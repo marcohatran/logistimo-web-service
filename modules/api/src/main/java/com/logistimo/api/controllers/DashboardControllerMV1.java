@@ -73,6 +73,10 @@ public class DashboardControllerMV1 {
   public static final String STATE_LOWER = "state";
   public static final String DISTRICT_LOWER = "district";
   public static final String COUNTRY_LOWER = "country";
+  public static final String ACTIVITY = "activity";
+  public static final String ALL_ACTIVITY = "all_activity";
+  public static final String ALL_INV = "all_inv";
+  public static final String INV = "inv";
   private static final XLog xLogger = XLog.getLog(DashboardControllerMV1.class);
 
   @RequestMapping(value = "/inventory", method = RequestMethod.GET)
@@ -106,7 +110,7 @@ public class DashboardControllerMV1 {
       state = dc.getState();
     }
     DashQueryModel paramModel = new DashQueryModel(country, state, district, incetags, exetags,
-        mtags, mnm, loc, p, date, domainId, null);
+        mtags, mnm, loc, p, date, domainId, null, null);
     String
         cachekey =
         buildCacheKey(paramModel);
@@ -124,10 +128,10 @@ public class DashboardControllerMV1 {
         filters =
         buildQueryFilters(paramModel);
     ds = Services.getService(DashboardService.class);
-    ResultSet invTyRes = ds.getMainDashboardResults(domainId, filters, "inv", true, null);
-    ResultSet invAlRes = ds.getMainDashboardResults(domainId, filters, "all_inv", true, null);
-    ResultSet acstRes = ds.getMainDashboardResults(domainId, filters, "activity", true, null);
-    ResultSet alstRes = ds.getMainDashboardResults(domainId, filters, "all_activity", true, null);
+    ResultSet invTyRes = ds.getMainDashboardResults(domainId, filters, INV, true, null);
+    ResultSet invAlRes = ds.getMainDashboardResults(domainId, filters, ALL_INV, true, null);
+    ResultSet acstRes = ds.getMainDashboardResults(domainId, filters, ACTIVITY, true, null);
+    ResultSet alstRes = ds.getMainDashboardResults(domainId, filters, ALL_ACTIVITY, true, null);
     //preparing the model
     dashboardModel =
         MobileInvDashboardBuilder.buildInvDashboard(invTyRes, invAlRes, acstRes, alstRes);
@@ -168,7 +172,7 @@ public class DashboardControllerMV1 {
       state = dc.getState();
     }
     DashQueryModel paramModel = new DashQueryModel(country, state, district, incetags, exetags,
-        mtags, mnm, loc, p, date, domainId, groupby);
+        mtags, mnm, loc, p, date, domainId, groupby, null);
     String
         cachekey =
         buildCacheKey(paramModel);
@@ -186,8 +190,8 @@ public class DashboardControllerMV1 {
         filters =
         buildQueryFilters(paramModel);
     ds = Services.getService(DashboardService.class);
-    ResultSet invTyRes = ds.getMainDashboardResults(domainId, filters, "inv", false, groupby);
-    ResultSet invAlRes = ds.getMainDashboardResults(domainId, filters, "all_inv", false, groupby);
+    ResultSet invTyRes = ds.getMainDashboardResults(domainId, filters, INV, false, groupby);
+    ResultSet invAlRes = ds.getMainDashboardResults(domainId, filters, ALL_INV, false, groupby);
     ResultSet
         alstRes =
         ds.getMainDashboardResults(domainId, filters, "all_activity", false, null);
@@ -273,6 +277,85 @@ public class DashboardControllerMV1 {
     if (cache != null) {
       cache.put(cacheKey, model, 1800); // 30 min expiry
     }
+    return model;
+  }
+
+  /**
+   * Provide statistics related to active/inactive entities which contains total count
+   * and the detail breakdown by location wise
+   *
+   * @param incetags  Entity tags to be included
+   * @param exetags   Entity tags to be excluded
+   * @param mtags     Material tags to be included
+   * @param mnm       Material name
+   * @param loc       Location
+   * @param locty     Location type: country/state/district
+   * @param p         Period in days
+   * @param date      Day of activity to be viewed
+   * @param refresh   true/false; whether to use cached data or not
+   *
+   * @throws SQLException
+   */
+  @RequestMapping(value = "/activity", method = RequestMethod.GET)
+  public
+  @ResponseBody
+  MainDashboardModel getActivityDashboard(@RequestParam(required = false) String incetags,
+                                          @RequestParam(required = false) String exetags,
+                                          @RequestParam(required = false) String mtags,
+                                          @RequestParam(required = false) String mnm,
+                                          @RequestParam(required = false) String loc,
+                                          @RequestParam(required = false) String locty,
+                                          @RequestParam(required = false) Integer p,
+                                          @RequestParam(required = false) String date,
+                                          @RequestParam(required = false, defaultValue = "true") Boolean refresh)
+      throws SQLException {
+    MainDashboardModel model;
+    Long domainId = SecurityUtils.getCurrentDomainId();
+    DomainConfig dc = DomainConfig.getInstance(domainId);
+    String country = dc.getCountry();
+    String state = null;
+    String district = null;
+    if (StringUtils.isNotEmpty(dc.getDistrict())) {
+      state = dc.getState();
+      district = dc.getDistrict();
+    } else if (StringUtils.isNotEmpty(dc.getState())) {
+      state = dc.getState();
+    }
+    DashQueryModel
+        activityQueryModel =
+        new DashQueryModel(country, state, district, incetags, exetags,
+            mtags, mnm, loc, p, date, domainId, null, locty);
+    String cacheKey = buildCacheKey(activityQueryModel);
+    cacheKey += "_ACT";
+    MemcacheService cache = AppFactory.get().getMemcacheService();
+    if(!refresh) {
+      model = (MainDashboardModel) cache.get(cacheKey);
+      if (model != null) {
+        return model;
+      }
+    }
+    Map<String, String> filters = buildQueryFilters(activityQueryModel);
+    String colFilter;
+    if (DISTRICT_LOWER.equals(activityQueryModel.locty) || activityQueryModel.district != null) {
+      colFilter = "NAME";
+    } else if (STATE_LOWER.equals(activityQueryModel.locty) || activityQueryModel.state != null) {
+      colFilter = DISTRICT;
+    } else {
+      colFilter = STATE;
+    }
+    IDashboardService dashboardService = Services.getService(DashboardService.class);
+    ResultSet activity = dashboardService.getMainDashboardResults(domainId, filters, ACTIVITY);
+    ResultSet activityDomain = dashboardService.getMainDashboardResults(domainId, filters, ALL_ACTIVITY);
+    DashboardBuilder builder = new DashboardBuilder();
+    model = builder.getMainDashBoardData(null, null, activity, activityDomain, null, null, colFilter);
+    if (StringUtils.isBlank(activityQueryModel.loc) && activityQueryModel.state == null) {
+      model.mLev = COUNTRY_LOWER;
+    } else if (StringUtils.isBlank(activityQueryModel.loc) && activityQueryModel.district == null) {
+      model.mLev = STATE_LOWER;
+    } else {
+      model.mLev = activityQueryModel.locty;
+    }
+    cache.put(cacheKey, model, 1800);
     return model;
   }
 

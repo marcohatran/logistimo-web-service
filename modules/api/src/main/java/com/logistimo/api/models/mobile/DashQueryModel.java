@@ -50,7 +50,7 @@ public class DashQueryModel {
 
   public DashQueryModel(String country, String state, String district, String incetags,
                         String exetags, String mtags, String mnm, String loc, Integer p,
-                        String date, Long domainId, String groupby) {
+                        String date, Long domainId, String groupby, String locty) {
     this.country = country;
     this.state = state;
     this.district = district;
@@ -63,6 +63,7 @@ public class DashQueryModel {
     this.date = date;
     this.domainId = domainId;
     this.groupby = groupby;
+    this.locty = locty;
   }
 
   public DashQueryModel(String country, String state, String district, String excludeETags,
