@@ -27,6 +27,7 @@ import com.logistimo.api.constants.SMSConstants;
 import com.logistimo.api.models.InventoryTransactions;
 import com.logistimo.api.models.SMSModel;
 import com.logistimo.api.models.SMSTransactionModel;
+import com.logistimo.api.util.SMSDecodeUtil;
 import com.logistimo.api.util.SMSUtil;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
@@ -60,6 +61,7 @@ import com.logistimo.utils.LocalDateUtil;
 
 import org.apache.commons.lang.StringUtils;
 
+import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -178,7 +180,7 @@ public class SMSBuilder {
             model.setUserId(keyValue[1]);
             break;
           case SMSConstants.KIOSK_ID:
-            model.setKioskId(Long.parseLong(keyValue[1]));
+            model.setKioskId(SMSDecodeUtil.decode(keyValue[1]));
             break;
           default:
             xLogger.warn("Unknown key,value found in SMS: " + Arrays.toString(keyValue));
@@ -215,9 +217,10 @@ public class SMSBuilder {
    * @param model- Transaction model
    * @param value- parsed value
    */
-  private void setSendTime(SMSTransactionModel model, String value) {
+  private void setSendTime(SMSTransactionModel model, String value)
+      throws UnsupportedEncodingException {
     Calendar calendar = GregorianCalendar.getInstance();
-    final long sendTime = Long.parseLong(value) * SMSConstants.MILLISECONDS;
+    final long sendTime = SMSDecodeUtil.decode(value);
     if (sendTime > calendar.getTimeInMillis()) {
       //send time cannot be a future time
       throw new BadRequestException("M016");
@@ -234,7 +237,8 @@ public class SMSBuilder {
    * @param inventoryDetails Request which has inventory details
    * @param model            Transaction Model
    */
-  private void processInventoryDetails(String inventoryDetails, SMSTransactionModel model) {
+  private void processInventoryDetails(String inventoryDetails, SMSTransactionModel model)
+      throws UnsupportedEncodingException {
     //Split based on | for materials
     List<String>
         materialsList =
@@ -243,8 +247,7 @@ public class SMSBuilder {
     for (String material : materialsList) {
       InventoryTransactions
           inventoryTransactions =
-          getInventoryTransactions(material, model.getSendTime(),
-              model.getActualTransactionDate());
+          getInventoryTransactions(material, model.getSendTime());
       inventoryTransactionsList.add(inventoryTransactions);
     }
     model.setInventoryTransactionsList(inventoryTransactionsList);
@@ -258,12 +261,13 @@ public class SMSBuilder {
    * @param actualTransactionDate Actual Date of transaction
    * @return Inventory Transactions
    */
-  private InventoryTransactions getInventoryTransactions(String material, Long sendTime,
-                                                         Long actualTransactionDate) {
+  private InventoryTransactions getInventoryTransactions(String material, Long sendTime)
+      throws UnsupportedEncodingException {
 
     String[] mat = material.split(SMSConstants.ENTRY_TIME_SEPARATOR);
     //Material short Id
-    Long materialId = Long.parseLong(mat[0]);
+
+    Long materialId = SMSDecodeUtil.decode(mat[0]);
     InventoryTransactions inventoryTransactions = new InventoryTransactions();
     inventoryTransactions.setMaterialShortId(materialId);
     List<MobileTransModel> mobileTransModels = new ArrayList<>();
@@ -272,14 +276,13 @@ public class SMSBuilder {
       //set entry time
       Long entryTimeInMillis;
       if (transactions[0] != null && !transactions[0].equalsIgnoreCase(CharacterConstants.EMPTY)) {
-        entryTimeInMillis = sendTime - (Long.parseLong(transactions[0])
-                * SMSConstants.MIN_IN_MILLI_SEC);
+        entryTimeInMillis = sendTime - (SMSDecodeUtil.decode(transactions[0]));
       } else {
         entryTimeInMillis = sendTime;
       }
       for (int j = 1; j < transactions.length; j++) {
         MobileTransModel mobileTransModel =
-            populateTransModel(transactions[j], sendTime, entryTimeInMillis, actualTransactionDate);
+            populateTransModel(transactions[j], sendTime, entryTimeInMillis);
         //Increase entry time by one millisecond for every transaction since the service sorts it based on entry time
         entryTimeInMillis += 1;
         mobileTransModel.sortEtm = entryTimeInMillis;
@@ -296,32 +299,35 @@ public class SMSBuilder {
    * @param transaction        Transaction String
    * @param sendTime           Send Time
    * @param entryTimeInMillis  Entry Time in millis
-   * @param actualTransDate    Actual Transaction Date
    * @return Mobile Trans Model
    */
   private MobileTransModel populateTransModel(String transaction, Long sendTime,
-                                              Long entryTimeInMillis, Long actualTransDate) {
+                                              Long entryTimeInMillis)
+      throws UnsupportedEncodingException {
     SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATE_FORMAT);
     MobileTransModel mobileTransModel = new MobileTransModel();
     mobileTransModel.entm = entryTimeInMillis;
 
     String[] transactionDet = transaction.split(SMSConstants.COMMA_SEPARATOR);
     mobileTransModel.ty = transactionDet[0];
-    mobileTransModel.ostk = transactionDet[1] != null ? new BigDecimal(transactionDet[1]) : null;
-    mobileTransModel.q = transactionDet[2] != null ? new BigDecimal(transactionDet[2]) : null;
+    mobileTransModel.ostk = transactionDet[1] != null ?
+        new BigDecimal(String.valueOf(SMSDecodeUtil.decode(transactionDet[1]))) : null;
+    mobileTransModel.q = transactionDet[2] != null ?
+        new BigDecimal(String.valueOf(SMSDecodeUtil.decode(transactionDet[2]))) : null;
     //set actual transaction date
-    Long actualTransactionDate = actualTransDate;
+    Long actualTransactionDate = null;
     if (transactionDet.length > 3 && transactionDet[3] != null && !transactionDet[3]
         .equalsIgnoreCase(CharacterConstants.EMPTY)) {
-      Long days = Long.parseLong(transactionDet[3]);
+      Long days = SMSDecodeUtil.decode(transactionDet[3]);
       actualTransactionDate = sendTime - days * SMSConstants.DAYS_IN_MILLI_SEC;
     }
     mobileTransModel.bid =
         ((transactionDet.length > 4) && (transactionDet[4] != null) && !CharacterConstants.EMPTY
             .equalsIgnoreCase(transactionDet[4])) ? transactionDet[4] : null;
     mobileTransModel.lkid =
-        (transactionDet.length > 5 && transactionDet[5] != null && !transactionDet[5]
-            .equalsIgnoreCase(CharacterConstants.EMPTY)) ? Long.parseLong(transactionDet[5]) : null;
+        (transactionDet.length > 5 && transactionDet[5] != null
+          && !transactionDet[5].equalsIgnoreCase(CharacterConstants.EMPTY)) ?
+            SMSDecodeUtil.decode(transactionDet[5]) : null;
     if (actualTransactionDate != null) {
       mobileTransModel.atd = sdf.format(new Date(actualTransactionDate));
     }
@@ -566,19 +572,9 @@ public class SMSBuilder {
             mobileTransModelList =
             inventoryTransactions.getMobileTransModelList();
         for (MobileTransModel mobileTransModel : mobileTransModelList) {
-          ITransaction
-              transaction =
+          ITransaction transaction =
               setTransactionDetails(mobileTransModel, ua, model.getKioskId(),
-                  model.getActualTransactionDate(), material.getMaterialId());
-
-          // Add 100 * partialID milliseconds to make the same entry time unique from multiple SMS
-          long partialTimeDiff = 0;
-          try {
-            partialTimeDiff = Integer.parseInt(model.getPartialId()) * 100;
-          } catch (Exception ignored) { }
-          if(partialTimeDiff > 0) {
-            transaction.setEntryTime(new Date(transaction.getEntryTime().getTime() + partialTimeDiff));
-          }
+                  material.getMaterialId());
 
           transactionList = map.get(material.getMaterialId());
           if (transactionList == null) {
@@ -604,15 +600,13 @@ public class SMSBuilder {
    * @param mobileTransModel      Mobile transaction model
    * @param ua                    User Account
    * @param kioskId               Kiosk ID
-   * @param actualTransactionDate Actual Transaction Date
    * @param materialId            Material ID
    * @return ITransaction
    * @throws ParseException          when unable to parse date
    * @throws ServiceException        Exception thrown from Service Layer
    */
   private ITransaction setTransactionDetails(MobileTransModel mobileTransModel, IUserAccount ua,
-                                             Long kioskId, Long actualTransactionDate,
-                                             Long materialId) throws
+                                             Long kioskId, Long materialId) throws
       ParseException, ServiceException {
     ITransaction transaction = JDOUtils.createInstance(ITransaction.class);
     transaction.setKioskId(kioskId);
@@ -625,7 +619,7 @@ public class SMSBuilder {
     }
     transaction.setQuantity(mobileTransModel.q);
     transaction.setSourceUserId(ua.getUserId());
-    if (actualTransactionDate != null) {
+    if (mobileTransModel.atd != null) {
       Date d = LocalDateUtil.parseCustom(mobileTransModel.atd, Constants.DATE_FORMAT, null);
       transaction.setAtd(d);
     }

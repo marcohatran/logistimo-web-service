@@ -113,7 +113,7 @@ public class SMSController {
         return;
       }
       isDuplicate =
-          SMSUtil.isDuplicateMsg(model.getSendTime() / 1000, model.getUserId(), model.getKioskId(),
+          SMSUtil.isDuplicateMsg(model.getSendTime(), model.getUserId(), model.getKioskId(),
               model.getPartialId());
       //check if duplicate transaction
       Map<Long, List<ITransaction>> transactionMap = builder.buildTransaction(model);

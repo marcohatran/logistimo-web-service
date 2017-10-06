@@ -840,7 +840,7 @@ public class InventoryServlet extends JsonRestServlet {
       domainId = u.getDomainId();
       // Deduplicate by transaction send time
       if (TransactionUtil
-          .deduplicateBySaveTimePartial(String.valueOf(mobUpdateInvTransReq.sntm / 1000),
+          .deduplicateBySaveTimePartial(String.valueOf(mobUpdateInvTransReq.sntm),
               mobUpdateInvTransReq.uid, String.valueOf(mobUpdateInvTransReq.kid),
               mobUpdateInvTransReq.pid)) {
         isDuplicate = true;
