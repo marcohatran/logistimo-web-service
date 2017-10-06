@@ -64,7 +64,7 @@ public class LocationConfigServlet extends SgServlet {
   private static final long serialVersionUID = -4934073385876857714L;
   private static final String ACTION_GETLOCATIONCONFIG = "getlocationconfig";
   private static final String ACTION_FORMAT_OLD_LOCATIONCONFIG = "formatold";
-  private static final XLog xLogger = XLog.getLog(ConfigDataServlet.class);
+  private static final XLog xLogger = XLog.getLog(LocationConfigServlet.class);
 
   @Override
   protected void processGet(HttpServletRequest request,
@@ -96,7 +96,7 @@ public class LocationConfigServlet extends SgServlet {
           }
         }
       } catch (Exception e) {
-        xLogger.warn("Exception: {0}", e.getMessage());
+        xLogger.warn("Exception: {0}", e);
         writeResponse(response.getWriter(), "Invalid user name or password");
       }
       /** OLD way of doing it
@@ -151,7 +151,7 @@ public class LocationConfigServlet extends SgServlet {
       return config.getConfig();
     } catch (ServiceException e) {
       xLogger.severe("{0} when getting config. for key {1}: {2}", e.getClass().getName(),
-          IConfig.LOCATIONS, e.getMessage());
+          IConfig.LOCATIONS, e);
     } catch (ObjectNotFoundException e) {
       xLogger.warn("Configuration not available for key: " + IConfig.LOCATIONS);
     }
