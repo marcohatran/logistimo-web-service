@@ -191,12 +191,15 @@ public class BulkExportMgr {
     }
     String discType = req.getParameter("disctype"); // Type of discrepancy
     String eTags =
-        req.getParameter("etag"); // Entity tags, multiple possible in case of Inventory export
+        req.getParameter("etag"); // Entity tags, multiple possible in case of Inventory export, order tags in case of Order export
     String eeTags =
         req.getParameter("eetag"); // Entity tags, multiple possible in case of Inventory export
     String mTag = req.getParameter("mtag"); // Material tag
     String orderIdStr = req.getParameter("orderid"); // Order ID
     boolean etrn = req.getParameter("etrn") != null ? true : false; // Exclude transfer orders
+    String approvalStatus = req.getParameter("approvalstatus");
+    String referenceId = req.getParameter("refid");
+    String tagType = req.getParameter("tagtype");
 
     // Get the parameter objects
     SimpleDateFormat df =
@@ -344,6 +347,12 @@ public class BulkExportMgr {
               .setStatus(orderStatus)
               .setOtype(oType)
               .setUserId(sourceUserId)
+              .setSince(from)
+              .setUntil(to)
+              .setTagType(tagType)
+              .setTag(eTags)
+              .setApprovalStatus(approvalStatus)
+              .setReferenceId(referenceId)
               .setOrderType(Integer.parseInt(spTransfer)));
     }
     // Form query params.
