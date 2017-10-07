@@ -22,8 +22,8 @@
  */
 
 var domainCfgControllers = angular.module('domainCfgControllers', []);
-domainCfgControllers.controller('GeneralConfigurationController', ['$scope', 'domainCfgService', 'configService','userService',
-    function ($scope, domainCfgService, configService, userService) {
+domainCfgControllers.controller('GeneralConfigurationController', ['$scope', 'domainCfgService', 'configService','userService','mediaService',
+    function ($scope, domainCfgService, configService, userService, mediaService) {
         $scope.cnf = {};
         $scope.cnf.support = [];
         $scope.cnf.adminContact = {};
@@ -62,6 +62,8 @@ domainCfgControllers.controller('GeneralConfigurationController', ['$scope', 'do
                 $scope.setDefaultCurrency($scope.cnf.cur);
                 $scope.getFilteredUserId($scope.cnf.support);
                 updatePSUser();
+                $scope.domainId = 'd' + $scope.cnf.domainId;
+                getDomainImage();
             }).catch(function err(msg){
                 $scope.showWarning($scope.resourceBundle['configuration.general.unavailable']);
             }).finally(function (){
@@ -277,11 +279,89 @@ domainCfgControllers.controller('GeneralConfigurationController', ['$scope', 'do
 
         $scope.validateSupportPhone = function(phnm) {
             return validateSupport(phnm);
-        }
+        };
 
         $scope.validateEmail = function(email) {
             return checkEmail(email);
+        };
+
+        function getDomainImage() {
+            $scope.showLoading();
+            $scope.loadImage = true;
+            mediaService.getDomainkeyImages($scope.domainId).then(function (data) {
+                $scope.domainImages = data.data;
+                $scope.addImage = false;
+            }).catch(function error(msg) {
+                $scope.showErrorMsg(msg);
+            }).finally(function () {
+                $scope.hideLoading();
+                $scope.loadImage = false;
+            });
         }
+
+        $scope.validateDomainImage = function() {
+            if(checkNullEmpty($scope.imageData)) {
+                $scope.showWarning($scope.resourceBundle['image.upload.empty.warning']);
+                return false;
+            }
+            var fileType = $scope.imageData.filetype.split("/");
+            $scope.fileExt = fileType[fileType.length - 1];
+            if($scope.fileExt != "png" && $scope.fileExt == "jpg" && $scope.fileExt == "jpeg") {
+                $scope.showWarning($scope.resourceBundle['image.upload.warning']);
+                return false;
+            }
+            var fileSize = $scope.imageData.filesize;
+            if(fileSize > 5*1024*1024) {
+                $scope.showWarning ($scope.resourceBundle['uploadsizemessage']);
+                return false;
+            }
+            return true;
+        };
+
+        $scope.uploadDomainImage = function() {
+            $scope.showLoading();
+            $scope.loadImage = true;
+            mediaService.uploadImage($scope.fileExt, $scope.domainId, $scope.imageData.base64).then(function(data) {
+                $scope.showSuccess($scope.resourceBundle['image.upload.success']);
+                getDomainImage();
+                $scope.addImage = false;
+                $scope.imageData = undefined;
+            }).catch(function error(msg) {
+                $scope.showErrorMsg(msg);
+            }).finally(function() {
+                $scope.hideLoading();
+                $scope.loadImage = false;
+            });
+        };
+
+        $scope.removeDomainImage = function(key) {
+            if (!confirm($scope.resourceBundle['image.removed.warning'] + "?")) {
+                return false;
+            }
+            $scope.showLoading();
+            $scope.loadImage = true;
+            mediaService.removeImage(key).then(function() {
+                $scope.showSuccess($scope.resourceBundle['image.delete.success']);
+                getDomainImage();
+            }).catch(function error(msg) {
+
+            }).finally(function() {
+                $scope.hideLoading();
+                $scope.loadImage = false;
+            });
+        };
+        $scope.addDomainImage = function(){
+            if($scope.domainImages.items.length == 3) {
+                $scope.showWarning($scope.resourceBundle['domain.image.upload.maximum.images']);
+                $scope.addImage=false;
+                return;
+            }
+            $scope.addImage = true;
+        };
+        $scope.cancel = function(){
+            $scope.addImage=false;
+            $scope.imageData='';
+        };
     }
 ]);
 domainCfgControllers.controller('CapabilitiesConfigurationController', ['$scope', 'domainCfgService',
