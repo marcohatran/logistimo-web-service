@@ -183,12 +183,12 @@ public class ConfigurationMgmtServiceImpl extends ServiceImpl implements Configu
       if (locindex != 0) {
         updateDomainConfigLocIds(c);
       }
+      //pm.makePersistent( c );
+      tx.commit();
       // whenever there is a change in the location configuration, re-initialize it
       if (c.getKey().equals(IConfig.LOCATIONS)) {
         LocationConfig.initialize();
       }
-      //pm.makePersistent( c );
-      tx.commit();
     } catch (Exception e) {
       xLogger
           .fine("Exception while updating configuration object with key {0}: {1}", config.getKey(),
