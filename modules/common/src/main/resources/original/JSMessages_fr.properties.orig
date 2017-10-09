@@ -1111,3 +1111,4 @@ purchase.order.lowercase=acheter en ligne
 sales.order.lowercase=commandes
 primary.approvers.purchase.config.error=Les approbateurs primaires ne sont pas configurés pour le bon de commande.
 primary.approvers.sales.config.error=Les approbateurs primaires ne sont pas configurés pour l'ordre client.
+partial.order.ship.confirm=Vous avez partiellement attribué des stocks pour certains articles. Le système va automatiquement compléter les allocations sur l'expédition. Voulez-vous continuer à expédier la commande?

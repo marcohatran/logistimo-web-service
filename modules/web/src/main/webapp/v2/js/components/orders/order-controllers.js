@@ -585,23 +585,25 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                 $scope.sMatList = $scope.sMTShip;
             };
 
-             function isOrderFullyAllocated(){
+             function isOrderPartiallyAllocated(){
                  if(!$scope.allocate) {
                      return true;
                  }
-                 var allocateComplete = true;
                  var isBatchItemAvl = false;
+                 var isItemAllocated = false;
 
                  $scope.sMTShip = angular.copy($scope.order.its);
-                $scope.order.its.forEach(function (data) {
-                    if (data.isBa) {
-                        isBatchItemAvl = true;
-                    }
-                    if (data.q != data.astk) {
-                        allocateComplete = false;
-                    }
-                });
-                return !isBatchItemAvl || allocateComplete;
+                 return $scope.order.its.some(function (data) {
+                     if (data.isBa) {
+                         isBatchItemAvl = true;
+                     }
+                     if (data.q == data.astk) {
+                         isItemAllocated = true;
+                     }
+                     if (data.q != data.astk && (data.astk != 0 || isBatchItemAvl || isItemAllocated)) {
+                         return true;
+                     }
+                 });
             }
 
             $scope.toggleEdit = function (field,open) {
@@ -701,7 +703,13 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                     }
                 }
             };
+            function isBatchItemAvailable() {
+                return $scope.order.its.some(function (data) {
+                    return data.isBa;
+                });
+            }
             $scope.changeStatus = function (value) {
+                $scope.showShipForm = true;
                 $scope.nStatus = value;
                 $scope.newStatus= {};
                 $scope.newStatus.st = value;
@@ -725,6 +733,17 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                         $scope.hideLoading();
                     });
                 } else {
+                    if (($scope.newStatus.st == ORDER.COMPLETED || ($scope.order.st != $scope.ORDER.COMPLETED && $scope.newStatus.st == ORDER.FULFILLED)) && isOrderPartiallyAllocated()) {
+                        if (isBatchItemAvailable()) {
+                            $scope.showWarning($scope.resourceBundle['order.allocations.required.toship']);
+                            return false;
+                        } else {
+                            confirmPartialAllocatedOrder();
+                            $scope.showShipForm = false;
+                        }
+                    }
+                }
+                if ($scope.showShipForm) {
                     $scope.modalInstance = $uibModal.open({
                         templateUrl: 'views/orders/order-status.html',
                         scope: $scope,
@@ -734,10 +753,34 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                     $scope.disableScroll();
                 }
             };
+
+        function confirmPartialAllocatedOrder() {
+            $scope.msg = $scope.resourceBundle['partial.order.ship.confirm'];
+            $scope.modalInstance = $uibModal.open({
+                templateUrl: 'views/orders/confirm.html',
+                scope: $scope,
+                keyboard: false,
+                backdrop: 'static'
+            });
+            $scope.disableScroll();
+        }
+
         $scope.cancel = function () {
             $scope.enableScroll();
             $scope.order.aprmsg = "";
             $scope.modalInstance.dismiss('cancel');
+        };
+
+        $scope.confirm = function() {
+            $scope.cancel();
+            $scope.showShipForm = true;
+            $scope.modalInstance = $uibModal.open({
+                templateUrl: 'views/orders/order-status.html',
+                scope: $scope,
+                keyboard: false,
+                backdrop: 'static'
+            });
+            $scope.disableScroll();
         };
             $scope.cancelShipNow = function () {
                 $scope.enableScroll();
@@ -766,10 +809,6 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                     enforceCreditCheck = true;
                 if (enforceCreditCheck && $scope.order.tp > $scope.order.avc) {
                     $scope.showWarning($scope.resourceBundle.ordercannotbe + ' ' + ORDER.statusTxt[$scope.newStatus.st].toLowerCase() + '. ' + $scope.resourceBundle.ordercostexceedscredit + ' ' + $scope.order.cur + ' ' + $scope.order.avc);
-                    return false;
-                }
-                if(($scope.newStatus.st == ORDER.COMPLETED || ($scope.order.st != $scope.ORDER.COMPLETED && $scope.newStatus.st == ORDER.FULFILLED)) && !isOrderFullyAllocated()){
-                    $scope.showWarning($scope.resourceBundle['order.allocations.required.toship']);
                     return false;
                 }
                 if($scope.oCfg.tm && checkNullEmpty($scope.newStatus.t) && ($scope.newStatus.st == $scope.ORDER.COMPLETED || $scope.newStatus.st == ORDER.FULFILLED) ) {
