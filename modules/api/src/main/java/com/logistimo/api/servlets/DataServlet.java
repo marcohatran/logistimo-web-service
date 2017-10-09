@@ -28,8 +28,7 @@ package com.logistimo.api.servlets;
 
 import com.logistimo.AppFactory;
 import com.logistimo.api.util.KioskDataSimulator;
-import com.logistimo.auth.SecurityMgr;
-import com.logistimo.auth.utils.SessionMgr;
+import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.constants.Constants;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
@@ -262,7 +261,7 @@ public class DataServlet extends JsonRestServlet {
     }
 
     // Get the logged in user
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(req.getSession());
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     String userId = sUser.getUsername();
     // Get the domain Id from the session for the logged in user
     Long domainId = null; // Can also get this from the session, but now getting it from the post
@@ -367,15 +366,15 @@ public class DataServlet extends JsonRestServlet {
     // Get the form parameters
     String kioskIdStr = req.getParameter("kioskid");
     // Get the locale
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(req.getSession());
-    Long domainId = SessionMgr.getCurrentDomain(req.getSession(), sUser.getUsername());
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
+    Long domainId = SecurityUtils.getCurrentDomainId();
 
     // Make the HTTP call to optimize servlet
     Map<String, String> params = new HashMap<String, String>();
     params.put("domainid", domainId.toString());
     params.put("kioskid", kioskIdStr);
     params.put("force", "true");
-    String message = null;
+    String message;
     try {
       taskService.schedule(taskService.QUEUE_OPTIMZER, "/task/optimize", params, null,
           taskService.METHOD_POST, domainId, sUser.getUsername(), "SIMULATE_ORDERS");

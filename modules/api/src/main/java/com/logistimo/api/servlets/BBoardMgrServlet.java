@@ -26,8 +26,7 @@
  */
 package com.logistimo.api.servlets;
 
-import com.logistimo.auth.SecurityMgr;
-import com.logistimo.auth.utils.SessionMgr;
+import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.entity.IBBoard;
 import com.logistimo.events.handlers.BBHandler;
@@ -112,13 +111,13 @@ public class BBoardMgrServlet extends JsonRestServlet {
       xLogger.severe("No message to post to Bulletin Board");
       sendJsonResponse(response, 200, "{\"st\": \"0\", \"ms\": \"No message to post\" }");
     }
-    String jsonResp = null;
+    String jsonResp;
     try {
       // Get the user Id
-      SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
+      SecureUserDetails sUser = SecurityUtils.getUserDetails();
       xLogger.fine("sUser: {0}", sUser);
       String userId = sUser.getUsername();
-      Long domainId = SessionMgr.getCurrentDomain(request.getSession(), userId);
+      Long domainId = SecurityUtils.getCurrentDomainId();
       // Create the BBoard message
       IBBoard bb = JDOUtils.createInstance(IBBoard.class);
       bb.setDomainId(domainId);

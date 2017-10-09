@@ -405,7 +405,7 @@ public class CreateEntityServlet extends SgServlet {
     Long domainId = null;
     // NOTE: sUser can be null, when this is accessed via a task during multi-kiosk addition of materials
     if (sUser != null) {
-      domainId = SessionMgr.getCurrentDomain(req.getSession(), sUser.getUsername());
+      domainId = SecurityUtils.getCurrentDomainId();
     }
     if (domainId == null) {
       String dIdStr = req.getParameter(DOMAINID);
@@ -728,8 +728,7 @@ public class CreateEntityServlet extends SgServlet {
       throws ServiceException, IOException {
     Map<String, String[]> materialDetails = req.getParameterMap();
     materialDetails = cleanMap(materialDetails);
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(req.getSession());
-    Long domainId = SessionMgr.getCurrentDomain(req.getSession(), sUser.getUsername());
+    Long domainId = SecurityUtils.getCurrentDomainId();
 
     String message = "";
     IMaterial m = JDOUtils.createInstance(IMaterial.class);
@@ -1072,8 +1071,7 @@ public class CreateEntityServlet extends SgServlet {
       m.setTemperatureMax(0F);
     }
     // Get the domain ID
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(req.getSession());
-    Long domainId = SessionMgr.getCurrentDomain(req.getSession(), sUser.getUsername());
+    Long domainId = SecurityUtils.getCurrentDomainId();
 
     if (message.isEmpty()) {
       Long matID = mc.addMaterial(domainId, m);
@@ -1505,12 +1503,12 @@ public class CreateEntityServlet extends SgServlet {
     xLogger.fine("Entered modifyKioskOwnerPassword");
     Map<String, String[]> userDetails = req.getParameterMap();
     userDetails = cleanMap(userDetails);
-    String userId = "";
-    IUserAccount u = null;
+    String userId;
+    IUserAccount u;
     // Get logged in User details
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(req.getSession());
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     String loggedInUserId = sUser.getUsername();
-    Long domainId = SessionMgr.getCurrentDomain(req.getSession(), sUser.getUsername());
+    Long domainId = SecurityUtils.getCurrentDomainId();
     // Get the user Id
     if (userDetails.containsKey("id")) {
       userId = userDetails.get("id")[0];
@@ -1818,11 +1816,11 @@ public class CreateEntityServlet extends SgServlet {
     }
 
     // Get the user who registered this user
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(req.getSession());
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     String registeredBy = sUser.getUsername();
     u.setRegisteredBy(registeredBy);
     // Get the domain ID
-    Long domainId = SessionMgr.getCurrentDomain(req.getSession(), sUser.getUsername());
+    Long domainId = SecurityUtils.getCurrentDomainId();
 
     // Add account
     if (message.isEmpty()) {
@@ -1929,8 +1927,7 @@ public class CreateEntityServlet extends SgServlet {
                            ResourceBundle messages) throws ServiceException, IOException {
     Map<String, String[]> kioskDetails = req.getParameterMap();
     kioskDetails = cleanMap(kioskDetails);
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(req.getSession());
-    Long domainId = SessionMgr.getCurrentDomain(req.getSession(), sUser.getUsername());
+    Long domainId = SecurityUtils.getCurrentDomainId();
     String message = "";
 
     String kioskIDStr = "";
@@ -2133,8 +2130,8 @@ public class CreateEntityServlet extends SgServlet {
     }
 
     // Get the domain Id
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(req.getSession());
-    Long domainId = SessionMgr.getCurrentDomain(req.getSession(), sUser.getUsername());
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
+    Long domainId = SecurityUtils.getCurrentDomainId();
     if (message.isEmpty()) {
       Long pgID = as.addPoolGroup(domainId, pg);
       message =
@@ -2282,8 +2279,8 @@ public class CreateEntityServlet extends SgServlet {
     }
 
     // Get the domain Id from the session
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(req.getSession());
-    Long domainId = SessionMgr.getCurrentDomain(req.getSession(), sUser.getUsername());
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
+    Long domainId = SecurityUtils.getCurrentDomainId();
     // Add kiosk
     if (message.isEmpty()) {
       // Add registered by info
@@ -2315,8 +2312,8 @@ public class CreateEntityServlet extends SgServlet {
       throws ServiceException, IOException {
     xLogger.fine("Enter addOrRemoveMaterialsForMultipleKiosks");
     // Get the domain Id
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(req.getSession());
-    Long domainId = SessionMgr.getCurrentDomain(req.getSession(), sUser.getUsername());
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
+    Long domainId = SecurityUtils.getCurrentDomainId();
     // Get the action
     String action = req.getParameter(SecurityFilter.ACTION); // add or remove
     boolean add = "add".equals(action); // else remove
@@ -2707,9 +2704,9 @@ public class CreateEntityServlet extends SgServlet {
     String linkId = req.getParameter("linkid");
     boolean modify = MODIFY.equals(action);
     // Get logged in user
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(req.getSession());
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     String userId = sUser.getUsername();
-    Long domainId = SessionMgr.getCurrentDomain(req.getSession(), userId);
+    Long domainId = SecurityUtils.getCurrentDomainId();
     // Init. object
     IKioskLink kioskLink = null;
     if (modify) {
@@ -2829,8 +2826,7 @@ public class CreateEntityServlet extends SgServlet {
     Map<String, String[]> linkDetails = req.getParameterMap();
     linkDetails = cleanMap(linkDetails);
     String kioskIdStr = null;
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(req.getSession());
-    Long domainId = SessionMgr.getCurrentDomain(req.getSession(), sUser.getUsername());
+    Long domainId = SecurityUtils.getCurrentDomainId();
     // Get parameters and update object
     if (linkDetails.containsKey(KIOSKID)) {
       kioskIdStr = linkDetails.get(KIOSKID)[0];
@@ -2905,10 +2901,10 @@ public class CreateEntityServlet extends SgServlet {
       return;
     }
     // Get domain info.
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(req.getSession());
+    SecureUserDetails sUser = SecurityMgr.getUserDetailsIfPresent();
     Long domainId = null;
     if (sUser != null) {
-      domainId = SessionMgr.getCurrentDomain(req.getSession(), sUser.getUsername());
+      domainId = SecurityUtils.getCurrentDomainId();
     } else {
       String domainIdStr = req.getParameter(DOMAINID);
       try {
@@ -3074,10 +3070,10 @@ public class CreateEntityServlet extends SgServlet {
     Map<String, String[]> transDetails = req.getParameterMap();
     transDetails = cleanMap(transDetails);
     // Get the logged in user Id
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(req.getSession());
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     String userId = sUser.getUsername();
     // Get the domain id
-    Long domainId = SessionMgr.getCurrentDomain(req.getSession(), userId);
+    Long domainId = SecurityUtils.getCurrentDomainId();
     // Get the transaction type
     String transType = null;
     if (transDetails.containsKey("transtype")) {
@@ -3328,10 +3324,10 @@ public class CreateEntityServlet extends SgServlet {
     xLogger.fine("Entered createOrders");
     String message = "";
     // Get the logged in user Id
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(req.getSession());
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     String userId = sUser.getUsername();
     // Get the domain id
-    Long domainId = SessionMgr.getCurrentDomain(req.getSession(), userId);
+    Long domainId = SecurityUtils.getCurrentDomainId();
     // Get domain config
     DomainConfig dc = DomainConfig.getInstance(domainId);
     // Get the kiosk id
@@ -3564,8 +3560,7 @@ public class CreateEntityServlet extends SgServlet {
     xLogger.fine("userId = {0}", userId);
     xLogger.fine("routeQueryString = {0}", routeQueryString);
     // Get the domain Id
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(req.getSession());
-    Long domainId = SessionMgr.getCurrentDomain(req.getSession(), sUser.getUsername());
+    Long domainId = SecurityUtils.getCurrentDomainId();
 
     try {
       as.updateManagedEntitiesOrdering(domainId, userId, routeQueryString);
@@ -3615,8 +3610,7 @@ public class CreateEntityServlet extends SgServlet {
     xLogger.fine("kioskId = {0}", kioskId);
     xLogger.fine("routeQueryString = {0}", routeQueryString);
     // Get the domain Id
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(req.getSession());
-    Long domainId = SessionMgr.getCurrentDomain(req.getSession(), sUser.getUsername());
+    Long domainId = SecurityUtils.getCurrentDomainId();
 
     try {
       as.updateRelatedEntitiesOrdering(domainId, kioskId, linkType, routeQueryString);

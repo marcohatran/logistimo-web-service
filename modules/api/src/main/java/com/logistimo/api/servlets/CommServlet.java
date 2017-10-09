@@ -28,7 +28,7 @@ package com.logistimo.api.servlets;
 
 import com.logistimo.AppFactory;
 import com.logistimo.auth.SecurityMgr;
-import com.logistimo.auth.utils.SessionMgr;
+import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.communications.MessageHandlingException;
 import com.logistimo.communications.ServiceResponse;
 import com.logistimo.communications.service.MessageService;
@@ -138,13 +138,13 @@ public class CommServlet extends SgServlet {
       return;
     }
     // Get the sending user's domain/ID information
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
+    SecureUserDetails sUser = SecurityMgr.getUserDetailsIfPresent();
     String sendingUserId = null;
     Long domainId = null;
     Locale locale = null;
     if (sUser != null) {
       sendingUserId = sUser.getUsername();
-      domainId = SessionMgr.getCurrentDomain(request.getSession(), sendingUserId);
+      domainId = SecurityUtils.getCurrentDomainId();
       locale = sUser.getLocale();
     }
     // Send the message to selected users or schedule sending to all users
@@ -209,11 +209,11 @@ public class CommServlet extends SgServlet {
       return;
     }
     // Get the sending user's domain/ID information
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
-    Long domainId = null;
+    SecureUserDetails sUser = SecurityMgr.getUserDetailsIfPresent();
+    Long domainId;
     if (sUser != null) {
       sendingUserId = sUser.getUsername();
-      domainId = SessionMgr.getCurrentDomain(request.getSession(), sendingUserId);
+      domainId = SecurityUtils.getCurrentDomainId();
     } else {
       if (domainIdStr != null && !domainIdStr.isEmpty()) {
         domainId = Long.valueOf(domainIdStr);

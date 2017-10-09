@@ -32,7 +32,7 @@ import com.logistimo.assets.entity.IAsset;
 import com.logistimo.assets.models.Temperature;
 import com.logistimo.assets.models.TemperatureResponse;
 import com.logistimo.auth.SecurityMgr;
-import com.logistimo.auth.utils.SessionMgr;
+import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.bulkuploads.BulkUploadMgr;
 import com.logistimo.communications.MessageHandlingException;
 import com.logistimo.communications.service.EmailService;
@@ -236,10 +236,10 @@ public class ExportServlet extends SgServlet {
     // Get the values
     String valuesCSV = request.getParameter("values");
     // Get locale/timezone of user
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     String timezone = sUser.getTimezone();
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
+    Long domainId = SecurityUtils.getCurrentDomainId();
     // Get the fields config., if any
     DomainConfig dc = DomainConfig.getInstance(domainId);
     // Init. services
@@ -287,9 +287,9 @@ public class ExportServlet extends SgServlet {
     // Add the header to target export backend
     Map<String, String> headers = BulkExportMgr.getExportBackendHeader();
     xLogger.fine("task url params: {0}", params);
-    String message = null;
+    String message;
     try {
-      SecureUserDetails sUser = SecurityMgr.getUserDetails(req.getSession());
+      SecureUserDetails sUser = SecurityUtils.getUserDetails();
       // Schedule task for export
       taskService.schedule(ITaskService.QUEUE_EXPORTER, EXPORT_TASK_URL, params, headers,
           ITaskService.METHOD_POST, sUser.getDomainId(), sourceUserId, "BATCH_EXPORT");
@@ -1085,9 +1085,8 @@ public class ExportServlet extends SgServlet {
     }
     String filename = (typeName != null ? typeName : type) + ".csv";
     // Get locale
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(req.getSession());
-    Locale locale = sUser.getLocale();
-    Long domainId = SessionMgr.getCurrentDomain(req.getSession(), sUser.getUsername());
+    Locale locale = SecurityUtils.getLocale();
+    Long domainId = SecurityUtils.getCurrentDomainId();
     // Send the CSV format
     sendCSVFile(BulkUploadMgr.getCSVFormat(type, locale, DomainConfig.getInstance(domainId)),
         filename, resp);

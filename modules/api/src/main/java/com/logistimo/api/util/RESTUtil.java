@@ -39,7 +39,7 @@ import com.logistimo.auth.SecurityMgr;
 import com.logistimo.auth.SecurityUtil;
 import com.logistimo.auth.service.AuthenticationService;
 import com.logistimo.auth.service.impl.AuthenticationServiceImpl;
-import com.logistimo.auth.utils.SessionMgr;
+import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.communications.service.SMSService;
 import com.logistimo.config.models.AccountingConfig;
 import com.logistimo.config.models.ActualTransConfig;
@@ -830,7 +830,7 @@ public class RESTUtil {
           // Brought this back, without this few pages in old UI break. ( Stock view dashboard)
           // DEPRECATED
           // No password - check whether an authenticated session exists
-          SecureUserDetails sUser = SecurityMgr.getUserDetails(req.getSession());
+          SecureUserDetails sUser = SecurityMgr.getUserDetailsIfPresent();
           if (sUser != null && sUser.getUsername()
               .equals(uId)) { // authenticated via web login session
             u = as.getUserAccount(uId);
@@ -906,7 +906,7 @@ public class RESTUtil {
   }
 
   public static Long getDomainId(HttpSession session, String userId) {
-    return SessionMgr.getCurrentDomain(session, userId);
+    return SecurityUtils.getCurrentDomainId();
   }
 
   public static String getJsonOutputAuthenticate(boolean status, IUserAccount user, String message,
