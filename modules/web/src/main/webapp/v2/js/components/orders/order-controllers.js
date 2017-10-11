@@ -589,21 +589,24 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                  if(!$scope.allocate) {
                      return true;
                  }
-                 var isBatchItemAvl = false;
-                 var isItemAllocated = false;
+                 var nonAllocatedItemCount = 0;
+                 var noOfValidItems = 0;
 
                  $scope.sMTShip = angular.copy($scope.order.its);
-                 return $scope.order.its.some(function (data) {
-                     if (data.isBa) {
-                         isBatchItemAvl = true;
-                     }
-                     if (data.q == data.astk) {
-                         isItemAllocated = true;
-                     }
-                     if (data.q != data.astk && (data.astk != 0 || isBatchItemAvl || isItemAllocated)) {
+                 var dd = $scope.order.its.some(function (data) {
+                     if (data.isBa && data.q != data.astk && data.q > 0) {
                          return true;
                      }
+                     if (data.q > 0) {
+                         noOfValidItems++;
+                         if (data.astk == 0) {
+                             nonAllocatedItemCount++;
+                         } else if (data.q != data.astk && data.astk > 0) {
+                             return true;
+                         }
+                     }
                  });
+                 return dd || (nonAllocatedItemCount > 0 && nonAllocatedItemCount != noOfValidItems);
             }
 
             $scope.toggleEdit = function (field,open) {
@@ -709,7 +712,6 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                 });
             }
             $scope.changeStatus = function (value) {
-                $scope.showShipForm = true;
                 $scope.nStatus = value;
                 $scope.newStatus= {};
                 $scope.newStatus.st = value;
@@ -739,20 +741,22 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                             return false;
                         } else {
                             confirmPartialAllocatedOrder();
-                            $scope.showShipForm = false;
                         }
+                    } else {
+                        displayShipForm();
                     }
                 }
-                if ($scope.showShipForm) {
-                    $scope.modalInstance = $uibModal.open({
-                        templateUrl: 'views/orders/order-status.html',
-                        scope: $scope,
-                        keyboard: false,
-                        backdrop: 'static'
-                    });
-                    $scope.disableScroll();
-                }
             };
+
+        function displayShipForm() {
+            $scope.modalInstance = $uibModal.open({
+                templateUrl: 'views/orders/order-status.html',
+                scope: $scope,
+                keyboard: false,
+                backdrop: 'static'
+            });
+            $scope.disableScroll();
+        }
 
         function confirmPartialAllocatedOrder() {
             $scope.msg = $scope.resourceBundle['partial.order.ship.confirm'];
@@ -773,14 +777,7 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
 
         $scope.confirm = function() {
             $scope.cancel();
-            $scope.showShipForm = true;
-            $scope.modalInstance = $uibModal.open({
-                templateUrl: 'views/orders/order-status.html',
-                scope: $scope,
-                keyboard: false,
-                backdrop: 'static'
-            });
-            $scope.disableScroll();
+            displayShipForm();
         };
             $scope.cancelShipNow = function () {
                 $scope.enableScroll();
