@@ -326,6 +326,7 @@ domainCfgControllers.controller('GeneralConfigurationController', ['$scope', 'do
                 getDomainImage();
                 $scope.addImage = false;
                 $scope.imageData = undefined;
+                angular.element('#domainFileupload').val(null);
             }).catch(function error(msg) {
                 $scope.showErrorMsg(msg);
             }).finally(function() {
@@ -344,7 +345,7 @@ domainCfgControllers.controller('GeneralConfigurationController', ['$scope', 'do
                 $scope.showSuccess($scope.resourceBundle['image.delete.success']);
                 getDomainImage();
             }).catch(function error(msg) {
-
+                $scope.showErrorMsg(msg);
             }).finally(function() {
                 $scope.hideLoading();
                 $scope.loadImage = false;
@@ -353,14 +354,15 @@ domainCfgControllers.controller('GeneralConfigurationController', ['$scope', 'do
         $scope.addDomainImage = function(){
             if($scope.domainImages.items.length == 3) {
                 $scope.showWarning($scope.resourceBundle['domain.image.upload.maximum.images']);
-                $scope.addImage=false;
+                $scope.addImage = false;
                 return;
             }
             $scope.addImage = true;
+            angular.element('#domainFileupload').val(null);
         };
         $scope.cancel = function(){
-            $scope.addImage=false;
-            $scope.imageData='';
+            $scope.addImage = false;
+            $scope.imageData = undefined;
         };
     }
 ]);

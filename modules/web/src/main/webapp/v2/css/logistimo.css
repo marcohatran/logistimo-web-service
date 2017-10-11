@@ -3950,3 +3950,9 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
 .mr15{
     margin-right : 15px;
 }
+.child-div-height{
+    height: 100%;
+    position: absolute;
+    right: 0;
+    top: 0;
+}
