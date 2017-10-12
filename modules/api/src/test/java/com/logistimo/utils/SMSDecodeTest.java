@@ -23,7 +23,9 @@
 
 package com.logistimo.utils;
 
+import com.logistimo.api.builders.SMSBuilder;
 import com.logistimo.api.util.SMSDecodeUtil;
+import com.logistimo.services.ServiceException;
 
 import org.testng.annotations.Test;
 
@@ -41,5 +43,14 @@ public class SMSDecodeTest {
       long decodedLong = SMSDecodeUtil.decode(encodedStr);
       assert decodedLong == l;
     }
+  }
+
+  @Test
+  public void smsBuilderTest() throws ServiceException {
+    String message = "O=d951:S=QXpNWBO:V=2:P=1:U=phc1dvs1_operator:K=5fLf:I=K;r0q_i,39,k,9,"
+                     + "\"B1_MA2_BE\",5fLg;iou_w,2P,9,8,\"B1_MA2_BE\",*L;a6A_i,2Q,K,7,,5fLg;RSM_p,"
+                     + "26,HQ,6,,";
+    SMSBuilder smsBuilder = new SMSBuilder();
+    smsBuilder.buildSMSModel(message);
   }
 }
