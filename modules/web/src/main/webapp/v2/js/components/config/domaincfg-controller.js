@@ -287,7 +287,7 @@ domainCfgControllers.controller('GeneralConfigurationController', ['$scope', 'do
 
         function getDomainImage() {
             $scope.showLoading();
-            $scope.loadImage = true;
+            $scope.loadingImage = true;
             mediaService.getDomainkeyImages($scope.domainId).then(function (data) {
                 $scope.domainImages = data.data;
                 $scope.addImage = false;
@@ -295,7 +295,7 @@ domainCfgControllers.controller('GeneralConfigurationController', ['$scope', 'do
                 $scope.showErrorMsg(msg);
             }).finally(function () {
                 $scope.hideLoading();
-                $scope.loadImage = false;
+                $scope.loadingImage = false;
             });
         }
 
@@ -320,7 +320,7 @@ domainCfgControllers.controller('GeneralConfigurationController', ['$scope', 'do
 
         $scope.uploadDomainImage = function() {
             $scope.showLoading();
-            $scope.loadImage = true;
+            $scope.loadingImage = true;
             mediaService.uploadImage($scope.fileExt, $scope.domainId, $scope.imageData.base64).then(function(data) {
                 $scope.showSuccess($scope.resourceBundle['image.upload.success']);
                 getDomainImage();
@@ -331,7 +331,7 @@ domainCfgControllers.controller('GeneralConfigurationController', ['$scope', 'do
                 $scope.showErrorMsg(msg);
             }).finally(function() {
                 $scope.hideLoading();
-                $scope.loadImage = false;
+                $scope.loadingImage = false;
             });
         };
 
@@ -340,7 +340,7 @@ domainCfgControllers.controller('GeneralConfigurationController', ['$scope', 'do
                 return false;
             }
             $scope.showLoading();
-            $scope.loadImage = true;
+            $scope.loadingImage = true;
             mediaService.removeImage(key).then(function() {
                 $scope.showSuccess($scope.resourceBundle['image.delete.success']);
                 getDomainImage();
@@ -348,7 +348,7 @@ domainCfgControllers.controller('GeneralConfigurationController', ['$scope', 'do
                 $scope.showErrorMsg(msg);
             }).finally(function() {
                 $scope.hideLoading();
-                $scope.loadImage = false;
+                $scope.loadingImage = false;
             });
         };
         $scope.addDomainImage = function(){

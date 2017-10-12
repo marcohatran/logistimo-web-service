@@ -223,7 +223,7 @@
                                     </div>
                                 </div>
                                 <div class="col-sm-12 pt15 pb20"
-                                     ng-show="isDef(domainImages.items) && domainImages.items.length > 0 && !loadImage">
+                                     ng-show="isDef(domainImages.items) && domainImages.items.length > 0 && !loadingImage">
                                     <div class="bgr image-upload mr15 ml15">
                                         <div uib-carousel active="active" interval="5000" no-wrap="noWrapSlides"
                                              class="logiCarousel">
@@ -251,7 +251,7 @@
                                     </div>
                                 </div>
                                 <div class="col-sm-12">
-                                    <div ng-show="(isUnDef(domainImages.items) || domainImages.items.length == 0) && !loadImage">
+                                    <div ng-show="(isUnDef(domainImages.items) || domainImages.items.length == 0) && !loadingImage">
                                         <div class="bgr imageBox">
                                     <span ng-show="iSU || dp.ce" class="btn btn-primary image-add-button no-img-tr"
                                           ng-click="addImage=true" uib-tooltip="Add image">
