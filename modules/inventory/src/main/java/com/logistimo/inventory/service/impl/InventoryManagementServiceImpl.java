@@ -914,7 +914,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
       List<IInvntry> mmUpdatedItems = new ArrayList<>();
       for (IInvntry inventory : items) {
         Long kioskId = inventory.getKioskId();
-        if (!kidLockStatusMap.containsKey(String.valueOf(kioskId))) {
+        if (!kidLockStatusMap.containsKey(kioskId)) {
           LockUtil.LockStatus lockStatus =
               LockUtil.lock(String.valueOf(kioskId), LOCK_RETRY_COUNT,
                   LOCK_RETRY_DELAY_IN_MILLISECONDS);
