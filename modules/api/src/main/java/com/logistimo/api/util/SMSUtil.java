@@ -33,6 +33,7 @@ import com.logistimo.inventory.TransactionUtil;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
 import com.logistimo.users.entity.IUserAccount;
+import com.logistimo.utils.PatternConstants;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -60,11 +61,11 @@ public class SMSUtil {
       throws UnsupportedEncodingException {
     SMSRequestModel smsReqModel = null;
     String message = request.getParameter(MessageHandler.MESSAGE);
-    if (message != null) {
+    if (StringUtils.isNotEmpty(message)) {
 
       message = URLDecoder.decode(message, "UTF-8");
 
-      message = message.substring(message.indexOf(CharacterConstants.SPACE) + 1);
+      message = removeIdentifierIfPresent(message);
       smsReqModel = new SMSRequestModel();
       smsReqModel.setMessage(message);
     }
@@ -79,6 +80,17 @@ public class SMSUtil {
       smsReqModel.setReceivedOn(receivedon);
     }
     return smsReqModel;
+  }
+
+  private static String removeIdentifierIfPresent(String message) {
+    String[] split = message.split(CharacterConstants.SPACE + PatternConstants
+        .ESCAPE_INSIDE_DOUBLE_QUOTES);
+    if (split.length > 1) {
+      split[0] = CharacterConstants.EMPTY;
+      return StringUtils.join(split);
+    } else {
+      return message;
+    }
   }
 
   public static Date populateActualTransactionDate(Long domainId, String actualTD) {
