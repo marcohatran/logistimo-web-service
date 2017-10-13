@@ -49,6 +49,7 @@ public class SMSConstants {
   public static final String FAIL_INVENTORY = "FI";
   public static final String FAIL_MESSAGE = "E";
   public static final String COMMA_SEPARATOR = ",";
+  public static final String DOUBLE_QUOTE = "\"";
   public static final String FAULT_CODE = "FC";
   public static final int DAYS_IN_MILLI_SEC = 24 * 60 * 60 * 1000;
   public static final int MIN_IN_MILLI_SEC = 60 * 1000;

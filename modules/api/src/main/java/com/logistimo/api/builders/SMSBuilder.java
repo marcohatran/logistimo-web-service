@@ -460,7 +460,8 @@ public class SMSBuilder {
           //append inventory details
           appendInventoryDetails(materialDetails, batchModel.q, batchModel.alq, invModel.itq);
           //append batch Id
-          materialDetails.append(SMSConstants.COMMA_SEPARATOR).append(batchModel.bid)
+          materialDetails.append(SMSConstants.COMMA_SEPARATOR).append(SMSConstants.DOUBLE_QUOTE)
+              .append(batchModel.bid).append(SMSConstants.DOUBLE_QUOTE)
               .append(SMSConstants.COMMA_SEPARATOR);
         }
       }
