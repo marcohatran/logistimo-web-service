@@ -27,7 +27,7 @@
             <form class="form-horizontal" role="form" name="generalConfigForm">
                 <div class="row">
                     <div class="col-sm-12">
-                        <div class="domain-title-heading marginlr0">
+                        <div class="domain-title-heading marginlr0 mt5">
                             <h4>{{resourceBundle['general']}} {{resourceBundle['domain.configuration.lowercase']}}</h4>
                             <span ng-show="cnf.lastUpdated" class="caption pull-right">{{resourceBundle['lastupdated']}} {{resourceBundle['on']}} {{cnf.lastUpdated}} {{resourceBundle['by']}}
                                 <a href="#/setup/users/all/details?userId={{cnf.createdBy}}" target="_new"> {{cnf.fn}} </a>
@@ -35,151 +35,248 @@
                         </div>
                     </div>
                 </div>
+                <div class="row" style="position: relative">
+                    <div class="col-sm-8 norightpad">
+                        <div class="bgr">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <div class="title-heading">
+                                        {{resourceBundle['config.localeinfotitle']}}
+                                    </div>
+                                    <p class="litetext">
+                                        {{resourceBundle['config.localeinfo']}}<br/>
+                                        <i>({{resourceBundle['config.warning']}})</i>
+                                    </p>
+                                </div>
+                                <div class="col-sm-12">
+                                    <div class="row">
+                                        <div class="col-sm-7">
+                                            <div class="form-group">
+                                                <label for="cnfCnt" class="col-sm-4 control-label">{{resourceBundle['country']}}</label>
 
-                <div class="bgr">
-                    <div class="row">
-                        <div class="col-sm-12">
-                            <div class="title-heading">
-                                {{resourceBundle['config.localeinfotitle']}}
-                            </div>
-                            <p class="litetext">
-                                {{resourceBundle['config.localeinfo']}}<br/>
-                                <i>({{resourceBundle['config.warning']}})</i>
-                            </p>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-sm-6">
-                            <div class="form-group">
-                                <label for="cnfCnt" class="col-sm-4 control-label">{{resourceBundle['country']}}</label>
-                                <div class="col-sm-8">
-                                    <select ng-model="cnf.cnt" class="form-control" id="cnfCnt"
-                                            ng-change="setCountry(cnf.cnt)">
-                                        <option value="">-- {{resourceBundle['select']}} {{resourceBundle['country']}} --</option>
-                                        <option ng-repeat="(name,val) in sCountries" value="{{val.code}}" ng-selected="val.code === user.cnt">{{val.name}}</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-sm-6">
-                            <div class="form-group">
-                                <label for="cnfSt" class="col-sm-4 control-label">{{resourceBundle['state']}}</label>
+                                                <div class="col-sm-7">
+                                                    <select ng-model="cnf.cnt" class="form-control" id="cnfCnt"
+                                                            ng-change="setCountry(cnf.cnt)">
+                                                        <option value="">-- {{resourceBundle['select']}}
+                                                            {{resourceBundle['country']}} --
+                                                        </option>
+                                                        <option ng-repeat="(name,val) in sCountries"
+                                                                value="{{val.code}}"
+                                                                ng-selected="val.code === user.cnt">{{val.name}}
+                                                        </option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-sm-7">
+                                            <div class="form-group">
+                                                <label for="cnfSt" class="col-sm-4 control-label">{{resourceBundle['state']}}</label>
 
-                                <div class="col-sm-8">
-                                    <select ng-model="cnf.st" class="form-control" id="cnfSt"
-                                            ng-change="setState(cnf.st)">
-                                        <option value="">-- {{resourceBundle['select']}} {{resourceBundle['state']}}
-                                            --
-                                        </option>
-                                        <option ng-repeat="(code,val) in states" value="{{code}}"
-                                                ng-selected="code === cnf.st">{{code}}
-                                        </option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row"><!--District-->
-                        <div class="col-sm-6">
-                            <div class="form-group">
-                                <label for="cnfDs" class="col-sm-4 control-label">{{resourceBundle['district']}}</label>
+                                                <div class="col-sm-7">
+                                                    <select ng-model="cnf.st" class="form-control" id="cnfSt"
+                                                            ng-change="setState(cnf.st)">
+                                                        <option value="">-- {{resourceBundle['select']}}
+                                                            {{resourceBundle['state']}}
+                                                            --
+                                                        </option>
+                                                        <option ng-repeat="(code,val) in states" value="{{code}}"
+                                                                ng-selected="code === cnf.st">{{code}}
+                                                        </option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row"><!--District-->
+                                        <div class="col-sm-7">
+                                            <div class="form-group">
+                                                <label for="cnfDs" class="col-sm-4 control-label">{{resourceBundle['district']}}</label>
 
-                                <div class="col-sm-8">
-                                    <select ng-model="cnf.ds" class="form-control" id="cnfDs">
-                                        <option value="">-- {{resourceBundle['select']}} {{resourceBundle['district']}} --</option>
-                                        <option ng-repeat="(code,val) in districts" value="{{code}}"
-                                                ng-selected="code === cnf.ds">{{code}}
-                                        </option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row"> <!--Language-->
-                        <div class="col-sm-6">
-                            <div class="form-group">
-                                <label for="cnfLng" class="col-sm-4 control-label">{{resourceBundle['language']}}</label>
-                                <div class="col-sm-8">
-                                    <select ng-model="cnf.lng" class="form-control" id="cnfLng"
-                                            name="lng">
-                                        <option ng-repeat="(value,key) in allLanguages" value="{{value}}">
-                                            {{key}}
-                                        </option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row"> <!--Timezone-->
-                        <div class="col-sm-6">
-                            <div class="form-group">
-                                <label for="cnfTz" class="col-sm-4 control-label">{{resourceBundle['timezone']}}</label>
-                                <div class="col-sm-8">
-                                    <select ng-model="cnf.tz" class="form-control" id="cnfTz"
-                                            name="tz">
-                                        <option value="">-- {{resourceBundle['select']}} {{resourceBundle['timezone.lower']}} --</option>
-                                        <option ng-repeat="(key,value) in allTimezones" value="{{value}}">
-                                            {{key}}
-                                        </option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row"> <!--Currency-->
-                        <div class="col-sm-6">
-                            <div class="form-group">
-                                <label for="cnfcur" class="col-sm-4 control-label">{{resourceBundle['currency']}}</label>
-                                <div class="col-sm-8">
-                                    <select ng-model="cnf.cur" class="form-control" id="cnfcur">
-                                        <option value="">-- {{resourceBundle['select']}} {{resourceBundle['currency.lower']}} --</option>
-                                        <option ng-repeat="(key,val) in currencies" value="{{key}}">{{val}} ({{key}})</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row"> <!--Custom Page Header-->
-                        <div class="col-sm-6">
-                            <div class="form-group">
-                                <label for="cnfPgh" class="col-sm-4 control-label">{{resourceBundle['config.custompageheader']}}</label>
-                                <div class="col-sm-8">
-                                    <textarea class="form-control" id="cnfPgh" rows="2" ng-model="cnf.pgh"></textarea>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row" ng-show="iSU && !onlyNewUI"> <!--Switch Console-->
-                        <div class="col-sm-6">
-                            <div class="form-group">
-                                <label class="col-sm-4 control-label">{{resourceBundle['switch.users.console']}}</label>
-                                <div class="col-sm-8 cbx">
-                                    <input type="checkbox" ng-model="cnf.sc">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row" ng-show="iSU"> <!--Switch to new host-->
-                        <div class="col-sm-6">
-                            <div class="form-group">
-                                <label class="col-sm-4 control-label">{{resourceBundle['switch.newhost']}}</label>
-                                <div class="col-sm-8 cbx">
-                                    <input type="checkbox" ng-model="cnf.snh" ng-change="cnf.nhn=''">
-                                </div>
-                            </div>
-                        </div>
+                                                <div class="col-sm-7">
+                                                    <select ng-model="cnf.ds" class="form-control" id="cnfDs">
+                                                        <option value="">-- {{resourceBundle['select']}}
+                                                            {{resourceBundle['district']}} --
+                                                        </option>
+                                                        <option ng-repeat="(code,val) in districts" value="{{code}}"
+                                                                ng-selected="code === cnf.ds">{{code}}
+                                                        </option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row"> <!--Language-->
+                                        <div class="col-sm-7">
+                                            <div class="form-group">
+                                                <label for="cnfLng" class="col-sm-4 control-label">{{resourceBundle['language']}}</label>
 
+                                                <div class="col-sm-7">
+                                                    <select ng-model="cnf.lng" class="form-control" id="cnfLng"
+                                                            name="lng">
+                                                        <option ng-repeat="(value,key) in allLanguages"
+                                                                value="{{value}}">
+                                                            {{key}}
+                                                        </option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row"> <!--Timezone-->
+                                        <div class="col-sm-7">
+                                            <div class="form-group">
+                                                <label for="cnfTz" class="col-sm-4 control-label">{{resourceBundle['timezone']}}</label>
+
+                                                <div class="col-sm-7">
+                                                    <select ng-model="cnf.tz" class="form-control" id="cnfTz"
+                                                            name="tz">
+                                                        <option value="">-- {{resourceBundle['select']}}
+                                                            {{resourceBundle['timezone.lower']}} --
+                                                        </option>
+                                                        <option ng-repeat="(key,value) in allTimezones"
+                                                                value="{{value}}">
+                                                            {{key}}
+                                                        </option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row"> <!--Currency-->
+                                        <div class="col-sm-7">
+                                            <div class="form-group">
+                                                <label for="cnfcur" class="col-sm-4 control-label">{{resourceBundle['currency']}}</label>
+
+                                                <div class="col-sm-7">
+                                                    <select ng-model="cnf.cur" class="form-control" id="cnfcur">
+                                                        <option value="">-- {{resourceBundle['select']}}
+                                                            {{resourceBundle['currency.lower']}} --
+                                                        </option>
+                                                        <option ng-repeat="(key,val) in currencies" value="{{key}}">
+                                                            {{val}} ({{key}})
+                                                        </option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row"> <!--Custom Page Header-->
+                                        <div class="col-sm-7">
+                                            <div class="form-group">
+                                                <label for="cnfPgh" class="col-sm-4 control-label">{{resourceBundle['config.custompageheader']}}</label>
+
+                                                <div class="col-sm-7">
+                                                    <textarea class="form-control" id="cnfPgh" rows="2"
+                                                              ng-model="cnf.pgh"></textarea>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row" ng-show="iSU && !onlyNewUI"> <!--Switch Console-->
+                                        <div class="col-sm-7">
+                                            <div class="form-group">
+                                                <label class="col-sm-4 control-label">{{resourceBundle['switch.users.console']}}</label>
+
+                                                <div class="col-sm-7 cbx">
+                                                    <input type="checkbox" ng-model="cnf.sc">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row" ng-show="iSU"> <!--Switch to new host-->
+                                        <div class="col-sm-7">
+                                            <div class="form-group">
+                                                <label class="col-sm-4 control-label">{{resourceBundle['switch.newhost']}}</label>
+
+                                                <div class="col-sm-7 cbx">
+                                                    <input type="checkbox" ng-model="cnf.snh" ng-change="cnf.nhn=''">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                    <div class="row" ng-show="iSU && cnf.snh">
+                                        <div class="col-sm-7">
+                                            <div class="form-group">
+                                                <label class="col-sm-4 control-label">{{resourceBundle['newhostname']}}</label>
+
+                                                <div class="col-sm-7">
+                                                    <input type="text" class="form-control w25 wh"
+                                                           maxlength="144" ng-model="cnf.nhn"
+                                                           placeholder="{{resourceBundle['newhostname']}}">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="row" ng-show="iSU && cnf.snh">
-                        <div class="col-sm-6">
-                            <div class="form-group">
-                                <label class="col-sm-4 control-label">{{resourceBundle['newhostname']}}</label>
-                                <div class="col-sm-8">
-                                    <input type="text" class="form-control w25 wh"
-                                           maxlength="144" ng-model="cnf.nhn"
-                                           placeholder="{{resourceBundle['newhostname']}}">
+                    <div class="col-sm-4 noleftpad child-div-height" style="padding-bottom: 15px">
+                        <div class="bgr" style="height: 100%">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <div class="title-heading">
+                                        Domain photos
+                                    </div>
+                                </div>
+                                <div class="col-sm-12 pt15 pb20"
+                                     ng-show="isDef(domainImages.items) && domainImages.items.length > 0 && !loadingImage">
+                                    <div class="bgr image-upload mr15 ml15">
+                                        <div uib-carousel active="active" interval="5000" no-wrap="noWrapSlides"
+                                             class="logiCarousel">
+                                            <div uib-slide ng-repeat="image in domainImages.items track by $index"
+                                                 index="$index" ng-mouseover="hoverEdit=true"
+                                                 ng-mouseleave="hoverEdit=false">
+                                        <span ng-show="(iSU || dp.ce) && hoverEdit"
+                                              class="btn btn-primary image-add-button img-tr"
+                                              ng-click="addDomainImage()"
+                                              uib-tooltip="Add image">
+                                            <span class="glyphicons glyphicons-plus"></span>
+                                        </span>
+                                        <span ng-show="(iSU || dp.ce) && hoverEdit"
+                                              class="text-center btn btn-primary image-close-button ml25"
+                                              ng-click="removeDomainImage(image.id)"
+                                              uib-tooltip="Remove image">
+                                            <span class="glyphicons glyphicons-bin"></span>
+                                        </span>
+                                                <a href="{{image.servingUrl}}" target="_blank">
+                                                    <img ng-src="{{image.servingUrl}}" class="image-upload-img"
+                                                         ng-style="hoverEdit && {'opacity':'0.2'}">
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-12">
+                                    <div ng-show="(isUnDef(domainImages.items) || domainImages.items.length == 0) && !loadingImage">
+                                        <div class="bgr imageBox">
+                                    <span ng-show="iSU || dp.ce" class="btn btn-primary image-add-button no-img-tr"
+                                          ng-click="addImage=true" uib-tooltip="Add image">
+                                        <span class="glyphicons glyphicons-plus"></span>
+                                    </span>
+
+                                            <p ng-show="iSU || dp.ce" class="text-center mt10" style="color:#9d9d9d">
+                                                {{resourceBundle['image.unavailable']}}</p>
+                                        </div>
+                                    </div>
+                                    <div ng-show="addImage">
+                                        <div class="form-group mgh0">
+                                            <input type="file" id="domainFileupload" ng-model="imageData" class="form-control"
+                                                   accept=".png,.jpg,.jpeg" maxsize="5000" base-sixty-four-input/>
+                                            <span ng-show="uploadForm.imageData.$error.maxsize">{{resourceBundle['uploadsizemessage']}}</span>
+                                        </div>
+                                        <span class="litetext">{{resourceBundle['uploadmessage']}}</span>
+
+                                        <div class="mt10">
+                                            <input type="button" ng-click="validateDomainImage() && uploadDomainImage()"
+                                                   class="btn btn-primary" value="Upload">
+                                            <input type="button" ng-click="cancel()" class="btn btn-default"
+                                                   value="{{resourceBundle['cancel']}}">
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
