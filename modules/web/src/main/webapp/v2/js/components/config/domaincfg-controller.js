@@ -306,7 +306,7 @@ domainCfgControllers.controller('GeneralConfigurationController', ['$scope', 'do
             }
             var fileType = $scope.imageData.filetype.split("/");
             $scope.fileExt = fileType[fileType.length - 1];
-            if($scope.fileExt != "png" && $scope.fileExt == "jpg" && $scope.fileExt == "jpeg") {
+            if($scope.fileExt != "png" && $scope.fileExt != "jpg" && $scope.fileExt != "jpeg") {
                 $scope.showWarning($scope.resourceBundle['image.upload.warning']);
                 return false;
             }
