@@ -294,12 +294,15 @@ public class CustomReportsExportServlet extends SgServlet {
         // Headers (to target backend)
         Map<String, String> headers = new HashMap<String, String>();
         //headers.put( "Host", BackendServiceFactory.getBackendService().getBackendAddress( Constants.BACKEND1 ) );
+        String
+            userName =
+            SecurityMgr.getUserDetailsIfPresent() != null ? SecurityMgr.getUserDetailsIfPresent()
+                .getUsername() : null;
         try {
           taskService
               .schedule(taskService.QUEUE_EXPORTER, CustomReportConstants.CUSTOMREPORTS_EXPORT_TASK_URL, params, headers,
                   taskService.METHOD_POST, domainIdStr != null ? Long.parseLong(domainIdStr) : -1,
-                  SecurityMgr.getUserDetails(req.getSession())
-                      .getUsername(), "CUSTOM_REPORTS_EXPORT");
+                  userName, "CUSTOM_REPORTS_EXPORT");
           jsonOutput =
               new JsonOutput("", true,
                   "Report '" + reportNameStr + "' is now scheduled for export.");

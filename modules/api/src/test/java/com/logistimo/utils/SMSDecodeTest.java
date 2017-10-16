@@ -23,8 +23,13 @@
 
 package com.logistimo.utils;
 
+import com.logistimo.api.builders.SMSBuilder;
+import com.logistimo.api.communications.MessageHandler;
+import com.logistimo.api.controllers.SMSController;
 import com.logistimo.api.util.SMSDecodeUtil;
+import com.logistimo.services.ServiceException;
 
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.testng.annotations.Test;
 
 import java.io.UnsupportedEncodingException;
@@ -42,4 +47,24 @@ public class SMSDecodeTest {
       assert decodedLong == l;
     }
   }
+
+  @Test
+  public void smsBuilderTest() throws ServiceException {
+    String message = "O=d951:S=QXpNWBO:V=2:P=1:U=phc1dvs1_operator:K=5fLf:I=K;r0q_i,39,k,9,"
+                     + "\"B1_MA2_BE\",5fLg;iou_w,2P,9,8,\"B1_MA2_BE\",*L;a6A_i,2Q,K,7,,5fLg;RSM_p,"
+                     + "26,HQ,6,,";
+    SMSBuilder smsBuilder = new SMSBuilder();
+    smsBuilder.buildSMSModel(message);
+  }
+
+  /*@Test
+  public void smsControllerTest() throws ServiceException, UnsupportedEncodingException {
+    SMSController smsController = new SMSController();
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    String message = "O%3D74f4%3AS%3DQXvGmDv%3AV%3D2%3AP%3D0%3AU%3Dckop230%3AK%3D5f9z%3AI%3DG"
+                     + "%3B3fo_i%2CC6%2C13%2C%2C%22NEW+BATCH+11%22%2C%3B3fg_i%2CPA%2Cj%2C%2C%22NEW"
+                     + "+BATCH+12%22%2C%3BMO_w%2CB3%2Cj%2C%2C%22NEW+BATCH+11%22%2C";
+    request.setParameter(MessageHandler.MESSAGE, message);
+    smsController.updateTransactions(request);
+  }*/
 }

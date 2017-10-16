@@ -29,7 +29,7 @@ import com.logistimo.api.util.RESTUtil;
 import com.logistimo.auth.SecurityConstants;
 import com.logistimo.auth.SecurityMgr;
 import com.logistimo.auth.SecurityUtil;
-import com.logistimo.auth.utils.SessionMgr;
+import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.constants.Constants;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
@@ -60,7 +60,6 @@ import java.util.ResourceBundle;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 public class DashboardServlet extends JsonRestServlet {
 
@@ -84,10 +83,7 @@ public class DashboardServlet extends JsonRestServlet {
       throws IOException {
     xLogger.fine("Entered getMonthlyStats");
     // Get the domain ID
-    HttpSession session = request.getSession();
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(session);
-    String userId = sUser.getUsername();
-    Long domainId = SessionMgr.getCurrentDomain(session, userId);
+    Long domainId = SecurityUtils.getCurrentDomainId();
     try {
       // Get number of months
       String monthsStr = request.getParameter("months");
@@ -288,11 +284,11 @@ public class DashboardServlet extends JsonRestServlet {
       IUserAccount u = RESTUtil.authenticate(userId, password, null, request, response);
       Long domainId = null;
       // Get domain ID of logged-in user
-      SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
+      SecureUserDetails sUser = SecurityMgr.getUserDetailsIfPresent();
       if (sUser != null) {
-        domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
+        domainId = SecurityUtils.getCurrentDomainId();
       }
-      Results results = null;
+      Results results;
       EntitiesService as = Services.getService(EntitiesServiceImpl.class);
       if (SecurityUtil.compareRoles(u.getRole(), SecurityConstants.ROLE_DOMAINOWNER) >= 0) {
         results = as.getAllKiosks(domainId, null, null, pageParams);

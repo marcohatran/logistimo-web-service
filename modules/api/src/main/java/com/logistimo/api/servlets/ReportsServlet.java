@@ -32,7 +32,7 @@ import com.google.visualization.datasource.base.StatusType;
 import com.google.visualization.datasource.datatable.DataTable;
 import com.google.visualization.datasource.datatable.TableRow;
 
-import com.logistimo.auth.SecurityMgr;
+import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.auth.utils.SessionMgr;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.Constants;
@@ -160,7 +160,7 @@ public class ReportsServlet extends SgServlet {
       Locale locale = null;
       String timezone = null;
       if (pdbDomainId == null) { // this means this is not from public demand board
-        sUser = SecurityMgr.getUserDetails(request.getSession());
+        sUser = SecurityUtils.getUserDetails();
         userId = sUser.getUsername();
         locale = sUser.getLocale();
         timezone = sUser.getTimezone();
@@ -175,7 +175,7 @@ public class ReportsServlet extends SgServlet {
         }
       } else // Get from the user's session
       {
-        domainId = SessionMgr.getCurrentDomain(request.getSession(), userId);
+        domainId = SecurityUtils.getCurrentDomainId();
       }
       // Get the domain config
       DomainConfig dc = null;

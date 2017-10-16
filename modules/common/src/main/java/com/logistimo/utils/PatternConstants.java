@@ -45,4 +45,7 @@ public class PatternConstants {
   public static final String FIRSTNAME = "[A-Za-z ]+";
   public static final String LASTNAME = "[A-Za-z ]*";
   public static final String ZIPCODE = "[A-Za-z0-9- ]{1," + FieldLimits.TEXT_FIELD_MAX_LENGTH + "}";
+
+  public static final String ESCAPE_INSIDE_DOUBLE_QUOTES = "(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)";
+  public static final String REMOVE_DOUBLE_QUOTES = "^\"|\"$";
 }

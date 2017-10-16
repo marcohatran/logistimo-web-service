@@ -27,8 +27,7 @@
 package com.logistimo.api.servlets;
 
 import com.logistimo.AppFactory;
-import com.logistimo.auth.SecurityMgr;
-import com.logistimo.auth.utils.SessionMgr;
+import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.bulkuploads.BulkImportMapperContants;
 import com.logistimo.bulkuploads.BulkUploadMgr;
 import com.logistimo.constants.Constants;
@@ -147,8 +146,8 @@ public class UploadServlet extends SgServlet {
     }
     String blobKeyStr = blobKey;
     // Get user data
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
+    Long domainId = SecurityUtils.getCurrentDomainId();
     String userId = sUser.getUsername();
     Locale locale = sUser.getLocale();
     String localeStr = sUser.getLocale().toString();
