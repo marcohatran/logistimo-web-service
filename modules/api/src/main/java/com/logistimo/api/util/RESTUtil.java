@@ -935,7 +935,7 @@ public class RESTUtil {
           results =
           as.getKiosksForUser(user, null, kioskPageParams);
       kiosks = results.getResults();
-      boolean isSingleKiosk = kiosks.size() == 1;
+      boolean isSingleKiosk = kiosks != null && kiosks.size() == 1;
       // Get the kiosk maps
       kiosksData = new Vector();
       if (kiosks != null && !kiosks.isEmpty()) {
