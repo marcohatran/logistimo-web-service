@@ -1201,7 +1201,6 @@ approval.approved.message=L'approbation $ {approvalType} demandée par $ {reques
 approval.rejected.message=L'approbation $ {approvalType} demandée par $ {requestorName} ($ {requestorPhone}) à partir de $ {eName}, $ {eCity} sur la commande $ {orderId} a été rejetée à $ {statusChangedTime}
 approval.cancelled.message=L'approbation $ {approvalType} demandée par $ {requestorName} ($ {requestorPhone}) à partir de $ {eName}, $ {eCity} sur la commande $ {orderId} a été annulée à $ {statusChangedTime}
 gui.theme=Thème GUI
-store.app.theme=Thème de l'application Store
 theme.black=Thème noir
 theme.red=Thème rouge
 select.theme=Sélectionnez le thème pour l'utilisateur

@@ -1218,7 +1218,6 @@ approval.approved.message=The ${approvalType} approval requested by ${requestorN
 approval.rejected.message=The ${approvalType} approval requested by ${requestorName} (${requestorPhone}) from ${eName}, ${eCity} on order ${orderId} was rejected by ${updatedBy} (${updatedByPhone}) at ${statusChangedTime}
 approval.cancelled.message=The ${approvalType} approval requested by ${requestorName} (${requestorPhone}) from ${eName}, ${eCity} on order ${orderId} was cancelled by ${updatedBy} (${updatedByPhone}) at ${statusChangedTime}
 gui.theme=GUI theme
-store.app.theme=Store app theme
 theme.black=Theme black
 theme.red=Theme red
 select.theme=Select theme for the user
