@@ -60,6 +60,50 @@
       ]
     },
     {
+      "event_type": "inventory_performance_by_entity",
+      "category": "inventory",
+      "thresholds": [
+        {
+          "conditions": [
+            {
+              "name": "percentage_time_in_stock",
+              "oper":">=",
+              "units": "%"
+            },
+            {
+              "name": "percentage_time_no_excess_stock",
+              "oper":">=",
+              "units": "%"
+            },
+            {
+              "name": "percentage_of_materials",
+              "oper":">=",
+              "units": "%"
+            },
+            {
+              "name": "duration",
+              "units": "months"
+            },
+            {
+              "name": "include_material_tags"
+            },
+            {
+              "name": "exclude_material_tags"
+            },
+            {
+              "name": "include_entity_tags"
+            },
+            {
+              "name": "exclude_entity_tags"
+            },
+            {
+              "name": "include_user_tags"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "event_type": "heating",
       "category": "assets",
       "thresholds": [
@@ -112,6 +156,40 @@
       ]
     },
     {
+      "event_type": "asset_performance_by_entity",
+      "category": "assets",
+      "thresholds": [
+        {
+        "conditions": [
+          {
+          "name": "asset_normal_percentage",
+          "oper": ">=",
+          "units": "%"
+          },
+          {
+            "name": "duration",
+            "units": "months"
+          },
+          {
+            "name": "include_asset_types"
+          },
+          {
+            "name": "exclude_asset_types"
+          },
+          {
+            "name": "include_entity_tags"
+          },
+          {
+            "name": "exclude_entity_tags"
+          },
+          {
+            "name": "include_user_tags"
+          }
+        ]
+      }
+      ]
+    },
+    {
       "event_type": "login",
       "category": "activity",
       "thresholds": [
@@ -127,6 +205,78 @@
             },
             {
               "name": "exclude_user_tags"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "event_type": "data_entry_performance_by_entity",
+      "category": "activity",
+      "thresholds": [
+        {
+          "conditions": [
+            {
+              "name": "duration",
+              "oper": "<=",
+              "units": "days"
+            },
+            {
+              "name": "period",
+              "units": "months"
+            },
+            {
+              "name": "include_entity_tags"
+            },
+            {
+              "name": "exclude_entity_tags"
+            },
+            {
+              "name": "include_user_tags"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "event_type": "supply_performance",
+      "category": "supply",
+      "thresholds": [
+        {
+          "conditions": [
+            {
+              "name": "percentage_time_in_stock",
+              "oper":">=",
+              "units": "%"
+            },
+            {
+              "name": "percentage_of_entities",
+              "oper":">=",
+              "units": "%"
+            },
+            {
+              "name": "number_of_supply_days",
+              "oper": "<=",
+              "units": "days"
+            },
+            {
+              "name": "period",
+              "units": "months"
+            },
+            {
+              "name": "include_material_tags"
+            },
+            {
+              "name": "exclude_material_tags"
+            },
+            {
+              "name": "include_entity_tags"
+            },
+            {
+              "name": "exclude_entity_tags"
+            },
+            {
+              "name": "include_user_tags"
             }
           ]
         }

@@ -37,12 +37,16 @@
                                    ng-model="editData[field]['value']" maxlength="10">
                         </div>
                         <div ng-if="editData[field]['units'] != 'hours' && editData[field]['units'] != 'days'">
-                            <input type="text" class="form-control" autocomplete="off" ng-if="!isTagField(field)"
+                            <input type="text" class="form-control" autocomplete="off" ng-if="!isTagField(field) && !isAssetTypeField(field)"
                                    ng-model="editData[field]['value']" maxlength="100">
                         </div>
 
                         <tag-select tags-model="editData[field]['values']" type="getTagType(field)"
                                     ng-if="isTagField(field)" force-no-udf="true"></tag-select>
+
+                        <div ng-if="isAssetTypeField(field)">
+                            <lg-uib-select multiple="'multiple" query="filterAssets(q)" ui-model="editData[field]['values']"></lg-uib-select>
+                        </div>
 
                     </div>
                     <label class="col-sm-2 codegray cbx noleftpad">{{editData[field]['units']}}</label>

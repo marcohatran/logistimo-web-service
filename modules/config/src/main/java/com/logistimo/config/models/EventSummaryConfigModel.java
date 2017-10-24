@@ -36,10 +36,9 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -56,9 +55,13 @@ public class EventSummaryConfigModel implements Serializable {
 
   private List<Events> events;
 
+  private String createdBy;
+  private String lastUpdated;
+  private String fullName;
+
   public List<Events> getEvents() {
     if (events == null) {
-      return new ArrayList<>(0);
+      events = new ArrayList<>(0);
     }
     return events;
   }
@@ -82,6 +85,15 @@ public class EventSummaryConfigModel implements Serializable {
   public void setEvents(List<Events> events) {
     this.events = events;
   }
+
+  public String getCreatedBy() { return createdBy; }
+  public void setCreatedBy(String createdBy) { this.createdBy = createdBy; }
+
+  public String getLastUpdated() { return lastUpdated; }
+  public void setLastUpdated(String lastUpdated) { this.lastUpdated = lastUpdated; }
+
+  public String getFullName() { return fullName; }
+  public void setFullName(String fullName) { this.fullName = fullName; }
 
   public class Events implements Serializable {
 
@@ -123,7 +135,6 @@ public class EventSummaryConfigModel implements Serializable {
       this.units = units;
       this.oper = operations;
     }
-
 
     @Override
     public int hashCode() {
@@ -307,7 +318,7 @@ public class EventSummaryConfigModel implements Serializable {
    * @return map of categories and conditions values
    */
   private Map<String, Map<String, Condition>> populateThresholdMap(List<Events> eventsList) {
-    Map<String, Map<String, Condition>> map = new HashMap<>(eventsList.size());
+    Map<String, Map<String, Condition>> map = new LinkedHashMap<>(eventsList.size());
     for (Events event : eventsList) {
       //form a key of the map by appending category,$ and type
       Threshold threshold = event.getThresholds().get(0);
@@ -325,7 +336,7 @@ public class EventSummaryConfigModel implements Serializable {
     //build the map with the properties in template json
     Map<String, Map<String, Condition>> templateMap = populateThresholdMap(templateEvents);
     //Get the keys present in the template map
-    Set<String> templateKeySet = new HashSet<>(templateMap.keySet());
+    Set<String> templateKeySet = new LinkedHashSet<>(templateMap.keySet());
     Iterator<Events> eventsIterator = this.getEvents().iterator();
     while (eventsIterator.hasNext()) {
       Events event = eventsIterator.next();

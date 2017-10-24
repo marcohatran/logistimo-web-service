@@ -171,6 +171,8 @@ public class DomainConfigController {
   private ConfigurationModelsBuilder builder = new ConfigurationModelsBuilder();
   private CustomReportsBuilder crBuilder = new CustomReportsBuilder();
   private UserBuilder userBuilder = new UserBuilder();
+  private static final String BACKEND_MESSAGES = "BackendMessages";
+  private static final String PERMISSION_DENIED = "permission.denied";
 
   @Autowired
   UsersService usersService;
@@ -317,7 +319,7 @@ public class DomainConfigController {
   MenuStatsModel getDomainConfigMenuStats(HttpServletRequest request) {
     SecureUserDetails user = getUserDetails(request);
     Locale locale = user.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     Long domainId = SecurityUtils.getCurrentDomainId();
     DomainConfig config = DomainConfig.getInstance(domainId);
     if (config != null) {
@@ -349,7 +351,7 @@ public class DomainConfigController {
       throws ServiceException {
     SecureUserDetails sUser = getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     Long
         dId =
         (null == domainId) ? SecurityUtils.getCurrentDomainId() : domainId;
@@ -371,7 +373,7 @@ public class DomainConfigController {
   SupportConfigModel getSupportConfig(HttpServletRequest request) {
     SecureUserDetails user = getUserDetails(request);
     Locale locale = user.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     try {
       return builder.buildSCModelForWebDisplay(request);
     } catch (ServiceException | ObjectNotFoundException | ConfigurationException e) {
@@ -387,7 +389,7 @@ public class DomainConfigController {
   AdminContactConfigModel getAdminConfig() {
     ResourceBundle
         backendMessages =
-        Resources.get().getBundle("BackendMessages", SecurityUtils.getLocale());
+        Resources.get().getBundle(BACKEND_MESSAGES, SecurityUtils.getLocale());
     try {
       return builder.buildAdminContactModel(SecurityUtils.getUsername());
     } catch (ObjectNotFoundException e) {
@@ -404,7 +406,7 @@ public class DomainConfigController {
     SecureUserDetails sUser = getUserDetails(request);
     Long domainId = SecurityUtils.getCurrentDomainId();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     try {
       return builder.buildAccountingConfigModel(domainId, locale, sUser.getTimezone());
     } catch (ServiceException | ObjectNotFoundException | JSONException e) {
@@ -419,7 +421,7 @@ public class DomainConfigController {
   TagsConfigModel getTags() {
     SecureUserDetails sUser = getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     Long domainId = SecurityUtils.getCurrentDomainId();
     try {
       if (domainId == null) {
@@ -439,7 +441,7 @@ public class DomainConfigController {
   String setTags(@RequestBody TagsConfigModel model, HttpServletRequest request) {
     SecureUserDetails sUser = getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (model == null) {
       throw new BadRequestException(backendMessages.getString("tags.config.update.error"));
     }
@@ -491,7 +493,7 @@ public class DomainConfigController {
       }
 
       Map<String, Integer> entityOrderMap = new LinkedHashMap<>();
-      if (model.etr != null && model.etr.size() > 0) {
+      if (model.etr != null && !model.etr.isEmpty()) {
         for (TagsConfigModel.ETagOrder eto : model.etr) {
           entityOrderMap.put(eto.etg, eto.rnk);
         }
@@ -615,10 +617,10 @@ public class DomainConfigController {
                            HttpServletRequest request) {
     SecureUserDetails sUser = getUserDetails(request);
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (!GenericAuthoriser.authoriseAdmin(request)) {
       throw new UnauthorizedException(
-          backendMessages.getString(backendMessages.getString("permission.denied")));
+          backendMessages.getString(backendMessages.getString(PERMISSION_DENIED)));
     }
     if (assetConfigModel == null) {
       xLogger.severe("Error in updating temperature configuration");
@@ -704,9 +706,9 @@ public class DomainConfigController {
                                 HttpServletRequest request) {
     SecureUserDetails sUser = getUserDetails(request);
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (!GenericAuthoriser.authoriseAdmin(request)) {
-      throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
     }
     if (model == null) {
       xLogger.severe("Error in updating Accounting configuration");
@@ -745,9 +747,9 @@ public class DomainConfigController {
   String updateGeneralConfig(@RequestBody GeneralConfigModel model, HttpServletRequest request) {
     SecureUserDetails sUser = getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (!GenericAuthoriser.authoriseAdmin(request)) {
-      throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
     }
     String userId = sUser.getUsername();
     Long domainId = SecurityUtils.getCurrentDomainId();
@@ -815,7 +817,7 @@ public class DomainConfigController {
     SecureUserDetails sUser = getUserDetails();
     Long domainId = SecurityUtils.getCurrentDomainId();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     try {
       if (domainId == null) {
         xLogger.severe("Error in fetching capabilities configuration");
@@ -838,7 +840,7 @@ public class DomainConfigController {
     SecureUserDetails sUser = getUserDetails();
     Long domainId = SecurityUtils.getCurrentDomainId();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     try {
       if (domainId == null) {
         xLogger.severe("Error in fetching role capabilities configuration");
@@ -863,9 +865,9 @@ public class DomainConfigController {
     SecureUserDetails sUser = getUserDetails();
     Locale locale = sUser.getLocale();
     String timezone = sUser.getTimezone();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (!GenericAuthoriser.authoriseAdmin(request)) {
-      throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
     }
     String userId = sUser.getUsername();
     Long domainId = SecurityUtils.getCurrentDomainId();
@@ -909,7 +911,7 @@ public class DomainConfigController {
         String discardTags = StringUtils.join(model.hiw, ',');
         String transferTags = StringUtils.join(model.hit, ',');
 
-        Map<String, String> tagInvByOperation = new HashMap<String, String>();
+        Map<String, String> tagInvByOperation = new HashMap<>();
         tagInvByOperation.put(ITransaction.TYPE_ISSUE, issueTags);
         tagInvByOperation.put(ITransaction.TYPE_RECEIPT, receiptsTags);
         tagInvByOperation.put(ITransaction.TYPE_PHYSICALCOUNT, stockTags);
@@ -978,7 +980,7 @@ public class DomainConfigController {
     Locale locale = sUser.getLocale();
     Long domainId = SecurityUtils.getCurrentDomainId();
     DomainConfig dc = DomainConfig.getInstance(domainId);
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     try {
       if (domainId == null) {
         xLogger.severe("Error in fetching Inventory configuration");
@@ -1000,7 +1002,7 @@ public class DomainConfigController {
     Locale locale = sUser.getLocale();
     Long domainId = SecurityUtils.getCurrentDomainId();
     DomainConfig dc = DomainConfig.getInstance(domainId);
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     try {
       if (domainId == null) {
         xLogger.severe("Error in fetching Inventory configuration");
@@ -1022,7 +1024,7 @@ public class DomainConfigController {
     Locale locale = sUser.getLocale();
     Long domainId = SecurityUtils.getCurrentDomainId();
     boolean hasAtd;
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (domainId == null) {
       xLogger.severe("Error in fetching Inventory configuration");
       throw new InvalidServiceException(backendMessages.getString("inventory.config.fetch.error"));
@@ -1066,9 +1068,9 @@ public class DomainConfigController {
                                HttpServletRequest request) {
     SecureUserDetails sUser = getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (!GenericAuthoriser.authoriseAdmin(request)) {
-      throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
     }
     String userId = sUser.getUsername();
     Long domainId = SecurityUtils.getCurrentDomainId();
@@ -1269,11 +1271,6 @@ public class DomainConfigController {
           inventoryConfig.setUserTags(model.usrTgs);
         }
       }
-      //capture the actual date of transaction
-           /* boolean atd = model.atd;
-            if (atd) {
-                inventoryConfig.putActualDateTrans(model.catd);
-            }*/
       // Update permissions
       InventoryConfig.Permissions perms = new InventoryConfig.Permissions();
       perms.invCustomersVisible = model.ivc;
@@ -1384,7 +1381,7 @@ public class DomainConfigController {
   OrdersConfigModel getOrdersConfig(HttpServletRequest request) {
     SecureUserDetails sUser = getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     Long domainId = SecurityUtils.getCurrentDomainId();
     try {
       if (domainId == null) {
@@ -1406,9 +1403,9 @@ public class DomainConfigController {
     SecureUserDetails sUser = getUserDetails();
     Locale locale = sUser.getLocale();
     BlobstoreService blobstoreService = AppFactory.get().getBlobstoreService();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (!GenericAuthoriser.authoriseAdmin(request)) {
-      throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
     }
     String userId = sUser.getUsername();
     Long domainId = SecurityUtils.getCurrentDomainId();
@@ -1555,9 +1552,9 @@ public class DomainConfigController {
                                    HttpServletRequest request) {
     SecureUserDetails sUser = getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (!GenericAuthoriser.authoriseAdmin(request)) {
-      throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
     }
     String userId = sUser.getUsername();
     Long domainId = SecurityUtils.getCurrentDomainId();
@@ -1625,7 +1622,7 @@ public class DomainConfigController {
       @RequestParam String t) {
     SecureUserDetails sUser = getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     Long domainId = SecurityUtils.getCurrentDomainId();
     DomainConfig dc = DomainConfig.getInstance(domainId);
     if (dc == null) {
@@ -1656,9 +1653,9 @@ public class DomainConfigController {
                             HttpServletRequest request) {
     SecureUserDetails sUser = getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (!GenericAuthoriser.authoriseAdmin(request)) {
-      throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
     }
     String userId = sUser.getUsername();
     Long domainId = SecurityUtils.getCurrentDomainId();
@@ -1747,9 +1744,9 @@ public class DomainConfigController {
     PageParams pageParams = new PageParams(navigator.getCursor(offset), offset, size);
     Results results;
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (!GenericAuthoriser.authoriseAdmin(request)) {
-      throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
         }
         try {
           Date startDate = null, endDate = null;
@@ -1800,9 +1797,9 @@ public class DomainConfigController {
                                    HttpServletRequest request) {
     SecureUserDetails sUser = getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (!GenericAuthoriser.authoriseAdmin(request)) {
-      throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
     }
     if (model == null) {
       xLogger.severe("Error in updating bulletin board configuration");
@@ -1839,7 +1836,7 @@ public class DomainConfigController {
   BulletinBoardConfigModel getBulletinBoardConfig() {
     SecureUserDetails sUser = getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     Long domainId = SecurityUtils.getCurrentDomainId();
     DomainConfig dc = DomainConfig.getInstance(domainId);
     BulletinBoardBuilder boardBuilder = new BulletinBoardBuilder();
@@ -1875,9 +1872,9 @@ public class DomainConfigController {
   String setMessageToBoard(@RequestBody String msg, HttpServletRequest request) {
     SecureUserDetails sUser = getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (!GenericAuthoriser.authoriseAdmin(request)) {
-      throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
     }
     String userId = sUser.getUsername();
     Long domainId = SecurityUtils.getCurrentDomainId();
@@ -1908,9 +1905,9 @@ public class DomainConfigController {
                         HttpServletRequest request) {
     SecureUserDetails sUser = getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (!GenericAuthoriser.authoriseAdmin(request)) {
-      throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
     }
     Long domainId = SecurityUtils.getCurrentDomainId();
     if (domainId == null) {
@@ -1968,9 +1965,9 @@ public class DomainConfigController {
   String upload(HttpServletRequest request) {
     SecureUserDetails sUser = getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (!GenericAuthoriser.authoriseAdmin(request)) {
-      throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
     }
     BlobstoreService blobstoreService = AppFactory.get().getBlobstoreService();
     String fullURL = request.getServletPath() + request.getPathInfo();
@@ -1988,7 +1985,7 @@ public class DomainConfigController {
                                        HttpServletRequest request) {
     SecureUserDetails sUser = getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     Long domainId = SecurityUtils.getCurrentDomainId();
     if (StringUtils.isEmpty(templateName)) {
       xLogger.severe("Error in fetching configuration");
@@ -2021,9 +2018,9 @@ public class DomainConfigController {
                           HttpServletRequest request) {
     SecureUserDetails sUser = getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (!GenericAuthoriser.authoriseAdmin(request)) {
-      throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
     }
     if (addCustomReportRequestObj == null || addCustomReportRequestObj.customReport == null
         || addCustomReportRequestObj.config == null) {
@@ -2069,7 +2066,7 @@ public class DomainConfigController {
   NotificationsModel getCustomReports() {
     SecureUserDetails sUser = getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     Long domainId = SecurityUtils.getCurrentDomainId();
     if (domainId == null) {
       xLogger.severe("Error in fetching list of Custom Reports");
@@ -2099,9 +2096,9 @@ public class DomainConfigController {
   String deleteCustomReport(@RequestBody String name, HttpServletRequest request) {
     SecureUserDetails sUser = getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (!GenericAuthoriser.authoriseAdmin(request)) {
-      throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
     }
     String userId = sUser.getUsername();
     Long domainId = SecurityUtils.getCurrentDomainId();
@@ -2159,7 +2156,7 @@ public class DomainConfigController {
   NotificationsModel getCustomReport(@RequestParam String n) {
     SecureUserDetails sUser = getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     Long domainId = SecurityUtils.getCurrentDomainId();
     if (domainId == null) {
       xLogger.severe("Error in fetching Custom Report");
@@ -2224,9 +2221,9 @@ public class DomainConfigController {
                             HttpServletRequest request) {
     SecureUserDetails sUser = getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (!GenericAuthoriser.authoriseAdmin(request)) {
-      throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
     }
     if (model == null) {
       throw new BadRequestException("Error in updating Custom Report");
@@ -2265,7 +2262,7 @@ public class DomainConfigController {
   String exportReport(@RequestBody String name) {
     SecureUserDetails sUser = getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     Long domainId = SecurityUtils.getCurrentDomainId();
     if (domainId == null) {
       throw new InvalidServiceException(backendMessages.getString("report.export.error"));
@@ -2359,7 +2356,7 @@ public class DomainConfigController {
     List<IDomain> domains = null;
     SecureUserDetails sUser = getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     try {
       if (q != null && !q.isEmpty()) {
         domains = (List<IDomain>) query.executeWithMap(params);
@@ -2399,9 +2396,9 @@ public class DomainConfigController {
       throws ServiceException, ConfigurationException {
     SecureUserDetails sUser = getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (!GenericAuthoriser.authoriseAdmin(request)) {
-      throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
     }
     String userId = sUser.getUsername();
     Long domainId = SecurityUtils.getCurrentDomainId();
@@ -2464,6 +2461,8 @@ public class DomainConfigController {
   EventSummaryConfigModel getEventSummaryConfig(@RequestParam(required = false) Long domainId) {
     EventSummaryConfigModel model = null;
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
+    Locale locale = sUser.getLocale();
+    String timezone = sUser.getTimezone();
     try {
       Long
           dId =
@@ -2490,6 +2489,13 @@ public class DomainConfigController {
           return templateEvent;
         } else {
           model.buildEvents(templateEvent.getEvents());
+          List<String> val = dc.getDomainData(ConfigConstants.EVENT_SUMMARY_INVENTORY);
+          if (val != null) {
+            model.setCreatedBy(val.get(0));
+            model.setLastUpdated(
+                LocalDateUtil.format(new Date(Long.parseLong(val.get(1))), locale, timezone));
+            model.setFullName(usersService.getUserAccount(model.getCreatedBy()).getFullName());
+          }
           xLogger.info(" Event summary events built based on template");
         }
       }
@@ -2498,7 +2504,7 @@ public class DomainConfigController {
       ResourceBundle
           backendMessages =
           Resources.get()
-              .getBundle("BackendMessages", sUser == null ? Locale.ENGLISH : sUser.getLocale());
+              .getBundle(BACKEND_MESSAGES, sUser.getLocale());
       throw new BadRequestException(backendMessages.getString("error.fetch.event.summary"));
     }
     return model;
@@ -2517,7 +2523,7 @@ public class DomainConfigController {
     SecureUserDetails sUser = getUserDetails();
     ResourceBundle
         backendMessages =
-        Resources.get().getBundle("BackendMessages", sUser.getLocale());
+        Resources.get().getBundle(BACKEND_MESSAGES, sUser.getLocale());
 
     String responseMsg;
     try {
@@ -2579,9 +2585,9 @@ public class DomainConfigController {
   String updateGeneralNotificationsConfig(@RequestBody String language, HttpServletRequest request)
       throws ServiceException, ConfigurationException {
     SecureUserDetails sUser = getUserDetails();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", sUser.getLocale());
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, sUser.getLocale());
     if(!GenericAuthoriser.authoriseAdmin(request)) {
-      throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
     }
     Long domainId = SecurityUtils.getCurrentDomainId();
     ConfigContainer cc = getDomainConfig(domainId, sUser.getUsername(), sUser.getLocale());
@@ -2598,9 +2604,9 @@ public class DomainConfigController {
                                HttpServletRequest request) {
     SecureUserDetails sUser = getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (!GenericAuthoriser.authoriseAdmin(request)) {
-      throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
     }
     try {
       String userId = sUser.getUsername();

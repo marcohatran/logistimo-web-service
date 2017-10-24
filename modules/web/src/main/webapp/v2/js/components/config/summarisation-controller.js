@@ -55,6 +55,15 @@ domainCfgControllers.controller('SummarisationMenuController', ['$scope', 'domai
                         $scope.config.eventdistribution.push({text: tag, id: tag});
                     });
                 }
+                if (checkNotNullEmpty(esConfig.lastUpdated)) {
+                    $scope.lastUpdated = esConfig.lastUpdated;
+                }
+                if (checkNotNullEmpty(esConfig.createdBy)) {
+                    $scope.createdBy = esConfig.createdBy;
+                }
+                if (checkNotNullEmpty(esConfig.fullName)) {
+                    $scope.fullName = esConfig.fullName;
+                }
                 angular.forEach(esConfig.events, function (c) {
                     updateConfigCategory(c);
                 });
@@ -77,10 +86,22 @@ domainCfgControllers.controller('SummarisationMenuController', ['$scope', 'domai
             return tags;
         };
 
+        function buildAssetTypeElement(typeArray) {
+            var assetTypes = [];
+            angular.forEach(typeArray, function (type) {
+                assetTypes.push({text: type, id: type});
+            });
+            return assetTypes;
+        }
+
         function buildData(data) {
             if ($scope.isTagField(data.name)) {
                 if (checkNotNullEmpty(data.values)) {
                     data.values = $scope.buildTagElement(data.values);
+                }
+            } else if ($scope.isAssetTypeField(data.name)) {
+                if (checkNotNullEmpty(data.values)) {
+                    data.values = buildAssetTypeElement(data.values);
                 }
             }
         }
@@ -89,6 +110,10 @@ domainCfgControllers.controller('SummarisationMenuController', ['$scope', 'domai
             return (field == 'include_material_tags' || field == 'include_entity_tags' ||
             field == 'include_user_tags' || field == 'exclude_material_tags' ||
             field == 'exclude_entity_tags' || field == 'exclude_user_tags');
+        };
+
+        $scope.isAssetTypeField = function (field) {
+            return (field == 'include_asset_types' || field == 'exclude_asset_types');
         };
 
         function updateConfigCategory(c) {
@@ -158,7 +183,7 @@ domainCfgControllers.controller('SummarisationConfigurationController', ['$scope
 
 
         $scope.displayTable = function (data, key, value) {
-            if (key == 'include_material_tags' || key == 'include_entity_tags' || key == 'include_user_tags' || key == 'exclude_material_tags' || key == 'exclude_entity_tags' || key == 'exclude_user_tags') {
+            if (key == 'include_material_tags' || key == 'include_entity_tags' || key == 'include_user_tags' || key == 'exclude_material_tags' || key == 'exclude_entity_tags' || key == 'exclude_user_tags' || key == 'include_asset_types' || key == 'exclude_asset_types') {
                 var tags = '';
                 if (checkNotNullEmpty(data.values)) {
                     angular.forEach(data.values, function (d) {
@@ -247,6 +272,25 @@ domainCfgControllers.controller('SummarisationConfigurationController', ['$scope
             $scope.config[$scope.subview][type]['editData']['type'] = type;
             $scope.config[$scope.subview][type]['editData']['index'] = index;
         }
+        $scope.showLoading();
+        domainCfgService.getAssetSysCfg('2').then(function(data) {
+            $scope.allAssets = data.data;
+        }).catch(function error(msg) {
+            $scope.showErrorMsg(msg);
+        }).finally(function () {
+            $scope.hideLoading();
+        });
+
+        $scope.filterAssets = function (query) {
+            var rData = {results: []};
+            for(var key in $scope.allAssets) {
+                if($scope.allAssets[key].toLowerCase().indexOf(query.term.toLowerCase()) != -1) {
+                    rData.results.push({'text': $scope.allAssets[key], 'id': $scope.allAssets[key]});
+                }
+            }
+            query.callback(rData);
+        };
+
     }
 ]);
 domainCfgControllers.controller('AddSummarisationConfigurationController', ['$scope',

@@ -28,6 +28,9 @@
             <div class="col-sm-12">
                 <div class="domain-title-heading marginlr0">
                     <h4>{{resourceBundle['event.summary']}}</h4>
+                    <span ng-show="lastUpdated" class="caption pull-right">{{resourceBundle['lastupdated']}} {{resourceBundle['on']}} {{lastUpdated}} {{resourceBundle['by']}}
+                        <a href="#/setup/users/all/details?userId={{createdBy}}" target="_new">{{fullName}}</a>
+                    </span>
                 </div>
             </div>
         </div>
