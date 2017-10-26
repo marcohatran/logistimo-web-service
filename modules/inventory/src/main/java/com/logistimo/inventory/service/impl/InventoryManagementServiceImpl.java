@@ -158,13 +158,11 @@ public class InventoryManagementServiceImpl extends ServiceImpl
     }
     updateEntityActivityTimestamps(transList);
 
-    ///int numItems = transList.size();
     ITransaction trans = transList.get(0);
     Long domainId = trans.getDomainId();
     String type = trans.getType();
     // Check if notification is to done post transaction commit
     DomainConfig dc = DomainConfig.getInstance(domainId);
-    ///boolean notify = TransactionUtil.isPostTransNotificationReqd( dc, type );
     boolean
         optimize =
         !toBeOptimized.isEmpty() && TransactionUtil.isPostTransOptimizationReqd(dc, type);
@@ -1566,7 +1564,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
       }
 
     }
-    if (!toBeOptimized.isEmpty()) {
+    if (!toBeOptimized.isEmpty() || !committedTransList.isEmpty()) {
       // Invoke the post-transaction commit hook, as required
       doPostTransactionCommitHook(committedTransList, toBeOptimized);
     }
@@ -1854,7 +1852,6 @@ public class InventoryManagementServiceImpl extends ServiceImpl
     IInvntry inv;
     try {
       inv = invntryDao.findId(kioskId, materialId, pm);
-      //inv = pm.detachCopy(inv);
     } catch (JDOObjectNotFoundException e) {
       return null;
     }
@@ -2061,7 +2058,6 @@ public class InventoryManagementServiceImpl extends ServiceImpl
       objects.addAll(
           createTransactableObjects(receipt, lkInv, lkInvBatch, timestamp, pm, isBatchEnabled));
     } catch (JDOObjectNotFoundException e) {
-//            ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages",Locale.ENGLISH);
       throw new ObjectNotFoundException(
           "This material is not configured in the destination entity");
     }
@@ -2074,11 +2070,11 @@ public class InventoryManagementServiceImpl extends ServiceImpl
                                           IInvntryBatch invBatch) {
     BigDecimal stock = inv.getStock();
     trans.setOpeningStock(stock);
-    trans.setClosingStock(stock.subtract(trans.getQuantity())); /// stock );
+    trans.setClosingStock(stock.subtract(trans.getQuantity()));
     if (invBatch != null) {
       BigDecimal stockInBatch = invBatch.getQuantity();
       trans.setOpeningStockByBatch(stockInBatch);
-      trans.setClosingStockByBatch(stockInBatch.subtract(trans.getQuantity()));  /// stockInBatch );
+      trans.setClosingStockByBatch(stockInBatch.subtract(trans.getQuantity()));
     }
   }
 
@@ -2507,7 +2503,6 @@ public class InventoryManagementServiceImpl extends ServiceImpl
     boolean
         isCurStockAbnormal =
         BigUtil.equalsZero(stock) || inv.isStockUnsafe() || inv.isStockExcess();
-    ///if ( ( prevStock == 0F && stock > 0F ) || ( safetyStock > 0F && prevStock <= safetyStock && stock > safetyStock ) || ( maxStock > 0 && prevStock >= maxStock && stock < maxStock ) ) {
     xLogger.fine("isCurStockAbnormal: {0}, isPrevStockAbnormal: {1}", isCurStockAbnormal,
         isPrevStockAbnormal);
     if (!isStockUpdatedFirstTime && isPrevStockAbnormal && !isCurStockAbnormal) {
