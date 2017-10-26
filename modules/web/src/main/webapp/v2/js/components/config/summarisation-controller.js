@@ -116,6 +116,10 @@ domainCfgControllers.controller('SummarisationMenuController', ['$scope', 'domai
             return (field == 'include_asset_types' || field == 'exclude_asset_types');
         };
 
+        $scope.isNumericalField = function(field) {
+            return (field == 'hours' || field == 'days' || field == 'months' || field == '%');
+        };
+
         function updateConfigCategory(c) {
             var category = c.category.toLowerCase();
             if (checkNullEmpty($scope.config[category])) {

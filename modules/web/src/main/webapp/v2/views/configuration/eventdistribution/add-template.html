@@ -31,12 +31,12 @@
                         {{editData[field]['oper']}}</label>
 
                     <div class="col-sm-5 noleftpad">
-                        <div ng-if="editData[field]['units'] == 'hours' || editData[field]['units'] == 'days'">
+                        <div ng-if="isNumericalField(editData[field]['units'])">
                             <input only-digits allow-decimal type="text" class="form-control" autocomplete="off"
                                    ng-if="!isTagField(field)"
                                    ng-model="editData[field]['value']" maxlength="10">
                         </div>
-                        <div ng-if="editData[field]['units'] != 'hours' && editData[field]['units'] != 'days'">
+                        <div ng-if="!isNumericalField(editData[field]['units'])">
                             <input type="text" class="form-control" autocomplete="off" ng-if="!isTagField(field) && !isAssetTypeField(field)"
                                    ng-model="editData[field]['value']" maxlength="100">
                         </div>
