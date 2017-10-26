@@ -307,4 +307,8 @@ public class JsonTagsZ {
   public static final String AUTO_ASSIGN_MATERIAL_STATUS_TO_ORDERS = "atasgnmst";
   public static final String ACCOUNTING_CONFIG = "acct";
 
+  // Count of inventory, vendors and customers
+  public static final String NUMBER_OF_INVENTORY = "numinv";
+  public static final String NUMBER_OF_CUSTOMERS = "numcsts";
+  public static final String NUMBER_OF_VENDORS = "numvnds";
 }

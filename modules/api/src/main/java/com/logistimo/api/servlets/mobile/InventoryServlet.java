@@ -32,10 +32,21 @@ import com.google.gson.GsonBuilder;
 import com.logistimo.AppFactory;
 import com.logistimo.api.servlets.JsonRestServlet;
 import com.logistimo.api.servlets.mobile.builders.MobileTransactionsBuilder;
+import com.logistimo.api.servlets.mobile.json.GetInventoryBatchesOutput;
+import com.logistimo.api.servlets.mobile.json.JsonOutput;
+import com.logistimo.api.util.GsonUtil;
+import com.logistimo.api.util.RESTUtil;
+import com.logistimo.config.models.DomainConfig;
+import com.logistimo.config.models.InventoryConfig;
+import com.logistimo.config.models.KioskConfig;
+import com.logistimo.config.models.StockboardConfig;
+import com.logistimo.constants.Constants;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
+import com.logistimo.exception.InvalidDataException;
 import com.logistimo.exception.LogiException;
+import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.inventory.TransactionUtil;
 import com.logistimo.inventory.dao.ITransDao;
 import com.logistimo.inventory.dao.impl.TransDao;
@@ -45,34 +56,24 @@ import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.inventory.models.ErrorDetailModel;
 import com.logistimo.inventory.service.InventoryManagementService;
 import com.logistimo.inventory.service.impl.InventoryManagementServiceImpl;
-import com.logistimo.proto.MobileUpdateInvTransRequest;
-import com.logistimo.proto.MobileUpdateInvTransResponse;
-import com.logistimo.services.taskqueue.ITaskService;
-
-import org.apache.commons.lang.StringUtils;
-import com.logistimo.config.models.DomainConfig;
-import com.logistimo.config.models.InventoryConfig;
-import com.logistimo.config.models.KioskConfig;
-import com.logistimo.config.models.StockboardConfig;
+import com.logistimo.logger.XLog;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
+import com.logistimo.proto.JsonTagsZ;
+import com.logistimo.proto.MobileUpdateInvTransRequest;
+import com.logistimo.proto.MobileUpdateInvTransResponse;
+import com.logistimo.proto.RestConstantsZ;
+import com.logistimo.proto.UpdateInventoryInput;
 import com.logistimo.services.DuplicationException;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.Services;
-import com.logistimo.api.util.GsonUtil;
-import com.logistimo.proto.JsonTagsZ;
-import com.logistimo.proto.RestConstantsZ;
-import com.logistimo.proto.UpdateInventoryInput;
-import com.logistimo.api.servlets.mobile.json.GetInventoryBatchesOutput;
-import com.logistimo.api.servlets.mobile.json.JsonOutput;
-import com.logistimo.utils.BigUtil;
-import com.logistimo.constants.Constants;
-import com.logistimo.utils.LocalDateUtil;
-import com.logistimo.api.util.RESTUtil;
-import com.logistimo.logger.XLog;
-import com.logistimo.exception.InvalidDataException;
-import com.logistimo.exception.UnauthorizedException;
+import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.users.entity.IUserAccount;
+import com.logistimo.utils.BigUtil;
+import com.logistimo.utils.HttpUtil;
+import com.logistimo.utils.LocalDateUtil;
+
+import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -84,6 +85,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.Vector;
@@ -334,7 +336,7 @@ public class InventoryServlet extends JsonRestServlet {
     String startDateStr = req.getParameter(START);
     Date start = null;
     xLogger.fine("startDateStr: " + startDateStr);
-
+    Optional<Date> modifiedSinceDate=Optional.empty();
     String offsetStr = req.getParameter(Constants.OFFSET);
     int offset = 0;
     if (StringUtils.isNotBlank(offsetStr)) {
@@ -393,6 +395,7 @@ public class InventoryServlet extends JsonRestServlet {
             }
           }
         }
+
         if (!hasPublicStockboard) {
           // Authenticate user
           IUserAccount
@@ -422,8 +425,11 @@ public class InventoryServlet extends JsonRestServlet {
       status = false;
       statusCode = HttpServletResponse.SC_UNAUTHORIZED;
     }
+    int numInv = 0;
+    String lastModified = new Date().toString();
     // Get inventory list
     if (status) {
+      modifiedSinceDate= HttpUtil.getModifiedDate(req, timezone);
       try {
         // Get domain config
         DomainConfig dc = DomainConfig.getInstance(domainId);
@@ -440,30 +446,25 @@ public class InventoryServlet extends JsonRestServlet {
                 pe.getClass().getName(), pe.getMessage());
           }
         }
-        // Get the inventory list
         Results
             results =
-            RESTUtil.getInventoryData(domainId, kioskId, locale, timezone, currency, onlyStock, dc,
-                forceIntegerForStock, start, pageParams);
+            RESTUtil.getInventoryData(kioskId, locale, timezone, onlyStock, dc,
+                forceIntegerForStock, start,modifiedSinceDate, pageParams);
         xLogger.fine("results: {0}", results);
         inventoryList = (Vector<Hashtable<String, Object>>) results.getResults();
+        numInv = results.getNumFound();
       } catch (ServiceException e) {
         xLogger.severe("InventoryServlet Exception: {0}", e.getMessage());
         status = false;
         errMessage = backendMessages.getString("error.nomaterials");
       }
     }
-    // Send the response
     try {
-      // Get the json return object
-      //GetInventoryOutput jsonOutput = new GetInventoryOutput( status, inventoryList, currency, errMessage, onlyStock, locale.toString(), RESTUtil.VERSION_01 );
-      //sendJsonResponse( resp, statusCode, jsonOutput.toJSONString() );
       String
           jsonOutput =
-          GsonUtil.getInventoryOutputToJson(status, inventoryList, currency, errMessage, onlyStock,
-              locale.toString(), RESTUtil.VERSION_01);
+          GsonUtil.getInventoryOutputToJson(status, inventoryList, currency, errMessage, numInv, RESTUtil.VERSION_01);
+      HttpUtil.setLastModifiedHeader(resp,lastModified);
       sendJsonResponse(resp, statusCode, jsonOutput);
-
     } catch (Exception e1) {
       xLogger.severe("InventoryServlet Exception: {0}", e1.getMessage());
       resp.setStatus(500);

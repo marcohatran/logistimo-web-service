@@ -93,8 +93,10 @@ public class GetFilteredOrdersQueryAction {
 
     applyApprovalStatusFilter(filterQuery, parameters, filters);
 
+    applyUpdatedDateFilter(filterQuery,parameters,filters);
+
     sqlQuery.append(filterQuery);
-    sqlQuery.append(" ORDER BY CON DESC");
+     sqlQuery.append(" ORDER BY CON DESC");
     return new QueryParams(sqlQuery.toString(), parameters,
         QueryParams.QTYPE.SQL, IOrder.class, filterQuery.toString());
 
@@ -225,6 +227,18 @@ public class GetFilteredOrdersQueryAction {
     sqlQuery.append(getKioskField(filters)).append(" = ?").append(" AND ")
         .append(getVisibilityField(filters)).append(" = 1");
     parameters.add(String.valueOf(filters.getKioskId()));
+  }
+
+  private void applyUpdatedDateFilter(StringBuilder sqlQuery, List<String> parameters,
+                                       OrderFilters filters){
+    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    if (filters.getUpdatedSince() != null) {
+      sqlQuery.append(" AND (UON >= ? OR `ID` IN (SELECT ORDER_ID FROM ORDER_APPROVAL_MAPPING WHERE UPDATED_AT>=? AND KIOSK_ID=? ))");
+      String updatedSinceStr = sdf.format(filters.getUpdatedSince());
+      parameters.add(updatedSinceStr);
+      parameters.add(updatedSinceStr);
+      parameters.add(String.valueOf(filters.getKioskId()));
+    }
   }
 
   private String getKioskField(OrderFilters filters) {

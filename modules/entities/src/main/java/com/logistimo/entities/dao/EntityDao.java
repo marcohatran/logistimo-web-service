@@ -24,13 +24,22 @@
 package com.logistimo.entities.dao;
 
 import com.logistimo.constants.CharacterConstants;
+import com.logistimo.constants.Constants;
 import com.logistimo.constants.QueryConstants;
+import com.logistimo.entities.entity.Approver;
+import com.logistimo.entities.entity.IApprover;
 import com.logistimo.entities.entity.IKiosk;
+import com.logistimo.entities.entity.IKioskLink;
 import com.logistimo.entities.entity.IPoolGroup;
 import com.logistimo.entities.entity.Kiosk;
+import com.logistimo.entities.entity.KioskLink;
+import com.logistimo.entities.models.ApproverFilters;
+import com.logistimo.entities.models.KioskLinkFilters;
 import com.logistimo.logger.XLog;
 import com.logistimo.pagination.PageParams;
+import com.logistimo.pagination.QueryParams;
 import com.logistimo.pagination.Results;
+import com.logistimo.services.ServiceException;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.tags.dao.ITagDao;
 import com.logistimo.tags.dao.TagDao;
@@ -40,6 +49,7 @@ import com.logistimo.utils.StringUtil;
 
 import org.apache.commons.lang.StringUtils;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -135,5 +145,160 @@ public class EntityDao implements IEntityDao {
 
   public String getKeyString(IPoolGroup group) {
     return String.valueOf(group.getGroupId());
+  }
+
+  public List<IApprover> getApprovers(ApproverFilters filters) {
+    PersistenceManager pm = PMF.get().getPersistenceManager();
+    Query query = null;
+    List<IApprover> approvers = null;
+    try {
+      QueryParams
+          sqlQueryModel = buildApproversQuery(filters);
+      String executeQuery = sqlQueryModel.query;
+      query = pm.newQuery("javax.jdo.query.SQL", executeQuery);
+      query.setClass(Approver.class);
+      approvers = (List<IApprover>) query.executeWithArray(
+          sqlQueryModel.listParams.toArray());
+      approvers = (List<IApprover>) pm.detachCopyAll(approvers);
+    } catch (Exception e){
+      xLogger.severe("Error while getting approvers", e);
+    } finally {
+      if (query != null) {
+        query.closeAll();
+      }
+      pm.close();
+    }
+    return approvers;
+  }
+
+  public Results getKioskLinks(KioskLinkFilters filters, PageParams pageParams, boolean countOnly) throws
+      ServiceException {
+    PersistenceManager pm = PMF.get().getPersistenceManager();
+    Query query = null;
+    Query cntQuery = null;
+    List<IKioskLink> kioskLinks = null;
+    int count = 0;
+    try {
+      QueryParams
+          sqlQueryModel = buildKioskLinksQuery(filters, pageParams, false);
+      if (!countOnly) {
+        String sqlQuery = sqlQueryModel.query;
+        query = pm.newQuery("javax.jdo.query.SQL", sqlQuery);
+        query.setClass(KioskLink.class);
+        kioskLinks = (List<IKioskLink>) query.executeWithArray(
+            sqlQueryModel.listParams.toArray());
+        kioskLinks = (List<IKioskLink>) pm.detachCopyAll(kioskLinks);
+      }
+      filters.withModifiedSince(null);
+      QueryParams cntSqlQueryModel = buildKioskLinksQuery(filters, null, true);
+      cntQuery = pm.newQuery("javax.jdo.query.SQL", cntSqlQueryModel.query);
+      cntQuery.setUnique(true);
+      count =
+          ((Long) (cntQuery.executeWithArray(cntSqlQueryModel.listParams.toArray()))).intValue();
+    } catch (Exception e){
+      xLogger.severe("Error while getting kiosklinks", e);
+      throw new ServiceException(e);
+    } finally {
+      if (query != null) {
+        try {
+          query.closeAll();
+        } catch (Exception e) {
+          // ignore
+        }
+      }
+      if (cntQuery != null) {
+        try {
+          cntQuery.closeAll();
+        } catch (Exception e) {
+          // ignore
+        }
+      }
+      pm.close();
+    }
+    return new Results(kioskLinks, null, count,
+        pageParams == null ? 0 : pageParams.getOffset());
+  }
+
+  private QueryParams buildApproversQuery(ApproverFilters filters) {
+    StringBuilder
+        queryBuilder =
+        new StringBuilder("SELECT * FROM APPROVERS");
+    if (filters.getKioskId() == null) {
+      throw new IllegalArgumentException("Invalid kiosk ID");
+    }
+    List<String> params = new ArrayList<>(1);
+    queryBuilder.append(" WHERE KID = ?");
+    params.add(String.valueOf(filters.getKioskId()));
+
+    if (filters.getOrderType() != null) {
+      queryBuilder.append(" AND OTYPE = ?");
+      params.add(String.valueOf(filters.getOrderType()));
+    }
+    if (filters.getType() != null) {
+      queryBuilder.append(" AND TYPE = ?");
+      params.add(String.valueOf(filters.getType()));
+    }
+    return new QueryParams(queryBuilder.toString(), params, QueryParams.QTYPE.SQL,
+        IApprover.class);
+  }
+
+  private QueryParams buildKioskLinksQuery(KioskLinkFilters filters, PageParams pageParams, boolean buildCountQuery) {
+    StringBuilder
+        sqlQuery =
+        new StringBuilder("SELECT KL.`KEY` AS `KEY`, KL.* FROM KIOSKLINK KL,KIOSK K");
+    String orderBy = CharacterConstants.EMPTY;
+    List<String> params = new ArrayList<>(1);
+    if (filters.getKioskId() == null) {
+      throw new IllegalArgumentException("Invalid kiosk ID");
+    }
+    sqlQuery.append(" WHERE KL.KIOSKID = ?");
+    params.add(String.valueOf(filters.getKioskId()));
+    if (filters.getLinkType() != null) {
+      sqlQuery.append(" AND KL.LINKTYPE = ?");
+      params.add(filters.getLinkType());
+    }
+    sqlQuery.append(" AND KL.LINKEDKIOSKID = K.KIOSKID");
+    if (filters.getRouteEnabled() || StringUtils.isNotEmpty(filters.getRouteTag())) {
+      sqlQuery.append(" AND KL.RTG = ?");
+      params.add(filters.getRouteTag());
+      if (filters.getRouteEnabled()) {
+        orderBy = " ORDER BY KL.RI";
+      }
+    } else {
+      orderBy = " ORDER BY K.NAME";
+    }
+    if (StringUtils.isNotEmpty(filters.getStartsWith())) {
+      sqlQuery.append(" AND K.NNAME like ?");
+      params.add(filters.getStartsWith().toLowerCase() + CharacterConstants.PERCENT);
+    } else if (filters.getLinkedKioskId() != null) {
+      sqlQuery.append(" AND KL.LINKEDKIOSKID = ?");
+      params.add(String.valueOf(filters.getLinkedKioskId()));
+    } else if (StringUtils.isNotEmpty(filters.getEntityTag())) {
+      sqlQuery.append(" AND KL.LINKEDKIOSKID IN (SELECT KIOSKID FROM KIOSK_TAGS WHERE ID IN (SELECT ID FROM TAG WHERE NAME = ? AND TYPE = " + ITag.KIOSK_TAG + "))");
+      params.add(filters.getEntityTag());
+    }
+    if (filters.getModifiedSince() != null) {
+      SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATETIME_CSV_FORMAT);
+      sqlQuery.append(" AND CREATEDON >= ? ");
+      params.add(sdf.format(filters.getModifiedSince()));
+    }
+    if (buildCountQuery) {
+      String
+          cntQueryStr =
+          sqlQuery.toString().replace("KL.`KEY` AS `KEY`, KL.*", QueryConstants.ROW_COUNT);
+      return new QueryParams(cntQueryStr, params, QueryParams.QTYPE.SQL,
+          IKioskLink.class);
+    }
+    sqlQuery.append(orderBy);
+    addLimitToQuery(sqlQuery, pageParams);
+    return new QueryParams(sqlQuery.toString(), params, QueryParams.QTYPE.SQL,
+        IKioskLink.class);
+  }
+
+  private void addLimitToQuery(StringBuilder sqlQuery, PageParams pageParams) {
+    if (pageParams != null) {
+      sqlQuery.append(" LIMIT ").append(pageParams.getOffset()).append(CharacterConstants.COMMA)
+          .append(pageParams.getSize());
+    }
   }
 }

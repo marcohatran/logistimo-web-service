@@ -82,9 +82,12 @@ public interface InventoryManagementService extends Service {
    */
   Results getInventoryByKiosk(Long kioskId, PageParams params) throws ServiceException;
 
-  /**
-   * Get inventory by kiosk and a material tag (optional)
-   */
+
+
+
+    /**
+     * Get inventory by kiosk and a material tag (optional)
+     */
   Results getInventoryByKiosk(Long kioskId, String materialTag, PageParams params)
       throws ServiceException;
 
@@ -470,4 +473,5 @@ public interface InventoryManagementService extends Service {
   BigDecimal getUnusableStock(Long kId, Long mId) throws ServiceException;
 
   Long getInvMaterialCount(Long domainId, Long tagId) throws ServiceException;
+
 }

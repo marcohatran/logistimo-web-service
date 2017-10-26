@@ -1011,6 +1011,5 @@ public class Kiosk implements IKiosk {
   public String user() {
     return this.getUpdatedBy();
   }
-
 }
 

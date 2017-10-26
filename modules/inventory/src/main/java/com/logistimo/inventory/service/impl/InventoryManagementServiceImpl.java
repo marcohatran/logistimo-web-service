@@ -1872,6 +1872,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
             , pageParams, pm);
   }
 
+
   public Results getInvntryByLocation(Long domainId, LocationSuggestionModel location,
                                       String kioskTags, String excludedKioskTags,
                                       String materialTags, String pdos, PageParams params)
@@ -3678,7 +3679,6 @@ public class InventoryManagementServiceImpl extends ServiceImpl
     }
     return results;
   }
-
 
   public boolean validateEntityBatchManagementUpdate(Long kioskId) throws ServiceException {
     if (kioskId == null) {

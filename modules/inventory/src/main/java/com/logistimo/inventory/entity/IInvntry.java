@@ -252,4 +252,8 @@ public interface IInvntry extends IOverlappedDomain {
   void setUpdatedBy(String user);
 
   String getMCRUnits(Locale locale);
+
+  Date getUpdatedOn();
+
+  void setUpdatedOn(Date updatedOn);
 }

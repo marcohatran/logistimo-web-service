@@ -50,6 +50,7 @@ import com.logistimo.utils.LocalDateUtil;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Component;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -479,6 +480,15 @@ public class InvntryDao implements IInvntryDao {
     if (filters.isNoInTransitStock()) {
       queryBuilder.append(" AND (I.TSTK <= 0 OR I.TSTK IS NULL)");
     }
+    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+    //Added for if modified since changes
+    if(filters.getUpdatedSince()!=null){
+      queryBuilder.append(" AND (I.UON >= ? OR M.MATERIALID IN (SELECT MAT.MATERIALID FROM MATERIAL MAT WHERE MAT.LASTUPDATED >=? )) ");
+      String updatedSinceStr = sdf.format(filters.getUpdatedSince());
+      params.add(updatedSinceStr);
+      params.add(updatedSinceStr);
+    }
 
     String orderByStr = " ORDER BY K.NAME ASC, M.NAME ASC";
     queryBuilder.append(orderByStr);
@@ -517,6 +527,8 @@ public class InvntryDao implements IInvntryDao {
       inventoryList = (List<Invntry>) query.executeWithArray(
           sqlQueryModel.listParams.toArray());
       inventoryList = (List<Invntry>) pm.detachCopyAll(inventoryList);
+      inventoryFilters.withUpdatedSince(null);
+
       QueryParams cntSqlQueryModel = buildInventoryQuery(inventoryFilters, true);
       cntQuery = pm.newQuery("javax.jdo.query.SQL", cntSqlQueryModel.query);
       count =

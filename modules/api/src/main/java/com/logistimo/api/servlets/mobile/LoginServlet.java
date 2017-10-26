@@ -48,6 +48,7 @@ import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.entity.IUserToken;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.users.service.impl.UsersServiceImpl;
+import com.logistimo.utils.HttpUtil;
 import com.logistimo.utils.LocalDateUtil;
 
 import org.apache.commons.lang.StringUtils;
@@ -58,6 +59,7 @@ import java.util.Date;
 import java.util.InputMismatchException;
 import java.util.Locale;
 import java.util.MissingResourceException;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 import javax.jdo.JDOObjectNotFoundException;
@@ -188,8 +190,8 @@ public class LoginServlet extends JsonRestServlet {
         status = false;
         try {
           jsonString =
-              RESTUtil.getJsonOutputAuthenticate(status, user, message, null, locale, null,
-                  backendMessages, false, false, null, null);
+              RESTUtil.getJsonOutputAuthenticate(status, user, message, null, null,
+                  false, false, null, null, null);
         } catch (Exception e1) {
           xLogger.warn("Protocol exception after data formatting error (during login): {0}",
               e.getMessage());
@@ -341,16 +343,19 @@ public class LoginServlet extends JsonRestServlet {
         }
       }
     }
+    String lastModified = new Date().toString();
+    Optional<Date> modifiedSinceDate = Optional.empty();
     try {
       // Get the domain configuration from the data store
       DomainConfig dc = null;
       if (domainId != null) {
         dc = DomainConfig.getInstance(domainId);
       }
-      // Assemble the JSON return object
+      String timezone = (user != null ? user.getTimezone() : Constants.TIMEZONE_DEFAULT);
+      modifiedSinceDate = HttpUtil.getModifiedDate(req, timezone);
       jsonString =
-          RESTUtil.getJsonOutputAuthenticate(status, user, message, dc, locale, minResponseCode,
-              backendMessages, onlyAuthenticate, forceIntegerForStock, start, pageParams);
+          RESTUtil.getJsonOutputAuthenticate(status, user, message, dc, minResponseCode,
+              onlyAuthenticate, forceIntegerForStock, start, modifiedSinceDate, pageParams);
     } catch (Exception e2) {
       xLogger.warn("Protocol exception during login: {0}", e2);
       if (status) { // that is, login successful, but data formatting exception
@@ -359,8 +364,8 @@ public class LoginServlet extends JsonRestServlet {
         try {
           jsonString =
               RESTUtil
-                  .getJsonOutputAuthenticate(status, null, message, null, locale, minResponseCode,
-                      backendMessages, onlyAuthenticate, forceIntegerForStock, start, null);
+                  .getJsonOutputAuthenticate(status, null, message, null, minResponseCode,
+                      onlyAuthenticate, forceIntegerForStock, start, modifiedSinceDate, null);
         } catch (Exception e) {
           xLogger.severe("Protocol exception after data formatting error (during login): {0}", e);
           resp.setStatus(500);
@@ -369,6 +374,7 @@ public class LoginServlet extends JsonRestServlet {
       }
     }
     if (jsonString != null) {
+      HttpUtil.setLastModifiedHeader(resp,lastModified);
       sendJsonResponse(resp, HttpServletResponse.SC_OK, jsonString);
     }
   }

@@ -87,6 +87,7 @@ import com.logistimo.services.utils.ConfigUtil;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.CommonUtils;
+import com.logistimo.utils.HttpUtil;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.StringUtil;
 
@@ -99,6 +100,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 import javax.jdo.PersistenceManager;
@@ -113,6 +115,9 @@ public class OrderServlet extends JsonRestServlet {
   private static final String STARTDATE = "sd";
   private static final int CACHE_EXPIRY = ConfigUtil
       .getInt("cache.expiry.for.transaction.signature", 900); // 15 minutes
+  private static final String SYSTEM_ERROR = "error.systemerror";
+  private static final String NO_ORDERS = "error.noorders";
+  private static final String NO_KIOSK = "error.nokiosk";
 
   // Check if kioskId is needed for updating order status via REST
   public static boolean isKioskIdOptionalForRESTStatusUpdate(String appVersion) {
@@ -142,12 +147,12 @@ public class OrderServlet extends JsonRestServlet {
     } else if (RestConstantsZ.ACTION_UPDATEORDERSTATUS_OLD.equals(action)) {
       updateOrderStatusOld(req, resp, backendMessages, messages);
     } else if (RestConstantsZ.ACTION_EXPORT.equals(action)) {
-      scheduleExport(req, resp, backendMessages, messages);
+      scheduleExport(req, resp, messages);
     } else if (RestConstantsZ.ACTION_UPDATEORDER.equals(action)) {
       createOrUpdateOrder(req, resp, backendMessages, messages, false);
     } else {
       throw new ServiceException("Invalid action: " + action);
-    }
+      }
   }
 
   public void processPost(HttpServletRequest req, HttpServletResponse resp,
@@ -183,15 +188,21 @@ public class OrderServlet extends JsonRestServlet {
     String message = null;
     Long kioskId = null;
     int statusCode = HttpServletResponse.SC_OK;
+    Optional<Date> modifiedSinceDate=Optional.empty();
+    String lastModified="";
     JsonObject jsonObject = null;
     try {
       //Get kiosk from request
       if (StringUtils.isBlank(kioskIdStr)) {
-        throw new ServiceException(backendMessages.getString("error.nokiosk"));
+        throw new ServiceException(backendMessages.getString(NO_KIOSK));
       }
       kioskId = Long.parseLong(kioskIdStr);
       //validate token and kiosk
       IUserAccount u = RESTUtil.authenticate(userId, null, kioskId, request, response);
+
+      modifiedSinceDate= HttpUtil.getModifiedDate(request, u.getTimezone());
+      lastModified=new Date().toString();
+
       //Get the max results from request
       int maxResults = PageParams.DEFAULT_SIZE;
       if (StringUtils.isNotBlank(size)) {
@@ -219,22 +230,21 @@ public class OrderServlet extends JsonRestServlet {
       //Based on whether transfer is requested or not, set the flag
       boolean isTransfer = OrderUtils.isTransfer(transfers);
 
+      OrderFilters orderFilters = new OrderFilters()
+          .setKioskId(kioskId)
+          .setStatus(status)
+          .setOtype(otype)
+          .setOrderType(isTransfer ? IOrder.TRANSFER : IOrder.NONTRANSFER)
+          .setUpdatedSince(modifiedSinceDate.orElse(null));
+
       //Get orders for specified entity, status, order type and transfers
       List<IOrder> ordersList = StaticApplicationContext.getBean(GetFilteredOrdersAction.class)
-          .invoke(new OrderFilters()
-                  .setKioskId(kioskId)
-                  .setStatus(status)
-                  .setOtype(otype)
-                  .setOrderType(isTransfer ? IOrder.TRANSFER : IOrder.NONTRANSFER)
-              , pageParams
-          ).getResults();
+          .invoke(orderFilters, pageParams).getResults();
       if (ordersList == null || ordersList.isEmpty()) {
-        message = backendMessages.getString("error.noorders");
+        message = backendMessages.getString(NO_ORDERS);
       } else {
-
         //Get the order approval type
         int orderApprovalType = OrderUtils.getOrderApprovalType(otype, isTransfer);
-
         //Build json response
         jsonObject =
             new MobileOrderBuilder()
@@ -242,7 +252,7 @@ public class OrderServlet extends JsonRestServlet {
       }
     } catch (NumberFormatException e) {
       xLogger.severe(" Exception when getting kiosk", e);
-      message = backendMessages.getString("error.nokiosk");
+      message = backendMessages.getString(NO_KIOSK);
     } catch (UnauthorizedException e) {
       xLogger.warn(" User unauthorized", e);
       statusCode = HttpServletResponse.SC_UNAUTHORIZED;
@@ -252,10 +262,13 @@ public class OrderServlet extends JsonRestServlet {
       message = e.getMessage();
     } catch (Exception e) {
       xLogger.severe(" Exception when fetching orders for kiosk {0}: {1}", kioskId, e);
-      message = backendMessages.getString("error.systemerror");
+      message = backendMessages.getString(SYSTEM_ERROR);
     }
     try {
       String resp = GsonUtil.buildResponse(jsonObject, message, RESTUtil.VERSION_01);
+      if(modifiedSinceDate.isPresent() && StringUtils.isBlank(message)){
+        HttpUtil.setLastModifiedHeader(response, lastModified);
+      }
       sendJsonResponse(response, statusCode, resp);
     } catch (Exception e1) {
       xLogger.severe("Protocol exception when sending orders for kiosk {0}: {1}", kioskId,
@@ -288,7 +301,6 @@ public class OrderServlet extends JsonRestServlet {
         incShpItems =
         (exShpItemsStr == null || exShpItemsStr.isEmpty()) ? true
             : exShpItemsStr.equals("1") ? false : true;
-
     // Get the order type, if sent
     String otype = req.getParameter(RestConstantsZ.ORDER_TYPE);
     if (otype == null || otype.isEmpty()) {
@@ -339,7 +351,7 @@ public class OrderServlet extends JsonRestServlet {
       if (kioskId == null
           && !isUserAdminOrGreater) { // kiosk ID is mandatory, and user should have authorization on it (either domain owner, or a operator/manager of it)
         status = false;
-        message = backendMessages.getString("error.nokiosk");
+        message = backendMessages.getString(NO_KIOSK);
       }
     } catch (ServiceException e) {
       status = false;
@@ -352,6 +364,10 @@ public class OrderServlet extends JsonRestServlet {
       status = false;
       statusCode = HttpServletResponse.SC_UNAUTHORIZED;
     }
+
+    Optional<Date> modifiedSinceDate = HttpUtil.getModifiedDate(req, timezone);
+    String lastModified=new Date().toString();
+
     List<IOrder> orders = null;
     boolean includeBatchDetails = true;
     if (status) {
@@ -423,10 +439,12 @@ public class OrderServlet extends JsonRestServlet {
           currency = dc.getCurrency();
         }
         if (hasOrders) {
+          OrderFilters filters= new OrderFilters().setDomainId(domainId).setKioskId(kioskId).setStatus(statusStr)
+              .setSince(startDate).setUntil(endDate).setOtype(otype).setTagType(null)
+              .setTag(null).setKioskIds(null).setOrderType(orderType).setReferenceId(null).setApprovalStatus(null).setWithDemand(loadAll)
+              .setUpdatedSince(modifiedSinceDate.orElse(null));
           Results
-              res =
-              oms.getOrders(domainId, kioskId, statusStr, startDate, endDate, otype, null, null,
-                  null, pageParams, orderType, null, null, loadAll);
+              res =  oms.getOrders(filters, pageParams);
           if (res != null) {
             orders = res.getResults();
           }
@@ -435,13 +453,13 @@ public class OrderServlet extends JsonRestServlet {
         xLogger.severe("Number format exception when getting orders for kiosk {0}: {1}", kioskId,
             e.getMessage());
         status = false;
-        message = backendMessages.getString("error.systemerror");
+        message = backendMessages.getString(SYSTEM_ERROR);
       } catch (ServiceException e) {
         xLogger.severe("Service exception when getting orders for kiosk {0}: {1}", kioskId,
             e.getMessage());
         status = false;
         message =
-            backendMessages.getString("error.noorders")
+            backendMessages.getString(NO_ORDERS)
                 + " [2]"; // [2] is marker for error position in code
       }
     }
@@ -450,7 +468,7 @@ public class OrderServlet extends JsonRestServlet {
     if (status) {
       if (orders == null || orders.isEmpty()) {
         status = false;
-        message = backendMessages.getString("error.noorders");
+        message = backendMessages.getString(NO_ORDERS);
       } else {
         MobileOrderBuilder mob = new MobileOrderBuilder();
         mom = mob.buildOrders(orders, locale, timezone, loadAll, incShpItems, includeBatchDetails);
@@ -462,16 +480,22 @@ public class OrderServlet extends JsonRestServlet {
       String
           jsonOutput =
           GsonUtil.buildGetOrdersResponseModel(status, mom, message, RESTUtil.VERSION_01);
+      if(modifiedSinceDate.isPresent() && status){
+        HttpUtil.setLastModifiedHeader(resp, lastModified);
+      }
       sendJsonResponse(resp, statusCode, jsonOutput);
     } catch (Exception e) {
       xLogger.severe("Protocol exception when sending orders for kiosk {0}: {1}", kioskId,
           e.getMessage());
       status = false;
-      message = backendMessages.getString("error.systemerror") + " [2]";
+      message = backendMessages.getString(SYSTEM_ERROR) + " [2]";
       try {
         String
             jsonOutput =
             GsonUtil.buildGetOrdersResponseModel(status, mom, message, RESTUtil.VERSION_01);
+        if(modifiedSinceDate.isPresent() && status){
+          HttpUtil.setLastModifiedHeader(resp, lastModified);
+        }
         sendJsonResponse(resp, statusCode, jsonOutput);
       } catch (Exception e1) {
         xLogger.severe("Protocol exception when sending orders for kiosk {0}: {1}", kioskId,
@@ -525,7 +549,7 @@ public class OrderServlet extends JsonRestServlet {
       if (!isKioskIdOptionalForRESTStatusUpdate(appVersion) && kioskId
           == null) { // kiosk ID is mandatory, and user should have authorization on it (either domain owner, or a operator/manager of it)
         status = false;
-        message = backendMessages.getString("error.nokiosk");
+        message = backendMessages.getString(NO_KIOSK);
       } else {
         IUserAccount u = RESTUtil.authenticate(userId, password, kioskId, req, resp);
         timezone = u.getTimezone();
@@ -601,7 +625,7 @@ public class OrderServlet extends JsonRestServlet {
       } catch (NumberFormatException e) {
         xLogger.severe("Number format exception when getting order Id: {0}", orderId, e);
         status = false;
-        message = backendMessages.getString("error.systemerror") + " [1]";
+        message = backendMessages.getString(SYSTEM_ERROR) + " [1]";
         setSignatureAndStatus(cache, signature, IJobStatus.FAILED);
       } catch (ObjectNotFoundException e) {
         xLogger.severe("Object not found with order ID: {0}", orderId, e);
@@ -613,7 +637,7 @@ public class OrderServlet extends JsonRestServlet {
       } catch (LogiException e) {
         xLogger.severe("Service exception when getting order with ID: {0}", orderId, e);
         status = false;
-        message = backendMessages.getString("error.systemerror");
+        message = backendMessages.getString(SYSTEM_ERROR);
         setSignatureAndStatus(cache, signature, IJobStatus.FAILED);
       }
     }
@@ -636,7 +660,7 @@ public class OrderServlet extends JsonRestServlet {
         }
 
         mom =
-            mob.build(order, locale, timezone, true, isAccounting, incShpItems,isBatchEnabled);
+            mob.build(order, locale, timezone, true, isAccounting, incShpItems, isBatchEnabled);
       }
       String
           jsonOutput =
@@ -646,7 +670,7 @@ public class OrderServlet extends JsonRestServlet {
       xLogger.severe("Protocol exception when sending order with ID {0}: {1}", orderId,
           e.getMessage());
       status = false;
-      message = backendMessages.getString("error.systemerror");
+      message = backendMessages.getString(SYSTEM_ERROR);
       try {
         String
             jsonOutput =
@@ -702,7 +726,7 @@ public class OrderServlet extends JsonRestServlet {
           // (either domain owner, or a operator/manager of it)
           if (uoReq.kid == null) {
             status = false;
-            message = backendMessages.getString("error.nokiosk");
+            message = backendMessages.getString(NO_KIOSK);
           } else {
             IUserAccount u = null;
             if (uoReq.oty.equals(IOrder.TYPE_SALE)) {
@@ -949,16 +973,16 @@ public class OrderServlet extends JsonRestServlet {
       } catch (NumberFormatException e) {
         xLogger.warn("Invalid number passed during inventory update: {0}",
             uoReq.tid, e);
-        message = backendMessages.getString("error.systemerror");
+        message = backendMessages.getString(SYSTEM_ERROR);
         status = false;
       } catch (InvalidDataException ide) {
         xLogger.warn(backendMessages.getString("error.transferfailed") + " " +
             backendMessages.getString("affectedmaterials") + ": " + ide);
         status = false;
-        message = backendMessages.getString("error.systemerror");
+        message = backendMessages.getString(SYSTEM_ERROR);
       } catch (Exception e2) {
         xLogger.severe("Exception: {0} : {1}", e2.getClass().getName(), e2);
-        message = backendMessages.getString("error.systemerror") + " [2]";
+        message = backendMessages.getString(SYSTEM_ERROR) + " [2]";
         status = false;
       }
     }
@@ -1071,7 +1095,7 @@ public class OrderServlet extends JsonRestServlet {
       if (kioskId
           == null) { // kiosk ID is mandatory, and user should have authorization on it (either domain owner, or a operator/manager of it)
         status = false;
-        message = backendMessages.getString("error.nokiosk");
+        message = backendMessages.getString(NO_KIOSK);
       } else {
         IUserAccount u = RESTUtil.authenticate(userId, password, kioskId, req, resp);
         if (userId == null) // possible if BasicAuth was used
@@ -1164,7 +1188,7 @@ public class OrderServlet extends JsonRestServlet {
         xLogger.severe("Service exception when getting order with ID {0}: {1}", orderId,
             e.getMessage());
         status = false;
-        message = backendMessages.getString("error.systemerror");
+        message = backendMessages.getString(SYSTEM_ERROR);
         setSignatureAndStatus(cache, signature, IJobStatus.FAILED);
       }
     }
@@ -1192,7 +1216,7 @@ public class OrderServlet extends JsonRestServlet {
       xLogger.severe("Protocol exception when sending order with ID {0}: {1}", orderId,
           e.getMessage());
       status = false;
-      message = backendMessages.getString("error.systemerror");
+      message = backendMessages.getString(SYSTEM_ERROR);
       try {
         String
             json =
@@ -1232,7 +1256,7 @@ public class OrderServlet extends JsonRestServlet {
       if (uosReq.kid
           == null) { // kiosk ID is mandatory, and user should have authorization on it (either domain owner, or a operator/manager of it)
         status = false;
-        message = backendMessages.getString("error.nokiosk");
+        message = backendMessages.getString(NO_KIOSK);
       } else {
         IUserAccount u = null;
         if (uosReq.oty.equals(IOrder.TYPE_SALE)) {
@@ -1363,7 +1387,7 @@ public class OrderServlet extends JsonRestServlet {
           xLogger.severe("Service exception when getting order with ID {0}: {1}",
               uosReq.tid, e.getMessage());
           status = false;
-          message = backendMessages.getString("error.systemerror");
+          message = backendMessages.getString(SYSTEM_ERROR);
           setSignatureAndStatus(cache, signature, IJobStatus.FAILED);
         } catch (LogiException e) {
           xLogger.severe("Logi exception when updating shipment with ID {0}: {1}",
@@ -1373,7 +1397,7 @@ public class OrderServlet extends JsonRestServlet {
             errorCode = e.getCode();
             message = e.getMessage();
           } else{
-            message = backendMessages.getString("error.systemerror");
+            message = backendMessages.getString(SYSTEM_ERROR);
           }
           setSignatureAndStatus(cache, signature, IJobStatus.FAILED);
         }
@@ -1407,7 +1431,7 @@ public class OrderServlet extends JsonRestServlet {
       xLogger.severe("Protocol exception when sending order with ID {0}: {1}", uosReq.tid,
           e.getMessage());
       status = false;
-      message = backendMessages.getString("error.systemerror");
+      message = backendMessages.getString(SYSTEM_ERROR);
       try {
         // Send error output as JSON
         String
@@ -1436,7 +1460,7 @@ public class OrderServlet extends JsonRestServlet {
 
   // Schedule export of inventory data
   private void scheduleExport(HttpServletRequest req, HttpServletResponse resp,
-                              ResourceBundle backendMessages, ResourceBundle messages) {
+                             ResourceBundle messages) {
     xLogger.fine("Entered scheduleExport");
     int statusCode = HttpServletResponse.SC_OK;
     // Send response back to client
@@ -1488,5 +1512,7 @@ public class OrderServlet extends JsonRestServlet {
         !ac.getOrderConfig().getPurchaseSalesOrderApproval().isEmpty() || ac.getOrderConfig()
             .isTransferApprovalEnabled()));
   }
+
+
 
 }

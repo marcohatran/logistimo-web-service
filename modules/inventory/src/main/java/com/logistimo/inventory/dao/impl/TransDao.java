@@ -234,6 +234,7 @@ public class TransDao implements ITransDao {
       }
       parameters.add(sdf.format(untilDate));
     }
+
     if (bid != null) {
       sqlQuery.append(" AND BID = ").append(CharacterConstants.QUESTION);
       parameters.add(bid);

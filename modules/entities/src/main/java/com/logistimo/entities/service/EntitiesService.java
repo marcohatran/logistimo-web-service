@@ -30,7 +30,9 @@ import com.logistimo.entities.entity.IApprover;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.entity.IKioskLink;
 import com.logistimo.entities.entity.IPoolGroup;
+import com.logistimo.entities.models.ApproverFilters;
 import com.logistimo.entities.models.EntityLinkModel;
+import com.logistimo.entities.models.KioskLinkFilters;
 import com.logistimo.entities.models.LocationSuggestionModel;
 import com.logistimo.entities.models.UserEntitiesModel;
 import com.logistimo.pagination.PageParams;
@@ -46,9 +48,6 @@ import java.util.List;
 import javax.jdo.PersistenceManager;
 
 public interface EntitiesService extends Service {
-
-
-
   /**
    * Get users associated with a given kiosk
    */
@@ -402,5 +401,23 @@ public interface EntitiesService extends Service {
    * @return
    */
   boolean isAnApprover(String userId, Long domainId);
+
+  /**
+   * Get the list of approvers based on the filters
+   * @param filters
+   * @return
+   */
+  List<IApprover> getApprovers(ApproverFilters filters);
+
+  /**
+   * Get the kiosk links based on the filters
+   * @param filters
+   * @param pageParams
+   * @param countOnly
+   * @return
+   * @throws ServiceException
+   */
+  Results getKioskLinks(KioskLinkFilters filters, PageParams pageParams, boolean countOnly)
+      throws ServiceException;
 
 }

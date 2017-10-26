@@ -32,6 +32,8 @@ import com.logistimo.services.utils.SSLUtilities;
 
 import com.logistimo.logger.XLog;
 
+import org.apache.commons.lang.StringUtils;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -42,11 +44,15 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.text.ParseException;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * Utility to work with network connections, e.g. HTTP
@@ -268,5 +274,35 @@ public class HttpUtil {
     } else {
       return request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
     }
+  }
+
+  /**
+   * Returns an optional If-Modified-Since date if it is present in the request header
+   * @param request
+   * @param timezone
+   * @return
+   */
+  public static Optional<Date> getModifiedDate(HttpServletRequest request, String timezone){
+    String ifModifiedHeader = request.getHeader(Constants.IF_MODIFIED_SINCE_HEADER);
+    Date date = null;
+    try {
+      if (StringUtils.isNotBlank(ifModifiedHeader)) {
+        date = LocalDateUtil
+            .parseCustom(ifModifiedHeader, Constants.IF_MODIFIED_SINCE_DATE_FORMAT, timezone);
+      }
+    } catch (ParseException e) {
+      // ignore
+      xLogger.warn("Ignoring exception while parsing modified since date", e);
+    }
+    return Optional.ofNullable(date);
+  }
+
+  /**
+   * Sets the Last-Modified response header
+   * @param response
+   * @param dateValue
+   */
+  public static void setLastModifiedHeader(HttpServletResponse response, String dateValue){
+    response.addHeader(Constants.LAST_MODIFIED_HEADER, dateValue);
   }
 }

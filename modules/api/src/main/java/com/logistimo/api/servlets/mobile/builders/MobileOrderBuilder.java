@@ -192,7 +192,7 @@ public class MobileOrderBuilder {
     }
 
     List<String> otgs = o.getTags(TagUtil.TYPE_ORDER);
-    if (otgs != null && otgs.size() > 0) {
+    if (otgs != null && !otgs.isEmpty()) {
       mom.tg = StringUtil.getCSV(otgs);
     }
     mom.tp = o.getTotalPrice();
@@ -301,7 +301,7 @@ public class MobileOrderBuilder {
       }
     }
     MobileOrdersModel mom = null;
-    if (momList != null && !momList.isEmpty()) {
+    if (!momList.isEmpty()) {
       mom = new MobileOrdersModel();
       mom.os = momList;
     }
@@ -505,9 +505,11 @@ public class MobileOrderBuilder {
                                Map<Long, Kiosk> kioskMap, Long kioskId) {
     if (!kioskIdList.contains(kioskId)) {
       try {
-        IKiosk kiosk = entitiesService.getKiosk(kioskId);
-        kioskMap.put(kiosk.getKioskId(), new Kiosk(kiosk.getName(), kiosk.getCity()));
-        kioskIdList.add(kiosk.getKioskId());
+        IKiosk kiosk = entitiesService.getKiosk(kioskId, false);
+        if (kiosk != null) {
+          kioskMap.put(kiosk.getKioskId(), new Kiosk(kiosk.getName(), kiosk.getCity()));
+          kioskIdList.add(kiosk.getKioskId());
+        }
       } catch (ServiceException e) {
         xLogger.warn("Exception fetching kiosk details", e);
       }

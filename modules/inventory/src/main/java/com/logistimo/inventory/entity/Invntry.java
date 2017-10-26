@@ -190,6 +190,12 @@ public class Invntry implements IInvntry {
   @Persistent
   private BigDecimal pdos; // Predicted days of stock including order status
 
+  /**
+   * Updated on time
+   */
+  @Persistent
+  private Date uOn;
+
   public static String getModelDisplay(String modelType) {
     String display = "User specified replenishment - s,X";
     if (MODEL_SQ.equals(modelType)) {
@@ -423,6 +429,7 @@ public class Invntry implements IInvntry {
   @Override
   public void setTimestamp(Date timeStamp) {
     this.t = timeStamp;
+    uOn=timeStamp;
   }
 
   @Override
@@ -433,6 +440,7 @@ public class Invntry implements IInvntry {
   @Override
   public void setCreatedOn(Date createdOn) {
     cOn = createdOn;
+    uOn=createdOn;
     t = createdOn; // last stock updated time is set to creation time
   }
 
@@ -518,6 +526,7 @@ public class Invntry implements IInvntry {
     if ((this.reord == null && BigUtil.notEqualsZero(reordLevel)) || (this.reord != null && BigUtil
         .notEquals(reordLevel, this.reord))) {
       this.reordT = new Date();
+      this.uOn=reordT;
     }
     if (reordLevel == null) {
       this.reord = null;
@@ -536,6 +545,7 @@ public class Invntry implements IInvntry {
     if ((this.max == null && BigUtil.notEqualsZero(maxStock)) || (this.max != null && BigUtil
         .notEquals(maxStock, this.max))) {
       this.maxT = new Date();
+      this.uOn=maxT;
     }
     if (maxStock == null) {
       this.max = null;
@@ -689,7 +699,7 @@ public class Invntry implements IInvntry {
 
   @Override
   public void setTgs(List<? extends ITag> tags, String tagType) {
-    if (TagUtil.TYPE_MATERIAL.equals(tagType)) {
+      if (TagUtil.TYPE_MATERIAL.equals(tagType)) {
       if (this.tgs != null) {
         this.tgs.clear();
         if (tags != null) {
@@ -860,5 +870,15 @@ public class Invntry implements IInvntry {
       manualCrUnits = jsMessages.getString("monthsofstock");
     }
     return manualCrUnits;
+  }
+
+  @Override
+  public Date getUpdatedOn() {
+    return uOn;
+  }
+
+  @Override
+  public void setUpdatedOn(Date updatedOn) {
+    this.uOn = updatedOn;
   }
 }

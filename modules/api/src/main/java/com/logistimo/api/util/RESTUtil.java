@@ -41,6 +41,7 @@ import com.logistimo.auth.service.AuthenticationService;
 import com.logistimo.auth.service.impl.AuthenticationServiceImpl;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.communications.service.SMSService;
+import com.logistimo.config.entity.IConfig;
 import com.logistimo.config.models.AccountingConfig;
 import com.logistimo.config.models.ActualTransConfig;
 import com.logistimo.config.models.ApprovalsConfig;
@@ -55,6 +56,8 @@ import com.logistimo.config.models.OrdersConfig;
 import com.logistimo.config.models.SMSConfig;
 import com.logistimo.config.models.SupportConfig;
 import com.logistimo.config.models.SyncConfig;
+import com.logistimo.config.service.ConfigurationMgmtService;
+import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.SourceConstants;
@@ -63,6 +66,7 @@ import com.logistimo.entities.auth.EntityAuthoriser;
 import com.logistimo.entities.entity.IApprover;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.entity.IKioskLink;
+import com.logistimo.entities.models.KioskLinkFilters;
 import com.logistimo.entities.models.UserEntitiesModel;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
@@ -77,6 +81,7 @@ import com.logistimo.inventory.dao.impl.TransDao;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.IInvntryBatch;
 import com.logistimo.inventory.entity.ITransaction;
+import com.logistimo.inventory.models.InventoryFilters;
 import com.logistimo.inventory.service.InventoryManagementService;
 import com.logistimo.inventory.service.impl.InventoryManagementServiceImpl;
 import com.logistimo.logger.XLog;
@@ -134,6 +139,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.Vector;
@@ -167,9 +173,9 @@ public class RESTUtil {
   private static ITransDao transDao = new TransDao();
 
   @SuppressWarnings("unchecked")
-  public static Results getInventoryData(Long domainId, Long kioskId, Locale locale,
-                                         String timezone, String currency, boolean onlyStock,
-                                         DomainConfig dc, boolean forceIntegerForStock, Date start,
+  public static Results getInventoryData( Long kioskId, Locale locale,
+                                         String timezone, boolean onlyStock,
+                                         DomainConfig dc, boolean forceIntegerForStock, Date start,Optional<Date> modifiedSince,
                                          PageParams pageParams) throws ServiceException {
     xLogger.fine("Entered getInventoryData");
     // Get the services
@@ -184,17 +190,21 @@ public class RESTUtil {
     boolean hasEOQ = (oc.getCompute() == OptimizerConfig.COMPUTE_EOQ);
     boolean hasStartDate = (start != null);
     // Get the inventories
-    Results results = ims.getInventoryByKiosk(kioskId, pageParams);
+    InventoryFilters filters = new InventoryFilters()
+        .withKioskId(kioskId)
+        .withUpdatedSince(modifiedSince.orElse(null));
+
+    Results results = ims.getInventory(filters,pageParams);
     IKiosk kiosk = Services.getService(EntitiesServiceImpl.class).getKiosk(kioskId);
     List<IInvntry> inventories = (List<IInvntry>) results.getResults();
     String cursor = results.getCursor();
     boolean isBatchMgmtEnabled = kiosk.isBatchMgmtEnabled();
-    Vector<Hashtable<String, Object>> invData = new Vector<Hashtable<String, Object>>();
+    Vector<Hashtable<String, Object>> invData = new Vector<>();
     Iterator<IInvntry> it = inventories.iterator();
     while (it.hasNext()) {
       IInvntry inv = it.next();
       // Get the material data
-      IMaterial m = null;
+      IMaterial m;
       try {
         m = mcs.getMaterial(inv.getMaterialId());
       } catch (Exception e) {
@@ -204,7 +214,7 @@ public class RESTUtil {
         continue;
       }
       // Create a material data hashtable
-      Hashtable<String, Object> material = new Hashtable<String, Object>();
+      Hashtable<String, Object> material = new Hashtable<>();
       material.put(JsonTagsZ.MATERIAL_ID, m.getMaterialId().toString());
       String stockStr = null;
       if (forceIntegerForStock) {
@@ -364,7 +374,7 @@ public class RESTUtil {
     }
     xLogger.fine("Exiting getInventoryData: {0} inventory items, invData: {1}", inventories.size(),
         invData);
-    return new Results(invData, cursor);
+    return new Results(invData, cursor, results.getNumFound(), results.getOffset());
   }
 
   public static Hashtable<String, Object> getConsumptionRate(InventoryConfig ic, IInvntry inv,
@@ -426,8 +436,7 @@ public class RESTUtil {
   public static List<ITransaction> getInventoryTransactions(UpdateOrderRequest uoReq,
                                                             String transType, Date time,
                                                             Locale locale) throws ServiceException {
-    List<ITransaction> list = new ArrayList<ITransaction>();
-
+    List<ITransaction> list = new ArrayList<>();
     // Parameter checks
     if (uoReq == null) {
       throw new ServiceException("Invalid JSON input object during inventory update");
@@ -440,7 +449,6 @@ public class RESTUtil {
     if (transObjs == null || transObjs.size() == 0) {
       return null;
     }
-
     boolean checkBatchMgmt = ITransaction.TYPE_TRANSFER.equals(transType);
     List<String> bErrorMaterials = new ArrayList<>(1);
     MaterialCatalogService mcs = null;
@@ -460,7 +468,6 @@ public class RESTUtil {
     } catch (ServiceException se) {
       xLogger.warn("ServiceException while getting kiosk details. Exception: {0}", se);
     }
-
     // Form the inventory transaction objects
     for (MaterialRequest mReq : transObjs) {
       if (checkBatchMgmt) {
@@ -750,8 +757,6 @@ public class RESTUtil {
         if (eoqrsn != null && !eoqrsn.isEmpty()) {
           trans.setEditOrderQtyRsn(eoqrsn);
         }
-
-        //trans.setKey( Transaction.createKey( kioskId, materialId, transType, t, batchIdStr ) );
         transDao.setKey(trans);
         // Add to transaction list
         list.add(trans);
@@ -776,7 +781,6 @@ public class RESTUtil {
   public static IUserAccount authenticate(String userId, String password, Long kioskId,
                                           HttpServletRequest req, HttpServletResponse resp)
       throws ServiceException, UnauthorizedException {
-    ///HttpSession session = req.getSession();
     // Get service
     UsersService as = Services.getService(UsersServiceImpl.class);
     EntitiesService entitiesService = Services.getService(EntitiesServiceImpl.class);
@@ -880,7 +884,7 @@ public class RESTUtil {
             }
           } else {
             try {
-              IKiosk k = entitiesService.getKiosk(kioskId, false);
+              entitiesService.getKiosk(kioskId, false);
             } catch (Exception e) {
               xLogger.warn(
                   "Exception {0} when getting find kiosk {1} when authenticating user {2}: {3}",
@@ -910,34 +914,28 @@ public class RESTUtil {
   }
 
   public static String getJsonOutputAuthenticate(boolean status, IUserAccount user, String message,
-                                                 DomainConfig dc, String localeStr,
+                                                 DomainConfig dc,
                                                  String minResponseCode,
-                                                 ResourceBundle backendMessages,
                                                  boolean onlyAuthenticate,
-                                                 boolean forceIntegerForStock, Date start,
+                                                 boolean forceIntegerForStock, Date start, Optional<Date> modifiedSinceDate,
                                                  PageParams kioskPageParams)
       throws ProtocolException, ServiceException {
-    xLogger.fine("Entered RESTUtil.getJsonOutputAuthenticate");
-    xLogger.fine("start: {0}", start != null ? start.toString() : null);
-    Vector<Hashtable> kiosksData = null;
     Hashtable<String, Object> config = null;
     String expiryTime = null;
     boolean hasStartDate = (start != null);
-    List<IKiosk> kiosks = null;
-    List kioskList = new ArrayList();
-
     UserEntitiesModel fullUser = new UserEntitiesModel(user, null);
     if (status && !onlyAuthenticate) {
+      List kioskList = new ArrayList();
       // Get the kiosks
       EntitiesService as = Services.getService(EntitiesServiceImpl.class);
       // Get paginated kiosks for a given user
       Results
           results =
           as.getKiosksForUser(user, null, kioskPageParams);
-      kiosks = results.getResults();
-      boolean isSingleKiosk = kiosks != null && kiosks.size() == 1;
+      List<IKiosk> kiosks = results.getResults();
+      boolean isSingleKiosk = (kiosks != null && kiosks.size() == 1);
       // Get the kiosk maps
-      kiosksData = new Vector();
+      Vector<Hashtable> kiosksData = new Vector();
       if (kiosks != null && !kiosks.isEmpty()) {
         boolean getUsersForKiosk = (MINIMUM_RESPONSE_CODE_TWO.equals(minResponseCode));
         boolean
@@ -959,7 +957,7 @@ public class RESTUtil {
           Hashtable<String, Object>
               kioskData =
               getKioskData(k, locale, user.getTimezone(), dc, getUsersForKiosk, getMaterials,
-                  getLinkedKiosks, forceIntegerForStock, user.getUserId(), user.getRole());
+                  getLinkedKiosks, forceIntegerForStock, user.getUserId(), user.getRole(), modifiedSinceDate);
           Date kioskCreatedOn = k.getTimeStamp();
           Date kioskLastUpdatedOn = k.getLastUpdated();
           xLogger.fine(
@@ -979,22 +977,9 @@ public class RESTUtil {
         expiryTime = String.valueOf(getLoginExpiry(user));
       }
       // Get config. for transaction inclusion and naming
-      config = getConfig(dc, user.getRole());
-      if (config != null) {
-        if (IUserAccount.LR_LOGIN_RECONNECT.equals(user.getLoginReconnect())) {
-          config.put(JsonTagsZ.LOGIN_AS_RECONNECT, Constants.TRUE);
-        } else if (IUserAccount.LR_LOGIN_DONT_RECONNECT.equals(user.getLoginReconnect())) {
-          config.remove(JsonTagsZ.LOGIN_AS_RECONNECT);
-        }
-        // Get user specific gui theme configuration and add it to config
-        int storeAppTheme = user.getStoreAppTheme();
-        if (storeAppTheme != GUI_THEME_FROM_DOMAIN_CONFIGURATION) {
-          config.put(JsonTagsZ.GUI_THEME, storeAppTheme);
-        }
-      }
+      config = getConfig(dc, user, modifiedSinceDate);
       fullUser = new UserEntitiesModel(user, kioskList);
     }
-    xLogger.fine("Exiting RESTUtil.getJsonOutputAuthenticate");
     String
         jsonString =
         GsonUtil.authenticateOutputToJson(status, message, expiryTime, fullUser, config,
@@ -1009,7 +994,7 @@ public class RESTUtil {
                                                         boolean getMaterials,
                                                         boolean getLinkedKiosks,
                                                         boolean forceIntegerForStock, String userId,
-                                                        String role) {
+                                                        String role, Optional<Date> modifiedSince) {
     xLogger.fine("Entered getKioskData");
     Hashtable
         kioskData =
@@ -1047,9 +1032,11 @@ public class RESTUtil {
       }
       // Add materials
       if (getMaterials) {
-        kioskData.put(JsonTagsZ.MATERIALS, RESTUtil
-            .getInventoryData(k.getDomainId(), k.getKioskId(), locale, timezone, currency, false,
-                dc, forceIntegerForStock, null, null).getResults());
+        Results results = RESTUtil
+            .getInventoryData(k.getKioskId(), locale, timezone, false,
+                dc, forceIntegerForStock, null, modifiedSince, null);
+        kioskData.put(JsonTagsZ.MATERIALS, results.getResults());
+        kioskData.put(JsonTagsZ.NUMBER_OF_INVENTORY, results.getNumFound());
       }
       if (getLinkedKiosks) {
         CapabilityConfig cconf = dc.getCapabilityByRole(role);
@@ -1061,34 +1048,34 @@ public class RESTUtil {
         }
         if (sendVendors) {
           // Add vendor info., if present
-          Vector<Hashtable<String, String>>
-              vendors =
-              (Vector<Hashtable<String, String>>) getLinkedKiosks(k.getKioskId(),
-                  IKioskLink.TYPE_VENDOR, userId, getUsersForKiosk, dc, null).getResults();
-          if (vendors != null && !vendors.isEmpty()) {
+          Results results = getLinkedKiosks(k.getKioskId(), IKioskLink.TYPE_VENDOR, userId, getUsersForKiosk, dc, null, modifiedSince);
+          if (results.getResults() != null && !results.getResults().isEmpty()) {
             kioskData
-                .put(JsonTagsZ.VENDORS, vendors); // vector of Hashtable of vendor kiosk metadata
+                .put(JsonTagsZ.VENDORS, results.getResults());
           }
+          kioskData.put(JsonTagsZ.NUMBER_OF_VENDORS, results.getNumFound());
         }
 
         if (sendCustomers) {
           // Add customer info., if present
-          Vector<Hashtable<String, String>>
-              customers =
-              (Vector<Hashtable<String, String>>) getLinkedKiosks(k.getKioskId(),
-                  IKioskLink.TYPE_CUSTOMER, userId, getUsersForKiosk, dc, null).getResults();
-          if (dc.sendCustomers() && customers != null && !customers.isEmpty()) {
-            kioskData.put(JsonTagsZ.CUSTOMERS, customers); // vector of Hashtable(kiosk-metadata)
+          Results results =
+              getLinkedKiosks(k.getKioskId(),
+                  IKioskLink.TYPE_CUSTOMER, userId, getUsersForKiosk, dc, null, modifiedSince);
+          if (dc.sendCustomers() && results.getResults() != null && !results.getResults().isEmpty()) {
+            kioskData.put(JsonTagsZ.CUSTOMERS, results.getResults());
           }
+          kioskData.put(JsonTagsZ.NUMBER_OF_CUSTOMERS, results.getNumFound());
         }
       }
-      // Add approvers if configured for the kiosk.
-      EntitiesService as = Services.getService(EntitiesServiceImpl.class, locale);
-      MobileEntityBuilder mobileEntityBuilder = new MobileEntityBuilder();
-      List<IApprover> approversList = as.getApprovers(k.getKioskId());
-      if (approversList != null && !approversList.isEmpty()) {
-        kioskData.put(JsonTagsZ.APPROVERS,
-            mobileEntityBuilder.buildApproversModel(approversList));
+      if (dc.isPurchaseApprovalEnabled() || dc.isSalesApprovalEnabled()) {
+        EntitiesService es = Services.getService(EntitiesServiceImpl.class, locale);
+        MobileEntityBuilder mobileEntityBuilder = new MobileEntityBuilder();
+
+        List<IApprover> approversList = es.getApprovers(k.getKioskId());
+        if (approversList != null && !approversList.isEmpty()) {
+          kioskData.put(JsonTagsZ.APPROVERS,
+              mobileEntityBuilder.buildApproversModel(approversList, dc.isPurchaseApprovalEnabled(), dc.isSalesApprovalEnabled()));
+        }
       }
       // Add kiosk tags if any configured for the kiosk
       // If tags are specified, send that back as an array
@@ -1109,16 +1096,21 @@ public class RESTUtil {
   @SuppressWarnings("unchecked")
   public static Results getLinkedKiosks(Long kioskId, String linkType, String userId,
                                         boolean getUsersForKiosk, DomainConfig dc,
-                                        PageParams pageParams) {
-    Vector<Hashtable<String, String>> linkedKiosks = new Vector<Hashtable<String, String>>();
+                                        PageParams pageParams, Optional<Date> modifiedSinceDate) {
+    Vector<Hashtable<String, String>> linkedKiosks = new Vector<>();
+    Results results = null;
     String cursor = null;
     try {
       EntitiesService as = Services.getService(EntitiesServiceImpl.class);
-      Results results = as.getKioskLinks(kioskId, linkType, null, null, pageParams);
+      KioskLinkFilters filters = new KioskLinkFilters()
+          .withKioskId(kioskId)
+          .withLinkType(linkType)
+          .withModifiedSince(modifiedSinceDate.orElse(null));
+      results = as.getKioskLinks(filters, pageParams, false);
       List<IKioskLink> vlinks = results.getResults();
       cursor = results.getCursor();
       if (vlinks == null || vlinks.isEmpty()) {
-        return new Results(linkedKiosks, cursor);
+        return new Results(linkedKiosks, cursor, results.getNumFound(), results.getOffset());
       }
       PersistenceManager pm = PMF.get().getPersistenceManager();
       // Check if accounting is enabled - to send credit limit and payable information
@@ -1132,7 +1124,6 @@ public class RESTUtil {
         while (it.hasNext()) {
           IKioskLink link = it.next();
           try {
-            ///Kiosk k = pm.getObjectById( Kiosk.class, link.getLinkedKioskId() );
             Long linkedKioskId = link.getLinkedKioskId();
             IKiosk k = JDOUtils.getObjectById(IKiosk.class, linkedKioskId);
             if (getUsersForKiosk) {
@@ -1154,7 +1145,7 @@ public class RESTUtil {
                       : defaultCreditLimit);
               if (BigUtil.notEqualsZero(creditLimit)) {
                 linkedKiosk.put(JsonTagsZ.CREDIT_LIMIT, BigUtil.getFormattedValue(creditLimit));
-                Long vId = null, cId = null;
+                Long vId, cId;
                 if (IKioskLink.TYPE_VENDOR.equals(linkType)) {
                   cId = link.getKioskId();
                   vId = link.getLinkedKioskId();
@@ -1200,7 +1191,7 @@ public class RESTUtil {
           .warn("ServiceException when getting KioskLinks for {0}: {1}", kioskId, e.getMessage());
     }
     xLogger.fine("getLinkedKiosks: linkedKiosks: {0}", linkedKiosks);
-    return new Results(linkedKiosks, cursor);
+    return new Results(linkedKiosks, cursor, results.getNumFound(), results.getOffset());
   }
 
   // Schedule export of inventory, transactions or orders via REST for a given kiosk
@@ -1375,14 +1366,17 @@ public class RESTUtil {
   }
 
   // Get domain-specific configuration to be sent to mobile
-  private static Hashtable<String, Object> getConfig(DomainConfig dc, String role) {
+  private static Hashtable<String, Object> getConfig(DomainConfig dc, IUserAccount user, Optional<Date> modifiedSinceDate) throws ServiceException{
     xLogger.fine("Entered getConfig");
     OrdersConfig oc = dc.getOrdersConfig();
     // Get domain config
     if (dc != null) {
       Hashtable<String, Object>
           config =
-          new Hashtable<>(); // Changed to Hashtable<String,Object> to accomodate mst, rsnsbytg and tgiov which are JSON objects
+          new Hashtable<>();
+      if (!isConfigModified(modifiedSinceDate,user.getDomainId())) {
+        return config;
+      }
       String transNaming = dc.getTransactionNaming();
       if (transNaming != null) {
         config.put(JsonTagsZ.TRANSACTION_NAMING, transNaming);
@@ -1396,7 +1390,7 @@ public class RESTUtil {
       config.put(JsonTagsZ.UPDATESTOCK_ON_SHIPPED, String.valueOf(dc.autoGI()));
       config.put(JsonTagsZ.UPDATESTOCK_ON_FULFILLED, String.valueOf(dc.autoGR()));
       // Role-specific configs.
-      CapabilityConfig cconf = dc.getCapabilityByRole(role);
+      CapabilityConfig cconf = dc.getCapabilityByRole(user.getRole());
       String transMenu = null, tagsInventory = null, tagsOrders = null, geoCodingStrategy = null,
           creatableEntityTypes =
               null;
@@ -1582,7 +1576,7 @@ public class RESTUtil {
       SupportConfig
           supportConfig =
           dc.getSupportConfigByRole(
-              role); // Get the support configuration for the role of the logged in user
+              user.getRole()); // Get the support configuration for the role of the logged in user
       String supportEmail = null, supportPhone = null, supportContactName = null;
       // If Support is configured in Domain configuration, get support information.
       if (supportConfig != null) {
@@ -1703,6 +1697,16 @@ public class RESTUtil {
           MobileAccountingConfigModel mobileAccountingConfigModel = mobileConfigBuilder.buildAccountingConfiguration(
               dc.isAccountingEnabled(), acctConfig);
           config.put(JsonTagsZ.ACCOUNTING_CONFIG, mobileAccountingConfigModel);
+        }
+        if (IUserAccount.LR_LOGIN_RECONNECT.equals(user.getLoginReconnect())) {
+          config.put(JsonTagsZ.LOGIN_AS_RECONNECT, Constants.TRUE);
+        } else if (IUserAccount.LR_LOGIN_DONT_RECONNECT.equals(user.getLoginReconnect())) {
+          config.remove(JsonTagsZ.LOGIN_AS_RECONNECT);
+        }
+        // Get user specific gui theme configuration and add it to config
+        int storeAppTheme = user.getStoreAppTheme();
+        if (storeAppTheme != GUI_THEME_FROM_DOMAIN_CONFIGURATION) {
+          config.put(JsonTagsZ.GUI_THEME, storeAppTheme);
         }
       } catch (Exception e) {
         xLogger.warn("Error in getting system configuration: {0}", e);
@@ -2351,5 +2355,14 @@ public class RESTUtil {
       }
     }
     return parsedRequest;
+  }
+
+  private static boolean isConfigModified(Optional<Date> modifiedSinceDate, Long domainId) throws ServiceException{
+    ConfigurationMgmtService cms = Services.getService(ConfigurationMgmtServiceImpl.class);
+    IConfig config = cms.getConfiguration(IConfig.CONFIG_PREFIX + domainId);
+    if (modifiedSinceDate.isPresent()) {
+      return !modifiedSinceDate.get().after(config.getLastUpdated());
+    }
+    return true;
   }
 }

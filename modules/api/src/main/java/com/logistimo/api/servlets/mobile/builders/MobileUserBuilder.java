@@ -23,30 +23,32 @@
 
 package com.logistimo.api.servlets.mobile.builders;
 
+import com.logistimo.logger.XLog;
 import com.logistimo.proto.MobileUserModel;
+import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Created by vani on 28/06/17.
  */
 public class MobileUserBuilder {
+  private static final XLog LOGGER = XLog.getLog(MobileUserBuilder.class);
   /**
    * Builds a list of user models as required by the mobile from a list of user account objects
+   * @param users
    */
   public List<MobileUserModel> buildMobileUserModels(List<IUserAccount> users) {
     if (users == null || users.isEmpty()) {
       return null;
     }
-    List<MobileUserModel> userModels = new ArrayList<>(users.size());
-    for (IUserAccount user : users) {
-      MobileUserModel userModel = buildMobileUserModel(user);
-      userModels.add(userModel);
-    }
-    return userModels;
+    return(users.stream()
+                    .map(user -> buildMobileUserModel(user))
+                    .collect(Collectors.toList()));
   }
 
   private MobileUserModel buildMobileUserModel(IUserAccount user) {
@@ -60,19 +62,32 @@ public class MobileUserBuilder {
 
   /**
    * Constructs a list of UserAccount objects from a list of user ids
+   * @param usersService
+   * @param userIds
    */
-  public List<IUserAccount> constructUserAccount(UsersService as, List<String> userIds) {
+  public List<IUserAccount> constructUserAccount(UsersService usersService, List<String> userIds) {
     if (userIds == null || userIds.isEmpty()) {
       return null;
     }
-    List<IUserAccount> list = new ArrayList<>(userIds.size());
-    for (String userId : userIds) {
-      try {
-        list.add(as.getUserAccount(userId));
-      } catch (Exception ignored) {
-        // do nothing
-      }
+    return(userIds.stream()
+        .map(userId -> getUserAccount(usersService, userId))
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .collect(Collectors.toList()));
+  }
+
+  /**
+   * Returns an Optional user account object for a specified user id or an empty object if the user account does not exist.
+   * @param usersService
+   * @param userId
+   * @return
+   */
+  private Optional<IUserAccount> getUserAccount(UsersService usersService, String userId) {
+    try {
+      return Optional.of(usersService.getUserAccount(userId));
+    } catch (ObjectNotFoundException e) {
+      LOGGER.warn("Exception while getting user account for user {0}", userId, e);
     }
-    return list;
+    return Optional.empty();
   }
 }

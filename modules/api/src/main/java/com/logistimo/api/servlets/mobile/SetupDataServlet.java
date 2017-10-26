@@ -65,6 +65,7 @@ import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.users.service.impl.UsersServiceImpl;
+import com.logistimo.utils.HttpUtil;
 import com.logistimo.utils.StringUtil;
 
 import org.apache.commons.lang.StringUtils;
@@ -80,6 +81,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.Vector;
 
@@ -175,31 +177,32 @@ public class SetupDataServlet extends JsonRestServlet {
           linkType = IKioskLink.TYPE_CUSTOMER;
           lkNamesList = getList(vendors);
         }
-        // Loop through lkNamesList
-        Iterator<String> lkNamesListIter = lkNamesList.iterator();
-        Long lkid = null;
-        while (lkNamesListIter.hasNext()) {
-          String lkName = lkNamesListIter.next();
-          if (lkName != null && !lkName.isEmpty()) {
-            try {
-              IKiosk k = as.getKioskByName(domainId, lkName);
-              if (k != null) {
-                lkid = k.getKioskId();
-                // Set the related entity info
-                as.setRelatedEntityRouteInfo(domainId, lkid, linkType, kioskId, routeTag,
-                    routeIndex);
-              } else {
-                xLogger.warn("Could not get linked kiosk {0}", lkName);
+        if (lkNamesList != null && !lkNamesList.isEmpty()) {
+          // Loop through lkNamesList
+          Iterator<String> lkNamesListIter = lkNamesList.iterator();
+          Long lkid = null;
+          while (lkNamesListIter.hasNext()) {
+            String lkName = lkNamesListIter.next();
+            if (lkName != null && !lkName.isEmpty()) {
+              try {
+                IKiosk k = as.getKioskByName(domainId, lkName);
+                if (k != null) {
+                  lkid = k.getKioskId();
+                  // Set the related entity info
+                  as.setRelatedEntityRouteInfo(domainId, lkid, linkType, kioskId, routeTag,
+                      routeIndex);
+                } else {
+                  xLogger.warn("Could not get linked kiosk {0}", lkName);
+                }
+              } catch (Exception e) {
+                xLogger.warn(
+                    "{0} while setting route info for related entity for kioskId: {1}, LinkType: {2}, Linked Kiosk Id: {3}.",
+                    e.getClass().getName(), kioskId, linkType, lkid, e);
               }
-            } catch (Exception e) {
-              xLogger.warn(
-                  "{0} while setting route info for related entity for kioskId: {1}, LinkType: {2}, Linked Kiosk Id: {3}. Message: {4}",
-                  e.getClass().getName(), kioskId, linkType, lkid, e.getMessage());
             }
           }
         }
       }
-
     } catch (Exception e) {
       xLogger.warn("{0} when updating route tag {1} for kiosk {2}: {3}", e.getClass().getName(),
           routeTag, kioskId, e.getMessage());
@@ -262,9 +265,6 @@ public class SetupDataServlet extends JsonRestServlet {
       if (isEntityVendor && !creatableEntities.contains(CapabilityConfig.TYPE_VENDOR)) {
         return false;
       }
-      boolean
-          isEntityCustomer =
-          ((value = kioskData.get(JsonTagsZ.VENDORS)) != null && (!value.isEmpty()));
       if (isEntityVendor && !creatableEntities.contains(CapabilityConfig.TYPE_CUSTOMER)) {
         return false;
       }
@@ -409,7 +409,6 @@ public class SetupDataServlet extends JsonRestServlet {
     SetupDataInput setupDataInput = new SetupDataInput();
     Hashtable<String, String> user = null;
     try {
-      //	setupDataInput.fromJSONString( jsonString );
       setupDataInput = GsonUtil.setupDataInputFromJson(jsonString);
       // Set the bulkUploadOp to add/edit depending on the action parameter
       String bulkUploadOp = BulkUploadMgr.OP_ADD;
@@ -1631,7 +1630,6 @@ public class SetupDataServlet extends JsonRestServlet {
     String kioskIdStr = req.getParameter(RestConstantsZ.KIOSK_ID);
     String relationshipType = req.getParameter(RestConstantsZ.RELATIONSHIP);
     String sizeStr = req.getParameter(RestConstantsZ.SIZE);
-    String localeStr = Constants.LANG_DEFAULT;
     Vector<Hashtable<String, String>> linkedKiosks = null;
     String errMsg = null;
     boolean status = true;
@@ -1656,21 +1654,23 @@ public class SetupDataServlet extends JsonRestServlet {
         }
       }
       PageParams pageParams = new PageParams(offset, size);
+      String lastModified = new Date().toString();
+      int numLinkedKiosks = 0;
       try {
         // Authenticate user
         IUserAccount u = RESTUtil.authenticate(userId, password, kioskId, req, resp);
-        if (userId == null) // in case of Basic authentication
-        {
+        if (userId == null) {
           userId = u.getUserId();
         }
-        localeStr = u.getLocale().toString();
-        // Get domain config
         DomainConfig dc = DomainConfig.getInstance(u.getDomainId());
-        // Get the related kiosks
+        String timezone = (u.getTimezone() != null ? u.getTimezone() : Constants.TIMEZONE_DEFAULT);
+        Optional<Date> modifiedSinceDate = HttpUtil.getModifiedDate(req, timezone);
         Results
             results =
-            RESTUtil.getLinkedKiosks(kioskId, relationshipType, userId, true, dc, pageParams);
+            RESTUtil.getLinkedKiosks(kioskId, relationshipType, userId, true, dc, pageParams,
+                modifiedSinceDate);
         linkedKiosks = (Vector<Hashtable<String, String>>) results.getResults();
+        numLinkedKiosks = results.getNumFound();
       } catch (ServiceException e) {
         errMsg = e.getMessage();
         status = false;
@@ -1682,14 +1682,12 @@ public class SetupDataServlet extends JsonRestServlet {
         errMsg = "System error occurred. Please notify administrator. [" + e.getMessage() + "]";
         status = false;
       }
-      // Form the JSON output
       try {
-        //GetRelationshipsOutput gro = new GetRelationshipsOutput( status, relationshipType, linkedKiosks, null, errMsg, localeStr, RESTUtil.VERSION_01 );
-        //sendJsonResponse( resp, statusCode, gro.toJSONString() );
         String
             Jsongro =
             GsonUtil.getRelationshipsOutputToJson(status, relationshipType, linkedKiosks, errMsg,
-                localeStr, RESTUtil.VERSION_01);
+                numLinkedKiosks, RESTUtil.VERSION_01);
+        HttpUtil.setLastModifiedHeader(resp,lastModified);
         sendJsonResponse(resp, statusCode, Jsongro);
       } catch (Exception e) {
         xLogger.severe(

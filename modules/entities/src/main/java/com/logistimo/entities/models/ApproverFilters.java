@@ -21,34 +21,45 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.entities.dao;
-
-import com.logistimo.entities.entity.IApprover;
-import com.logistimo.entities.entity.IKiosk;
-import com.logistimo.entities.entity.IPoolGroup;
-import com.logistimo.entities.models.ApproverFilters;
-import com.logistimo.entities.models.KioskLinkFilters;
-import com.logistimo.pagination.PageParams;
-import com.logistimo.pagination.Results;
-import com.logistimo.services.ServiceException;
-
-import java.util.List;
+package com.logistimo.entities.models;
 
 /**
- * Created by charan on 17/02/15.
+ * Created by vani on 05/09/17.
  */
-public interface IEntityDao {
 
+public class ApproverFilters {
+  private Long kioskId;
+  private Long type;
+  private Long orderId;
+  private Integer orderType;
 
-  Results getAllKiosks(Long domainId, String tag, String excludedTag, PageParams pageParams);
+  public Long getKioskId() {
+    return kioskId;
+  }
+  public Long getType() {
+    return type;
+  }
+  public Long getOrderId() {
+    return orderId;
+  }
+  public Integer getOrderType() {
+    return orderType;
+  }
 
-  Results getAllDomainKiosks(Long domainId, String tag, String excludedTag, PageParams pageParams);
-
-  String getKeyString(IKiosk kiosk);
-
-  String getKeyString(IPoolGroup group);
-
-  List<IApprover> getApprovers(ApproverFilters filters);
-
-  Results getKioskLinks(KioskLinkFilters filters, PageParams pageParams, boolean countOnly) throws ServiceException;
+  public ApproverFilters withType(Long type) {
+    this.type = type;
+    return this;
+  }
+  public ApproverFilters withOrderId(Long orderId) {
+    this.orderId = orderId;
+    return this;
+  }
+  public ApproverFilters withOrderType(Integer orderType) {
+    this.orderType = orderType;
+    return this;
+  }
+  public ApproverFilters withKioskId(Long kioskId) {
+    this.kioskId = kioskId;
+    return this;
+  }
 }

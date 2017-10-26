@@ -31,6 +31,7 @@ import org.apache.commons.lang.StringUtils;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -51,6 +52,8 @@ public class InventoryFilters {
   private Set<Integer> eventTypes = new LinkedHashSet<>(1);
   private Long sourceDomainId;
   private boolean noInTransitStock;
+
+  private Date updatedSince;
 
   public Long getKioskId() {
     return kioskId;
@@ -103,6 +106,16 @@ public class InventoryFilters {
   public Collection<Integer> getEventTypes() {
     return eventTypes;
   }
+
+  public Date getUpdatedSince() {
+    return updatedSince;
+  }
+
+  public InventoryFilters withUpdatedSince(Date updatedSince) {
+    this.updatedSince = updatedSince;
+    return this;
+  }
+
 
   public InventoryFilters withKioskId(Long kioskId) {
     this.kioskId = kioskId;

@@ -41,6 +41,20 @@ public class OrderFilters {
   private Date since;
   private Date until;
 
+  //Time after which there is create or update
+  private Date updatedSince;
+
+  public Date getUpdatedSince() {
+    return updatedSince;
+  }
+
+  public OrderFilters setUpdatedSince(Date updatedSince) {
+    if(updatedSince!=null) {
+      this.updatedSince = updatedSince;
+    }
+    return this;
+  }
+
   /**
    * Indicate transfer/order.
    */

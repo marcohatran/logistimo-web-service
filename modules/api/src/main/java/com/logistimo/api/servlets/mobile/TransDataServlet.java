@@ -47,6 +47,7 @@ import com.logistimo.services.ServiceException;
 import com.logistimo.services.Services;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.users.entity.IUserAccount;
+import com.logistimo.utils.HttpUtil;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.QueryUtil;
 
@@ -64,6 +65,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.Vector;
 
@@ -220,8 +222,6 @@ public class TransDataServlet extends JsonRestServlet {
     }
     try {
       // Create an AggTransDataOutput object
-      //AggTransDataOutput aggTransDataOutput = new AggTransDataOutput( status, resultsSize, null, transDataVector, errMsg, locale.toString(), RESTUtil.VERSION_01 );
-      //sendJsonResponse( res, statusCode, aggTransDataOutput.toJSONString() );
       String
           aggTransDataOutputString =
           GsonUtil.aggTransDataOutputToJson(status, resultsSize, transDataVector, errMsg,
@@ -298,8 +298,6 @@ public class TransDataServlet extends JsonRestServlet {
   private void sendError(HttpServletResponse res, String locale, String errMsg) throws IOException {
     xLogger.fine("Entering sendError");
     try {
-      //AggTransDataOutput aggTransDataOutput = new AggTransDataOutput( false, 0, null, null, errMsg, locale.toString(), RESTUtil.VERSION_01 );
-      //sendJsonResponse( res, HttpServletResponse.SC_OK,  aggTransDataOutput.toJSONString() );
       String
           aggTransDataOutput =
           GsonUtil.aggTransDataOutputToJson(false, 0, null, errMsg, locale,
@@ -445,12 +443,13 @@ public class TransDataServlet extends JsonRestServlet {
     int statusCode = HttpServletResponse.SC_OK;
     MobileTransactionsModel mobileTransactionsModel = null;
     Locale locale = new Locale(Constants.LANG_DEFAULT, "");
+    String timezone = null;
+    String lastModified = null;
     try {
       String kidStr = req.getParameter(RestConstantsZ.KIOSK_ID);
       String userIdStr = req.getParameter(RestConstantsZ.USER_ID);
       String passwordStr = req.getParameter(RestConstantsZ.PASSWORD);
       Long kioskId = null;
-      String timezone = null;
       // Authenticate the user - either with password or via the kioskId/session combination
       try {
         if (kidStr != null && !kidStr.isEmpty()) {
@@ -506,7 +505,9 @@ public class TransDataServlet extends JsonRestServlet {
       PageParams pageParams =
           new PageParams((Integer) parsedRequest.parsedReqMap.get(Constants.OFFSET),
               (Integer) parsedRequest.parsedReqMap.get(RestConstantsZ.SIZE));
-
+      Optional<Date> modDateFromReq = HttpUtil.getModifiedDate(req, timezone);
+      Date modifiedSinceDate = modDateFromReq.orElse((Date) parsedRequest.parsedReqMap.get(RestConstantsZ.STARTDATE));
+      lastModified = new Date().toString();
       InventoryManagementService
           ims =
           Services.getService(InventoryManagementServiceImpl.class);
@@ -515,7 +516,7 @@ public class TransDataServlet extends JsonRestServlet {
           results =
           ims.getInventoryTransactionsByKiosk(kioskId,
               (Long) parsedRequest.parsedReqMap.get(RestConstantsZ.MATERIAL_ID), (String) parsedRequest.parsedReqMap.get(RestConstantsZ.TAGS),
-              (Date) parsedRequest.parsedReqMap.get(RestConstantsZ.STARTDATE),
+              modifiedSinceDate,
               (Date) parsedRequest.parsedReqMap.get(RestConstantsZ.ENDDATE),
               (String) parsedRequest.parsedReqMap.get(RestConstantsZ.TRANSACTION_TYPE), pageParams,
               null,
@@ -531,6 +532,9 @@ public class TransDataServlet extends JsonRestServlet {
             GsonUtil
                 .buildGetTransactionsResponseModel(isValid,
                     mobileTransactionsModel, errMessage, RESTUtil.VERSION_01);
+        if(HttpUtil.getModifiedDate(req, timezone).isPresent() && isValid){
+          HttpUtil.setLastModifiedHeader(resp, lastModified);
+        }
         sendJsonResponse(resp, statusCode, jsonOutputString);
       } catch (Exception e1) {
         xLogger.severe("TransDataServlet Exception: {0}", e1);

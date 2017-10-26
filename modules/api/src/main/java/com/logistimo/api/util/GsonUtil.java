@@ -29,6 +29,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import com.logistimo.constants.Constants;
+import com.logistimo.entities.entity.IKioskLink;
 import com.logistimo.entities.models.UserEntitiesModel;
 import com.logistimo.proto.JsonTagsZ;
 import com.logistimo.proto.MobileOrderModel;
@@ -166,8 +167,8 @@ public class GsonUtil {
   }
 
   public static String getInventoryOutputToJson(boolean status, List inventoryList, String currency,
-                                                String errMessage, boolean onlyStock,
-                                                String localeString, String version) {
+                                                String errMessage,
+                                                int numInv, String version) {
     Gson
         gson =
         new GsonBuilder().setDateFormat(Constants.DATE_FORMAT)
@@ -180,6 +181,7 @@ public class GsonUtil {
 
     if (status) {
       jsonObject.addProperty(JsonTagsZ.CURRENCY, currency);
+      jsonObject.addProperty(JsonTagsZ.NUMBER_OF_INVENTORY, numInv);
       if (inventoryList != null && !inventoryList.isEmpty()) {
         String inventoryString = gson.toJson(inventoryList);
         JsonElement mElement = gson.fromJson(inventoryString, JsonElement.class);
@@ -266,7 +268,7 @@ public class GsonUtil {
 
   public static String getRelationshipsOutputToJson(boolean status, String relationshipType,
                                                     List linkedKiosks, String errMsg,
-                                                    String localeStr, String version) {
+                                                    int numLinkedKiosks, String version) {
     Gson
         gson =
         new GsonBuilder().setDateFormat(Constants.DATE_FORMAT)
@@ -279,12 +281,16 @@ public class GsonUtil {
 
     if (status) {
       jsonObject.addProperty(JsonTagsZ.TYPE, relationshipType);
+      if (IKioskLink.TYPE_CUSTOMER.equals(relationshipType)) {
+        jsonObject.addProperty(JsonTagsZ.NUMBER_OF_CUSTOMERS, numLinkedKiosks);
+      } else if (IKioskLink.TYPE_VENDOR.equals(relationshipType)) {
+        jsonObject.addProperty(JsonTagsZ.NUMBER_OF_VENDORS, numLinkedKiosks);
+      }
       if (linkedKiosks != null && !linkedKiosks.isEmpty()) {
         String linkedKiosksString = gson.toJson(linkedKiosks);
         JsonElement mElement = gson.fromJson(linkedKiosksString, JsonElement.class);
         jsonObject.add(JsonTagsZ.KIOSKS, mElement);
       }
-
     } else {
       if (errMsg != null) {
         jsonObject.addProperty(JsonTagsZ.MESSAGE, errMsg);

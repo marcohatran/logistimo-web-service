@@ -1880,4 +1880,28 @@ public class DomainConfig implements ILocation, Serializable {
   public void setLangPreference(String langPreference) {
     this.langPreference = langPreference;
   }
+
+  public boolean isPurchaseApprovalEnabled() {
+    if (approvalsConfig != null && approvalsConfig.getOrderConfig() != null) {
+      List<ApprovalsConfig.PurchaseSalesOrderConfig> purchaseSalesOrderConfigs = approvalsConfig.getOrderConfig().getPurchaseSalesOrderApproval();
+      return(purchaseSalesOrderConfigs.stream()
+                                .anyMatch(purchaseSalesOrderConfig -> purchaseSalesOrderConfig.isPurchaseOrderApproval()));
+
+    }
+    return false;
+  }
+
+  public boolean isSalesApprovalEnabled() {
+    if (approvalsConfig != null && approvalsConfig.getOrderConfig() != null) {
+      List<ApprovalsConfig.PurchaseSalesOrderConfig> purchaseSalesOrderConfigs = approvalsConfig.getOrderConfig().getPurchaseSalesOrderApproval();
+      return(purchaseSalesOrderConfigs.stream()
+          .anyMatch(purchaseSalesOrderConfig -> purchaseSalesOrderConfig.isSalesOrderApproval()));
+    }
+    return false;
+  }
+
+  public boolean isTransferApprovalEnabled() {
+    return (approvalsConfig != null && !approvalsConfig.getOrderConfig().getPrimaryApprovers().isEmpty());
+  }
+
 }
