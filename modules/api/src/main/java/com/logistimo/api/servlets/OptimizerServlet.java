@@ -35,6 +35,7 @@ import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.PagedExec;
 import com.logistimo.pagination.QueryParams;
 
+import com.logistimo.services.utils.ConfigUtil;
 import java.io.IOException;
 import java.util.ResourceBundle;
 
@@ -45,7 +46,8 @@ import javax.servlet.http.HttpServletResponse;
 public class OptimizerServlet extends JsonRestServlet {
 
   private static final XLog xLogger = XLog.getLog(OptimizerServlet.class);
-  private static final int MAX_ENTITIES_PER_TASK = 10;
+  private static final int MAX_ENTITIES_PER_TASK = ConfigUtil
+      .getInt("optimizer.max_inventory_per_task", 50);
   // Computation types
   private static final String COMPUTE_PS = "PS";
   private static final String COMPUTE_DQ = "DQ";
