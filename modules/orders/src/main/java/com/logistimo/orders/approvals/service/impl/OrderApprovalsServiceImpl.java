@@ -168,7 +168,7 @@ public class OrderApprovalsServiceImpl implements IOrderApprovalsService {
   @Override
   public boolean isShippingApprovalRequired(IOrder order)
       throws ServiceException, ObjectNotFoundException {
-    return !order.isTransfer() && DomainConfig.getInstance(order.getLinkedDomainId())
+    return !order.isTransfer() && order.getLinkedDomainId() != null && DomainConfig.getInstance(order.getLinkedDomainId())
         .getApprovalsConfig().getOrderConfig()
         .isSaleApprovalEnabled(
             entitiesService.getKioskIfPresent(order.getServicingKiosk()).getTags());
