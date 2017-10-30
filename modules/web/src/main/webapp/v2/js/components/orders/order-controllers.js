@@ -2457,8 +2457,8 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
         };
     }
 ]);
-ordControllers.controller('order.MaterialController', ['$scope',
-    function ($scope) {
+ordControllers.controller('order.MaterialController', ['$scope','invService',
+    function ($scope,invService) {
         $scope.material.showRecommended = false;
         $scope.showRecomQuantity = function(val){
             $scope.material.showRecommended = false;
@@ -2472,60 +2472,92 @@ ordControllers.controller('order.MaterialController', ['$scope',
         };
         $scope.recommendedQuantity = function(name){
             var opoq = -1;
+            var stock = name.validBatchStock || name.stk;
             if(name.im == 'sq'){
                 opoq = name.eoq;
             }else if(name.max > 0){
-                if((name.stk + name.tstk) >= name.max){
+                if((stock + name.tstk) >= name.max){
                     opoq = 0;
                 }else{
-                    opoq = name.max - name.stk - name.tstk;
+                    opoq = name.max - stock - name.tstk;
                     opoq.toFixed(1);
                 }
             }
             return opoq.toFixed(0);
         };
-        $scope.$watch('material.name', function (name, oldVal) {
-            if (checkNotNull(name) && checkNotNull(name.stk)) {
-                if(checkNotNullEmpty($scope.avMap[name.mId])){
-                    name = $scope.avMap[name.mId];
-                    name.hide = true;
-                }
-                $scope.material.stock = name.stk;
-                $scope.material.ind = name.sno - 1;
-                $scope.material.event = name.event;
-                $scope.material.rp = name.rp;
-                $scope.material.mId = [];
-                $scope.material.mId.push(name.mId);
-                $scope.material.kId = name.kId;
-                $scope.material.crd = name.crd;
-                $scope.material.crw = name.crw;
-                $scope.material.crm = name.crm;
-                $scope.material.rvpdmd = name.rvpdmd;
-                $scope.material.ordp = name.ordp;
-                $scope.material.eoq = name.eoq;
-                $scope.material.rsn = '';
-                $scope.material.atpstk = name.atpstk;
-                $scope.material.tstk = name.tstk;
-                $scope.material.mm = "(" + name.reord.toFixed(0) + ',' + name.max.toFixed(0) + ")";
-                if(checkNotNullEmpty($scope.order.cent)) {
-                    $scope.material.cstock = $scope.cInvMap[name.mId].stk;
-                    $scope.material.cevent = $scope.cInvMap[name.mId].event;
-                    $scope.material.cmm = "(" + $scope.cInvMap[name.mId].reord + "," + $scope.cInvMap[name.mId].max + ")";
-                    $scope.material.rp = $scope.cInvMap[name.mId].rp;
-                }
-                $scope.material.isBinary = name.b === 'bn';
-                if($scope.type == "1") {
-                    $scope.material.recomQ = $scope.recommendedQuantity(name);
-                } else if($scope.type == "0" || $scope.type == "2") {
-                    if($scope.cInvMap[name.mId]) {
-                        $scope.material.recomQ = $scope.recommendedQuantity($scope.cInvMap[name.mId]);
+
+        function setValidBatchQuantity(inv, material) {
+            $scope.showLoading();
+            invService.getBatchDetail(inv.mId, inv.kId, false).then(function (data) {
+                var batchDet = data.data;
+                var totalStock = 0;
+                if(checkNotNullEmpty(batchDet)){
+                    for(var i=0; i< batchDet.length; i++){
+                        if(!batchDet[i].isExp){
+                            totalStock = totalStock + batchDet[i].q;
+                        }
                     }
                 }
-                $scope.material.quantity = Math.max($scope.material.recomQ,0);
-                $scope.material.mrsn = null;
-                $scope.addRows();
+                material.validBatchStock =  totalStock;
+                updateMaterial(material);
+            }).catch(function error(msg) {
+                $scope.showErrorMsg(msg);
+            }).finally(function() {
+                $scope.hideLoading();
+            });
+        }
+
+        $scope.$watch('material.name', function (newVal, oldVal) {
+            if (checkNotNull(newVal) && checkNotNull(newVal.stk)) {
+                if(checkNotNullEmpty($scope.avMap[newVal.mId])){
+                    newVal = $scope.avMap[newVal.mId];
+                    newVal.hide = true;
+                }
+                if(newVal.be) {
+                    var inv = $scope.type == "0" || $scope.type == "2" ? $scope.cInvMap[newVal.mId] : newVal;
+                    setValidBatchQuantity(inv, newVal);
+                } else {
+                    updateMaterial(newVal);
+                }
             }
         });
+
+        function updateMaterial(name) {
+            $scope.material.stock = name.stk;
+            $scope.material.ind = name.sno - 1;
+            $scope.material.event = name.event;
+            $scope.material.rp = name.rp;
+            $scope.material.mId = [];
+            $scope.material.mId.push(name.mId);
+            $scope.material.kId = name.kId;
+            $scope.material.crd = name.crd;
+            $scope.material.crw = name.crw;
+            $scope.material.crm = name.crm;
+            $scope.material.rvpdmd = name.rvpdmd;
+            $scope.material.ordp = name.ordp;
+            $scope.material.eoq = name.eoq;
+            $scope.material.rsn = '';
+            $scope.material.atpstk = name.atpstk;
+            $scope.material.tstk = name.tstk;
+            $scope.material.mm = "(" + name.reord.toFixed(0) + ',' + name.max.toFixed(0) + ")";
+            if(checkNotNullEmpty($scope.order.cent)) {
+                $scope.material.cstock = $scope.cInvMap[name.mId].stk;
+                $scope.material.cevent = $scope.cInvMap[name.mId].event;
+                $scope.material.cmm = "(" + $scope.cInvMap[name.mId].reord + "," + $scope.cInvMap[name.mId].max + ")";
+                $scope.material.rp = $scope.cInvMap[name.mId].rp;
+            }
+            $scope.material.isBinary = name.b === 'bn';
+            $scope.material.mrsn = null;
+            if($scope.type == "1") {
+                $scope.material.recomQ = $scope.recommendedQuantity($scope.material.name);
+            } else if($scope.type == "0" || $scope.type == "2") {
+                if($scope.cInvMap[name.mId]) {
+                    $scope.material.recomQ = $scope.recommendedQuantity($scope.cInvMap[$scope.material.name]);
+                }
+            }
+            $scope.material.quantity = Math.max($scope.material.recomQ,0);
+            $scope.addRows();
+        }
     }
 ]);
 ordControllers.controller('DemandItemController', ['$scope', function ($scope) {
