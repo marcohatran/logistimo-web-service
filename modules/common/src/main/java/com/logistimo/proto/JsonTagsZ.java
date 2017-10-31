@@ -59,6 +59,10 @@ public class JsonTagsZ {
   public static final String
       CLOSING_STOCK_IN_BATCH =
       "cstkb";
+  public static final String MANUFACTURERS = "mfrs";
+  public static final String MANUFACTURER_CODE = "code";
+  public static final String MANUFACTURER_NAME = "name";
+  public static final String MATERIAL_CODE = "material_code";
   // Changed from csb to cstkb for naming consistency
   public static final String CONFIGURATION = "cf";
   public static final String CREDIT_LIMIT = "crl";

@@ -38,6 +38,7 @@ import com.logistimo.logger.XLog;
 import com.logistimo.materials.dao.IMaterialDao;
 import com.logistimo.materials.dao.impl.MaterialDao;
 import com.logistimo.materials.entity.IMaterial;
+import com.logistimo.materials.entity.IMaterialManufacturers;
 import com.logistimo.materials.entity.Material;
 import com.logistimo.materials.service.MaterialCatalogService;
 import com.logistimo.models.ICounter;
@@ -535,5 +536,27 @@ public class MaterialCatalogServiceImpl extends ServiceImpl implements MaterialC
     return materialIds;
   }
 
+  public List<IMaterialManufacturers> getMaterialManufacturers(Long materialId) throws ServiceException {
+    PersistenceManager pm = getPM();
+    String query = "SELECT * FROM MaterialManufacturers WHERE MATERIAL_ID = ?";
+    Query q = pm.newQuery("javax.jdo.query.SQL", query);
+    q.setClass(JDOUtils.getImplClass(IMaterialManufacturers.class));
+    try {
+      List<IMaterialManufacturers> manufacturers =
+          (List<IMaterialManufacturers>) q.execute(materialId);
+      manufacturers = (List<IMaterialManufacturers>) pm.detachCopyAll(manufacturers);
+      return manufacturers;
+    } catch (Exception e) {
+      xLogger.warn("Error while fetching manufacturer list for material {0}", materialId, e);
+      throw e;
+    } finally {
+      q.closeAll();
+      pm.close();
+    }
+  }
+
+  public PersistenceManager getPM() {
+    return PMF.get().getPersistenceManager();
+  }
 
 }

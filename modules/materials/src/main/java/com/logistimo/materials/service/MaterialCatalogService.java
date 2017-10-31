@@ -27,7 +27,7 @@
 package com.logistimo.materials.service;
 
 import com.logistimo.materials.entity.IMaterial;
-
+import com.logistimo.materials.entity.IMaterialManufacturers;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
 import com.logistimo.services.Service;
@@ -78,4 +78,6 @@ public interface MaterialCatalogService extends Service {
   Results searchMaterialsNoHU(Long domainId, String q);
 
   List<Long> getAllMaterialIds(Long domainId);
+
+  List<IMaterialManufacturers> getMaterialManufacturers(Long materialId) throws ServiceException;
 }

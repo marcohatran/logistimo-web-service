@@ -87,6 +87,7 @@ import com.logistimo.inventory.service.impl.InventoryManagementServiceImpl;
 import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IHandlingUnit;
 import com.logistimo.materials.entity.IMaterial;
+import com.logistimo.materials.entity.IMaterialManufacturers;
 import com.logistimo.materials.service.IHandlingUnitService;
 import com.logistimo.materials.service.MaterialCatalogService;
 import com.logistimo.materials.service.impl.HandlingUnitServiceImpl;
@@ -204,9 +205,11 @@ public class RESTUtil {
     while (it.hasNext()) {
       IInvntry inv = it.next();
       // Get the material data
-      IMaterial m;
+      IMaterial m = null;
+      List<IMaterialManufacturers> manufacturers;
       try {
         m = mcs.getMaterial(inv.getMaterialId());
+        manufacturers = mcs.getMaterialManufacturers(m.getMaterialId());
       } catch (Exception e) {
         xLogger
             .warn("{0} when getting material {1}: {2}", e.getClass().getName(), inv.getMaterialId(),
@@ -356,6 +359,7 @@ public class RESTUtil {
         material.put(JsonTagsZ.ENFORCE_HANDLING_UNIT_CONSTRAINT, "yes");
         material.put(JsonTagsZ.HANDLING_UNIT, handlingUnit);
       }
+        material.put(JsonTagsZ.MANUFACTURERS, getManufacturerList(manufacturers));
       // If start date is specified, then check and add the material to invData only if the it was created or updated on or after the start date.
       Date materialCreatedOn = m.getTimeStamp();
       Date materialLastUpdatedOn = m.getLastUpdated();
@@ -985,6 +989,21 @@ public class RESTUtil {
         GsonUtil.authenticateOutputToJson(status, message, expiryTime, fullUser, config,
             RESTUtil.VERSION_01);
     return jsonString;
+  }
+
+  public static List<Map<String, Object>> getManufacturerList(List<IMaterialManufacturers> manufacturers) {
+    List<Map<String, Object>> manufacturerList = new ArrayList<>();
+    if(manufacturers != null && !manufacturers.isEmpty()) {
+      for (IMaterialManufacturers manufacturer : manufacturers) {
+        Map<String, Object> model = new HashMap<>();
+        model.put(JsonTagsZ.MANUFACTURER_CODE, manufacturer.getManufacturerCode());
+        model.put(JsonTagsZ.MANUFACTURER_NAME, manufacturer.getManufacturerName());
+        model.put(JsonTagsZ.MATERIAL_CODE, manufacturer.getMaterialCode());
+        model.put(JsonTagsZ.QUANTITY, manufacturer.getQuantity());
+        manufacturerList.add(model);
+      }
+    }
+    return manufacturerList;
   }
 
   // Get data for kiosks for JSON output
