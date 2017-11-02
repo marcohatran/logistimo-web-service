@@ -34,7 +34,7 @@ public class MaterialCatalogServiceImplTest {
   public void setup() throws ServiceException {
     pm = mock(PersistenceManager.class);
     q = mock(Query.class);
-    String query = "SELECT * FROM MaterialManufacturers WHERE MATERIAL_ID = ?";
+    String query = "SELECT * FROM MATERIALMANUFACTURERS WHERE MATERIAL_ID = ?";
     doReturn(pm).when(mcs).getPM();
     when(pm.newQuery("javax.jdo.query.SQL", query)).thenReturn(q);
   }

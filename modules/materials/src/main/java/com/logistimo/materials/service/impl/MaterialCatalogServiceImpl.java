@@ -538,7 +538,7 @@ public class MaterialCatalogServiceImpl extends ServiceImpl implements MaterialC
 
   public List<IMaterialManufacturers> getMaterialManufacturers(Long materialId) throws ServiceException {
     PersistenceManager pm = getPM();
-    String query = "SELECT * FROM MaterialManufacturers WHERE MATERIAL_ID = ?";
+    String query = "SELECT * FROM MATERIALMANUFACTURERS WHERE MATERIAL_ID = ?";
     Query q = pm.newQuery("javax.jdo.query.SQL", query);
     q.setClass(JDOUtils.getImplClass(IMaterialManufacturers.class));
     try {
