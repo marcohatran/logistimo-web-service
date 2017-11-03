@@ -1387,358 +1387,363 @@ public class RESTUtil {
   // Get domain-specific configuration to be sent to mobile
   private static Hashtable<String, Object> getConfig(DomainConfig dc, IUserAccount user, Optional<Date> modifiedSinceDate) throws ServiceException{
     xLogger.fine("Entered getConfig");
-    OrdersConfig oc = dc.getOrdersConfig();
     // Get domain config
-    if (dc != null) {
-      Hashtable<String, Object>
-          config =
-          new Hashtable<>();
-      if (!isConfigModified(modifiedSinceDate,user.getDomainId())) {
-        return config;
-      }
-      String transNaming = dc.getTransactionNaming();
-      if (transNaming != null) {
-        config.put(JsonTagsZ.TRANSACTION_NAMING, transNaming);
-      }
-      String orderGen = dc.getOrderGeneration();
-      if (orderGen == null) {
-        orderGen = DomainConfig.ORDERGEN_DEFAULT;
-      }
-      config.put(JsonTagsZ.ORDER_GENERATION, orderGen);
-      // Get config. on auto-posting of inventory
-      config.put(JsonTagsZ.UPDATESTOCK_ON_SHIPPED, String.valueOf(dc.autoGI()));
-      config.put(JsonTagsZ.UPDATESTOCK_ON_FULFILLED, String.valueOf(dc.autoGR()));
-      // Role-specific configs.
-      CapabilityConfig cconf = dc.getCapabilityByRole(user.getRole());
-      String transMenu = null, tagsInventory = null, tagsOrders = null, geoCodingStrategy = null,
-          creatableEntityTypes =
-              null;
-      boolean allowRouteTagEditing, loginAsReconnect;
-      boolean sendVendors, sendCustomers, disableShippingOnMobile;
-      // Inventory tags to hide by operation, if any
-      Hashtable<String, String> invTgsToHide = null;
-      if (cconf != null) { // send role-specific configuration
-        transMenu = StringUtil.getCSV(cconf.getCapabilities());
-        tagsInventory = cconf.getTagsInventory();
-        tagsOrders = cconf.getTagsOrders();
-        sendVendors = cconf.sendVendors();
-        sendCustomers = cconf.sendCustomers();
-        geoCodingStrategy = cconf.getGeoCodingStrategy();
-        creatableEntityTypes = StringUtil.getCSV(cconf.getCreatableEntityTypes());
-        allowRouteTagEditing = cconf.allowRouteTagEditing();
-        loginAsReconnect = cconf.isLoginAsReconnect();
-        disableShippingOnMobile = cconf.isDisableShippingOnMobile();
-        invTgsToHide = getInventoryTagsToHide(cconf);
-      } else { // send generic configuration
-        transMenu = dc.getTransactionMenusString();
-        tagsInventory = dc.getTagsInventory();
-        tagsOrders = dc.getTagsOrders();
-        sendVendors = dc.sendVendors();
-        sendCustomers = dc.sendCustomers();
-        geoCodingStrategy = dc.getGeoCodingStrategy();
-        creatableEntityTypes = StringUtil.getCSV(dc.getCreatableEntityTypes());
-        allowRouteTagEditing = dc.allowRouteTagEditing();
-        loginAsReconnect = dc.isLoginAsReconnect();
-        disableShippingOnMobile = dc.isDisableShippingOnMobile();
-        invTgsToHide = getInventoryTagsToHide(dc);
-      }
-      if (invTgsToHide != null && !invTgsToHide.isEmpty()) {
-        config.put(JsonTagsZ.TAGS_INVENTORY_OPERATION, invTgsToHide);
-      }
+    if (dc == null) {
+      return null;
+    }
+    OrdersConfig oc = dc.getOrdersConfig();
+    Hashtable<String, Object>
+        config =
+        new Hashtable<>();
+    if (!isConfigModified(modifiedSinceDate,user.getDomainId())) {
+      return config;
+    }
+    String transNaming = dc.getTransactionNaming();
+    if (transNaming != null) {
+      config.put(JsonTagsZ.TRANSACTION_NAMING, transNaming);
+    }
+    String orderGen = dc.getOrderGeneration();
+    if (orderGen == null) {
+      orderGen = DomainConfig.ORDERGEN_DEFAULT;
+    }
+    config.put(JsonTagsZ.ORDER_GENERATION, orderGen);
+    // Get config. on auto-posting of inventory
+    config.put(JsonTagsZ.UPDATESTOCK_ON_SHIPPED, String.valueOf(dc.autoGI()));
+    config.put(JsonTagsZ.UPDATESTOCK_ON_FULFILLED, String.valueOf(dc.autoGR()));
+    // Role-specific configs.
+    CapabilityConfig cconf = dc.getCapabilityByRole(user.getRole());
+    String transMenu = null, tagsInventory = null, tagsOrders = null, geoCodingStrategy = null,
+        creatableEntityTypes =
+            null;
+    boolean allowRouteTagEditing, loginAsReconnect;
+    boolean sendVendors, sendCustomers, disableShippingOnMobile;
+    // Inventory tags to hide by operation, if any
+    Hashtable<String, String> invTgsToHide = null;
+    if (cconf != null) { // send role-specific configuration
+      transMenu = StringUtil.getCSV(cconf.getCapabilities());
+      tagsInventory = cconf.getTagsInventory();
+      tagsOrders = cconf.getTagsOrders();
+      sendVendors = cconf.sendVendors();
+      sendCustomers = cconf.sendCustomers();
+      geoCodingStrategy = cconf.getGeoCodingStrategy();
+      creatableEntityTypes = StringUtil.getCSV(cconf.getCreatableEntityTypes());
+      allowRouteTagEditing = cconf.allowRouteTagEditing();
+      loginAsReconnect = cconf.isLoginAsReconnect();
+      disableShippingOnMobile = cconf.isDisableShippingOnMobile();
+      invTgsToHide = getInventoryTagsToHide(cconf);
+    } else { // send generic configuration
+      transMenu = dc.getTransactionMenusString();
+      tagsInventory = dc.getTagsInventory();
+      tagsOrders = dc.getTagsOrders();
+      sendVendors = dc.sendVendors();
+      sendCustomers = dc.sendCustomers();
+      geoCodingStrategy = dc.getGeoCodingStrategy();
+      creatableEntityTypes = StringUtil.getCSV(dc.getCreatableEntityTypes());
+      allowRouteTagEditing = dc.allowRouteTagEditing();
+      loginAsReconnect = dc.isLoginAsReconnect();
+      disableShippingOnMobile = dc.isDisableShippingOnMobile();
+      invTgsToHide = getInventoryTagsToHide(dc);
+    }
+    if (invTgsToHide != null && !invTgsToHide.isEmpty()) {
+      config.put(JsonTagsZ.TAGS_INVENTORY_OPERATION, invTgsToHide);
+    }
 
-      if (transMenu != null) {
-        config.put(JsonTagsZ.TRANSACTIONS, transMenu);
-      }
-      if (tagsInventory != null && !tagsInventory.isEmpty()) {
-        config.put(JsonTagsZ.TAGS_INVENTORY, tagsInventory);
-      }
-      if (tagsOrders != null && !tagsOrders.isEmpty()) {
-        config.put(JsonTagsZ.TAGS_ORDERS, tagsOrders);
-      }
-      if (sendVendors) {
-        config.put(JsonTagsZ.VENDORS_MANDATORY, JsonTagsZ.STATUS_TRUE);
-      }
-      if (sendCustomers) {
-        config.put(JsonTagsZ.CUSTOMERS_MANDATORY, JsonTagsZ.STATUS_TRUE);
-      }
-      if (dc.allowEmptyOrders()) {
-        config.put(JsonTagsZ.ALLOW_EMPTY_ORDERS, JsonTagsZ.STATUS_TRUE);
-      }
-      if (dc.allowMarkOrderAsFulfilled()) {
-        config.put(JsonTagsZ.ORDER_MARKASFULFILLED, JsonTagsZ.STATUS_TRUE);
-      }
-      if (dc.getPaymentOptions() != null && !dc.getPaymentOptions().isEmpty()) {
-        config.put(JsonTagsZ.PAYMENT_OPTION, dc.getPaymentOptions());
-      }
-      if (dc.getPackageSizes() != null && !dc.getPackageSizes().isEmpty()) {
-        config.put(JsonTagsZ.PACKAGE_SIZE, dc.getPackageSizes());
-      }
-      if (dc.getOrderTags() != null && !dc.getOrderTags().isEmpty()) {
-        config.put(JsonTagsZ.ORDER_TAGS, dc.getOrderTags());
-      }
-      if (geoCodingStrategy != null) {
-        config.put(JsonTagsZ.GEOCODING_STRATEGY, geoCodingStrategy);
-      }
-      if (creatableEntityTypes != null && !creatableEntityTypes.isEmpty()) {
-        config.put(JsonTagsZ.CREATABLE_ENTITY_TYPES, creatableEntityTypes);
-      }
-      if (allowRouteTagEditing) {
-        config.put(JsonTagsZ.ALLOW_ROUTETAG_EDITING, String.valueOf(true));
-      }
-      if (loginAsReconnect) {
-        config.put(JsonTagsZ.LOGIN_AS_RECONNECT, String.valueOf(true));
-      }
-      if (!disableShippingOnMobile) {
-        config.put(JsonTagsZ.ENABLE_SHIPPING_MOBILE, String.valueOf(true));
-      }
-      // Send transaction reasons
-      // Get wastage reason from the higest level, always
-      String wastageReasons = dc.getWastageReasons();
-      if (wastageReasons != null && !wastageReasons.isEmpty()) {
-        config.put(JsonTagsZ.REASONS_WASTAGE, StringUtil.getCSV(new ArrayList<>(
-            new LinkedHashSet<>(Arrays.asList(wastageReasons.split(CharacterConstants.COMMA))))));
-      }
-      InventoryConfig ic = dc.getInventoryConfig();
-      // Issue reasons, if any
-      String issueReasons = ic.getTransReason(ITransaction.TYPE_ISSUE);
-      if (issueReasons != null && !issueReasons.isEmpty()) {
-        config.put(JsonTagsZ.REASONS_ISSUE, StringUtil.getCSV(new ArrayList<>(
-            new LinkedHashSet<>(Arrays.asList(issueReasons.split(CharacterConstants.COMMA))))));
-      }
-      // Receipt reasons, if any
-      String receiptReasons = ic.getTransReason(ITransaction.TYPE_RECEIPT);
-      if (receiptReasons != null && !receiptReasons.isEmpty()) {
-        config.put(JsonTagsZ.REASONS_RECEIPT, StringUtil.getCSV(new ArrayList<>(
-            new LinkedHashSet<>(Arrays.asList(receiptReasons.split(CharacterConstants.COMMA))))));
-      }
-      // Stockcount reasons, if any
-      String stockcountReasons = ic.getTransReason(ITransaction.TYPE_PHYSICALCOUNT);
-      if (stockcountReasons != null && !stockcountReasons.isEmpty()) {
-        config.put(JsonTagsZ.REASONS_STOCKCOUNT, StringUtil.getCSV(new ArrayList<>(
-            new LinkedHashSet<>(
-                Arrays.asList(stockcountReasons.split(CharacterConstants.COMMA))))));
-      }
-      // Transfer reasons, if any
-      String transferReasons = ic.getTransReason(ITransaction.TYPE_TRANSFER);
-      if (transferReasons != null && !transferReasons.isEmpty()) {
-        config.put(JsonTagsZ.REASONS_TRANSFER, StringUtil.getCSV(new ArrayList<>(
-            new LinkedHashSet<>(Arrays.asList(transferReasons.split(CharacterConstants.COMMA))))));
-      }
+    if (transMenu != null) {
+      config.put(JsonTagsZ.TRANSACTIONS, transMenu);
+    }
+    if (tagsInventory != null && !tagsInventory.isEmpty()) {
+      config.put(JsonTagsZ.TAGS_INVENTORY, tagsInventory);
+    }
+    if (tagsOrders != null && !tagsOrders.isEmpty()) {
+      config.put(JsonTagsZ.TAGS_ORDERS, tagsOrders);
+    }
+    if (sendVendors) {
+      config.put(JsonTagsZ.VENDORS_MANDATORY, JsonTagsZ.STATUS_TRUE);
+    }
+    if (sendCustomers) {
+      config.put(JsonTagsZ.CUSTOMERS_MANDATORY, JsonTagsZ.STATUS_TRUE);
+    }
+    if (dc.allowEmptyOrders()) {
+      config.put(JsonTagsZ.ALLOW_EMPTY_ORDERS, JsonTagsZ.STATUS_TRUE);
+    }
+    if (dc.allowMarkOrderAsFulfilled()) {
+      config.put(JsonTagsZ.ORDER_MARKASFULFILLED, JsonTagsZ.STATUS_TRUE);
+    }
+    if (dc.getPaymentOptions() != null && !dc.getPaymentOptions().isEmpty()) {
+      config.put(JsonTagsZ.PAYMENT_OPTION, dc.getPaymentOptions());
+    }
+    if (dc.getPackageSizes() != null && !dc.getPackageSizes().isEmpty()) {
+      config.put(JsonTagsZ.PACKAGE_SIZE, dc.getPackageSizes());
+    }
+    if (dc.getOrderTags() != null && !dc.getOrderTags().isEmpty()) {
+      config.put(JsonTagsZ.ORDER_TAGS, dc.getOrderTags());
+    }
+    if (geoCodingStrategy != null) {
+      config.put(JsonTagsZ.GEOCODING_STRATEGY, geoCodingStrategy);
+    }
+    if (creatableEntityTypes != null && !creatableEntityTypes.isEmpty()) {
+      config.put(JsonTagsZ.CREATABLE_ENTITY_TYPES, creatableEntityTypes);
+    }
+    if (allowRouteTagEditing) {
+      config.put(JsonTagsZ.ALLOW_ROUTETAG_EDITING, String.valueOf(true));
+    }
+    if (loginAsReconnect) {
+      config.put(JsonTagsZ.LOGIN_AS_RECONNECT, String.valueOf(true));
+    }
+    if (!disableShippingOnMobile) {
+      config.put(JsonTagsZ.ENABLE_SHIPPING_MOBILE, String.valueOf(true));
+    }
+    // Send transaction reasons
+    // Get wastage reason from the higest level, always
+    String wastageReasons = dc.getWastageReasons();
+    if (wastageReasons != null && !wastageReasons.isEmpty()) {
+      config.put(JsonTagsZ.REASONS_WASTAGE, StringUtil.getCSV(new ArrayList<>(
+          new LinkedHashSet<>(Arrays.asList(wastageReasons.split(CharacterConstants.COMMA))))));
+    }
+    InventoryConfig ic = dc.getInventoryConfig();
+    // Issue reasons, if any
+    String issueReasons = ic.getTransReason(ITransaction.TYPE_ISSUE);
+    if (issueReasons != null && !issueReasons.isEmpty()) {
+      config.put(JsonTagsZ.REASONS_ISSUE, StringUtil.getCSV(new ArrayList<>(
+          new LinkedHashSet<>(Arrays.asList(issueReasons.split(CharacterConstants.COMMA))))));
+    }
+    // Receipt reasons, if any
+    String receiptReasons = ic.getTransReason(ITransaction.TYPE_RECEIPT);
+    if (receiptReasons != null && !receiptReasons.isEmpty()) {
+      config.put(JsonTagsZ.REASONS_RECEIPT, StringUtil.getCSV(new ArrayList<>(
+          new LinkedHashSet<>(Arrays.asList(receiptReasons.split(CharacterConstants.COMMA))))));
+    }
+    // Stockcount reasons, if any
+    String stockcountReasons = ic.getTransReason(ITransaction.TYPE_PHYSICALCOUNT);
+    if (stockcountReasons != null && !stockcountReasons.isEmpty()) {
+      config.put(JsonTagsZ.REASONS_STOCKCOUNT, StringUtil.getCSV(new ArrayList<>(
+          new LinkedHashSet<>(
+              Arrays.asList(stockcountReasons.split(CharacterConstants.COMMA))))));
+    }
+    // Transfer reasons, if any
+    String transferReasons = ic.getTransReason(ITransaction.TYPE_TRANSFER);
+    if (transferReasons != null && !transferReasons.isEmpty()) {
+      config.put(JsonTagsZ.REASONS_TRANSFER, StringUtil.getCSV(new ArrayList<>(
+          new LinkedHashSet<>(Arrays.asList(transferReasons.split(CharacterConstants.COMMA))))));
+    }
 
-      // Reasons by material tag, if any
-      Hashtable<String, Hashtable<String, String>> rsnsByMtag = getReasonsByTag(ic);
-      if (rsnsByMtag != null && !rsnsByMtag.isEmpty()) {
-        config.put(JsonTagsZ.REASONS_BY_TAG, rsnsByMtag);
-      }
+    // Reasons by material tag, if any
+    Hashtable<String, Hashtable<String, String>> rsnsByMtag = getReasonsByTag(ic);
+    if (rsnsByMtag != null && !rsnsByMtag.isEmpty()) {
+      config.put(JsonTagsZ.REASONS_BY_TAG, rsnsByMtag);
+    }
 
-      // Material Status, if any
-      Hashtable<String, Hashtable<String, String>> mStHt = getMaterialStatus(ic);
-      if (mStHt != null && !mStHt.isEmpty()) {
-        config.put(JsonTagsZ.MATERIAL_STATUS_OPERATION, mStHt);
-      }
+    // Material Status, if any
+    Hashtable<String, Hashtable<String, String>> mStHt = getMaterialStatus(ic);
+    if (mStHt != null && !mStHt.isEmpty()) {
+      config.put(JsonTagsZ.MATERIAL_STATUS_OPERATION, mStHt);
+    }
 
-      //Min Max Frequency
-      String minMaxFreq = ic.getMinMaxDur();
-      if (minMaxFreq != null && !minMaxFreq.isEmpty()) {
-        if (InventoryConfig.FREQ_DAILY.equals(minMaxFreq)) {
-          config.put(JsonTagsZ.MINMAX_FREQUENCY, 'd');
-        } else if (InventoryConfig.FREQ_WEEKLY.equals(minMaxFreq)) {
-          config.put(JsonTagsZ.MINMAX_FREQUENCY, 'w');
-        } else if (InventoryConfig.FREQ_MONTHLY.equals(minMaxFreq)) {
-          config.put(JsonTagsZ.MINMAX_FREQUENCY, 'm');
-        }
-      }
-      if (ic.getPermissions() != null && ic.getPermissions().invCustomersVisible) {
-        config.put(JsonTagsZ.INVENTORY_VISIBLE, true);
-      }
-      // Currency
-      String currency = dc.getCurrency();
-      if (currency != null && !currency.isEmpty()) {
-        config.put(JsonTagsZ.CURRENCY, currency);
-      }
-      // Route tags, if any
-      if (dc.getRouteTags() != null) {
-        config.put(JsonTagsZ.ROUTE_TAG, dc.getRouteTags());
-      }
-      // The following code was added to fix LS-1227.
-      // Default vendor ID and Default vendor Name if any
-      Long defaultVendorId = dc.getVendorId();
-      if (defaultVendorId != null) {
-        config.put(JsonTagsZ.VENDORID, defaultVendorId.toString());
-        // Get the default vendor name
-        try {
-          EntitiesService as = Services.getService(EntitiesServiceImpl.class);
-          IKiosk k = as.getKiosk(defaultVendorId, false);
-          if (k != null) {
-            config.put(JsonTagsZ.VENDOR, k.getName());
-            config.put(JsonTagsZ.VENDOR_CITY, k.getCity());
-          }
-        } catch (ServiceException se) {
-          xLogger.warn("ServiceException when getting default vendor name for vendor id {0}: {1}",
-              defaultVendorId, se.getMessage());
-        }
-      }
-      // The support related information should be added here.
-      // Get the general config from system configuration
-      GeneralConfig gc = null;
-      try {
-        gc = GeneralConfig.getInstance();
-      } catch (ConfigurationException ce) {
-        xLogger.warn("Exception while getting GeneralConfiguration. Message: {0}", ce.getMessage());
-      }
-      if (gc != null && gc.getAupg() != null) {
-        Hashtable<String, String> upgradeConfig = getAppUpgradeVersion(gc);
-        if (upgradeConfig != null) {
-          config.put(JsonTagsZ.APP_UPGRADE, upgradeConfig);
-        }
-      }
-      SupportConfig
-          supportConfig =
-          dc.getSupportConfigByRole(
-              user.getRole()); // Get the support configuration for the role of the logged in user
-      String supportEmail = null, supportPhone = null, supportContactName = null;
-      // If Support is configured in Domain configuration, get support information.
-      if (supportConfig != null) {
-        // Get the supportUserId or support user name from Support configuration.
-        String supportUserId = supportConfig.getSupportUser();
-
-        if (supportUserId != null && !supportUserId.isEmpty()) {
-          // If userId is configured in SupportConfig, get the phone number, email and contact name from the UserAccount object
-          try {
-            UsersService as = Services.getService(UsersServiceImpl.class);
-            IUserAccount ua = as.getUserAccount(supportUserId);
-            supportEmail = ua.getEmail();
-            supportPhone = ua.getMobilePhoneNumber();
-            supportContactName = ua.getFullName();
-          } catch (SystemException se) {
-            xLogger
-                .warn("ServiceException when getting support user with id {0}: {1}", supportUserId,
-                    se.getMessage());
-          }
-        } else {
-          supportPhone = supportConfig.getSupportPhone();
-          supportEmail = supportConfig.getSupportEmail();
-          supportContactName = supportConfig.getSupportUserName();
-          // The extra check below is added because if a support info is removed from the
-          // General Configuration, supportConfig exists but values for supportPhone, supportEmail and supportContactName are ""
-          // In that case, it has to send the support information present in System Configuration -> generalconfig
-          if (supportPhone == null || supportPhone.isEmpty() && gc != null) {
-            supportPhone = gc.getSupportPhone();
-          }
-          if (supportEmail == null || supportEmail.isEmpty() && gc != null) {
-            supportEmail = gc.getSupportEmail();
-          }
-        }
-      } else {
-        // If Support is not configured under Domain configuration, get the support phone number and email from the System configuration
-        if (gc != null) {
-          supportEmail = gc.getSupportEmail();
-          supportPhone = gc.getSupportPhone();
-        }
-      }
-      // Add support configuration only if it is present in Domain configuration or in System configuration.
-      if (supportContactName != null && !supportContactName.isEmpty()) {
-        config.put(JsonTagsZ.SUPPORT_CONTACT_NAME, supportContactName);
-      }
-      if (supportEmail != null && !supportEmail.isEmpty()) {
-        config.put(JsonTagsZ.SUPPORT_EMAIL, supportEmail);
-      }
-      if (supportPhone != null && !supportPhone.isEmpty()) {
-        config.put(JsonTagsZ.SUPPORT_PHONE, supportPhone);
-      }
-      // Synchronization by mobile configuration to be read from DomainConfig. It should be sent to the mobile app, only if the values of intervals are > 0
-      SyncConfig syncConfig = dc.getSyncConfig();
-      if (syncConfig != null) {
-        Hashtable<String, String> intrvlsHt = getIntervalsHashtable(syncConfig);
-        if (intrvlsHt != null && !intrvlsHt.isEmpty()) {
-          config.put(JsonTagsZ.INTERVALS, intrvlsHt);
-        }
-      }
-      // Local login required
-      config.put(JsonTagsZ.NO_LOCAL_LOGIN_WITH_VALID_TOKEN,
-          String.valueOf(!dc.isLocalLoginRequired()));
-      // Add the config. to capture actual date of trans, if enabled
-      Hashtable<String, Hashtable<String, String>> aTdHt = getActualTransDate(ic);
-      if (aTdHt != null && !aTdHt.isEmpty()) {
-        config.put(JsonTagsZ.CAPTURE_ACTUAL_TRANSACTION_DATE, aTdHt);
-      }
-      if (dc.isDisableOrdersPricing()) {
-        config.put(JsonTagsZ.DISABLE_ORDER_PRICING, String.valueOf(dc.isDisableOrdersPricing()));
-      }
-      // Add order reasons to config
-      addReasonsConfiguration(config, oc);
-      Hashtable<String, Object> oCfg = getOrdersConfiguration(dc);
-      if (!oCfg.isEmpty()) {
-        config.put(JsonTagsZ.ORDER_CONFIG, oCfg);
-      }
-
-      try {
-        SMSConfig smsConfig = SMSConfig.getInstance();
-        if (smsConfig != null) {
-          String country = dc.getCountry() != null ? dc.getCountry() : Constants.COUNTRY_DEFAULT;
-          // For incoming
-          SMSConfig.ProviderConfig
-              iProviderConfig =
-              smsConfig.getProviderConfig(smsConfig.getProviderId(country, SMSService.INCOMING));
-          Hashtable<String, String> sms = new Hashtable<>(3);
-          if (iProviderConfig != null) {
-            sms.put(JsonTagsZ.GATEWAY_PHONE_NUMBER,
-                iProviderConfig.getString(SMSConfig.ProviderConfig.LONGCODE));
-            sms.put(JsonTagsZ.GATEWAY_ROUTING_KEYWORD,
-                iProviderConfig.getString(SMSConfig.ProviderConfig.KEYWORD));
-          }
-          //For outgoing
-          SMSConfig.ProviderConfig
-              oProviderConfig =
-              smsConfig.getProviderConfig(smsConfig.getProviderId(country, SMSService.OUTGOING));
-          if (oProviderConfig != null) {
-            sms.put(JsonTagsZ.SENDER_ID,
-                oProviderConfig.getString(SMSConfig.ProviderConfig.SENDER_ID));
-          }
-          config.put(JsonTagsZ.SMS, sms);
-        }
-        MobileConfigBuilder mobileConfigBuilder = new MobileConfigBuilder();
-        // Approval configuration
-        ApprovalsConfig approvalsConfig = dc.getApprovalsConfig();
-        if (approvalsConfig != null) {
-          MobileApprovalsConfigModel
-              mobileApprovalsConfigModel =
-              mobileConfigBuilder.buildApprovalConfiguration(approvalsConfig);
-          if (mobileApprovalsConfigModel != null) {
-            config.put(JsonTagsZ.APPROVALS, mobileApprovalsConfigModel);
-          }
-        }
-        // Add the domain specific Store app theme configuration
-        config.put(JsonTagsZ.GUI_THEME, dc.getStoreAppTheme());
-        // Accounting configuration
-        AccountingConfig acctConfig = dc.getAccountingConfig();
-        if (acctConfig != null) {
-          MobileAccountingConfigModel mobileAccountingConfigModel = mobileConfigBuilder.buildAccountingConfiguration(
-              dc.isAccountingEnabled(), acctConfig);
-          config.put(JsonTagsZ.ACCOUNTING_CONFIG, mobileAccountingConfigModel);
-        }
-        if (IUserAccount.LR_LOGIN_RECONNECT.equals(user.getLoginReconnect())) {
-          config.put(JsonTagsZ.LOGIN_AS_RECONNECT, Constants.TRUE);
-        } else if (IUserAccount.LR_LOGIN_DONT_RECONNECT.equals(user.getLoginReconnect())) {
-          config.remove(JsonTagsZ.LOGIN_AS_RECONNECT);
-        }
-        // Get user specific gui theme configuration and add it to config
-        int storeAppTheme = user.getStoreAppTheme();
-        if (storeAppTheme != GUI_THEME_FROM_DOMAIN_CONFIGURATION) {
-          config.put(JsonTagsZ.GUI_THEME, storeAppTheme);
-        }
-      } catch (Exception e) {
-        xLogger.warn("Error in getting system configuration: {0}", e);
-      }
-      // Return config
-      if (config.isEmpty()) {
-        return null;
-      } else {
-        xLogger.fine("Exiting getConfig, config: {0}", config.toString());
-        return config;
+    //Min Max Frequency
+    String minMaxFreq = ic.getMinMaxDur();
+    if (minMaxFreq != null && !minMaxFreq.isEmpty()) {
+      if (InventoryConfig.FREQ_DAILY.equals(minMaxFreq)) {
+        config.put(JsonTagsZ.MINMAX_FREQUENCY, 'd');
+      } else if (InventoryConfig.FREQ_WEEKLY.equals(minMaxFreq)) {
+        config.put(JsonTagsZ.MINMAX_FREQUENCY, 'w');
+      } else if (InventoryConfig.FREQ_MONTHLY.equals(minMaxFreq)) {
+        config.put(JsonTagsZ.MINMAX_FREQUENCY, 'm');
       }
     }
-    return null;
+    if (ic.getPermissions() != null && ic.getPermissions().invCustomersVisible) {
+      config.put(JsonTagsZ.INVENTORY_VISIBLE, true);
+    }
+    // Currency
+    String currency = dc.getCurrency();
+    if (currency != null && !currency.isEmpty()) {
+      config.put(JsonTagsZ.CURRENCY, currency);
+    }
+    // Route tags, if any
+    if (dc.getRouteTags() != null) {
+      config.put(JsonTagsZ.ROUTE_TAG, dc.getRouteTags());
+    }
+    // The following code was added to fix LS-1227.
+    // Default vendor ID and Default vendor Name if any
+    Long defaultVendorId = dc.getVendorId();
+    if (defaultVendorId != null) {
+      config.put(JsonTagsZ.VENDORID, defaultVendorId.toString());
+      // Get the default vendor name
+      try {
+        EntitiesService as = Services.getService(EntitiesServiceImpl.class);
+        IKiosk k = as.getKiosk(defaultVendorId, false);
+        if (k != null) {
+          config.put(JsonTagsZ.VENDOR, k.getName());
+          config.put(JsonTagsZ.VENDOR_CITY, k.getCity());
+        }
+      } catch (ServiceException se) {
+        xLogger.warn("ServiceException when getting default vendor name for vendor id {0}: {1}",
+            defaultVendorId, se.getMessage());
+      }
+    }
+    // The support related information should be added here.
+    // Get the general config from system configuration
+    GeneralConfig gc = null;
+    try {
+      gc = GeneralConfig.getInstance();
+    } catch (ConfigurationException ce) {
+      xLogger.warn("Exception while getting GeneralConfiguration. Message: {0}", ce.getMessage());
+    }
+    if (gc != null && gc.getAupg() != null) {
+      Hashtable<String, String> upgradeConfig = getAppUpgradeVersion(gc);
+      if (upgradeConfig != null) {
+        config.put(JsonTagsZ.APP_UPGRADE, upgradeConfig);
+      }
+    }
+    SupportConfig
+        supportConfig =
+        dc.getSupportConfigByRole(
+            user.getRole()); // Get the support configuration for the role of the logged in user
+    String supportEmail = null, supportPhone = null, supportContactName = null;
+    // If Support is configured in Domain configuration, get support information.
+    if (supportConfig != null) {
+      // Get the supportUserId or support user name from Support configuration.
+      String supportUserId = supportConfig.getSupportUser();
+
+      if (supportUserId != null && !supportUserId.isEmpty()) {
+        // If userId is configured in SupportConfig, get the phone number, email and contact name from the UserAccount object
+        try {
+          UsersService as = Services.getService(UsersServiceImpl.class);
+          IUserAccount ua = as.getUserAccount(supportUserId);
+          supportEmail = ua.getEmail();
+          supportPhone = ua.getMobilePhoneNumber();
+          supportContactName = ua.getFullName();
+        } catch (SystemException se) {
+          xLogger
+              .warn("ServiceException when getting support user with id {0}: {1}", supportUserId,
+                  se.getMessage());
+        }
+      } else {
+        supportPhone = supportConfig.getSupportPhone();
+        supportEmail = supportConfig.getSupportEmail();
+        supportContactName = supportConfig.getSupportUserName();
+        // The extra check below is added because if a support info is removed from the
+        // General Configuration, supportConfig exists but values for supportPhone, supportEmail and supportContactName are ""
+        // In that case, it has to send the support information present in System Configuration -> generalconfig
+        if (supportPhone == null || supportPhone.isEmpty() && gc != null) {
+          supportPhone = gc.getSupportPhone();
+        }
+        if (supportEmail == null || supportEmail.isEmpty() && gc != null) {
+          supportEmail = gc.getSupportEmail();
+        }
+      }
+    } else {
+      // If Support is not configured under Domain configuration, get the support phone number and email from the System configuration
+      if (gc != null) {
+        supportEmail = gc.getSupportEmail();
+        supportPhone = gc.getSupportPhone();
+      }
+    }
+    // Add support configuration only if it is present in Domain configuration or in System configuration.
+    if (supportContactName != null && !supportContactName.isEmpty()) {
+      config.put(JsonTagsZ.SUPPORT_CONTACT_NAME, supportContactName);
+    }
+    if (supportEmail != null && !supportEmail.isEmpty()) {
+      config.put(JsonTagsZ.SUPPORT_EMAIL, supportEmail);
+    }
+    if (supportPhone != null && !supportPhone.isEmpty()) {
+      config.put(JsonTagsZ.SUPPORT_PHONE, supportPhone);
+    }
+    // Synchronization by mobile configuration to be read from DomainConfig. It should be sent to the mobile app, only if the values of intervals are > 0
+    SyncConfig syncConfig = dc.getSyncConfig();
+    if (syncConfig != null) {
+      Hashtable<String, String> intrvlsHt = getIntervalsHashtable(syncConfig);
+      if (intrvlsHt != null && !intrvlsHt.isEmpty()) {
+        config.put(JsonTagsZ.INTERVALS, intrvlsHt);
+      }
+    }
+    // Local login required
+    config.put(JsonTagsZ.NO_LOCAL_LOGIN_WITH_VALID_TOKEN,
+        String.valueOf(!dc.isLocalLoginRequired()));
+    // Add the config. to capture actual date of trans, if enabled
+    Hashtable<String, Hashtable<String, String>> aTdHt = getActualTransDate(ic);
+    if (aTdHt != null && !aTdHt.isEmpty()) {
+      config.put(JsonTagsZ.CAPTURE_ACTUAL_TRANSACTION_DATE, aTdHt);
+    }
+    if (dc.isDisableOrdersPricing()) {
+      config.put(JsonTagsZ.DISABLE_ORDER_PRICING, String.valueOf(dc.isDisableOrdersPricing()));
+    }
+    // Add order reasons to config
+    addReasonsConfiguration(config, oc);
+    Hashtable<String, Object> oCfg = getOrdersConfiguration(dc);
+    if (!oCfg.isEmpty()) {
+      config.put(JsonTagsZ.ORDER_CONFIG, oCfg);
+    }
+
+    try {
+      SMSConfig smsConfig = SMSConfig.getInstance();
+      if (smsConfig != null) {
+        String country = dc.getCountry() != null ? dc.getCountry() : Constants.COUNTRY_DEFAULT;
+        // For incoming
+        SMSConfig.ProviderConfig
+            iProviderConfig =
+            smsConfig.getProviderConfig(smsConfig.getProviderId(country, SMSService.INCOMING));
+        Hashtable<String, String> sms = new Hashtable<>(3);
+        if (iProviderConfig != null) {
+          sms.put(JsonTagsZ.GATEWAY_PHONE_NUMBER,
+              iProviderConfig.getString(SMSConfig.ProviderConfig.LONGCODE));
+          sms.put(JsonTagsZ.GATEWAY_ROUTING_KEYWORD,
+              iProviderConfig.getString(SMSConfig.ProviderConfig.KEYWORD));
+        }
+        //For outgoing
+        SMSConfig.ProviderConfig
+            oProviderConfig =
+            smsConfig.getProviderConfig(smsConfig.getProviderId(country, SMSService.OUTGOING));
+        if (oProviderConfig != null) {
+          sms.put(JsonTagsZ.SENDER_ID,
+              oProviderConfig.getString(SMSConfig.ProviderConfig.SENDER_ID));
+        }
+        config.put(JsonTagsZ.SMS, sms);
+      }
+      MobileConfigBuilder mobileConfigBuilder = new MobileConfigBuilder();
+      // Approval configuration
+      ApprovalsConfig approvalsConfig = dc.getApprovalsConfig();
+      if (approvalsConfig != null) {
+        MobileApprovalsConfigModel
+            mobileApprovalsConfigModel =
+            mobileConfigBuilder.buildApprovalConfiguration(approvalsConfig);
+        if (mobileApprovalsConfigModel != null) {
+          config.put(JsonTagsZ.APPROVALS, mobileApprovalsConfigModel);
+        }
+      }
+      // Add the domain specific Store app theme configuration
+      config.put(JsonTagsZ.GUI_THEME, dc.getStoreAppTheme());
+      // Accounting configuration
+      AccountingConfig acctConfig = dc.getAccountingConfig();
+      if (acctConfig != null) {
+        MobileAccountingConfigModel mobileAccountingConfigModel = mobileConfigBuilder.buildAccountingConfiguration(
+            dc.isAccountingEnabled(), acctConfig);
+        config.put(JsonTagsZ.ACCOUNTING_CONFIG, mobileAccountingConfigModel);
+      }
+      if (IUserAccount.LR_LOGIN_RECONNECT.equals(user.getLoginReconnect())) {
+        config.put(JsonTagsZ.LOGIN_AS_RECONNECT, Constants.TRUE);
+      } else if (IUserAccount.LR_LOGIN_DONT_RECONNECT.equals(user.getLoginReconnect())) {
+        config.remove(JsonTagsZ.LOGIN_AS_RECONNECT);
+      }
+      // Get user specific gui theme configuration and add it to config
+      int storeAppTheme = user.getStoreAppTheme();
+      if (storeAppTheme != GUI_THEME_FROM_DOMAIN_CONFIGURATION) {
+        config.put(JsonTagsZ.GUI_THEME, storeAppTheme);
+      }
+      // Add kiosk tags, if configured in the domain
+      String[] kioskTags = TagUtil.getTagsArray(dc.getKioskTags());
+      if (kioskTags != null) {
+        config.put(JsonTagsZ.ENTITY_TAG, Arrays.asList(kioskTags));
+      }
+    } catch (Exception e) {
+      xLogger.warn("Error in getting system configuration: {0}", e);
+    }
+    // Return config
+    if (config.isEmpty()) {
+      return null;
+    } else {
+      xLogger.fine("Exiting getConfig, config: {0}", config.toString());
+      return config;
+    }
   }
 
   // Check if the stock value should be sent back as an integer or float - depending on app. version (beyond 1.2.0 it is float)
