@@ -352,7 +352,7 @@ domainCfgControllers.controller('GeneralConfigurationController', ['$scope', 'do
             });
         };
         $scope.addDomainImage = function(){
-            if($scope.domainImages.items.length == 3) {
+            if($scope.domainImages.items.length == 5) {
                 $scope.showWarning($scope.resourceBundle['domain.image.upload.maximum.images']);
                 $scope.addImage = false;
                 return;
