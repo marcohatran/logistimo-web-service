@@ -46,6 +46,8 @@ WEB_APP_VER=`grep "web.app.ver=[0-9]" $TOMCAT_HOME/webapps/ROOT/WEB-INF/classes/
 
 envsubst < $TOMCAT_HOME/webapps/ROOT/WEB-INF/classes/samaanguru.properties.template  > $TOMCAT_HOME/webapps/ROOT/WEB-INF/classes/samaanguru.properties
 
+envsubst < $TOMCAT_HOME/webapps/ROOT/WEB-INF/classes/readonlyDB.properties.template  > $TOMCAT_HOME/webapps/ROOT/WEB-INF/classes/readonlyDB.properties
+
 JAVA_OPTS="-Xms$JAVA_XMS -Xmx$JAVA_XMX \
         -\"javaagent://$TOMCAT_HOME/jmx_prometheus_javaagent-0.7.jar=$JMX_AGENT_PORT:$TOMCAT_HOME/jmx_exporter.json\""
 

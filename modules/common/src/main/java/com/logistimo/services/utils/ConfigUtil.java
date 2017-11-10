@@ -39,31 +39,41 @@ import java.util.Properties;
 public class ConfigUtil {
 
   private static final Properties properties;
+  private static final Properties readOnlyDBproperties;
   private static final Logger xLogger = LoggerFactory.getLogger(ConfigUtil.class);
 
   static {
+
+    readOnlyDBproperties = new Properties();
+    try {
+      readOnlyDBproperties.load(Thread.currentThread().getContextClassLoader()
+          .getResourceAsStream("readonlyDB.properties"));
+    } catch (Exception e) {
+      throw new SystemException("Unable to load readonlyDB.properties", e);
+    }
+
     properties = new Properties();
     try {
       properties.load(Thread.currentThread().getContextClassLoader()
           .getResourceAsStream("samaanguru.properties"));
-    }catch(Exception e) {
+    } catch (Exception e) {
       throw new SystemException("Unable to load samaanguru.properties", e);
     }
 
-    try{
+    try {
       properties.load(Thread.currentThread().getContextClassLoader()
           .getResourceAsStream("beans.properties"));
     } catch (Exception e) {
       throw new SystemException("Unable to load beans.properties", e);
     }
 
-    try{
+    try {
       InputStream in = Thread.currentThread().getContextClassLoader()
           .getResourceAsStream("custom-beans.properties");
       if (in != null) {
         properties.load(in);
       }
-    }catch(Exception ignored){
+    } catch (Exception ignored) {
       xLogger.info("Unable to load custom-beans.properties", ignored);
     }
 
@@ -127,5 +137,9 @@ public class ConfigUtil {
 
   public static Properties getProperties() {
     return (Properties) properties.clone();
+  }
+
+  public static Properties getReadOnlyDBProperties() {
+    return (Properties) readOnlyDBproperties.clone();
   }
 }

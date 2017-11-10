@@ -93,17 +93,20 @@ public class TransDao implements ITransDao {
 
   @Override
   public Results getInventoryTransactions(Date sinceDate, Date untilDate, Long domainId,
-                                          Long kioskId,
-                                          Long materialId, List<String> transTypes,
-                                          Long linkedKioskId, String kioskTag,
-                                          String materialTag, List<Long> kioskIds,
-                                          PageParams pageParams, String bid,
-                                          boolean atd, String reason, List<String> excludeReasons) {
-    PersistenceManager pm = PMF.get().getPersistenceManager();
+      Long kioskId, Long materialId, List<String> transTypes, Long linkedKioskId, String kioskTag,
+      String materialTag, List<Long> kioskIds, PageParams pageParams, String bid, boolean atd,
+      String reason, List<String> excludeReasons, PersistenceManager pm) {
+
+    PersistenceManager localpm;
+    if (pm != null) {
+      localpm = pm;
+    } else {
+      localpm = PMF.get().getPersistenceManager();
+    }
     Query query = null;
     Query cntQuery = null;
     Results res;
-    try{
+    try {
       QueryParams queryParams = buildTransactionsQuery(sinceDate, untilDate, domainId,
           kioskId, materialId, transTypes, linkedKioskId, kioskTag, materialTag, kioskIds,
           bid, atd, reason, excludeReasons);
@@ -115,22 +118,19 @@ public class TransDao implements ITransDao {
             " LIMIT " + pageParams.getOffset() + CharacterConstants.COMMA + pageParams.getSize();
         sqlQuery.append(limitStr);
       }
-      query = pm.newQuery("javax.jdo.query.SQL", sqlQuery.toString());
+      query = localpm.newQuery("javax.jdo.query.SQL", sqlQuery.toString());
       query.setClass(Transaction.class);
-      List<Transaction> trans = (List<Transaction>) query.executeWithArray(queryParams.listParams.toArray());
-      trans = (List<Transaction>) pm.detachCopyAll(trans);
-      String
-          cntQueryStr =
-          sqlQuery.toString().replace("*", QueryConstants.ROW_COUNT)
-              .replace(orderBy, CharacterConstants.EMPTY);
+      List<Transaction> trans = (List<Transaction>) query
+          .executeWithArray(queryParams.listParams.toArray());
+      trans = (List<Transaction>) localpm.detachCopyAll(trans);
+      String cntQueryStr = sqlQuery.toString().replace("*", QueryConstants.ROW_COUNT)
+          .replace(orderBy, CharacterConstants.EMPTY);
       if (limitStr != null) {
         cntQueryStr = cntQueryStr.replace(limitStr, CharacterConstants.EMPTY);
       }
-      cntQuery = pm.newQuery("javax.jdo.query.SQL", cntQueryStr);
-      int
-          count =
-          ((Long) ((List) cntQuery.executeWithArray(queryParams.listParams.toArray())).iterator().next())
-              .intValue();
+      cntQuery = localpm.newQuery("javax.jdo.query.SQL", cntQueryStr);
+      int count = ((Long) ((List) cntQuery.executeWithArray(queryParams.listParams.toArray()))
+          .iterator().next()).intValue();
       res = new Results(trans, null, count, pageParams == null ? 0 : pageParams.getOffset());
     } finally {
       if (query != null) {
@@ -147,8 +147,9 @@ public class TransDao implements ITransDao {
           xLogger.warn("Exception while closing query", ignored);
         }
       }
-      pm.close();
-
+      if (pm == null) {
+        localpm.close();
+      }
     }
     return res;
 
@@ -156,13 +157,9 @@ public class TransDao implements ITransDao {
 
   @Override
   public QueryParams buildTransactionsQuery(Date sinceDate, Date untilDate, Long domainId,
-                                                      Long kioskId,
-                                                      Long materialId, List<String> transTypes,
-                                                      Long linkedKioskId, String kioskTag,
-                                                      String materialTag, List<Long> kioskIds,
-                                                      String bid,
-                                                      boolean atd, String reason,
-                                                      List<String> excludeReasons) {
+      Long kioskId, Long materialId, List<String> transTypes, Long linkedKioskId, String kioskTag,
+      String materialTag, List<Long> kioskIds, String bid, boolean atd, String reason,
+      List<String> excludeReasons) {
 
     List<String> parameters = new ArrayList<>(1);
     StringBuilder sqlQuery = new StringBuilder("SELECT * FROM TRANSACTION");
@@ -248,7 +245,8 @@ public class TransDao implements ITransDao {
         sqlQuery
             .append(" AND (RS IS NULL OR RS <> ")
             .append(CharacterConstants.QUESTION)
-            .append(CharacterConstants.C_BRACKET);;
+            .append(CharacterConstants.C_BRACKET);
+        ;
         parameters.add(excludeReasons.get(0));
       } else {
         sqlQuery.append(" AND ( RS IS NULL OR RS NOT IN (");

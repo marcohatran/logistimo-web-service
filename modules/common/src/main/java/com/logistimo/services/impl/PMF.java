@@ -36,7 +36,11 @@ public final class PMF {
 
   private static final XLog xlogger = XLog.getLog(PMF.class);
 
-  private static final PersistenceManagerFactory pmfInstance = JDOHelper.getPersistenceManagerFactory(ConfigUtil.getProperties());
+  private static final PersistenceManagerFactory pmfInstance = JDOHelper
+      .getPersistenceManagerFactory(ConfigUtil.getProperties());
+
+  private static final PersistenceManagerFactory readOnlyPmfInstance = JDOHelper
+      .getPersistenceManagerFactory(ConfigUtil.getReadOnlyDBProperties());
 
   private PMF() {
   }
@@ -48,6 +52,10 @@ public final class PMF {
 
   public static PersistenceManagerFactory getReportsPM() {
     throw new UnsupportedOperationException();
+  }
+
+  public static PersistenceManagerFactory getReadOnlyPM() {
+    return readOnlyPmfInstance;
   }
 
   /**

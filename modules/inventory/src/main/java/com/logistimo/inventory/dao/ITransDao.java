@@ -51,19 +51,13 @@ public interface ITransDao {
   void linkTransactions(ITransaction destination, ITransaction source);
 
   Results getInventoryTransactions(Date sinceDate, Date untilDate, Long domainId, Long kioskId,
-                                   Long materialId, List<String> transTypes,
-                                   Long linkedKioskId, String kioskTag,
-                                   String materialTag, List<Long> kioskIds, PageParams pageParams,
-                                   String bid,
-                                   boolean atd, String reason, List<String> excludeReasons)
+      Long materialId, List<String> transTypes, Long linkedKioskId, String kioskTag,
+      String materialTag, List<Long> kioskIds, PageParams pageParams, String bid,
+      boolean atd, String reason, List<String> excludeReasons, PersistenceManager pm)
       throws ServiceException;
 
-  QueryParams buildTransactionsQuery(Date sinceDate, Date untilDate, Long domainId,
-                                               Long kioskId,
-                                               Long materialId, List<String> transTypes,
-                                               Long linkedKioskId, String kioskTag,
-                                               String materialTag, List<Long> kioskIds,
-                                               String bid,
-                                               boolean atd, String reason,
-                                               List<String> excludeReasons);
+  QueryParams buildTransactionsQuery(Date sinceDate, Date untilDate, Long domainId, Long kioskId,
+      Long materialId, List<String> transTypes, Long linkedKioskId, String kioskTag,
+      String materialTag, List<Long> kioskIds, String bid, boolean atd, String reason,
+      List<String> excludeReasons);
 }

@@ -1,0 +1,19 @@
+#JDO properties
+javax.jdo.PersistenceManagerFactoryClass=org.datanucleus.api.jdo.JDOPersistenceManagerFactory
+javax.jdo.option.ConnectionURL=$MYSQL_RO_HOST_URL
+javax.jdo.option.ConnectionDriverName=org.mariadb.jdbc.Driver
+javax.jdo.option.ConnectionUserName=$MYSQL_USER
+javax.jdo.option.ConnectionPassword=$MYSQL_PASS
+javax.jdo.option.ReadOnly=true
+javax.jdo.option.Optimistic=true
+datanucleus.schema.autoCreateAll=false
+javax.jdo.listener.InstanceLifecycleListener.com.logistimo.events.entity.callbacks.PostPutCallbacks=com.logistimo.events.entity.Event
+datanucleus.connectionPoolingType=DBCP
+datanucleus.connectionPool.maxIdle=$CON_MAX_IDLE
+datanucleus.connectionPool.minIdle=$CON_MIX_IDLE
+datanucleus.connectionPool.maxActive=$CON_MAX_ACTIVE
+datanucleus.connectionPool.maxWait=$CON_MAX_WAIT
+datanucleus.connectionPool.maxStatements=20
+datanucleus.connectionPool.testSQL=SELECT 1
+datanucleus.connectionPool.timeBetweenEvictionRunsMillis=2400000
+datanucleus.connectionPool.minEvictableIdleTimeMillis=18000000

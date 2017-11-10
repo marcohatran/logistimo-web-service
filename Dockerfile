@@ -46,6 +46,7 @@ RUN unzip -o $TOMCAT_HOME/webapps/$warname \
         && rm -rf $TOMCAT_HOME/webapps/$warname
 
 ENV MYSQL_HOST_URL="jdbc:mariadb://localhost/logistimo?useUnicode=true&amp;characterEncoding=UTF-8" \
+        MYSQL_RO_HOST_URL="jdbc:mariadb://localhost/logistimo?useUnicode=true&amp;characterEncoding=UTF-8" \
         MYSQL_USER=logistimo \
         MYSQL_PASS=logistimo \
         MYSQL_DATABASE=logistimo \

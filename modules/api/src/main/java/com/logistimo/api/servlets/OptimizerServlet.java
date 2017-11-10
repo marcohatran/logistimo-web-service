@@ -31,12 +31,11 @@ import com.logistimo.inventory.models.InventoryFilters;
 import com.logistimo.inventory.optimization.pagination.processor.InvOptimizationDQProcessor;
 import com.logistimo.inventory.optimization.pagination.processor.InvOptimizationPSProcessor;
 import com.logistimo.logger.XLog;
-import com.logistimo.pagination.PageParams;
-import com.logistimo.pagination.PagedExec;
+import com.logistimo.pagination.Executor;
 import com.logistimo.pagination.QueryParams;
 
-import com.logistimo.services.utils.ConfigUtil;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.ResourceBundle;
 
 import javax.servlet.http.HttpServletRequest;
@@ -46,33 +45,30 @@ import javax.servlet.http.HttpServletResponse;
 public class OptimizerServlet extends JsonRestServlet {
 
   private static final XLog xLogger = XLog.getLog(OptimizerServlet.class);
-  private static final int MAX_ENTITIES_PER_TASK = ConfigUtil
-      .getInt("optimizer.max_inventory_per_task", 50);
+
   // Computation types
   private static final String COMPUTE_PS = "PS";
   private static final String COMPUTE_DQ = "DQ";
+  private static final String READ_ONLY_DB = "readOnlyDB";
 
   // Access via the data/test GUI
   public void processGet(HttpServletRequest req, HttpServletResponse resp,
-                         ResourceBundle backendMessages, ResourceBundle messages)
+      ResourceBundle backendMessages, ResourceBundle messages)
       throws IOException {
     processPost(req, resp, backendMessages, messages);
   }
 
   // Accessed via a task
   public void processPost(HttpServletRequest req, HttpServletResponse resp,
-                          ResourceBundle backendMessages, ResourceBundle messages)
+      ResourceBundle backendMessages, ResourceBundle messages)
       throws IOException {
     xLogger.fine("Entered processPost");
     // Get parameters
     String domainIdStr = req.getParameter("domainid");
-    String
-        kioskIdStr =
-        req.getParameter("kioskid"); // optional; domain Id is ignored, if kioskId is specified
-    String
-        materialIdStr =
-        req.getParameter(
-            "materialid"); // optional: domain Id is ignored and used alongside kiosk Id, if specified
+    // optional; domain Id is ignored, if kioskId is specified
+    String kioskIdStr = req.getParameter("kioskid");
+    // optional: domain Id is ignored and used alongside kiosk Id, if specified
+    String materialIdStr = req.getParameter("materialid");
     String compute = req.getParameter("compute"); // either PS or DQ
     if (compute == null || compute.isEmpty()) {
       compute = COMPUTE_DQ;
@@ -100,8 +96,7 @@ public class OptimizerServlet extends JsonRestServlet {
         xLogger.info("No optimization required for domain {0}", domainId);
         return;
       }
-      InvntryDao
-          invntryDao =
+      InvntryDao invntryDao =
           StaticApplicationContext.getApplicationContext().getBean(InvntryDao.class);
       InventoryFilters filters = new InventoryFilters();
       // Form query and query params
@@ -114,15 +109,14 @@ public class OptimizerServlet extends JsonRestServlet {
         filters.withSourceDomainId(domainId);
       }
       QueryParams qp = invntryDao.buildInventoryQuery(filters, false);
-      // Get page params
-      PageParams pageParams = new PageParams(null, MAX_ENTITIES_PER_TASK);
+      qp.params = Collections.singletonMap(READ_ONLY_DB, Boolean.TRUE);
       // Get the processor
       String processor = InvOptimizationDQProcessor.class.getName();
       if (COMPUTE_PS.equals(compute)) {
         processor = InvOptimizationPSProcessor.class.getName();
       }
       // *** Execute optimization process ***
-      PagedExec.exec(domainId, qp, pageParams, processor, null, null);
+      Executor.exec(domainId, qp, null, processor, null, null);
       // *** Done execution ***
     } catch (Exception e) {
       xLogger.severe("Exception: {0} : {1}", e.getClass().getName(), e.getMessage());

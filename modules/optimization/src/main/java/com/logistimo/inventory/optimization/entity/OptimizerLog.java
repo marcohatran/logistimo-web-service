@@ -61,6 +61,7 @@ public class OptimizerLog implements IOptimizerLog {
   @Column(length = 2048)
   private String msg = null;
   @Persistent
+  @Column(length = 2048)
   private String inIds; // inventories IDs processed (kid:mid,...)
 
   @Override

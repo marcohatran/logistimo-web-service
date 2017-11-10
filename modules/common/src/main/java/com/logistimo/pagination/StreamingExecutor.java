@@ -38,6 +38,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
+import org.springframework.util.CollectionUtils;
 
 /**
  * @author Mohan Raja
@@ -45,21 +46,19 @@ import javax.jdo.Query;
 public class StreamingExecutor {
 
   private static final XLog xLogger = XLog.getLog(StreamingExecutor.class);
-  public static ScheduledThreadPoolExecutor
-      poolExecutor =
+  public static ScheduledThreadPoolExecutor poolExecutor =
       new ScheduledThreadPoolExecutor(ConfigUtil.getInt("export.queue.size", 2));
+  private static final String READ_ONLY_DB = "readOnlyDB";
 
   public static void exec(Long domainId, QueryParams qp, PageParams pageParams,
-                          String processorClassName, String prevOutput,
-                          PagedExec.Finalizer finalizer)
+      String processorClassName, String prevOutput, PagedExec.Finalizer finalizer)
       throws TaskSchedulingException, ProcessingException {
     exec(domainId, qp, pageParams, processorClassName, prevOutput, finalizer, 0);
   }
 
   public static void exec(Long domainId, QueryParams qp, PageParams pageParams,
-                          String processorClassName, String prevOutput,
-                          PagedExec.Finalizer finalizer, int secondsBetweenTasks)
-      throws TaskSchedulingException, ProcessingException {
+      String processorClassName, String prevOutput, PagedExec.Finalizer finalizer,
+      int secondsBetweenTasks) throws TaskSchedulingException, ProcessingException {
     Processor proc = PagedExec.loadProcessor(processorClassName);
     if (proc == null) {
       throw new ProcessingException("Could not load processor with name " + processorClassName);
@@ -68,8 +67,8 @@ public class StreamingExecutor {
   }
 
   public static void exec(Long domainId, QueryParams qparam, PageParams pageParams,
-                          Processor proc, String prevOutput, PagedExec.Finalizer finalizer,
-                          int secondsBetweenTasks, boolean async)
+      Processor proc, String prevOutput, PagedExec.Finalizer finalizer,
+      int secondsBetweenTasks, boolean async)
       throws TaskSchedulingException, ProcessingException {
     xLogger.fine("Entered exec");
     if (qparam == null || qparam.query == null) {
@@ -90,6 +89,9 @@ public class StreamingExecutor {
               .toLowerCase().contains("monthslice") || qp.query.toLowerCase()
               .contains("activecountsstatsstore"))) {
             pm = PMF.getReportsPM().getPersistenceManager();
+          } else if (!CollectionUtils.isEmpty(qp.params) && Boolean.TRUE
+              .equals(qp.params.get(READ_ONLY_DB))) {
+            pm = PMF.getReadOnlyPM().getPersistenceManager();
           } else {
             pm = PMF.get().getPersistenceManager();
           }
@@ -136,9 +138,8 @@ public class StreamingExecutor {
             }
           }
         } catch (Throwable e) {
-          xLogger
-              .severe("Processing exception {0} for domain {1} using processor {2}", e.getMessage(),
-                  did, p.getClass().getSimpleName(), e);
+          xLogger.severe("Processing exception {0} for domain {1} using processor {2}",
+              e.getMessage(), did, p.getClass().getSimpleName(), e);
         }
       }
     };
