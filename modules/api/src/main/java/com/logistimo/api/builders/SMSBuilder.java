@@ -73,6 +73,7 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -450,7 +451,7 @@ public class SMSBuilder {
       //Create a set with the batchid received in the request
       Set<String> batchIdSet=new HashSet<>();
       for(MobileTransModel transModel:mobileTransModelList){
-        if(StringUtils.isNotBlank(transModel.bid) && !batchIdSet.contains(transModel.bid)) {
+        if(StringUtils.isNotBlank(transModel.bid)) {
           batchIdSet.add(transModel.bid);
         }
       }
@@ -462,6 +463,19 @@ public class SMSBuilder {
           //append batch Id
           materialDetails.append(SMSConstants.COMMA_SEPARATOR).append(SMSConstants.DOUBLE_QUOTE)
               .append(batchModel.bid).append(SMSConstants.DOUBLE_QUOTE)
+              .append(SMSConstants.COMMA_SEPARATOR);
+          batchIdSet.remove(batchModel.bid);
+        }
+      }
+      if(!batchIdSet.isEmpty()){
+        Iterator<String> it = batchIdSet.iterator();
+        while (it.hasNext()){
+          String bid = it.next();
+          //append inventory details
+          appendInventoryDetails(materialDetails, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
+          //append batch Id
+          materialDetails.append(SMSConstants.COMMA_SEPARATOR).append(SMSConstants.DOUBLE_QUOTE)
+              .append(bid).append(SMSConstants.DOUBLE_QUOTE)
               .append(SMSConstants.COMMA_SEPARATOR);
         }
       }
