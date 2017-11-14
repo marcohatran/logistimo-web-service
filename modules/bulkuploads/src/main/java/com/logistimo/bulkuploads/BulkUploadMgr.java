@@ -2474,7 +2474,7 @@ public class BulkUploadMgr {
       if (++i < size) {
         String newName = tokens[i].trim();
         if (isEdit && !newName.isEmpty()) {
-          if (newName.length() < FieldLimits.TEXT_FIELD_MAX_LENGTH) {
+          if (newName.length() <= FieldLimits.TEXT_FIELD_MAX_LENGTH) {
             k.setName(newName);
           } else {
             ec.messages.add(backendMessages.getString("kiosk") + "'s new name '" + newName
