@@ -2549,10 +2549,10 @@ ordControllers.controller('order.MaterialController', ['$scope','invService',
             $scope.material.isBinary = name.b === 'bn';
             $scope.material.mrsn = null;
             if($scope.type == "1") {
-                $scope.material.recomQ = $scope.recommendedQuantity($scope.material.name);
+                $scope.material.recomQ = $scope.recommendedQuantity(name);
             } else if($scope.type == "0" || $scope.type == "2") {
                 if($scope.cInvMap[name.mId]) {
-                    $scope.material.recomQ = $scope.recommendedQuantity($scope.cInvMap[$scope.material.name]);
+                    $scope.material.recomQ = $scope.recommendedQuantity($scope.cInvMap[name.mId]);
                 }
             }
             $scope.material.quantity = Math.max($scope.material.recomQ,0);
