@@ -23,10 +23,8 @@
 
 package com.logistimo.inventory.entity;
 
-import com.logistimo.tags.entity.ITag;
-
 import com.logistimo.domains.IOverlappedDomain;
-import com.logistimo.events.IEvents;
+import com.logistimo.tags.entity.ITag;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -46,7 +44,8 @@ public interface ITransaction
   String TYPE_REORDER = "oo";
   String TYPE_WASTAGE = "w";
   String TYPE_RETURN = "rt";
-  String TYPE_SHIPMENT = "s";
+  String TYPE_ORDER_SHIPMENT = "os";
+  String TYPE_TRANSFER_SHIPMENT = "ts";
 
   String getKeyString();
 

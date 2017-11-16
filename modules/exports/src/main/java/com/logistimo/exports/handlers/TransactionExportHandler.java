@@ -24,29 +24,29 @@
 package com.logistimo.exports.handlers;
 
 import com.logistimo.config.models.DomainConfig;
+import com.logistimo.constants.CharacterConstants;
+import com.logistimo.constants.Constants;
+import com.logistimo.constants.SourceConstants;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.inventory.entity.ITransaction;
+import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.materials.service.MaterialCatalogService;
 import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
+import com.logistimo.services.Resources;
+import com.logistimo.services.Services;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.users.service.impl.UsersServiceImpl;
-
-import org.apache.commons.lang.StringEscapeUtils;
-import com.logistimo.services.Resources;
-import com.logistimo.services.Services;
 import com.logistimo.utils.BigUtil;
-import com.logistimo.constants.CharacterConstants;
-import com.logistimo.constants.Constants;
 import com.logistimo.utils.GeoUtil;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.NumberUtil;
-import com.logistimo.constants.SourceConstants;
 import com.logistimo.utils.StringUtil;
-import com.logistimo.logger.XLog;
+
+import org.apache.commons.lang.StringEscapeUtils;
 
 import java.util.List;
 import java.util.Locale;
@@ -149,7 +149,6 @@ public class TransactionExportHandler implements IExportHandler {
   @Override
   public String toCSV(Locale locale, String timezone, DomainConfig dc, String type) {
     ResourceBundle messages = Resources.get().getBundle("Messages", locale);
-    ResourceBundle jsmessages = Resources.get().getBundle("JSMessages", locale);
     try {
       // Get services
       EntitiesService as = Services.getService(EntitiesServiceImpl.class);
@@ -181,8 +180,10 @@ public class TransactionExportHandler implements IExportHandler {
           totStr = messages.getString("order");
         } else if (ITransaction.TYPE_TRANSFER.equalsIgnoreCase(totStr)) {
           totStr = messages.getString("transactions.transfer.upper");
-        } else if (ITransaction.TYPE_SHIPMENT.equalsIgnoreCase(totStr)) {
-          totStr = jsmessages.getString("shipment");
+        } else if (ITransaction.TYPE_ORDER_SHIPMENT.equalsIgnoreCase(totStr)) {
+          totStr = messages.getString("order.shipment");
+        } else if (ITransaction.TYPE_TRANSFER_SHIPMENT.equalsIgnoreCase(totStr)) {
+          totStr = messages.getString("transfer.shipment");
         }
       }
       // Related entity

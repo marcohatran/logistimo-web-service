@@ -96,6 +96,17 @@ public interface OrderManagementService extends Service {
       throws ObjectNotFoundException, ServiceException;
 
   /**
+   * Gets the order details for given order for a given persistence manager object
+   * @param orderId - order id
+   * @param includeItems - determines whether demand items should be included in response or not
+   * @param pm - Persistent Manager
+   * @return returns order details
+   * @throws ObjectNotFoundException
+   * @throws ServiceException
+   */
+  IOrder getOrder(Long orderId, boolean includeItems, PersistenceManager pm) throws ObjectNotFoundException, ServiceException;
+
+  /**
    * Update an order and automatically post goods issued/received (GI/GR)
    */
   UpdatedOrder updateOrder(IOrder order, int source) throws LogiException;
