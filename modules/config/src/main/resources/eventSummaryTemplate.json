@@ -97,7 +97,7 @@
               "name": "exclude_entity_tags"
             },
             {
-              "name": "include_user_tags"
+              "name": "user_tags_responsible"
             }
           ]
         }
@@ -183,7 +183,7 @@
             "name": "exclude_entity_tags"
           },
           {
-            "name": "include_user_tags"
+            "name": "user_tags_responsible"
           }
         ]
       }
@@ -232,7 +232,7 @@
               "name": "exclude_entity_tags"
             },
             {
-              "name": "include_user_tags"
+              "name": "user_tags_responsible"
             }
           ]
         }
@@ -276,7 +276,7 @@
               "name": "exclude_entity_tags"
             },
             {
-              "name": "include_user_tags"
+              "name": "user_tags_responsible"
             }
           ]
         }

@@ -108,7 +108,7 @@ domainCfgControllers.controller('SummarisationMenuController', ['$scope', 'domai
 
         $scope.isTagField = function (field) {
             return (field == 'include_material_tags' || field == 'include_entity_tags' ||
-            field == 'include_user_tags' || field == 'exclude_material_tags' ||
+            field == 'include_user_tags' || field == 'user_tags_responsible' || field == 'exclude_material_tags' ||
             field == 'exclude_entity_tags' || field == 'exclude_user_tags');
         };
 
@@ -187,7 +187,9 @@ domainCfgControllers.controller('SummarisationConfigurationController', ['$scope
 
 
         $scope.displayTable = function (data, key, value) {
-            if (key == 'include_material_tags' || key == 'include_entity_tags' || key == 'include_user_tags' || key == 'exclude_material_tags' || key == 'exclude_entity_tags' || key == 'exclude_user_tags' || key == 'include_asset_types' || key == 'exclude_asset_types') {
+            if (key == 'include_material_tags' || key == 'include_entity_tags' || key == 'include_user_tags'
+                || key == 'user_tags_responsible' || key == 'exclude_material_tags' || key == 'exclude_entity_tags'
+                || key == 'exclude_user_tags' || key == 'include_asset_types' || key == 'exclude_asset_types') {
                 var tags = '';
                 if (checkNotNullEmpty(data.values)) {
                     angular.forEach(data.values, function (d) {
@@ -332,7 +334,7 @@ domainCfgControllers.controller('AddSummarisationConfigurationController', ['$sc
                 return "material";
             else if (field == 'include_entity_tags' || field == 'exclude_entity_tags')
                 return "entity";
-            else if (field == 'include_user_tags' || field == 'exclude_user_tags')
+            else if (field == 'include_user_tags' || field == 'user_tags_responsible' || field == 'exclude_user_tags')
                 return "user";
         }
     }
