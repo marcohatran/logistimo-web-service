@@ -1072,9 +1072,7 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
           o.setDueDate(reqByDate);
           o.setSrc(source);
           DomainConfig dc = DomainConfig.getInstance(domainId);
-          StaticApplicationContext.getBean(OrderVisibilityAction.class)
-              .invoke(
-                  o, domainId);
+          StaticApplicationContext.getBean(OrderVisibilityAction.class).invoke(o, domainId);
           o = pm.makePersistent(o);
           demandList = (List<IDemandItem>) pm.makePersistentAll(demandList);
           demandList = (List<IDemandItem>) pm.detachCopyAll(demandList);

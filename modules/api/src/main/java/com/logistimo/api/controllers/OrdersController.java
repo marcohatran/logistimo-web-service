@@ -707,9 +707,7 @@ public class OrdersController {
           }
         }
       }
-      Results
-          or =
-          oms.getOrders(domainId, entityId, status, startDate, endDate, otype, tgType, tag,
+      Results or = oms.getOrders(domainId, entityId, status, startDate, endDate, otype, tgType, tag,
               kioskIds, pageParams, oty, rid, approvalStatus);
       return builder.buildOrders(or, user, SecurityUtils.getDomainId(request));
     } catch (Exception e) {

@@ -27,6 +27,7 @@ import com.logistimo.domains.entity.IDomainLink;
 import com.logistimo.domains.utils.DomainsUtil;
 import com.logistimo.orders.entity.IOrder;
 import com.logistimo.services.ServiceException;
+import java.util.Date;
 
 /**
  * Created by charan on 18/07/17.
@@ -34,10 +35,14 @@ import com.logistimo.services.ServiceException;
 public class OrderVisibilityUtils {
 
   protected static void updateTransferOrderVisibility(IOrder order, Long domainId,
-                                                      boolean isApproved)
-      throws ServiceException {
+      boolean isApproved) throws ServiceException {
+    Date currentTime = new Date();
     order.setVisibleToCustomer(isApproved);
     order.setVisibleToVendor(isApproved);
+    if (isApproved) {
+      order.setVendorVisibilityTime(currentTime);
+      order.setCustomerVisibilityTime(currentTime);
+    }
     order.setDomainId(domainId);
     if (!isApproved) {
       order.setDomainIds(DomainsUtil.getVisibleDomains(domainId, IDomainLink.TYPE_PARENT));
@@ -47,10 +52,14 @@ public class OrderVisibilityUtils {
   }
 
   protected static void updatePurchaseOrderVisibility(IOrder order, Long domainId,
-                                                      boolean isApproved)
-      throws ServiceException {
+      boolean isApproved) throws ServiceException {
+    Date currentTime = new Date();
     order.setVisibleToCustomer(true);
+    order.setCustomerVisibilityTime(currentTime);
     order.setVisibleToVendor(isApproved);
+    if (isApproved) {
+      order.setVendorVisibilityTime(currentTime);
+    }
     order.setDomainId(domainId);
     if (!isApproved) {
       order.setDomainIds(
@@ -62,8 +71,11 @@ public class OrderVisibilityUtils {
 
   protected static void updateSalesOrderVisibility(IOrder order, Long domainId)
       throws ServiceException {
+    Date currentTime = new Date();
     order.setVisibleToCustomer(true);
+    order.setCustomerVisibilityTime(currentTime);
     order.setVisibleToVendor(true);
+    order.setVendorVisibilityTime(currentTime);
     order.setDomainId(domainId);
     DomainsUtil.addToDomain(order, domainId, null);
   }

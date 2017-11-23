@@ -30,6 +30,7 @@ import com.logistimo.orders.entity.IOrder;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
 
+import java.util.Date;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -47,8 +48,11 @@ public class OrderVisibilityAction {
     if (isApprovalRequired) {
       OrderVisibilityUtils.setOrderVisibility(o, domainId, false);
     } else {
+      Date currentTime = new Date();
       o.setVisibleToCustomer(true);
+      o.setCustomerVisibilityTime(currentTime);
       o.setVisibleToVendor(true);
+      o.setVendorVisibilityTime(currentTime);
       DomainsUtil.addToDomain(o, domainId, null);
     }
   }

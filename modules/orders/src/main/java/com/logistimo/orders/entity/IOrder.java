@@ -249,8 +249,8 @@ public interface IOrder extends ICrossDomain {
 
   @SuppressWarnings("rawtypes")
   Map<String, Object> toMap(boolean includeItems, Locale locale, String timezone,
-                            boolean forceIntegerQuantity, boolean includeAccountingData,
-                            boolean includeShipmentItems);
+      boolean forceIntegerQuantity, boolean includeAccountingData,
+      boolean includeShipmentItems);
 
   // Name of discount type
   String getDiscountTypeName();
@@ -296,4 +296,24 @@ public interface IOrder extends ICrossDomain {
   Integer getSrc();
 
   void setSrc(Integer source);
+
+  Date getVendorVisibilityTime();
+
+  void setVendorVisibilityTime(Date vendorVisibilityTime);
+
+  Date getCustomerVisibilityTime();
+
+  void setCustomerVisibilityTime(Date customerVisibilityTime);
+
+  Long getPurchaseApprovalResponseTime();
+
+  void setPurchaseApprovalResponseTime(Long purchaseApprovalResponseTime);
+
+  Long getSalesApprovalResponseTime();
+
+  void setSalesApprovalResponseTime(Long salesApprovalResponseTime);
+
+  Long getTransferApprovalResponseTime();
+
+  void setTransferApprovalResponseTime(Long transferApprovalResponseTime);
 }
