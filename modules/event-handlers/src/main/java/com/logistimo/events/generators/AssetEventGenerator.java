@@ -203,7 +203,10 @@ public class AssetEventGenerator extends EventGenerator {
         }
         if ((assetStatus.getTs().compareTo(event.getTimestamp()) != 0)) {
           isEventValid = false;
+        } else {
+          isEventValid = isEventDurationValid(event.getParams().get(EventConstants.PARAM_REMINDMINSAFTER), assetStatus.getTs().getTime());
         }
+
 
       }
     } catch (Exception e1) {
@@ -212,6 +215,18 @@ public class AssetEventGenerator extends EventGenerator {
               domainId);
     }
     return isEventValid;
+  }
+
+  public Boolean isEventDurationValid(Object remindMinsAfterObject,Long assetStatusTimeStamp) {
+    if(remindMinsAfterObject != null) {
+      Integer timeAfter = Integer.parseInt(
+          remindMinsAfterObject.toString());
+      if (System.currentTimeMillis() - assetStatusTimeStamp
+          < timeAfter * 60_000) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public Map<String, Object> getTagParams(Object eventObject) {
