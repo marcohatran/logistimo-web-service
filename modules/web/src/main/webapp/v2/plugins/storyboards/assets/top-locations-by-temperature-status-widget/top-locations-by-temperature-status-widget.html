@@ -1,0 +1,19 @@
+<div ng-controller="topLocationsByTemperatureStatusWidgetController">
+    <div ng-if="wloading" class="row mt18 widget-loading">
+        <div class="text-center">
+            {{resourceBundle['loading.uppercase']}}... <span class="glyphicons glyphicons-cogwheel spin"></span>
+        </div>
+    </div>
+    <div ng-if="!wloading && showError" class="alert alert-danger">
+        <div class="text-center">
+            {{errorMessage}}
+        </div>
+    </div>
+    <div ng-if="!wloading && !showError && showChart">
+        <fusion-chart type="topLocationsByTemperatureStatusWidget.cType" height="topLocationsByTemperatureStatusWidget.computedHeight" width="topLocationsByTemperatureStatusWidget.computedWidth"
+                      chart-label="topLocationsByTemperatureStatusWidget.cLabel"
+                      chart-data="topLocationsByTemperatureStatusWidget.cdata" chart-options="topLocationsByTemperatureStatusWidget.copt"
+                      chart-id="{{topLocationsByTemperatureStatusWidget.wId}}" simple="'true'">
+        </fusion-chart>
+    </div>
+</div>

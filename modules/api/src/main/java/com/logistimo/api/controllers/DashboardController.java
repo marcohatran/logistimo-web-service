@@ -91,7 +91,7 @@ public class DashboardController {
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
     try {
-      IDashboard db = builder.buildDashboard(model, domainId, sUser.getUsername());
+      IDashboard db = builder.buildDashboard(model, sUser.getUsername());
       IDashboardService ds = Services.getService(DashboardService.class);
       ds.createDashboard(db);
     } catch (ServiceException e) {
@@ -122,7 +122,7 @@ public class DashboardController {
       IDashboard db = ds.getDashBoard(dbId);
       DashboardModel model = builder.buildDashboardModel(db, true);
       if ("y".equals(wc)) {
-        model.conf = db.getConf();
+        //model.conf = db.getConf();
       }
       return model;
     } catch (ServiceException e) {

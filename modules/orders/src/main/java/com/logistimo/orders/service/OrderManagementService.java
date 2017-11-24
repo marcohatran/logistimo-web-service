@@ -32,8 +32,8 @@ import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.orders.OrderResults;
 import com.logistimo.orders.entity.IDemandItem;
 import com.logistimo.orders.entity.IOrder;
-import com.logistimo.orders.models.PDFResponseModel;
 import com.logistimo.orders.models.OrderFilters;
+import com.logistimo.orders.models.PDFResponseModel;
 import com.logistimo.orders.models.UpdatedOrder;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
@@ -97,14 +97,14 @@ public interface OrderManagementService extends Service {
 
   /**
    * Gets the order details for given order for a given persistence manager object
-   * @param orderId - order id
+   *
+   * @param orderId      - order id
    * @param includeItems - determines whether demand items should be included in response or not
-   * @param pm - Persistent Manager
+   * @param pm           - Persistent Manager
    * @return returns order details
-   * @throws ObjectNotFoundException
-   * @throws ServiceException
    */
-  IOrder getOrder(Long orderId, boolean includeItems, PersistenceManager pm) throws ObjectNotFoundException, ServiceException;
+  IOrder getOrder(Long orderId, boolean includeItems, PersistenceManager pm)
+      throws ObjectNotFoundException, ServiceException;
 
   /**
    * Update an order and automatically post goods issued/received (GI/GR)

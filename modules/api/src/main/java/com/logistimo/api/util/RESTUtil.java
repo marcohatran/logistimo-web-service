@@ -31,6 +31,7 @@ import com.logistimo.AppFactory;
 import com.logistimo.accounting.entity.IAccount;
 import com.logistimo.accounting.service.IAccountingService;
 import com.logistimo.accounting.service.impl.AccountingServiceImpl;
+import com.logistimo.api.auth.AuthenticationUtil;
 import com.logistimo.api.servlets.mobile.builders.MobileConfigBuilder;
 import com.logistimo.api.servlets.mobile.builders.MobileEntityBuilder;
 import com.logistimo.api.servlets.mobile.models.ParsedRequest;
@@ -812,8 +813,7 @@ public class RESTUtil {
       // Check if Basic auth. header exists
       SecurityMgr.Credentials creds = SecurityMgr.getUserCredentials(req);
       if (StringUtils.isNotEmpty(token)) {
-        uId = aus.authenticateToken(token, actionInitiator);
-        u = as.getUserAccount(uId);
+        u = AuthenticationUtil.authenticateToken(token, actionInitiator);
         authenticated = true;
       } else {
         if (creds != null) {

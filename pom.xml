@@ -65,6 +65,7 @@
         <module>modules/web</module>
         <module>modules/approvals-client</module>
         <module>modules/location-client</module>
+        <module>modules/bulletin-board</module>
     </modules>
 
     <dependencies>

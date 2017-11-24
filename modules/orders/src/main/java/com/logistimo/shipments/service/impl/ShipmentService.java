@@ -142,6 +142,7 @@ public class ShipmentService extends ServiceImpl implements IShipmentService {
     }
     return demand;
   }
+
   private ITaskService getTask() {
     return AppFactory.get().getTaskService();
   }

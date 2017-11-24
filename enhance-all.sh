@@ -42,3 +42,5 @@ cd ../tags
 mvn datanucleus:enhance
 cd ../users
 mvn datanucleus:enhance
+cd ../bulletin-board
+mvn datanucleus:enhance

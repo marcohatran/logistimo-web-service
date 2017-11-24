@@ -152,7 +152,7 @@ public class SecurityUtils {
   public static SecureUserDetails getUserDetails() {
     SecureUserDetails userDetails = ThreadLocalUtil.get().getSecureUserDetails();
     if (userDetails == null) {
-      throw new UnauthorizedException("Unauthenticated access to user details");
+      throw new UnauthorizedException("G002", new Object[]{});
     }
     return userDetails;
   }

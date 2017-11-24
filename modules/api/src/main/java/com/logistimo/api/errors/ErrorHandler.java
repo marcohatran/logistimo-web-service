@@ -53,10 +53,13 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.util.Locale;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * Created by Mohan Raja on 12/03/15
@@ -91,7 +94,8 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
     ErrorResource error = new ErrorResource("[Unauthorized]", message);
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
-    return handleExceptionInternal(e, error, headers, ((UnauthorizedException) e).getCode(),
+    return handleExceptionInternal(e, error, headers,
+        ((UnauthorizedException) e).getHttpStatusCode(),
         request);
   }
 
@@ -239,16 +243,24 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
 
   private void log(WebRequest request, Throwable throwable) {
     try {
-      XLOGGER.severe("{2}: {0} failed for user {1}", request.getContextPath(),
+      XLOGGER.severe("{2}: {0} failed for user {1}", getPath(request),
           SecurityUtils.getUserDetails(), throwable);
     } catch (UnauthorizedException uae) {
       //ignored;
     }
   }
 
+  private String getPath(WebRequest request) {
+    if (request instanceof ServletWebRequest) {
+      HttpServletRequest req = ((ServletWebRequest) request).getRequest();
+      return req.getServletPath() + req.getPathInfo();
+    }
+    return "";
+  }
+
   private void logWarning(WebRequest request, Throwable throwable) {
     try {
-      XLOGGER.warn("{2}: {0} failed for user {1}", request.getContextPath(),
+      XLOGGER.warn("{2}: {0} failed for user {1}", getPath(request),
           SecurityUtils.getUserDetails(), throwable);
     } catch (UnauthorizedException uae) {
       //ignored;

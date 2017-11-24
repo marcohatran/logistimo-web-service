@@ -143,6 +143,11 @@
             <version>2.5.0</version>
         </dependency>
         <dependency>
+            <groupId>com.logistimo</groupId>
+            <artifactId>logistimo-bulletinboard</artifactId>
+            <version>2.5.0</version>
+        </dependency>
+        <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>jstl</artifactId>
             <version>1.2</version>

@@ -30,25 +30,25 @@ import java.util.Date;
  */
 public interface IDashboard {
 
-  Long getDbId();
+  Long getDashboardId();
 
-  void setDbId(Long dbId);
+  void setDashboardId(Long dbId);
 
-  Long getdId();
+  Long getDomainId();
 
-  void setdId(Long dId);
+  void setDomainId(Long dId);
 
   String getName();
 
   void setName(String name);
 
-  String getDesc();
+  String getDescription();
 
-  void setDesc(String desc);
+  void setDescription(String desc);
 
-  String getConf();
+  String getConfiguration();
 
-  void setConf(String conf);
+  void setConfiguration(String conf);
 
   String getCreatedBy();
 
@@ -58,7 +58,19 @@ public interface IDashboard {
 
   void setCreatedOn(Date createdOn);
 
-  Boolean isDef();
+  String getTitle();
 
-  void setDef(Boolean def);
+  void setTitle(String title);
+
+  String getInfo();
+
+  void setInfo(String info);
+
+  void setUpdatedBy(String updatedBy);
+
+  String getUpdatedBy();
+
+  Date getUpdatedOn();
+
+  void setUpdatedOn(Date updatedOn);
 }

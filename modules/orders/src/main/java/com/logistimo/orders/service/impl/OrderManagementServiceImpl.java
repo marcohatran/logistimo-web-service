@@ -167,7 +167,8 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
     return getOrder(orderId, false, null);
   }
 
-  public IOrder getOrder(Long orderId, boolean includeItems) throws ObjectNotFoundException, ServiceException {
+  public IOrder getOrder(Long orderId, boolean includeItems)
+      throws ObjectNotFoundException, ServiceException {
     return getOrder(orderId, includeItems, null);
   }
 
@@ -183,7 +184,7 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
     }
     PersistenceManager localPM = pm;
     boolean isLocalPM = false;
-    if(localPM == null) {
+    if (localPM == null) {
       localPM = PMF.get().getPersistenceManager();
       isLocalPM = true;
     }
@@ -202,7 +203,7 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
       throw new ServiceException(e.getMessage());
     } finally {
       // Close PM
-      if(isLocalPM && localPM != null) {
+      if (isLocalPM && localPM != null) {
         localPM.close();
       }
     }

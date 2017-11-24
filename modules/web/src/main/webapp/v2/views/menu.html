@@ -38,6 +38,8 @@
                 <div class="float-right rPad5 userinfo">
                     <span ng-if="iOCEnabled && !onlyNewUI && subview != 'manage' " class="userdomaininfo" ng-click="switchConsole()">{{resourceBundle['switch.console']}}</span>
                     <!--<span ng-if="subview !='manage'" class="userdomaininfo"><a ng-href="#/setup/users/all/details?userId={{curUser}}">{{curUserName}}</a> {{resourceBundle['in']}} <b>{{domainName}}</b></span>-->
+                    <span class="userdomaininfo"><a href="/s/help/index.html" target="_blank"
+                                                    title="Help">Help</a></span>
                     <span ng-if="subview !='manage'" class="userdomaininfo"><b>{{domainName}}</b></span>
                     <span class="userdomaininfo" ng-if="iSU && subview != 'manage'"><a href="#/manage/domains">{{resourceBundle['manage']}}</a></span>
                     <span class="userdomaininfo" ng-if="iSU && subview == 'manage'"><a href="#/">{{resourceBundle['home']}}</a></span>
@@ -148,6 +150,8 @@
                         <li><a ng-hide="isTempMonOnly" href="#/configuration/dashboard/">{{resourceBundle['dashboard']}}</a></li>
                         <li><a ng-if="hasChild && (iAdm || dp.ce)" href="#/configuration/options/">{{resourceBundle['configuration.options']}}</a></li>
                         <li><a href="#/configuration/summarisation/">{{resourceBundle['event.summary']}}</a></li>
+                        <li ng-show="(iAdm || iSU)"><a href="#/configuration/bulletin/">Bulletin Board</a></li>
+                        <li ng-show="iSU"><a href="#/configuration/dashboards/">Dashboards</a></li>
                     </ul>
                 </li>
                 <li ng-class="{active:subview == 'setup'}" ng-if="((iSU || dp.uv || dp.mv || dp.ev || dp.egv || dp.iv) && !tempOnlyAU) || (tempOnlyAU && tempEnabled)"><a
@@ -172,9 +176,6 @@
                     </div>
                 </div>
                 <domain-tree></domain-tree>
-            </div>
-            <div class="share_box help">
-                <a href="/s/help/index.html" target="_blank" class="clickable pad3 db" title="Help"><span class="glyphicons glyphicons-info-sign qm"></span></a>
             </div>
             <div class="share_box shortcuts" ng-if="!iAU">
                 <div class="scmenu">

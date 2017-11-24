@@ -30,12 +30,10 @@ import com.logistimo.api.models.ChangePasswordModel;
 import com.logistimo.api.models.UserDetailModel;
 import com.logistimo.api.models.mobile.ValidateOtpModel;
 import com.logistimo.auth.service.AuthenticationService;
-import com.logistimo.auth.service.impl.AuthenticationServiceImpl;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.SourceConstants;
 import com.logistimo.exception.BadRequestException;
 import com.logistimo.exception.ValidationException;
-import com.logistimo.logger.XLog;
 import com.logistimo.security.BadCredentialsException;
 import com.logistimo.security.UserDisabledException;
 import com.logistimo.services.ObjectNotFoundException;
@@ -47,6 +45,7 @@ import com.logistimo.users.service.UsersService;
 import com.logistimo.users.service.impl.UsersServiceImpl;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -68,11 +67,17 @@ import javax.servlet.http.HttpServletResponse;
 @RequestMapping("/mauth")
 public class AuthControllerMV1 {
 
-  private static final XLog xLogger = XLog.getLog(AuthControllerMV1.class);
   private static final String USER_AGENT = "User-Agent";
   private static final String DEVICE_DETAILS = "Device-Details";
   private static final String DEVICE_PROFILE = "Device-Profile";
   private static final UserBuilder ubuilder = new UserBuilder();
+
+  private AuthenticationService authenticationService;
+
+  @Autowired
+  public void setAuthenticationService(AuthenticationService authenticationService) {
+    this.authenticationService = authenticationService;
+  }
 
   /**
    * This method is used for user's login
@@ -157,10 +162,8 @@ public class AuthControllerMV1 {
 
   private void generateUserToken(Map<String, String> headers,
                                  String userid) throws ObjectNotFoundException, ServiceException {
-    AuthenticationService aus;
     IUserToken token;
-    aus = Services.getService(AuthenticationServiceImpl.class);
-    token = aus.generateUserToken(userid);
+    token = authenticationService.generateUserToken(userid);
     if (token != null) {
       headers.put(Constants.TOKEN, token.getRawToken());
       headers.put(Constants.EXPIRES, String.valueOf(token.getExpires().getTime()));
@@ -175,9 +178,7 @@ public class AuthControllerMV1 {
   @RequestMapping(value = "/validate-otp", method = RequestMethod.POST)
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void validateOtp(@RequestBody ValidateOtpModel otpModel) throws ValidationException {
-    AuthenticationService as;
-    as = Services.getService(AuthenticationServiceImpl.class);
-    as.validateOtpMMode(otpModel.uid, otpModel.otp);
+    authenticationService.validateOtpMMode(otpModel.uid, otpModel.otp);
   }
 
   /**
@@ -190,14 +191,7 @@ public class AuthControllerMV1 {
   @ResponseBody
   String validateToken(@RequestBody String token)
       throws ServiceException, ObjectNotFoundException {
-    String userId;
-    AuthenticationService aus;
-    aus = Services.getService(AuthenticationServiceImpl.class);
-    userId = aus.authenticateToken(token, -1);
-    if (userId == null) {
-      throw new ObjectNotFoundException("Invalid token");
-    }
-    return userId;
+    return authenticationService.authenticateToken(token, -1).getUserId();
   }
 
   /**
@@ -210,9 +204,7 @@ public class AuthControllerMV1 {
   public void resetPassword(@RequestBody ChangePasswordModel pwdModel)
       throws ServiceException, ValidationException {
     UsersService us;
-    AuthenticationService as;
-    as = Services.getService(AuthenticationServiceImpl.class);
-    as.validateOtpMMode(pwdModel.uid, pwdModel.otp);
+    authenticationService.validateOtpMMode(pwdModel.uid, pwdModel.otp);
     us = Services.getService(UsersServiceImpl.class);
     us.changePassword(pwdModel.uid, null, pwdModel.npd);
   }

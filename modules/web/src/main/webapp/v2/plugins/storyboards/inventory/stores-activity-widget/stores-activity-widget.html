@@ -1,0 +1,22 @@
+<div ng-controller="storesActivityWidgetController">
+    <div ng-if="wloading" class="row mt18 widget-loading">
+        <div class="text-center">
+            {{resourceBundle['loading.uppercase']}}... <span class="glyphicons glyphicons-cogwheel spin"></span>
+        </div>
+    </div>
+    <div ng-if="!wloading && showError" class="alert alert-danger">
+        <div class="text-center">
+            {{errorMessage}}
+        </div>
+    </div>
+    <div ng-if="!wloading && !showError && showChart">
+        <fusion-chart type="storesActivityWidget.cType" height="storesActivityWidget.computedHeight" width="storesActivityWidget.computedWidth"
+                      chart-label="storesActivityWidget.cLabel"
+                      chart-data="storesActivityWidget.cdata" chart-options="storesActivityWidget.copt"
+                      chart-id="{{storesActivityWidget.wId}}">
+        </fusion-chart>
+        <div class="text-center position-relative mtm15 large-grey-lbl" > {{activePercent}}% {{resourceBundle['stores.active']}}</div>
+        <br/>
+        <div class="text-center position-relative mtm15 small-grey-lbl" > {{entDomainTotal}} {{resourceBundle['stores']}}</div>
+    </div>
+</div>

@@ -49,13 +49,19 @@ module.exports = function(grunt, ref) {
         },
         env: {
             local: {
-                NODE_ENV: 'LOCAL'
+                NODE_ENV: 'LOCAL',
+                BULLETIN_BOARD: 'NA'
             },
             dev: {
-                NODE_ENV: 'DEVELOPMENT'
+                NODE_ENV: 'DEVELOPMENT',
+                BULLETIN_BOARD: 'NA'
             },
             prod: {
-                NODE_ENV: 'PRODUCTION'
+                NODE_ENV: 'PRODUCTION',
+                BULLETIN_BOARD: 'NA'
+            },
+            bulletinboard: {
+                BULLETIN_BOARD: 'BULLETIN_BOARD'
             }
         },
         shell: {
@@ -136,6 +142,14 @@ module.exports = function(grunt, ref) {
                 dest: '<%= baseurl %>/modules/common/src/main/resources',
                 src: 'target/grunt/resources/*_*.properties',
                 flatten: true
+            },
+            bulletinboard: {
+                src: '<%= baseurl %>/modules/web/src/main/webapp/v2/index.html',
+                dest: 'target/grunt/webapp/v2/bulletinboard.html'
+            },
+            bulletinboardApp: {
+                src: '<%= baseurl %>/modules/web/src/main/webapp/v2/js/app.js',
+                dest: 'target/grunt/webapp/v2/js/bulletinboard-app.js'
             }
         },
         rename: {
@@ -237,7 +251,9 @@ module.exports = function(grunt, ref) {
                     "target/grunt/webapp/v2/views/**/*.html",
                     "target/grunt/webapp/v2/views/*.html",
                     "target/grunt/webapp/v2/plugins/reports/**/*.html",
-                    "target/grunt/webapp/v2/plugins/reports/*.html"
+                    "target/grunt/webapp/v2/plugins/reports/*.html",
+                    "target/grunt/webapp/v2/plugins/storyboards/**/*.html",
+                    "target/grunt/webapp/v2/plugins/storyboards/*.html"
                 ],
                 dest: "target/grunt/webapp/v2/js/<%= pkg.suffix %>-tpl-<%= now %>.js"
             }
@@ -255,7 +271,24 @@ module.exports = function(grunt, ref) {
                         'target/grunt/webapp/v2/js/utils/*.js',
                         'target/grunt/webapp/v2/js/components/*/*.js',
                         'target/grunt/webapp/v2/plugins/reports/*.js',
-                        'target/grunt/webapp/v2/plugins/reports/**/*.js'
+                        'target/grunt/webapp/v2/plugins/reports/**/*.js',
+                        'target/grunt/webapp/v2/plugins/storyboards/*.js',
+                        'target/grunt/webapp/v2/plugins/storyboards/**/*.js'
+                    ]
+                }
+            },
+            bulletinboard: {
+                files: {
+                    'target/grunt/webapp/v2/js/bulletinboard.js': [
+                        'target/grunt/webapp/v2/js/bulletinboard-app.js',
+                        'target/grunt/webapp/v2/js/re*.js',
+                        'target/grunt/webapp/v2/js/app-*.js',
+                        'target/grunt/webapp/v2/js/utils/*.js',
+                        'target/grunt/webapp/v2/js/components/*/*.js',
+                        'target/grunt/webapp/v2/plugins/reports/*.js',
+                        'target/grunt/webapp/v2/plugins/reports/**/*.js',
+                        'target/grunt/webapp/v2/plugins/storyboards/*.js',
+                        'target/grunt/webapp/v2/plugins/storyboards/**/*.js'
                     ]
                 }
             }
@@ -264,7 +297,8 @@ module.exports = function(grunt, ref) {
         {
             dist: {
                 files: {
-                    'target/grunt/webapp/v2/js/logistimo.js': 'target/grunt/webapp/v2/js/logistimo.js'
+                    'target/grunt/webapp/v2/js/logistimo.js': 'target/grunt/webapp/v2/js/logistimo.js',
+                    'target/grunt/webapp/v2/js/bulletinboard.js': 'target/grunt/webapp/v2/js/bulletinboard.js'
                 },
                 options: {
                     replacements: [{
@@ -277,7 +311,9 @@ module.exports = function(grunt, ref) {
                 files: {
                     'target/grunt/webapp/m/index.html': 'target/grunt/webapp/m/index.html',
                     'target/grunt/webapp/v2/index.html': 'target/grunt/webapp/v2/index.html',
+                    'target/grunt/webapp/v2/bulletinboard.html': 'target/grunt/webapp/v2/bulletinboard.html',
                     'target/grunt/webapp/v2/js/app.js': 'target/grunt/webapp/v2/js/app.js',
+                    'target/grunt/webapp/v2/js/bulletinboard-app.js': 'target/grunt/webapp/v2/js/bulletinboard-app.js',
                     'target/grunt/webapp/v2/views/login.html': 'target/grunt/webapp/v2/views/login.html',
                     'target/grunt/webapp/v2/views/menu.html': 'target/grunt/webapp/v2/views/menu.html',
                     'target/grunt/webapp/v2/views/forgot-password.html': 'target/grunt/webapp/v2/views/forgot-password.html',
@@ -449,7 +485,8 @@ module.exports = function(grunt, ref) {
             },
             prod: {
                 files: {
-                    'target/grunt/webapp/v2/js/<%= pkg.suffix %>-<%= now %>.min.js': ['target/grunt/webapp/v2/js/logistimo.js']
+                    'target/grunt/webapp/v2/js/<%= pkg.suffix %>-<%= now %>.min.js': ['target/grunt/webapp/v2/js/logistimo.js'],
+                    'target/grunt/webapp/v2/js/<%= pkg.suffix %>-bb-<%= now %>.min.js': ['target/grunt/webapp/v2/js/bulletinboard.js']
                 }
             }
         },
@@ -460,6 +497,7 @@ module.exports = function(grunt, ref) {
                 },
                 files: {
                     "target/grunt/webapp/v2/index.html": "target/grunt/webapp/v2/index.html",
+                    "target/grunt/webapp/v2/bulletinboard.html": "target/grunt/webapp/v2/bulletinboard.html",
                     "target/grunt/webapp/v2/mobile-pwd-reset-success.html": "target/grunt/webapp/v2/mobile-pwd-reset-success.html",
                     "target/grunt/webapp/v2/password-reset-error.html": "target/grunt/webapp/v2/password-reset-error.html",
                     "target/grunt/webapp/v2/password-reset-success.html": "target/grunt/webapp/v2/password-reset-success.html",
@@ -481,7 +519,9 @@ module.exports = function(grunt, ref) {
                     now: '<%= now %>',
                     version: '<%= pkg.version %>',
                     scriptInc: '<script src="js/<%= pkg.suffix %>-<%= now %>.min.js"></script>',
+                    bbScriptInc: '<script src="js/<%= pkg.suffix %>-bb-<%= now %>.min.js"></script>',
                     templateInc: '<script src="js/<%= pkg.suffix %>-tpl-<%= now %>.js"></script>',
+                    bbTemplateInc: '<script src="js/<%= pkg.suffix %>-tpl-<%= now %>.js"></script>',
                     cssInc: '<link rel="stylesheet" href="css/<%= pkg.suffix %>-<%= now %>.min.css" />',
                     tempCssInc: '<link rel="stylesheet" href="css/temperature-<%= now %>.min.css" />',
                     appVerScriptInc: "setCookie('web.app.ver','<%= now %>',30);",
@@ -554,6 +594,28 @@ module.exports = function(grunt, ref) {
                     {
                         src: 'target/grunt/webapp/v2/js/app-controller.js',
                         dest: 'target/grunt/webapp/v2/js/app-controller.js'
+                    },
+                    {
+                        src: 'target/grunt/webapp/v2/js/app.js',
+                        dest: 'target/grunt/webapp/v2/js/app.js'
+                    }
+                ]
+            },
+            bulletinboardUglify: {
+                files: [
+
+                    {
+                        src: 'target/grunt/webapp/v2/js/bulletinboard-app.js',
+                        dest: 'target/grunt/webapp/v2/js/bulletinboard-app.js'
+                    }
+                ]
+            },
+            bulletinboardAfterUglify: {
+                files: [
+
+                    {
+                        src: 'target/grunt/webapp/v2/bulletinboard.html',
+                        dest: 'target/grunt/webapp/v2/bulletinboard.html'
                     }
                 ]
             }
@@ -570,6 +632,10 @@ module.exports = function(grunt, ref) {
                         reporterOutput: 'report-jshint-checkstyle.xml'
                 },
                 files: ['Gruntfile.js', '<%= baseurl %>/modules/web/src/main/webapp/v2/js/*.js','<%= baseurl %>/modules/web/src/main/webapp/v2/js/components/**/*.js','<%= baseurl %>/modules/web/src/main/webapp/v2/js/utils/*.js']
+        },
+        watch: {
+            files: ['**/src/**/*'],
+            tasks: ['development']
         }
     });
 
@@ -589,18 +655,21 @@ module.exports = function(grunt, ref) {
     grunt.loadNpmTasks('json-string-replace');
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-shell');
+    grunt.loadNpmTasks('grunt-contrib-watch');
 
 
     grunt.registerTask('default', ['copy:main', 'copy:properties', 'rename:en', 'rename:fr', 'rename:hi', 'propertiesToJSON:en',
         'propertiesToJSON:fr','shell:convertUTF8','copy:res2src','copy:rb2src']);
     grunt.registerTask('development',['clean:dist', 'env:dev', 'copy:src','copy:main','copy:properties','if:default',
         'rename:en', 'rename:fr', 'rename:hi', 'propertiesToJSON:en', 'propertiesToJSON:fr', 'shell:convertUTF8', 'if:rb',
-        'rename:resource','cssmin:prod', 'preprocess:beforeUglify', 'toggleComments', 'html2js', 'ngAnnotate',
-        'string-replace:dist', 'uglify', 'preprocess:afterUglify']);
+        'rename:resource', 'cssmin:prod', 'copy:bulletinboard', 'copy:bulletinboardApp', 'preprocess:beforeUglify',
+        'env:bulletinboard', 'preprocess:bulletinboardUglify', 'env:dev', 'toggleComments', 'html2js', 'ngAnnotate',
+        'string-replace:dist', 'uglify', 'preprocess:afterUglify', 'env:bulletinboard', 'preprocess:bulletinboardAfterUglify']);
     grunt.registerTask('production',['clean:dist', 'env:prod', 'copy:src','copy:main','copy:properties', 'if:default',
         'rename:en', 'rename:fr', 'rename:hi', 'propertiesToJSON:en', 'propertiesToJSON:fr', 'shell:convertUTF8', 'if:rb',
-        'rename:resource', 'cssmin:prod', 'preprocess:beforeUglify', 'toggleComments', 'html2js', 'ngAnnotate',
-        'string-replace:dist', 'uglify', 'preprocess:afterUglify']);
+        'rename:resource', 'cssmin:prod', 'copy:bulletinboard', 'copy:bulletinboardApp', 'preprocess:beforeUglify',
+        'env:bulletinboard', 'preprocess:bulletinboardUglify', 'env:prod', 'toggleComments', 'html2js', 'ngAnnotate',
+        'string-replace:dist', 'uglify', 'preprocess:afterUglify', 'env:bulletinboard', 'preprocess:bulletinboardAfterUglify']);
 
     function rename(moduleName) {
         return moduleName.replace('../modules/web/src/main/webapp/v2/', '');

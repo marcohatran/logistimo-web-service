@@ -23,6 +23,7 @@
 
 package com.logistimo.api.filters;
 
+import com.logistimo.api.auth.AuthenticationUtil;
 import com.logistimo.auth.SecurityMgr;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.constants.CharacterConstants;
@@ -90,6 +91,14 @@ public class APISecurityFilter implements Filter {
           return;
         }
 
+      } else if (StringUtils.isNotBlank(req.getHeader(Constants.TOKEN))) {
+        try {
+          AuthenticationUtil.authenticatTokenAndSetSession(req.getHeader(Constants.TOKEN), -1);
+        } catch (Exception e) {
+          xLogger.severe("Issue with api client authentication", e);
+          resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+          return;
+        }
       } else if (StringUtils.isBlank(req.getHeader(Constants.X_APP_ENGINE_TASK_NAME)) && !(
           StringUtils.isNotBlank(servletPath) && (servletPath.startsWith(ASSET_STATUS_URL)
               || servletPath.startsWith(SMS_API_URL) || servletPath.startsWith(M_AUTH_URL)))) {
@@ -99,16 +108,21 @@ public class APISecurityFilter implements Filter {
           resp.sendError(HttpServletResponse.SC_CONFLICT, "Upgrade required");
           return;
         }
+        SecureUserDetails
+            userDetails = SecurityMgr
+            .getSessionDetails(req.getSession());
+        if (userDetails != null) {
+          SecurityUtils.setUserDetails(userDetails);
+        }
+        SecurityUtils.setUserDetails(userDetails);
         if (StringUtils.isNotBlank(servletPath) && !(servletPath.startsWith(APP_STATUS_URL)
             || servletPath.startsWith(AUTHENTICATE_URL))) {
-          SecureUserDetails
-              userDetails = SecurityMgr
-              .getSessionDetails(req.getSession());
+
           if (userDetails == null) {
             resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication Required.");
             return;
           }
-          SecurityUtils.setUserDetails(userDetails);
+
           String reqDomainId = SecurityUtils.getReqCookieUserDomain(req);
           if (reqDomainId != null && !reqDomainId.equals(
               userDetails.getUsername() + CharacterConstants.COLON + SecurityUtils

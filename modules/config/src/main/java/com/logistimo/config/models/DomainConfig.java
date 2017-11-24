@@ -145,6 +145,7 @@ public class DomainConfig implements ILocation, Serializable {
   public static final String UPDATE_DATA = "updateData";
   public static final String DISABLE_TAGS_INVENTRY_OPERATION = "tgiov";
   public static final String AUTHENTICATION_TOKEN_EXPIRY = "atexp";
+  public static final String ACCESS_KEY_AUTHENTICATION_TOKEN_EXPIRY = "atexp";
   // Synchroization by mobile
   public static final String SYNCHRONIZATION_BY_MOBILE = "syncbymob";
   // Local login required
@@ -295,6 +296,8 @@ public class DomainConfig implements ILocation, Serializable {
   private String langPreference = "en";
 
   private EventSummaryConfigModel eventSummaryConfig;
+
+  private int accessKeyAuthTokenExpiry = 30;
 
   public DomainConfig() {
     optimizerConfig = new OptimizerConfig();
@@ -728,6 +731,12 @@ public class DomainConfig implements ILocation, Serializable {
       }
 
       try {
+        this.accessKeyAuthTokenExpiry = json.getInt(ACCESS_KEY_AUTHENTICATION_TOKEN_EXPIRY);
+      } catch (JSONException e) {
+        // do nothing
+      }
+
+      try {
         this.localLoginRequired = json.getBoolean(LOCAL_LOGIN_REQUIRED);
       } catch (JSONException e) {
         // do nothing
@@ -1007,6 +1016,7 @@ public class DomainConfig implements ILocation, Serializable {
       // Only New UI
       json.put(ONLYNEWUI, onlyNewUI);
       json.put(AUTHENTICATION_TOKEN_EXPIRY, authenticationTokenExpiry);
+      json.put(ACCESS_KEY_AUTHENTICATION_TOKEN_EXPIRY, accessKeyAuthTokenExpiry);
       json.put(LOCAL_LOGIN_REQUIRED, localLoginRequired);
 
       if (supportConfigMap != null && !supportConfigMap.isEmpty()) {
@@ -1904,4 +1914,11 @@ public class DomainConfig implements ILocation, Serializable {
     return (approvalsConfig != null && !approvalsConfig.getOrderConfig().getPrimaryApprovers().isEmpty());
   }
 
+  public int getAccessKeyAuthTokenExpiry() {
+    return accessKeyAuthTokenExpiry;
+  }
+
+  public void setAccessKeyAuthTokenExpiry(int accessKeyAuthTokenExpiry) {
+    this.accessKeyAuthTokenExpiry = accessKeyAuthTokenExpiry;
+  }
 }

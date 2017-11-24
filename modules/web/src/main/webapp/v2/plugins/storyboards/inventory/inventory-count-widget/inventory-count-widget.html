@@ -1,0 +1,16 @@
+<div ng-controller="inventoryCountWidgetController" style="margin: 28px;">
+    <div ng-if="wloading" class="row mt18 widget-loading">
+        <div class="text-center">
+            {{resourceBundle['loading.uppercase']}}... <span class="glyphicons glyphicons-cogwheel spin"></span>
+        </div>
+    </div>
+    <div ng-if="!wloading && showError" class="alert alert-danger">
+        <div class="text-center">
+            {{errorMessage}}
+        </div>
+    </div>
+    <div ng-if="!wloading && !showError">
+        <div class="xlarge-grey-lbl">{{totalInv}}</div>
+        <div class="large-grey-lbl">{{resourceBundle['inventory.items']}}</div>
+    </div>
+</div>

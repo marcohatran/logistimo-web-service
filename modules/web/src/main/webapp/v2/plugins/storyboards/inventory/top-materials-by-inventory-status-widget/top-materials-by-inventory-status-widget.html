@@ -1,0 +1,19 @@
+<div ng-controller="topMaterialsByInventoryStatusWidgetController">
+    <div ng-if="wloading" class="row mt18 widget-loading">
+        <div class="text-center">
+            {{resourceBundle['loading.uppercase']}}... <span class="glyphicons glyphicons-cogwheel spin"></span>
+        </div>
+    </div>
+    <div ng-if="!wloading && showError" class="alert alert-danger">
+        <div class="text-center">
+            {{errorMessage}}
+        </div>
+    </div>
+    <div ng-if="!wloading && !showError && showChart">
+        <fusion-chart type="topMaterialsByInventoryStatus.cType" height="topMaterialsByInventoryStatus.computedHeight" width="topMaterialsByInventoryStatus.computedWidth"
+                      chart-label="topMaterialsByInventoryStatus.cLabel"
+                      chart-data="topMaterialsByInventoryStatus.cdata" chart-options="topMaterialsByInventoryStatus.copt"
+                      chart-id="{{topMaterialsByInventoryStatus.wId}}" simple="'true'">
+        </fusion-chart>
+    </div>
+</div>

@@ -55,6 +55,12 @@
             <li ng-class="{ enable: subview == 'summarisation'}">
                 <a href="#/configuration/summarisation/">{{resourceBundle['event.summary']}}</a>
             </li>
+            <li ng-class="{enable: subview == 'bulletin' }">
+                <a href="#/configuration/bulletin/">Bulletin board</a>
+            </li>
+            <li ng-class="{enable: subview == 'dashboards' }" ng-show="iSU">
+                <a href="#/configuration/dashboards/">Dashboards</a>
+            </li>
         </ul>
         <!--<span class="pull-right" ng-class="{ enable: subview == 'push'}">
             <a href="#/configuration/push" class="btn btn-sm btn-primary pull-right">{{resourceBundle['push']}} {{resourceBundle['configuration']}}</a></span>-->
@@ -98,6 +104,12 @@
         </div>
         <div ng-switch-when="summarisation">
             <div ng-include="'views/configuration/eventdistribution/summarisation.html'"></div>
+        </div>
+        <div ng-switch-when="bulletin">
+            <div ng-include="'views/bulletinboard/bulletinboards.html'"></div>
+        </div>
+        <div ng-switch-when="dashboards">
+            <div ng-include="'views/dashboards/dashboards.html'"></div>
         </div>
     </div>
 </div>

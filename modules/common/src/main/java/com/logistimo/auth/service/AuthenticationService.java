@@ -34,6 +34,7 @@ import com.logistimo.users.entity.IUserToken;
 
 import java.io.IOException;
 import java.util.InputMismatchException;
+import java.util.Optional;
 
 
 /**
@@ -46,13 +47,13 @@ public interface AuthenticationService extends Service {
 
   IUserToken generateUserToken(String userId) throws ServiceException, ObjectNotFoundException;
 
-  String authenticateToken(String token, Integer accessInitiator)
+  IUserToken authenticateToken(String token, Integer accessInitiator)
       throws UnauthorizedException, ServiceException, ObjectNotFoundException;
 
   String getUserIdByToken(String token)
       throws UnauthorizedException, ServiceException, ObjectNotFoundException;
 
-  Boolean clearUserTokens(String userId);
+  Boolean clearUserTokens(String userId, boolean removeAccessKeys);
 
   /**
    * Update users session with new session Id. This also clears user tokens generated for mobile.
@@ -71,6 +72,10 @@ public interface AuthenticationService extends Service {
       throws MessageHandlingException, IOException, ServiceException, ObjectNotFoundException,
       InvalidDataException;
 
+  Optional<IUserToken> checkAccessKeyStatus(String accessKey) throws ServiceException;
+
+  void authoriseAccessKey(String accessKey) throws ValidationException, ServiceException;
+
   String createJWT(String userid, long ttlMillis);
 
   String decryptJWT(String token);
@@ -81,4 +86,6 @@ public interface AuthenticationService extends Service {
   String generatePassword(String id);
 
   void validateOtpMMode(String userId, String otp) throws ValidationException;
+
+  String generateAccessKey();
 }

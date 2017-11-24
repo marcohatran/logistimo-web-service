@@ -736,7 +736,7 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
               }
               xLogger.fine("deleteAccounts: deleting user {0} from the database", accountId);
               pm.deletePersistent(account);
-              aus.clearUserTokens(accountId);
+              aus.clearUserTokens(accountId, true);
               xLogger.info("AUDITLOG\t{0}\t{1}\tUSER\t " +
                   "DELETE\t{2}\t{3}", domainId, sUser, accountId, userName);
               --numAccounts;
@@ -897,6 +897,7 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
         IUserAccount user = JDOUtils.getObjectById(IUserAccount.class, userId, pm);
         xLogger.info("disableAccount: Disabling user account {0}", userId);
         user.setEnabled(false);
+        StaticApplicationContext.getBean(AuthenticationService.class).clearUserTokens(userId, true);
       } catch (JDOObjectNotFoundException e) {
         xLogger.warn("disableAccount: FAILED!! user {0} does not exist", userId);
         exception = e;
