@@ -30,6 +30,7 @@ import com.logistimo.api.models.UserDashboardConfigModel;
 import com.logistimo.api.models.UserDetailModel;
 import com.logistimo.api.models.UserDomainDetail;
 import com.logistimo.api.models.UserModel;
+import com.logistimo.api.models.configuration.AdminContactConfigModel;
 import com.logistimo.api.models.configuration.AssetConfigModel;
 import com.logistimo.auth.SecurityConstants;
 import com.logistimo.config.models.AdminContactConfig;
@@ -45,6 +46,8 @@ import com.logistimo.domains.service.impl.DomainsServiceImpl;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.logger.XLog;
+import com.logistimo.media.endpoints.IMediaEndPoint;
+import com.logistimo.media.entity.IMedia;
 import com.logistimo.models.superdomains.DomainSuggestionModel;
 import com.logistimo.orders.approvals.service.IOrderApprovalsService;
 import com.logistimo.pagination.Results;
@@ -62,6 +65,7 @@ import org.apache.commons.lang.StringUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 public class UserBuilder {
   private static final XLog xLogger = XLog.getLog(UserBuilder.class);
@@ -458,5 +462,23 @@ public class UserBuilder {
             "Unable to build domain suggestion models for accDids " + accDids.toString());
       }
     }
+  }
+
+  public List<AdminContactConfigModel> buildAdminContactModel(List<IUserAccount> userAccounts) {
+    IMediaEndPoint endPoint = JDOUtils.createInstance(IMediaEndPoint.class);
+    MediaBuilder builder = new MediaBuilder();
+    return userAccounts.stream().map(key -> constructAdminContact(key, endPoint, builder)).collect(
+        Collectors.toList());
+  }
+
+  private AdminContactConfigModel constructAdminContact(IUserAccount userAccount, IMediaEndPoint endPoint, MediaBuilder mediaBuilder) {
+    AdminContactConfigModel model = new AdminContactConfigModel();
+    model.userId = userAccount.getUserId();
+    model.userNm = userAccount.getFullName();
+    model.phn = userAccount.getMobilePhoneNumber();
+    model.email = userAccount.getEmail();
+    List<IMedia> mediaList = endPoint.getMedias(model.userId);
+    model.setPhoto(mediaBuilder.constructMediaModelList(mediaList));
+    return model;
   }
 }

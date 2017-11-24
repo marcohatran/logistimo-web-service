@@ -25,6 +25,7 @@ package com.logistimo.api.builders;
 
 import com.logistimo.AppFactory;
 import com.logistimo.api.constants.ConfigConstants;
+import com.logistimo.api.models.MediaModel;
 import com.logistimo.api.models.MenuStatsModel;
 import com.logistimo.api.models.configuration.AccountingConfigModel;
 import com.logistimo.api.models.configuration.AdminContactConfigModel;
@@ -65,6 +66,7 @@ import com.logistimo.config.models.SyncConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
 import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
 import com.logistimo.constants.Constants;
+import com.logistimo.dao.JDOUtils;
 import com.logistimo.domains.entity.IDomain;
 import com.logistimo.domains.service.DomainsService;
 import com.logistimo.domains.service.impl.DomainsServiceImpl;
@@ -74,6 +76,8 @@ import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exception.SystemException;
 import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.logger.XLog;
+import com.logistimo.media.endpoints.IMediaEndPoint;
+import com.logistimo.media.entity.IMedia;
 import com.logistimo.orders.entity.IOrder;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
@@ -419,9 +423,17 @@ public class ConfigurationModelsBuilder {
         model.email = userAccount.getEmail();
         model.phn = userAccount.getMobilePhoneNumber();
         model.userNm = userAccount.getFullName();
+        model.setPhoto(constructMediaModel(model.userId));
       }
     }
     return model;
+  }
+
+  private List<MediaModel> constructMediaModel(String key) {
+    IMediaEndPoint endPoint = JDOUtils.createInstance(IMediaEndPoint.class);
+    MediaBuilder builder = new MediaBuilder();
+    List<IMedia> mediaList = endPoint.getMedias(key);
+    return builder.constructMediaModelList(mediaList);
   }
 
   public List<SupportConfigModel> buildAllSupportConfigModels(DomainConfig dc) {

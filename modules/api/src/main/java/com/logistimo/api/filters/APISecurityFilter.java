@@ -28,8 +28,10 @@ import com.logistimo.auth.SecurityMgr;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
+import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.logger.XLog;
 import com.logistimo.security.SecureUserDetails;
+import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.utils.ConfigUtil;
 
 import org.apache.commons.lang.StringUtils;
@@ -85,6 +87,10 @@ public class APISecurityFilter implements Filter {
       if (StringUtils.isNotBlank(req.getHeader(X_ACCESS_USER))) {
         try {
           SecurityMgr.setSessionDetails(req.getHeader(X_ACCESS_USER));
+        } catch (UnauthorizedException | ObjectNotFoundException e) {
+          xLogger.warn("Issue with api client authentication", e);
+          resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
+          return;
         } catch (Exception e) {
           xLogger.severe("Issue with api client authentication", e);
           resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());

@@ -110,7 +110,6 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
   private IUserDao userDao = new UserDao();
   DomainsService domainsService = Services.getService(DomainsServiceImpl.class);
 
-
   /**
    * Check to see if a user id exists in the system or not.
    *
@@ -1338,7 +1337,7 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
       String query = "SELECT UA.USERID FROM USERACCOUNT UA,USER_TAGS UT WHERE "
           + "UT.ID IN (SELECT ID FROM TAG WHERE NAME IN (" + tagName + ") AND TYPE=4)"
           + " AND UT.USERID = UA.USERID AND UA.ISENABLED = 1 AND UA.SDID = ?";
-      Query q = pm.newQuery("javax.jdo.query.SQL", query);
+      Query q = pm.newQuery(Constants.JAVAX_JDO_QUERY_SQL, query);
       try {
         List l = (List) q.executeWithArray(domainId);
         uIds = new ArrayList<>(l.size());
@@ -1523,7 +1522,7 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
       Query query = pm.newQuery(JDOUtils.getImplClass(IUserDevice.class));
       query.setFilter("userId == userIdParam && appname == appnameParam");
       query.declareParameters("String userIdParam, String appnameParam");
-      //Query query = pm.newQuery("javax.jdo.query.SQL",q);
+      //Query query = pm.newQuery(Constants.QUERY_LANGUAGE",q);
       query.setUnique(true);
       userDevice = (IUserDevice) query.execute(userid, appname);
       userDevice = pm.detachCopy(userDevice);
@@ -1653,7 +1652,7 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
       }
       queryBuilder.setLength(queryBuilder.length() - 1);
       queryBuilder.append(" )");
-      query = pm.newQuery("javax.jdo.query.SQL", queryBuilder.toString());
+      query = pm.newQuery(Constants.JAVAX_JDO_QUERY_SQL, queryBuilder.toString());
       query.setClass(JDOUtils.getImplClass(IUserAccount.class));
       results = (List<IUserAccount>) query.execute();
       results = (List<IUserAccount>) pm.detachCopyAll(results);
@@ -1670,5 +1669,44 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
       pm.close();
     }
     return results;
+  }
+
+  public List<IUserAccount> getUsersByTag(Long objectId, String objectType, String userTags)
+      throws ServiceException {
+    List<String> parameters = new ArrayList<>();
+    StringBuilder
+        queryString =
+        new StringBuilder(
+            "SELECT * FROM USERACCOUNT WHERE USERID IN (SELECT USERID FROM USERTOKIOSK WHERE KIOSKID = ?");
+    parameters.add(String.valueOf(objectId));
+
+    if (!StringUtils.isEmpty(userTags)) {
+      queryString.append(
+          " AND USERID IN (SELECT USERID FROM USER_TAGS WHERE ID IN (SELECT ID FROM TAG WHERE TYPE = ?")
+          .append(
+              " AND NAME IN(").append(userTags).append(")))");
+      parameters.add(String.valueOf(ITag.USER_TAG));
+    }
+    queryString.append(CharacterConstants.C_BRACKET);
+    PersistenceManager pm = getPM();
+    Query query = pm.newQuery(Constants.JAVAX_JDO_QUERY_SQL, queryString.toString());
+    query.setClass(JDOUtils.getImplClass(IUserAccount.class));
+    try {
+      List<IUserAccount>
+          results =
+          (List<IUserAccount>) query.executeWithArray(parameters.toArray());
+      results = (List<IUserAccount>) pm.detachCopyAll(results);
+      return results;
+    } catch (Exception e) {
+      xLogger.warn("Error while fetching users for kiosk: {0} for user tag: {1}", objectId, userTags,
+          e);
+      throw e;
+    } finally {
+      query.closeAll();
+      pm.close();
+    }
+  }
+  protected PersistenceManager getPM() {
+    return PMF.get().getPersistenceManager();
   }
 }

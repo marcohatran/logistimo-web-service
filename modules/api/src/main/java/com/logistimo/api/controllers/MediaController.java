@@ -24,22 +24,23 @@
 package com.logistimo.api.controllers;
 
 import com.logistimo.AppFactory;
+import com.logistimo.api.builders.MediaBuilder;
+import com.logistimo.api.models.MediaModel;
+import com.logistimo.api.models.MediaModels;
+import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.dao.JDOUtils;
+import com.logistimo.exception.InvalidDataException;
+import com.logistimo.exception.InvalidServiceException;
+import com.logistimo.logger.XLog;
 import com.logistimo.media.SupportedMediaTypes;
 import com.logistimo.media.endpoints.IMediaEndPoint;
 import com.logistimo.media.entity.IMedia;
+import com.logistimo.services.ServiceException;
 import com.logistimo.services.blobstore.BlobKey;
 import com.logistimo.services.blobstore.BlobstoreService;
+import com.logistimo.services.impl.PMF;
 
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
-import com.logistimo.services.ServiceException;
-import com.logistimo.services.impl.PMF;
-import com.logistimo.logger.XLog;
-import com.logistimo.api.builders.MediaBuilder;
-import com.logistimo.exception.InvalidDataException;
-import com.logistimo.exception.InvalidServiceException;
-import com.logistimo.api.models.MediaModel;
-import com.logistimo.api.models.MediaModels;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -75,6 +76,7 @@ public class MediaController {
   @RequestMapping(value = "/v1/mediaforDomain/{domainKey:.+}", method = RequestMethod.GET)
   @ResponseBody
   public MediaModels getMedia(@PathVariable String domainKey) {
+    xLogger.info(SecurityUtils.getUsername() + " trying to fetch media for key: " + domainKey);
     IMediaEndPoint endPoint = JDOUtils.createInstance(IMediaEndPoint.class);
     List<IMedia> mediaList = endPoint.getMedias(domainKey);
     return new MediaModels(builder.constructMediaModelList(mediaList));
@@ -86,6 +88,7 @@ public class MediaController {
     IMediaEndPoint endPoint = JDOUtils.createInstance(IMediaEndPoint.class);
     try {
       endPoint.removeMedia(id);
+      xLogger.info(SecurityUtils.getUsername() + " deleted the media successfully for id: " + id);
     } catch (ServiceException e) {
       xLogger.warn("Error while deleting image.", e);
       throw new InvalidServiceException("Error while deleting image.");
@@ -103,6 +106,7 @@ public class MediaController {
     if (mm != null) {
       modelList.add(mm);
     }
+    xLogger.info(SecurityUtils.getUsername() + " uploaded media successfully for key: " + model.domainKey);
     return new MediaModels(modelList);
   }
 
@@ -126,7 +130,7 @@ public class MediaController {
         MultipartFile file = fileMap.getFirst(fieldName);
         String fileName = file.getOriginalFilename();
         try {
-          String fileExt = fileName.substring(fileName.lastIndexOf(".") + 1);
+          String fileExt = fileName.substring(fileName.lastIndexOf('.') + 1);
           String contentType = file.getContentType();
           long sizeInBytes = file.getSize();
           String
@@ -140,6 +144,7 @@ public class MediaController {
           media.setMediaType(SupportedMediaTypes.valueOf(fileExt));
           media.setDomainKey(domainId);
           pm.makePersistent(media);
+          xLogger.info(SecurityUtils.getUsername() + " uploaded media for key: " + domainId);
           mediaResponse.items.add(builder.constructMediaModel(media, fieldName));
         } catch (IllegalArgumentException e) {
           throw new InvalidDataException(
