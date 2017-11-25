@@ -84,7 +84,7 @@ public class BulletinBoardDashboardController {
       xLogger.severe("Error creating Dashboard for domain ", domainId);
       throw new InvalidServiceException("Error creating Dashboard for " + domainId);
     }
-    return backendMessages.getString("dashboard") + " " + MsgUtil.bold(model.getName()) + " " + backendMessages
+    return backendMessages.getString("dashboard.upper") + " " + MsgUtil.bold(model.getName()) + " " + backendMessages
         .getString("created.success");
   }
 

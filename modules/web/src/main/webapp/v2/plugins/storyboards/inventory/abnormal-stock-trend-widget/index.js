@@ -25,12 +25,12 @@
  * Created by naveensnair on 24/11/17.
  */
 
-angular.module('logistimo.storyboard.stockAvailabilityTrend', [])
+angular.module('logistimo.storyboard.abnormalStockTrend', [])
     .config(function (widgetsRepositoryProvider) {
         widgetsRepositoryProvider.addWidget({
-            id: "stockAvailabilityTrendWidget",
-            name: "Stock availability trend",
-            templateUrl: "plugins/storyboards/inventory/stock-availability-trend-widget/stock-availability-trend-widget.html",
+            id: "abnormalStockTrendWidget",
+            name: "Abnormal stock trend",
+            templateUrl: "plugins/storyboards/inventory/abnormal-stock-trend-widget/abnormal-stock-trend-widget.html",
             editTemplateUrl: "plugins/storyboards/inventory/edit-template.html",
             templateFilters: [
                 {
@@ -69,7 +69,7 @@ angular.module('logistimo.storyboard.stockAvailabilityTrend', [])
             if(checkNullEmpty($scope.filter.periodicity)) {
                 $scope.filter.periodicity = "m";
             }
-            $scope.filter.type = "isa";
+            $scope.filter.type = "ias";
         }
 
         function setFilters(){
@@ -242,5 +242,4 @@ angular.module('logistimo.storyboard.stockAvailabilityTrend', [])
         init();
     }]);
 
-logistimoApp.requires.push('logistimo.storyboard.stockAvailabilityTrend');
-
+logistimoApp.requires.push('logistimo.storyboard.abnormalStockTrend');

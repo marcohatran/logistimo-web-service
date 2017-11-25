@@ -33,11 +33,9 @@ import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.logger.XLog;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.Resources;
-import com.logistimo.services.ServiceException;
 import com.logistimo.services.Services;
 import com.logistimo.utils.MsgUtil;
 
-import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -48,6 +46,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.ResourceBundle;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -60,6 +59,7 @@ public class BulletinBoardController {
   private static final XLog xLogger = XLog.getLog(BulletinBoardController.class);
 
   BulletinBoardDashBoardBuilder builder = new BulletinBoardDashBoardBuilder();
+  private static final String BULLETIN_BOARD = "bulletin.board";
 
   @RequestMapping(value = "/", method = RequestMethod.POST)
   public
@@ -67,7 +67,7 @@ public class BulletinBoardController {
   String create(@RequestBody BulletinBoardModel model, HttpServletRequest request) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
     Locale locale = sUser.getLocale();
-    java.util.ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     long domainId = SecurityUtils.getDomainId(request);
     String msg;
     try {
@@ -76,11 +76,11 @@ public class BulletinBoardController {
         IBulletinBoard bulletinBoard = bulletinBoardService.getBulletinBoard(model.getBulletinBoardId());
         bulletinBoard = builder.buildBulletinBoardForUpdate(model, bulletinBoard, sUser.getUsername());
         bulletinBoardService.updateBulletinBoard(bulletinBoard);
-        msg = "Bulletin board " + MsgUtil.bold(model.getName()) + " updated successfully.";
+        msg = backendMessages.getString(BULLETIN_BOARD) + " " + MsgUtil.bold(model.getName()) + " " + backendMessages.getString("update.success");
       } else {
         IBulletinBoard bulletinBoard = builder.buildBulletinBoard(model, domainId, sUser.getUsername());
         bulletinBoardService.createBulletinBoard(bulletinBoard);
-        msg = backendMessages.getString("bulletin.board") + " " + MsgUtil.bold(model.getName()) + " " + backendMessages
+        msg = backendMessages.getString(BULLETIN_BOARD) + " " + MsgUtil.bold(model.getName()) + " " + backendMessages
             .getString("created.success");
       }
     } catch (Exception e) {
@@ -130,7 +130,7 @@ public class BulletinBoardController {
       throw new InvalidServiceException("Error deleting Dashboard: " + bulletinBoardId);
     }
 
-    return backendMessages.getString("bulletin.board") + " " + MsgUtil.bold(name) + " " + backendMessages.getString("deleted.success");
+    return backendMessages.getString(BULLETIN_BOARD) + " " + MsgUtil.bold(name) + " " + backendMessages.getString("deleted.success");
   }
 
 }
