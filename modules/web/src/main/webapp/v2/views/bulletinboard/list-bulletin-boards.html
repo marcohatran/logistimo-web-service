@@ -32,8 +32,8 @@
                             <thead>
                             <tr>
                                 <th class="col-sm-1">S.No</th>
-                                <th class="col-sm-4">BulletinBoard</th>
-                                <th class="col-sm-1">Action</th>
+                                <th class="col-sm-4">{{resourceBundle['bulletin.board.upper']}}</th>
+                                <th class="col-sm-1">{{resourceBundle['action']}}</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -41,12 +41,12 @@
                                 <td>{{$index + 1}}</td>
                                 <td>{{bulletinBoard.name}}</td>
                                 <td>
-                                    <a ng-if="$rootScope.isSession"
+                                    <a ng-if="isSession"
                                        ng-href="#configuration/bulletin/view/{{bulletinBoard.bbId}}"><span
                                             class="glyphicon glyphicon-th-large" title="View"></span></a>
-                                    <a ng-if="!$rootScope.isSession" ng-href="#/view/{{bulletinBoard.bbId}}"><span
+                                    <a ng-if="!isSession" ng-href="#/view/{{bulletinBoard.bbId}}"><span
                                             class="glyphicon glyphicon-th-large" title="View"></span></a>&nbsp;&nbsp;
-                                    <a ng-if="$rootScope.isSession"
+                                    <a ng-if="isSession"
                                        href="#configuration/bulletin/detail/{{bulletinBoard.bbId}}"><span
                                             class="glyphicon glyphicon-cog" title="Configure"></span></a>
                                 </td>
@@ -61,7 +61,7 @@
                 <div class="row mt18">
                     <div class="col-sm-12">
                         <p class=" alert alert-warning">
-                            No bulletin board configured</p>
+                            {{resourceBundle['bulletin.board.nil']}}</p>
                     </div>
                 </div>
             </div>

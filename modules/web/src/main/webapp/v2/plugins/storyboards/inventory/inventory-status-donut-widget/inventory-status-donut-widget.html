@@ -10,10 +10,9 @@
         </div>
     </div>
     <div ng-if="!wloading && !showError && showChart">
-        <div class="col-sm-12 font-larger text-left text-bold">
+        <div class="col-sm-12 font-larger text-center text-bold">
             <span class="font-large">{{widget.conf.title}}</span>
             <span class="litetext">{{subCaption}}</span>
-            <!--<div class="litetext text-center" ng-if="widget.conf.date"><b>Date: </b>{{date}}</div>-->
         </div>
 
         <fusion-chart type="inventoryStatusDonutWidget.cType" height="inventoryStatusDonutWidget.computedHeight" width="inventoryStatusDonutWidget.computedWidth"

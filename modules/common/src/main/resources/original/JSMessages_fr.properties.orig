@@ -1138,5 +1138,13 @@ stores=magasins
 stores.upper=Magasins
 material.upper=Matériel
 inventory.status=Statut de l'inventaire
+authorize.upper=Autoriser
+authorization.key=Clé d'autorisation
+authorize.bulletin.board=Autoriser le tableau d'affichage
+enter.key=Entrez la clé
+bulletin.boards=babillards
+bulletin.board.lower=tableau d'affichage
+bulletin.board.upper=tableau d'affichage
+bulletin.board.nil=Aucun tableau d'affichage configuré
 
 

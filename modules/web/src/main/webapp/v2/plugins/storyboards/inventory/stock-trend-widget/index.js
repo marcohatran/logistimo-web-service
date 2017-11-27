@@ -25,14 +25,22 @@
  * Created by naveensnair on 24/11/17.
  */
 
-angular.module('logistimo.storyboard.stockAvailabilityTrend', [])
+angular.module('logistimo.storyboard.stockTrend', [])
     .config(function (widgetsRepositoryProvider) {
         widgetsRepositoryProvider.addWidget({
-            id: "stockAvailabilityTrendWidget",
-            name: "Stock availability trend",
-            templateUrl: "plugins/storyboards/inventory/stock-availability-trend-widget/stock-availability-trend-widget.html",
+            id: "stockTrendWidget",
+            name: "Stock trend",
+            templateUrl: "plugins/storyboards/inventory/stock-trend-widget/stock-trend-widget.html",
             editTemplateUrl: "plugins/storyboards/inventory/edit-template.html",
             templateFilters: [
+                {
+                    nameKey: 'title',
+                    type: 'title'
+                },
+                {
+                    nameKey: 'inventory.status',
+                    type: 'widType'
+                },
                 {
                     nameKey:'filter.material.tag',
                     type: 'materialTag'
@@ -54,25 +62,34 @@ angular.module('logistimo.storyboard.stockAvailabilityTrend', [])
                     type: 'periodicity'
                 }
             ],
-            defaultHeight: 6,
-            defaultWidth: 8
+            defaultHeight: 3,
+            defaultWidth: 4
         });
     })
-    .controller('stockAvailabilityTrendWidgetController', ['$scope', 'reportsServiceCore', '$timeout', function ($scope, reportsServiceCore, $timeout) {
+    .controller('stockTrendWidgetController', ['$scope', 'reportsServiceCore', '$timeout', function ($scope, reportsServiceCore, $timeout) {
         $scope.filter = angular.copy($scope.widget.conf);
         var MAX_MONTHS = 11;
         var MAX_WEEKS = 15;
         var MAX_DAYS = 31;
+
 
         function setDefaultFilters(){
             $scope.filter.compare = "none";
             if(checkNullEmpty($scope.filter.periodicity)) {
                 $scope.filter.periodicity = "m";
             }
-            $scope.filter.type = "isa";
         }
 
         function setFilters(){
+            if($scope.isDef($scope.widget.conf.widType) && checkNotNullEmpty($scope.widget.conf.widType)) {
+                if($scope.widget.conf.widType == '0') {
+                    $scope.filter.type = "isa";
+                } else if($scope.widget.conf.widType == '1') {
+                    $scope.filter.type = "ias";
+                }
+            } else {
+                $scope.filter.type = "isa";
+            }
             if($scope.isDef($scope.widget.conf.period) && checkNotNullEmpty($scope.widget.conf.period)) {
                 $scope.filter.periodicity = $scope.widget.conf.period;
             } else {
@@ -196,6 +213,7 @@ angular.module('logistimo.storyboard.stockAvailabilityTrend', [])
         }
 
         function getData(){
+            $scope.wLoading = true;
             var selectedFilters = angular.copy($scope.filter);
             selectedFilters.from = formatDate2Url(selectedFilters.from);
             selectedFilters.to = formatDate2Url(selectedFilters.to);
@@ -213,13 +231,14 @@ angular.module('logistimo.storyboard.stockAvailabilityTrend', [])
                     $scope.noData = false;
                 }
             }).catch(function error(msg) {
+                showError(msg,$scope);
             }).finally(function () {
                 if (selectedFilters['level'] == "d") {
                     $scope.dLoading = false;
                 } else {
                     $scope.loading = false;
                 }
-                $scope.hideLoading();
+                $scope.wLoading = false;
             });
         }
 
@@ -232,6 +251,7 @@ angular.module('logistimo.storyboard.stockAvailabilityTrend', [])
         function init() {
             $scope.renderChart = false;
             $scope.filterLabels = {};
+            $scope.showError = false;
             setDefaultFilters();
             setFilters();
             setChartOptions();
@@ -242,5 +262,4 @@ angular.module('logistimo.storyboard.stockAvailabilityTrend', [])
         init();
     }]);
 
-logistimoApp.requires.push('logistimo.storyboard.stockAvailabilityTrend');
-
+logistimoApp.requires.push('logistimo.storyboard.stockTrend');
