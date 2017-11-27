@@ -7,10 +7,6 @@ angular.module('logistimo.storyboard.inventoryStatusDonutWidget', [])
             editTemplateUrl: "plugins/storyboards/inventory/edit-template.html",
             templateFilters: [
                 {
-                    nameKey: 'title',
-                    type: 'title'
-                },
-                {
                     nameKey: 'inventory.status',
                     type: 'widType'
                 },
@@ -65,14 +61,17 @@ angular.module('logistimo.storyboard.inventoryStatusDonutWidget', [])
                     var widType = filter.widType;
                     if (widType == '0' || widType == '1') {
                         $scope.widType = widType;
+                        
                         if ($scope.widType == 0) {
                             invPieColors[0] = "#efefef";
                             invPieColors[1] = invPieColors[3];
                             invPieColors[2] = invPieColors[3];
+                            $scope.widget.conf.title = "Available";
                         } else {
                             invPieColors[1] = "#efefef";
                             invPieColors[2] = "#efefef";
                             invPieColors[3] = "#efefef";
+                            $scope.widget.conf.title = "Stocked out";
                         }
                     }
                 } else {
@@ -134,34 +133,33 @@ angular.module('logistimo.storyboard.inventoryStatusDonutWidget', [])
                         subCaption: totalInv + " inventory items",
                         captionOnTop: "0",
                         alignCaptionWithCanvas: "1",
-                        showToolTip: "0"
+                        showToolTip: "1"
                     },
                     cdata: chartData,
                     computedWidth: '100%',
-                    computedHeight: parseInt($scope.widget.computedHeight, 10) - 100
+                    computedHeight: parseInt($scope.widget.computedHeight, 10) - 30
                 };
                 $scope.wloading = false;
                 $scope.showChart = true;
             }
 
+            /*
+            Filters are not showing in widgets, this can be used in future.
             $scope.subCaption = undefined;
-
             if (checkNotNullEmpty(filter.materialTag)) {
                 $scope.subCaption = "Material tag(s):" + getSubtext(filter.materialTag);
             } else if (checkNotNullEmpty(filter.material)) {
                 $scope.subCaption = "Material tag(s):" + getSubtext(filter.material);
             }
-
             if (checkNotNullEmpty(filter.entityTag)) {
                 $scope.subCaption =
                     (checkNullEmpty($scope.subCaption) ? '' : $scope.subCaption + ', ') + $scope.resourceBundle.kiosk +
                     " tag(s):" + getSubtext(filter.entityTag);
             }
-
             if (checkNotNullEmpty(filter.period)) {
                 $scope.subCaption = (checkNullEmpty($scope.subCaption) ? '' : $scope.subCaption + ', ') + "Period: " +
                     $scope.widget.conf.period + " day(s)";
-            }
+            }*/
 
         }]);
 

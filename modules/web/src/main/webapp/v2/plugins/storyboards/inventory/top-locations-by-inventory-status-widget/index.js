@@ -146,7 +146,10 @@ angular.module('logistimo.storyboard.topLocationsByInventoryStatusWidget', [])
                 "captionFontSize": "12",
                 "captionAlignment": "center",
                 "caption": "Top 10 districts",
-                "chartLeftMargin": "50"
+                "chartLeftMargin": "50",
+                "captionFontSize": "14",
+                "captionFontBold":1,
+                "captionFont":'Helvetica Neue", Arial'
             };
 
             function setWidgetData() {

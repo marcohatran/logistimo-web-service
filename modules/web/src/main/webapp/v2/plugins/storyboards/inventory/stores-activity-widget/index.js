@@ -133,7 +133,8 @@ angular.module('logistimo.storyboard.storesActivityWidget', [])
             "useDataPlotColorForLabels": 1,
             "subCaptionFontSize": 10,
             "interactiveLegend": 0,
-            "exportEnabled": 1
+            "exportEnabled": 1,
+            "captionOnTop": 0
         };
         $scope.pieOpt = [];
         $scope.pieOpt[0] = angular.copy($scope.pOpt);
@@ -149,6 +150,19 @@ angular.module('logistimo.storyboard.storesActivityWidget', [])
         $scope.stackBarOptions.valueFontColor = '#ffffff';
 
         function setWidgetData(stackData) {
+
+
+            $scope.wloading = false;
+            $scope.showChart = true;
+            if($scope.showChart) {
+                $scope.stackBarOptions.caption = $scope.activePercent + '% active';
+                $scope.stackBarOptions.subCaption = $scope.entDomainTotal + ' stores';
+                $scope.stackBarOptions.subCaption = $scope.entDomainTotal + ' stores';
+                $scope.stackBarOptions.captionFont = 'Helvetica Neue", Arial';
+                $scope.stackBarOptions.subCaptionFontSize = 12;
+                $scope.stackBarOptions.subCaptionFontColor = '#a3a3a3';
+                $scope.stackBarOptions.captionFontBold = 0;
+            }
             $scope.storesActivityWidget = {
                 wId: $scope.widget.id,
                 cType: "stackedbar2d",
@@ -158,9 +172,9 @@ angular.module('logistimo.storyboard.storesActivityWidget', [])
                 computedWidth: '100%',
                 computedHeight: parseInt($scope.widget.computedHeight, 10) - 30
             };
-            $scope.wloading = false;
-            $scope.showChart = true;
-        };
+        }
+
+
 
     }]);
 

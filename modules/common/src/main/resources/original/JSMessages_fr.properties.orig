@@ -1146,5 +1146,6 @@ bulletin.boards=babillards
 bulletin.board.lower=tableau d'affichage
 bulletin.board.upper=tableau d'affichage
 bulletin.board.nil=Aucun tableau d'affichage configuré
+excursion.type=Type d'excursion
 
 

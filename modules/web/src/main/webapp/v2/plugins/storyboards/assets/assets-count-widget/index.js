@@ -22,7 +22,7 @@ angular.module('logistimo.storyboard.assetsCountWidget', [])
                     type: 'exTempState'
                 }
             ],
-            defaultHeight: 1,
+            defaultHeight: 2,
             defaultWidth: 2
         });
     })

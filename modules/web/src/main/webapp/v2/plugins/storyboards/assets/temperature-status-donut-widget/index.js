@@ -51,12 +51,15 @@ angular.module('logistimo.storyboard.temperatureStatusDonutWidget', [])
                 if (assetStatus == 'tn') {
                     tempPieColors[1] = tempPieColors[3];
                     tempPieColors[2] = tempPieColors[3];
+                    $scope.widget.conf.title = "Normal";
                 } else if (assetStatus == 'tl') {
                     tempPieColors[0] = tempPieColors[3];
                     tempPieColors[2] = tempPieColors[3];
+                    $scope.widget.conf.title = "Freezing";
                 } else if (assetStatus == 'th') {
                     tempPieColors[0] = tempPieColors[3];
                     tempPieColors[1] = tempPieColors[3];
+                    $scope.widget.conf.title = "Heating";
                 } else {
                     tempPieColors[0] = tempPieColors[3];
                     tempPieColors[1] = tempPieColors[3];

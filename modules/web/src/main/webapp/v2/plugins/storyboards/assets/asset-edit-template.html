@@ -131,5 +131,24 @@
                            place-holder="None"></lg-uib-select>
         </div>
 
+        <div class="col-sm-5" ng-if="filter.type == 'excursionType'">
+            <div class="col-sm-12 noLRpad">
+                <select ng-model="widget.conf.excursionType" class="form-control">
+                    <option value="0">High</option>
+                    <option value="1">Low</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="col-sm-5" ng-if="filter.type=='periodicity'">
+            <div class="col-sm-12 noLRpad btn-group">
+                <select ng-model="widget.conf.period" class="form-control">
+                    <option value="">-- Select period --</option>
+                    <option value="m">Monthly</option>
+                    <option value="w">Weekly</option>
+                    <option value="d">Daily</option>
+                </select>
+            </div>
+        </div>
     </div>
 </div>

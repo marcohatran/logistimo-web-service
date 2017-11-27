@@ -22,40 +22,28 @@
  */
 
 /**
- * Created by naveensnair on 24/11/17.
+ * Created by naveensnair on 27/11/17.
  */
 
-angular.module('logistimo.storyboard.stockTrend', [])
+angular.module('logistimo.storyboard.temperatureExcursion', [])
     .config(function (widgetsRepositoryProvider) {
         widgetsRepositoryProvider.addWidget({
-            id: "stockTrendWidget",
-            name: "Stock trend",
-            templateUrl: "plugins/storyboards/inventory/stock-trend-widget/stock-trend-widget.html",
-            editTemplateUrl: "plugins/storyboards/inventory/edit-template.html",
+            id: "temperatureExcursionWidget",
+            name: "Asset temperature excursion trend",
+            templateUrl: "plugins/storyboards/assets/temperature-excursion-trend-widget/temperature-excursion-trend-widget.html",
+            editTemplateUrl: "plugins/storyboards/assets/asset-edit-template.html",
             templateFilters: [
                 {
                     nameKey: 'title',
                     type: 'title'
                 },
                 {
-                    nameKey: 'inventory.status',
-                    type: 'widType'
+                    nameKey: 'asset.type',
+                    type: 'assetType'
                 },
                 {
-                    nameKey: 'filter.material.tag',
-                    type: 'materialTag'
-                },
-                {
-                    nameKey: 'material.upper',
-                    type: 'material'
-                },
-                {
-                    nameKey: 'tagentity',
-                    type: 'entityTag'
-                },
-                {
-                    nameKey: 'kiosk',
-                    type: 'entity'
+                    nameKey: 'excursion.type',
+                    type: 'excursionType'
                 },
                 {
                     nameKey: 'period',
@@ -66,7 +54,7 @@ angular.module('logistimo.storyboard.stockTrend', [])
             defaultWidth: 4
         });
     })
-    .controller('stockTrendWidgetController', ['$scope', 'reportsServiceCore', '$timeout', function ($scope, reportsServiceCore, $timeout) {
+    .controller('temperatureExcursionTrendWidgetController', ['$scope', 'reportsServiceCore', '$timeout', function ($scope, reportsServiceCore, $timeout) {
         $scope.filter = angular.copy($scope.widget.conf);
         var MAX_MONTHS = 6;
         var MAX_WEEKS = 15;
@@ -75,44 +63,29 @@ angular.module('logistimo.storyboard.stockTrend', [])
 
         function setDefaultFilters() {
             $scope.filter.compare = "none";
+            if (checkNullEmpty($scope.filter.periodicity)) {
+                $scope.filter.periodicity = "m";
+            }
+            $scope.filter.type = "ate";
         }
 
         function setFilters() {
-            if ($scope.isDef($scope.widget.conf.widType) && checkNotNullEmpty($scope.widget.conf.widType)) {
-                if ($scope.widget.conf.widType == '0') {
-                    $scope.filter.type = "isa";
-                } else if ($scope.widget.conf.widType == '1') {
-                    $scope.filter.type = "ias";
-                }
-            } else {
-                $scope.filter.type = "isa";
-            }
+
             if ($scope.isUndef($scope.widget.conf.period) || checkNullEmpty($scope.widget.conf.period)) {
                 $scope.widget.conf.period = "m";
                 delete $scope.filter["periodicity"];
             }
-            if ($scope.isDef($scope.widget.conf.materialTag) && checkNotNullEmpty($scope.widget.conf.materialTag)) {
-                $scope.filter.mtag = $scope.widget.conf.materialTag[0].id;
-            } else if (checkNullEmpty($scope.widget.conf.materialTag)) {
-                delete $scope.filter['mtag'];
+
+            if($scope.isUndef($scope.widget.conf.excursionType) || checkNullEmpty($scope.widget.conf.excursionType)) {
+                $scope.widget.conf.excursionType = "0";
             }
 
-            if ($scope.isDef($scope.widget.conf.entityTag) && checkNotNullEmpty($scope.widget.conf.entityTag)) {
-                $scope.filter.etag = $scope.widget.conf.entityTag[0].id;
-            } else if (checkNullEmpty($scope.widget.conf.entityTag)) {
-                delete $scope.filter['etag']
-            }
-
-            if ($scope.isDef($scope.widget.conf.entity) && checkNotNullEmpty($scope.widget.conf.entity)) {
-                $scope.filter.entity = $scope.widget.conf.entity.id;
-            } else if (checkNullEmpty($scope.widget.conf.entity)) {
-                delete $scope.filter['entity']
-            }
-
-            if ($scope.isDef($scope.widget.conf.material) && checkNotNullEmpty($scope.widget.conf.material)) {
-                $scope.filter.mat = $scope.widget.conf.material.id;
-            } else if (checkNullEmpty($scope.widget.conf.material)) {
-                delete $scope.filter['mat']
+            if($scope.isDef($scope.widget.conf.asset) && checkNotNullEmpty($scope.widget.conf.asset)) {
+                $scope.filter.at = $scope.widget.conf.asset[0].id;
+                delete $scope.filter["mt"];
+            } else {
+                $scope.filter.mt = "2";
+                delete $scope.filter["at"];
             }
 
             var fromDate = new Date();
@@ -129,7 +102,7 @@ angular.module('logistimo.storyboard.stockTrend', [])
                 $scope.filter.to = toDate;
                 $scope.filter.periodicity = "m";
             } else if ($scope.widget.conf.period == 'w') {
-                fromDate.setDate(fromDate.getDate() - (MAX_WEEKS - 1) * 7);
+                fromDate.setDate(fromDate.getDate() - MAX_WEEKS * 7);
                 fromDate.setDate(fromDate.getDate() + (fromDate.getDay() == 0 ? -6 : 1 - fromDate.getDay()));
                 $scope.filter.from = new Date(fromDate);
                 var toDate = new Date();
@@ -175,27 +148,23 @@ angular.module('logistimo.storyboard.stockTrend', [])
                     compareFields.push(d.value[0].value);
                 }
             });
-            var filterSeriesIndex = undefined;
             if (compareFields.length > 1) {
                 if (compareFields.indexOf("") != -1) {
                     compareFields.splice(compareFields.indexOf(""), 1);
                 }
-                filterSeriesIndex = 0;
             }
             var cData = [];
-            if($scope.filter.type == "isa") {
+            if($scope.widget.conf.excursionType == "1") {
                 for (var i = 0; i < compareFields.length; i++) {
-                    cData[i] = getReportFCSeries(chartData, 2, compareFields[i],
-                        "line", linkDisabled, filterSeriesIndex, "1");
+                    cData[i] = getReportFCSeries(chartData, 27, compareFields[i], "line", linkDisabled, 0);
                 }
-                $scope.cOptions.caption = "% of inventory items available (100% availability)";
+                $scope.cOptions.caption = "Low excursions - % of assets with exposure (>= 1 hour)";
 
-            } else if ($scope.filter.type == "ias") {
+            } else {
                 for (var i = 0; i < compareFields.length; i++) {
-                    cData[i] = getReportFCSeries(chartData, 13, compareFields[i],
-                        "line", linkDisabled, filterSeriesIndex, "1");
+                    cData[i] = getReportFCSeries(chartData, 26, compareFields[i], "line", linkDisabled, 0);
                 }
-                $scope.cOptions.caption = "Zero stock - % of inventory items with this abnormality (100% of the time)";
+                $scope.cOptions.caption = "High excursions - % of assets with exposure (>= 1 hour)";
             }
             $scope.cOptions.subcaption = getReportCaption($scope.filter);
             if ($scope.filter.periodicity != "m" && cLabel.length > 10) {
@@ -267,4 +236,4 @@ angular.module('logistimo.storyboard.stockTrend', [])
         init();
     }]);
 
-logistimoApp.requires.push('logistimo.storyboard.stockTrend');
+logistimoApp.requires.push('logistimo.storyboard.temperatureExcursion');

@@ -3964,6 +3964,30 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
     top: 0;
 }
 
+.widget-loading {
+    color: #aaaaaa;
+}
+.widget-title{
+    font-size: 14px;
+    font-family: "Helvetica Neue", Arial;
+    font-weight:bold;
+}
+
+.mbn4{
+    margin-bottom: -4px;
+}
+
+.large-grey-lbl {
+    font-size: large;
+    color: grey;
+}
+
+.small-grey-lbl {
+    color: #bcbcbc;
+    margin-top: -24px;
+    font-size: 10px;
+}
+
 .xlarge-grey-lbl {
     color: #bcbcbc;
     font-size: x-large;
@@ -3976,6 +4000,3 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
     text-align: center;
 }
 
-.widget-loading {
-    color: #aaaaaa;
-}

@@ -90,17 +90,17 @@ function getPercent(data, wt) {
 
     if (checkNotNullEmpty(wt)) {
         if (wt == 0) {
-            return ((data['n'] + data[201] + data[202]) / getTotalItems(data) * 100).toFixed(2) + " % Available";
+            return (((data['n'] + data[201] + data[202]) / getTotalItems(data) * 100).toFixed(2)) * 1 + " % Available";
         } else if (wt == 1) {
-            return (data[200] ? data[200] : 0 / getTotalItems(data) * 100).toFixed(2) + " % Stocked out";
+            return ((data[200] ? data[200] : 0 / getTotalItems(data) * 100).toFixed(2)) * 1 + " % Stocked out";
         } else if (wt == 'tn') {
-            return ((data['tn'] ? data['tn'] : 0) / getTotalItems(data) * 100).toFixed(2) + " % Normal";
+            return (((data['tn'] ? data['tn'] : 0) / getTotalItems(data) * 100).toFixed(2)) * 1 + " % Normal";
         } else if (wt == 'tl') {
-            return ((data['tl'] ? data['tl'] : 0) / getTotalItems(data) * 100).toFixed(2) + " % Freezing";
+            return (((data['tl'] ? data['tl'] : 0) / getTotalItems(data) * 100).toFixed(2)) * 1 + " % Freezing";
         } else if (wt == 'th') {
-            return ((data['th'] ? data['th'] : 0) / getTotalItems(data) * 100).toFixed(2) + " % Heating";
+            return (((data['th'] ? data['th'] : 0) / getTotalItems(data) * 100).toFixed(2)) * 1 + " % Heating";
         } else if (wt == 'tu') {
-            return ((data['tu'] ? data['tu'] : 0) / getTotalItems(data) * 100).toFixed(2) + " % Unknown";
+            return (((data['tu'] ? data['tu'] : 0) / getTotalItems(data) * 100).toFixed(2)) * 1 + " % Unknown";
         }
     }
     return null;
@@ -219,10 +219,13 @@ function constructMapData(event, init, scope, INVENTORY, $sce, mapRange, mapColo
         "interactiveLegend": 1,
         "exportEnabled": 0,
         "baseFontColor": "#000000",
-        "captionFontSize": "10",
+        "captionFontSize": "14",
         "captionAlignment": "left",
         "legendPosition": "bottom", // we can set only bottom or right.
-        "alignCaptionWithCanvas": 1
+        "alignCaptionWithCanvas": 1,
+        "labelConnectorAlpha":0,
+        "captionFontBold":1,
+        "captionFont":'Helvetica Neue", Arial'
 
     };
     var addLink = false;
@@ -267,7 +270,8 @@ function constructMapData(event, init, scope, INVENTORY, $sce, mapRange, mapColo
                 }
                 o.label = n;
                 o.value = per;
-                o.displayValue = o.label + "<br/>" + per + "%";
+                // o.displayValue = o.label + "<br/>" + per + "%";
+                o.displayValue = "";
                 if (iEntEvent) {
                     o.toolText = o.label + ": " + value + " of " + den + " " + scope.resourceBundle['kiosks.lower'];
                 } else if (iTempEvent) {
@@ -603,8 +607,8 @@ function getReportFCSeries(data, seriesno, name, type, isLinkDisabled, filterSer
             var series = {};
             series.seriesName = name;
             series.renderAs = type;
-            series.showValues = showvalue ? showvalue : "1";
             series.drawAnchors = noAnchor ? "0" : "1";
+            series.anchorRadius = 0;
             series.data = [];
             var ind = 0;
             var prevLabel = undefined;
