@@ -31,7 +31,7 @@ import java.util.List;
 /**
  * Created by naveensnair on 13/11/17.
  */
-public interface IBulletinBoardDashBoardService{
+public interface IBulletinBoardDashBoardService {
 
   void createDashboard(IDashboard ds) throws ServiceException;
 

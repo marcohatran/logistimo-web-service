@@ -46,9 +46,9 @@ public class MobileUserBuilder {
     if (users == null || users.isEmpty()) {
       return null;
     }
-    return(users.stream()
-                    .map(user -> buildMobileUserModel(user))
-                    .collect(Collectors.toList()));
+    return (users.stream()
+        .map(user -> buildMobileUserModel(user))
+        .collect(Collectors.toList()));
   }
 
   private MobileUserModel buildMobileUserModel(IUserAccount user) {
@@ -69,7 +69,7 @@ public class MobileUserBuilder {
     if (userIds == null || userIds.isEmpty()) {
       return null;
     }
-    return(userIds.stream()
+    return (userIds.stream()
         .map(userId -> getUserAccount(usersService, userId))
         .filter(Optional::isPresent)
         .map(Optional::get)
@@ -78,9 +78,6 @@ public class MobileUserBuilder {
 
   /**
    * Returns an Optional user account object for a specified user id or an empty object if the user account does not exist.
-   * @param usersService
-   * @param userId
-   * @return
    */
   private Optional<IUserAccount> getUserAccount(UsersService usersService, String userId) {
     try {

@@ -24,9 +24,7 @@
 package com.logistimo.bulletinboard.service;
 
 import com.logistimo.bulletinboard.entity.IBulletinBoard;
-import com.logistimo.services.Service;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.impl.ServiceImpl;
 
 import java.util.List;
 

@@ -103,20 +103,21 @@ authControllers.controller('LoginController', ['$scope', 'iAuthService', 'authSe
         }
     }]);
 
-authControllers.controller('BulletinBoardAuthController', ['$scope', 'iAuthService', function($scope, iAuthService) {
+authControllers.controller('BulletinBoardAuthController', ['$scope', 'iAuthService', function ($scope, iAuthService) {
     function init() {
         $scope.authKey = "";
     }
+
     init();
 
-    $scope.authorizeBulletinBoard = function(){
-        if(checkNotNullEmpty($scope.authKey)) {
+    $scope.authorizeBulletinBoard = function () {
+        if (checkNotNullEmpty($scope.authKey)) {
             $scope.showLoading();
             iAuthService.authorizeBulletinBoard($scope.authKey).then(function (data) {
                 $scope.showSuccess("Authorized successfully");
-            }).catch(function err(msg){
+            }).catch(function err(msg) {
                 $scope.showErrorMsg(msg);
-            }).finally(function() {
+            }).finally(function () {
                 $scope.hideLoading();
             })
         } else {

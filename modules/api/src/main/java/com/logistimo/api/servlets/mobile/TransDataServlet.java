@@ -506,7 +506,9 @@ public class TransDataServlet extends JsonRestServlet {
           new PageParams((Integer) parsedRequest.parsedReqMap.get(Constants.OFFSET),
               (Integer) parsedRequest.parsedReqMap.get(RestConstantsZ.SIZE));
       Optional<Date> modDateFromReq = HttpUtil.getModifiedDate(req, timezone);
-      Date modifiedSinceDate = modDateFromReq.orElse((Date) parsedRequest.parsedReqMap.get(RestConstantsZ.STARTDATE));
+      Date
+          modifiedSinceDate =
+          modDateFromReq.orElse((Date) parsedRequest.parsedReqMap.get(RestConstantsZ.STARTDATE));
       lastModified = new Date().toString();
       InventoryManagementService
           ims =
@@ -532,7 +534,7 @@ public class TransDataServlet extends JsonRestServlet {
             GsonUtil
                 .buildGetTransactionsResponseModel(isValid,
                     mobileTransactionsModel, errMessage, RESTUtil.VERSION_01);
-        if(HttpUtil.getModifiedDate(req, timezone).isPresent() && isValid){
+        if (HttpUtil.getModifiedDate(req, timezone).isPresent() && isValid) {
           HttpUtil.setLastModifiedHeader(resp, lastModified);
         }
         sendJsonResponse(resp, statusCode, jsonOutputString);

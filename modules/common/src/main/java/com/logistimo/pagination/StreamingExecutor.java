@@ -25,20 +25,20 @@ package com.logistimo.pagination;
 
 import com.logistimo.AppFactory;
 import com.logistimo.dao.JDOUtils;
-import com.logistimo.services.utils.ConfigUtil;
-
+import com.logistimo.exception.TaskSchedulingException;
+import com.logistimo.logger.XLog;
 import com.logistimo.pagination.processor.ProcessingException;
 import com.logistimo.pagination.processor.Processor;
 import com.logistimo.services.impl.PMF;
-import com.logistimo.exception.TaskSchedulingException;
-import com.logistimo.logger.XLog;
+import com.logistimo.services.utils.ConfigUtil;
+
+import org.springframework.util.CollectionUtils;
 
 import java.util.List;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
-import org.springframework.util.CollectionUtils;
 
 /**
  * @author Mohan Raja
@@ -51,14 +51,17 @@ public class StreamingExecutor {
   private static final String READ_ONLY_DB = "readOnlyDB";
 
   public static void exec(Long domainId, QueryParams qp, PageParams pageParams,
-      String processorClassName, String prevOutput, PagedExec.Finalizer finalizer)
+                          String processorClassName, String prevOutput,
+                          PagedExec.Finalizer finalizer)
       throws TaskSchedulingException, ProcessingException {
     exec(domainId, qp, pageParams, processorClassName, prevOutput, finalizer, 0);
   }
 
   public static void exec(Long domainId, QueryParams qp, PageParams pageParams,
-      String processorClassName, String prevOutput, PagedExec.Finalizer finalizer,
-      int secondsBetweenTasks) throws TaskSchedulingException, ProcessingException {
+                          String processorClassName, String prevOutput,
+                          PagedExec.Finalizer finalizer,
+                          int secondsBetweenTasks)
+      throws TaskSchedulingException, ProcessingException {
     Processor proc = PagedExec.loadProcessor(processorClassName);
     if (proc == null) {
       throw new ProcessingException("Could not load processor with name " + processorClassName);
@@ -67,8 +70,8 @@ public class StreamingExecutor {
   }
 
   public static void exec(Long domainId, QueryParams qparam, PageParams pageParams,
-      Processor proc, String prevOutput, PagedExec.Finalizer finalizer,
-      int secondsBetweenTasks, boolean async)
+                          Processor proc, String prevOutput, PagedExec.Finalizer finalizer,
+                          int secondsBetweenTasks, boolean async)
       throws TaskSchedulingException, ProcessingException {
     xLogger.fine("Entered exec");
     if (qparam == null || qparam.query == null) {

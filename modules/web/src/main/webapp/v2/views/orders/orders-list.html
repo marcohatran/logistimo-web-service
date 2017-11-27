@@ -119,7 +119,8 @@
             <div class="col-sm-8 noLRpad">
                 <export-data ng-show="resSize > 0" mail-id="mailId" export-type="orders" export-callback="exportOrders(type,extraParams)"
                              entity-id="entity.id" entity-name="entity.nm" order-id="selectedOrderIds" export-order-type="otype" from="from" to="to"
-                        rows="numFound" ref-id="referenceId" approval-status="approval_status" tag-type="tType" e-tag="ft"></export-data>
+                             rows="numFound" ref-id="referenceId" approval-status="approval_status" tag-type="tType"
+                             e-tag="ft"></export-data>
 
             </div>
             <div class="col-sm-4 noLRpad" ng-show="(iMan || (entity!= null && entity.id != null && entity.id != ''))" >

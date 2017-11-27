@@ -44,7 +44,7 @@ bulletinBoardControllers.controller('BulletinBoardController', ['bulletinBoardRe
         $scope.bulletinBoard.dashboards = [];
         if (checkNotNullEmpty(conf)) {
             conf.forEach(function (c) {
-                dashboardRepository.get(c, $scope).then(function(data) {
+                dashboardRepository.get(c, $scope).then(function (data) {
                     $scope.bulletinBoard.dashboards.push(data);
                 })
             });
@@ -147,41 +147,41 @@ bulletinBoardControllers.controller('BulletinBoardsListingController', ['bulleti
 bulletinBoardControllers.controller('BulletinBoardViewController', ['bulletinBoardRepository', 'dashboardRepository',
     '$scope', 'requestContext', '$timeout',
     function (bulletinBoardRepository, dashboardRepository, $scope, requestContext, $timeout) {
-    $scope.init = function () {
-        $scope.renderDashboardsPage = false;
-        $scope.bulletinBoardId = requestContext.getParam("bulletinBoardId");
-        if ($scope.bulletinBoardId != undefined) {
-            bulletinBoardRepository.get($scope.bulletinBoardId, $scope).then(function (bulletinBoard) {
-                $scope.bulletinBoard = bulletinBoard;
-                if (checkNotNullEmpty($scope.bulletinBoard)) {
-                    $scope.bulletinBoard.conf = JSON.parse(bulletinBoard.conf);
-                    renderDashboards();
-                }
-            });
-        } else {
-            $scope.bulletinBoard = {dashboards: []};
-        }
-        $scope.myInterval = 1000;
-        $scope.noWrapSlides = false;
-        $scope.activeSlide = 0;
-        $scope.count = 0;
-    };
-    $scope.init();
+        $scope.init = function () {
+            $scope.renderDashboardsPage = false;
+            $scope.bulletinBoardId = requestContext.getParam("bulletinBoardId");
+            if ($scope.bulletinBoardId != undefined) {
+                bulletinBoardRepository.get($scope.bulletinBoardId, $scope).then(function (bulletinBoard) {
+                    $scope.bulletinBoard = bulletinBoard;
+                    if (checkNotNullEmpty($scope.bulletinBoard)) {
+                        $scope.bulletinBoard.conf = JSON.parse(bulletinBoard.conf);
+                        renderDashboards();
+                    }
+                });
+            } else {
+                $scope.bulletinBoard = {dashboards: []};
+            }
+            $scope.myInterval = 1000;
+            $scope.noWrapSlides = false;
+            $scope.activeSlide = 0;
+            $scope.count = 0;
+        };
+        $scope.init();
         //var index = 0;
 
-    function renderDashboards() {
-        $scope.dashboardId = $scope.bulletinBoard.conf[$scope.count];
-        $scope.renderDashboardsPage = true;
-        $timeout(function () {
-            $scope.count = $scope.count + 1;
-            $scope.renderDashboardsPage = false;
-            if($scope.count == $scope.bulletinBoard.conf.length) {
-                $scope.count = 0;
-            }
+        function renderDashboards() {
+            $scope.dashboardId = $scope.bulletinBoard.conf[$scope.count];
+            $scope.renderDashboardsPage = true;
             $timeout(function () {
-                renderDashboards();
-            }, 10);
-        }, $scope.bulletinBoard.max * 1000);
-    }
+                $scope.count = $scope.count + 1;
+                $scope.renderDashboardsPage = false;
+                if ($scope.count == $scope.bulletinBoard.conf.length) {
+                    $scope.count = 0;
+                }
+                $timeout(function () {
+                    renderDashboards();
+                }, 10);
+            }, $scope.bulletinBoard.max * 1000);
+        }
 
-}]);
+    }]);

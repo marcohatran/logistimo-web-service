@@ -37,12 +37,12 @@ function DashboardRepository(apiService, $q) {
             }).catch(function error(msg) {
                 $scope.showErrorMsg(msg);
                 deferred.reject();
-            }).finally(function (){
+            }).finally(function () {
                 $scope.hideLoading();
             });
             return deferred.promise;
         },
-        getAll: function($scope){
+        getAll: function ($scope) {
             var deferred = $q.defer();
             $scope.showLoading();
             apiService.get("/s2/api/dashboards/all").then(function (data) {
@@ -56,10 +56,10 @@ function DashboardRepository(apiService, $q) {
             return deferred.promise;
         },
         save: function (dashboard, $scope) {
-            if($scope.isUndef(dashboard.name)) {
+            if ($scope.isUndef(dashboard.name)) {
                 $scope.showWarning("Name is mandatory");
                 return;
-            } else if($scope.isUndef(dashboard.widgets) || checkNullEmptyObject(dashboard.widgets)) {
+            } else if ($scope.isUndef(dashboard.widgets) || checkNullEmptyObject(dashboard.widgets)) {
                 $scope.showWarning("Please configure widgets");
                 return;
             }
@@ -72,7 +72,7 @@ function DashboardRepository(apiService, $q) {
             }).catch(function error(msg) {
                 $scope.showErrorMsg(msg);
                 deferred.reject();
-            }).finally(function (){
+            }).finally(function () {
                 $scope.hideLoading();
             });
             return deferred.promise;

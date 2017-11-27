@@ -10,10 +10,12 @@
         </div>
     </div>
     <div ng-if="!wloading && !showError && showChart">
-        <fusion-chart type="'maps/'+temperatureStatusMapWidget.cType" height="temperatureStatusMapWidget.computedHeight" width="temperatureStatusMapWidget.computedWidth"
+        <fusion-chart type="'maps/'+temperatureStatusMapWidget.cType" height="temperatureStatusMapWidget.computedHeight"
+                      width="temperatureStatusMapWidget.computedWidth"
                       chart-label="temperatureStatusMapWidget.cLabel"
                       chart-data="temperatureStatusMapWidget.cdata" chart-options="temperatureStatusMapWidget.copt"
-                      chart-id="{{temperatureStatusMapWidget.wId}}" color-range="mapRange"  markers="markers" simple="'true'">
+                      chart-id="{{temperatureStatusMapWidget.wId}}" color-range="mapRange" markers="markers"
+                      simple="'true'">
         </fusion-chart>
 
 

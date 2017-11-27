@@ -67,17 +67,17 @@
           "conditions": [
             {
               "name": "percentage_time_in_stock",
-              "oper":">=",
+              "oper": ">=",
               "units": "%"
             },
             {
               "name": "percentage_time_no_excess_stock",
-              "oper":">=",
+              "oper": ">=",
               "units": "%"
             },
             {
               "name": "percentage_of_materials",
-              "oper":">=",
+              "oper": ">=",
               "units": "%"
             },
             {
@@ -160,33 +160,33 @@
       "category": "assets",
       "thresholds": [
         {
-        "conditions": [
-          {
-          "name": "asset_normal_percentage",
-          "oper": ">=",
-          "units": "%"
-          },
-          {
-            "name": "duration",
-            "units": "months"
-          },
-          {
-            "name": "include_asset_types"
-          },
-          {
-            "name": "exclude_asset_types"
-          },
-          {
-            "name": "include_entity_tags"
-          },
-          {
-            "name": "exclude_entity_tags"
-          },
-          {
-            "name": "user_tags_responsible"
-          }
-        ]
-      }
+          "conditions": [
+            {
+              "name": "asset_normal_percentage",
+              "oper": ">=",
+              "units": "%"
+            },
+            {
+              "name": "duration",
+              "units": "months"
+            },
+            {
+              "name": "include_asset_types"
+            },
+            {
+              "name": "exclude_asset_types"
+            },
+            {
+              "name": "include_entity_tags"
+            },
+            {
+              "name": "exclude_entity_tags"
+            },
+            {
+              "name": "user_tags_responsible"
+            }
+          ]
+        }
       ]
     },
     {
@@ -246,12 +246,12 @@
           "conditions": [
             {
               "name": "percentage_time_in_stock",
-              "oper":">=",
+              "oper": ">=",
               "units": "%"
             },
             {
               "name": "percentage_of_entities",
-              "oper":">=",
+              "oper": ">=",
               "units": "%"
             },
             {

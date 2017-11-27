@@ -36,7 +36,8 @@
                                 <label class="col-sm-4 control-label required">{{resourceBundle['authorization.key']}}</label>
 
                                 <div class="col-sm-6">
-                                    <input type="text" class="form-control" placeholder="{{resourceBundle['enter.key']}}"
+                                    <input type="text" class="form-control"
+                                           placeholder="{{resourceBundle['enter.key']}}"
                                            ng-model="authKey" maxlength="50">
                                 </div>
                             </div>
@@ -46,7 +47,9 @@
                 <div class="row" id="sbt">
                     <div class="col-sm-6">
                         <div class="pull-right">
-                            <button type="button" ng-click="authorizeBulletinBoard()" class="btn btn-primary">{{resourceBundle['authorize.upper']}}</button>
+                            <button type="button" ng-click="authorizeBulletinBoard()" class="btn btn-primary">
+                                {{resourceBundle['authorize.upper']}}
+                            </button>
                         </div>
                     </div>
                 </div>

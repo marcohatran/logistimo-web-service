@@ -49,17 +49,18 @@ import com.logistimo.users.service.impl.UsersServiceImpl;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.MetricsUtil;
 
-import java.util.Date;
-import java.util.concurrent.TimeUnit;
-import javax.jdo.PersistenceManager;
 import org.apache.camel.Handler;
 import org.apache.commons.lang.text.StrSubstitutor;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.concurrent.TimeUnit;
+
+import javax.jdo.PersistenceManager;
 
 /**
  * Created by nitisha.khandelwal on 02/06/17.
@@ -161,7 +162,7 @@ public class ApprovalStatusUpdateEventProcessor {
   }
 
   private String getMessage(ApprovalStatusUpdateEvent event, IOrderApprovalMapping orderApproval,
-      IUserAccount requester, IKiosk kiosk, IUserAccount updatedBy) {
+                            IUserAccount requester, IKiosk kiosk, IUserAccount updatedBy) {
 
     String message = getMessage(event.getStatus(), requester);
     Map<String, String> values = new HashMap<>();

@@ -36,7 +36,7 @@ import javax.jdo.annotations.PrimaryKey;
  * Created by naveensnair on 14/11/17.
  */
 @PersistenceCapable(identityType = IdentityType.APPLICATION, detachable = "true")
-public class BulletinBoard implements IBulletinBoard{
+public class BulletinBoard implements IBulletinBoard {
 
   @PrimaryKey
   @Persistent(valueStrategy = IdGeneratorStrategy.IDENTITY)

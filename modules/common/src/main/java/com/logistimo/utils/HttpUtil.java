@@ -27,10 +27,9 @@
 package com.logistimo.utils;
 
 import com.logistimo.constants.Constants;
+import com.logistimo.logger.XLog;
 import com.logistimo.services.utils.ConfigUtil;
 import com.logistimo.services.utils.SSLUtilities;
-
-import com.logistimo.logger.XLog;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -278,11 +277,8 @@ public class HttpUtil {
 
   /**
    * Returns an optional If-Modified-Since date if it is present in the request header
-   * @param request
-   * @param timezone
-   * @return
    */
-  public static Optional<Date> getModifiedDate(HttpServletRequest request, String timezone){
+  public static Optional<Date> getModifiedDate(HttpServletRequest request, String timezone) {
     String ifModifiedHeader = request.getHeader(Constants.IF_MODIFIED_SINCE_HEADER);
     Date date = null;
     try {
@@ -299,10 +295,8 @@ public class HttpUtil {
 
   /**
    * Sets the Last-Modified response header
-   * @param response
-   * @param dateValue
    */
-  public static void setLastModifiedHeader(HttpServletResponse response, String dateValue){
+  public static void setLastModifiedHeader(HttpServletResponse response, String dateValue) {
     response.addHeader(Constants.LAST_MODIFIED_HEADER, dateValue);
   }
 }

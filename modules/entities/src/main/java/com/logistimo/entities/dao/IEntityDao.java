@@ -50,5 +50,6 @@ public interface IEntityDao {
 
   List<IApprover> getApprovers(ApproverFilters filters);
 
-  Results getKioskLinks(KioskLinkFilters filters, PageParams pageParams, boolean countOnly) throws ServiceException;
+  Results getKioskLinks(KioskLinkFilters filters, PageParams pageParams, boolean countOnly)
+      throws ServiceException;
 }

@@ -10,9 +10,11 @@
         </div>
     </div>
     <div ng-if="!wloading && !showError && showChart">
-        <fusion-chart type="topMaterialsByInventoryStatus.cType" height="topMaterialsByInventoryStatus.computedHeight" width="topMaterialsByInventoryStatus.computedWidth"
+        <fusion-chart type="topMaterialsByInventoryStatus.cType" height="topMaterialsByInventoryStatus.computedHeight"
+                      width="topMaterialsByInventoryStatus.computedWidth"
                       chart-label="topMaterialsByInventoryStatus.cLabel"
-                      chart-data="topMaterialsByInventoryStatus.cdata" chart-options="topMaterialsByInventoryStatus.copt"
+                      chart-data="topMaterialsByInventoryStatus.cdata"
+                      chart-options="topMaterialsByInventoryStatus.copt"
                       chart-id="{{topMaterialsByInventoryStatus.wId}}" simple="'true'">
         </fusion-chart>
     </div>

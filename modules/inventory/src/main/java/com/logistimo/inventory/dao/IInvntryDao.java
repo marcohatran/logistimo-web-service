@@ -163,7 +163,7 @@ public interface IInvntryDao {
    * @return Inventory objects
    * @throws ServiceException
    */
-  Results getInventory(InventoryFilters inventoryFilters, PageParams pageParams,
+  Results<IInvntry> getInventory(InventoryFilters inventoryFilters, PageParams pageParams,
                        PersistenceManager pm)
       throws ServiceException;
 

@@ -761,7 +761,7 @@
             };
 
             $scope.$on("event:auth-loginConfirmed", function () {
-                if(!$rootScope.isSession) {
+                if (!$rootScope.isSession) {
                     $scope.initApp();
                 }
             });

@@ -249,8 +249,8 @@ public interface IOrder extends ICrossDomain {
 
   @SuppressWarnings("rawtypes")
   Map<String, Object> toMap(boolean includeItems, Locale locale, String timezone,
-      boolean forceIntegerQuantity, boolean includeAccountingData,
-      boolean includeShipmentItems);
+                            boolean forceIntegerQuantity, boolean includeAccountingData,
+                            boolean includeShipmentItems);
 
   // Name of discount type
   String getDiscountTypeName();

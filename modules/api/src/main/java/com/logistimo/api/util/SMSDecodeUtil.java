@@ -46,7 +46,8 @@ public class SMSDecodeUtil {
   private static final int TOTAL_CHARS =
       SIZE_ASCII_SET1 + SIZE_ASCII_SET2 + SIZE_ASCII_SET3;
 
-  private SMSDecodeUtil(){}
+  private SMSDecodeUtil() {
+  }
 
   private static int getIndex(char c) {
     int i = (int) c;
@@ -67,7 +68,8 @@ public class SMSDecodeUtil {
     } else if (i >= SIZE_ASCII_SET1 && i < (SIZE_ASCII_SET2 + SIZE_ASCII_SET1)) {
       return (char) (i + ASCII_START_INDEX_SET1 + (ASCII_START_INDEX_SET2 - ASCII_END_INDEX_SET1));
     } else if (i >= (SIZE_ASCII_SET2 + SIZE_ASCII_SET1) && i < TOTAL_CHARS) {
-      return (char) (i + ASCII_START_INDEX_SET1 + (ASCII_START_INDEX_SET2 - ASCII_END_INDEX_SET1) + (
+      return (char) (i + ASCII_START_INDEX_SET1 + (ASCII_START_INDEX_SET2 - ASCII_END_INDEX_SET1)
+          + (
           ASCII_START_INDEX_SET3 - ASCII_END_INDEX_SET2));
     } else {
       return '!';

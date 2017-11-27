@@ -46,25 +46,25 @@ angular.module('logistimo.storyboard.bulletinboards', ['logistimo.storyboard.das
             $scope.selectedRow = null;
         };
         $scope.init();
-        
+
         $scope.checkNotNullEmpty = function (argument) {
             return typeof argument !== 'undefined' && argument != null && argument != "";
         };
-        
+
         $scope.checkNullEmpty = function (argument) {
             return !$scope.checkNotNullEmpty(argument);
         };
-        
+
         $scope.addDashboard = function (dashboard) {
             var db = {id: dashboard.dbId, name: dashboard.name};
             $scope.bulletinBoard.dashboards.push(db);
         };
-        
+
         $scope.setClickedRow = function (index) {
             $scope.selectedRow = index;
             $scope.bulletinBoard.dashboards[index].isChecked = true;
         };
-        
+
         $scope.moveUp = function (num) {
             if (num > 0) {
                 tmp = $scope.bulletinBoard.dashboards[num - 1];
@@ -74,7 +74,7 @@ angular.module('logistimo.storyboard.bulletinboards', ['logistimo.storyboard.das
                 $scope.bulletinBoard.dashboards[num - 1].isChecked = false;
             }
         };
-        
+
         $scope.moveDown = function (num) {
             if (num < $scope.bulletinBoard.dashboards.length - 1) {
                 tmp = $scope.bulletinBoard.dashboards[num + 1];
@@ -84,13 +84,13 @@ angular.module('logistimo.storyboard.bulletinboards', ['logistimo.storyboard.das
                 $scope.bulletinBoard.dashboards[num + 1].isChecked = false;
             }
         };
-        
+
         $scope.save = function () {
             if ($scope.checkNotNullEmpty($scope.bulletinBoard)) {
                 bulletinBoardRepository.save($scope.bulletinBoard, $scope);
             }
         };
-        
+
         $scope.removeDashboardFromBulletinBoard = function (index) {
             $scope.bulletinBoard.dashboards.splice(index, 1);
         }
@@ -100,12 +100,12 @@ angular.module('logistimo.storyboard.bulletinboards', ['logistimo.storyboard.das
             $scope.bulletinBoards = {};
         };
         $scope.init();
-        
+
         bulletinBoardRepository.getAll($scope).then(function (bulletinBoards) {
             $scope.bulletinBoards = bulletinBoards;
         })
     }])
-    .controller('BulletinBoardViewController', ['bulletinBoardRepository', '$scope','$timeout', function (bulletinBoardRepository, $scope, $timeout) {
+    .controller('BulletinBoardViewController', ['bulletinBoardRepository', '$scope', '$timeout', function (bulletinBoardRepository, $scope, $timeout) {
         $scope.init = function () {
             $scope.renderDashboardsPage = false;
             if ($scope.bulletinBoardId != undefined) {
@@ -136,42 +136,43 @@ angular.module('logistimo.storyboard.bulletinboards', ['logistimo.storyboard.das
                 }, 10);
             }, $scope.bulletinBoard.max * 1000);
         }
-        
+
     }]);
-
-
 
 
 /**
  * Created by naveensnair on 18/10/17.
  */
-function LocalBBStorageRepository(promise){
+function LocalBBStorageRepository(promise) {
     var BULLETINBOARDS = "bulletinBoard";
-    function readLocal(){
-        if(localStorage.getItem(BULLETINBOARDS) == undefined){
+
+    function readLocal() {
+        if (localStorage.getItem(BULLETINBOARDS) == undefined) {
             return {}
         }
         return JSON.parse(localStorage.getItem(BULLETINBOARDS));
     }
-    function saveLocal(bulletinBoard){
-        localStorage.setItem(BULLETINBOARDS,JSON.stringify(bulletinBoard));
+
+    function saveLocal(bulletinBoard) {
+        localStorage.setItem(BULLETINBOARDS, JSON.stringify(bulletinBoard));
     }
+
     return {
         get: function (bulletinBoardId) {
-            return promise(function(resolve, reject){
+            return promise(function (resolve, reject) {
                 var bulletinBoards = readLocal();
                 resolve(bulletinBoards[bulletinBoardId]);
             });
-            
+
         },
-        getAll: function(){
-            return promise(function(resolve, reject){
+        getAll: function () {
+            return promise(function (resolve, reject) {
                 resolve(readLocal());
             });
         },
         save: function (bulletinBoard) {
-            return promise(function(resolve, reject){
-                if(bulletinBoard.dbId == undefined) {
+            return promise(function (resolve, reject) {
+                if (bulletinBoard.dbId == undefined) {
                     bulletinBoard.dbId = new Date().getTime();
                 }
                 var bulletinBoards = readLocal();
@@ -181,7 +182,7 @@ function LocalBBStorageRepository(promise){
             });
         },
         delete: function (bulletinBoardId) {
-            return promise(function(resolve, reject){
+            return promise(function (resolve, reject) {
                 var bulletinBoards = readLocal();
                 delete bulletinBoards[bulletinBoardId];
                 saveLocal(bulletinBoards);
@@ -190,7 +191,7 @@ function LocalBBStorageRepository(promise){
         }
     }
 }
-function DashboardLayoutHandler(containerId,$timeout) {
+function DashboardLayoutHandler(containerId, $timeout) {
     var ul = document.getElementById(containerId);
     var MAX_COLS_WIDTH = parseInt(getComputedStyle(ul).width, 10);
     var sw = MAX_COLS_WIDTH / 12;
@@ -212,19 +213,19 @@ function DashboardLayoutHandler(containerId,$timeout) {
     var dProcessedPanels = [];
     var removeProcessedPanes = [];
     var processedPanels = [];
-    
+
     function checkNotNullEmpty(argument) {
         return typeof argument !== 'undefined' && argument != null && argument != "";
     }
-    
-    function getLeft(newVal){
-        if(newVal < PAD){
+
+    function getLeft(newVal) {
+        if (newVal < PAD) {
             return PAD + 'px';
-        }else {
+        } else {
             return newVal + PAD + 'px';
         }
     }
-    
+
     function getGhostLeft(newVal) {
         if (newVal < PAD) {
             return PAD + 'px';
@@ -232,16 +233,16 @@ function DashboardLayoutHandler(containerId,$timeout) {
             return Math.round(newVal / sw) * sw + PAD + 'px';
         }
     }
-    
+
     function getWidth(newVal) {
         return Math.round(newVal / sw) * sw - PAD2 + 'px';
     }
-    
-    
+
+
     function onMouseDown(e) {
         onDown(e);
     }
-    
+
     function onDown(e) {
         calc(e);
         var isResizing = onRightEdge || onBottomEdge || onLeftEdge;
@@ -269,7 +270,7 @@ function DashboardLayoutHandler(containerId,$timeout) {
             getInnerMostPanel(panel).classList.remove('dummy');
         }
     }
-    
+
     function onUp(e) {
         if (checkNotNullEmpty(panel)) {
             calc(e);
@@ -280,7 +281,7 @@ function DashboardLayoutHandler(containerId,$timeout) {
             panel.style.zIndex = '1';
             getInnerPanel(panel).classList.add('dummy');
             getInnerMostPanel(panel).classList.add('dummy');
-            
+
             ghostPanel.style.opacity = '0';
             var st = {};
             st.left = ghostPanel.style.left;
@@ -294,22 +295,22 @@ function DashboardLayoutHandler(containerId,$timeout) {
             clicked = null;
         }
     }
-    
+
     function canMove() {
         return x > PAD && x < b.width && y > PAD && y < b.height && y < 50;
     }
-    
+
     function increaseRow(wid, count) {
         wid.computedY = (wid.y + count) * sh + PAD;
         wid.y += count;
         panels[wid.wid].style.top = wid.computedY + 'px';
         ghostPanels[wid.wid].style.top = wid.computedY + PAD + 'px';
     }
-    
+
     function decreaseRow(wid, count) {
         increaseRow(wid, -count);
     }
-    
+
     function isIncrease(wid, t, h, l, w, recall) {
         if ((t + h > wid.computedY - PAD && t + h <= wid.computedY + wid.computedHeight + PAD) ||
             (t > wid.computedY - PAD && t < wid.computedY + wid.computedHeight + PAD && recall)) { // h increase move down - recall: because of width increase
@@ -322,7 +323,7 @@ function DashboardLayoutHandler(containerId,$timeout) {
         }
         return false;
     }
-    
+
     function addPaneEventListener(wid, time) {
         $timeout(function () {
             var pp = document.getElementById('panel_' + wid);
@@ -332,7 +333,7 @@ function DashboardLayoutHandler(containerId,$timeout) {
             ghostPanels[wid] = document.getElementById('ghost_' + wid);
         }, time ? time : 1000); // Let the page render this elements to add listeners
     }
-    
+
     function isBlockedPanel(sc, sx, dc, dx, isBig) {
         return (sc <= dc && sc + sx <= dc + dx && sc + sx > dc) ||
             (sc >= dc && sc + sx >= dc + dx && sc < dc + dx) ||
@@ -340,15 +341,15 @@ function DashboardLayoutHandler(containerId,$timeout) {
             (dc < sc && dc + dx > sc + sx) ||
             (!isBig && (dc > sc && dc + dx < sc + sx));
     }
-    
+
     function getInnerPanel(p) {
         return p.children[0].children[0].children[0];
     }
-    
+
     function getInnerMostPanel(p) {
         return p.children[0].children[0].children[0].children[1].children[0].children[0];
     }
-    
+
     function movePanesUp() {
         for (var d in widgets) {
             if (widgets.hasOwnProperty(d)) {
@@ -368,7 +369,7 @@ function DashboardLayoutHandler(containerId,$timeout) {
             }
         }
     }
-    
+
     function recalculateEdges(wid, l, t, w, h) {
         for (var x in widgets) {
             if (widgets.hasOwnProperty(x)) {
@@ -387,8 +388,8 @@ function DashboardLayoutHandler(containerId,$timeout) {
             }
         }
     }
-    
-    
+
+
     function isBlocked(wid, cnt, skipWid) {
         for (var x in widgets) {
             if (widgets.hasOwnProperty(x)) {
@@ -402,11 +403,11 @@ function DashboardLayoutHandler(containerId,$timeout) {
             }
         }
     }
-    
+
     function getWidgetId(id, asInt) {
         return asInt ? parseInt(id.replace('panel_', ''), 10) : id.replace('panel_', '');
     }
-    
+
     function movePanesDown(np, ngp, recall) {
         var nw = parseInt(ngp.style.width, 10) + PAD2;
         var nh = parseInt(ngp.style.height, 10) + PAD2;
@@ -427,7 +428,7 @@ function DashboardLayoutHandler(containerId,$timeout) {
             }
         }
     }
-    
+
     function reArrangePanes(np, ngp, oWid, oHt, recall, rht) {
         var nw = parseInt(ngp.style.width, 10) + PAD2;
         var nh = parseInt(ngp.style.height, 10) + PAD2;
@@ -503,14 +504,14 @@ function DashboardLayoutHandler(containerId,$timeout) {
             }
         }
     }
-    
+
     function setBounds(element, x, y, w, h) {
         element.style.left = x + 'px';
         element.style.top = y + 'px';
         element.style.width = w + 'px';
         element.style.height = h + 'px';
     }
-    
+
     function calc(e) {
         b = panel.getBoundingClientRect();
         x = e.clientX - b.left;
@@ -520,10 +521,10 @@ function DashboardLayoutHandler(containerId,$timeout) {
         onBottomEdge = y >= (b.height - PAD - 3) && y <= (b.height - PAD + 1);
         /*console.log(e);
          console.log(b);*/
-        
+
     }
-    
-    
+
+
     function onMove(ee) {
         if (ee.currentTarget.id && !clicked) {
             panel = ee.currentTarget;
@@ -533,7 +534,7 @@ function DashboardLayoutHandler(containerId,$timeout) {
         e = ee;
         redraw = true;
     }
-    
+
     function setComputeRow(wid, row) {
         for (var d in widgets) {
             if (widgets.hasOwnProperty(d)) {
@@ -546,16 +547,16 @@ function DashboardLayoutHandler(containerId,$timeout) {
             }
         }
     }
-    
+
     function animate() {
-        
+
         requestAnimationFrame(animate);
-        
+
         if (!redraw) return;
-        
+
         redraw = false;
         var rearrange = false;
-        
+
         if (clicked && clicked.isResizing) {
             if (clicked.onRightEdge) {
                 if (clicked.l + clicked.w + e.clientX - clicked.cx <= MAX_COLS_WIDTH) { // Right most edge
@@ -576,12 +577,12 @@ function DashboardLayoutHandler(containerId,$timeout) {
                     }
                 }
             }
-            
+
             var curWid = parseInt(ghostPanel.style.width, 10) + PAD2;
             var curHt = parseInt(ghostPanel.style.height, 10) + PAD2;
             var gw = parseInt(ghostPanel.style.width, 10);
             var pw = parseInt(panel.style.width, 10);
-            
+
             if (gw - pw >= sw * 0.65) { // w dec
                 ghostPanel.style.width = getWidth(gw - sw);
                 if (clicked.onLeftEdge) {
@@ -613,7 +614,7 @@ function DashboardLayoutHandler(containerId,$timeout) {
                 clicked.l + e.clientX - clicked.cx + clicked.w <= MAX_COLS_WIDTH) {
                 panel.style.left = getLeft(clicked.l + e.clientX - clicked.cx);
             }
-            
+
             curWid = parseInt(ghostPanel.style.width, 10);
             curHt = parseInt(ghostPanel.style.height, 10);
             var gl = parseInt(ghostPanel.style.left, 10);
@@ -700,13 +701,13 @@ function DashboardLayoutHandler(containerId,$timeout) {
                 }
             }
         }
-        
+
         if (rearrange) {
             processedPanels = [];
             reArrangePanes(panel, ghostPanel, curWid, curHt, clicked.isMoving);
             var d = undefined;
             var curId = getWidgetId(panel.id);
-            
+
             for (widget in widgets) {
                 if (widgets.hasOwnProperty(widget)) {
                     var dw = widgets[widget];
@@ -730,7 +731,7 @@ function DashboardLayoutHandler(containerId,$timeout) {
             }
             return;
         }
-        
+
         if (onRightEdge && onBottomEdge) {
             panel.style.cursor = 'nwse-resize';
         } else if (onBottomEdge && onLeftEdge) {
@@ -745,7 +746,7 @@ function DashboardLayoutHandler(containerId,$timeout) {
             panel.style.cursor = 'default';
         }
     }
-    
+
     function setMaxHeight() {
         var maxHeight = 100;
         maxHeightNo = 0;
@@ -760,15 +761,15 @@ function DashboardLayoutHandler(containerId,$timeout) {
         }
         ul.style.minHeight = maxHeight - PAD + 'px';
     }
-    
-    
+
+
     return {
         setWidgets: function (newWidgets) {
             widgets = newWidgets;
         },
-        addWidget: function(widget) {
+        addWidget: function (widget) {
             var newWid = {};
-            newWid.id = widget.name.replace(/\s/g,'')+new Date().getMilliseconds();
+            newWid.id = widget.name.replace(/\s/g, '') + new Date().getMilliseconds();
             newWid.name = widget.name;
             newWid.wid = newWid.id;
             newWid.widgetTemplateId = widget.id;
@@ -818,15 +819,15 @@ function DashboardLayoutHandler(containerId,$timeout) {
             }, 1000); // Let the page render all elements to add listeners
             $timeout(function () {
                 setMaxHeight();
-            },1000);
+            }, 1000);
         },
-        removeWidget: function(widgetId) {
+        removeWidget: function (widgetId) {
             delete widgets[widgetId];
             movePanesUp();
             setMaxHeight();
         }
     }
-    
+
 }
 /*
  * Copyright © 2017 Logistimo.
@@ -864,7 +865,7 @@ angular.module('logistimo.storyboard.dashboards', ['logistimo.storyboard.widgets
         };
     })
     .controller('DashboardViewController', ['dashboardRepository', '$scope', function (dashboardRepository, $scope) {
-        
+
         function init() {
             function initDashboardLayout() {
                 var dashboardLayoutHandler = new DashboardLayoutHandler("allWid");
@@ -873,7 +874,7 @@ angular.module('logistimo.storyboard.dashboards', ['logistimo.storyboard.widgets
                 dashboardLayoutHandler.setMaxHeight();
                 $scope.renderingStatus = {};
             }
-            
+
             if (!$scope.noInit) {
                 dashboardRepository.get($scope.dashboardId, $scope).then(function (dashboard) {
                     $scope.db = dashboard;
@@ -889,17 +890,17 @@ angular.module('logistimo.storyboard.dashboards', ['logistimo.storyboard.widgets
                 initDashboardLayout();
             }
         }
-        
+
         init();
-        
+
         $scope.completeRendering = function (widgetId) {
             $scope.renderingStatus[widgetId] = true;
             //check if all widgets have signalled completion and then emit so bulletin board can switch dashboard.
         }
-        
+
     }])
     .controller('DashboardConfigureController', ['dashboardRepository', '$scope', '$timeout', function (dashboardRepository, $scope, $timeout) {
-        
+
         var dashboardLayoutHandler = new DashboardLayoutHandler("allWid", $timeout, $scope.maxHeight);
         $scope.init = function () {
             if ($scope.dashboard != undefined) {
@@ -912,22 +913,22 @@ angular.module('logistimo.storyboard.dashboards', ['logistimo.storyboard.widgets
             dashboardLayoutHandler.setMaxHeight();
         };
         $scope.init();
-        
+
         $scope.checkNotNullEmpty = function (argument) {
             return typeof argument !== 'undefined' && argument != null && argument != "";
         };
-        
+
         $scope.checkNullEmpty = function (argument) {
             return !$scope.checkNotNullEmpty(argument);
         };
-        
-        
+
+
         $scope.addWidget = function (widget) {
             if ($scope.checkNotNullEmpty(widget)) {
                 dashboardLayoutHandler.addWidget(widget);
             }
         };
-        
+
         $scope.removeWidget = function (wid) {
             if (!confirm("Do you want to remove this widget from dashboard?")) {
                 return;
@@ -937,34 +938,34 @@ angular.module('logistimo.storyboard.dashboards', ['logistimo.storyboard.widgets
         $scope.completeRendering = function (widgetId) {
             console.log("rendered widget" + widgetId);
         };
-        
+
         $scope.saveWidgetConf = function (widgetId, widgetConfig) {
             if ($scope.widgets[widgetId] == null) {
                 $scope.widgets[widgetId] = {};
             }
             $scope.widgets[widgetId].conf = widgetConfig;
         };
-        
+
         $scope.save = function () {
             $scope.saveDashboard($scope.widgets);
         };
-        
+
         $scope.previewChange = function () {
             $scope.previewDashboard($scope.widgets);
         }
-        
+
     }])
     .controller('DashboardListingController', ['dashboardRepository', '$scope', function (dashboardRepository, $scope) {
         $scope.dashboards = {};
-        
+
         dashboardRepository.getAll($scope).then(function (dashboards) {
             $scope.dashboards = dashboards;
         });
-        
+
         $scope.checkNotNullEmpty = function (argument) {
             return typeof argument !== 'undefined' && argument != null && argument != "";
         };
-        
+
         $scope.checkNullEmpty = function (argument) {
             return !$scope.checkNotNullEmpty(argument);
         };
@@ -984,11 +985,11 @@ angular.module('logistimo.storyboard.dashboards', ['logistimo.storyboard.widgets
             $scope.preview = false;
         };
         $scope.init();
-        
+
         $scope.isUndef = function (value) {
             return (value == undefined || value == '');
         };
-        
+
         $scope.isDef = function (value) {
             return !$scope.isUndef(value);
         };
@@ -999,7 +1000,7 @@ angular.module('logistimo.storyboard.dashboards', ['logistimo.storyboard.widgets
                 $scope.dashboard = {};
             });
         };
-        
+
         $scope.previewDashboard = function (widgets) {
             $scope.preview = !$scope.preview;
             $scope.temp_dashboard = angular.copy($scope.dashboard);
@@ -1008,43 +1009,43 @@ angular.module('logistimo.storyboard.dashboards', ['logistimo.storyboard.widgets
             }
             $scope.temp_dashboard.widgets = widgets;
         }
-        
+
     }]);
-
-
-
 
 
 /**
  * Created by naveensnair on 18/10/17.
  */
-function LocalStorageRepository(promise){
+function LocalStorageRepository(promise) {
     var DASHBOARDS = "dashboards";
-    function readLocal(){
-        if(localStorage.getItem(DASHBOARDS) == undefined){
+
+    function readLocal() {
+        if (localStorage.getItem(DASHBOARDS) == undefined) {
             return {}
         }
         return JSON.parse(localStorage.getItem(DASHBOARDS));
     }
-    function saveLocal(dashboards){
-        localStorage.setItem(DASHBOARDS,JSON.stringify(dashboards));
+
+    function saveLocal(dashboards) {
+        localStorage.setItem(DASHBOARDS, JSON.stringify(dashboards));
     }
+
     return {
         get: function (dashboardId) {
-            return promise(function(resolve, reject){
+            return promise(function (resolve, reject) {
                 var dashboards = readLocal();
                 resolve(dashboards[dashboardId]);
             });
-            
+
         },
-        getAll: function(){
-            return promise(function(resolve, reject){
+        getAll: function () {
+            return promise(function (resolve, reject) {
                 resolve(readLocal());
             });
         },
         save: function (dashboard) {
-            return promise(function(resolve, reject){
-                if(dashboard.dbId == undefined) {
+            return promise(function (resolve, reject) {
+                if (dashboard.dbId == undefined) {
                     dashboard.dbId = new Date().getTime();
                 }
                 var dashboards = readLocal();
@@ -1054,7 +1055,7 @@ function LocalStorageRepository(promise){
             });
         },
         delete: function (dashboardId) {
-            return promise(function(resolve, reject){
+            return promise(function (resolve, reject) {
                 var dashboards = readLocal();
                 delete dashboards[dashboardId];
                 saveLocal(dashboards);
@@ -1083,23 +1084,23 @@ angular.module('logistimo.storyboard.widgets', [])
     }])
     .controller('WidgetsConfigureController', ['widgetsRepository', '$scope', function (widgetsRepository, $scope) {
         $scope.widgetTemplate = widgetsRepository.get($scope.widget.widgetTemplateId);
-        
+
         $scope.checkNotNullEmpty = function (argument) {
             return typeof argument !== 'undefined' && argument != null && argument != "";
         };
-        
+
         $scope.checkNullEmpty = function (argument) {
             return !$scope.checkNotNullEmpty(argument);
         };
-        
-        if(!$scope.checkNotNullEmpty($scope.widget.conf)){
+
+        if (!$scope.checkNotNullEmpty($scope.widget.conf)) {
             $scope.widget.conf = {};
         }
         $scope.save = function () {
             $scope.saveWidgetConf($scope.id, $scope.widget.conf);
             $scope.isEdit = false;
         };
-        $scope.cancel = function(){
+        $scope.cancel = function () {
             $scope.isEdit = false;
         };
     }])
@@ -1109,24 +1110,22 @@ angular.module('logistimo.storyboard.widgets', [])
     .controller('WidgetsListingController', ['widgetsRepository', '$scope', function (widgetRepository, $scope) {
         $scope.widgets = widgetRepository.getAll();
     }])
-    .controller('StaticWidgetController', ['$scope', function($scope) {
+    .controller('StaticWidgetController', ['$scope', function ($scope) {
         //$scope.completeRendering($scope.id);
     }]);
-
-
 
 
 /**
  * Created by naveensnair on 18/10/17.
  */
-function WidgetRegistry(){
+function WidgetRegistry() {
     var widget = "widget";
     return {
-        widgets : {},
+        widgets: {},
         get: function (widgetId) {
             return this.widgets[widgetId];
         },
-        getAll: function(){
+        getAll: function () {
             return this.widgets;
         },
         register: function (widget) {
@@ -1134,8 +1133,9 @@ function WidgetRegistry(){
         }
     }
 }
-angular.module('logistimo.storyboard').run(['$templateCache', function($templateCache) {  'use strict';
-    
+angular.module('logistimo.storyboard').run(['$templateCache', function ($templateCache) {
+    'use strict';
+
     $templateCache.put('/angular-storyboards/src/bulletinboard/templates/create-bulletin-board.html',
         "<div ng-controller=\"BulletinBoardController\">\n" +
         "    <div class=\"box topbox\">\n" +
@@ -1239,8 +1239,8 @@ angular.module('logistimo.storyboard').run(['$templateCache', function($template
         "    </div>\n" +
         "</div>"
     );
-    
-    
+
+
     $templateCache.put('/angular-storyboards/src/bulletinboard/templates/dashboards-render.html',
         "<div ng-controller=\"RenderDashboardsController\">\n" +
         "    <div class=\"row mt18\">\n" +
@@ -1264,8 +1264,8 @@ angular.module('logistimo.storyboard').run(['$templateCache', function($template
         "    </div>\n" +
         "</div>"
     );
-    
-    
+
+
     $templateCache.put('/angular-storyboards/src/bulletinboard/templates/dashboards.html',
         "<div ng-controller=\"DashboardListingController\">\n" +
         "    <div class=\"row\">\n" +
@@ -1300,8 +1300,8 @@ angular.module('logistimo.storyboard').run(['$templateCache', function($template
         "    </div>\n" +
         "</div>"
     );
-    
-    
+
+
     $templateCache.put('/angular-storyboards/src/bulletinboard/templates/list-bulletin-boards.html',
         "<div class=\"tab pane\">\n" +
         "    <div class=\"box topbox\">\n" +
@@ -1335,8 +1335,8 @@ angular.module('logistimo.storyboard').run(['$templateCache', function($template
         "    </div>\n" +
         "</div>"
     );
-    
-    
+
+
     $templateCache.put('/angular-storyboards/src/bulletinboard/templates/view-bulletin-board.html',
         "<div class=\"tab pane\">\n" +
         "    <div class=\"box topbox\">\n" +
@@ -1352,13 +1352,13 @@ angular.module('logistimo.storyboard').run(['$templateCache', function($template
         "    </div>\n" +
         "</div>"
     );
-    
-    
+
+
     $templateCache.put('/angular-storyboards/src/bulletinboard/templates/view-bulletinboard.html',
         ""
     );
-    
-    
+
+
     $templateCache.put('/angular-storyboards/src/dashboard/templates/configure-dashboard.html',
         "<div ng-controller=\"DashboardConfigureController\">\n" +
         "    <div class=\"bgr\">\n" +
@@ -1434,8 +1434,8 @@ angular.module('logistimo.storyboard').run(['$templateCache', function($template
         "    </div>\n" +
         "</div>"
     );
-    
-    
+
+
     $templateCache.put('/angular-storyboards/src/dashboard/templates/create-dashboard.html',
         "<div ng-controller=\"DashboardController\">\n" +
         "    <div class=\"box topbox\">\n" +
@@ -1501,8 +1501,8 @@ angular.module('logistimo.storyboard').run(['$templateCache', function($template
         "    </div>\n" +
         "</div>"
     );
-    
-    
+
+
     $templateCache.put('/angular-storyboards/src/dashboard/templates/list-dashboards.html',
         "<div class=\"tab pane\">\n" +
         "    <div class=\"box topbox\">\n" +
@@ -1536,8 +1536,8 @@ angular.module('logistimo.storyboard').run(['$templateCache', function($template
         "    </div>\n" +
         "</div>"
     );
-    
-    
+
+
     $templateCache.put('/angular-storyboards/src/dashboard/templates/view-dashboard.html',
         "<div class=\"tab pane\">\n" +
         "    <div class=\"box topbox\">\n" +
@@ -1577,8 +1577,8 @@ angular.module('logistimo.storyboard').run(['$templateCache', function($template
         "    </div>\n" +
         "</div>"
     );
-    
-    
+
+
     $templateCache.put('/angular-storyboards/src/widget/templates/list-widgets.html',
         "<div ng-controller=\"WidgetsListingController\">\n" +
         "    <div class=\"row\">\n" +
@@ -1610,8 +1610,8 @@ angular.module('logistimo.storyboard').run(['$templateCache', function($template
         "    </div>\n" +
         "</div>"
     );
-    
-    
+
+
     $templateCache.put('/angular-storyboards/src/widget/templates/view-widget-template.html',
         "<widget-panel>\n" +
         "    <div class=\"panel panel-default dummy\" style=\"height: {{widget.computedHeight}}px;\">\n" +
@@ -1635,8 +1635,8 @@ angular.module('logistimo.storyboard').run(['$templateCache', function($template
         "    </div>\n" +
         "</widget-panel>"
     );
-    
-    
+
+
     $templateCache.put('/angular-storyboards/src/widget/templates/view-widget.html',
         "<div ng-controller=\"WidgetsViewController\">\n" +
         "    <div class=\"bgr\" style=\"height: {{widget.computedHeight}};width: {{widget.computedWidth}}; overflow: hidden\">\n" +

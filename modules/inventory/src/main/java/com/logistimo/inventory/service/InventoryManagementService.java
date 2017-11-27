@@ -67,7 +67,8 @@ public interface InventoryManagementService extends Service {
    * Get inventory from location
    */
   Results getInvntryByLocation(Long domainId, LocationSuggestionModel location, String kioskTags,
-      String excludedKioskTags, String materialTags, String pdos, PageParams pageParams)
+                               String excludedKioskTags, String materialTags, String pdos,
+                               PageParams pageParams)
       throws ServiceException;
 
   /**
@@ -89,7 +90,7 @@ public interface InventoryManagementService extends Service {
    * Search Inventory starts with by kiosk and material tag (optional)
    */
   Results searchKioskInventory(Long kioskId, String materialTag, String nameStartsWith,
-      PageParams params) throws ServiceException;
+                               PageParams params) throws ServiceException;
 
   /**
    * Get all inventory items associated with a given material, across kiosks
@@ -100,19 +101,21 @@ public interface InventoryManagementService extends Service {
    * @return A list of Inventory objects NOTE: kiosk tag is optional
    */
   Results getInventoryByMaterial(Long materialId, String kioskTag, List<Long> kioskIds,
-      PageParams pageParams) throws ServiceException;
+                                 PageParams pageParams) throws ServiceException;
 
   /**
    * Get Inventory by material of a domain
    */
   Results getInventoryByMaterialDomain(Long materialId, String kioskTag, List<Long> kioskIds,
-      PageParams pageParams, Long domainId) throws ServiceException;
+                                       PageParams pageParams, Long domainId)
+      throws ServiceException;
 
   /**
    * Get inventory by batch number for a given material
    */
   Results getInventoryByBatchId(Long materialId, String batchId, PageParams pageParams,
-      Long domainId, String kioskTags, String excludedKioskTags, LocationSuggestionModel location)
+                                Long domainId, String kioskTags, String excludedKioskTags,
+                                LocationSuggestionModel location)
       throws ServiceException;
 
   /**
@@ -120,14 +123,15 @@ public interface InventoryManagementService extends Service {
    * param
    */
   Results getValidBatchesByBatchId(String batchId, Long materialId, Long kioskId, Long domainId,
-      boolean excludeExpired, PageParams pageParams);
+                                   boolean excludeExpired, PageParams pageParams);
 
   /**
    * Get inventory by batch expiry
    */
   Results getInventoryByBatchExpiry(Long domainId, Long materialId, Date start, Date end,
-      String kioskTag, String excludedKioskTag, String materialTag,
-      LocationSuggestionModel location, PageParams pageParams) throws ServiceException;
+                                    String kioskTag, String excludedKioskTag, String materialTag,
+                                    LocationSuggestionModel location, PageParams pageParams)
+      throws ServiceException;
 
   /**
    * Get valid batches for a given inventory item - this includes active batches with non-zero stock
@@ -167,24 +171,27 @@ public interface InventoryManagementService extends Service {
    * kioskId is mandatory.
    */
   Results getInventoryTransactionsByKiosk(Long kioskId, Long materialId, String materialTag,
-      Date sinceDate, Date untilDate, String transType, PageParams pageParams, String bid,
-      boolean atd, String reason) throws ServiceException;
+                                          Date sinceDate, Date untilDate, String transType,
+                                          PageParams pageParams, String bid,
+                                          boolean atd, String reason) throws ServiceException;
 
   /**
    * Get inventory transactions for a given kiosk.
    * kioskId and sinceDate are mandatory. transType is optional
    */
   Results getInventoryTransactionsByKiosk(Long kioskId, String materialTag, Date sinceDate,
-      Date untilDate, String transType, PageParams pageParams, String bid, boolean atd,
-      String reason) throws ServiceException;
+                                          Date untilDate, String transType, PageParams pageParams,
+                                          String bid, boolean atd,
+                                          String reason) throws ServiceException;
 
   /**
    * Get inventory transactions for a given material.
    * materialId and sinceDate are mandatory. transType is optional
    */
   Results getInventoryTransactionsByMaterial(Long materialId, String kioskTag, Date sinceDate,
-      Date untilDate, String transType, PageParams pageParams, Long domainId, String bid,
-      boolean atd, String reason) throws ServiceException;
+                                             Date untilDate, String transType,
+                                             PageParams pageParams, Long domainId, String bid,
+                                             boolean atd, String reason) throws ServiceException;
 
   /**
    * Get inventory transactions for a given domain.
@@ -192,22 +199,25 @@ public interface InventoryManagementService extends Service {
    * NOTE: Only one of kioskTag or materialTag can be passed
    */
   Results getInventoryTransactionsByDomain(Long domainId, String kioskTag, String materialTag,
-      Date sinceDate, Date untilDate, String transType, List<Long> kioskIds, PageParams pageParams,
-      String bid, boolean atd, String reason) throws ServiceException;
+                                           Date sinceDate, Date untilDate, String transType,
+                                           List<Long> kioskIds, PageParams pageParams,
+                                           String bid, boolean atd, String reason)
+      throws ServiceException;
 
   /**
    *
    * @throws ServiceException
    */
   Results getInventoryTransactionsByKioskLink(Long kioskId, Long linkedKioskId, String materialTag,
-      Date sinceDate, Date untilDate, String transType, PageParams pageParams, String bid,
-      boolean atd, String reason) throws ServiceException;
+                                              Date sinceDate, Date untilDate, String transType,
+                                              PageParams pageParams, String bid,
+                                              boolean atd, String reason) throws ServiceException;
 
   /**
    * Get inventory transactions by a given user
    */
   Results getInventoryTransactionsByUser(String userId, Date fromDate, Date toDate,
-      PageParams pageParams) throws ServiceException;
+                                         PageParams pageParams) throws ServiceException;
 
   /**
    * Get inventory transactions, common method that honors all parameters
@@ -232,14 +242,19 @@ public interface InventoryManagementService extends Service {
    * @return Transactions which meet the filter criteria specified as parameters in Results object.
    */
   Results getInventoryTransactions(Date sinceDate, Date untilDate, Long domainId, Long kioskId,
-      Long materialId, List<String> transTypes, Long linkedKioskId, String kioskTag,
-      String materialTag, List<Long> kioskIds, PageParams pageParams, String bid, boolean atd,
-      String reason, List<String> excludeReasons, PersistenceManager pm)
+                                   Long materialId, List<String> transTypes, Long linkedKioskId,
+                                   String kioskTag,
+                                   String materialTag, List<Long> kioskIds, PageParams pageParams,
+                                   String bid, boolean atd,
+                                   String reason, List<String> excludeReasons,
+                                   PersistenceManager pm)
       throws ServiceException;
 
   Results getInventoryTransactions(Date sinceDate, Date untilDate, Long domainId, Long kioskId,
-      Long materialId, String transType, Long linkedKioskId, String kioskTag, String materialTag,
-      List<Long> kioskIds, PageParams pageParams, String bid, boolean atd, String reason)
+                                   Long materialId, String transType, Long linkedKioskId,
+                                   String kioskTag, String materialTag,
+                                   List<Long> kioskIds, PageParams pageParams, String bid,
+                                   boolean atd, String reason)
       throws ServiceException;
 
   /**
@@ -253,27 +268,34 @@ public interface InventoryManagementService extends Service {
    * @return Erroneous transactions with error message in the object
    */
   List<ITransaction> updateInventoryTransactions(Long domainId,
-      List<ITransaction> inventoryTransactions) throws ServiceException, DuplicationException;
-
-  List<ITransaction> updateInventoryTransactions(Long domainId,
-      List<ITransaction> inventoryTransactions, PersistenceManager pm)
+                                                 List<ITransaction> inventoryTransactions)
       throws ServiceException, DuplicationException;
 
   List<ITransaction> updateInventoryTransactions(Long domainId,
-      List<ITransaction> inventoryTransactions, boolean skipVal)
+                                                 List<ITransaction> inventoryTransactions,
+                                                 PersistenceManager pm)
       throws ServiceException, DuplicationException;
 
   List<ITransaction> updateInventoryTransactions(Long domainId,
-      List<ITransaction> inventoryTransactions, boolean skipVal, PersistenceManager pm)
+                                                 List<ITransaction> inventoryTransactions,
+                                                 boolean skipVal)
       throws ServiceException, DuplicationException;
 
   List<ITransaction> updateInventoryTransactions(Long domainId,
-      List<ITransaction> inventoryTransactions, boolean skipVal, boolean skipPred)
+                                                 List<ITransaction> inventoryTransactions,
+                                                 boolean skipVal, PersistenceManager pm)
       throws ServiceException, DuplicationException;
 
   List<ITransaction> updateInventoryTransactions(Long domainId,
-      List<ITransaction> inventoryTransactions, boolean skipVal, boolean skipPred,
-      PersistenceManager pm) throws ServiceException, DuplicationException;
+                                                 List<ITransaction> inventoryTransactions,
+                                                 boolean skipVal, boolean skipPred)
+      throws ServiceException, DuplicationException;
+
+  List<ITransaction> updateInventoryTransactions(Long domainId,
+                                                 List<ITransaction> inventoryTransactions,
+                                                 boolean skipVal, boolean skipPred,
+                                                 PersistenceManager pm)
+      throws ServiceException, DuplicationException;
 
 
   /**
@@ -289,8 +311,10 @@ public interface InventoryManagementService extends Service {
    */
   @SuppressWarnings({"unchecked", "rawtypes"})
   List<ITransaction> updateInventoryTransactions(Long domainId,
-      List<ITransaction> inventoryTransactions, List<IInvntry> invntryList, boolean skipVal,
-      boolean skipPred, PersistenceManager pm) throws ServiceException, DuplicationException;
+                                                 List<ITransaction> inventoryTransactions,
+                                                 List<IInvntry> invntryList, boolean skipVal,
+                                                 boolean skipPred, PersistenceManager pm)
+      throws ServiceException, DuplicationException;
 
   /**
    * Update a single inventory transaction
@@ -299,17 +323,20 @@ public interface InventoryManagementService extends Service {
       throws ServiceException, DuplicationException;
 
   ITransaction updateInventoryTransaction(Long domainId, ITransaction inventoryTransaction,
-      PersistenceManager pm) throws ServiceException, DuplicationException;
-
-  ITransaction updateInventoryTransaction(Long domainId, ITransaction inventoryTransaction,
-      boolean skipPred) throws ServiceException, DuplicationException;
-
-  ITransaction updateInventoryTransaction(Long domainId, ITransaction inventoryTransaction,
-      boolean skipPred, boolean skipVal, PersistenceManager pm)
+                                          PersistenceManager pm)
       throws ServiceException, DuplicationException;
 
   ITransaction updateInventoryTransaction(Long domainId, ITransaction inventoryTransaction,
-      boolean skipPred, PersistenceManager pm) throws ServiceException, DuplicationException;
+                                          boolean skipPred)
+      throws ServiceException, DuplicationException;
+
+  ITransaction updateInventoryTransaction(Long domainId, ITransaction inventoryTransaction,
+                                          boolean skipPred, boolean skipVal, PersistenceManager pm)
+      throws ServiceException, DuplicationException;
+
+  ITransaction updateInventoryTransaction(Long domainId, ITransaction inventoryTransaction,
+                                          boolean skipPred, PersistenceManager pm)
+      throws ServiceException, DuplicationException;
 
   /**
    * Undo inventory transactions (depending on the transaction type). Returns a list of transactions
@@ -329,7 +356,7 @@ public interface InventoryManagementService extends Service {
       throws ServiceException;
 
   IInvntryBatch getInventoryBatch(Long kioskId, Long materialId, String batchId,
-      PersistenceManager pm);
+                                  PersistenceManager pm);
 
   BigDecimal getStockAvailabilityPeriod(IInvntry invntry, DomainConfig currentDC);
 
@@ -355,28 +382,30 @@ public interface InventoryManagementService extends Service {
   List<IInvAllocation> getAllocations(Long kid, Long mid);
 
   List<IInvAllocation> getAllocationsByTypeId(Long kid, Long mid, IInvAllocation.Type type,
-      String typeId);
+                                              String typeId);
 
   void allocate(Long kid, Long mid, IInvAllocation.Type type, String typeId, String tag,
-      BigDecimal quantity, List<ShipmentItemBatchModel> batchDetails, String userId,
-      PersistenceManager pm) throws ServiceException;
+                BigDecimal quantity, List<ShipmentItemBatchModel> batchDetails, String userId,
+                PersistenceManager pm) throws ServiceException;
 
   void allocate(Long kid, Long mid, IInvAllocation.Type type, String typeId, String tag,
-      BigDecimal quantity, List<ShipmentItemBatchModel> bdetails, String userId,
-      PersistenceManager pm, String materialStatus) throws ServiceException;
+                BigDecimal quantity, List<ShipmentItemBatchModel> bdetails, String userId,
+                PersistenceManager pm, String materialStatus) throws ServiceException;
 
   void allocateAutomatically(Long kid, Long mid, IInvAllocation.Type type, String typeId,
-      String tag, BigDecimal quantity, String userId, boolean autoAssignStatus,
-      PersistenceManager pm) throws ServiceException;
+                             String tag, BigDecimal quantity, String userId,
+                             boolean autoAssignStatus,
+                             PersistenceManager pm) throws ServiceException;
 
   void clearAllocation(Long kid, Long mid, IInvAllocation.Type type, String typeId)
       throws ServiceException;
 
   void clearAllocation(Long kid, Long mid, IInvAllocation.Type type, String typeId,
-      PersistenceManager pm) throws ServiceException;
+                       PersistenceManager pm) throws ServiceException;
 
   void clearBatchAllocation(Long kid, Long mid, IInvAllocation.Type type, String typeId,
-      String batchId, PersistenceManager persistenceManager) throws ServiceException;
+                            String batchId, PersistenceManager persistenceManager)
+      throws ServiceException;
 
   void clearAllocationByTag(Long kid, Long mid, String tag) throws ServiceException;
 
@@ -401,9 +430,10 @@ public interface InventoryManagementService extends Service {
    * the destination allocation
    */
   void transferAllocation(Long kid, Long mid, IInvAllocation.Type srcType, String srcTypeId,
-      IInvAllocation.Type destType, String destTypeId, BigDecimal quantity,
-      List<ShipmentItemBatchModel> batchDetails, String userId, String tag,
-      PersistenceManager pm, String materialStatus, boolean isSet) throws ServiceException;
+                          IInvAllocation.Type destType, String destTypeId, BigDecimal quantity,
+                          List<ShipmentItemBatchModel> batchDetails, String userId, String tag,
+                          PersistenceManager pm, String materialStatus, boolean isSet)
+      throws ServiceException;
 
   /**
    * Returns the duration from expected reorder point, min event start time if applicable
@@ -419,11 +449,14 @@ public interface InventoryManagementService extends Service {
   IInvntryEvntLog adjustInventoryEvents(IInvntryEvntLog invntryEvntLog) throws ServiceException;
 
   Results getInventory(Long domainId, Long kioskId, List<Long> kioskIds, String kioskTags,
-      String excludedKioskTags, Long materialId, String materialTag, int batchEnabled,
-      boolean onlyNZInv, String pdos, LocationSuggestionModel location, PageParams pageParams)
+                       String excludedKioskTags, Long materialId, String materialTag,
+                       int batchEnabled,
+                       boolean onlyNZInv, String pdos, LocationSuggestionModel location,
+                       PageParams pageParams)
       throws ServiceException;
 
-  Results getInventory(InventoryFilters filters, PageParams pageParams) throws ServiceException;
+  Results<IInvntry> getInventory(InventoryFilters filters, PageParams pageParams)
+      throws ServiceException;
 
   boolean validateEntityBatchManagementUpdate(Long kioskId) throws ServiceException;
 

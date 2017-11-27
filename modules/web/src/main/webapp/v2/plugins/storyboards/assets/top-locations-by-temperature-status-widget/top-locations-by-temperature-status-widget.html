@@ -10,9 +10,12 @@
         </div>
     </div>
     <div ng-if="!wloading && !showError && showChart">
-        <fusion-chart type="topLocationsByTemperatureStatusWidget.cType" height="topLocationsByTemperatureStatusWidget.computedHeight" width="topLocationsByTemperatureStatusWidget.computedWidth"
+        <fusion-chart type="topLocationsByTemperatureStatusWidget.cType"
+                      height="topLocationsByTemperatureStatusWidget.computedHeight"
+                      width="topLocationsByTemperatureStatusWidget.computedWidth"
                       chart-label="topLocationsByTemperatureStatusWidget.cLabel"
-                      chart-data="topLocationsByTemperatureStatusWidget.cdata" chart-options="topLocationsByTemperatureStatusWidget.copt"
+                      chart-data="topLocationsByTemperatureStatusWidget.cdata"
+                      chart-options="topLocationsByTemperatureStatusWidget.copt"
                       chart-id="{{topLocationsByTemperatureStatusWidget.wId}}" simple="'true'">
         </fusion-chart>
     </div>

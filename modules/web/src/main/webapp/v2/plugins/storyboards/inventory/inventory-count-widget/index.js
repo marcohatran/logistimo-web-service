@@ -38,64 +38,64 @@ angular.module('logistimo.storyboard.inventoryCountWidget', [])
         });
     })
     .controller('inventoryCountWidgetController',
-        ['$scope', 'dashboardService', 'domainCfgService', function ($scope, dashboardService, domainCfgService) {
-            var filter = angular.copy($scope.widget.conf);
-            var entPieColors;
-            var fDate = (checkNotNullEmpty(filter.date) ? formatDate(filter.date) : undefined);
-            $scope.showChart = false;
-            $scope.totalInv = 0;
-            $scope.wloading = true;
-            $scope.showError = false;
-            function setFilters() {
-                if (checkNotNullEmpty(filter.period)) {
-                    var p = filter.period;
-                    if (p == '0' || p == '1' || p == '2' || p == '3' || p == '7' || p == '30') {
-                        $scope.period = p;
-                    }
-                } else {
-                    $scope.period = "0";
+    ['$scope', 'dashboardService', 'domainCfgService', function ($scope, dashboardService, domainCfgService) {
+        var filter = angular.copy($scope.widget.conf);
+        var entPieColors;
+        var fDate = (checkNotNullEmpty(filter.date) ? formatDate(filter.date) : undefined);
+        $scope.showChart = false;
+        $scope.totalInv = 0;
+        $scope.wloading = true;
+        $scope.showError = false;
+        function setFilters() {
+            if (checkNotNullEmpty(filter.period)) {
+                var p = filter.period;
+                if (p == '0' || p == '1' || p == '2' || p == '3' || p == '7' || p == '30') {
+                    $scope.period = p;
                 }
-                
-                if (checkNotNullEmpty(filter.materialTag)) {
-                    $scope.exFilter = constructModel(filter.materialTag);
-                    $scope.exType = 'mTag';
-                } else if (checkNotNullEmpty(filter.material)) {
-                    $scope.exFilter = filter.material.id;
-                    $scope.exType = 'mId';
-                }
+            } else {
+                $scope.period = "0";
             }
-            
-            domainCfgService.getSystemDashboardConfig().then(function (data) {
-                var domainConfig = angular.fromJson(data.data);
-                entPieColors = domainConfig.pie.ec;
-            }).then(function () {
-                setFilters();
-            }).then(function () {
-                getData();
-            });
-            
-            function getData() {
-                $scope.showLoading();
-                dashboardService.get(undefined, undefined, $scope.exFilter, $scope.exType, $scope.period, undefined,
-                    undefined, constructModel(filter.entityTag), fDate, constructModel(filter.exEntityTag), false).then(
-                    function (data) {
-                        getTotalItems(data.data.invDomain);
-                    }).catch(function error(msg) {
+
+            if (checkNotNullEmpty(filter.materialTag)) {
+                $scope.exFilter = constructModel(filter.materialTag);
+                $scope.exType = 'mTag';
+            } else if (checkNotNullEmpty(filter.material)) {
+                $scope.exFilter = filter.material.id;
+                $scope.exType = 'mId';
+            }
+        }
+
+        domainCfgService.getSystemDashboardConfig().then(function (data) {
+            var domainConfig = angular.fromJson(data.data);
+            entPieColors = domainConfig.pie.ec;
+        }).then(function () {
+            setFilters();
+        }).then(function () {
+            getData();
+        });
+
+        function getData() {
+            $scope.showLoading();
+            dashboardService.get(undefined, undefined, $scope.exFilter, $scope.exType, $scope.period, undefined,
+                undefined, constructModel(filter.entityTag), fDate, constructModel(filter.exEntityTag), false).then(
+                function (data) {
+                    getTotalItems(data.data.invDomain);
+                }).catch(function error(msg) {
                     $scope.showErrorMsg(msg);
                 }).finally(function () {
                     $scope.hideLoading();
                     $scope.loading = false;
                     $scope.wloading = false;
                 });
+        }
+
+        function getTotalItems(data) {
+            for (var d in data) {
+                $scope.totalInv += data[d];
             }
-            
-            function getTotalItems(data) {
-                for (var d in data) {
-                    $scope.totalInv += data[d];
-                }
-            }
-            
-            $scope.computedHeight = parseInt($scope.widget.computedHeight, 10) - 30;
-        }]);
+        }
+
+        $scope.computedHeight = parseInt($scope.widget.computedHeight, 10) - 30;
+    }]);
 
 logistimoApp.requires.push('logistimo.storyboard.inventoryCountWidget');

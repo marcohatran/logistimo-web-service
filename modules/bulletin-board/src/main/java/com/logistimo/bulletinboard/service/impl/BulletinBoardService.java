@@ -27,24 +27,23 @@ import com.logistimo.bulletinboard.entity.IBulletinBoard;
 import com.logistimo.bulletinboard.service.IBulletinBoardService;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.logger.XLog;
-import com.logistimo.services.Service;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.services.impl.ServiceImpl;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
+
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 
 /**
  * Created by naveensnair on 14/11/17.
  */
-public class BulletinBoardService extends ServiceImpl implements IBulletinBoardService{
+public class BulletinBoardService extends ServiceImpl implements IBulletinBoardService {
 
   private static final XLog xLogger = XLog.getLog(IBulletinBoardService.class);
+
   @Override
   public void createBulletinBoard(IBulletinBoard bulletinBoard) throws ServiceException {
     try {
@@ -74,14 +73,16 @@ public class BulletinBoardService extends ServiceImpl implements IBulletinBoardS
   public String deleteBulletinBoard(Long bulletinBoardId) throws ServiceException {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     try {
-      IBulletinBoard bulletinBoard = JDOUtils.getObjectById(IBulletinBoard.class, bulletinBoardId, pm);
+      IBulletinBoard
+          bulletinBoard =
+          JDOUtils.getObjectById(IBulletinBoard.class, bulletinBoardId, pm);
       String name = bulletinBoard.getName();
       pm.deletePersistent(bulletinBoard);
       return name;
     } catch (Exception e) {
       xLogger.severe("Error in deleting BulletinBoard:", e);
       throw new ServiceException("Error while deleting BulletinBoard" + bulletinBoardId, e);
-    }finally {
+    } finally {
       pm.close();
     }
   }
@@ -90,7 +91,9 @@ public class BulletinBoardService extends ServiceImpl implements IBulletinBoardS
   public void updateBulletinBoard(IBulletinBoard bulletinBoard) throws ServiceException {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     try {
-      IBulletinBoard bulletinBoardObject = JDOUtils.getObjectById(IBulletinBoard.class, bulletinBoard.getBulletinBoardId(), pm);
+      IBulletinBoard
+          bulletinBoardObject =
+          JDOUtils.getObjectById(IBulletinBoard.class, bulletinBoard.getBulletinBoardId(), pm);
       bulletinBoardObject.setConfiguration(bulletinBoard.getConfiguration());
       bulletinBoardObject.setDescription(bulletinBoard.getDescription());
       bulletinBoardObject.setMinScrollTime(bulletinBoard.getMinScrollTime());

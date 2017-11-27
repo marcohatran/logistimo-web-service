@@ -1686,7 +1686,7 @@ public class SetupDataServlet extends JsonRestServlet {
             Jsongro =
             GsonUtil.getRelationshipsOutputToJson(status, relationshipType, linkedKiosks, errMsg,
                 numLinkedKiosks, RESTUtil.VERSION_01);
-        HttpUtil.setLastModifiedHeader(resp,lastModified);
+        HttpUtil.setLastModifiedHeader(resp, lastModified);
         sendJsonResponse(resp, statusCode, Jsongro);
       } catch (Exception e) {
         xLogger.severe(

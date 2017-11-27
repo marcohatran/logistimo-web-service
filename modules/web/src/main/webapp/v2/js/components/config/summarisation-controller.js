@@ -116,7 +116,7 @@ domainCfgControllers.controller('SummarisationMenuController', ['$scope', 'domai
             return (field == 'include_asset_types' || field == 'exclude_asset_types');
         };
 
-        $scope.isNumericalField = function(field) {
+        $scope.isNumericalField = function (field) {
             return (field == 'hours' || field == 'days' || field == 'months' || field == '%');
         };
 
@@ -278,8 +278,9 @@ domainCfgControllers.controller('SummarisationConfigurationController', ['$scope
             $scope.config[$scope.subview][type]['editData']['type'] = type;
             $scope.config[$scope.subview][type]['editData']['index'] = index;
         }
+
         $scope.showLoading();
-        domainCfgService.getAssetSysCfg('2').then(function(data) {
+        domainCfgService.getAssetSysCfg('2').then(function (data) {
             $scope.allAssets = data.data;
         }).catch(function error(msg) {
             $scope.showErrorMsg(msg);
@@ -289,8 +290,8 @@ domainCfgControllers.controller('SummarisationConfigurationController', ['$scope
 
         $scope.filterAssets = function (query) {
             var rData = {results: []};
-            for(var key in $scope.allAssets) {
-                if($scope.allAssets[key].toLowerCase().indexOf(query.term.toLowerCase()) != -1) {
+            for (var key in $scope.allAssets) {
+                if ($scope.allAssets[key].toLowerCase().indexOf(query.term.toLowerCase()) != -1) {
                     rData.results.push({'text': $scope.allAssets[key], 'id': $scope.allAssets[key]});
                 }
             }

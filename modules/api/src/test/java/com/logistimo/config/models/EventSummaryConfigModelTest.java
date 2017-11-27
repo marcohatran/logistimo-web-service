@@ -69,7 +69,7 @@ public class EventSummaryConfigModelTest extends TestCase {
     eventsList.add(getEvent(eventSummaryConfigModel, ASSETS, HEATING));
     eventSummaryConfigModel.addEvents(eventsList);
     assertEquals(eventSummaryConfigModel.getEvents().size(), 2);
-   }
+  }
 
   @Test
   public void testRemoveEventsByCategory() {
@@ -85,25 +85,31 @@ public class EventSummaryConfigModelTest extends TestCase {
     eventSummaryConfigModel.removeEventsByCategory(ASSETS);
     assertEquals(eventSummaryConfigModel.getEvents().size(), 3);
   }
+
   @Test
   public void testPopulateThresholdMap() {
     try {
       EventSummaryConfigModel defaultTemplate = getDefaultTemplate();
       assertNotNull(defaultTemplate);
       EventSummaryConfigModel eventSummaryConfigModel = new EventSummaryConfigModel();
-      Method populateThresholdMap = eventSummaryConfigModel.getClass().getDeclaredMethod(POPULATE_THRESHOLD_MAP, new Class[] {List.class});
+      Method
+          populateThresholdMap =
+          eventSummaryConfigModel.getClass()
+              .getDeclaredMethod(POPULATE_THRESHOLD_MAP, new Class[]{List.class});
       populateThresholdMap.setAccessible(true);
-      Map<String, Map<String, EventSummaryConfigModel.Condition>> map = (Map) populateThresholdMap.invoke(
-          eventSummaryConfigModel, new Object[]{defaultTemplate.getEvents()});
+      Map<String, Map<String, EventSummaryConfigModel.Condition>>
+          map =
+          (Map) populateThresholdMap.invoke(
+              eventSummaryConfigModel, new Object[]{defaultTemplate.getEvents()});
       assertNotNull(map);
-      assertEquals(map.size(),9);
+      assertEquals(map.size(), 9);
       List<String> expectedMapKeys = defaultTemplate.getEvents().stream().map(
           events -> events.getCategory() + CATEGORY_TYPE_DELIMITER + events.getType())
-      .collect(Collectors.toList());
+          .collect(Collectors.toList());
       List mapKeys = new ArrayList<>(map.keySet());
       assertTrue(mapKeys.equals(expectedMapKeys));
     } catch (Exception e) {
-      LOGGER.warn("Ignoring exception" , e);
+      LOGGER.warn("Ignoring exception", e);
     }
   }
 
@@ -113,22 +119,32 @@ public class EventSummaryConfigModelTest extends TestCase {
       EventSummaryConfigModel defaultTemplate = getDefaultTemplate();
       assertNotNull(defaultTemplate);
       EventSummaryConfigModel eventSummaryConfigModel = new EventSummaryConfigModel();
-      Method populateThresholdMap = eventSummaryConfigModel.getClass().getDeclaredMethod(POPULATE_THRESHOLD_MAP, new Class[] {List.class});
+      Method
+          populateThresholdMap =
+          eventSummaryConfigModel.getClass()
+              .getDeclaredMethod(POPULATE_THRESHOLD_MAP, new Class[]{List.class});
       populateThresholdMap.setAccessible(true);
-      Map<String, Map<String, EventSummaryConfigModel.Condition>> map = (Map) populateThresholdMap.invoke(
-          eventSummaryConfigModel, new Object[]{defaultTemplate.getEvents()});
-      Map<String,EventSummaryConfigModel.Condition> keyConditionMap = map.get(INVENTORY + CATEGORY_TYPE_DELIMITER + STOCK_OUTS);
+      Map<String, Map<String, EventSummaryConfigModel.Condition>>
+          map =
+          (Map) populateThresholdMap.invoke(
+              eventSummaryConfigModel, new Object[]{defaultTemplate.getEvents()});
+      Map<String, EventSummaryConfigModel.Condition>
+          keyConditionMap =
+          map.get(INVENTORY + CATEGORY_TYPE_DELIMITER + STOCK_OUTS);
       EventSummaryConfigModel.Events events = getEvent(eventSummaryConfigModel, INVENTORY,
           STOCK_OUTS);
       assertNull(events.getThresholds());
-      Method updateThresholds = eventSummaryConfigModel.getClass().getDeclaredMethod(UPDATE_THRESHOLDS, new Class[] {EventSummaryConfigModel.Events.class, Map.class});
+      Method
+          updateThresholds =
+          eventSummaryConfigModel.getClass().getDeclaredMethod(UPDATE_THRESHOLDS,
+              new Class[]{EventSummaryConfigModel.Events.class, Map.class});
       updateThresholds.setAccessible(true);
       updateThresholds.invoke(
-          eventSummaryConfigModel, new Object[]{events,keyConditionMap});
+          eventSummaryConfigModel, new Object[]{events, keyConditionMap});
       assertEquals(events.getThresholds().size(), 1);
-      assertEquals(events.getThresholds().get(0).getConditions().size(),5);
+      assertEquals(events.getThresholds().get(0).getConditions().size(), 5);
     } catch (Exception e) {
-      LOGGER.warn("Ignoring exception" , e);
+      LOGGER.warn("Ignoring exception", e);
     }
   }
 
@@ -138,24 +154,34 @@ public class EventSummaryConfigModelTest extends TestCase {
       EventSummaryConfigModel defaultTemplate = getDefaultTemplate();
       assertNotNull(defaultTemplate);
       EventSummaryConfigModel eventSummaryConfigModel = new EventSummaryConfigModel();
-      Method populateThresholdMap = eventSummaryConfigModel.getClass().getDeclaredMethod(POPULATE_THRESHOLD_MAP, new Class[] {List.class});
+      Method
+          populateThresholdMap =
+          eventSummaryConfigModel.getClass()
+              .getDeclaredMethod(POPULATE_THRESHOLD_MAP, new Class[]{List.class});
       populateThresholdMap.setAccessible(true);
-      Map<String, Map<String, EventSummaryConfigModel.Condition>> map = (Map) populateThresholdMap.invoke(
-          eventSummaryConfigModel, new Object[]{defaultTemplate.getEvents()});
-      Map<String,EventSummaryConfigModel.Condition> keyConditionMap = map.get(INVENTORY + CATEGORY_TYPE_DELIMITER + STOCK_OUTS);
+      Map<String, Map<String, EventSummaryConfigModel.Condition>>
+          map =
+          (Map) populateThresholdMap.invoke(
+              eventSummaryConfigModel, new Object[]{defaultTemplate.getEvents()});
+      Map<String, EventSummaryConfigModel.Condition>
+          keyConditionMap =
+          map.get(INVENTORY + CATEGORY_TYPE_DELIMITER + STOCK_OUTS);
       EventSummaryConfigModel.Events events = getEventWithThresholds(eventSummaryConfigModel,
           INVENTORY,
           STOCK_OUTS);
       assertNotNull(events.getThresholds());
-      assertEquals(events.getThresholds().get(0).getConditions().size(),2);
-      Method updateThresholds = eventSummaryConfigModel.getClass().getDeclaredMethod(UPDATE_THRESHOLDS, new Class[] {EventSummaryConfigModel.Events.class, Map.class});
+      assertEquals(events.getThresholds().get(0).getConditions().size(), 2);
+      Method
+          updateThresholds =
+          eventSummaryConfigModel.getClass().getDeclaredMethod(UPDATE_THRESHOLDS,
+              new Class[]{EventSummaryConfigModel.Events.class, Map.class});
       updateThresholds.setAccessible(true);
       updateThresholds.invoke(
-          eventSummaryConfigModel, new Object[]{events,keyConditionMap});
+          eventSummaryConfigModel, new Object[]{events, keyConditionMap});
       assertEquals(events.getThresholds().size(), 1);
-      assertEquals(events.getThresholds().get(0).getConditions().size(),5);
+      assertEquals(events.getThresholds().get(0).getConditions().size(), 5);
     } catch (Exception e) {
-      LOGGER.warn("Ignoring exception" , e);
+      LOGGER.warn("Ignoring exception", e);
     }
   }
 
@@ -165,36 +191,50 @@ public class EventSummaryConfigModelTest extends TestCase {
       EventSummaryConfigModel defaultTemplate = getDefaultTemplate();
       assertNotNull(defaultTemplate);
       EventSummaryConfigModel eventSummaryConfigModel = new EventSummaryConfigModel();
-      Method populateThresholdMap = eventSummaryConfigModel.getClass().getDeclaredMethod(POPULATE_THRESHOLD_MAP, new Class[] {List.class});
+      Method
+          populateThresholdMap =
+          eventSummaryConfigModel.getClass()
+              .getDeclaredMethod(POPULATE_THRESHOLD_MAP, new Class[]{List.class});
       populateThresholdMap.setAccessible(true);
-      Map<String, Map<String, EventSummaryConfigModel.Condition>> map = (Map) populateThresholdMap.invoke(
-          eventSummaryConfigModel, new Object[]{defaultTemplate.getEvents()});
-      Map<String,EventSummaryConfigModel.Condition> keyConditionMap = map.get(INVENTORY + CATEGORY_TYPE_DELIMITER + STOCK_OUTS);
+      Map<String, Map<String, EventSummaryConfigModel.Condition>>
+          map =
+          (Map) populateThresholdMap.invoke(
+              eventSummaryConfigModel, new Object[]{defaultTemplate.getEvents()});
+      Map<String, EventSummaryConfigModel.Condition>
+          keyConditionMap =
+          map.get(INVENTORY + CATEGORY_TYPE_DELIMITER + STOCK_OUTS);
       EventSummaryConfigModel.Events events = getEventWithThresholds(eventSummaryConfigModel,
           INVENTORY,
           STOCK_OUTS);
       assertNotNull(events.getThresholds());
-      assertEquals(events.getThresholds().get(0).getConditions().size(),2);
-      Method buildConditions = eventSummaryConfigModel.getClass().getDeclaredMethod(BUILD_CONDITIONS, new Class[] {EventSummaryConfigModel.Events.class, Map.class});
+      assertEquals(events.getThresholds().get(0).getConditions().size(), 2);
+      Method
+          buildConditions =
+          eventSummaryConfigModel.getClass().getDeclaredMethod(BUILD_CONDITIONS,
+              new Class[]{EventSummaryConfigModel.Events.class, Map.class});
       buildConditions.setAccessible(true);
       buildConditions.invoke(
-          eventSummaryConfigModel, new Object[]{events,keyConditionMap});
+          eventSummaryConfigModel, new Object[]{events, keyConditionMap});
       assertEquals(events.getThresholds().size(), 1);
-      assertEquals(events.getThresholds().get(0).getConditions().size(),5);
+      assertEquals(events.getThresholds().get(0).getConditions().size(), 5);
       assertEquals(events.getThresholds().get(0).getConditions().get(0).getName(), DURATION);
       assertEquals(events.getThresholds().get(0).getConditions().get(0).getValue(), TEN);
       assertEquals(events.getThresholds().get(0).getConditions().get(0).getUnits(), DAYS);
-      assertEquals(events.getThresholds().get(0).getConditions().get(0).getOper(), GREATER_THAN_OR_EQUAL_TO);
-      assertEquals(events.getThresholds().get(0).getConditions().get(0).getValues(),null);
-      assertEquals(events.getThresholds().get(0).getConditions().get(1).getName(),INCLUDE_MATERIAL_TAGS);
-      assertEquals(events.getThresholds().get(0).getConditions().get(1).getValue(),null);
-      assertEquals(events.getThresholds().get(0).getConditions().get(1).getUnits(),"");
-      assertEquals(events.getThresholds().get(0).getConditions().get(1).getOper(),"");
-      assertEquals(events.getThresholds().get(0).getConditions().get(1).getValues().get(0),ANTIBIOTIC);
+      assertEquals(events.getThresholds().get(0).getConditions().get(0).getOper(),
+          GREATER_THAN_OR_EQUAL_TO);
+      assertEquals(events.getThresholds().get(0).getConditions().get(0).getValues(), null);
+      assertEquals(events.getThresholds().get(0).getConditions().get(1).getName(),
+          INCLUDE_MATERIAL_TAGS);
+      assertEquals(events.getThresholds().get(0).getConditions().get(1).getValue(), null);
+      assertEquals(events.getThresholds().get(0).getConditions().get(1).getUnits(), "");
+      assertEquals(events.getThresholds().get(0).getConditions().get(1).getOper(), "");
+      assertEquals(events.getThresholds().get(0).getConditions().get(1).getValues().get(0),
+          ANTIBIOTIC);
     } catch (Exception e) {
-      LOGGER.warn("Ignoring exception" , e);
+      LOGGER.warn("Ignoring exception", e);
     }
   }
+
   @Test
   public void testBuildEventsWithoutDBValues() {
     try {
@@ -218,17 +258,31 @@ public class EventSummaryConfigModelTest extends TestCase {
       eventsList.add(getEventWithThresholds(eventSummaryConfigModel, INVENTORY, STOCK_OUTS));
       eventSummaryConfigModel.addEvents(eventsList);
       eventSummaryConfigModel.buildEvents(defaultTemplate.getEvents());
-      assertEquals(eventSummaryConfigModel.getEvents().get(0).getThresholds().size(),1);
-      assertEquals(eventSummaryConfigModel.getEvents().get(0).getThresholds().get(0).getConditions().get(0).getName(),DURATION);
-      assertEquals(eventSummaryConfigModel.getEvents().get(0).getThresholds().get(0).getConditions().get(0).getValue(),TEN);
-      assertEquals(eventSummaryConfigModel.getEvents().get(0).getThresholds().get(0).getConditions().get(0).getUnits(), DAYS);
-      assertEquals(eventSummaryConfigModel.getEvents().get(0).getThresholds().get(0).getConditions().get(0).getOper(), GREATER_THAN_OR_EQUAL_TO);
-      assertEquals(eventSummaryConfigModel.getEvents().get(0).getThresholds().size(),1);
-      assertEquals(eventSummaryConfigModel.getEvents().get(0).getThresholds().get(0).getConditions().get(1).getName(), INCLUDE_MATERIAL_TAGS);
-      assertEquals(eventSummaryConfigModel.getEvents().get(0).getThresholds().get(0).getConditions().get(1).getValues().size(), 1);
-      assertEquals(eventSummaryConfigModel.getEvents().get(0).getThresholds().get(0).getConditions().get(1).getValues().get(0), ANTIBIOTIC);
+      assertEquals(eventSummaryConfigModel.getEvents().get(0).getThresholds().size(), 1);
+      assertEquals(
+          eventSummaryConfigModel.getEvents().get(0).getThresholds().get(0).getConditions().get(0)
+              .getName(), DURATION);
+      assertEquals(
+          eventSummaryConfigModel.getEvents().get(0).getThresholds().get(0).getConditions().get(0)
+              .getValue(), TEN);
+      assertEquals(
+          eventSummaryConfigModel.getEvents().get(0).getThresholds().get(0).getConditions().get(0)
+              .getUnits(), DAYS);
+      assertEquals(
+          eventSummaryConfigModel.getEvents().get(0).getThresholds().get(0).getConditions().get(0)
+              .getOper(), GREATER_THAN_OR_EQUAL_TO);
+      assertEquals(eventSummaryConfigModel.getEvents().get(0).getThresholds().size(), 1);
+      assertEquals(
+          eventSummaryConfigModel.getEvents().get(0).getThresholds().get(0).getConditions().get(1)
+              .getName(), INCLUDE_MATERIAL_TAGS);
+      assertEquals(
+          eventSummaryConfigModel.getEvents().get(0).getThresholds().get(0).getConditions().get(1)
+              .getValues().size(), 1);
+      assertEquals(
+          eventSummaryConfigModel.getEvents().get(0).getThresholds().get(0).getConditions().get(1)
+              .getValues().get(0), ANTIBIOTIC);
     } catch (Exception e) {
-      LOGGER.warn("Ignoring exception" , e);
+      LOGGER.warn("Ignoring exception", e);
     }
   }
 
@@ -247,9 +301,9 @@ public class EventSummaryConfigModelTest extends TestCase {
       eventsList.add(getEvent(eventSummaryConfigModel, ASSETS, ASSET_PERFORMANCE_BY_ENTITY));
       eventSummaryConfigModel.addEvents(eventsList);
       eventSummaryConfigModel.buildEvents(defaultTemplate.getEvents());
-      assertEquals(defaultTemplate.getEvents().size(),eventSummaryConfigModel.getEvents().size());
+      assertEquals(defaultTemplate.getEvents().size(), eventSummaryConfigModel.getEvents().size());
     } catch (Exception e) {
-      LOGGER.warn("Ignoring exception" , e);
+      LOGGER.warn("Ignoring exception", e);
     }
   }
 
@@ -265,9 +319,9 @@ public class EventSummaryConfigModelTest extends TestCase {
       eventsList.add(getEventWithThresholds(eventSummaryConfigModel, INVENTORY, STOCK_OUTS));
       eventSummaryConfigModel.addEvents(eventsList);
       eventSummaryConfigModel.buildEvents(defaultTemplate.getEvents());
-      assertEquals(eventSummaryConfigModel.getEvents().size(),6);
+      assertEquals(eventSummaryConfigModel.getEvents().size(), 6);
     } catch (Exception e) {
-      LOGGER.warn("Ignoring exception" , e);
+      LOGGER.warn("Ignoring exception", e);
     }
   }
 
@@ -278,12 +332,12 @@ public class EventSummaryConfigModelTest extends TestCase {
       EventSummaryConfigModel eventSummaryConfigModelCopy = eventSummaryConfigModel.copy();
       assertNotSame(eventSummaryConfigModel, eventSummaryConfigModelCopy);
     } catch (Exception e) {
-      LOGGER.warn("Ignoring exception" , e);
+      LOGGER.warn("Ignoring exception", e);
     }
   }
 
   @Test
-  public  void testSetUniqueIdentifierWithSameConditions() {
+  public void testSetUniqueIdentifierWithSameConditions() {
     try {
       EventSummaryConfigModel defaultTemplate = getDefaultTemplate();
       assertNotNull(defaultTemplate);
@@ -300,12 +354,12 @@ public class EventSummaryConfigModelTest extends TestCase {
       assertNotNull(idAgain);
       assertEquals(id, idAgain);
     } catch (Exception e) {
-      LOGGER.warn("Ignoring exception" , e);
+      LOGGER.warn("Ignoring exception", e);
     }
   }
 
   @Test
-  public  void testSetUniqueIdentifierWithDifferentConditions() {
+  public void testSetUniqueIdentifierWithDifferentConditions() {
     try {
       EventSummaryConfigModel defaultTemplate = getDefaultTemplate();
       assertNotNull(defaultTemplate);
@@ -317,33 +371,40 @@ public class EventSummaryConfigModelTest extends TestCase {
       eventSummaryConfigModel.setUniqueIdentifier();
       String id = eventSummaryConfigModel.getEvents().get(0).getThresholds().get(0).getId();
       assertNotNull(id);
-      eventSummaryConfigModel.getEvents().add(getEventWithThresholds(eventSummaryConfigModel, INVENTORY, STOCK_EXPIRY));
+      eventSummaryConfigModel.getEvents()
+          .add(getEventWithThresholds(eventSummaryConfigModel, INVENTORY, STOCK_EXPIRY));
       eventSummaryConfigModel.setUniqueIdentifier();
       String idAgain = eventSummaryConfigModel.getEvents().get(1).getThresholds().get(0).getId();
       assertNotNull(idAgain);
-      assertNotSame(id,idAgain);
+      assertNotSame(id, idAgain);
     } catch (Exception e) {
-      LOGGER.warn("Ignoring exception" , e);
+      LOGGER.warn("Ignoring exception", e);
     }
   }
 
-  private EventSummaryConfigModel.Events getEvent(EventSummaryConfigModel eventSummaryConfigModel, String category, String type) {
+  private EventSummaryConfigModel.Events getEvent(EventSummaryConfigModel eventSummaryConfigModel,
+                                                  String category, String type) {
     EventSummaryConfigModel.Events events = eventSummaryConfigModel.new Events();
     events.setCategory(category);
     events.setType(type);
     return events;
   }
 
-  private EventSummaryConfigModel.Events getEventWithThresholds(EventSummaryConfigModel eventSummaryConfigModel, String category, String type) {
+  private EventSummaryConfigModel.Events getEventWithThresholds(
+      EventSummaryConfigModel eventSummaryConfigModel, String category, String type) {
     EventSummaryConfigModel.Events events = eventSummaryConfigModel.new Events();
     events.setCategory(category);
     events.setType(type);
     List<EventSummaryConfigModel.Threshold> thresholds = new ArrayList<>(0);
     EventSummaryConfigModel.Threshold threshold = eventSummaryConfigModel.new Threshold();
     List<EventSummaryConfigModel.Condition> conditions = new ArrayList<>(0);
-    EventSummaryConfigModel.Condition nameCondition = eventSummaryConfigModel.new Condition(DURATION, DAYS, GREATER_THAN_OR_EQUAL_TO);
+    EventSummaryConfigModel.Condition
+        nameCondition =
+        eventSummaryConfigModel.new Condition(DURATION, DAYS, GREATER_THAN_OR_EQUAL_TO);
     nameCondition.setValue(TEN);
-    EventSummaryConfigModel.Condition includeMTagsCondition = eventSummaryConfigModel.new Condition(INCLUDE_MATERIAL_TAGS, null, null);
+    EventSummaryConfigModel.Condition
+        includeMTagsCondition =
+        eventSummaryConfigModel.new Condition(INCLUDE_MATERIAL_TAGS, null, null);
     includeMTagsCondition.setValues(Arrays.asList(ANTIBIOTIC));
     conditions.add(nameCondition);
     conditions.add(includeMTagsCondition);
@@ -357,7 +418,7 @@ public class EventSummaryConfigModelTest extends TestCase {
     try {
       return EventSummaryTemplateLoader.getDefaultTemplate();
     } catch (Exception e) {
-      LOGGER.warn("Ignoring exception" , e);
+      LOGGER.warn("Ignoring exception", e);
     }
     return null;
   }

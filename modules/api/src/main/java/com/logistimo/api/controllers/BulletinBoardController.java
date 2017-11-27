@@ -72,16 +72,25 @@ public class BulletinBoardController {
     String msg;
     try {
       BulletinBoardService bulletinBoardService = Services.getService(BulletinBoardService.class);
-      if(model.getBulletinBoardId() != null ){
-        IBulletinBoard bulletinBoard = bulletinBoardService.getBulletinBoard(model.getBulletinBoardId());
-        bulletinBoard = builder.buildBulletinBoardForUpdate(model, bulletinBoard, sUser.getUsername());
+      if (model.getBulletinBoardId() != null) {
+        IBulletinBoard
+            bulletinBoard =
+            bulletinBoardService.getBulletinBoard(model.getBulletinBoardId());
+        bulletinBoard =
+            builder.buildBulletinBoardForUpdate(model, bulletinBoard, sUser.getUsername());
         bulletinBoardService.updateBulletinBoard(bulletinBoard);
-        msg = backendMessages.getString(BULLETIN_BOARD) + " " + MsgUtil.bold(model.getName()) + " " + backendMessages.getString("update.success");
+        msg =
+            backendMessages.getString(BULLETIN_BOARD) + " " + MsgUtil.bold(model.getName()) + " "
+                + backendMessages.getString("update.success");
       } else {
-        IBulletinBoard bulletinBoard = builder.buildBulletinBoard(model, domainId, sUser.getUsername());
+        IBulletinBoard
+            bulletinBoard =
+            builder.buildBulletinBoard(model, domainId, sUser.getUsername());
         bulletinBoardService.createBulletinBoard(bulletinBoard);
-        msg = backendMessages.getString(BULLETIN_BOARD) + " " + MsgUtil.bold(model.getName()) + " " + backendMessages
-            .getString("created.success");
+        msg =
+            backendMessages.getString(BULLETIN_BOARD) + " " + MsgUtil.bold(model.getName()) + " "
+                + backendMessages
+                .getString("created.success");
       }
     } catch (Exception e) {
       xLogger.severe("Error creating bulletin board for domain ", domainId);
@@ -103,7 +112,8 @@ public class BulletinBoardController {
   @RequestMapping(value = "/{bulletinBoardId}", method = RequestMethod.GET)
   public
   @ResponseBody
-  BulletinBoardModel getBulletinBoard(@PathVariable Long bulletinBoardId, HttpServletRequest request) {
+  BulletinBoardModel getBulletinBoard(@PathVariable Long bulletinBoardId,
+                                      HttpServletRequest request) {
     try {
       BulletinBoardService bulletinBoardService = Services.getService(BulletinBoardService.class);
       IBulletinBoard bulletinBoard = bulletinBoardService.getBulletinBoard(bulletinBoardId);
@@ -130,7 +140,8 @@ public class BulletinBoardController {
       throw new InvalidServiceException("Error deleting Dashboard: " + bulletinBoardId);
     }
 
-    return backendMessages.getString(BULLETIN_BOARD) + " " + MsgUtil.bold(name) + " " + backendMessages.getString("deleted.success");
+    return backendMessages.getString(BULLETIN_BOARD) + " " + MsgUtil.bold(name) + " "
+        + backendMessages.getString("deleted.success");
   }
 
 }

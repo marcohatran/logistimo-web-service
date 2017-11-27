@@ -26,8 +26,6 @@ package com.logistimo.api.servlets.mobile.builders;
 import com.google.gson.Gson;
 
 import com.logistimo.api.util.RESTUtil;
-import com.logistimo.config.models.DomainConfig;
-import com.logistimo.config.models.InventoryConfig;
 import com.logistimo.constants.Constants;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.entities.entity.IKiosk;
@@ -35,7 +33,6 @@ import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.inventory.TransactionUtil;
 import com.logistimo.inventory.entity.IInvntry;
-import com.logistimo.inventory.entity.IInvntryBatch;
 import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.inventory.models.ErrorDetailModel;
 import com.logistimo.inventory.service.InventoryManagementService;
@@ -44,11 +41,7 @@ import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.materials.service.MaterialCatalogService;
 import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
-import com.logistimo.pagination.PageParams;
-import com.logistimo.pagination.Results;
-import com.logistimo.proto.MobileConsRateModel;
 import com.logistimo.proto.MobileGeoModel;
-import com.logistimo.proto.MobileInvBatchModel;
 import com.logistimo.proto.MobileInvModel;
 import com.logistimo.proto.MobileMaterialTransModel;
 import com.logistimo.proto.MobileTransErrModel;
@@ -64,13 +57,11 @@ import com.logistimo.tags.TagUtil;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.users.service.impl.UsersServiceImpl;
-import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.StringUtil;
 
 import org.apache.commons.lang.StringUtils;
 
-import java.math.BigDecimal;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -279,176 +270,15 @@ public class MobileTransactionsBuilder {
         xLogger.warn("Exception while getting inventory for kid: {0}, mid: {1}", kioskId, mid, e);
         continue;
      }
-     MobileInvModel inv = buildMobileInvModel(inventory, domainId, userId, ims, es);
+     MobileInvModel
+         inv =
+         new MobileInventoryBuilder().buildMobileInvModel(inventory, domainId, userId, ims, es);
      if (inv != null) {
        mobInvList.add(inv);
      }
    }
    return mobInvList;
  }
-
- private MobileInvModel buildMobileInvModel(IInvntry inventory,
-                                             Long domainId, String userId,
-                                             InventoryManagementService ims, EntitiesService es) {
-   MobileInvModel inv = new MobileInvModel();
-   try {
-      DomainConfig dc = DomainConfig.getInstance(domainId);
-      UsersService us = Services.getService(UsersServiceImpl.class);
-      MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
-      IUserAccount user = us.getUserAccount(userId);
-      Locale locale = user.getLocale();
-      String timezone = user.getTimezone();
-      inv.mid = inventory.getMaterialId();
-      inv.smid = inventory.getShortId();
-      inv.q = inventory.getStock();
-      if (dc.autoGI()) {
-        inv.alq = inventory.getAllocatedStock();
-        inv.itq = inventory.getInTransitStock();
-        inv.avq = inventory.getAvailableStock();
-      }
-      BigDecimal stockAvailPeriod = ims.getStockAvailabilityPeriod(inventory, dc);
-      if (stockAvailPeriod != null && BigUtil.notEqualsZero(stockAvailPeriod)) {
-        inv.dsq = stockAvailPeriod;
-      }
-      if (inventory.getMinDuration() != null && BigUtil
-          .notEqualsZero(inventory.getMinDuration())) {
-        inv.dmin = inventory.getMinDuration();
-      }
-      if (inventory.getMaxDuration() != null && BigUtil
-          .notEqualsZero(inventory.getMaxDuration())) {
-        inv.dmax = inventory.getMaxDuration();
-      }
-      MobileConsRateModel crModel = buildMobileConsRateModel(domainId, inventory);
-      if (crModel != null) {
-        inv.cr = crModel;
-      }
-      inv.t = LocalDateUtil.format(inventory.getTimestamp(), locale,
-          timezone);
-      Long kid = inventory.getKioskId();
-      Long mid = inventory.getMaterialId();
-      IKiosk k = es.getKiosk(kid, false);
-      IMaterial m = mcs.getMaterial(mid);
-      if (k.isBatchMgmtEnabled() && m.isBatchEnabled()) {
-        inv.bt = buildMobileInvBatchModelList(kid, mid, locale, timezone,
-            dc.autoGI(), true);
-        inv.xbt = buildMobileInvBatchModelList(kid, mid, locale, timezone, dc.autoGI(),
-            false);
-      }
-      return inv;
-   } catch (Exception e) {
-     xLogger.warn(
-          "Exception while building inventory model in update inventory transactions response", e);
-      return null;
-   }
- }
-
-  private List<MobileInvBatchModel> buildMobileInvBatchModelList(Long kid, Long mid, Locale locale,
-                                                                 String timezone,
-                                                                 boolean isAutoPostingIssuesEnabled,
-                                                                 boolean buildValidBatchModel) {
-    List<MobileInvBatchModel> mobileInvBatchModelList = null;
-    try {
-      InventoryManagementService ims = Services.getService(InventoryManagementServiceImpl.class);
-      // NOTE: Get only up to the 50 last batches
-      Results<IInvntryBatch>
-          results =
-          ims.getBatches(mid, kid, new PageParams(null,
-              PageParams.DEFAULT_SIZE));
-      if (results != null) {
-        List<IInvntryBatch> batches = results.getResults();
-        if (batches != null && !batches.isEmpty()) {
-          mobileInvBatchModelList = new ArrayList<>(batches.size());
-          for (IInvntryBatch invBatch : batches) {
-            MobileInvBatchModel
-                mibm =
-                buildMobileInvBatchModel(invBatch, isAutoPostingIssuesEnabled, locale, timezone,
-                    buildValidBatchModel);
-            if (mibm != null) {
-              mobileInvBatchModelList.add(mibm);
-            }
-          }
-        }
-      }
-    } catch (Exception e) {
-      xLogger
-          .warn("Exception when trying to get batch information for kid {0} mid {1}", kid, mid, e);
-      return null;
-    }
-    return mobileInvBatchModelList;
-  }
-
-  private MobileInvBatchModel buildMobileInvBatchModel(IInvntryBatch invBatch,
-                                                       boolean isAutoPostingIssuesEnabled,
-                                                       Locale locale, String timezone,
-                                                       boolean validBatchesOnly) {
-    if (validBatchesOnly && invBatch.isExpired()) {
-      return null;
-    }
-    if (!validBatchesOnly && !invBatch.isExpired()) {
-      return null;
-    }
-    // For any batch whether valid or expired, if q is not > 0, return null
-    if (!BigUtil.greaterThanZero(invBatch.getQuantity())) {
-      return null;
-    }
-    MobileInvBatchModel mobileInvBatchModel = new MobileInvBatchModel();
-    mobileInvBatchModel.bid = invBatch.getBatchId();
-    if (invBatch.getBatchManufacturedDate() != null) {
-      mobileInvBatchModel.bmfdt =
-          LocalDateUtil
-              .formatCustom(invBatch.getBatchManufacturedDate(), Constants.DATE_FORMAT, null);
-    }
-    mobileInvBatchModel.bmfnm = invBatch.getBatchManufacturer();
-    if (invBatch.getBatchExpiry() != null) {
-      mobileInvBatchModel.bexp =
-          LocalDateUtil.formatCustom(invBatch.getBatchExpiry(), Constants.DATE_FORMAT, null);
-    } else {
-      xLogger.warn("Null Batch expiry date when building mobile inventory batch model for kid: {0}, mid: {1}, bid: {2}, bexp: {3}", invBatch.getKioskId(), invBatch.getMaterialId(), invBatch.getBatchId(),
-          invBatch.getBatchExpiry());
-    }
-
-    mobileInvBatchModel.q = invBatch.getQuantity();
-    if (isAutoPostingIssuesEnabled && validBatchesOnly) {
-      mobileInvBatchModel.alq = invBatch.getAllocatedStock();
-      mobileInvBatchModel.avq = invBatch.getAvailableStock();
-    }
-    mobileInvBatchModel.t = LocalDateUtil.format(invBatch.getTimestamp(), locale,
-        timezone);
-
-    return mobileInvBatchModel;
-  }
-
-  private MobileConsRateModel buildMobileConsRateModel(Long domainId, IInvntry inv) {
-    DomainConfig dc = DomainConfig.getInstance(domainId);
-    InventoryConfig ic = dc.getInventoryConfig();
-    String displayFreq = ic.getDisplayCRFreq();
-    try {
-      InventoryManagementService ims = Services.getService(InventoryManagementServiceImpl.class);
-      BigDecimal cr = ims.getDailyConsumptionRate(inv);
-      if (BigUtil.greaterThanZero(cr)) {
-        MobileConsRateModel mobConRateModel = new MobileConsRateModel();
-        mobConRateModel.val = BigUtil.getFormattedValue(cr);
-        switch (displayFreq) {
-          case Constants.FREQ_DAILY:
-            mobConRateModel.ty = Constants.FREQ_TYPE_DAILY;
-            break;
-          case Constants.FREQ_WEEKLY:
-            mobConRateModel.ty = Constants.FREQ_TYPE_WEEKLY;
-            break;
-          case Constants.FREQ_MONTHLY:
-            mobConRateModel.ty = Constants.FREQ_TYPE_MONTHLY;
-            break;
-          default:
-            xLogger.warn("Invalid displayFrequency: {0} while building mobile consumption rate model for inventory with kid: {1} and mid: {1}", displayFreq, inv.getKioskId(), inv.getMaterialId());
-            break;
-        }
-        return mobConRateModel;
-      }
-    } catch (Exception e) {
-      return null;
-    }
-    return null;
-  }
 
   /**
    * Builds a map of material to list of server transaction objects from list of mobile transaction objects
@@ -472,19 +302,6 @@ public class MobileTransactionsBuilder {
     return midTransModelMap;
   }
 
-  /**
-   * Sets the partial id in the mobile update inventory transaction response json string (if not set already)
-   */
-  public String buildUpdateInvTransResponseWithPartialID(String mobUpdateInvTransRespJsonStr, String pid) {
-    MobileUpdateInvTransResponse mobileUpdateInvTransResponse =  new Gson().fromJson(mobUpdateInvTransRespJsonStr,
-        MobileUpdateInvTransResponse.class);
-    if (StringUtils.isEmpty(mobileUpdateInvTransResponse.pid)) {
-      mobileUpdateInvTransResponse.pid = pid;
-      return new Gson().toJson(mobileUpdateInvTransResponse);
-    } else {
-      return mobUpdateInvTransRespJsonStr;
-    }
-  }
 
   private List<ITransaction> buildTransactions(String userId, Long kid, MobileMaterialTransModel mobileMaterialTransModel) {
     if (mobileMaterialTransModel == null || mobileMaterialTransModel.trns == null) {
@@ -588,11 +405,25 @@ public class MobileTransactionsBuilder {
     List<MobileTransErrorDetailModel> mobileTransErrorDetailModels = new ArrayList<>(errorDetailModels.size());
     for (ErrorDetailModel errorDetailModel : errorDetailModels) {
       MobileTransErrorDetailModel mobileTransErrorDetailModel = new MobileTransErrorDetailModel();
-      mobileTransErrorDetailModel.ec = errorDetailModel.errorCode;
+      mobileTransErrorDetailModel.ec = getAppUnderstandableErrorCode(errorDetailModel.errorCode);
+      mobileTransErrorDetailModel.msg = errorDetailModel.message;
       mobileTransErrorDetailModel.idx = errorDetailModel.index;
       mobileTransErrorDetailModels.add(mobileTransErrorDetailModel);
     }
     return mobileTransErrorDetailModels;
+  }
+
+  private String getAppUnderstandableErrorCode(String errorCode) {
+    switch(errorCode){
+      case "M004" :
+        return "M012";
+      case "M011" :
+        return "M011";
+      case "M012" :
+        return "M012";
+      default:
+        return "M010";
+    }
   }
 
 }

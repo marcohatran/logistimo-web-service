@@ -54,6 +54,7 @@ import com.logistimo.utils.LocalDateUtil;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.InputMismatchException;
@@ -179,7 +180,7 @@ public class LoginServlet extends JsonRestServlet {
     if (authtoken != null) {
       try {
         user = AuthenticationUtil.authenticateToken(authtoken, actionInitiator);
-        if (RESTUtil.switchToNewHostIfRequired(user, resp)) {
+        if (RESTUtil.checkIfLoginShouldNotBeAllowed(user, resp, req)) {
           xLogger.warn("Switching user {0} to new host...", user.getUserId());
           return;
         }
@@ -191,7 +192,12 @@ public class LoginServlet extends JsonRestServlet {
         try {
           jsonString =
               RESTUtil.getJsonOutputAuthenticate(status, user, message, null, null,
-                  false, false, null, null, null);
+                  false, false, null, Optional.<Date>empty(), null);
+          resp.setStatus(401);
+          resp.setContentType(JSON_UTF8);
+          PrintWriter pw = resp.getWriter();
+          pw.write(jsonString);
+          pw.close();
         } catch (Exception e1) {
           xLogger.warn("Protocol exception after data formatting error (during login): {0}",
               e.getMessage());
@@ -248,7 +254,7 @@ public class LoginServlet extends JsonRestServlet {
           // Get user details
           if (user != null) {
             // Switch the user to another host, if that is enabled
-            if (status && RESTUtil.switchToNewHostIfRequired(user, resp)) {
+            if (status && RESTUtil.checkIfLoginShouldNotBeAllowed(user, resp, req)) {
               xLogger.warn("Switching user {0} to new host...", userId);
               return;
             }
@@ -374,7 +380,7 @@ public class LoginServlet extends JsonRestServlet {
       }
     }
     if (jsonString != null) {
-      HttpUtil.setLastModifiedHeader(resp,lastModified);
+      HttpUtil.setLastModifiedHeader(resp, lastModified);
       sendJsonResponse(resp, HttpServletResponse.SC_OK, jsonString);
     }
   }

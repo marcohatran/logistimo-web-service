@@ -1277,8 +1277,10 @@ public class ConfigurationModelsBuilder {
   private String buildDownloadLink(String key, String fileName, String defaultFileName)
       throws UnsupportedEncodingException {
     String downloadLink;
-    if(StringUtils.isNotEmpty(key)) {
-        downloadLink = DOWNLOAD_LINK + "&fileName=" + URLEncoder.encode(fileName, "UTF-8") + "&key=" + URLEncoder.encode(key, "UTF-8");
+    if (StringUtils.isNotEmpty(key)) {
+      downloadLink = DOWNLOAD_LINK + "&fileName=" +
+          URLEncoder.encode(fileName != null ? fileName : defaultFileName, "UTF-8") +
+          "&key=" + URLEncoder.encode(key, "UTF-8");
     } else {
       StorageUtil storageUtil = AppFactory.get().getStorageUtil();
       downloadLink = storageUtil.getExternalUrl(UPLOADS, fileName != null ? fileName : defaultFileName);

@@ -46,7 +46,9 @@ public class MobileEntityBuilder {
    * @param isPurchaseApprovalEnabled
    * @param isSalesApprovalEnabled
    */
-  public MobileEntityApproversModel buildApproversModel(List<IApprover> approversList, boolean isPurchaseApprovalEnabled, boolean isSalesApprovalEnabled) {
+  public MobileEntityApproversModel buildApproversModel(List<IApprover> approversList,
+                                                        boolean isPurchaseApprovalEnabled,
+                                                        boolean isSalesApprovalEnabled) {
     if (approversList == null || approversList.isEmpty()) {
       return null;
     }
@@ -54,9 +56,11 @@ public class MobileEntityBuilder {
     List<String> sap = new ArrayList<>();
     List<String> pas = new ArrayList<>();
     List<String> sas = new ArrayList<>();
-    Map<String,List<IApprover>> purchaseSalesApproversList = approversList.stream()
-                .collect(Collectors.groupingBy(IApprover::getOrderType));
-    purchaseSalesApproversList.entrySet().stream().forEach(entry -> processEntry(entry.getKey(), entry.getValue(), isPurchaseApprovalEnabled, isSalesApprovalEnabled, pap, pas, sap, sas));
+    Map<String, List<IApprover>> purchaseSalesApproversList = approversList.stream()
+        .collect(Collectors.groupingBy(IApprover::getOrderType));
+    purchaseSalesApproversList.entrySet().stream().forEach(
+        entry -> processEntry(entry.getKey(), entry.getValue(), isPurchaseApprovalEnabled,
+            isSalesApprovalEnabled, pap, pas, sap, sas));
     if (pap.isEmpty() && pas.isEmpty() && sap.isEmpty() && sas.isEmpty()) {
       return null;
     }
@@ -85,17 +89,26 @@ public class MobileEntityBuilder {
     return mobileEntityApproversModel;
   }
 
-  private void processEntry(String orderType, List<IApprover> approvers, boolean isPurchaseApprovalEnabled, boolean isSalesApprovalEnabled, List<String> primaryApproversPurchaseOrder, List<String> primaryApproversSalesOrder, List<String> secondaryApproversPurchaseOrder, List<String> secondaryApproversSalesOrder) {
+  private void processEntry(String orderType, List<IApprover> approvers,
+                            boolean isPurchaseApprovalEnabled, boolean isSalesApprovalEnabled,
+                            List<String> primaryApproversPurchaseOrder,
+                            List<String> primaryApproversSalesOrder,
+                            List<String> secondaryApproversPurchaseOrder,
+                            List<String> secondaryApproversSalesOrder) {
     if (isPurchaseApprovalEnabled && IApprover.PURCHASE_ORDER.equals(orderType)) {
-      populateLists(approvers, primaryApproversPurchaseOrder,secondaryApproversPurchaseOrder);
+      populateLists(approvers, primaryApproversPurchaseOrder, secondaryApproversPurchaseOrder);
     } else if (isSalesApprovalEnabled && IApprover.SALES_ORDER.equals(orderType)) {
       populateLists(approvers, primaryApproversSalesOrder, secondaryApproversSalesOrder);
     }
   }
-  private void populateLists(List<IApprover> approvers, List<String> primaryApprovers, List<String> secondaryApprovers) {
-    approvers.forEach(approver-> processApprover(approver, primaryApprovers, secondaryApprovers));
+
+  private void populateLists(List<IApprover> approvers, List<String> primaryApprovers,
+                             List<String> secondaryApprovers) {
+    approvers.forEach(approver -> processApprover(approver, primaryApprovers, secondaryApprovers));
   }
-  private void processApprover(IApprover approver, List<String> primaryApprovers, List<String> secondaryApprovers) {
+
+  private void processApprover(IApprover approver, List<String> primaryApprovers,
+                               List<String> secondaryApprovers) {
     if (approver.getType().intValue() == IApprover.PRIMARY_APPROVER) {
       primaryApprovers.add(approver.getUserId());
     } else {

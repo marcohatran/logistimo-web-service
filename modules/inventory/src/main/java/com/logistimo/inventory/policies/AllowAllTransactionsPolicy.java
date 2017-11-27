@@ -21,33 +21,43 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.inventory;
+package com.logistimo.inventory.policies;
 
+import com.logistimo.exception.LogiException;
 import com.logistimo.inventory.entity.ITransaction;
-import com.logistimo.inventory.entity.Transaction;
+import com.logistimo.services.utils.ConfigUtil;
 
-import org.junit.Test;
+import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
-import java.util.Date;
-
-import static org.mockito.Mockito.spy;
+import java.util.List;
 
 /**
- * Created by vani on 16/05/17.
+ * Created by charan on 14/11/17.
  */
-public class RejectOldMobileTransactionsPolicyTest {
-  @Test
-  public void testBuildStockCountTrans() {
-    RejectOldMobileTransactionsPolicy policy = spy(RejectOldMobileTransactionsPolicy.class);
-    ITransaction trans = new Transaction();
-    trans.setKioskId(1l);
-    trans.setOpeningStock(new BigDecimal(700));
-    trans.setMaterialId(2l);
-    trans.setType(ITransaction.TYPE_RECEIPT);
-    trans.setQuantity(new BigDecimal(100));
-    trans.setEntryTime(new Date());
-    ITransaction scTrans = policy.buildStockCountTrans(trans);
-    assert(trans.getEntryTime().getTime() - scTrans.getEntryTime().getTime() == 1);
+@Component("AllowAllTransactionsPolicy")
+public class AllowAllTransactionsPolicy implements InventoryUpdatePolicy {
+
+  /**
+   * This policy is dependent on the current behavior of the inventory service implementation
+   * which updates the opening stock of the requese based on the server's stock value
+   *
+   * @param transactions - List of transactions
+   * @param lastWebTrans - Last web transaction for a kid, mid and/or bid
+   * @return
+   */
+  @Override
+  public int apply(List<ITransaction> transactions, ITransaction lastWebTrans) {
+    return -1;
+  }
+
+  @Override
+  public void addStockCountIfNeeded(ITransaction lastWebTrans, List<ITransaction> transactions)
+      throws LogiException {
+    //no operation required, no need to add any stock counts.
+  }
+
+  @Override
+  public boolean shouldDeduplicate() {
+    return ConfigUtil.getBoolean("inventory.allowAllTransactionsPolicy.deduplicate", false);
   }
 }

@@ -40,6 +40,9 @@ import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
+import com.logistimo.inventory.entity.IInvntry;
+import com.logistimo.inventory.models.InventoryFilters;
+import com.logistimo.inventory.service.InventoryManagementService;
 import com.logistimo.logger.XLog;
 import com.logistimo.orders.OrderUtils;
 import com.logistimo.orders.approvals.service.IOrderApprovalsService;
@@ -74,6 +77,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Created by vani on 03/11/16.
@@ -85,6 +89,14 @@ public class MobileOrderBuilder {
   public MobileOrderModel build(IOrder o, Locale locale, String timezone, boolean includeItems,
                                 boolean includeAccountingData, boolean includeShipmentItems,
                                 boolean includeBatchDetails) {
+    return build(o, locale, timezone, includeItems, includeAccountingData, includeShipmentItems,
+        includeBatchDetails, false, null);
+  }
+
+  public MobileOrderModel build(IOrder o, Locale locale, String timezone, boolean includeItems,
+                                boolean includeAccountingData, boolean includeShipmentItems,
+                                boolean includeBatchDetails, boolean embedInventoryDetails,
+                                Long userKioskId) {
     if (o == null) {
       return null;
     }
@@ -279,7 +291,42 @@ public class MobileOrderBuilder {
     } catch (Exception e) {
       xLogger.warn("Exception fetching approval details", e);
     }
+
+    if (embedInventoryDetails && userKioskId != null) {
+      embedInventoryDetails(mom, userKioskId, o.getDomainId());
+    }
     return mom;
+  }
+
+  private void embedInventoryDetails(MobileOrderModel mobileOrderModel, Long userKioskId,
+                                     Long domainId) {
+    if (mobileOrderModel.mt == null) {
+      return;
+    }
+    List<Long>
+        midList =
+        mobileOrderModel.mt.stream().map(mobileDemandItemModel -> mobileDemandItemModel.mid)
+            .collect(
+                Collectors.toList());
+    InventoryManagementService
+        ims =
+        StaticApplicationContext.getBean(InventoryManagementService.class);
+    try {
+      Results<IInvntry>
+          results =
+          ims.getInventory(new InventoryFilters().withKioskId(userKioskId).withMaterialIds(midList),
+              null);
+      MobileInventoryBuilder mobileInventoryBuilder = new MobileInventoryBuilder();
+      if (results != null) {
+        EntitiesService es = StaticApplicationContext.getBean(EntitiesService.class);
+        mobileOrderModel.inv = results.getResults().stream().map(invntry -> mobileInventoryBuilder
+            .buildMobileInvModel(invntry, domainId, mobileOrderModel.ubid, ims, es))
+            .collect(Collectors.toList());
+      }
+    } catch (ServiceException e) {
+      xLogger.severe("Exception while embedding inventory details into the Order {0} for user {1} ",
+          mobileOrderModel.tid, mobileOrderModel.ubid, e);
+    }
   }
 
   public MobileOrdersModel buildOrders(List<IOrder> orders, Locale locale, String timezone,
@@ -486,7 +533,7 @@ public class MobileOrderBuilder {
     Map<Long, Kiosk> kioskMap = new HashMap<>();
     for (IOrder order : orderList) {
       getKioskDetails(kioskIdList, entitiesService, kioskMap, order.getKioskId());
-      if(order.getServicingKiosk() != null) {
+      if (order.getServicingKiosk() != null) {
         getKioskDetails(kioskIdList, entitiesService, kioskMap, order.getServicingKiosk());
       }
     }

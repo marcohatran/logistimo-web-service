@@ -10,10 +10,12 @@
         </div>
     </div>
     <div ng-if="!wloading && !showError && showChart">
-        <fusion-chart type="'maps/'+inventoryStatusMapWidget.cType" height="inventoryStatusMapWidget.computedHeight" width="inventoryStatusMapWidget.computedWidth"
+        <fusion-chart type="'maps/'+inventoryStatusMapWidget.cType" height="inventoryStatusMapWidget.computedHeight"
+                      width="inventoryStatusMapWidget.computedWidth"
                       chart-label="inventoryStatusMapWidget.cLabel"
                       chart-data="inventoryStatusMapWidget.cdata" chart-options="inventoryStatusMapWidget.copt"
-                      chart-id="{{inventoryStatusMapWidget.wId}}" color-range="mapRange"  markers="markers" simple="'true'">
+                      chart-id="{{inventoryStatusMapWidget.wId}}" color-range="mapRange" markers="markers"
+                      simple="'true'">
         </fusion-chart>
 
 

@@ -70,9 +70,9 @@ public class EventSummaryTemplateLoaderTest extends TestCase {
     assertEquals(TYPE_LOGIN, getEventType(defaultTemplate.getEvents(), 6));
     assertEquals(CATEGORY_ACTIVITY, getEventCategory(defaultTemplate.getEvents(), 6));
     assertEquals(TYPE_DATA_ENTRY_PERFORMANCE, getEventType(defaultTemplate.getEvents(), 7));
-    assertEquals(CATEGORY_ACTIVITY,getEventCategory(defaultTemplate.getEvents(), 7));
+    assertEquals(CATEGORY_ACTIVITY, getEventCategory(defaultTemplate.getEvents(), 7));
     assertEquals(TYPE_SUPPLY_PERFORMANCE, getEventType(defaultTemplate.getEvents(), 8));
-    assertEquals(CATEGORY_SUPPLY,getEventCategory(defaultTemplate.getEvents(), 8));
+    assertEquals(CATEGORY_SUPPLY, getEventCategory(defaultTemplate.getEvents(), 8));
   }
 
   private String getEventType(List<EventSummaryConfigModel.Events> events, int index) {

@@ -336,7 +336,7 @@ public class InventoryServlet extends JsonRestServlet {
     String startDateStr = req.getParameter(START);
     Date start = null;
     xLogger.fine("startDateStr: " + startDateStr);
-    Optional<Date> modifiedSinceDate=Optional.empty();
+    Optional<Date> modifiedSinceDate;
     String offsetStr = req.getParameter(Constants.OFFSET);
     int offset = 0;
     if (StringUtils.isNotBlank(offsetStr)) {
@@ -429,7 +429,7 @@ public class InventoryServlet extends JsonRestServlet {
     String lastModified = new Date().toString();
     // Get inventory list
     if (status) {
-      modifiedSinceDate= HttpUtil.getModifiedDate(req, timezone);
+      modifiedSinceDate = HttpUtil.getModifiedDate(req, timezone);
       try {
         // Get domain config
         DomainConfig dc = DomainConfig.getInstance(domainId);
@@ -449,7 +449,7 @@ public class InventoryServlet extends JsonRestServlet {
         Results
             results =
             RESTUtil.getInventoryData(kioskId, locale, timezone, onlyStock, dc,
-                forceIntegerForStock, start,modifiedSinceDate, pageParams);
+                forceIntegerForStock, start, modifiedSinceDate, pageParams);
         xLogger.fine("results: {0}", results);
         inventoryList = (Vector<Hashtable<String, Object>>) results.getResults();
         numInv = results.getNumFound();
@@ -462,8 +462,9 @@ public class InventoryServlet extends JsonRestServlet {
     try {
       String
           jsonOutput =
-          GsonUtil.getInventoryOutputToJson(status, inventoryList, currency, errMessage, numInv, RESTUtil.VERSION_01);
-      HttpUtil.setLastModifiedHeader(resp,lastModified);
+          GsonUtil.getInventoryOutputToJson(status, inventoryList, currency, errMessage, numInv,
+              RESTUtil.VERSION_01);
+      HttpUtil.setLastModifiedHeader(resp, lastModified);
       sendJsonResponse(resp, statusCode, jsonOutput);
     } catch (Exception e1) {
       xLogger.severe("InventoryServlet Exception: {0}", e1.getMessage());

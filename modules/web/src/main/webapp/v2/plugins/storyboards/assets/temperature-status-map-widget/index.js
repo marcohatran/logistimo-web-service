@@ -39,64 +39,64 @@ angular.module('logistimo.storyboard.temperatureStatusMapWidget', [])
         });
     })
     .controller('temperatureStatusMapWidgetController',
-        ['$scope', '$timeout', 'dashboardService', 'domainCfgService', 'INVENTORY', '$sce',
-            function ($scope, $timeout, dashboardService, domainCfgService, INVENTORY, $sce) {
-                var filter = angular.copy($scope.widget.conf);
-                var tempPieColors, tempPieOrder, mapRange, mapColors, asset = '';
-                var fDate = (checkNotNullEmpty(filter.date) ? formatDate(filter.date) : undefined);
-                $scope.showChart = false;
-                $scope.wloading = true;
-                $scope.showError = false;
-                domainCfgService.getSystemDashboardConfig().then(function (data) {
-                    var domainConfig = angular.fromJson(data.data);
-                    mapColors = domainConfig.mc;
-                    $scope.mc = mapColors;
-                    mapRange = domainConfig.mr;
-                    $scope.mr = mapRange;
-                    tempPieOrder = domainConfig.pie.to;
-                    tempPieColors = domainConfig.pie.tc;
-                    $scope.mapEvent = tempPieOrder[0];
-                    $scope.init();
-                });
-                
-                $scope.init = function () {
-                    domainCfgService.getMapLocationMapping().then(function (data) {
-                        if (checkNotNullEmpty(data.data)) {
-                            $scope.locationMapping = angular.fromJson(data.data);
-                            setFilters();
-                            loadLocationMap();
-                        }
-                    })
-                };
-                
-                function setFilters() {
-                    
-                    if (checkNotNullEmpty(filter.assetStatus) && checkNotNullEmpty($scope.widget.conf.assetStatus)) {
-                        $scope.mapEvent = $scope.widget.conf.assetStatus;
-                    } else {
-                        $scope.mapType = "tn";
+    ['$scope', '$timeout', 'dashboardService', 'domainCfgService', 'INVENTORY', '$sce',
+        function ($scope, $timeout, dashboardService, domainCfgService, INVENTORY, $sce) {
+            var filter = angular.copy($scope.widget.conf);
+            var tempPieColors, tempPieOrder, mapRange, mapColors, asset = '';
+            var fDate = (checkNotNullEmpty(filter.date) ? formatDate(filter.date) : undefined);
+            $scope.showChart = false;
+            $scope.wloading = true;
+            $scope.showError = false;
+            domainCfgService.getSystemDashboardConfig().then(function (data) {
+                var domainConfig = angular.fromJson(data.data);
+                mapColors = domainConfig.mc;
+                $scope.mc = mapColors;
+                mapRange = domainConfig.mr;
+                $scope.mr = mapRange;
+                tempPieOrder = domainConfig.pie.to;
+                tempPieColors = domainConfig.pie.tc;
+                $scope.mapEvent = tempPieOrder[0];
+                $scope.init();
+            });
+
+            $scope.init = function () {
+                domainCfgService.getMapLocationMapping().then(function (data) {
+                    if (checkNotNullEmpty(data.data)) {
+                        $scope.locationMapping = angular.fromJson(data.data);
+                        setFilters();
+                        loadLocationMap();
                     }
-                    
+                })
+            };
+
+            function setFilters() {
+
+                if (checkNotNullEmpty(filter.assetStatus) && checkNotNullEmpty($scope.widget.conf.assetStatus)) {
+                    $scope.mapEvent = $scope.widget.conf.assetStatus;
+                } else {
+                    $scope.mapType = "tn";
                 }
-                
-                if (checkNotNullEmpty($scope.widget.conf.asset) && $scope.widget.conf.asset.length > 0) {
-                    var first = true;
-                    $scope.widget.conf.asset.forEach(function (data) {
-                        if (!first) {
-                            asset += "," + data.id;
-                        } else {
-                            asset += data.id;
-                            first = false;
-                        }
-                        
-                    });
-                }
-                ;
-                
-                function loadLocationMap() {
-                    dashboardService.get(undefined, undefined, $scope.exFilter, $scope.exType, $scope.period,
-                        $scope.widget.conf.tPeriod, asset, constructModel(filter.entityTag), fDate,
-                        constructModel(filter.exEntityTag), false).then(function (data) {
+
+            }
+
+            if (checkNotNullEmpty($scope.widget.conf.asset) && $scope.widget.conf.asset.length > 0) {
+                var first = true;
+                $scope.widget.conf.asset.forEach(function (data) {
+                    if (!first) {
+                        asset += "," + data.id;
+                    } else {
+                        asset += data.id;
+                        first = false;
+                    }
+
+                });
+            }
+            ;
+
+            function loadLocationMap() {
+                dashboardService.get(undefined, undefined, $scope.exFilter, $scope.exType, $scope.period,
+                    $scope.widget.conf.tPeriod, asset, constructModel(filter.entityTag), fDate,
+                    constructModel(filter.exEntityTag), false).then(function (data) {
                         $scope.dashboardView = data.data;
                         var linkText;
                         if ($scope.dashboardView.mLev == "country") {
@@ -110,27 +110,27 @@ angular.module('logistimo.storyboard.temperatureStatusMapWidget', [])
                             tempPieOrder, $timeout);
                         setWidgetData();
                     }).catch(function error(msg) {
-                        showError(msg,$scope);
+                        showError(msg, $scope);
                     }).finally(function () {
                         $scope.loading = false;
                         $scope.wloading = false;
                     });
+            };
+
+            function setWidgetData() {
+                $scope.temperatureStatusMapWidget = {
+                    wId: $scope.widget.id,
+                    cType: $scope.mapType,
+                    copt: $scope.mapOpt,
+                    cdata: $scope.mapData,
+                    computedWidth: '100%',
+                    computedHeight: parseInt($scope.widget.computedHeight, 10) - 10,
+                    colorRange: $scope.mapRange,
+                    markers: $scope.markers
                 };
-                
-                function setWidgetData() {
-                    $scope.temperatureStatusMapWidget = {
-                        wId: $scope.widget.id,
-                        cType: $scope.mapType,
-                        copt: $scope.mapOpt,
-                        cdata: $scope.mapData,
-                        computedWidth: '100%',
-                        computedHeight: parseInt($scope.widget.computedHeight, 10) - 10,
-                        colorRange: $scope.mapRange,
-                        markers: $scope.markers
-                    };
-                    $scope.wloading = false;
-                    $scope.showChart = true;
-                };
-            }]);
+                $scope.wloading = false;
+                $scope.showChart = true;
+            };
+        }]);
 
 logistimoApp.requires.push('logistimo.storyboard.temperatureStatusMapWidget');

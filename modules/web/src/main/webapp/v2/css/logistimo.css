@@ -2036,7 +2036,7 @@ h6{
     background: transparent;
     box-shadow: none;
     border: none;
-    z-index:9999;
+    z-index: 9999;
 }
 .ws{
     background: #f5f5f5;
@@ -3524,7 +3524,7 @@ tr.alert.alert-warning.alert-warning-dark{
     font-size: large;
 }
 
-.font-larger{
+.font-larger {
     font-size: larger;
 }
 
@@ -3947,32 +3947,35 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
     vertical-align: bottom;
 }
 
-.imageBox{
+.imageBox {
     min-height: 250px;
     min-width: 200px;
     background-color: #f5f5f5;
 }
-.mr15{
-    margin-right : 15px;
+
+.mr15 {
+    margin-right: 15px;
 }
-.child-div-height{
+
+.child-div-height {
     height: 100%;
     position: absolute;
     right: 0;
     top: 0;
 }
 
-.xlarge-grey-lbl{
-    color:#bcbcbc;
+.xlarge-grey-lbl {
+    color: #bcbcbc;
     font-size: x-large;
     text-align: center;
 }
-.large-grey-lbl{
-    color:#bcbcbc;
+
+.large-grey-lbl {
+    color: #bcbcbc;
     font-size: large;
     text-align: center;
 }
 
-.widget-loading{
+.widget-loading {
     color: #aaaaaa;
 }

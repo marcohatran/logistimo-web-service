@@ -2922,7 +2922,8 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
     return entityDao.getApprovers(filters);
   }
 
-  public Results getKioskLinks(KioskLinkFilters filters, PageParams pageParams, boolean countOnly) throws ServiceException {
+  public Results getKioskLinks(KioskLinkFilters filters, PageParams pageParams, boolean countOnly)
+      throws ServiceException {
     return entityDao.getKioskLinks(filters, pageParams, countOnly);
   }
 

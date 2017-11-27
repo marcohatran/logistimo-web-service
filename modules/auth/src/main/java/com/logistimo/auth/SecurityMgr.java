@@ -141,7 +141,7 @@ public class SecurityMgr {
 
 
   // Get SecureUserDetails from UserAccount
-  private static SecureUserDetails getSecureUserDetails(IUserAccount user) {
+  public static SecureUserDetails getSecureUserDetails(IUserAccount user) {
     SecureUserDetails userDetails = new SecureUserDetails();
     userDetails.setUsername(user.getUserId());
     userDetails.setEnabled(user.isEnabled());

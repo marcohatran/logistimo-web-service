@@ -3,8 +3,7 @@ angular.module('logistimo.storyboard.inventoryStatusDonutWidget', [])
         widgetsRepositoryProvider.addWidget({
             id: "inventoryStatusDonutWidget",
             name: "Inventory status donut",
-            templateUrl: 
-                "plugins/storyboards/inventory/inventory-status-donut-widget/inventory-status-donut-widget.html",
+            templateUrl: "plugins/storyboards/inventory/inventory-status-donut-widget/inventory-status-donut-widget.html",
             editTemplateUrl: "plugins/storyboards/inventory/edit-template.html",
             templateFilters: [
                 {
@@ -61,7 +60,7 @@ angular.module('logistimo.storyboard.inventoryStatusDonutWidget', [])
                 } else {
                     $scope.period = "0";
                 }
-                
+
                 if (checkNotNullEmpty(filter.widType)) {
                     var widType = filter.widType;
                     if (widType == '0' || widType == '1') {
@@ -79,7 +78,7 @@ angular.module('logistimo.storyboard.inventoryStatusDonutWidget', [])
                 } else {
                     $scope.widType = "0";
                 }
-                
+
                 if (checkNotNullEmpty(filter.materialTag)) {
                     $scope.exFilter = constructModel(filter.materialTag);
                     $scope.exType = 'mTag';
@@ -88,21 +87,21 @@ angular.module('logistimo.storyboard.inventoryStatusDonutWidget', [])
                     $scope.exType = 'mId';
                 }
             }
-            
+
             domainCfgService.getSystemDashboardConfig().then(function (data) {
                 var domainConfig = angular.fromJson(data.data);
                 invPieColors = domainConfig.pie.ic;
                 invPieOrder = domainConfig.pie.io;
                 $scope.init();
             });
-            
+
             $scope.init = function () {
                 setFilters();
                 getData();
             };
-            
+
             function getData() {
-                var chartData =[];
+                var chartData = [];
                 dashboardService.get(undefined, undefined, $scope.exFilter, $scope.exType, $scope.period, undefined,
                     undefined, constructModel(filter.entityTag), fDate, constructModel(filter.exEntityTag), false).then(
                     function (data) {
@@ -112,13 +111,13 @@ angular.module('logistimo.storyboard.inventoryStatusDonutWidget', [])
                         totalInv = getTotalItems(data.data.invDomain);
                         setWidgetData(normalPercent, chartData);
                     }).catch(function error(msg) {
-                    showError(msg,$scope);
-                }).finally(function () {
-                    $scope.loading = false;
-                    $scope.wloading = false;
-                });
+                        showError(msg, $scope);
+                    }).finally(function () {
+                        $scope.loading = false;
+                        $scope.wloading = false;
+                    });
             }
-            
+
             function setWidgetData(centerLabelPercent, chartData) {
                 $scope.inventoryStatusDonutWidget = {
                     wId: $scope.widget.id,
@@ -144,26 +143,26 @@ angular.module('logistimo.storyboard.inventoryStatusDonutWidget', [])
                 $scope.wloading = false;
                 $scope.showChart = true;
             }
-            
+
             $scope.subCaption = undefined;
-            
+
             if (checkNotNullEmpty(filter.materialTag)) {
                 $scope.subCaption = "Material tag(s):" + getSubtext(filter.materialTag);
             } else if (checkNotNullEmpty(filter.material)) {
                 $scope.subCaption = "Material tag(s):" + getSubtext(filter.material);
             }
-            
+
             if (checkNotNullEmpty(filter.entityTag)) {
                 $scope.subCaption =
                     (checkNullEmpty($scope.subCaption) ? '' : $scope.subCaption + ', ') + $scope.resourceBundle.kiosk +
                     " tag(s):" + getSubtext(filter.entityTag);
             }
-            
+
             if (checkNotNullEmpty(filter.period)) {
                 $scope.subCaption = (checkNullEmpty($scope.subCaption) ? '' : $scope.subCaption + ', ') + "Period: " +
                     $scope.widget.conf.period + " day(s)";
             }
-            
+
         }]);
 
 logistimoApp.requires.push('logistimo.storyboard.inventoryStatusDonutWidget');
