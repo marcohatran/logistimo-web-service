@@ -143,26 +143,18 @@ public class ApprovalStatusUpdateEventProcessor {
       order.setTransferApprovalResponseTime(TimeUnit.MILLISECONDS.toSeconds(
           eventUpdateTime.getTime() - order.getCreatedOn().getTime()));
     }
-    if (IOrder.SALES_ORDER == approvalType) {
+    if (IOrder.PURCHASE_ORDER == approvalType) {
       order.setPurchaseApprovalResponseTime(TimeUnit.MILLISECONDS.toSeconds(
           eventUpdateTime.getTime() - order.getCustomerVisibilityTime().getTime()));
     }
-    if (IOrder.PURCHASE_ORDER == approvalType) {
-      IOrderApprovalMapping purchaseApproval = approvalDao
-          .getOrderApprovalMapping(order.getOrderId(), IOrder.PURCHASE_ORDER);
-      if (purchaseApproval != null && purchaseApproval.getStatus()
-          .equals(APPROVED_STATUS)) {
-        order.setSalesApprovalResponseTime(TimeUnit.MILLISECONDS.toSeconds(
-            eventUpdateTime.getTime() - purchaseApproval.getUpdatedAt().getTime()));
-      } else {
-        order.setSalesApprovalResponseTime(TimeUnit.MILLISECONDS.toSeconds(
-            eventUpdateTime.getTime() - order.getVendorVisibilityTime().getTime()));
-      }
+    if (IOrder.SALES_ORDER == approvalType) {
+      order.setSalesApprovalResponseTime(TimeUnit.MILLISECONDS.toSeconds(
+          eventUpdateTime.getTime() - order.getVendorVisibilityTime().getTime()));
     }
   }
 
   private String getMessage(ApprovalStatusUpdateEvent event, IOrderApprovalMapping orderApproval,
-                            IUserAccount requester, IKiosk kiosk, IUserAccount updatedBy) {
+      IUserAccount requester, IKiosk kiosk, IUserAccount updatedBy) {
 
     String message = getMessage(event.getStatus(), requester);
     Map<String, String> values = new HashMap<>();
