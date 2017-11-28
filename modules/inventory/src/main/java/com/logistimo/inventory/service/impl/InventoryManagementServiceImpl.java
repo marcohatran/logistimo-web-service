@@ -1410,9 +1410,8 @@ public class InventoryManagementServiceImpl extends ServiceImpl
           BigDecimal stockOnHandTotal = in.getAvailableStock();
 
           if (invBatch != null) {
-            stockOnHand = invBatch.getQuantity();
-          } else if (trans.hasBatch()) // batch ID exists, but no batch record so far
-          {
+            stockOnHand = invBatch.getAvailableStock();
+          } else if (trans.hasBatch()) {
             stockOnHand = BigDecimal.ZERO;
           }
 
