@@ -1,4 +1,4 @@
-<div ng-controller="storesCountWidgetController" style="margin: 28px;">
+<div ng-controller="storesCountWidgetController" class="mt10">
     <div ng-if="wloading" class="row mt18 widget-loading">
         <div class="text-center">
             {{resourceBundle['loading.uppercase']}}... <span class="glyphicons glyphicons-cogwheel spin"></span>
@@ -10,7 +10,7 @@
         </div>
     </div>
     <div ng-if="!wloading && !showError">
-        <div class="xlarge-grey-lbl">{{entDomainTotal}}</div>
+        <div class="xlarge-grey-lbl">{{entDomainTotal | number:0}}</div>
         <div class="large-grey-lbl">{{resourceBundle['stores.upper']}}</div>
     </div>
 </div>

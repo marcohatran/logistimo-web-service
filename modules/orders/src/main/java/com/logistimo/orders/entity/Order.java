@@ -990,7 +990,8 @@ public class Order implements IOrder {
   @Override
   @SuppressWarnings("rawtypes")
   public Map<String, Object> toMap(boolean includeItems, Locale locale, String timezone,
-      boolean forceIntegerQuantity, boolean includeAccountingData, boolean includeShipmentItems) {
+                                   boolean forceIntegerQuantity, boolean includeAccountingData,
+                                   boolean includeShipmentItems) {
     Map<String, Object> map = new HashMap<>(1);
     map.put(JsonTagsZ.TRACKING_ID, String.valueOf(this.id));
     map.put(JsonTagsZ.KIOSK_ID, kId.toString());

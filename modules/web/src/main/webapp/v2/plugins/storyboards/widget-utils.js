@@ -2,14 +2,14 @@
  * Created by yuvaraj on 21/11/17.
  */
 
-function constructPie(data, color, order,invConstants,mapEvent,ets) {
+function constructPie(data, color, order, invConstants, mapEvent, ets) {
 
-    if(checkNotNullEmpty(ets)) {
-        ets.forEach(function(exStatus){
+    if (checkNotNullEmpty(ets)) {
+        ets.forEach(function (exStatus) {
             delete data[exStatus.id];
         });
     }
-    
+
     var d = [];
     var iEntEvent = false;
     var iTempEvent = false;
@@ -70,43 +70,71 @@ function constructPie(data, color, order,invConstants,mapEvent,ets) {
     return isOneDataAvailable ? d : [];
 };
 
-function constructPieData(data,color, order, invConstants,mapEvent,ets) {
-    if(checkNotNullEmpty(data)) {
-        return constructPie(data,color, order,invConstants,mapEvent,ets);
-    }else{
+function constructPieData(data, color, order, invConstants, mapEvent, ets) {
+    if (checkNotNullEmpty(data)) {
+        return constructPie(data, color, order, invConstants, mapEvent, ets);
+    } else {
         return null;
     }
 };
 
-function getTotalItems(data){
+function getTotalItems(data) {
     var totalInv = 0;
     for (var d in data) {
         totalInv += data[d];
     }
-    return totalInv; 
+    return totalInv;
 };
 
-function getPercent(data,wt) {
-    
-    if(checkNotNullEmpty(wt)){
-        if(wt==0){
-            return ((data['n'] + data[201] + data[202]) / getTotalItems(data) * 100).toFixed(2) + " % Available";
-        }else if(wt==1){
-            return (data[200]?data[200]:0 / getTotalItems(data) * 100).toFixed(2) + " % Stocked out";
-        }else if(wt=='tn'){
-            return ((data['tn']?data['tn']:0) / getTotalItems(data) * 100).toFixed(2) + " % Normal";
-        }else if(wt=='tl'){
-            return ((data['tl']?data['tl']:0) / getTotalItems(data) * 100).toFixed(2) + " % Freezing";
-        }else if(wt=='th'){
-            return ((data['th']?data['th']:0) / getTotalItems(data) * 100).toFixed(2) + " % Heating";
-        }else if(wt=='tu'){
-            return ((data['tu']?data['tu']:0) / getTotalItems(data) * 100).toFixed(2) + " % Unknown";
+function getItemCount(data, wt){
+    if (wt == 'ia') {
+        return (data['n'] + data[201] + data[202]);
+    } else if (wt == 'iso') {
+        return (data[200] ? data[200] : 0 );
+    } else if (wt == 'in') {
+        return (data['n'] ? data['n'] : 0 );
+    } else if (wt == 'imin') {
+        return (data[201] ? data[201] : 0 );
+    } else if (wt == 'imax') {
+        return (data[202] ? data[202] : 0 );
+    } else if (wt == 'tn') {
+        return (data['tn'] ? data['tn'] : 0);
+    } else if (wt == 'tl') {
+        return (data['tl'] ? data['tl'] : 0);
+    } else if (wt == 'th') {
+        return (data['th']? data['th'] : 0);
+    } else if (wt == 'tu') {
+        return (data['tu']? data['tu'] : 0);
+    }
+}
+
+function getPercent(data, wt) {
+    // Available = ia, Stockout = iso, Normal = in, Min = imin, or Max = imax
+    if (checkNotNullEmpty(wt)) {
+        if (wt == 'ia') {
+            return (((data['n'] + data[201] + data[202]) / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
+        } else if (wt == 'iso') {
+            return ((data[200] / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
+        } else if (wt == 'in') {
+            return ((data['n'] / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
+        } else if (wt == 'imin') {
+            return ((data[201]  / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
+        } else if (wt == 'imax') {
+            return ((data[202]  / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
+        } else if (wt == 'tn') {
+            return ((data['tn']  / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
+        } else if (wt == 'tl') {
+            return ((data['tl'] / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
+        } else if (wt == 'th') {
+            return ((data['th'] / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
+        } else if (wt == 'tu') {
+            return ((data['tu'] / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
         }
     }
     return null;
 };
 
-function constructMapData(event, init,scope,INVENTORY,$sce,mapRange,mapColors,invPieOrder,$timeout,isloc) {
+function constructMapData(event, init, scope, INVENTORY, $sce, mapRange, mapColors, invPieOrder, $timeout, isloc) {
     if (scope.mapEvent == event && !init) {
         return;
     }
@@ -163,9 +191,9 @@ function constructMapData(event, init,scope,INVENTORY,$sce,mapRange,mapColors,in
         scope.subCaption = "<b>Status: </b> Unknown";
         iTempEvent = true;
     }
-    var allSubData = iEntEvent ? scope.dashboardView.ent["i"] : (iTempEvent? subData : scope.dashboardView.inv["n"]);
+    var allSubData = iEntEvent ? scope.dashboardView.ent["i"] : (iTempEvent ? subData : scope.dashboardView.inv["n"]);
     var fPeriod;
-    if(!iTempEvent) {
+    if (!iTempEvent) {
         fPeriod = scope.period == "0" ? (iEntEvent ? scope.aper : "0") : scope.period;
     } else {
         fPeriod = scope.tperiod;
@@ -178,7 +206,7 @@ function constructMapData(event, init,scope,INVENTORY,$sce,mapRange,mapColors,in
         }
     }
     if (checkNotNullEmpty(fPeriod)) {
-        if(iTempEvent) {
+        if (iTempEvent) {
             if (fPeriod != 'M_0') {
                 var fp = fPeriod.substr(2);
                 scope.subCaption += (scope.subCaption == '' ? '' : ', ') + "<b>Period: </b>" + (fPeriod.indexOf('M') == 0 ? fp + " Minutes(s)" : (fPeriod.indexOf('H') == 0 ? fp + " Hour(s)" : fp + " Day(s)"));
@@ -193,8 +221,8 @@ function constructMapData(event, init,scope,INVENTORY,$sce,mapRange,mapColors,in
     if (checkNotNullEmpty(scope.asset) && iTempEvent) {
         scope.subCaption += (scope.subCaption == '' ? '' : ', ') + "<b>Asset Type:</b> ";
         var first = true;
-        scope.asset.forEach(function(data) {
-            if(!first) {
+        scope.asset.forEach(function (data) {
+            if (!first) {
                 scope.subCaption += ", " + data.text;
             } else {
                 scope.subCaption += data.text;
@@ -203,7 +231,6 @@ function constructMapData(event, init,scope,INVENTORY,$sce,mapRange,mapColors,in
         });
     }
     scope.subCaption = $sce.trustAsHtml(scope.subCaption);
-
 
 
     scope.mapOpt = {
@@ -220,10 +247,13 @@ function constructMapData(event, init,scope,INVENTORY,$sce,mapRange,mapColors,in
         "interactiveLegend": 1,
         "exportEnabled": 0,
         "baseFontColor": "#000000",
-        "captionFontSize":"10",
-        "captionAlignment":"left",
-        "legendPosition":"bottom", // we can set only bottom or right.
-        "alignCaptionWithCanvas":1
+        "captionFontSize": "14",
+        "captionAlignment": "left",
+        "legendPosition": "bottom", // we can set only bottom or right.
+        "alignCaptionWithCanvas": 1,
+        "labelConnectorAlpha":0,
+        "captionFontBold":1,
+        "captionFont":'Helvetica Neue, Arial'
 
     };
     var addLink = false;
@@ -232,11 +262,11 @@ function constructMapData(event, init,scope,INVENTORY,$sce,mapRange,mapColors,in
         var level = undefined;
         if (scope.dashboardView.mLev == "country") {
             level = "state";
-            scope.mapOpt.caption = "Availability by "+ level;
+            scope.mapOpt.caption = "Availability by " + level;
 
         } else if (scope.dashboardView.mLev == "state") {
             level = "district";
-            scope.mapOpt.caption = "Availability by "+ level;
+            scope.mapOpt.caption = "Availability by " + level;
         }
         for (var n in allSubData) {
             if (checkNotNullEmpty(n)) {
@@ -268,10 +298,11 @@ function constructMapData(event, init,scope,INVENTORY,$sce,mapRange,mapColors,in
                 }
                 o.label = n;
                 o.value = per;
-                o.displayValue = o.label + "<br/>" + per + "%";
-                if(iEntEvent) {
+                // o.displayValue = o.label + "<br/>" + per + "%";
+                o.displayValue = "";
+                if (iEntEvent) {
                     o.toolText = o.label + ": " + value + " of " + den + " " + scope.resourceBundle['kiosks.lower'];
-                } else if(iTempEvent) {
+                } else if (iTempEvent) {
                     o.toolText = o.label + ": " + value + " of " + den + " " + " assets";
                 } else {
                     o.toolText = o.label + ": " + value + " of " + den + " " + " inventory items";
@@ -284,7 +315,7 @@ function constructMapData(event, init,scope,INVENTORY,$sce,mapRange,mapColors,in
             }
         }
         scope.mapData = mData;
-        setMapRange(event,scope,mapRange,mapColors);
+        setMapRange(event, scope, mapRange, mapColors);
         addLink = true;
     }
     var ei = invPieOrder.indexOf(scope.mapEvent);
@@ -294,10 +325,10 @@ function constructMapData(event, init,scope,INVENTORY,$sce,mapRange,mapColors,in
         }
     }
     scope.mapEvent = event;
-    constructBarData(subData, allSubData, event, addLink, level,scope,mapRange, mapColors);
-    if(!isloc && (scope.mapEvent == 'n' || scope.mapEvent == '200' || scope.mapEvent == '201' || scope.mapEvent == '202')) {
+    constructBarData(subData, allSubData, event, addLink, level, scope, mapRange, mapColors);
+    if (!isloc && (scope.mapEvent == 'n' || scope.mapEvent == '200' || scope.mapEvent == '201' || scope.mapEvent == '202')) {
         constructMatBarData(subData['MAT_BD'].materials, allSubData['MAT_BD'].materials, event, scope, mapRange, mapColors, INVENTORY);
-    }else{
+    } else {
         scope.matBarData = undefined;
     }
     if (!init) {
@@ -312,7 +343,7 @@ function constructMapData(event, init,scope,INVENTORY,$sce,mapRange,mapColors,in
     }
 };
 
-function constructBarData(data, allData, event, addLink, level,scope,mapRange, mapColors) {
+function constructBarData(data, allData, event, addLink, level, scope, mapRange, mapColors) {
     var bData = [];
     for (var f in allData) {
         if (checkNotNullEmpty(f) && f != "MAT_BD") {
@@ -336,11 +367,11 @@ function constructBarData(data, allData, event, addLink, level,scope,mapRange, m
                 if (n == bd.label) {
                     bd.value = per;
                     bd.displayValue = bd.value + "%";
-                    if(event == '200' || event == '201' || event == '202' || event == 'n') {
+                    if (event == '200' || event == '201' || event == '202' || event == 'n') {
                         bd.toolText = value + " of " + den + (level == undefined ? " materials" : " inventory items");
-                    } else if(event == 'a' || event == 'i') {
+                    } else if (event == 'a' || event == 'i') {
                         bd.toolText = value + " of " + den + " " + scope.resourceBundle['kiosks.lower'];
-                    } else if(event == 'tu' || event == 'tl' || event == 'th' || event == 'tn') {
+                    } else if (event == 'tu' || event == 'tl' || event == 'th' || event == 'tn') {
                         bd.toolText = value + " of " + den + " assets";
                     }
                     for (var r = 1; r < mapRange[event].length; r++) {
@@ -355,31 +386,33 @@ function constructBarData(data, allData, event, addLink, level,scope,mapRange, m
                             filter = scope.dashboardView.mTyNm + "_" + bd.label;
                         }
                         bd.link = "JavaScript: angular.element(document.getElementById('cid')).scope().addFilter('" + filter + "','" + level + "')";
-                    } else if((event == '200' || event == '201' || event == '202' || event == 'n')) {
-                        var search = "?eid="+kid;
-                        if(checkNotNullEmpty(scope.mtag) && scope.mtag instanceof Array) {
-                            search += "&mtag="+ scope.mtag.map(function(val){return val.text;}).join(',');
+                    } else if ((event == '200' || event == '201' || event == '202' || event == 'n')) {
+                        var search = "?eid=" + kid;
+                        if (checkNotNullEmpty(scope.mtag) && scope.mtag instanceof Array) {
+                            search += "&mtag=" + scope.mtag.map(function (val) {
+                                    return val.text;
+                                }).join(',');
                         }
-                        if(event != 'n'){
-                            search += "&abntype="+event;
-                            if(checkNotNullEmpty(scope.period) && scope.period != '0'){
-                                search += "&dur="+scope.period;
+                        if (event != 'n') {
+                            search += "&abntype=" + event;
+                            if (checkNotNullEmpty(scope.period) && scope.period != '0') {
+                                search += "&dur=" + scope.period;
                             }
                         }
                         bd.link = "JavaScript: angular.element(document.getElementById('cid')).scope().drillDownInventory('" + search + "')";
-                    } else if(event == 'a' || event == 'i') {
+                    } else if (event == 'a' || event == 'i') {
                         var fromDate = angular.copy(scope.date || scope.today);
                         fromDate.setDate(fromDate.getDate() - (scope.period || scope.aper) + (scope.date ? 1 : 0));
-                        bd.link = "N-#/inventory/transactions/?eid="+kid+"&from="+formatDate2Url(fromDate)+"&to="+formatDate2Url(scope.date || scope.today);
-                        if(checkNotNullEmpty(scope.mtag) && scope.mtag.length == 1) {
+                        bd.link = "N-#/inventory/transactions/?eid=" + kid + "&from=" + formatDate2Url(fromDate) + "&to=" + formatDate2Url(scope.date || scope.today);
+                        if (checkNotNullEmpty(scope.mtag) && scope.mtag.length == 1) {
                             bd.link += "&tag=" + scope.mtag[0].text;
                         }
-                    } else if(event == 'tu' || event == 'tl' || event == 'th' || event == 'tn') {
+                    } else if (event == 'tu' || event == 'tl' || event == 'th' || event == 'tn') {
                         var at = '&at=md';
-                        if(checkNotNullEmpty(scope.assetText)) {
+                        if (checkNotNullEmpty(scope.assetText)) {
                             at = '&at=' + scope.assetText.join(",");
                         }
-                        if(!scope.iMan) {
+                        if (!scope.iMan) {
                             bd.link = "N-#/assets/all?eid=" + kid + "&alrm=" + (event == 'tn' ? '4' : (event == 'tu' ? '3' : '1')) + at + "&awr=1&ws=1";
                         }
                     }
@@ -404,7 +437,7 @@ function constructBarData(data, allData, event, addLink, level,scope,mapRange, m
     scope.barData = topTen(bData);
 }
 
-function constructMatBarData(data, allData, event,scope,mapRange,mapColors,INVENTORY) {
+function constructMatBarData(data, allData, event, scope, mapRange, mapColors, INVENTORY) {
     var bData = [];
     for (var f in allData) {
         if (checkNotNullEmpty(f)) {
@@ -419,23 +452,24 @@ function constructMatBarData(data, allData, event,scope,mapRange,mapColors,INVEN
                 value = data[n].value;
                 den = data[n].den;
             }
-            function getLocationParams(links){
+            function getLocationParams(links) {
                 var params = '';
-                if(checkNotNullEmpty(links) && links.length > 0){
-                    for(var l = 0; l<links.length; l++){
-                        if(links[l].level == 'state' && checkNotNullEmpty(links[l].text)){
-                            params += '&state='+ links[l].text;
-                        } else if(links[l].level == 'district' && checkNotNullEmpty(links[l].text)){
-                            params += '&district='+ links[l].text;
+                if (checkNotNullEmpty(links) && links.length > 0) {
+                    for (var l = 0; l < links.length; l++) {
+                        if (links[l].level == 'state' && checkNotNullEmpty(links[l].text)) {
+                            params += '&state=' + links[l].text;
+                        } else if (links[l].level == 'district' && checkNotNullEmpty(links[l].text)) {
+                            params += '&district=' + links[l].text;
                         }
                     }
                 }
                 return params;
             }
+
             for (var i = 0; i < bData.length; i++) {
                 var bd = bData[i];
                 if (n == bd.label) {
-                    bd.value = Math.round(value / den  * 1000) / 10;
+                    bd.value = Math.round(value / den * 1000) / 10;
                     bd.displayValue = bd.value + "%";
                     bd.toolText = value + " of " + den + " " + scope.resourceBundle['kiosks.lower'];
                     for (var r = 1; r < mapRange[event].length; r++) {
@@ -446,26 +480,28 @@ function constructMatBarData(data, allData, event,scope,mapRange,mapColors,INVEN
                     }
                     // generate link to stock views page
                     var search;
-                    if(checkNotNullEmpty(data[n].mid) && (event == INVENTORY.stock.STOCKOUT ||
+                    if (checkNotNullEmpty(data[n].mid) && (event == INVENTORY.stock.STOCKOUT ||
                         event == INVENTORY.stock.UNDERSTOCK || event == INVENTORY.stock.OVERSTOCK)
                         && data[n].value != 0) {
-                        search = "?abntype="+event + "&mid="+data[n].mid;
-                        if(checkNotNullEmpty(scope.period) && scope.period != '0'){
-                            search += "&dur="+scope.period;
+                        search = "?abntype=" + event + "&mid=" + data[n].mid;
+                        if (checkNotNullEmpty(scope.period) && scope.period != '0') {
+                            search += "&dur=" + scope.period;
                         }
                         search += getLocationParams(scope.links);
-                    } else if(event == 'n' && checkNotNullEmpty(data[n].mid) && data[n].value != 0){
-                        search = "?mid="+data[n].mid;
+                    } else if (event == 'n' && checkNotNullEmpty(data[n].mid) && data[n].value != 0) {
+                        search = "?mid=" + data[n].mid;
                         search += getLocationParams(scope.links);
                     }
-                    if(checkNotNullEmpty(search) && checkNotNullEmpty(scope.eTag) && scope.eTag instanceof Array){
-                        search += "&etag="+scope.eTag.map(function(val){
-                                return val.text;}).join(',');
-                    }else if(checkNotNullEmpty(search) && checkNotNullEmpty(scope.excludeTag) && scope.excludeTag instanceof Array){
-                        search += "&eetag="+scope.excludeTag.map(function(val){
-                                return val.text;}).join(',');
+                    if (checkNotNullEmpty(search) && checkNotNullEmpty(scope.eTag) && scope.eTag instanceof Array) {
+                        search += "&etag=" + scope.eTag.map(function (val) {
+                                return val.text;
+                            }).join(',');
+                    } else if (checkNotNullEmpty(search) && checkNotNullEmpty(scope.excludeTag) && scope.excludeTag instanceof Array) {
+                        search += "&eetag=" + scope.excludeTag.map(function (val) {
+                                return val.text;
+                            }).join(',');
                     }
-                    if(checkNotNullEmpty(search)){
+                    if (checkNotNullEmpty(search)) {
                         bd.link = "JavaScript: angular.element(document.getElementById('cid')).scope().drillDownInventory('" + search + "')";
                     }
                     var found = false;
@@ -490,7 +526,7 @@ function constructMatBarData(data, allData, event,scope,mapRange,mapColors,INVEN
     scope.barData = topTen(bData);
 };
 
-function topTen (bData){
+function topTen(bData) {
     if (Array.isArray(bData) && bData.length >= 10) {
         return bData.slice(0, 10);
     } else {
@@ -498,7 +534,7 @@ function topTen (bData){
     }
 };
 
-function setMapRange (event,scope,mapRange,mapColors) {
+function setMapRange(event, scope, mapRange, mapColors) {
     scope.mapRange = {color: []};
     for (var i = 1; i < mapRange[event].length; i++) {
         var o = {};
@@ -516,10 +552,10 @@ function setMapRange (event,scope,mapRange,mapColors) {
     }
 };
 
-function getSubtext(obj){
-    var first = true,subCaption='';
-    obj.forEach(function(data) {
-        if(!first) {
+function getSubtext(obj) {
+    var first = true, subCaption = '';
+    obj.forEach(function (data) {
+        if (!first) {
             subCaption += ", " + data.text;
         } else {
             subCaption += data.text;
@@ -529,7 +565,7 @@ function getSubtext(obj){
     return subCaption;
 };
 
-function showError (msg,scope){
+function showError(msg, scope) {
     scope.showError = true;
     if (checkNotNullEmpty(msg.data)) {
         if (checkNotNullEmpty(msg.data.message)) {
@@ -555,7 +591,7 @@ function getReportFCCategories(data, format) {
         var ind = 0;
         format = format || "mmm dd, yyyy";
         for (var i = data.length - 1; i >= 0; i--) {
-            if(labels.indexOf(data[i].label) == -1) {
+            if (labels.indexOf(data[i].label) == -1) {
                 var t = {};
                 t.label = formatLabel(data[i].label, format);
                 t.csvLabel = data[i].label;
@@ -568,7 +604,7 @@ function getReportFCCategories(data, format) {
 };
 
 function getReportCaption(filter) {
-        return "From: " + formatReportDate(filter.from, filter) + "   To: " + formatReportDate(filter.to, filter) + "   " + getFilterLabel()
+    return "From: " + formatReportDate(filter.from, filter) + "   To: " + formatReportDate(filter.to, filter) + "   " + getFilterLabel()
 };
 
 function formatReportDate(date, filter) {
@@ -589,7 +625,7 @@ function getFilterLabel(filterLabels) {
     return label;
 };
 
-function getReportDateFormat (level, filter) {
+function getReportDateFormat(level, filter) {
     return (filter.periodicity == "m" && level == undefined) ? "mmm yyyy" : undefined;
 };
 
@@ -599,8 +635,8 @@ function getReportFCSeries(data, seriesno, name, type, isLinkDisabled, filterSer
             var series = {};
             series.seriesName = name;
             series.renderAs = type;
-            series.showValues = showvalue ? showvalue : "1";
             series.drawAnchors = noAnchor ? "0" : "1";
+            series.anchorRadius = 0;
             series.data = [];
             var ind = 0;
             var prevLabel = undefined;
@@ -608,7 +644,7 @@ function getReportFCSeries(data, seriesno, name, type, isLinkDisabled, filterSer
             var found = false;
             for (var i = data.length - 1; i >= 0; i--) {
                 var lData = data[i];
-                if(filterSeriesIndex >= 0) {
+                if (filterSeriesIndex >= 0) {
                     curLabel = lData.label;
                     if (found) {
                         if (curLabel == prevLabel) {
@@ -618,25 +654,25 @@ function getReportFCSeries(data, seriesno, name, type, isLinkDisabled, filterSer
                         prevLabel = undefined;
                     }
 
-                    if(!found && ((i == 0 && lData.value[filterSeriesIndex].value != name) || (prevLabel != undefined && curLabel != prevLabel))) {
+                    if (!found && ((i == 0 && lData.value[filterSeriesIndex].value != name) || (prevLabel != undefined && curLabel != prevLabel))) {
                         var dummy = {};
                         dummy.value = [];
                         dummy.value[seriesno] = {};
                         dummy.value[seriesno].value = "0";
                         dummy.label = prevLabel;
                         lData = dummy;
-                        if(prevLabel != undefined) {
+                        if (prevLabel != undefined) {
                             i++;
                         }
                         prevLabel = undefined;
                         found = true;
-                    } else if(lData.value[filterSeriesIndex].value == name) {
+                    } else if (lData.value[filterSeriesIndex].value == name) {
                         found = true;
                         prevLabel = curLabel;
                     } else {
                         prevLabel = curLabel;
                     }
-                    if(!found) {
+                    if (!found) {
                         continue;
                     }
                 }
@@ -655,16 +691,16 @@ function getReportFCSeries(data, seriesno, name, type, isLinkDisabled, filterSer
                 if (color) {
                     t.color = color;
                 }
-                if(name && !skipSeriesInLabel) {
+                if (name && !skipSeriesInLabel) {
                     t.toolText = "$seriesName, ";
                 }
                 if (forceSum || (checkNotNullEmpty(type) && (type.indexOf("Pie") == 0 || type.indexOf("Doughnut") == 0))) {
-                    t.toolText = (t.toolText? t.toolText : "" ) + "$label: $value of $unformattedSum";
+                    t.toolText = (t.toolText ? t.toolText : "" ) + "$label: $value of $unformattedSum";
                 } else {
-                    t.toolText = (t.toolText? t.toolText : "" ) + "$label: " + roundNumber(lData.value[seriesno].value,2);
-                    if(lData.value[seriesno].num) {
-                        t.toolText += " (" + roundNumber(lData.value[seriesno].num,2) + " / " + roundNumber(lData.value[seriesno].den,2) +")";
-                        t.tableTooltip = roundNumber(lData.value[seriesno].num,2) + " / " + roundNumber(lData.value[seriesno].den,2);
+                    t.toolText = (t.toolText ? t.toolText : "" ) + "$label: " + roundNumber(lData.value[seriesno].value, 2);
+                    if (lData.value[seriesno].num) {
+                        t.toolText += " (" + roundNumber(lData.value[seriesno].num, 2) + " / " + roundNumber(lData.value[seriesno].den, 2) + ")";
+                        t.tableTooltip = roundNumber(lData.value[seriesno].num, 2) + " / " + roundNumber(lData.value[seriesno].den, 2);
                     }
                 }
                 series.data[ind++] = t;
@@ -672,4 +708,15 @@ function getReportFCSeries(data, seriesno, name, type, isLinkDisabled, filterSer
             return series;
         }
     }
+}
+
+function getDonutRadius(width, height) {
+    var minSide = Math.min(width, height);
+    if (minSide == 2 && height == 2) {
+        minSide = 1.5;
+    }
+    return {
+        doughnutRadius: (30 * minSide),
+        pieRadius: (40 * minSide)
+    };
 }

@@ -21,7 +21,7 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.inventory;
+package com.logistimo.inventory.policies;
 
 import com.logistimo.exception.LogiException;
 import com.logistimo.inventory.entity.ITransaction;
@@ -32,14 +32,14 @@ import java.util.List;
 /**
  * Created by vani on 19/04/17.
  */
-public interface MobileTransactionsHandler {
+public interface InventoryUpdatePolicy {
   /**
    * Given list of ITransaction objects and the last web transaction, applies a policy to sequence them.
    * @param transactions - List of transactions
    * @param lastWebTrans - Last web transaction for a kid, mid and/or bid
    * @return index until which the transactions should be rejected (inclusive), -1 if no transactions are rejected.
    */
-  int applyPolicy(List<ITransaction> transactions, ITransaction lastWebTrans);
+  int apply(List<ITransaction> transactions, ITransaction lastWebTrans);
 
   /**
    * Adds a stock count transaction to the list of transactions if there is a mismatch in the opening stock of the first transaction and the last web transaction's closing stock
@@ -48,4 +48,9 @@ public interface MobileTransactionsHandler {
    * @throws LogiException if there is an error while creating the stock count transaction
    */
   void addStockCountIfNeeded(ITransaction lastWebTrans, List<ITransaction> transactions) throws LogiException;
+
+  /**
+   * Should specify if de-duplication of transactions based on quantity and user should be done by the system.
+   */
+  boolean shouldDeduplicate();
 }

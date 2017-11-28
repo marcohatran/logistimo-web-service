@@ -37,7 +37,8 @@
                                    ng-model="editData[field]['value']" maxlength="10">
                         </div>
                         <div ng-if="!isNumericalField(editData[field]['units'])">
-                            <input type="text" class="form-control" autocomplete="off" ng-if="!isTagField(field) && !isAssetTypeField(field)"
+                            <input type="text" class="form-control" autocomplete="off"
+                                   ng-if="!isTagField(field) && !isAssetTypeField(field)"
                                    ng-model="editData[field]['value']" maxlength="100">
                         </div>
 
@@ -45,7 +46,8 @@
                                     ng-if="isTagField(field)" force-no-udf="true"></tag-select>
 
                         <div ng-if="isAssetTypeField(field)">
-                            <lg-uib-select multiple="'multiple" query="filterAssets(q)" ui-model="editData[field]['values']"></lg-uib-select>
+                            <lg-uib-select multiple="'multiple" query="filterAssets(q)"
+                                           ui-model="editData[field]['values']"></lg-uib-select>
                         </div>
 
                     </div>

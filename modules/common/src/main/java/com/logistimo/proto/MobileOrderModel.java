@@ -214,4 +214,9 @@ public class MobileOrderModel {
 
   //Order status update time
   public Long ostt;
+
+  /**
+   * Inventory of embedded kiosk id requested by the user
+   */
+  public List<MobileInvModel> inv;
 }

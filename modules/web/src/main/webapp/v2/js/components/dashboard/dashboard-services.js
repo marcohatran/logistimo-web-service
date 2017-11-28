@@ -80,7 +80,7 @@ dashboardServices.factory('dashboardService', ['$http', 'logistimoCache', '$q', 
                 url += (url == ''? '?' : '&') + 'skipCache=' + skipCache;
             }
 
-            return apiService.get('/s2/api/dashboard/'+url, {duration: 30});
+            return apiService.get('/s2/api/dashboard/' + url, {duration: 30});
 
         },
         getInv: function (state,district,period,eTag,skipCache) {

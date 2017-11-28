@@ -29,9 +29,7 @@ import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.auth.utils.SessionMgr;
 import com.logistimo.dashboards.entity.IDashboard;
 import com.logistimo.dashboards.service.IBulletinBoardDashBoardService;
-import com.logistimo.dashboards.service.IDashboardService;
 import com.logistimo.dashboards.service.impl.BulletinBoardDashBoardService;
-import com.logistimo.dashboards.service.impl.DashboardService;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.logger.XLog;
 import com.logistimo.security.SecureUserDetails;
@@ -39,6 +37,7 @@ import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.Services;
 import com.logistimo.utils.MsgUtil;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -46,6 +45,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -72,7 +72,7 @@ public class BulletinBoardDashboardController {
     long domainId = SecurityUtils.getDomainId(request);
     try {
       IBulletinBoardDashBoardService ds = Services.getService(BulletinBoardDashBoardService.class);
-      if(model.getDashboardId() != null) {
+      if (model.getDashboardId() != null) {
         IDashboard db = ds.getDashBoard(model.getDashboardId());
         db = builder.buildDashboardForUpdate(model, db, sUser.getUsername());
         ds.updateDashboard(db);
@@ -84,7 +84,8 @@ public class BulletinBoardDashboardController {
       xLogger.severe("Error creating Dashboard for domain ", domainId);
       throw new InvalidServiceException("Error creating Dashboard for " + domainId);
     }
-    return backendMessages.getString("dashboard.upper") + " " + MsgUtil.bold(model.getName()) + " " + backendMessages
+    return backendMessages.getString("dashboard.upper") + " " + MsgUtil.bold(model.getName()) + " "
+        + backendMessages
         .getString("created.success");
   }
 
@@ -102,7 +103,8 @@ public class BulletinBoardDashboardController {
   @RequestMapping(value = "/{dbId}", method = RequestMethod.GET)
   public
   @ResponseBody
-  BulletinBoardDashBoardModel get(@PathVariable Long dbId, @RequestParam(required = false) String wc) {
+  BulletinBoardDashBoardModel get(@PathVariable Long dbId,
+                                  @RequestParam(required = false) String wc) {
     try {
       BulletinBoardDashBoardService ds = Services.getService(BulletinBoardDashBoardService.class);
       IDashboard db = ds.getDashBoard(dbId);
@@ -129,7 +131,8 @@ public class BulletinBoardDashboardController {
       xLogger.severe("Error deleting Dashboard: {0}", id);
       throw new InvalidServiceException("Error deleting Dashboard: " + id);
     }
-    return backendMessages.getString("dashboard") + " " +  MsgUtil.bold(name) + " " + backendMessages.getString("deleted.success");
+    return backendMessages.getString("dashboard") + " " + MsgUtil.bold(name) + " " + backendMessages
+        .getString("deleted.success");
   }
 
 }

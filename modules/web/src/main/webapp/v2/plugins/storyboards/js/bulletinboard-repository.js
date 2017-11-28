@@ -28,26 +28,26 @@
 function BulletinBoardRepository(apiService, $q) {
     return {
         /*checkNotNullEmpty : function (argument) {
-            return typeof argument !== 'undefined' && argument != null && argument != "";
-        },
-        checkNullEmpty : function (argument) {
-            return !$scope.checkNotNullEmpty(argument);
-        },
-        constructDashboardsForBulletinBoard: function (bulletinBoard) {
-            if(checkNotNullEmpty(bulletinBoard.dashboards)) {
-                bulletinBoard.conf = [];
-                bulletinBoard.dashboards.forEach(function (db) {
-                    bulletinBoard.conf.push(db.dbId);
-                });
-            }
-            return bulletinBoard;
-        },*/
+         return typeof argument !== 'undefined' && argument != null && argument != "";
+         },
+         checkNullEmpty : function (argument) {
+         return !$scope.checkNotNullEmpty(argument);
+         },
+         constructDashboardsForBulletinBoard: function (bulletinBoard) {
+         if(checkNotNullEmpty(bulletinBoard.dashboards)) {
+         bulletinBoard.conf = [];
+         bulletinBoard.dashboards.forEach(function (db) {
+         bulletinBoard.conf.push(db.dbId);
+         });
+         }
+         return bulletinBoard;
+         },*/
         get: function (bulletinBoardId, $scope) {
             var deferred = $q.defer();
             $scope.showLoading();
             apiService.get("/s2/api/bulletinboard/" + bulletinBoardId).then(function (data) {
                 var bulletinBoard = data.data;
-                if(bulletinBoard) {
+                if (bulletinBoard) {
                     bulletinBoard.dashboards = [];
                     bulletinBoard.dashboards = JSON.parse(bulletinBoard.conf);
                     delete bulletinBoard["conf"];
@@ -56,12 +56,12 @@ function BulletinBoardRepository(apiService, $q) {
             }).catch(function error(msg) {
                 $scope.showErrorMsg(msg);
                 deferred.reject();
-            }).finally(function (){
+            }).finally(function () {
                 $scope.hideLoading();
             });
             return deferred.promise;
         },
-        getAll: function($scope){
+        getAll: function ($scope) {
             var deferred = $q.defer();
             $scope.showLoading();
             apiService.get("/s2/api/bulletinboard/all").then(function (data) {
@@ -75,16 +75,16 @@ function BulletinBoardRepository(apiService, $q) {
             return deferred.promise;
         },
         save: function (bulletinBoard, $scope) {
-            if($scope.isUndef(bulletinBoard.name)) {
+            if ($scope.isUndef(bulletinBoard.name)) {
                 $scope.showWarning("Name is mandatory");
                 return;
-            } else if($scope.isUndef(bulletinBoard.min)) {
+            } else if ($scope.isUndef(bulletinBoard.min)) {
                 $scope.showWarning("Minimum scroll time is mandatory");
                 return;
-            } else if($scope.isUndef(bulletinBoard.max)) {
+            } else if ($scope.isUndef(bulletinBoard.max)) {
                 $scope.showWarning("Maximum scroll time is mandatory");
                 return;
-            } else if($scope.isUndef(bulletinBoard.dashboards) || bulletinBoard.dashboards.length == 0) {
+            } else if ($scope.isUndef(bulletinBoard.dashboards) || bulletinBoard.dashboards.length == 0) {
                 $scope.showWarning("Please configure dashboards");
                 return;
             }
@@ -98,7 +98,7 @@ function BulletinBoardRepository(apiService, $q) {
             }).catch(function error(msg) {
                 $scope.showErrorMsg(msg);
                 deferred.reject();
-            }).finally(function (){
+            }).finally(function () {
                 $scope.hideLoading();
             });
             return deferred.promise;
@@ -116,7 +116,7 @@ function BulletinBoardRepository(apiService, $q) {
             }).catch(function error(msg) {
                 $scope.showErrorMsg(msg);
                 deferred.reject();
-            }).finally(function (){
+            }).finally(function () {
                 $scope.hideLoading();
             });
             return deferred.promise;

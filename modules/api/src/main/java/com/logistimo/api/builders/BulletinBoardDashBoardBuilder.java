@@ -28,6 +28,7 @@ import com.logistimo.api.models.BulletinBoardModel;
 import com.logistimo.bulletinboard.entity.IBulletinBoard;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.dashboards.entity.IDashboard;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -40,7 +41,8 @@ import java.util.stream.Collectors;
 public class BulletinBoardDashBoardBuilder {
 
 
-  public IDashboard buildDashboard(BulletinBoardDashBoardModel model, Long domainId, String userName) {
+  public IDashboard buildDashboard(BulletinBoardDashBoardModel model, Long domainId,
+                                   String userName) {
     IDashboard db = JDOUtils.createInstance(IDashboard.class);
     db.setDomainId(domainId);
     db.setCreatedOn(new Date());
@@ -54,7 +56,8 @@ public class BulletinBoardDashBoardBuilder {
     return db;
   }
 
-  public IDashboard buildDashboardForUpdate(BulletinBoardDashBoardModel model, IDashboard dashboard, String userName) {
+  public IDashboard buildDashboardForUpdate(BulletinBoardDashBoardModel model, IDashboard dashboard,
+                                            String userName) {
     dashboard.setConfiguration(model.getWidgets());
     dashboard.setName(model.getName());
     dashboard.setDescription(model.getDescription());
@@ -80,6 +83,7 @@ public class BulletinBoardDashBoardBuilder {
     model.setDomainId(db.getDomainId());
     model.setDescription(db.getDescription());
     model.setTitle(db.getTitle());
+    model.setInfo(db.getInfo());
     model.setCreatedBy(db.getCreatedBy());
     model.setCreatedOn(db.getCreatedOn());
     model.setWidgets(db.getConfiguration());
@@ -88,7 +92,8 @@ public class BulletinBoardDashBoardBuilder {
     return model;
   }
 
-  public IBulletinBoard buildBulletinBoard(BulletinBoardModel model, Long domainId, String userName) {
+  public IBulletinBoard buildBulletinBoard(BulletinBoardModel model, Long domainId,
+                                           String userName) {
     IBulletinBoard bulletinBoard = JDOUtils.createInstance(IBulletinBoard.class);
     bulletinBoard.setConfiguration(model.getDashboards());
     bulletinBoard.setDomainId(domainId);
@@ -101,7 +106,8 @@ public class BulletinBoardDashBoardBuilder {
     return bulletinBoard;
   }
 
-  public IBulletinBoard buildBulletinBoardForUpdate(BulletinBoardModel model, IBulletinBoard bulletinBoard, String userName) {
+  public IBulletinBoard buildBulletinBoardForUpdate(BulletinBoardModel model,
+                                                    IBulletinBoard bulletinBoard, String userName) {
     bulletinBoard.setConfiguration(model.getDashboards());
     bulletinBoard.setName(model.getName());
     bulletinBoard.setDescription(model.getDescription());
@@ -127,7 +133,8 @@ public class BulletinBoardDashBoardBuilder {
     return model;
   }
 
-  public List<BulletinBoardModel> buildBulletinBoardModelList(Collection<IBulletinBoard> bulletinBoardList) {
+  public List<BulletinBoardModel> buildBulletinBoardModelList(
+      Collection<IBulletinBoard> bulletinBoardList) {
     List<BulletinBoardModel> models = new ArrayList<>(bulletinBoardList.size());
     models.addAll(
         bulletinBoardList.stream().map(this::buildBulletinBoardModel).collect(Collectors.toList()));

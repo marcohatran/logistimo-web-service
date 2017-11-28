@@ -87,7 +87,7 @@ authServices.factory('iAuthService', ['APIService', '$rootScope', '$q', function
             $rootScope.token = null;
             $rootScope.expires = null;
         },
-        authorizeBulletinBoard: function(authKey) {
+        authorizeBulletinBoard: function (authKey) {
             return apiService.post(authKey, "/s2/api/auth/authorise-access-key");
         },
         requestAccessKey: function () {

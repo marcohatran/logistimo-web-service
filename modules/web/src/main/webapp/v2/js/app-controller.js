@@ -761,7 +761,7 @@
             };
 
             $scope.$on("event:auth-loginConfirmed", function () {
-                if(!$rootScope.isSession) {
+                if (!$rootScope.isSession) {
                     $scope.initApp();
                 }
             });
@@ -776,6 +776,23 @@
 
                 $scope.initApp();
             }
+
+            $scope.networkAvailable = true;
+            $scope.checkNetwork = function(){
+                if($scope.networkAvailable != navigator.onLine) {
+                    if(!navigator.onLine) {
+                        $scope.networkAvailable = false;
+                        $scope.$broadcast("offline");
+                    } else {
+                        $scope.networkAvailable = true;
+                        $scope.$broadcast("online");
+                    }
+                }
+                $timeout(function () {
+                    $scope.checkNetwork();
+                }, 300);
+            };
+            $scope.checkNetwork();
         }
     );
     logistimoApp.factory('APIService', function ($http, $q, logistimoCache) {

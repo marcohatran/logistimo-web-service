@@ -6,7 +6,8 @@
 
         <div class="col-sm-5" ng-if="filter.type=='title'">
             <div class="has-feedback">
-                <input type="text" class="form-control" ng-model="widget.conf.title" autocomplete="off" placeholder="Title">
+                <input type="text" class="form-control" ng-model="widget.conf.title" autocomplete="off"
+                       placeholder="Title">
             </div>
         </div>
         <div class="col-sm-5" ng-if="filter.type=='entity'">
@@ -36,7 +37,8 @@
             </tag-select>
         </div>
         <div class="col-sm-5" ng-if="filter.type=='date'">
-            <date-picker date-model="widget.conf.date" min-date="createdOn" place-holder="Date" max-date="today"></date-picker>
+            <date-picker date-model="widget.conf.date" min-date="createdOn" place-holder="Date"
+                         max-date="today"></date-picker>
         </div>
         <div class="col-sm-5" ng-if="filter.type=='period'">
             <div class="col-sm-12 noLRpad btn-group">
@@ -89,7 +91,8 @@
 
 
         <div class="col-sm-5" ng-if="filter.type=='assetType'">
-            <lg-uib-select multiple="'multiple" query="filterAssets(q)" ui-model="widget.conf.asset" place-holder="All"> </lg-uib-select>
+            <lg-uib-select multiple="'multiple" query="filterAssets(q)" ui-model="widget.conf.asset"
+                           place-holder="All"></lg-uib-select>
         </div>
 
         <div class="col-sm-5" ng-if="filter.type=='assetStatus'">
@@ -124,8 +127,28 @@
         </div>
 
         <div class="col-sm-5" ng-if="filter.type=='exTempState'">
-            <lg-uib-select multiple="'multiple" query="filterStatus(q)" ui-model="widget.conf.exTempState" place-holder="None"> </lg-uib-select>
+            <lg-uib-select multiple="'multiple" query="filterStatus(q)" ui-model="widget.conf.exTempState"
+                           place-holder="None"></lg-uib-select>
         </div>
 
+        <div class="col-sm-5" ng-if="filter.type == 'excursionType'">
+            <div class="col-sm-12 noLRpad">
+                <select ng-model="widget.conf.excursionType" class="form-control">
+                    <option value="0">High</option>
+                    <option value="1">Low</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="col-sm-5" ng-if="filter.type=='periodicity'">
+            <div class="col-sm-12 noLRpad btn-group">
+                <select ng-model="widget.conf.period" class="form-control">
+                    <option value="">-- Select period --</option>
+                    <option value="m">Monthly</option>
+                    <option value="w">Weekly</option>
+                    <option value="d">Daily</option>
+                </select>
+            </div>
+        </div>
     </div>
 </div>

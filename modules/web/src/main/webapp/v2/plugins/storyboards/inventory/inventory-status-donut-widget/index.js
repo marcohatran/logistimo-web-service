@@ -3,14 +3,9 @@ angular.module('logistimo.storyboard.inventoryStatusDonutWidget', [])
         widgetsRepositoryProvider.addWidget({
             id: "inventoryStatusDonutWidget",
             name: "Inventory status donut",
-            templateUrl: 
-                "plugins/storyboards/inventory/inventory-status-donut-widget/inventory-status-donut-widget.html",
+            templateUrl: "plugins/storyboards/inventory/inventory-status-donut-widget/inventory-status-donut-widget.html",
             editTemplateUrl: "plugins/storyboards/inventory/edit-template.html",
             templateFilters: [
-                {
-                    nameKey: 'title',
-                    type: 'title'
-                },
                 {
                     nameKey: 'inventory.status',
                     type: 'widType'
@@ -47,7 +42,7 @@ angular.module('logistimo.storyboard.inventoryStatusDonutWidget', [])
     .controller('inventoryStatusDonutWidgetController', ['$scope', 'dashboardService', 'domainCfgService', 'INVENTORY',
         function ($scope, dashboardService, domainCfgService, INVENTORY) {
             var filter = angular.copy($scope.widget.conf);
-            var invPieColors, invPieOrder, totalInv = 0;
+            var invPieColors, invPieOrder;
             var fDate = (checkNotNullEmpty(filter.date) ? formatDate(filter.date) : undefined);
             $scope.showChart = false;
             $scope.wloading = true;
@@ -61,25 +56,40 @@ angular.module('logistimo.storyboard.inventoryStatusDonutWidget', [])
                 } else {
                     $scope.period = "0";
                 }
-                
+
                 if (checkNotNullEmpty(filter.widType)) {
                     var widType = filter.widType;
-                    if (widType == '0' || widType == '1') {
                         $scope.widType = widType;
-                        if ($scope.widType == 0) {
+                        if ($scope.widType == 'ia') {
                             invPieColors[0] = "#efefef";
                             invPieColors[1] = invPieColors[3];
                             invPieColors[2] = invPieColors[3];
-                        } else {
+                            $scope.widget.conf.title = "Available";
+                        } else if($scope.widType == 'iso'){
                             invPieColors[1] = "#efefef";
                             invPieColors[2] = "#efefef";
                             invPieColors[3] = "#efefef";
+                            $scope.widget.conf.title = "Stocked out";
+                        } else if($scope.widType == 'in'){
+                            invPieColors[0] = "#efefef";
+                            invPieColors[1] = "#efefef";
+                            invPieColors[2] = "#efefef";
+                            $scope.widget.conf.title = "Normal";
+                        }else if($scope.widType == 'imin'){
+                            invPieColors[0] = "#efefef";
+                            invPieColors[2] = "#efefef";
+                            invPieColors[3] = "#efefef";
+                            $scope.widget.conf.title = "Minimum";
+                        }else if($scope.widType == 'imax'){
+                            invPieColors[0] = "#efefef";
+                            invPieColors[1] = "#efefef";
+                            invPieColors[3] = "#efefef";
+                            $scope.widget.conf.title = "Maximum";
                         }
-                    }
                 } else {
-                    $scope.widType = "0";
+                    $scope.widType = "ia";
                 }
-                
+
                 if (checkNotNullEmpty(filter.materialTag)) {
                     $scope.exFilter = constructModel(filter.materialTag);
                     $scope.exType = 'mTag';
@@ -88,82 +98,70 @@ angular.module('logistimo.storyboard.inventoryStatusDonutWidget', [])
                     $scope.exType = 'mId';
                 }
             }
-            
+
             domainCfgService.getSystemDashboardConfig().then(function (data) {
                 var domainConfig = angular.fromJson(data.data);
                 invPieColors = domainConfig.pie.ic;
                 invPieOrder = domainConfig.pie.io;
                 $scope.init();
             });
-            
+
             $scope.init = function () {
                 setFilters();
                 getData();
             };
-            
+
             function getData() {
-                var chartData =[];
+                var chartData = [],totalInv = 0, totalInvText = '';
                 dashboardService.get(undefined, undefined, $scope.exFilter, $scope.exType, $scope.period, undefined,
                     undefined, constructModel(filter.entityTag), fDate, constructModel(filter.exEntityTag), false).then(
                     function (data) {
                         chartData = constructPieData(data.data.invDomain, invPieColors, invPieOrder, INVENTORY,
                             $scope.mapEvent);
                         var normalPercent = getPercent(data.data.invDomain, $scope.widType);
-                        totalInv = getTotalItems(data.data.invDomain);
-                        setWidgetData(normalPercent, chartData);
+                        totalInv = getItemCount(data.data.invDomain, $scope.widType);
+                        if(totalInv>1){
+                            totalInvText = totalInv + " inventory items";
+                        }else{
+                            totalInvText = totalInv + " inventory item";
+                        }
+                        setWidgetData(normalPercent, chartData, totalInvText);
                     }).catch(function error(msg) {
-                    showError(msg,$scope);
-                }).finally(function () {
-                    $scope.loading = false;
-                    $scope.wloading = false;
-                });
+                        showError(msg, $scope);
+                    }).finally(function () {
+                        $scope.loading = false;
+                        $scope.wloading = false;
+                    });
             }
-            
-            function setWidgetData(centerLabelPercent, chartData) {
+
+            function setWidgetData(centerLabelPercent, chartData, totalInvText) {
+                var radius = getDonutRadius($scope.widget.width,$scope.widget.height);
                 $scope.inventoryStatusDonutWidget = {
                     wId: $scope.widget.id,
                     cType: "doughnut2d",
                     copt: {
                         theme: "fint",
-                        doughnutRadius: '60',
-                        pieRadius: '80',
+                        doughnutRadius: radius.doughnutRadius,
+                        pieRadius: radius.pieRadius,
                         showLabels: "0",
                         showPercentValues: "0",
                         showLegend: "0",
                         showValues: "0",
                         defaultCenterLabel: centerLabelPercent,
-                        subCaption: totalInv + " inventory items",
+                        subCaption: totalInvText,
                         captionOnTop: "0",
                         alignCaptionWithCanvas: "1",
-                        showToolTip: "0"
+                        showToolTip: "1",
+                        centerLabelFontSize: 19,
+                        centerLabelFont : 'Helvetica Neue, Arial'
                     },
                     cdata: chartData,
                     computedWidth: '100%',
-                    computedHeight: parseInt($scope.widget.computedHeight, 10) - 100
+                    computedHeight: parseInt($scope.widget.computedHeight, 10) - 30
                 };
                 $scope.wloading = false;
                 $scope.showChart = true;
             }
-            
-            $scope.subCaption = undefined;
-            
-            if (checkNotNullEmpty(filter.materialTag)) {
-                $scope.subCaption = "Material tag(s):" + getSubtext(filter.materialTag);
-            } else if (checkNotNullEmpty(filter.material)) {
-                $scope.subCaption = "Material tag(s):" + getSubtext(filter.material);
-            }
-            
-            if (checkNotNullEmpty(filter.entityTag)) {
-                $scope.subCaption =
-                    (checkNullEmpty($scope.subCaption) ? '' : $scope.subCaption + ', ') + $scope.resourceBundle.kiosk +
-                    " tag(s):" + getSubtext(filter.entityTag);
-            }
-            
-            if (checkNotNullEmpty(filter.period)) {
-                $scope.subCaption = (checkNullEmpty($scope.subCaption) ? '' : $scope.subCaption + ', ') + "Period: " +
-                    $scope.widget.conf.period + " day(s)";
-            }
-            
         }]);
 
 logistimoApp.requires.push('logistimo.storyboard.inventoryStatusDonutWidget');

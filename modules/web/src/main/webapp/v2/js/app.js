@@ -32,7 +32,7 @@ var logistimoApp = angular.module('logistimoApp', ['ngSanitize','ngRoute', 'dash
     'linkedDomainControllers', 'linkedDomainServices','domainControllers','domainServices', 'mediaServices', 'base64',
     'exportControllers','once','assetControllers','assetServices','handlingUnitControllers','handlingUnitServices',
     'conversationServices', 'activityServices','conversationControllers','hc.downloader','reportsPluginCore','approvalServices',
-    'approvalControllers', 'logistimo.storyboard'
+    'approvalControllers', 'bulletinBoardControllers','logistimo.storyboard'
     /*<% do-not-remove-this-comment-grunt-will-insert-dep-for-prod %>*/]);
 
 logistimoApp.config(function (uibDatepickerConfig) {
@@ -43,13 +43,13 @@ logistimoApp.config(function (uiSelectConfig) {
     uiSelectConfig.theme = 'select2';
 });
 
-    /* @if BULLETIN_BOARD == 'NA' */
-    logistimoApp.constant('isSession', true);
-    /*@endif*/
+/* @if BULLETIN_BOARD == 'NA' */
+logistimoApp.constant('isSession', true);
+/*@endif*/
 
-    /* @if BULLETIN_BOARD == 'BULLETIN_BOARD' */
-    logistimoApp.constant('isSession', false);
-    /* @endif */
+/* @if BULLETIN_BOARD == 'BULLETIN_BOARD' */
+logistimoApp.constant('isSession', false);
+/* @endif */
 
 logistimoApp.provider('dashboardRepository', function () {
     return {
@@ -59,7 +59,7 @@ logistimoApp.provider('dashboardRepository', function () {
     };
 });
 
-logistimoApp.provider('bulletinBoardRepository', function() {
+logistimoApp.provider('bulletinBoardRepository', function () {
     return {
         $get: ['APIService', '$q', function (apiService, $q) {
             return new BulletinBoardRepository(apiService, $q);
@@ -414,7 +414,7 @@ logistimoApp.config(function ($routeProvider) {
     }).when("/configuration/bulletin/add", {
         action: "configuration.bulletin.add"
     }).when("/configuration/bulletin/detail/:bulletinBoardId", {
-       action: "configuration.bulletin.detail"
+        action: "configuration.bulletin.detail"
     }).when("/configuration/bulletin/view/:bulletinBoardId", {
         action: "configuration.bulletin.view"
     }).when("/configuration/dashboards", {
@@ -514,7 +514,7 @@ logistimoApp.config(['$uibTooltipProvider', function($uibTooltipProvider){
     });
 }]);
 
-logistimoApp.factory('logistimoCache', ['$cacheFactory', function($cacheFactory) {
+logistimoApp.factory('logistimoCache', ['$cacheFactory', function ($cacheFactory) {
     return $cacheFactory('logistimo-cache');
 }]);
 

@@ -40,39 +40,63 @@ public class MaterialManufacturers implements IMaterialManufacturers {
   private BigDecimal qty;
 
   @Override
-  public Long getKey() { return key; }
+  public Long getKey() {
+    return key;
+  }
 
   @Override
-  public void setKey(Long key) { this.key = key; }
+  public void setKey(Long key) {
+    this.key = key;
+  }
 
   @Override
-  public Long getManufacturerCode() { return mfrCode; }
+  public Long getManufacturerCode() {
+    return mfrCode;
+  }
 
   @Override
-  public void setManufacturerCode(Long mfrCode) { this.mfrCode = mfrCode; }
+  public void setManufacturerCode(Long mfrCode) {
+    this.mfrCode = mfrCode;
+  }
 
   @Override
-  public Long getMaterialCode() { return materialCode; }
+  public Long getMaterialCode() {
+    return materialCode;
+  }
 
   @Override
-  public void setMaterialCode(Long materialCode) { this.materialCode = materialCode; }
+  public void setMaterialCode(Long materialCode) {
+    this.materialCode = materialCode;
+  }
 
   @Override
-  public BigDecimal getQuantity() { return qty; }
+  public BigDecimal getQuantity() {
+    return qty;
+  }
 
   @Override
-  public void setQuantity(BigDecimal qty) { this.qty = qty; }
+  public void setQuantity(BigDecimal qty) {
+    this.qty = qty;
+  }
 
   @Override
-  public Long getMaterialId() { return materialId; }
+  public Long getMaterialId() {
+    return materialId;
+  }
 
   @Override
-  public void setMaterialId(Long materialId) { this.materialId = materialId; }
+  public void setMaterialId(Long materialId) {
+    this.materialId = materialId;
+  }
 
   @Override
-  public String getManufacturerName() { return mfrName; }
+  public String getManufacturerName() {
+    return mfrName;
+  }
 
   @Override
-  public void setManufacturerName(String mfrName) { this.mfrName = mfrName; }
+  public void setManufacturerName(String mfrName) {
+    this.mfrName = mfrName;
+  }
 
 }

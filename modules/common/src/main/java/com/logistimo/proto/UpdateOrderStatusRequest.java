@@ -99,4 +99,13 @@ public class UpdateOrderStatusRequest {
    * Updated time sent in the last response
    */
   public String tm;
+  /**
+   * Store of the user
+   */
+  public Long ukid;
+  /**
+   * Embed request: presently supports only inventory
+   */
+  public String embed;
+
 }

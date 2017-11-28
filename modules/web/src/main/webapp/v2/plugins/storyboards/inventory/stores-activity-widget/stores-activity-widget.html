@@ -10,13 +10,19 @@
         </div>
     </div>
     <div ng-if="!wloading && !showError && showChart">
-        <fusion-chart type="storesActivityWidget.cType" height="storesActivityWidget.computedHeight" width="storesActivityWidget.computedWidth"
+        <fusion-chart type="storesActivityWidget.cType" height="storesActivityWidget.computedHeight"
+                      width="storesActivityWidget.computedWidth"
                       chart-label="storesActivityWidget.cLabel"
                       chart-data="storesActivityWidget.cdata" chart-options="storesActivityWidget.copt"
                       chart-id="{{storesActivityWidget.wId}}">
         </fusion-chart>
-        <div class="text-center position-relative mtm15 large-grey-lbl" > {{activePercent}}% {{resourceBundle['stores.active']}}</div>
+        <div class="text-center position-relative mtm15 widget-title"> {{activePercent}}%
+            {{resourceBundle['stores.active']}}
+        </div>
         <br/>
-        <div class="text-center position-relative mtm15 small-grey-lbl" > {{entDomainTotal}} {{resourceBundle['stores']}}</div>
+
+        <div class="text-center position-relative mtm15 "> {{entDomainTotal}}
+            {{resourceBundle['stores']}}
+        </div>
     </div>
 </div>

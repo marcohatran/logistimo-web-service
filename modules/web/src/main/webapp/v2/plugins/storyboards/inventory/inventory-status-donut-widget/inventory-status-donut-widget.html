@@ -10,12 +10,11 @@
         </div>
     </div>
     <div ng-if="!wloading && !showError && showChart">
-        <div class="col-sm-12 font-larger text-center text-bold">
-            <span class="font-large">{{widget.conf.title}}</span>
-            <span class="litetext">{{subCaption}}</span>
+        <div class="col-sm-12 text-center pt15">
+            <span class="widget-title">{{widget.conf.title}}</span>
         </div>
-
-        <fusion-chart type="inventoryStatusDonutWidget.cType" height="inventoryStatusDonutWidget.computedHeight" width="inventoryStatusDonutWidget.computedWidth"
+        <fusion-chart type="inventoryStatusDonutWidget.cType" height="inventoryStatusDonutWidget.computedHeight"
+                      width="inventoryStatusDonutWidget.computedWidth"
                       chart-label="inventoryStatusDonutWidget.cLabel"
                       chart-data="inventoryStatusDonutWidget.cdata" chart-options="inventoryStatusDonutWidget.copt"
                       chart-id="{{inventoryStatusDonutWidget.wId}}" simple="'true'">

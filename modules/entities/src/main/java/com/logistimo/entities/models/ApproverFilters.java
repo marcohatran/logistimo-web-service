@@ -36,12 +36,15 @@ public class ApproverFilters {
   public Long getKioskId() {
     return kioskId;
   }
+
   public Long getType() {
     return type;
   }
+
   public Long getOrderId() {
     return orderId;
   }
+
   public Integer getOrderType() {
     return orderType;
   }
@@ -50,14 +53,17 @@ public class ApproverFilters {
     this.type = type;
     return this;
   }
+
   public ApproverFilters withOrderId(Long orderId) {
     this.orderId = orderId;
     return this;
   }
+
   public ApproverFilters withOrderType(Integer orderType) {
     this.orderType = orderType;
     return this;
   }
+
   public ApproverFilters withKioskId(Long kioskId) {
     this.kioskId = kioskId;
     return this;

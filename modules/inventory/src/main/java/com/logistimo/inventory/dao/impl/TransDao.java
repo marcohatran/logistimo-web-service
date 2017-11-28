@@ -23,21 +23,20 @@
 
 package com.logistimo.inventory.dao.impl;
 
+import com.logistimo.constants.CharacterConstants;
+import com.logistimo.constants.QueryConstants;
 import com.logistimo.inventory.dao.ITransDao;
 import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.inventory.entity.Transaction;
+import com.logistimo.logger.XLog;
+import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.QueryParams;
+import com.logistimo.pagination.Results;
+import com.logistimo.services.impl.PMF;
 import com.logistimo.tags.dao.ITagDao;
 import com.logistimo.tags.dao.TagDao;
 import com.logistimo.tags.entity.ITag;
-
-import com.logistimo.pagination.PageParams;
-import com.logistimo.pagination.Results;
-import com.logistimo.services.impl.PMF;
-import com.logistimo.constants.CharacterConstants;
 import com.logistimo.utils.LocalDateUtil;
-import com.logistimo.constants.QueryConstants;
-import com.logistimo.logger.XLog;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -93,9 +92,12 @@ public class TransDao implements ITransDao {
 
   @Override
   public Results getInventoryTransactions(Date sinceDate, Date untilDate, Long domainId,
-      Long kioskId, Long materialId, List<String> transTypes, Long linkedKioskId, String kioskTag,
-      String materialTag, List<Long> kioskIds, PageParams pageParams, String bid, boolean atd,
-      String reason, List<String> excludeReasons, PersistenceManager pm) {
+                                          Long kioskId, Long materialId, List<String> transTypes,
+                                          Long linkedKioskId, String kioskTag,
+                                          String materialTag, List<Long> kioskIds,
+                                          PageParams pageParams, String bid, boolean atd,
+                                          String reason, List<String> excludeReasons,
+                                          PersistenceManager pm) {
 
     PersistenceManager localpm;
     if (pm != null) {
@@ -157,9 +159,11 @@ public class TransDao implements ITransDao {
 
   @Override
   public QueryParams buildTransactionsQuery(Date sinceDate, Date untilDate, Long domainId,
-      Long kioskId, Long materialId, List<String> transTypes, Long linkedKioskId, String kioskTag,
-      String materialTag, List<Long> kioskIds, String bid, boolean atd, String reason,
-      List<String> excludeReasons) {
+                                            Long kioskId, Long materialId, List<String> transTypes,
+                                            Long linkedKioskId, String kioskTag,
+                                            String materialTag, List<Long> kioskIds, String bid,
+                                            boolean atd, String reason,
+                                            List<String> excludeReasons) {
 
     List<String> parameters = new ArrayList<>(1);
     StringBuilder sqlQuery = new StringBuilder("SELECT * FROM TRANSACTION");

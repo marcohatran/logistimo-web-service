@@ -41,7 +41,8 @@ public class MaterialCatalogServiceImplTest {
 
   @Test
   public void testGetMaterialManufacturers() throws ServiceException {
-    manufacturers = setManufacturers(1l, 11l, "Serum Institute of India", 2233l, 3345721l, new BigDecimal(20));
+    manufacturers =
+        setManufacturers(1l, 11l, "Serum Institute of India", 2233l, 3345721l, new BigDecimal(20));
     when(q.execute(3345721l)).thenReturn(manufacturers);
     when(pm.detachCopyAll(manufacturers)).thenReturn(manufacturers);
     List<IMaterialManufacturers> manufacturerList = mcs.getMaterialManufacturers(3345721l);

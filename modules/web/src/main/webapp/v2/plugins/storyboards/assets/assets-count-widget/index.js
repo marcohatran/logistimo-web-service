@@ -23,7 +23,7 @@ angular.module('logistimo.storyboard.assetsCountWidget', [])
                 }
             ],
             defaultHeight: 1,
-            defaultWidth: 2
+            defaultWidth: 4
         });
     })
     .controller('assetsCountWidgetController', ['$scope', 'dashboardService', function ($scope, dashboardService) {
@@ -42,7 +42,7 @@ angular.module('logistimo.storyboard.assetsCountWidget', [])
         } else {
             $scope.period = "0";
         }
-        
+
         if (checkNotNullEmpty(filter.materialTag)) {
             $scope.exFilter = constructModel(filter.materialTag);
             $scope.exType = 'mTag';
@@ -50,7 +50,7 @@ angular.module('logistimo.storyboard.assetsCountWidget', [])
             $scope.exFilter = filter.material.id;
             $scope.exType = 'mId';
         }
-        
+
         if (checkNotNullEmpty($scope.widget.conf.asset) && $scope.widget.conf.asset.length > 0) {
             var first = true;
             $scope.widget.conf.asset.forEach(function (data) {
@@ -60,25 +60,25 @@ angular.module('logistimo.storyboard.assetsCountWidget', [])
                     asset += data.id;
                     first = false;
                 }
-                
+
             });
         }
-        
+
         getData();
-        
+
         function getData() {
             dashboardService.get(undefined, undefined, $scope.exFilter, $scope.exType, $scope.period,
-                                 $scope.widget.conf.tPeriod, asset, constructModel(filter.entityTag), fDate,
-                                 constructModel(filter.exEntityTag), false).then(function (data) {
-                $scope.totalAssets = getTotalItems(data.data.tempDomain);
-            }).catch(function error(msg) {
-                showError(msg,$scope);
-            }).finally(function () {
-                $scope.loading = false;
-                $scope.wloading = false;
-            });
+                $scope.widget.conf.tPeriod, asset, constructModel(filter.entityTag), fDate,
+                constructModel(filter.exEntityTag), false).then(function (data) {
+                    $scope.totalAssets = getTotalItems(data.data.tempDomain);
+                }).catch(function error(msg) {
+                    showError(msg, $scope);
+                }).finally(function () {
+                    $scope.loading = false;
+                    $scope.wloading = false;
+                });
         }
-        
+
     }]);
 
 logistimoApp.requires.push('logistimo.storyboard.assetsCountWidget');

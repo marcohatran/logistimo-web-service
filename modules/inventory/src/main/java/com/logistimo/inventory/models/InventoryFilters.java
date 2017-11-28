@@ -39,6 +39,7 @@ import java.util.Set;
 public class InventoryFilters {
   private Long kioskId;
   private Long materialId;
+  private List<Long> materialIds;
   private List<String> kioskTags;
   private List<String> excludedKioskTags;
   private List<String> materialTags;
@@ -215,5 +216,18 @@ public class InventoryFilters {
 
   public boolean isNoInTransitStock() {
     return noInTransitStock;
+  }
+
+  public List<Long> getMaterialIds() {
+    return materialIds;
+  }
+
+  public InventoryFilters withMaterialIds(List<Long> materialIds) {
+    this.materialIds = materialIds;
+    return this;
+  }
+
+  public boolean hasMaterialIds() {
+    return materialIds != null && !materialIds.isEmpty();
   }
 }

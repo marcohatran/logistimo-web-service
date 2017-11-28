@@ -31,7 +31,6 @@ import com.logistimo.services.ServiceException;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.services.impl.ServiceImpl;
 
-
 import java.util.List;
 
 import javax.jdo.PersistenceManager;
@@ -40,7 +39,8 @@ import javax.jdo.Query;
 /**
  * Created by naveensnair on 13/11/17.
  */
-public class BulletinBoardDashBoardService extends ServiceImpl implements IBulletinBoardDashBoardService{
+public class BulletinBoardDashBoardService extends ServiceImpl
+    implements IBulletinBoardDashBoardService {
 
   private static final XLog xLogger = XLog.getLog(IBulletinBoardDashBoardService.class);
 

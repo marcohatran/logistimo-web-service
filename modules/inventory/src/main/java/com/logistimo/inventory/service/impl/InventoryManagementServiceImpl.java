@@ -27,12 +27,14 @@
 package com.logistimo.inventory.service.impl;
 
 import com.logistimo.AppFactory;
+import com.logistimo.config.models.ConfigurationException;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.InventoryConfig;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.QueryConstants;
 import com.logistimo.constants.SourceConstants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.domains.utils.DomainsUtil;
 import com.logistimo.domains.utils.EntityRemover;
@@ -47,9 +49,8 @@ import com.logistimo.events.processor.EventPublisher;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exception.LogiException;
 import com.logistimo.exception.TaskSchedulingException;
-import com.logistimo.inventory.MobileTransactionsHandler;
-import com.logistimo.inventory.MobileTransactionsHandlerFactory;
 import com.logistimo.inventory.TransactionUtil;
+import com.logistimo.inventory.actions.UpdateMultipleInventoryTransactionsAction;
 import com.logistimo.inventory.dao.IInvntryDao;
 import com.logistimo.inventory.dao.ITransDao;
 import com.logistimo.inventory.dao.impl.InvntryDao;
@@ -104,7 +105,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -152,7 +152,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
 
   // Post inv.-transaction-commit hook
   private static void doPostTransactionCommitHook(List<ITransaction> transList,
-      List<IInvntry> toBeOptimized) {
+                                                  List<IInvntry> toBeOptimized) {
     xLogger.fine("Entered doPostTransactionCommitHook");
     if (transList == null || transList.isEmpty()) {
       return;
@@ -297,7 +297,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
 
   @Override
   public Results searchKioskInventory(Long kioskId, String materialTag, String nameStartsWith,
-      PageParams params) throws ServiceException {
+                                      PageParams params) throws ServiceException {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     Results results = null;
     try {
@@ -314,7 +314,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
   }
 
   public Results getInventoryByMaterial(Long materialId, String kioskTag, List<Long> kioskIds,
-      PageParams params) throws ServiceException {
+                                        PageParams params) throws ServiceException {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     Results results = null;
     try {
@@ -326,7 +326,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
   }
 
   public Results getInventoryByMaterialDomain(Long materialId, String kioskTag, List<Long> kioskIds,
-      PageParams params, Long domainId)
+                                              PageParams params, Long domainId)
       throws ServiceException {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     Results results = null;
@@ -347,8 +347,8 @@ public class InventoryManagementServiceImpl extends ServiceImpl
 
   @SuppressWarnings("unchecked")
   public Results getInventoryByBatchId(Long materialId, String batchId, PageParams pageParams,
-      Long domainId, String kioskTags, String excludedKioskTags,
-      LocationSuggestionModel location)
+                                       Long domainId, String kioskTags, String excludedKioskTags,
+                                       LocationSuggestionModel location)
       throws ServiceException {
     xLogger.fine("Entered getInventoryByBatch");
     if (materialId == null || batchId == null || batchId.isEmpty()) {
@@ -448,8 +448,10 @@ public class InventoryManagementServiceImpl extends ServiceImpl
   // Get inv. batches that are expiring within a specified time
   @SuppressWarnings("unchecked")
   public Results getInventoryByBatchExpiry(Long domainId, Long materialId, Date start, Date end,
-      String kioskTags, String excludedKioskTags, String materialTag,
-      LocationSuggestionModel location, PageParams pageParams) throws ServiceException {
+                                           String kioskTags, String excludedKioskTags,
+                                           String materialTag,
+                                           LocationSuggestionModel location, PageParams pageParams)
+      throws ServiceException {
     xLogger.fine("Entered getInventoryByBatchExpiry");
     if (domainId == null && materialId == null) {
       throw new IllegalArgumentException(
@@ -618,7 +620,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
    * Get valid batches for a given inventory item - this includes active batches with non-zero stock
    */
   public Results<IInvntryBatch> getValidBatches(Long materialId, Long kioskId,
-      PageParams pageParams) throws ServiceException {
+                                                PageParams pageParams) throws ServiceException {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     try {
       return getValidBatches(materialId, kioskId, pageParams, pm);
@@ -629,7 +631,8 @@ public class InventoryManagementServiceImpl extends ServiceImpl
 
   @SuppressWarnings("unchecked")
   private Results<IInvntryBatch> getValidBatches(Long materialId, Long kioskId,
-      PageParams pageParams, PersistenceManager pm) throws ServiceException {
+                                                 PageParams pageParams, PersistenceManager pm)
+      throws ServiceException {
     xLogger.fine("Entered getValidBatches");
     // Form query
     String queryStr = "SELECT FROM " + JDOUtils.getImplClass(IInvntryBatch.class).getName()
@@ -665,7 +668,8 @@ public class InventoryManagementServiceImpl extends ServiceImpl
    * batches based on expiry param with non-zero stock
    */
   public Results getValidBatchesByBatchId(String batchId, Long materialId, Long kioskId,
-      Long domainId, boolean excludeExpired, PageParams pageParams) {
+                                          Long domainId, boolean excludeExpired,
+                                          PageParams pageParams) {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     String
         queryStr =
@@ -898,7 +902,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
   }
 
   public void updateInventory(List<IInvntry> items, String user, PersistenceManager pm,
-      boolean closePM) throws ServiceException {
+                              boolean closePM) throws ServiceException {
     xLogger.fine("Entering updateInventory - num. of items = {0}", items.size());
     if (items == null || items.isEmpty()) {
       // nothing to remove
@@ -1041,8 +1045,9 @@ public class InventoryManagementServiceImpl extends ServiceImpl
    * kioskId is mandatory.
    */
   public Results getInventoryTransactionsByKiosk(Long kioskId, String materialTag, Date sinceDate,
-      Date untilDate, String transType, PageParams pageParams, String bid, boolean atd,
-      String reason) throws ServiceException {
+                                                 Date untilDate, String transType,
+                                                 PageParams pageParams, String bid, boolean atd,
+                                                 String reason) throws ServiceException {
     return getInventoryTransactionsByKiosk(kioskId, null, materialTag, sinceDate, untilDate,
         transType, pageParams, bid, atd, reason);
   }
@@ -1052,8 +1057,10 @@ public class InventoryManagementServiceImpl extends ServiceImpl
    * kioskId is mandatory.
    */
   public Results getInventoryTransactionsByKiosk(Long kioskId, Long materialId, String materialTag,
-      Date sinceDate, Date untilDate, String transType, PageParams pageParams, String bid,
-      boolean atd, String reason) throws ServiceException {
+                                                 Date sinceDate, Date untilDate, String transType,
+                                                 PageParams pageParams, String bid,
+                                                 boolean atd, String reason)
+      throws ServiceException {
     return getInventoryTransactions(sinceDate, untilDate, null, kioskId, materialId, transType,
         null,
         null, materialTag, null, pageParams, bid, atd, reason);
@@ -1064,8 +1071,11 @@ public class InventoryManagementServiceImpl extends ServiceImpl
    * materialId and sinceDate are mandatory. transType is optional
    */
   public Results getInventoryTransactionsByMaterial(Long materialId, String kioskTag,
-      Date sinceDate, Date untilDate, String transType, PageParams pageParams, Long domainId,
-      String bid, boolean atd, String reason) throws ServiceException {
+                                                    Date sinceDate, Date untilDate,
+                                                    String transType, PageParams pageParams,
+                                                    Long domainId,
+                                                    String bid, boolean atd, String reason)
+      throws ServiceException {
     return getInventoryTransactions(sinceDate, untilDate, domainId, null, materialId, transType,
         null, kioskTag, null, null, pageParams, bid, atd, reason);
   }
@@ -1075,15 +1085,21 @@ public class InventoryManagementServiceImpl extends ServiceImpl
    * domainId and sinceDate are mandatory. transType is optional
    */
   public Results getInventoryTransactionsByDomain(Long domainId, String kioskTag,
-      String materialTag, Date sinceDate, Date untilDate, String transType, List<Long> kioskIds,
-      PageParams pageParams, String bid, boolean atd, String reason) throws ServiceException {
+                                                  String materialTag, Date sinceDate,
+                                                  Date untilDate, String transType,
+                                                  List<Long> kioskIds,
+                                                  PageParams pageParams, String bid, boolean atd,
+                                                  String reason) throws ServiceException {
     return getInventoryTransactions(sinceDate, untilDate, domainId, null, null, transType, null,
         kioskTag, materialTag, kioskIds, pageParams, bid, atd, reason);
   }
 
   public Results getInventoryTransactionsByKioskLink(Long kioskId, Long linkedKioskId,
-      String materialTag, Date sinceDate, Date untilDate, String transType, PageParams pageParams,
-      String bid, boolean atd, String reason) throws ServiceException {
+                                                     String materialTag, Date sinceDate,
+                                                     Date untilDate, String transType,
+                                                     PageParams pageParams,
+                                                     String bid, boolean atd, String reason)
+      throws ServiceException {
     if (kioskId == null || linkedKioskId == null) {
       throw new ServiceException("Kiosk IDs or linked Kiosk IDs date not specified");
     }
@@ -1096,7 +1112,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
    */
   @SuppressWarnings("unchecked")
   public Results getInventoryTransactionsByUser(String userId, Date fromDate, Date toDate,
-      PageParams pageParams) throws ServiceException {
+                                                PageParams pageParams) throws ServiceException {
     xLogger.fine("Entered getInventoryTransactionsByUser");
     if (userId == null || fromDate == null) {
       throw new IllegalArgumentException("User ID and from date are not supplied");
@@ -1146,9 +1162,11 @@ public class InventoryManagementServiceImpl extends ServiceImpl
   @SuppressWarnings("unchecked")
   @Override
   public Results getInventoryTransactions(Date sinceDate, Date untilDate, Long domainId,
-      Long kioskId, Long materialId, String transType, Long linkedKioskId, String kioskTag,
-      String materialTag, List<Long> kioskIds, PageParams pageParams, String bid, boolean atd,
-      String reason) throws ServiceException {
+                                          Long kioskId, Long materialId, String transType,
+                                          Long linkedKioskId, String kioskTag,
+                                          String materialTag, List<Long> kioskIds,
+                                          PageParams pageParams, String bid, boolean atd,
+                                          String reason) throws ServiceException {
     return getInventoryTransactions(sinceDate, untilDate, domainId, kioskId, materialId,
         transType != null ? Collections.singletonList(transType) : null, linkedKioskId, kioskTag,
         materialTag, kioskIds, pageParams, bid, atd, reason, null, null);
@@ -1157,9 +1175,12 @@ public class InventoryManagementServiceImpl extends ServiceImpl
   @SuppressWarnings("unchecked")
   @Override
   public Results getInventoryTransactions(Date sinceDate, Date untilDate, Long domainId,
-      Long kioskId, Long materialId, List<String> transTypes, Long linkedKioskId, String kioskTag,
-      String materialTag, List<Long> kioskIds, PageParams pageParams, String bid,
-      boolean atd, String reason, List<String> excludeReasons, PersistenceManager pm)
+                                          Long kioskId, Long materialId, List<String> transTypes,
+                                          Long linkedKioskId, String kioskTag,
+                                          String materialTag, List<Long> kioskIds,
+                                          PageParams pageParams, String bid,
+                                          boolean atd, String reason, List<String> excludeReasons,
+                                          PersistenceManager pm)
       throws ServiceException {
     xLogger.fine("Entering getInventoryTransactions");
     Results results = transDao.getInventoryTransactions(sinceDate, untilDate, domainId, kioskId,
@@ -1205,37 +1226,44 @@ public class InventoryManagementServiceImpl extends ServiceImpl
    */
 
   public List<ITransaction> updateInventoryTransactions(Long domainId,
-      List<ITransaction> inventoryTransactions) throws ServiceException, DuplicationException {
+                                                        List<ITransaction> inventoryTransactions)
+      throws ServiceException, DuplicationException {
     return updateInventoryTransactions(domainId, inventoryTransactions, false);
   }
 
   public List<ITransaction> updateInventoryTransactions(Long domainId,
-      List<ITransaction> inventoryTransactions, PersistenceManager pm)
+                                                        List<ITransaction> inventoryTransactions,
+                                                        PersistenceManager pm)
       throws ServiceException, DuplicationException {
     return updateInventoryTransactions(domainId, inventoryTransactions, false, pm);
   }
 
   public List<ITransaction> updateInventoryTransactions(Long domainId,
-      List<ITransaction> inventoryTransactions, boolean skipVal)
+                                                        List<ITransaction> inventoryTransactions,
+                                                        boolean skipVal)
       throws ServiceException, DuplicationException {
     return updateInventoryTransactions(domainId, inventoryTransactions, skipVal, false);
   }
 
   public List<ITransaction> updateInventoryTransactions(Long domainId,
-      List<ITransaction> inventoryTransactions, boolean skipVal, PersistenceManager pm)
+                                                        List<ITransaction> inventoryTransactions,
+                                                        boolean skipVal, PersistenceManager pm)
       throws ServiceException, DuplicationException {
     return updateInventoryTransactions(domainId, inventoryTransactions, skipVal, false, pm);
   }
 
   public List<ITransaction> updateInventoryTransactions(Long domainId,
-      List<ITransaction> inventoryTransactions, boolean skipVal, boolean skipPred)
+                                                        List<ITransaction> inventoryTransactions,
+                                                        boolean skipVal, boolean skipPred)
       throws ServiceException, DuplicationException {
     return updateInventoryTransactions(domainId, inventoryTransactions, skipVal, skipPred, null);
   }
 
   public List<ITransaction> updateInventoryTransactions(Long domainId,
-      List<ITransaction> inventoryTransactions, boolean skipVal, boolean skipPred,
-      PersistenceManager pm) throws DuplicationException, ServiceException {
+                                                        List<ITransaction> inventoryTransactions,
+                                                        boolean skipVal, boolean skipPred,
+                                                        PersistenceManager pm)
+      throws DuplicationException, ServiceException {
     return updateInventoryTransactions(domainId, inventoryTransactions, null, skipVal, skipPred,
         pm);
   }
@@ -1243,8 +1271,10 @@ public class InventoryManagementServiceImpl extends ServiceImpl
   @Override
   @SuppressWarnings({"unchecked", "rawtypes"})
   public List<ITransaction> updateInventoryTransactions(Long domainId,
-      List<ITransaction> inventoryTransactions, List<IInvntry> invntryList, boolean skipVal,
-      boolean skipPred, PersistenceManager pm) throws ServiceException, DuplicationException {
+                                                        List<ITransaction> inventoryTransactions,
+                                                        List<IInvntry> invntryList, boolean skipVal,
+                                                        boolean skipPred, PersistenceManager pm)
+      throws ServiceException, DuplicationException {
     xLogger.fine("Entering updateInventoryTransactions");
     boolean closePM = pm == null;
     if (inventoryTransactions == null || inventoryTransactions.size() == 0) {
@@ -1276,7 +1306,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
     if (!isTransactionTypeValid(tType)) {
       throw new ServiceException("Invalid transaction type: " + tType);
     }
-    // Deduplicate the transactions, except for stock outs
+    // Deduplicate the transactions, except for stock counts
     if (!skipVal && !ITransaction.TYPE_PHYSICALCOUNT.equals(tType) && TransactionUtil
         .deduplicate(domainId, inventoryTransactions)) {
       ///generateDuplicationEvents( inventoryTransactions, egTrans );
@@ -1380,9 +1410,8 @@ public class InventoryManagementServiceImpl extends ServiceImpl
           BigDecimal stockOnHandTotal = in.getAvailableStock();
 
           if (invBatch != null) {
-            stockOnHand = invBatch.getQuantity();
-          } else if (trans.hasBatch()) // batch ID exists, but no batch record so far
-          {
+            stockOnHand = invBatch.getAvailableStock();
+          } else if (trans.hasBatch()) {
             stockOnHand = BigDecimal.ZERO;
           }
 
@@ -1586,12 +1615,14 @@ public class InventoryManagementServiceImpl extends ServiceImpl
   }
 
   public ITransaction updateInventoryTransaction(Long domainId, ITransaction inventoryTransaction,
-      PersistenceManager pm) throws ServiceException, DuplicationException {
+                                                 PersistenceManager pm)
+      throws ServiceException, DuplicationException {
     return updateInventoryTransaction(domainId, inventoryTransaction, false, pm);
   }
 
   public ITransaction updateInventoryTransaction(Long domainId, ITransaction inventoryTransaction,
-      boolean skipPred) throws ServiceException, DuplicationException {
+                                                 boolean skipPred)
+      throws ServiceException, DuplicationException {
     if (inventoryTransaction == null) {
       throw new ServiceException("Invalid parameter passed");
     }
@@ -1608,7 +1639,8 @@ public class InventoryManagementServiceImpl extends ServiceImpl
   }
 
   public ITransaction updateInventoryTransaction(Long domainId, ITransaction inventoryTransaction,
-      boolean skipPred, boolean skipVal, PersistenceManager pm)
+                                                 boolean skipPred, boolean skipVal,
+                                                 PersistenceManager pm)
       throws ServiceException, DuplicationException {
     if (inventoryTransaction == null) {
       throw new ServiceException("Invalid parameter passed");
@@ -1628,7 +1660,8 @@ public class InventoryManagementServiceImpl extends ServiceImpl
   }
 
   public ITransaction updateInventoryTransaction(Long domainId, ITransaction inventoryTransaction,
-      boolean skipPred, PersistenceManager pm) throws ServiceException, DuplicationException {
+                                                 boolean skipPred, PersistenceManager pm)
+      throws ServiceException, DuplicationException {
     if (inventoryTransaction == null) {
       throw new ServiceException("Invalid parameter passed");
     }
@@ -1827,8 +1860,8 @@ public class InventoryManagementServiceImpl extends ServiceImpl
 
 
   private Results getInventoryByIds(Long kioskId, Long materialId, String kioskTag,
-      String materialTag, List<Long> kioskIds, PageParams pageParams,
-      PersistenceManager pm) throws ServiceException {
+                                    String materialTag, List<Long> kioskIds, PageParams pageParams,
+                                    PersistenceManager pm) throws ServiceException {
     return invntryDao
         .getInventory(
             new InventoryFilters().withKioskId(kioskId)
@@ -1841,8 +1874,9 @@ public class InventoryManagementServiceImpl extends ServiceImpl
 
 
   public Results getInvntryByLocation(Long domainId, LocationSuggestionModel location,
-      String kioskTags, String excludedKioskTags, String materialTags, String pdos,
-      PageParams params) throws ServiceException {
+                                      String kioskTags, String excludedKioskTags,
+                                      String materialTags, String pdos,
+                                      PageParams params) throws ServiceException {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     try {
       return invntryDao
@@ -1900,14 +1934,16 @@ public class InventoryManagementServiceImpl extends ServiceImpl
   }
 
   private List<Object> createTransactableObjects(ITransaction trans, IInvntry inv,
-      IInvntryBatch invBatch, Date timestamp, PersistenceManager pm) throws ServiceException {
+                                                 IInvntryBatch invBatch, Date timestamp,
+                                                 PersistenceManager pm) throws ServiceException {
     return createTransactableObjects(trans, inv, invBatch, timestamp, pm, true);
   }
 
   // Create a list of trans, inv., inv. log objects that can be transacted together as an entity group of inv (parent)
   @SuppressWarnings({"rawtypes", "unchecked"})
   private List<Object> createTransactableObjects(ITransaction trans, IInvntry inv,
-      IInvntryBatch invBatch, Date timestamp, PersistenceManager pm, boolean isBatchEnabled)
+                                                 IInvntryBatch invBatch, Date timestamp,
+                                                 PersistenceManager pm, boolean isBatchEnabled)
       throws ServiceException {
     BigDecimal stockOnHand = inv.getStock();
     // Update the inventory stock
@@ -1957,8 +1993,11 @@ public class InventoryManagementServiceImpl extends ServiceImpl
    * @param lkInvBatch - applicable for transfer
    */
   private List<Object> createTransactableObjectsForTransfer(ITransaction trans, IInvntry inv,
-      IInvntryBatch invBatch, IInvntry lkInv, IInvntryBatch lkInvBatch, Date timestamp,
-      PersistenceManager pm) throws ObjectNotFoundException, ServiceException {
+                                                            IInvntryBatch invBatch, IInvntry lkInv,
+                                                            IInvntryBatch lkInvBatch,
+                                                            Date timestamp,
+                                                            PersistenceManager pm)
+      throws ObjectNotFoundException, ServiceException {
     Long localts = System.currentTimeMillis() + 1;
     // Ensure issue and receipt have different timestamps, so they are sequenced appropriately in views.
     List<Object> objects = new ArrayList<Object>();
@@ -2026,7 +2065,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
 
   // Update the opening/closing stock in a transfer transaction
   private void updateStockInTransferTrans(ITransaction trans, IInvntry inv,
-      IInvntryBatch invBatch) {
+                                          IInvntryBatch invBatch) {
     BigDecimal stock = inv.getStock();
     trans.setOpeningStock(stock);
     trans.setClosingStock(stock.subtract(trans.getQuantity()));
@@ -2039,7 +2078,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
 
   // Update the stock of a given inventory item (and transaction, in case of stock count)
   private IInvntryBatch updateStock(IInvntry in, IInvntryBatch invBatch, ITransaction trans,
-      Date time, PersistenceManager pm) throws ServiceException {
+                                    Date time, PersistenceManager pm) throws ServiceException {
     // Set the opening stock in trans.
     trans.setOpeningStock(in.getStock());
     if (invBatch != null) {
@@ -2250,7 +2289,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
   }
 
   private boolean updateLastStockEvent(IInvntry inv, BigDecimal oldStock,
-      IInvntryEvntLog lastStockEvent) {
+                                       IInvntryEvntLog lastStockEvent) {
     xLogger.fine("Entered updateStockEventLog");
     BigDecimal newStock = inv.getStock();
     BigDecimal minStock = inv.getNormalizedSafetyStock();
@@ -2266,7 +2305,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
   }
 
   private boolean createNewStockEvent(IInvntry inv, int updateSource,
-      IInvntryEvntLog lastStockEvent, PersistenceManager pm) {
+                                      IInvntryEvntLog lastStockEvent, PersistenceManager pm) {
     int type = inv.getStockEvent();
     boolean
         createNewEvent =
@@ -2292,7 +2331,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
   // Create an inventory event log, if a stockout, under/over stock has happened. 'updateSource' is the source of the update, either IInvntryLog.SOURCE_MINMAXUPDATE or IInvntryLog.SOURCE_STOCKUPDATE
   // NOTE: Stock event state can move from normal to event, event to normal or event to event
   private void updateStockEventLog(BigDecimal oldStock, IInvntry inv, PersistenceManager pm,
-      int updateSource, Long domainId) {
+                                   int updateSource, Long domainId) {
 
     IInvntryEvntLog lastStockEvent = invntryDao.getLastStockEvent(inv, pm);
     // Close the last open stock event, if no event
@@ -2330,8 +2369,8 @@ public class InventoryManagementServiceImpl extends ServiceImpl
 
   // Generate the necessary inventory events
   private void generateEvents(ITransaction trans, IInvntry inv, BigDecimal prevStock,
-      IInvntry linkedKioskInv, BigDecimal lkPrevStock,
-      boolean isStockUpdatedFirstTime, Long domainId) {
+                              IInvntry linkedKioskInv, BigDecimal lkPrevStock,
+                              boolean isStockUpdatedFirstTime, Long domainId) {
     int eventId = -1;
     String transType = trans.getType();
     if (ITransaction.TYPE_ISSUE.equals(transType)) {
@@ -2408,7 +2447,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
   }
 
   private void generateAbnormalStockEvent(ITransaction trans, IInvntry inv, BigDecimal prevStock,
-      Long domainId, boolean isStockUpdatedFirstTime) {
+                                          Long domainId, boolean isStockUpdatedFirstTime) {
     Map<String, Object> params = null;
 
     BigDecimal stock = inv.getStock();
@@ -2476,7 +2515,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
   }
 
   public IInvntryBatch getInventoryBatch(Long kioskId, Long materialId, String batchId,
-      PersistenceManager pm) {
+                                         PersistenceManager pm) {
     IInvntryBatch invBatch = null;
     boolean closePM = false;
     if (pm == null) {
@@ -2551,7 +2590,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
   }
 
   private BigDecimal getStockAvailabilityPeriod(IInvntry inv, int crType, String dispFreq,
-      String entFrequency) {
+                                                String entFrequency) {
     if (crType == InventoryConfig.CR_NONE) {
       return BigDecimal.ZERO;
     }
@@ -2817,19 +2856,19 @@ public class InventoryManagementServiceImpl extends ServiceImpl
   @Override
   @SuppressWarnings("unchecked")
   public List<IInvAllocation> getAllocationsByTypeId(Long kid, Long mid, IInvAllocation.Type type,
-      String typeId) {
+                                                     String typeId) {
     return getAllocations(kid, mid, type, typeId, null);
   }
 
   private List<IInvAllocation> getAllocations(Long kid, Long mid, IInvAllocation.Type type,
-      String typeId, String tag) {
+                                              String typeId, String tag) {
     return getAllocations(kid, mid, type, typeId, tag, null, null);
   }
 
   @SuppressWarnings("unchecked")
   private List<IInvAllocation> getAllocations(Long kid, Long mid, IInvAllocation.Type type,
-      String typeId, String tag, String batchId,
-      PersistenceManager pm) {
+                                              String typeId, String tag, String batchId,
+                                              PersistenceManager pm) {
     boolean useLocalpm = pm == null;
     if (useLocalpm) {
       pm = PMF.get().getPersistenceManager();
@@ -2855,9 +2894,9 @@ public class InventoryManagementServiceImpl extends ServiceImpl
 
   @Override
   public void allocate(Long kid, Long mid, IInvAllocation.Type type, String typeId, String tag,
-      BigDecimal quantity,
-      List<ShipmentItemBatchModel> batchDetails, String userId,
-      PersistenceManager pm) throws ServiceException {
+                       BigDecimal quantity,
+                       List<ShipmentItemBatchModel> batchDetails, String userId,
+                       PersistenceManager pm) throws ServiceException {
     allocate(kid, mid, type, typeId, tag, quantity, batchDetails, userId, pm, null);
   }
 
@@ -2877,9 +2916,9 @@ public class InventoryManagementServiceImpl extends ServiceImpl
    */
   @Override
   public void allocate(Long kid, Long mid, IInvAllocation.Type type, String typeId, String tag,
-      BigDecimal quantity, List<ShipmentItemBatchModel> batchDetails,
-      String userId,
-      PersistenceManager pm, String materialStatus) throws ServiceException {
+                       BigDecimal quantity, List<ShipmentItemBatchModel> batchDetails,
+                       String userId,
+                       PersistenceManager pm, String materialStatus) throws ServiceException {
     if ((quantity == null && batchDetails == null) || (quantity != null && batchDetails != null)) {
       throw new IllegalArgumentException(
           "Invalid data. Allocation cannot happen. Both quantity and batch " +
@@ -2996,9 +3035,9 @@ public class InventoryManagementServiceImpl extends ServiceImpl
 
   @Override
   public void allocateAutomatically(Long kid, Long mid, IInvAllocation.Type type, String typeId,
-      String tag,
-      BigDecimal quantity, String userId, boolean autoAssignStatus,
-      PersistenceManager pm)
+                                    String tag,
+                                    BigDecimal quantity, String userId, boolean autoAssignStatus,
+                                    PersistenceManager pm)
       throws ServiceException {
     boolean useLocalPM = pm == null;
 
@@ -3114,15 +3153,15 @@ public class InventoryManagementServiceImpl extends ServiceImpl
   }
 
   public void clearAllocation(Long kid, Long mid, IInvAllocation.Type type, String typeId,
-      PersistenceManager persistenceManager) throws ServiceException {
+                              PersistenceManager persistenceManager) throws ServiceException {
     clearAllocation(kid, mid, type, Collections.singletonList(typeId), null, null,
         persistenceManager);
   }
 
   @Override
   public void clearBatchAllocation(Long kid, Long mid, IInvAllocation.Type type, String typeId,
-      String batchId,
-      PersistenceManager persistenceManager) throws ServiceException {
+                                   String batchId,
+                                   PersistenceManager persistenceManager) throws ServiceException {
     clearAllocation(kid, mid, type, Collections.singletonList(typeId), null, batchId,
         persistenceManager);
   }
@@ -3147,16 +3186,16 @@ public class InventoryManagementServiceImpl extends ServiceImpl
   }
 
   private void clearAllocation(Long kid, Long mid, IInvAllocation.Type type, List<String> typeIds,
-      String tag,
-      String batchId, PersistenceManager pm) throws ServiceException {
+                               String tag,
+                               String batchId, PersistenceManager pm) throws ServiceException {
     clearAllocation(kid, mid, type, typeIds, tag, batchId, pm, null, null);
   }
 
 
   private void clearAllocation(Long kid, Long mid, IInvAllocation.Type type, List<String> typeIds,
-      String tag,
-      String batchId, PersistenceManager pm, IInvntry inv,
-      IInvntryBatch invBatch)
+                               String tag,
+                               String batchId, PersistenceManager pm, IInvntry inv,
+                               IInvntryBatch invBatch)
       throws ServiceException {
     boolean closePM = pm == null;
     if (closePM) {
@@ -3210,11 +3249,11 @@ public class InventoryManagementServiceImpl extends ServiceImpl
 
   @Override
   public void transferAllocation(Long kid, Long mid, IInvAllocation.Type srcType, String srcTypeId,
-      IInvAllocation.Type destType, String destTypeId,
-      BigDecimal quantity,
-      List<ShipmentItemBatchModel> batchDetails, String userId,
-      String tag,
-      PersistenceManager pm, String materialStatus, boolean isSet)
+                                 IInvAllocation.Type destType, String destTypeId,
+                                 BigDecimal quantity,
+                                 List<ShipmentItemBatchModel> batchDetails, String userId,
+                                 String tag,
+                                 PersistenceManager pm, String materialStatus, boolean isSet)
       throws ServiceException {
     if ((quantity == null && batchDetails == null) || (quantity != null && batchDetails != null)) {
       throw new IllegalArgumentException(
@@ -3269,11 +3308,11 @@ public class InventoryManagementServiceImpl extends ServiceImpl
   }
 
   private void transferAllocate(Long kid, Long mid, String bid, IInvAllocation.Type srcType,
-      String srcTypeId,
-      IInvAllocation.Type destType, String destTypeId, BigDecimal q,
-      String userId,
-      List<IInvAllocation> allocations, String tag, PersistenceManager pm,
-      boolean isSet)
+                                String srcTypeId,
+                                IInvAllocation.Type destType, String destTypeId, BigDecimal q,
+                                String userId,
+                                List<IInvAllocation> allocations, String tag, PersistenceManager pm,
+                                boolean isSet)
       throws Exception {
     if (BigUtil.equalsZero(q)) {
       return;
@@ -3301,9 +3340,9 @@ public class InventoryManagementServiceImpl extends ServiceImpl
   }
 
   private IInvAllocation getOrCreateAllocation(Long kid, Long mid, String bid,
-      IInvAllocation.Type type,
-      String typeId, String userId,
-      PersistenceManager pm) {
+                                               IInvAllocation.Type type,
+                                               String typeId, String userId,
+                                               PersistenceManager pm) {
     IInvAllocation allocation = getInvAllocation(kid, mid, bid, type, typeId, pm);
     if (allocation == null) {
       allocation = createAllocateInstance(kid, mid, bid, type, typeId, userId);
@@ -3312,14 +3351,14 @@ public class InventoryManagementServiceImpl extends ServiceImpl
   }
 
   private IInvAllocation getInvAllocation(Long kid, Long mid, String bid, IInvAllocation.Type type,
-      String typeId, PersistenceManager pm) {
+                                          String typeId, PersistenceManager pm) {
     QueryParams query = constructAllocationQuery(kid, mid, bid, type, typeId, null);
     return JDOUtils.getSingle(query, pm, null);
   }
 
   private QueryParams constructAllocationQuery(Long kid, Long mid, String bid,
-      IInvAllocation.Type type,
-      String typeId, String tag) {
+                                               IInvAllocation.Type type,
+                                               String typeId, String tag) {
     StringBuilder query = new StringBuilder("SELECT * FROM INVALLOCATION WHERE ");
     final String AND = " AND ";
     boolean firstCondition = true;
@@ -3364,8 +3403,8 @@ public class InventoryManagementServiceImpl extends ServiceImpl
   }
 
   private IInvAllocation createAllocateInstance(Long kid, Long mid, String bId,
-      IInvAllocation.Type type, String typeId,
-      String userId) {
+                                                IInvAllocation.Type type, String typeId,
+                                                String userId) {
     IInvAllocation allocation = JDOUtils.createInstance(IInvAllocation.class);
     allocation.setMaterialId(mid);
     allocation.setKioskId(kid);
@@ -3380,8 +3419,8 @@ public class InventoryManagementServiceImpl extends ServiceImpl
   }
 
   private void incrementInvAllocation(IInvAllocation allocation, BigDecimal quantity, String tag,
-      String userId,
-      BigDecimal invAllocQty, PersistenceManager pm)
+                                      String userId,
+                                      BigDecimal invAllocQty, PersistenceManager pm)
       throws Exception {
     if (tag != null) {
       allocation.setTags(Collections.singletonList(tag));
@@ -3397,7 +3436,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
   }
 
   private void decrementInvAllocation(IInvAllocation allocation, BigDecimal quantity, String tag,
-      String userId) throws Exception {
+                                      String userId) throws Exception {
     if (tag != null) {
       allocation.setTags(Collections.singletonList(tag));
     }
@@ -3410,16 +3449,16 @@ public class InventoryManagementServiceImpl extends ServiceImpl
   }
 
   private void incrementInventoryAvailableQuantity(Long kioskId, Long materialId, String batchId,
-      BigDecimal quantity,
-      PersistenceManager pm) throws Exception {
+                                                   BigDecimal quantity,
+                                                   PersistenceManager pm) throws Exception {
     incrementInventoryAvailableQuantity(kioskId, materialId, batchId, quantity, pm, null, null,
         false);
   }
 
   public void incrementInventoryAvailableQuantity(Long kioskId, Long materialId, String batchId,
-      BigDecimal quantity,
-      PersistenceManager pm, IInvntry inv,
-      IInvntryBatch invBatch, boolean isClear)
+                                                  BigDecimal quantity,
+                                                  PersistenceManager pm, IInvntry inv,
+                                                  IInvntryBatch invBatch, boolean isClear)
       throws Exception {
     if (BigUtil.equalsZero(quantity)) {
       return;
@@ -3601,25 +3640,25 @@ public class InventoryManagementServiceImpl extends ServiceImpl
   }
 
   public Results getInventory(Long domainId, Long kioskId, List<Long> kioskIds, String kioskTags,
-      String excludedKioskTags,
-      Long materialId, String materialTag, int matType,
-      boolean onlyNonZeroStk, String pdos, LocationSuggestionModel location,
-      PageParams params) throws ServiceException {
+                              String excludedKioskTags,
+                              Long materialId, String materialTag, int matType,
+                              boolean onlyNonZeroStk, String pdos, LocationSuggestionModel location,
+                              PageParams params) throws ServiceException {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     Results results = null;
     try {
       results =
           invntryDao.getInventory(new InventoryFilters().withDomainId(domainId)
-                  .withKioskId(kioskId)
-                  .withKioskIds(kioskIds)
-                  .withKioskTags(kioskTags)
-                  .withExcludedKioskTags(excludedKioskTags)
-                  .withMaterialId(materialId)
-                  .withMaterialTags(materialTag)
-                  .withMatType(matType)
-                  .withOnlyNonZeroStk(onlyNonZeroStk)
-                  .withPdos(pdos)
-                  .withLocation(location)
+              .withKioskId(kioskId)
+              .withKioskIds(kioskIds)
+              .withKioskTags(kioskTags)
+              .withExcludedKioskTags(excludedKioskTags)
+              .withMaterialId(materialId)
+              .withMaterialTags(materialTag)
+              .withMatType(matType)
+              .withOnlyNonZeroStk(onlyNonZeroStk)
+              .withPdos(pdos)
+              .withLocation(location)
               , params, pm);
     } finally {
       pm.close();
@@ -3628,10 +3667,10 @@ public class InventoryManagementServiceImpl extends ServiceImpl
   }
 
   @Override
-  public Results getInventory(InventoryFilters filters, PageParams pageParams)
+  public Results<IInvntry> getInventory(InventoryFilters filters, PageParams pageParams)
       throws ServiceException {
     PersistenceManager pm = PMF.get().getPersistenceManager();
-    Results results = null;
+    Results<IInvntry> results = null;
     try {
       results =
           invntryDao.getInventory(filters, pageParams, pm);
@@ -3659,217 +3698,12 @@ public class InventoryManagementServiceImpl extends ServiceImpl
   public Map<Long, List<ErrorDetailModel>> updateMultipleInventoryTransactions(
       Map<Long, List<ITransaction>> materialTransactionsMap, Long domainId, String userId)
       throws ServiceException {
-    if (materialTransactionsMap == null || materialTransactionsMap.isEmpty() || domainId == null
-        || StringUtils.isEmpty(userId)) {
-      throw new ServiceException(
-          "Missing or invalid mandatory attributes while updating multiple inventory transactions");
-    }
-    PersistenceManager pm = null;
-    javax.jdo.Transaction tx = null;
-    Map<Long, LockUtil.LockStatus> locks = null;
-    Map<Long, List<ErrorDetailModel>> materialErrorDetailModelsMap = new HashMap<>(1);
     try {
-      pm = PMF.get().getPersistenceManager();
-      tx = pm.currentTransaction();
-      tx.begin();
-      // Iterate over the map and validate transactions for each material
-      Set<Long> mids = materialTransactionsMap.keySet();
-      Map<Long, Integer> midCountMap = new HashMap<>();
-      List<ITransaction> validTransactions = null;
-      Map<Long, Integer> midFailedFromPositionMap = new HashMap<>();
-      for (Long mid : mids) {
-        List<ITransaction> transactions = materialTransactionsMap.get(mid);
-        // Pass it through data validation
-        int invalidStartPosition = TransactionUtil.filterInvalidTransactions(transactions);
-        if (invalidStartPosition != -1) {
-          updateMaterialErrorDetailModelsMap(mid, materialErrorDetailModelsMap, "M010",
-              invalidStartPosition);
-        }
-        if (transactions.isEmpty()) {
-          // No more transactions to process. Continue to the next material.
-          continue;
-        }
-        MobileTransactionsHandler mobTransHandler = MobileTransactionsHandlerFactory.getInstance(
-            MobileTransactionsHandlerFactory.POLICY_1);
-        ITransaction transaction = transactions.get(0);
-        Long kioskId = transaction.getKioskId();
-        Long materialId = transaction.getMaterialId();
-        Set<Long> kiosksToLock = getKioskIdsToLock(transactions);
-        Map<Long, LockUtil.LockStatus> kidLockStatusMap = LockUtil
-            .lock(kiosksToLock, Constants.TX, LOCK_RETRY_COUNT, LOCK_RETRY_DELAY_IN_MILLISECONDS);
-        locks = new HashMap<>(kiosksToLock.size());
-        for (Map.Entry<Long, LockUtil.LockStatus> entry : kidLockStatusMap.entrySet()) {
-          if (!locks.containsKey(entry.getKey())) {
-            locks.put(entry.getKey(), entry.getValue());
-          }
-          if (!LockUtil.isLocked(entry.getValue())) {
-            throw new ServiceException(backendMessages.getString("lockinventory.failed"));
-          }
-        }
-        ITransaction lastWebTrans = getLastWebTransaction(kioskId, materialId, null);
-        int rejectUntilPosition = -1;
-        if (mobTransHandler != null) {
-          rejectUntilPosition = mobTransHandler.applyPolicy(transactions, lastWebTrans);
-        }
-        if (rejectUntilPosition != -1) {
-          updateMaterialErrorDetailModelsMap(mid, materialErrorDetailModelsMap, "M011",
-              rejectUntilPosition);
-          midCountMap.put(mid, rejectUntilPosition);
-        }
-        if (transactions.isEmpty()) {
-          // No more transactions to process. Continue to next material.
-          continue;
-        }
-        try {
-          // If the transaction has batch, then get a map of batch id  and the first transaction for that batch
-          if (transaction.hasBatch()) {
-            Map<String, List<ITransaction>> bidTransactionsMap = getBatchIdFirstTransactionMap(
-                transactions);
-            // Iterate through the map and get lastWebTrans for every bid and add stock count if needed for every batch
-            for (Map.Entry<String, List<ITransaction>> entry : bidTransactionsMap.entrySet()) {
-              ITransaction lastWebTransactionForBatch = getLastWebTransaction(kioskId, materialId,
-                  entry.getKey());
-              mobTransHandler.addStockCountIfNeeded(lastWebTransactionForBatch, entry.getValue());
-              if (entry.getValue().size() == 2) {
-                // Stock count has been added. Update the transactions
-                transactions.add(0, entry.getValue().get(0));
-              }
-            }
-          } else {
-            mobTransHandler.addStockCountIfNeeded(lastWebTrans, transactions);
-          }
-        } catch (LogiException e) {
-          // Reject all transactions
-          transactions.clear();
-          updateFailedFromPositionMap(midFailedFromPositionMap, midCountMap,
-              materialErrorDetailModelsMap, transaction.getMaterialId());
-        }
-        if (transactions.isEmpty()) {
-          continue;
-        }
-        // Add valid transactions for this material into the main list
-        if (validTransactions == null) {
-          validTransactions = new ArrayList<>(transactions.size());
-        }
-        validTransactions.addAll(transactions);
-      }
-      // If no validTransactions, return
-      if (validTransactions == null || validTransactions.isEmpty()) {
-        return materialErrorDetailModelsMap;
-      }
-      // Shuffle and sort the transactions by entry time
-      Collections.sort(validTransactions, new EntryTimeComparator());
-      // Iterate through every valid transaction
-      for (ITransaction transaction : validTransactions) {
-        if (midFailedFromPositionMap.containsKey(transaction.getMaterialId())) {
-          // Do not process for this material
-          continue;
-        }
-        try {
-          ITransaction error = updateInventoryTransaction(domainId, transaction, false, true, pm);
-          if (error != null) {
-            xLogger.warn("Error while updating inventory, errorCode: {0}, errorMessage: {1}",
-                error.getMsgCode(), error.getMessage());
-            updateFailedFromPositionMap(midFailedFromPositionMap, midCountMap,
-                materialErrorDetailModelsMap, transaction.getMaterialId());
-            continue;
-          }
-        } catch (DuplicationException | ServiceException e) {
-          xLogger.severe(
-              "Exception while updating inventory transaction for kid: {0}, mid: {1}, bid: {2}",
-              transaction.getKioskId(), transaction.getMaterialId(), transaction.getBatchId(), e);
-          updateFailedFromPositionMap(midFailedFromPositionMap, midCountMap,
-              materialErrorDetailModelsMap, transaction.getMaterialId());
-          continue;
-        }
-        if (!transaction.isSystemCreated()) {
-          if (midCountMap.containsKey(transaction.getMaterialId())) {
-            int rejectUntilPosition = midCountMap.get(transaction.getMaterialId());
-            midCountMap.put(transaction.getMaterialId(), rejectUntilPosition + 1);
-          } else {
-            midCountMap.put(transaction.getMaterialId(), 0);
-          }
-        }
-      }
-      tx.commit();
-    } finally {
-      if (tx != null && tx.isActive()) {
-        tx.rollback();
-      }
-      if (locks != null) {
-        LockUtil.releaseLocks(locks, Constants.TX);
-      }
-      if (!pm.isClosed()) {
-        pm.close();
-      }
+      return StaticApplicationContext.getBean(UpdateMultipleInventoryTransactionsAction.class)
+          .execute(materialTransactionsMap, domainId, userId);
+    } catch (ConfigurationException e) {
+      throw new ServiceException(e);
     }
-    return materialErrorDetailModelsMap;
-  }
-
-  private void updateMaterialErrorDetailModelsMap(Long mid,
-      Map<Long, List<ErrorDetailModel>> materialErrorDetailModelsMap, String errorCode,
-      int position) {
-    if (materialErrorDetailModelsMap == null) {
-      materialErrorDetailModelsMap = new HashMap<>(1);
-    }
-    List<ErrorDetailModel> errorDetailModels;
-    if (materialErrorDetailModelsMap.containsKey(mid)) {
-      errorDetailModels = materialErrorDetailModelsMap.get(mid);
-    } else {
-      errorDetailModels = new ArrayList<>(1);
-    }
-    errorDetailModels.add(new ErrorDetailModel(errorCode, position));
-    materialErrorDetailModelsMap.put(mid, errorDetailModels);
-  }
-
-  private void updateFailedFromPositionMap(Map<Long, Integer> midFailedFromPositionMap,
-      Map<Long, Integer> midCountMap,
-      Map<Long, List<ErrorDetailModel>> materialErrorDetailModelsMap, Long mid) {
-    int failedFromPosition = 0;
-    if (midCountMap.containsKey(mid)) {
-      failedFromPosition = midCountMap.get(mid) + 1;
-    }
-    midFailedFromPositionMap.put(mid, failedFromPosition);
-    updateMaterialErrorDetailModelsMap(mid, materialErrorDetailModelsMap, "M012",
-        failedFromPosition);
-  }
-
-  public ITransaction getLastWebTransaction(Long kid, Long mid, String bid)
-      throws ServiceException {
-    // Get the latest transaction
-    PageParams pageParams = new PageParams(0, 1);
-    Results results = getInventoryTransactions(null, null, null, kid, mid,
-        null,
-        null, null, null, null, pageParams, bid, false, null);
-    ITransaction lastWebTrans = null;
-    if (results.getSize() == 1) {
-      lastWebTrans = (ITransaction) results.getResults().get(0);
-    }
-    return lastWebTrans;
-  }
-
-  // Get the unique list of kiosk ids to lock. This includes kid and lkid (in case the transaction type is transfer)
-  private Set<Long> getKioskIdsToLock(List<ITransaction> transactions) {
-    Set<Long> kidsToLock = new HashSet<>(1);
-    for (ITransaction trn : transactions) {
-      kidsToLock.add(trn.getKioskId());
-      if (ITransaction.TYPE_TRANSFER.equals(trn.getType()) && !kidsToLock
-          .contains(trn.getLinkedKioskId())) {
-        kidsToLock.add(trn.getLinkedKioskId());
-      }
-    }
-    return kidsToLock;
-  }
-
-  private Map<String, List<ITransaction>> getBatchIdFirstTransactionMap(
-      List<ITransaction> transactions) {
-    // Iterate through transactions and form a map of bid and first transaction for that batch
-    Map<String, List<ITransaction>> bidFirstTransactionMap = new HashMap<>();
-    transactions.stream()
-        .filter(transaction -> !bidFirstTransactionMap.containsKey(transaction.getBatchId()))
-        .forEach(transaction -> bidFirstTransactionMap.put(transaction.getBatchId(),
-            new ArrayList<>(Arrays.asList(transaction))));
-    return bidFirstTransactionMap;
   }
 
   public boolean validateMaterialBatchManagementUpdate(Long materialId) throws ServiceException {
@@ -3956,7 +3790,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
   }
 
   private BigDecimal calculateUnconsumableStock(Map<Date, BigDecimal> expDateBatchQtyMap,
-      BigDecimal c) {
+                                                BigDecimal c) {
     // CD = CONSUMPTION_DAYS (days required to consume the stock)
     // BQ = BATCH QUANTITY
     // C = CONSUMPTION RATE
@@ -4068,14 +3902,6 @@ public class InventoryManagementServiceImpl extends ServiceImpl
         TagUtil.TYPE_ENTITY);
     if (user != null) {
       in.setUpdatedBy(user);
-    }
-  }
-
-  public class EntryTimeComparator implements Comparator<ITransaction> {
-
-    @Override
-    public int compare(ITransaction o1, ITransaction o2) {
-      return o1.getSortEt().compareTo(o2.getSortEt());
     }
   }
 

@@ -26,9 +26,9 @@
      ng-init="init('configuration.dashboards')">
     <ul class="nav nav-tabs subnav-tabs">
         <li ng-class="{active: (subview == 'list')}"><a
-                href="#/configuration/dashboards/" ng-show="iSU">Dashboards</a></li>
+                href="#/configuration/dashboards/" ng-show="iSU">{{resourceBundle['custom.dashboards']}}</a></li>
         <li ng-class="{active: (subview == 'add' || subview == 'detail' || subview == 'view')}" ng-show="iSU"><a
-                href="#/configuration/dashboards/add/">{{resourceBundle['create']}} dashboard</a></li>
+                href="#/configuration/dashboards/add/">{{resourceBundle['create']}} {{resourceBundle['custom.dashboard']}}</a></li>
     </ul>
     <div ng-switch="subview">
         <div class="tab-pane" ng-switch-when="list">

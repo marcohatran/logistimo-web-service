@@ -53,14 +53,14 @@ public class OptimizerServlet extends JsonRestServlet {
 
   // Access via the data/test GUI
   public void processGet(HttpServletRequest req, HttpServletResponse resp,
-      ResourceBundle backendMessages, ResourceBundle messages)
+                         ResourceBundle backendMessages, ResourceBundle messages)
       throws IOException {
     processPost(req, resp, backendMessages, messages);
   }
 
   // Accessed via a task
   public void processPost(HttpServletRequest req, HttpServletResponse resp,
-      ResourceBundle backendMessages, ResourceBundle messages)
+                          ResourceBundle backendMessages, ResourceBundle messages)
       throws IOException {
     xLogger.fine("Entered processPost");
     // Get parameters

@@ -5,7 +5,7 @@ angular.module('logistimo.storyboard.storesCountWidget', [])
     .config(function (widgetsRepositoryProvider) {
         widgetsRepositoryProvider.addWidget({
             id: "storesCountWidget",
-            name: "Inventory store count",
+            name: "Entity count",
             templateUrl: "plugins/storyboards/inventory/stores-count-widget/stores-count-widget.html",
             editTemplateUrl: "plugins/storyboards/inventory/edit-template.html",
             templateFilters: [
@@ -34,72 +34,72 @@ angular.module('logistimo.storyboard.storesCountWidget', [])
                     type: 'period'
                 }
             ],
-            defaultHeight: 2,
+            defaultHeight: 1,
             defaultWidth: 4
         });
     })
     .controller('storesCountWidgetController',
-        ['$scope', 'dashboardService', 'domainCfgService', function ($scope, dashboardService, domainCfgService) {
-            var filter = angular.copy($scope.widget.conf);
-            var entPieColors;
-            var fDate = (checkNotNullEmpty(filter.date) ? formatDate(filter.date) : undefined);
-            $scope.showChart = false;
-            $scope.totalInv = 0;
-            $scope.wloading = true;
-            $scope.showError = false;
-            function setFilters() {
-                if (checkNotNullEmpty(filter.period)) {
-                    var p = filter.period;
-                    if (p == '0' || p == '1' || p == '2' || p == '3' || p == '7' || p == '30') {
-                        $scope.period = p;
-                    }
-                } else {
-                    $scope.period = "0";
+    ['$scope', 'dashboardService', 'domainCfgService', function ($scope, dashboardService, domainCfgService) {
+        var filter = angular.copy($scope.widget.conf);
+        var entPieColors;
+        var fDate = (checkNotNullEmpty(filter.date) ? formatDate(filter.date) : undefined);
+        $scope.showChart = false;
+        $scope.totalInv = 0;
+        $scope.wloading = true;
+        $scope.showError = false;
+        function setFilters() {
+            if (checkNotNullEmpty(filter.period)) {
+                var p = filter.period;
+                if (p == '0' || p == '1' || p == '2' || p == '3' || p == '7' || p == '30') {
+                    $scope.period = p;
                 }
-                
-                if (checkNotNullEmpty(filter.materialTag)) {
-                    $scope.exFilter = constructModel(filter.materialTag);
-                    $scope.exType = 'mTag';
-                } else if (checkNotNullEmpty(filter.material)) {
-                    $scope.exFilter = filter.material.id;
-                    $scope.exType = 'mId';
-                }
+            } else {
+                $scope.period = "0";
             }
-            
-            domainCfgService.getSystemDashboardConfig().then(function (data) {
-                var domainConfig = angular.fromJson(data.data);
-                entPieColors = domainConfig.pie.ec;
-            }).then(function () {
-                setFilters();
-            }).then(function () {
-                getData();
-            });
-            
-            function getData() {
-                dashboardService.get(undefined, undefined, $scope.exFilter, $scope.exType, $scope.period, undefined,
-                    undefined, constructModel(filter.entityTag), fDate, constructModel(filter.exEntityTag), false).then(
-                    function (data) {
-                        getTotalItems(data.data.entDomain);
-                        setWidgetData();
-                    }).catch(function error(msg) {
-                    showError(msg,$scope);
+
+            if (checkNotNullEmpty(filter.materialTag)) {
+                $scope.exFilter = constructModel(filter.materialTag);
+                $scope.exType = 'mTag';
+            } else if (checkNotNullEmpty(filter.material)) {
+                $scope.exFilter = filter.material.id;
+                $scope.exType = 'mId';
+            }
+        }
+
+        domainCfgService.getSystemDashboardConfig().then(function (data) {
+            var domainConfig = angular.fromJson(data.data);
+            entPieColors = domainConfig.pie.ec;
+        }).then(function () {
+            setFilters();
+        }).then(function () {
+            getData();
+        });
+
+        function getData() {
+            dashboardService.get(undefined, undefined, $scope.exFilter, $scope.exType, $scope.period, undefined,
+                undefined, constructModel(filter.entityTag), fDate, constructModel(filter.exEntityTag), false).then(
+                function (data) {
+                    getTotalItems(data.data.entDomain);
+                    setWidgetData();
+                }).catch(function error(msg) {
+                    showError(msg, $scope);
                 }).finally(function () {
                     $scope.loading = false;
                     $scope.wloading = false;
                 });
-            }
-            
-            function getTotalItems(data) {
-                $scope.entDomainTotal = (data.a || 0) + (data.i || 0);
-            }
-            
-            function setWidgetData() {
-                $scope.storesCountWidget = {
-                    computedWidth: '100%',
-                    computedHeight: parseInt($scope.widget.computedHeight, 10) - 30
-                };
-            }
-            
-        }]);
+        }
+
+        function getTotalItems(data) {
+            $scope.entDomainTotal = (data.a || 0) + (data.i || 0);
+        }
+
+        function setWidgetData() {
+            $scope.storesCountWidget = {
+                computedWidth: '100%',
+                computedHeight: parseInt($scope.widget.computedHeight, 10) - 30
+            };
+        }
+
+    }]);
 
 logistimoApp.requires.push('logistimo.storyboard.storesCountWidget');

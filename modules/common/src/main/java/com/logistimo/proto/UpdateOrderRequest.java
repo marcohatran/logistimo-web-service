@@ -162,4 +162,13 @@ public class UpdateOrderRequest {
    */
 
   public String tm;
+
+  /**
+   * Store of the user
+   */
+  public Long ukid;
+  /**
+   * Embed request: presently supports only inventory
+   */
+  public String embed;
 }

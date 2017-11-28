@@ -23,22 +23,22 @@
   -->
 
 <div ng-controller="stockTrendWidgetController">
-  <div ng-if="wLoading" class="row mt18 widget-loading">
-    <div class="text-center">
-      {{resourceBundle['loading.uppercase']}}... <span class="glyphicons glyphicons-cogwheel spin"></span>
+    <div ng-if="wLoading" class="row mt18 widget-loading">
+        <div class="text-center">
+            {{resourceBundle['loading.uppercase']}}... <span class="glyphicons glyphicons-cogwheel spin"></span>
+        </div>
     </div>
-  </div>
-  <div ng-if="!wLoading && showError" class="alert alert-danger">
-    <div class="text-center">
-      {{errorMessage}}
+    <div ng-if="!wLoading && showError" class="alert alert-danger">
+        <div class="text-center">
+            {{errorMessage}}
+        </div>
     </div>
-  </div>
-  <div ng-if="!wLoading && !showError && renderChart">
-    <div class="col-sm-12 font-larger text-center text-bold">
-      <span class="font-large">{{widget.conf.title}}</span>
+    <div ng-if="!wLoading && !showError && renderChart">
+        <div class="col-sm-12 font-larger text-center text-bold">
+            <span class="font-large">{{widget.conf.title}}</span>
+        </div>
+        <fusion-chart type="cType" height="cHeight" width="cWidth" chart-label="cLabel"
+                      chart-data="cData" chart-options="cOptions"
+                      chart-id="{{widget.id}}"></fusion-chart>
     </div>
-      <fusion-chart type="cType" height="cHeight" width="cWidth" chart-label="cLabel"
-                    chart-data="cData" chart-options="cOptions"
-                    chart-id="{{widget.id}}"></fusion-chart>
-  </div>
 </div>

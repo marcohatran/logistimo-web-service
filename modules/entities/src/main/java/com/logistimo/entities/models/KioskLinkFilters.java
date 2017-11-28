@@ -66,7 +66,9 @@ public class KioskLinkFilters {
     return modifiedSince;
   }
 
-  public Boolean getRouteEnabled() { return routeEnabled; }
+  public Boolean getRouteEnabled() {
+    return routeEnabled;
+  }
 
 
   public KioskLinkFilters withKioskId(Long kioskId) {

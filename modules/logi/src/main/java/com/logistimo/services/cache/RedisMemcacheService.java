@@ -28,7 +28,7 @@ import com.logistimo.logger.XLog;
 import com.logistimo.services.utils.ConfigUtil;
 
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -54,7 +54,7 @@ import redis.clients.util.SafeEncoder;
 /**
  * Created by charan on 22/01/15.
  */
-@Service
+@Component
 public class RedisMemcacheService implements MemcacheService {
 
   private static final byte[] NX = "NX".getBytes();

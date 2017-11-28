@@ -28,7 +28,8 @@
         <li ng-class="{active: (subview == 'list')}"><a
                 href="#/configuration/bulletin/" ng-show="iSU">{{resourceBundle['bulletin.boards']}}</a></li>
         <li ng-class="{active: (subview == 'add' || subview == 'detail' || subview == 'view')}" ng-show="iSU"><a
-                href="#/configuration/bulletin/add/">{{resourceBundle['create']}} {{resourceBundle['bulletin.board.lower']}}</a></li>
+                href="#/configuration/bulletin/add/">{{resourceBundle['create']}}
+            {{resourceBundle['bulletin.board.lower']}}</a></li>
         <li ng-class="{active: (subview == 'auth')}">
             <a href="#/configuration/bulletin/auth">{{resourceBundle['authorize']}}</a>
         </li>
@@ -45,7 +46,7 @@
                  ng-init="bulletinBoardId = getRequestParam('bulletinBoardId')"></div>
         </div>
         <div class="tab-pane" ng-switch-when="view">
-            <div ng-include="'/angular-storyboards/src/bulletinboard/templates/view-bulletin-board.html'"
+            <div ng-include="'views/bulletinboard/view-bulletin-board.html'"
                  ng-init="bulletinBoardId = getRequestParam('bulletinBoardId')"></div>
         </div>
         <div class="tab-pane" ng-switch-when="auth">

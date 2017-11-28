@@ -27,6 +27,7 @@ import com.logistimo.domains.entity.IDomainLink;
 import com.logistimo.domains.utils.DomainsUtil;
 import com.logistimo.orders.entity.IOrder;
 import com.logistimo.services.ServiceException;
+
 import java.util.Date;
 
 /**
@@ -35,7 +36,7 @@ import java.util.Date;
 public class OrderVisibilityUtils {
 
   protected static void updateTransferOrderVisibility(IOrder order, Long domainId,
-      boolean isApproved) throws ServiceException {
+                                                      boolean isApproved) throws ServiceException {
     Date currentTime = new Date();
     order.setVisibleToCustomer(isApproved);
     order.setVisibleToVendor(isApproved);
@@ -52,7 +53,7 @@ public class OrderVisibilityUtils {
   }
 
   protected static void updatePurchaseOrderVisibility(IOrder order, Long domainId,
-      boolean isApproved) throws ServiceException {
+                                                      boolean isApproved) throws ServiceException {
     Date currentTime = new Date();
     order.setVisibleToCustomer(true);
     order.setCustomerVisibilityTime(currentTime);

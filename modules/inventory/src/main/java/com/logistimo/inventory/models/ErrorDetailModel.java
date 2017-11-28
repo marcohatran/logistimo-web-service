@@ -37,12 +37,18 @@ public class ErrorDetailModel {
   public int index;
 
   /**
+   * error message
+   */
+  public String message;
+
+  /**
    * Constructor
    * @param errorCode
    * @param index
    */
-  public ErrorDetailModel(String errorCode, int index) {
+  public ErrorDetailModel(String errorCode, int index, String message) {
     this.errorCode = errorCode;
     this.index = index;
+    this.message = message;
   }
 }

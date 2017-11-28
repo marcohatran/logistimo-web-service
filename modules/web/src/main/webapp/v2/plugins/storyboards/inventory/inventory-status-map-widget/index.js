@@ -5,7 +5,7 @@ angular.module('logistimo.storyboard.inventoryStatusMapWidget', [])
     .config(function (widgetsRepositoryProvider) {
         widgetsRepositoryProvider.addWidget({
             id: "inventoryStatusMapWidget",
-            name: "Inventory map distribution",
+            name: "Inventory status map",
             templateUrl: "plugins/storyboards/inventory/inventory-status-map-widget/inventory-status-map-widget.html",
             editTemplateUrl: "plugins/storyboards/inventory/edit-template.html",
             templateFilters: [
@@ -39,77 +39,77 @@ angular.module('logistimo.storyboard.inventoryStatusMapWidget', [])
                 }
             ],
             defaultHeight: 4,
-            defaultWidth: 4
+            defaultWidth: 5
         });
     })
     .controller('inventoryStatusMapWidgetController',
-        ['$scope', '$timeout', 'dashboardService', 'domainCfgService', 'INVENTORY', '$sce',
-            function ($scope, $timeout, dashboardService, domainCfgService, INVENTORY, $sce) {
-                var filter = angular.copy($scope.widget.conf);
-                var invPieColors, invPieOrder, mapRange, mapColors;
-                var fDate = (checkNotNullEmpty(filter.date) ? formatDate(filter.date) : undefined);
-                $scope.showChart = false;
-                $scope.wloading = true;
-                $scope.showError = false;
-                domainCfgService.getSystemDashboardConfig().then(function (data) {
-                    var domainConfig = angular.fromJson(data.data);
-                    mapColors = domainConfig.mc;
-                    $scope.mc = mapColors;
-                    mapRange = domainConfig.mr;
-                    $scope.mr = mapRange;
-                    invPieColors = domainConfig.pie.ic;
-                    invPieOrder = domainConfig.pie.io;
-                    $scope.mapEvent = invPieOrder[0];
-                    $scope.init();
-                });
+    ['$scope', '$timeout', 'dashboardService', 'domainCfgService', 'INVENTORY', '$sce',
+        function ($scope, $timeout, dashboardService, domainCfgService, INVENTORY, $sce) {
+            var filter = angular.copy($scope.widget.conf);
+            var invPieColors, invPieOrder, mapRange, mapColors;
+            var fDate = (checkNotNullEmpty(filter.date) ? formatDate(filter.date) : undefined);
+            $scope.showChart = false;
+            $scope.wloading = true;
+            $scope.showError = false;
+            domainCfgService.getSystemDashboardConfig().then(function (data) {
+                var domainConfig = angular.fromJson(data.data);
+                mapColors = domainConfig.mc;
+                $scope.mc = mapColors;
+                mapRange = domainConfig.mr;
+                $scope.mr = mapRange;
+                invPieColors = domainConfig.pie.ic;
+                invPieOrder = domainConfig.pie.io;
+                $scope.mapEvent = invPieOrder[0];
+                $scope.init();
+            });
 
-                $scope.init = function () {
-                    domainCfgService.getMapLocationMapping().then(function (data) {
-                        if (checkNotNullEmpty(data.data)) {
-                            $scope.locationMapping = angular.fromJson(data.data);
-                            setFilters();
-                            loadLocationMap();
-                        }
-                    })
-                };
-
-                function setFilters() {
-                    if (checkNotNullEmpty(filter.period)) {
-                        var p = filter.period;
-                        if (p == '0' || p == '1' || p == '2' || p == '3' || p == '7' || p == '30') {
-                            $scope.period = p;
-                        }
-                    } else {
-                        $scope.period = "0";
+            $scope.init = function () {
+                domainCfgService.getMapLocationMapping().then(function (data) {
+                    if (checkNotNullEmpty(data.data)) {
+                        $scope.locationMapping = angular.fromJson(data.data);
+                        setFilters();
+                        loadLocationMap();
                     }
+                })
+            };
 
-                    if (checkNotNullEmpty(filter.mapType)) {
-                        var mapType = filter.mapType;
-                        if (mapType == '0' || mapType == '1') {
-                            $scope.mapType = mapType;
-                            if ($scope.mapType == 0) {
-                                $scope.mapEvent = invPieOrder[0];
-                            } else {
-                                $scope.mapEvent = invPieOrder[1];
-                            }
-                        }
-                    } else {
-                        $scope.mapType = "0";
+            function setFilters() {
+                if (checkNotNullEmpty(filter.period)) {
+                    var p = filter.period;
+                    if (p == '0' || p == '1' || p == '2' || p == '3' || p == '7' || p == '30') {
+                        $scope.period = p;
                     }
-
-                    if (checkNotNullEmpty(filter.materialTag)) {
-                        $scope.exFilter = constructModel(filter.materialTag);
-                        $scope.exType = 'mTag';
-                    } else if (checkNotNullEmpty(filter.material)) {
-                        $scope.exFilter = filter.material.id;
-                        $scope.exType = 'mId';
-                    }
+                } else {
+                    $scope.period = "0";
                 }
 
-                function loadLocationMap() {
-                    dashboardService.get(undefined, undefined, $scope.exFilter, $scope.exType, $scope.period, undefined,
-                        undefined, constructModel(filter.entityTag), fDate, constructModel(filter.exEntityTag),
-                        false).then(function (data) {
+                if (checkNotNullEmpty(filter.mapType)) {
+                    var mapType = filter.mapType;
+                    if (mapType == '0' || mapType == '1') {
+                        $scope.mapType = mapType;
+                        if ($scope.mapType == 0) {
+                            $scope.mapEvent = invPieOrder[0];
+                        } else {
+                            $scope.mapEvent = invPieOrder[1];
+                        }
+                    }
+                } else {
+                    $scope.mapType = "0";
+                }
+
+                if (checkNotNullEmpty(filter.materialTag)) {
+                    $scope.exFilter = constructModel(filter.materialTag);
+                    $scope.exType = 'mTag';
+                } else if (checkNotNullEmpty(filter.material)) {
+                    $scope.exFilter = filter.material.id;
+                    $scope.exType = 'mId';
+                }
+            }
+
+            function loadLocationMap() {
+                dashboardService.get(undefined, undefined, $scope.exFilter, $scope.exType, $scope.period, undefined,
+                    undefined, constructModel(filter.entityTag), fDate, constructModel(filter.exEntityTag),
+                    false).then(function (data) {
                         $scope.dashboardView = data.data;
                         var linkText;
                         if ($scope.dashboardView.mLev == "country") {
@@ -122,27 +122,27 @@ angular.module('logistimo.storyboard.inventoryStatusMapWidget', [])
                             invPieOrder, $timeout);
                         setWidgetData();
                     }).catch(function error(msg) {
-                        showError(msg,$scope);
+                        showError(msg, $scope);
                     }).finally(function () {
                         $scope.loading = false;
                         $scope.wloading = false;
                     });
-                };
+            };
 
-                function setWidgetData() {
-                    $scope.inventoryStatusMapWidget = {
-                        wId: $scope.widget.id,
-                        cType: $scope.mapType,
-                        copt: $scope.mapOpt,
-                        cdata: $scope.mapData,
-                        computedWidth: '100%',
-                        computedHeight: parseInt($scope.widget.computedHeight, 10) - 30,
-                        colorRange: $scope.mapRange,
-                        markers: $scope.markers
-                    };
-                    $scope.wloading = false;
-                    $scope.showChart = true;
-                }
-            }]);
+            function setWidgetData() {
+                $scope.inventoryStatusMapWidget = {
+                    wId: $scope.widget.id,
+                    cType: $scope.mapType,
+                    copt: $scope.mapOpt,
+                    cdata: $scope.mapData,
+                    computedWidth: '100%',
+                    computedHeight: parseInt($scope.widget.computedHeight, 10) - 30,
+                    colorRange: $scope.mapRange,
+                    markers: $scope.markers
+                };
+                $scope.wloading = false;
+                $scope.showChart = true;
+            }
+        }]);
 
 logistimoApp.requires.push('logistimo.storyboard.inventoryStatusMapWidget');

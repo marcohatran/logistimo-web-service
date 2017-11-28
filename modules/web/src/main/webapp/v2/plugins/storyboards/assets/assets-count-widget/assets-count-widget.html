@@ -1,4 +1,4 @@
-<div ng-controller="assetsCountWidgetController" style="margin: 28px;">
+<div ng-controller="assetsCountWidgetController" class="mt10">
     <div ng-if="wloading" class="row mt18 widget-loading">
         <div class="text-center">
             {{resourceBundle['loading.uppercase']}}... <span class="glyphicons glyphicons-cogwheel spin"></span>
@@ -10,7 +10,7 @@
         </div>
     </div>
     <div ng-if="!wloading && !showError">
-        <div class="xlarge-grey-lbl">{{totalAssets}}</div>
+        <div class="xlarge-grey-lbl">{{totalAssets | number:0}}</div>
         <div class="large-grey-lbl">{{resourceBundle['assets']}}</div>
     </div>
 </div>

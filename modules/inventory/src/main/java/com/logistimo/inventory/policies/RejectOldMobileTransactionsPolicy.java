@@ -21,31 +21,30 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.inventory;
+package com.logistimo.inventory.policies;
 
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.SourceConstants;
 import com.logistimo.exception.LogiException;
 import com.logistimo.inventory.entity.ITransaction;
-import com.logistimo.logger.XLog;
 import com.logistimo.services.Resources;
-import com.logistimo.services.Services;
-import com.logistimo.users.entity.IUserAccount;
-import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
+import com.logistimo.services.utils.ConfigUtil;
+
+import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Locale;
 import java.util.ResourceBundle;
 
 /**
  * Created by vani on 19/04/17.
  */
-public class RejectOldMobileTransactionsPolicy implements MobileTransactionsHandler {
-  private static final XLog xLogger = XLog.getLog(RejectOldMobileTransactionsPolicy.class);
+@Component("RejectOldMobileTransactionsPolicy")
+public class RejectOldMobileTransactionsPolicy implements InventoryUpdatePolicy {
 
   /**
    * Filter the transactions based below conditions
@@ -56,7 +55,7 @@ public class RejectOldMobileTransactionsPolicy implements MobileTransactionsHand
    * @param lastWebTrans - Last web transaction for a kid, mid and/or bid
    * @return index till where it got rejected
    */
-  public int applyPolicy(List<ITransaction> transactions, ITransaction lastWebTrans) {
+  public int apply(List<ITransaction> transactions, ITransaction lastWebTrans) {
     if (transactions == null || transactions.isEmpty() || lastWebTrans == null) {
       return -1;
     }
@@ -79,7 +78,8 @@ public class RejectOldMobileTransactionsPolicy implements MobileTransactionsHand
     return index;
   }
 
-  public void addStockCountIfNeeded(ITransaction lastWebTrans, List<ITransaction> transactions) throws LogiException {
+  public void addStockCountIfNeeded(ITransaction lastWebTrans, List<ITransaction> transactions)
+      throws LogiException {
     if (transactions == null || transactions.isEmpty()) {
       return;
     }
@@ -87,31 +87,33 @@ public class RejectOldMobileTransactionsPolicy implements MobileTransactionsHand
     if (lastWebTrans == null) {
       currentStock = BigDecimal.ZERO;
     } else {
-      currentStock = lastWebTrans.hasBatch() ? lastWebTrans.getClosingStockByBatch(): lastWebTrans.getClosingStock();
+      currentStock =
+          lastWebTrans.hasBatch() ? lastWebTrans.getClosingStockByBatch()
+              : lastWebTrans.getClosingStock();
     }
     ITransaction firstValidMobTrans = transactions.get(0);
-    if (currentStock.compareTo(firstValidMobTrans.hasBatch() ? firstValidMobTrans.getOpeningStockByBatch() : firstValidMobTrans.getOpeningStock()) != 0) {
-      ITransaction scTrans = buildStockCountTrans(firstValidMobTrans);
-      if (scTrans == null) {
-        throw new LogiException("M012", (Object[])null);
-      }
-      transactions.add(0,scTrans);
+    if (currentStock.compareTo(
+        firstValidMobTrans.hasBatch() ? firstValidMobTrans.getOpeningStockByBatch()
+            : firstValidMobTrans.getOpeningStock()) != 0) {
+      transactions.add(0, buildStockCountTrans(firstValidMobTrans));
     }
   }
 
+  @Override
+  public boolean shouldDeduplicate() {
+    return ConfigUtil.getBoolean("inventory.rejectOldMobileTransactionsPolicy.deduplicate", false);
+  }
+
   protected ITransaction buildStockCountTrans(ITransaction trans) {
-    try {
-      UsersService us = Services.getService(UsersServiceImpl.class);
-      IUserAccount ua = us.getUserAccount(trans.getSourceUserId());
-      ResourceBundle
-          backendMessages =
-          Resources.get().getBundle("BackendMessages", ua.getLocale());
+    ResourceBundle
+        backendMessages =
+        Resources.get().getBundle("BackendMessages", Locale.getDefault());
       ITransaction scTrans = trans.clone();
       // Set the entry time of this stock count transaction to 1 ms less than the entry time of trans
       Date et = trans.getEntryTime();
       Calendar etCal = Calendar.getInstance();
-      scTrans.setEntryTime(etCal.getTime());
       etCal.setTimeInMillis(et.getTime() - 1);
+    scTrans.setEntryTime(etCal.getTime());
       scTrans.setSortEt(etCal.getTime());
       scTrans.setType(ITransaction.TYPE_PHYSICALCOUNT);
       scTrans.setReason(backendMessages.getString("openingstock.mismatch"));
@@ -129,9 +131,5 @@ public class RejectOldMobileTransactionsPolicy implements MobileTransactionsHand
         scTrans.setOpeningStock(trans.getOpeningStock());
       }
       return scTrans;
-    } catch (Exception e) {
-      xLogger.severe("Exception when creating a stock count transaction", e);
-      return null;
     }
-  }
 }

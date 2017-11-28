@@ -29,7 +29,7 @@ angular.module('logistimo.storyboard.stockTrend', [])
     .config(function (widgetsRepositoryProvider) {
         widgetsRepositoryProvider.addWidget({
             id: "stockTrendWidget",
-            name: "Stock trend",
+            name: "Stock availability/abnormality trends",
             templateUrl: "plugins/storyboards/inventory/stock-trend-widget/stock-trend-widget.html",
             editTemplateUrl: "plugins/storyboards/inventory/edit-template.html",
             templateFilters: [
@@ -42,7 +42,7 @@ angular.module('logistimo.storyboard.stockTrend', [])
                     type: 'widType'
                 },
                 {
-                    nameKey:'filter.material.tag',
+                    nameKey: 'filter.material.tag',
                     type: 'materialTag'
                 },
                 {
@@ -68,60 +68,56 @@ angular.module('logistimo.storyboard.stockTrend', [])
     })
     .controller('stockTrendWidgetController', ['$scope', 'reportsServiceCore', '$timeout', function ($scope, reportsServiceCore, $timeout) {
         $scope.filter = angular.copy($scope.widget.conf);
-        var MAX_MONTHS = 11;
+        var MAX_MONTHS = 6;
         var MAX_WEEKS = 15;
         var MAX_DAYS = 31;
 
 
-        function setDefaultFilters(){
+        function setDefaultFilters() {
             $scope.filter.compare = "none";
-            if(checkNullEmpty($scope.filter.periodicity)) {
-                $scope.filter.periodicity = "m";
-            }
         }
 
-        function setFilters(){
-            if($scope.isDef($scope.widget.conf.widType) && checkNotNullEmpty($scope.widget.conf.widType)) {
-                if($scope.widget.conf.widType == '0') {
+        function setFilters() {
+            if ($scope.isDef($scope.widget.conf.widType) && checkNotNullEmpty($scope.widget.conf.widType)) {
+                if ($scope.widget.conf.widType == '0') {
                     $scope.filter.type = "isa";
-                } else if($scope.widget.conf.widType == '1') {
+                } else if ($scope.widget.conf.widType == '1') {
                     $scope.filter.type = "ias";
                 }
             } else {
                 $scope.filter.type = "isa";
             }
-            if($scope.isDef($scope.widget.conf.period) && checkNotNullEmpty($scope.widget.conf.period)) {
-                $scope.filter.periodicity = $scope.widget.conf.period;
-            } else {
+            if ($scope.isUndef($scope.widget.conf.period) || checkNullEmpty($scope.widget.conf.period)) {
                 $scope.widget.conf.period = "m";
+                delete $scope.filter["periodicity"];
             }
-            if($scope.isDef($scope.widget.conf.materialTag) && checkNotNullEmpty($scope.widget.conf.materialTag)) {
+            if ($scope.isDef($scope.widget.conf.materialTag) && checkNotNullEmpty($scope.widget.conf.materialTag)) {
                 $scope.filter.mtag = $scope.widget.conf.materialTag[0].id;
-            } else if(checkNullEmpty($scope.widget.conf.materialTag)) {
+            } else if (checkNullEmpty($scope.widget.conf.materialTag)) {
                 delete $scope.filter['mtag'];
             }
 
-            if($scope.isDef($scope.widget.conf.entityTag) && checkNotNullEmpty($scope.widget.conf.entityTag)) {
+            if ($scope.isDef($scope.widget.conf.entityTag) && checkNotNullEmpty($scope.widget.conf.entityTag)) {
                 $scope.filter.etag = $scope.widget.conf.entityTag[0].id;
-            } else if(checkNullEmpty($scope.widget.conf.entityTag)) {
+            } else if (checkNullEmpty($scope.widget.conf.entityTag)) {
                 delete $scope.filter['etag']
             }
 
-            if($scope.isDef($scope.widget.conf.entity) && checkNotNullEmpty($scope.widget.conf.entity)) {
+            if ($scope.isDef($scope.widget.conf.entity) && checkNotNullEmpty($scope.widget.conf.entity)) {
                 $scope.filter.entity = $scope.widget.conf.entity.id;
-            } else if(checkNullEmpty($scope.widget.conf.entity)) {
+            } else if (checkNullEmpty($scope.widget.conf.entity)) {
                 delete $scope.filter['entity']
             }
 
-            if($scope.isDef($scope.widget.conf.material) && checkNotNullEmpty($scope.widget.conf.material)) {
+            if ($scope.isDef($scope.widget.conf.material) && checkNotNullEmpty($scope.widget.conf.material)) {
                 $scope.filter.mat = $scope.widget.conf.material.id;
-            } else if(checkNullEmpty($scope.widget.conf.material)) {
+            } else if (checkNullEmpty($scope.widget.conf.material)) {
                 delete $scope.filter['mat']
             }
 
             var fromDate = new Date();
             fromDate.setHours(0, 0, 0, 0);
-            if($scope.widget.conf.period == 'm') {
+            if ($scope.widget.conf.period == 'm') {
                 $scope.dateMode = 'month';
                 fromDate.setDate(1);
                 fromDate.setMonth(fromDate.getMonth() - MAX_MONTHS);
@@ -129,8 +125,10 @@ angular.module('logistimo.storyboard.stockTrend', [])
                 var toDate = new Date();
                 toDate.setHours(0, 0, 0, 0);
                 toDate.setDate(1);
+                toDate.setMonth(toDate.getMonth() - 1);
                 $scope.filter.to = toDate;
-            } else if($scope.widget.conf.period == 'w'){
+                $scope.filter.periodicity = "m";
+            } else if ($scope.widget.conf.period == 'w') {
                 fromDate.setDate(fromDate.getDate() - (MAX_WEEKS - 1) * 7);
                 fromDate.setDate(fromDate.getDate() + (fromDate.getDay() == 0 ? -6 : 1 - fromDate.getDay()));
                 $scope.filter.from = new Date(fromDate);
@@ -139,16 +137,18 @@ angular.module('logistimo.storyboard.stockTrend', [])
                 toDate.setDate(toDate.getDate() + (toDate.getDay() == 0 ? -6 : 1 - toDate.getDay()));
                 $scope.filter.to = toDate;
                 $scope.dateMode = 'week';
-            } else if($scope.widget.conf.period == 'd') {
+                $scope.filter.periodicity = "w";
+            } else if ($scope.widget.conf.period == 'd') {
                 fromDate.setDate(fromDate.getDate() - MAX_DAYS + 1);
                 $scope.filter.from = new Date(fromDate);
                 $scope.filter.to = new Date();
                 $scope.filter.to.setHours(0, 0, 0, 0);
                 $scope.dateMode = 'day';
+                $scope.filter.periodicity = "d";
             }
         }
 
-        function setChartOptions(){
+        function setChartOptions() {
             $scope.cOptions = {
                 "theme": "fint",
                 "subCaptionFontSize": 10,
@@ -159,11 +159,11 @@ angular.module('logistimo.storyboard.stockTrend', [])
             };
             $scope.cHeight = $scope.widget.computedHeight;
             $scope.cWidth = "90%";
-            $scope.cType="mscombi2d";
+            $scope.cType = "mscombi2d";
         }
 
         function setChartData(localData, chartData, level) {
-            if(!localData) {
+            if (!localData) {
                 $scope.loading = true;
                 chartData = angular.copy($scope.allChartData);
             }
@@ -176,24 +176,29 @@ angular.module('logistimo.storyboard.stockTrend', [])
                 }
             });
             var filterSeriesIndex = undefined;
-            var isCompare = false;
-            if(compareFields.length > 1) {
-                if(compareFields.indexOf("") != -1) {
+            if (compareFields.length > 1) {
+                if (compareFields.indexOf("") != -1) {
                     compareFields.splice(compareFields.indexOf(""), 1);
                 }
                 filterSeriesIndex = 0;
-                isCompare = true;
             }
             var cData = [];
-            for (var i = 0; i < compareFields.length; i++) {
-                cData[i] = getReportFCSeries(chartData, parseInt("0")*1 +
-                    parseInt("2"), compareFields[i],
-                    "line", linkDisabled, filterSeriesIndex, isCompare ? "0" : "1");
+            if($scope.filter.type == "isa") {
+                for (var i = 0; i < compareFields.length; i++) {
+                    cData[i] = getReportFCSeries(chartData, 2, compareFields[i],
+                        "line", linkDisabled, filterSeriesIndex, "1");
+                }
+                $scope.cOptions.caption = "% of inventory items available (100% availability)";
+
+            } else if ($scope.filter.type == "ias") {
+                for (var i = 0; i < compareFields.length; i++) {
+                    cData[i] = getReportFCSeries(chartData, 13, compareFields[i],
+                        "line", linkDisabled, filterSeriesIndex, "1");
+                }
+                $scope.cOptions.caption = "Zero stock - % of inventory items with this abnormality (100% of the time)";
             }
-            $scope.cOptions.caption = "% of inventory items available (100% availability)";
             $scope.cOptions.subcaption = getReportCaption($scope.filter);
-            $scope.cOptions.yAxisName = $scope.cOptions.caption;
-            if($scope.filter.periodicity != "m" && cLabel.length > 10) {
+            if ($scope.filter.periodicity != "m" && cLabel.length > 10) {
                 $scope.cOptions.rotateLabels = "1";
             } else {
                 $scope.cOptions.rotateLabels = undefined;
@@ -201,18 +206,18 @@ angular.module('logistimo.storyboard.stockTrend', [])
             $scope.cData = cData;
             $scope.cLabel = cLabel;
             $scope.chartData = chartData;
-            if(checkNotNullEmpty($scope.cData)) {
+            if (checkNotNullEmpty($scope.cData)) {
                 $scope.renderChart = true;
             }
 
-            if(!localData) {
+            if (!localData) {
                 $timeout(function () {
                     $scope.loading = false;
                 }, 200);
             }
         }
 
-        function getData(){
+        function getData() {
             $scope.wLoading = true;
             var selectedFilters = angular.copy($scope.filter);
             selectedFilters.from = formatDate2Url(selectedFilters.from);
@@ -231,7 +236,7 @@ angular.module('logistimo.storyboard.stockTrend', [])
                     $scope.noData = false;
                 }
             }).catch(function error(msg) {
-                showError(msg,$scope);
+                showError(msg, $scope);
             }).finally(function () {
                 if (selectedFilters['level'] == "d") {
                     $scope.dLoading = false;

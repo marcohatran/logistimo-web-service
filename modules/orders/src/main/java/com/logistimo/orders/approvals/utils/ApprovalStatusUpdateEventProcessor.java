@@ -49,17 +49,18 @@ import com.logistimo.users.service.impl.UsersServiceImpl;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.MetricsUtil;
 
-import java.util.Date;
-import java.util.concurrent.TimeUnit;
-import javax.jdo.PersistenceManager;
 import org.apache.camel.Handler;
 import org.apache.commons.lang.text.StrSubstitutor;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.concurrent.TimeUnit;
+
+import javax.jdo.PersistenceManager;
 
 /**
  * Created by nitisha.khandelwal on 02/06/17.
@@ -142,21 +143,13 @@ public class ApprovalStatusUpdateEventProcessor {
       order.setTransferApprovalResponseTime(TimeUnit.MILLISECONDS.toSeconds(
           eventUpdateTime.getTime() - order.getCreatedOn().getTime()));
     }
-    if (IOrder.SALES_ORDER == approvalType) {
+    if (IOrder.PURCHASE_ORDER == approvalType) {
       order.setPurchaseApprovalResponseTime(TimeUnit.MILLISECONDS.toSeconds(
           eventUpdateTime.getTime() - order.getCustomerVisibilityTime().getTime()));
     }
-    if (IOrder.PURCHASE_ORDER == approvalType) {
-      IOrderApprovalMapping purchaseApproval = approvalDao
-          .getOrderApprovalMapping(order.getOrderId(), IOrder.PURCHASE_ORDER);
-      if (purchaseApproval != null && purchaseApproval.getStatus()
-          .equals(APPROVED_STATUS)) {
-        order.setSalesApprovalResponseTime(TimeUnit.MILLISECONDS.toSeconds(
-            eventUpdateTime.getTime() - purchaseApproval.getUpdatedAt().getTime()));
-      } else {
-        order.setSalesApprovalResponseTime(TimeUnit.MILLISECONDS.toSeconds(
-            eventUpdateTime.getTime() - order.getVendorVisibilityTime().getTime()));
-      }
+    if (IOrder.SALES_ORDER == approvalType) {
+      order.setSalesApprovalResponseTime(TimeUnit.MILLISECONDS.toSeconds(
+          eventUpdateTime.getTime() - order.getVendorVisibilityTime().getTime()));
     }
   }
 
