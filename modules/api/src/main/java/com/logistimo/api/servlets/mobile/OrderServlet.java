@@ -242,9 +242,9 @@ public class OrderServlet extends JsonRestServlet {
       //Get orders for specified entity, status, order type and transfers
       List<IOrder> ordersList = StaticApplicationContext.getBean(GetFilteredOrdersAction.class)
           .invoke(orderFilters, pageParams).getResults();
-      if (ordersList == null || ordersList.isEmpty()) {
+      if (!modifiedSinceDate.isPresent() && (ordersList == null || ordersList.isEmpty())) {
         message = backendMessages.getString(NO_ORDERS);
-      } else {
+      } else if(ordersList!=null && !ordersList.isEmpty()){
         //Get the order approval type
         int orderApprovalType = OrderUtils.getOrderApprovalType(otype, isTransfer);
         //Build json response
