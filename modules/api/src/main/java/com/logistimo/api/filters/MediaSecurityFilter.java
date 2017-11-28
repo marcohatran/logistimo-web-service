@@ -100,8 +100,7 @@ public class MediaSecurityFilter implements Filter {
     }
     try {
       SecureUserDetails
-          userDetails = SecurityMgr
-          .getSessionDetails(req.getSession());
+          userDetails = SecurityUtils.getUserDetails();
       if (userDetails == null) {
         resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication Required.");
         return;
