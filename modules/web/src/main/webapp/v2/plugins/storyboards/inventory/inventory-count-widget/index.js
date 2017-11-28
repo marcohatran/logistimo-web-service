@@ -5,7 +5,7 @@ angular.module('logistimo.storyboard.inventoryCountWidget', [])
     .config(function (widgetsRepositoryProvider) {
         widgetsRepositoryProvider.addWidget({
             id: "inventoryCountWidget",
-            name: "Inventory stock count",
+            name: "Inventory item count",
             templateUrl: "plugins/storyboards/inventory/inventory-count-widget/inventory-count-widget.html",
             editTemplateUrl: "plugins/storyboards/inventory/edit-template.html",
             templateFilters: [
@@ -33,7 +33,7 @@ angular.module('logistimo.storyboard.inventoryCountWidget', [])
                     nameKey: 'period.since',
                     type: 'period'
                 }],
-            defaultHeight: 2,
+            defaultHeight: 1,
             defaultWidth: 4
         });
     })

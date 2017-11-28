@@ -29,7 +29,7 @@ angular.module('logistimo.storyboard.stockTrend', [])
     .config(function (widgetsRepositoryProvider) {
         widgetsRepositoryProvider.addWidget({
             id: "stockTrendWidget",
-            name: "Stock trend",
+            name: "Stock availability/abnormality trends",
             templateUrl: "plugins/storyboards/inventory/stock-trend-widget/stock-trend-widget.html",
             editTemplateUrl: "plugins/storyboards/inventory/edit-template.html",
             templateFilters: [

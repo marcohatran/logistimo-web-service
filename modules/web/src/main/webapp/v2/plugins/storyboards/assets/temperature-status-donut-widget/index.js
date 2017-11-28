@@ -2,7 +2,7 @@ angular.module('logistimo.storyboard.temperatureStatusDonutWidget', [])
     .config(function (widgetsRepositoryProvider) {
         widgetsRepositoryProvider.addWidget({
             id: "temperatureStatusDonutWidget",
-            name: "Asset Donut",
+            name: "Asset status donut",
             templateUrl: "plugins/storyboards/assets/temperature-status-donut-widget/temperature-status-donut-widget.html",
             editTemplateUrl: "plugins/storyboards/assets/asset-edit-template.html",
             templateFilters: [

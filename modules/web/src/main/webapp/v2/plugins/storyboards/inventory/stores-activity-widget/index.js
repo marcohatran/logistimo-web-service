@@ -5,7 +5,7 @@ angular.module('logistimo.storyboard.storesActivityWidget', [])
     .config(function (widgetsRepositoryProvider) {
         widgetsRepositoryProvider.addWidget({
             id: "storesActivityWidget",
-            name: "Inventory status activity bar",
+            name: "Entity activity bar",
             templateUrl: "plugins/storyboards/inventory/stores-activity-widget/stores-activity-widget.html",
             editTemplateUrl: "plugins/storyboards/inventory/edit-template.html",
             templateFilters: [
@@ -153,16 +153,15 @@ angular.module('logistimo.storyboard.storesActivityWidget', [])
 
 
             $scope.wloading = false;
-            $scope.showChart = true;
-            if($scope.showChart) {
-                $scope.stackBarOptions.caption = $scope.activePercent + '% active';
-                $scope.stackBarOptions.subCaption = $scope.entDomainTotal + ' stores';
-                $scope.stackBarOptions.subCaption = $scope.entDomainTotal + ' stores';
+            
+            /*if($scope.showChart) {
                 $scope.stackBarOptions.captionFont = 'Helvetica Neue", Arial';
                 $scope.stackBarOptions.subCaptionFontSize = 12;
                 $scope.stackBarOptions.subCaptionFontColor = '#a3a3a3';
                 $scope.stackBarOptions.captionFontBold = 0;
-            }
+                $scope.stackBarOptions.caption = $scope.activePercent + '% active';
+                $scope.stackBarOptions.subCaption = $scope.entDomainTotal + ' stores';
+            }*/
             $scope.storesActivityWidget = {
                 wId: $scope.widget.id,
                 cType: "stackedbar2d",
@@ -172,10 +171,8 @@ angular.module('logistimo.storyboard.storesActivityWidget', [])
                 computedWidth: '100%',
                 computedHeight: parseInt($scope.widget.computedHeight, 10) - 30
             };
+            $scope.showChart = true;
         }
-
-
-
     }]);
 
 logistimoApp.requires.push('logistimo.storyboard.storesActivityWidget');

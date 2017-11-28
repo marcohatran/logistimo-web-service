@@ -5,7 +5,7 @@ angular.module('logistimo.storyboard.inventoryStatusMapWidget', [])
     .config(function (widgetsRepositoryProvider) {
         widgetsRepositoryProvider.addWidget({
             id: "inventoryStatusMapWidget",
-            name: "Inventory map distribution",
+            name: "Inventory status map",
             templateUrl: "plugins/storyboards/inventory/inventory-status-map-widget/inventory-status-map-widget.html",
             editTemplateUrl: "plugins/storyboards/inventory/edit-template.html",
             templateFilters: [
@@ -39,7 +39,7 @@ angular.module('logistimo.storyboard.inventoryStatusMapWidget', [])
                 }
             ],
             defaultHeight: 4,
-            defaultWidth: 4
+            defaultWidth: 5
         });
     })
     .controller('inventoryStatusMapWidgetController',

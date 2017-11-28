@@ -4188,13 +4188,13 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
 }
 
 .xlarge-grey-lbl {
-    color: #bcbcbc;
+    color: black;
     font-size: x-large;
     text-align: center;
 }
 
 .large-grey-lbl {
-    color: #bcbcbc;
+    color: black;
     font-size: large;
     text-align: center;
 }

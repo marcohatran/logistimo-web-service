@@ -5,7 +5,7 @@ angular.module('logistimo.storyboard.temperatureStatusMapWidget', [])
     .config(function (widgetsRepositoryProvider) {
         widgetsRepositoryProvider.addWidget({
             id: "temperatureStatusMapWidget",
-            name: "Asset map distribution",
+            name: "Asset status map",
             templateUrl: "plugins/storyboards/assets/temperature-status-map-widget/temperature-status-map-widget.html",
             editTemplateUrl: "plugins/storyboards/assets/asset-edit-template.html",
             templateFilters: [

@@ -29,7 +29,7 @@ angular.module('logistimo.storyboard.temperatureExcursion', [])
     .config(function (widgetsRepositoryProvider) {
         widgetsRepositoryProvider.addWidget({
             id: "temperatureExcursionWidget",
-            name: "Asset temperature excursion trend",
+            name: "Temperature excursion trends",
             templateUrl: "plugins/storyboards/assets/temperature-excursion-trend-widget/temperature-excursion-trend-widget.html",
             editTemplateUrl: "plugins/storyboards/assets/asset-edit-template.html",
             templateFilters: [
