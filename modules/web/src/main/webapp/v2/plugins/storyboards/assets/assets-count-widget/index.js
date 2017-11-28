@@ -22,8 +22,8 @@ angular.module('logistimo.storyboard.assetsCountWidget', [])
                     type: 'exTempState'
                 }
             ],
-            defaultHeight: 2,
-            defaultWidth: 2
+            defaultHeight: 1,
+            defaultWidth: 4
         });
     })
     .controller('assetsCountWidgetController', ['$scope', 'dashboardService', function ($scope, dashboardService) {

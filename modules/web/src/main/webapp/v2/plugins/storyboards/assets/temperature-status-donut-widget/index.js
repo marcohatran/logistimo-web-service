@@ -31,8 +31,8 @@ angular.module('logistimo.storyboard.temperatureStatusDonutWidget', [])
                     type: 'exEntityTag'
                 }
             ],
-            defaultHeight: 2,
-            defaultWidth: 2
+            defaultHeight: 3,
+            defaultWidth: 4
         });
     })
     .controller('temperatureStatusDonutWidgetController',
@@ -64,6 +64,7 @@ angular.module('logistimo.storyboard.temperatureStatusDonutWidget', [])
                     tempPieColors[0] = tempPieColors[3];
                     tempPieColors[1] = tempPieColors[3];
                     tempPieColors[2] = tempPieColors[3];
+                    $scope.widget.conf.title = "Unknown";
                 }
             }
 
@@ -95,15 +96,21 @@ angular.module('logistimo.storyboard.temperatureStatusDonutWidget', [])
         });
 
         function getData() {
-            var chartData = [], totalAssets = 0;
+            var chartData = [], totalAssets = 0, totalAssetsText = '';
             dashboardService.get(undefined, undefined, $scope.exFilter, $scope.exType, $scope.period,
                 $scope.widget.conf.tPeriod, asset, constructModel(filter.entityTag), fDate,
                 constructModel(filter.exEntityTag), false).then(function (data) {
                     chartData = constructPieData(data.data.tempDomain, tempPieColors, tempPieOrder, INVENTORY,
                         $scope.mapEvent, $scope.widget.conf.exTempState);
                     var normalPercent = getPercent(data.data.tempDomain, $scope.assetStatus);
-                    totalAssets = getTotalItems(data.data.tempDomain);
-                    setWidgetData(normalPercent, chartData, totalAssets);
+                    totalAssets = getItemCount(data.data.tempDomain, $scope.assetStatus);
+
+                if(totalAssets>1){
+                    totalAssetsText = totalAssets + " assets";
+                }else{
+                    totalAssetsText = totalAssets + " asset";
+                }
+                    setWidgetData(normalPercent, chartData, totalAssetsText);
                 }).catch(function error(msg) {
                     showError(msg, $scope);
                 }).finally(function () {
@@ -112,27 +119,30 @@ angular.module('logistimo.storyboard.temperatureStatusDonutWidget', [])
                 });
         }
 
-        function setWidgetData(centerLabelPercent, chartData, totalAssets) {
+        function setWidgetData(centerLabelPercent, chartData, totalAssetsText) {
+            var radius = getDonutRadius($scope.widget.width,$scope.widget.height);
             $scope.temperatureStatusDonutWidget = {
                 wId: $scope.widget.id,
                 cType: "doughnut2d",
                 copt: {
                     theme: "fint",
-                    doughnutRadius: '60',
-                    pieRadius: '80',
+                    doughnutRadius: radius.doughnutRadius,
+                    pieRadius: radius.pieRadius,
                     showLabels: "0",
                     showPercentValues: "0",
                     showLegend: "0",
                     showValues: "0",
                     defaultCenterLabel: centerLabelPercent,
-                    subCaption: totalAssets + " assets",
+                    subCaption: totalAssetsText,
                     captionOnTop: "0",
                     alignCaptionWithCanvas: "1",
-                    showToolTip: "0"
+                    showToolTip: "0",
+                    centerLabelFontSize: 19,
+                    centerLabelFont : 'Helvetica Neue, Arial'
                 },
                 cdata: chartData,
                 computedWidth: '100%',
-                computedHeight: parseInt($scope.widget.computedHeight, 10) - 10
+                computedHeight: parseInt($scope.widget.computedHeight, 10) - 30
             };
             $scope.wloading = false;
             $scope.showChart = true;

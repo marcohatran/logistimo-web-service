@@ -10,6 +10,9 @@
         </div>
     </div>
     <div ng-if="!wloading && !showError && showChart">
+        <div class="col-sm-12 text-center pt15">
+            <span class="widget-title">{{widget.conf.title}}</span>
+        </div>
         <fusion-chart type="temperatureStatusDonutWidget.cType" height="temperatureStatusDonutWidget.computedHeight"
                       width="temperatureStatusDonutWidget.computedWidth"
                       chart-label="temperatureStatusDonutWidget.cLabel"

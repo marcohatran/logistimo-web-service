@@ -86,21 +86,49 @@ function getTotalItems(data) {
     return totalInv;
 };
 
-function getPercent(data, wt) {
+function getItemCount(data, wt){
+    if (wt == 'ia') {
+        return (data['n'] + data[201] + data[202]);
+    } else if (wt == 'iso') {
+        return (data[200] ? data[200] : 0 );
+    } else if (wt == 'in') {
+        return (data['n'] ? data['n'] : 0 );
+    } else if (wt == 'imin') {
+        return (data[201] ? data[201] : 0 );
+    } else if (wt == 'imax') {
+        return (data[202] ? data[202] : 0 );
+    } else if (wt == 'tn') {
+        return (data['tn'] ? data['tn'] : 0);
+    } else if (wt == 'tl') {
+        return (data['tl'] ? data['tl'] : 0);
+    } else if (wt == 'th') {
+        return (data['th']? data['th'] : 0);
+    } else if (wt == 'tu') {
+        return (data['tu']? data['tu'] : 0);
+    }
+}
 
+function getPercent(data, wt) {
+    // Available = ia, Stockout = iso, Normal = in, Min = imin, or Max = imax
     if (checkNotNullEmpty(wt)) {
-        if (wt == 0) {
-            return (((data['n'] + data[201] + data[202]) / getTotalItems(data) * 100).toFixed(2)) * 1 + " % Available";
-        } else if (wt == 1) {
-            return ((data[200] ? data[200] : 0 / getTotalItems(data) * 100).toFixed(2)) * 1 + " % Stocked out";
+        if (wt == 'ia') {
+            return (((data['n'] + data[201] + data[202]) / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
+        } else if (wt == 'iso') {
+            return ((data[200] / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
+        } else if (wt == 'in') {
+            return ((data['n'] / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
+        } else if (wt == 'imin') {
+            return ((data[201]  / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
+        } else if (wt == 'imax') {
+            return ((data[202]  / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
         } else if (wt == 'tn') {
-            return (((data['tn'] ? data['tn'] : 0) / getTotalItems(data) * 100).toFixed(2)) * 1 + " % Normal";
+            return ((data['tn']  / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
         } else if (wt == 'tl') {
-            return (((data['tl'] ? data['tl'] : 0) / getTotalItems(data) * 100).toFixed(2)) * 1 + " % Freezing";
+            return ((data['tl'] / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
         } else if (wt == 'th') {
-            return (((data['th'] ? data['th'] : 0) / getTotalItems(data) * 100).toFixed(2)) * 1 + " % Heating";
+            return ((data['th'] / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
         } else if (wt == 'tu') {
-            return (((data['tu'] ? data['tu'] : 0) / getTotalItems(data) * 100).toFixed(2)) * 1 + " % Unknown";
+            return ((data['tu'] / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
         }
     }
     return null;
@@ -225,7 +253,7 @@ function constructMapData(event, init, scope, INVENTORY, $sce, mapRange, mapColo
         "alignCaptionWithCanvas": 1,
         "labelConnectorAlpha":0,
         "captionFontBold":1,
-        "captionFont":'Helvetica Neue", Arial'
+        "captionFont":'Helvetica Neue, Arial'
 
     };
     var addLink = false;
@@ -680,4 +708,15 @@ function getReportFCSeries(data, seriesno, name, type, isLinkDisabled, filterSer
             return series;
         }
     }
+}
+
+function getDonutRadius(width, height) {
+    var minSide = Math.min(width, height);
+    if (minSide == 2 && height == 2) {
+        minSide = 1.5;
+    }
+    return {
+        doughnutRadius: (30 * minSide),
+        pieRadius: (40 * minSide)
+    };
 }

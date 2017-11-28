@@ -10,7 +10,7 @@
         </div>
     </div>
     <div ng-if="!wloading && !showError">
-        <div class="xlarge-grey-lbl">{{totalInv}}</div>
+        <div class="xlarge-grey-lbl">{{totalInv | number:0}}</div>
         <div class="large-grey-lbl">{{resourceBundle['inventory.items']}}</div>
     </div>
 </div>

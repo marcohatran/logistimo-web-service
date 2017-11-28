@@ -10,7 +10,7 @@
         </div>
     </div>
     <div ng-if="!wloading && !showError">
-        <div class="xlarge-grey-lbl">{{entDomainTotal}}</div>
+        <div class="xlarge-grey-lbl">{{entDomainTotal | number:0}}</div>
         <div class="large-grey-lbl">{{resourceBundle['stores.upper']}}</div>
     </div>
 </div>

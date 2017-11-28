@@ -12,7 +12,7 @@ angular.module('logistimo.storyboard.topMaterialsByInventoryStatusWidget', [])
             templateFilters: [
                 {
                     nameKey: 'inventory.status',
-                    type: 'topTenLocType',
+                    type: 'topTenMatType',
                 },
                 {
                     nameKey: 'material.upper',

@@ -56,8 +56,11 @@
         <div class="col-sm-5" ng-if="filter.type=='widType'">
             <div class="col-sm-12 noLRpad btn-group">
                 <select ng-model="widget.conf.widType" class="form-control">
-                    <option value="0">Stock Available</option>
-                    <option value="1">Stock Out</option>
+                    <option value="ia">Available</option>
+                    <option value="iso">Stock out</option>
+                    <option value="in">Normal</option>
+                    <option value="imin">Min</option>
+                    <option value="imax">Max</option>
                 </select>
             </div>
         </div>
