@@ -83,6 +83,7 @@ public class BulletinBoardDashBoardBuilder {
     model.setDomainId(db.getDomainId());
     model.setDescription(db.getDescription());
     model.setTitle(db.getTitle());
+    model.setInfo(db.getInfo());
     model.setCreatedBy(db.getCreatedBy());
     model.setCreatedOn(db.getCreatedOn());
     model.setWidgets(db.getConfiguration());

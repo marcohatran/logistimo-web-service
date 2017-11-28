@@ -4002,4 +4002,9 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
     font-size: large;
     text-align: center;
 }
+.bulletin-board-title {
+    background-color: white;
+    padding: 5px 0px;
+    border-bottom: 1px solid #ddd;
+}
 

@@ -1147,5 +1147,8 @@ bulletin.board.lower=tableau d'affichage
 bulletin.board.upper=tableau d'affichage
 bulletin.board.nil=Aucun tableau d'affichage configuré
 excursion.type=Type d'excursion
+custom.dashboards=Tableaux de bord personnalisés
+custom.dashboard=tableau de bord personnalisé
+network.unavailable=Le réseau n'est pas disponible. Dernière mise à jour à
 
 

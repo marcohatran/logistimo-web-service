@@ -32,7 +32,7 @@ var logistimoApp = angular.module('logistimoApp', ['ngSanitize','ngRoute', 'dash
     'linkedDomainControllers', 'linkedDomainServices','domainControllers','domainServices', 'mediaServices', 'base64',
     'exportControllers','once','assetControllers','assetServices','handlingUnitControllers','handlingUnitServices',
     'conversationServices', 'activityServices','conversationControllers','hc.downloader','reportsPluginCore','approvalServices',
-    'approvalControllers', 'logistimo.storyboard'
+    'approvalControllers', 'bulletinBoardControllers','logistimo.storyboard'
     /*<% do-not-remove-this-comment-grunt-will-insert-dep-for-prod %>*/]);
 
 logistimoApp.config(function (uibDatepickerConfig) {

@@ -1,26 +1,3 @@
-/*
- * Copyright © 2017 Logistimo.
- *
- * This file is part of Logistimo.
- *
- * Logistimo software is a mobile & web platform for supply chain management and remote temperature monitoring in
- * low-resource settings, made available under the terms of the GNU Affero General Public License (AGPL).
- *
- * This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General
- * Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any
- * later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
- * for more details.
- *
- * You should have received a copy of the GNU Affero General Public License along with this program.  If not, see
- * <http://www.gnu.org/licenses/>.
- *
- * You can be released from the requirements of the license by purchasing a commercial license. To know more about
- * the commercial license, please contact us at opensource@logistimo.com
- */
-
 angular.module('logistimo.storyboard', ['logistimo.storyboard.bulletinboards']);
 /*
  * Copyright © 2017 Logistimo.
@@ -128,9 +105,12 @@ angular.module('logistimo.storyboard.bulletinboards', ['logistimo.storyboard.das
             $scope.bulletinBoards = bulletinBoards;
         })
     }])
-    .controller('BulletinBoardViewController', ['bulletinBoardRepository', '$scope', '$timeout', function (bulletinBoardRepository, $scope, $timeout) {
+    .controller('BulletinBoardViewController', ['bulletinBoardRepository', '$scope','$timeout', function (bulletinBoardRepository, $scope, $timeout) {
         $scope.init = function () {
             $scope.renderDashboardsPage = false;
+            if($scope.showTitle == undefined) {
+                $scope.showTitle = true;
+            }
             if ($scope.bulletinBoardId != undefined) {
                 bulletinBoardRepository.get($scope.bulletinBoardId, $scope).then(function (bulletinBoard) {
                     $scope.bulletinBoard = bulletinBoard;
@@ -160,41 +140,45 @@ angular.module('logistimo.storyboard.bulletinboards', ['logistimo.storyboard.das
             }, $scope.bulletinBoard.max * 1000);
         }
 
+        $scope.setTitles = function(title, info) {
+            $scope.setBulletinBoardTitle(title, info);
+        }
+
     }]);
+
+
 
 
 /**
  * Created by naveensnair on 18/10/17.
  */
-function LocalBBStorageRepository(promise) {
+function LocalBBStorageRepository(promise){
     var BULLETINBOARDS = "bulletinBoard";
-
-    function readLocal() {
-        if (localStorage.getItem(BULLETINBOARDS) == undefined) {
+    function readLocal(){
+        if(localStorage.getItem(BULLETINBOARDS) == undefined){
             return {}
         }
         return JSON.parse(localStorage.getItem(BULLETINBOARDS));
     }
-
-    function saveLocal(bulletinBoard) {
-        localStorage.setItem(BULLETINBOARDS, JSON.stringify(bulletinBoard));
+    function saveLocal(bulletinBoard){
+        localStorage.setItem(BULLETINBOARDS,JSON.stringify(bulletinBoard));
     }
     return {
         get: function (bulletinBoardId) {
-            return promise(function (resolve, reject) {
+            return promise(function(resolve, reject){
                 var bulletinBoards = readLocal();
                 resolve(bulletinBoards[bulletinBoardId]);
             });
 
         },
-        getAll: function () {
-            return promise(function (resolve, reject) {
+        getAll: function(){
+            return promise(function(resolve, reject){
                 resolve(readLocal());
             });
         },
         save: function (bulletinBoard) {
-            return promise(function (resolve, reject) {
-                if (bulletinBoard.dbId == undefined) {
+            return promise(function(resolve, reject){
+                if(bulletinBoard.dbId == undefined) {
                     bulletinBoard.dbId = new Date().getTime();
                 }
                 var bulletinBoards = readLocal();
@@ -204,7 +188,7 @@ function LocalBBStorageRepository(promise) {
             });
         },
         delete: function (bulletinBoardId) {
-            return promise(function (resolve, reject) {
+            return promise(function(resolve, reject){
                 var bulletinBoards = readLocal();
                 delete bulletinBoards[bulletinBoardId];
                 saveLocal(bulletinBoards);
@@ -213,7 +197,7 @@ function LocalBBStorageRepository(promise) {
         }
     }
 }
-function DashboardLayoutHandler(containerId, $timeout) {
+function DashboardLayoutHandler(containerId,$timeout) {
     var ul = document.getElementById(containerId);
     var MAX_COLS_WIDTH = parseInt(getComputedStyle(ul).width, 10);
     var sw = MAX_COLS_WIDTH / 12;
@@ -240,10 +224,10 @@ function DashboardLayoutHandler(containerId, $timeout) {
         return typeof argument !== 'undefined' && argument != null && argument != "";
     }
 
-    function getLeft(newVal) {
-        if (newVal < PAD) {
+    function getLeft(newVal){
+        if(newVal < PAD){
             return PAD + 'px';
-        } else {
+        }else {
             return newVal + PAD + 'px';
         }
     }
@@ -789,9 +773,9 @@ function DashboardLayoutHandler(containerId, $timeout) {
         setWidgets: function (newWidgets) {
             widgets = newWidgets;
         },
-        addWidget: function (widget) {
+        addWidget: function(widget) {
             var newWid = {};
-            newWid.id = widget.name.replace(/\s/g, '') + new Date().getMilliseconds();
+            newWid.id = widget.name.replace(/\s/g,'')+new Date().getMilliseconds();
             newWid.name = widget.name;
             newWid.wid = newWid.id;
             newWid.widgetTemplateId = widget.id;
@@ -841,9 +825,9 @@ function DashboardLayoutHandler(containerId, $timeout) {
             }, 1000); // Let the page render all elements to add listeners
             $timeout(function () {
                 setMaxHeight();
-            }, 1000);
+            },1000);
         },
-        removeWidget: function (widgetId) {
+        removeWidget: function(widgetId) {
             delete widgets[widgetId];
             movePanesUp();
             setMaxHeight();
@@ -900,6 +884,7 @@ angular.module('logistimo.storyboard.dashboards', ['logistimo.storyboard.widgets
             if (!$scope.noInit) {
                 dashboardRepository.get($scope.dashboardId, $scope).then(function (dashboard) {
                     $scope.db = dashboard;
+                    $scope.setTitles($scope.db.title, $scope.db.info);
                     if ($scope.db == null || $scope.db == "") {
                         $scope.db = {
                             id: $scope.dashboardId,
@@ -1035,38 +1020,39 @@ angular.module('logistimo.storyboard.dashboards', ['logistimo.storyboard.widgets
     }]);
 
 
+
+
+
 /**
  * Created by naveensnair on 18/10/17.
  */
-function LocalStorageRepository(promise) {
+function LocalStorageRepository(promise){
     var DASHBOARDS = "dashboards";
-
-    function readLocal() {
-        if (localStorage.getItem(DASHBOARDS) == undefined) {
+    function readLocal(){
+        if(localStorage.getItem(DASHBOARDS) == undefined){
             return {}
         }
         return JSON.parse(localStorage.getItem(DASHBOARDS));
     }
-
-    function saveLocal(dashboards) {
-        localStorage.setItem(DASHBOARDS, JSON.stringify(dashboards));
+    function saveLocal(dashboards){
+        localStorage.setItem(DASHBOARDS,JSON.stringify(dashboards));
     }
     return {
         get: function (dashboardId) {
-            return promise(function (resolve, reject) {
+            return promise(function(resolve, reject){
                 var dashboards = readLocal();
                 resolve(dashboards[dashboardId]);
             });
 
         },
-        getAll: function () {
-            return promise(function (resolve, reject) {
+        getAll: function(){
+            return promise(function(resolve, reject){
                 resolve(readLocal());
             });
         },
         save: function (dashboard) {
-            return promise(function (resolve, reject) {
-                if (dashboard.dbId == undefined) {
+            return promise(function(resolve, reject){
+                if(dashboard.dbId == undefined) {
                     dashboard.dbId = new Date().getTime();
                 }
                 var dashboards = readLocal();
@@ -1076,7 +1062,7 @@ function LocalStorageRepository(promise) {
             });
         },
         delete: function (dashboardId) {
-            return promise(function (resolve, reject) {
+            return promise(function(resolve, reject){
                 var dashboards = readLocal();
                 delete dashboards[dashboardId];
                 saveLocal(dashboards);
@@ -1114,14 +1100,14 @@ angular.module('logistimo.storyboard.widgets', [])
             return !$scope.checkNotNullEmpty(argument);
         };
 
-        if (!$scope.checkNotNullEmpty($scope.widget.conf)) {
+        if(!$scope.checkNotNullEmpty($scope.widget.conf)){
             $scope.widget.conf = {};
         }
         $scope.save = function () {
             $scope.saveWidgetConf($scope.id, $scope.widget.conf);
             $scope.isEdit = false;
         };
-        $scope.cancel = function () {
+        $scope.cancel = function(){
             $scope.isEdit = false;
         };
     }])
@@ -1131,22 +1117,24 @@ angular.module('logistimo.storyboard.widgets', [])
     .controller('WidgetsListingController', ['widgetsRepository', '$scope', function (widgetRepository, $scope) {
         $scope.widgets = widgetRepository.getAll();
     }])
-    .controller('StaticWidgetController', ['$scope', function ($scope) {
+    .controller('StaticWidgetController', ['$scope', function($scope) {
         //$scope.completeRendering($scope.id);
     }]);
+
+
 
 
 /**
  * Created by naveensnair on 18/10/17.
  */
-function WidgetRegistry() {
+function WidgetRegistry(){
     var widget = "widget";
     return {
-        widgets: {},
+        widgets : {},
         get: function (widgetId) {
             return this.widgets[widgetId];
         },
-        getAll: function () {
+        getAll: function(){
             return this.widgets;
         },
         register: function (widget) {
@@ -1154,8 +1142,7 @@ function WidgetRegistry() {
         }
     }
 }
-angular.module('logistimo.storyboard').run(['$templateCache', function ($templateCache) {
-    'use strict';
+angular.module('logistimo.storyboard').run(['$templateCache', function($templateCache) {  'use strict';
 
     $templateCache.put('/angular-storyboards/src/bulletinboard/templates/create-bulletin-board.html',
         "<div ng-controller=\"BulletinBoardController\">\n" +
@@ -1365,7 +1352,7 @@ angular.module('logistimo.storyboard').run(['$templateCache', function ($templat
         "            <div class=\"col-sm-12\">\n" +
         "                <div ng-controller=\"BulletinBoardViewController\">\n" +
         "                    <div ng-if=\"renderDashboardsPage == true\">\n" +
-        "                        <div ng-include=\"'/angular-storyboards/src/dashboard/templates/view-dashboard.html'\"></div>\n" +
+        "                        <div ng-include=\"'/angular-storyboards/src/dashboard/templates/view-dashboard.html'\" ng-init=\"showTitle = showTitle\"></div>\n" +
         "                    </div>\n" +
         "                </div>\n" +
         "            </div>\n" +
@@ -1517,7 +1504,7 @@ angular.module('logistimo.storyboard').run(['$templateCache', function ($templat
         "            </form>\n" +
         "        </div>\n" +
         "        <div ng-if=\"preview == true\">\n" +
-        "            <div ng-include=\"'/angular-storyboards/src/dashboard/templates/view-dashboard.html'\" ng-init=\"db = temp_dashboard; noInit = true; preview = preview\"></div>\n" +
+        "            <div ng-include=\"'/angular-storyboards/src/dashboard/templates/view-dashboard.html'\" ng-init=\"db = temp_dashboard; noInit = true; preview = preview; showTitle = true\"></div>\n" +
         "        </div>\n" +
         "    </div>\n" +
         "</div>"
@@ -1571,13 +1558,15 @@ angular.module('logistimo.storyboard').run(['$templateCache', function ($templat
         "                        </div>\n" +
         "                    </div>\n" +
         "                    <div>\n" +
-        "                        <div class=\"row mt18\">\n" +
-        "                            <div class=\"col-sm-12\">\n" +
-        "                                <h2 style=\"text-align: center;\">{{db.title}}</h2>\n" +
+        "                        <div class=\"row\" ng-if=\"showTitle\">\n" +
+        "                            <div class=\"col-sm-12 pt10\">\n" +
+        "                                <h2 style=\"text-align: center;margin: 0px\">{{db.title}}</h2>\n" +
         "                            </div>\n" +
         "                        </div>\n" +
-        "                        <div class=\"row mt18\">\n" +
-        "                            <h3 style=\"text-align: center;\">{{db.info}}</h3>\n" +
+        "                        <div class=\"row\" ng-if=\"showTitle\">\n" +
+        "                            <div class=\"col-sm-12 pt10 pb10\">\n" +
+        "                                <h3 style=\"text-align: center;margin: 0px;color: #777;\">{{db.info}}</h3>\n" +
+        "                            </div>\n" +
         "                        </div>\n" +
         "                        <div class=\"row padding5\" id=\"viewDash\">\n" +
         "                            <ul\n" +
