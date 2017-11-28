@@ -36,19 +36,70 @@
             </div>
             <div class="col-sm-8">
                 <div class="float-right rPad5 userinfo">
-                    <span ng-if="iOCEnabled && !onlyNewUI && subview != 'manage' " class="userdomaininfo" ng-click="switchConsole()">{{resourceBundle['switch.console']}}</span>
+                    <span ng-if="iOCEnabled && !onlyNewUI && subview != 'manage' " class="userdomaininfo"
+                          ng-click="switchConsole()">{{resourceBundle['switch.console']}}</span>
                     <!--<span ng-if="subview !='manage'" class="userdomaininfo"><a ng-href="#/setup/users/all/details?userId={{curUser}}">{{curUserName}}</a> {{resourceBundle['in']}} <b>{{domainName}}</b></span>-->
+                    <span class="userdomaininfo dropdown" ng-if="!iAU">
+                            <a href="#" id="shortcutsMenu" class="dropdown-toggle" data-toggle="dropdown" role="button"
+                               aria-haspopup="true" aria-expanded="false">Shortcuts&nbsp;<span
+                                    class="caret"></span></a>
+                            <ul class="dropdown-menu dropdown-menu-right" role="menu" aria-labelledby="shortcutsMenu">
+                                <li>
+                                    <div ng-controller="ShortcutController">
+        <span ng-if="enableBB">
+            <a href="/pub/board?domainid={{bb.did}}" target="_blank">{{resourceBundle['bulletinboard']}}
+            </a>
+            <p ng-if="enablePost" class="dummyLink automargin" ng-click="toggle()" style="display: inline-block;">
+                ({{resourceBundle['home.post']}})</p>
+            <div ng-if="showPostBoard">
+                <div ng-include="'views/configuration/message-to-board.html'"></div>
+            </div>
+        </span>
+                                    </div>
+                                </li>
+                                <li ng-if="ordersTabEnabled">
+                                    <a href="#/orders/demand/?vw=m"
+                                       target="_blank">{{resourceBundle['home.demandmap']}}</a>
+                                </li>
+                                <li>
+                                    <a href="#/inventory/?vw=m"
+                                       target="_blank">{{resourceBundle['home.inventorymap']}}</a>
+                                </li>
+                                <li>
+                                    <a href="#/inventory/transactions/" target="_blank">{{resourceBundle['home.inventorytransactions']}}</a>
+                                </li>
+                                <li role="separator" class="divider"></li>
+
+
+                                <li ng-show="isDef(generalconfig.appurls.j2me_en)">
+                                    <a href="http://{{generalconfig.appurls.j2me_en}}" target="_blank">{{resourceBundle['home.featuredphone']}}</a>
+                                </li>
+                                <li ng-show="isDef(generalconfig.appurls.android)">
+                                    <a href="http://{{generalconfig.appurls.android}}" target="_blank">{{resourceBundle['home.smartphone']}}</a>
+                                </li>
+                                <li>
+                                    <a href="/m/index.html" target="_blank"
+                                            >{{resourceBundle['home.html5browser']}}</a>
+                                </li>
+                            </ul>
+                    </span>
                     <span class="userdomaininfo"><a href="/s/help/index.html" target="_blank"
                                                     title="Help">Help</a></span>
                     <span ng-if="subview !='manage'" class="userdomaininfo"><b>{{domainName}}</b></span>
                     <span class="userdomaininfo" ng-if="iSU && subview != 'manage'"><a href="#/manage/domains">{{resourceBundle['manage']}}</a></span>
                     <span class="userdomaininfo" ng-if="iSU && subview == 'manage'"><a href="#/">{{resourceBundle['home']}}</a></span>
-                    <span ng-if="subview !='manage'" class="userdomaininfo br0" style="padding-right:0">
-                        <a class="dropdown-toggle clickable" data-toggle="dropdown">{{curUserName}} <span class="caret"></span></a>
-                        <ul class="dropdown-menu dropdown-menu-right" style="top:17px; right:25px;" role="menu">
-                            <li><a ng-href="#/setup/users/all/details?userId={{curUser}}"><span class="glyphicons glyphicons-user c-grey"></span>&nbsp;&nbsp;{{resourceBundle['myaccount']}}</a></li>
-                            <li ng-hide="iAU"><a href="#/exportstatus/exports/"><span class="glyphicons glyphicons-download-alt c-grey"></span>&nbsp;&nbsp;{{resourceBundle['myexports']}}</a></li>
-                            <li><a ng-click="logout()"><span class="glyphicons glyphicons-exit c-grey"></span>&nbsp;&nbsp;{{resourceBundle['signout']}}</a></li>
+                    <span ng-if="subview !='manage'" class="userdomaininfo br0 dropdown" style="padding-right:0">
+                        <a class="dropdown-toggle clickable" data-toggle="dropdown">{{curUserName}} <span
+                                class="caret"></span></a>
+                        <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                            <li><a ng-href="#/setup/users/all/details?userId={{curUser}}"><span
+                                    class="glyphicons glyphicons-user c-grey"></span>&nbsp;&nbsp;{{resourceBundle['myaccount']}}</a>
+                            </li>
+                            <li ng-hide="iAU"><a href="#/exportstatus/exports/"><span
+                                    class="glyphicons glyphicons-download-alt c-grey"></span>&nbsp;&nbsp;{{resourceBundle['myexports']}}</a>
+                            </li>
+                            <li><a ng-click="logout()"><span class="glyphicons glyphicons-exit c-grey"></span>&nbsp;&nbsp;{{resourceBundle['signout']}}</a>
+                            </li>
                         </ul>
                     </span>
                     <span><a ng-show="subview == 'manage'" ng-click="logout()">{{resourceBundle['signout']}}</a></span>
@@ -66,9 +117,12 @@
                     <ul class="dropdown-menu" role="menu">
                         <li><a href="#/dashboard/">Overview</a></li>
                         <li ng-if="hasDashbaccess && !tempOnlyAU"><a href="#/dashboard/inventory">Inventory</a></li>
-                        <li ng-if="hasDashbaccess && !tempOnlyAU && !hbUTag && (dashboardConfig.ape || dashboardConfig.ipe)"><a href="#/dashboard/activity">Activity</a></li>
-                        <li ng-if="hasDashbaccess && !tempOnlyAU && (dashboardConfig.ope || dashboardConfig.rpe)"><a href="#/dashboard/orders">Orders</a></li>
-                        <li ng-repeat="item in dashboards" ng-show="item.isConfd"><a href="#/dashboard/view/{{item.dbId}}">{{item.nm}}</a></li>
+                        <li ng-if="hasDashbaccess && !tempOnlyAU && !hbUTag && (dashboardConfig.ape || dashboardConfig.ipe)">
+                            <a href="#/dashboard/activity">Activity</a></li>
+                        <li ng-if="hasDashbaccess && !tempOnlyAU && (dashboardConfig.ope || dashboardConfig.rpe)"><a
+                                href="#/dashboard/orders">Orders</a></li>
+                        <li ng-repeat="item in dashboards" ng-show="item.isConfd"><a
+                                href="#/dashboard/view/{{item.dbId}}">{{item.nm}}</a></li>
                     </ul>
                 </li>
                 <li ng-if="ordersTabEnabled" ng-class="{active:subview == 'orders' }">
@@ -94,7 +148,8 @@
                     <ul class="dropdown-menu" role="menu">
                         <li><a href="#/inventory/">{{resourceBundle.stock}}
                             {{resourceBundle['views.lowercase']}}</a></li>
-                        <li><a href="#/inventory/abnormalstock/">{{resourceBundle.abnormal}} {{resourceBundle['stock.lowercase']}}</a></li>
+                        <li><a href="#/inventory/abnormalstock/">{{resourceBundle.abnormal}}
+                            {{resourceBundle['stock.lowercase']}}</a></li>
                         <li><a href="#/inventory/transactions/">{{resourceBundle.transactions}}</a></li>
                     </ul>
                 </li>
@@ -139,33 +194,44 @@
                         </li>
                         <li ng-if="!isTempMonOnly"><a href="#/configuration/orders/">{{resourceBundle.orders}}</a></li>
                         <li><a href="#/configuration/approvals/">{{resourceBundle['approvals.upper.case']}}</a></li>
-                        <li ng-show="isTempMonOnly"><a href="#/configuration/notifications/event/assets">{{resourceBundle.notifications}}</a></li>
-                        <li ng-hide="isTempMonOnly"><a href="#/configuration/notifications/">{{resourceBundle.notifications}}</a></li>
+                        <li ng-show="isTempMonOnly"><a href="#/configuration/notifications/event/assets">{{resourceBundle.notifications}}</a>
+                        </li>
+                        <li ng-hide="isTempMonOnly"><a href="#/configuration/notifications/">{{resourceBundle.notifications}}</a>
+                        </li>
                         <li><a href="#/configuration/tags">{{resourceBundle.tags}}</a></li>
                         <li ng-if="!isTempMonOnly"><a
                                 href="#/configuration/accounting/">{{resourceBundle.accounting}}</a></li>
                         <li ng-if="!isTempMonOnly"><a
                                 href="#/configuration/custom/">{{resourceBundle['report.customreports']}}</a></li>
-                        <li><a ng-show="iSU || (iAdm && dp.av)" href="#/configuration/asset/">{{resourceBundle['assets']}}</a></li>
-                        <li><a ng-hide="isTempMonOnly" href="#/configuration/dashboard/">{{resourceBundle['dashboard']}}</a></li>
-                        <li><a ng-if="hasChild && (iAdm || dp.ce)" href="#/configuration/options/">{{resourceBundle['configuration.options']}}</a></li>
+                        <li><a ng-show="iSU || (iAdm && dp.av)" href="#/configuration/asset/">{{resourceBundle['assets']}}</a>
+                        </li>
+                        <li><a ng-hide="isTempMonOnly"
+                               href="#/configuration/dashboard/">{{resourceBundle['dashboard']}}</a></li>
+                        <li><a ng-if="hasChild && (iAdm || dp.ce)" href="#/configuration/options/">{{resourceBundle['configuration.options']}}</a>
+                        </li>
                         <li><a href="#/configuration/summarisation/">{{resourceBundle['event.summary']}}</a></li>
                         <li ng-show="(iAdm || iSU)"><a href="#/configuration/bulletin/">Bulletin Board</a></li>
                         <li ng-show="iSU"><a href="#/configuration/dashboards/">Dashboards</a></li>
                     </ul>
                 </li>
-                <li ng-class="{active:subview == 'setup'}" ng-if="((iSU || dp.uv || dp.mv || dp.ev || dp.egv || dp.iv) && !tempOnlyAU) || (tempOnlyAU && tempEnabled)"><a
-                        class="dropdown-toggle clickable" data-toggle="dropdown">{{resourceBundle.setup}} <span
-                        class="caret"></span></a>
+                <li ng-class="{active:subview == 'setup'}"
+                    ng-if="((iSU || dp.uv || dp.mv || dp.ev || dp.egv || dp.iv) && !tempOnlyAU) || (tempOnlyAU && tempEnabled)">
+                    <a
+                            class="dropdown-toggle clickable" data-toggle="dropdown">{{resourceBundle.setup}} <span
+                            class="caret"></span></a>
                     <ul class="dropdown-menu" role="menu">
                         <li ng-show="iSU || dp.uv"><a href="#/setup/users/">{{resourceBundle.users}}</a></li>
-                        <li ng-show="iSU || (iAdm && dp.mv)"><a href="#/setup/materials/">{{resourceBundle.materials}}</a></li>
+                        <li ng-show="iSU || (iAdm && dp.mv)"><a
+                                href="#/setup/materials/">{{resourceBundle.materials}}</a></li>
                         <li ng-show="iSU || (iAdm && dp.mv)"><a href="#/setup/handlingunits/">Handling units</a></li>
                         <li ng-show="iSU || dp.ev"><a href="#/setup/entities/">{{resourceBundle.kiosks}}</a></li>
-                        <li ng-show="iSU || dp.egv"><a href="#/setup/ent-grps/">{{resourceBundle['linked.domains.allow.entity.groups.management']}}</a></li>
-                        <li ng-show="!iMan && (iSU || dp.ia || dp.ie || dp.ir)"><a href="#/setup/inventory/">{{resourceBundle.inventory}}</a></li>
+                        <li ng-show="iSU || dp.egv"><a href="#/setup/ent-grps/">{{resourceBundle['linked.domains.allow.entity.groups.management']}}</a>
+                        </li>
+                        <li ng-show="!iMan && (iSU || dp.ia || dp.ie || dp.ir)"><a href="#/setup/inventory/">{{resourceBundle.inventory}}</a>
+                        </li>
                         <li ng-show="iAdm"><a href="#/setup/domains/">{{resourceBundle.domains}}</a></li>
-                        <li ng-show="tempEnabled && (iSU || (iAdm && dp.av))"><a href="#/setup/assets/">{{resourceBundle.assets}}</a></li>
+                        <li ng-show="tempEnabled && (iSU || (iAdm && dp.av))"><a href="#/setup/assets/">{{resourceBundle.assets}}</a>
+                        </li>
                     </ul>
                 </li>
             </ul>
@@ -176,16 +242,6 @@
                     </div>
                 </div>
                 <domain-tree></domain-tree>
-            </div>
-            <div class="share_box shortcuts" ng-if="!iAU">
-                <div class="scmenu">
-                    <a href="" target="_blank" class="clickable pad3 db ok" title="Help"><span
-                            class="scmenu"><span
-                            class="glyphicons glyphicons-chevron-left qm"></span></span></a>
-                    <div class="show" >
-                        <div ng-include="'views/home/right-menu.html'"></div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -199,7 +255,8 @@
                 <li><a href="/s/admin/system_configuration.jsp">{{resourceBundle['manage.systemconf']}}</a></li>
             </ul>
             <div class="share_box">
-                <a href="/s/help/index.html" target="_blank" class="clickable pad3 db" title="Help"><span class="glyphicons glyphicons-info-sign qm"></span></a>
+                <a href="/s/help/index.html" target="_blank" class="clickable pad3 db" title="Help"><span
+                        class="glyphicons glyphicons-info-sign qm"></span></a>
             </div>
         </div>
     </div>

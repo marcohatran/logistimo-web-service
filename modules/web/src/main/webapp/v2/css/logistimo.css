@@ -2448,9 +2448,7 @@ date-picker[noclear] .btn-group>.btn:first-child:not(:last-child):not(.dropdown-
     right: 0px;
 }
 .share_box{
-    position: fixed;
     width: 45px;
-    right: 0%;
     box: 1px solid grey;
     background-color: white;
     height:40px;

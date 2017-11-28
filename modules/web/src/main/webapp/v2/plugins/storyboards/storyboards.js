@@ -1,3 +1,26 @@
+/*
+ * Copyright © 2017 Logistimo.
+ *
+ * This file is part of Logistimo.
+ *
+ * Logistimo software is a mobile & web platform for supply chain management and remote temperature monitoring in
+ * low-resource settings, made available under the terms of the GNU Affero General Public License (AGPL).
+ *
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General
+ * Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any
+ * later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/>.
+ *
+ * You can be released from the requirements of the license by purchasing a commercial license. To know more about
+ * the commercial license, please contact us at opensource@logistimo.com
+ */
+
 angular.module('logistimo.storyboard', ['logistimo.storyboard.bulletinboards']);
 /*
  * Copyright © 2017 Logistimo.
@@ -156,7 +179,6 @@ function LocalBBStorageRepository(promise) {
     function saveLocal(bulletinBoard) {
         localStorage.setItem(BULLETINBOARDS, JSON.stringify(bulletinBoard));
     }
-
     return {
         get: function (bulletinBoardId) {
             return promise(function (resolve, reject) {
@@ -397,7 +419,7 @@ function DashboardLayoutHandler(containerId, $timeout) {
                 if (dd.wid != wid.wid && dd.wid != skipWid &&
                     isBlockedPanel(dd.computedX, dd.computedWidth, wid.computedX, wid.computedWidth) &&
                     ((wid.y - cnt) * sh + PAD) < dd.computedY + dd.computedHeight &&
-                    ((wid.y - cnt) * sh + PAD) > dd.computedY) {
+                    ((wid.y - cnt) * sh + PAD) >= dd.computedY) {
                     return true;
                 }
             }
@@ -1029,7 +1051,6 @@ function LocalStorageRepository(promise) {
     function saveLocal(dashboards) {
         localStorage.setItem(DASHBOARDS, JSON.stringify(dashboards));
     }
-
     return {
         get: function (dashboardId) {
             return promise(function (resolve, reject) {
@@ -1563,7 +1584,7 @@ angular.module('logistimo.storyboard').run(['$templateCache', function ($templat
         "                                    style=\"list-style-type: none; padding: 0; display: block; margin: 0; position: relative; min-height: {{maxHeight}}\"\n" +
         "                                    id=\"allWid\">\n" +
         "                                <li class=\"dummy noLRpad\"\n" +
-        "                                    style=\"z-index: 1; position: absolute; padding:5px; display:list-item; width: {{widget.computedWidth}}px; left: {{widget.computedX}}px; top: {{widget.computedY}}px; height: {{widget.computedHeight + 10}}px;\"\n" +
+        "                                    style=\"z-index: 1; position: absolute; padding:5px; display:list-item; width: {{widget.computedWidth}}px; left: {{widget.computedX}}px; top: {{widget.computedY}}px; height: {{widget.computedHeight}}px;max-height: {{widget.computedHeight}}px;\"\n" +
         "                                    ng-controller=\"WidgetScopeController\"\n" +
         "                                    ng-repeat=\"(id,widget) in db.widgets track by $index\">\n" +
         "                                    <span ng-include=\"'/angular-storyboards/src/widget/templates/view-widget.html'\"></span>\n" +
@@ -1614,7 +1635,7 @@ angular.module('logistimo.storyboard').run(['$templateCache', function ($templat
 
     $templateCache.put('/angular-storyboards/src/widget/templates/view-widget-template.html',
         "<widget-panel>\n" +
-        "    <div class=\"panel panel-default dummy\" style=\"height: {{widget.computedHeight}}px;\">\n" +
+        "    <div class=\"panel panel-default dummy\" style=\"height: {{widget.computedHeight}}px; overflow: hidden\">\n" +
         "        <div class=\"panel-heading\" style=\"display: flex\">\n" +
         "            <span class=\"panel-title\" style=\"flex: 1 1 0\">{{widget.name}}</span>\n" +
         "            <div class=\"btn-group\">\n" +
@@ -1639,7 +1660,7 @@ angular.module('logistimo.storyboard').run(['$templateCache', function ($templat
 
     $templateCache.put('/angular-storyboards/src/widget/templates/view-widget.html',
         "<div ng-controller=\"WidgetsViewController\">\n" +
-        "    <div class=\"bgr\" style=\"height: {{widget.computedHeight}};width: {{widget.computedWidth}}; overflow: hidden\">\n" +
+        "    <div style=\"height: {{widget.computedHeight}}px; min-height: {{widget.computedHeight}}px;max-height: {{widget.computedHeight}}px; overflow: hidden; border-radius: 5px; border: 1px solid #dddddd; padding: 2px\">\n" +
         "        <div ng-include=\"widgetTemplate.templateUrl\"></div>\n" +
         "    </div>\n" +
         "</div>"
