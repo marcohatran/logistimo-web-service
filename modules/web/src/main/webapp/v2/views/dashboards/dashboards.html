@@ -42,7 +42,7 @@
                  ng-init="dashboardId = getRequestParam('dashboardId')"></div>
         </div>
         <div class="tab-pane" ng-switch-when="view">
-            <div ng-init="dashboardId = getRequestParam('dashboardId')"
+            <div ng-init="dashboardId = getRequestParam('dashboardId'); showTitle = true"
                  ng-include="'/angular-storyboards/src/dashboard/templates/view-dashboard.html'"></div>
         </div>
 
