@@ -23,8 +23,12 @@
 
 package com.logistimo.reports.plugins.service;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
 import com.logistimo.assets.service.AssetManagementService;
 import com.logistimo.assets.service.impl.AssetManagementServiceImpl;
+import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
@@ -32,14 +36,16 @@ import com.logistimo.exception.BadRequestException;
 import com.logistimo.logger.XLog;
 import com.logistimo.reports.ReportsConstants;
 import com.logistimo.reports.constants.ReportCompareField;
-import com.logistimo.reports.constants.ReportType;
 import com.logistimo.reports.constants.ReportViewType;
+import com.logistimo.reports.plugins.IExternalServiceClient;
 import com.logistimo.reports.plugins.internal.ExternalServiceClient;
 import com.logistimo.reports.plugins.internal.QueryHelper;
 import com.logistimo.reports.plugins.internal.QueryRequestModel;
+import com.logistimo.reports.plugins.internal.ReportRequestModel;
 import com.logistimo.reports.plugins.models.ReportChartModel;
 import com.logistimo.reports.plugins.models.TableResponseModel;
 import com.logistimo.reports.utils.ReportsUtil;
+import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.Service;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.Services;
@@ -53,6 +59,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.lang.reflect.Type;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -83,7 +90,8 @@ public class ReportPluginService implements Service {
   public List<ReportChartModel> getReportData(Long domainId, String json) {
     try {
       JSONObject jsonObject = new JSONObject(json);
-      ExternalServiceClient externalServiceClient = ExternalServiceClient.getNewInstance();
+      IExternalServiceClient<QueryRequestModel>
+          externalServiceClient = ExternalServiceClient.getNewCallistoInstance();
 
       ReportCompareField compareField =
           ReportCompareField.getField(jsonObject.getString(JSON_REPORT_COMPARE));
@@ -123,43 +131,11 @@ public class ReportPluginService implements Service {
         throw new BadRequestException("Invalid request");
       }
 
-
-      QueryRequestModel model = new QueryRequestModel();
-      model.filters = QueryHelper.parseFilters(domainId, jsonObject);
-      if (model.filters.containsKey(QueryHelper.TOKEN + QueryHelper.QUERY_CITY)) {
-        model.filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_TALUK);
-        model.filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_DISTRICT);
-      }
-
-      String startTime = getReportTableStartTime(jsonObject, model.filters.get(QueryHelper.TOKEN_END_TIME));
-      if(StringUtils.isNotEmpty(startTime)) {
-        model.filters.put(QueryHelper.TOKEN_START_TIME,startTime);
-      }
-
-      final String type = jsonObject.getString(JSON_REPORT_TYPE);
+      QueryRequestModel model = constructQueryRequestModel(domainId, jsonObject, viewType);
       final IReportService reportBuilder =
-          reportServiceCollection.getReportService(type);
-      model.filters.put(QueryHelper.TOKEN_COLUMNS, reportBuilder.getTableColumns(model.filters,
-          viewType));
-
-      Map<String, String> retainFilters = new HashMap<>();
-
-      prepareFilters(domainId, viewType, model, retainFilters);
-
-      model.queryId = viewType.toString().toUpperCase() + CharacterConstants.UNDERSCORE
-          + QueryHelper.getQueryID(model.filters, type);
-      if (viewType.toString().equals(ReportViewType.BY_ASSET.toString())) {
-        model.queryId = "DID_DVID";
-        model.derivedResultsId = "ATE_DID_DVID";
-        String[] arr = StringUtils.split(model.filters.get(QueryHelper.TOKEN + QueryHelper.QUERY_DVID),',');
-        for(int i=0;i<arr.length;i++){
-          arr[i] = arr[i].substring(1,arr[i].length()-1);
-        }
-        model.rowHeadings = Arrays.asList(arr);
-      }
-      finaliseFilters(viewType, model, retainFilters);
-
-      ExternalServiceClient externalServiceClient = ExternalServiceClient.getNewInstance();
+          reportServiceCollection.getReportService(jsonObject.getString(JSON_REPORT_TYPE));
+      IExternalServiceClient<QueryRequestModel>
+          externalServiceClient = ExternalServiceClient.getNewCallistoInstance();
       Response response = externalServiceClient.postRequest(model);
       return reportBuilder.buildReportTableData(response.readEntity(String.class), viewType, model);
     }catch (Exception e) {
@@ -190,7 +166,7 @@ public class ReportPluginService implements Service {
     model.filters.put(QueryHelper.TOKEN_RUN_TIME, aggregationRunTimeKey);
     model.queryId = QueryHelper.QUERY_LAST_RUN_TIME;
     //Request callisto for data
-    ExternalServiceClient externalServiceClient = ExternalServiceClient.getNewInstance();
+    IExternalServiceClient<QueryRequestModel> externalServiceClient = ExternalServiceClient.getNewCallistoInstance();
     Response response = externalServiceClient.postRequest(model);
     //parse response
     if (response != null) {
@@ -205,6 +181,55 @@ public class ReportPluginService implements Service {
         } catch (ParseException e) {
           xLogger.warn("Exception parsing date", e);
         }
+      }
+    }
+    return null;
+  }
+
+  public ReportRequestModel buildExportModel(String json) throws ParseException, ServiceException {
+    JSONObject jsonObject = new JSONObject(json);
+    final String reportViewType = jsonObject.getString(JSON_REPORT_VIEW_TYPE);
+    ReportViewType viewType =
+        ReportViewType.getViewType(reportViewType);
+    Long domainId = SecurityUtils.getCurrentDomainId();
+    final QueryRequestModel model =
+        constructQueryRequestModel(domainId, jsonObject, viewType);
+    ReportRequestModel eModel = new ReportRequestModel();
+    final SecureUserDetails userDetails = SecurityUtils.getUserDetails();
+    eModel.userId = userDetails.getUsername();
+    eModel.timezone = userDetails.getTimezone();
+    eModel.locale = userDetails.getLocale().getLanguage();
+    eModel.filters = model.filters;
+    eModel.templateId = jsonObject.getString(JSON_REPORT_TYPE);
+    eModel.additionalData = new HashMap<>();
+    eModel.additionalData.put("typeId",getExportType(reportViewType));
+    eModel.additionalData.put("reportViewType", reportViewType);
+    eModel.additionalData.put("queryId",model.queryId);
+    eModel.additionalData.put("reportType", eModel.templateId);
+    eModel.additionalData.put("primaryMetricIndex",jsonObject.getString("primaryMetricIndex"));
+    eModel.additionalData.put("secondaryMetricIndex",jsonObject.getString("secondaryMetricIndex"));
+    eModel.additionalData.put("tertiaryMetricIndex",jsonObject.getString("tertiaryMetricIndex"));
+    DomainConfig dc = DomainConfig.getInstance(SecurityUtils.getCurrentDomainId());
+    eModel.additionalData.put("domainTimezone",dc.getTimezone());
+
+    Type type = new TypeToken<Map<String, String>>(){}.getType();
+    eModel.titles = new Gson().fromJson(jsonObject.get("titles").toString(), type);
+
+    return eModel;
+  }
+
+  private String getExportType(String viewtype) {
+    final ReportViewType viewType = ReportViewType.getViewType(viewtype);
+    if(viewType != null) {
+      switch (viewType) {
+        case BY_MATERIAL:
+          return "T_MID";
+        case BY_ENTITY:
+          return "T_KID";
+        case BY_REGION:
+          return "T_REG";
+        default:
+          return null;
       }
     }
     return null;
@@ -297,6 +322,46 @@ public class ReportPluginService implements Service {
               + CharacterConstants.UNDERSCORE + QueryHelper.QUERY,
           QueryHelper.QUERY_ENTITY + CharacterConstants.UNDERSCORE + QueryHelper.QUERY);
     }
+  }
+
+  private QueryRequestModel constructQueryRequestModel(Long domainId, JSONObject jsonObject,
+                                                       ReportViewType viewType)
+      throws ParseException, ServiceException {
+    QueryRequestModel model = new QueryRequestModel();
+    model.filters = QueryHelper.parseFilters(domainId, jsonObject);
+    if (model.filters.containsKey(QueryHelper.TOKEN + QueryHelper.QUERY_CITY)) {
+      model.filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_TALUK);
+      model.filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_DISTRICT);
+    }
+
+    String startTime = getReportTableStartTime(jsonObject, model.filters.get(QueryHelper.TOKEN_END_TIME));
+    if(StringUtils.isNotEmpty(startTime)) {
+      model.filters.put(QueryHelper.TOKEN_START_TIME,startTime);
+    }
+
+    final String type = jsonObject.getString(JSON_REPORT_TYPE);
+    final IReportService reportBuilder =
+        reportServiceCollection.getReportService(type);
+    model.filters.put(QueryHelper.TOKEN_COLUMNS, reportBuilder.getTableColumns(model.filters,
+        viewType));
+
+    Map<String, String> retainFilters = new HashMap<>();
+
+    prepareFilters(domainId, viewType, model, retainFilters);
+
+    model.queryId = viewType.toString().toUpperCase() + CharacterConstants.UNDERSCORE
+        + QueryHelper.getQueryID(model.filters, type);
+    if (viewType.toString().equals(ReportViewType.BY_ASSET.toString())) {
+      model.queryId = "DID_DVID";
+      model.derivedResultsId = "ATE_DID_DVID";
+      String[] arr = StringUtils.split(model.filters.get(QueryHelper.TOKEN + QueryHelper.QUERY_DVID),',');
+      for(int i=0;i<arr.length;i++){
+        arr[i] = arr[i].substring(1,arr[i].length()-1);
+      }
+      model.rowHeadings = Arrays.asList(arr);
+    }
+    finaliseFilters(viewType, model, retainFilters);
+    return model;
   }
 
   private void finaliseFilterByMaterial(QueryRequestModel model,

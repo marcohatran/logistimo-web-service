@@ -44,7 +44,7 @@ registerWidget('ias', 'rpt-abnormal-stock', 'Inventory', 'Abnormal stock','inven
 
     function ReportAbnormalStockController($scope, $timeout, reportsServiceCore) {
 
-        InventoryReportController.call(this, $scope, $timeout, getData);
+        InventoryReportController.call(this, $scope, $timeout, getData, reportsServiceCore);
 
         $scope.reportType=reportType;
         $scope.cType = "mscombi2d";
@@ -75,13 +75,6 @@ registerWidget('ias', 'rpt-abnormal-stock', 'Inventory', 'Abnormal stock','inven
             }
             var fileName = "Abnormal_Stock" + formatDate2Url($scope.filter.from) +"_"+ formatDate2Url($scope.filter.to);
             $scope.exportAsCSV(data, heading, fileName);
-        };
-
-        $scope.downloadTableAsCSV = function () {
-            var data = $scope.tableData;
-            var heading = $scope.tableCSVHeading;
-            var fileName = "Abnormal_Stock" + formatDate2Url($scope.filter.from) +"_"+ formatDate2Url($scope.filter.to);
-            $scope.exportAsCSV(data, heading, fileName, $scope.tableSeriesNo);
         };
 
         $scope.$watch("metrics.primary",function(newValue,oldValue){

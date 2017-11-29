@@ -23,15 +23,9 @@
 
 package com.logistimo.reports.plugins.config;
 
-import com.logistimo.services.utils.ConfigUtil;
-
 /**
  * @author Mohan Raja
  */
-public class ExternalServiceClientConfiguration {
-  private String url = ConfigUtil.get("callisto.url","http://localhost:8090");
-  public String getUrl() {
-    return url;
-  }
-
+public interface IExternalServiceClientConfiguration {
+  String getUrl();
 }

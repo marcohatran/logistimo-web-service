@@ -21,17 +21,17 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.reports.plugins;
+package com.logistimo.reports.plugins.config;
 
-import com.logistimo.reports.plugins.internal.QueryRequestModel;
-
-import javax.ws.rs.core.Response;
+import com.logistimo.services.utils.ConfigUtil;
 
 /**
  * @author Mohan Raja
  */
-public interface IExteranalServiceClient {
+public class CallistoServiceClientConfiguration implements IExternalServiceClientConfiguration {
+  private String url = ConfigUtil.get("callisto.url","http://localhost:8090");
+  public String getUrl() {
+    return url;
+  }
 
-  Response getResponse(String id);
-  Response postRequest(QueryRequestModel request);
 }

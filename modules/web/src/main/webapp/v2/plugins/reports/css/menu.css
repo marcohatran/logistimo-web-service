@@ -189,3 +189,7 @@
     text-align: right;
     font-size: 12px;
 }
+
+.metric-row {
+    margin-top: 20px;
+}

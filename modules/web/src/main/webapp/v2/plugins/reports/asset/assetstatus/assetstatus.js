@@ -41,13 +41,13 @@ registerWidget('aas', 'rpt-asset-status', 'Assets', 'Asset status','asset/assets
 
     reportsPluginCore.controller('rptAssetStatusController', ReportAssetStatusController);
 
-    ReportAssetStatusController.$inject = ['$scope', '$timeout','reportsServiceCore','domainCfgService'];
+    ReportAssetStatusController.$inject = ['$scope', '$timeout','reportsServiceCore','domainCfgService','exportService'];
 
-    function ReportAssetStatusController($scope, $timeout, reportsServiceCore,domainCfgService) {
+    function ReportAssetStatusController($scope, $timeout, reportsServiceCore, domainCfgService, exportService) {
 
         $scope.reportStartDate = new Date(2017, 5, 1);
 
-        AssetReportController.call(this, $scope, $timeout, getData);
+        AssetReportController.call(this, $scope, $timeout, getData, exportService);
         $scope.reportType=reportType;
 
         $scope.cType = "mscolumn2d";
@@ -81,13 +81,6 @@ registerWidget('aas', 'rpt-asset-status', 'Assets', 'Asset status','asset/assets
             }
             var fileName = "Asset_Status" + formatDate2Url($scope.filter.from) +"_"+ formatDate2Url($scope.filter.to);
             $scope.exportAsCSV(data, heading, fileName);
-        };
-
-        $scope.downloadTableAsCSV = function () {
-            var data = $scope.tableData;
-            var heading = $scope.tableCSVHeading;
-            var fileName = "Asset_Status" + formatDate2Url($scope.filter.from) +"_"+ formatDate2Url($scope.filter.to);
-            $scope.exportAsCSV(data, heading, fileName, $scope.tableSeriesNo);
         };
 
         $scope.$watch("metrics.primary",function(newValue,oldValue){

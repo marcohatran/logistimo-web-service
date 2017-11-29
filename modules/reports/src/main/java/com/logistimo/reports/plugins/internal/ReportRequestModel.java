@@ -23,40 +23,17 @@
 
 package com.logistimo.reports.plugins.internal;
 
-import com.netflix.hystrix.HystrixCommand;
-import com.netflix.hystrix.HystrixCommandGroupKey;
-
-import org.glassfish.jersey.uri.internal.JerseyUriBuilder;
-
-import java.net.URI;
-
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import java.util.Map;
 
 /**
  * @author Mohan Raja
  */
-public class PostAPICommand<T> extends HystrixCommand<Response> {
-  private final String baseURL;
-  private final Client client;
-  private final T requestModel;
-
-  public static final String EXTERNAL_SERVICE = "external-service";
-  public static final String PATH = "/query/getdata";
-
-  public PostAPICommand(String baseURL, Client client, T requestModel) {
-    super(HystrixCommandGroupKey.Factory.asKey(EXTERNAL_SERVICE), 30_000);
-    this.baseURL = baseURL;
-    this.client = client;
-    this.requestModel = requestModel;
-  }
-
-  @Override
-  protected Response run() throws Exception {
-    URI link = JerseyUriBuilder.fromUri(baseURL).path(PATH).build();
-    return client.target(link).request(MediaType.APPLICATION_JSON_TYPE)
-        .post(Entity.json(requestModel));
-  }
+public class ReportRequestModel {
+  public String userId;
+  public String timezone;
+  public String locale;
+  public String templateId;
+  public Map<String, String> filters;
+  public Map<String, String> additionalData;
+  public Map<String, String> titles;
 }

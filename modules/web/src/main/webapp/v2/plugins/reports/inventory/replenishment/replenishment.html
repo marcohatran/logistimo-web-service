@@ -36,12 +36,9 @@
                     </ul>
                 </div>
                 <div ng-show="!loading && !noData">
-                    <div class="row">
-                        <div class="col-sm-12">
-                            <rpt-last-run-time report-type="reportType"></rpt-last-run-time>
-                        </div>
-                    </div>
-                    <div class="row pt15">
+                    <rpt-last-run-time report-type="reportType"></rpt-last-run-time>
+                    <rpt-export-data ng-if="activeMetric != 'ot'" report-type="reportType" callback="exportData(reportType)"></rpt-export-data>
+                    <div class="row metric-row">
                         <div class="col-sm-3">
                             <select class="form-control" ng-model="metrics.primary">
                                 <option ng-repeat="metric in primaryMetric" value="{{metric.value}}">{{metric.name}}</option>
@@ -85,9 +82,6 @@
                         <div ng-if="activeMetric != 'ot'" class="row">
                             <div class="col-sm-12">
                                 <span ng-include="'plugins/reports/tables/data-table.html'"></span>
-                                <p class="text-center">
-                                    <a ng-click="downloadTableAsCSV()">{{resourceBundle['download.csv']}}</a>
-                                </p>
                             </div>
                         </div>
                 </div>

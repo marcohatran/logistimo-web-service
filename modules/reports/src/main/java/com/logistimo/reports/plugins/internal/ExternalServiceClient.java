@@ -23,8 +23,9 @@
 
 package com.logistimo.reports.plugins.internal;
 
-import com.logistimo.reports.plugins.IExteranalServiceClient;
-import com.logistimo.reports.plugins.config.ExternalServiceClientConfiguration;
+import com.logistimo.reports.plugins.IExternalServiceClient;
+import com.logistimo.reports.plugins.config.CallistoServiceClientConfiguration;
+import com.logistimo.reports.plugins.config.IExternalServiceClientConfiguration;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -33,15 +34,15 @@ import javax.ws.rs.core.Response;
 /**
  * @author Mohan Raja
  */
-public class ExternalServiceClient implements IExteranalServiceClient {
-  ExternalServiceClientConfiguration configuration;
+public class ExternalServiceClient<T> implements IExternalServiceClient<T> {
+  IExternalServiceClientConfiguration configuration;
   Client client;
 
-  public static ExternalServiceClient getNewInstance() {
-    return new ExternalServiceClient(new ExternalServiceClientConfiguration(), ClientBuilder.newClient());
+  public static ExternalServiceClient<QueryRequestModel> getNewCallistoInstance() {
+    return new ExternalServiceClient<>(new CallistoServiceClientConfiguration(), ClientBuilder.newClient());
   }
 
-  public ExternalServiceClient(ExternalServiceClientConfiguration configuration, Client client) {
+  public ExternalServiceClient(IExternalServiceClientConfiguration configuration, Client client) {
     this.configuration = configuration;
     this.client = client;
   }
@@ -53,12 +54,12 @@ public class ExternalServiceClient implements IExteranalServiceClient {
   }
 
   @Override
-  public Response postRequest(QueryRequestModel request) {
-    PostAPICommand command = new PostAPICommand(configuration.getUrl(), client, request);
+  public Response postRequest(T request) {
+    PostAPICommand<T> command = new PostAPICommand<>(configuration.getUrl(), client, request);
     return command.execute();
   }
 
-  public ExternalServiceClientConfiguration getConfiguration() {
+  public IExternalServiceClientConfiguration getConfiguration() {
     return configuration;
   }
 

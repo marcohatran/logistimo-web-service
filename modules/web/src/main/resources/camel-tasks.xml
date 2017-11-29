@@ -108,6 +108,18 @@
             <bean ref="approvalRequestedProcessor"/>
         </route>
 
+        <route id="dataxExportStatus" errorHandlerRef="dataxExportStatusErrorHandler" autoStartup="{{export.route.start}}">
+            <from uri="activemq:queue:datax-mesh-status-ls-export-app"/>
+            <unmarshal ref="dataxResponseModel"/>
+            <bean ref="dataxExportStatusProcessor"/>
+        </route>
+
+        <route id="dataxExportJob">
+            <from uri="direct:export-tasks"/>
+            <marshal ref="gson"/>
+            <to uri="activemq:queue:datax-apps-submit"/>
+        </route>
+
     </camelContext>
 
     <bean id="approvalRequestedProcessor"
@@ -117,6 +129,20 @@
     <bean id="approvalRequestedErrorHandler" class="org.apache.camel.builder.DeadLetterChannelBuilder">
         <property name="deadLetterUri" value="activemq:queue:approval-requested-deadletter"/>
         <property name="redeliveryPolicy" ref="approvalStatusUpdateRedeliveryPolicyConfig"/>
+    </bean>
+
+    <bean id="dataxExportStatusProcessor"
+          class="com.logistimo.exports.processors.DataXExportStatusProcessor">
+    </bean>
+
+    <bean id="dataxExportStatusErrorHandler" class="org.apache.camel.builder.DeadLetterChannelBuilder">
+        <property name="deadLetterUri" value="activemq:queue:datax-mesh-status-ls-export-app-deadletter"/>
+        <property name="redeliveryPolicy" ref="dataxExportRedeliveryPolicyConfig"/>
+    </bean>
+
+    <bean id="dataxExportRedeliveryPolicyConfig" class="org.apache.camel.processor.RedeliveryPolicy">
+        <property name="maximumRedeliveries" value="3"/>
+        <property name="redeliveryDelay" value="5000"/>
     </bean>
 
     <bean id="approvalStatusProcessor"
@@ -209,6 +235,10 @@
 
     <bean id="approvalRequested" class="org.apache.camel.component.gson.GsonDataFormat">
         <property name="unmarshalType" value="com.logistimo.orders.approvals.utils.ApprovalCreatedEvent"/>
+    </bean>
+
+    <bean id="dataxResponseModel" class="org.apache.camel.component.gson.GsonDataFormat">
+        <property name="unmarshalType" value="com.logistimo.exports.model.ExportResponseModel"/>
     </bean>
 
 </beans>
