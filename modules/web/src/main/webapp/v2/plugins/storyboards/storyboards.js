@@ -884,7 +884,9 @@ angular.module('logistimo.storyboard.dashboards', ['logistimo.storyboard.widgets
             if (!$scope.noInit) {
                 dashboardRepository.get($scope.dashboardId, $scope).then(function (dashboard) {
                     $scope.db = dashboard;
-                    $scope.setTitles($scope.db.title, $scope.db.info);
+                    if(!$scope.showTitle) {
+                        $scope.setTitles($scope.db.title, $scope.db.info);
+                    }
                     if ($scope.db == null || $scope.db == "") {
                         $scope.db = {
                             id: $scope.dashboardId,
