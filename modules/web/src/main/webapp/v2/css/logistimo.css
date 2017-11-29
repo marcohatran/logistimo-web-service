@@ -4008,3 +4008,30 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
     border-bottom: 1px solid #ddd;
 }
 
+.event-title{
+    font-size: 14px;
+    font-weight:bold;
+    text-align: left;
+    padding-top: 10px;
+}
+
+.event-title > .sub{
+    font-size: 12px;
+    font-weight: normal;
+}
+.event-title > .sub.blue-txt{
+    color: #00c0ef;
+}
+
+.event-title > .sub.grey-txt{
+    color: darkgrey;
+}
+.padding20{
+    padding: 20px;
+}
+
+.event-icon{
+    height:60px;
+    width: 100%;
+}
+
