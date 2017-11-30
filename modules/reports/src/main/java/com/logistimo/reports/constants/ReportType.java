@@ -25,28 +25,30 @@ package com.logistimo.reports.constants;
 
 public enum ReportType {
 
-  INV_ABNORMAL_STOCK("ias"),
-  INV_REPELISHMENT("ir"),
-  INV_TRANSACTION_COUNT("itc"),
-  INV_CONSUMPTION("ic"),
-  INV_DISCARDS("id"),
-  INV_STOCK_AVAILABILITY("isa"),
-  INV_STOCK_TREND("ist"),
-  INV_SUPPLY("is"),
-  INV_UTILISATION("iu"),
-  AS_CAPACITY("asa"),
-  AS_POWER_AVAILABILITY("apa"),
-  AS_RESPONSE_TIME("art"),
-  AS_SICKNESS_RATE("asr"),
-  AS_TEMPERATURE_EXCURSION("ate"),
-  AS_UP_TIME("aut"),
-  AS_ASSET_STATUS("aas"),
-  ACTIVITY_USER("ua");
+  INV_ABNORMAL_STOCK("ias", "Abnormal stock"),
+  INV_REPELISHMENT("ir", "Replenishment response time"),
+  INV_TRANSACTION_COUNT("itc", "Transaction counts"),
+  INV_CONSUMPTION("ic", "Consumption"),
+  INV_DISCARDS("id", "Discards"),
+  INV_STOCK_AVAILABILITY("isa", "Stock availability"),
+  INV_STOCK_TREND("ist", "Stock trends"),
+  INV_SUPPLY("is", "Supply"),
+  INV_UTILISATION("iu", "Utilization"),
+  AS_CAPACITY("asa", "Asset capacity"),
+  AS_POWER_AVAILABILITY("apa", "Power availability"),
+  AS_RESPONSE_TIME("art", "Response time to repair"),
+  AS_SICKNESS_RATE("asr", "Sickness rate"),
+  AS_TEMPERATURE_EXCURSION("ate", "Temperature excursions"),
+  AS_UP_TIME("aut", "Up time"),
+  AS_ASSET_STATUS("aas", "Asset status"),
+  ACTIVITY_USER("ua", "User activity");
 
   private String value;
+  private String name;
 
-  ReportType(String value) {
+  ReportType(String value, String name) {
     this.value = value;
+    this.name = name;
   }
 
   public static ReportType getReportType(String value) {
@@ -56,6 +58,15 @@ public enum ReportType {
       }
     }
     return null;
+  }
+
+  public static String getReportName(String value) {
+    for (ReportType type : ReportType.values()) {
+      if (type.value.equals(value)) {
+        return type.name;
+      }
+    }
+    return "";
   }
 
   @Override

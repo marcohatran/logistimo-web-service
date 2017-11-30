@@ -45,6 +45,7 @@ import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.NumberUtil;
 
+import org.apache.commons.lang.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -1340,4 +1341,10 @@ public class Order implements IOrder {
   public void setTransferApprovalResponseTime(Long transferApprovalResponseTime) {
     this.tart = transferApprovalResponseTime;
   }
+
+  @Override
+  public boolean hasReferenceId() {
+    return StringUtils.isNotEmpty(rid);
+  }
+
 }

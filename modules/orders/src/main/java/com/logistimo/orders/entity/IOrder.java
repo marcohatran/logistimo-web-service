@@ -316,4 +316,7 @@ public interface IOrder extends ICrossDomain {
   Long getTransferApprovalResponseTime();
 
   void setTransferApprovalResponseTime(Long transferApprovalResponseTime);
+
+  boolean hasReferenceId();
+
 }

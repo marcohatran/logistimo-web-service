@@ -674,6 +674,23 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
     return results;
   }
 
+  @Override
+  public void updateOrderReferenceId(Long orderId, String referenceId, String userId,
+                                     PersistenceManager pm) throws ServiceException {
+    PersistenceManager localPm = null;
+    if (pm == null) {
+      localPm = PMF.get().getPersistenceManager();
+    }
+    try {
+      IOrder order = getOrder(orderId, false, pm != null ? pm : localPm);
+      order.setReferenceID(referenceId);
+    } finally {
+      if (localPm != null) {
+        localPm.close();
+      }
+    }
+  }
+
   /**
    * Get orders placed by a certain user
    */

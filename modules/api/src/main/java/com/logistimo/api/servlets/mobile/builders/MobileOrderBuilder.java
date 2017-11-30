@@ -116,6 +116,8 @@ public class MobileOrderBuilder {
     mom.ost = o.getStatus();
     mom.q = o.getNumberOfItems();
     mom.cbid = o.getUserId();
+    mom.vtv = o.isVisibleToVendor();
+    mom.vtc = o.isVisibleToCustomer();
     mom.tm = LocalDateUtil.formatCustom(o.getUpdatedOn(), Constants.DATETIME_FORMAT, null);
     try {
       user = as.getUserAccount(o.getUserId());

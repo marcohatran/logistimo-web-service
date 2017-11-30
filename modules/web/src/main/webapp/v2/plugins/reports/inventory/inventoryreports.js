@@ -461,9 +461,9 @@ function InventoryReportController(s, timeout, getData, reportsServiceCore) {
         selectedFilters['tertiaryMetricIndex'] = s.metrics.tertiary;
         s.showLoading();
         reportsServiceCore.exportData(JSON.stringify(angular.toJson(selectedFilters))).then(function (data) {
-            s.showSuccess("Export scheduled successfully");
-        }).catch(function error() {
-            s.showError("Scheduling export failed");
+            s.showSuccess(data.data);
+        }).catch(function error(msg) {
+            s.showError(msg);
         }).finally(function(){
             s.hideLoading();
         });

@@ -53,6 +53,7 @@ import com.logistimo.events.processor.EventPublisher;
 import com.logistimo.exception.InvalidDataException;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exception.LogiException;
+import com.logistimo.exception.SystemException;
 import com.logistimo.exception.ValidationException;
 import com.logistimo.inventory.entity.IInvAllocation;
 import com.logistimo.inventory.entity.IInvntry;
@@ -1189,9 +1190,12 @@ public class ShipmentService extends ServiceImpl implements IShipmentService {
     return true;
   }
 
-  public IShipment updateShipmentData(String updType, String updValue, String orderUpdatedAt,
+  public IShipment updateShipmentData(Map<String, String> shipmentMetadata, String orderUpdatedAt,
                                     String sId, String userId)
-      throws ServiceException, LogiException {
+      throws LogiException {
+    if (shipmentMetadata == null || shipmentMetadata.isEmpty()) {
+      throw new IllegalArgumentException("No meta data provided for updating the shipment");
+    }
     Long orderId = extractOrderId(sId);
     LockUtil.LockStatus lockStatus = LockUtil.lock(Constants.TX_O + orderId);
     if (!LockUtil.isLocked(lockStatus)) {
@@ -1207,32 +1211,46 @@ public class ShipmentService extends ServiceImpl implements IShipmentService {
             Services.getService(OrderManagementServiceImpl.class, getLocale());
         IOrder order = oms.getOrder(orderId);
         if (StringUtils.isNotBlank(orderUpdatedAt)) {
-          UsersService as = Services.getService(UsersServiceImpl.class, getLocale());
-          IUserAccount userAccount = as.getUserAccount(order.getUpdatedBy());
           if (!orderUpdatedAt.equals(
               LocalDateUtil.formatCustom(order.getUpdatedOn(), Constants.DATETIME_FORMAT, null))) {
+            UsersService as = Services.getService(UsersServiceImpl.class, getLocale());
+            IUserAccount userAccount = as.getUserAccount(order.getUpdatedBy());
             throw new LogiException("O004", userAccount.getFullName(),
                 LocalDateUtil.format(order.getUpdatedOn(), getLocale(), userAccount.getTimezone()));
           }
         }
-        if ("tpName".equals(updType)) {
-          shipment.setTransporter(updValue);
-        } else if ("tId".equals(updType)) {
-          shipment.setTrackingId(updValue);
-        } else if ("rsn".equals(updType)) {
-          shipment.setReason(updValue);//todo: update reason for shipment pending.
-        } else if ("date".equals(updType)) {
-          if (StringUtils.isNotBlank(updValue)) {
-            SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATE_FORMAT);
-            shipment.setExpectedArrivalDate(sdf.parse(updValue));
-          } else {
-            shipment.setExpectedArrivalDate(null);
+        shipmentMetadata.entrySet().stream().forEach(entry -> {
+          if ("tpName".equals(entry.getKey())) {
+            shipment.setTransporter(entry.getValue());
+          } else if ("tId".equals(entry.getKey())) {
+            shipment.setTrackingId(entry.getValue());
+          } else if ("rsn".equals(entry.getKey())) {
+            shipment.setReason(entry.getValue());//todo: update reason for shipment pending.
+          } else if ("date".equals(entry.getKey())) {
+            if (StringUtils.isNotBlank(entry.getValue())) {
+              SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATE_FORMAT);
+              try {
+                shipment.setExpectedArrivalDate(sdf.parse(entry.getValue()));
+              } catch (ParseException e) {
+                throw new IllegalArgumentException(e);
+              }
+            } else {
+              shipment.setExpectedArrivalDate(null);
+            }
+          } else if ("ps".equals(entry.getKey())) {
+            shipment.setPackageSize(entry.getValue());
+          } else if ("rid".equals(entry.getKey())) {
+            try {
+              oms.updateOrderReferenceId(orderId, entry.getValue(), userId, pm);
+            } catch (ServiceException e) {
+              throw new SystemException(e);
+            }
           }
-        } else if ("ps".equals(updType)) {
-          shipment.setPackageSize(updValue);
-        }
+        });
+
         shipment.setUpdatedBy(userId);
         shipment.setUpdatedOn(new Date());
+
         generateEvent(shipment.getDomainId(), IEvent.MODIFIED, shipment, null, null);
 
         tx.begin();

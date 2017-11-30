@@ -269,4 +269,7 @@ public interface OrderManagementService extends Service {
       boolean isTransfer)
       throws ServiceException;
 
+  void updateOrderReferenceId(Long orderId, String referenceId, String userId,
+                              PersistenceManager pm)
+      throws ServiceException;
 }

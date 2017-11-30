@@ -35,7 +35,10 @@ import com.logistimo.reports.plugins.models.ReportChartModel;
 import com.logistimo.reports.plugins.models.TableResponseModel;
 import com.logistimo.reports.plugins.service.ReportPluginService;
 import com.logistimo.security.SecureUserDetails;
+import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
+import com.logistimo.users.entity.IUserAccount;
+import com.logistimo.users.service.UsersService;
 import com.logistimo.utils.LocalDateUtil;
 
 import org.json.JSONObject;
@@ -50,10 +53,14 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.ResourceBundle;
 
 import javax.servlet.http.HttpServletRequest;
 
-/** Created by mohan on 02/03/17. */
+/**
+ * Created by mohan on 02/03/17.
+ */
 @Controller
 @RequestMapping("/plugins/report")
 public class ReportPluginController {
@@ -65,6 +72,7 @@ public class ReportPluginController {
 
   ReportPluginService reportPluginService;
   ExportService exportService;
+  UsersService usersService;
 
   @Autowired
   private void setReportPluginService(ReportPluginService reportPluginService) {
@@ -72,12 +80,18 @@ public class ReportPluginController {
   }
 
   @Autowired
-  private void setExportService(ExportService service) {
-    this.exportService = service;
+  private void setExportService(ExportService exportService) {
+    this.exportService = exportService;
+  }
+
+  @Autowired
+  private void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
   }
 
   @RequestMapping(value = "/", method = RequestMethod.GET)
-  public @ResponseBody
+  public
+  @ResponseBody
   List<ReportChartModel> getReportData(@RequestParam String json, HttpServletRequest request) {
     xLogger.fine("Entering getReportData");
     try {
@@ -97,7 +111,8 @@ public class ReportPluginController {
   }
 
   @RequestMapping(value = "/breakdown", method = RequestMethod.GET)
-  public @ResponseBody
+  public
+  @ResponseBody
   TableResponseModel getReportTableData(
       @RequestParam String json, HttpServletRequest request) {
     xLogger.fine("Entering getReportData");
@@ -119,12 +134,11 @@ public class ReportPluginController {
 
   /**
    * Get the last aggregated time based on report type
-   * @param reportType
-   * @param request
-   * @return
    */
-  @RequestMapping(value = "/last-run-time",method = RequestMethod.GET)
-  public @ResponseBody String getLastAggregatedTime(@RequestParam String reportType, HttpServletRequest request){
+  @RequestMapping(value = "/last-run-time", method = RequestMethod.GET)
+  public
+  @ResponseBody
+  String getLastAggregatedTime(@RequestParam String reportType, HttpServletRequest request) {
     xLogger.fine("In getLastAggregatedTime");
     try {
       Date date = reportPluginService.getLastAggregatedTime(reportType);
@@ -142,8 +156,15 @@ public class ReportPluginController {
   @RequestMapping(value = "/export", method = RequestMethod.POST)
   public
   @ResponseBody
-  void exportData(@RequestBody String json) throws ParseException, ServiceException {
+  String exportData(@RequestBody String json) throws ParseException, ServiceException {
     ReportRequestModel model = reportPluginService.buildExportModel(json);
-    exportService.scheduleReportExport(model);
+    long jobId = exportService.scheduleReportExport(model);
+    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", Locale.ENGLISH);
+    IUserAccount u = usersService.getUserAccount(SecurityUtils.getUsername());
+    return backendMessages.getString("export.success1") + " " + u.getEmail() + " "
+        + backendMessages.getString("export.success2") + " "
+        + backendMessages.getString("exportstatusinfo2") + " "
+        + jobId + ". "
+        + backendMessages.getString("exportstatusinfo1");
   }
 }

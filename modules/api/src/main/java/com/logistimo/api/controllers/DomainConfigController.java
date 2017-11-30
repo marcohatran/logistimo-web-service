@@ -360,7 +360,7 @@ public class DomainConfigController {
       throw new InvalidDataException("User does not have access to domain");
     }
     try {
-      return builder.buildGeneralConfigModel(dId, locale, sUser.getTimezone());
+      return builder.buildDomainLocationModels(dId, locale, sUser.getTimezone());
     } catch (ServiceException | ConfigurationException e) {
       xLogger.severe("Error in fetching general configuration", e);
       throw new InvalidServiceException(backendMessages.getString("general.config.fetch.error"));
@@ -2738,6 +2738,18 @@ public class DomainConfigController {
       cc.add = true;
     }
     return cc;
+  }
+
+  @RequestMapping(value="/general/domains", method = RequestMethod.GET)
+  public
+  @ResponseBody
+  List<GeneralConfigModel> getGeneralConfigForDomains(
+      @RequestParam(name = "domain_ids") List<String> domainIds)
+      throws ServiceException, ConfigurationException {
+    SecureUserDetails sUser = getUserDetails();
+    return builder.buildDomainLocationModels(domainIds, usersService,
+        sUser.getUsername());
+
   }
 
   private SyncConfig generateSyncConfig(CapabilitiesConfigModel model) {

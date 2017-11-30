@@ -109,7 +109,7 @@ public class ReportPluginService implements Service {
       model.filters.put(QueryHelper.TOKEN_COLUMNS,
           reportBuilder.getColumns(model.filters, ReportViewType.OVERVIEW));
 
-      model.queryId = QueryHelper.getQueryID(model.filters,type);
+      model.queryId = QueryHelper.getQueryID(model.filters, type);
       Response response = externalServiceClient.postRequest(model);
       return reportBuilder.buildReportsData(response.readEntity(String.class), compareField,
           model.filters);
@@ -138,17 +138,17 @@ public class ReportPluginService implements Service {
           externalServiceClient = ExternalServiceClient.getNewCallistoInstance();
       Response response = externalServiceClient.postRequest(model);
       return reportBuilder.buildReportTableData(response.readEntity(String.class), viewType, model);
-    }catch (Exception e) {
+    } catch (Exception e) {
       return null;
     }
   }
 
   /**
    * Get the last aggregated time for each report based on the report type
+   *
    * @param reportType Report type
-   * @return
    */
-  public Date getLastAggregatedTime(String reportType){
+  public Date getLastAggregatedTime(String reportType) {
     if (StringUtils.isBlank(reportType)) {
       xLogger.warn(
           "Invalid report type received {0}", reportType);
@@ -166,7 +166,9 @@ public class ReportPluginService implements Service {
     model.filters.put(QueryHelper.TOKEN_RUN_TIME, aggregationRunTimeKey);
     model.queryId = QueryHelper.QUERY_LAST_RUN_TIME;
     //Request callisto for data
-    IExternalServiceClient<QueryRequestModel> externalServiceClient = ExternalServiceClient.getNewCallistoInstance();
+    IExternalServiceClient<QueryRequestModel>
+        externalServiceClient =
+        ExternalServiceClient.getNewCallistoInstance();
     Response response = externalServiceClient.postRequest(model);
     //parse response
     if (response != null) {
@@ -202,17 +204,20 @@ public class ReportPluginService implements Service {
     eModel.filters = model.filters;
     eModel.templateId = jsonObject.getString(JSON_REPORT_TYPE);
     eModel.additionalData = new HashMap<>();
-    eModel.additionalData.put("typeId",getExportType(reportViewType));
+    eModel.additionalData.put("typeId", getExportType(reportViewType));
     eModel.additionalData.put("reportViewType", reportViewType);
-    eModel.additionalData.put("queryId",model.queryId);
+    eModel.additionalData.put("queryId", model.queryId);
     eModel.additionalData.put("reportType", eModel.templateId);
-    eModel.additionalData.put("primaryMetricIndex",jsonObject.getString("primaryMetricIndex"));
-    eModel.additionalData.put("secondaryMetricIndex",jsonObject.getString("secondaryMetricIndex"));
-    eModel.additionalData.put("tertiaryMetricIndex",jsonObject.getString("tertiaryMetricIndex"));
+    eModel.additionalData.put("primaryMetricIndex", jsonObject.getString("primaryMetricIndex"));
+    eModel.additionalData.put("secondaryMetricIndex", jsonObject.getString("secondaryMetricIndex"));
+    eModel.additionalData.put("tertiaryMetricIndex", jsonObject.getString("tertiaryMetricIndex"));
     DomainConfig dc = DomainConfig.getInstance(SecurityUtils.getCurrentDomainId());
-    eModel.additionalData.put("domainTimezone",dc.getTimezone());
+    eModel.additionalData.put("domainTimezone", dc.getTimezone());
+    eModel.additionalData.put("exportTime", LocalDateUtil
+        .formatCustom(new Date(), Constants.DATETIME_CSV_FORMAT, userDetails.getTimezone()));
 
-    Type type = new TypeToken<Map<String, String>>(){}.getType();
+    Type type = new TypeToken<Map<String, String>>() {
+    }.getType();
     eModel.titles = new Gson().fromJson(jsonObject.get("titles").toString(), type);
 
     return eModel;
@@ -220,7 +225,7 @@ public class ReportPluginService implements Service {
 
   private String getExportType(String viewtype) {
     final ReportViewType viewType = ReportViewType.getViewType(viewtype);
-    if(viewType != null) {
+    if (viewType != null) {
       switch (viewType) {
         case BY_MATERIAL:
           return "T_MID";
@@ -246,7 +251,7 @@ public class ReportPluginService implements Service {
         break;
       case BY_USER:
         model.filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_USER);
-        if(retainFilters.containsKey(QueryHelper.TOKEN + QueryHelper.QUERY_USER_TAG)) {
+        if (retainFilters.containsKey(QueryHelper.TOKEN + QueryHelper.QUERY_USER_TAG)) {
           model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_USER
                   + CharacterConstants.UNDERSCORE + QueryHelper.QUERY,
               QueryHelper.QUERY_USER + CharacterConstants.UNDERSCORE + QueryHelper.QUERY_USER_TAG
@@ -334,9 +339,11 @@ public class ReportPluginService implements Service {
       model.filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_DISTRICT);
     }
 
-    String startTime = getReportTableStartTime(jsonObject, model.filters.get(QueryHelper.TOKEN_END_TIME));
-    if(StringUtils.isNotEmpty(startTime)) {
-      model.filters.put(QueryHelper.TOKEN_START_TIME,startTime);
+    String
+        startTime =
+        getReportTableStartTime(jsonObject, model.filters.get(QueryHelper.TOKEN_END_TIME));
+    if (StringUtils.isNotEmpty(startTime)) {
+      model.filters.put(QueryHelper.TOKEN_START_TIME, startTime);
     }
 
     final String type = jsonObject.getString(JSON_REPORT_TYPE);
@@ -354,9 +361,11 @@ public class ReportPluginService implements Service {
     if (viewType.toString().equals(ReportViewType.BY_ASSET.toString())) {
       model.queryId = "DID_DVID";
       model.derivedResultsId = "ATE_DID_DVID";
-      String[] arr = StringUtils.split(model.filters.get(QueryHelper.TOKEN + QueryHelper.QUERY_DVID),',');
-      for(int i=0;i<arr.length;i++){
-        arr[i] = arr[i].substring(1,arr[i].length()-1);
+      String[]
+          arr =
+          StringUtils.split(model.filters.get(QueryHelper.TOKEN + QueryHelper.QUERY_DVID), ',');
+      for (int i = 0; i < arr.length; i++) {
+        arr[i] = arr[i].substring(1, arr[i].length() - 1);
       }
       model.rowHeadings = Arrays.asList(arr);
     }
@@ -415,7 +424,7 @@ public class ReportPluginService implements Service {
                 model.filters.get(QueryHelper.TOKEN + QueryHelper.QUERY_DOMAIN)));
         break;
       case BY_USER:
-        prepareFiltersByUser(model,retainFilters);
+        prepareFiltersByUser(model, retainFilters);
         break;
       case BY_ASSET_TYPE:
         model.filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_MTYPE);
@@ -486,7 +495,7 @@ public class ReportPluginService implements Service {
     }
   }
 
-  private void prepareFiltersByUser(QueryRequestModel model,Map<String,String> retainFilters){
+  private void prepareFiltersByUser(QueryRequestModel model, Map<String, String> retainFilters) {
     model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_USER, null);
     if (model.filters.containsKey(QueryHelper.TOKEN + QueryHelper.QUERY_USER_TAG)) {
       retainFilters.put(QueryHelper.TOKEN + QueryHelper.QUERY_USER_TAG,
@@ -510,17 +519,17 @@ public class ReportPluginService implements Service {
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM");
         Calendar toDate = new GregorianCalendar();
         toDate.setTime(format.parse(endTime));
-        toDate.add(Calendar.MONTH, -1*(QueryHelper.MONTHS_LIMIT-1));
+        toDate.add(Calendar.MONTH, -1 * (QueryHelper.MONTHS_LIMIT - 1));
         return format.format(toDate.getTime());
       case QueryHelper.PERIODICITY_WEEK:
         DateTimeFormatter mDateTimeFormatter = DateTimeFormat.forPattern(
             QueryHelper.DATE_FORMAT_DAILY);
         DateTime toTime = mDateTimeFormatter.parseDateTime(endTime);
-        return mDateTimeFormatter.print(toTime.minusWeeks(QueryHelper.WEEKS_LIMIT-1));
+        return mDateTimeFormatter.print(toTime.minusWeeks(QueryHelper.WEEKS_LIMIT - 1));
       default:
         mDateTimeFormatter = DateTimeFormat.forPattern(QueryHelper.DATE_FORMAT_DAILY);
         toTime = mDateTimeFormatter.parseDateTime(endTime);
-        return mDateTimeFormatter.print(toTime.minusDays(QueryHelper.DAYS_LIMIT-1));
+        return mDateTimeFormatter.print(toTime.minusDays(QueryHelper.DAYS_LIMIT - 1));
     }
   }
 

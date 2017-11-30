@@ -216,7 +216,7 @@ public class JobUtil {
             outputFileLoc =
             (host == null ? "" : "https://" + host) + path + "/user/logistimoapp/" + jobTypeLocStr;
         if(StringUtils.isNotBlank(filePath)) {
-          outputFileLoc += filePath;
+          outputFileLoc += "/" + filePath;
         }
         outputFileLoc += "/" + fileName + localStr;
         jobStatus.setOutputFileLocation(outputFileLoc);
