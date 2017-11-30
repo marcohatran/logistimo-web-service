@@ -40,11 +40,11 @@ registerWidget('itc', 'rpt-transaction-counts', 'Activity', 'Transaction counts'
 
     reportsPluginCore.controller('rptTransactionCountsController', ReportTransactionCountsController);
 
-    ReportTransactionCountsController.$inject = ['$scope', '$timeout','reportsServiceCore','exportService'];
+    ReportTransactionCountsController.$inject = ['$scope', '$timeout','reportsServiceCore'];
 
-    function ReportTransactionCountsController($scope, $timeout, reportsServiceCore, exportService) {
+    function ReportTransactionCountsController($scope, $timeout, reportsServiceCore) {
 
-        InventoryReportController.call(this, $scope, $timeout, getData, exportService);
+        InventoryReportController.call(this, $scope, $timeout, getData, reportsServiceCore);
 
         $scope.reportType=reportType;
 
