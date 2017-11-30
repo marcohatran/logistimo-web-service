@@ -26,11 +26,16 @@ package com.logistimo.auth;
 import com.logistimo.auth.service.AuthenticationService;
 import com.logistimo.auth.service.impl.AuthenticationServiceImpl;
 import com.logistimo.auth.utils.SecurityUtils;
+import com.logistimo.constants.CharacterConstants;
+import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.Services;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.users.service.impl.UsersServiceImpl;
+import com.logistimo.utils.PatternConstants;
+
+import org.springframework.util.StringUtils;
 
 import java.util.Locale;
 
@@ -73,12 +78,15 @@ public class GenericAuthoriser {
     //If token is present validate token else validate mobile number
     AuthenticationService as = Services.getService(AuthenticationServiceImpl.class);
     String token = as.getUserToken(userId);
-    if (token != null && tokenSuffix!=null) {
-      isAuthorised = token.endsWith(tokenSuffix);
-    } else {
-      String tmpUserMobileNumber = userMobileNumber.replaceAll("[+ ]", "");
-      isAuthorised = tmpUserMobileNumber.equals(mobileNumber);
+    if( StringUtils.isEmpty(token) || StringUtils.isEmpty(tokenSuffix)
+        || !token.endsWith(tokenSuffix)) {
+      throw new UnauthorizedException("Invalid token");
     }
+
+    String tmpUserMobileNumber = userMobileNumber.replaceAll(PatternConstants.PLUS_AND_SPACES,
+        CharacterConstants.EMPTY);
+    isAuthorised = tmpUserMobileNumber.equals(
+            mobileNumber.replaceAll(PatternConstants.PLUS_AND_SPACES, CharacterConstants.EMPTY));
 
     return isAuthorised;
   }
