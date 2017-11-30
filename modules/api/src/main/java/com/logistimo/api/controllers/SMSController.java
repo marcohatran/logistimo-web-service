@@ -35,6 +35,7 @@ import com.logistimo.auth.GenericAuthoriser;
 import com.logistimo.communications.service.MessageService;
 import com.logistimo.exception.InvalidDataException;
 import com.logistimo.exception.LogiException;
+import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.inventory.TransactionUtil;
 import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.inventory.models.ErrorDetailModel;
@@ -145,6 +146,9 @@ public class SMSController {
     } catch (InvalidDataException e) {
       xLogger.warn("Error in processing SMS.", e);
       sendErrorResponse(smsMessage, ua, "M013", model);
+    } catch (UnauthorizedException e) {
+      xLogger.warn("Exception in processing SMS.", e);
+      sendErrorResponse(smsMessage, ua, "M014", model);
     } catch (Exception e) {
       xLogger.warn("Exception in processing SMS.", e);
       sendErrorResponse(smsMessage, ua, "M004", model);

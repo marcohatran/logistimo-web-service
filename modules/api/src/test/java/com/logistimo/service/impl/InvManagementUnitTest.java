@@ -23,19 +23,31 @@
 
 package com.logistimo.service.impl;
 
+import com.logistimo.context.StaticApplicationContext;
+import com.logistimo.entities.entity.Kiosk;
+import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.Invntry;
 import com.logistimo.inventory.exceptions.InventoryAllocationException;
 import com.logistimo.inventory.service.impl.InventoryManagementServiceImpl;
+import com.logistimo.materials.entity.Material;
+import com.logistimo.materials.service.MaterialCatalogService;
+import com.logistimo.services.ServiceException;
 import com.logistimo.utils.BigUtil;
 
+import org.springframework.context.ApplicationContext;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
 
 import javax.jdo.PersistenceManager;
 
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
@@ -43,6 +55,29 @@ import static org.testng.Assert.fail;
  * Created by charan on 04/11/16.
  */
 public class InvManagementUnitTest {
+
+  @BeforeClass
+  public void setup() {
+    ApplicationContext mockApplicationContext = mock(ApplicationContext.class);
+    EntitiesService entitiesService = mock(EntitiesService.class);
+    try {
+      doReturn(new Kiosk()).when(entitiesService).getKiosk(anyLong(), anyBoolean());
+    } catch (ServiceException e) {
+      //exception
+    }
+    when(mockApplicationContext.getBean(EntitiesService.class)).thenReturn(
+        entitiesService);
+    MaterialCatalogService materialCatalogService = mock(MaterialCatalogService.class);
+    try {
+      doReturn(new Material()).when(materialCatalogService).getMaterial(anyLong());
+    } catch (ServiceException e) {
+      //exception
+    }
+    when(mockApplicationContext.getBean(MaterialCatalogService.class)).thenReturn(
+        materialCatalogService);
+    StaticApplicationContext applicationContext = new StaticApplicationContext();
+    applicationContext.setApplicationContext(mockApplicationContext);
+  }
 
   @Test
   public void testIncrementInventoryAvailableQuantity() throws Exception {

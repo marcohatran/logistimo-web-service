@@ -84,6 +84,7 @@ import java.util.TimeZone;
 public class SMSBuilder {
 
   private static final XLog xLogger = XLog.getLog(SMSBuilder.class);
+  private static final int SMS_AUTH_TOKEN_LENGTH = 4;
 
   public SMSModel constructSMSModel(String message) throws ServiceException {
     SMSModel model = new SMSModel();
@@ -162,7 +163,9 @@ public class SMSBuilder {
             field.split(SMSConstants.KEY_SEPARATOR + PatternConstants.ESCAPE_INSIDE_DOUBLE_QUOTES);
         switch (keyValue[0]) {
           case SMSConstants.TOKEN:
-            model.setToken(keyValue[1]);
+            if(keyValue[1] != null && keyValue[1].length() >= SMS_AUTH_TOKEN_LENGTH){
+              model.setToken(keyValue[1]);
+            }
             break;
           case SMSConstants.INVENTORY:
             //Split based on | for materials

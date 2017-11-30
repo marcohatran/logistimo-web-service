@@ -3472,15 +3472,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
         inv = getInventory(kioskId, materialId, pm);
       }
       if (inv == null) {
-        try {
-          MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
-          IMaterial m = mcs.getMaterial(materialId);
-          EntitiesService as = Services.getService(EntitiesServiceImpl.class);
-          IKiosk k = as.getKiosk(kioskId);
-          throw new ServiceException("I002", m.getName(), k.getName());
-        } catch (Exception e) {
-          throw new ServiceException("Error while updating inventory");
-        }
+        throw new ServiceException("I002", getMaterialName(materialId), getKioskName(kioskId));
       }
       BigDecimal newQuantity = inv.getAvailableStock().add(quantity);
       boolean isCorrected = false;
@@ -3493,10 +3485,9 @@ public class InventoryManagementServiceImpl extends ServiceImpl
           newQuantity = BigUtil.lesserThanZero(newQuantity) ? BigDecimal.ZERO : inv.getStock();
           isCorrected = true;
         } else {
-          throw new InventoryAllocationException("IA001", this.getLocale(), inv.getKioskName(),
-              inv.getMaterialName(), inv.getAvailableStock(), quantity.abs());
+          throw new InventoryAllocationException("IA001", this.getLocale(), getKioskName(kioskId),
+              getMaterialName(materialId), inv.getAvailableStock(), quantity.abs());
         }
-
       }
       inv.setAvailableStock(newQuantity);
       inv.setAllocatedStock(inv.getAllocatedStock().subtract(quantity));
@@ -3601,6 +3592,16 @@ public class InventoryManagementServiceImpl extends ServiceImpl
         pm.close();
       }
     }
+  }
+
+  private String getMaterialName(Long materialId) throws ServiceException {
+    return StaticApplicationContext.getBean(MaterialCatalogService.class).getMaterial(materialId)
+        .getName();
+  }
+
+  private String getKioskName(Long kioskId) throws ServiceException {
+    return StaticApplicationContext.getBean(EntitiesService.class).getKiosk(kioskId, false)
+        .getName();
   }
 
   private boolean closeOpenEvent(Long invId, PersistenceManager pm) {
