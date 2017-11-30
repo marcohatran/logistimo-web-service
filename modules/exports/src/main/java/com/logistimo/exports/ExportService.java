@@ -45,7 +45,7 @@ import java.util.Map;
 @org.springframework.stereotype.Service
 public class ExportService {
 
-  public void scheduleReportExport(ReportRequestModel model) {
+  public long scheduleReportExport(ReportRequestModel model) {
     Map<String, String>
         filters = new HashMap<>(model.filters.size() + model.additionalData.size() + 1, 1);
     filters.putAll(model.filters);
@@ -63,7 +63,7 @@ public class ExportService {
     exportRequestModel.meshId = "exp_" + System.currentTimeMillis() + "_" + jobId;
     exportRequestModel.addRequestConfig(ecModel);
     submitExportJob(exportRequestModel);
-
+    return jobId;
   }
 
   private void submitExportJob(ExportRequestModel model) {

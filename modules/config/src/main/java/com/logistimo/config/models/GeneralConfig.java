@@ -41,6 +41,7 @@ public class GeneralConfig {
   // Default support configuration
   public static final String DEFAULT_SUPPORT_EMAIL = "support@logistimo.com";
   public static final String DEFAULT_SUPPORT_PHONE = "180030101947";
+  public static final String DEFAULT_SUPPORT_TEAM = "Logistimo team";
   // Default feedback configuration
   public static final String DEFAULT_FEEDBACK_EMAIL = "feedback@logistimo.com";
   // JSON Tags

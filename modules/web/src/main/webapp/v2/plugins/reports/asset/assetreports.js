@@ -21,7 +21,7 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-function AssetReportController(s, timeout, getData, exportService) {
+function AssetReportController(s, timeout, getData, reportsServiceCore) {
     s.resourceBundle = s.$parent.$parent.resourceBundle;
     s.ddist = s.$parent.$parent.ddist;
     s.dstate = s.$parent.$parent.dstate;
@@ -363,13 +363,10 @@ function AssetReportController(s, timeout, getData, exportService) {
         selectedFilters['secondaryMetricIndex'] = s.metrics.secondary;
         selectedFilters['tertiaryMetricIndex'] = s.metrics.tertiary;
         s.showLoading();
-        exportService.exportData(JSON.stringify(angular.toJson(selectedFilters))).then(function (data) {
-            if(data.data) {
-                s.showSuccess("Export scheduled successfully");
-            } else {
-                s.showError("Scheduling export failed");
-            }
-        }).catch(function error() {
+        reportsServiceCore.exportData(JSON.stringify(angular.toJson(selectedFilters))).then(function (data) {
+            s.showSuccess(data.data);
+        }).catch(function error(msg) {
+            s.showError(msg);
         }).finally(function(){
             s.hideLoading();
         });

@@ -30,7 +30,10 @@ import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entity.IJobStatus;
 import com.logistimo.exports.model.ExportResponseModel;
 import com.logistimo.exports.util.EmailHelper;
+import com.logistimo.exports.util.ExportConstants;
+import com.logistimo.reports.constants.ReportType;
 import com.logistimo.services.Resources;
+import com.logistimo.services.ServiceException;
 import com.logistimo.utils.JobUtil;
 import com.logistimo.utils.MetricsUtil;
 
@@ -44,25 +47,29 @@ import java.util.ResourceBundle;
  * @author Mohan Raja
  */
 public class DataXExportStatusProcessor {
-  public static final String FILE_NAME = "data.csv";
   private static Meter jmsMeter = MetricsUtil.getMeter(DataXExportStatusProcessor.class,
       "DataXExportStatusProcessor");
 
   @Handler
-  public void execute(ExportResponseModel model) throws MessageHandlingException, IOException {
+  public void execute(ExportResponseModel model)
+      throws MessageHandlingException, IOException, ServiceException {
     jmsMeter.mark();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", Locale.ENGLISH);
     Long jobId = Long.parseLong(model.meshId.substring(model.meshId.lastIndexOf(
         CharacterConstants.UNDERSCORE) + 1));
     IJobStatus jobStatus = JobUtil.getJobById(jobId);
     EmailHelper emailHelper = StaticApplicationContext.getBean(EmailHelper.class);
-    if ("success".equals(model.status)) {
-      emailHelper.sendMail(jobStatus, model.meshId, FILE_NAME, null);
-      JobUtil.setJobCompleted(jobStatus.getJobId(), IJobStatus.TYPE_EXPORT, 1, FILE_NAME,
+    String fileName =
+        emailHelper.getFileName(ReportType.getReportName(jobStatus.getMetadataMap().get(
+            ExportConstants.REPORT_TYPE)),
+            jobStatus.getMetadataMap().get(ExportConstants.EXPORT_TIME));
+    if (ExportConstants.STATUS_SUCCESS.equals(model.status)) {
+      emailHelper.sendMail(jobStatus, model.meshId);
+      JobUtil.setJobCompleted(jobStatus.getJobId(), IJobStatus.TYPE_EXPORT, 1, fileName,
           backendMessages, model.meshId);
-    } else if ("failed".equals(model.status)) {
+    } else if (ExportConstants.STATUS_FAILED.equals(model.status)) {
       JobUtil.setJobFailed(jobId, model.reason);
-      emailHelper.sendMail(jobStatus, model.meshId, FILE_NAME, "Error during export");
+      emailHelper.sendMail(jobStatus, model.meshId, "Error during export.");
     }
   }
 }

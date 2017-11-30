@@ -26,7 +26,12 @@ package com.logistimo.exports.util;
 import com.logistimo.communications.MessageHandlingException;
 import com.logistimo.communications.service.EmailService;
 import com.logistimo.communications.service.MessageService;
+import com.logistimo.config.models.GeneralConfig;
+import com.logistimo.constants.CharacterConstants;
+import com.logistimo.domains.service.DomainsService;
 import com.logistimo.entity.IJobStatus;
+import com.logistimo.reports.constants.ReportType;
+import com.logistimo.services.ServiceException;
 import com.logistimo.services.utils.ConfigUtil;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
@@ -49,35 +54,89 @@ import java.util.Map;
 public class EmailHelper {
 
   UsersService us;
+  DomainsService ds;
 
   @Autowired
   private void setUserService(UsersService us) {
     this.us = us;
   }
 
-  public void sendMail(IJobStatus jobStatus, String filePath, String fileName, String customMessage)
-      throws MessageHandlingException, IOException {
+  @Autowired
+  private void setDomainService(DomainsService ds) {
+    this.ds = ds;
+  }
+
+  public void sendMail(IJobStatus jobStatus, String filePath)
+      throws ServiceException, IOException, MessageHandlingException {
+    sendMail(jobStatus, filePath, null);
+  }
+  public void sendMail(IJobStatus jobStatus, String filePath, String customMessage)
+      throws MessageHandlingException, IOException, ServiceException {
     Map<String, String> model = jobStatus.getMetadataMap();
-    IUserAccount u = us.getUserAccount(model.get("userId"));
-    String subject = "Export Subject";
+    IUserAccount u = us.getUserAccount(model.get(ExportConstants.USER_ID));
+    String reportName = ReportType.getReportName(model.get(ExportConstants.REPORT_TYPE));
+    final String exportTime = model.get(ExportConstants.EXPORT_TIME);
+    String subject = getMailSubject(model, reportName, exportTime);
     List<String> userIds = StringUtil.getList(u.getEmail());
     List<String> addresses = new ArrayList<>();
     String[] addressArray = userIds.toArray(new String[userIds.size()]);
     Collections.addAll(addresses, addressArray);
     String message;
-    if(StringUtils.isNotBlank(customMessage)){
+    if (StringUtils.isNotBlank(customMessage)) {
       message = customMessage;
     } else {
-      String host = ConfigUtil.get("logi.host.server");
-      String path = host == null ? "http://localhost:50070/webhdfs/v1" : "/media";
-      String localStr = host == null ? "?op=OPEN" : "";
-      message = "<br/><br/>Please <a href=\"" + (host == null ? "" : host) + path
-          + "/user/logistimoapp/dataexport/" + filePath + "/" + fileName + localStr
-          + "\">click here</a> to download the file.";
+      final String downloadLinkText = getDownloadLinkText(filePath, reportName, exportTime);
+      message = constructEmailMessage(u, reportName, downloadLinkText);
     }
     MessageService ms =
         MessageService.getInstance(MessageService.EMAIL, u.getCountry(), true, u.getDomainId(),
             u.getUserId(), null);
     ((EmailService) ms).sendHTML(null, addresses, subject, message, null);
+  }
+
+  private String getMailSubject(Map<String, String> model, String reportName, String exportTime)
+      throws ServiceException {
+    return "[Export] " + reportName + " for " +
+        ds.getDomain(Long.valueOf(model.get(ExportConstants.DOMAIN_ID))).getName() + " on " + exportTime;
+  }
+
+  private String getDownloadLinkText(String filePath, String reportName, String exportTime) {
+    String host = ConfigUtil.get("logi.host.server");
+    String path = host == null ? "http://localhost:50070/webhdfs/v1" : "/media";
+    String localStr = host == null ? "?op=OPEN" : "";
+    return "<a href=\"" + (host == null ? "" : host) + path
+        + "/user/logistimoapp/dataexport/" + filePath + "/" + getFileName(reportName, exportTime)
+        + localStr + "\">";
+  }
+
+  private String constructEmailMessage(IUserAccount u, String reportName, String downloadLinkText) {
+    /**
+     Dear <first name of the user>,
+     As requested, the report '<report title>' is generated and can be viewed by clicking on this link <link>. Please contact <support info> for any further queries.
+     Thank you,
+     < Program/Product name > Team
+     Note: If you have not requested this file but have still received it, please inform <support info> immediately"
+     */
+    StringBuilder message = new StringBuilder();
+    message.append("<br/>Dear ").append(u.getFirstName()).append(",<br/><br/>");
+    final String support = ConfigUtil.get("support.email", GeneralConfig.DEFAULT_SUPPORT_EMAIL);
+    message.append("As requested, the report ").append(CharacterConstants.SINGLE_QUOTES)
+        .append(reportName).append(CharacterConstants.SINGLE_QUOTES)
+        .append(" is generated and can be viewed by clicking on this ")
+        .append(downloadLinkText).append(" link").append("</a>. Please contact ")
+        .append(support)
+        .append(" for any further queries.<br/><br/>");
+    message.append("Thank you,<br/>");
+    message.append(ConfigUtil.get("support.team", GeneralConfig.DEFAULT_SUPPORT_TEAM)).append(
+        "<br/><br/>");
+    message.append(
+        "Note: If you have not requested this file but have still received it, please inform ")
+        .append(support).append(" immediately");
+    return message.toString();
+  }
+
+  public String getFileName(String fileName, String fileTime) {
+    return fileName.replace(CharacterConstants.SPACE, CharacterConstants.UNDERSCORE) +
+        CharacterConstants.UNDERSCORE + fileTime.replaceAll("[ :\\-]", CharacterConstants.UNDERSCORE) + ".csv";
   }
 }
