@@ -48,7 +48,7 @@ public class Dashboard implements IDashboard {
   @Persistent
   private String desc;
   @Persistent
-  @Column(length = 4096)
+  @Column(length = 8192)
   private String conf;
   @Persistent
   private String title;
