@@ -1671,8 +1671,9 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
     return results;
   }
 
-  public List<IUserAccount> getUsersByTag(Long objectId, String objectType, String userTags)
+  public List<IUserAccount> getUsersByTag(Long objectId, String objectType, List<String> userTags)
       throws ServiceException {
+    String tagQueryParam = StringUtil.getSingleQuotesCSV(userTags);
     List<String> parameters = new ArrayList<>();
     StringBuilder
         queryString =
@@ -1680,11 +1681,11 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
             "SELECT * FROM USERACCOUNT WHERE USERID IN (SELECT USERID FROM USERTOKIOSK WHERE KIOSKID = ?");
     parameters.add(String.valueOf(objectId));
 
-    if (!StringUtils.isEmpty(userTags)) {
+    if (StringUtils.isNotEmpty(tagQueryParam)) {
       queryString.append(
           " AND USERID IN (SELECT USERID FROM USER_TAGS WHERE ID IN (SELECT ID FROM TAG WHERE TYPE = ?")
           .append(
-              " AND NAME IN(").append(userTags).append(")))");
+              " AND NAME IN(").append(tagQueryParam).append(")))");
       parameters.add(String.valueOf(ITag.USER_TAG));
     }
     queryString.append(CharacterConstants.C_BRACKET);

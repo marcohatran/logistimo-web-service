@@ -74,6 +74,7 @@ import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exception.SystemException;
+import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.logger.XLog;
 import com.logistimo.media.endpoints.IMediaEndPoint;
@@ -360,21 +361,11 @@ public class ConfigurationModelsBuilder {
     return null;
   }
 
-  public GeneralConfigModel buildGeneralConfigModel(Long domainId, Locale locale, String timezone)
+  public GeneralConfigModel buildDomainLocationModels(Long domainId, Locale locale, String timezone)
       throws ServiceException, ObjectNotFoundException, ConfigurationException {
-    String strConfig;
-    DomainConfig dc;
+    DomainConfig dc = DomainConfig.getInstance(domainId);
     GeneralConfigModel model = new GeneralConfigModel();
-    ConfigurationMgmtService
-        cms =
-        Services.getService(ConfigurationMgmtServiceImpl.class, locale);
-    try {
-      String key = IConfig.CONFIG_PREFIX + domainId.toString();
-      strConfig = cms.getConfiguration(key).getConfig();
-      dc = new DomainConfig(strConfig);
-    } catch (Exception e) {
-      dc = new DomainConfig();
-    }
+
     List<String> val = dc.getDomainData(ConfigConstants.GENERAL);
     if (val != null) {
       model.createdBy = val.get(0);
@@ -395,6 +386,16 @@ public class ConfigurationModelsBuilder {
     model.nhn = dc.getNewHostName();
     model.support = buildAllSupportConfigModels(dc);
     model.adminContact = buildAllAdminContactConfigModel(dc.getAdminContactConfig());
+    return model;
+  }
+
+  public GeneralConfigModel buildDomainLocationModel(Long domainId) {
+    DomainConfig dc = DomainConfig.getInstance(domainId);
+    GeneralConfigModel model = new GeneralConfigModel();
+    model.cnt = dc.getCountry() != null ? dc.getCountry() : "";
+    model.st = dc.getState() != null ? dc.getState() : "";
+    model.ds = dc.getDistrict() != null ? dc.getDistrict() : "";
+    model.domainId = domainId;
     return model;
   }
 
@@ -1340,7 +1341,7 @@ public class ConfigurationModelsBuilder {
     Long domainId = SessionMgr.getCurrentDomain(request.getSession(), userId);
     String timezone = sUser.getTimezone();
     try {
-      GeneralConfigModel generalConfigModel = buildGeneralConfigModel(domainId, locale, timezone);
+      GeneralConfigModel generalConfigModel = buildDomainLocationModels(domainId, locale, timezone);
       List<SupportConfigModel> supportConfigModels = generalConfigModel.support;
       for (SupportConfigModel supportConfigModel : supportConfigModels) {
         if (sUser.getRole().equals(supportConfigModel.role)) {
@@ -1448,5 +1449,20 @@ public class ConfigurationModelsBuilder {
       return list;
     }
     return new ArrayList<>();
+  }
+
+  public List<GeneralConfigModel> buildDomainLocationModels(List<String> domainIds,
+                                                            UsersService userService,
+                                                            String userName)
+      throws ServiceException, ConfigurationException {
+    List<GeneralConfigModel> configModel = new ArrayList<>();
+    for(String dId: domainIds) {
+      if (!userService.hasAccessToDomain(userName, Long.valueOf(dId))) {
+        xLogger.warn("User {0} does not have access to domain id {1}", userName, dId);
+        throw new UnauthorizedException("User does not have access to domain");
+      }
+      configModel.add(buildDomainLocationModel(Long.valueOf(dId)));
+    }
+    return configModel;
   }
 }
