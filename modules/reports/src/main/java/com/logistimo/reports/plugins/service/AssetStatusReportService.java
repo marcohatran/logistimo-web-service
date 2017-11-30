@@ -130,8 +130,8 @@ public class AssetStatusReportService extends ReportServiceUtil implements IRepo
 
   @Override
   public String getColumns(Map<String, String> filters, ReportViewType viewType) {
-    return "wkec, urec, brec, cdec, dec, stbec, wked, ured, bred, cded, " +
-        "stbed, ded, wkecs, urecs, brecs, cdecs, stbecs, decs, miac, mac";
+    return "wkec,urec,brec,cdec,dec,stbec,wked,ured,bred,cded," +
+        "stbed,ded,wkecs,urecs,brecs,cdecs,stbecs,decs,miac,mac";
   }
 
   @Override
