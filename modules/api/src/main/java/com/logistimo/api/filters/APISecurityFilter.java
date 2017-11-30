@@ -99,7 +99,7 @@ public class APISecurityFilter implements Filter {
 
       } else if (StringUtils.isNotBlank(req.getHeader(Constants.TOKEN))) {
         try {
-          AuthenticationUtil.authenticatTokenAndSetSession(req.getHeader(Constants.TOKEN), -1);
+          AuthenticationUtil.authenticateTokenAndSetSession(req.getHeader(Constants.TOKEN), -1);
         } catch (Exception e) {
           xLogger.severe("Issue with api client authentication", e);
           resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());

@@ -47,7 +47,7 @@ public class AuthenticationUtil {
     return usersService.getUserAccount(token.getUserId());
   }
 
-  public static void authenticatTokenAndSetSession(String authtoken, Integer actionInitiator)
+  public static void authenticateTokenAndSetSession(String authtoken, Integer actionInitiator)
       throws ServiceException {
     AuthenticationService aus = StaticApplicationContext.getBean(AuthenticationService.class);
     IUserToken token = aus.authenticateToken(authtoken, actionInitiator);
