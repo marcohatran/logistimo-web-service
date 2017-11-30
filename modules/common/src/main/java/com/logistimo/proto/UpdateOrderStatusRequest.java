@@ -24,6 +24,8 @@
 package com.logistimo.proto;
 
 
+import org.apache.commons.lang.StringUtils;
+
 import java.util.Date;
 import java.util.List;
 
@@ -108,4 +110,36 @@ public class UpdateOrderStatusRequest {
    */
   public String embed;
 
+  /**
+   * Reference Id
+   */
+  public String rid;
+
+  public boolean hasPackageSize() {
+    return StringUtils.isNotEmpty(pksz);
+  }
+
+  public boolean hasTransporter() {
+    return StringUtils.isNotEmpty(trsp);
+  }
+
+  public boolean hasTrackingId() {
+    return StringUtils.isNotEmpty(trid);
+  }
+
+  public boolean hasEAD() {
+    return ead != null;
+  }
+
+  public boolean hasReferenceId() {
+    return StringUtils.isNotEmpty(rid);
+  }
+
+  public boolean hasShipmentId() {
+    return StringUtils.isNotEmpty(sid);
+  }
+
+  public boolean hasOrderId() {
+    return tid != null;
+  }
 }

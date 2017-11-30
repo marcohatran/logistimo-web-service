@@ -72,6 +72,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -412,7 +413,9 @@ public class ShipmentController {
       }
       IShipmentService ss = Services.getService(ShipmentService.class, user.getLocale());
       String userId = user.getUsername();
-      shipment = ss.updateShipmentData(updType, updValue, orderUpdatedAt, sId, userId);
+      shipment =
+          ss.updateShipmentData(Collections.singletonMap(updType, updValue), orderUpdatedAt, sId,
+              userId);
       if (StringUtils.isEmpty(successMessage)) {
         successMessage = backendMessages.getString(succesKey);
       }

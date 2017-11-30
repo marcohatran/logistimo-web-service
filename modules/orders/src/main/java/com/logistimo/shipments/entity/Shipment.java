@@ -23,32 +23,16 @@
 
 package com.logistimo.shipments.entity;
 
-import com.logistimo.config.models.EventsConfig;
-import com.logistimo.conversations.entity.IMessage;
-import com.logistimo.conversations.service.ConversationService;
-import com.logistimo.conversations.service.impl.ConversationServiceImpl;
-import com.logistimo.entities.entity.IKiosk;
-import com.logistimo.entities.entity.Kiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
-import com.logistimo.materials.service.MaterialCatalogService;
-import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
-import com.logistimo.orders.OrderUtils;
-import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
-import com.logistimo.services.impl.PMF;
-import com.logistimo.shipments.ShipmentStatus;
-import com.logistimo.shipments.service.impl.ShipmentService;
-import com.logistimo.users.entity.UserAccount;
-
-import com.logistimo.utils.BigUtil;
-import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.logger.XLog;
+import com.logistimo.services.Services;
+import com.logistimo.shipments.ShipmentStatus;
 
-import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
-import javax.jdo.PersistenceManager;
 import javax.jdo.annotations.Element;
 import javax.jdo.annotations.IdentityType;
 import javax.jdo.annotations.Join;
@@ -121,6 +105,11 @@ public class Shipment implements IShipment {
   @Override
   public void setSrc(Integer src) {
     this.src = src;
+  }
+
+  @Override
+  public boolean hasEAD() {
+    return ead != null;
   }
 
   /**

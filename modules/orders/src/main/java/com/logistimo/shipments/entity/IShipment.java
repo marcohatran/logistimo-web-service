@@ -23,10 +23,8 @@
 
 package com.logistimo.shipments.entity;
 
-import com.logistimo.shipments.ShipmentStatus;
-
 import com.logistimo.domains.ICrossDomain;
-import com.logistimo.events.IEvents;
+import com.logistimo.shipments.ShipmentStatus;
 
 import java.util.Date;
 import java.util.List;
@@ -129,4 +127,5 @@ public interface IShipment extends ICrossDomain {
 
   void setSrc(Integer src);
 
+  boolean hasEAD();
 }

@@ -1351,8 +1351,8 @@ public class OrderServlet extends JsonRestServlet {
           if (status) {
             // Update order status
             UpdatedOrder uo = new UpdatedOrder();
-            if (uosReq.sid != null && !uosReq.sid.isEmpty()) {
-              if (uosReq.tid == null) {
+            if (uosReq.hasShipmentId()) {
+              if (!uosReq.hasOrderId()) {
                 uo = OrderUtils.updateShpStatus(uosReq,
                     dc, SourceConstants.MOBILE,
                     backendMessages, uosReq.tm);
@@ -1361,12 +1361,12 @@ public class OrderServlet extends JsonRestServlet {
                     dc, SourceConstants.MOBILE,
                     backendMessages);
               }
-            } else if (uosReq.tid != null) {
+            } else if (uosReq.hasOrderId()) {
               uo = OrderUtils.updateOrdStatus(uosReq, dc,
                   SourceConstants.MOBILE, backendMessages);
             } else {
               // Error cannot change status. One of them should be present.
-              uo.message = "Either tid or mid should be present";
+              uo.message = "Either tid or sid should be present";
               uo.inventoryError = true;
             }
             order = uo.order;
