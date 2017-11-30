@@ -464,7 +464,7 @@ public class SMSBuilder {
       //Create a set with the batchid received in the request
       Set<String> batchIdSet=new HashSet<>();
       for(MobileTransModel transModel:mobileTransModelList){
-        if(StringUtils.isNotBlank(transModel.bid) && !batchIdSet.contains(transModel.bid)) {
+        if(StringUtils.isNotBlank(transModel.bid)) {
           batchIdSet.add(transModel.bid);
         }
       }
@@ -477,8 +477,16 @@ public class SMSBuilder {
           materialDetails.append(SMSConstants.COMMA_SEPARATOR).append(SMSConstants.DOUBLE_QUOTE)
               .append(batchModel.bid).append(SMSConstants.DOUBLE_QUOTE)
               .append(SMSConstants.COMMA_SEPARATOR);
+          batchIdSet.remove(batchModel.bid);
         }
       }
+      batchIdSet.stream().forEach(bid -> {
+        appendInventoryDetails(materialDetails, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
+        //append batch Id
+        materialDetails.append(SMSConstants.COMMA_SEPARATOR).append(SMSConstants.DOUBLE_QUOTE)
+            .append(bid).append(SMSConstants.DOUBLE_QUOTE)
+            .append(SMSConstants.COMMA_SEPARATOR);
+      });
     } else {
       //append inventory details
       appendInventoryDetails(materialDetails, invModel.q, invModel.alq, invModel.itq);
