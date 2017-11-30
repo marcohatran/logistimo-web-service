@@ -31,11 +31,11 @@ import com.logistimo.api.models.PasswordModel;
 import com.logistimo.auth.SecurityConstants;
 import com.logistimo.auth.SecurityMgr;
 import com.logistimo.auth.service.AuthenticationService;
-import com.logistimo.auth.service.impl.AuthenticationServiceImpl;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.auth.utils.SessionMgr;
 import com.logistimo.communications.MessageHandlingException;
 import com.logistimo.communications.service.MessageService;
+import com.logistimo.constants.Constants;
 import com.logistimo.constants.SourceConstants;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.events.entity.IEvent;
@@ -48,17 +48,18 @@ import com.logistimo.security.UserDisabledException;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.cache.MemcacheService;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.services.utils.ConfigUtil;
 import com.logistimo.users.entity.IUserAccount;
+import com.logistimo.users.entity.IUserToken;
 import com.logistimo.users.entity.UserAccount;
 import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
 import com.logistimo.utils.MsgUtil;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -66,6 +67,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 import java.io.IOException;
 import java.util.Date;
@@ -73,6 +75,7 @@ import java.util.HashMap;
 import java.util.InputMismatchException;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 import javax.jdo.PersistenceManager;
@@ -97,6 +100,20 @@ public class AuthController {
   private static final Integer OTP_EXPIRED = 8;
   private static final Integer PASSWORD_MISMATCH = 9;
   private static boolean isGAE = ConfigUtil.getBoolean("gae.deployment", true);
+
+  private AuthenticationService authenticationService;
+  private UsersService usersService;
+
+  @Autowired
+  public void setAuthenticationService(AuthenticationService authenticationService) {
+    this.authenticationService = authenticationService;
+  }
+
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
+  }
+
 
   private static void updateUserDetails(SecureUserDetails userDetails, String ipAddress,
                                         String userAgent) {
@@ -139,15 +156,14 @@ public class AuthController {
       //Recreates and initialize the session after successful login.
       SessionMgr.recreateSession(request, response, userDetails);
       Long domainId = SecurityUtils.getReqCookieDomain(request);
-      UsersService as = Services.getService(UsersServiceImpl.class);
       if (domainId != null) {
-        if (as.hasAccessToDomain(userDetails.getUsername(), domainId)) {
+        if (usersService.hasAccessToDomain(userDetails.getUsername(), domainId)) {
           SessionMgr.setCurrentDomain(request.getSession(), domainId);
         }
       }
       String ipAddress = isGAE ? request.getRemoteAddr() : request.getHeader("X-REAL-IP");
       updateUserDetails(userDetails, ipAddress, request.getHeader("User-Agent"));
-      as.updateUserLoginHistory(userDetails.getUsername(), SourceConstants.WEB,
+      usersService.updateUserLoginHistory(userDetails.getUsername(), SourceConstants.WEB,
           request.getHeader("User-Agent"), request.getHeader("X-REAL-IP"), new Date(), "LogiWeb");
 
       xLogger.info("ip: {0}, headers: {1}", ipAddress, request.getHeader("X-Forwarded-For"));
@@ -250,8 +266,7 @@ public class AuthController {
       throws ValidationException, ServiceException, ObjectNotFoundException,
       MessageHandlingException, IOException {
     if (model != null) {
-        AuthenticationService as = Services.getService(AuthenticationServiceImpl.class, null);
-        String successMsg = as.resetPassword(model.uid, model.mode, model.otp, "w",
+      String successMsg = authenticationService.resetPassword(model.uid, model.mode, model.otp, "w",
             request.getParameter("au"));
         return new AuthModel(false, successMsg);
     }
@@ -265,13 +280,11 @@ public class AuthController {
   AuthModel generateOtp(@RequestBody PasswordModel model, HttpServletRequest request)
       throws ServiceException, ObjectNotFoundException, IOException, MessageHandlingException {
     if (model != null) {
-        AuthenticationService as = Services.getService(AuthenticationServiceImpl.class, null);
-        UsersService us = Services.getService(UsersServiceImpl.class);
         //web client is not sending this variable
         if (StringUtils.isEmpty(model.udty)) {
           model.udty = "w";
         }
-        String successMsg = as.generateOTP(model.uid, model.mode, model.udty,
+      String successMsg = authenticationService.generateOTP(model.uid, model.mode, model.udty,
             request.getHeader("host"));
         return new AuthModel(false, successMsg);
     }
@@ -285,8 +298,7 @@ public class AuthController {
   AuthModel changePassword(@RequestBody ChangePasswordModel model) {
     if (model != null) {
       try {
-        AuthenticationService as = Services.getService(AuthenticationServiceImpl.class, null);
-        String successMsg = as.setNewPassword(model.key, model.npd, model.cpd);
+        String successMsg = authenticationService.setNewPassword(model.key, model.npd, model.cpd);
         return new AuthModel(false, successMsg);
       } catch (MessageHandlingException | ServiceException | IOException e) {
         xLogger.severe("Exception: " + e);
@@ -306,11 +318,42 @@ public class AuthController {
     return null;
   }
 
+  @RequestMapping(value = "/request-access-key", method = RequestMethod.GET)
+  public
+  @ResponseBody
+  String requestAccessKey() {
+    return authenticationService.generateAccessKey();
+  }
+
+  @RequestMapping(value = "/authorise-access-key", method = RequestMethod.POST)
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void authoriseAccessKey(@RequestBody String accessKey)
+      throws ValidationException, ServiceException {
+    authenticationService.authoriseAccessKey(accessKey);
+  }
+
+  @RequestMapping(value = "/check-access-key", method = RequestMethod.POST)
+  public
+  @ResponseBody
+  Map<String, String> checkAccessKeyStatus(@RequestBody String accessKey)
+      throws ValidationException, ServiceException {
+    Optional<IUserToken>
+        optionalToken =
+        authenticationService.checkAccessKeyStatus(accessKey);
+    Map<String, String> tokenDetails = new HashMap<>(2);
+    if (optionalToken.isPresent()) {
+      tokenDetails.put(Constants.TOKEN, optionalToken.get().getRawToken());
+      tokenDetails.put(Constants.EXPIRES,
+          String.valueOf(optionalToken.get().getExpires().getTime()));
+    }
+    return tokenDetails;
+
+  }
+
   public String resetAndRedirect(String token, String src, HttpServletRequest request,
                                  HttpServletResponse response) throws Exception {
     if (StringUtils.isNotEmpty(token)) {
-      AuthenticationService as = Services.getService(AuthenticationServiceImpl.class, null);
-      String decryptedToken = as.decryptJWT(token);
+      String decryptedToken = authenticationService.decryptJWT(token);
       String[] tokens = new String[2];
       if (decryptedToken != null) {
         tokens = decryptedToken.split("&&");
@@ -328,14 +371,13 @@ public class AuthController {
               String logMsg;
               String sendMode = null;
               String sendType;
-              UsersService usersService = Services.getService(UsersServiceImpl.class, null);
               IUserAccount account = usersService.getUserAccount(userId);
               Locale locale = account.getLocale();
               ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
               if ("w".equalsIgnoreCase(src)) {
                 response.sendRedirect("/v2/password-request.html?key=" + token);
               } else {
-                newPassword = as.generatePassword(userId);
+                newPassword = authenticationService.generatePassword(userId);
                 msg = backendMessages.getString("password.reset.success") + ": " + newPassword;
                 logMsg = backendMessages.getString("password.reset.success.log");
                 sendMode = backendMessages.getString("password.mid");
@@ -386,6 +428,5 @@ public class AuthController {
     }
     return false;
   }
-
 
 }

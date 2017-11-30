@@ -49,4 +49,8 @@ public interface IUserToken {
   String getRawToken();
 
   void setRawToken(String rawToken);
+
+  String getAccessKey();
+
+  void setAccessKey(String accessKey);
 }

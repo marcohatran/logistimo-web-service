@@ -35,14 +35,14 @@ import com.logistimo.proto.JsonTagsZ;
 import org.junit.Test;
 
 import java.lang.reflect.Method;
-import java.util.Calendar;
-import java.util.Date;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Hashtable;
-import java.util.Optional;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -82,7 +82,9 @@ public class RESTUtilTest {
     mockConfig.setLastUpdated(getDate(-1));
     when(configManagementService.getConfiguration(CONFIG_KEY))
         .thenReturn(mockConfig);
-    Method isConfigModified = RESTUtil.class.getDeclaredMethod(IS_CONFIG_MODIFIED, Optional.class, Long.class);
+    Method
+        isConfigModified =
+        RESTUtil.class.getDeclaredMethod(IS_CONFIG_MODIFIED, Optional.class, Long.class);
     isConfigModified.setAccessible(true);
     Object o = isConfigModified.invoke(null, Optional.of(getDate(0)), 2l);
     assertEquals(o, false);
@@ -95,7 +97,9 @@ public class RESTUtilTest {
     mockConfig.setLastUpdated(getDate(0));
     when(configManagementService.getConfiguration(CONFIG_KEY))
         .thenReturn(mockConfig);
-    Method isConfigModified = RESTUtil.class.getDeclaredMethod(IS_CONFIG_MODIFIED, Optional.class, Long.class);
+    Method
+        isConfigModified =
+        RESTUtil.class.getDeclaredMethod(IS_CONFIG_MODIFIED, Optional.class, Long.class);
     isConfigModified.setAccessible(true);
     Object o = isConfigModified.invoke(null, Optional.of(getDate(-1)), 2l);
     assertEquals(o, true);
@@ -108,7 +112,9 @@ public class RESTUtilTest {
     mockConfig.setLastUpdated(getDate(0));
     when(configManagementService.getConfiguration(CONFIG_KEY))
         .thenReturn(mockConfig);
-    Method isConfigModified = RESTUtil.class.getDeclaredMethod(IS_CONFIG_MODIFIED, Optional.class, Long.class);
+    Method
+        isConfigModified =
+        RESTUtil.class.getDeclaredMethod(IS_CONFIG_MODIFIED, Optional.class, Long.class);
     isConfigModified.setAccessible(true);
     Object o = isConfigModified.invoke(null, Optional.of(getDate(0)), 2l);
     assertEquals(o, false);
@@ -121,7 +127,9 @@ public class RESTUtilTest {
     mockConfig.setLastUpdated(getDate(0));
     when(configManagementService.getConfiguration(CONFIG_KEY))
         .thenReturn(mockConfig);
-    Method isConfigModified = RESTUtil.class.getDeclaredMethod(IS_CONFIG_MODIFIED, Optional.class, Long.class);
+    Method
+        isConfigModified =
+        RESTUtil.class.getDeclaredMethod(IS_CONFIG_MODIFIED, Optional.class, Long.class);
     isConfigModified.setAccessible(true);
     Object o = isConfigModified.invoke(null, Optional.empty(), 2l);
     assertEquals(o, true);
@@ -156,7 +164,7 @@ public class RESTUtilTest {
   }
 
   private List<IMaterialManufacturers> setMaterialManufacturers(Long key, Long code, String name,
-                                                               Long materialCode, BigDecimal qty) {
+                                                                Long materialCode, BigDecimal qty) {
     List<IMaterialManufacturers> manufacturers = new ArrayList<>();
     MaterialManufacturers mfrs = new MaterialManufacturers();
     mfrs.setKey(key);

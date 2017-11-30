@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright © 2017 Logistimo.
+  ~
+  ~ This file is part of Logistimo.
+  ~
+  ~ Logistimo software is a mobile & web platform for supply chain management and remote temperature monitoring in
+  ~ low-resource settings, made available under the terms of the GNU Affero General Public License (AGPL).
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General
+  ~ Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any
+  ~ later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+  ~ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+  ~ for more details.
+  ~
+  ~ You should have received a copy of the GNU Affero General Public License along with this program.  If not, see
+  ~ <http://www.gnu.org/licenses/>.
+  ~
+  ~ You can be released from the requirements of the license by purchasing a commercial license. To know more about
+  ~ the commercial license, please contact us at opensource@logistimo.com
+  -->
+
+<div ng-controller="BulletinBoardRenderController">
+    <!--<div ng-show="showOffline" class="toast toast-warning" style="width: 100%; box-shadow: none; position: relative; overflow: hidden; margin: 0 0 6px; padding: 15px 15px 15px 60px;border-radius: 3px; top:5px;">
+        <button type="button" class="toast-close-button" ng-click="$event.stopPropagation(); predictiveDiv = false">×</button>
+        <div class="toast-icon glyphicons glyphicons-exclamation-sign"></div>
+        <div class="toast-message">
+            <span class="warning-color">{{offLineMessage}} since {{offLineSince}}</span>
+        </div>
+    </div>-->
+    <div class="bulletin-board-title col-sm-12">
+        <div class="col-sm-4 pull-left" style="top:5px;">
+            <div class="col-sm-12 pt5 noleftpad">
+                <h3 style="margin: 0px;">{{title}}</h3>
+            </div>
+            <div class="col-sm-12 pt5 noleftpad">
+                <h5 style="margin:0px;color: #777;">{{subTitle}}</h5>
+            </div>
+        </div>
+        <div class="col-sm-5">
+            <span class="alert alert-danger col-sm-12" ng-show="!networkAvailable">{{offLineMessage}}{{offLineSince}}</span>
+        </div>
+        <div class="col-sm-3">
+            <div ng-if="headerImage != undefined && headerImage != ''">
+                <div class="imagewrapper pull-right">
+                    <div ng-bind-html="headerImage"></div>
+                </div>
+            </div>
+            <div ng-if="headerImage == undefined || headerImage == ''">
+                <img class="mainlogo pull-right" src="images/acquia_marina_logo.png">
+            </div>
+        </div>
+    </div>
+    <div ng-include="'/angular-storyboards/src/bulletinboard/templates/view-bulletin-board.html'" ng-init="showTitle = false"></div>
+</div>

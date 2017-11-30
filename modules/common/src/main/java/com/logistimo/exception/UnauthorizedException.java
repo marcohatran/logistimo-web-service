@@ -30,25 +30,31 @@ import org.springframework.http.HttpStatus;
  */
 
 @SuppressWarnings("serial")
-public class UnauthorizedException extends RuntimeException {
+public class UnauthorizedException extends SystemException {
 
-  private HttpStatus code;
+  private HttpStatus httpStatusCode = HttpStatus.UNAUTHORIZED;
 
-  public UnauthorizedException(String message, HttpStatus code) {
+  public UnauthorizedException(String message, HttpStatus httpStatusCode) {
     super(message);
-    this.code = code;
+    this.httpStatusCode = httpStatusCode;
   }
 
   public UnauthorizedException(String message) {
     super(message);
-    this.code = HttpStatus.FORBIDDEN;
+    this.httpStatusCode = HttpStatus.FORBIDDEN;
   }
 
-  public HttpStatus getCode() {
-    return code;
+  public UnauthorizedException(String code, Object... arguments) {
+    super(code, arguments);
   }
 
-  public void setCode(HttpStatus code) {
-    this.code = code;
+  public UnauthorizedException(String code, HttpStatus httpStatus, Object... arguments) {
+    super(code, arguments);
+    this.httpStatusCode = httpStatus;
   }
+
+  public HttpStatus getHttpStatusCode() {
+    return httpStatusCode;
+  }
+
 }

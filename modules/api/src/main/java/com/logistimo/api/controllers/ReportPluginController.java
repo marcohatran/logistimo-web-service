@@ -28,21 +28,26 @@ import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.auth.utils.SessionMgr;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.exception.BadRequestException;
+import com.logistimo.exports.ExportService;
 import com.logistimo.logger.XLog;
+import com.logistimo.reports.plugins.internal.ReportRequestModel;
 import com.logistimo.reports.plugins.models.ReportChartModel;
 import com.logistimo.reports.plugins.models.TableResponseModel;
 import com.logistimo.reports.plugins.service.ReportPluginService;
 import com.logistimo.security.SecureUserDetails;
+import com.logistimo.services.ServiceException;
 import com.logistimo.utils.LocalDateUtil;
 
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
 
@@ -58,7 +63,18 @@ public class ReportPluginController {
   private static final String JSON_REPORT_TYPE = "type";
   private static final String JSON_REPORT_VIEW_TYPE = "viewtype";
 
-  @Autowired ReportPluginService service;
+  ReportPluginService reportPluginService;
+  ExportService exportService;
+
+  @Autowired
+  private void setReportPluginService(ReportPluginService reportPluginService) {
+    this.reportPluginService = reportPluginService;
+  }
+
+  @Autowired
+  private void setExportService(ExportService service) {
+    this.exportService = service;
+  }
 
   @RequestMapping(value = "/", method = RequestMethod.GET)
   public @ResponseBody
@@ -73,7 +89,7 @@ public class ReportPluginController {
       SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
       String userId = sUser.getUsername();
       Long domainId = SessionMgr.getCurrentDomain(request.getSession(), userId);
-      return service.getReportData(domainId, json);
+      return reportPluginService.getReportData(domainId, json);
     } catch (Exception e) {
       xLogger.severe("Error while getting the report data", e);
       return null;
@@ -94,7 +110,7 @@ public class ReportPluginController {
       SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
       String userId = sUser.getUsername();
       Long domainId = SessionMgr.getCurrentDomain(request.getSession(), userId);
-      return service.getReportTableData(domainId, json);
+      return reportPluginService.getReportTableData(domainId, json);
     } catch (Exception e) {
       xLogger.severe("Error while getting the data", e);
       return null;
@@ -111,7 +127,7 @@ public class ReportPluginController {
   public @ResponseBody String getLastAggregatedTime(@RequestParam String reportType, HttpServletRequest request){
     xLogger.fine("In getLastAggregatedTime");
     try {
-      Date date = service.getLastAggregatedTime(reportType);
+      Date date = reportPluginService.getLastAggregatedTime(reportType);
       if (date != null) {
         SecureUserDetails secureUserDetails = SecurityUtils.getUserDetails();
         return LocalDateUtil.format(date,
@@ -121,5 +137,13 @@ public class ReportPluginController {
       xLogger.severe("Error while getting the data", e);
     }
     return CharacterConstants.EMPTY;
+  }
+
+  @RequestMapping(value = "/export", method = RequestMethod.POST)
+  public
+  @ResponseBody
+  void exportData(@RequestBody String json) throws ParseException, ServiceException {
+    ReportRequestModel model = reportPluginService.buildExportModel(json);
+    exportService.scheduleReportExport(model);
   }
 }

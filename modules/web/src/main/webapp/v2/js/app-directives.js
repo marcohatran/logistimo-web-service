@@ -2392,10 +2392,10 @@ logistimoApp.directive('exportData', function () {
             mTag: '=',
             etrn: '=',
             rows: '=',
-            pdos:'=',
-            refId:'=',
-            tagType:'=',
-            approvalStatus:'='
+            pdos: '=',
+            refId: '=',
+            tagType: '=',
+            approvalStatus: '='
 
         },
         controller: ['$scope', '$uibModal', 'exportService', function ($scope, $uibModal, exportService) {
@@ -2713,13 +2713,13 @@ logistimoApp.directive('exportData', function () {
                 if (checkNotNullEmpty($scope.pdos)) {
                     extraParams += '&pdos=' + $scope.pdos;
                 }
-                if(checkNotNullEmpty($scope.refId)) {
+                if (checkNotNullEmpty($scope.refId)) {
                     extraParams += '&refid=' + $scope.refId;
                 }
-                if(checkNotNullEmpty($scope.tagType)) {
+                if (checkNotNullEmpty($scope.tagType)) {
                     extraParams += '&tagtype=' + $scope.tagType;
                 }
-                if(checkNotNullEmpty($scope.approvalStatus)) {
+                if (checkNotNullEmpty($scope.approvalStatus)) {
                     extraParams += '&approvalstatus=' + $scope.approvalStatus;
                 }
                 if (type == 'orders' || type =='reports') {

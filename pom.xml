@@ -30,7 +30,7 @@
     <groupId>com.logistimo</groupId>
     <artifactId>logistimo</artifactId>
     <packaging>pom</packaging>
-    <version>2.5.0</version>
+    <version>2.6.0</version>
     <name>Logistimo web Parent Project</name>
 
     <modules>
@@ -65,6 +65,7 @@
         <module>modules/web</module>
         <module>modules/approvals-client</module>
         <module>modules/location-client</module>
+        <module>modules/bulletin-board</module>
     </modules>
 
     <dependencies>

@@ -263,6 +263,7 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
     reportsPluginCore.directive('rptModelFilter', modelFilter);
     reportsPluginCore.directive('rptWidgetBase', widgetBase);
     reportsPluginCore.directive('rptLastRunTime', lastRunTime);
+    reportsPluginCore.directive('rptExportData', exportData);
 
     LocationFilterController.$inject = ['$scope','entityService'];
     MaterialFilterController.$inject = ['$scope', '$q', 'matService'];
@@ -276,6 +277,7 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
     ManufacturerFilterController.$inject = ['$scope','domainCfgService'];
     ModelFilterController.$inject = ['$scope','$q', 'assetService'];
     AggregationLastRunTimeController.$inject = ['$scope','reportsServiceCore'];
+    ExportController.$inject = ['$scope'];
 
     function ageFilter() {
         function getYears(offset){
@@ -323,6 +325,24 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
         }).catch(function error() {
             $scope.lastRuntime=undefined;
         });
+    }
+
+    function exportData() {
+        return {
+            restrict: 'E',
+            scope: {
+                reportType: '=',
+                callback: '&'
+            },
+            controller: ExportController,
+            template: '<div><button class="btn btn-primary pull-right" ng-click="exportData()">Export</button></div>'
+        };
+    }
+
+    function ExportController($scope) {
+        $scope.exportData = function() {
+            $scope.callback({reportType:$scope.reportType});
+        }
     }
 
     function locationFilter() {
@@ -1004,15 +1024,21 @@ function reportCoreService() {
             fetch: function (urlStr) {
                 return $http({method: 'GET', url: urlStr});
             },
+            fetchP: function (data, urlStr) {
+                return $http({method: 'POST', data: data, url: urlStr});
+            },
             getReportData: function (json) {
                 return this.fetch('/s2/api/plugins/report/?json=' + json);
             },
             getReportBreakdownData: function (json) {
                 return this.fetch('/s2/api/plugins/report/breakdown?json=' + json);
-            },getAggregatedTime: function (reportType) {
+            },
+            getAggregatedTime: function (reportType) {
                 return this.fetch('/s2/api/plugins/report/last-run-time?reportType=' + reportType);
-            }
-
+            },
+            exportData: function (json) {
+            return this.fetchP(json,'/s2/api/plugins/report/export');
+        }
         }
     }]);
 }

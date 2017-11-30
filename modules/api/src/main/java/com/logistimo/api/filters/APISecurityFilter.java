@@ -23,12 +23,15 @@
 
 package com.logistimo.api.filters;
 
+import com.logistimo.api.auth.AuthenticationUtil;
 import com.logistimo.auth.SecurityMgr;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
+import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.logger.XLog;
 import com.logistimo.security.SecureUserDetails;
+import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.utils.ConfigUtil;
 
 import org.apache.commons.lang.StringUtils;
@@ -84,12 +87,24 @@ public class APISecurityFilter implements Filter {
       if (StringUtils.isNotBlank(req.getHeader(X_ACCESS_USER))) {
         try {
           SecurityMgr.setSessionDetails(req.getHeader(X_ACCESS_USER));
+        } catch (UnauthorizedException | ObjectNotFoundException e) {
+          xLogger.warn("Issue with api client authentication", e);
+          resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
+          return;
         } catch (Exception e) {
           xLogger.severe("Issue with api client authentication", e);
           resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
           return;
         }
 
+      } else if (StringUtils.isNotBlank(req.getHeader(Constants.TOKEN))) {
+        try {
+          AuthenticationUtil.authenticatTokenAndSetSession(req.getHeader(Constants.TOKEN), -1);
+        } catch (Exception e) {
+          xLogger.severe("Issue with api client authentication", e);
+          resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+          return;
+        }
       } else if (StringUtils.isBlank(req.getHeader(Constants.X_APP_ENGINE_TASK_NAME)) && !(
           StringUtils.isNotBlank(servletPath) && (servletPath.startsWith(ASSET_STATUS_URL)
               || servletPath.startsWith(SMS_API_URL) || servletPath.startsWith(M_AUTH_URL)))) {
@@ -99,16 +114,21 @@ public class APISecurityFilter implements Filter {
           resp.sendError(HttpServletResponse.SC_CONFLICT, "Upgrade required");
           return;
         }
+        SecureUserDetails
+            userDetails = SecurityMgr
+            .getSessionDetails(req.getSession());
+        if (userDetails != null) {
+          SecurityUtils.setUserDetails(userDetails);
+        }
+        SecurityUtils.setUserDetails(userDetails);
         if (StringUtils.isNotBlank(servletPath) && !(servletPath.startsWith(APP_STATUS_URL)
             || servletPath.startsWith(AUTHENTICATE_URL))) {
-          SecureUserDetails
-              userDetails = SecurityMgr
-              .getSessionDetails(req.getSession());
+
           if (userDetails == null) {
             resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication Required.");
             return;
           }
-          SecurityUtils.setUserDetails(userDetails);
+
           String reqDomainId = SecurityUtils.getReqCookieUserDomain(req);
           if (reqDomainId != null && !reqDomainId.equals(
               userDetails.getUsername() + CharacterConstants.COLON + SecurityUtils

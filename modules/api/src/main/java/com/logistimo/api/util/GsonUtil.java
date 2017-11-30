@@ -585,6 +585,9 @@ public class GsonUtil {
       jsonObject.addProperty(JsonTagsZ.MESSAGE, errorMsg);
       statusCode = RestConstantsZ.ORDERS_FAIL_STATUS_CODE;
     }
+    if(jsonObject==null){
+      jsonObject=new JsonObject();
+    }
     jsonObject.addProperty(JsonTagsZ.VERSION, version);
     jsonObject.addProperty(JsonTagsZ.STATUS, statusCode);
     return new Gson().toJson(jsonObject);

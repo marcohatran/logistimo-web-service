@@ -447,4 +447,16 @@ public class StringUtil {
     }
     return str;
   }
+  public static String getSingleQuotesCSV(List<String> list) {
+      StringBuilder tag = new StringBuilder("");
+      if (list != null && !list.isEmpty()) {
+        for (String userTag : list) {
+          if (!CharacterConstants.EMPTY.equals(tag.toString())) {
+            tag.append(CharacterConstants.COMMA);
+          }
+          tag.append(CharacterConstants.S_QUOTE).append(userTag).append(CharacterConstants.S_QUOTE);
+        }
+      }
+      return tag.toString();
+    }
 }

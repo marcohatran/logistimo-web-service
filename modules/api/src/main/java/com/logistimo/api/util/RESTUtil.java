@@ -31,6 +31,7 @@ import com.logistimo.AppFactory;
 import com.logistimo.accounting.entity.IAccount;
 import com.logistimo.accounting.service.IAccountingService;
 import com.logistimo.accounting.service.impl.AccountingServiceImpl;
+import com.logistimo.api.auth.AuthenticationUtil;
 import com.logistimo.api.servlets.mobile.builders.MobileConfigBuilder;
 import com.logistimo.api.servlets.mobile.builders.MobileEntityBuilder;
 import com.logistimo.api.servlets.mobile.models.ParsedRequest;
@@ -71,6 +72,7 @@ import com.logistimo.entities.models.UserEntitiesModel;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.entity.IJobStatus;
+import com.logistimo.exception.ExceptionUtils;
 import com.logistimo.exception.InvalidDataException;
 import com.logistimo.exception.SystemException;
 import com.logistimo.exception.UnauthorizedException;
@@ -174,9 +176,10 @@ public class RESTUtil {
   private static ITransDao transDao = new TransDao();
 
   @SuppressWarnings("unchecked")
-  public static Results getInventoryData( Long kioskId, Locale locale,
+  public static Results getInventoryData(Long kioskId, Locale locale,
                                          String timezone, boolean onlyStock,
-                                         DomainConfig dc, boolean forceIntegerForStock, Date start,Optional<Date> modifiedSince,
+                                         DomainConfig dc, boolean forceIntegerForStock, Date start,
+                                         Optional<Date> modifiedSince,
                                          PageParams pageParams) throws ServiceException {
     xLogger.fine("Entered getInventoryData");
     // Get the services
@@ -195,7 +198,7 @@ public class RESTUtil {
         .withKioskId(kioskId)
         .withUpdatedSince(modifiedSince.orElse(null));
 
-    Results results = ims.getInventory(filters,pageParams);
+    Results results = ims.getInventory(filters, pageParams);
     IKiosk kiosk = Services.getService(EntitiesServiceImpl.class).getKiosk(kioskId);
     List<IInvntry> inventories = (List<IInvntry>) results.getResults();
     String cursor = results.getCursor();
@@ -359,7 +362,7 @@ public class RESTUtil {
         material.put(JsonTagsZ.ENFORCE_HANDLING_UNIT_CONSTRAINT, "yes");
         material.put(JsonTagsZ.HANDLING_UNIT, handlingUnit);
       }
-        material.put(JsonTagsZ.MANUFACTURERS, getManufacturerList(manufacturers));
+      material.put(JsonTagsZ.MANUFACTURERS, getManufacturerList(manufacturers));
       // If start date is specified, then check and add the material to invData only if the it was created or updated on or after the start date.
       Date materialCreatedOn = m.getTimeStamp();
       Date materialLastUpdatedOn = m.getLastUpdated();
@@ -812,8 +815,7 @@ public class RESTUtil {
       // Check if Basic auth. header exists
       SecurityMgr.Credentials creds = SecurityMgr.getUserCredentials(req);
       if (StringUtils.isNotEmpty(token)) {
-        uId = aus.authenticateToken(token, actionInitiator);
-        u = as.getUserAccount(uId);
+        u = AuthenticationUtil.authenticateToken(token, actionInitiator);
         authenticated = true;
       } else {
         if (creds != null) {
@@ -854,7 +856,7 @@ public class RESTUtil {
       // If authenticated, check permissions for this kiosk, if available
       if (authenticated) { // authenticated, so proceed...
         // Check if switch to new host is required. If yes, then return an error message. Otherwise, proceed.
-        if (switchToNewHostIfRequired(u, resp)) {
+        if (checkIfLoginShouldNotBeAllowed(u, resp, req)) {
           xLogger.warn("Switched user {0} to new host", uId);
         } else if (kioskId != null) {
           // If not, proceed.
@@ -921,7 +923,8 @@ public class RESTUtil {
                                                  DomainConfig dc,
                                                  String minResponseCode,
                                                  boolean onlyAuthenticate,
-                                                 boolean forceIntegerForStock, Date start, Optional<Date> modifiedSinceDate,
+                                                 boolean forceIntegerForStock, Date start,
+                                                 Optional<Date> modifiedSinceDate,
                                                  PageParams kioskPageParams)
       throws ProtocolException, ServiceException {
     Hashtable<String, Object> config = null;
@@ -961,7 +964,8 @@ public class RESTUtil {
           Hashtable<String, Object>
               kioskData =
               getKioskData(k, locale, user.getTimezone(), dc, getUsersForKiosk, getMaterials,
-                  getLinkedKiosks, forceIntegerForStock, user.getUserId(), user.getRole(), modifiedSinceDate);
+                  getLinkedKiosks, forceIntegerForStock, user.getUserId(), user.getRole(),
+                  modifiedSinceDate);
           Date kioskCreatedOn = k.getTimeStamp();
           Date kioskLastUpdatedOn = k.getLastUpdated();
           xLogger.fine(
@@ -991,9 +995,10 @@ public class RESTUtil {
     return jsonString;
   }
 
-  public static List<Map<String, Object>> getManufacturerList(List<IMaterialManufacturers> manufacturers) {
+  public static List<Map<String, Object>> getManufacturerList(
+      List<IMaterialManufacturers> manufacturers) {
     List<Map<String, Object>> manufacturerList = new ArrayList<>();
-    if(manufacturers != null && !manufacturers.isEmpty()) {
+    if (manufacturers != null && !manufacturers.isEmpty()) {
       for (IMaterialManufacturers manufacturer : manufacturers) {
         Map<String, Object> model = new HashMap<>();
         model.put(JsonTagsZ.MANUFACTURER_CODE, manufacturer.getManufacturerCode());
@@ -1067,7 +1072,10 @@ public class RESTUtil {
         }
         if (sendVendors) {
           // Add vendor info., if present
-          Results results = getLinkedKiosks(k.getKioskId(), IKioskLink.TYPE_VENDOR, userId, getUsersForKiosk, dc, null, modifiedSince);
+          Results
+              results =
+              getLinkedKiosks(k.getKioskId(), IKioskLink.TYPE_VENDOR, userId, getUsersForKiosk, dc,
+                  null, modifiedSince);
           if (results.getResults() != null && !results.getResults().isEmpty()) {
             kioskData
                 .put(JsonTagsZ.VENDORS, results.getResults());
@@ -1080,7 +1088,8 @@ public class RESTUtil {
           Results results =
               getLinkedKiosks(k.getKioskId(),
                   IKioskLink.TYPE_CUSTOMER, userId, getUsersForKiosk, dc, null, modifiedSince);
-          if (dc.sendCustomers() && results.getResults() != null && !results.getResults().isEmpty()) {
+          if (dc.sendCustomers() && results.getResults() != null && !results.getResults()
+              .isEmpty()) {
             kioskData.put(JsonTagsZ.CUSTOMERS, results.getResults());
           }
           kioskData.put(JsonTagsZ.NUMBER_OF_CUSTOMERS, results.getNumFound());
@@ -1093,7 +1102,8 @@ public class RESTUtil {
         List<IApprover> approversList = es.getApprovers(k.getKioskId());
         if (approversList != null && !approversList.isEmpty()) {
           kioskData.put(JsonTagsZ.APPROVERS,
-              mobileEntityBuilder.buildApproversModel(approversList, dc.isPurchaseApprovalEnabled(), dc.isSalesApprovalEnabled()));
+              mobileEntityBuilder.buildApproversModel(approversList, dc.isPurchaseApprovalEnabled(),
+                  dc.isSalesApprovalEnabled()));
         }
       }
       // Add kiosk tags if any configured for the kiosk
@@ -1385,7 +1395,9 @@ public class RESTUtil {
   }
 
   // Get domain-specific configuration to be sent to mobile
-  private static Hashtable<String, Object> getConfig(DomainConfig dc, IUserAccount user, Optional<Date> modifiedSinceDate) throws ServiceException{
+  private static Hashtable<String, Object> getConfig(DomainConfig dc, IUserAccount user,
+                                                     Optional<Date> modifiedSinceDate)
+      throws ServiceException {
     xLogger.fine("Entered getConfig");
     // Get domain config
     if (dc == null) {
@@ -1395,7 +1407,7 @@ public class RESTUtil {
     Hashtable<String, Object>
         config =
         new Hashtable<>();
-    if (!isConfigModified(modifiedSinceDate,user.getDomainId())) {
+    if (!isConfigModified(modifiedSinceDate, user.getDomainId())) {
       return config;
     }
     String transNaming = dc.getTransactionNaming();
@@ -1715,8 +1727,10 @@ public class RESTUtil {
       // Accounting configuration
       AccountingConfig acctConfig = dc.getAccountingConfig();
       if (acctConfig != null) {
-        MobileAccountingConfigModel mobileAccountingConfigModel = mobileConfigBuilder.buildAccountingConfiguration(
-            dc.isAccountingEnabled(), acctConfig);
+        MobileAccountingConfigModel
+            mobileAccountingConfigModel =
+            mobileConfigBuilder.buildAccountingConfiguration(
+                dc.isAccountingEnabled(), acctConfig);
         config.put(JsonTagsZ.ACCOUNTING_CONFIG, mobileAccountingConfigModel);
       }
       if (IUserAccount.LR_LOGIN_RECONNECT.equals(user.getLoginReconnect())) {
@@ -1807,14 +1821,49 @@ public class RESTUtil {
   }
 
   // Method to switch to new host if configured in the Domain configuration for a user's domain
-  public static boolean switchToNewHostIfRequired(IUserAccount u, HttpServletResponse resp) {
+  public static boolean checkIfLoginShouldNotBeAllowed(IUserAccount u, HttpServletResponse resp,
+                                                       HttpServletRequest req)
+      throws ServiceException {
     // Get the configuration. Check if switch to new host is enabled. If yes, get the new host name and return 409 response.
+
+    return checkAppVersion(u,resp,req) || checkDomainSwith(u,resp,req);
+  }
+
+  private static boolean checkAppVersion(IUserAccount u, HttpServletResponse resp,
+                                         HttpServletRequest req) throws ServiceException {
+    String version = req.getParameter(RestConstantsZ.VERSION);
+    try {
+      String[] blockedVersions = StringUtil.getCSVTokens(
+          GeneralConfig.getInstance().getBlockedAppVersion());
+      if (blockedVersions != null && blockedVersions.length > 0 && Arrays.asList(blockedVersions)
+          .contains(version)) {
+        resp.setStatus(200);
+        resp.setContentType("application/json; charset=\"UTF-8\"");
+        PrintWriter pw = resp.getWriter();
+        pw.write(GsonUtil
+            .authenticateOutputToJson(false, ExceptionUtils.constructMessage("G004", u.getLocale(),
+                new Object[]{version, GeneralConfig.getInstance().getUpgradeToVersion()}), null, new UserEntitiesModel(u,null), null,
+                RESTUtil.VERSION_01));
+        pw.close();
+        return true;
+      }
+    } catch (IOException e) {
+      xLogger
+          .severe("Exception {0} sending error message to user {1} in domain {2}. Message: {3}",
+              e.getClass().getName(), u.getUserId(), u.getDomainId(), e);
+    } catch (ConfigurationException e) {
+      throw new ServiceException(e);
+    }
+    return false;
+  }
+
+  private static boolean checkDomainSwith(IUserAccount u, HttpServletResponse resp,
+                                          HttpServletRequest req) {
     Long domainId = u.getDomainId();
     DomainConfig dc = DomainConfig.getInstance(domainId);
-    boolean switched = false;
     if (dc.isEnableSwitchToNewHost() && dc.getNewHostName() != null && !dc.getNewHostName()
         .isEmpty()) {
-      xLogger.fine("Switch to new host is enabled for domainId: {0}, dc.getNewHostName(): {1}",
+      xLogger.info("Switch to new host is enabled for domainId: {0}, dc.getNewHostName(): {1}",
           domainId, dc.getNewHostName());
       try {
         resp.setStatus(409);
@@ -1822,14 +1871,14 @@ public class RESTUtil {
         PrintWriter pw = resp.getWriter();
         pw.write(dc.getNewHostName());
         pw.close();
-        switched = true;
+        return true;
       } catch (IOException e) {
         xLogger
             .severe("Exception {0} sending error message to user {1} in domain {2}. Message: {3}",
                 e.getClass().getName(), u.getUserId(), domainId, e.getMessage());
       }
     }
-    return switched;
+    return false;
   }
 
   // Method to get transaction history
@@ -2381,7 +2430,8 @@ public class RESTUtil {
     return parsedRequest;
   }
 
-  private static boolean isConfigModified(Optional<Date> modifiedSinceDate, Long domainId) throws ServiceException{
+  private static boolean isConfigModified(Optional<Date> modifiedSinceDate, Long domainId)
+      throws ServiceException {
     ConfigurationMgmtService cms = Services.getService(ConfigurationMgmtServiceImpl.class);
     IConfig config = cms.getConfiguration(IConfig.CONFIG_PREFIX + domainId);
     if (modifiedSinceDate.isPresent()) {

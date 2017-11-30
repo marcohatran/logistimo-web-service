@@ -22,7 +22,7 @@
  */
 
 var domainCfgControllers = angular.module('domainCfgControllers', []);
-domainCfgControllers.controller('GeneralConfigurationController', ['$scope', 'domainCfgService', 'configService','userService','mediaService',
+domainCfgControllers.controller('GeneralConfigurationController', ['$scope', 'domainCfgService', 'configService', 'userService', 'mediaService',
     function ($scope, domainCfgService, configService, userService, mediaService) {
         $scope.cnf = {};
         $scope.cnf.support = [];
@@ -299,29 +299,29 @@ domainCfgControllers.controller('GeneralConfigurationController', ['$scope', 'do
             });
         }
 
-        $scope.validateDomainImage = function() {
-            if(checkNullEmpty($scope.imageData)) {
+        $scope.validateDomainImage = function () {
+            if (checkNullEmpty($scope.imageData)) {
                 $scope.showWarning($scope.resourceBundle['image.upload.empty.warning']);
                 return false;
             }
             var fileType = $scope.imageData.filetype.split("/");
             $scope.fileExt = fileType[fileType.length - 1];
-            if($scope.fileExt != "png" && $scope.fileExt != "jpg" && $scope.fileExt != "jpeg") {
+            if ($scope.fileExt != "png" && $scope.fileExt != "jpg" && $scope.fileExt != "jpeg") {
                 $scope.showWarning($scope.resourceBundle['image.upload.warning']);
                 return false;
             }
             var fileSize = $scope.imageData.filesize;
-            if(fileSize > 5*1024*1024) {
-                $scope.showWarning ($scope.resourceBundle['uploadsizemessage']);
+            if (fileSize > 5 * 1024 * 1024) {
+                $scope.showWarning($scope.resourceBundle['uploadsizemessage']);
                 return false;
             }
             return true;
         };
 
-        $scope.uploadDomainImage = function() {
+        $scope.uploadDomainImage = function () {
             $scope.showLoading();
             $scope.loadingImage = true;
-            mediaService.uploadImage($scope.fileExt, $scope.domainId, $scope.imageData.base64).then(function(data) {
+            mediaService.uploadImage($scope.fileExt, $scope.domainId, $scope.imageData.base64).then(function (data) {
                 $scope.showSuccess($scope.resourceBundle['image.upload.success']);
                 getDomainImage();
                 $scope.addImage = false;
@@ -329,38 +329,38 @@ domainCfgControllers.controller('GeneralConfigurationController', ['$scope', 'do
                 angular.element('#domainFileupload').val(null);
             }).catch(function error(msg) {
                 $scope.showErrorMsg(msg);
-            }).finally(function() {
+            }).finally(function () {
                 $scope.hideLoading();
                 $scope.loadingImage = false;
             });
         };
 
-        $scope.removeDomainImage = function(key) {
+        $scope.removeDomainImage = function (key) {
             if (!confirm($scope.resourceBundle['image.removed.warning'] + "?")) {
                 return false;
             }
             $scope.showLoading();
             $scope.loadingImage = true;
-            mediaService.removeImage(key).then(function() {
+            mediaService.removeImage(key).then(function () {
                 $scope.showSuccess($scope.resourceBundle['image.delete.success']);
                 getDomainImage();
             }).catch(function error(msg) {
                 $scope.showErrorMsg(msg);
-            }).finally(function() {
+            }).finally(function () {
                 $scope.hideLoading();
                 $scope.loadingImage = false;
             });
         };
-        $scope.addDomainImage = function(){
-            if($scope.domainImages.items.length == 5) {
-                $scope.showWarning($scope.resourceBundle['domain.image.upload.maximum.images']);
+        $scope.addDomainImage = function () {
+            if ($scope.domainImages.items.length == 5) {
+                $scope.showWarning($scope.resourceBundle['image.upload.maximum.images']);
                 $scope.addImage = false;
                 return;
             }
             $scope.addImage = true;
             angular.element('#domainFileupload').val(null);
         };
-        $scope.cancel = function(){
+        $scope.cancel = function () {
             $scope.addImage = false;
             $scope.imageData = undefined;
         };

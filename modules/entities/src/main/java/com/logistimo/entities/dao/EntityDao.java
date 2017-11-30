@@ -160,7 +160,7 @@ public class EntityDao implements IEntityDao {
       approvers = (List<IApprover>) query.executeWithArray(
           sqlQueryModel.listParams.toArray());
       approvers = (List<IApprover>) pm.detachCopyAll(approvers);
-    } catch (Exception e){
+    } catch (Exception e) {
       xLogger.severe("Error while getting approvers", e);
     } finally {
       if (query != null) {
@@ -171,7 +171,8 @@ public class EntityDao implements IEntityDao {
     return approvers;
   }
 
-  public Results getKioskLinks(KioskLinkFilters filters, PageParams pageParams, boolean countOnly) throws
+  public Results getKioskLinks(KioskLinkFilters filters, PageParams pageParams, boolean countOnly)
+      throws
       ServiceException {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     Query query = null;
@@ -195,7 +196,7 @@ public class EntityDao implements IEntityDao {
       cntQuery.setUnique(true);
       count =
           ((Long) (cntQuery.executeWithArray(cntSqlQueryModel.listParams.toArray()))).intValue();
-    } catch (Exception e){
+    } catch (Exception e) {
       xLogger.severe("Error while getting kiosklinks", e);
       throw new ServiceException(e);
     } finally {
@@ -242,7 +243,8 @@ public class EntityDao implements IEntityDao {
         IApprover.class);
   }
 
-  private QueryParams buildKioskLinksQuery(KioskLinkFilters filters, PageParams pageParams, boolean buildCountQuery) {
+  private QueryParams buildKioskLinksQuery(KioskLinkFilters filters, PageParams pageParams,
+                                           boolean buildCountQuery) {
     StringBuilder
         sqlQuery =
         new StringBuilder("SELECT KL.`KEY` AS `KEY`, KL.* FROM KIOSKLINK KL,KIOSK K");
@@ -274,7 +276,9 @@ public class EntityDao implements IEntityDao {
       sqlQuery.append(" AND KL.LINKEDKIOSKID = ?");
       params.add(String.valueOf(filters.getLinkedKioskId()));
     } else if (StringUtils.isNotEmpty(filters.getEntityTag())) {
-      sqlQuery.append(" AND KL.LINKEDKIOSKID IN (SELECT KIOSKID FROM KIOSK_TAGS WHERE ID IN (SELECT ID FROM TAG WHERE NAME = ? AND TYPE = " + ITag.KIOSK_TAG + "))");
+      sqlQuery.append(
+          " AND KL.LINKEDKIOSKID IN (SELECT KIOSKID FROM KIOSK_TAGS WHERE ID IN (SELECT ID FROM TAG WHERE NAME = ? AND TYPE = "
+              + ITag.KIOSK_TAG + "))");
       params.add(filters.getEntityTag());
     }
     if (filters.getModifiedSince() != null) {

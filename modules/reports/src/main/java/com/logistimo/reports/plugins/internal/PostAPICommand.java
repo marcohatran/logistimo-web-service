@@ -38,15 +38,15 @@ import javax.ws.rs.core.Response;
 /**
  * @author Mohan Raja
  */
-public class PostAPICommand extends HystrixCommand<Response> {
+public class PostAPICommand<T> extends HystrixCommand<Response> {
   private final String baseURL;
   private final Client client;
-  private final QueryRequestModel requestModel;
+  private final T requestModel;
 
   public static final String EXTERNAL_SERVICE = "external-service";
   public static final String PATH = "/query/getdata";
 
-  public PostAPICommand(String baseURL, Client client, QueryRequestModel requestModel) {
+  public PostAPICommand(String baseURL, Client client, T requestModel) {
     super(HystrixCommandGroupKey.Factory.asKey(EXTERNAL_SERVICE), 30_000);
     this.baseURL = baseURL;
     this.client = client;

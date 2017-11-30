@@ -68,7 +68,9 @@ public class DomainsServiceImpl extends ServiceImpl implements DomainsService {
   private static final String DOMAINS_TASK_URL = "/task/domains";
   private static final String CONFIG_TASK_URL = "/task/createconfig";
 
-  private ITaskService taskService = AppFactory.get().getTaskService();
+  private ITaskService getTaskService() {
+    return AppFactory.get().getTaskService();
+  }
 
   /**
    * Get a domain, given a domain ID
@@ -762,7 +764,7 @@ public class DomainsServiceImpl extends ServiceImpl implements DomainsService {
     xLogger.fine("Scheduling task to add linked domains: {0}, json post: {1}", linkedDomainIds,
         new Gson().toJson(otdm));
     // Schedule task
-    taskService.schedule(ITaskService.QUEUE_DOMAINS, DOMAINS_TASK_URL, taskParams,
+    getTaskService().schedule(ITaskService.QUEUE_DOMAINS, DOMAINS_TASK_URL, taskParams,
         ITaskService.METHOD_POST);
     xLogger.fine("Exiting inheritMaterials");
   }
@@ -783,7 +785,7 @@ public class DomainsServiceImpl extends ServiceImpl implements DomainsService {
     params.put("action", "copydomainconfig");
     params.put("data", new Gson().toJson(ccm));
     // Schedule task
-    taskService
+    getTaskService()
         .schedule(ITaskService.QUEUE_DOMAINS, CONFIG_TASK_URL, params, ITaskService.METHOD_POST);
     xLogger.fine("Exiting copyConfiguration");
   }

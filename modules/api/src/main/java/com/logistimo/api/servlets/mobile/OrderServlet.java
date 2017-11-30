@@ -33,6 +33,7 @@ import com.logistimo.api.servlets.mobile.builders.MobileOrderBuilder;
 import com.logistimo.api.util.GsonUtil;
 import com.logistimo.api.util.RESTUtil;
 import com.logistimo.auth.SecurityConstants;
+import com.logistimo.auth.SecurityMgr;
 import com.logistimo.auth.SecurityUtil;
 import com.logistimo.config.models.ApprovalsConfig;
 import com.logistimo.config.models.DomainConfig;
@@ -40,6 +41,7 @@ import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.SourceConstants;
 import com.logistimo.context.StaticApplicationContext;
+import com.logistimo.entities.auth.EntityAuthoriser;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
@@ -152,7 +154,7 @@ public class OrderServlet extends JsonRestServlet {
       createOrUpdateOrder(req, resp, backendMessages, messages, false);
     } else {
       throw new ServiceException("Invalid action: " + action);
-      }
+    }
   }
 
   public void processPost(HttpServletRequest req, HttpServletResponse resp,
@@ -188,8 +190,8 @@ public class OrderServlet extends JsonRestServlet {
     String message = null;
     Long kioskId = null;
     int statusCode = HttpServletResponse.SC_OK;
-    Optional<Date> modifiedSinceDate=Optional.empty();
-    String lastModified="";
+    Optional<Date> modifiedSinceDate = Optional.empty();
+    String lastModified = "";
     JsonObject jsonObject = null;
     try {
       //Get kiosk from request
@@ -200,8 +202,8 @@ public class OrderServlet extends JsonRestServlet {
       //validate token and kiosk
       IUserAccount u = RESTUtil.authenticate(userId, null, kioskId, request, response);
 
-      modifiedSinceDate= HttpUtil.getModifiedDate(request, u.getTimezone());
-      lastModified=new Date().toString();
+      modifiedSinceDate = HttpUtil.getModifiedDate(request, u.getTimezone());
+      lastModified = new Date().toString();
 
       //Get the max results from request
       int maxResults = PageParams.DEFAULT_SIZE;
@@ -240,9 +242,9 @@ public class OrderServlet extends JsonRestServlet {
       //Get orders for specified entity, status, order type and transfers
       List<IOrder> ordersList = StaticApplicationContext.getBean(GetFilteredOrdersAction.class)
           .invoke(orderFilters, pageParams).getResults();
-      if (ordersList == null || ordersList.isEmpty()) {
+      if (!modifiedSinceDate.isPresent() && (ordersList == null || ordersList.isEmpty())) {
         message = backendMessages.getString(NO_ORDERS);
-      } else {
+      } else if(ordersList!=null && !ordersList.isEmpty()){
         //Get the order approval type
         int orderApprovalType = OrderUtils.getOrderApprovalType(otype, isTransfer);
         //Build json response
@@ -266,7 +268,7 @@ public class OrderServlet extends JsonRestServlet {
     }
     try {
       String resp = GsonUtil.buildResponse(jsonObject, message, RESTUtil.VERSION_01);
-      if(modifiedSinceDate.isPresent() && StringUtils.isBlank(message)){
+      if (modifiedSinceDate.isPresent() && StringUtils.isBlank(message)) {
         HttpUtil.setLastModifiedHeader(response, lastModified);
       }
       sendJsonResponse(response, statusCode, resp);
@@ -366,7 +368,7 @@ public class OrderServlet extends JsonRestServlet {
     }
 
     Optional<Date> modifiedSinceDate = HttpUtil.getModifiedDate(req, timezone);
-    String lastModified=new Date().toString();
+    String lastModified = new Date().toString();
 
     List<IOrder> orders = null;
     boolean includeBatchDetails = true;
@@ -439,12 +441,15 @@ public class OrderServlet extends JsonRestServlet {
           currency = dc.getCurrency();
         }
         if (hasOrders) {
-          OrderFilters filters= new OrderFilters().setDomainId(domainId).setKioskId(kioskId).setStatus(statusStr)
-              .setSince(startDate).setUntil(endDate).setOtype(otype).setTagType(null)
-              .setTag(null).setKioskIds(null).setOrderType(orderType).setReferenceId(null).setApprovalStatus(null).setWithDemand(loadAll)
-              .setUpdatedSince(modifiedSinceDate.orElse(null));
+          OrderFilters
+              filters =
+              new OrderFilters().setDomainId(domainId).setKioskId(kioskId).setStatus(statusStr)
+                  .setSince(startDate).setUntil(endDate).setOtype(otype).setTagType(null)
+                  .setTag(null).setKioskIds(null).setOrderType(orderType).setReferenceId(null)
+                  .setApprovalStatus(null).setWithDemand(loadAll)
+                  .setUpdatedSince(modifiedSinceDate.orElse(null));
           Results
-              res =  oms.getOrders(filters, pageParams);
+              res = oms.getOrders(filters, pageParams);
           if (res != null) {
             orders = res.getResults();
           }
@@ -480,7 +485,7 @@ public class OrderServlet extends JsonRestServlet {
       String
           jsonOutput =
           GsonUtil.buildGetOrdersResponseModel(status, mom, message, RESTUtil.VERSION_01);
-      if(modifiedSinceDate.isPresent() && status){
+      if (modifiedSinceDate.isPresent() && status) {
         HttpUtil.setLastModifiedHeader(resp, lastModified);
       }
       sendJsonResponse(resp, statusCode, jsonOutput);
@@ -493,7 +498,7 @@ public class OrderServlet extends JsonRestServlet {
         String
             jsonOutput =
             GsonUtil.buildGetOrdersResponseModel(status, mom, message, RESTUtil.VERSION_01);
-        if(modifiedSinceDate.isPresent() && status){
+        if (modifiedSinceDate.isPresent() && status) {
           HttpUtil.setLastModifiedHeader(resp, lastModified);
         }
         sendJsonResponse(resp, statusCode, jsonOutput);
@@ -707,15 +712,17 @@ public class OrderServlet extends JsonRestServlet {
     Locale locale = null;
     String timezone = null;
     String appVersion = null;
+    UpdateOrderRequest uoReq = null;
     Date now = new Date();
     int statusCode = HttpServletResponse.SC_OK;
     boolean includeBatchDetails = true;
+    IUserAccount u = null;
     // Input error checks
     if (type == null || type.isEmpty() || jsonInput == null || jsonInput.isEmpty()) {
       message = "Invalid input parameters";
       status = false;
     } else {
-      UpdateOrderRequest uoReq = GsonUtil.updateOrderInputFromJson(jsonInput);
+      uoReq = GsonUtil.updateOrderInputFromJson(jsonInput);
 
       try {
         List<String> orderTags = StringUtil.getList(uoReq.tg);
@@ -728,7 +735,6 @@ public class OrderServlet extends JsonRestServlet {
             status = false;
             message = backendMessages.getString(NO_KIOSK);
           } else {
-            IUserAccount u = null;
             if (uoReq.oty.equals(IOrder.TYPE_SALE)) {
               u =
                   RESTUtil
@@ -808,7 +814,7 @@ public class OrderServlet extends JsonRestServlet {
             if (!OrderUtils.validateOrderUpdatedTime(uoReq.tm, o.getUpdatedOn())) {
               errorCode = "O004";
               status = false;
-              mom = buildOrderModel(timezone, o, locale, includeBatchDetails);
+              mom = buildOrderModel(timezone, o, locale, includeBatchDetails, uoReq, u);
             }
 
           }
@@ -991,7 +997,13 @@ public class OrderServlet extends JsonRestServlet {
     String jsonString = null;
 
     if (status) {
-      mom = buildOrderModel(timezone, o, locale, includeBatchDetails);
+      try {
+        mom = buildOrderModel(timezone, o, locale, includeBatchDetails, uoReq, u);
+      } catch (ServiceException e) {
+        xLogger.severe("Exception: {0} : {1}", e.getClass().getName(), e);
+        message = backendMessages.getString("error.systemerror") + " [2]";
+        status = false;
+      }
 
       // Get JSON output
       jsonString = buildJsonResponse(resp, status, mom, message, errorCode);
@@ -1044,17 +1056,24 @@ public class OrderServlet extends JsonRestServlet {
    * @param timezone user's timezone
    * @param order    Order
    * @param locale   user's locale
+   * @param uoReq
+   * @param u
    * @return MobileOrderModel order model
    */
   private MobileOrderModel buildOrderModel(String timezone, IOrder order, Locale locale,
-                                           boolean includeBatch) {
+                                           boolean includeBatch, UpdateOrderRequest uoReq,
+                                           IUserAccount u)
+      throws ServiceException {
     if (order == null) {
       return null;
     }
     DomainConfig dc = DomainConfig.getInstance(order.getDomainId());
     boolean isAccounting = dc.isAccountingEnabled();
+    boolean embedInventoryDetails = "inventory".equals(uoReq.embed) && uoReq.ukid != null;
+    EntityAuthoriser.authoriseEntity(SecurityMgr.getSecureUserDetails(u), uoReq.ukid);
     return new MobileOrderBuilder()
-        .build(order, locale, timezone, true, isAccounting, true, includeBatch);
+        .build(order, locale, timezone, true, isAccounting, true, includeBatch,
+            embedInventoryDetails, uoReq.ukid);
   }
 
 
@@ -1251,6 +1270,7 @@ public class OrderServlet extends JsonRestServlet {
     Long kioskId = null;
     Long vid = null;
     int statusCode = HttpServletResponse.SC_OK;
+    IUserAccount u = null;
     // Authenticate or check authentication
     try {
       if (uosReq.kid
@@ -1258,7 +1278,6 @@ public class OrderServlet extends JsonRestServlet {
         status = false;
         message = backendMessages.getString(NO_KIOSK);
       } else {
-        IUserAccount u = null;
         if (uosReq.oty.equals(IOrder.TYPE_SALE)) {
           if (uosReq.vid != null) {
             u = RESTUtil.authenticate(uosReq.uid, password, vid, req, resp);
@@ -1422,8 +1441,14 @@ public class OrderServlet extends JsonRestServlet {
           includeBatchDetails = k.isBatchMgmtEnabled();
         }
 
+        boolean embedInventoryDetails = "inventory".equals(uosReq.embed) && uosReq.ukid != null;
+
+        EntityAuthoriser.authoriseEntity(SecurityMgr.getSecureUserDetails(u), uosReq.ukid);
+
         MobileOrderBuilder mob = new MobileOrderBuilder();
-        mom = mob.build(order, locale, timezone, true, isAccounting, true, includeBatchDetails);
+        mom =
+            mob.build(order, locale, timezone, true, isAccounting, true, includeBatchDetails,
+                embedInventoryDetails, uosReq.ukid);
       }
       String jsonString = buildJsonResponse(resp, status, mom, message, errorCode);
       sendJsonResponse(resp, statusCode, jsonString);
@@ -1460,7 +1485,7 @@ public class OrderServlet extends JsonRestServlet {
 
   // Schedule export of inventory data
   private void scheduleExport(HttpServletRequest req, HttpServletResponse resp,
-                             ResourceBundle messages) {
+                              ResourceBundle messages) {
     xLogger.fine("Entered scheduleExport");
     int statusCode = HttpServletResponse.SC_OK;
     // Send response back to client
@@ -1512,7 +1537,6 @@ public class OrderServlet extends JsonRestServlet {
         !ac.getOrderConfig().getPurchaseSalesOrderApproval().isEmpty() || ac.getOrderConfig()
             .isTransferApprovalEnabled()));
   }
-
 
 
 }

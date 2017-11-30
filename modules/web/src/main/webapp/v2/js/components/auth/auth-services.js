@@ -25,23 +25,15 @@
  * Created by Mohan Raja on 03/04/15.
  */
 var authServices = angular.module('authServices', []);
-authServices.factory('iAuthService', ['$http', function ($http) {
+authServices.factory('iAuthService', ['APIService', '$rootScope', '$q', function (apiService, $rootScope, $q) {
     return {
-        fetch: function (urlStr) {
-            var promise = $http({method: 'GET', url: urlStr});
-            return promise;
-        },
-        fetchP: function (data, urlStr) {
-            var promise = $http({method: 'POST', data: data, url: urlStr});
-            return promise;
-        },
         login: function (userId,password,lang) {
             /*var payload = $.param({userId: userId,password:password});
             var promise = $http.post('/s2/api/auth/login',payload,{
                 transformRequest: angular.identity,
                 headers : { 'Content-Type' : 'application/x-www-form-urlencoded;charset=utf-8'}
             });*/
-            var urlStr = '/s2/api/auth/login';
+            var urlStr = $rootScope.isSession ? '/s2/api/auth/login' : '/s2/api/mauth/login';
             var credentials = {};
             if (checkNotNullEmpty(userId)) {
                 credentials.userId = userId;
@@ -52,17 +44,59 @@ authServices.factory('iAuthService', ['$http', function ($http) {
             if (checkNotNullEmpty(lang)) {
                 credentials.language = lang;
             }
-            return this.fetchP(credentials,urlStr);
+            return apiService.post(credentials, urlStr);
         },
         logout: function () {
-            return this.fetch('/s2/api/auth/logout');
+            if ($rootScope.isSession) {
+                return apiService.get('/s2/api/auth/logout');
+            }
+            return $q(function (resolve) {
+                resolve();
+            });
         },
         generatePassword: function(data){
-            return this.fetchP(data, '/s2/api/auth/resetpassword/');
+            return apiService.post(data, '/s2/api/auth/resetpassword/');
         },
         generateOtp: function(data){
-            return this.fetchP(data, '/s2/api/auth/generateOtp');
+            return apiService.post(data, '/s2/api/auth/generateOtp');
+        },
+        getAccessToken: function (init) {
+            var token = localStorage.getItem("x-access-token");
+            if (checkNotNullEmpty(token)) {
+                if (localStorage.getItem("expires") > new Date().getTime()) {
+                    if (init) {
+                        $rootScope.token = token;
+                        $rootScope.expires = localStorage.getItem("expires");
+                    }
+                    return token;
+                } else {
+                    this.removeAccessToken();
+                }
+            }
+            return null;
+        },
+        setAccessToken: function (accessToken, expires) {
+            $rootScope.token = accessToken;
+            $rootScope.expires = expires;
+            localStorage.setItem("x-access-token", accessToken);
+            localStorage.setItem("expires", expires);
+        },
+        removeAccessToken: function () {
+            localStorage.removeItem('x-access-token');
+            localStorage.removeItem('expires');
+            $rootScope.token = null;
+            $rootScope.expires = null;
+        },
+        authorizeBulletinBoard: function (authKey) {
+            return apiService.post(authKey, "/s2/api/auth/authorise-access-key");
+        },
+        requestAccessKey: function () {
+            return apiService.get("/s2/api/auth/request-access-key");
+        },
+        checkAccessKey: function (authKey) {
+            return apiService.post(authKey, "/s2/api/auth/check-access-key");
         }
+
     }
 }
 ]);

@@ -274,7 +274,7 @@ homeControllers.controller('ShortcutController',['$scope','domainCfgService',
                 $scope.showErrorMsg(msg);
             });
         };
-        $scope.getBulletinBoardConfiguration();
+        //$scope.getBulletinBoardConfiguration();
         $scope.showPostBoard = false;
         $scope.toggle = function() {
             $scope.showPostBoard = !$scope.showPostBoard;

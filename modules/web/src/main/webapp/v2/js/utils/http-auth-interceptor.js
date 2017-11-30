@@ -35,6 +35,7 @@
 
         .factory('authService', ['$rootScope','httpBuffer', function($rootScope, httpBuffer) {
             return {
+                token: null,
                 /**
                  * Call this function to indicate that authentication was successfull and trigger a
                  * retry of all deferred requests.
@@ -81,6 +82,12 @@
                         // do something on success
                         if(checkNotNullEmpty($rootScope.currentDomain) && checkNotNullEmpty($rootScope.curUser)){
                             config.headers.d = $rootScope.curUser+":"+$rootScope.currentDomain;
+                        }
+                        if (!$rootScope.isSession && config.url.startsWith("/s2")) {
+                            if (checkNotNullEmpty($rootScope.token)) {
+                                config.headers['x-access-token'] = $rootScope.token;
+                            }
+                            config.url = $rootScope.basePath + config.url;
                         }
                         return config;
                     },

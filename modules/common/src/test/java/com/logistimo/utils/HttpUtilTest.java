@@ -59,7 +59,7 @@ public class HttpUtilTest extends TestCase {
     HttpServletRequest request = mock(HttpServletRequest.class);
     when(request.getHeader(Constants.IF_MODIFIED_SINCE_HEADER)).thenReturn(MODIFIED_SINCE_DATE);
     HttpUtil httpUtil = new HttpUtil();
-    assertNotSame(httpUtil.getModifiedDate(request, TIMEZONE),Optional.<Date>empty());
+    assertNotSame(httpUtil.getModifiedDate(request, TIMEZONE), Optional.<Date>empty());
   }
 
   @Test
@@ -91,6 +91,6 @@ public class HttpUtilTest extends TestCase {
     HttpServletResponse response = mock(HttpServletResponse.class);
     HttpUtil httpUtil = new HttpUtil();
     httpUtil.setLastModifiedHeader(response, MODIFIED_SINCE_DATE);
-    verify(response).addHeader(Constants.LAST_MODIFIED_HEADER,MODIFIED_SINCE_DATE);
+    verify(response).addHeader(Constants.LAST_MODIFIED_HEADER, MODIFIED_SINCE_DATE);
   }
 }

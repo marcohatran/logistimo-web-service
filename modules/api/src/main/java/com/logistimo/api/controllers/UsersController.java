@@ -29,6 +29,7 @@ import com.logistimo.api.builders.UserMessageBuilder;
 import com.logistimo.api.models.AddRemoveAccDomainsResponseObj;
 import com.logistimo.api.models.UserMessageModel;
 import com.logistimo.api.models.UserModel;
+import com.logistimo.api.models.configuration.AdminContactConfigModel;
 import com.logistimo.api.request.AddAccDomainsRequestObj;
 import com.logistimo.api.request.UserFilterRequestObj;
 import com.logistimo.api.util.UserMessageUtil;
@@ -80,8 +81,10 @@ import com.logistimo.utils.Counter;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.MessageUtil;
 import com.logistimo.utils.MsgUtil;
+import com.logistimo.utils.StringUtil;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -111,6 +114,9 @@ public class UsersController {
   private static final String ACTIVE_USERS = "au";
   UserBuilder builder = new UserBuilder();
   UserMessageBuilder messageBuilder = new UserMessageBuilder();
+
+  @Autowired
+  private UsersService usersService;
 
   private Results getUsers(String q, HttpServletRequest request, int offset, int size,
                            boolean isSuggest, boolean activeUsersOnly, boolean includeSuperusers,
@@ -650,7 +656,7 @@ public class UsersController {
           AuthenticationService
               aus =
               Services.getService(AuthenticationServiceImpl.class, locale);
-          aus.clearUserTokens(userId);
+          aus.clearUserTokens(userId, false);
         }
         as.updateAccount(ua, sUser.getUsername());
       } else {
@@ -688,7 +694,7 @@ public class UsersController {
         return backendMessages.getString("invalid.lowercase");
       }
       as.changePassword(userId, opw, pw);
-      aus.clearUserTokens(userId);
+      aus.clearUserTokens(userId, false);
       xLogger.info("AUDITLOG \t {0} \t {1} \t USER \t " +
               "UPDATE PASSWORD \t {2} \t {3}", domainId, sUser.getUsername(), userId,
           user.getFullName());
@@ -1029,7 +1035,7 @@ public class UsersController {
             Services.getService(AuthenticationServiceImpl.class, locale);
         UsersService as = Services.getService(UsersServiceImpl.class, locale);
         IUserAccount userAccount = as.getUserAccount(userId);
-        success = aus.clearUserTokens(userId);
+        success = aus.clearUserTokens(userId, false);
         if (success) {
           return backendMessages.getString("user.force.logout") + " " + MsgUtil
               .bold(userAccount.getFullName());
@@ -1098,5 +1104,23 @@ public class UsersController {
         pm.close();
       }
     }
+  }
+
+  @RequestMapping(value = "/user-contact-by-tag", method = RequestMethod.GET)
+  public
+  @ResponseBody
+  List<AdminContactConfigModel> getUsersContactByTag(@RequestParam Long objectId,
+                                                     @RequestParam String objectType,
+                                                     @RequestParam String userTag)
+      throws ServiceException {
+    if (objectId == null) {
+      xLogger.warn("Object id is mandatory");
+      throw new ServiceException("Object id is mandatory");
+    }
+    String tag = StringUtil.getSingleQuotesCSV(StringUtil.getList(userTag));
+    List<IUserAccount>
+        results =
+        usersService.getUsersByTag(objectId, objectType, tag);
+    return builder.buildAdminContactModel(results);
   }
 }

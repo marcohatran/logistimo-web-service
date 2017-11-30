@@ -284,17 +284,15 @@ public class DashboardControllerMV1 {
    * Provide statistics related to active/inactive entities which contains total count
    * and the detail breakdown by location wise
    *
-   * @param incetags  Entity tags to be included
-   * @param exetags   Entity tags to be excluded
-   * @param mtags     Material tags to be included
-   * @param mnm       Material name
-   * @param loc       Location
-   * @param locty     Location type: country/state/district
-   * @param p         Period in days
-   * @param date      Day of activity to be viewed
-   * @param refresh   true/false; whether to use cached data or not
-   *
-   * @throws SQLException
+   * @param incetags Entity tags to be included
+   * @param exetags  Entity tags to be excluded
+   * @param mtags    Material tags to be included
+   * @param mnm      Material name
+   * @param loc      Location
+   * @param locty    Location type: country/state/district
+   * @param p        Period in days
+   * @param date     Day of activity to be viewed
+   * @param refresh  true/false; whether to use cached data or not
    */
   @RequestMapping(value = "/activity", method = RequestMethod.GET)
   public
@@ -328,7 +326,7 @@ public class DashboardControllerMV1 {
     String cacheKey = buildCacheKey(activityQueryModel);
     cacheKey += "_ACT";
     MemcacheService cache = AppFactory.get().getMemcacheService();
-    if(!refresh) {
+    if (!refresh) {
       model = (MainDashboardModel) cache.get(cacheKey);
       if (model != null) {
         return model;
@@ -345,9 +343,12 @@ public class DashboardControllerMV1 {
     }
     IDashboardService dashboardService = Services.getService(DashboardService.class);
     ResultSet activity = dashboardService.getMainDashboardResults(domainId, filters, ACTIVITY);
-    ResultSet activityDomain = dashboardService.getMainDashboardResults(domainId, filters, ALL_ACTIVITY);
+    ResultSet
+        activityDomain =
+        dashboardService.getMainDashboardResults(domainId, filters, ALL_ACTIVITY);
     DashboardBuilder builder = new DashboardBuilder();
-    model = builder.getMainDashBoardData(null, null, activity, activityDomain, null, null, colFilter);
+    model =
+        builder.getMainDashBoardData(null, null, activity, activityDomain, null, null, colFilter);
     if (StringUtils.isBlank(activityQueryModel.loc) && activityQueryModel.state == null) {
       model.mLev = COUNTRY_LOWER;
     } else if (StringUtils.isBlank(activityQueryModel.loc) && activityQueryModel.district == null) {

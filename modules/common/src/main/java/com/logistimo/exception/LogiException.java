@@ -82,7 +82,11 @@ public class LogiException extends Exception implements ExceptionWithCodes {
     return arguments;
   }
 
+  @Override
   public String getMessage() {
+    if (code == null) {
+      return super.getMessage();
+    }
     return ExceptionUtils.constructMessage(code, Locale.getDefault(), arguments);
   }
 

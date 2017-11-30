@@ -23,15 +23,16 @@
 
 package com.logistimo.api.auth;
 
+import com.logistimo.auth.SecurityMgr;
 import com.logistimo.auth.service.AuthenticationService;
-import com.logistimo.auth.service.impl.AuthenticationServiceImpl;
-import com.logistimo.users.entity.IUserAccount;
-import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
-
+import com.logistimo.auth.utils.SecurityUtils;
+import com.logistimo.context.StaticApplicationContext;
+import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
+import com.logistimo.users.entity.IUserAccount;
+import com.logistimo.users.entity.IUserToken;
+import com.logistimo.users.service.UsersService;
 
 /**
  * Created by charan on 09/03/17.
@@ -40,9 +41,20 @@ public class AuthenticationUtil {
 
   public static IUserAccount authenticateToken(String authtoken, Integer actionInitiator)
       throws ServiceException, ObjectNotFoundException {
-    AuthenticationService aus = Services.getService(AuthenticationServiceImpl.class, null);
-    String userId = aus.authenticateToken(authtoken, actionInitiator);
-    UsersService usersService = Services.getService(UsersServiceImpl.class);
-    return usersService.getUserAccount(userId);
+    AuthenticationService aus = StaticApplicationContext.getBean(AuthenticationService.class);
+    IUserToken token = aus.authenticateToken(authtoken, actionInitiator);
+    UsersService usersService = StaticApplicationContext.getBean(UsersService.class);
+    return usersService.getUserAccount(token.getUserId());
+  }
+
+  public static void authenticatTokenAndSetSession(String authtoken, Integer actionInitiator)
+      throws ServiceException {
+    AuthenticationService aus = StaticApplicationContext.getBean(AuthenticationService.class);
+    IUserToken token = aus.authenticateToken(authtoken, actionInitiator);
+    UsersService usersService = StaticApplicationContext.getBean(UsersService.class);
+    SecurityMgr.setSessionDetails(usersService.getUserAccount(token.getUserId()));
+    SecureUserDetails userDetails = SecurityUtils.getUserDetails();
+    userDetails.setCurrentDomainId(token.getDomainId());
+    SecurityUtils.setUserDetails(userDetails);
   }
 }

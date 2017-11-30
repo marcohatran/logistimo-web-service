@@ -45,6 +45,10 @@ public class UserToken implements IUserToken {
   private Date expires;
   @Persistent
   private Long domainId;
+
+  @Persistent
+  private String accessKey;
+
   @NotPersistent
   private String rawToken;
 
@@ -88,5 +92,15 @@ public class UserToken implements IUserToken {
   @Override
   public void setRawToken(String rawToken) {
     this.rawToken = rawToken;
+  }
+
+  @Override
+  public String getAccessKey() {
+    return accessKey;
+  }
+
+  @Override
+  public void setAccessKey(String accessKey) {
+    this.accessKey = accessKey;
   }
 }

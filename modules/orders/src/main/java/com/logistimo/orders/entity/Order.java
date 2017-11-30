@@ -225,6 +225,21 @@ public class Order implements IOrder {
   @Persistent
   private Integer src;
 
+  @Persistent
+  private Date vvt;
+
+  @Persistent
+  private Date cvt;
+
+  @Persistent
+  private Long part;
+
+  @Persistent
+  private Long sart;
+
+  @Persistent
+  private Long tart;
+
   public Order() {
 
   }
@@ -335,14 +350,7 @@ public class Order implements IOrder {
         }
       } else if ((PENDING.equals(prevStatus) || CONFIRMED.equals(prevStatus)) && (
           COMPLETED.equals(st) || FULFILLED.equals(st))) {
-        if (oldStatusDate == null && PENDING.equals(
-            prevStatus)) // in case of a pending order, take the order creation timestamp, since status change date may not be available
-        {
-          oldStatusDate = getCreatedOn();
-        }
-        if (oldStatusDate != null) {
-          setProcessingTime(newDate.getTime() - oldStatusDate.getTime());
-        }
+        setProcessingTime(newDate.getTime() - getVendorVisibilityTime().getTime());
         // If product is shipped, update accounting as needed
         doAccounting(getTotalPrice(), BigDecimal.ZERO);
       }
@@ -1190,7 +1198,7 @@ public class Order implements IOrder {
   }
 
   public void setOrderType(Integer orderType) {
-    if(orderType != null) {
+    if (orderType != null) {
       oty = orderType;
     }
   }
@@ -1283,8 +1291,53 @@ public class Order implements IOrder {
   }
 
   @Override
-  public Integer getSrc() { return src; }
+  public Integer getSrc() {
+    return src;
+  }
 
   @Override
-  public void setSrc(Integer source) { this.src = source;}
+  public void setSrc(Integer source) {
+    this.src = source;
+  }
+
+  public Date getVendorVisibilityTime() {
+    return vvt;
+  }
+
+  public void setVendorVisibilityTime(Date vendorVisibilityTime) {
+
+    this.vvt = vendorVisibilityTime;
+  }
+
+  public Date getCustomerVisibilityTime() {
+    return cvt;
+  }
+
+  public void setCustomerVisibilityTime(Date customerVisibilityTime) {
+    this.cvt = customerVisibilityTime;
+  }
+
+  public Long getPurchaseApprovalResponseTime() {
+    return part;
+  }
+
+  public void setPurchaseApprovalResponseTime(Long purchaseApprovalResponseTime) {
+    this.part = purchaseApprovalResponseTime;
+  }
+
+  public Long getSalesApprovalResponseTime() {
+    return sart;
+  }
+
+  public void setSalesApprovalResponseTime(Long salesApprovalResponseTime) {
+    this.sart = salesApprovalResponseTime;
+  }
+
+  public Long getTransferApprovalResponseTime() {
+    return tart;
+  }
+
+  public void setTransferApprovalResponseTime(Long transferApprovalResponseTime) {
+    this.tart = transferApprovalResponseTime;
+  }
 }

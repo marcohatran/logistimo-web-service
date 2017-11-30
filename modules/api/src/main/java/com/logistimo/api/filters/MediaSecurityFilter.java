@@ -23,9 +23,17 @@
 
 package com.logistimo.api.filters;
 
-import org.apache.commons.lang.StringUtils;
+import com.logistimo.api.auth.AuthenticationUtil;
+import com.logistimo.auth.SecurityMgr;
+import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.constants.Constants;
+import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.logger.XLog;
+import com.logistimo.security.SecureUserDetails;
+import com.logistimo.services.ObjectNotFoundException;
+import com.logistimo.users.entity.IUserAccount;
+
+import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 
@@ -47,6 +55,7 @@ public class MediaSecurityFilter implements Filter {
   public static final String MEDIA_ENDPOINT_URL = "/_ah/api/mediaendpoint";
 
   private static final XLog xLogger = XLog.getLog(APISecurityFilter.class);
+  private static final String X_ACCESS_USER = "x-access-user";
 
   @Override
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain)
@@ -63,11 +72,48 @@ public class MediaSecurityFilter implements Filter {
     if (!(StringUtils.isNotBlank(servletPath) && servletPath.startsWith(MEDIA_ENDPOINT_URL))) {
       resp.sendError(HttpServletResponse.SC_NOT_FOUND);
       return;
+    } else if (StringUtils.isNotBlank(req.getHeader(X_ACCESS_USER))) {
+      try {
+        SecurityMgr.setSessionDetails(req.getHeader(X_ACCESS_USER));
+      } catch (UnauthorizedException | ObjectNotFoundException e) {
+        xLogger.warn("Issue with api client authentication", e);
+        resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
+        return;
+      } catch (Exception e) {
+        xLogger.severe("Issue with api client authentication", e);
+        resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+        return;
+      }
+    } else if (StringUtils.isNotBlank(req.getHeader(Constants.TOKEN))) {
+      try {
+        IUserAccount user = AuthenticationUtil.authenticateToken(req.getHeader(Constants.TOKEN), -1);
+        SecurityMgr.setSessionDetails(user.getUserId());
+      } catch (UnauthorizedException | ObjectNotFoundException e) {
+        xLogger.warn("Issue with api client authentication", e);
+        resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
+        return;
+      } catch (Exception e) {
+          xLogger.severe("Issue with api client authentication", e);
+          resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+          return;
+      }
     }
-    if (filterChain != null) {
-      filterChain.doFilter(request, response);
+    try {
+      SecureUserDetails
+          userDetails = SecurityUtils.getUserDetails();
+      if (userDetails == null) {
+        resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication Required.");
+        return;
+      }
+      SecurityUtils.setUserDetails(userDetails);
+      if (filterChain != null) {
+        filterChain.doFilter(request, response);
+      }
+    } finally {
+      SecurityUtils.setUserDetails(null);
     }
   }
+
 
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {

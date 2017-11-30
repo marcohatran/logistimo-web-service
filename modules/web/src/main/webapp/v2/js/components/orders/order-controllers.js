@@ -585,28 +585,28 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                 $scope.sMatList = $scope.sMTShip;
             };
 
-             function isOrderPartiallyAllocated(){
+        function isOrderPartiallyAllocated() {
                  if(!$scope.allocate) {
                      return true;
                  }
-                 var nonAllocatedItemCount = 0;
-                 var noOfValidItems = 0;
+            var nonAllocatedItemCount = 0;
+            var noOfValidItems = 0;
 
                  $scope.sMTShip = angular.copy($scope.order.its);
-                 var dd = $scope.order.its.some(function (data) {
-                     if (data.isBa && data.q != data.astk && data.q > 0) {
-                         return true;
-                     }
-                     if (data.q > 0) {
-                         noOfValidItems++;
-                         if (data.astk == 0) {
-                             nonAllocatedItemCount++;
-                         } else if (data.q != data.astk && data.astk > 0) {
-                             return true;
-                         }
-                     }
-                 });
-                 return dd || (nonAllocatedItemCount > 0 && nonAllocatedItemCount != noOfValidItems);
+            var dd = $scope.order.its.some(function (data) {
+                if (data.isBa && data.q != data.astk && data.q > 0) {
+                    return true;
+                }
+                if (data.q > 0) {
+                    noOfValidItems++;
+                    if (data.astk == 0) {
+                        nonAllocatedItemCount++;
+                    } else if (data.q != data.astk && data.astk > 0) {
+                        return true;
+                    }
+                }
+            });
+            return dd || (nonAllocatedItemCount > 0 && nonAllocatedItemCount != noOfValidItems);
             }
 
             $scope.toggleEdit = function (field,open) {
@@ -706,11 +706,11 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                     }
                 }
             };
-            function isBatchItemAvailable() {
-                return $scope.order.its.some(function (data) {
-                    return data.isBa;
-                });
-            }
+        function isBatchItemAvailable() {
+            return $scope.order.its.some(function (data) {
+                return data.isBa;
+            });
+        }
             $scope.changeStatus = function (value) {
                 $scope.nStatus = value;
                 $scope.newStatus= {};
@@ -775,7 +775,7 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
             $scope.modalInstance.dismiss('cancel');
         };
 
-        $scope.confirm = function() {
+        $scope.confirm = function () {
             $scope.cancel();
             displayShipForm();
         };
@@ -2457,8 +2457,8 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
         };
     }
 ]);
-ordControllers.controller('order.MaterialController', ['$scope','invService',
-    function ($scope,invService) {
+ordControllers.controller('order.MaterialController', ['$scope', 'invService',
+    function ($scope, invService) {
         $scope.material.showRecommended = false;
         $scope.showRecomQuantity = function(val){
             $scope.material.showRecommended = false;
@@ -2476,7 +2476,7 @@ ordControllers.controller('order.MaterialController', ['$scope','invService',
             if(name.im == 'sq'){
                 opoq = name.eoq;
             }else if(name.max > 0){
-                if((stock + name.tstk) >= name.max){
+                if ((stock + name.tstk) >= name.max) {
                     opoq = 0;
                 }else{
                     opoq = name.max - stock - name.tstk;
@@ -2491,29 +2491,29 @@ ordControllers.controller('order.MaterialController', ['$scope','invService',
             invService.getBatchDetail(inv.mId, inv.kId, false).then(function (data) {
                 var batchDet = data.data;
                 var totalStock = 0;
-                if(checkNotNullEmpty(batchDet)){
-                    for(var i=0; i< batchDet.length; i++){
-                        if(!batchDet[i].isExp){
+                if (checkNotNullEmpty(batchDet)) {
+                    for (var i = 0; i < batchDet.length; i++) {
+                        if (!batchDet[i].isExp) {
                             totalStock = totalStock + batchDet[i].q;
                         }
                     }
                 }
-                material.validBatchStock =  totalStock;
+                material.validBatchStock = totalStock;
                 updateMaterial(material);
             }).catch(function error(msg) {
                 $scope.showErrorMsg(msg);
-            }).finally(function() {
+            }).finally(function () {
                 $scope.hideLoading();
             });
         }
 
         $scope.$watch('material.name', function (newVal, oldVal) {
             if (checkNotNull(newVal) && checkNotNull(newVal.stk)) {
-                if(checkNotNullEmpty($scope.avMap[newVal.mId])){
+                if (checkNotNullEmpty($scope.avMap[newVal.mId])) {
                     newVal = $scope.avMap[newVal.mId];
                     newVal.hide = true;
                 }
-                if(newVal.be) {
+                if (newVal.be) {
                     var inv = $scope.type == "0" || $scope.type == "2" ? $scope.cInvMap[newVal.mId] : newVal;
                     setValidBatchQuantity(inv, newVal);
                 } else {
@@ -2540,7 +2540,7 @@ ordControllers.controller('order.MaterialController', ['$scope','invService',
             $scope.material.atpstk = name.atpstk;
             $scope.material.tstk = name.tstk;
             $scope.material.mm = "(" + name.reord.toFixed(0) + ',' + name.max.toFixed(0) + ")";
-            if(checkNotNullEmpty($scope.order.cent)) {
+            if (checkNotNullEmpty($scope.order.cent)) {
                 $scope.material.cstock = $scope.cInvMap[name.mId].stk;
                 $scope.material.cevent = $scope.cInvMap[name.mId].event;
                 $scope.material.cmm = "(" + $scope.cInvMap[name.mId].reord + "," + $scope.cInvMap[name.mId].max + ")";
@@ -2548,14 +2548,14 @@ ordControllers.controller('order.MaterialController', ['$scope','invService',
             }
             $scope.material.isBinary = name.b === 'bn';
             $scope.material.mrsn = null;
-            if($scope.type == "1") {
-                $scope.material.recomQ = $scope.recommendedQuantity($scope.material.name);
-            } else if($scope.type == "0" || $scope.type == "2") {
-                if($scope.cInvMap[name.mId]) {
-                    $scope.material.recomQ = $scope.recommendedQuantity($scope.cInvMap[$scope.material.name]);
+            if ($scope.type == "1") {
+                $scope.material.recomQ = $scope.recommendedQuantity(name);
+            } else if ($scope.type == "0" || $scope.type == "2") {
+                if ($scope.cInvMap[name.mId]) {
+                    $scope.material.recomQ = $scope.recommendedQuantity($scope.cInvMap[name.mId]);
                 }
             }
-            $scope.material.quantity = Math.max($scope.material.recomQ,0);
+            $scope.material.quantity = Math.max($scope.material.recomQ, 0);
             $scope.addRows();
         }
     }

@@ -1,0 +1,23 @@
+<div ng-controller="inventoryStatusDonutWidgetController">
+    <div ng-if="wloading" class="row mt18 widget-loading">
+        <div class="text-center">
+            {{resourceBundle['loading.uppercase']}}... <span class="glyphicons glyphicons-cogwheel spin"></span>
+        </div>
+    </div>
+    <div ng-if="!wloading && showError" class="alert alert-danger">
+        <div class="text-center">
+            {{errorMessage}}
+        </div>
+    </div>
+    <div ng-if="!wloading && !showError && showChart">
+        <div class="col-sm-12 text-center pt15">
+            <span class="widget-title">{{widget.conf.title}}</span>
+        </div>
+        <fusion-chart type="inventoryStatusDonutWidget.cType" height="inventoryStatusDonutWidget.computedHeight"
+                      width="inventoryStatusDonutWidget.computedWidth"
+                      chart-label="inventoryStatusDonutWidget.cLabel"
+                      chart-data="inventoryStatusDonutWidget.cdata" chart-options="inventoryStatusDonutWidget.copt"
+                      chart-id="{{inventoryStatusDonutWidget.wId}}" simple="'true'">
+        </fusion-chart>
+    </div>
+</div>

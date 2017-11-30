@@ -23,6 +23,10 @@
 
 package com.logistimo.api.models.configuration;
 
+import com.logistimo.api.models.MediaModel;
+
+import java.util.List;
+
 /**
  * Created by yuva on 27/07/17.
  */
@@ -31,4 +35,8 @@ public class AdminContactConfigModel {
   public String email;
   public String phn;
   public String userNm;
+  private List<MediaModel> photo;
+
+  public void setPhoto(List<MediaModel> photo) { this.photo = photo; }
+  public List<MediaModel> getPhoto() { return photo; }
 }

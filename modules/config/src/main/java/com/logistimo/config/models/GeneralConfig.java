@@ -26,13 +26,13 @@ package com.logistimo.config.models;
 import com.logistimo.config.entity.IConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
 import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
-import com.logistimo.services.utils.ConfigUtil;
-
-import org.json.JSONObject;
+import com.logistimo.logger.XLog;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.Services;
-import com.logistimo.logger.XLog;
+import com.logistimo.services.utils.ConfigUtil;
+
+import org.json.JSONObject;
 
 /**
  * Created by vani on 04/08/15.
@@ -67,6 +67,9 @@ public class GeneralConfig {
   private JSONObject aupg;
   private Integer dashboardRefreshIntervalInMinutes = 30;
   private Integer eventsRefreshIntervalInMinutes = 1440;
+  private String inventoryPolicy = "AllowAllTransactionsPolicy";
+  private String blockedAppVersion = "";
+  private String upgradeToVersion = "";
 
 
   public GeneralConfig() {
@@ -126,6 +129,21 @@ public class GeneralConfig {
           this.eventsRefreshIntervalInMinutes = jsonObject.getInt(ES_RFINT);
         } catch (Exception e) {
           this.eventsRefreshIntervalInMinutes = 1440;
+        }
+        try {
+          this.inventoryPolicy = jsonObject.getString("inventory_policy");
+        } catch (Exception e) {
+          this.inventoryPolicy = "AllowAllTransactionsPolicy";
+        }
+        try {
+          this.blockedAppVersion = jsonObject.getString("block_iota_versions");
+        } catch (Exception e) {
+          this.blockedAppVersion = "";
+        }
+        try {
+          this.upgradeToVersion = jsonObject.getString("upgrade_iota_version");
+        } catch (Exception e) {
+          this.upgradeToVersion = "";
         }
       }
     } catch (Exception e) {
@@ -227,5 +245,17 @@ public class GeneralConfig {
 
   public void setEventsRefreshIntervalInMinutes(Integer eventsRefreshIntervalInMinutes) {
     this.eventsRefreshIntervalInMinutes = eventsRefreshIntervalInMinutes;
+  }
+
+  public String getInventoryPolicy() {
+    return inventoryPolicy;
+  }
+
+  public String getBlockedAppVersion() {
+    return blockedAppVersion;
+  }
+
+  public String getUpgradeToVersion() {
+    return upgradeToVersion;
   }
 }

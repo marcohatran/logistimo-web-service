@@ -131,7 +131,6 @@ public class ShipmentService extends ServiceImpl implements IShipmentService {
 
   private static final XLog xLogger = XLog.getLog(ShipmentService.class);
   private SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATE_FORMAT);
-  private ITaskService taskService = AppFactory.get().getTaskService();
 
   private Map<Long, IDemandItem> getDemandMetadata(Long orderId, PersistenceManager pm)
       throws ServiceException {
@@ -142,6 +141,10 @@ public class ShipmentService extends ServiceImpl implements IShipmentService {
       demand.put(di.getMaterialId(), di);
     }
     return demand;
+  }
+
+  private ITaskService getTask() {
+    return AppFactory.get().getTaskService();
   }
 
   /**
@@ -819,7 +822,7 @@ public class ShipmentService extends ServiceImpl implements IShipmentService {
       t.setMaterialId(shipmentItem.getMaterialId());
       t.setSrc(src);
       t.setTrackingId(shipment.getShipmentId());
-      t.setTrackingObjectType(ITransaction.TYPE_SHIPMENT);
+      t.setTrackingObjectType(getTrackingObjectType(shipment, pm));
       t.setSourceUserId(userId);
       List<IShipmentItemBatch>
           batch =
@@ -879,7 +882,7 @@ public class ShipmentService extends ServiceImpl implements IShipmentService {
           Map<String, String> params = new HashMap<>(1);
           params.put("orderId", String.valueOf(shipment.getOrderId()));
           //Added 40 sec delay to let update inventory during post transaction
-          taskService.schedule(ITaskService.QUEUE_OPTIMZER,
+          getTask().schedule(ITaskService.QUEUE_OPTIMZER,
               Constants.UPDATE_PREDICTION_TASK, params,
               null, ITaskService.METHOD_POST, System.currentTimeMillis() + 40000);
         }
@@ -901,6 +904,14 @@ public class ShipmentService extends ServiceImpl implements IShipmentService {
         throw new ServiceException("T002", errorMsg.toString());
       }
     }
+  }
+
+  protected String getTrackingObjectType(IShipment shipment, PersistenceManager pm)
+      throws ServiceException {
+    OrderManagementService oms = Services.getService(OrderManagementServiceImpl.class);
+    return
+        oms.getOrder(shipment.getOrderId(), false, pm).getOrderType() == IOrder.TRANSFER_ORDER
+            ? ITransaction.TYPE_TRANSFER_SHIPMENT : ITransaction.TYPE_ORDER_SHIPMENT;
   }
 
   /**

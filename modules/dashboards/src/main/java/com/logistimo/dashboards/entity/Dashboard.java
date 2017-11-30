@@ -25,6 +25,7 @@ package com.logistimo.dashboards.entity;
 
 import java.util.Date;
 
+import javax.jdo.annotations.Column;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.IdentityType;
 import javax.jdo.annotations.PersistenceCapable;
@@ -47,31 +48,38 @@ public class Dashboard implements IDashboard {
   @Persistent
   private String desc;
   @Persistent
+  @Column(length = 8192)
   private String conf;
   @Persistent
-  private String createdBy; // userId of owner of domain
+  private String title;
   @Persistent
-  private Date createdOn;
+  private String info;
   @Persistent
-  private Boolean def = false;
+  private String cBy; // userId of owner of domain
+  @Persistent
+  private Date cOn;
+  @Persistent
+  private String uBy;
+  @Persistent
+  private Date uOn;
 
   @Override
-  public Long getDbId() {
+  public Long getDashboardId() {
     return dbId;
   }
 
   @Override
-  public void setDbId(Long dbId) {
+  public void setDashboardId(Long dbId) {
     this.dbId = dbId;
   }
 
   @Override
-  public Long getdId() {
+  public Long getDomainId() {
     return dId;
   }
 
   @Override
-  public void setdId(Long dId) {
+  public void setDomainId(Long dId) {
     this.dId = dId;
   }
 
@@ -86,52 +94,82 @@ public class Dashboard implements IDashboard {
   }
 
   @Override
-  public String getDesc() {
+  public String getDescription() {
     return desc;
   }
 
   @Override
-  public void setDesc(String desc) {
+  public void setDescription(String desc) {
     this.desc = desc;
   }
 
   @Override
-  public String getConf() {
+  public String getConfiguration() {
     return conf;
   }
 
   @Override
-  public void setConf(String conf) {
+  public void setConfiguration(String conf) {
     this.conf = conf;
   }
 
   @Override
   public String getCreatedBy() {
-    return createdBy;
+    return cBy;
   }
 
   @Override
   public void setCreatedBy(String createdBy) {
-    this.createdBy = createdBy;
+    this.cBy = createdBy;
   }
 
   @Override
   public Date getCreatedOn() {
-    return createdOn;
+    return cOn;
   }
 
   @Override
   public void setCreatedOn(Date createdOn) {
-    this.createdOn = createdOn;
+    this.cOn = createdOn;
   }
 
   @Override
-  public Boolean isDef() {
-    return def;
+  public String getTitle() {
+    return title;
   }
 
   @Override
-  public void setDef(Boolean def) {
-    this.def = def;
+  public void setTitle(String title) {
+    this.title = title;
+  }
+
+  @Override
+  public String getInfo() {
+    return info;
+  }
+
+  @Override
+  public void setInfo(String info) {
+    this.info = info;
+  }
+
+  @Override
+  public void setUpdatedBy(String updatedBy) {
+    this.uBy = updatedBy;
+  }
+
+  @Override
+  public String getUpdatedBy() {
+    return uBy;
+  }
+
+  @Override
+  public Date getUpdatedOn() {
+    return uOn;
+  }
+
+  @Override
+  public void setUpdatedOn(Date updatedOn) {
+    this.uOn = updatedOn;
   }
 }

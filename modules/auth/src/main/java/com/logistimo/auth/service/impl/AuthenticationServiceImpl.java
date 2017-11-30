@@ -25,6 +25,7 @@ package com.logistimo.auth.service.impl;
 
 import com.logistimo.AppFactory;
 import com.logistimo.auth.service.AuthenticationService;
+import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.communications.MessageHandlingException;
 import com.logistimo.communications.service.EmailService;
 import com.logistimo.communications.service.MessageService;
@@ -33,6 +34,7 @@ import com.logistimo.constants.Constants;
 import com.logistimo.constants.PropertyConstants;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.exception.InvalidDataException;
+import com.logistimo.exception.SystemException;
 import com.logistimo.exception.TaskSchedulingException;
 import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.exception.ValidationException;
@@ -58,6 +60,9 @@ import org.jose4j.jwe.JsonWebEncryption;
 import org.jose4j.jwe.KeyManagementAlgorithmIdentifiers;
 import org.jose4j.keys.AesKey;
 import org.jose4j.lang.JoseException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -72,6 +77,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 
@@ -79,14 +85,27 @@ import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 
-
+@Service
 public class AuthenticationServiceImpl extends ServiceImpl implements AuthenticationService {
 
   private static final XLog xLogger = XLog.getLog(AuthenticationServiceImpl.class);
   private static final String UPDATE_LAST_ACCESSED_TASK = "/s2/api/users/update/mobileaccessed";
+  private static final String ACCESS_KEY_PREFIX = "ACCESSKEY_";
+  private static final String DOMAIN_KEY_SEPARATOR = "_";
   private static ITaskService taskService = AppFactory.get().getTaskService();
 
-  public IUserToken generateUserToken(String userId)
+  private MemcacheService memcacheService;
+
+  @Autowired
+  public void setCacheService(MemcacheService memcacheService) {
+    this.memcacheService = memcacheService;
+  }
+
+  public IUserToken generateUserToken(String userId) throws ServiceException {
+    return generateUserToken(userId, null, null);
+  }
+
+  public IUserToken generateUserToken(String userId, String accessKey, Long domainId)
       throws ServiceException, ObjectNotFoundException {
     xLogger.fine("Entering generateUserToken");
 
@@ -97,13 +116,39 @@ public class AuthenticationServiceImpl extends ServiceImpl implements Authentica
     IUserAccount account = as.getUserAccount(userId);
     IUserToken iUserToken;
     String token;
-    int expiresDate = ConfigUtil.getInt(PropertyConstants.TOKEN_EXPIRY, 30);
     PersistenceManager pm = PMF.get().getPersistenceManager();
     try {
-      //Clear previous user sessions on mobile and web.
-      updateUserSession(userId, null);
+      if (StringUtils.isEmpty(accessKey)) {
+        //Clear previous user sessions on mobile and web.
+        updateUserSession(userId, null);
+      }
       token = generateUuid();
       Calendar c = Calendar.getInstance();
+      int expiresDate = getTokenExpiryDate(account, accessKey);
+      c.add(Calendar.DATE, expiresDate);
+      iUserToken = JDOUtils.createInstance(IUserToken.class);
+      iUserToken.setUserId(userId);
+      iUserToken.setToken(PasswordEncoder.MD5(token));
+      iUserToken.setRawToken(token);
+      iUserToken.setExpires(c.getTime());
+      iUserToken.setDomainId(domainId != null ? domainId : account.getDomainId());
+      iUserToken.setAccessKey(accessKey);
+      pm.makePersistent(iUserToken);
+      xLogger.fine("generateUserToken: userId is {0}, token is {1}, expires is {2}", userId,
+          iUserToken.getToken(), iUserToken.getExpires());
+      return iUserToken;
+    } catch (Exception e) {
+      xLogger.severe("Failed to encode password for user : {0}", userId, e);
+      throw new ServiceException(
+          "System error while generating access token. Contact System Administrator");
+    } finally {
+      pm.close();
+    }
+  }
+
+  private int getTokenExpiryDate(IUserAccount account, String isAccessKey) {
+    int expiresDate = ConfigUtil.getInt(PropertyConstants.TOKEN_EXPIRY, 30);
+    if (StringUtils.isEmpty(isAccessKey)) {
       if (account.getAuthenticationTokenExpiry() != 0) {
         expiresDate = account.getAuthenticationTokenExpiry();
       } else {
@@ -112,26 +157,18 @@ public class AuthenticationServiceImpl extends ServiceImpl implements Authentica
           expiresDate = domainConfig.getAuthenticationTokenExpiry();
         }
       }
-      c.add(Calendar.DATE, expiresDate);
-      iUserToken = JDOUtils.createInstance(IUserToken.class);
-      iUserToken.setUserId(userId);
-      iUserToken.setToken(PasswordEncoder.MD5(token));
-      iUserToken.setRawToken(token);
-      iUserToken.setExpires(c.getTime());
-      iUserToken.setDomainId(account.getDomainId());
-      pm.makePersistent(iUserToken);
-      xLogger.fine("generateUserToken: userId is {0}, token is {1}, expires is {2}", userId,
-          iUserToken.getToken(), iUserToken.getExpires());
-      return iUserToken;
-    } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
-      xLogger.severe("Failed to encode password for user : {0}", userId, e);
-      throw new ServiceException("Password encoding error. Contact System Administrator");
-    } finally {
-      pm.close();
+    } else {
+      int
+          domainExpiry =
+          DomainConfig.getInstance(account.getDomainId()).getAccessKeyAuthTokenExpiry();
+      if (domainExpiry > 0) {
+        expiresDate = domainExpiry;
+      }
     }
+    return expiresDate;
   }
 
-  public String authenticateToken(String token, Integer accessInitiator)
+  public IUserToken authenticateToken(String token, Integer accessInitiator)
       throws UnauthorizedException, ServiceException, ObjectNotFoundException {
     if (StringUtils.isEmpty(token)) {
       throw new UnauthorizedException("Token is empty or null");
@@ -149,31 +186,27 @@ public class AuthenticationServiceImpl extends ServiceImpl implements Authentica
     if (iUserToken != null) {
       String userId = iUserToken.getUserId();
       Date expires = iUserToken.getExpires();
-      if (StringUtils.isNotEmpty(userId)) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(expires);
-        if (calendar.getTimeInMillis() < System.currentTimeMillis()) {
-          throw new UnauthorizedException("Expired Token " + token);
-        }
-        if (!Objects.equals(accessInitiator, Constants.LAST_ACCESSED_BY_SYSTEM)) {
-          Map<String, String> params = new HashMap<>(2);
-          params.put("userId", userId);
-          params.put("aTime", String.valueOf(System.currentTimeMillis()));
-          try {
-            taskService.schedule(ITaskService.QUEUE_DEFAULT, UPDATE_LAST_ACCESSED_TASK, params,
-                ITaskService.METHOD_POST);
-          } catch (TaskSchedulingException e) {
-            xLogger
-                .warn("Failed to update the last mobile accessed time for user : {0} ", userId, e);
-          }
-        }
-        return iUserToken.getUserId();
+      Calendar calendar = Calendar.getInstance();
+      calendar.setTime(expires);
+      if (calendar.getTimeInMillis() < System.currentTimeMillis()) {
+        throw new UnauthorizedException("Expired Token " + token);
       }
+      if (!Objects.equals(accessInitiator, Constants.LAST_ACCESSED_BY_SYSTEM)) {
+        Map<String, String> params = new HashMap<>(2);
+        params.put("userId", userId);
+        params.put("aTime", String.valueOf(System.currentTimeMillis()));
+        try {
+          taskService.schedule(ITaskService.QUEUE_DEFAULT, UPDATE_LAST_ACCESSED_TASK, params,
+              ITaskService.METHOD_POST);
+        } catch (TaskSchedulingException e) {
+          xLogger
+              .warn("Failed to update the last mobile accessed time for user : {0} ", userId, e);
+        }
+      }
+      return iUserToken;
     } else {
       throw new UnauthorizedException("Invalid Token " + token);
     }
-    xLogger.fine("Exiting authenticateToken");
-    return null;
   }
 
   public String getUserIdByToken(String token) {
@@ -189,14 +222,17 @@ public class AuthenticationServiceImpl extends ServiceImpl implements Authentica
     }
     return null;
   }
-  public Boolean clearUserTokens(String userId) {
+
+  public Boolean clearUserTokens(String userId, boolean removeAccessKeyTokens) {
     PersistenceManager pm = null;
     Query q = null;
     if (StringUtils.isNotEmpty(userId)) {
       String
           queryStr =
           "SELECT FROM " + JDOUtils.getImplClass(IUserToken.class).getName()
-              + " WHERE userId == uIdParam PARAMETERS String uIdParam";
+              + " WHERE userId == uIdParam "
+              + (removeAccessKeyTokens ? "" : " && accessKey == null")
+              + " PARAMETERS String uIdParam";
       try {
         pm = PMF.get().getPersistenceManager();
         q = pm.newQuery(queryStr);
@@ -253,7 +289,7 @@ public class AuthenticationServiceImpl extends ServiceImpl implements Authentica
 
   @Override
   public void updateUserSession(String userId, String sessionId) {
-    clearUserTokens(userId);
+    clearUserTokens(userId, false);
     MemcacheService cacheService = AppFactory.get().getMemcacheService();
     String currentSession = (String) cacheService.get(Constants.USER_SESS_PREFIX + userId);
     if (currentSession != null) {
@@ -430,6 +466,50 @@ public class AuthenticationServiceImpl extends ServiceImpl implements Authentica
       xLogger.warn("Wrong OTP entered for  " + userId);
       throw new ValidationException("UA002",userId);
     }
+  }
+
+  @Override
+  public String generateAccessKey() {
+    String accessKey;
+    try {
+      accessKey = UUID.randomUUID().toString().substring(0, 8);
+      memcacheService.put(ACCESS_KEY_PREFIX + accessKey, "",
+          ConfigUtil.getInt("access.key.request.expiry.minutes", 30) * 60);
+    } catch (Exception e) {
+      throw new SystemException(e, "G001");
+    }
+    return accessKey;
+  }
+
+  @Override
+  public Optional<IUserToken> checkAccessKeyStatus(String accessKey) throws ServiceException {
+    String value = (String) memcacheService.get(ACCESS_KEY_PREFIX + accessKey);
+    if (value == null) {
+      throw new ValidationException("A001", accessKey);
+    } else if (StringUtils.isNotEmpty(value)) {
+      int domainKeySeparatorIndex = value.indexOf(DOMAIN_KEY_SEPARATOR);
+      return Optional.of(generateUserToken(
+          value.substring(domainKeySeparatorIndex + 1, value.length()), accessKey,
+          Long.valueOf(value.substring(0, domainKeySeparatorIndex))));
+    } else {
+      return Optional.empty();
+    }
+  }
+
+  @Override
+  public void authoriseAccessKey(String accessKey) throws ValidationException, ServiceException {
+    if (SecurityUtils.isAdmin()) {
+      String date = (String) memcacheService.get(ACCESS_KEY_PREFIX + accessKey);
+      if (date == null) {
+        throw new ValidationException("A001", accessKey);
+      }
+      memcacheService.put(ACCESS_KEY_PREFIX + accessKey,
+          SecurityUtils.getCurrentDomainId() + DOMAIN_KEY_SEPARATOR
+              + SecurityUtils.getUsername(),
+          ConfigUtil.getInt("access.key.authorisation.validity.minutes", 30) * 60);
+      return;
+    }
+    throw new UnauthorizedException("G003", HttpStatus.FORBIDDEN, new Object[]{});
   }
 
   private String generateUuid() {

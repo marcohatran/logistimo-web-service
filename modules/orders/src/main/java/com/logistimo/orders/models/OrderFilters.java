@@ -49,7 +49,7 @@ public class OrderFilters {
   }
 
   public OrderFilters setUpdatedSince(Date updatedSince) {
-    if(updatedSince!=null) {
+    if (updatedSince != null) {
       this.updatedSince = updatedSince;
     }
     return this;

@@ -420,6 +420,8 @@ public class InvntryDao implements IInvntryDao {
     if (filters.getMaterialId() != null) {
       queryBuilder.append(" AND I.MID = ?");
       params.add(String.valueOf(filters.getMaterialId()));
+    } else if (filters.hasMaterialIds()) {
+      addMaterialIdsFilter(filters, queryBuilder, params);
     } else {
       if (filters.getMaterialTags() != null && !filters.getMaterialTags().isEmpty()) {
         queryBuilder.append(" AND I.MID in (SELECT MATERIALID from MATERIAL_TAGS where (");
@@ -483,8 +485,9 @@ public class InvntryDao implements IInvntryDao {
     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     //Added for if modified since changes
-    if(filters.getUpdatedSince()!=null){
-      queryBuilder.append(" AND (I.UON >= ? OR M.MATERIALID IN (SELECT MAT.MATERIALID FROM MATERIAL MAT WHERE MAT.LASTUPDATED >=? )) ");
+    if (filters.getUpdatedSince() != null) {
+      queryBuilder.append(
+          " AND (I.UON >= ? OR M.MATERIALID IN (SELECT MAT.MATERIALID FROM MATERIAL MAT WHERE MAT.LASTUPDATED >=? )) ");
       String updatedSinceStr = sdf.format(filters.getUpdatedSince());
       params.add(updatedSinceStr);
       params.add(updatedSinceStr);
@@ -505,14 +508,25 @@ public class InvntryDao implements IInvntryDao {
         IInvntry.class);
   }
 
+  private void addMaterialIdsFilter(InventoryFilters filters, StringBuilder queryBuilder,
+                                    List<String> params) {
+    queryBuilder.append(" AND I.MID IN (");
+    for (Long id : filters.getMaterialIds()) {
+      queryBuilder.append(CharacterConstants.QUESTION).append(CharacterConstants.COMMA);
+      params.add(String.valueOf(id));
+    }
+    queryBuilder.setLength(queryBuilder.length() - 1);
+    queryBuilder.append(CharacterConstants.C_BRACKET);
+  }
+
 
   @Override
-  public Results getInventory(InventoryFilters inventoryFilters, PageParams pageParams,
+  public Results<IInvntry> getInventory(InventoryFilters inventoryFilters, PageParams pageParams,
                               PersistenceManager pm)
       throws ServiceException {
     Query query = null;
     Query cntQuery = null;
-    List<Invntry> inventoryList = null;
+    List<IInvntry> inventoryList = null;
     int count = 0;
     try {
       QueryParams
@@ -524,11 +538,11 @@ public class InvntryDao implements IInvntryDao {
       }
       query = pm.newQuery("javax.jdo.query.SQL", executeQuery);
       query.setClass(Invntry.class);
-      inventoryList = (List<Invntry>) query.executeWithArray(
+      inventoryList = (List<IInvntry>) query.executeWithArray(
           sqlQueryModel.listParams.toArray());
-      inventoryList = (List<Invntry>) pm.detachCopyAll(inventoryList);
       inventoryFilters.withUpdatedSince(null);
 
+      inventoryList = (List<IInvntry>) pm.detachCopyAll(inventoryList);
       QueryParams cntSqlQueryModel = buildInventoryQuery(inventoryFilters, true);
       cntQuery = pm.newQuery("javax.jdo.query.SQL", cntSqlQueryModel.query);
       count =
@@ -545,7 +559,7 @@ public class InvntryDao implements IInvntryDao {
         cntQuery.closeAll();
       }
     }
-    return new Results(inventoryList, null, count,
+    return new Results<>(inventoryList, null, count,
         pageParams == null ? 0 : pageParams.getOffset());
   }
 

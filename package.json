@@ -24,5 +24,8 @@
     "jshint-stylish": "^2.2.0",
     "json-string-replace": "^0.0.2",
     "require": "^2.4.20"
+  },
+  "devDependencies": {
+    "grunt-contrib-watch": "^1.0.0"
   }
 }

@@ -86,14 +86,29 @@ public class EventSummaryConfigModel implements Serializable {
     this.events = events;
   }
 
-  public String getCreatedBy() { return createdBy; }
-  public void setCreatedBy(String createdBy) { this.createdBy = createdBy; }
+  public String getCreatedBy() {
+    return createdBy;
+  }
 
-  public String getLastUpdated() { return lastUpdated; }
-  public void setLastUpdated(String lastUpdated) { this.lastUpdated = lastUpdated; }
+  public void setCreatedBy(String createdBy) {
+    this.createdBy = createdBy;
+  }
 
-  public String getFullName() { return fullName; }
-  public void setFullName(String fullName) { this.fullName = fullName; }
+  public String getLastUpdated() {
+    return lastUpdated;
+  }
+
+  public void setLastUpdated(String lastUpdated) {
+    this.lastUpdated = lastUpdated;
+  }
+
+  public String getFullName() {
+    return fullName;
+  }
+
+  public void setFullName(String fullName) {
+    this.fullName = fullName;
+  }
 
   public class Events implements Serializable {
 

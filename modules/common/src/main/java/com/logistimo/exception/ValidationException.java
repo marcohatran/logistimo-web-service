@@ -26,7 +26,7 @@ package com.logistimo.exception;
 /**
  * Created by charan on 22/06/17.
  */
-public class ValidationException extends LogiException {
+public class ValidationException extends SystemException {
 
   public ValidationException(String message) {
     super(message);
@@ -44,7 +44,7 @@ public class ValidationException extends LogiException {
     super(code, arguments);
   }
 
-  public ValidationException(Throwable t) {
+  public ValidationException(Exception t) {
     super(t);
   }
 }

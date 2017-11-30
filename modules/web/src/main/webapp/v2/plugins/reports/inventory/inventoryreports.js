@@ -21,13 +21,15 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-function InventoryReportController(s, timeout, getData) {
+function InventoryReportController(s, timeout, getData, reportsServiceCore) {
     s.resourceBundle = s.$parent.$parent.resourceBundle;
     s.ddist = s.$parent.$parent.ddist;
     s.dstate = s.$parent.$parent.dstate;
     s.showLoading = s.$parent.$parent.showLoading;
     s.hideLoading = s.$parent.$parent.hideLoading;
     s.exportAsCSV = s.$parent.$parent.exportAsCSV;
+    s.showSuccess = s.$parent.$parent.showSuccess;
+    s.showError = s.$parent.$parent.showError;
 
     s.MAX_MONTHS = 11;
     s.MAX_WEEKS = 15;
@@ -444,6 +446,27 @@ function InventoryReportController(s, timeout, getData) {
         } else {
             return "From: " + s.formatReportDate(s.filter.from) + "   To: " + s.formatReportDate(s.filter.to) + "   " + s.getFilterLabel()
         }
+    };
+
+    s.exportData = function(reportType) {
+        var selectedFilters = s.populateFilters();
+        selectedFilters['type'] = reportType;
+        selectedFilters['viewtype'] = s.activeMetric;
+        selectedFilters['titles'] = {};
+        selectedFilters['titles']['filters'] = s.tableCaption;
+        selectedFilters['titles']['metrics'] = s.tableMetric;
+        selectedFilters['titles']['viewtype'] = s.activeMetric;
+        selectedFilters['primaryMetricIndex'] = s.metrics.primary;
+        selectedFilters['secondaryMetricIndex'] = s.metrics.secondary;
+        selectedFilters['tertiaryMetricIndex'] = s.metrics.tertiary;
+        s.showLoading();
+        reportsServiceCore.exportData(JSON.stringify(angular.toJson(selectedFilters))).then(function (data) {
+            s.showSuccess("Export scheduled successfully");
+        }).catch(function error() {
+            s.showError("Scheduling export failed");
+        }).finally(function(){
+            s.hideLoading();
+        });
     };
 
     s.$watch("filter.to", function (newValue, oldValue) {

@@ -35,4 +35,8 @@ public class MobileTransErrorDetailModel {
    * Position of the failed transaction
    */
   public Integer idx;
+  /**
+   * message
+   */
+  public String msg;
 }

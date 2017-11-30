@@ -42,6 +42,9 @@
             <li ng-class="{enable: subview == 'assets' }" ng-show="(isTempMonOnly || isTempMonWLg) && (iSU || (iAdm && dp.av))">
                 <a href="#/setup/assets/">{{resourceBundle.assets}}</a>
             </li>
+            <li ng-class="{enable: subview == 'bulletin' }" ng-show="iSU">
+                <a href="#/setup/bulletinboard/">Bulletin board</a>
+            </li>
             <!--<li ng-if="iSU" ng-class="{ enable: subview == 'dashboard' }"><a
                     href="#/setup/dashboard/">Dashboard</a></li>-->
         </ul>
@@ -73,6 +76,9 @@
         </div>
 		<div ng-switch-when="handlingunits">
 			<div ng-include="'views/handlingunits/handling-units.html'"></div>
+        </div>
+        <div ng-switch-when="bulletin">
+            <div ng-include="'views/bulletinboard/bulletinboard.html'"></div>
 		</div>
 	</div>
 </div>

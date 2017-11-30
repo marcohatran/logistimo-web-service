@@ -21,15 +21,20 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-(['ng', 'logistimoApp'], function (ng, logistimoApp) { "use strict";
+(['ng', 'logistimoApp'], function (ng, logistimoApp) {
+    "use strict";
     logistimoApp.controller("AppController",
         function ($scope, $route, $routeParams, $location, $uibModal, requestContext, ngI18nResourceBundle, $timeout,
-                  domainCfgService, exportService, userService, $window,$sce, iAuthService,$q,$rootScope,
-                  linkedDomainService, domainService, configService, dashboardService) {
+                  domainCfgService, exportService, userService, $window, $sce, iAuthService, $q, $rootScope,
+                  linkedDomainService, domainService, configService, dashboardService, isSession) {
             var renderContext = requestContext.getRenderContext();
 
             $scope.showpopup = 'showpopup';
             $scope.hidepopup = 'hidepopup';
+            $rootScope.basePath = '';
+
+            $rootScope.isSession = isSession;
+
 
             var resourceBundleName = 'resourceBundle';
             /*  @if NODE_ENV == 'PRODUCTION' || NODE_ENV == 'DEVELOPMENT' || NODE_ENV == 'TEST' */
@@ -37,28 +42,31 @@
             /* @endif */
             $scope.rFetch = false;
             $scope.showLPage = false;
-            $scope.disableScroll = function(){
-                document.body.classList.toggle("noscroll",true);
+            $scope.disableScroll = function () {
+                document.body.classList.toggle("noscroll", true);
             };
-            $scope.enableScroll = function(){
-                document.body.classList.toggle("noscroll",false);
+            $scope.enableScroll = function () {
+                document.body.classList.toggle("noscroll", false);
             };
-            $scope.showDomainTree = function() {
+            $scope.showDomainTree = function () {
                 $scope.showLPage = true;
                 $scope.disableScroll();
             };
-            $scope.hideDomainTree = function() {
+            $scope.hideDomainTree = function () {
                 $scope.showLPage = false;
                 $scope.enableScroll();
             };
-            $scope.languages = [{"locale": "en",txt:"English"}, {"locale": "fr",txt:"Française (French)"}];
-            $scope.$watch('i18n.language', function (language,oldval) {
+            $scope.languages = [{"locale": "en", txt: "English"}, {"locale": "fr", txt: "Française (French)"}];
+            $scope.$watch('i18n.language', function (language, oldval) {
                 if (!checkNullEmpty(language) && (checkNullEmpty(oldval) || (!$scope.rFetch && checkNullEmpty($scope.resourceBundle)) || language.locale != oldval.locale)) {
                     $scope.rFetch = true;
                     $scope.showLoading();
-                    ngI18nResourceBundle.get({locale: language.locale,name: resourceBundleName}).success(function (resourceBundle) {
+                    ngI18nResourceBundle.get({
+                        locale: language.locale,
+                        name: resourceBundleName
+                    }).success(function (resourceBundle) {
                         $rootScope.resourceBundle = $scope.resourceBundle = resourceBundle;
-                    }).finally(function(){
+                    }).finally(function () {
                         $scope.hideLoading();
                         $scope.rFetch = false;
                     });
@@ -81,9 +89,9 @@
                 var instanceTime = timeString.match(/\d+:\d+:\d+/i);
                 return ( instanceTime[0] );
             };
-            $scope.showNotification = function(message, type) {
-                message = checkNotNullEmpty(message)?message:$scope.resourceBundle['general.error'];
-                switch(type) {
+            $scope.showNotification = function (message, type) {
+                message = checkNotNullEmpty(message) ? message : $scope.resourceBundle['general.error'];
+                switch (type) {
                     case 'success':
                         toastr.success(message);
                         break;
@@ -112,11 +120,11 @@
             $scope.showSuccess = function (message) {
                 $scope.showNotification(cleanupString(message), 'success');
             };
-            $scope.showFormError = function(){
+            $scope.showFormError = function () {
                 $scope.showError($scope.resourceBundle['form.error']);
             };
             $scope.showError = function (message) {
-                if( checkNotNullEmpty(message) && message.indexOf("Login changed, rejecting deferred calls.") == -1 ) {
+                if (checkNotNullEmpty(message) && message.indexOf("Login changed, rejecting deferred calls.") == -1) {
                     $scope.showNotification(cleanupString(message), 'error');
                 }
             };
@@ -127,15 +135,15 @@
                 $scope.showNotification(cleanupString(message), 'info');
             };
             $scope.showErrorMsg = function (msg) {
-                if(checkNotNullEmpty(msg.data)) {
-                    if(checkNotNullEmpty(msg.data.message)) {
+                if (checkNotNullEmpty(msg.data)) {
+                    if (checkNotNullEmpty(msg.data.message)) {
                         $scope.showNotification(cleanupString(msg.data.message), 'error');
                     } else {
                         $scope.showNotification(cleanupString($scope.resourceBundle['general.error']), 'error');
                     }
-                }else if(checkNotNullEmpty(msg.message)) {
+                } else if (checkNotNullEmpty(msg.message)) {
                     $scope.showError(msg.message);
-                } else if(msg.data == '') {
+                } else if (msg.data == '') {
                     $scope.showError(msg.data);
                 } else {
                     $scope.showError(msg);
@@ -145,32 +153,32 @@
 
             $scope.loadTemplate = '<h1><span class="glyphicons glyphicons-cogwheel spin" style="color:#000000;font-size: 1.6em;"></span></h1>';
             $scope.loaders = 0;
-            $scope.showLoading = function(restore) {
+            $scope.showLoading = function (restore) {
                 if (restore || $scope.loaders++ == 0) {
                     $scope.showLoadIcon = true;
                 }
             };
-            $scope.hideLoading = function(forceClose){
-                if(forceClose) {
+            $scope.hideLoading = function (forceClose) {
+                if (forceClose) {
                     $scope.showLoadIcon = false;
-                }else if(--$scope.loaders <= 0) {
+                } else if (--$scope.loaders <= 0) {
                     $scope.showLoadIcon = false;
-                    if($scope.loaders < 0){
+                    if ($scope.loaders < 0) {
                         $scope.loaders = 0;
                     }
                 }
             };
-            $scope.showLogin = function(action) {
-                if($scope.lgModalInstance == undefined) {
-                    if($scope.loaders>0){
+            $scope.showLogin = function (action) {
+                if ($scope.lgModalInstance == undefined) {
+                    if ($scope.loaders > 0) {
                         $scope.hideLoading(true);
                     }
                     $scope.lgModalInstance = $uibModal.open({
                         templateUrl: 'views/login.html',
                         scope: $scope,
                         backdrop: 'static',
-                        backdropClass:'login-modal',
-                        windowClass:'login-modal-win',
+                        backdropClass: 'login-modal',
+                        windowClass: 'login-modal-win',
                         keyboard: false,
                         resolve: {
                             userId: function () {
@@ -180,25 +188,40 @@
                     });
                 }
             };
-            $scope.hideLogin = function() {
+            $scope.showBulletinBoardLogin = function () {
+                if ($scope.lgModalInstance == undefined) {
+                    if ($scope.loaders > 0) {
+                        $scope.hideLoading(true);
+                    }
+                    $scope.lgModalInstance = $uibModal.open({
+                        templateUrl: 'views/bulletin-board-login.html',
+                        scope: $scope,
+                        backdrop: 'static',
+                        backdropClass: 'login-modal',
+                        windowClass: 'login-modal-win',
+                        keyboard: false
+                    });
+                }
+            };
+            $scope.hideLogin = function () {
                 if (checkNotNullEmpty($scope.lgModalInstance)) {
-                    if($scope.loaders>0){
+                    if ($scope.loaders > 0) {
                         $scope.showLoading(true);
                     }
                     $scope.lgModalInstance.close();
                     $scope.lgModalInstance = undefined;
                 }
             };
-            $scope.logout = function() {
+            $scope.logout = function () {
                 $scope.showLoading();
-                iAuthService.logout().then(function (data){
+                iAuthService.logout().then(function (data) {
                     $scope.clearSesNConfig();
                     $scope.userLoggedOut = true;
                     $rootScope.currentDomain = undefined;
                     $scope.showLogin();
-                }).catch(function error(msg){
+                }).catch(function error(msg) {
                     $scope.showErrorMsg(msg);
-                }).finally(function (){
+                }).finally(function () {
                     $scope.hideLoading();
                 });
             };
@@ -206,6 +229,7 @@
             $scope.$on("event:auth-loginRequired", function () {
                 //On Session timeout, resetting language.
                 $scope.i18n = {language: $scope.languages[0]};
+                iAuthService.removeAccessToken();
                 $scope.showLogin();
             });
 
@@ -217,18 +241,18 @@
             $scope._rel = false;
 
             $scope.$on("event:reload-page", function (rejection, data) {
-                if(!$scope._rel){
+                if (!$scope._rel) {
                     $scope._rel = true;
-                }else{
+                } else {
                     return;
                 }
                 var type = data.headers("e");
                 showUpgrade(type);
-                if(type == '2') {
+                if (type == '2') {
                     $window.location = "/v2/index.html#/?d=1";
                     $window.location.reload();
-                }else{
-                    $timeout($scope.reloadPage,5000);
+                } else {
+                    $timeout($scope.reloadPage, 5000);
                 }
             });
 
@@ -238,8 +262,8 @@
                     templateUrl: 'views/upgrade.html',
                     scope: $scope,
                     backdrop: 'static',
-                    backdropClass:'login-modal',
-                    windowClass:'login-modal-win',
+                    backdropClass: 'login-modal',
+                    windowClass: 'login-modal-win',
                     keyboard: false,
                     resolve: {
                         userId: function () {
@@ -249,7 +273,7 @@
                 })
             }
 
-            $scope.reloadPage = function(){
+            $scope.reloadPage = function () {
                 $window.location.reload();
             };
 
@@ -257,7 +281,7 @@
                 $scope.showError($scope.resourceBundle['error.connectiontimeout']);
             });
 
-            $scope.getGeneralConfig = function() {
+            $scope.getGeneralConfig = function () {
                 $scope.showLoading();
                 configService.getGeneralConfig().then(function (data) {
                     if (data) {
@@ -271,11 +295,10 @@
                 });
             };
 
-            $scope.getGeneralConfig();
 
-            $scope.getSupportConfig = function() {
+            $scope.getSupportConfig = function () {
                 $scope.showLoading();
-                domainCfgService.getSupportCfg().then(function(data){
+                domainCfgService.getSupportCfg().then(function (data) {
                     $scope.supportConfig = data.data;
                 }).catch(function error(msg) {
                     $scope.showErrorMsg(msg);
@@ -296,38 +319,44 @@
                 });
             };
 
-            $scope.generateAssetFilters = function(){
+            $scope.generateAssetFilters = function () {
                 $scope.assetFilters = [{"value": "0", "dV": "All"}];
-                for(var i in $scope.assetConfig.assets){
-                    $scope.assetFilters[$scope.assetConfig.assets[i].id] = {"value": $scope.assetConfig.assets[i].id, "dV": $scope.assetConfig.assets[i].an};
+                for (var i in $scope.assetConfig.assets) {
+                    $scope.assetFilters[$scope.assetConfig.assets[i].id] = {
+                        "value": $scope.assetConfig.assets[i].id,
+                        "dV": $scope.assetConfig.assets[i].an
+                    };
                 }
 
                 $scope.mAssetFilters = {md: {}, mg: {}};
-                angular.forEach($scope.assetConfig.assets, function(asset){
-                    if(asset.at == '1'){
+                angular.forEach($scope.assetConfig.assets, function (asset) {
+                    if (asset.at == '1') {
                         $scope.mAssetFilters.mg[asset.id] = asset.an;
-                    } else if(asset.at == '2') {
+                    } else if (asset.at == '2') {
                         $scope.mAssetFilters.md[asset.id] = asset.an;
                     }
                 });
 
                 $scope.assetWSFilters = [{"status": "0", "dV": "All"}];
-                for(var i in $scope.assetConfig.wses){
-                    $scope.assetWSFilters[$scope.assetConfig.wses[i].status] = {"status": $scope.assetConfig.wses[i].status, "dV": $scope.assetConfig.wses[i].dV};
+                for (var i in $scope.assetConfig.wses) {
+                    $scope.assetWSFilters[$scope.assetConfig.wses[i].status] = {
+                        "status": $scope.assetConfig.wses[i].status,
+                        "dV": $scope.assetConfig.wses[i].dV
+                    };
                 }
 
                 $scope.assetVendorMapping = {};
 
-                angular.forEach($scope.assetConfig.assets, function(asset){
-                     angular.forEach(asset.mcs, function(m){
-                         $scope.assetVendorMapping[m.id] = m.name;
-                     });
+                angular.forEach($scope.assetConfig.assets, function (asset) {
+                    angular.forEach(asset.mcs, function (m) {
+                        $scope.assetVendorMapping[m.id] = m.name;
+                    });
                 });
             };
 
             $scope.hasUserChildDomains = false;
 
-            $scope.clearSesNConfig = function(){
+            $scope.clearSesNConfig = function () {
                 $rootScope.currentDomain = $scope.currentDomain = null;
                 $scope.createdOn = null;
                 $scope.hasUserChildDomains = false;
@@ -400,7 +429,7 @@
                     $scope.mxE = data.data.mxE;
                     $scope.accd = data.data.accd;
                     $scope.assetConfig = data.data.ac;
-                    if(checkNotNullEmpty($scope.assetConfig))
+                    if (checkNotNullEmpty($scope.assetConfig))
                         $scope.generateAssetFilters();
                     $scope.domainName = data.data.dnm;
                     $scope.approvalConfig = data.data.apc;
@@ -408,7 +437,7 @@
                     $scope.iSoae = data.data.soae;
                     $scope.iToae = data.data.toae;
                     $rootScope.curUser = $scope.curUser = data.data.unm;
-                    $scope.i18n.language = {"locale":data.data.lng};
+                    $scope.i18n.language = {"locale": data.data.lng};
                     $scope.mailId = data.data.em;
                     $scope.defaultEntityId = data.data.eid;
                     $scope.curUserName = data.data.ufn;
@@ -426,7 +455,7 @@
                     //revenue report tab enable/disable
                     $scope.rpe = data.data.rpe;
                     $scope.hasDashbaccess = data.data.mdp;
-                    if($location.path() == '/' && !$scope.hasDashbaccess) {
+                    if ($location.path() == '/' && !$scope.hasDashbaccess) {
                         $scope.redirectManagers();
                     }
                     setMinMaxText();
@@ -437,69 +466,67 @@
                 }).catch(function error(msg) {
                     $scope.showErrorMsg(msg);
                     deferred.reject(msg);
-                }).finally(function (){
+                }).finally(function () {
                     $scope.hideLoading();
                 });
                 return deferred.promise;
             };
 
-            $scope.setOCEnabled = function(value){
+            $scope.setOCEnabled = function (value) {
                 $scope.iOCEnabled = value;
             };
 
-            $scope.setDefaultCurrency = function(value){
+            $scope.setDefaultCurrency = function (value) {
                 $scope.defaultCurrency = value;
             };
 
-            $scope.getSessionDetails = function(promiseHandle){
+            $scope.getSessionDetails = function (promiseHandle) {
                 $scope.showLoading();
-                domainCfgService.getCurrentSessionDetails().then(function(data){
+                domainCfgService.getCurrentSessionDetails().then(function (data) {
                     var details = data.data;
                     $scope.domainName = details.dnm;
                     $scope.curUser = details.unm;
-                    $scope.i18n.language = {"locale":details.lng};
+                    $scope.i18n.language = {"locale": details.lng};
                     $scope.mailId = details.em;
                     $scope.defaultEntityId = details.eid;
                     $scope.curUserName = details.ufn;
                     $scope.userTz = details.tz;
-                    if(checkNotNullEmpty(promiseHandle)){
+                    if (checkNotNullEmpty(promiseHandle)) {
                         promiseHandle.resolve(true);
                     }
                 }).catch(function error(msg) {
                     $scope.showErrorMsg(msg);
-                    if(checkNotNullEmpty(promiseHandle)){
+                    if (checkNotNullEmpty(promiseHandle)) {
                         promiseHandle.reject(msg);
                     }
-                }).finally(function (){
+                }).finally(function () {
                     $scope.hideLoading();
                 });
             };
 
-            $scope.setDefaultEntityId = function(value){
+            $scope.setDefaultEntityId = function (value) {
                 $scope.defaultEntityId = value;
             };
 
-            $scope.loadTempDashboard = function(){
-                if($route && $route.current && $route.current.action == 'dashboard.overview'){
-                    if(!$scope.iMan){
+            $scope.loadTempDashboard = function () {
+                if ($route && $route.current && $route.current.action == 'dashboard.overview') {
+                    if (!$scope.iMan) {
                         $location.path('dashboard/overview');
-                    }else if($scope.iMan){
+                    } else if ($scope.iMan) {
                         $location.path('setup/users');
                     }
                 }
             };
 
-            $scope.refreshDomainConfig();
-
-            function setSubView(){
-                if(checkNotNullEmpty($scope.resourceBundle)){
-                    if(requestContext.getParam("d")==1){
-                        if(checkNullEmpty($scope.domainName)) {
+            function setSubView() {
+                if (checkNotNullEmpty($scope.resourceBundle)) {
+                    if (requestContext.getParam("d") == 1) {
+                        if (checkNullEmpty($scope.domainName)) {
                             $timeout(function () {
                                 $scope.showSuccess($scope.resourceBundle['upgrade.domain.msg'] + ' ' + "<b>" + (checkNotNullEmpty($scope.domainName) ? $scope.domainName : 'new') + ' ' + "</b>" + $scope.resourceBundle['domain']);
                             }, 1500);
-                        }else{
-                            $scope.showSuccess($scope.resourceBundle['upgrade.domain.msg'] + ' ' + "<b>" +  $scope.domainName + ' ' + "</b>" + $scope.resourceBundle['domain']);
+                        } else {
+                            $scope.showSuccess($scope.resourceBundle['upgrade.domain.msg'] + ' ' + "<b>" + $scope.domainName + ' ' + "</b>" + $scope.resourceBundle['domain']);
                         }
                         delete $location.$$search["d"];
                         $location.$$compose();
@@ -509,7 +536,7 @@
             }
 
             function setMinMaxText() {
-                if(checkNotNull($scope.resourceBundle) && $scope.lmmt == 1) {
+                if (checkNotNull($scope.resourceBundle) && $scope.lmmt == 1) {
                     $scope.mmd = $scope.resourceBundle['daysofstock'];
                     $scope.mmdt = $scope.resourceBundle['days'];
                     if ($scope.lmmd == 'weekly') {
@@ -528,11 +555,11 @@
                     if (!renderContext.isChangeRelevant() || $scope._rel) {
                         return;
                     }
-                    if(checkNotNull($scope.resourceBundle)) {
+                    if (checkNotNull($scope.resourceBundle)) {
                         setSubView();
                         setMinMaxText();
-                    }else{
-                        $scope.$watch("resourceBundle",function(){
+                    } else {
+                        $scope.$watch("resourceBundle", function () {
                             setSubView();
                             setMinMaxText();
                         });
@@ -550,23 +577,24 @@
             function isRouteRedirect(route) {
                 return (typeof route.current == 'undefined' || typeof route.current.action == 'undefined');
             }
+
             $scope.getAction = function () {
                 return requestContext.getAction();
             };
-            $scope.changeContext = function(){
+            $scope.changeContext = function () {
                 $window.location = "index.html";
             };
-            $scope.resetFilters = function(){
+            $scope.resetFilters = function () {
                 $location.$$search = {};
                 $location.$$compose();
             };
-            $scope.isUndef = function(value){
+            $scope.isUndef = function (value) {
                 return (value == undefined || value == '');
             };
-            $scope.isDef = function(value){
+            $scope.isDef = function (value) {
                 return !$scope.isUndef(value);
             };
-            $scope.isObjDef = function(value){
+            $scope.isObjDef = function (value) {
                 return !checkNullEmptyObject(value);
             };
             $scope.map = {
@@ -578,26 +606,26 @@
                 options: {scrollwheel: false}
             };
 
-            $scope.switchConsole = function(){
+            $scope.switchConsole = function () {
                 $scope.switchconsole = false;
-                userService.switchConsole().then(function(data){
+                userService.switchConsole().then(function (data) {
                     $scope.switchconsole = data.data;
-                    if($scope.switchconsole){
+                    if ($scope.switchconsole) {
                         $window.location = "/s/index.jsp";
                     }
-                }).catch(function error(msg){
+                }).catch(function error(msg) {
                     $scope.showErrorMsg(msg);
                 });
             };
-            $scope.switchDomain = function(id,name){
+            $scope.switchDomain = function (id, name) {
                 if (!confirm($scope.resourceBundle['domain.switch'] + " " + name + '?')) {
                     return;
                 }
-                if(checkNotNullEmpty(id)){
+                if (checkNotNullEmpty(id)) {
                     $scope.domainSwitch(id);
                 }
             };
-            $scope.domainSwitch = function(id){
+            $scope.domainSwitch = function (id) {
                 $scope.showLoading();
                 domainService.switchDomain(id).then(function (data) {
                     $scope.success = data.data;
@@ -609,54 +637,66 @@
                 })
             };
 
-            $scope.hasParents = false;
-            $scope.showLoading();
-            linkedDomainService.getLinkedDomains(1).then(function(data) {
-                $scope.parents = data.data;
-                if($scope.parents != null && $scope.parents.length > 1){
-                    $scope.hasParents=true;
-                }
-            }).catch(function (msg) {
-                $scope.showErrorMsg(msg);
-            }).finally(function() {
-                $scope.hideLoading();
-            });
+            $scope.initApp = function () {
+                $scope.getGeneralConfig();
+                $scope.refreshDomainConfig();
+                $scope.hasParents = false;
+                $scope.showLoading();
+                linkedDomainService.getLinkedDomains(1).then(function (data) {
+                    $scope.parents = data.data;
+                    if ($scope.parents != null && $scope.parents.length > 1) {
+                        $scope.hasParents = true;
+                    }
+                }).catch(function (msg) {
+                    $scope.showErrorMsg(msg);
+                }).finally(function () {
+                    $scope.hideLoading();
+                });
 
-            $scope.showLoading();
-            $scope.action = true;
-            linkedDomainService.getDomainPermission($scope.action).then(function(data){
-                if(checkNotNullEmpty(data.data)){
-                    $scope.dp = data.data.dp;
-                    $scope.getRoleCapabilities();
-                    $scope.copyConfig = data.data.cc;
-                    $scope.copyMaterials = data.data.cm;
-                    $scope.hasChild = data.data.hasChild;
-                }
-            }).catch(function error(msg){
-                $scope.showErrorMsg(msg);
-            }).finally(function (){
-                $scope.hideLoading();
-            });
+                $scope.showLoading();
+                $scope.action = true;
+                linkedDomainService.getDomainPermission($scope.action).then(function (data) {
+                    if (checkNotNullEmpty(data.data)) {
+                        $scope.dp = data.data.dp;
+                        $scope.getRoleCapabilities();
+                        $scope.copyConfig = data.data.cc;
+                        $scope.copyMaterials = data.data.cm;
+                        $scope.hasChild = data.data.hasChild;
+                    }
+                }).catch(function error(msg) {
+                    $scope.showErrorMsg(msg);
+                }).finally(function () {
+                    $scope.hideLoading();
+                });
+                $scope.getAllDashboards();
+                domainCfgService.getMapLocationMapping().then(function (data) {
+                    if (checkNotNullEmpty(data.data)) {
+                        var a = angular.fromJson(data.data);
+                        $rootScope.entDef = a.entdef;
+                    }
+                });
+            };
+
 
             $scope.getRoleCapabilities = function () {
                 $scope.showLoading();
                 domainCfgService.getRoleCapabilitiesCfg().then(function (data) {
                     $scope.cnff = data.data;
-                    if(checkNullEmpty($scope.cnff.et)){
+                    if (checkNullEmpty($scope.cnff.et)) {
                         $scope.cnff.enableVs = $scope.cnff.enableCs = $scope.cnff.enableEn = false;
-                    }else{
-                        $scope.cnff.enableVs = ($scope.cnff.et.indexOf("vnds")!=-1); //enable Vendor creation
-                        $scope.cnff.enableCs = ($scope.cnff.et.indexOf("csts")!=-1); //enable Customer creation
-                        $scope.cnff.enableEn = ($scope.cnff.et.indexOf("ents")!=-1); //enable Entity creation
+                    } else {
+                        $scope.cnff.enableVs = ($scope.cnff.et.indexOf("vnds") != -1); //enable Vendor creation
+                        $scope.cnff.enableCs = ($scope.cnff.et.indexOf("csts") != -1); //enable Customer creation
+                        $scope.cnff.enableEn = ($scope.cnff.et.indexOf("ents") != -1); //enable Entity creation
                     }
                 }).catch(function error(msg) {
                     $scope.showErrorMsg(msg, true);
-                }).finally(function (){
+                }).finally(function () {
                     $scope.hideLoading();
                 });
             };
 
-            $scope.getAllDashboards = function() {
+            $scope.getAllDashboards = function () {
                 $scope.showLoading();
                 dashboardService.getAll().then(function (data) {
                     $scope.dashboards = data.data;
@@ -667,33 +707,24 @@
                 });
             };
 
-            $scope.getAllDashboards();
 
-            $scope.setDashboard = function(newDashboards) {
+            $scope.setDashboard = function (newDashboards) {
                 $scope.dashboards = newDashboards;
             };
 
-            $scope.getDashboardConfig = function(){
+            $scope.getDashboardConfig = function () {
                 $scope.loading = true;
                 $scope.showLoading();
-                domainCfgService.getDashboardCfg().then(function(data){
+                domainCfgService.getDashboardCfg().then(function (data) {
                     $scope.dashboardConfig = data.data;
-                }).finally (function(){
+                }).finally(function () {
                     $scope.hideLoading();
                 });
             };
 
-
-            domainCfgService.getMapLocationMapping().then(function (data) {
-                if (checkNotNullEmpty(data.data)) {
-                    var a = angular.fromJson(data.data);
-                    $rootScope.entDef = a.entdef;
-                }
-            });
-
-            $scope.updateDashboardName = function(id,name) {
-                $scope.dashboards.some(function(d){
-                    if(d.dbId == id){
+            $scope.updateDashboardName = function (id, name) {
+                $scope.dashboards.some(function (d) {
+                    if (d.dbId == id) {
                         d.nm = name;
                         return true;
                     }
@@ -704,16 +735,16 @@
                 return checkNotNullEmpty(object) ? Object.keys(object).length : 0;
             };
 
-            $scope.encodeURIParam = function(value,noEncode) {
+            $scope.encodeURIParam = function (value, noEncode) {
                 return encodeURIParam(value, noEncode);
             };
-            $scope.redirectManagers = function() {
-                if(checkNullEmpty($scope.defaultEntityId)) {
+            $scope.redirectManagers = function () {
+                if (checkNullEmpty($scope.defaultEntityId)) {
                     $location.path('/setup/entities/all/');
-                } else if($scope.isTempMonOnly){
-                    $location.path('/setup/entities/detail/'+$scope.defaultEntityId + "/assets");
+                } else if ($scope.isTempMonOnly) {
+                    $location.path('/setup/entities/detail/' + $scope.defaultEntityId + "/assets");
                 } else {
-                    $location.path('/setup/entities/detail/'+$scope.defaultEntityId + "/");
+                    $location.path('/setup/entities/detail/' + $scope.defaultEntityId + "/");
                 }
             };
             $scope.formatDate = function (date) {
@@ -723,11 +754,80 @@
                 return momentFromNow(date, $scope.dc.utz, $scope.dc.locale);
             };
             /*$rootScope.getReportsMenu = function(){
-                return reportMenus;
-            };*/
-            $rootScope.getReportWidgets = function(){
+             return reportMenus;
+             };*/
+            $rootScope.getReportWidgets = function () {
                 return reportWidgets;
             };
+
+            $scope.$on("event:auth-loginConfirmed", function () {
+                if (!$rootScope.isSession) {
+                    $scope.initApp();
+                }
+            });
+
+            $scope.getRequestParam = function (paramName) {
+                return requestContext.getParam(paramName);
+            };
+
+            if (!$rootScope.isSession && checkNullEmpty(iAuthService.getAccessToken(true))) {
+                $scope.showBulletinBoardLogin();
+            } else {
+
+                $scope.initApp();
+            }
+
+            $scope.networkAvailable = true;
+            $scope.checkNetwork = function(){
+                if($scope.networkAvailable != navigator.onLine) {
+                    if(!navigator.onLine) {
+                        $scope.networkAvailable = false;
+                        $scope.$broadcast("offline");
+                    } else {
+                        $scope.networkAvailable = true;
+                        $scope.$broadcast("online");
+                    }
+                }
+                $timeout(function () {
+                    $scope.checkNetwork();
+                }, 300);
+            };
+            $scope.checkNetwork();
         }
     );
+    logistimoApp.factory('APIService', function ($http, $q, logistimoCache) {
+        var getExpiryTime = function (cacheOptions) {
+            return new Date(new Date().getTime() + cacheOptions.duration * 60000);
+        };
+        return {
+            get: function (urlStr, cacheOptions) {
+                if (cacheOptions == undefined) {
+                    return $http({method: 'GET', url: urlStr});
+                } else {
+                    var cache = logistimoCache.get(urlStr);
+                    if (cache && cache.expiry < new Date()) {
+                        return $q(function (resolve) {
+                            resolve(JSON.parse(cache.data));
+                        });
+                    } else {
+                        var promise = $http({method: 'GET', url: urlStr});
+                        return $q(function (resolve, reject) {
+                            promise.then(function (data) {
+                                logistimoCache.put(urlStr, {
+                                    expiry: getExpiryTime(cacheOptions),
+                                    data: JSON.stringify(data)
+                                });
+                                resolve(data);
+                            }).catch(function (error) {
+                                reject(error);
+                            });
+                        });
+                    }
+                }
+            },
+            post: function (data, urlStr) {
+                return $http({method: 'POST', data: data, url: urlStr});
+            }
+        }
+    });
 })(angular, logistimoApp);

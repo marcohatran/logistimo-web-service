@@ -1,0 +1,154 @@
+<div ng-controller="assetTemplateController">
+    <div class="row pb10" ng-repeat="filter in widgetTemplate.templateFilters">
+        <div class="col-sm-4">
+            <span class="form-label">{{resourceBundle[filter.nameKey]}}</span>
+        </div>
+
+        <div class="col-sm-5" ng-if="filter.type=='title'">
+            <div class="has-feedback">
+                <input type="text" class="form-control" ng-model="widget.conf.title" autocomplete="off"
+                       placeholder="Title">
+            </div>
+        </div>
+        <div class="col-sm-5" ng-if="filter.type=='entity'">
+            <entity-select ent-model="widget.conf.entity" classes="form-control"
+                           place-holder="{{resourceBundle.filterby}} {{resourceBundle['kiosks.lower']}}">
+            </entity-select>
+        </div>
+        <div class="col-sm-5" ng-if="filter.type=='material'">
+            <material-drop-down ng-model="widget.conf.material" mtag="widget.conf.material"></material-drop-down>
+        </div>
+        <div class="col-sm-5" ng-if="filter.type=='entityTag'">
+            <tag-select tags-model="widget.conf.entityTag" place-holder="All"
+                        type="'entity'"
+                        force-no-udf="'true'">
+            </tag-select>
+        </div>
+        <div class="col-sm-5" ng-if="filter.type=='exEntityTag'">
+            <tag-select tags-model="widget.conf.exEntityTag" place-holder="All"
+                        type="'entity'"
+                        force-no-udf="'true'">
+            </tag-select>
+        </div>
+        <div class="col-sm-5" ng-if="filter.type=='materialTag'">
+            <tag-select tags-model="widget.conf.materialTag" place-holder="All"
+                        type="'material'"
+                        force-no-udf="'true'">
+            </tag-select>
+        </div>
+        <div class="col-sm-5" ng-if="filter.type=='date'">
+            <date-picker date-model="widget.conf.date" min-date="createdOn" place-holder="Date"
+                         max-date="today"></date-picker>
+        </div>
+        <div class="col-sm-5" ng-if="filter.type=='period'">
+            <div class="col-sm-12 noLRpad btn-group">
+                <select ng-model="widget.conf.period" class="form-control">
+                    <option value="0">Now</option>
+                    <option value="1">1 day</option>
+                    <option value="2">2 days</option>
+                    <option value="3">3 days</option>
+                    <option value="7">7 days</option>
+                    <option value="30">30 days</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="col-sm-5" ng-if="filter.type=='widType'">
+            <div class="col-sm-12 noLRpad btn-group">
+                <select ng-model="widget.conf.widType" class="form-control">
+                    <option value="0">Stock Available</option>
+                    <option value="1">Stock Out</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="col-sm-5" ng-if="filter.type=='mapType'">
+            <div class="col-sm-12 noLRpad btn-group">
+                <select ng-model="widget.conf.mapType" class="form-control">
+                    <option value="0">Stock Available</option>
+                    <option value="1">Stock Out</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="col-sm-5" ng-if="filter.type=='topTenLocType'">
+            <div class="col-sm-12 noLRpad btn-group">
+                <select ng-model="widget.conf.topTenLocType" class="form-control">
+                    <option value="0">Stock Available</option>
+                    <option value="1">Stock Out</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="col-sm-5" ng-if="filter.type=='topTenMatType'">
+            <div class="col-sm-12 noLRpad btn-group">
+                <select ng-model="widget.conf.topTenMatType" class="form-control">
+                    <option value="0">Stock Available</option>
+                    <option value="1">Stock Out</option>
+                </select>
+            </div>
+        </div>
+
+
+        <div class="col-sm-5" ng-if="filter.type=='assetType'">
+            <lg-uib-select multiple="'multiple" query="filterAssets(q)" ui-model="widget.conf.asset"
+                           place-holder="All"></lg-uib-select>
+        </div>
+
+        <div class="col-sm-5" ng-if="filter.type=='assetStatus'">
+            <div class="col-sm-12 noLRpad btn-group">
+                <select ng-model="widget.conf.assetStatus" class="form-control">
+                    <option value="tn">Normal</option>
+                    <option value="tl">Low</option>
+                    <option value="th">High</option>
+                    <option value="tu">Unknown</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="col-sm-5" ng-if="filter.type=='tPeriod'">
+            <div class="col-sm-12 noLRpad">
+                <select ng-model="widget.conf.tPeriod" class="form-control">
+                    <option value="M_0">Now</option>
+                    <option value="M_30">30 minutes</option>
+                    <option value="H_1">1 hour</option>
+                    <option value="H_2">2 hours</option>
+                    <option value="H_3">3 hours</option>
+                    <option value="H_6">6 hours</option>
+                    <option value="H_12">12 hours</option>
+                    <option value="D_1">1 day</option>
+                    <option value="D_2">2 days</option>
+                    <option value="D_3">3 days</option>
+                    <option value="D_7">7 days</option>
+                    <option value="D_15">15 days</option>
+                    <option value="D_30">30 days</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="col-sm-5" ng-if="filter.type=='exTempState'">
+            <lg-uib-select multiple="'multiple" query="filterStatus(q)" ui-model="widget.conf.exTempState"
+                           place-holder="None"></lg-uib-select>
+        </div>
+
+        <div class="col-sm-5" ng-if="filter.type == 'excursionType'">
+            <div class="col-sm-12 noLRpad">
+                <select ng-model="widget.conf.excursionType" class="form-control">
+                    <option value="0">High</option>
+                    <option value="1">Low</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="col-sm-5" ng-if="filter.type=='periodicity'">
+            <div class="col-sm-12 noLRpad btn-group">
+                <select ng-model="widget.conf.period" class="form-control">
+                    <option value="">-- Select period --</option>
+                    <option value="m">Monthly</option>
+                    <option value="w">Weekly</option>
+                    <option value="d">Daily</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>

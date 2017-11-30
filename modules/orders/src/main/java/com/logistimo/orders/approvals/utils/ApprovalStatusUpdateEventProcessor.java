@@ -34,11 +34,15 @@ import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.logger.XLog;
 import com.logistimo.orders.approvals.dao.IApprovalsDao;
 import com.logistimo.orders.approvals.dao.impl.ApprovalsDao;
+import com.logistimo.orders.entity.IOrder;
 import com.logistimo.orders.entity.approvals.IOrderApprovalMapping;
+import com.logistimo.orders.service.OrderManagementService;
+import com.logistimo.orders.service.impl.OrderManagementServiceImpl;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.Services;
+import com.logistimo.services.impl.PMF;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.users.service.impl.UsersServiceImpl;
@@ -49,10 +53,14 @@ import org.apache.camel.Handler;
 import org.apache.commons.lang.text.StrSubstitutor;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.concurrent.TimeUnit;
+
+import javax.jdo.PersistenceManager;
 
 /**
  * Created by nitisha.khandelwal on 02/06/17.
@@ -67,10 +75,8 @@ public class ApprovalStatusUpdateEventProcessor {
   private static final String EXPIRED_STATUS = "ex";
 
   private IApprovalsDao approvalDao = new ApprovalsDao();
-
   private static Meter jmsMeter = MetricsUtil
       .getMeter(ApprovalStatusUpdateEventProcessor.class, "approvalStatusUpdateEventMeter");
-
   private static final XLog xLogger = XLog.getLog(ApprovalStatusUpdateEventProcessor.class);
 
   @Handler
@@ -83,54 +89,72 @@ public class ApprovalStatusUpdateEventProcessor {
 
       UsersService usersService = Services.getService(UsersServiceImpl.class);
       EntitiesService entitiesService = Services.getService(EntitiesServiceImpl.class);
+      OrderManagementService orderManagementService = Services.getService(
+          OrderManagementServiceImpl.class);
+      PersistenceManager pm = PMF.get().getPersistenceManager();
 
       try {
 
         IOrderApprovalMapping orderApprovalMapping = approvalDao
             .getOrderApprovalMapping(event.getApprovalId());
+        IOrder order = orderManagementService.getOrder(orderApprovalMapping.getOrderId());
 
+        if (APPROVED_STATUS.equals(event.getStatus())) {
+          setApprovalResponseTime(event.getUpdatedAt(), orderApprovalMapping.getApprovalType(),
+              order);
+        }
+
+        pm.makePersistent(order);
         approvalDao.updateOrderApprovalStatus(Long.valueOf(event.getTypeId()),
             event.getApprovalId(), event.getStatus());
 
         IUserAccount requester = usersService.getUserAccount(event.getRequesterId());
-
         IUserAccount updatedBy = usersService.getUserAccount(event.getUpdatedBy());
-
         IKiosk kiosk = entitiesService.getKiosk(orderApprovalMapping.getKioskId());
 
-        MessageService messageService = MessageService.getInstance(
-            MessageService.SMS, requester.getCountry(), true, kiosk.getDomainId(),
-            Constants.SYSTEM_USER_ID, null);
-
-        String
-            resolvedMessage =
+        MessageService messageService = MessageService.getInstance(MessageService.SMS,
+            requester.getCountry(), true, kiosk.getDomainId(), Constants.SYSTEM_USER_ID, null);
+        String resolvedMessage =
             getMessage(event, orderApprovalMapping, requester, kiosk, updatedBy);
-
-        messageService
-            .send(requester, resolvedMessage, MessageService.getMessageType(resolvedMessage), null,
-                null, null);
-
+        messageService.send(requester, resolvedMessage,
+            MessageService.getMessageType(resolvedMessage), null, null, null);
         for (String approverId : event.getApproverIds()) {
           IUserAccount approver = usersService.getUserAccount(approverId);
-          messageService
-              .send(approver, resolvedMessage, MessageService.getMessageType(resolvedMessage), null,
-                  null, null);
+          messageService.send(approver, resolvedMessage,
+              MessageService.getMessageType(resolvedMessage), null, null, null);
         }
 
       } catch (ObjectNotFoundException e) {
-        xLogger.warn("Object not found : {0}", e);
+        xLogger.warn("Object not found - ", e);
       } catch (IOException e) {
         xLogger.warn("Error in sending message - ", e);
       } catch (MessageHandlingException e) {
         xLogger.warn("Error in building message status - ", e);
       } catch (Exception e) {
         xLogger.warn("Error in handling approval message - ", e);
+      } finally {
+        pm.close();
       }
     }
   }
 
+  private void setApprovalResponseTime(Date eventUpdateTime, Integer approvalType, IOrder order) {
+    if (IOrder.TRANSFER_ORDER == approvalType) {
+      order.setTransferApprovalResponseTime(TimeUnit.MILLISECONDS.toSeconds(
+          eventUpdateTime.getTime() - order.getCreatedOn().getTime()));
+    }
+    if (IOrder.PURCHASE_ORDER == approvalType) {
+      order.setPurchaseApprovalResponseTime(TimeUnit.MILLISECONDS.toSeconds(
+          eventUpdateTime.getTime() - order.getCustomerVisibilityTime().getTime()));
+    }
+    if (IOrder.SALES_ORDER == approvalType) {
+      order.setSalesApprovalResponseTime(TimeUnit.MILLISECONDS.toSeconds(
+          eventUpdateTime.getTime() - order.getVendorVisibilityTime().getTime()));
+    }
+  }
+
   private String getMessage(ApprovalStatusUpdateEvent event, IOrderApprovalMapping orderApproval,
-                            IUserAccount requester, IKiosk kiosk, IUserAccount updatedBy) {
+      IUserAccount requester, IKiosk kiosk, IUserAccount updatedBy) {
 
     String message = getMessage(event.getStatus(), requester);
     Map<String, String> values = new HashMap<>();

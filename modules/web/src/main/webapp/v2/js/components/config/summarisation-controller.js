@@ -108,7 +108,7 @@ domainCfgControllers.controller('SummarisationMenuController', ['$scope', 'domai
 
         $scope.isTagField = function (field) {
             return (field == 'include_material_tags' || field == 'include_entity_tags' ||
-            field == 'include_user_tags' || field == 'exclude_material_tags' ||
+            field == 'include_user_tags' || field == 'user_tags_responsible' || field == 'exclude_material_tags' ||
             field == 'exclude_entity_tags' || field == 'exclude_user_tags');
         };
 
@@ -116,7 +116,7 @@ domainCfgControllers.controller('SummarisationMenuController', ['$scope', 'domai
             return (field == 'include_asset_types' || field == 'exclude_asset_types');
         };
 
-        $scope.isNumericalField = function(field) {
+        $scope.isNumericalField = function (field) {
             return (field == 'hours' || field == 'days' || field == 'months' || field == '%');
         };
 
@@ -187,7 +187,9 @@ domainCfgControllers.controller('SummarisationConfigurationController', ['$scope
 
 
         $scope.displayTable = function (data, key, value) {
-            if (key == 'include_material_tags' || key == 'include_entity_tags' || key == 'include_user_tags' || key == 'exclude_material_tags' || key == 'exclude_entity_tags' || key == 'exclude_user_tags' || key == 'include_asset_types' || key == 'exclude_asset_types') {
+            if (key == 'include_material_tags' || key == 'include_entity_tags' || key == 'include_user_tags'
+                || key == 'user_tags_responsible' || key == 'exclude_material_tags' || key == 'exclude_entity_tags'
+                || key == 'exclude_user_tags' || key == 'include_asset_types' || key == 'exclude_asset_types') {
                 var tags = '';
                 if (checkNotNullEmpty(data.values)) {
                     angular.forEach(data.values, function (d) {
@@ -276,8 +278,9 @@ domainCfgControllers.controller('SummarisationConfigurationController', ['$scope
             $scope.config[$scope.subview][type]['editData']['type'] = type;
             $scope.config[$scope.subview][type]['editData']['index'] = index;
         }
+
         $scope.showLoading();
-        domainCfgService.getAssetSysCfg('2').then(function(data) {
+        domainCfgService.getAssetSysCfg('2').then(function (data) {
             $scope.allAssets = data.data;
         }).catch(function error(msg) {
             $scope.showErrorMsg(msg);
@@ -287,8 +290,8 @@ domainCfgControllers.controller('SummarisationConfigurationController', ['$scope
 
         $scope.filterAssets = function (query) {
             var rData = {results: []};
-            for(var key in $scope.allAssets) {
-                if($scope.allAssets[key].toLowerCase().indexOf(query.term.toLowerCase()) != -1) {
+            for (var key in $scope.allAssets) {
+                if ($scope.allAssets[key].toLowerCase().indexOf(query.term.toLowerCase()) != -1) {
                     rData.results.push({'text': $scope.allAssets[key], 'id': $scope.allAssets[key]});
                 }
             }
@@ -332,7 +335,7 @@ domainCfgControllers.controller('AddSummarisationConfigurationController', ['$sc
                 return "material";
             else if (field == 'include_entity_tags' || field == 'exclude_entity_tags')
                 return "entity";
-            else if (field == 'include_user_tags' || field == 'exclude_user_tags')
+            else if (field == 'include_user_tags' || field == 'user_tags_responsible' || field == 'exclude_user_tags')
                 return "user";
         }
     }

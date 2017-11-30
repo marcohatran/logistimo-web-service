@@ -55,6 +55,12 @@ public class SystemException extends RuntimeException implements ExceptionWithCo
     this.arguments = new Object[0];
   }
 
+  public SystemException(String code, Object... arguments) {
+    super(code);
+    this.code = code;
+    this.arguments = arguments;
+  }
+
   public SystemException(String message, Throwable e) {
     super(message, e);
     this.code = null;

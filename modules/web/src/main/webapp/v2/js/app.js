@@ -32,7 +32,7 @@ var logistimoApp = angular.module('logistimoApp', ['ngSanitize','ngRoute', 'dash
     'linkedDomainControllers', 'linkedDomainServices','domainControllers','domainServices', 'mediaServices', 'base64',
     'exportControllers','once','assetControllers','assetServices','handlingUnitControllers','handlingUnitServices',
     'conversationServices', 'activityServices','conversationControllers','hc.downloader','reportsPluginCore','approvalServices',
-    'approvalControllers'
+    'approvalControllers', 'bulletinBoardControllers','logistimo.storyboard'
     /*<% do-not-remove-this-comment-grunt-will-insert-dep-for-prod %>*/]);
 
 logistimoApp.config(function (uibDatepickerConfig) {
@@ -43,6 +43,41 @@ logistimoApp.config(function (uiSelectConfig) {
     uiSelectConfig.theme = 'select2';
 });
 
+/* @if BULLETIN_BOARD == 'NA' */
+logistimoApp.constant('isSession', true);
+/*@endif*/
+
+/* @if BULLETIN_BOARD == 'BULLETIN_BOARD' */
+logistimoApp.constant('isSession', false);
+/* @endif */
+
+logistimoApp.provider('dashboardRepository', function () {
+    return {
+        $get: ['APIService', '$q', function (apiService, $q) {
+            return new DashboardRepository(apiService, $q);
+        }]
+    };
+});
+
+logistimoApp.provider('bulletinBoardRepository', function () {
+    return {
+        $get: ['APIService', '$q', function (apiService, $q) {
+            return new BulletinBoardRepository(apiService, $q);
+        }]
+    };
+});
+
+/* @if BULLETIN_BOARD == 'BULLETIN_BOARD' */
+logistimoApp.config(function ($routeProvider) {
+    $routeProvider.when("/", {
+        action: "bulletinboard.list"
+    }).when("/view/:bulletinBoardId", {
+        action: "bulletinboard.view"
+    })
+});
+/* @endif */
+
+/* @if BULLETIN_BOARD == 'NA' */
 logistimoApp.config(function ($routeProvider) {
     $routeProvider.when("/setup/entities/detail/:entityId/", {
         action: "setup.entities.detail.inventory"
@@ -180,7 +215,7 @@ logistimoApp.config(function ($routeProvider) {
         action: "setup.users.all.msgstatus"
     }).when("/setup/users/all/upload", {
         action: "setup.users.all.upload"
-    }).when("/setup/ent-grps/", {
+    }).when("/setup/.ent-grps/", {
         action: "setup.ent-grps.all.list"
     }).when("/setup/ent-grps/all/", {
         action: "setup.ent-grps.all.list"
@@ -372,11 +407,36 @@ logistimoApp.config(function ($routeProvider) {
         action: "orders.shipment.list"
     }).when("/orders/shipment/detail/:sid/", {
         action: "orders.shipment.shipmentdetail"
-    })
+    }).when("/configuration/bulletin/", {
+        action: "configuration.bulletin.list"
+    }).when("/configuration/bulletin/list", {
+        action: "configuration.bulletin.list"
+    }).when("/configuration/bulletin/add", {
+        action: "configuration.bulletin.add"
+    }).when("/configuration/bulletin/detail/:bulletinBoardId", {
+        action: "configuration.bulletin.detail"
+    }).when("/configuration/bulletin/view/:bulletinBoardId", {
+        action: "configuration.bulletin.view"
+    }).when("/configuration/dashboards", {
+        action: "configuration.dashboards.list"
+    }).when("/configuration/dashboards/add", {
+        action: "configuration.dashboards.add"
+    }).when("/configuration/dashboards/detail/:dashboardId", {
+        action: "configuration.dashboards.detail"
+    }).when("/configuration/dashboards/view/:dashboardId", {
+        action: "configuration.dashboards.view"
+    }).when("/configuration/bulletin/auth", {
+        action: "configuration.bulletin.auth"
+    });
 });
+/* @endif */
 
 if (typeof updateRouteProviderConfig === "function") {
     updateRouteProviderConfig();
+}
+
+if (typeof updateDependencies === "function") {
+    updateDependencies();
 }
 
 logistimoApp.config(['$httpProvider', function($httpProvider) {
@@ -452,6 +512,10 @@ logistimoApp.config(['$uibTooltipProvider', function($uibTooltipProvider){
         'showpopup': 'hidepopup',
         'hclick': 'hleave'
     });
+}]);
+
+logistimoApp.factory('logistimoCache', ['$cacheFactory', function ($cacheFactory) {
+    return $cacheFactory('logistimo-cache');
 }]);
 
 (function($) {

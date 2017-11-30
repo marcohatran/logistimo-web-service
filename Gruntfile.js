@@ -43,6 +43,12 @@ module.exports = function(grunt) {
         });
     }
 
+    if (grunt.option("bulletinboard") != undefined) {
+        grunt.config.set("bulletinboard", {
+            generate: true
+        })
+    }
+
     require('./grunt-tasks.js')(grunt);
 
 };

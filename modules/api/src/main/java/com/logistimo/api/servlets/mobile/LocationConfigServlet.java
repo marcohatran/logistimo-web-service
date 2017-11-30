@@ -25,27 +25,26 @@ package com.logistimo.api.servlets.mobile;
 
 import com.google.gson.Gson;
 
-import org.apache.commons.lang.StringUtils;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 import com.logistimo.api.response.Country;
 import com.logistimo.api.response.District;
 import com.logistimo.api.response.LocationMetadataResponse;
 import com.logistimo.api.response.State;
+import com.logistimo.api.servlets.SgServlet;
+import com.logistimo.api.util.RESTUtil;
 import com.logistimo.config.entity.IConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
 import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
+import com.logistimo.logger.XLog;
+import com.logistimo.proto.RestConstantsZ;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.Services;
-
-import com.logistimo.api.servlets.SgServlet;
-import com.logistimo.proto.RestConstantsZ;
-import com.logistimo.api.util.RESTUtil;
 import com.logistimo.users.entity.IUserAccount;
 
-import com.logistimo.logger.XLog;
+import org.apache.commons.lang.StringUtils;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.PrintWriter;

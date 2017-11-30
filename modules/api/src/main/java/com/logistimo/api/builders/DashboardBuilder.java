@@ -64,14 +64,11 @@ public class DashboardBuilder {
 
   public static final String MATERIAL_BD = "MAT_BD";
 
-  public IDashboard buildDashboard(DashboardModel model, Long domainId, String userName) {
+  public IDashboard buildDashboard(DashboardModel model, String userName) {
     IDashboard db = JDOUtils.createInstance(IDashboard.class);
-    db.setdId(domainId);
     db.setCreatedOn(new Date());
     db.setCreatedBy(userName);
     db.setName(model.nm);
-    db.setDesc(model.desc);
-    db.setDef(model.def);
     return db;
   }
 
@@ -85,17 +82,13 @@ public class DashboardBuilder {
 
   public DashboardModel buildDashboardModel(IDashboard db, boolean deep) {
     DashboardModel model = new DashboardModel();
-    model.dbId = db.getDbId();
     model.nm = db.getName();
-    model.def = db.isDef();
-    model.isConfd = StringUtils.isNotEmpty(db.getConf());
     if (deep) {
       try {
         UsersService as = Services.getService(UsersServiceImpl.class);
         model.cByNm = as.getUserAccount(db.getCreatedBy()).getFullName();
         model.cBy = db.getCreatedBy();
         model.cOn = db.getCreatedOn();
-        model.desc = db.getDesc();
       } catch (SystemException ignored) {
       }
     }
@@ -451,7 +444,7 @@ public class DashboardBuilder {
           DashboardChartModel matChartModel = new DashboardChartModel(count);
           if(columns.contains("MID")) {
             matChartModel.mid = res.getLong("MID");
-        }
+          }
           materialBreakDown.materials.put(matValue, matChartModel);
         }
       }

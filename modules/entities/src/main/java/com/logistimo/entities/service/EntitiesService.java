@@ -404,18 +404,11 @@ public interface EntitiesService extends Service {
 
   /**
    * Get the list of approvers based on the filters
-   * @param filters
-   * @return
    */
   List<IApprover> getApprovers(ApproverFilters filters);
 
   /**
    * Get the kiosk links based on the filters
-   * @param filters
-   * @param pageParams
-   * @param countOnly
-   * @return
-   * @throws ServiceException
    */
   Results getKioskLinks(KioskLinkFilters filters, PageParams pageParams, boolean countOnly)
       throws ServiceException;

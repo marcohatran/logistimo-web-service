@@ -151,11 +151,16 @@ public class SMSBuilder {
     SMSTransactionModel model = new SMSTransactionModel();
     try {
       //Split based on :
-      List<String> fields = Arrays.asList(message.split(SMSConstants.FIELD_SEPARATOR + PatternConstants.ESCAPE_INSIDE_DOUBLE_QUOTES));
+      List<String>
+          fields =
+          Arrays.asList(message
+              .split(SMSConstants.FIELD_SEPARATOR + PatternConstants.ESCAPE_INSIDE_DOUBLE_QUOTES));
       String inventoryDetails = null;
       //Get fields
       for (String field : fields) {
-        String[] keyValue = field.split(SMSConstants.KEY_SEPARATOR + PatternConstants.ESCAPE_INSIDE_DOUBLE_QUOTES);
+        String[]
+            keyValue =
+            field.split(SMSConstants.KEY_SEPARATOR + PatternConstants.ESCAPE_INSIDE_DOUBLE_QUOTES);
         switch (keyValue[0]) {
           case SMSConstants.TOKEN:
             model.setToken(keyValue[1]);
@@ -265,7 +270,10 @@ public class SMSBuilder {
   private InventoryTransactions getInventoryTransactions(String material, Long sendTime)
       throws UnsupportedEncodingException {
 
-    String[] mat = material.split(SMSConstants.ENTRY_TIME_SEPARATOR + PatternConstants.ESCAPE_INSIDE_DOUBLE_QUOTES);
+    String[]
+        mat =
+        material.split(
+            SMSConstants.ENTRY_TIME_SEPARATOR + PatternConstants.ESCAPE_INSIDE_DOUBLE_QUOTES);
     //Material short Id
 
     Long materialId = SMSDecodeUtil.decode(mat[0]);
@@ -273,7 +281,10 @@ public class SMSBuilder {
     inventoryTransactions.setMaterialShortId(materialId);
     List<MobileTransModel> mobileTransModels = new ArrayList<>();
     for (int i = 1; i < mat.length; i++) {
-      String[] transactions = mat[i].split(SMSConstants.TRANSACTION_SEPARATOR + PatternConstants.ESCAPE_INSIDE_DOUBLE_QUOTES);
+      String[]
+          transactions =
+          mat[i].split(
+              SMSConstants.TRANSACTION_SEPARATOR + PatternConstants.ESCAPE_INSIDE_DOUBLE_QUOTES);
       //set entry time
       Long entryTimeInMillis;
       if (transactions[0] != null && !transactions[0].equalsIgnoreCase(CharacterConstants.EMPTY)) {
@@ -328,7 +339,7 @@ public class SMSBuilder {
             (PatternConstants.REMOVE_DOUBLE_QUOTES, "") : null;
     mobileTransModel.lkid =
         (transactionDet.length > 5 && transactionDet[5] != null
-          && !transactionDet[5].equalsIgnoreCase(CharacterConstants.EMPTY)) ?
+            && !transactionDet[5].equalsIgnoreCase(CharacterConstants.EMPTY)) ?
             SMSDecodeUtil.decode(transactionDet[5]) : null;
     if (actualTransactionDate != null) {
       mobileTransModel.atd = sdf.format(new Date(actualTransactionDate));

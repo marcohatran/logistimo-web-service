@@ -128,6 +128,10 @@ public class SecurityMgr {
   public static void setSessionDetails(String userId) throws ObjectNotFoundException {
     UsersService as = Services.getService(UsersServiceImpl.class);
     IUserAccount user = as.getUserAccount(userId);
+    setSessionDetails(user);
+  }
+
+  public static void setSessionDetails(IUserAccount user) {
     if (!user.isEnabled()) {
       throw new UnauthorizedException("You account is disabled");
     }
@@ -137,7 +141,7 @@ public class SecurityMgr {
 
 
   // Get SecureUserDetails from UserAccount
-  private static SecureUserDetails getSecureUserDetails(IUserAccount user) {
+  public static SecureUserDetails getSecureUserDetails(IUserAccount user) {
     SecureUserDetails userDetails = new SecureUserDetails();
     userDetails.setUsername(user.getUserId());
     userDetails.setEnabled(user.isEnabled());

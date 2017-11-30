@@ -135,9 +135,14 @@
     <script src="js/3rdparty/moment/moment-timezone.min.js"></script>
 
 
-    <!-- @if NODE_ENV == 'PRODUCTION' || NODE_ENV == 'DEVELOPMENT' -->
+    <!-- @if (NODE_ENV == 'PRODUCTION'|| NODE_ENV == 'DEVELOPMENT') && BULLETIN_BOARD == 'NA' -->
     <!-- @echo scriptInc -->
     <!-- @echo templateInc -->
+    <!-- @endif -->
+
+    <!-- @if (NODE_ENV == 'PRODUCTION' || NODE_ENV == 'DEVELOPMENT') && BULLETIN_BOARD == 'BULLETIN_BOARD' -->
+    <!-- @echo bbScriptInc -->
+    <!-- @echo bbTemplateInc -->
     <!-- @endif -->
 
     <!-- @if NODE_ENV == 'LOCAL' -->
@@ -205,6 +210,7 @@
     <script src="js/components/activity/activity-services.js"></script>
     <script src="js/components/conversation/conversation-services.js"></script>
     <script src="js/components/conversation/conversation-controllers.js"></script>
+    <script src="js/components/bulletinboard/bulletinboard-controller.js"></script>
 
     <script src="plugins/reports/reports-core.js"></script>
 
@@ -215,6 +221,29 @@
 
     <script src="plugins/reports/asset/assetreports.js"></script>
     <script src="plugins/reports/asset/assetstatus/assetstatus.js"></script>
+
+    <script src="plugins/storyboards/storyboards.js"></script>
+    <script src="plugins/storyboards/widget-utils.js"></script>
+    <script src="plugins/storyboards/inventory/edit-template.js"></script>
+    <script src="plugins/storyboards/assets/asset-edit-template.js"></script>
+    <script src="plugins/storyboards/js/dashboard-repository.js"></script>
+    <script src="plugins/storyboards/js/bulletinboard-repository.js"></script>
+
+    <script src="plugins/storyboards/inventory/inventory-status-donut-widget/index.js"></script>
+    <script src="plugins/storyboards/inventory/stores-activity-widget/index.js"></script>
+    <script src="plugins/storyboards/inventory/inventory-status-map-widget/index.js"></script>
+    <script src="plugins/storyboards/inventory/top-locations-by-inventory-status-widget/index.js"></script>
+    <script src="plugins/storyboards/inventory/top-materials-by-inventory-status-widget/index.js"></script>
+    <script src="plugins/storyboards/inventory/inventory-count-widget/index.js"></script>
+    <script src="plugins/storyboards/inventory/stores-count-widget/index.js"></script>
+
+    <script src="plugins/storyboards/assets/temperature-status-donut-widget/index.js"></script>
+    <script src="plugins/storyboards/assets/assets-count-widget/index.js"></script>
+    <script src="plugins/storyboards/assets/temperature-status-map-widget/index.js"></script>
+    <script src="plugins/storyboards/assets/top-locations-by-temperature-status-widget/index.js"></script>
+    <script src="plugins/storyboards/inventory/stock-trend-widget/index.js"></script>
+    <script src="plugins/storyboards/assets/temperature-excursion-trend-widget/index.js"></script>
+
     <!-- @endif -->
 
     <script type="text/ng-template" id="entityTemplate">
@@ -231,9 +260,9 @@
             <span ng-bind-html="match.label | uibTypeaheadHighlight:query"></span>
         </a>
     </script>
-
+    <!-- @if (NODE_ENV == 'PRODUCTION' || NODE_ENV == 'DEVELOPMENT') && BULLETIN_BOARD == 'NA' -->
 	<div ng-cloak>
-	<div class="container">
+        <div class="container-fluid">
 		<div ng-include=" 'views/menu.html' "></div>
 			<div ng-switch="subview">
 				<div ng-switch-when="setup">
@@ -288,5 +317,33 @@
         </div>
 		</div>
 	</div>
+    <!-- @endif -->
+
+    <!-- @if (NODE_ENV == 'PRODUCTION' || NODE_ENV == 'DEVELOPMENT') && BULLETIN_BOARD == 'BULLETIN_BOARD' -->
+    <!-- comments:uncomment-block html -->
+    <!--
+    <div ng-cloak>
+        <div class="container-fluid">
+            <div ng-switch="subview">
+                <div ng-switch-when="bulletinboard">
+                    <div ng-controller="SimpleMenuController"
+                         ng-init="init('bulletinboard')">
+                        <div ng-switch="subview">
+                            <div class="tab-pane" ng-switch-when="list">
+                                <div ng-include="'views/bulletinboard/list-bulletin-boards.html'"></div>
+                            </div>
+                            <div class="tab-pane" ng-switch-when="view">
+                                <div ng-include="'/angular-storyboards/src/bulletinboard/templates/view-bulletin-board.html'"
+                                     ng-init="bulletinBoardId = getRequestParam('bulletinBoardId')"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    -->
+    <!-- endcomments -->
+    <!-- @endif -->
 </body>
 </html>

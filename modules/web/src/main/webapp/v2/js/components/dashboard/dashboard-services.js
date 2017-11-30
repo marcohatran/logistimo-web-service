@@ -22,7 +22,7 @@
  */
 
 var dashboardServices = angular.module('dashboardServices', []);
-dashboardServices.factory('dashboardService', ['$http', function ($http) {
+dashboardServices.factory('dashboardService', ['$http', 'logistimoCache', '$q', 'APIService', function ($http, logistimoCache, $q, apiService) {
     return {
         fetch: function (urlStr) {
             var promise = $http({method: 'GET', url: urlStr});
@@ -79,7 +79,9 @@ dashboardServices.factory('dashboardService', ['$http', function ($http) {
             if(checkNotNullEmpty(skipCache)) {
                 url += (url == ''? '?' : '&') + 'skipCache=' + skipCache;
             }
-            return this.fetch('/s2/api/dashboard/' + url);
+
+            return apiService.get('/s2/api/dashboard/' + url, {duration: 30});
+
         },
         getInv: function (state,district,period,eTag,skipCache) {
             var url = '';

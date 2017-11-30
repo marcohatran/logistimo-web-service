@@ -25,8 +25,8 @@
  * Created by Mohan Raja on 03/04/15
  */
 var authControllers = angular.module('authControllers', []);
-authControllers.controller('LoginController', ['$scope', 'iAuthService', 'authService',
-    function ($scope, iAuthService, authService) {
+authControllers.controller('LoginController', ['$scope', 'iAuthService', 'authService', '$rootScope',
+    function ($scope, iAuthService, authService, $rootScope) {
         $scope.lLoading = false;
         $scope.fp = false;
 
@@ -56,6 +56,9 @@ authControllers.controller('LoginController', ['$scope', 'iAuthService', 'authSe
                     } else {
                         $scope.invalid = false;
                         $scope.errorMsg = undefined;
+                        if (!$rootScope.isSession) {
+                            iAuthService.setAccessToken(data.headers()['x-access-token'], data.headers()['expires']);
+                        }
 
                         if(checkNotNullEmpty($scope.curUser)){
                             if($scope.curUser != $scope.userId){
@@ -98,6 +101,66 @@ authControllers.controller('LoginController', ['$scope', 'iAuthService', 'authSe
         $scope.reset = function(){
             $scope.fp = false;
         }
+    }]);
+
+authControllers.controller('BulletinBoardAuthController', ['$scope', 'iAuthService', function ($scope, iAuthService) {
+    function init() {
+        $scope.authKey = "";
+    }
+
+    init();
+
+    $scope.authorizeBulletinBoard = function () {
+        if (checkNotNullEmpty($scope.authKey)) {
+            $scope.showLoading();
+            iAuthService.authorizeBulletinBoard($scope.authKey).then(function (data) {
+                $scope.showSuccess("Authorized successfully");
+            }).catch(function err(msg) {
+                $scope.showErrorMsg(msg);
+            }).finally(function () {
+                $scope.hideLoading();
+            })
+        } else {
+            $scope.showWarning('Please enter the key');
+        }
+    }
+}]);
+
+authControllers.controller('BulletinBoardLoginController', ['$scope', 'iAuthService', 'authService', '$rootScope', '$timeout',
+    function ($scope, iAuthService, authService, $rootScope, $timeout) {
+        $scope.lLoading = false;
+        $scope.accessKey = "";
+
+        $scope.init = function () {
+            $scope.lLoading = true;
+            iAuthService.requestAccessKey().then(function (data) {
+                $scope.accessKey = data.data;
+                $timeout($scope.checkAccessKey, 5000);
+            }).catch(function error(msg) {
+                $scope.errorMsg = $scope.resourceBundle['login.unable'] + " " + msg;
+            }).finally(function () {
+                $scope.lLoading = false;
+            });
+        };
+        $scope.init();
+
+        $scope.checkAccessKey = function () {
+            $scope.lLoading = true;
+            iAuthService.checkAccessKey($scope.accessKey).then(function (data) {
+                if (!checkNullEmptyObject(data.data)) {
+                    iAuthService.setAccessToken(data.data["x-access-token"], data.data.expires);
+                    authService.loginConfirmed(null, null, false);
+                    $scope.hideLogin();
+                } else {
+                    $timeout($scope.checkAccessKey, 5000);
+                }
+            }).catch(function err(msg) {
+                $scope.errorMsg = "Unable to check authorisation: " + msg;
+                $timeout($scope.checkAccessKey, 5000);
+            }).finally(function () {
+                $scope.lLoading = false;
+            })
+        };
     }]);
 
 authControllers.controller('ForgotPasswordController', ['$scope', 'iAuthService',
@@ -196,75 +259,4 @@ authControllers.controller('ForgotPasswordController', ['$scope', 'iAuthService'
             });
         };
 
-        /*$scope.generatePassword = function(otp){
-            if(checkNotNullEmpty($scope.fpw)){
-                if(checkNullEmpty($scope.fpw.uid)){
-                    $scope.showWarning($scope.resourceBundle['pwd.user.id.required']);
-                    return;
-                }
-                if(otp){
-                    if(!$scope.newotp){
-                        $scope.fLoading = true;
-                    }
-                    iAuthService.generateOtp($scope.fpw).then(function(data){
-                        $scope.fpResponse = data.data;
-                        if ($scope.fpResponse.isError) {
-                            $scope.invalid = true;
-                            $scope.showMsg = true;
-                            $scope.errorMsg = $scope.fpResponse.errorMsg;
-                        } else {
-                            $scope.invalid = false;
-                            $scope.errorMsg = undefined;
-                            $scope.showSuccess($scope.fpResponse.errorMsg);
-                            if (!$scope.newotp && $scope.fpw.mode == '0') {
-                                $scope.otp = false;
-                                $scope.toggleOTP();
-                            }
-                        }
-                    }).catch(function error(msg){
-                        $scope.showErrorMsg(msg);
-                    }).finally(function (){
-                        $scope.fLoading = false;
-                        $scope.newotp = false;
-                        if($scope.fpw.mode == '1' && !$scope.invalid){
-                            $scope.cancelFP();
-                        }
-                    });
-                } else {
-                    if($scope.fpw.mode != '1' && checkNullEmpty($scope.fpw.otp)){
-                        $scope.showWarning($scope.resourceBundle['pwd.otp.required']);
-                        return;
-                    }
-                    $scope.fLoading = true;
-                    iAuthService.generatePassword($scope.fpw, null).then(function(data){
-                        $scope.fpResponse = data.data;
-                        if ($scope.fpResponse.isError) {
-                            $scope.invalid = true;
-                            $scope.showMsg = true;
-                            $scope.errorMsg = $scope.fpResponse.errorMsg;
-                        } else {
-                            $scope.invalid = false;
-                            $scope.errorMsg = undefined;
-                            $scope.showSuccess($scope.fpResponse.errorMsg);
-                            $scope.cancelFP();
-                        }
-                    }).catch(function error(msg){
-                            $scope.showErrorMsg(msg);
-                    }).finally(function (){
-                            $scope.fLoading = false;
-                    });
-                }
-
-            }else{
-                $scope.showWarning($scope.resourceBundle['pwd.user.id.required']);
-            }
-        };*/
-
-        /*
-        $scope.$watch("userId", function (newval, oldval) {
-            if(newval != oldval || $scope.loadDetail){
-                $scope.fetchUserDetails();
-                $scope.loadDetail = false;
-            }
-        });*/
     }]);

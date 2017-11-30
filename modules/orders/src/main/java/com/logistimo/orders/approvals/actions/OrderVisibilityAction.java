@@ -33,6 +33,8 @@ import com.logistimo.services.ServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Date;
+
 /**
  * Created by charan on 18/07/17.
  */
@@ -47,8 +49,11 @@ public class OrderVisibilityAction {
     if (isApprovalRequired) {
       OrderVisibilityUtils.setOrderVisibility(o, domainId, false);
     } else {
+      Date currentTime = new Date();
       o.setVisibleToCustomer(true);
+      o.setCustomerVisibilityTime(currentTime);
       o.setVisibleToVendor(true);
+      o.setVendorVisibilityTime(currentTime);
       DomainsUtil.addToDomain(o, domainId, null);
     }
   }

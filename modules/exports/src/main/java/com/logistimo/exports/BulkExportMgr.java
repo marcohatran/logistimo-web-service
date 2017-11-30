@@ -191,7 +191,8 @@ public class BulkExportMgr {
     }
     String discType = req.getParameter("disctype"); // Type of discrepancy
     String eTags =
-        req.getParameter("etag"); // Entity tags, multiple possible in case of Inventory export, order tags in case of Order export
+        req.getParameter(
+            "etag"); // Entity tags, multiple possible in case of Inventory export, order tags in case of Order export
     String eeTags =
         req.getParameter("eetag"); // Entity tags, multiple possible in case of Inventory export
     String mTag = req.getParameter("mtag"); // Material tag

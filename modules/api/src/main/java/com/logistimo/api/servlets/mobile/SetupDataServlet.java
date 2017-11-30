@@ -24,6 +24,7 @@
 package com.logistimo.api.servlets.mobile;
 
 import com.logistimo.AppFactory;
+import com.logistimo.api.auth.AuthenticationUtil;
 import com.logistimo.api.servlets.JsonRestServlet;
 import com.logistimo.api.util.GsonUtil;
 import com.logistimo.api.util.RESTUtil;
@@ -1579,9 +1580,7 @@ public class SetupDataServlet extends JsonRestServlet {
     }
     if (StringUtils.isNotEmpty(token)) {
       try {
-        userId = aus.authenticateToken(token, actionInitiator);
-        UsersService usersService = Services.getService(UsersServiceImpl.class);
-        u = usersService.getUserAccount(userId);
+        u = AuthenticationUtil.authenticateToken(token, actionInitiator);
       } catch (ServiceException e) {
         errMsg = e.getMessage();
         status = false;
@@ -1687,7 +1686,7 @@ public class SetupDataServlet extends JsonRestServlet {
             Jsongro =
             GsonUtil.getRelationshipsOutputToJson(status, relationshipType, linkedKiosks, errMsg,
                 numLinkedKiosks, RESTUtil.VERSION_01);
-        HttpUtil.setLastModifiedHeader(resp,lastModified);
+        HttpUtil.setLastModifiedHeader(resp, lastModified);
         sendJsonResponse(resp, statusCode, Jsongro);
       } catch (Exception e) {
         xLogger.severe(

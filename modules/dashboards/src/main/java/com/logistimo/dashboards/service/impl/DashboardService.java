@@ -200,11 +200,11 @@ public class DashboardService implements IDashboardService {
     try {
       if (oid != 0) {
         IDashboard db = JDOUtils.getObjectById(IDashboard.class, oid, pm);
-        db.setDef(false);
+        //db.setDef(false);
         pm.makePersistent(db);
       }
       IDashboard defDb = JDOUtils.getObjectById(IDashboard.class, id, pm);
-      defDb.setDef(true);
+      //defDb.setDef(true);
       String name = defDb.getName();
       pm.makePersistent(defDb);
       return name;
@@ -254,9 +254,9 @@ public class DashboardService implements IDashboardService {
       if ("nm".equals(ty)) {
         db.setName(val);
       } else if ("desc".equals(ty)) {
-        db.setDesc(val);
+        //db.setDesc(val);
       } else if ("conf".equals(ty)) {
-        db.setConf(val);
+        //db.setConf(val);
       }
       pm.makePersistent(db);
       return name;
@@ -323,7 +323,7 @@ public class DashboardService implements IDashboardService {
   @Override
   public ResultSet getMainDashboardResults(Long domainId, Map<String, String> filters, String type,
                                            boolean isCountOnly, String groupby) {
-    PersistenceManager pm = PMF.get().getPersistenceManager();
+    PersistenceManager pm = PMF.getReadOnlyPM().getPersistenceManager();
     JDOConnection conn = pm.getDataStoreConnection();
     Statement statement = null;
     try {
@@ -1295,7 +1295,7 @@ public class DashboardService implements IDashboardService {
   }
 
   public Integer getInvTotalCount(Map<String, String> filter) throws SQLException{
-    PersistenceManager pm = PMF.get().getPersistenceManager();
+    PersistenceManager pm = PMF.getReadOnlyPM().getPersistenceManager();
     StringBuilder
         sb =
         new StringBuilder("SELECT COUNT(1) AS COUNT FROM INVNTRY WHERE KID = " + Long.parseLong(

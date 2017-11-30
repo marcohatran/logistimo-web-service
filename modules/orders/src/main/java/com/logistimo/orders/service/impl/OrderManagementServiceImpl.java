@@ -79,8 +79,8 @@ import com.logistimo.orders.entity.IDemandItem;
 import com.logistimo.orders.entity.IDemandItemBatch;
 import com.logistimo.orders.entity.IOrder;
 import com.logistimo.orders.entity.Order;
-import com.logistimo.orders.models.PDFResponseModel;
 import com.logistimo.orders.models.OrderFilters;
+import com.logistimo.orders.models.PDFResponseModel;
 import com.logistimo.orders.models.UpdatedOrder;
 import com.logistimo.orders.service.IDemandService;
 import com.logistimo.orders.service.OrderManagementService;
@@ -164,24 +164,34 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
   }
 
   public IOrder getOrder(Long orderId) throws ObjectNotFoundException, ServiceException {
-    return getOrder(orderId, false);
+    return getOrder(orderId, false, null);
+  }
+
+  public IOrder getOrder(Long orderId, boolean includeItems)
+      throws ObjectNotFoundException, ServiceException {
+    return getOrder(orderId, includeItems, null);
   }
 
   /**
    * Get an order, given an order Id
    */
   @Override
-  public IOrder getOrder(Long orderId, boolean includeItems)
+  public IOrder getOrder(Long orderId, boolean includeItems, PersistenceManager pm)
       throws ObjectNotFoundException, ServiceException {
     xLogger.fine("Entered getOrder");
     if (orderId == null) {
       throw new ServiceException("No order ID specified");
     }
-    PersistenceManager pm = PMF.get().getPersistenceManager();
+    PersistenceManager localPM = pm;
+    boolean isLocalPM = false;
+    if (localPM == null) {
+      localPM = PMF.get().getPersistenceManager();
+      isLocalPM = true;
+    }
     IOrder o = null;
     try {
-      o = JDOUtils.getObjectById(IOrder.class, orderDao.createKey(orderId), pm);
-      o = pm.detachCopy(o);
+      o = JDOUtils.getObjectById(IOrder.class, orderDao.createKey(orderId), localPM);
+      o = localPM.detachCopy(o);
       if (includeItems) {
         IDemandService ds = Services.getService(DemandService.class, this.getLocale());
         o.setItems(ds.getDemandItems(orderId));
@@ -193,7 +203,9 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
       throw new ServiceException(e.getMessage());
     } finally {
       // Close PM
-      pm.close();
+      if (isLocalPM && localPM != null) {
+        localPM.close();
+      }
     }
     xLogger.fine("Exiting getOrder");
     return o;
@@ -1061,9 +1073,7 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
           o.setDueDate(reqByDate);
           o.setSrc(source);
           DomainConfig dc = DomainConfig.getInstance(domainId);
-          StaticApplicationContext.getBean(OrderVisibilityAction.class)
-              .invoke(
-                  o, domainId);
+          StaticApplicationContext.getBean(OrderVisibilityAction.class).invoke(o, domainId);
           o = pm.makePersistent(o);
           demandList = (List<IDemandItem>) pm.makePersistentAll(demandList);
           demandList = (List<IDemandItem>) pm.detachCopyAll(demandList);

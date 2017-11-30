@@ -21,7 +21,7 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-function AssetReportController(s, timeout, getData) {
+function AssetReportController(s, timeout, getData, exportService) {
     s.resourceBundle = s.$parent.$parent.resourceBundle;
     s.ddist = s.$parent.$parent.ddist;
     s.dstate = s.$parent.$parent.dstate;
@@ -29,6 +29,8 @@ function AssetReportController(s, timeout, getData) {
     s.hideLoading = s.$parent.$parent.hideLoading;
     s.exportAsCSV = s.$parent.$parent.exportAsCSV;
     s.encodeURIParam = s.$parent.$parent.encodeURIParam;
+    s.showSuccess = s.$parent.$parent.showSuccess;
+    s.showError = s.$parent.$parent.showError;
 
     s.MAX_MONTHS = 11;
     s.MAX_WEEKS = 15;
@@ -347,6 +349,30 @@ function AssetReportController(s, timeout, getData) {
         } else {
             return "From: " + s.formatReportDate(s.filter.from) + "   To: " + s.formatReportDate(s.filter.to) + "   " + s.getFilterLabel()
         }
+    };
+
+    s.exportData = function(reportType) {
+        var selectedFilters = s.populateFilters();
+        selectedFilters['type'] = reportType;
+        selectedFilters['viewtype'] = s.activeMetric;
+        selectedFilters['titles'] = {};
+        selectedFilters['titles']['filters'] = s.tableCaption;
+        selectedFilters['titles']['metrics'] = s.tableMetric;
+        selectedFilters['titles']['viewtype'] = s.activeMetric;
+        selectedFilters['primaryMetricIndex'] = s.metrics.primary;
+        selectedFilters['secondaryMetricIndex'] = s.metrics.secondary;
+        selectedFilters['tertiaryMetricIndex'] = s.metrics.tertiary;
+        s.showLoading();
+        exportService.exportData(JSON.stringify(angular.toJson(selectedFilters))).then(function (data) {
+            if(data.data) {
+                s.showSuccess("Export scheduled successfully");
+            } else {
+                s.showError("Scheduling export failed");
+            }
+        }).catch(function error() {
+        }).finally(function(){
+            s.hideLoading();
+        });
     };
 
     s.$watch("filter.to",function(newValue,oldValue){
