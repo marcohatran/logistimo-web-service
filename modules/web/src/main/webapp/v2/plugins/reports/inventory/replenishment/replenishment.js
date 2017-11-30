@@ -40,11 +40,11 @@ registerWidget('ir', 'rpt-replenishment', 'Inventory', 'Replenishment response t
 
     reportsPluginCore.controller('rptReplenishmentController', ReportReplenishmentController);
 
-    ReportReplenishmentController.$inject = ['$scope', '$timeout','reportsServiceCore','exportService'];
+    ReportReplenishmentController.$inject = ['$scope', '$timeout','reportsServiceCore'];
 
-    function ReportReplenishmentController($scope, $timeout, reportsServiceCore, exportService) {
+    function ReportReplenishmentController($scope, $timeout, reportsServiceCore) {
 
-        InventoryReportController.call(this, $scope, $timeout, getData, exportService);
+        InventoryReportController.call(this, $scope, $timeout, getData, reportsServiceCore);
 
         $scope.reportType=reportType;
 

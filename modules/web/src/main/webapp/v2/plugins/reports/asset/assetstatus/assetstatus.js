@@ -41,7 +41,7 @@ registerWidget('aas', 'rpt-asset-status', 'Assets', 'Asset status','asset/assets
 
     reportsPluginCore.controller('rptAssetStatusController', ReportAssetStatusController);
 
-    ReportAssetStatusController.$inject = ['$scope', '$timeout','reportsServiceCore','domainCfgService','exportService'];
+    ReportAssetStatusController.$inject = ['$scope', '$timeout','reportsServiceCore','domainCfgService'];
 
     function ReportAssetStatusController($scope, $timeout, reportsServiceCore, domainCfgService) {
 
