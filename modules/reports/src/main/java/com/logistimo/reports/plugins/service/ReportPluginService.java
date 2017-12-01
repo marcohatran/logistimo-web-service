@@ -233,6 +233,18 @@ public class ReportPluginService implements Service {
           return "T_KID";
         case BY_REGION:
           return "T_REG";
+        case BY_MANUFACTURER:
+          return "T_MNT";
+        case BY_MODEL:
+          return "T_AMT";
+        case BY_ASSET:
+          return "T_AT";
+        case BY_ASSET_TYPE:
+          return "T_ATT";
+        case BY_ENTITY_TAGS:
+          return "T_KTAG";
+        case BY_USER:
+          return "T_UT";
         default:
           return null;
       }
