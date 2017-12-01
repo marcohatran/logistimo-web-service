@@ -73,6 +73,7 @@ ENV MYSQL_HOST_URL="jdbc:mariadb://localhost/logistimo?useUnicode=true&amp;chara
         JAVA_XMX=1024m \
         LOC_URL=http://localhost:9090 \
         APPROVAL_URL=http://localhost:6400 \
+        COLLABORATION_URL=http://localhost:9070/v1/collaboration/likes \
         CON_MAX_IDLE=50 \
         CON_MIX_IDLE=20 \
         CON_MAX_ACTIVE=150 \
