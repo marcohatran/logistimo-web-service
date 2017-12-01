@@ -1,4 +1,4 @@
-﻿dummy=
+﻿﻿dummy=
 abnormalstockduration=Durée de l'action anormale
 abnormalstockviews=Vue anormale des stocks
 abnormalstockevent=Événement boursier anormal (par exemple, rupture de stock, < min.,> max.)
@@ -1148,8 +1148,13 @@ excursion.type=Type d'excursion
 custom.dashboards=Tableaux de bord personnalisés
 custom.dashboard=tableau de bord personnalisé
 network.unavailable=Le réseau n'est pas disponible. Dernière mise à jour à
+event.category=Catégorie
+event=un événement
+threshold=Seuil
+locations.number=Nombre d'emplacements
 config.rfid.enable=Activer l'analyse RFID sur mobile
 config.barcoding.enable=Activer l'analyse de code-barres sur mobile
 config.barcoding.rfid.enable=Activer le balayage de code-barres / RFID
+profile.number=Nombre de profils
 
 

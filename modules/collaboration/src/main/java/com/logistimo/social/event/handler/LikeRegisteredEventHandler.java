@@ -23,10 +23,10 @@
 
 package com.logistimo.social.event.handler;
 
+import com.logistimo.collaboration.core.events.LikeRegisteredEvent;
 import com.logistimo.exception.SystemException;
 import com.logistimo.logger.XLog;
 import com.logistimo.services.ServiceException;
-import com.logistimo.collaboration.core.events.LikeRegisteredEvent;
 import com.logistimo.social.model.ContentQuerySpecs;
 import com.logistimo.social.provider.ContentProvider;
 import com.logistimo.social.provider.SubscriberProvider;
@@ -71,30 +71,31 @@ public class LikeRegisteredEventHandler implements Handler<LikeRegisteredEvent> 
 
   @Override
   public void handle(LikeRegisteredEvent event) {
-    log.info("LikeRegisteredEvent {0} being handled",event);
+    log.info("LikeRegisteredEvent {0} being handled", event);
     List<IUserAccount> users = null;
     try {
       users = getSubscribers(event);
     } catch (ServiceException e) {
-      log.severe("Error occured during getting subscriber for event {0}",event,e);
-      throw new SystemException(e,"CL001",event);
+      log.severe("Error occured during getting subscriber for event {0}", event, e);
+      throw new SystemException(e, "CL001", event);
     }
     String content = null;
     try {
       content = getNotificationContent(event);
     } catch (ServiceException e) {
-      log.warn("Error occured during content generation for event {0}",event,e);
-      throw new SystemException(e,"CL002",event);
+      log.warn("Error occured during content generation for event {0}", event, e);
+      throw new SystemException(e, "CL002", event);
     }
-    if (!StringUtils.isEmpty(content) && users != null && users.size() >0) {
+    if (!StringUtils.isEmpty(content) && users != null && users.size() > 0) {
       try {
-        CollaborationNotificationUtil.sendSMS(users,content,usersService.getUserAccount(event.getUser()));
+        CollaborationNotificationUtil
+            .sendSMS(users, content, usersService.getUserAccount(event.getUser()));
       } catch (Exception e) {
-        log.severe("Error occured while notifying users for collaboration event {0}",event,e);
-        throw new SystemException(e,"CL003",event);
+        log.severe("Error occured while notifying users for collaboration event {0}", event, e);
+        throw new SystemException(e, "CL003", event);
       }
     } else {
-      log.warn("No users found for notification for event {0}",event);
+      log.warn("No users found for notification for event {0}", event);
     }
   }
 
@@ -102,7 +103,7 @@ public class LikeRegisteredEventHandler implements Handler<LikeRegisteredEvent> 
     return subscriberProvider.getSubscriber(event);
   }
 
-  private String getNotificationContent (LikeRegisteredEvent event) throws ServiceException {
+  private String getNotificationContent(LikeRegisteredEvent event) throws ServiceException {
     ContentQuerySpecs querySpecs = new ContentQuerySpecs();
     querySpecs.setObjectId(event.getObjectId());
     querySpecs.setObjectType(event.getObjectType());

@@ -1019,25 +1019,19 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
 
 function reportCoreService() {
     var reportCoreService = angular.module('reportsServiceCore', []);
-    reportCoreService.factory('reportsServiceCore', ['$http', function ($http) {
+    reportCoreService.factory('reportsServiceCore', ['APIService', function (apiService) {
         return {
-            fetch: function (urlStr) {
-                return $http({method: 'GET', url: urlStr});
-            },
-            fetchP: function (data, urlStr) {
-                return $http({method: 'POST', data: data, url: urlStr});
-            },
             getReportData: function (json) {
-                return this.fetch('/s2/api/plugins/report/?json=' + json);
+                return apiService.get('/s2/api/plugins/report/?json=' + json);
             },
             getReportBreakdownData: function (json) {
-                return this.fetch('/s2/api/plugins/report/breakdown?json=' + json);
+                return apiService.get('/s2/api/plugins/report/breakdown?json=' + json);
             },
             getAggregatedTime: function (reportType) {
-                return this.fetch('/s2/api/plugins/report/last-run-time?reportType=' + reportType);
+                return apiService.get('/s2/api/plugins/report/last-run-time?reportType=' + reportType);
             },
             exportData: function (json) {
-            return this.fetchP(json,'/s2/api/plugins/report/export');
+                return apiService.post(json, '/s2/api/plugins/report/export');
         }
         }
     }]);

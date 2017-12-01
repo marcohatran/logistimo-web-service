@@ -30,5 +30,5 @@ import com.logistimo.collaboration.core.events.Event;
  */
 public interface Handler<E extends Event> {
 
-   void handle(E event);
+  void handle(E event);
 }

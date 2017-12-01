@@ -43,8 +43,9 @@ public class GetLikeAction {
   @Qualifier("collabRestTemplate")
   private RestTemplate restTemplate;
 
-  public LSLikeResponseModel invoke (String objectId, String objectTy, String eventId, boolean count, Integer offset, Integer size) {
-    LSGetLikeModel model = new LSGetLikeModel(objectId,objectTy,eventId,count,offset,size);
+  public LSLikeResponseModel invoke(String objectId, String objectTy, String eventId, boolean count,
+                                    Integer offset, Integer size) {
+    LSGetLikeModel model = new LSGetLikeModel(objectId, objectTy, eventId, count, offset, size);
     return new LSGetLikesCommand(restTemplate, model).execute();
   }
 }

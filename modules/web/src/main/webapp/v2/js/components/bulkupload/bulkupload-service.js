@@ -28,29 +28,24 @@
 var blkUpServices = angular.module('blkUpServices', []);
 
 blkUpServices.factory('blkUpService', [
-    '$http',
-    function($http) {
+    'APIService', '$http',
+    function (apiService, $http) {
         return {
-            fetch: function (urlStr) {
-                var promise = $http({method: 'GET', url: urlStr});
-                return promise;
-            },
             uploadStatus : function(type) {
-                return this.fetch('/s2/api/bulk/uploadstatus?type=' + type);
+                return apiService.get('/s2/api/bulk/uploadstatus?type=' + type);
             },
             uploadURL : function(type) {
-                return this.fetch('/s2/api/bulk/upload');
+                return apiService.get('/s2/api/bulk/upload');
             },
             uploadPostUrl : function(url,file, type) {
                 var fd = new FormData();
                 fd.append('data',file);
                 fd.append('type', type);
-                var promise = $http.post(url,fd,{
+                return $http.post(url, fd, {
                     transformRequest: angular.identity,
                     headers : { 'Content-Type' : undefined},
                     url : url
                 });
-                return promise;
             },
             getUploadTransactions : function(eid,from,to,offset,size) {
                 offset = typeof offset !== 'undefined' ? offset : 0;
@@ -65,10 +60,10 @@ blkUpServices.factory('blkUpService', [
                 if (typeof to !== 'undefined' && to != null && to != "") {
                     urlStr = urlStr + "&to=" + to;
                 }
-                return this.fetch(urlStr);
+                return apiService.get(urlStr);
             },
             getManualUploadStatus : function(){
-                return this.fetch('/s2/api/bulk/checkMUStatus');
+                return apiService.get('/s2/api/bulk/checkMUStatus');
             }
         }
     }

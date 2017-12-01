@@ -23,6 +23,8 @@
 
 package com.logistimo.social.command;
 
+import com.logistimo.collaboration.core.models.LikerResponseModel;
+import com.logistimo.collaboration.core.models.SocialLikerModel;
 import com.logistimo.common.builder.MediaBuilder;
 import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.JDOUtils;
@@ -31,8 +33,6 @@ import com.logistimo.exception.HttpBadRequestException;
 import com.logistimo.media.endpoints.IMediaEndPoint;
 import com.logistimo.media.entity.IMedia;
 import com.logistimo.services.utils.ConfigUtil;
-import com.logistimo.collaboration.core.models.LikerResponseModel;
-import com.logistimo.collaboration.core.models.SocialLikerModel;
 import com.logistimo.social.model.LSGetLikeModel;
 import com.logistimo.social.model.LSLikerResponseModel;
 import com.logistimo.social.model.LSSocialLikerModel;
@@ -74,14 +74,14 @@ public class LSGetLikersCommand extends HystrixCommand<LSLikerResponseModel> {
   protected LSLikerResponseModel run() throws Exception {
 
     URI link = null;
-    String contextId  = request.getContextId();
-    UriBuilder builder =  JerseyUriBuilder.fromUri(getLikerUrl(contextId));
-    builder.queryParam("offset",request.getOffset());
-    builder.queryParam("size",request.getSize());
-    if(StringUtils.isEmpty(contextId)) {
+    String contextId = request.getContextId();
+    UriBuilder builder = JerseyUriBuilder.fromUri(getLikerUrl(contextId));
+    builder.queryParam("offset", request.getOffset());
+    builder.queryParam("size", request.getSize());
+    if (StringUtils.isEmpty(contextId)) {
       link = builder.build(request.getObjectType(), request.getObjectId());
     } else {
-      link = builder.build(request.getObjectType(), request.getObjectId(),contextId);
+      link = builder.build(request.getObjectType(), request.getObjectId(), contextId);
     }
     try {
       ResponseEntity<LikerResponseModel>
@@ -94,16 +94,16 @@ public class LSGetLikersCommand extends HystrixCommand<LSLikerResponseModel> {
     }
   }
 
-  private String getLikerUrl (String contextId) {
+  private String getLikerUrl(String contextId) {
     String baseUrl = ConfigUtil.get("collaboration-service.url",
         "http://localhost:9070/v1/collaboration/likes");
-    if(StringUtils.isEmpty(contextId)){
-      return baseUrl+"/{obj_ty}/{obj_id}/likers";
+    if (StringUtils.isEmpty(contextId)) {
+      return baseUrl + "/{obj_ty}/{obj_id}/likers";
     }
-    return baseUrl+"/{obj_ty}/{obj_id}/{context_id}/likers";
+    return baseUrl + "/{obj_ty}/{obj_id}/{context_id}/likers";
   }
 
-  private LSLikerResponseModel map (LikerResponseModel model) {
+  private LSLikerResponseModel map(LikerResponseModel model) {
     LSLikerResponseModel res = convert(model);
     transform(res.getLikers());
     return res;
@@ -114,7 +114,7 @@ public class LSGetLikersCommand extends HystrixCommand<LSLikerResponseModel> {
     res.setTotal(model.getTotal());
     res.setOffset(model.getOffset());
     res.setSize(model.getSize());
-    if (model.getLikers() != null && model.getLikers().size() >0) {
+    if (model.getLikers() != null && model.getLikers().size() > 0) {
       List<LSSocialLikerModel> likers = new ArrayList<>();
       LSSocialLikerModel likerModel = null;
       for (SocialLikerModel socialLikerModel : model.getLikers()) {
@@ -129,20 +129,22 @@ public class LSGetLikersCommand extends HystrixCommand<LSLikerResponseModel> {
     return res;
   }
 
-  private void transform (List<LSSocialLikerModel> model) {
+  private void transform(List<LSSocialLikerModel> model) {
 
-    UsersServiceImpl usersService = StaticApplicationContext.getApplicationContext().getBean(UsersServiceImpl.class);
-    List<String> userIds = model.stream().map(m-> m.getLiker()).collect(Collectors.toList());
+    UsersServiceImpl
+        usersService =
+        StaticApplicationContext.getApplicationContext().getBean(UsersServiceImpl.class);
+    List<String> userIds = model.stream().map(m -> m.getLiker()).collect(Collectors.toList());
     List<IUserAccount> users = usersService.getUsersByIds(userIds);
 
-    model.stream().flatMap(m ->users.stream()
-                  .filter(user ->  user.getUserId().equals(m.getLiker()))
-                  .map(u -> addProperty(m,u))).count();
+    model.stream().flatMap(m -> users.stream()
+        .filter(user -> user.getUserId().equals(m.getLiker()))
+        .map(u -> addProperty(m, u))).count();
   }
 
-  private LSSocialLikerModel addProperty (LSSocialLikerModel m, IUserAccount u) {
+  private LSSocialLikerModel addProperty(LSSocialLikerModel m, IUserAccount u) {
     m.setName(u.getFullName());
-    if (u.getTags() != null && u.getTags().size() >0) {
+    if (u.getTags() != null && u.getTags().size() > 0) {
       m.setUserTags(StringUtils.arrayToCommaDelimitedString(u.getTags().toArray()));
     }
     IMediaEndPoint endPoint = JDOUtils.createInstance(IMediaEndPoint.class);

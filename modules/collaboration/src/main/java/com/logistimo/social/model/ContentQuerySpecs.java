@@ -23,8 +23,6 @@
 
 package com.logistimo.social.model;
 
-import java.util.Map;
-
 /**
  * Created by kumargaurav on 26/11/17.
  */

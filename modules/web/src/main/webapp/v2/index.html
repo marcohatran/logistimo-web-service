@@ -30,6 +30,7 @@
     <meta name="author" content="">
     <title>Logistimo</title>
     <script type="text/javascript">
+        var MAPI_URL = "http://localhost:8080/event-summaries";
         function setCookie(cname, cvalue, exdays) {
             var d = new Date();
             d.setTime(d.getTime() + (exdays*24*60*60*1000));
@@ -151,6 +152,7 @@
     <script src="js/app-controller.js"></script>
     <script src="js/app-constants.js"></script>
     <script src="js/app-directives.js"></script>
+    <script src="js/api-services.js"></script>
     <script src="js/request-context.js"></script>
     <script src="js/render-context.js"></script>
     <script src="js/utils/common-utils.js"></script>
@@ -212,6 +214,7 @@
     <script src="js/components/conversation/conversation-services.js"></script>
     <script src="js/components/conversation/conversation-controllers.js"></script>
     <script src="js/components/bulletinboard/bulletinboard-controller.js"></script>
+    <script src="js/components/event-summaries/event-summary-service.js"></script>
 
     <script src="plugins/reports/reports-core.js"></script>
 
@@ -229,6 +232,9 @@
     <script src="plugins/storyboards/assets/asset-edit-template.js"></script>
     <script src="plugins/storyboards/js/dashboard-repository.js"></script>
     <script src="plugins/storyboards/js/bulletinboard-repository.js"></script>
+    <script src="plugins/storyboards/event-summaries/events-map-widget/index.js"></script>
+    <script src="plugins/storyboards/event-summaries/event-summaries-top-ten-widget/index.js"></script>
+    <script src="plugins/storyboards/event-summaries/event-summaries-edit-template.js"></script>
 
     <script src="plugins/storyboards/inventory/inventory-status-donut-widget/index.js"></script>
     <script src="plugins/storyboards/inventory/stores-activity-widget/index.js"></script>
@@ -244,8 +250,12 @@
     <script src="plugins/storyboards/assets/top-locations-by-temperature-status-widget/index.js"></script>
     <script src="plugins/storyboards/inventory/stock-trend-widget/index.js"></script>
     <script src="plugins/storyboards/assets/temperature-excursion-trend-widget/index.js"></script>
+    <script src="plugins/storyboards/event-summaries/event-summaries-text-widget/index.js"></script>
+    <script src="plugins/storyboards/event-summaries/event-summaries-user-profile-widget/index.js"></script>
 
-    <!-- @endif -->
+
+
+<!-- @endif -->
 
     <script type="text/ng-template" id="entityTemplate">
         <a>

@@ -28,14 +28,14 @@ package com.logistimo.api.controllers;
  */
 
 import com.logistimo.auth.utils.SecurityUtils;
+import com.logistimo.collaboration.core.models.RegisterLikeRequestModel;
+import com.logistimo.collaboration.core.models.RegisterLikeResponseModel;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ServiceException;
 import com.logistimo.social.action.GetLikeAction;
 import com.logistimo.social.action.GetLikerAction;
 import com.logistimo.social.action.RegisterLikeAction;
-import com.logistimo.collaboration.core.models.RegisterLikeRequestModel;
-import com.logistimo.collaboration.core.models.RegisterLikeResponseModel;
 import com.logistimo.social.model.LSLikeResponseModel;
 import com.logistimo.social.model.LSLikerResponseModel;
 
@@ -47,8 +47,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * Created by kumargaurav on 15/11/17.

@@ -42,9 +42,10 @@ public class GetLikerAction {
   @Qualifier("collabRestTemplate")
   private RestTemplate restTemplate;
 
-  public LSLikerResponseModel invoke (String objectId, String objectTy, String eventId, Integer offset, Integer size) {
+  public LSLikerResponseModel invoke(String objectId, String objectTy, String eventId,
+                                     Integer offset, Integer size) {
 
-    LSGetLikeModel model = new LSGetLikeModel(objectId,objectTy,eventId,offset,size);
+    LSGetLikeModel model = new LSGetLikeModel(objectId, objectTy, eventId, offset, size);
     return new LSGetLikersCommand(restTemplate, model).execute();
   }
 }

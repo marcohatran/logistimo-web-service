@@ -23,16 +23,8 @@
 
 var trnServices = angular.module('trnServices', []);
 
-trnServices.factory('trnService', ['$http', function($http) {
+trnServices.factory('trnService', ['APIService', function (apiService) {
     return {
-        fetch: function (urlStr) {
-            var promise = $http({method: 'GET', url: urlStr});
-            return promise;
-        },
-        fetchP: function (data, urlStr) {
-            var promise = $http({method: 'POST', data: data, url: urlStr});
-            return promise;
-        },
         getEntityTransactions: function (entityId, tag, from, to, type, offset, size,lEntityId,bId,atd) {
             offset = typeof offset !== 'undefined' ? offset : 0;
             size = typeof size !== 'undefined' ? size : 50;
@@ -60,7 +52,7 @@ trnServices.factory('trnService', ['$http', function($http) {
                 urlStr = urlStr + "&atd=" + atd;
             }
 
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         getMaterialTransactions: function (materialId, ktag, from, to, type, offset, size,bId,atd) {
             offset = typeof offset !== 'undefined' ? offset : 0;
@@ -85,7 +77,7 @@ trnServices.factory('trnService', ['$http', function($http) {
             if (typeof atd !== 'undefined' && atd != null && atd != "") {
                 urlStr = urlStr + "&atd=" + atd;
             }
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         getTransactions: function (etag, tag, from, to, type, offset, size,bId,atd,eid,lEntityId,mid,rsn) {
             offset = typeof offset !== 'undefined' ? offset : 0;
@@ -122,31 +114,31 @@ trnServices.factory('trnService', ['$http', function($http) {
             if (typeof rsn !== 'undefined' && rsn != null && rsn != "") {
                 urlStr = urlStr + "&reason=" + rsn;
             }
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         undoTransactions: function (tran) {
-            return this.fetchP(tran,'/s2/api/transactions/undo');
+            return apiService.post(tran, '/s2/api/transactions/undo');
         },
         getTransDomainConfig: function (kioskId) {
-            return this.fetch('/s2/api/transactions/transconfig/?kioskId=' + kioskId);
+            return apiService.get('/s2/api/transactions/transconfig/?kioskId=' + kioskId);
         },
         updateTransaction : function(data){
-            return this.fetchP(data,'/s2/api/transactions/add/');
+            return apiService.post(data, '/s2/api/transactions/add/');
         },
         getActualRoute: function(userId,from,to){
-            return this.fetch('/s2/api/transactions/actualroute?userId=' + userId + '&from=' + from + '&to=' + to);
+            return apiService.get('/s2/api/transactions/actualroute?userId=' + userId + '&from=' + from + '&to=' + to);
         },
         getReasons : function(type,tags){
-            return this.fetch('/s2/api/transactions/reasons?type='+type+'&tags='+tags);
+            return apiService.get('/s2/api/transactions/reasons?type=' + type + '&tags=' + tags);
         },
         getMatStatus : function(type,ts){
-            return this.fetch('/s2/api/transactions/matStatus?type='+type+'&ts='+ts);
+            return apiService.get('/s2/api/transactions/matStatus?type=' + type + '&ts=' + ts);
         },
         getPermission : function(userId,kioskId){
-            return this.fetch('/s2/api/transactions/checkpermission?userId=' + userId + '&kioskId=' + kioskId);
+            return apiService.get('/s2/api/transactions/checkpermission?userId=' + userId + '&kioskId=' + kioskId);
         },
         getStatusMandatory : function() {
-            return this.fetch('/s2/api/transactions/statusmandatory');
+            return apiService.get('/s2/api/transactions/statusmandatory');
         }
     }
 }]);

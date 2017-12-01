@@ -68,7 +68,8 @@ public class LSRegisterLikeCommand extends HystrixCommand<RegisterLikeResponseMo
     }
   }
 
-  private String registerLikeUrl () {
-    return ConfigUtil.get("collaboration-service.url","http://localhost:9070/v1/collaboration/likes");
+  private String registerLikeUrl() {
+    return ConfigUtil
+        .get("collaboration-service.url", "http://localhost:9070/v1/collaboration/likes");
   }
 }

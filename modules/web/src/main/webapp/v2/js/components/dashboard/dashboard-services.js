@@ -22,27 +22,19 @@
  */
 
 var dashboardServices = angular.module('dashboardServices', []);
-dashboardServices.factory('dashboardService', ['$http', 'logistimoCache', '$q', 'APIService', function ($http, logistimoCache, $q, apiService) {
+dashboardServices.factory('dashboardService', ['APIService', function (apiService) {
     return {
-        fetch: function (urlStr) {
-            var promise = $http({method: 'GET', url: urlStr});
-            return promise;
-        },
-        fetchP: function (data, urlStr) {
-            var promise = $http({method: 'POST', data: data, url: urlStr});
-            return promise;
-        },
         getMonthlyStats: function (numMonths) {
-            return this.fetch('/s/dashboard?action=getmonthlystats&months=' + numMonths);
+            return apiService.get('/s/dashboard?action=getmonthlystats&months=' + numMonths);
         },
         create: function (data) {
-            return this.fetchP(data, '/s2/api/dashboard/');
+            return apiService.post(data, '/s2/api/dashboard/');
         },
         getById: function (dbId, withConfig) {
-            return this.fetch('/s2/api/dashboard/' + dbId + (withConfig ? ('?wc=' + withConfig) : ''));
+            return apiService.get('/s2/api/dashboard/' + dbId + (withConfig ? ('?wc=' + withConfig) : ''));
         },
         getAll: function () {
-            return this.fetch('/s2/api/dashboard/all/');
+            return apiService.get('/s2/api/dashboard/all/');
         },
         get: function (filter, level, exFilter, exType, period, tPeriod,aType, eTag, date, excludeETag, skipCache) {
             var url = '';
@@ -100,7 +92,7 @@ dashboardServices.factory('dashboardService', ['$http', 'logistimoCache', '$q', 
             if(checkNotNullEmpty(skipCache)) {
                 url += (url == ''? '?' : '&') + 'skipCache=' + skipCache;
             }
-            return this.fetch('/s2/api/dashboard/inv'+url);
+            return apiService.get('/s2/api/dashboard/inv' + url);
         },
         getSessionData: function(filter, level, exFilter, exType, period, eTag, date, type, skipCache) {
             var url = '';
@@ -131,7 +123,7 @@ dashboardServices.factory('dashboardService', ['$http', 'logistimoCache', '$q', 
             if(checkNotNullEmpty(skipCache)) {
                 url += (url == ''? '?' : '&') + 'skipCache=' + skipCache;
             }
-            return this.fetch('/s2/api/dashboard/session' + url);
+            return apiService.get('/s2/api/dashboard/session' + url);
         },
         getPredictive: function (filter, level, exFilter, exType, eTag, excludeETag, skipCache) {
             var url = '';
@@ -156,26 +148,26 @@ dashboardServices.factory('dashboardService', ['$http', 'logistimoCache', '$q', 
             if(checkNotNullEmpty(skipCache)) {
                 url += (url == ''? '?' : '&') + 'skipCache=' + skipCache;
             }
-            return this.fetch('/s2/api/dashboard/predictive' + url);
+            return apiService.get('/s2/api/dashboard/predictive' + url);
         },
         delete: function (id) {
-            return this.fetchP(null, '/s2/api/dashboard/delete?id=' + id);
+            return apiService.post(null, '/s2/api/dashboard/delete?id=' + id);
         },
         setAsDefault: function (curId, id) {
-            return this.fetch('/s2/api/dashboard/setdefault?oid=' + curId + '&id=' + id);
+            return apiService.get('/s2/api/dashboard/setdefault?oid=' + curId + '&id=' + id);
         },
         update: function (data) {
-            return this.fetchP(data, '/s2/api/dashboard/update');
+            return apiService.post(data, '/s2/api/dashboard/update');
         },
         saveConfig: function (data) {
-            return this.fetchP(data, '/s2/api/dashboard/saveconfig');
+            return apiService.post(data, '/s2/api/dashboard/saveconfig');
         },
         getEntInvData: function(eid, mTag) {
             var url = '/s2/api/dashboard/ent/?eid=' + eid;
             if(checkNotNullEmpty(mTag)) {
                 url += '&mTag=' + mTag;
             }
-            return this.fetch(url);
+            return apiService.get(url);
         }
     }
 }]);

@@ -23,12 +23,12 @@
 
 package com.logistimo.social.action;
 
-import com.logistimo.security.SecureUserDetails;
-import com.logistimo.services.ServiceException;
-import com.logistimo.social.command.LSRegisterLikeCommand;
 import com.logistimo.collaboration.core.models.ContextModel;
 import com.logistimo.collaboration.core.models.RegisterLikeRequestModel;
 import com.logistimo.collaboration.core.models.RegisterLikeResponseModel;
+import com.logistimo.security.SecureUserDetails;
+import com.logistimo.services.ServiceException;
+import com.logistimo.social.command.LSRegisterLikeCommand;
 import com.logistimo.social.util.CollaborationDomainUtil;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,14 +52,16 @@ public class RegisterLikeAction {
       throws ServiceException {
     //TODO: check possible values of context type
     if (model.getContextType().equalsIgnoreCase("event")) {
-      ContextModel context = CollaborationDomainUtil.getEventContext(model.getContextId(), sUser.getDomainId());
+      ContextModel
+          context =
+          CollaborationDomainUtil.getEventContext(model.getContextId(), sUser.getDomainId());
       model.setContextAttribute(context.getAttribute());
     }
     return executeCommand(model);
   }
 
-  private RegisterLikeResponseModel executeCommand (RegisterLikeRequestModel requestModel) {
-    LSRegisterLikeCommand command = new LSRegisterLikeCommand(restTemplate,requestModel);
+  private RegisterLikeResponseModel executeCommand(RegisterLikeRequestModel requestModel) {
+    LSRegisterLikeCommand command = new LSRegisterLikeCommand(restTemplate, requestModel);
     return command.execute();
   }
 

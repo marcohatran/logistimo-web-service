@@ -40,9 +40,10 @@ public class CollaborationNotificationUtil {
 
   public static void sendSMS(List<IUserAccount> users, String content, IUserAccount domainUser)
       throws MessageHandlingException, IOException {
-      MessageService
-          ms = MessageService
-          .getInstance(MessageService.SMS, domainUser.getCountry(), true, domainUser.getDomainId(), "", null);
-      ms.send(users, content, MessageService.getMessageType(content), null, null, content,0,null);
+    MessageService
+        ms = MessageService
+        .getInstance(MessageService.SMS, domainUser.getCountry(), true, domainUser.getDomainId(),
+            "", null);
+    ms.send(users, content, MessageService.getMessageType(content), null, null, content, 0, null);
   }
 }

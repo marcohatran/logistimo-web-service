@@ -26,7 +26,7 @@
     logistimoApp.controller("AppController",
         function ($scope, $route, $routeParams, $location, $uibModal, requestContext, ngI18nResourceBundle, $timeout,
                   domainCfgService, exportService, userService, $window, $sce, iAuthService, $q, $rootScope,
-                  linkedDomainService, domainService, configService, dashboardService, isSession) {
+                  linkedDomainService, domainService, configService, dashboardService, isSession, isBulletinBoard) {
             var renderContext = requestContext.getRenderContext();
 
             $scope.showpopup = 'showpopup';
@@ -34,7 +34,7 @@
             $rootScope.basePath = '';
 
             $rootScope.isSession = isSession;
-            $rootScope.isBulletinBoard = false;
+            $rootScope.isBulletinBoard = isBulletinBoard;
             $scope.loadMessage = "";
 
 
@@ -781,14 +781,14 @@
                 $scope.initApp();
             }
 
-            $scope.networkAvailable = true;
+            $rootScope.networkAvailable = true;
             $scope.checkNetwork = function(){
-                if($scope.networkAvailable != navigator.onLine) {
+                if ($rootScope.networkAvailable != navigator.onLine) {
                     if(!navigator.onLine) {
-                        $scope.networkAvailable = false;
+                        $rootScope.networkAvailable = false;
                         $scope.$broadcast("offline");
                     } else {
-                        $scope.networkAvailable = true;
+                        $rootScope.networkAvailable = true;
                         $scope.$broadcast("online");
                     }
                 }
@@ -799,39 +799,4 @@
             $scope.checkNetwork();
         }
     );
-    logistimoApp.factory('APIService', function ($http, $q, logistimoCache) {
-        var getExpiryTime = function (cacheOptions) {
-            return new Date(new Date().getTime() + cacheOptions.duration * 60000);
-        };
-        return {
-            get: function (urlStr, cacheOptions) {
-                if (cacheOptions == undefined) {
-                    return $http({method: 'GET', url: urlStr});
-                } else {
-                    var cache = logistimoCache.get(urlStr);
-                    if (cache && cache.expiry < new Date()) {
-                        return $q(function (resolve) {
-                            resolve(JSON.parse(cache.data));
-                        });
-                    } else {
-                        var promise = $http({method: 'GET', url: urlStr});
-                        return $q(function (resolve, reject) {
-                            promise.then(function (data) {
-                                logistimoCache.put(urlStr, {
-                                    expiry: getExpiryTime(cacheOptions),
-                                    data: JSON.stringify(data)
-                                });
-                                resolve(data);
-                            }).catch(function (error) {
-                                reject(error);
-                            });
-                        });
-                    }
-                }
-            },
-            post: function (data, urlStr) {
-                return $http({method: 'POST', data: data, url: urlStr});
-            }
-        }
-    });
 })(angular, logistimoApp);

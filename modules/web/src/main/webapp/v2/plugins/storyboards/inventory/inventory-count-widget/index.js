@@ -95,7 +95,7 @@ angular.module('logistimo.storyboard.inventoryCountWidget', [])
             }
         }
 
-        $scope.computedHeight = parseInt($scope.widget.computedHeight, 10) - 30;
+        $scope.computedHeight = parseInt($scope.widget.computedHeight, 10)-10;
     }]);
 
 logistimoApp.requires.push('logistimo.storyboard.inventoryCountWidget');

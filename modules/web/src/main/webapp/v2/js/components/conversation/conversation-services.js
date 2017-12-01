@@ -22,16 +22,8 @@
  */
 
 var conversationServices = angular.module('conversationServices', []);
-conversationServices.factory('conversationService', ['$http', function ($http) {
+conversationServices.factory('conversationService', ['APIService', function (apiService) {
     return {
-        fetch: function (urlStr) {
-            var promise = $http({method: 'GET', url: urlStr});
-            return promise;
-        },
-        fetchP: function (data, urlStr) {
-            var promise = $http({method: 'POST', data: data, url: urlStr});
-            return promise;
-        },
         getMessages: function (conversationId,offset,size) {
             offset = typeof offset !== 'undefined' ? offset : 0;
             size = typeof size !== 'undefined' ? size : 50;
@@ -40,7 +32,7 @@ conversationServices.factory('conversationService', ['$http', function ($http) {
             if (typeof conversationId !== 'undefined') {
                 urlStr = urlStr + "&conversationId=" + conversationId;
             }
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         getMessagesByObj: function (objType, objId, offset, size, isCnt) {
             offset = typeof offset !== 'undefined' ? offset : 0;
@@ -56,7 +48,7 @@ conversationServices.factory('conversationService', ['$http', function ($http) {
             if(isCnt) {
                 urlStr += "&cnt=true";
             }
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         getMessagesByTag: function (tag, offset, size) {
             offset = typeof offset !== 'undefined' ? offset : 0;
@@ -66,10 +58,10 @@ conversationServices.factory('conversationService', ['$http', function ($http) {
             if (typeof tag !== 'undefined') {
                 urlStr = urlStr + "&tag=" + tag;
             }
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         addMessage: function(objType, objId, message) {
-            return this.fetchP({"data":message},'/s2/api/conversation/message/' + objType + '/' + objId);
+            return apiService.post({"data": message}, '/s2/api/conversation/message/' + objType + '/' + objId);
         }
     }
 }

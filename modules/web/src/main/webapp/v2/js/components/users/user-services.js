@@ -22,22 +22,14 @@
  */
 
 var userServices = angular.module('userServices', []);
-userServices.factory('userService', ['$http', function ($http) {
+userServices.factory('userService', ['APIService', function (apiService) {
     return {
-        fetch: function (urlStr) {
-            var promise = $http({method: 'GET', url: urlStr});
-            return promise;
-        },
-        fetchP: function (data, urlStr) {
-            var promise = $http({method: 'POST', data: data, url: urlStr});
-            return promise;
-        },
         getUsers: function (entityId, srcEntityId) {
             var urlStr = '/s2/api/entities/entity/' + entityId + "/users";
             if (typeof srcEntityId !== 'undefined') {
                 urlStr = urlStr + "?srcEntityId=" + srcEntityId;
             }
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         getUsersByRole: function (role, q, offset, size) {
             offset = typeof offset !== 'undefined' ? offset : 0;
@@ -47,7 +39,7 @@ userServices.factory('userService', ['$http', function ($http) {
             if (typeof q !== 'undefined') {
                 urlStr = urlStr + "&q=" + q;
             }
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         getDomainUsers: function (q, offset, size, utype, includeSuperusers, includeChildDomainUsers) {
             offset = typeof offset !== 'undefined' ? offset : 0;
@@ -66,78 +58,78 @@ userServices.factory('userService', ['$http', function ($http) {
             if (typeof includeChildDomainUsers !== 'undefined') {
                 urlStr = urlStr + "&includeChildDomainUsers=" + includeChildDomainUsers;
             }
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         getFilteredDomainUsers : function(filters){
             var urlStr = '/s2/api/users/domain/users';
-            return this.fetchP(filters,urlStr);
+            return apiService.post(filters, urlStr);
         },
         getElementsByUserFilter : function(pv,pn){
            var urlStr="/s2/api/users/elements/?paramName=" +pv+ "&paramValue="+pn;
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         checkUserAvailability: function (userid) {
-            return this.fetch('/s2/api/users/check/?userid=' + userid);
+            return apiService.get('/s2/api/users/check/?userid=' + userid);
         },
         checkCustomIDAvailability: function (customId, userId) {
             var params = customId;
             if(checkNotNullEmpty(userId)){
                 params += "&userId="+userId;
             }
-            return this.fetch('/s2/api/users/check/custom?customId=' + params);
+            return apiService.get('/s2/api/users/check/custom?customId=' + params);
         },
         createUser: function (user) {
-            return this.fetchP(user, "/s2/api/users/");
+            return apiService.post(user, "/s2/api/users/");
         },
         deleteUsers: function (user) {
-            return this.fetchP("'" + user + "'", "/s2/api/users/delete/");
+            return apiService.post("'" + user + "'", "/s2/api/users/delete/");
         },
         getUser: function (userid) {
-            return this.fetch('/s2/api/users/user/' + userid);
+            return apiService.get('/s2/api/users/user/' + userid);
         },
         getUserMeta: function (userid) {
-            return this.fetch('/s2/api/users/user/meta/' + userid);
+            return apiService.get('/s2/api/users/user/meta/' + userid);
         },
         getUserDetails: function (userid) {
-            return this.fetch('/s2/api/users/user/' + userid + '?isDetail=true');
+            return apiService.get('/s2/api/users/user/' + userid + '?isDetail=true');
         },
         getUsersDetailByIds: function (userIds) {
-            return this.fetch('/s2/api/users/users/?userIds=' + userIds + '&isMessage=true');
+            return apiService.get('/s2/api/users/users/?userIds=' + userIds + '&isMessage=true');
         },
         sendUserMessage: function (message) {
-            return this.fetchP(message, '/s2/api/users/sendmessage/');
+            return apiService.post(message, '/s2/api/users/sendmessage/');
         },
         getUsersMessageStatus: function (offset, size) {
-            return this.fetch('/s2/api/users/msgstatus/?offset=' + offset + '&size=' + size);
+            return apiService.get('/s2/api/users/msgstatus/?offset=' + offset + '&size=' + size);
         },
         updateUser: function (user, userId) {
-            return this.fetchP(user, '/s2/api/users/user/' + userId);
+            return apiService.post(user, '/s2/api/users/user/' + userId);
         },
         updateUserPassword: function (user, userId) {
-            return this.fetch('/s2/api/users/updatepassword/?userId=' + userId + '&opw=' + user.opw + '&pw=' + user.pw);
+            return apiService.get('/s2/api/users/updatepassword/?userId=' + userId + '&opw=' + user.opw + '&pw=' + user.pw);
         },
         resetUserPassword: function (userId, sendType) {
-            return this.fetch('/s2/api/users/resetpassword/?userId=' + userId + '&sendType=' + sendType);
+            return apiService.get('/s2/api/users/resetpassword/?userId=' + userId + '&sendType=' + sendType);
         },
         enableDisableUser: function (userId, action) {
-            return this.fetch('/s2/api/users/userstate/?userId=' + userId + '&action=' + action);
+            return apiService.get('/s2/api/users/userstate/?userId=' + userId + '&action=' + action);
         },
         getRoles: function(edit,eUsrid) {
             edit = typeof edit !== 'undefined' ? edit : false;
             eUsrid = typeof eUsrid !== 'undefined' ? eUsrid : "";
-            return this.fetch('/s2/api/users/roles?edit='+edit+'&euid='+eUsrid);
+            return apiService.get('/s2/api/users/roles?edit=' + edit + '&euid=' + eUsrid);
         },
         switchConsole: function(){
-            return this.fetch('/s2/api/users/switch');
+            return apiService.get('/s2/api/users/switch');
         },
         addAccessibleDomains: function (userId, accDids) {
-            return this.fetchP({userId: userId, accDids: accDids}, "/s2/api/users/addaccessibledomains");
+            return apiService.post({userId: userId, accDids: accDids}, "/s2/api/users/addaccessibledomains");
         },
         removeAccessibleDomain: function (userId, domainId) {
-            return this.fetch("/s2/api/users/removeaccessibledomain?userId="+userId+"&domainId="+domainId);
+            return apiService.get("/s2/api/users/removeaccessibledomain?userId=" + userId + "&domainId=" + domainId);
         },
         forceLogoutOnMobile: function (userId) {
-            return this.fetch("/s2/api/users/forcelogoutonmobile?userId="+userId);
+            return apiService.get("/s2/api/users/forcelogoutonmobile?userId=" + userId);
         }
     }
 }

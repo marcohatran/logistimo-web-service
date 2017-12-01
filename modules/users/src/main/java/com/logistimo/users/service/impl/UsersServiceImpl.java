@@ -1677,10 +1677,11 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
     List<String> parameters = new ArrayList<>();
     StringBuilder queryString = new StringBuilder();
     if (org.springframework.util.StringUtils.isEmpty(objectType)
-           || "store".equalsIgnoreCase(objectType)) {
-      queryString.append("SELECT * FROM USERACCOUNT WHERE USERID IN (SELECT USERID FROM USERTOKIOSK WHERE KIOSKID = ?");
+        || "store".equalsIgnoreCase(objectType)) {
+      queryString.append(
+          "SELECT * FROM USERACCOUNT WHERE USERID IN (SELECT USERID FROM USERTOKIOSK WHERE KIOSKID = ?");
       parameters.add(String.valueOf(objectId));
-    } else if("domain".equalsIgnoreCase(objectType)) {
+    } else if ("domain".equalsIgnoreCase(objectType)) {
       queryString.append("SELECT * FROM USERACCOUNT WHERE SDID = ? ");
       parameters.add(String.valueOf(objectId));
     }

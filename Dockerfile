@@ -80,7 +80,8 @@ ENV MYSQL_HOST_URL="jdbc:mariadb://localhost/logistimo?useUnicode=true&amp;chara
         CON_MAX_WAIT=1000 \
         CACHE_TYPE=none \
         STATUS_FILE= \
-        JMX_AGENT_PORT=8088
+        JMX_AGENT_PORT=8088 \
+        MAPI_URL=http://localhost:8080
 
 ENV JAVA_OPTS $JAVA_OPTS
 

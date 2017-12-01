@@ -22,22 +22,14 @@
  */
 
 var entityServices = angular.module('entityServices', []);
-entityServices.factory('entityService', ['$http', function ($http) {
+entityServices.factory('entityService', ['APIService', function (apiService) {
     return {
-        fetch: function (urlStr) {
-            var promise = $http({method: 'GET', url: urlStr});
-            return promise;
-        },
-        fetchP: function (data, urlStr) {
-            var promise = $http({method: 'POST', data: data, url: urlStr});
-            return promise;
-        },
         get: function (entityId,skipAuthCheck) {
             var oParams = "";
             if (typeof(skipAuthCheck) !== 'undefined') {
                 oParams += "?skipAuthCheck=" + skipAuthCheck;
             }
-            return this.fetch('/s2/api/entities/entity/' + entityId + oParams);
+            return apiService.get('/s2/api/entities/entity/' + entityId + oParams);
         },
         getLinksCount: function (entityId,searchkey,linkedEntityId,entityTag) {
             var oParams = "";
@@ -50,7 +42,7 @@ entityServices.factory('entityService', ['$http', function ($http) {
             if(typeof entityTag !== 'undefined') {
                 oParams += (oParams == '' ? "?" : "&") + "entityTag=" + entityTag;
             }
-            return this.fetch('/s2/api/entities/entity/linkscount/' + entityId + oParams);
+            return apiService.get('/s2/api/entities/entity/linkscount/' + entityId + oParams);
         },
         getCustomers: function (entityId,size,offset,searchkey,linkedEntityId,entityTag) {
             var oParams = "";
@@ -69,7 +61,7 @@ entityServices.factory('entityService', ['$http', function ($http) {
             if(typeof entityTag !== 'undefined') {
                 oParams += (oParams == '' ? "?" : "&") + "entityTag=" + entityTag;
             }
-            return this.fetch('/s2/api/entities/entity/' + entityId + '/customers' + oParams);
+            return apiService.get('/s2/api/entities/entity/' + entityId + '/customers' + oParams);
         },
         getVendors: function (entityId,size,offset,searchKey,linkedEntityId,entityTag) {
             var oParams = "";
@@ -89,7 +81,7 @@ entityServices.factory('entityService', ['$http', function ($http) {
                 oParams += (oParams == '' ? "?" : "&") + "entityTag=" + entityTag;
             }
 
-            return this.fetch('/s2/api/entities/entity/' + entityId + '/vendors'+oParams);
+            return apiService.get('/s2/api/entities/entity/' + entityId + '/vendors' + oParams);
         },
         getAll: function (offset, size,tag, q, mt, excludedTag, linkedEntityId) {
             offset = typeof offset !== 'undefined' ? offset : 0;
@@ -109,32 +101,36 @@ entityServices.factory('entityService', ['$http', function ($http) {
             if(checkNotNullEmpty(linkedEntityId)) {
                 urlStr = urlStr + "&linkedEntityId=" + linkedEntityId;
             }
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         deleteEntities: function (entities) {
-            return this.fetchP("'" + entities + "'", '/s2/api/entities/delete/');
+            return apiService.post("'" + entities + "'", '/s2/api/entities/delete/');
         },
         createEntity: function (entity) {
-            return this.fetchP(entity, '/s2/api/entities/');
+            return apiService.post(entity, '/s2/api/entities/');
         },
         update: function (entity) {
-            return this.fetchP(entity, "/s2/api/entities/update");
+            return apiService.post(entity, "/s2/api/entities/update");
         },
         getFilteredEntity: function (text, sourceDomainOnly) {
             var urlStr = '/s2/api/entities/filter?text=' + text;
             if(checkNotNullEmpty(sourceDomainOnly)){
                 urlStr += '&sdOnly=true';
             }
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         addRelation: function (relation) {
-            return this.fetchP(relation, "/s2/api/entities/addrelation");
+            return apiService.post(relation, "/s2/api/entities/addrelation");
         },
         addMaterials: function (materials, entityIds, overwrite) {
-            return this.fetchP({materials: materials, entityIds: entityIds, overwrite: overwrite}, "/s2/api/entities/materials/");
+            return apiService.post({
+                materials: materials,
+                entityIds: entityIds,
+                overwrite: overwrite
+            }, "/s2/api/entities/materials/");
         },
         editMaterials: function (entityId, materials) {
-            return this.fetchP({"materials": materials}, "/s2/api/entities/" + entityId + "/materials/");
+            return apiService.post({"materials": materials}, "/s2/api/entities/" + entityId + "/materials/");
         },
         getMaterials: function (entityId, tag, offset, size) {
             offset = typeof offset !== 'undefined' ? offset : 0;
@@ -143,7 +139,7 @@ entityServices.factory('entityService', ['$http', function ($http) {
             if (checkNotNullEmpty(tag)) {
                 urlStr = urlStr + "&tag=" + tag;
             }
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         getMaterialStats: function (entityId, tag, offset, size) {
             offset = typeof offset !== 'undefined' ? offset : 0;
@@ -152,25 +148,34 @@ entityServices.factory('entityService', ['$http', function ($http) {
             if (checkNotNullEmpty(tag)) {
                 urlStr = urlStr + "&tag=" + tag;
             }
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         removeMaterials: function (materials, entityIds) {
-            return this.fetchP({materials: materials, entityIds: entityIds}, "/s2/api/entities/materials/remove/");
+            return apiService.post({materials: materials, entityIds: entityIds}, "/s2/api/entities/materials/remove/");
         },
         updateEntityOrder: function (ordEntities, lt, eid, isRTAvailable) {
-            return this.fetchP({ ordEntities: ordEntities, lt: lt, eid: eid, rta: isRTAvailable}, "/s2/api/entities/reorder");
+            return apiService.post({
+                ordEntities: ordEntities,
+                lt: lt,
+                eid: eid,
+                rta: isRTAvailable
+            }, "/s2/api/entities/reorder");
         },
         updateEntityRelation: function (relationData) {
-            return this.fetchP(relationData, "/s2/api/entities/updaterelation");
+            return apiService.post(relationData, "/s2/api/entities/updaterelation");
         },
         updateManagedEntityOrder: function (ordEntities, uid, isRTAvailable) {
-            return this.fetchP({ordEntities: ordEntities, uid: uid, rta: isRTAvailable}, "/s2/api/entities/manreorder");
+            return apiService.post({
+                ordEntities: ordEntities,
+                uid: uid,
+                rta: isRTAvailable
+            }, "/s2/api/entities/manreorder");
         },
         removeEntityRelation: function (linkIds) {
-            return this.fetchP(linkIds, "/s2/api/entities/deleteRelation");
+            return apiService.post(linkIds, "/s2/api/entities/deleteRelation");
         },
         getMonthlyUsageStats: function (entityId) {
-            return this.fetch("/s2/api/entities/monthlyStats/" + entityId);
+            return apiService.get("/s2/api/entities/monthlyStats/" + entityId);
         },
         getUserEntities: function (userId,size,offset) {
             var oParams = "";
@@ -180,34 +185,34 @@ entityServices.factory('entityService', ['$http', function ($http) {
             if(typeof size !== 'undefined'){
                 oParams += (oParams == '' ? "?" : "&") + "size=" + size.toString();
             }
-            return this.fetch('/s2/api/entities/user/' + userId + oParams);
+            return apiService.get('/s2/api/entities/user/' + userId + oParams);
         },
         setPermission: function (per) {
-            return this.fetchP(per,'/s2/api/entities/permission');
+            return apiService.post(per, '/s2/api/entities/permission');
         },
         getPermission: function (eid) {
-            return this.fetch('/s2/api/entities/permission?eId='+eid);
+            return apiService.get('/s2/api/entities/permission?eId=' + eid);
         },
         checkEntityAvailability: function (enm) {
-            return this.fetch('/s2/api/entities/check/?enm=' + enm);
+            return apiService.get('/s2/api/entities/check/?enm=' + enm);
         },
         setStockBoardConfig: function(stockboard){
-            return this.fetchP(stockboard, '/s2/api/entities/stockboard');
+            return apiService.post(stockboard, '/s2/api/entities/stockboard');
         },
         getStockBoard: function(entityId){
-            return this.fetch('/s2/api/entities/stockboard?entityId=' + entityId);
+            return apiService.get('/s2/api/entities/stockboard?entityId=' + entityId);
         },
         moveEntity: function(kids,did) {
-            return this.fetchP(null,'/s2/api/entities/move?kids='+kids+'&dDid='+did);
+            return apiService.post(null, '/s2/api/entities/move?kids=' + kids + '&dDid=' + did);
         },
         getDomainData: function(entityId) {
-            return this.fetch('/s2/api/entities/domains?eId=' + entityId);
+            return apiService.get('/s2/api/entities/domains?eId=' + entityId);
         },
         getFilteredDomains: function(entityId,text) {
-            return this.fetch('/s2/api/entities/filterdomains?eId=' + entityId + '&text='+text+'');
+            return apiService.get('/s2/api/entities/filterdomains?eId=' + entityId + '&text=' + text + '');
         },
         domainUpdate: function(entityIds,domainIds,type) {
-            return this.fetchP(null,'/s2/api/entities/domainupdate?eIds=' + entityIds + '&dIds='+domainIds+'&type='+type);
+            return apiService.post(null, '/s2/api/entities/domainupdate?eIds=' + entityIds + '&dIds=' + domainIds + '&type=' + type);
         },
         getDomainEntities: function(offset, size, tag, q) {
             offset = typeof offset !== 'undefined' ? offset : 0;
@@ -219,26 +224,26 @@ entityServices.factory('entityService', ['$http', function ($http) {
             if (checkNotNullEmpty(q)) {
                 urlStr = urlStr + "&q=" + q;
             }
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         getRelationship: function(entityId) {
-            return this.fetch('/s2/api/entities/' + entityId+ '/relationship');
+            return apiService.get('/s2/api/entities/' + entityId + '/relationship');
         },
         getNetworkView: function(domainId) {
-            return this.fetch('/s2/api/entities/networkview?domainId=' + domainId);
+            return apiService.get('/s2/api/entities/networkview?domainId=' + domainId);
         },
         getLocationSuggestion: function (text, type, parentLocation) {
             var urlStr = '/s2/api/entities/location?text=' + text + '&type=' + type;
             if(checkNotNullEmpty(parentLocation)){
                 urlStr += '&parentLoc='+JSON.stringify(parentLocation);
             }
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         setApprovers: function (data) {
-            return this.fetchP(data, '/s2/api/entities/approvers');
+            return apiService.post(data, '/s2/api/entities/approvers');
         },
         getApprovers: function(kioskId) {
-            return this.fetch('/s2/api/entities/approvers?kioskId='+kioskId);
+            return apiService.get('/s2/api/entities/approvers?kioskId=' + kioskId);
         }
     }
 }]);

@@ -45,7 +45,7 @@ public class LSSocialLikeModel implements Serializable {
 
   private LSSocialLikerModel liker;
 
-  private String [] tags;
+  private String[] tags;
 
   private Integer counts;
 

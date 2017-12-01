@@ -25,17 +25,13 @@
  * Created by mohan on 02/12/14.
  */
 var actServices = angular.module('actServices', []);
-actServices.factory('actServices', ['$http', function ($http) {
+actServices.factory('actServices', ['APIService', function (apiService) {
     return {
-        fetch: function (urlStr) {
-            var promise = $http({method: 'GET', url: urlStr});
-            return promise;
-        },
         getAccountConfig: function () {
-            return this.fetch('/s2/api/accounts/config');
+            return apiService.get('/s2/api/accounts/config');
         },
         getActDetails: function (kioskId, yr, type, sb, offset, size) {
-            return this.fetch('/s2/api/accounts/?kioskId=' + kioskId + '&type=' + type + '&yr=' + yr + '&sb=' + sb + '&offset=' + offset + '&size=' + size);
+            return apiService.get('/s2/api/accounts/?kioskId=' + kioskId + '&type=' + type + '&yr=' + yr + '&sb=' + sb + '&offset=' + offset + '&size=' + size);
         }
     }
 }

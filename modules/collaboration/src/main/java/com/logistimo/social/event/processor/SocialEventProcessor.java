@@ -24,9 +24,9 @@
 package com.logistimo.social.event.processor;
 
 import com.codahale.metrics.Meter;
+import com.logistimo.collaboration.core.events.Event;
 import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.logger.XLog;
-import com.logistimo.collaboration.core.events.Event;
 import com.logistimo.social.event.handler.Handler;
 import com.logistimo.social.event.registry.HandlerRegistry;
 import com.logistimo.utils.MetricsUtil;
@@ -45,10 +45,12 @@ public class SocialEventProcessor<E extends Event> {
   @org.apache.camel.Handler
   public void execute(E e) {
     jmsMeter.mark();
-    log.info("processing events in logistimo {0}",e);
-    HandlerRegistry registry = StaticApplicationContext.getApplicationContext().getBean(HandlerRegistry.class);
+    log.info("processing events in logistimo {0}", e);
+    HandlerRegistry
+        registry =
+        StaticApplicationContext.getApplicationContext().getBean(HandlerRegistry.class);
     List<Handler> handlers = registry.getEventHandlers(e);
-    for (Handler handler:handlers) {
+    for (Handler handler : handlers) {
       handler.handle(e);
     }
   }

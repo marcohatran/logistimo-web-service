@@ -25,13 +25,13 @@ package com.logistimo.social.provider;
 
 import com.google.gson.GsonBuilder;
 
+import com.logistimo.collaboration.core.models.ContextModel;
 import com.logistimo.config.models.EventSummaryConfigModel;
 import com.logistimo.domains.service.impl.DomainsServiceImpl;
 import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.exception.SystemException;
 import com.logistimo.logger.XLog;
 import com.logistimo.services.ServiceException;
-import com.logistimo.collaboration.core.models.ContextModel;
 import com.logistimo.social.model.ContentQuerySpecs;
 import com.logistimo.social.util.CollaborationDomainUtil;
 import com.logistimo.social.util.CollaborationMessageUtil;
@@ -76,7 +76,7 @@ public class ContentProvider {
 
   public String generateContent(ContentQuerySpecs query) {
 
-    if(!"event".equals(query.getContextType())) {
+    if (!"event".equals(query.getContextType())) {
       return "";
     }
     String user = query.getUser();
@@ -89,7 +89,8 @@ public class ContentProvider {
             eventContext.getCategory() + "." + eventContext.getEventType() + ".text"
             , userAccount.getLocale()
             , new Object[]{userAccount.getFullName(),
-                getObjectText(query.getObjectId(), query.getObjectType()),getDuration(eventContext,userAccount.getLocale())});
+                getObjectText(query.getObjectId(), query.getObjectType()),
+                getDuration(eventContext, userAccount.getLocale())});
     return mainContent;
   }
 
@@ -103,14 +104,15 @@ public class ContentProvider {
         name = entitiesService.getKiosk(Long.valueOf(objectId)).getName();
       }
     } catch (ServiceException se) {
-      log.severe("Error with getting name for collaboration object with type {0} and id {1}",objectType,objectId,se);
-       throw new SystemException(se,"CL004",objectType,objectId);
+      log.severe("Error with getting name for collaboration object with type {0} and id {1}",
+          objectType, objectId, se);
+      throw new SystemException(se, "CL004", objectType, objectId);
     }
     sb.append(name).append("\'s");
     return sb.toString();
   }
 
-  private String getDuration(ContextModel eventContext,Locale locale) {
+  private String getDuration(ContextModel eventContext, Locale locale) {
     EventSummaryConfigModel.Threshold
         threshold =
         new GsonBuilder().create()
@@ -118,20 +120,21 @@ public class ContentProvider {
     String event = eventContext.getEventType();
     String category = eventContext.getCategory();
 
-    if ("inventory".equals(category) && "inventory_performance_by_entity".equals(event)){
-      return getConditionValueWithUnit(threshold,"duration",locale);
+    if ("inventory".equals(category) && "inventory_performance_by_entity".equals(event)) {
+      return getConditionValueWithUnit(threshold, "duration", locale);
     } else if ("assets".equals(category) && "asset_performance_by_entity".equals(event)) {
-      return getConditionValueWithUnit(threshold,"duration",locale);
+      return getConditionValueWithUnit(threshold, "duration", locale);
     } else if ("activity".equals(category) && "data_entry_performance_by_entity".equals(event)) {
-      return getConditionValueWithUnit(threshold,"period",locale);
+      return getConditionValueWithUnit(threshold, "period", locale);
     } else if ("supply".equals(category) && "supply_performance".equals(event)) {
-      return getConditionValueWithUnit(threshold,"period",locale);
+      return getConditionValueWithUnit(threshold, "period", locale);
     }
     return "";
   }
 
 
-  private String getConditionValueWithUnit (EventSummaryConfigModel.Threshold threshold, String name, Locale locale) {
+  private String getConditionValueWithUnit(EventSummaryConfigModel.Threshold threshold, String name,
+                                           Locale locale) {
     Optional<EventSummaryConfigModel.Condition> condition = threshold.getConditions().stream()
         .filter(cond -> cond.getName().equalsIgnoreCase(name))
         .findFirst();
@@ -139,16 +142,18 @@ public class ContentProvider {
     if (condition.isPresent()) {
       EventSummaryConfigModel.Condition conditionObj = condition.get();
       if (conditionObj.getValue() != null && !StringUtils.isEmpty(conditionObj.getValue())) {
-        ret =  conditionObj.getValue();
+        ret = conditionObj.getValue();
       }
     }
     if (!StringUtils.isEmpty(ret)) {
       try {
         Integer count = Integer.parseInt(ret);
         if (count <= 1) {
-          return CollaborationMessageUtil.constructMessage("months.singular.text",locale, new Object[]{count});
+          return CollaborationMessageUtil
+              .constructMessage("months.singular.text", locale, new Object[]{count});
         } else {
-          return CollaborationMessageUtil.constructMessage("months.plural.text",locale,new Object[]{count});
+          return CollaborationMessageUtil
+              .constructMessage("months.plural.text", locale, new Object[]{count});
         }
       } catch (NumberFormatException ex) {
         return "";

@@ -22,38 +22,34 @@
  */
 
 var configServices = angular.module('configServices', []);
-configServices.factory('configService', ['$http', function ($http) {
+configServices.factory('configService', ['APIService', function (apiService) {
     return {
-        fetch: function (urlStr) {
-            var promise = $http({method: 'GET', url: urlStr});
-            return promise;
-        },
         getLocations: function () {
-            return this.fetch('/s2/api/config/locations');
+            return apiService.get('/s2/api/config/locations');
         },
         getCurrentDomainLocations: function () {
-            return this.fetch('/s2/api/config/locations/currentdomain');
+            return apiService.get('/s2/api/config/locations/currentdomain');
         },
         getCurrencies: function () {
-            return this.fetch('/s2/api/config/currencies');
+            return apiService.get('/s2/api/config/currencies');
         },
         getLanguages: function () {
-            return this.fetch('/s2/api/config/languages');
+            return apiService.get('/s2/api/config/languages');
         },
         getMobileLanguages: function () {
-            return this.fetch('/s2/api/config/languages?type=mobile');
+            return apiService.get('/s2/api/config/languages?type=mobile');
         },
         getTimezones: function () {
-            return this.fetch('/s2/api/config/timezones');
+            return apiService.get('/s2/api/config/timezones');
         },
         getTimezonesWithOffset: function () {
-            return this.fetch('/s2/api/config/timezones/offset');
+            return apiService.get('/s2/api/config/timezones/offset');
         },
         getGeneralConfig: function() {
-            return this.fetch('/s2/api/config/generalconfig');
+            return apiService.get('/s2/api/config/generalconfig');
         },
         getTimezonesKVReversed: function () {
-            return this.fetch('/s2/api/config/timezoneskvreversed');
+            return apiService.get('/s2/api/config/timezoneskvreversed');
         }
     }
 }]);

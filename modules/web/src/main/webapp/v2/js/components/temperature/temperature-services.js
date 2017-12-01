@@ -22,58 +22,50 @@
  */
 
 var tempServices = angular.module('tempServices', []);
-tempServices.factory('tempService', ['$http', function ($http) {
+tempServices.factory('tempService', ['APIService', function (apiService) {
     return {
-        fetch: function (urlStr) {
-            var promise = $http({method: 'GET', url: urlStr});
-            return promise;
-        },
-        fetchP: function (data, urlStr) {
-            var promise = $http({method: 'POST', data: data, url: urlStr});
-            return promise;
-        },
         getMaterialDevices: function (entityId, materialId) {
-            return this.fetch('/s2/api/temperature/devices/' + entityId + '/' + materialId);
+            return apiService.get('/s2/api/temperature/devices/' + entityId + '/' + materialId);
         },
         saveInvntryItems: function (entityId, materialId, invItem) {
-            return this.fetchP(invItem, '/s2/api/temperature/devices/' + entityId + '/' + materialId);
+            return apiService.post(invItem, '/s2/api/temperature/devices/' + entityId + '/' + materialId);
         },
         saveInvntryItem: function (entityId, materialId, invItem, pushConfig) {
-            return this.fetchP(invItem, '/s2/api/temperature/device/' + entityId + '/' + materialId + '?pushconfig=' + pushConfig);
+            return apiService.post(invItem, '/s2/api/temperature/device/' + entityId + '/' + materialId + '?pushconfig=' + pushConfig);
         },
         getTempDetails: function (entityId, materialId) {
-            return this.fetch('/s2/api/temperature/monitor/' + entityId + '/' + materialId);
+            return apiService.get('/s2/api/temperature/monitor/' + entityId + '/' + materialId);
         },
         getTagSummary: function (domainId) {
-            return this.fetch('/s2/api/temperature/tags?tagid=' + domainId);
+            return apiService.get('/s2/api/temperature/tags?tagid=' + domainId);
         },
 
         getChildTagSummary: function (domainId) {
-            return this.fetch('/s2/api/temperature/tags/child?tagid=' + domainId);
+            return apiService.get('/s2/api/temperature/tags/child?tagid=' + domainId);
         },
 
         getTagAbnormalDevices: function (domainId) {
-            return this.fetch('/s2/api/temperature/tags/abnormal?tagid=' + domainId);
+            return apiService.get('/s2/api/temperature/tags/abnormal?tagid=' + domainId);
         },
 
         getAssets: function (kioskId, deviceId, vendorId, filter, duration, location, locType, offset, size) {
-            return this.fetch('/s2/api/temperature/assets?kioskid=' + kioskId + '&deviceid=' + deviceId + '&vendorid=' + vendorId + '&filter=' + filter + '&duration=' + duration + '&location=' + location + '&loctype=' + locType + '&offset=' + offset + '&size=' + size);
+            return apiService.get('/s2/api/temperature/assets?kioskid=' + kioskId + '&deviceid=' + deviceId + '&vendorid=' + vendorId + '&filter=' + filter + '&duration=' + duration + '&location=' + location + '&loctype=' + locType + '&offset=' + offset + '&size=' + size);
         },
 
         getInvntryItemsByDomain: function (domainId, deviceId) {
-            return this.fetch('/s2/api/temperature/assets/' + deviceId);
+            return apiService.get('/s2/api/temperature/assets/' + deviceId);
         },
 
         getDeviceInfo: function (vendorId, deviceId) {
-            return this.fetch('/s2/api/temperature/device/' + vendorId + '/' + deviceId);
+            return apiService.get('/s2/api/temperature/device/' + vendorId + '/' + deviceId);
         },
 
         getDeviceConfig: function (vendorId, deviceId) {
-            return this.fetch('/s2/api/temperature/device/config/' + vendorId + '/' + deviceId);
+            return apiService.get('/s2/api/temperature/device/config/' + vendorId + '/' + deviceId);
         },
 
         getRecentAlerts: function (vendorId, deviceId, page, size) {
-            return this.fetch('/s2/api/temperature/device/alerts/recent/' + vendorId + '/' + deviceId + '?page=' + page + '&size=' + size);
+            return apiService.get('/s2/api/temperature/device/alerts/recent/' + vendorId + '/' + deviceId + '?page=' + page + '&size=' + size);
         },
 
         getTemperatures: function (vendorId, deviceId, size, sint, tdate) {
@@ -81,61 +73,61 @@ tempServices.factory('tempService', ['$http', function ($http) {
             if(checkNotNullEmpty(tdate)){
                 url += '&edate=' + formatDate2Url(tdate);
             }
-            return this.fetch(url);
+            return apiService.get(url);
         },
 
         getCurrentTemp: function (vendorId, deviceId) {
-            return this.fetch('/s2/api/temperature/current/' + vendorId + '/' + deviceId);
+            return apiService.get('/s2/api/temperature/current/' + vendorId + '/' + deviceId);
         },
 
         getDeviceStats: function (vendorId, deviceId, from, to) {
-            return this.fetch('/s2/api/temperature/stats/' + vendorId + '/' + deviceId + '?from=' + from + '&to=' + to);
+            return apiService.get('/s2/api/temperature/stats/' + vendorId + '/' + deviceId + '?from=' + from + '&to=' + to);
         },
 
         getVendorMapping: function () {
-            return this.fetch('/s2/api/temperature/vendors');
+            return apiService.get('/s2/api/temperature/vendors');
         },
 
         getDomainVendorMapping: function () {
-            return this.fetch('/s2/api/temperature/domain/vendors');
+            return apiService.get('/s2/api/temperature/domain/vendors');
         },
 
         pushPullConfig: function (requestData, domainId) {
-            return this.fetchP(requestData, '/s2/api/temperature/device/config');
+            return apiService.post(requestData, '/s2/api/temperature/device/config');
         },
 
         updateDeviceInfo: function (deviceInfo, domainId) {
-            return this.fetchP(deviceInfo, '/s2/api/temperature/device');
+            return apiService.post(deviceInfo, '/s2/api/temperature/device');
         },
 
         updateDeviceConfig: function (deviceConfig, domainId, pushConfig) {
-            return this.fetchP(deviceConfig, '/s2/api/temperature/config?pushConfig=' + pushConfig);
+            return apiService.post(deviceConfig, '/s2/api/temperature/config?pushConfig=' + pushConfig);
         },
 
         /*updateInvntryItems: function (kioskId, materialId, deviceInfo) {
-            return this.fetchP(deviceInfo, '/i?a=arsni&kid=' + kioskId + '&mid=' + materialId);
+         return apiService.post(deviceInfo, '/i?a=arsni&kid=' + kioskId + '&mid=' + materialId);
         },*/
 
         /*createDevice: function (deviceInfo, domainId, kioskId, materialId) {
-            return this.fetchP("", '/tempmonitoring?a=register&domainid=' + domainId + '&kioskid=' + kioskId + '&materialid=' + materialId + '&devicestoaddjson=' + JSON.stringify(deviceInfo));
+         return apiService.post("", '/tempmonitoring?a=register&domainid=' + domainId + '&kioskid=' + kioskId + '&materialid=' + materialId + '&devicestoaddjson=' + JSON.stringify(deviceInfo));
         },*/
 
         getEntityInformation: function (kioskId) {
-            return this.fetch('/s2/api/entities/entity/' + kioskId);
+            return apiService.get('/s2/api/entities/entity/' + kioskId);
         },
 
         getMaterialInformation: function (materialId) {
-            return this.fetch('/s2/api/materials/material/' + materialId);
+            return apiService.get('/s2/api/materials/material/' + materialId);
         },
 
         getDevices: function (entityId) {
             if(!checkNotNullEmpty(entityId)){
                 entityId = -1;
             }
-            return this.fetch('/s2/api/temperature/devices/' + entityId);
+            return apiService.get('/s2/api/temperature/devices/' + entityId);
         },
 
         getDomainLocation: function () {
-            return this.fetch('/s2/api/temperature/domain/location');
+            return apiService.get('/s2/api/temperature/domain/location');
         }
     }}]);

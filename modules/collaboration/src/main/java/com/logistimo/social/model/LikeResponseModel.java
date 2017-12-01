@@ -29,7 +29,7 @@ import java.util.List;
 /**
  * Created by kumargaurav on 09/11/17.
  */
-public class LikeResponseModel implements Serializable{
+public class LikeResponseModel implements Serializable {
 
   private String objectid;
 

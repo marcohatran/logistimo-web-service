@@ -25,9 +25,9 @@ package com.logistimo.social.util;
 
 import com.google.gson.GsonBuilder;
 
+import com.logistimo.collaboration.core.models.ContextModel;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.EventSummaryConfigModel;
-import com.logistimo.collaboration.core.models.ContextModel;
 
 import java.util.List;
 import java.util.Optional;
@@ -37,7 +37,7 @@ import java.util.Optional;
  */
 public class CollaborationDomainUtil {
 
-  private CollaborationDomainUtil(){
+  private CollaborationDomainUtil() {
 
   }
 
@@ -47,8 +47,10 @@ public class CollaborationDomainUtil {
     cmodel.setEventId(eventId);
     DomainConfig dc = DomainConfig.getInstance(domainId);
     EventSummaryConfigModel config = dc.getEventSummaryConfig();
-    if (config != null && config.getEvents() !=null) {
-      Optional<EventSummaryConfigModel.Events> events = getEventByEventId(config.getEvents(), eventId);
+    if (config != null && config.getEvents() != null) {
+      Optional<EventSummaryConfigModel.Events>
+          events =
+          getEventByEventId(config.getEvents(), eventId);
       if (events.isPresent()) {
         cmodel.setCategory(events.get().getCategory());
         cmodel.setEventType(events.get().getType());
@@ -63,14 +65,16 @@ public class CollaborationDomainUtil {
     return cmodel;
   }
 
-  private static Optional<EventSummaryConfigModel.Events> getEventByEventId(List<EventSummaryConfigModel.Events> events,
-                                                                            String eventId) {
+  private static Optional<EventSummaryConfigModel.Events> getEventByEventId(
+      List<EventSummaryConfigModel.Events> events,
+      String eventId) {
     return events.stream().filter(e -> e.getThresholds().stream()
         .filter(t -> t.getId().equalsIgnoreCase(eventId)).findFirst().isPresent()).findFirst();
   }
 
-  private static Optional<EventSummaryConfigModel.Threshold> getThresholdByEventId(List<EventSummaryConfigModel.Threshold> thresholds,
-                                                                                   String eventId) {
+  private static Optional<EventSummaryConfigModel.Threshold> getThresholdByEventId(
+      List<EventSummaryConfigModel.Threshold> thresholds,
+      String eventId) {
     return thresholds.stream().
         filter(threshold -> threshold.getId().equalsIgnoreCase(eventId)).findFirst();
   }

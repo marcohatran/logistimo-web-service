@@ -36,11 +36,12 @@ import java.util.ResourceBundle;
  */
 public class CollaborationMessageUtil {
 
-  private CollaborationMessageUtil() {}
+  private CollaborationMessageUtil() {
+  }
 
 
   public static String constructMessage(String key, Locale locale) {
-    String message = getParameterizedMessage(key,locale);
+    String message = getParameterizedMessage(key, locale);
     if (StringUtils.isNotEmpty(message)) {
       return message;
     }
@@ -58,7 +59,8 @@ public class CollaborationMessageUtil {
   private static String getParameterizedMessage(String key, Locale locale) {
     ResourceBundle
         resourceBundle =
-        Resources.get().getBundle("CollaborationMessages", locale != null ? locale : Locale.ENGLISH);
+        Resources.get()
+            .getBundle("CollaborationMessages", locale != null ? locale : Locale.ENGLISH);
     return resourceBundle.getString(key);
   }
 }

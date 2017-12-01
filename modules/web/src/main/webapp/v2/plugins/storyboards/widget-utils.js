@@ -144,6 +144,7 @@ function constructMapData(event, init, scope, INVENTORY, $sce, mapRange, mapColo
     scope.subCaption = '';
     var iEntEvent = false;
     var iTempEvent = false;
+    var eventIndicators = false;
     if (event == INVENTORY.stock.STOCKOUT) {
         subData = scope.dashboardView.inv[INVENTORY.stock.STOCKOUT];
         scope.caption = "Inventory";
@@ -190,8 +191,16 @@ function constructMapData(event, init, scope, INVENTORY, $sce, mapRange, mapColo
         scope.caption = "Temperature";
         scope.subCaption = "<b>Status: </b> Unknown";
         iTempEvent = true;
+    } else if(event == 'es') {
+        subData = scope.dashboardView.event["es"];
+        eventIndicators = true;
     }
-    var allSubData = iEntEvent ? scope.dashboardView.ent["i"] : (iTempEvent ? subData : scope.dashboardView.inv["n"]);
+    if(eventIndicators){
+        var allSubData = scope.dashboardView.event['es'];
+    }else {
+        var allSubData = iEntEvent ? scope.dashboardView.ent["i"] :
+            (iTempEvent ? subData : scope.dashboardView.inv["n"]);
+    }
     var fPeriod;
     if (!iTempEvent) {
         fPeriod = scope.period == "0" ? (iEntEvent ? scope.aper : "0") : scope.period;
@@ -298,8 +307,17 @@ function constructMapData(event, init, scope, INVENTORY, $sce, mapRange, mapColo
                 }
                 o.label = n;
                 o.value = per;
+                if(eventIndicators){
+                    o.value = value;
+                    o.label = o.value;
+                    o.displayValue = o.value.toString();
+                    o.showLabel = 1;
+                    scope.mapOpt.labelConnectorAlpha = 1;
+                }else{
+                    o.displayValue = "";
+                    scope.mapOpt.labelConnectorAlpha = 0;
+                }
                 // o.displayValue = o.label + "<br/>" + per + "%";
-                o.displayValue = "";
                 if (iEntEvent) {
                     o.toolText = o.label + ": " + value + " of " + den + " " + scope.resourceBundle['kiosks.lower'];
                 } else if (iTempEvent) {

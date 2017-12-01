@@ -3984,6 +3984,25 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
     font-weight:bold;
 }
 
+.widget-title-text {
+    font-size: large;
+    font-family: "Helvetica Neue", Arial;
+    font-weight:normal;
+    margin-bottom:0px;
+}
+.widget-sub-title-text {
+    font-size: larger;
+    font-family: "Helvetica Neue", Arial;
+    font-weight:normal;
+    margin-bottom:0px;
+    color:#999;
+}
+.widget-text {
+    font-size: small;
+    font-family: "Helvetica Neue", Arial;
+    font-weight:normal;
+    color: #2596cf;
+}
 .mbn4{
     margin-bottom: -4px;
 }
@@ -4041,5 +4060,38 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
 .event-icon{
     height:60px;
     width: 100%;
+}
+.count-widget{
+    height: 310px;
+    display: table;
+    width: 100%;
+    text-align: center;
+}
+
+.count-text{
+    display: table-cell;
+    vertical-align: middle;
+}
+.bulletin-board-event-image {
+    display: table-cell;
+    vertical-align:top;
+    padding-top:10px;
+    padding-bottom:10px;
+    width: 30px;
+}
+.widget-no-data {
+    display: table-cell;
+    vertical-align: middle;
+    font-family: Verdana, sans;
+    font-size: 10px;
+    fill: rgb(102, 102, 102);
+    stroke: none;
+    text-anchor: middle;
+}
+
+.widget-profile-image {
+    height: 67px;
+    width: 67px;
+    border-radius: 50px;
 }
 

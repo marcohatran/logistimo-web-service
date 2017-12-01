@@ -25,11 +25,11 @@ package com.logistimo.social.provider;
 
 import com.google.gson.GsonBuilder;
 
+import com.logistimo.collaboration.core.events.LikeRegisteredEvent;
 import com.logistimo.config.models.AdminContactConfig;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.EventSummaryConfigModel;
 import com.logistimo.services.ServiceException;
-import com.logistimo.collaboration.core.events.LikeRegisteredEvent;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.impl.UsersServiceImpl;
 
@@ -55,30 +55,34 @@ public class SubscriberProvider {
     this.usersService = usersService;
   }
 
-  public List<IUserAccount> getSubscriber (LikeRegisteredEvent event) throws ServiceException {
-    if ("domain".equalsIgnoreCase(event.getObjectType())){
+  public List<IUserAccount> getSubscriber(LikeRegisteredEvent event) throws ServiceException {
+    if ("domain".equalsIgnoreCase(event.getObjectType())) {
       //check for domain config to determine domain level (i.e. country , state or district)
       return getDomainContacts(event.getObjectId());
-    } else if ("store".equalsIgnoreCase(event.getObjectType())){
-      return getStoreContacts(event.getObjectId(),getStoreUserTagForEvent(event.getContextAttributes()));
+    } else if ("store".equalsIgnoreCase(event.getObjectType())) {
+      return getStoreContacts(event.getObjectId(),
+          getStoreUserTagForEvent(event.getContextAttributes()));
     }
     return Collections.emptyList();
   }
 
-  private List<String> getStoreUserTagForEvent (String contextAttribute) {
-    EventSummaryConfigModel.Threshold threshold = new GsonBuilder().create().fromJson(contextAttribute, EventSummaryConfigModel.Threshold.class);
-    Optional<EventSummaryConfigModel.Condition> cond =  threshold.getConditions().stream().
+  private List<String> getStoreUserTagForEvent(String contextAttribute) {
+    EventSummaryConfigModel.Threshold
+        threshold =
+        new GsonBuilder().create()
+            .fromJson(contextAttribute, EventSummaryConfigModel.Threshold.class);
+    Optional<EventSummaryConfigModel.Condition> cond = threshold.getConditions().stream().
         filter(condition -> condition.getName().equalsIgnoreCase("user_tags_responsible"))
         .findFirst();
-    if(cond.isPresent()) {
+    if (cond.isPresent()) {
       return cond.get().getValues();
     }
     return Collections.emptyList();
   }
 
-  private List<IUserAccount> getDomainContacts (String domainId) throws ServiceException {
+  private List<IUserAccount> getDomainContacts(String domainId) throws ServiceException {
 
-    long dId =Long.valueOf(domainId);
+    long dId = Long.valueOf(domainId);
     DomainConfig dc = DomainConfig.getInstance(dId);
     AdminContactConfig acc = dc.getAdminContactConfig();
     List<String> adminUserdIds = new ArrayList<>();
@@ -90,7 +94,7 @@ public class SubscriberProvider {
         adminUserdIds.add(acc.getSecondaryAdminContact());
       }
     }
-    if(adminUserdIds.isEmpty()){
+    if (adminUserdIds.isEmpty()) {
       return Collections.emptyList();
     } else {
       return usersService
@@ -98,8 +102,9 @@ public class SubscriberProvider {
     }
   }
 
-  private List<IUserAccount> getStoreContacts (String storeId,List<String> userTags) throws ServiceException {
-    return usersService.getUsersByTag(Long.valueOf(storeId),"store",userTags);
+  private List<IUserAccount> getStoreContacts(String storeId, List<String> userTags)
+      throws ServiceException {
+    return usersService.getUsersByTag(Long.valueOf(storeId), "store", userTags);
   }
 
 }

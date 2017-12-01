@@ -23,12 +23,8 @@
 
 var invServices = angular.module('invServices', []);
 
-invServices.factory('invService', ['$http', function ($http) {
+invServices.factory('invService', ['APIService', function (apiService) {
     return {
-        fetch: function (urlStr) {
-            var promise = $http({method: 'GET', url: urlStr});
-            return promise;
-        },
         getInventory: function (entityId, tag, offset, size, fetchTemp, matType, onlyNZStk, pdos) {
             offset = typeof offset !== 'undefined' ? offset : 0;
             size = typeof size !== 'undefined' ? size : 50;
@@ -50,7 +46,7 @@ invServices.factory('invService', ['$http', function ($http) {
             if (checkNotNullEmpty(pdos)) {
                 urlStr = urlStr + "&pdos=" + pdos;
             }
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         getInventoryByLocation: function (kioskTags, excludedKioskTags, materialTag, offset, size, loc, pdos) {
             offset = typeof offset !== 'undefined' ? offset : 0;
@@ -69,7 +65,7 @@ invServices.factory('invService', ['$http', function ($http) {
                 urlStr = urlStr + "&pdos=" + pdos;
             }
             urlStr = urlStr + this.getParsedLocation(loc);
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         getInventoryStartsWith: function (entityId, tag, q, offset, size) {
             offset = typeof offset !== 'undefined' ? offset : 0;
@@ -82,13 +78,13 @@ invServices.factory('invService', ['$http', function ($http) {
             if (checkNotNullEmpty(tag)) {
                 urlStr = urlStr + "&tag=" + tag;
             }
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         getInventoryDomainConfig: function (entityId) {
             if(checkNullEmpty(entityId)){
-                return this.fetch('/s2/api/inventory/domain/');
+                return apiService.get('/s2/api/inventory/domain/');
             }
-            return this.fetch('/s2/api/inventory/domain/' + entityId);
+            return apiService.get('/s2/api/inventory/domain/' + entityId);
         },
         getMaterialInventory: function (materialId, etag, eetag, offset, size, matType, onlyNZStk, loc, pdos) {
             offset = typeof offset !== 'undefined' ? offset : 0;
@@ -110,7 +106,7 @@ invServices.factory('invService', ['$http', function ($http) {
                 urlStr = urlStr + "&pdos=" + pdos;
             }
             urlStr = urlStr + this.getParsedLocation(loc);
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         getBatchMaterial: function (data, offset, size, loc) {
             offset = typeof offset !== 'undefined' ? offset : 0;
@@ -134,7 +130,7 @@ invServices.factory('invService', ['$http', function ($http) {
                 url = url + "&mtag=" + data.mtag;
             }
             url = url + this.getParsedLocation(loc);
-            return this.fetch(url);
+            return apiService.get(url);
         },
         getBatchDetail: function (mid, kid, allBatch,allocOrderId) {
             var url = '/s2/api/inventory/batchmaterialbyid/?kid=' + kid + "&mid=" + mid;
@@ -144,7 +140,7 @@ invServices.factory('invService', ['$http', function ($http) {
             if (checkNotNullEmpty(allocOrderId)) {
                 url = url + "&allocOrderId=" + allocOrderId;
             }
-            return this.fetch(url);
+            return apiService.get(url);
         },
         getAbnormalStockDetail: function (data, offset, size) {
             offset = typeof offset !== 'undefined' ? offset : 0;
@@ -160,7 +156,7 @@ invServices.factory('invService', ['$http', function ($http) {
             if (checkNotNullEmpty(data.et)) {
                 url = url + "&eventType=" + data.et;
             }
-            return this.fetch(url);
+            return apiService.get(url);
         },
         getAbnormalInventory: function (data, offset, size, inDetail) {
             offset = typeof offset !== 'undefined' ? offset : 0;
@@ -190,22 +186,22 @@ invServices.factory('invService', ['$http', function ($http) {
                 url = url + "&inDetail=" + inDetail;
             }
             url = url + this.getParsedLocation(data.loc);
-            return this.fetch(url);
+            return apiService.get(url);
         },
         getInventoryByMaterial: function (kioskId, materials) {
-            return this.fetch('/s2/api/inventory/inventoryByMaterial/?kioskId=' + kioskId + '&materials=' + materials);
+            return apiService.get('/s2/api/inventory/inventoryByMaterial/?kioskId=' + kioskId + '&materials=' + materials);
         },
         getPredictiveStock: function (kioskId, material) {
-            return this.fetch('/s2/api/inventory/predictiveStk?kioskId=' + kioskId + '&materialId=' + material);
+            return apiService.get('/s2/api/inventory/predictiveStk?kioskId=' + kioskId + '&materialId=' + material);
         },
         getActualRoute: function(userId,from,to){
-            return this.fetch('/s2/api/inventory/actualroute?userId=' + userId + '&from=' + from + '&to=' + to);
+            return apiService.get('/s2/api/inventory/actualroute?userId=' + userId + '&from=' + from + '&to=' + to);
         },
         getInventoryHistory: function (invId){
-            return this.fetch('/s2/api/inventory/invHistory?invId=' + invId);
+            return apiService.get('/s2/api/inventory/invHistory?invId=' + invId);
         },
         getInvEventHistory: function (url){
-            return this.fetch(url);
+            return apiService.get(url);
         },
         getParsedLocation: function (loc){
             if(checkNotNullEmpty(loc)){

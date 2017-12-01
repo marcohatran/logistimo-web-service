@@ -22,16 +22,8 @@
  */
 
 var demandServices = angular.module('demandServices', []);
-demandServices.factory('demandService', ['$http', function ($http) {
+demandServices.factory('demandService', ['APIService', function (apiService) {
     return {
-        fetch: function (urlStr) {
-            var promise = $http({method: 'GET', url: urlStr});
-            return promise;
-        },
-        fetchP: function (data, urlStr) {
-            var promise = $http({method: 'POST', data: data, url: urlStr});
-            return promise;
-        },
         getEntityDemand: function (entityId, from, tag, offset, size) {
             offset = typeof offset !== 'undefined' ? offset : 0;
             size = typeof size !== 'undefined' ? size : 50;
@@ -42,7 +34,7 @@ demandServices.factory('demandService', ['$http', function ($http) {
             if (checkNotNullEmpty(tag)) {
                 urlStr = urlStr + "&tag=" + tag;
             }
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         getMaterialDemand: function (materialId, from, etag, offset, size, noDups) {
             offset = typeof offset !== 'undefined' ? offset : 0;
@@ -57,7 +49,7 @@ demandServices.factory('demandService', ['$http', function ($http) {
             if (checkNotNullEmpty(noDups)) {
                 urlStr = urlStr + "&noDups=" + noDups;
             }
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         getDemand: function (etag, tag, kioskId, mId, etrn, sbo, offset, size, otype) {
             offset = typeof offset !== 'undefined' ? offset : 0;
@@ -84,7 +76,7 @@ demandServices.factory('demandService', ['$http', function ($http) {
             if(checkNotNullEmpty(otype)) {
                 urlStr = urlStr + "&otype=" + otype;
             }
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         clearAllocations: function(kId, mId, oid, etrn, bo) {
             var urlStr = '/s2/api/demand/alloc?mId=' + mId;
@@ -100,7 +92,7 @@ demandServices.factory('demandService', ['$http', function ($http) {
             if(checkNotNullEmpty(bo)) {
                 urlStr = urlStr + "&bo=" + bo;
             }
-            return this.fetchP("", urlStr);
+            return apiService.post("", urlStr);
         },
         getDiscrepancies: function(oType, etrn, entityId, materialId, eTag, mTag, from, to, orderId, discType, offset, size) {
             offset = typeof offset !== 'undefined' ? offset : 0;
@@ -136,7 +128,7 @@ demandServices.factory('demandService', ['$http', function ($http) {
             if (checkNotNullEmpty(discType)) {
                 urlStr = urlStr + "&discType=" + discType;
             }
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         getDemandView: function(kId, mId, etrn, bo, otype, incShip) {
             var urlStr = '/s2/api/demand/details?kId=' + kId + "&mId=" + mId + "&otype=" + otype;
@@ -149,10 +141,10 @@ demandServices.factory('demandService', ['$http', function ($http) {
             if(checkNotNullEmpty(incShip)) {
                 urlStr = urlStr + "&incShip=" + incShip;
             }
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         allocateQuantity: function(allocation) {
-            return this.fetchP(allocation,'/s2/api/demand/allocate/');
+            return apiService.post(allocation, '/s2/api/demand/allocate/');
         }
     }
 }]);

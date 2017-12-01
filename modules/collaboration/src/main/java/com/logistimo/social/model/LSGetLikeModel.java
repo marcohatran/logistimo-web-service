@@ -44,7 +44,7 @@ public class LSGetLikeModel implements Serializable {
 
   public LSGetLikeModel(String objectId, String objectType, String contextId,
                         Integer offset, Integer size) {
-    this(objectId,objectType,contextId,null,offset,size);
+    this(objectId, objectType, contextId, null, offset, size);
   }
 
   public LSGetLikeModel(String objectId, String objectType, String contextId,

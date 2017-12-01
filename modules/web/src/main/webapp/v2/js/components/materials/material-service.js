@@ -22,21 +22,13 @@
  */
 
 var matServices = angular.module('matServices', []);
-matServices.factory('matService', ['$http', function ($http) {
+matServices.factory('matService', ['APIService', function (apiService) {
     return {
-        fetch: function (urlStr) {
-            var promise = $http({method: 'GET', url: urlStr});
-            return promise;
-        },
-        fetchP: function (data, urlStr) {
-            var promise = $http({method: 'POST', data: data, url: urlStr});
-            return promise;
-        },
         get: function (materialId) {
-            return this.fetch('/s2/api/materials/material/' + materialId);
+            return apiService.get('/s2/api/materials/material/' + materialId);
         },
         checkMaterialAvailability: function (mnm) {
-            return this.fetch('/s2/api/materials/check/?mnm=' + mnm);
+            return apiService.get('/s2/api/materials/check/?mnm=' + mnm);
         },
         /*getMaterials: function (entityId, q, tag, offset, size) {
             offset = typeof offset !== 'undefined' ? offset : 0;
@@ -48,7 +40,7 @@ matServices.factory('matService', ['$http', function ($http) {
             if (typeof q !== 'undefined') {
                 urlStr = urlStr + "&q=" + q;
             }
-            return this.fetch(urlStr);
+         return apiService.get(urlStr);
         },*/
         getDomainMaterials: function (q, tag, offset, size, entityId, ihu) {
             offset = typeof offset !== 'undefined' ? offset : 0;
@@ -66,16 +58,16 @@ matServices.factory('matService', ['$http', function ($http) {
             if (checkNotNullEmpty(ihu)) {
                 urlStr = urlStr + "&ihu=" + ihu;
             }
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         deleteMaterials: function (materials) {
-            return this.fetchP("'" + materials + "'", '/s2/api/materials/delete/');
+            return apiService.post("'" + materials + "'", '/s2/api/materials/delete/');
         },
         createMaterial: function (material) {
-            return this.fetchP(material, '/s2/api/materials/create');
+            return apiService.post(material, '/s2/api/materials/create');
         },
         update: function (material) {
-            return this.fetchP(material, "/s2/api/materials/update");
+            return apiService.post(material, "/s2/api/materials/update");
         }
     }
 }]);
