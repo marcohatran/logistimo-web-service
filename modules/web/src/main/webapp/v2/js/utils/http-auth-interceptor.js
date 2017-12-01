@@ -78,16 +78,16 @@
         .config(['$httpProvider', function($httpProvider) {
             $httpProvider.interceptors.push(['$rootScope', '$q', 'httpBuffer', function($rootScope, $q, httpBuffer) {
                 return {
-                    'request': function(config) {
+                    'request': function (config) {
                         // do something on success
-                        if(checkNotNullEmpty($rootScope.currentDomain) && checkNotNullEmpty($rootScope.curUser)){
-                            config.headers.d = $rootScope.curUser+":"+$rootScope.currentDomain;
+                        if (checkNotNullEmpty($rootScope.currentDomain) && checkNotNullEmpty($rootScope.curUser)) {
+                            config.headers.d = $rootScope.curUser + ":" + $rootScope.currentDomain;
                         }
-                        if (!$rootScope.isSession && config.url.startsWith("/s2")) {
-                            if (checkNotNullEmpty($rootScope.token)) {
-                                config.headers['x-access-token'] = $rootScope.token;
-                            }
+                        if (config.url.startsWith("/s2")) {
                             config.url = $rootScope.basePath + config.url;
+                        }
+                        if (checkNotNullEmpty($rootScope.token)) {
+                            config.headers['x-access-token'] = $rootScope.token;
                         }
                         return config;
                     },

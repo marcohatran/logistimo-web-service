@@ -34,6 +34,7 @@
             $rootScope.basePath = '';
 
             $rootScope.isSession = isSession;
+            $rootScope.isBulletinBoard = false;
 
 
             var resourceBundleName = 'resourceBundle';
@@ -770,10 +771,11 @@
                 return requestContext.getParam(paramName);
             };
 
-            if (!$rootScope.isSession && checkNullEmpty(iAuthService.getAccessToken(true))) {
+            iAuthService.getAccessToken(true);
+
+            if ($rootScope.isBulletinBoard && checkNullEmpty($rootScope.token)) {
                 $scope.showBulletinBoardLogin();
             } else {
-
                 $scope.initApp();
             }
 
