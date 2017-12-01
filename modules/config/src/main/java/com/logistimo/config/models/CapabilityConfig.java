@@ -26,9 +26,10 @@
  */
 package com.logistimo.config.models;
 
+import com.logistimo.utils.StringUtil;
+
 import org.json.JSONException;
 import org.json.JSONObject;
-import com.logistimo.utils.StringUtil;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -48,7 +49,7 @@ public class CapabilityConfig implements Serializable {
   public static final String GEOCODING_STRATEGY_OPTIMISTIC = "o";
   public static final String GEOCODING_STRATEGY_STRICT = "s";
   // Keys
-  public static final String DISABLED = "dsbld";
+  public static final String DISABLED_JSON_KEY = "dsbld";
   public static final String GEOCODING_STRATEGY = "gstr";
   public static final String TAGS_INVENTORY = "tgi";
   public static final String TAGS_ORDERS = "tgo";
@@ -67,6 +68,8 @@ public class CapabilityConfig implements Serializable {
   // Capability constants (only those used internally for permission checks are listed here)
   public static final String CAPABILITY_EDITPROFILE = "ep";
   private static final long serialVersionUID = 1L;
+  public static final String ENABLE_BARCODING_ON_MOBILE = "ebc";
+  public static final String ENABLE_RFID_ON_MOBILE = "erf";
   private List<String> disabled = null;
   private String geoCodingStrategy = GEOCODING_STRATEGY_OPTIMISTIC;
   private String tagsInventory = null; // tags to be hidden from Inventory in client app.
@@ -82,14 +85,16 @@ public class CapabilityConfig implements Serializable {
   private boolean loginAsReconnect = false;
   private boolean disableShippingOnMobile = false; // By default disable shipping on mobile.
   private Map<String, String> tagsInvByOperation = new HashMap<>();
+  private boolean barcodingEnabled;
+  private boolean rfidEnabled;
 
   public CapabilityConfig() {
   }
 
-  public CapabilityConfig(JSONObject json) throws ConfigurationException {
+  public CapabilityConfig(JSONObject json) {
     // Get capabilities for disablement
     try {
-      this.disabled = StringUtil.getList(json.getString(DISABLED));
+      this.disabled = StringUtil.getList(json.getString(DISABLED_JSON_KEY));
     } catch (JSONException e) {
       // do nothing
     }
@@ -143,6 +148,16 @@ public class CapabilityConfig implements Serializable {
       // do nothing
     }
     try {
+      this.barcodingEnabled = json.getBoolean(ENABLE_BARCODING_ON_MOBILE);
+    } catch (JSONException e) {
+      // do nothing
+    }
+    try {
+      this.rfidEnabled = json.getBoolean(ENABLE_RFID_ON_MOBILE);
+    } catch (JSONException e) {
+      // do nothing
+    }
+    try {
       JSONObject invTags = json.getJSONObject(DISABLE_TAGS_INVENTRY_OPERATION);
       Iterator<String> en = invTags.keys();
       while (en.hasNext()) {
@@ -157,7 +172,7 @@ public class CapabilityConfig implements Serializable {
 
   @SuppressWarnings("rawtypes")
   public static Map<String, CapabilityConfig> getCapabilitiesMap(JSONObject json) {
-    Map<String, CapabilityConfig> map = new HashMap<String, CapabilityConfig>();
+    Map<String, CapabilityConfig> map = new HashMap<>();
     // Get the roles
     Iterator keys = json.keys();
     while (keys.hasNext()) {
@@ -194,7 +209,7 @@ public class CapabilityConfig implements Serializable {
       // Get the capabilities to be disabled
       String capabilitiesStr = StringUtil.getCSV(this.disabled);
       if (capabilitiesStr != null && !capabilitiesStr.isEmpty()) {
-        json.put(DISABLED, capabilitiesStr);
+        json.put(DISABLED_JSON_KEY, capabilitiesStr);
       }
       if (tagsInventory != null && !tagsInventory.isEmpty()) {
         json.put(TAGS_INVENTORY, tagsInventory);
@@ -220,14 +235,14 @@ public class CapabilityConfig implements Serializable {
       // Allow route tag editing
       json.put(ALLOW_ROUTETAG_EDITING, allowRouteTagEditing);
       json.put(DISABLE_SHIPPING_ON_MOBILE, disableShippingOnMobile);
+      json.put(ENABLE_BARCODING_ON_MOBILE, barcodingEnabled);
+      json.put(ENABLE_RFID_ON_MOBILE, rfidEnabled);
       if (!tagsInvByOperation.isEmpty()) {
         JSONObject invTags = new JSONObject();
-        Iterator<String> it = tagsInvByOperation.keySet().iterator();
-        while (it.hasNext()) {
-          String transType = it.next();
-          String tagsCsv = (String) tagsInvByOperation.get(transType);
+        for (Map.Entry<String, String> transTypeEntry : tagsInvByOperation.entrySet()) {
+          String tagsCsv = transTypeEntry.getValue();
           if (tagsCsv != null && !tagsCsv.isEmpty()) {
-            invTags.put(transType, tagsCsv);
+            invTags.put(transTypeEntry.getKey(), tagsCsv);
           }
         }
         json.put(DISABLE_TAGS_INVENTRY_OPERATION, invTags);
@@ -347,7 +362,7 @@ public class CapabilityConfig implements Serializable {
   }
 
   public String gettagByOperation(String transType) {
-    return (String) tagsInvByOperation.get(transType);
+    return tagsInvByOperation.get(transType);
   }
 
   public void settagInvByOperation(Map<String, String> tagsInvByOperation) {
@@ -356,5 +371,21 @@ public class CapabilityConfig implements Serializable {
 
   public void puttagsInvByOperation(String transType, String tagsCSV) {
     tagsInvByOperation.put(transType, tagsCSV);
+  }
+
+  public void setBarcodingEnabled(boolean barcodingEnabled) {
+    this.barcodingEnabled = barcodingEnabled;
+  }
+
+  public boolean isBarcodingEnabled() {
+    return barcodingEnabled;
+  }
+
+  public void setRFIDEnabled(boolean rfidEnabled) {
+    this.rfidEnabled = rfidEnabled;
+  }
+
+  public boolean isRFIDEnabled() {
+    return rfidEnabled;
   }
 }

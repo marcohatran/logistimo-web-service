@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-export MAVEN_OPTS="-Xmx2048m -Xms1024m -Djava.awt.headless=true"
+export MAVEN_OPTS="-Xmx2048m -Djava.awt.headless=true"
 cd modules/accounting
 mvn datanucleus:enhance
 cd ../activity
@@ -44,3 +44,4 @@ cd ../users
 mvn datanucleus:enhance
 cd ../bulletin-board
 mvn datanucleus:enhance
+

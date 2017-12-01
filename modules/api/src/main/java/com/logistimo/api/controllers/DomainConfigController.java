@@ -903,6 +903,8 @@ public class DomainConfigController {
         cconf.setAllowRouteTagEditing(model.er);
         cconf.setLoginAsReconnect(model.lr);
         cconf.setDisableShippingOnMobile(model.dshp);
+        cconf.setBarcodingEnabled(model.bcs);
+        cconf.setRFIDEnabled(model.rfids);
         cc.dc.setCapabilityByRole(model.ro, cconf);
 
         String issueTags = StringUtils.join(model.hii, ',');
@@ -941,6 +943,8 @@ public class DomainConfigController {
         cc.dc.setAllowRouteTagEditing(model.er);
         cc.dc.setLoginAsReconnect(model.lr);
         cc.dc.setDisableShippingOnMobile(model.dshp);
+        cc.dc.setBarcodingEnabled(model.bcs);
+        cc.dc.setRFIDEnabled(model.rfids);
         cc.dc.setStoreAppTheme(model.getTheme());
 
         String issueTags = TagUtil.getCleanTags(StringUtils.join(model.hii, ','), true);

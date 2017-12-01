@@ -1428,7 +1428,7 @@ public class RESTUtil {
         creatableEntityTypes =
             null;
     boolean allowRouteTagEditing, loginAsReconnect;
-    boolean sendVendors, sendCustomers, disableShippingOnMobile;
+    boolean sendVendors, sendCustomers, disableShippingOnMobile, enableBarcoding, enableRFID;
     // Inventory tags to hide by operation, if any
     Hashtable<String, String> invTgsToHide = null;
     if (cconf != null) { // send role-specific configuration
@@ -1442,6 +1442,8 @@ public class RESTUtil {
       allowRouteTagEditing = cconf.allowRouteTagEditing();
       loginAsReconnect = cconf.isLoginAsReconnect();
       disableShippingOnMobile = cconf.isDisableShippingOnMobile();
+      enableBarcoding = cconf.isBarcodingEnabled();
+      enableRFID = cconf.isRFIDEnabled();
       invTgsToHide = getInventoryTagsToHide(cconf);
     } else { // send generic configuration
       transMenu = dc.getTransactionMenusString();
@@ -1454,6 +1456,8 @@ public class RESTUtil {
       allowRouteTagEditing = dc.allowRouteTagEditing();
       loginAsReconnect = dc.isLoginAsReconnect();
       disableShippingOnMobile = dc.isDisableShippingOnMobile();
+      enableBarcoding = dc.isBarcodingEnabled();
+      enableRFID = dc.isRFIDEnabled();
       invTgsToHide = getInventoryTagsToHide(dc);
     }
     if (invTgsToHide != null && !invTgsToHide.isEmpty()) {
@@ -1504,6 +1508,12 @@ public class RESTUtil {
     }
     if (!disableShippingOnMobile) {
       config.put(JsonTagsZ.ENABLE_SHIPPING_MOBILE, String.valueOf(true));
+    }
+    if (enableBarcoding) {
+      config.put(JsonTagsZ.ENABLE_BARCODING_MOBULE, String.valueOf(true));
+    }
+    if (enableRFID) {
+      config.put(JsonTagsZ.ENABLE_RFIDS_MOBILE, String.valueOf(true));
     }
     // Send transaction reasons
     // Get wastage reason from the higest level, always

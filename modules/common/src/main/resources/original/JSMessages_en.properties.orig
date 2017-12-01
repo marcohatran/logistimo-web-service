@@ -1150,3 +1150,6 @@ excursion.type=Excursion type
 custom.dashboards=Custom dashboards
 custom.dashboard=custom dashboard
 network.unavailable=Network is not available. Last refreshed at
+config.rfid.enable=Enable RFID scanning on mobile
+config.barcoding.enable=Enable Barcode scanning on mobile
+config.barcoding.rfid.enable=Enable barcode/RFID scanning

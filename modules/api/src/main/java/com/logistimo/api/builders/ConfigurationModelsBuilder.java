@@ -25,7 +25,6 @@ package com.logistimo.api.builders;
 
 import com.logistimo.AppFactory;
 import com.logistimo.api.constants.ConfigConstants;
-import com.logistimo.models.MediaModel;
 import com.logistimo.api.models.MenuStatsModel;
 import com.logistimo.api.models.configuration.AccountingConfigModel;
 import com.logistimo.api.models.configuration.AdminContactConfigModel;
@@ -80,6 +79,7 @@ import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.logger.XLog;
 import com.logistimo.media.endpoints.IMediaEndPoint;
 import com.logistimo.media.entity.IMedia;
+import com.logistimo.models.MediaModel;
 import com.logistimo.orders.entity.IOrder;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
@@ -763,8 +763,10 @@ public class ConfigurationModelsBuilder {
       model.ho = new ArrayList<String>(Arrays.asList(dc.getTagsOrders().split(",")));
     }
     model.dshp = dc.isDisableShippingOnMobile();
+    model.bcs = dc.isBarcodingEnabled();
+    model.rfids = dc.isRFIDEnabled();
     model.ro = "";
-    Map<String, CapabilitiesConfigModel> roleMap = new HashMap<String, CapabilitiesConfigModel>(4);
+    Map<String, CapabilitiesConfigModel> roleMap = new HashMap<>(4);
     roleMap.put(SecurityConstants.ROLE_KIOSKOWNER,
         constructCCM(map.get(SecurityConstants.ROLE_KIOSKOWNER), SecurityConstants.ROLE_KIOSKOWNER, dc));
     roleMap.put(SecurityConstants.ROLE_SERVICEMANAGER,
@@ -849,9 +851,11 @@ public class ConfigurationModelsBuilder {
                 Arrays.asList(config.gettagByOperation(ITransaction.TYPE_TRANSFER).split(",")));
       }
       if (config.getTagsOrders() != null) {
-        model.ho = new ArrayList<String>(Arrays.asList(config.getTagsOrders().split(",")));
+        model.ho = new ArrayList<>(Arrays.asList(config.getTagsOrders().split(",")));
       }
       model.dshp = config.isDisableShippingOnMobile();
+      model.bcs = config.isBarcodingEnabled();
+      model.rfids = config.isRFIDEnabled();
     }
     if (dc != null) {
       model.atexp = dc.getAuthenticationTokenExpiry();

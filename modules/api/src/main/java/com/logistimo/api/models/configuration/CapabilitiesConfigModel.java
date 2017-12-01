@@ -47,6 +47,8 @@ public class CapabilitiesConfigModel {
   public boolean dshp; // Disable shipping orders on mobile
   public int atexp; // Authentication token expiry
   public boolean llr; // Local login required
+  public boolean bcs; // Bar code scanning enabled
+  public boolean rfids; // RFID scanning enabled
 
   public Map<String, CapabilitiesConfigModel> roleConfig;
 

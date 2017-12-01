@@ -298,6 +298,8 @@ public class DomainConfig implements ILocation, Serializable {
   private EventSummaryConfigModel eventSummaryConfig;
 
   private int accessKeyAuthTokenExpiry = 30;
+  private boolean barcodingEnabled = false;
+  private boolean rfidEnabled = false;
 
   public DomainConfig() {
     optimizerConfig = new OptimizerConfig();
@@ -725,6 +727,18 @@ public class DomainConfig implements ILocation, Serializable {
       }
 
       try {
+        this.barcodingEnabled = json.getBoolean(CapabilityConfig.ENABLE_BARCODING_ON_MOBILE);
+      } catch (JSONException e) {
+        // do nothing
+      }
+
+      try {
+        this.rfidEnabled = json.getBoolean(CapabilityConfig.ENABLE_RFID_ON_MOBILE);
+      } catch (JSONException e) {
+        // do nothing
+      }
+
+      try {
         this.authenticationTokenExpiry = json.getInt(AUTHENTICATION_TOKEN_EXPIRY);
       } catch (JSONException e) {
         // do nothing
@@ -1031,6 +1045,8 @@ public class DomainConfig implements ILocation, Serializable {
       }
 
       json.put(CapabilityConfig.DISABLE_SHIPPING_ON_MOBILE, disableShippingOnMobile);
+      json.put(CapabilityConfig.ENABLE_BARCODING_ON_MOBILE, barcodingEnabled);
+      json.put(CapabilityConfig.ENABLE_RFID_ON_MOBILE, rfidEnabled);
 
       if (loginAsReconnect) {
         json.put(CapabilityConfig.LOGIN_AS_RECONNECT, true);
@@ -1926,5 +1942,21 @@ public class DomainConfig implements ILocation, Serializable {
 
   public void setAccessKeyAuthTokenExpiry(int accessKeyAuthTokenExpiry) {
     this.accessKeyAuthTokenExpiry = accessKeyAuthTokenExpiry;
+  }
+
+  public boolean isBarcodingEnabled() {
+    return barcodingEnabled;
+  }
+
+  public void setBarcodingEnabled(boolean barcodingEnabled) {
+    this.barcodingEnabled = barcodingEnabled;
+  }
+
+  public boolean isRFIDEnabled() {
+    return rfidEnabled;
+  }
+
+  public void setRFIDEnabled(boolean rfidEnabled) {
+    this.rfidEnabled = rfidEnabled;
   }
 }
