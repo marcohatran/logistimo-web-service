@@ -952,7 +952,7 @@ public class DashboardService implements IDashboardService {
       groupBy.append(" GROUP BY ");
     }
     StringBuilder where = new StringBuilder();
-    where.append(" WHERE `KEY` IN (SELECT KEY_OID FROM TRANSACTION_DOMAINS WHERE DOMAIN_ID = ")
+    where.append(" WHERE KID IN (SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID = ")
         .append(domainId).append(")");
     int period = 0;
     String startTime = null;

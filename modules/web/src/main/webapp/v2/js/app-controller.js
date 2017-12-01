@@ -35,6 +35,7 @@
 
             $rootScope.isSession = isSession;
             $rootScope.isBulletinBoard = false;
+            $scope.loadMessage = "";
 
 
             var resourceBundleName = 'resourceBundle';
@@ -154,10 +155,11 @@
 
             $scope.loadTemplate = '<h1><span class="glyphicons glyphicons-cogwheel spin" style="color:#000000;font-size: 1.6em;"></span></h1>';
             $scope.loaders = 0;
-            $scope.showLoading = function (restore) {
+            $scope.showLoading = function (restore, message) {
                 if (restore || $scope.loaders++ == 0) {
                     $scope.showLoadIcon = true;
                 }
+                $scope.loadMessage = message;
             };
             $scope.hideLoading = function (forceClose) {
                 if (forceClose) {
