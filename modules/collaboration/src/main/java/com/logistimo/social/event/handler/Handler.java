@@ -21,18 +21,14 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.api.models.mobile;
+package com.logistimo.social.event.handler;
 
-import com.logistimo.api.models.InventoryDetail;
-import com.logistimo.models.BasePagedResponseModel;
-
-import java.util.List;
+import com.logistimo.collaboration.core.events.Event;
 
 /**
- * Created by yuvaraj on 03/05/17.
+ * Created by kumargaurav on 10/11/17.
  */
-public class PagedInventoryDetails extends BasePagedResponseModel {
+public interface Handler<E extends Event> {
 
-  public List<InventoryDetail> items;
-
+   void handle(E event);
 }

@@ -21,18 +21,25 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.api.models.mobile;
+package com.logistimo.social.model;
 
-import com.logistimo.api.models.InventoryDetail;
 import com.logistimo.models.BasePagedResponseModel;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
- * Created by yuvaraj on 03/05/17.
+ * Created by kumargaurav on 21/11/17.
  */
-public class PagedInventoryDetails extends BasePagedResponseModel {
+public class LSLikerResponseModel extends BasePagedResponseModel implements Serializable {
 
-  public List<InventoryDetail> items;
+  private List<LSSocialLikerModel> likers;
 
+  public List<LSSocialLikerModel> getLikers() {
+    return likers;
+  }
+
+  public void setLikers(List<LSSocialLikerModel> likers) {
+    this.likers = likers;
+  }
 }

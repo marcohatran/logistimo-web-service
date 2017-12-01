@@ -23,6 +23,8 @@
 
 package com.logistimo.api.models;
 
+import com.logistimo.models.MediaModel;
+
 import java.util.List;
 
 /**

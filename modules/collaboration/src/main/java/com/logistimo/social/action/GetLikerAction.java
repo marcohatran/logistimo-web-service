@@ -21,22 +21,30 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.api.models;
+package com.logistimo.social.action;
+
+import com.logistimo.social.command.LSGetLikersCommand;
+import com.logistimo.social.model.LSGetLikeModel;
+import com.logistimo.social.model.LSLikerResponseModel;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
 /**
- * Warning: Variable name should not be changed. This is synced with google appengine Media object.
- *
- * @author Mohan Raja
+ * Created by kumargaurav on 21/11/17.
  */
-public class MediaModel {
-  public Long id;
-  public String mediaType;
-  public String domainKey;
-  public MediaText content;
-  public String servingUrl;
-  public String fn;
+@Component
+public class GetLikerAction {
 
-  public static class MediaText {
-    public String value;
+  @Autowired
+  @Qualifier("collabRestTemplate")
+  private RestTemplate restTemplate;
+
+  public LSLikerResponseModel invoke (String objectId, String objectTy, String eventId, Integer offset, Integer size) {
+
+    LSGetLikeModel model = new LSGetLikeModel(objectId,objectTy,eventId,offset,size);
+    return new LSGetLikersCommand(restTemplate, model).execute();
   }
 }

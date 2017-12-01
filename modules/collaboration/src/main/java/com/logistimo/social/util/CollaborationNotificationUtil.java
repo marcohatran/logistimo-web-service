@@ -21,18 +21,28 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.api.models.mobile;
+package com.logistimo.social.util;
 
-import com.logistimo.api.models.InventoryDetail;
-import com.logistimo.models.BasePagedResponseModel;
+import com.logistimo.communications.MessageHandlingException;
+import com.logistimo.communications.service.MessageService;
+import com.logistimo.users.entity.IUserAccount;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
- * Created by yuvaraj on 03/05/17.
+ * Created by kumargaurav on 26/11/17.
  */
-public class PagedInventoryDetails extends BasePagedResponseModel {
+public class CollaborationNotificationUtil {
 
-  public List<InventoryDetail> items;
+  private CollaborationNotificationUtil() {
+  }
 
+  public static void sendSMS(List<IUserAccount> users, String content, IUserAccount domainUser)
+      throws MessageHandlingException, IOException {
+      MessageService
+          ms = MessageService
+          .getInstance(MessageService.SMS, domainUser.getCountry(), true, domainUser.getDomainId(), "", null);
+      ms.send(users, content, MessageService.getMessageType(content), null, null, content,0,null);
+  }
 }

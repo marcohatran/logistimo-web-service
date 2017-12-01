@@ -23,6 +23,8 @@
 
 package com.logistimo.api.models.mobile;
 
+import com.logistimo.models.BasePagedResponseModel;
+
 import java.util.List;
 
 /**

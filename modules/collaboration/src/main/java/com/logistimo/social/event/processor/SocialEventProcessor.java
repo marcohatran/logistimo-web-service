@@ -21,18 +21,36 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.api.models.mobile;
+package com.logistimo.social.event.processor;
 
-import com.logistimo.api.models.InventoryDetail;
-import com.logistimo.models.BasePagedResponseModel;
+import com.codahale.metrics.Meter;
+import com.logistimo.context.StaticApplicationContext;
+import com.logistimo.logger.XLog;
+import com.logistimo.collaboration.core.events.Event;
+import com.logistimo.social.event.handler.Handler;
+import com.logistimo.social.event.registry.HandlerRegistry;
+import com.logistimo.utils.MetricsUtil;
 
 import java.util.List;
 
 /**
- * Created by yuvaraj on 03/05/17.
+ * Created by kumargaurav on 10/11/17.
  */
-public class PagedInventoryDetails extends BasePagedResponseModel {
+public class SocialEventProcessor<E extends Event> {
 
-  public List<InventoryDetail> items;
+  private static final XLog log = XLog.getLog(SocialEventProcessor.class);
+  private static Meter jmsMeter = MetricsUtil
+      .getMeter(SocialEventProcessor.class, "socialEventProcessor");
+
+  @org.apache.camel.Handler
+  public void execute(E e) {
+    jmsMeter.mark();
+    log.info("processing events in logistimo {0}",e);
+    HandlerRegistry registry = StaticApplicationContext.getApplicationContext().getBean(HandlerRegistry.class);
+    List<Handler> handlers = registry.getEventHandlers(e);
+    for (Handler handler:handlers) {
+      handler.handle(e);
+    }
+  }
 
 }

@@ -1675,12 +1675,15 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
       throws ServiceException {
     String tagQueryParam = StringUtil.getSingleQuotesCSV(userTags);
     List<String> parameters = new ArrayList<>();
-    StringBuilder
-        queryString =
-        new StringBuilder(
-            "SELECT * FROM USERACCOUNT WHERE USERID IN (SELECT USERID FROM USERTOKIOSK WHERE KIOSKID = ?");
-    parameters.add(String.valueOf(objectId));
-
+    StringBuilder queryString = new StringBuilder();
+    if (org.springframework.util.StringUtils.isEmpty(objectType)
+           || "store".equalsIgnoreCase(objectType)) {
+      queryString.append("SELECT * FROM USERACCOUNT WHERE USERID IN (SELECT USERID FROM USERTOKIOSK WHERE KIOSKID = ?");
+      parameters.add(String.valueOf(objectId));
+    } else if("domain".equalsIgnoreCase(objectType)) {
+      queryString.append("SELECT * FROM USERACCOUNT WHERE SDID = ? ");
+      parameters.add(String.valueOf(objectId));
+    }
     if (StringUtils.isNotEmpty(tagQueryParam)) {
       queryString.append(
           " AND USERID IN (SELECT USERID FROM USER_TAGS WHERE ID IN (SELECT ID FROM TAG WHERE TYPE = ?")
@@ -1688,7 +1691,10 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
               " AND NAME IN(").append(tagQueryParam).append(")))");
       parameters.add(String.valueOf(ITag.USER_TAG));
     }
-    queryString.append(CharacterConstants.C_BRACKET);
+    if (org.springframework.util.StringUtils.isEmpty(objectType)
+        || "store".equalsIgnoreCase(objectType)) {
+      queryString.append(CharacterConstants.C_BRACKET);
+    }
     PersistenceManager pm = getPM();
     Query query = pm.newQuery(Constants.JAVAX_JDO_QUERY_SQL, queryString.toString());
     query.setClass(JDOUtils.getImplClass(IUserAccount.class));

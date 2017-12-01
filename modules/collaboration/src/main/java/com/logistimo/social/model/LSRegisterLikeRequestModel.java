@@ -21,18 +21,24 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.api.models.mobile;
+package com.logistimo.social.model;
 
-import com.logistimo.api.models.InventoryDetail;
-import com.logistimo.models.BasePagedResponseModel;
+import com.logistimo.collaboration.core.models.RegisterLikeRequestModel;
 
-import java.util.List;
+import java.io.Serializable;
 
 /**
- * Created by yuvaraj on 03/05/17.
+ * Created by kumargaurav on 27/11/17.
  */
-public class PagedInventoryDetails extends BasePagedResponseModel {
+public class LSRegisterLikeRequestModel extends RegisterLikeRequestModel implements Serializable {
 
-  public List<InventoryDetail> items;
+  private Long srcDomainId;
 
+  public Long getSrcDomainId() {
+    return srcDomainId;
+  }
+
+  public void setSrcDomainId(Long srcDomainId) {
+    this.srcDomainId = srcDomainId;
+  }
 }

@@ -21,18 +21,44 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.api.models.mobile;
+package com.logistimo.social.util;
 
-import com.logistimo.api.models.InventoryDetail;
-import com.logistimo.models.BasePagedResponseModel;
+import com.logistimo.services.Resources;
 
-import java.util.List;
+import org.apache.commons.lang.StringUtils;
+
+import java.text.MessageFormat;
+import java.util.Locale;
+import java.util.ResourceBundle;
 
 /**
- * Created by yuvaraj on 03/05/17.
+ * Created by kumargaurav on 21/11/17.
  */
-public class PagedInventoryDetails extends BasePagedResponseModel {
+public class CollaborationMessageUtil {
 
-  public List<InventoryDetail> items;
+  private CollaborationMessageUtil() {}
 
+
+  public static String constructMessage(String key, Locale locale) {
+    String message = getParameterizedMessage(key,locale);
+    if (StringUtils.isNotEmpty(message)) {
+      return message;
+    }
+    return key;
+  }
+
+  public static String constructMessage(String key, Locale locale, Object[] params) {
+    String message = getParameterizedMessage(key, locale);
+    if (message != null && params != null && params.length > 0) {
+      return MessageFormat.format(message, params);
+    }
+    return key;
+  }
+
+  private static String getParameterizedMessage(String key, Locale locale) {
+    ResourceBundle
+        resourceBundle =
+        Resources.get().getBundle("CollaborationMessages", locale != null ? locale : Locale.ENGLISH);
+    return resourceBundle.getString(key);
+  }
 }

@@ -21,18 +21,76 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.api.models.mobile;
+package com.logistimo.social.model;
 
-import com.logistimo.api.models.InventoryDetail;
-import com.logistimo.models.BasePagedResponseModel;
+import com.logistimo.models.MediaModel;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
- * Created by yuvaraj on 03/05/17.
+ * Created by kumargaurav on 14/11/17.
  */
-public class PagedInventoryDetails extends BasePagedResponseModel {
 
-  public List<InventoryDetail> items;
+public class LSSocialLikerModel implements Serializable {
 
+  private String liker;
+
+  private String createdOn;
+
+  private String src;
+
+  private String name;
+
+  private String userTags;
+
+  private List<MediaModel> userMedia;
+
+  public String getLiker() {
+    return liker;
+  }
+
+  public void setLiker(String liker) {
+    this.liker = liker;
+  }
+
+  public String getCreatedOn() {
+    return createdOn;
+  }
+
+  public void setCreatedOn(String createdOn) {
+    this.createdOn = createdOn;
+  }
+
+  public String getSrc() {
+    return src;
+  }
+
+  public void setSrc(String src) {
+    this.src = src;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  public String getUserTags() {
+    return userTags;
+  }
+
+  public void setUserTags(String userTags) {
+    this.userTags = userTags;
+  }
+
+  public List<MediaModel> getUserMedia() {
+    return userMedia;
+  }
+
+  public void setUserMedia(List<MediaModel> userMedia) {
+    this.userMedia = userMedia;
+  }
 }

@@ -21,18 +21,30 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.api.models.mobile;
+package com.logistimo.social.action;
 
-import java.io.Serializable;
+import com.logistimo.social.command.LSGetLikesCommand;
+import com.logistimo.social.model.LSGetLikeModel;
+import com.logistimo.social.model.LSLikeResponseModel;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
 /**
- * Created by kumargaurav on 13/04/17.
+ * Created by kumargaurav on 21/11/17.
  */
-public class BasePagedResponseModel implements Serializable {
 
-  protected static final long serialVersionUID = 1L;
-  public Integer total;
-  public Integer offset;
-  public Integer size;
-  public Long resTime;
+@Component
+public class GetLikeAction {
+
+  @Autowired
+  @Qualifier("collabRestTemplate")
+  private RestTemplate restTemplate;
+
+  public LSLikeResponseModel invoke (String objectId, String objectTy, String eventId, boolean count, Integer offset, Integer size) {
+    LSGetLikeModel model = new LSGetLikeModel(objectId,objectTy,eventId,count,offset,size);
+    return new LSGetLikesCommand(restTemplate, model).execute();
+  }
 }

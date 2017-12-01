@@ -33,6 +33,7 @@ import com.logistimo.api.models.UserModel;
 import com.logistimo.api.models.configuration.AdminContactConfigModel;
 import com.logistimo.api.models.configuration.AssetConfigModel;
 import com.logistimo.auth.SecurityConstants;
+import com.logistimo.common.builder.MediaBuilder;
 import com.logistimo.config.models.AdminContactConfig;
 import com.logistimo.config.models.AssetSystemConfig;
 import com.logistimo.config.models.DomainConfig;

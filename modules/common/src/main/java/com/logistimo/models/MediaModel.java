@@ -21,18 +21,22 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.api.models.mobile;
-
-import com.logistimo.api.models.InventoryDetail;
-import com.logistimo.models.BasePagedResponseModel;
-
-import java.util.List;
+package com.logistimo.models;
 
 /**
- * Created by yuvaraj on 03/05/17.
+ * Warning: Variable name should not be changed. This is synced with google appengine Media object.
+ *
+ * @author Mohan Raja
  */
-public class PagedInventoryDetails extends BasePagedResponseModel {
+public class MediaModel {
+  public Long id;
+  public String mediaType;
+  public String domainKey;
+  public MediaText content;
+  public String servingUrl;
+  public String fn;
 
-  public List<InventoryDetail> items;
-
+  public static class MediaText {
+    public String value;
+  }
 }

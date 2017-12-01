@@ -25,7 +25,7 @@ package com.logistimo.api.builders;
 
 import com.logistimo.AppFactory;
 import com.logistimo.api.constants.ConfigConstants;
-import com.logistimo.api.models.MediaModel;
+import com.logistimo.models.MediaModel;
 import com.logistimo.api.models.MenuStatsModel;
 import com.logistimo.api.models.configuration.AccountingConfigModel;
 import com.logistimo.api.models.configuration.AdminContactConfigModel;
@@ -43,6 +43,7 @@ import com.logistimo.auth.SecurityConstants;
 import com.logistimo.auth.SecurityMgr;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.auth.utils.SessionMgr;
+import com.logistimo.common.builder.MediaBuilder;
 import com.logistimo.config.entity.IConfig;
 import com.logistimo.config.models.AccountingConfig;
 import com.logistimo.config.models.ActualTransConfig;

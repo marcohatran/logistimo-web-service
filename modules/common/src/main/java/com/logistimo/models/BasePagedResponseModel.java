@@ -21,18 +21,42 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.api.models.mobile;
+package com.logistimo.models;
 
-import com.logistimo.api.models.InventoryDetail;
-import com.logistimo.models.BasePagedResponseModel;
-
-import java.util.List;
+import java.io.Serializable;
 
 /**
- * Created by yuvaraj on 03/05/17.
+ * Created by kumargaurav on 13/04/17.
  */
-public class PagedInventoryDetails extends BasePagedResponseModel {
+public class BasePagedResponseModel implements Serializable {
 
-  public List<InventoryDetail> items;
+  protected static final long serialVersionUID = 1L;
+  public Integer total;
+  public Integer offset;
+  public Integer size;
+  public Long resTime;
 
+  public Integer getTotal() {
+    return total;
+  }
+
+  public void setTotal(Integer total) {
+    this.total = total;
+  }
+
+  public Integer getOffset() {
+    return offset;
+  }
+
+  public void setOffset(Integer offset) {
+    this.offset = offset;
+  }
+
+  public Integer getSize() {
+    return size;
+  }
+
+  public void setSize(Integer size) {
+    this.size = size;
+  }
 }

@@ -24,8 +24,8 @@
 package com.logistimo.api.controllers;
 
 import com.logistimo.AppFactory;
-import com.logistimo.api.builders.MediaBuilder;
-import com.logistimo.api.models.MediaModel;
+import com.logistimo.common.builder.MediaBuilder;
+import com.logistimo.models.MediaModel;
 import com.logistimo.api.models.MediaModels;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.dao.JDOUtils;

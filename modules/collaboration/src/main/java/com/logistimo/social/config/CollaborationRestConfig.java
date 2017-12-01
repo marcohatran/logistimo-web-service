@@ -21,18 +21,23 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.api.models.mobile;
+package com.logistimo.social.config;
 
-import com.logistimo.api.models.InventoryDetail;
-import com.logistimo.models.BasePagedResponseModel;
+import com.logistimo.rest.client.RestConfig;
 
-import java.util.List;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestTemplate;
 
 /**
- * Created by yuvaraj on 03/05/17.
+ * Created by kumargaurav on 13/07/17.
  */
-public class PagedInventoryDetails extends BasePagedResponseModel {
+@Configuration
+public class CollaborationRestConfig {
 
-  public List<InventoryDetail> items;
+  @Bean(name = "collabRestTemplate")
+  public RestTemplate locationsRestTemplate() {
+    return RestConfig.restTemplate();
+  }
 
 }
