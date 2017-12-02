@@ -22,7 +22,7 @@
  */
 
 var domainServices = angular.module('domainServices', []);
-domainServices.factory('domainService', ['APIService', function (apiService) {
+domainServices.factory('domainService', ['APIService', '$q', function (apiService, $q) {
     return {
         createDomain: function (domainName, desc) {
             var param = '?domainName=' + domainName + '&desc=' + desc;
@@ -36,7 +36,14 @@ domainServices.factory('domainService', ['APIService', function (apiService) {
             return apiService.get('/s2/api/domain/current');
         },
         switchDomain: function(domainId){
-            return apiService.post(domainId, '/s2/api/domain/switch');
+            return $q(function (resolve, reject) {
+                apiService.post(domainId, '/s2/api/domain/switch').then(function (data) {
+                    localStorage.setItem("domain", domainId);
+                    resolve(data);
+                }).catch(function (err) {
+                    reject(err);
+                })
+            });
         },
         getCurrentUserDomain: function(){
             return apiService.get('/s2/api/domain/currentUser');

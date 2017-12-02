@@ -26,6 +26,8 @@ package com.logistimo.api.auth;
 import com.logistimo.auth.SecurityMgr;
 import com.logistimo.auth.service.AuthenticationService;
 import com.logistimo.auth.utils.SecurityUtils;
+import com.logistimo.constants.Constants;
+import com.logistimo.constants.SourceConstants;
 import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
@@ -33,6 +35,10 @@ import com.logistimo.services.ServiceException;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.entity.IUserToken;
 import com.logistimo.users.service.UsersService;
+
+import org.springframework.util.StringUtils;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * Created by charan on 09/03/17.
@@ -47,14 +53,31 @@ public class AuthenticationUtil {
     return usersService.getUserAccount(token.getUserId());
   }
 
-  public static void authenticateTokenAndSetSession(String authtoken, Integer actionInitiator)
+  public static void authenticateTokenAndSetSession(HttpServletRequest req)
       throws ServiceException {
+    String authToken = req.getHeader(Constants.TOKEN);
     AuthenticationService aus = StaticApplicationContext.getBean(AuthenticationService.class);
-    IUserToken token = aus.authenticateToken(authtoken, actionInitiator);
+    IUserToken token = aus.authenticateToken(authToken, getSource(req));
     UsersService usersService = StaticApplicationContext.getBean(UsersService.class);
     SecurityMgr.setSessionDetails(usersService.getUserAccount(token.getUserId()));
     SecureUserDetails userDetails = SecurityUtils.getUserDetails();
-    userDetails.setCurrentDomainId(token.getDomainId());
+    if (!token.hasAccessKey()) {
+      Long requestDomainId = SecurityUtils.getReqCookieDomain(req);
+      if (requestDomainId != null) {
+        if (usersService.hasAccessToDomain(userDetails.getUsername(), requestDomainId)) {
+          userDetails.setCurrentDomainId(requestDomainId);
+        } else {
+          userDetails.setCurrentDomainId(token.getDomainId());
+        }
+      }
+    } else {
+      userDetails.setCurrentDomainId(token.getDomainId());
+    }
     SecurityUtils.setUserDetails(userDetails);
+  }
+
+  private static int getSource(HttpServletRequest req) {
+    String sourceParam = req.getHeader(Constants.ACCESS_INITIATOR);
+    return StringUtils.isEmpty(sourceParam) ? SourceConstants.WEB : Integer.parseInt(sourceParam);
   }
 }

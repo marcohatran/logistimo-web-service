@@ -91,7 +91,7 @@ public class AuthControllerMV1 {
   @ResponseBody
   UserDetailModel login(@RequestBody AuthLoginModel loginModel,
                         HttpServletRequest req, HttpServletResponse res)
-      throws ServiceException, ObjectNotFoundException, BadCredentialsException,
+      throws ServiceException, BadCredentialsException,
       UserDisabledException {
     IUserAccount user;
     UsersService as;
@@ -129,14 +129,18 @@ public class AuthControllerMV1 {
       String password = loginModel.password;
 
       as = Services.getService(UsersServiceImpl.class);
-      user = as.authenticateUser(userid, password, src);
+      try {
+        user = as.authenticateUser(userid, password, src);
+      } catch (ObjectNotFoundException oe) {
+        throw new BadCredentialsException("Invalid user name or password");
+      }
       if (user == null) {
         throw new BadCredentialsException("Invalid user name or password");
       }
       if (!user.isEnabled()) {
         throw new UserDisabledException("You account is disabled");
       }
-      generateUserToken(headers, userid);
+      generateUserToken(headers, userid, actionInitiator);
       user.setIPAddress(ipaddr);
       user.setLoginSource(src);
       user.setPreviousUserAgent(user.getUserAgent());
@@ -161,9 +165,10 @@ public class AuthControllerMV1 {
   }
 
   private void generateUserToken(Map<String, String> headers,
-                                 String userid) throws ObjectNotFoundException, ServiceException {
+                                 String userid, int src)
+      throws ObjectNotFoundException, ServiceException {
     IUserToken token;
-    token = authenticationService.generateUserToken(userid);
+    token = authenticationService.generateUserToken(userid, src);
     if (token != null) {
       headers.put(Constants.TOKEN, token.getRawToken());
       headers.put(Constants.EXPIRES, String.valueOf(token.getExpires().getTime()));

@@ -26,14 +26,13 @@
     logistimoApp.controller("AppController",
         function ($scope, $route, $routeParams, $location, $uibModal, requestContext, ngI18nResourceBundle, $timeout,
                   domainCfgService, exportService, userService, $window, $sce, iAuthService, $q, $rootScope,
-                  linkedDomainService, domainService, configService, dashboardService, isSession, isBulletinBoard) {
+                  linkedDomainService, domainService, configService, dashboardService, isBulletinBoard) {
             var renderContext = requestContext.getRenderContext();
 
             $scope.showpopup = 'showpopup';
             $scope.hidepopup = 'hidepopup';
             $rootScope.basePath = '';
 
-            $rootScope.isSession = isSession;
             $rootScope.isBulletinBoard = isBulletinBoard;
             $scope.loadMessage = "";
 
@@ -217,7 +216,7 @@
             };
             $scope.logout = function () {
                 $scope.showLoading();
-                iAuthService.logout().then(function (data) {
+                iAuthService.logout().then(function () {
                     $scope.clearSesNConfig();
                     $scope.userLoggedOut = true;
                     $rootScope.currentDomain = undefined;
@@ -763,8 +762,8 @@
                 return reportWidgets;
             };
 
-            $scope.$on("event:auth-loginConfirmed", function () {
-                if (!$rootScope.isSession) {
+            $scope.$on("event:auth-loginConfirmed", function (event, data) {
+                if (checkNullEmpty(data) || data.initApp) {
                     $scope.initApp();
                 }
             });

@@ -44,14 +44,6 @@ logistimoApp.config(function (uiSelectConfig) {
 });
 
 /* @if BULLETIN_BOARD == 'NA' */
-logistimoApp.constant('isSession', true);
-/*@endif*/
-
-/* @if BULLETIN_BOARD == 'BULLETIN_BOARD' */
-logistimoApp.constant('isSession', false);
-/* @endif */
-
-/* @if BULLETIN_BOARD == 'NA' */
 logistimoApp.constant('isBulletinBoard', false);
 /*@endif*/
 

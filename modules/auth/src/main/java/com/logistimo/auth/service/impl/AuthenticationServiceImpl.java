@@ -32,6 +32,7 @@ import com.logistimo.communications.service.MessageService;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.PropertyConstants;
+import com.logistimo.constants.SourceConstants;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.exception.InvalidDataException;
 import com.logistimo.exception.SystemException;
@@ -101,11 +102,12 @@ public class AuthenticationServiceImpl extends ServiceImpl implements Authentica
     this.memcacheService = memcacheService;
   }
 
-  public IUserToken generateUserToken(String userId) throws ServiceException {
-    return generateUserToken(userId, null, null);
+  public IUserToken generateUserToken(String userId, Integer source) throws ServiceException {
+    return generateUserToken(userId, null, null, source);
   }
 
-  public IUserToken generateUserToken(String userId, String accessKey, Long domainId)
+  public IUserToken generateUserToken(String userId, String accessKey, Long domainId,
+                                      Integer source)
       throws ServiceException, ObjectNotFoundException {
     xLogger.fine("Entering generateUserToken");
 
@@ -124,8 +126,8 @@ public class AuthenticationServiceImpl extends ServiceImpl implements Authentica
       }
       token = generateUuid();
       Calendar c = Calendar.getInstance();
-      int expiresDate = getTokenExpiryDate(account, accessKey);
-      c.add(Calendar.DATE, expiresDate);
+      int validityInMinutes = getTokenValidityInMinutes(account, accessKey, source);
+      c.add(Calendar.MINUTE, validityInMinutes);
       iUserToken = JDOUtils.createInstance(IUserToken.class);
       iUserToken.setUserId(userId);
       iUserToken.setToken(PasswordEncoder.MD5(token));
@@ -146,26 +148,35 @@ public class AuthenticationServiceImpl extends ServiceImpl implements Authentica
     }
   }
 
-  private int getTokenExpiryDate(IUserAccount account, String isAccessKey) {
-    int expiresDate = ConfigUtil.getInt(PropertyConstants.TOKEN_EXPIRY, 30);
+  private int getTokenValidityInMinutes(IUserAccount account, String isAccessKey, Integer source) {
+    int validityTimeInMinutes = ConfigUtil.getInt(PropertyConstants.TOKEN_EXPIRY, 30 * 1440);
+
     if (StringUtils.isEmpty(isAccessKey)) {
-      if (account.getAuthenticationTokenExpiry() != 0) {
-        expiresDate = account.getAuthenticationTokenExpiry();
+      // Web app limit token access time
+      if (SourceConstants.WEB.equals(source)) {
+        validityTimeInMinutes = ConfigUtil.getInt(PropertyConstants.TOKEN_EXPIRE_WEB, 30);
       } else {
-        DomainConfig domainConfig = DomainConfig.getInstance(account.getDomainId());
-        if (domainConfig.getAuthenticationTokenExpiry() != 0) {
-          expiresDate = domainConfig.getAuthenticationTokenExpiry();
+        //Mobile apps pick configuration
+        if (account.getAuthenticationTokenExpiry() != 0) {
+          validityTimeInMinutes = account.getAuthenticationTokenExpiry() * 1440;
+        } else {
+          DomainConfig domainConfig = DomainConfig.getInstance(account.getDomainId());
+          if (domainConfig.getAuthenticationTokenExpiry() != 0) {
+            validityTimeInMinutes = domainConfig.getAuthenticationTokenExpiry() * 1440;
+          }
         }
       }
     } else {
+      //Bulletin board, use domain default
       int
           domainExpiry =
           DomainConfig.getInstance(account.getDomainId()).getAccessKeyAuthTokenExpiry();
       if (domainExpiry > 0) {
-        expiresDate = domainExpiry;
+        validityTimeInMinutes = domainExpiry * 1440;
       }
     }
-    return expiresDate;
+
+    return validityTimeInMinutes;
   }
 
   public IUserToken authenticateToken(String token, Integer accessInitiator)
@@ -177,6 +188,8 @@ public class AuthenticationServiceImpl extends ServiceImpl implements Authentica
     PersistenceManager pm = PMF.get().getPersistenceManager();
     try {
       iUserToken = JDOUtils.getObjectById(IUserToken.class, PasswordEncoder.MD5(token), pm);
+    } catch (JDOObjectNotFoundException e) {
+      throw new UnauthorizedException("Invalid token");
     } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
       throw new UnauthorizedException("System error");
     } finally {
@@ -490,7 +503,8 @@ public class AuthenticationServiceImpl extends ServiceImpl implements Authentica
       int domainKeySeparatorIndex = value.indexOf(DOMAIN_KEY_SEPARATOR);
       return Optional.of(generateUserToken(
           value.substring(domainKeySeparatorIndex + 1, value.length()), accessKey,
-          Long.valueOf(value.substring(0, domainKeySeparatorIndex))));
+          Long.valueOf(value.substring(0, domainKeySeparatorIndex)),
+          SourceConstants.BULLETIN_BOARD));
     } else {
       return Optional.empty();
     }

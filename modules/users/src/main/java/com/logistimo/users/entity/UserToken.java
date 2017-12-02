@@ -23,6 +23,8 @@
 
 package com.logistimo.users.entity;
 
+import org.apache.commons.lang.StringUtils;
+
 import java.util.Date;
 
 import javax.jdo.annotations.IdentityType;
@@ -102,5 +104,10 @@ public class UserToken implements IUserToken {
   @Override
   public void setAccessKey(String accessKey) {
     this.accessKey = accessKey;
+  }
+
+  @Override
+  public boolean hasAccessKey() {
+    return StringUtils.isNotEmpty(accessKey);
   }
 }

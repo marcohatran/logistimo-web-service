@@ -53,4 +53,6 @@ public interface IUserToken {
   String getAccessKey();
 
   void setAccessKey(String accessKey);
+
+  boolean hasAccessKey();
 }

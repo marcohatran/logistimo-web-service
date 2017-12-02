@@ -80,8 +80,9 @@
                 return {
                     'request': function (config) {
                         // do something on success
-                        if (checkNotNullEmpty($rootScope.currentDomain) && checkNotNullEmpty($rootScope.curUser)) {
-                            config.headers.d = $rootScope.curUser + ":" + $rootScope.currentDomain;
+                        var curDomain = localStorage.getItem("domain");
+                        if (checkNotNullEmpty(curDomain) && checkNotNullEmpty($rootScope.curUser)) {
+                            config.headers.d = $rootScope.curUser + ":" + curDomain;
                         }
                         if (config.url.startsWith("/s2")) {
                             config.url = $rootScope.basePath + config.url;
@@ -89,6 +90,8 @@
                         if (checkNotNullEmpty($rootScope.token)) {
                             config.headers['x-access-token'] = $rootScope.token;
                         }
+                        config.headers['x-access-initiator'] = "1";
+                        config.headers['x-app-name'] = "web";
                         return config;
                     },
                     responseError: function(rejection) {

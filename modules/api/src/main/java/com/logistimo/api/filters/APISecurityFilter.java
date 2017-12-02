@@ -74,14 +74,10 @@ public class APISecurityFilter implements Filter {
     HttpServletRequest req = (HttpServletRequest) request;
     HttpServletResponse resp = (HttpServletResponse) response;
     String servletPath = req.getServletPath() + req.getPathInfo();
-    xLogger.fine("Servlet path: ", servletPath);
     if (req.getCharacterEncoding() == null) {
       request.setCharacterEncoding(Constants.UTF8);
     }
 
-    if (StringUtils.isNotEmpty(req.getHeader("app-name"))) {
-      filterChain.doFilter(request, response);
-    }
     try {
       //this is meant for internal api client
       if (StringUtils.isNotBlank(req.getHeader(X_ACCESS_USER))) {
@@ -96,10 +92,13 @@ public class APISecurityFilter implements Filter {
           resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
           return;
         }
-
       } else if (StringUtils.isNotBlank(req.getHeader(Constants.TOKEN))) {
         try {
-          AuthenticationUtil.authenticateTokenAndSetSession(req.getHeader(Constants.TOKEN), -1);
+          AuthenticationUtil.authenticateTokenAndSetSession(req);
+        } catch (UnauthorizedException | ObjectNotFoundException e) {
+          xLogger.warn("Issue with api client authentication", e);
+          resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
+          return;
         } catch (Exception e) {
           xLogger.severe("Issue with api client authentication", e);
           resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
@@ -117,9 +116,6 @@ public class APISecurityFilter implements Filter {
         SecureUserDetails
             userDetails = SecurityMgr
             .getSessionDetails(req.getSession());
-        if (userDetails != null) {
-          SecurityUtils.setUserDetails(userDetails);
-        }
         SecurityUtils.setUserDetails(userDetails);
         if (StringUtils.isNotBlank(servletPath) && !(servletPath.startsWith(APP_STATUS_URL)
             || servletPath.startsWith(AUTHENTICATE_URL))) {
