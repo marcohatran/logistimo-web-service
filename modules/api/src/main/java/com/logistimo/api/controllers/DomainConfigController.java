@@ -324,7 +324,7 @@ public class DomainConfigController {
     DomainConfig config = DomainConfig.getInstance(domainId);
     if (config != null) {
       try {
-        return builder.buildMenuStats(user, config, locale, user.getTimezone(), request);
+        return builder.buildMenuStats(user, config, locale, user.getTimezone());
       } catch (ServiceException | ObjectNotFoundException e) {
         throw new InvalidServiceException(backendMessages.getString("menustats.fetch.error"));
       }

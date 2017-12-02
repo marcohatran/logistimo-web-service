@@ -26,11 +26,9 @@ package com.logistimo.api.filters;
 import com.logistimo.api.auth.AuthenticationUtil;
 import com.logistimo.auth.SecurityMgr;
 import com.logistimo.auth.utils.SecurityUtils;
-import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.logger.XLog;
-import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.utils.ConfigUtil;
 
@@ -79,6 +77,13 @@ public class APISecurityFilter implements Filter {
     }
 
     try {
+      String recvdCookie = getAppCookie(req);
+      if (appVerAvailable && recvdCookie != null && !appVersion.equals(recvdCookie)) {
+        resp.setHeader(ERROR_HEADER_NAME, UPGRADE_REQUIRED_RESPONSE_CODE);
+        resp.sendError(HttpServletResponse.SC_CONFLICT, "Upgrade required");
+        return;
+      }
+
       //this is meant for internal api client
       if (StringUtils.isNotBlank(req.getHeader(X_ACCESS_USER))) {
         try {
@@ -104,37 +109,15 @@ public class APISecurityFilter implements Filter {
           resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
           return;
         }
-      } else if (StringUtils.isBlank(req.getHeader(Constants.X_APP_ENGINE_TASK_NAME)) && !(
-          StringUtils.isNotBlank(servletPath) && (servletPath.startsWith(ASSET_STATUS_URL)
-              || servletPath.startsWith(SMS_API_URL) || servletPath.startsWith(M_AUTH_URL)))) {
-        String recvdCookie = getAppCookie(req);
-        if (appVerAvailable && recvdCookie != null && !appVersion.equals(recvdCookie)) {
-          resp.setHeader(ERROR_HEADER_NAME, UPGRADE_REQUIRED_RESPONSE_CODE);
-          resp.sendError(HttpServletResponse.SC_CONFLICT, "Upgrade required");
+      } else if (StringUtils.isBlank(req.getHeader(Constants.X_APP_ENGINE_TASK_NAME)) &&
+          !(StringUtils.isNotBlank(servletPath) &&
+              (servletPath.startsWith(ASSET_STATUS_URL) ||
+                  servletPath.startsWith(SMS_API_URL) ||
+                  servletPath.startsWith(M_AUTH_URL) ||
+                  servletPath.startsWith(APP_STATUS_URL) ||
+                  servletPath.startsWith(AUTHENTICATE_URL)))) {
+        resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication Required.");
           return;
-        }
-        SecureUserDetails
-            userDetails = SecurityMgr
-            .getSessionDetails(req.getSession());
-        SecurityUtils.setUserDetails(userDetails);
-        if (StringUtils.isNotBlank(servletPath) && !(servletPath.startsWith(APP_STATUS_URL)
-            || servletPath.startsWith(AUTHENTICATE_URL))) {
-
-          if (userDetails == null) {
-            resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication Required.");
-            return;
-          }
-
-          String reqDomainId = SecurityUtils.getReqCookieUserDomain(req);
-          if (reqDomainId != null && !reqDomainId.equals(
-              userDetails.getUsername() + CharacterConstants.COLON + SecurityUtils
-                  .getCurrentDomainId())) {
-            resp.setHeader(ERROR_HEADER_NAME, DOMAIN_CHANGE_RESPONSE_CODE);
-            resp.sendError(HttpServletResponse.SC_CONFLICT, "Invalid session on client");
-            return;
-          }
-        }
-
       }
 
       if (filterChain != null) {

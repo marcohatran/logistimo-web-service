@@ -32,6 +32,7 @@
             $scope.showpopup = 'showpopup';
             $scope.hidepopup = 'hidepopup';
             $rootScope.basePath = '';
+            $rootScope.currentDomain = localStorage.getItem("domain");
 
             $rootScope.isBulletinBoard = isBulletinBoard;
             $scope.loadMessage = "";
@@ -275,7 +276,7 @@
                 })
             }
 
-            $scope.reloadPage = function () {
+            $rootScope.reloadPage = $scope.reloadPage = function () {
                 $window.location.reload();
             };
 
@@ -793,7 +794,7 @@
                 }
                 $timeout(function () {
                     $scope.checkNetwork();
-                }, 300);
+                }, 30000);
             };
             $scope.checkNetwork();
         }

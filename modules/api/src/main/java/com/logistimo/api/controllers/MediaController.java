@@ -76,7 +76,6 @@ public class MediaController {
   @RequestMapping(value = "/v1/mediaforDomain/{domainKey:.+}", method = RequestMethod.GET)
   @ResponseBody
   public MediaModels getMedia(@PathVariable String domainKey) {
-    xLogger.info(SecurityUtils.getUsername() + " trying to fetch media for key: " + domainKey);
     IMediaEndPoint endPoint = JDOUtils.createInstance(IMediaEndPoint.class);
     List<IMedia> mediaList = endPoint.getMedias(domainKey);
     return new MediaModels(builder.constructMediaModelList(mediaList));

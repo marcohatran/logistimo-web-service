@@ -22,8 +22,23 @@
  */
 
 logistimoApp.factory('APIService', function ($http, $q, $rootScope) {
+    var checkDomainAndReject = function () {
+        var localDomain = localStorage.getItem("domain");
+        if (checkNotNullEmpty($rootScope.currentDomain)) {
+            if (localDomain != $rootScope.currentDomain) {
+                $rootScope.reloadPage();
+                return true;
+            }
+        }
+        return false;
+    };
     return {
         get: function (urlStr) {
+            if (checkDomainAndReject()) {
+                return $q(function (resolve, reject) {
+                    reject();
+                });
+            }
             if (!$rootScope.isBulletinBoard) {
                 return $http({method: 'GET', url: urlStr});
             } else if (!$rootScope.networkAvailable) {
@@ -52,12 +67,27 @@ logistimoApp.factory('APIService', function ($http, $q, $rootScope) {
             }
         },
         post: function (data, urlStr) {
+            if (checkDomainAndReject()) {
+                return $q(function (resolve, reject) {
+                    reject();
+                });
+            }
             return $http({method: 'POST', data: data, url: urlStr});
         },
         put: function (data, urlStr) {
+            if (checkDomainAndReject()) {
+                return $q(function (resolve, reject) {
+                    reject();
+                });
+            }
             return $http({method: 'PUT', data: data, url: urlStr})
         },
         delete: function (urlStr) {
+            if (checkDomainAndReject()) {
+                return $q(function (resolve, reject) {
+                    reject();
+                });
+            }
             return $http({method: 'DELETE', url: urlStr})
         }
     }

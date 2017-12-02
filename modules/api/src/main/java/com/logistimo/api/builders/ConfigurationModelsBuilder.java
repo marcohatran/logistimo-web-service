@@ -122,7 +122,6 @@ import javax.servlet.http.HttpServletRequest;
  */
 public class ConfigurationModelsBuilder {
   private static final XLog xLogger = XLog.getLog(ConfigurationModelsBuilder.class);
-  private static final int GAE_MAX_ENTITIES = 30;
   private static final String UPLOADS = "uploads";
   private static final String LOGO = "logo.png";
   private static final String INVOICE_TEMPLATE = "logistimo_invoice.jrxml";
@@ -130,9 +129,9 @@ public class ConfigurationModelsBuilder {
   private static final String DOWNLOAD_LINK = "/s2/api/export/download?isBlobKey=true";
 
   public MenuStatsModel buildMenuStats(SecureUserDetails user, DomainConfig config, Locale locale,
-                                       String timezone, HttpServletRequest request)
+                                       String timezone)
       throws ServiceException, ObjectNotFoundException {
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), user.getUsername());
+    Long domainId = SecurityUtils.getCurrentDomainId();
     MenuStatsModel model = new MenuStatsModel();
     model.iAccTbEn = config.isAccountingEnabled();
     model.iOrdTbEn =

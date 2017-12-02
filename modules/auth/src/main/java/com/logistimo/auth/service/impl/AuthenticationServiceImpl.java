@@ -141,8 +141,7 @@ public class AuthenticationServiceImpl extends ServiceImpl implements Authentica
       return iUserToken;
     } catch (Exception e) {
       xLogger.severe("Failed to encode password for user : {0}", userId, e);
-      throw new ServiceException(
-          "System error while generating access token. Contact System Administrator");
+      throw new ServiceException("G001", new Object[]{});
     } finally {
       pm.close();
     }

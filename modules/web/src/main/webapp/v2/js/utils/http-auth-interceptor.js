@@ -81,8 +81,8 @@
                     'request': function (config) {
                         // do something on success
                         var curDomain = localStorage.getItem("domain");
-                        if (checkNotNullEmpty(curDomain) && checkNotNullEmpty($rootScope.curUser)) {
-                            config.headers.d = $rootScope.curUser + ":" + curDomain;
+                        if (checkNotNullEmpty(curDomain)) {
+                            config.headers.d = "user:" + curDomain;
                         }
                         if (config.url.startsWith("/s2")) {
                             config.url = $rootScope.basePath + config.url;
