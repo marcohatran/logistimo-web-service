@@ -29,7 +29,7 @@ function InventoryReportController(s, timeout, getData, reportsServiceCore) {
     s.hideLoading = s.$parent.$parent.hideLoading;
     s.exportAsCSV = s.$parent.$parent.exportAsCSV;
     s.showSuccess = s.$parent.$parent.showSuccess;
-    s.showError = s.$parent.$parent.showError;
+    s.showErrorMsg = s.$parent.$parent.showErrorMsg;
 
     s.MAX_MONTHS = 11;
     s.MAX_WEEKS = 15;
@@ -463,7 +463,7 @@ function InventoryReportController(s, timeout, getData, reportsServiceCore) {
         reportsServiceCore.exportData(JSON.stringify(angular.toJson(selectedFilters))).then(function (data) {
             s.showSuccess(data.data);
         }).catch(function error(msg) {
-            s.showError(msg);
+            s.showErrorMsg(msg);
         }).finally(function(){
             s.hideLoading();
         });
