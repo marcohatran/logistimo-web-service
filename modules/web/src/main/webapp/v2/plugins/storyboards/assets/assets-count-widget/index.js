@@ -78,6 +78,7 @@ angular.module('logistimo.storyboard.assetsCountWidget', [])
                     $scope.wloading = false;
                 });
         }
+        $scope.computedHeight = parseInt($scope.widget.computedHeight, 10)-10;
 
     }]);
 

@@ -46,9 +46,6 @@ angular.module('logistimo.storyboard.eventMapWidget', [])
                 $scope.eventId = $scope.widget.conf.event;
                 $scope.categoryId = $scope.widget.conf.category;
                 $scope.thresholdId = $scope.widget.conf.threshold;
-                console.log("eventId: " + $scope.eventId);
-                console.log("categoryId: " + $scope.categoryId);
-                console.log("thresholdId: " + $scope.thresholdId);
                 $scope.init();
             });
 
@@ -97,7 +94,7 @@ angular.module('logistimo.storyboard.eventMapWidget', [])
             
 
             function loadLocationMap() {
-                var eventId = widget.conf.threshold;
+                var eventId = $scope.widget.conf.threshold;
                 eventSummaryService.getEventSummariesDistribution($scope.currentDomain,$scope.curUser,eventId,true).then(function(data){
                     $scope.dashboardView = {};
                     $scope.dashboardView.distribution = data.data.summaries[0].distribution;
