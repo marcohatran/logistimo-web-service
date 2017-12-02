@@ -59,14 +59,10 @@ authServices.factory('iAuthService', ['APIService', '$rootScope', '$q', function
         generateOtp: function(data){
             return apiService.post(data, '/s2/api/auth/generateOtp');
         },
-        getAccessToken: function (init) {
+        getAccessToken: function () {
             var token = localStorage.getItem("x-access-token");
             if (checkNotNullEmpty(token)) {
                 if (localStorage.getItem("expires") > new Date().getTime()) {
-                    if (init) {
-                        $rootScope.token = token;
-                        $rootScope.expires = localStorage.getItem("expires");
-                    }
                     return token;
                 } else {
                     this.removeAccessToken();
@@ -75,16 +71,12 @@ authServices.factory('iAuthService', ['APIService', '$rootScope', '$q', function
             return null;
         },
         setAccessToken: function (accessToken, expires) {
-            $rootScope.token = accessToken;
-            $rootScope.expires = expires;
             localStorage.setItem("x-access-token", accessToken);
             localStorage.setItem("expires", expires);
         },
         removeAccessToken: function () {
             localStorage.removeItem('x-access-token');
             localStorage.removeItem('expires');
-            $rootScope.token = null;
-            $rootScope.expires = null;
         },
         authorizeBulletinBoard: function (authKey) {
             return apiService.post(authKey, "/s2/api/auth/authorise-access-key");

@@ -773,9 +773,9 @@
                 return requestContext.getParam(paramName);
             };
 
-            iAuthService.getAccessToken(true);
+            var token = iAuthService.getAccessToken(true);
 
-            if ($rootScope.isBulletinBoard && checkNullEmpty($rootScope.token)) {
+            if ($rootScope.isBulletinBoard && checkNullEmpty(token)) {
                 $scope.showBulletinBoardLogin();
             } else {
                 $scope.initApp();

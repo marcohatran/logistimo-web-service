@@ -87,8 +87,9 @@
                         if (config.url.startsWith("/s2")) {
                             config.url = $rootScope.basePath + config.url;
                         }
-                        if (checkNotNullEmpty($rootScope.token)) {
-                            config.headers['x-access-token'] = $rootScope.token;
+                        var token = localStorage.getItem("x-access-token");
+                        if (checkNotNullEmpty(token)) {
+                            config.headers['x-access-token'] = token;
                         }
                         config.headers['x-access-initiator'] = "1";
                         config.headers['x-app-name'] = "web";

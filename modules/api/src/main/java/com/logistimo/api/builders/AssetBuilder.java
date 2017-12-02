@@ -146,7 +146,7 @@ public class AssetBuilder {
           IUserAccount ua = as.getUserAccount(assetDetailsModel.lub);
           assetDetailsModel.lubn = ua.getFullName();
         } catch (Exception e) {
-          xLogger.warn("Error in fetching user details", e);
+          xLogger.warn("Error in fetching user details", e.getMessage());
         }
       }
       assetDetailsModelList.add(assetDetailsModel);

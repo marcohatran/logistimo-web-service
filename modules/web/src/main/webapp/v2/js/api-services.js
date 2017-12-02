@@ -24,7 +24,7 @@
 logistimoApp.factory('APIService', function ($http, $q, $rootScope) {
     var checkDomainAndReject = function () {
         var localDomain = localStorage.getItem("domain");
-        if (checkNotNullEmpty($rootScope.currentDomain)) {
+        if (checkNotNullEmpty($rootScope.currentDomain) && checkNotNullEmpty(localDomain)) {
             if (localDomain != $rootScope.currentDomain) {
                 $rootScope.reloadPage();
                 return true;
