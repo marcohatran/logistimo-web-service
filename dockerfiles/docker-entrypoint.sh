@@ -31,7 +31,8 @@ sed -ri "$ a logi.host.server=$LOGI_HOST" $TOMCAT_HOME/webapps/ROOT/WEB-INF/clas
         && sed -ri "/Jad\/Jar download servlet/,+4d" $TOMCAT_HOME/webapps/ROOT/WEB-INF/web.xml \
         && sed -ri "$ a tomcat.util.http.parser.HttpParser.requestTargetAllow=|{}" $TOMCAT_HOME/conf/catalina.properties \
         && sed -ri "s/8080/$TASK_PORT/g" $TOMCAT_HOME/conf/server.xml \
-        && sed -ri "s/http:\/\/localhost:8080/$MAPI_URL/g" $TOMCAT_HOME/webapps/ROOT/v2/index.html
+        && sed -ri "s/http:\/\/localhost:8080/$MAPI_URL/g" $TOMCAT_HOME/webapps/ROOT/v2/index.html \
+        && sed -ri "s/http:\/\/localhost:8080/$MAPI_URL/g" $TOMCAT_HOME/webapps/ROOT/v2/bulletinboard.html
 
 if [[ "$SENTINEL_HOST" != "" ]]
 then
