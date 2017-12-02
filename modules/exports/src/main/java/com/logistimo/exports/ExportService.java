@@ -30,6 +30,8 @@ import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.entity.IJobStatus;
 import com.logistimo.exports.model.ExportConfigModel;
 import com.logistimo.exports.model.ExportRequestModel;
+import com.logistimo.reports.constants.ReportViewType;
+import com.logistimo.reports.plugins.internal.QueryHelper;
 import com.logistimo.reports.plugins.internal.ReportRequestModel;
 import com.logistimo.utils.JobUtil;
 
@@ -45,12 +47,16 @@ import java.util.Map;
 @org.springframework.stereotype.Service
 public class ExportService {
 
+  public static final String REPORT_VIEW_TYPE = "reportViewType";
+
   public long scheduleReportExport(ReportRequestModel model) {
     Map<String, String>
         filters = new HashMap<>(model.filters.size() + model.additionalData.size() + 1, 1);
     filters.putAll(model.filters);
     filters.putAll(model.additionalData);
     filters.put("userId", model.userId);
+
+    clearMetaFilters(filters);
 
     long jobId = JobUtil
         .createJob(SecurityUtils.getCurrentDomainId(), SecurityUtils.getUsername(), null,
@@ -64,6 +70,16 @@ public class ExportService {
     exportRequestModel.addRequestConfig(ecModel);
     submitExportJob(exportRequestModel);
     return jobId;
+  }
+
+  private void clearMetaFilters(Map<String, String> filters) {
+    if(ReportViewType.BY_ASSET.toString().equals(filters.get(REPORT_VIEW_TYPE))) {
+      filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_DVID);
+    } else if(ReportViewType.BY_MANUFACTURER.toString().equals(filters.get(REPORT_VIEW_TYPE))) {
+      filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_VENDOR_ID);
+    } else if(ReportViewType.BY_ASSET_TYPE.toString().equals(filters.get(REPORT_VIEW_TYPE))) {
+      filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_ATYPE);
+    }
   }
 
   private void submitExportJob(ExportRequestModel model) {
