@@ -171,7 +171,9 @@ public class AuthControllerMV1 {
     token = authenticationService.generateUserToken(userid, src);
     if (token != null) {
       headers.put(Constants.TOKEN, token.getRawToken());
-      headers.put(Constants.EXPIRES, String.valueOf(token.getExpires().getTime()));
+      if (token.getExpires() != null) {
+        headers.put(Constants.EXPIRES, String.valueOf(token.getExpires().getTime()));
+      }
     }
   }
 
