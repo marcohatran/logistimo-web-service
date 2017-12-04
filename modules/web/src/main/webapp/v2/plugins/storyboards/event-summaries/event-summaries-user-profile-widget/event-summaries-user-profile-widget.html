@@ -37,21 +37,22 @@
         <span class="widget-no-data">No data to display</span>
     </div>
     <div ng-show="!wloading && !showError">
-        <div class="row">
-            <div class="col-sm-12"  ng-repeat="item in profiles">
-                <div class="panel panel-default" style="border:none;">
+        <div class="summary-title pt15" style="padding-bottom: 15px; border-bottom:1px solid #ddd;">
+            {{heading}}
+        </div>
+            <div ng-repeat="item in profiles">
+                <div class="panel-default" style="border-bottom:1px solid #ddd">
                     <div class="panel-body">
                         <div class="col-sm-8">
                             <p class="widget-text table-min">{{item.name}}</p>
                             <p class="widget-text table-min" style="color:grey;">{{item.title}}</p>
                             <p class="widget-text table-min" style="color:grey;">{{item.user}}</p>
                         </div>
-                        <div class="col-sm-4">
+                        <div class="col-sm-4" ng-show="item.image_url">
                             <img class="widget-profile-image" src="{{item.image_url}}"/>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
     </div>
 </div>

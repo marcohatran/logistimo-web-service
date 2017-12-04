@@ -308,9 +308,9 @@ function constructMapData(event, init, scope, INVENTORY, $sce, mapRange, mapColo
                 o.label = n;
                 o.value = per;
                 if(eventIndicators){
-                    o.value = value;
+                    o.value = per;
                     o.label = o.value;
-                    o.displayValue = o.value.toString();
+                    o.displayValue = value.toString();
                     o.showLabel = 1;
                     scope.mapOpt.labelConnectorAlpha = 1;
                 }else{
@@ -726,6 +726,17 @@ function getReportFCSeries(data, seriesno, name, type, isLinkDisabled, filterSer
             return series;
         }
     }
+}
+function getHeading(summaries, dstate, ddist) {
+    var location = "";
+    if(checkNullEmpty(dstate)) {
+        location = "country";
+    } else if(checkNullEmpty(ddist)) {
+        location = summaries.length > 1 ? "states" : "state";
+    } else {
+        location = summaries.length > 1 ?"districts" : "district";
+    }
+    return "Top " + summaries.length + " " + location
 }
 
 function getDonutRadius(width, height) {

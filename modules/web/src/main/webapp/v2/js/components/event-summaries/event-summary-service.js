@@ -55,8 +55,19 @@ eventSummaryServices.factory('eventSummaryService', ['APIService', function (api
 
         },
         getEventSummariesDistribution: function (domainId, userId, eventId, include_distribution) {
-            return apiservice.get(MAPI_URL + "?cn_domain_id=" + domainId + "&user_id=" + userId + "&event_id=" +
-            eventId + "&include_distribution=" + include_distribution, undefined);
+            var urlStr = "";
+            if(checkNotNullEmpty(domainId)) {
+                urlStr += "?cn_domain_id=" + domainId;
+            }
+            if(checkNotNullEmpty(userId)) {
+                urlStr += "&user_id=" + userId;
+            }
+            if(checkNotNullEmpty(eventId)) {
+                urlStr += "&event_id=" + eventId;
+            }
+            urlStr += "&include_distribution=" + include_distribution;
+
+            return apiservice.get(MAPI_URL + urlStr, undefined);
         }
     }
 }]);

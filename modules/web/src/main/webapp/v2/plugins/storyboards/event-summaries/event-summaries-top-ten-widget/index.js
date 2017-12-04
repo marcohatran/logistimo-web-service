@@ -62,6 +62,7 @@ angular.module('logistimo.storyboard.eventSummariesTopTenWidget', [])
             eventSummaryService.getEventSummariesByEventId($scope.currentDomain, $scope.curUser, $scope.widget.conf.threshold, $scope.offset, $scope.size).then(function (data) {
                 if(checkNotNullEmpty(data.data) && checkNotNullEmpty(data.data.summaries)) {
                     $scope.eventSummaries = data.data.summaries;
+                    $scope.heading = getHeading($scope.eventSummaries, $scope.dstate, $scope.ddist);
                 } else {
                     $scope.noData = true;
                 }

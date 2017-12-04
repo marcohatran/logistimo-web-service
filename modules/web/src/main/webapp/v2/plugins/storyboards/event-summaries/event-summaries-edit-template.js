@@ -147,8 +147,6 @@ logistimoApp.controller('eventSummariesTemplateController', ['$scope', '$timeout
         }).catch(function error(msg) {
             $scope.showErrorMsg(msg);
         }).finally(function () {
-            $scope.hideLoading();
-            $scope.loading = false;
             $scope.wloading = false;
         });
     }
@@ -159,7 +157,6 @@ logistimoApp.controller('eventSummariesTemplateController', ['$scope', '$timeout
         $scope.thresholds = {};
         $scope.eventIds = {};
         getEventSummariesConfig();
-        console.log($scope.thresholds);
     }
 
     init();

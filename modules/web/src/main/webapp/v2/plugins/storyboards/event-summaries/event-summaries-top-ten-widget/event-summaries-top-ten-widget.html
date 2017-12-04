@@ -37,11 +37,14 @@
     <span class="widget-no-data">No data to display</span>
   </div>
   <div ng-show="!wloading && !showError">
+    <div class="summary-title pt15" style="padding-bottom: 15px;">
+      {{heading}}
+    </div>
     <table class="table table-bordered-less table-striped table-logistimo">
       <thead>
-      <tr>
-        <th>Location</th>
-        <th>Count</th>
+      <tr style="background: #DDDDDD">
+        <th class="no-background">Location</th>
+        <th class="no-background">Count</th>
       </tr>
       </thead>
       <tbody>

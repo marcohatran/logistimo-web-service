@@ -60,7 +60,7 @@ angular.module('logistimo.storyboard.eventSummariesUserProfileWidget', [])
                         profile.user = data.contacts[0].user;
                     }
                     if(checkNotNullEmpty(data.contacts[0].photo)) {
-                        profile.image_url = "https://nls.logistimo.com" + data.contacts[0].photo[0].serving_url;
+                        profile.image_url = data.contacts[0].photo[0].serving_url;
                     }
                 }
                 $scope.profiles.push(profile);
@@ -77,6 +77,7 @@ angular.module('logistimo.storyboard.eventSummariesUserProfileWidget', [])
             eventSummaryService.getEventSummariesByEventId($scope.currentDomain, $scope.curUser, $scope.widget.conf.threshold, $scope.offset, $scope.size).then(function (data) {
                 if(checkNotNullEmpty(data.data) && checkNotNullEmpty(data.data.summaries)) {
                     populateUserProfiles(data.data.summaries);
+                    $scope.heading = getHeading(data.data.summaries, $scope.dstate, $scope.ddist);
                 } else {
                     $scope.noData = true;
                 }
