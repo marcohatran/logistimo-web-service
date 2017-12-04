@@ -37,6 +37,7 @@ import com.logistimo.exception.BadRequestException;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exception.TaskSchedulingException;
 import com.logistimo.exports.BulkExportMgr;
+import com.logistimo.exports.ExportService;
 import com.logistimo.logger.XLog;
 import com.logistimo.pagination.Navigator;
 import com.logistimo.pagination.PageParams;
@@ -54,6 +55,7 @@ import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.utils.JobUtil;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -100,17 +102,17 @@ public class ExportController {
     try {
       String blobKeyStr;
       String downloadFileName;
-      if(!isBlobKey) {
+      if (!isBlobKey) {
         UploadService us = Services.getService(UploadServiceImpl.class);
         IUploaded uploaded = us.getUploaded(key);
-         blobKeyStr = uploaded.getBlobKey();
+        blobKeyStr = uploaded.getBlobKey();
         downloadFileName = uploaded.getFileName();
       } else {
         blobKeyStr = key;
         downloadFileName = fileName;
       }
       response.addHeader("Content-Disposition", "attachment; filename=" + downloadFileName);
-      response.setBufferSize(32*1024);
+      response.setBufferSize(32 * 1024);
       if (blobKeyStr != null) {
         AppFactory.get().getBlobstoreService().serve(blobKeyStr, response);
       }
@@ -386,5 +388,4 @@ public class ExportController {
       throw new InvalidServiceException("When trying to get recent jobs", e);
     }
   }
-
 }

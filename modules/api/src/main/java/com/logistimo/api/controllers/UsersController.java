@@ -1109,18 +1109,17 @@ public class UsersController {
   @RequestMapping(value = "/user-contact-by-tag", method = RequestMethod.GET)
   public
   @ResponseBody
-  List<AdminContactConfigModel> getUsersContactByTag(@RequestParam Long objectId,
-                                                     @RequestParam String objectType,
-                                                     @RequestParam String userTag)
+  List<AdminContactConfigModel> getUsersContactByTag(@RequestParam(name = "object_id") Long objectId,
+                                                     @RequestParam(name = "object_type", required = false) String objectType,
+                                                     @RequestParam(name = "user_tags") String userTags)
       throws ServiceException {
     if (objectId == null) {
       xLogger.warn("Object id is mandatory");
       throw new ServiceException("Object id is mandatory");
     }
-    String tag = StringUtil.getSingleQuotesCSV(StringUtil.getList(userTag));
     List<IUserAccount>
         results =
-        usersService.getUsersByTag(objectId, objectType, tag);
+        usersService.getUsersByTag(objectId, objectType, StringUtil.getList(userTags));
     return builder.buildAdminContactModel(results);
   }
 }

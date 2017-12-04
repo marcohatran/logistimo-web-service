@@ -32,7 +32,7 @@ var logistimoApp = angular.module('logistimoApp', ['ngSanitize','ngRoute', 'dash
     'linkedDomainControllers', 'linkedDomainServices','domainControllers','domainServices', 'mediaServices', 'base64',
     'exportControllers','once','assetControllers','assetServices','handlingUnitControllers','handlingUnitServices',
     'conversationServices', 'activityServices','conversationControllers','hc.downloader','reportsPluginCore','approvalServices',
-    'approvalControllers', 'bulletinBoardControllers','logistimo.storyboard'
+    'approvalControllers', 'bulletinBoardControllers','logistimo.storyboard','eventSummaryServices'
     /*<% do-not-remove-this-comment-grunt-will-insert-dep-for-prod %>*/]);
 
 logistimoApp.config(function (uibDatepickerConfig) {
@@ -44,11 +44,11 @@ logistimoApp.config(function (uiSelectConfig) {
 });
 
 /* @if BULLETIN_BOARD == 'NA' */
-logistimoApp.constant('isSession', true);
+logistimoApp.constant('isBulletinBoard', false);
 /*@endif*/
 
 /* @if BULLETIN_BOARD == 'BULLETIN_BOARD' */
-logistimoApp.constant('isSession', false);
+logistimoApp.constant('isBulletinBoard', true);
 /* @endif */
 
 logistimoApp.provider('dashboardRepository', function () {

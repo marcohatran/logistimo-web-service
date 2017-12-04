@@ -25,18 +25,10 @@
  * Created by yuvaraj on 12/07/16.
  */
 var handlingUnitServices = angular.module('handlingUnitServices', []);
-handlingUnitServices.factory('handlingUnitService', ['$http', function ($http) {
+handlingUnitServices.factory('handlingUnitService', ['APIService', function (apiService) {
     return {
-        fetch: function (urlStr) {
-            var promise = $http({method: 'GET', url: urlStr});
-            return promise;
-        },
-        fetchP: function (data, urlStr) {
-            var promise = $http({method: 'POST', data: data, url: urlStr});
-            return promise;
-        },
         create: function (handlingUnit) {
-            return this.fetchP(handlingUnit, '/s2/api/hu/create')
+            return apiService.post(handlingUnit, '/s2/api/hu/create')
         },
         getAll: function (offset, size, q) {
             offset = typeof offset !== 'undefined' ? offset : 0;
@@ -45,13 +37,13 @@ handlingUnitServices.factory('handlingUnitService', ['$http', function ($http) {
             if (checkNotNullEmpty(q)) {
                 urlStr += "&q=" + q;
             }
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         getDetail: function (huId) {
-            return this.fetch('/s2/api/hu/hu/' + huId);
+            return apiService.get('/s2/api/hu/hu/' + huId);
         },
         update: function (handlingUnit) {
-            return this.fetchP(handlingUnit, '/s2/api/hu/update')
-        },
+            return apiService.post(handlingUnit, '/s2/api/hu/update')
+        }
     }
 }]);

@@ -25,24 +25,16 @@
  * Created by Mohan Raja on 30/01/15.
  */
 var reportServices = angular.module('reportServices', []);
-reportServices.factory('reportService', ['$http', function($http) {
+reportServices.factory('reportService', ['APIService', function (apiService) {
     return {
-        fetch: function (urlStr) {
-            var promise = $http({method: 'GET', url: urlStr});
-            return promise;
-        },
-        fetchP: function (data, urlStr) {
-            var promise = $http({method: 'POST', data: data, url: urlStr});
-            return promise;
-        },
         getFChartData: function(data){
-            return this.fetchP(data,'/s2/api/report/fchartdata');
+            return apiService.post(data, '/s2/api/report/fchartdata');
         },
         getHistoricalData: function(domainId){
-            return this.fetch('/s2/api/report/domainstats?domainId=' + domainId);
+            return apiService.get('/s2/api/report/domainstats?domainId=' + domainId);
         },
         fetchTagsBasedCount: function(domainId, tag, count) {
-            return this.fetch('/s2/api/report/domainstats/tag?domainId=' + domainId + '&tag=' + tag + '&c=' + count);
+            return apiService.get('/s2/api/report/domainstats/tag?domainId=' + domainId + '&tag=' + tag + '&c=' + count);
         }
     }
 }]);

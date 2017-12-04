@@ -25,7 +25,6 @@ package com.logistimo.api.builders;
 
 import com.logistimo.AppFactory;
 import com.logistimo.api.constants.ConfigConstants;
-import com.logistimo.api.models.MediaModel;
 import com.logistimo.api.models.MenuStatsModel;
 import com.logistimo.api.models.configuration.AccountingConfigModel;
 import com.logistimo.api.models.configuration.AdminContactConfigModel;
@@ -43,6 +42,7 @@ import com.logistimo.auth.SecurityConstants;
 import com.logistimo.auth.SecurityMgr;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.auth.utils.SessionMgr;
+import com.logistimo.common.builder.MediaBuilder;
 import com.logistimo.config.entity.IConfig;
 import com.logistimo.config.models.AccountingConfig;
 import com.logistimo.config.models.ActualTransConfig;
@@ -74,10 +74,12 @@ import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exception.SystemException;
+import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.logger.XLog;
 import com.logistimo.media.endpoints.IMediaEndPoint;
 import com.logistimo.media.entity.IMedia;
+import com.logistimo.models.MediaModel;
 import com.logistimo.orders.entity.IOrder;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
@@ -120,7 +122,6 @@ import javax.servlet.http.HttpServletRequest;
  */
 public class ConfigurationModelsBuilder {
   private static final XLog xLogger = XLog.getLog(ConfigurationModelsBuilder.class);
-  private static final int GAE_MAX_ENTITIES = 30;
   private static final String UPLOADS = "uploads";
   private static final String LOGO = "logo.png";
   private static final String INVOICE_TEMPLATE = "logistimo_invoice.jrxml";
@@ -128,9 +129,9 @@ public class ConfigurationModelsBuilder {
   private static final String DOWNLOAD_LINK = "/s2/api/export/download?isBlobKey=true";
 
   public MenuStatsModel buildMenuStats(SecureUserDetails user, DomainConfig config, Locale locale,
-                                       String timezone, HttpServletRequest request)
+                                       String timezone)
       throws ServiceException, ObjectNotFoundException {
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), user.getUsername());
+    Long domainId = SecurityUtils.getCurrentDomainId();
     MenuStatsModel model = new MenuStatsModel();
     model.iAccTbEn = config.isAccountingEnabled();
     model.iOrdTbEn =
@@ -360,21 +361,11 @@ public class ConfigurationModelsBuilder {
     return null;
   }
 
-  public GeneralConfigModel buildGeneralConfigModel(Long domainId, Locale locale, String timezone)
+  public GeneralConfigModel buildDomainLocationModels(Long domainId, Locale locale, String timezone)
       throws ServiceException, ObjectNotFoundException, ConfigurationException {
-    String strConfig;
-    DomainConfig dc;
+    DomainConfig dc = DomainConfig.getInstance(domainId);
     GeneralConfigModel model = new GeneralConfigModel();
-    ConfigurationMgmtService
-        cms =
-        Services.getService(ConfigurationMgmtServiceImpl.class, locale);
-    try {
-      String key = IConfig.CONFIG_PREFIX + domainId.toString();
-      strConfig = cms.getConfiguration(key).getConfig();
-      dc = new DomainConfig(strConfig);
-    } catch (Exception e) {
-      dc = new DomainConfig();
-    }
+
     List<String> val = dc.getDomainData(ConfigConstants.GENERAL);
     if (val != null) {
       model.createdBy = val.get(0);
@@ -395,6 +386,16 @@ public class ConfigurationModelsBuilder {
     model.nhn = dc.getNewHostName();
     model.support = buildAllSupportConfigModels(dc);
     model.adminContact = buildAllAdminContactConfigModel(dc.getAdminContactConfig());
+    return model;
+  }
+
+  public GeneralConfigModel buildDomainLocationModel(Long domainId) {
+    DomainConfig dc = DomainConfig.getInstance(domainId);
+    GeneralConfigModel model = new GeneralConfigModel();
+    model.cnt = dc.getCountry() != null ? dc.getCountry() : "";
+    model.st = dc.getState() != null ? dc.getState() : "";
+    model.ds = dc.getDistrict() != null ? dc.getDistrict() : "";
+    model.domainId = domainId;
     return model;
   }
 
@@ -761,8 +762,10 @@ public class ConfigurationModelsBuilder {
       model.ho = new ArrayList<String>(Arrays.asList(dc.getTagsOrders().split(",")));
     }
     model.dshp = dc.isDisableShippingOnMobile();
+    model.bcs = dc.isBarcodingEnabled();
+    model.rfids = dc.isRFIDEnabled();
     model.ro = "";
-    Map<String, CapabilitiesConfigModel> roleMap = new HashMap<String, CapabilitiesConfigModel>(4);
+    Map<String, CapabilitiesConfigModel> roleMap = new HashMap<>(4);
     roleMap.put(SecurityConstants.ROLE_KIOSKOWNER,
         constructCCM(map.get(SecurityConstants.ROLE_KIOSKOWNER), SecurityConstants.ROLE_KIOSKOWNER, dc));
     roleMap.put(SecurityConstants.ROLE_SERVICEMANAGER,
@@ -847,9 +850,11 @@ public class ConfigurationModelsBuilder {
                 Arrays.asList(config.gettagByOperation(ITransaction.TYPE_TRANSFER).split(",")));
       }
       if (config.getTagsOrders() != null) {
-        model.ho = new ArrayList<String>(Arrays.asList(config.getTagsOrders().split(",")));
+        model.ho = new ArrayList<>(Arrays.asList(config.getTagsOrders().split(",")));
       }
       model.dshp = config.isDisableShippingOnMobile();
+      model.bcs = config.isBarcodingEnabled();
+      model.rfids = config.isRFIDEnabled();
     }
     if (dc != null) {
       model.atexp = dc.getAuthenticationTokenExpiry();
@@ -1340,7 +1345,7 @@ public class ConfigurationModelsBuilder {
     Long domainId = SessionMgr.getCurrentDomain(request.getSession(), userId);
     String timezone = sUser.getTimezone();
     try {
-      GeneralConfigModel generalConfigModel = buildGeneralConfigModel(domainId, locale, timezone);
+      GeneralConfigModel generalConfigModel = buildDomainLocationModels(domainId, locale, timezone);
       List<SupportConfigModel> supportConfigModels = generalConfigModel.support;
       for (SupportConfigModel supportConfigModel : supportConfigModels) {
         if (sUser.getRole().equals(supportConfigModel.role)) {
@@ -1448,5 +1453,20 @@ public class ConfigurationModelsBuilder {
       return list;
     }
     return new ArrayList<>();
+  }
+
+  public List<GeneralConfigModel> buildDomainLocationModels(List<String> domainIds,
+                                                            UsersService userService,
+                                                            String userName)
+      throws ServiceException, ConfigurationException {
+    List<GeneralConfigModel> configModel = new ArrayList<>();
+    for(String dId: domainIds) {
+      if (!userService.hasAccessToDomain(userName, Long.valueOf(dId))) {
+        xLogger.warn("User {0} does not have access to domain id {1}", userName, dId);
+        throw new UnauthorizedException("User does not have access to domain");
+      }
+      configModel.add(buildDomainLocationModel(Long.valueOf(dId)));
+    }
+    return configModel;
   }
 }

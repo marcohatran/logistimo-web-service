@@ -52,7 +52,7 @@ public class BulletinBoard implements IBulletinBoard {
   @Persistent
   private Long max;
   @Persistent
-  @Column(length = 2048)
+  @Column(length = 4096)
   private String conf;
   @Persistent
   private String cBy; // userId of owner of domain

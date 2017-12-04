@@ -1,4 +1,4 @@
-﻿dummy=
+﻿﻿dummy=
 abnormalstockduration=Durée de l'action anormale
 abnormalstockviews=Vue anormale des stocks
 abnormalstockevent=Événement boursier anormal (par exemple, rupture de stock, < min.,> max.)
@@ -687,7 +687,6 @@ pwd.otp.enter=Entrez le Bureau du Procureur que vous avez reçu par SMS dans le 
 config.usedomaindefault=Utilisez la valeur par défaut pour ce domaine
 config.overridedomaindefault=Options suivantes remplacent la valeur par défaut du domaine
 permission=permission
-exportstatusinfo1=Vous pouvez suivre l'état de l'exportation en cliquant sur ​​le lien ' Mes exportations '.
 exportstatus=Etat de l'exportation
 id=ID
 numberofrecords=Nombre de documents
@@ -706,7 +705,6 @@ myaccount=Mon compte
 myexports=Mes exportations
 showallexportsindomain=Montrer toutes les exportations dans ce domaine
 scheduledbythesystem=Prévu par le système
-exportstatusinfo2=Votre ID de l'emploi est:
 customreportsstatusinfo1=Vous pouvez suivre l'état de l'exportation en cliquant sur ​​le lien « Rapports personnalisés » sous la rubrique « Rapports ».
 user.permissions=autorisations
 user.token.expiry=expiration token
@@ -1150,5 +1148,13 @@ excursion.type=Type d'excursion
 custom.dashboards=Tableaux de bord personnalisés
 custom.dashboard=tableau de bord personnalisé
 network.unavailable=Le réseau n'est pas disponible. Dernière mise à jour à
+event.category=Catégorie
+event=un événement
+threshold=Seuil
+locations.number=Nombre d'emplacements
+config.rfid.enable=Activer l'analyse RFID sur mobile
+config.barcoding.enable=Activer l'analyse de code-barres sur mobile
+config.barcoding.rfid.enable=Activer le balayage de code-barres / RFID
+profile.number=Nombre de profils
 
 

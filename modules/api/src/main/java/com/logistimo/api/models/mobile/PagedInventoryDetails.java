@@ -24,6 +24,7 @@
 package com.logistimo.api.models.mobile;
 
 import com.logistimo.api.models.InventoryDetail;
+import com.logistimo.models.BasePagedResponseModel;
 
 import java.util.List;
 

@@ -28,12 +28,7 @@ var authServices = angular.module('authServices', []);
 authServices.factory('iAuthService', ['APIService', '$rootScope', '$q', function (apiService, $rootScope, $q) {
     return {
         login: function (userId,password,lang) {
-            /*var payload = $.param({userId: userId,password:password});
-            var promise = $http.post('/s2/api/auth/login',payload,{
-                transformRequest: angular.identity,
-                headers : { 'Content-Type' : 'application/x-www-form-urlencoded;charset=utf-8'}
-            });*/
-            var urlStr = $rootScope.isSession ? '/s2/api/auth/login' : '/s2/api/mauth/login';
+            var urlStr = '/s2/api/mauth/login';
             var credentials = {};
             if (checkNotNullEmpty(userId)) {
                 credentials.userId = userId;
@@ -47,11 +42,15 @@ authServices.factory('iAuthService', ['APIService', '$rootScope', '$q', function
             return apiService.post(credentials, urlStr);
         },
         logout: function () {
-            if ($rootScope.isSession) {
-                return apiService.get('/s2/api/auth/logout');
-            }
-            return $q(function (resolve) {
-                resolve();
+            var service = this;
+            return $q(function (resolve, reject) {
+                apiService.get('/s2/api/auth/logout').then(function () {
+                    localStorage.removeItem("domain");
+                    service.removeAccessToken();
+                    resolve();
+                }).catch(function (err) {
+                    reject(err);
+                })
             });
         },
         generatePassword: function(data){
@@ -60,14 +59,10 @@ authServices.factory('iAuthService', ['APIService', '$rootScope', '$q', function
         generateOtp: function(data){
             return apiService.post(data, '/s2/api/auth/generateOtp');
         },
-        getAccessToken: function (init) {
+        getAccessToken: function () {
             var token = localStorage.getItem("x-access-token");
             if (checkNotNullEmpty(token)) {
                 if (localStorage.getItem("expires") > new Date().getTime()) {
-                    if (init) {
-                        $rootScope.token = token;
-                        $rootScope.expires = localStorage.getItem("expires");
-                    }
                     return token;
                 } else {
                     this.removeAccessToken();
@@ -76,21 +71,18 @@ authServices.factory('iAuthService', ['APIService', '$rootScope', '$q', function
             return null;
         },
         setAccessToken: function (accessToken, expires) {
-            $rootScope.token = accessToken;
-            $rootScope.expires = expires;
             localStorage.setItem("x-access-token", accessToken);
             localStorage.setItem("expires", expires);
         },
         removeAccessToken: function () {
             localStorage.removeItem('x-access-token');
             localStorage.removeItem('expires');
-            $rootScope.token = null;
-            $rootScope.expires = null;
         },
         authorizeBulletinBoard: function (authKey) {
             return apiService.post(authKey, "/s2/api/auth/authorise-access-key");
         },
         requestAccessKey: function () {
+            localStorage.removeItem("domain");
             return apiService.get("/s2/api/auth/request-access-key");
         },
         checkAccessKey: function (authKey) {

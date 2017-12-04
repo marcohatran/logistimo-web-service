@@ -149,6 +149,9 @@ cassandra.keyspace=$CASSANDRA_KEYSPACE
 cassandra.username=$CASSANDRA_USER
 cassandra.password=$CASSANDRA_PASS
 
+#collaboration
+collaboration-service.url=$COLLABORATION_URL
+
 
 #JDO properties
 javax.jdo.PersistenceManagerFactoryClass=org.datanucleus.api.jdo.JDOPersistenceManagerFactory

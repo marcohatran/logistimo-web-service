@@ -25,39 +25,31 @@
  * @author Mohan Raja
  */
 var widgetServices = angular.module('widgetServices', []);
-widgetServices.factory('widgetService', ['$http', function ($http) {
+widgetServices.factory('widgetService', ['APIService', function (apiService) {
     return {
-        fetch: function (urlStr) {
-            var promise = $http({method: 'GET', url: urlStr});
-            return promise;
-        },
-        fetchP: function (data, urlStr) {
-            var promise = $http({method: 'POST', data: data, url: urlStr});
-            return promise;
-        },
         create: function (data) {
-            return this.fetchP(data, '/s2/api/widget/');
+            return apiService.post(data, '/s2/api/widget/');
         },
         get: function (wId) {
-            return this.fetch('/s2/api/widget/' + wId);
+            return apiService.get('/s2/api/widget/' + wId);
         },
         getAll: function () {
-            return this.fetch('/s2/api/widget/');
+            return apiService.get('/s2/api/widget/');
         },
         delete: function (id) {
-            return this.fetchP(null, '/s2/api/widget/delete?id=' + id);
+            return apiService.post(null, '/s2/api/widget/delete?id=' + id);
         },
         update: function(data) {
-            return this.fetchP(data, '/s2/api/widget/update');
+            return apiService.post(data, '/s2/api/widget/update');
         },
         saveConfig: function(data) {
-            return this.fetchP(data, '/s2/api/widget/saveconfig');
+            return apiService.post(data, '/s2/api/widget/saveconfig');
         },
         getConfig: function(wId){
-            return this.fetch('/s2/api/widget/getconfig?wId=' + wId);
+            return apiService.get('/s2/api/widget/getconfig?wId=' + wId);
         },
         getData: function(wId){
-            return this.fetch('/s2/api/widget/getdata?wId=' + wId);
+            return apiService.get('/s2/api/widget/getdata?wId=' + wId);
         }
     }
 }]);

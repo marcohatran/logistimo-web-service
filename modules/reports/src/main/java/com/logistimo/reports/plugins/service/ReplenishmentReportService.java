@@ -131,7 +131,7 @@ public class ReplenishmentReportService extends ReportServiceUtil implements IRe
 
   @Override
   public String getColumns(Map<String, String> filters, ReportViewType viewType) {
-    return "sod, soc, gmd, gmc, lmd, lmc";
+    return "sod,soc,gmd,gmc,lmd,lmc";
   }
 
   @Override

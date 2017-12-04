@@ -758,7 +758,7 @@ public class DashboardService implements IDashboardService {
       groupBy.append(", MATERIAL");
     }
     StringBuilder where = new StringBuilder();
-    where.append(" WHERE `KEY` IN (SELECT KEY_OID FROM INVNTRYEVENTLOG_DOMAINS WHERE DOMAIN_ID = ")
+    where.append(" WHERE `KID` IN (SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID = ")
         .append(domainId).append(")");
 
     if (filters != null) {
@@ -952,7 +952,7 @@ public class DashboardService implements IDashboardService {
       groupBy.append(" GROUP BY ");
     }
     StringBuilder where = new StringBuilder();
-    where.append(" WHERE `KEY` IN (SELECT KEY_OID FROM TRANSACTION_DOMAINS WHERE DOMAIN_ID = ")
+    where.append(" WHERE KID IN (SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID = ")
         .append(domainId).append(")");
     int period = 0;
     String startTime = null;
@@ -1139,7 +1139,7 @@ public class DashboardService implements IDashboardService {
     query.append("SELECT ty TYPE,");
     StringBuilder groupBy = new StringBuilder(" GROUP BY TY");
     StringBuilder where = new StringBuilder();
-    where.append(" WHERE `KEY` IN (SELECT KEY_OID FROM INVNTRYEVENTLOG_DOMAINS WHERE DOMAIN_ID = ")
+    where.append(" WHERE `KID` IN (SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID = ")
         .append(domainId).append(")");
     where.append(" AND ED IS NULL");
 

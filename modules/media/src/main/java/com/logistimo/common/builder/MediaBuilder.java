@@ -21,14 +21,13 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.api.builders;
+package com.logistimo.common.builder;
 
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.media.SupportedMediaTypes;
 import com.logistimo.media.entity.IMedia;
+import com.logistimo.models.MediaModel;
 import com.logistimo.services.utils.ConfigUtil;
-
-import com.logistimo.api.models.MediaModel;
 
 import java.util.ArrayList;
 import java.util.List;

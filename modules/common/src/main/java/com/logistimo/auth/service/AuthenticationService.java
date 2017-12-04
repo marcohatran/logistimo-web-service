@@ -45,7 +45,8 @@ public interface AuthenticationService extends Service {
   String JWTKEY = "jwt.key";
 
 
-  IUserToken generateUserToken(String userId) throws ServiceException, ObjectNotFoundException;
+  IUserToken generateUserToken(String userId, Integer accessInitiator)
+      throws ServiceException, ObjectNotFoundException;
 
   IUserToken authenticateToken(String token, Integer accessInitiator)
       throws UnauthorizedException, ServiceException, ObjectNotFoundException;

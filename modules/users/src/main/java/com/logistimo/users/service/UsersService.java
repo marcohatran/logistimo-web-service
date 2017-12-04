@@ -174,8 +174,6 @@ public interface UsersService extends Service {
 
   List<IUserAccount> getUsersByIds(List<String> userIds);
 
-  List<IUserAccount> getUsersByTag(Long objectId, String objectType, String userTags) throws ServiceException;
-
-
+  List<IUserAccount> getUsersByTag(Long objectId, String objectType, List<String> userTags) throws ServiceException;
 
 }

@@ -21,22 +21,11 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.api.models;
+package com.logistimo.reports.plugins.config;
 
 /**
- * Warning: Variable name should not be changed. This is synced with google appengine Media object.
- *
  * @author Mohan Raja
  */
-public class MediaModel {
-  public Long id;
-  public String mediaType;
-  public String domainKey;
-  public MediaText content;
-  public String servingUrl;
-  public String fn;
-
-  public static class MediaText {
-    public String value;
-  }
+public interface IExternalServiceClientConfiguration {
+  String getUrl();
 }

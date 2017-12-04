@@ -44,7 +44,7 @@ registerWidget('itc', 'rpt-transaction-counts', 'Activity', 'Transaction counts'
 
     function ReportTransactionCountsController($scope, $timeout, reportsServiceCore) {
 
-        InventoryReportController.call(this, $scope, $timeout, getData);
+        InventoryReportController.call(this, $scope, $timeout, getData, reportsServiceCore);
 
         $scope.reportType=reportType;
 
@@ -78,13 +78,6 @@ registerWidget('itc', 'rpt-transaction-counts', 'Activity', 'Transaction counts'
             }
             var fileName = "Transaction_Counts" + formatDate2Url($scope.filter.from) +"_"+ formatDate2Url($scope.filter.to);
             $scope.exportAsCSV(data, heading, fileName);
-        };
-
-        $scope.downloadTableAsCSV = function () {
-            var data = $scope.tableData;
-            var heading = $scope.tableCSVHeading;
-            var fileName = "Transaction_Counts" + formatDate2Url($scope.filter.from) +"_"+ formatDate2Url($scope.filter.to);
-            $scope.exportAsCSV(data, heading, fileName, $scope.tableSeriesNo);
         };
 
         $scope.$watch("metrics.primary",function(newValue,oldValue){

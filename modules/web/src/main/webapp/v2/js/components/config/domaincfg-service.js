@@ -22,130 +22,119 @@
  */
 
 var domainCfgServices = angular.module('domainCfgServices', []);
-domainCfgServices.factory('domainCfgService', ['$http', function ($http) {
+domainCfgServices.factory('domainCfgService', ['APIService', function (apiService) {
     return {
-        fetch: function (urlStr) {
-            var promise = $http({method: 'GET', url: urlStr});
-            return promise;
-        },
-        fetchP: function (data, urlStr) {
-            var promise = $http({method: 'POST', data: data, url: urlStr});
-            return promise;
-        }, fetchPut: function (data, urlStr) {
-            var promise = $http({method: 'PUT', data: data, url: urlStr});
-            return promise;
-        },
         getMaterialTagsCfg: function () {
-            return this.fetch('/s2/api/config/domain/tags/materials');
+            return apiService.get('/s2/api/config/domain/tags/materials');
         },
         getRouteTagsCfg: function () {
-            return this.fetch('/s2/api/config/domain/tags/route');
+            return apiService.get('/s2/api/config/domain/tags/route');
         },
         getOrderTagsCfg: function () {
-            return this.fetch('/s2/api/config/domain/tags/order');
+            return apiService.get('/s2/api/config/domain/tags/order');
         },
         getEntityTagsCfg: function () {
-            return this.fetch('/s2/api/config/domain/tags/entities');
+            return apiService.get('/s2/api/config/domain/tags/entities');
         },
         getUserTagsCfg: function () {
-            return this.fetch('/s2/api/config/domain/tags/user');
+            return apiService.get('/s2/api/config/domain/tags/user');
         },
         getOptimizerCfg: function () {
-            return this.fetch('/s2/api/config/domain/optimizer');
+            return apiService.get('/s2/api/config/domain/optimizer');
         },
         get: function () {
-            return this.fetch('/s2/api/config/domain/');
+            return apiService.get('/s2/api/config/domain/');
         },
         getRouteType: function () {
-            return this.fetch('/s2/api/config/domain/artype');
+            return apiService.get('/s2/api/config/domain/artype');
         },
         getGeneralCfg : function(){
-            return this.fetch("/s2/api/config/domain/general");
+            return apiService.get("/s2/api/config/domain/general");
         },
         setGeneralCfg : function(data){
-            return this.fetchP(data,"/s2/api/config/domain/general");
+            return apiService.post(data, "/s2/api/config/domain/general");
         },
         getCapabilitiesCfg : function(){
-            return this.fetch("/s2/api/config/domain/capabilities");
+            return apiService.get("/s2/api/config/domain/capabilities");
         },
         getRoleCapabilitiesCfg : function(){
-            return this.fetch("/s2/api/config/domain/rolecapabs");
+            return apiService.get("/s2/api/config/domain/rolecapabs");
         },
         setCapabilitiesCfg : function(data){
-            return this.fetchP(data,"/s2/api/config/domain/capabilities");
+            return apiService.post(data, "/s2/api/config/domain/capabilities");
         },
         getAccountingCfg : function(){
-            return this.fetch('/s2/api/config/domain/accounts');
+            return apiService.get('/s2/api/config/domain/accounts');
         },
         setAccountCfg : function(accountConfig){
-            return this.fetchP(accountConfig,'/s2/api/config/domain/add');
+            return apiService.post(accountConfig, '/s2/api/config/domain/add');
         },
         getAssetCfg : function(){
-            return this.fetch('/s2/api/config/domain/asset');
+            return apiService.get('/s2/api/config/domain/asset');
         },
         getAssetSysCfg : function(type){
-            return this.fetch('/s2/api/config/domain/assetconfig?type='+type);
+            return apiService.get('/s2/api/config/domain/assetconfig?type=' + type);
         },
         getAssetManufacturerSysCfg : function(type){
-            return this.fetch('/s2/api/config/domain/assetconfig/manufacturer?type='+type);
+            return apiService.get('/s2/api/config/domain/assetconfig/manufacturer?type=' + type);
         },
         getAssetWorkingStatusSysCfg : function(){
-            return this.fetch('/s2/api/config/domain/assetconfig/workingstatus');
+            return apiService.get('/s2/api/config/domain/assetconfig/workingstatus');
         },
         setAssetCfg : function(assetConfig){
-            return this.fetchP(assetConfig,'/s2/api/config/domain/asset');
+            return apiService.post(assetConfig, '/s2/api/config/domain/asset');
         },
         getTagsCfg : function(){
-            return this.fetch('/s2/api/config/domain/tags');
+            return apiService.get('/s2/api/config/domain/tags');
         },
         setTagsCfg : function(tags){
-            return this.fetchP(tags,'/s2/api/config/domain/tags');
+            return apiService.post(tags, '/s2/api/config/domain/tags');
         },
         getInventoryCfg : function(){
-            return this.fetch('/s2/api/config/domain/inventory');
+            return apiService.get('/s2/api/config/domain/inventory');
         },
         setInventoryCfg : function(inventory){
-            return this.fetchP(inventory,'/s2/api/config/domain/inventory');
+            return apiService.post(inventory, '/s2/api/config/domain/inventory');
         },
         getOrdersCfg : function(){
 
-            return this.fetch('/s2/api/config/domain/orders');
+            return apiService.get('/s2/api/config/domain/orders');
         },
         setOrdersCfg : function(orders){
-            return this.fetchP(orders,'/s2/api/config/domain/orders');
+            return apiService.post(orders, '/s2/api/config/domain/orders');
         },
         getDashboardCfg : function(){
-            return this.fetch('/s2/api/config/domain/dashboard');
+            return apiService.get('/s2/api/config/domain/dashboard');
         },
         setDashboardCfg : function(dashboard){
-            return this.fetchP(dashboard,'/s2/api/config/domain/dashboard');
+            return apiService.post(dashboard, '/s2/api/config/domain/dashboard');
         },
         setNotificationsCfg : function(notification){
-            return this.fetchP(notification,'/s2/api/config/domain/notifications');
+            return apiService.post(notification, '/s2/api/config/domain/notifications');
         },
         getNotificationsCfg: function (notifType) {
-            return this.fetch('/s2/api/config/domain/notifications/fetch?t=' + notifType);
+            return apiService.get('/s2/api/config/domain/notifications/fetch?t=' + notifType);
         },
         deleteNotificationCfg : function(notification){
-            return this.fetchP(notification,'/s2/api/config/domain/notifications/delete');
+            return apiService.post(notification, '/s2/api/config/domain/notifications/delete');
         },
         setBulletinBoardCfg : function(bulletinboard){
-            return this.fetchP(bulletinboard,'/s2/api/config/domain/bulletinboard');
+            return apiService.post(bulletinboard, '/s2/api/config/domain/bulletinboard');
         },
         getBulletinBoardCfg : function(){
-            return this.fetch('/s2/api/config/domain/bulletinboard');
+            return apiService.get('/s2/api/config/domain/bulletinboard');
         },
         postToBoard : function(notification){
-            return this.fetchP("'"+notification + "'",'/s2/api/config/domain/posttoboard');
+            return apiService.post("'" + notification + "'", '/s2/api/config/domain/posttoboard');
         },
         getAccessLog : function(offset, size){
-            return this.fetch('/s2/api/config/domain/accesslogs?o='+ offset + '&s=' + size);
+            return apiService.get('/s2/api/config/domain/accesslogs?o=' + offset + '&s=' + size);
         },
         getTempVendorMap: function () {
-            return this.fetch('/s2/api/config/domain/temperature/vendors');
+            return apiService.get('/s2/api/config/domain/temperature/vendors');
         },
         uploadURL: function(){
-            return this.fetch('/s2/api/config/domain/customreports');
+            return apiService.get('/s2/api/config/domain/customreports');
         },
         uploadPostUrl : function(url,file,templateName,templateKey,edit) {
             var fd = new FormData();
@@ -153,12 +142,11 @@ domainCfgServices.factory('domainCfgService', ['$http', function ($http) {
             fd.append('templateName',templateName);
             fd.append('templateKey',templateKey);
             fd.append('edit',edit);
-            var promise = $http.post(url,fd,{
+            return $http.post(url, fd, {
                 transformRequest: angular.identity,
                 headers : { 'Content-Type' : undefined},
                 url : url
             });
-            return promise;
         },
         uploadFile : function(file) {
             var url = '/s/direct-upload';
@@ -171,40 +159,43 @@ domainCfgServices.factory('domainCfgService', ['$http', function ($http) {
             });
         },
         setCustomReports : function(customReport, config){
-            return this.fetchP({customReport: customReport, config: config},'/s2/api/config/domain/customreport/add');
+            return apiService.post({
+                customReport: customReport,
+                config: config
+            }, '/s2/api/config/domain/customreport/add');
         },
         getCustomReports : function(){
-            return this.fetch('/s2/api/config/domain/customreport');
+            return apiService.get('/s2/api/config/domain/customreport');
         },
         deleteCustomReport : function(name){
-            return this.fetchP("'"+name+"'",'/s2/api/config/domain/customreport/delete');
+            return apiService.post("'" + name + "'", '/s2/api/config/domain/customreport/delete');
         },
         exportReport : function(name){
-            return this.fetchP("'"+name+"'",'/s2/api/config/domain/customreport/export');
+            return apiService.post("'" + name + "'", '/s2/api/config/domain/customreport/export');
         },
         getCustomReport : function(name, key){
-            return this.fetch('/s2/api/config/domain/customreport/fetch?n='+ name + '&k=' + key);
+            return apiService.get('/s2/api/config/domain/customreport/fetch?n=' + name + '&k=' + key);
         },
         updateCustomReport : function(customReport){
-            return this.fetchP(customReport,'/s2/api/config/domain/customreport/update');
+            return apiService.post(customReport, '/s2/api/config/domain/customreport/update');
         },
         getReportFilters : function(){
-            return this.fetch('/s2/api/config/domain/report/filters');
+            return apiService.get('/s2/api/config/domain/report/filters');
         },
         getAllDomain: function (size,offset,text) {
-            return this.fetch('/s2/api/config/domain/domains/all?s='+size + '&o='+offset+'&q='+text);
+            return apiService.get('/s2/api/config/domain/domains/all?s=' + size + '&o=' + offset + '&q=' + text);
         },
         getDomainConfigMenuStats:function(){
-            return this.fetch('/s2/api/config/domain/menustats');
+            return apiService.get('/s2/api/config/domain/menustats');
         },
         getCurrentSessionDetails: function(){
-            return this.fetch('/s2/api/config/domain/domaininfo');
+            return apiService.get('/s2/api/config/domain/domaininfo');
         },
         getMapLocationMapping: function() {
-            return this.fetch('/s2/api/config/domain/map/locations');
+            return apiService.get('/s2/api/config/domain/map/locations');
         },
         getSystemDashboardConfig: function() {
-            return this.fetch('/s2/api/config/domain/dashboards');
+            return apiService.get('/s2/api/config/domain/dashboards');
         },
         getNotificationsMessage: function (start,end,offset, size) {
             offset = typeof offset !== 'undefined' ? offset : 0;
@@ -217,37 +208,37 @@ domainCfgServices.factory('domainCfgService', ['$http', function ($http) {
             if(typeof end != "undefined"){
                 urlStr = urlStr +"&end="+end;
             }
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         getActualTransDateCheck : function(){
-            return this.fetch("/s2/api/config/domain/getactualtrans")
+            return apiService.get("/s2/api/config/domain/getactualtrans")
         },
         getSupportCfg : function() {
-            return this.fetch('/s2/api/config/domain/support');
+            return apiService.get('/s2/api/config/domain/support');
         },
         getAdminCfg: function () {
-            return this.fetch('/s2/api/config/domain/admin');
+            return apiService.get('/s2/api/config/domain/admin');
         },
         getUniqueTransReasons : function(){
-            return this.fetch('/s2/api/config/domain/inventory/transReasons');
+            return apiService.get('/s2/api/config/domain/inventory/transReasons');
         },
         setApprovalsConfig : function(data) {
-            return this.fetchP(data, "/s2/api/config/domain/approvals");
+            return apiService.post(data, "/s2/api/config/domain/approvals");
         },
         getApprovalsConfig : function() {
-            return this.fetch("/s2/api/config/domain/approvals");
+            return apiService.get("/s2/api/config/domain/approvals");
         },
         getEventSummaryConfig: function () {
-            return this.fetch("/s2/api/config/domain/event-summary");
+            return apiService.get("/s2/api/config/domain/event-summary");
         },
         setEventSummaryConfig: function (data) {
-            return this.fetchPut(data, "/s2/api/config/domain/event-summary");
+            return apiService.put(data, "/s2/api/config/domain/event-summary");
         },
         getGeneralNotificationsConfig: function() {
-            return this.fetch("/s2/api/config/domain/general-notifications");
+            return apiService.get("/s2/api/config/domain/general-notifications");
         },
         updateGeneralNotificationsConfig: function(language) {
-            return this.fetchP(language,"/s2/api/config/domain/general-notifications");
+            return apiService.post(language, "/s2/api/config/domain/general-notifications");
         }
     }
 }]);

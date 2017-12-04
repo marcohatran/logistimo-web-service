@@ -183,33 +183,13 @@ public class OrderUtils {
     }
     UpdatedOrder uo = new UpdatedOrder();
     if (IOrder.FULFILLED.equals(uosReq.ost)) {
-      IShipmentService ss;
-      boolean updated = false;
-      try {
-        ShipmentMaterialsModel smm = getShipmentMaterialsModel(uosReq);
-        if (smm == null) {
-          uo.inventoryError = true;
-          uo.message = backendMessages.getString("error.unabletofulfilorder");
-          return uo;
-        }
-        ss = Services.getService(ShipmentService.class, dc.getLocale());
-        updated = ss.fulfillShipment(smm, uosReq.uid, source).status;
-      } catch (Exception e) {
-        uo.inventoryError = true;
-        uo.message = backendMessages.getString("error.unabletofulfilorder");
-      }
-      if (updated) {
-        uo.order = oms.getOrder(uosReq.tid, true);
-      } else {
-        uo.inventoryError = true;
-        uo.message = backendMessages.getString("error.unabletofulfilorder");
+      if (fulfillOrder(uosReq, dc, source, backendMessages, oms, uo)) {
+        return uo;
       }
     } else if (IOrder.COMPLETED.equals(uosReq.ost)) {
-      oms.shipNow(o, uosReq.trsp, uosReq.trid, null, uosReq.ead, uosReq.uid, uosReq.pksz, source);
-      if (uosReq.ms != null && !uosReq.ms.isEmpty()) {
-        oms.addMessageToOrder(uosReq.tid, uosReq.ms, uosReq.uid);
+      if (shipOrder(uosReq, dc, source, oms, o, uo)) {
+        return uo;
       }
-      uo.order = oms.getOrder(uosReq.tid, true);
     } else {
       o.setStatus(
           uosReq.ost); // required, given isPostingInventoryTransRequired() requires an order with the current status
@@ -218,6 +198,60 @@ public class OrderUtils {
               uosReq.rsnco);
     }
     return uo;
+  }
+
+  private static boolean shipOrder(UpdateOrderStatusRequest uosReq, DomainConfig dc, int source,
+                                   OrderManagementService oms, IOrder o, UpdatedOrder uo)
+      throws ServiceException {
+    if (dc.getOrdersConfig()
+        .isReferenceIdMandatory() && !o.hasReferenceId() && !uosReq.hasReferenceId()) {
+      uo.inventoryError = true;
+      uo.message = "Reference id is required before shipping";
+      return true;
+    }
+    if (dc.getOrdersConfig().isExpectedArrivalDateMandatory() && !uosReq
+        .hasEAD()) {
+      uo.inventoryError = true;
+      uo.message = "Estimated arrival date is required before shipping.";
+      return true;
+    }
+
+    if (uosReq.hasReferenceId()) {
+      oms.updateOrderReferenceId(uosReq.tid, uosReq.rid, uosReq.uid, null);
+    }
+    oms.shipNow(o, uosReq.trsp, uosReq.trid, null, uosReq.ead, uosReq.uid, uosReq.pksz, source);
+    if (uosReq.ms != null && !uosReq.ms.isEmpty()) {
+      oms.addMessageToOrder(uosReq.tid, uosReq.ms, uosReq.uid);
+    }
+    uo.order = oms.getOrder(uosReq.tid, true);
+    return false;
+  }
+
+  private static boolean fulfillOrder(UpdateOrderStatusRequest uosReq, DomainConfig dc, int source,
+                                      ResourceBundle backendMessages, OrderManagementService oms,
+                                      UpdatedOrder uo) throws ServiceException {
+    IShipmentService ss;
+    boolean updated = false;
+    try {
+      ShipmentMaterialsModel smm = getShipmentMaterialsModel(uosReq);
+      if (smm == null) {
+        uo.inventoryError = true;
+        uo.message = backendMessages.getString("error.unabletofulfilorder");
+        return true;
+      }
+      ss = Services.getService(ShipmentService.class, dc.getLocale());
+      updated = ss.fulfillShipment(smm, uosReq.uid, source).status;
+    } catch (Exception e) {
+      uo.inventoryError = true;
+      uo.message = backendMessages.getString("error.unabletofulfilorder");
+    }
+    if (updated) {
+      uo.order = oms.getOrder(uosReq.tid, true);
+    } else {
+      uo.inventoryError = true;
+      uo.message = backendMessages.getString("error.unabletofulfilorder");
+    }
+    return false;
   }
 
   private static ShipmentMaterialsModel getShipmentMaterialsModel(UpdateOrderStatusRequest uosReq) {
@@ -318,19 +352,43 @@ public class OrderUtils {
         uo.message = backendMessages.getString("error.unabletofulfilorder");
       }
     } else {
-      if (uosReq.pksz != null && !uosReq.pksz.isEmpty()) {
-        ss.updateShipmentData("ps", uosReq.pksz, previousUpdatedTime, uosReq.sid, uosReq.uid);
+      if (ShipmentStatus.SHIPPED.equals(shipmentStatus)) {
+        if (dc.getOrdersConfig()
+            .isReferenceIdMandatory()) {
+          IOrder order = oms.getOrder(s.getOrderId());
+          if (!order.hasReferenceId() && !uosReq.hasReferenceId()) {
+            uo.inventoryError = true;
+            uo.message = "Reference id is mandatory before shipping.";
+            return uo;
+          }
+        }
+        if (dc.getOrdersConfig().isExpectedArrivalDateMandatory() && !s.hasEAD() && !uosReq
+            .hasEAD()) {
+          uo.inventoryError = true;
+          uo.message = "Estimated arrival data is mandatory before shipping.";
+          return uo;
+        }
       }
-      if (uosReq.trsp != null && !uosReq.trsp.isEmpty()) {
-        ss.updateShipmentData("tpName", uosReq.trsp, previousUpdatedTime, uosReq.sid, uosReq.uid);
+      Map<String, String> shipmentMetadata = new HashMap<>(2);
+      if (uosReq.hasReferenceId()) {
+        shipmentMetadata.put("rid", uosReq.rid);
       }
-      if (uosReq.trid != null && !uosReq.trid.isEmpty()) {
-        ss.updateShipmentData("tId", uosReq.trid, previousUpdatedTime, uosReq.sid, uosReq.uid);
+      if (uosReq.hasPackageSize()) {
+        shipmentMetadata.put("ps", uosReq.pksz);
       }
-      if (uosReq.ead != null) {
+      if (uosReq.hasTransporter()) {
+        shipmentMetadata.put("tpName", uosReq.trsp);
+      }
+      if (uosReq.hasTrackingId()) {
+        shipmentMetadata.put("tId", uosReq.trid);
+      }
+      if (uosReq.hasEAD()) {
         SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATE_FORMAT);
         String eadStr = sdf.format(uosReq.ead);
-        ss.updateShipmentData("date", eadStr, previousUpdatedTime, uosReq.sid, uosReq.uid);
+        shipmentMetadata.put("date", eadStr);
+      }
+      if (!shipmentMetadata.isEmpty()) {
+        ss.updateShipmentData(shipmentMetadata, previousUpdatedTime, uosReq.sid, uosReq.uid);
       }
       updated =
           ss.updateShipmentStatus(uosReq.sid, shipmentStatus, uosReq.ms, uosReq.uid,

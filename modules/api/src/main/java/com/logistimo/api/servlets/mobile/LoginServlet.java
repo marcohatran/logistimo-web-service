@@ -321,7 +321,7 @@ public class LoginServlet extends JsonRestServlet {
       IUserToken token;
       try {
         aus = Services.getService(AuthenticationServiceImpl.class);
-        token = aus.generateUserToken(userId);
+        token = aus.generateUserToken(userId, SourceConstants.MOBILE);
         if (token != null) {
           resp.setHeader(Constants.TOKEN, token.getRawToken());
           resp.setHeader(Constants.EXPIRES, String.valueOf(token.getExpires().getTime()));

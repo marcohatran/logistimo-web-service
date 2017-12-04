@@ -21,18 +21,14 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.api.models.mobile;
+package com.logistimo.social.event.handler;
 
-import java.io.Serializable;
+import com.logistimo.collaboration.core.events.Event;
 
 /**
- * Created by kumargaurav on 13/04/17.
+ * Created by kumargaurav on 10/11/17.
  */
-public class BasePagedResponseModel implements Serializable {
+public interface Handler<E extends Event> {
 
-  protected static final long serialVersionUID = 1L;
-  public Integer total;
-  public Integer offset;
-  public Integer size;
-  public Long resTime;
+  void handle(E event);
 }

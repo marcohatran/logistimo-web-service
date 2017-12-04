@@ -22,19 +22,11 @@
  */
 
 var homeServices = angular.module('homeServices', []);
-homeServices.factory('homePageService', ['$http', function ($http) {
+homeServices.factory('homePageService', ['APIService', function (apiService) {
     return {
-        fetchP: function (data, urlStr) {
-            var promise = $http({method: 'POST', data: data, url: urlStr});
-            return promise;
-        },
-        fetch: function (urlStr) {
-            var promise = $http({method: 'GET', url: urlStr});
-            return promise;
-        },
         getStats: function (month, vm,mtag,matId) {
             var param =  '?month=' + month + '&prd=' + vm+ '&mTag='+mtag +'&matId='+matId;
-            return this.fetch('/s2/api/home/reports/stats/'+param);
+            return apiService.get('/s2/api/home/reports/stats/' + param);
         }
     }
 }]);

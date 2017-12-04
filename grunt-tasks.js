@@ -267,6 +267,7 @@ module.exports = function(grunt, ref) {
                     'target/grunt/webapp/v2/js/logistimo.js': [
                         'target/grunt/webapp/v2/js/app.js',
                         'target/grunt/webapp/v2/js/re*.js',
+                        'target/grunt/webapp/v2/js/api-services.js',
                         'target/grunt/webapp/v2/js/app-*.js',
                         'target/grunt/webapp/v2/js/utils/*.js',
                         'target/grunt/webapp/v2/js/components/*/*.js',
@@ -282,6 +283,7 @@ module.exports = function(grunt, ref) {
                     'target/grunt/webapp/v2/js/bulletinboard.js': [
                         'target/grunt/webapp/v2/js/bulletinboard-app.js',
                         'target/grunt/webapp/v2/js/re*.js',
+                        'target/grunt/webapp/v2/js/api-services.js',
                         'target/grunt/webapp/v2/js/app-*.js',
                         'target/grunt/webapp/v2/js/utils/*.js',
                         'target/grunt/webapp/v2/js/components/*/*.js',

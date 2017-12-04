@@ -25,32 +25,23 @@
  * Created by mohansrinivas on 8/13/15.
  */
 var mediaServices = angular.module('mediaServices', []);
-mediaServices.factory('mediaService',['$http', function ($http) {
+mediaServices.factory('mediaService', ['APIService', function (apiService) {
     return {
-        fetch: function (urlStr) {
-            var promise = $http({method: 'GET', url: urlStr});
-            return promise;
-        },
-        fetchP: function (data, urlStr) {
-            var promise = $http({method: 'POST', data: data, url: urlStr});
-            return promise;
-        },
-        uploadImage : function(type,domainKey,data){
+        uploadImage: function (type, domainKey, data) {
             var media = {
-                "mediaType" : type,
-                "domainKey" : domainKey,
-                "content" :{
-                    "value" :data
+                "mediaType": type,
+                "domainKey": domainKey,
+                "content": {
+                    "value": data
                 }
             };
-            return this.fetchP(media, "/_ah/api/mediaendpoint/v1/media/");
+            return apiService.post(media, "/_ah/api/mediaendpoint/v1/media/");
         },
-        removeImage : function(domainKey){
-            var promise = $http({method: 'DELETE', url: "/_ah/api/mediaendpoint/v1/media/" + domainKey});
-            return promise;
+        removeImage: function (domainKey) {
+            return apiService.delete("/_ah/api/mediaendpoint/v1/media/" + domainKey);
         },
-        getDomainkeyImages: function(domainKey) {
-            return this.fetch('/_ah/api/mediaendpoint/v1/mediaforDomain/' + domainKey);
-        },
+        getDomainkeyImages: function (domainKey) {
+            return apiService.get('/_ah/api/mediaendpoint/v1/mediaforDomain/' + domainKey);
+        }
     }
-    }]);
+}]);

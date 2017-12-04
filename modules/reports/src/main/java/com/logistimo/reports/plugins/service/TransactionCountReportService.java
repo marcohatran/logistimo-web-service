@@ -140,7 +140,7 @@ public class TransactionCountReportService extends ReportServiceUtil implements 
 
   @Override
   public String getColumns(Map<String, String> filters, ReportViewType viewType) {
-    return "ic, rc, sc, wc, trc, tc, iec, rec, scec, wec, trec, tec, lic"
+    return "ic,rc,sc,wc,trc,tc,iec,rec,scec,wec,trec,tec,lic"
         + getSelectiveColumns(filters, viewType);
   }
 
@@ -159,7 +159,7 @@ public class TransactionCountReportService extends ReportServiceUtil implements 
   public String getTableColumns(Map<String, String> filters, ReportViewType viewType) {
     switch (viewType) {
       case BY_ENTITY:
-        return "ic, rc, sc, wc, trc, tc" + getSelectiveColumns(filters, viewType);
+        return "ic,rc,sc,wc,trc,tc" + getSelectiveColumns(filters, viewType);
       default:
         return getColumns(filters, viewType);
     }

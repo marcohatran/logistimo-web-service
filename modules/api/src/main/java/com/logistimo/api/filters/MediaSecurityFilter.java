@@ -31,7 +31,6 @@ import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.logger.XLog;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
-import com.logistimo.users.entity.IUserAccount;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -69,43 +68,43 @@ public class MediaSecurityFilter implements Filter {
       request.setCharacterEncoding(Constants.UTF8);
     }
 
-    if (!(StringUtils.isNotBlank(servletPath) && servletPath.startsWith(MEDIA_ENDPOINT_URL))) {
-      resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-      return;
-    } else if (StringUtils.isNotBlank(req.getHeader(X_ACCESS_USER))) {
-      try {
-        SecurityMgr.setSessionDetails(req.getHeader(X_ACCESS_USER));
-      } catch (UnauthorizedException | ObjectNotFoundException e) {
-        xLogger.warn("Issue with api client authentication", e);
-        resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
+    try {
+      if (!(StringUtils.isNotBlank(servletPath) && servletPath.startsWith(MEDIA_ENDPOINT_URL))) {
+        resp.sendError(HttpServletResponse.SC_NOT_FOUND);
         return;
-      } catch (Exception e) {
-        xLogger.severe("Issue with api client authentication", e);
-        resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
-        return;
-      }
-    } else if (StringUtils.isNotBlank(req.getHeader(Constants.TOKEN))) {
-      try {
-        IUserAccount user = AuthenticationUtil.authenticateToken(req.getHeader(Constants.TOKEN), -1);
-        SecurityMgr.setSessionDetails(user.getUserId());
-      } catch (UnauthorizedException | ObjectNotFoundException e) {
-        xLogger.warn("Issue with api client authentication", e);
-        resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
-        return;
-      } catch (Exception e) {
+      } else if (StringUtils.isNotBlank(req.getHeader(X_ACCESS_USER))) {
+        try {
+          SecurityMgr.setSessionDetails(req.getHeader(X_ACCESS_USER));
+        } catch (UnauthorizedException | ObjectNotFoundException e) {
+          xLogger.warn("Issue with api client authentication", e);
+          resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
+          return;
+        } catch (Exception e) {
           xLogger.severe("Issue with api client authentication", e);
           resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
           return;
+        }
+      } else if (StringUtils.isNotBlank(req.getHeader(Constants.TOKEN))) {
+        try {
+          AuthenticationUtil.authenticateTokenAndSetSession(req);
+        } catch (UnauthorizedException | ObjectNotFoundException e) {
+          xLogger.warn("Issue with api client authentication", e);
+          resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
+          return;
+        } catch (Exception e) {
+          xLogger.severe("Issue with api client authentication", e);
+          resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+          return;
+        }
+      } else {
+        SecureUserDetails
+            userDetails = SecurityMgr.getSessionDetails(req.getSession());
+        if (userDetails == null) {
+          resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication Required.");
+          return;
+        }
+        SecurityUtils.setUserDetails(userDetails);
       }
-    }
-    try {
-      SecureUserDetails
-          userDetails = SecurityUtils.getUserDetails();
-      if (userDetails == null) {
-        resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication Required.");
-        return;
-      }
-      SecurityUtils.setUserDetails(userDetails);
       if (filterChain != null) {
         filterChain.doFilter(request, response);
       }

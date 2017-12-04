@@ -46,6 +46,7 @@ import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.entity.IJobStatus;
+import com.logistimo.exception.ExceptionUtils;
 import com.logistimo.exception.InvalidDataException;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exception.LogiException;
@@ -242,9 +243,9 @@ public class OrderServlet extends JsonRestServlet {
       //Get orders for specified entity, status, order type and transfers
       List<IOrder> ordersList = StaticApplicationContext.getBean(GetFilteredOrdersAction.class)
           .invoke(orderFilters, pageParams).getResults();
-      if (ordersList == null || ordersList.isEmpty()) {
+      if (!modifiedSinceDate.isPresent() && (ordersList == null || ordersList.isEmpty())) {
         message = backendMessages.getString(NO_ORDERS);
-      } else {
+      } else if(ordersList!=null && !ordersList.isEmpty()){
         //Get the order approval type
         int orderApprovalType = OrderUtils.getOrderApprovalType(otype, isTransfer);
         //Build json response
@@ -1207,7 +1208,12 @@ public class OrderServlet extends JsonRestServlet {
         xLogger.severe("Service exception when getting order with ID {0}: {1}", orderId,
             e.getMessage());
         status = false;
-        message = backendMessages.getString(SYSTEM_ERROR);
+        Optional<String> optionalMessage = getErrorMessage(locale, e);
+        if (optionalMessage.isPresent()) {
+          message = optionalMessage.get();
+        } else {
+          message = backendMessages.getString(SYSTEM_ERROR);
+        }
         setSignatureAndStatus(cache, signature, IJobStatus.FAILED);
       }
     }
@@ -1234,7 +1240,6 @@ public class OrderServlet extends JsonRestServlet {
     } catch (Exception e) {
       xLogger.severe("Protocol exception when sending order with ID {0}: {1}", orderId,
           e.getMessage());
-      status = false;
       message = backendMessages.getString(SYSTEM_ERROR);
       try {
         String
@@ -1248,6 +1253,23 @@ public class OrderServlet extends JsonRestServlet {
       }
     }
     xLogger.fine("Exiting updateOrderStatusOld");
+  }
+
+  protected Optional<String> getErrorMessage(Locale locale,
+                                           ServiceException e) {
+    if (!e.hasErrorCode() && e.getCause() instanceof LogiException && ((LogiException) e.getCause())
+        .hasErrorCode()) {
+      if (((LogiException) e.getCause()).getCode().equals("M002")) {
+        return Optional.of(ExceptionUtils.constructMessage("O010", locale, null));
+      }
+      return Optional.of(((LogiException) e.getCause()).getLocalisedMessage(locale));
+    } else if (e.hasErrorCode()) {
+      if (e.getCode().equals("M002")) {
+        return Optional.of(ExceptionUtils.constructMessage("O010", locale, null));
+      }
+      return Optional.of(e.getLocalisedMessage(locale));
+    }
+    return Optional.empty();
   }
 
   @SuppressWarnings("rawtypes")
@@ -1351,8 +1373,8 @@ public class OrderServlet extends JsonRestServlet {
           if (status) {
             // Update order status
             UpdatedOrder uo = new UpdatedOrder();
-            if (uosReq.sid != null && !uosReq.sid.isEmpty()) {
-              if (uosReq.tid == null) {
+            if (uosReq.hasShipmentId()) {
+              if (!uosReq.hasOrderId()) {
                 uo = OrderUtils.updateShpStatus(uosReq,
                     dc, SourceConstants.MOBILE,
                     backendMessages, uosReq.tm);
@@ -1361,12 +1383,12 @@ public class OrderServlet extends JsonRestServlet {
                     dc, SourceConstants.MOBILE,
                     backendMessages);
               }
-            } else if (uosReq.tid != null) {
+            } else if (uosReq.hasOrderId()) {
               uo = OrderUtils.updateOrdStatus(uosReq, dc,
                   SourceConstants.MOBILE, backendMessages);
             } else {
               // Error cannot change status. One of them should be present.
-              uo.message = "Either tid or mid should be present";
+              uo.message = "Either tid or sid should be present";
               uo.inventoryError = true;
             }
             order = uo.order;

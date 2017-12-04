@@ -56,13 +56,11 @@ authControllers.controller('LoginController', ['$scope', 'iAuthService', 'authSe
                     } else {
                         $scope.invalid = false;
                         $scope.errorMsg = undefined;
-                        if (!$rootScope.isSession) {
-                            iAuthService.setAccessToken(data.headers()['x-access-token'], data.headers()['expires']);
-                        }
+                        iAuthService.setAccessToken(data.headers()['x-access-token'], data.headers()['expires']);
 
                         if(checkNotNullEmpty($scope.curUser)){
                             if($scope.curUser != $scope.userId){
-                                authService.loginConfirmed(null, null, true);
+                                authService.loginConfirmed({initApp: true}, null, true);
                                 $scope.refreshDomainConfig().then(function(){
                                     $scope.changeContext();
                                 }).catch(function error(msg){
@@ -71,11 +69,11 @@ authControllers.controller('LoginController', ['$scope', 'iAuthService', 'authSe
                                     $scope.hideLogin();
                                 });
                             }else{
-                                authService.loginConfirmed(null, null, false);
+                                authService.loginConfirmed({initApp: false}, null, false);
                                 $scope.hideLogin();
                             }
                         }else{
-                            authService.loginConfirmed(null, null, false);
+                            authService.loginConfirmed({initApp: true}, null, false);
                             $scope.hideLogin();
                             $scope.refreshDomainConfig();
 
@@ -87,7 +85,8 @@ authControllers.controller('LoginController', ['$scope', 'iAuthService', 'authSe
                     }
                 }).catch(function err(msg){
                     $scope.invalid = true;
-                    $scope.errorMsg = $scope.resourceBundle['login.unable'] + " " + msg;
+                    $scope.showMsg = true;
+                    $scope.errorMsg = $scope.resourceBundle['login.unable'] + " " + msg ? msg.data ? msg.data.message : "" : "";
                 }).finally(function (){
                     $scope.lLoading = false;
                 });

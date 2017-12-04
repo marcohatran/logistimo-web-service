@@ -1,0 +1,23 @@
+<div ng-controller="eventMapWidgetController">
+    <div ng-if="wloading" class="row mt18 widget-loading">
+        <div class="text-center">
+            {{resourceBundle['loading.uppercase']}}... <span class="glyphicons glyphicons-cogwheel spin"></span>
+        </div>
+    </div>
+    <div ng-if="!wloading && showError" class="alert alert-danger">
+        <div class="text-center">
+            {{errorMessage}}
+        </div>
+    </div>
+    <div ng-if="!wloading && !showError && showChart">
+        <fusion-chart type="'maps/'+eventMapWidget.cType" height="eventMapWidget.computedHeight"
+                      width="eventMapWidget.computedWidth"
+                      chart-label="eventMapWidget.cLabel"
+                      chart-data="eventMapWidget.cdata" chart-options="eventMapWidget.copt"
+                      chart-id="{{eventMapWidget.wId}}" color-range="mapRange" markers="markers"
+                      simple="'true'">
+        </fusion-chart>
+
+
+    </div>
+</div>

@@ -24,10 +24,9 @@
 package com.logistimo.api.controllers;
 
 import com.logistimo.AppFactory;
-import com.logistimo.api.builders.MediaBuilder;
-import com.logistimo.api.models.MediaModel;
 import com.logistimo.api.models.MediaModels;
 import com.logistimo.auth.utils.SecurityUtils;
+import com.logistimo.common.builder.MediaBuilder;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.exception.InvalidDataException;
 import com.logistimo.exception.InvalidServiceException;
@@ -35,6 +34,7 @@ import com.logistimo.logger.XLog;
 import com.logistimo.media.SupportedMediaTypes;
 import com.logistimo.media.endpoints.IMediaEndPoint;
 import com.logistimo.media.entity.IMedia;
+import com.logistimo.models.MediaModel;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.blobstore.BlobKey;
 import com.logistimo.services.blobstore.BlobstoreService;
@@ -76,7 +76,6 @@ public class MediaController {
   @RequestMapping(value = "/v1/mediaforDomain/{domainKey:.+}", method = RequestMethod.GET)
   @ResponseBody
   public MediaModels getMedia(@PathVariable String domainKey) {
-    xLogger.info(SecurityUtils.getUsername() + " trying to fetch media for key: " + domainKey);
     IMediaEndPoint endPoint = JDOUtils.createInstance(IMediaEndPoint.class);
     List<IMedia> mediaList = endPoint.getMedias(domainKey);
     return new MediaModels(builder.constructMediaModelList(mediaList));

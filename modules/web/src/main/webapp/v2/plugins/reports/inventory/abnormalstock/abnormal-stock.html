@@ -35,12 +35,9 @@
                     </ul>
                 </div>
                 <div ng-show="!loading && !noData">
-                    <div class="row">
-                        <div class="col-sm-12">
-                            <rpt-last-run-time report-type="reportType"></rpt-last-run-time>
-                        </div>
-                    </div>
-                    <div class="row pt30">
+                    <rpt-last-run-time report-type="reportType"></rpt-last-run-time>
+                    <rpt-export-data ng-if="activeMetric != 'ot'" report-type="reportType" callback="exportData(reportType)"></rpt-export-data>
+                    <div class="row metric-row">
                         <div class="col-sm-2">
                             <span class="form-label">Abnormality type</span>
                             <select class="form-control" ng-model="metrics.primary">
@@ -99,9 +96,6 @@
                     <div ng-if="activeMetric != 'ot'" class="row">
                         <div class="col-sm-12">
                             <span ng-include="'plugins/reports/tables/data-table.html'"></span>
-                            <p class="text-center">
-                                <a ng-click="downloadTableAsCSV()">{{resourceBundle['download.csv']}}</a>
-                            </p>
                         </div>
                     </div>
                 </div>

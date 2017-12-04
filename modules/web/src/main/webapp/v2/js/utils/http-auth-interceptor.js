@@ -78,17 +78,21 @@
         .config(['$httpProvider', function($httpProvider) {
             $httpProvider.interceptors.push(['$rootScope', '$q', 'httpBuffer', function($rootScope, $q, httpBuffer) {
                 return {
-                    'request': function(config) {
+                    'request': function (config) {
                         // do something on success
-                        if(checkNotNullEmpty($rootScope.currentDomain) && checkNotNullEmpty($rootScope.curUser)){
-                            config.headers.d = $rootScope.curUser+":"+$rootScope.currentDomain;
+                        var curDomain = localStorage.getItem("domain");
+                        if (checkNotNullEmpty(curDomain)) {
+                            config.headers.d = "user:" + curDomain;
                         }
-                        if (!$rootScope.isSession && config.url.startsWith("/s2")) {
-                            if (checkNotNullEmpty($rootScope.token)) {
-                                config.headers['x-access-token'] = $rootScope.token;
-                            }
+                        if (config.url.startsWith("/s2")) {
                             config.url = $rootScope.basePath + config.url;
                         }
+                        var token = localStorage.getItem("x-access-token");
+                        if (checkNotNullEmpty(token)) {
+                            config.headers['x-access-token'] = token;
+                        }
+                        config.headers['x-access-initiator'] = "1";
+                        config.headers['x-app-name'] = "web";
                         return config;
                     },
                     responseError: function(rejection) {

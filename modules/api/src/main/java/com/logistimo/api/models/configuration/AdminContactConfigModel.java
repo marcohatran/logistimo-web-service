@@ -23,7 +23,7 @@
 
 package com.logistimo.api.models.configuration;
 
-import com.logistimo.api.models.MediaModel;
+import com.logistimo.models.MediaModel;
 
 import java.util.List;
 

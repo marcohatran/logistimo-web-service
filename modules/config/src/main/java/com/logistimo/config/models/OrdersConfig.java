@@ -80,6 +80,8 @@ public class OrdersConfig implements Serializable {
   private static final String INVOICE_TEMPLATE_NAME = "invoice_template_name";
   private static final String SHIPMENT_TEMPLATE_NAME = "shipment_template_name";
   private static final String INVOICE_LOGO_NAME = "invoice_logo_name";
+  private static final String REFERENCE_ID_MANDATORY = "ref_id_mandatory";
+  private static final String EAD_MANDATORY = "ead_mandatory";
 
   String sourceUserId = null; // user who last created the export specification
   private boolean exportEnabled = false;
@@ -115,6 +117,8 @@ public class OrdersConfig implements Serializable {
   private String invoiceLogoName;
   private String invoiceTemplateName;
   private String shipmentTemplateName;
+  private boolean referenceIdMandatory = false;
+  private boolean expectedArrivalDateMandatory = false;
 
 
   public OrdersConfig() {
@@ -310,6 +314,18 @@ public class OrdersConfig implements Serializable {
     }
 
     try {
+      referenceIdMandatory = json.getBoolean(REFERENCE_ID_MANDATORY);
+    } catch (JSONException e) {
+      referenceIdMandatory = false;
+    }
+
+    try {
+      expectedArrivalDateMandatory = json.getBoolean(EAD_MANDATORY);
+    } catch (JSONException e) {
+      expectedArrivalDateMandatory = false;
+    }
+
+    try {
       String invLogoName = json.getString(INVOICE_LOGO_NAME);
       if(StringUtils.isNotEmpty(invLogoName)) {
         invoiceLogoName = invLogoName;
@@ -378,6 +394,8 @@ public class OrdersConfig implements Serializable {
       json.put(INVOICE_LOGO_NAME, invoiceLogoName);
       json.put(INVOICE_TEMPLATE_NAME, invoiceTemplateName);
       json.put(SHIPMENT_TEMPLATE_NAME, shipmentTemplateName);
+      json.put(REFERENCE_ID_MANDATORY, referenceIdMandatory);
+      json.put(EAD_MANDATORY, expectedArrivalDateMandatory);
       return json;
     } catch (JSONException e) {
       throw new ConfigurationException(e.getMessage());
@@ -658,4 +676,23 @@ public class OrdersConfig implements Serializable {
   public void setShipmentTemplateName(String shipmentTemplateName) {
     this.shipmentTemplateName = shipmentTemplateName;
   }
+
+  public boolean isReferenceIdMandatory() {
+    return referenceIdMandatory;
+  }
+
+  public OrdersConfig setReferenceIdMandatory(boolean referenceIdMandatory) {
+    this.referenceIdMandatory = referenceIdMandatory;
+    return this;
+  }
+
+  public OrdersConfig setExpectedArrivalDateMandatory(boolean expectedArrivalDateMandatory) {
+    this.expectedArrivalDateMandatory = expectedArrivalDateMandatory;
+    return this;
+  }
+
+  public boolean isExpectedArrivalDateMandatory() {
+    return expectedArrivalDateMandatory;
+  }
+
 }

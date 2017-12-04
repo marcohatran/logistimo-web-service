@@ -24,12 +24,15 @@
 
 sed -ri "$ a logi.host.server=$LOGI_HOST" $TOMCAT_HOME/webapps/ROOT/WEB-INF/classes/samaanguru.properties \
         && sed -ri "s/localhost/$HADOOP_HOST/g" $TOMCAT_HOME/webapps/ROOT/WEB-INF/classes/core-site.xml \
-        && sed -ri "s/, CONSOLE/, datalog/g" $TOMCAT_HOME/webapps/ROOT/WEB-INF/classes/log4j.properties \
+        && sed -ri "s/, CONSOLE/, datalog, CONSOLE/g" $TOMCAT_HOME/webapps/ROOT/WEB-INF/classes/log4j.properties \
+        && sed -ri "s/, mobilelog/, mobilelog, CONSOLE/g" $TOMCAT_HOME/webapps/ROOT/WEB-INF/classes/log4j.properties \
         && sed -ri "s~lgweb.log~logs\/lgweb.log~g" $TOMCAT_HOME/webapps/ROOT/WEB-INF/classes/log4j.properties \
         && sed -ri "s~mobile.log~logs\/mobile.log~g" $TOMCAT_HOME/webapps/ROOT/WEB-INF/classes/log4j.properties \
         && sed -ri "/Jad\/Jar download servlet/,+4d" $TOMCAT_HOME/webapps/ROOT/WEB-INF/web.xml \
         && sed -ri "$ a tomcat.util.http.parser.HttpParser.requestTargetAllow=|{}" $TOMCAT_HOME/conf/catalina.properties \
-        && sed -ri "s/8080/$TASK_PORT/g" $TOMCAT_HOME/conf/server.xml
+        && sed -ri "s/8080/$TASK_PORT/g" $TOMCAT_HOME/conf/server.xml \
+        && sed -ri "s/http:\/\/localhost:8080/$MAPI_URL/g" $TOMCAT_HOME/webapps/ROOT/v2/index.html \
+        && sed -ri "s/http:\/\/localhost:8080/$MAPI_URL/g" $TOMCAT_HOME/webapps/ROOT/v2/bulletinboard.html
 
 if [[ "$SENTINEL_HOST" != "" ]]
 then

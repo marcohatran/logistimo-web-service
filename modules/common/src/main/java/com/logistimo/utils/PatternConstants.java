@@ -48,4 +48,5 @@ public class PatternConstants {
 
   public static final String ESCAPE_INSIDE_DOUBLE_QUOTES = "(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)";
   public static final String REMOVE_DOUBLE_QUOTES = "^\"|\"$";
+  public static final String PLUS_AND_SPACES = "[+\\s]";
 }

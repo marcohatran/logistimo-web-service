@@ -1104,7 +1104,7 @@ logistimoApp.directive('domainSelect', function () {
         controller: ['$scope', '$location', '$window', 'domainService', 'linkedDomainService',
             function ($scope, $location, $window, domainService, linkedDomainService) {
                 $scope.$watch("model", function (currentValue, previousValue) {
-                    if ((currentValue != undefined && previousValue != undefined) && (currentValue != previousValue.id && currentValue.id != previousValue  )) {
+                    if ((currentValue != undefined && previousValue != undefined) && (currentValue != previousValue.id && currentValue.id != previousValue) && (currentValue.id != previousValue.id)) {
                         $scope.$parent.showLoading();
                         console.log("switching domain " + currentValue.id + " : "+previousValue.id);
                         domainService.switchDomain(currentValue.id).then(function (data) {
@@ -1117,10 +1117,16 @@ logistimoApp.directive('domainSelect', function () {
                         });
                     }
                 });
-
-                domainService.getCurrentDomain().then(function (data) {
-                    $scope.model = {'text': data.data.name, 'id': data.data.dId};
+                $scope.$on("event:auth-loginConfirmed", function () {
+                    setCurrentDomain();
                 });
+                function setCurrentDomain() {
+                    domainService.getCurrentDomain().then(function (data) {
+                        $scope.model = {'text': data.data.name, 'id': data.data.dId};
+                    });
+                }
+
+                setCurrentDomain();
                 $scope.query = function (query) {
                     if ($scope.isSuperUser) {
                         domainService.getDomainSuggestions(query.term).then(function (data) {

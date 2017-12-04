@@ -96,7 +96,7 @@ angular.module('logistimo.storyboard.storesCountWidget', [])
         function setWidgetData() {
             $scope.storesCountWidget = {
                 computedWidth: '100%',
-                computedHeight: parseInt($scope.widget.computedHeight, 10) - 30
+                computedHeight: parseInt($scope.widget.computedHeight, 10)-10
             };
         }
 

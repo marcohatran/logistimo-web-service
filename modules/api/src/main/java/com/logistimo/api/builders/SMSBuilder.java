@@ -84,6 +84,7 @@ import java.util.TimeZone;
 public class SMSBuilder {
 
   private static final XLog xLogger = XLog.getLog(SMSBuilder.class);
+  private static final int SMS_AUTH_TOKEN_LENGTH = 4;
 
   public SMSModel constructSMSModel(String message) throws ServiceException {
     SMSModel model = new SMSModel();
@@ -162,7 +163,9 @@ public class SMSBuilder {
             field.split(SMSConstants.KEY_SEPARATOR + PatternConstants.ESCAPE_INSIDE_DOUBLE_QUOTES);
         switch (keyValue[0]) {
           case SMSConstants.TOKEN:
-            model.setToken(keyValue[1]);
+            if(keyValue[1] != null && keyValue[1].length() >= SMS_AUTH_TOKEN_LENGTH){
+              model.setToken(keyValue[1]);
+            }
             break;
           case SMSConstants.INVENTORY:
             //Split based on | for materials
@@ -461,7 +464,7 @@ public class SMSBuilder {
       //Create a set with the batchid received in the request
       Set<String> batchIdSet=new HashSet<>();
       for(MobileTransModel transModel:mobileTransModelList){
-        if(StringUtils.isNotBlank(transModel.bid) && !batchIdSet.contains(transModel.bid)) {
+        if(StringUtils.isNotBlank(transModel.bid)) {
           batchIdSet.add(transModel.bid);
         }
       }
@@ -474,8 +477,16 @@ public class SMSBuilder {
           materialDetails.append(SMSConstants.COMMA_SEPARATOR).append(SMSConstants.DOUBLE_QUOTE)
               .append(batchModel.bid).append(SMSConstants.DOUBLE_QUOTE)
               .append(SMSConstants.COMMA_SEPARATOR);
+          batchIdSet.remove(batchModel.bid);
         }
       }
+      batchIdSet.stream().forEach(bid -> {
+        appendInventoryDetails(materialDetails, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
+        //append batch Id
+        materialDetails.append(SMSConstants.COMMA_SEPARATOR).append(SMSConstants.DOUBLE_QUOTE)
+            .append(bid).append(SMSConstants.DOUBLE_QUOTE)
+            .append(SMSConstants.COMMA_SEPARATOR);
+      });
     } else {
       //append inventory details
       appendInventoryDetails(materialDetails, invModel.q, invModel.alq, invModel.itq);

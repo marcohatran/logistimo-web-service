@@ -718,7 +718,6 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                 $scope.newStatus.ncdrsn = '';
                 $scope.newStatus.cmrsn = '';
                 if($scope.nStatus == ORDER.FULFILLED && $scope.shipmentList.length>0) {
-                    $scope.showLoading();
                     ordService.getShipment($scope.shipmentList[0].sId).then(function (data) {
                         $scope.shipment = data.data;
                         $scope.shipment.items.forEach(function (d) {
@@ -1486,14 +1485,14 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
 
             $scope.saveMaterials = function () {
                 if ($scope.validateMaterials()) {
-                    $scope.showLoading();
+                    $scope.showLoading(false, "Saving your materials..");
                     $scope.newIts = angular.copy($scope.order.its);
                     $scope.newIts.forEach(function (its) {
                         if (checkNotNullEmpty(its.nrsn) && its.nrsn != "Others") {
                             its.mrsn = undefined;
                         }
                         if(its.added || !$scope.order.atv) {
-                            if(its.rq >= 0 && its.rq != its.oq) {
+                            if (its.rq >= 0 && its.rq != its.q) {
                                 its.rsn = its.mrsn || its.nrsn || null;
                             } else {
                                 its.rsn = null;
@@ -3283,7 +3282,7 @@ ordControllers.controller('FulfilShipmentController', ['$scope','ordService','tr
             isOrderFulfil: $scope.isOrderFulfil,
             orderUpdatedAt: $scope.order ? $scope.order.orderUpdatedAt : $scope.shipment.orderUpdatedAt
         };
-        $scope.showLoading();
+        $scope.showLoading(false, "Fulfilling your order...");
         ordService.updateShipment(shipData).then(function (data) {
             $scope.$emit("updateFulifilmentdata",data);
             $scope.showPartialSuccessMsg(data);

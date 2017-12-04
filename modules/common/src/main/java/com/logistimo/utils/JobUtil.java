@@ -26,18 +26,17 @@ package com.logistimo.utils;
 import com.google.gson.Gson;
 
 import com.logistimo.constants.CharacterConstants;
+import com.logistimo.constants.QueryConstants;
 import com.logistimo.dao.JDOUtils;
-import com.logistimo.services.utils.ConfigUtil;
-
 import com.logistimo.entity.IJobStatus;
+import com.logistimo.logger.XLog;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.impl.PMF;
+import com.logistimo.services.utils.ConfigUtil;
 
-import com.logistimo.constants.QueryConstants;
-
-import com.logistimo.logger.XLog;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -143,6 +142,10 @@ public class JobUtil {
     return results;
   }
 
+  public static IJobStatus getJobById(Long id) {
+    return JDOUtils.getObjectById(IJobStatus.class, id);
+  }
+
   public static String getMetadataString(Map<String, String> metadataMap) {
     if (metadataMap == null || metadataMap.isEmpty()) {
       xLogger.warn("No metadata for specified for the job");
@@ -187,6 +190,11 @@ public class JobUtil {
   // Update the job status to completed, in case where there is exported data and also when there is no data to export.
   public static void setJobCompleted(Long jobId, String jobType, int size, String fileName,
                                      ResourceBundle backendMessages) {
+    setJobCompleted(jobId, jobType, size, fileName, backendMessages, null);
+  }
+
+  public static void setJobCompleted(Long jobId, String jobType, int size, String fileName,
+                                     ResourceBundle backendMessages, String filePath) {
     // Get the Job ID and update.
     PersistenceManager pm = PMF.get().getPersistenceManager();
     try {
@@ -206,8 +214,11 @@ public class JobUtil {
             jobType.equals(IJobStatus.TYPE_EXPORT) ? "dataexport" : "customreports";
         String
             outputFileLoc =
-            (host == null ? "" : "https://" + host) + path + "/user/logistimoapp/" + jobTypeLocStr
-                + "/" + fileName + localStr;
+            (host == null ? "" : "https://" + host) + path + "/user/logistimoapp/" + jobTypeLocStr;
+        if(StringUtils.isNotBlank(filePath)) {
+          outputFileLoc += "/" + filePath;
+        }
+        outputFileLoc += "/" + fileName + localStr;
         jobStatus.setOutputFileLocation(outputFileLoc);
       }
       pm.makePersistent(jobStatus);

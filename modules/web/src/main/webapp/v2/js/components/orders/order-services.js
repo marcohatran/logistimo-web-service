@@ -22,16 +22,8 @@
  */
 
 var ordServices = angular.module('ordServices', []);
-ordServices.factory('ordService', ['$http', function ($http) {
+ordServices.factory('ordService', ['APIService', function (apiService) {
     return {
-        fetch: function (urlStr) {
-            var promise = $http({method: 'GET', url: urlStr});
-            return promise;
-        },
-        fetchP: function (data, urlStr) {
-            var promise = $http({method: 'POST', data: data, url: urlStr});
-            return promise;
-        },
         getEntityOrders: function (entityId, orderType, status, tgType, tag, from, to, offset, size, oType, rid, approvalStatus) {
             offset = typeof offset !== 'undefined' ? offset : 0;
             size = typeof size !== 'undefined' ? size : 50;
@@ -63,10 +55,10 @@ ordServices.factory('ordService', ['$http', function ($http) {
             if (checkNotNullEmpty(approvalStatus)) {
                 urlStr = urlStr + "&approval_status=" + approvalStatus;
             }
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         getOrder: function (orderId) {
-            return this.fetch('/s2/api/orders/order/' + orderId + '?embed=permissions');
+            return apiService.get('/s2/api/orders/order/' + orderId + '?embed=permissions');
         },
         getOrders: function (orderType, status, tgType, tag, from, to, offset, size, oType, rid, approvalStatus) {
             offset = typeof offset !== 'undefined' ? offset : 0;
@@ -99,22 +91,25 @@ ordServices.factory('ordService', ['$http', function ($http) {
             if (checkNotNullEmpty(approvalStatus)) {
                 urlStr = urlStr + "&approval_status=" + approvalStatus;
             }
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         updateOrderStatus: function (orderId, orderStaus) {
-            return this.fetchP(orderStaus, '/s2/api/orders/order/' + orderId + "/status");
+            return apiService.post(orderStaus, '/s2/api/orders/order/' + orderId + "/status");
         },
         updateVendor: function (orderId, vendorId, orderUpdatedAt) {
-            return this.fetchP({updateValue: vendorId, orderUpdatedAt: orderUpdatedAt}, '/s2/api/orders/order/' + orderId + "/vendor");
+            return apiService.post({
+                updateValue: vendorId,
+                orderUpdatedAt: orderUpdatedAt
+            }, '/s2/api/orders/order/' + orderId + "/vendor");
         },
         getVendorConfig: function (kioskId) {
-            return this.fetch('/s2/api/transactions/transconfig/?kioskId=' + kioskId);
+            return apiService.get('/s2/api/transactions/transconfig/?kioskId=' + kioskId);
         },
         createOrder: function (data) {
-            return this.fetchP(data, '/s2/api/orders/add/');
+            return apiService.post(data, '/s2/api/orders/add/');
         },
         createShipment: function (data) {
-            return this.fetchP(data, '/s2/api/shipment/add/');
+            return apiService.post(data, '/s2/api/shipment/add/');
         },
         getShipments: function (offset, size, custId,vendId,status, from, to, eftFrom,eftTo, trans, trackId) {
             var urlStr = '/s2/api/shipment/?offset=' + offset + "&size=" + size;
@@ -145,75 +140,93 @@ ordServices.factory('ordService', ['$http', function ($http) {
             if (checkNotNullEmpty(trackId)) {
                 urlStr = urlStr + "&trackId=" + trackId;
             }
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         updateShipment: function (data) {
-            return this.fetchP(data, '/s2/api/shipment/update/sitems');
+            return apiService.post(data, '/s2/api/shipment/update/sitems');
         },
         updatePayment: function (orderId, payment) {
-            return this.fetchP(payment, '/s2/api/orders/order/' + orderId + "/payment");
+            return apiService.post(payment, '/s2/api/orders/order/' + orderId + "/payment");
         },
         updateTransporter: function (orderId, transporter, orderUpdatedAt) {
-            return this.fetchP({updateValue: transporter, orderUpdatedAt: orderUpdatedAt}, '/s2/api/orders/order/' + orderId + "/transporter");
+            return apiService.post({
+                updateValue: transporter,
+                orderUpdatedAt: orderUpdatedAt
+            }, '/s2/api/orders/order/' + orderId + "/transporter");
         },
         updatePackage: function (orderId, pkg) {
-            return this.fetchP("'"+pkg+"'", '/s2/api/orders/order/' + orderId + "/package");
+            return apiService.post("'" + pkg + "'", '/s2/api/orders/order/' + orderId + "/package");
         },
         updateFulfillmentTime: function (orderId, fulfillmentTime, orderUpdatedAt) {
-            return this.fetchP({updateValue: fulfillmentTime, orderUpdatedAt: orderUpdatedAt}, '/s2/api/orders/order/' + orderId + "/fulfillmenttime");
+            return apiService.post({
+                updateValue: fulfillmentTime,
+                orderUpdatedAt: orderUpdatedAt
+            }, '/s2/api/orders/order/' + orderId + "/fulfillmenttime");
         },
         updateExpectedFulfillmentDate: function (orderId, efd, orderUpdatedAt) {
-            return this.fetchP({updateValue: efd, orderUpdatedAt: orderUpdatedAt}, '/s2/api/orders/order/' + orderId + "/efd");
+            return apiService.post({
+                updateValue: efd,
+                orderUpdatedAt: orderUpdatedAt
+            }, '/s2/api/orders/order/' + orderId + "/efd");
         },
         updateDueDate: function (orderId, edd, orderUpdatedAt) {
-            return this.fetchP({updateValue: edd, orderUpdatedAt: orderUpdatedAt}, '/s2/api/orders/order/' + orderId + "/edd");
+            return apiService.post({
+                updateValue: edd,
+                orderUpdatedAt: orderUpdatedAt
+            }, '/s2/api/orders/order/' + orderId + "/edd");
         },
         updateMaterials: function (orderId, demandItems) {
-            return this.fetchP(demandItems, '/s2/api/orders/order/' + orderId + "/items");
+            return apiService.post(demandItems, '/s2/api/orders/order/' + orderId + "/items");
         },
         getOrderStatusJSON: function (orderId) {
-            return this.fetch('/s2/api/orders/order/' + orderId + '/statusJSON');
+            return apiService.get('/s2/api/orders/order/' + orderId + '/statusJSON');
         },
         getOrderReasons: function(type) {
-            return this.fetch('/s2/api/orders/order/reasons/' + type);
+            return apiService.get('/s2/api/orders/order/reasons/' + type);
         },
         updateOrderTags: function(orderId,oTags,orderUpdatedAt) {
-            return this.fetchP({updateValue: oTags, orderUpdatedAt: orderUpdatedAt}, '/s2/api/orders/order/'+orderId+'/tags');
+            return apiService.post({
+                updateValue: oTags,
+                orderUpdatedAt: orderUpdatedAt
+            }, '/s2/api/orders/order/' + orderId + '/tags');
         },
         updateReferenceID: function(orderId,referenceID, orderUpdatedAt) {
-            return this.fetchP({updateValue: referenceID, orderUpdatedAt: orderUpdatedAt}, '/s2/api/orders/order/'+orderId+'/referenceid');
+            return apiService.post({
+                updateValue: referenceID,
+                orderUpdatedAt: orderUpdatedAt
+            }, '/s2/api/orders/order/' + orderId + '/referenceid');
         },
         getIdSuggestions: function(id, type, oty) {
             var urlStr = '/s2/api/orders/filter/?id=' + encodeURIComponent(id) + "&type="+type;
             if (checkNotNullEmpty(oty)) {
                 urlStr += "&oty=" + oty;
             }
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         getTransSuggestions: function(text) {
             var urlStr = '/s2/api/shipment/transfilter/?text=' + encodeURIComponent(text);
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         updateOrder: function(orderId, details) {
-            return this.fetchP(details,'/s2/api/orders/' + orderId + '/update/items');
+            return apiService.post(details, '/s2/api/orders/' + orderId + '/update/items');
         },
         getShipmentsByOrderId: function (orderId) {
-            return this.fetch('/s2/api/shipment/' + orderId);
+            return apiService.get('/s2/api/shipment/' + orderId);
         },
         getShipment:function(sID){
-            return this.fetch('/s2/api/shipment/detail/' + sID);
+            return apiService.get('/s2/api/shipment/detail/' + sID);
         },
         updateShipmentInfo: function (updValue, sID, orderUpdatedAt) {
-            return this.fetchP("'" + updValue + "'", '/s2/api/shipment/update/' + sID + '/transporter?orderUpdatedAt=' + orderUpdatedAt);
+            return apiService.post("'" + updValue + "'", '/s2/api/shipment/update/' + sID + '/transporter?orderUpdatedAt=' + orderUpdatedAt);
         },
         updateShipmentTrackingId: function (updValue, sID, orderUpdatedAt) {
-            return this.fetchP("'" + updValue + "'", '/s2/api/shipment/update/' + sID + '/trackingID?orderUpdatedAt=' + orderUpdatedAt);
+            return apiService.post("'" + updValue + "'", '/s2/api/shipment/update/' + sID + '/trackingID?orderUpdatedAt=' + orderUpdatedAt);
         },
         updateShipmentReason: function (updValue, sID, orderUpdatedAt) {
-            return this.fetchP("'" + updValue + "'", '/s2/api/shipment/update/' + sID + '/rfs?orderUpdatedAt=' + orderUpdatedAt);
+            return apiService.post("'" + updValue + "'", '/s2/api/shipment/update/' + sID + '/rfs?orderUpdatedAt=' + orderUpdatedAt);
         },
         updateShipmentDate: function (updValue, sID, orderUpdatedAt) {
-            return this.fetchP("'" + updValue + "'", '/s2/api/shipment/update/' + sID + '/date?orderUpdatedAt=' + orderUpdatedAt);
+            return apiService.post("'" + updValue + "'", '/s2/api/shipment/update/' + sID + '/date?orderUpdatedAt=' + orderUpdatedAt);
         },
         getStatusHistory: function(id, type, tag) {
             var urlStr = '/s2/api/activity/?';
@@ -226,22 +239,22 @@ ordServices.factory('ordService', ['$http', function ($http) {
             if(checkNotNullEmpty(tag)) {
                 urlStr += '&tag=' + tag;
             }
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         updateShipmentStatus: function(shipId, status) {
-            return this.fetchP(status, '/s2/api/shipment/update/' + shipId + "/status");
+            return apiService.post(status, '/s2/api/shipment/update/' + shipId + "/status");
         },
         updateShipmentPackageSize: function (updValue, sID) {
-            return this.fetchP("'" + updValue + "'", '/s2/api/shipment/update/' + sID + '/ps');
+            return apiService.post("'" + updValue + "'", '/s2/api/shipment/update/' + sID + '/ps');
         },
         fetchRequesters: function(text) {
-            return this.fetch("/s2/api/order-approvals-meta/requesters?q=" + text);
+            return apiService.get("/s2/api/order-approvals-meta/requesters?q=" + text);
         },
         fetchApprovers: function(text) {
-            return this.fetch("/s2/api/order-approvals-meta/approvers?q=" + text);
+            return apiService.get("/s2/api/order-approvals-meta/approvers?q=" + text);
         },
         fetchPrimaryApprovers: function(orderId) {
-            return this.fetch("/s2/api/orders/order/" + orderId + "/approvers");
+            return apiService.get("/s2/api/orders/order/" + orderId + "/approvers");
         }
     }
 }]);

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright © 2017 Logistimo.
+  ~
+  ~ This file is part of Logistimo.
+  ~
+  ~ Logistimo software is a mobile & web platform for supply chain management and remote temperature monitoring in
+  ~ low-resource settings, made available under the terms of the GNU Affero General Public License (AGPL).
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General
+  ~ Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any
+  ~ later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+  ~ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+  ~ for more details.
+  ~
+  ~ You should have received a copy of the GNU Affero General Public License along with this program.  If not, see
+  ~ <http://www.gnu.org/licenses/>.
+  ~
+  ~ You can be released from the requirements of the license by purchasing a commercial license. To know more about
+  ~ the commercial license, please contact us at opensource@logistimo.com
+  -->
+<div ng-controller="eventSummariesTextWidgetController">
+  <div ng-if="wloading" class="row mt18 widget-loading">
+    <div class="text-center">
+      {{resourceBundle['loading.uppercase']}}... <span class="glyphicons glyphicons-cogwheel spin"></span>
+    </div>
+  </div>
+  <div ng-if="!wloading && showError" class="alert alert-danger">
+    <div class="text-center">
+      {{errorMessage}}
+    </div>
+  </div>
+  <div ng-show="noData" class="col-sm-12" style="display: table; text-align:center; width:100%; height: {{widget.computedHeight}}px">
+    <span class="widget-no-data">No data to display</span>
+  </div>
+  <div ng-show="!wloading && !showError">
+    <div class="col-sm-12" style="display: table; width:100%; height: {{widget.computedHeight}}px">
+      <div class="bulletin-board-event-image" ng-if="category == 'activity'">
+        <img src="/v2/images/activity.png">
+      </div>
+      <div class="bulletin-board-event-image" ng-if= "category == 'inventory'">
+        <img src="/v2/images/package.png">
+      </div>
+      <div class="bulletin-board-event-image" ng-if= "category == 'assets'">
+        <img src="/v2/images/event-summary-thermometer.png">
+      </div>
+      <div class="col-sm-12" style="padding-top:10px;padding-bottom:10px;">
+        <p class="widget-title-text">{{title}}</p>
+        <p class="widget-sub-title-text">{{subtitle}}</p>
+        <p class="widget-text">{{text}}</p>
+      </div>
+    </div>
+  </div>
+</div>

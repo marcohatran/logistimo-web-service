@@ -33,6 +33,7 @@ import com.logistimo.api.models.UserModel;
 import com.logistimo.api.models.configuration.AdminContactConfigModel;
 import com.logistimo.api.models.configuration.AssetConfigModel;
 import com.logistimo.auth.SecurityConstants;
+import com.logistimo.common.builder.MediaBuilder;
 import com.logistimo.config.models.AdminContactConfig;
 import com.logistimo.config.models.AssetSystemConfig;
 import com.logistimo.config.models.DomainConfig;
@@ -66,6 +67,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
+
 
 public class UserBuilder {
   private static final XLog xLogger = XLog.getLog(UserBuilder.class);
@@ -467,7 +469,7 @@ public class UserBuilder {
   public List<AdminContactConfigModel> buildAdminContactModel(List<IUserAccount> userAccounts) {
     IMediaEndPoint endPoint = JDOUtils.createInstance(IMediaEndPoint.class);
     MediaBuilder builder = new MediaBuilder();
-    return userAccounts.stream().map(key -> constructAdminContact(key, endPoint, builder)).collect(
+    return userAccounts.stream().map(userAccount -> constructAdminContact(userAccount, endPoint, builder)).collect(
         Collectors.toList());
   }
 

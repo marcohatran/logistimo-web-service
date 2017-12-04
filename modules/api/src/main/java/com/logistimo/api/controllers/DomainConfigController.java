@@ -324,7 +324,7 @@ public class DomainConfigController {
     DomainConfig config = DomainConfig.getInstance(domainId);
     if (config != null) {
       try {
-        return builder.buildMenuStats(user, config, locale, user.getTimezone(), request);
+        return builder.buildMenuStats(user, config, locale, user.getTimezone());
       } catch (ServiceException | ObjectNotFoundException e) {
         throw new InvalidServiceException(backendMessages.getString("menustats.fetch.error"));
       }
@@ -360,7 +360,7 @@ public class DomainConfigController {
       throw new InvalidDataException("User does not have access to domain");
     }
     try {
-      return builder.buildGeneralConfigModel(dId, locale, sUser.getTimezone());
+      return builder.buildDomainLocationModels(dId, locale, sUser.getTimezone());
     } catch (ServiceException | ConfigurationException e) {
       xLogger.severe("Error in fetching general configuration", e);
       throw new InvalidServiceException(backendMessages.getString("general.config.fetch.error"));
@@ -903,6 +903,8 @@ public class DomainConfigController {
         cconf.setAllowRouteTagEditing(model.er);
         cconf.setLoginAsReconnect(model.lr);
         cconf.setDisableShippingOnMobile(model.dshp);
+        cconf.setBarcodingEnabled(model.bcs);
+        cconf.setRFIDEnabled(model.rfids);
         cc.dc.setCapabilityByRole(model.ro, cconf);
 
         String issueTags = StringUtils.join(model.hii, ',');
@@ -941,6 +943,8 @@ public class DomainConfigController {
         cc.dc.setAllowRouteTagEditing(model.er);
         cc.dc.setLoginAsReconnect(model.lr);
         cc.dc.setDisableShippingOnMobile(model.dshp);
+        cc.dc.setBarcodingEnabled(model.bcs);
+        cc.dc.setRFIDEnabled(model.rfids);
         cc.dc.setStoreAppTheme(model.getTheme());
 
         String issueTags = TagUtil.getCleanTags(StringUtils.join(model.hii, ','), true);
@@ -2738,6 +2742,18 @@ public class DomainConfigController {
       cc.add = true;
     }
     return cc;
+  }
+
+  @RequestMapping(value="/general/domains", method = RequestMethod.GET)
+  public
+  @ResponseBody
+  List<GeneralConfigModel> getGeneralConfigForDomains(
+      @RequestParam(name = "domain_ids") List<String> domainIds)
+      throws ServiceException, ConfigurationException {
+    SecureUserDetails sUser = getUserDetails();
+    return builder.buildDomainLocationModels(domainIds, usersService,
+        sUser.getUsername());
+
   }
 
   private SyncConfig generateSyncConfig(CapabilitiesConfigModel model) {

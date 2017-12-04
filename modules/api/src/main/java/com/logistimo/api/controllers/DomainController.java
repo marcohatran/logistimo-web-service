@@ -75,7 +75,6 @@ import java.util.Map;
 import java.util.ResourceBundle;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 
 /**
  * @author Mohan Raja
@@ -306,14 +305,13 @@ public class DomainController {
   public
   @ResponseBody
   void switchDomain(@RequestBody String domainIdStr, HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     boolean authorisedUser = false;
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     if (!GenericAuthoriser.authoriseAdmin(request)) {
       throw new UnauthorizedException(backendMessages.getString("permission.denied"));
     }
-    HttpSession session = request.getSession();
     if (StringUtils.isBlank(domainIdStr)) {
       xLogger.severe("Error in switching domain");
       throw new BadRequestException(backendMessages.getString("switch.domain.error"));
@@ -341,9 +339,7 @@ public class DomainController {
           .warn("Error in fetching list of parent domains for domain: {0} for user: {1}", domainId,
               sUser.getUsername(), e);
     }
-    if (authorisedUser) {
-      SessionMgr.setCurrentDomain(session, domainId);
-    } else {
+    if (!authorisedUser) {
       throw new UnauthorizedException(backendMessages.getString("permission.denied"));
     }
   }

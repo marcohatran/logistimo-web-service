@@ -23,29 +23,21 @@
 
 var entGrpServices = angular.module('entGrpServices', []);
 
-entGrpServices.factory('entGrpService', ['$http', function($http) {
+entGrpServices.factory('entGrpService', ['APIService', function (apiService) {
     return {
-        fetch: function (urlStr) {
-            var promise = $http({method: 'GET', url: urlStr});
-            return promise;
-        },
-        fetchP: function (data, urlStr) {
-            var promise = $http({method: 'POST', data: data, url: urlStr});
-            return promise;
-        },
         getEntGrps: function (offset,size) {
             offset = typeof offset !== 'undefined' ? offset : 0;
             size = typeof size !== 'undefined' ? size : 50;
-            return this.fetch('/s2/api/ent-grps/?offset='+offset+"&size="+size);
+            return apiService.get('/s2/api/ent-grps/?offset=' + offset + "&size=" + size);
         },
         setEntGrps: function(entGrps, action){
-            return this.fetchP(entGrps,'/s2/api/ent-grps/action/'+action);
+            return apiService.post(entGrps, '/s2/api/ent-grps/action/' + action);
         },
         getPoolGroup: function(groupId){
-            return this.fetch('/s2/api/ent-grps/groupId/'+groupId);
+            return apiService.get('/s2/api/ent-grps/groupId/' + groupId);
         },
         deletePoolGroup: function(groupIds){
-            return this.fetchP("'"+groupIds + "'",'/s2/api/ent-grps/delete');
+            return apiService.post("'" + groupIds + "'", '/s2/api/ent-grps/delete');
         }
     }
 }]);

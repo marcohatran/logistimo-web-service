@@ -23,6 +23,8 @@
 
 package com.logistimo.api.util;
 
+import org.apache.commons.lang.xwork.StringUtils;
+
 import java.io.UnsupportedEncodingException;
 
 /**
@@ -84,12 +86,12 @@ public class SMSDecodeUtil {
       builder.insert(0, getChar(rem));
       number /= TOTAL_CHARS;
     }
-    return builder.toString();
+    return builder.length() > 0 ? builder.toString() : "0";
   }
 
   public static long decode(String str) throws UnsupportedEncodingException {
     long l = 0;
-    if (str != null && !str.isEmpty()) {
+    if (StringUtils.isNotEmpty(str)) {
       str = str.trim();
       for (int i = 0; i < str.length(); i++) {
         int index = getIndex(str.charAt(str.length() - i - 1));

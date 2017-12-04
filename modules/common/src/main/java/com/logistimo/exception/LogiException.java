@@ -24,6 +24,8 @@
 package com.logistimo.exception;
 
 
+import org.apache.commons.lang.StringUtils;
+
 import java.util.Locale;
 
 /**
@@ -96,5 +98,9 @@ public class LogiException extends Exception implements ExceptionWithCodes {
 
   public void setStatusCode(int statusCode) {
     this.statusCode = statusCode;
+  }
+
+  public boolean hasErrorCode() {
+    return StringUtils.isNotEmpty(code);
   }
 }

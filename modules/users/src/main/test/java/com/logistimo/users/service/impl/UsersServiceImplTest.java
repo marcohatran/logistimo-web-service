@@ -38,7 +38,9 @@ public class UsersServiceImplTest extends TestCase {
 
   @Test
   public void testGetUsersByTag() throws Exception {
-    String userTags = "'SIO',DIO'";
+    List<String> userTags = new ArrayList<>();
+    userTags.add("SIO");
+    userTags.add("DIO");
     StringBuilder queryString = new StringBuilder("SELECT * FROM USERACCOUNT WHERE USERID IN (SELECT USERID FROM USERTOKIOSK WHERE KIOSKID = ?");
     queryString.append(" AND USERID IN (SELECT USERID FROM USER_TAGS WHERE ID IN (SELECT ID FROM TAG WHERE TYPE = ?")
         .append(" AND NAME IN(").append(userTags).append("))))");

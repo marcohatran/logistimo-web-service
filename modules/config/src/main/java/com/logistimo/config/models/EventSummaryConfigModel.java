@@ -143,7 +143,7 @@ public class EventSummaryConfigModel implements Serializable {
     }
   }
 
-  class Condition implements Serializable {
+  public class Condition implements Serializable {
 
     Condition(String name, String units, String operations) {
       this.name = name;
@@ -227,7 +227,7 @@ public class EventSummaryConfigModel implements Serializable {
 
   }
 
-  class Threshold implements Serializable {
+  public class Threshold implements Serializable {
 
 
     private String id;

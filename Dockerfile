@@ -73,13 +73,15 @@ ENV MYSQL_HOST_URL="jdbc:mariadb://localhost/logistimo?useUnicode=true&amp;chara
         JAVA_XMX=1024m \
         LOC_URL=http://localhost:9090 \
         APPROVAL_URL=http://localhost:6400 \
+        COLLABORATION_URL=http://localhost:9070/v1/collaboration/likes \
         CON_MAX_IDLE=50 \
         CON_MIX_IDLE=20 \
         CON_MAX_ACTIVE=150 \
         CON_MAX_WAIT=1000 \
         CACHE_TYPE=none \
         STATUS_FILE= \
-        JMX_AGENT_PORT=8088
+        JMX_AGENT_PORT=8088 \
+        MAPI_URL=http://localhost:8080
 
 ENV JAVA_OPTS $JAVA_OPTS
 

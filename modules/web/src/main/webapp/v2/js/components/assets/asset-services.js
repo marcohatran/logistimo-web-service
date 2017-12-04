@@ -22,18 +22,10 @@
  */
 
 var assetServices = angular.module('assetServices', []);
-assetServices.factory('assetService', ['$http', function ($http) {
+assetServices.factory('assetService', ['APIService', function (apiService) {
     return {
-        fetch: function (urlStr) {
-            var promise = $http({method: 'GET', url: urlStr});
-            return promise;
-        },
-        fetchP: function (data, urlStr) {
-            var promise = $http({method: 'POST', data: data, url: urlStr});
-            return promise;
-        },
         createAsset: function(data){
-            return this.fetchP(data, '/s2/api/assets/');
+            return apiService.post(data, '/s2/api/assets/');
         },
         getAssetsByKeyword: function(keyword, at, size, offset){
             offset = typeof offset !== 'undefined' ? offset : 0;
@@ -44,7 +36,7 @@ assetServices.factory('assetService', ['$http', function ($http) {
             }else if(checkNotNullEmpty(at)){
                 urlStr += '&at=' + at;
             }
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         getAssetsInDetail: function(eid, at, ws, alrmType, dur, location, offset, size, awr){
             offset = typeof offset !== 'undefined' ? offset : 0;
@@ -75,13 +67,13 @@ assetServices.factory('assetService', ['$http', function ($http) {
             if(checkNotNullEmpty(awr)){
                 urlStr += "&awr=" + awr;
             }
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         getAssetDetails: function(manufactureId, assetId){
-            return this.fetch("/s2/api/assets/" + manufactureId + "/" + encodeURI(assetId));
+            return apiService.get("/s2/api/assets/" + manufactureId + "/" + encodeURI(assetId));
         },
         getAssetRelations: function(manufactureId, assetId){
-            return this.fetch("/s2/api/assets/relation/" + manufactureId + "/" + encodeURI(assetId));
+            return apiService.get("/s2/api/assets/relation/" + manufactureId + "/" + encodeURI(assetId));
         },
         getFilteredAssets: function(text, entityId, at, all, ns){
             var urlStr = "/s2/api/assets/filter?q=" + text;
@@ -100,7 +92,7 @@ assetServices.factory('assetService', ['$http', function ($http) {
             if(checkNotNullEmpty(ns)){
                 urlStr += "&ns=" + ns;
             }
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         createAssetRelationships: function(data, deleteR){
             var urlStr = "/s2/api/assets/relations";
@@ -109,57 +101,57 @@ assetServices.factory('assetService', ['$http', function ($http) {
                 urlStr += "?delete=" + deleteR;
             }
 
-            return this.fetchP(data, urlStr);
+            return apiService.post(data, urlStr);
         },
         getTemperatures: function (vendorId, deviceId, mpId, at, size, sint, tdate) {
             var url = '/s2/api/assets/temperature/' + vendorId + '/' + encodeURI(deviceId) + '/' + mpId + '?size=' + size + '&sint=' + sint + '&at=' + at;
             if(checkNotNullEmpty(tdate)){
                 url += '&edate=' + formatDate2Url(tdate);
             }
-            return this.fetch(url);
+            return apiService.get(url);
         },
         getRecentAlerts: function (vendorId, deviceId, page, size) {
-            return this.fetch('/s2/api/assets/alerts/recent/' + vendorId + '/' + encodeURI(deviceId) + '?page=' + page + '&size=' + size);
+            return apiService.get('/s2/api/assets/alerts/recent/' + vendorId + '/' + encodeURI(deviceId) + '?page=' + page + '&size=' + size);
         },
         getAssetConfig: function (vendorId, deviceId) {
-            return this.fetch('/s2/api/assets/config/' + vendorId + '/' + encodeURI(deviceId));
+            return apiService.get('/s2/api/assets/config/' + vendorId + '/' + encodeURI(deviceId));
         },
         updateDeviceConfig: function (deviceConfig, domainId, pushConfig) {
-            return this.fetchP(deviceConfig, '/s2/api/assets/config?pushConfig=' + pushConfig);
+            return apiService.post(deviceConfig, '/s2/api/assets/config?pushConfig=' + pushConfig);
         },
         getAssetStats: function (vendorId, deviceId, from, to) {
-            return this.fetch('/s2/api/assets/stats/' + vendorId + '/' + encodeURI(deviceId) + '?from=' + from + '&to=' + to);
+            return apiService.get('/s2/api/assets/stats/' + vendorId + '/' + encodeURI(deviceId) + '?from=' + from + '&to=' + to);
         },
         getChildTagSummary: function (domainId) {
-            return this.fetch('/s2/api/assets/tags/child?tagid=' + domainId);
+            return apiService.get('/s2/api/assets/tags/child?tagid=' + domainId);
         },
         getTagAbnormalDevices: function (domainId) {
-            return this.fetch('/s2/api/assets/tags/abnormal?tagid=' + domainId);
+            return apiService.get('/s2/api/assets/tags/abnormal?tagid=' + domainId);
         },
         getDomainLocation: function () {
-            return this.fetch('/s2/api/assets/domain/location');
+            return apiService.get('/s2/api/assets/domain/location');
         },
         getTagSummary: function (domainId, at) {
-            return this.fetch('/s2/api/assets/tags?tagid=' + domainId + '&at=' + at);
+            return apiService.get('/s2/api/assets/tags?tagid=' + domainId + '&at=' + at);
         },
         updateAsset: function (deviceDetails) {
-            return this.fetchP(deviceDetails, '/s2/api/assets/?update=true');
+            return apiService.post(deviceDetails, '/s2/api/assets/?update=true');
         },
         pushPullConfig: function (requestData) {
-            return this.fetchP(requestData, '/s2/api/assets/device/config');
+            return apiService.post(requestData, '/s2/api/assets/device/config');
         },
         getAsset: function(assetId){
-            return this.fetch('/s2/api/assets/' + assetId);
+            return apiService.get('/s2/api/assets/' + assetId);
         },
         deleteAsset: function(requestData){
-            return this.fetchP(requestData, '/s2/api/assets/delete');
+            return apiService.post(requestData, '/s2/api/assets/delete');
         },
         getModelSuggestions: function(query) {
             var url = '/s2/api/assets/model';
             if(checkNotNullEmpty(url)) {
                 url += '?query=' + query;
             }
-            return this.fetch(url);
+            return apiService.get(url);
         }
     }
 }]);

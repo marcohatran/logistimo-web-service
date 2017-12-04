@@ -28,7 +28,7 @@ import com.logistimo.services.utils.ConfigUtil;
 /**
  * @author Mohan Raja
  */
-public class ExternalServiceClientConfiguration {
+public class CallistoServiceClientConfiguration implements IExternalServiceClientConfiguration {
   private String url = ConfigUtil.get("callisto.url","http://localhost:8090");
   public String getUrl() {
     return url;

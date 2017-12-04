@@ -29,7 +29,7 @@ angular.module('logistimo.storyboard.stockTrend', [])
     .config(function (widgetsRepositoryProvider) {
         widgetsRepositoryProvider.addWidget({
             id: "stockTrendWidget",
-            name: "Stock availability/abnormality trends",
+            name: "Stock availability or abnormality trends",
             templateUrl: "plugins/storyboards/inventory/stock-trend-widget/stock-trend-widget.html",
             editTemplateUrl: "plugins/storyboards/inventory/edit-template.html",
             templateFilters: [
@@ -39,7 +39,7 @@ angular.module('logistimo.storyboard.stockTrend', [])
                 },
                 {
                     nameKey: 'inventory.status',
-                    type: 'widType'
+                    type: 'trendType'
                 },
                 {
                     nameKey: 'filter.material.tag',
@@ -78,10 +78,10 @@ angular.module('logistimo.storyboard.stockTrend', [])
         }
 
         function setFilters() {
-            if ($scope.isDef($scope.widget.conf.widType) && checkNotNullEmpty($scope.widget.conf.widType)) {
-                if ($scope.widget.conf.widType == '0') {
+            if ($scope.isDef($scope.widget.conf.trendType) && checkNotNullEmpty($scope.widget.conf.trendType)) {
+                if ($scope.widget.conf.trendType == '0') {
                     $scope.filter.type = "isa";
-                } else if ($scope.widget.conf.widType == '1') {
+                } else if ($scope.widget.conf.trendType == '1') {
                     $scope.filter.type = "ias";
                 }
             } else {

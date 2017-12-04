@@ -25,18 +25,10 @@
  * Created by Mohan Raja on 27/01/15.
  */
 var exportServices = angular.module('exportServices', []);
-exportServices.factory('exportService', ['$http', function($http) {
+exportServices.factory('exportService', ['APIService', function (apiService) {
     return {
-        fetch: function (urlStr) {
-            var promise = $http({method: 'GET', url: urlStr});
-            return promise;
-        },
-        fetchP: function (data, urlStr) {
-            var promise = $http({method: 'POST', data: data, url: urlStr});
-            return promise;
-        },
         /*downloadFile : function(key) {
-            return this.fetch('/s2/api/export/download?key=' + key);
+         return apiService.get('/s2/api/export/download?key=' + key);
         },*/
         scheduleBatchExport : function(type,extraParams) {
             if(type == "orders" && extraParams.indexOf("&values") >= 0){
@@ -46,23 +38,29 @@ exportServices.factory('exportService', ['$http', function($http) {
             var exportURL = '/s2/api/export/schedule/batch?type='+type;
             if (extraParams !== 'undefined' && checkNotNullEmpty(extraParams))
                 exportURL += extraParams;
-            return this.fetch(exportURL);
+            return apiService.get(exportURL);
         },
         /*exportOrders : function(orderIds){
-            return this.fetch('/s2/api/export/orders?values=' + orderIds);
+         return apiService.get('/s2/api/export/orders?values=' + orderIds);
         },*/
         exportReport : function(type,startDate,endDate,frequency,filterMap){
-            return this.fetchP({type: type,startDate: startDate,endDate: endDate,frequency: frequency,filterMap:filterMap},'/s2/api/export/schedule/report');
+            return apiService.post({
+                type: type,
+                startDate: startDate,
+                endDate: endDate,
+                frequency: frequency,
+                filterMap: filterMap
+            }, '/s2/api/export/schedule/report');
         },
         getExportJobList : function(offset,size,type, allExports) {
             offset = typeof offset !== 'undefined' ? offset : 0;
             size = typeof size !== 'undefined' ? size : 50;
 
             var urlStr = '/s2/api/export/exportjoblist?offset=' + offset + "&size=" + size + "&type=" + type + "&allExports=" + allExports;
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         exportAssets : function(type) {
-            return this.fetch('/s2/api/export/schedule/batch?type='+type);
+            return apiService.get('/s2/api/export/schedule/batch?type=' + type);
         }
     }
 }]);

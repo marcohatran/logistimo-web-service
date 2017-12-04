@@ -22,46 +22,45 @@
  */
 
 var domainServices = angular.module('domainServices', []);
-domainServices.factory('domainService', ['$http', function ($http) {
+domainServices.factory('domainService', ['APIService', '$q', function (apiService, $q) {
     return {
-        fetch: function (urlStr) {
-            var promise = $http({method: 'GET', url: urlStr});
-            return promise;
-        },
-        fetchP: function (data, urlStr) {
-            var promise = $http({method: 'POST', data: data, url: urlStr});
-            return promise;
-        },
         createDomain: function (domainName, desc) {
             var param = '?domainName=' + domainName + '&desc=' + desc;
-            return this.fetchP(null, '/s2/api/domain/create' + param);
+            return apiService.post(null, '/s2/api/domain/create' + param);
         },
         deleteDomain: function(dId) {
             var param = '?dId=' + dId;
-            return this.fetchP(null, '/s2/api/domain/delete' + param);
+            return apiService.post(null, '/s2/api/domain/delete' + param);
         },
         getCurrentDomain: function(){
-            return this.fetch('/s2/api/domain/current');
+            return apiService.get('/s2/api/domain/current');
         },
         switchDomain: function(domainId){
-            return this.fetchP(domainId,'/s2/api/domain/switch');
+            return $q(function (resolve, reject) {
+                apiService.post(domainId, '/s2/api/domain/switch').then(function (data) {
+                    localStorage.setItem("domain", domainId);
+                    resolve(data);
+                }).catch(function (err) {
+                    reject(err);
+                })
+            });
         },
         getCurrentUserDomain: function(){
-            return this.fetch('/s2/api/domain/currentUser');
+            return apiService.get('/s2/api/domain/currentUser');
         },
         getDomainSuggestions: function (query) {
             var param = '';
             if(checkNotNullEmpty(query)){
                 param = '?q='+query;
             }
-            return this.fetch('/s2/api/domain/suggestions' + param);
+            return apiService.get('/s2/api/domain/suggestions' + param);
         },
         updatedomaininfo: function (domainId, name, desc) {
             var param = '/' + domainId + '?name=' + name + '&desc=' + desc;
-            return this.fetch('/s2/api/domain/updateDomain' + param);
+            return apiService.get('/s2/api/domain/updateDomain' + param);
         },
         fetchDomainById: function (data) {
-            return this.fetch('/s2/api/domain/domain?domainId=' + data);
+            return apiService.get('/s2/api/domain/domain?domainId=' + data);
         }
     }
 }]);

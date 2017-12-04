@@ -22,41 +22,33 @@
  */
 
 var domainServices = angular.module('linkedDomainServices', []);
-domainServices.factory('linkedDomainService', ['$http', function ($http) {
+domainServices.factory('linkedDomainService', ['APIService', function (apiService) {
     return {
-        fetch: function (urlStr) {
-            var promise = $http({method: 'GET', url: urlStr});
-            return promise;
-        },
-        fetchP: function (data, urlStr) {
-            var promise = $http({method: 'POST', data: data, url: urlStr});
-            return promise;
-        },
         getChildSuggestions: function (text,domainId) {
             var eParam = '';
             if(domainId){
                 eParam = '&reqDomainId='+domainId;
             }
-            return this.fetch('/s2/api/linked/domain/unlinked?q=' + text + eParam);
+            return apiService.get('/s2/api/linked/domain/unlinked?q=' + text + eParam);
         },
         addChildren: function (data) {
-            return this.fetchP({domainModel: data}, '/s2/api/linked/domain/add');
+            return apiService.post({domainModel: data}, '/s2/api/linked/domain/add');
         },
         addChildrenTodomain: function (data,domainId) {
-            return this.fetchP({domainModel: data, domainId: domainId}, '/s2/api/linked/domain/add');
+            return apiService.post({domainModel: data, domainId: domainId}, '/s2/api/linked/domain/add');
         },
         fetchLinkedDomains: function (domainId) {
             var params = '';
             if (domainId != null) {
                 params = '?domainId=' + domainId;
             }
-            return this.fetch('/s2/api/linked/domain/' + params);
+            return apiService.get('/s2/api/linked/domain/' + params);
         },
         deleteDomainLink: function (domainId) {
-            return this.fetch('/s2/api/linked/domain/delete?domainId=' + domainId);
+            return apiService.get('/s2/api/linked/domain/delete?domainId=' + domainId);
         },
         getLinkedDomainSuggestion: function(query) {
-            return this.fetch('/s2/api/linked/domain/suggestions?q='+query);
+            return apiService.get('/s2/api/linked/domain/suggestions?q=' + query);
         },
         getDomainPermission: function(action,domainId){
             var params = "";
@@ -71,21 +63,21 @@ domainServices.factory('linkedDomainService', ['$http', function ($http) {
                 }
                 params += "domainId=" + domainId;
             }
-            return this.fetch('/s2/api/linked/domain/permission' + params);
+            return apiService.get('/s2/api/linked/domain/permission' + params);
         },
         getLinkedDomains: function (type) {
-            return this.fetch('/s2/api/linked/domain/parents?domainType=' + type);
+            return apiService.get('/s2/api/linked/domain/parents?domainType=' + type);
         },
         getParentsByDomainId : function(domainId, type){
             var param = "?domainId=" + domainId + "&domainType=" + type;
-            return this.fetch('/s2/api/linked/domain/parents'+param);
+            return apiService.get('/s2/api/linked/domain/parents' + param);
         },
 
         updateChildDomainPermissions: function (data) {
-            return this.fetchP(data, '/s2/api/linked/domain/updatepermission');
+            return apiService.post(data, '/s2/api/linked/domain/updatepermission');
         },
         pushConfiguration: function () {
-            return this.fetch('/s2/api/linked/domain/push');
+            return apiService.get('/s2/api/linked/domain/push');
         }
 
     }

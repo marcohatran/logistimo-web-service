@@ -26,14 +26,16 @@
     logistimoApp.controller("AppController",
         function ($scope, $route, $routeParams, $location, $uibModal, requestContext, ngI18nResourceBundle, $timeout,
                   domainCfgService, exportService, userService, $window, $sce, iAuthService, $q, $rootScope,
-                  linkedDomainService, domainService, configService, dashboardService, isSession) {
+                  linkedDomainService, domainService, configService, dashboardService, isBulletinBoard) {
             var renderContext = requestContext.getRenderContext();
 
             $scope.showpopup = 'showpopup';
             $scope.hidepopup = 'hidepopup';
             $rootScope.basePath = '';
+            $rootScope.currentDomain = localStorage.getItem("domain");
 
-            $rootScope.isSession = isSession;
+            $rootScope.isBulletinBoard = isBulletinBoard;
+            $scope.loadMessage = "";
 
 
             var resourceBundleName = 'resourceBundle';
@@ -153,10 +155,11 @@
 
             $scope.loadTemplate = '<h1><span class="glyphicons glyphicons-cogwheel spin" style="color:#000000;font-size: 1.6em;"></span></h1>';
             $scope.loaders = 0;
-            $scope.showLoading = function (restore) {
+            $scope.showLoading = function (restore, message) {
                 if (restore || $scope.loaders++ == 0) {
                     $scope.showLoadIcon = true;
                 }
+                $scope.loadMessage = message;
             };
             $scope.hideLoading = function (forceClose) {
                 if (forceClose) {
@@ -214,7 +217,7 @@
             };
             $scope.logout = function () {
                 $scope.showLoading();
-                iAuthService.logout().then(function (data) {
+                iAuthService.logout().then(function () {
                     $scope.clearSesNConfig();
                     $scope.userLoggedOut = true;
                     $rootScope.currentDomain = undefined;
@@ -273,7 +276,7 @@
                 })
             }
 
-            $scope.reloadPage = function () {
+            $rootScope.reloadPage = $scope.reloadPage = function () {
                 $window.location.reload();
             };
 
@@ -760,8 +763,8 @@
                 return reportWidgets;
             };
 
-            $scope.$on("event:auth-loginConfirmed", function () {
-                if (!$rootScope.isSession) {
+            $scope.$on("event:auth-loginConfirmed", function (event, data) {
+                if (checkNullEmpty(data) || data.initApp) {
                     $scope.initApp();
                 }
             });
@@ -770,64 +773,30 @@
                 return requestContext.getParam(paramName);
             };
 
-            if (!$rootScope.isSession && checkNullEmpty(iAuthService.getAccessToken(true))) {
+            var token = iAuthService.getAccessToken(true);
+
+            if ($rootScope.isBulletinBoard && checkNullEmpty(token)) {
                 $scope.showBulletinBoardLogin();
             } else {
-
                 $scope.initApp();
             }
 
-            $scope.networkAvailable = true;
+            $rootScope.networkAvailable = true;
             $scope.checkNetwork = function(){
-                if($scope.networkAvailable != navigator.onLine) {
+                if ($rootScope.networkAvailable != navigator.onLine) {
                     if(!navigator.onLine) {
-                        $scope.networkAvailable = false;
+                        $rootScope.networkAvailable = false;
                         $scope.$broadcast("offline");
                     } else {
-                        $scope.networkAvailable = true;
+                        $rootScope.networkAvailable = true;
                         $scope.$broadcast("online");
                     }
                 }
                 $timeout(function () {
                     $scope.checkNetwork();
-                }, 300);
+                }, 30000);
             };
             $scope.checkNetwork();
         }
     );
-    logistimoApp.factory('APIService', function ($http, $q, logistimoCache) {
-        var getExpiryTime = function (cacheOptions) {
-            return new Date(new Date().getTime() + cacheOptions.duration * 60000);
-        };
-        return {
-            get: function (urlStr, cacheOptions) {
-                if (cacheOptions == undefined) {
-                    return $http({method: 'GET', url: urlStr});
-                } else {
-                    var cache = logistimoCache.get(urlStr);
-                    if (cache && cache.expiry < new Date()) {
-                        return $q(function (resolve) {
-                            resolve(JSON.parse(cache.data));
-                        });
-                    } else {
-                        var promise = $http({method: 'GET', url: urlStr});
-                        return $q(function (resolve, reject) {
-                            promise.then(function (data) {
-                                logistimoCache.put(urlStr, {
-                                    expiry: getExpiryTime(cacheOptions),
-                                    data: JSON.stringify(data)
-                                });
-                                resolve(data);
-                            }).catch(function (error) {
-                                reject(error);
-                            });
-                        });
-                    }
-                }
-            },
-            post: function (data, urlStr) {
-                return $http({method: 'POST', data: data, url: urlStr});
-            }
-        }
-    });
 })(angular, logistimoApp);

@@ -44,7 +44,7 @@ registerWidget('ir', 'rpt-replenishment', 'Inventory', 'Replenishment response t
 
     function ReportReplenishmentController($scope, $timeout, reportsServiceCore) {
 
-        InventoryReportController.call(this, $scope, $timeout, getData);
+        InventoryReportController.call(this, $scope, $timeout, getData, reportsServiceCore);
 
         $scope.reportType=reportType;
 
@@ -65,13 +65,6 @@ registerWidget('ir', 'rpt-replenishment', 'Inventory', 'Replenishment response t
             }
             var fileName = "Replenishment" + formatDate2Url($scope.filter.from) +"_"+ formatDate2Url($scope.filter.to);
             $scope.exportAsCSV(data, heading, fileName);
-        };
-
-        $scope.downloadTableAsCSV = function () {
-            var data = $scope.tableData;
-            var heading = $scope.tableCSVHeading;
-            var fileName = "Replenishment" + formatDate2Url($scope.filter.from) +"_"+ formatDate2Url($scope.filter.to);
-            $scope.exportAsCSV(data, heading, fileName, $scope.tableSeriesNo);
         };
 
         $scope.$watch("metrics.primary",function(newValue,oldValue){

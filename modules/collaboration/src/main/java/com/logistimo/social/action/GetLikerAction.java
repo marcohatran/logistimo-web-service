@@ -21,17 +21,31 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.reports.plugins;
+package com.logistimo.social.action;
 
-import com.logistimo.reports.plugins.internal.QueryRequestModel;
+import com.logistimo.social.command.LSGetLikersCommand;
+import com.logistimo.social.model.LSGetLikeModel;
+import com.logistimo.social.model.LSLikerResponseModel;
 
-import javax.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
 /**
- * @author Mohan Raja
+ * Created by kumargaurav on 21/11/17.
  */
-public interface IExteranalServiceClient {
+@Component
+public class GetLikerAction {
 
-  Response getResponse(String id);
-  Response postRequest(QueryRequestModel request);
+  @Autowired
+  @Qualifier("collabRestTemplate")
+  private RestTemplate restTemplate;
+
+  public LSLikerResponseModel invoke(String objectId, String objectTy, String eventId,
+                                     Integer offset, Integer size) {
+
+    LSGetLikeModel model = new LSGetLikeModel(objectId, objectTy, eventId, offset, size);
+    return new LSGetLikersCommand(restTemplate, model).execute();
+  }
 }

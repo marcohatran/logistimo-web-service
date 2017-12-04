@@ -315,4 +315,6 @@ public class JsonTagsZ {
   public static final String NUMBER_OF_INVENTORY = "numinv";
   public static final String NUMBER_OF_CUSTOMERS = "numcsts";
   public static final String NUMBER_OF_VENDORS = "numvnds";
+  public static final String ENABLE_BARCODING_MOBULE = "ebc";
+  public static final String ENABLE_RFIDS_MOBILE = "erf";
 }

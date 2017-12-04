@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright © 2017 Logistimo.
+  ~
+  ~ This file is part of Logistimo.
+  ~
+  ~ Logistimo software is a mobile & web platform for supply chain management and remote temperature monitoring in
+  ~ low-resource settings, made available under the terms of the GNU Affero General Public License (AGPL).
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General
+  ~ Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any
+  ~ later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+  ~ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+  ~ for more details.
+  ~
+  ~ You should have received a copy of the GNU Affero General Public License along with this program.  If not, see
+  ~ <http://www.gnu.org/licenses/>.
+  ~
+  ~ You can be released from the requirements of the license by purchasing a commercial license. To know more about
+  ~ the commercial license, please contact us at opensource@logistimo.com
+  -->
+<div ng-controller="eventSummariesTemplateController">
+    <div class="row pb10" ng-repeat="filter in widgetTemplate.templateFilters">
+        <div class="col-sm-4">
+            <span class="form-label">{{resourceBundle[filter.nameKey]}}</span>
+        </div>
+        <div class="col-sm-5" ng-if="filter.type=='category'">
+            <div class="col-sm-12 noLRpad btn-group">
+                <select ng-model="widget.conf.category" ng-options="category for category in categories"
+                        class="form-control" style="text-transform: capitalize"></select>
+            </div>
+        </div>
+        <div class="col-sm-5" ng-if="filter.type=='event'">
+            <div class="col-sm-12 noLRpad btn-group">
+                <select ng-model="widget.conf.event" ng-options="event for event in summaryEvents"
+                        class="form-control" style="text-transform: capitalize"></select>
+            </div>
+        </div>
+        <div class="col-sm-5" ng-if="filter.type=='threshold'">
+            <div class="col-sm-12 noLRpad btn-group">
+                <select ng-model="widget.conf.threshold" ng-change="setSummaryId()" ng-options="key as value for (key, value) in summaryThresholds" class="form-control" style="text-transform: capitalize"></select>
+            </div>
+        </div>
+        <div class="col-sm-5" ng-if="filter.type=='locations'">
+            <input type="number" ng-model="widget.conf.locations" class="form-control"/>
+        </div>
+    </div>
+</div>

@@ -219,4 +219,14 @@ public class MobileOrderModel {
    * Inventory of embedded kiosk id requested by the user
    */
   public List<MobileInvModel> inv;
+
+  /**
+   * is visible to vendor
+   */
+  public boolean vtv;
+
+  /**
+   * is visible to customer
+   */
+  public boolean vtc;
 }
