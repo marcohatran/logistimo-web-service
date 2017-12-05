@@ -39,7 +39,6 @@ import com.logistimo.config.models.EventsConfig;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.domains.utils.DomainsUtil;
-import com.logistimo.events.EventConstants;
 import com.logistimo.events.entity.IEvent;
 import com.logistimo.events.processor.EventPublisher;
 import com.logistimo.logger.XLog;
@@ -76,6 +75,7 @@ import javax.sql.rowset.CachedRowSet;
  * Created by kaniyarasu on 02/11/15.
  */
 public class AssetManagementServiceImpl extends ServiceImpl implements AssetManagementService {
+
   private static final XLog xLogger = XLog.getLog(AssetManagementServiceImpl.class);
 
   @Override
@@ -115,9 +115,9 @@ public class AssetManagementServiceImpl extends ServiceImpl implements AssetMana
         throw new ServiceException(e);
       }
 
-    } catch(IllegalArgumentException e) {
+    } catch (IllegalArgumentException e) {
       throw e;
-    } catch(Exception e) {
+    } catch (Exception e) {
       throw new ServiceException(e);
     } finally {
       if (tx.isActive()) {
@@ -128,7 +128,8 @@ public class AssetManagementServiceImpl extends ServiceImpl implements AssetMana
   }
 
   @SuppressWarnings("unchecked")
-  private Long createAsset(Long domainId, IAsset asset, PersistenceManager pm) throws ServiceException {
+  private Long createAsset(Long domainId, IAsset asset, PersistenceManager pm)
+      throws ServiceException {
     if (domainId == null || asset == null
         || asset.getSerialId() == null || asset.getVendorId() == null) {
       throw new ServiceException("Invalid details for the asset");
@@ -210,29 +211,9 @@ public class AssetManagementServiceImpl extends ServiceImpl implements AssetMana
       tx.commit();
       asset = pm.detachCopy(asset);
       try {
-        if(assetModel.ws == null) {
-          EventPublisher
-              .generate(domainId, IEvent.MODIFIED, null, JDOUtils.getImplClassName(IAsset.class),
-                  String.valueOf(asset.getId()), null);
-        } else {
-          Query query = pm.newQuery();
-          query.setClass(JDOUtils.getImplClass(IAssetStatus.class));
-          query.setFilter("assetId == assetIdParam && type == typeIdParam");
-          query.declareParameters("Long assetIdParam, Integer typeIdParam");
-          query.setUnique(true);
-          IAssetStatus assetStatus = null;
-          try {
-            assetStatus = (IAssetStatus)query.execute(asset.getId(), IAssetStatus.TYPE_STATE);
-            Map<String, Object> params = new HashMap<>();
-            params.put(EventConstants.PARAM_STATUS, String.valueOf(assetModel.ws.st));
-            Integer event = asset.getType() == IAsset.MONITORED_ASSET ? IEvent.STATUS_CHANGE : IEvent.STATUS_CHANGE_TEMP;
-            EventPublisher
-                .generate(domainId, event, params,
-                    JDOUtils.getImplClassName(IAssetStatus.class),
-                    String.valueOf(assetStatus.getId()), null);
-          } catch (Exception e) {
-            xLogger.warn("{0} while getting asset data for {1} in domain {2}", e.getMessage(), asset.getId(), domainId, e);
-          }
+        if (assetModel.ws == null) {
+          EventPublisher.generate(domainId, IEvent.MODIFIED, null,
+              JDOUtils.getImplClassName(IAsset.class), String.valueOf(asset.getId()), null);
         }
       } catch (Exception e) {
         xLogger.warn("Exception when generating event for updating asset {0} in domain {1}",
@@ -285,10 +266,8 @@ public class AssetManagementServiceImpl extends ServiceImpl implements AssetMana
         assets = (List<IAsset>) pm.detachCopyAll(assets);
 
         //Count query
-        StringBuilder
-            sqlQuery =
-            new StringBuilder(
-                "SELECT COUNT(1) FROM ASSET WHERE ID in (SELECT ID_OID from ASSET_DOMAINS where DOMAIN_ID = ");
+        StringBuilder sqlQuery = new StringBuilder(
+            "SELECT COUNT(1) FROM ASSET WHERE ID in (SELECT ID_OID from ASSET_DOMAINS where DOMAIN_ID = ");
         sqlQuery.append(domainId);
         sqlQuery.append(")");
         if (assetType != null && assetType != 0) {
@@ -405,7 +384,7 @@ public class AssetManagementServiceImpl extends ServiceImpl implements AssetMana
 
 
   private IAssetStatus getAssetStatus(Long assetId, Integer mpId, String sId, Integer type,
-                                      PersistenceManager pm) throws ServiceException {
+      PersistenceManager pm) throws ServiceException {
     Preconditions.checkArgument(!(assetId == null || (mpId == null && sId == null) || type == null),
         "Illegal argument expected assetId, mpId or sId and type");
     Long id = JDOUtils.createAssetStatusKey(assetId, mpId != null ? mpId : 0, sId, type);
@@ -424,8 +403,7 @@ public class AssetManagementServiceImpl extends ServiceImpl implements AssetMana
     try {
       for (IAssetStatus assetStatusModel : assetStatusModelList) {
         try {
-          IAssetStatus
-              assetStatus =
+          IAssetStatus assetStatus =
               getAssetStatus(assetStatusModel.getAssetId(), assetStatusModel.getMpId(),
                   assetStatusModel.getsId(), assetStatusModel.getType(), pm);
           if (assetStatus == null) {
@@ -478,6 +456,8 @@ public class AssetManagementServiceImpl extends ServiceImpl implements AssetMana
             } else if (assetStatus.getStatus() == IAsset.STATUS_NORMAL) {
               eventType = IEvent.INCURSION;
             }
+          } else if (IAssetStatus.TYPE_STATE.equals(assetStatus.getType())) {
+            eventType = IEvent.STATUS_CHANGE;
           }
         } else if (assetType == IAsset.MONITORING_ASSET) {
           if (IAssetStatus.TYPE_BATTERY.equals(assetStatus.getType())) {
@@ -512,20 +492,20 @@ public class AssetManagementServiceImpl extends ServiceImpl implements AssetMana
             } else if (IAsset.STATUS_NORMAL == assetStatus.getStatus()) {
               eventType = IEvent.POWER_NORMAL;
             }
+          } else if (IAssetStatus.TYPE_STATE.equals(assetStatus.getType())) {
+            eventType = IEvent.STATUS_CHANGE_TEMP;
           }
         }
         // NO_ACTIVITY event is handled during DailyEventsCreation
         // Log the high excursion, low excursion and incursion events. The NO_ACTIVITY event is handled by the DailyEventsGenerator
         if (eventType != -1) {
           EventsConfig ec = DomainConfig.getInstance(asset.getDomainId()).getEventsConfig();
-          EventSpec
-              tempEventSpec =
+          EventSpec tempEventSpec =
               ec.getEventSpec(eventType, JDOUtils.getImplClass(IAssetStatus.class).getName());
           // After getting tempEventSpec, call a private method to generate temperature events.
           if (tempEventSpec != null) {
-            AssetUtil
-                .generateAssetEvents(asset.getDomainId(), tempEventSpec, assetStatus, asset,
-                    eventType);
+            AssetUtil.generateAssetEvents(asset.getDomainId(), tempEventSpec, assetStatus, asset,
+                eventType);
           }
         }
       }
@@ -566,7 +546,7 @@ public class AssetManagementServiceImpl extends ServiceImpl implements AssetMana
           serialIds.toString(), e);
       throw new ServiceException(e.getMessage());
     } finally {
-      if(tx.isActive()){
+      if (tx.isActive()) {
         tx.rollback();
       }
       pm.close();
@@ -600,7 +580,8 @@ public class AssetManagementServiceImpl extends ServiceImpl implements AssetMana
       } else {
         pm.makePersistent(assetRelation);
         EventPublisher.generate(domainId, IEvent.CREATED, null,
-            JDOUtils.getImplClassName(IAssetRelation.class), String.valueOf(assetRelation.getId()), null);
+            JDOUtils.getImplClassName(IAssetRelation.class), String.valueOf(assetRelation.getId()),
+            null);
         return assetRelation;
       }
     } catch (Exception e) {
@@ -623,7 +604,8 @@ public class AssetManagementServiceImpl extends ServiceImpl implements AssetMana
     }
   }
 
-  public void deleteAssetRelation(Long assetId, Long domainId, IAsset asset, PersistenceManager pm) throws ServiceException {
+  public void deleteAssetRelation(Long assetId, Long domainId, IAsset asset, PersistenceManager pm)
+      throws ServiceException {
     try {
       Query query = pm.newQuery(JDOUtils.getImplClass(IAssetRelation.class));
       query.setFilter("assetId == assetIdParam");
@@ -640,9 +622,10 @@ public class AssetManagementServiceImpl extends ServiceImpl implements AssetMana
 
       if (assetRelations != null && assetRelations.size() == 1) {
         IAssetRelation assetRelationTmp = assetRelations.get(0);
-        for(IAssetRelation assetRelation: assetRelations){
+        for (IAssetRelation assetRelation : assetRelations) {
           EventPublisher.generate(domainId, IEvent.DELETED, null,
-              JDOUtils.getImplClassName(IAssetRelation.class), String.valueOf(assetRelation.getId()), null, assetRelation);
+              JDOUtils.getImplClassName(IAssetRelation.class),
+              String.valueOf(assetRelation.getId()), null, assetRelation);
         }
         pm.deletePersistent(assetRelationTmp);
       }
@@ -758,7 +741,8 @@ public class AssetManagementServiceImpl extends ServiceImpl implements AssetMana
         sqlQuery.append(" ID IN (SELECT ID_OID FROM ASSET_DOMAINS WHERE DOMAIN_ID = ")
             .append(domainId).append(")");
       } else {
-        sqlQuery.append(" ID NOT IN (SELECT RELATEDASSETID FROM ASSETRELATION where RELATEDASSETID is not NULL) AND SDID = ")
+        sqlQuery.append(
+            " ID NOT IN (SELECT RELATEDASSETID FROM ASSETRELATION where RELATEDASSETID is not NULL) AND SDID = ")
             .append(domainId);
       }
 
@@ -793,9 +777,8 @@ public class AssetManagementServiceImpl extends ServiceImpl implements AssetMana
   }
 
   /**
-   * Checks whether the serial/model number of monitored asset matches with the format provided in the configuration
-   * @param asset
-   * @throws ServiceException
+   * Checks whether the serial/model number of monitored asset matches with the format provided in
+   * the configuration
    */
   private void validateAssets(IAsset asset) throws ServiceException, IllegalArgumentException {
     try {
@@ -919,7 +902,7 @@ public class AssetManagementServiceImpl extends ServiceImpl implements AssetMana
     } catch (Exception e) {
       xLogger.warn("Error while fetching suggestions for asset models", e);
     } finally {
-      if(query != null) {
+      if (query != null) {
         query.closeAll();
       }
       pm.close();
@@ -943,9 +926,9 @@ public class AssetManagementServiceImpl extends ServiceImpl implements AssetMana
       assetQuery.append("AND KID IN (");
       StringBuilder kioskQuery =
           new StringBuilder("SELECT KIOSKID FROM KIOSK K ,KIOSK_DOMAINS KD WHERE ");
-        kioskQuery
-            .append(" K.KIOSKID = KD.KIOSKID_OID AND KD.DOMAIN_ID = ")
-            .append(filters.get("TOKEN_DID"));
+      kioskQuery
+          .append(" K.KIOSKID = KD.KIOSKID_OID AND KD.DOMAIN_ID = ")
+          .append(filters.get("TOKEN_DID"));
       if (filters.containsKey("TOKEN_CN")) {
         kioskQuery.append(" AND K.COUNTRY = ").append(filters.get("TOKEN_CN"));
       }
@@ -1019,7 +1002,7 @@ public class AssetManagementServiceImpl extends ServiceImpl implements AssetMana
       try {
         pm.close();
         conn.close();
-        if(statement != null){
+        if (statement != null) {
           statement.close();
         }
       } catch (Exception e) {
@@ -1034,7 +1017,7 @@ public class AssetManagementServiceImpl extends ServiceImpl implements AssetMana
     PersistenceManager pm = PMF.get().getPersistenceManager();
     Query query;
     StringBuilder vidQuery = new StringBuilder();
-    StringBuilder vids =  new StringBuilder("");
+    StringBuilder vids = new StringBuilder("");
     if (StringUtils.isNotEmpty(did)) {
       vidQuery
           .append("SELECT DISTINCT VID FROM ASSET WHERE KID IN (")
@@ -1043,29 +1026,29 @@ public class AssetManagementServiceImpl extends ServiceImpl implements AssetMana
           .append(CharacterConstants.C_BRACKET);
     }
     query = pm.newQuery("javax.jdo.query.SQL", vidQuery.toString());
-    try{
-    List<String> result = (List) query.execute();
-    for(int i=0;i<result.size();i++){
-        if(i!=0){
-            vids.append(CharacterConstants.COMMA);
+    try {
+      List<String> result = (List) query.execute();
+      for (int i = 0; i < result.size(); i++) {
+        if (i != 0) {
+          vids.append(CharacterConstants.COMMA);
         }
         vids.append(CharacterConstants.S_QUOTE).append(result.get(i))
-                .append(CharacterConstants.S_QUOTE);
-    }
-    return vids.toString();
-    } catch (Exception e){
+            .append(CharacterConstants.S_QUOTE);
+      }
+      return vids.toString();
+    } catch (Exception e) {
       xLogger.warn("Error while fetching vendor ids for reports", e);
     } finally {
-        if(query != null) {
-            query.closeAll();
-        }
-        pm.close();
+      if (query != null) {
+        query.closeAll();
+      }
+      pm.close();
     }
     return null;
   }
 
   @Override
-  public String getAssetTypesForReports(String did,String exclude) {
+  public String getAssetTypesForReports(String did, String exclude) {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     Query query;
     StringBuilder q = new StringBuilder();
@@ -1077,7 +1060,7 @@ public class AssetManagementServiceImpl extends ServiceImpl implements AssetMana
           .append(did)
           .append(CharacterConstants.C_BRACKET);
     }
-    if(StringUtils.isNotEmpty(exclude)){
+    if (StringUtils.isNotEmpty(exclude)) {
       q.append(" AND TYPE != ").append(exclude);
     }
     query = pm.newQuery("javax.jdo.query.SQL", q.toString());
@@ -1088,7 +1071,7 @@ public class AssetManagementServiceImpl extends ServiceImpl implements AssetMana
           types.append(CharacterConstants.COMMA);
         }
         types.append(CharacterConstants.S_QUOTE).append(result.get(i).toString())
-                .append(CharacterConstants.S_QUOTE);
+            .append(CharacterConstants.S_QUOTE);
       }
       return types.toString();
     } catch (Exception e) {

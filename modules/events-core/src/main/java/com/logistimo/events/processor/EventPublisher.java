@@ -60,9 +60,7 @@ public class EventPublisher {
     EventData eventData = new EventData(domainId,eventId,params, objectType, objectId,
         customOptions, eventObject);
     try {
-      ProducerTemplate
-          camelTemplate =
-          getContext()
+      ProducerTemplate camelTemplate = getContext()
               .getBean("camel-events-gen", ProducerTemplate.class);
       camelTemplate.sendBody("direct:events", ExchangePattern.InOnly, eventData);
     }catch (Exception e){
