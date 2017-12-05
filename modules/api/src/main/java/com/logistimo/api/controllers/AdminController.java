@@ -27,23 +27,32 @@ import com.logistimo.AppFactory;
 import com.logistimo.api.migrators.DomainLocIDConfigMigrator;
 import com.logistimo.api.migrators.EventsConfigMigrator;
 import com.logistimo.api.migrators.UserDomainIdsMigrator;
+import com.logistimo.api.models.SimulateRequestModel;
+import com.logistimo.api.util.KioskDataSimulator;
 import com.logistimo.auth.SecurityConstants;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.events.handlers.EventHandler;
 import com.logistimo.exception.InvalidServiceException;
+import com.logistimo.exception.TaskSchedulingException;
+import com.logistimo.exception.ValidationException;
+import com.logistimo.inventory.entity.IInvntry;
+import com.logistimo.inventory.service.InventoryManagementService;
+import com.logistimo.inventory.service.impl.InventoryManagementServiceImpl;
 import com.logistimo.logger.XLog;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.Services;
 import com.logistimo.services.cache.MemcacheService;
 import com.logistimo.services.impl.PMF;
+import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.users.entity.IUserDevice;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.users.service.impl.UsersServiceImpl;
 
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -51,7 +60,11 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -62,6 +75,26 @@ import javax.servlet.http.HttpServletResponse;
 @Controller
 @RequestMapping("/admin")
 public class AdminController {
+  private static final String
+      ACTION_SIMULATETRANSDATA =
+      "simulatetransdata";
+  private static final String KIOSKID_PARAM = "kioskid";
+  private static final String STARTDATE_PARAM = "startdate";
+  private static final String DURATION_PARAM = "duration";
+  private static final String STOCKONHAND_PARAM = "stockonhand";
+  private static final String ISSUEPERIODICITY_PARAM = "issueperiodicity";
+  private static final String ISSUEMEAN_PARAM = "issuemean";
+  private static final String ISSUESTDDEV_PARAM = "issuestddev";
+  private static final String RECEIPTMEAN_PARAM = "receiptmean";
+  private static final String RECEIPTSTDDEV_PARAM = "receiptstddev";
+  private static final String ZEROSTOCKDAYSLOW_PARAM = "zerostockdayslow";
+  private static final String ZEROSTOCKDAYSHIGH_PARAM = "zerostockdayshigh";
+  private static final String MATERIALID_PARAM = "materialid";
+  private static final String DOMAINID_PARAM = "domainid";
+  private static final String USERID_PARAM = "userid";
+  private static final String REQUESTTYPE_PARAM = "requesttype";
+  private static final String REQUESTTYPE_EXECUTE = "execute";
+  private static final String TASK_URL = "/task/datagenerator";
   private static final XLog xLogger = XLog.getLog(AdminController.class);
 
   @RequestMapping(value = "/dailyevents", method = RequestMethod.GET)
@@ -214,4 +247,83 @@ public class AdminController {
     return (result != null) ? result.getToken() : "";
   }
 
+  @RequestMapping(value = "/simulate-data", method = RequestMethod.POST)
+  public
+  @ResponseBody
+  String simulateData(@RequestBody SimulateRequestModel simulateRequestModel)
+      throws ServiceException, TaskSchedulingException {
+    String message;
+    InventoryManagementService
+        ims =
+        Services.getService(InventoryManagementServiceImpl.class);
+    // Get the materials associated with the kiosk
+    List<IInvntry>
+        inventories =
+        ims.getInventoryByKiosk(simulateRequestModel.entityId, null)
+            .getResults(); // TODO: pagination
+
+    if (inventories == null || inventories.size() == 0) {
+      throw new ValidationException(
+          "No materials are associated with the kiosk. No transaction data was generated.");
+    } else {
+      Iterator<IInvntry> it = inventories.iterator();
+      // Schedule data generation tasks per material
+      int totalMaterials = inventories.size();
+      int numMaterials = 0;
+      while (it.hasNext() && numMaterials < KioskDataSimulator.MATERIAL_LIMIT) {
+        IInvntry inv = it.next();
+        // Get the parameter map
+        Map<String, String> params = new HashMap<>();
+        // Add action and type parameters
+        params.put("action", ACTION_SIMULATETRANSDATA);
+        params.put(REQUESTTYPE_PARAM, REQUESTTYPE_EXECUTE);
+        // Add the data simulation parameters
+        params.put(KIOSKID_PARAM, String.valueOf(simulateRequestModel.entityId));
+        params.put(STARTDATE_PARAM, simulateRequestModel.startDate);
+        params.put(DURATION_PARAM, String.valueOf(simulateRequestModel.duration));
+        params.put(STOCKONHAND_PARAM, String.valueOf(simulateRequestModel.stockOnHand));
+        params.put(ISSUEPERIODICITY_PARAM, simulateRequestModel.periodicity);
+        params.put(ISSUEMEAN_PARAM, String.valueOf(simulateRequestModel.issueMean));
+        params.put(ISSUESTDDEV_PARAM, String.valueOf(simulateRequestModel.issueStdDev));
+        params.put(RECEIPTMEAN_PARAM, String.valueOf(simulateRequestModel.receiptMean));
+        params.put(RECEIPTSTDDEV_PARAM, String.valueOf(simulateRequestModel.receiptStdDev));
+        params.put(ZEROSTOCKDAYSLOW_PARAM, String.valueOf(simulateRequestModel.zeroStockDaysLow));
+        params.put(ZEROSTOCKDAYSHIGH_PARAM,
+            String.valueOf(simulateRequestModel.zeroStockDaysHigh));
+        // Add the material Id as a new parameter to the scheduled task URL
+        params.put(MATERIALID_PARAM, inv.getMaterialId().toString());
+        // Add the domain Id as a new parameter to the scheduled task URL
+        params.put(DOMAINID_PARAM, String.valueOf((SecurityUtils.getCurrentDomainId())));
+        // Add the user Id
+        params.put(USERID_PARAM, SecurityUtils.getUsername());
+        // Schedule the task of simulating trans. data for a given kiosk-material
+        try {
+          getTaskService().schedule(ITaskService.QUEUE_DATASIMULATOR, TASK_URL, params, null,
+              ITaskService.METHOD_POST, SecurityUtils.getCurrentDomainId(),
+              SecurityUtils.getUsername(), "SIMULATE_TRANS");
+          numMaterials++; // count materials for successful scheduling
+        } catch (TaskSchedulingException e) {
+          xLogger.warn("Exception while scheduling task for kiosk-material: {0}-{1} : {2}",
+              simulateRequestModel.entityId, inv.getMaterialId(), e.getMessage());
+          throw e;
+        }
+      }
+
+      // Form the success message
+      message =
+          "Scheduled transaction-data simulation request for <b>" + String.valueOf(numMaterials)
+              + "</b> material(s).";
+      if ((totalMaterials - numMaterials) > 0) {
+        message +=
+            " Could not schedule task(s) for <b>" + String.valueOf(totalMaterials - numMaterials)
+                + "</b> material(s).";
+      }
+    }
+    return message;
+  }
+
+
+  public ITaskService getTaskService() {
+    return AppFactory.get().getTaskService();
+  }
 }

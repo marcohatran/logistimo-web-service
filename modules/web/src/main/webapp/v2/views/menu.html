@@ -210,8 +210,10 @@
                         <li><a ng-if="hasChild && (iAdm || dp.ce)" href="#/configuration/options/">{{resourceBundle['configuration.options']}}</a>
                         </li>
                         <li><a href="#/configuration/summarisation/">{{resourceBundle['event.summary']}}</a></li>
-                        <li ng-show="(iAdm || iSU)"><a href="#/configuration/bulletin/">{{resourceBundle['bulletin.board.upper']}}</a></li>
-                        <li ng-show="iSU"><a href="#/configuration/dashboards/">{{resourceBundle['custom.dashboards']}}</a></li>
+                        <li ng-show="(iAdm || iSU)"><a href="#/configuration/bulletin/">{{resourceBundle['bulletin.board.upper']}}</a>
+                        </li>
+                        <li ng-show="iSU"><a
+                                href="#/configuration/dashboards/">{{resourceBundle['custom.dashboards']}}</a></li>
                     </ul>
                 </li>
                 <li ng-class="{active:subview == 'setup'}"
@@ -246,14 +248,19 @@
         </div>
     </div>
     <div class="navbar navbar-default navbar-custom" role="navigation" ng-show="subview == 'manage'">
-        <div class="navbar-collapse collapse">
-            <ul class="nav navbar-nav">
-                <li ng-class="{active:subview =='manage'}"><a
-                        href="#/manage/domains">{{resourceBundle['domains']}}</a>
-                </li>
-                <li><a href="/s/admin/data.jsp">{{resourceBundle['manage.data']}}</a></li>
-                <li><a href="/s/admin/system_configuration.jsp">{{resourceBundle['manage.systemconf']}}</a></li>
-            </ul>
+        <div ng-controller="SimpleMenuController" ng-init="init('manage')">
+            <div class="navbar-collapse collapse">
+                <ul class="nav navbar-nav">
+                    <li ng-class="{active:subview =='domains'}"><a
+                            href="#/manage/domains">{{resourceBundle['domains']}}</a>
+                    </li>
+                    <li ng-class="{active:subview =='data'}"><a
+                            href="#/manage/data">{{resourceBundle['manage.data']}}</a>
+                    </li>
+                    <li ng-class="{active:subview =='system-config'}"><a href="#/manage/system-config">{{resourceBundle['manage.systemconf']}}</a>
+                    </li>
+                </ul>
+            </div>
         </div>
     </div>
 </div>

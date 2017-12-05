@@ -26,12 +26,15 @@
  */
 package com.logistimo.api.controllers;
 
+import com.logistimo.api.models.ConfigJSONModel;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.config.entity.IConfig;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
 import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
+import com.logistimo.dao.JDOUtils;
 import com.logistimo.exception.InvalidServiceException;
+import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.logger.XLog;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
@@ -40,8 +43,11 @@ import com.logistimo.services.ServiceException;
 import com.logistimo.services.Services;
 import com.logistimo.utils.LocalDateUtil;
 
+import org.apache.commons.lang.StringUtils;
 import org.json.JSONObject;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -198,6 +204,45 @@ public class ConfigController {
       xLogger.severe("Error in getting General Config details");
       throw new InvalidServiceException(backendMessages.getString("general.config.fetch.error"));
     }
+  }
+
+  @RequestMapping(value = "/json", method = RequestMethod.GET)
+  public
+  @ResponseBody
+  String getConfigJson(@RequestParam(name = "config_type") String configType)
+      throws ServiceException {
+    SecureUserDetails user = SecurityUtils.getUserDetails();
+    if (!SecurityUtils.isSuperUser()) {
+      throw new UnauthorizedException("Forbidden", HttpStatus.FORBIDDEN);
+    }
+    ConfigurationMgmtServiceImpl
+        cms =
+        Services.getService(ConfigurationMgmtServiceImpl.class, user.getLocale());
+    IConfig config = cms.getConfiguration(configType);
+    if (config != null && StringUtils.isNotEmpty(config.getConfig())) {
+      return config.getConfig();
+    }
+    return "{}";
+  }
+
+  @RequestMapping(value = "/json", method = RequestMethod.POST)
+  public
+  @ResponseBody
+  String updateConfigJSON(@RequestBody ConfigJSONModel configJSONModel)
+      throws ServiceException {
+    SecureUserDetails user = SecurityUtils.getUserDetails();
+    if (!SecurityUtils.isSuperUser()) {
+      throw new UnauthorizedException("Forbidden", HttpStatus.FORBIDDEN);
+    }
+    ConfigurationMgmtServiceImpl
+        cms =
+        Services.getService(ConfigurationMgmtServiceImpl.class, user.getLocale());
+    IConfig config = JDOUtils.createInstance(IConfig.class);
+    config.setKey(configJSONModel.type);
+    config.setConfig(configJSONModel.configJson);
+    config.setUserId(user.getUsername());
+    cms.updateConfiguration(config);
+    return configJSONModel.type + " updated successfully";
   }
 
 }

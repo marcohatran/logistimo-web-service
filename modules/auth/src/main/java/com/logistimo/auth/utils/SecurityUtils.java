@@ -192,4 +192,10 @@ public class SecurityUtils {
   public static String getUsername() {
     return getUserDetails().getUsername();
   }
+
+  public static boolean isSuperUser() {
+    return SecurityUtil
+        .compareRoles(SecurityUtils.getUserDetails().getRole(), SecurityConstants.ROLE_SUPERUSER)
+        >= 0;
+  }
 }

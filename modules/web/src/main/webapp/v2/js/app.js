@@ -32,7 +32,7 @@ var logistimoApp = angular.module('logistimoApp', ['ngSanitize','ngRoute', 'dash
     'linkedDomainControllers', 'linkedDomainServices','domainControllers','domainServices', 'mediaServices', 'base64',
     'exportControllers','once','assetControllers','assetServices','handlingUnitControllers','handlingUnitServices',
     'conversationServices', 'activityServices','conversationControllers','hc.downloader','reportsPluginCore','approvalServices',
-    'approvalControllers', 'bulletinBoardControllers','logistimo.storyboard','eventSummaryServices'
+    'approvalControllers', 'bulletinBoardControllers', 'logistimo.storyboard', 'eventSummaryServices', 'systemCfgControllers'
     /*<% do-not-remove-this-comment-grunt-will-insert-dep-for-prod %>*/]);
 
 logistimoApp.config(function (uibDatepickerConfig) {
@@ -357,6 +357,10 @@ logistimoApp.config(function ($routeProvider) {
         action :"manage.domains.add"
     }).when("/manage/domains/:domainId/" ,{
         action :"manage.domains.detail"
+    }).when("/manage/system-config", {
+        action: "manage.system-config"
+    }).when("/manage/data", {
+        action: "manage.data"
     }).when("/setup/users/all/details/kiosks", {
         action: "setup.users.all.details.kiosks"
     }).when("/setup/users/all/details/domains", {

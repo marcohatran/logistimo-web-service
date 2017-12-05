@@ -1,0 +1,199 @@
+<!--
+  ~ Copyright © 2017 Logistimo.
+  ~
+  ~ This file is part of Logistimo.
+  ~
+  ~ Logistimo software is a mobile & web platform for supply chain management and remote temperature monitoring in
+  ~ low-resource settings, made available under the terms of the GNU Affero General Public License (AGPL).
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General
+  ~ Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any
+  ~ later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+  ~ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+  ~ for more details.
+  ~
+  ~ You should have received a copy of the GNU Affero General Public License along with this program.  If not, see
+  ~ <http://www.gnu.org/licenses/>.
+  ~
+  ~ You can be released from the requirements of the license by purchasing a commercial license. To know more about
+  ~ the commercial license, please contact us at opensource@logistimo.com
+  -->
+
+<div class="box topbox">
+    <div class="bizinfo bizinfo-last">
+        <div ng-controller="SimulateDataController">
+            <form class="form-horizontal" role="form" name="simulateDataForm">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="domain-title-heading marginlr0">
+                            <h4>Simulate entity data</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label class="col-sm-4 control-label required">Entity</label>
+
+                            <div class="col-sm-8">
+                                <entity-select ent-model="entity" classes="form-control"
+                                               place-holder="Select entity">
+                                </entity-select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label class="col-sm-4 control-label required">Start date</label>
+
+                            <div class="col-sm-8">
+                                <input type="text" ng-model="model.startDate" name="startDate" placeholder=""
+                                       class="form-control"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label class="col-sm-4 control-label required">Duration</label>
+
+                            <div class="col-sm-8">
+                                <input type="text" ng-model="model.duration" name="duration" placeholder=""
+                                       class="form-control"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label class="col-sm-4 control-label required">Stock on hand</label>
+
+                            <div class="col-sm-8">
+                                <input type="text" ng-model="model.stockOnHand" name="stockOnHand" placeholder=""
+                                       class="form-control"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label class="col-sm-4 control-label required">Periodicity</label>
+
+                            <div class="col-sm-8">
+                                <select ng-model="model.periodicity" class="form-control" name="periodicity">
+                                    <option value="d"
+                                            ng-selected="'d' == model.periodicity">Daily
+                                    </option>
+                                    <option value="w"
+                                            ng-selected="'w' == model.periodicity">Weekly
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label class="col-sm-4 control-label required">Issues mean</label>
+
+                            <div class="col-sm-8">
+                                <input type="text" ng-model="model.issueMean" name="issueMean" placeholder=""
+                                       class="form-control"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label class="col-sm-4 control-label required">Issues Std dev</label>
+
+                            <div class="col-sm-8">
+                                <input type="text" ng-model="model.issueStdDev" name="issueStdDev" placeholder=""
+                                       class="form-control"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label class="col-sm-4 control-label required">Receipt Mean</label>
+
+                            <div class="col-sm-8">
+                                <input type="text" ng-model="model.receiptMean" name="receiptMean" placeholder=""
+                                       class="form-control"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label class="col-sm-4 control-label required">Receipt Mean</label>
+
+                            <div class="col-sm-8">
+                                <input type="text" ng-model="model.receiptMean" name="receiptMean" placeholder=""
+                                       class="form-control"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label class="col-sm-4 control-label required">Receipt Std dev</label>
+
+                            <div class="col-sm-8">
+                                <input type="text" ng-model="model.receiptStdDev" name="receiptStdDev" placeholder=""
+                                       class="form-control"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label class="col-sm-4 control-label required">Zero stock days min</label>
+
+                            <div class="col-sm-8">
+                                <input type="text" ng-model="model.zeroStockDaysLow" name="zeroStockDaysLow"
+                                       placeholder=""
+                                       class="form-control"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label class="col-sm-4 control-label required">Zero stock days max</label>
+
+                            <div class="col-sm-8">
+                                <input type="text" ng-model="model.zeroStockDaysHigh" name="zeroStockDaysHigh"
+                                       placeholder=""
+                                       class="form-control"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt10" ng-if="iSU">
+                    <div class="col-sm-4">
+                        <button type="button" ng-click="simulateData()" class="btn btn-primary">
+                            {{resourceBundle['Request simulation']}}
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

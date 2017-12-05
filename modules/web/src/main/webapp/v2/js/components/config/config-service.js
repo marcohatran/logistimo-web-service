@@ -50,6 +50,15 @@ configServices.factory('configService', ['APIService', function (apiService) {
         },
         getTimezonesKVReversed: function () {
             return apiService.get('/s2/api/config/timezoneskvreversed');
+        },
+        getConfigJson: function (configType) {
+            return apiService.get('/s2/api/config/json?config_type=' + configType)
+        },
+        updateConfigJson: function (configType, configJson) {
+            return apiService.post({type: configType, configJson: configJson}, '/s2/api/config/json');
+        },
+        simulateData: function (simulateDataRequest) {
+            return apiService.post(simulateDataRequest, '/s2/api/admin/simulate-data');
         }
     }
 }]);
