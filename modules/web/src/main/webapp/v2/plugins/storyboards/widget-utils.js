@@ -589,7 +589,7 @@ function showError(msg, scope) {
         if (checkNotNullEmpty(msg.data.message)) {
             scope.errorMessage = cleanupString(msg.data.message);
         } else {
-            scope.errorMessage = cleanupString($scope.resourceBundle['general.error']);
+            scope.errorMessage = cleanupString(scope.resourceBundle['general.error']);
         }
     } else if (checkNotNullEmpty(msg.message)) {
         scope.errorMessage = cleanupString(msg.message);
