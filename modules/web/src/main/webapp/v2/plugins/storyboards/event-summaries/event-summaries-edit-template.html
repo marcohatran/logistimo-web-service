@@ -28,19 +28,23 @@
         </div>
         <div class="col-sm-5" ng-if="filter.type=='category'">
             <div class="col-sm-12 noLRpad btn-group">
-                <select ng-model="widget.conf.category" ng-options="category for category in categories"
-                        class="form-control" style="text-transform: capitalize"></select>
+                <select ng-model="widget.conf.category" class="form-control">
+                    <option ng-repeat="category in categories" ng-selected="{{widget.conf.category == category}}" value="{{category}}" class="form-control" style="text-transform: capitalize">{{category}}</option>
+                </select>
             </div>
         </div>
         <div class="col-sm-5" ng-if="filter.type=='event'">
             <div class="col-sm-12 noLRpad btn-group">
-                <select ng-model="widget.conf.event" ng-options="event for event in summaryEvents"
-                        class="form-control" style="text-transform: capitalize"></select>
+                <select ng-model="widget.conf.event" class="form-control">
+                    <option ng-repeat="event in summaryEvents" ng-selected="{{widget.conf.event == event}}" value="{{event}}" class="form-control" style="text-transform: capitalize">{{event}}</option>
+                </select>
             </div>
         </div>
         <div class="col-sm-5" ng-if="filter.type=='threshold'">
             <div class="col-sm-12 noLRpad btn-group">
-                <select ng-model="widget.conf.threshold" ng-change="setSummaryId()" ng-options="key as value for (key, value) in summaryThresholds" class="form-control" style="text-transform: capitalize"></select>
+                <select ng-model="widget.conf.threshold" class="form-control">
+                    <option ng-repeat="(key, value) in summaryThresholds track by $index" ng-selected="{{widget.conf.threshold == key}}" value="{{key}}" style="text-transform: capitalize">{{value}}</option>
+                </select>
             </div>
         </div>
         <div class="col-sm-5" ng-if="filter.type=='locations'">
