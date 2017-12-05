@@ -112,6 +112,7 @@ angular.module('logistimo.storyboard.eventMapWidget', [])
                         $scope.mapType = $scope.dashboardView.mTy;
                         $scope.dashboardView.mTyNm = $scope.dstate;
                     } else if (checkNotNullEmpty($scope.dcntry)) {
+                        $scope.dashboardView.mTy = $scope.dcntry.replace(' ', '');
                         $scope.mapType = $scope.locationMapping.data[$scope.dashboardView.mTy].name;
                         $scope.dashboardView.mTy = $scope.dcntry;
                     }
