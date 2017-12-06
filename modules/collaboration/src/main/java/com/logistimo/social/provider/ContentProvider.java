@@ -33,7 +33,6 @@ import com.logistimo.exception.SystemException;
 import com.logistimo.logger.XLog;
 import com.logistimo.services.ServiceException;
 import com.logistimo.social.model.ContentQuerySpecs;
-import com.logistimo.social.util.CollaborationDomainUtil;
 import com.logistimo.social.util.CollaborationMessageUtil;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.impl.UsersServiceImpl;
@@ -81,8 +80,7 @@ public class ContentProvider {
     }
     String user = query.getUser();
     IUserAccount userAccount = usersService.getUserAccount(user);
-    Long dId = userAccount.getDomainId();
-    ContextModel eventContext = CollaborationDomainUtil.getEventContext(query.getContextId(), dId);
+    ContextModel eventContext = new GsonBuilder().create().fromJson(query.getContextAttribute(),ContextModel.class);
     String
         mainContent =
         CollaborationMessageUtil.constructMessage(

@@ -84,6 +84,7 @@ public class LSGetLikesCommand extends HystrixCommand<LSLikeResponseModel> {
     if (!StringUtils.isEmpty(request.getContextId())) {
       builder.queryParam("context_id", request.getContextId());
     }
+    builder.queryParam("count", request.getCount());
     builder.queryParam("offset", request.getOffset());
     builder.queryParam("size", request.getSize());
     link = builder.build();

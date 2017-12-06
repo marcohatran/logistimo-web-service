@@ -23,6 +23,8 @@
 
 package com.logistimo.social.action;
 
+import com.google.gson.GsonBuilder;
+
 import com.logistimo.collaboration.core.models.ContextModel;
 import com.logistimo.collaboration.core.models.RegisterLikeRequestModel;
 import com.logistimo.collaboration.core.models.RegisterLikeResponseModel;
@@ -55,7 +57,7 @@ public class RegisterLikeAction {
       ContextModel
           context =
           CollaborationDomainUtil.getEventContext(model.getContextId(), sUser.getDomainId());
-      model.setContextAttribute(context.getAttribute());
+      model.setContextAttribute(new GsonBuilder().create().toJson(context));
     }
     return executeCommand(model);
   }
