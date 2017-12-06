@@ -117,7 +117,6 @@ angular.module('logistimo.storyboard.eventMapWidget', [])
                         $scope.dashboardView.mTy = $scope.dcntry;
                     }
                     $scope.dashboardView.mLev = getLevel();
-                    data.data.summaries = [];
                     if (checkNotNullEmpty(data.data.summaries)) {
                         $scope.dashboardView.distribution = data.data.summaries[0].distribution;
                         $scope.dashboardView.eventType = data.data.summaries[0].type;
@@ -143,6 +142,30 @@ angular.module('logistimo.storyboard.eventMapWidget', [])
                         }
                         constructMapData($scope.mapEvent, true, $scope, INVENTORY, $sce, mapRange, mapColors,
                             invPieOrder, $timeout);
+                    }else{
+                        $scope.mapData = [];
+                        scope.mapOpt = {
+                            "nullEntityColor": "#cccccc",
+                            "nullEntityAlpha": "50",
+                            "hoverOnNull": "0",
+                            "showLabels": "0",
+                            "showCanvasBorder": "0",
+                            "useSNameInLabels": "0",
+                            "toolTipSepChar": ": ",
+                            "legendPosition": "BOTTOM",
+                            "borderColor": "FFFFFF",
+                            "interactiveLegend": 1,
+                            "exportEnabled": 0,
+                            "baseFontColor": "#000000",
+                            "captionFontSize": "14",
+                            "captionAlignment": "left",
+                            "legendPosition": "bottom", // we can set only bottom or right.
+                            "alignCaptionWithCanvas": 1,
+                            "labelConnectorAlpha":0,
+                            "captionFontBold":1,
+                            "captionFont":'Helvetica Neue, Arial'
+
+                        };
                     }
                     setWidgetData();
                 }).catch(function error(msg) {
