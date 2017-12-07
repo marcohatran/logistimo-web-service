@@ -32,24 +32,26 @@
       {{errorMessage}}
     </div>
   </div>
-  <div ng-show="noData" class="col-sm-12" style="display: table; text-align:center; width:100%; height: {{widget.computedHeight}}px">
+  <div ng-show="noData" class="col-sm-12 text-widget-no-data" style="text-align:center; height: {{widget.computedHeight}}px">
     <span class="widget-no-data">No data to display</span>
   </div>
   <div ng-show="!wloading && !showError">
-    <div class="col-sm-12" style="display: table; width:100%; height: {{widget.computedHeight}}px">
-      <div class="bulletin-board-event-image" ng-if="category == 'activity'">
-        <img src="/v2/images/activity.png">
-      </div>
-      <div class="bulletin-board-event-image" ng-if= "category == 'inventory'">
-        <img src="/v2/images/package.png">
-      </div>
-      <div class="bulletin-board-event-image" ng-if= "category == 'assets'">
-        <img src="/v2/images/event-summary-thermometer.png">
-      </div>
-      <div class="col-sm-12" style="padding-top:10px;padding-bottom:10px;">
-        <p class="widget-title-text">{{title}}</p>
-        <p class="widget-sub-title-text">{{subtitle}}</p>
-        <p class="widget-text">{{text}}</p>
+    <div class="col-sm-12 text-widget-no-data" style="height: {{widget.computedHeight}}px">
+      <div class="text-widget-container">
+        <div class="bulletin-board-event-image" ng-if="category == 'activity'">
+          <img src="/v2/images/activity.png">
+        </div>
+        <div class="bulletin-board-event-image" ng-if= "category == 'inventory'">
+          <img src="/v2/images/package.png">
+        </div>
+        <div class="bulletin-board-event-image" ng-if= "category == 'assets'">
+          <img src="/v2/images/event-summary-thermometer.png">
+        </div>
+        <div class="col-sm-10" style="display: inline;float:left;">
+          <p class="widget-title-text">{{title}}</p>
+          <p class="widget-sub-title-text">{{subtitle}}</p>
+          <p class="widget-text">{{text}}</p>
+        </div>
       </div>
     </div>
   </div>

@@ -229,6 +229,22 @@
                 });
             };
 
+            $scope.logoutBulletinBoard = function () {
+                $scope.showLoading();
+                iAuthService.logout().then(function () {
+                    $scope.clearSesNConfig();
+                    $scope.userLoggedOut = true;
+                    $rootScope.currentDomain = undefined;
+                    localStorage.clear();
+                    $scope.showBulletinBoardLogin();
+                }).catch(function error(msg) {
+                    $scope.showErrorMsg(msg);
+                }).finally(function () {
+                    $scope.hideLoading();
+                });
+
+            };
+
             $scope.$on("event:auth-loginRequired", function () {
                 //On Session timeout, resetting language.
                 $scope.i18n = {language: $scope.languages[0]};

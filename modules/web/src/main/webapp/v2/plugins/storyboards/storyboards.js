@@ -144,6 +144,7 @@ angular.module('logistimo.storyboard.bulletinboards', ['logistimo.storyboard.das
         $scope.setBulletinBoardTitle = function (title, subTitle) {
             $scope.title = title;
             $scope.subTitle = subTitle;
+            $scope.setBBTitle($scope.title, $scope.subTitle);
         };
 
         $scope.setTitles = function(title, info) {

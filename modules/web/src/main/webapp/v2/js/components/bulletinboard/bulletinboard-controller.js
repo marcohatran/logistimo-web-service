@@ -33,7 +33,7 @@ bulletinBoardControllers.controller('BulletinBoardRenderController', ['bulletinB
 
     init();
 
-    $scope.setBulletinBoardTitle = function (title, subTitle) {
+    $scope.setBBTitle = function (title, subTitle) {
         $scope.title = title;
         $scope.subTitle = subTitle;
     };
