@@ -167,7 +167,7 @@ public class LSGetLikesCommand extends HystrixCommand<LSLikeResponseModel> {
     querySpecs.setContextType(model.getContextType());
     querySpecs.setContextAttribute(model.getContextAttribute());
     querySpecs.setUser(model.getUser());
-    model.setTextSummary(contentProvider.generateContent(querySpecs));
+    model.setTextSummary(contentProvider.generateContent(querySpecs,request.getLanguage()));
     return model;
   }
 

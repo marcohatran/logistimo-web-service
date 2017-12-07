@@ -38,6 +38,8 @@ public class LSGetLikeModel implements Serializable {
 
   private Boolean count;
 
+  private String language;
+
   private Integer offset;
 
   private Integer size;
@@ -50,14 +52,19 @@ public class LSGetLikeModel implements Serializable {
   public LSGetLikeModel(String objectId, String objectType, String contextId,
                         Boolean count,
                         Integer offset, Integer size) {
+    this(objectId, objectType, contextId, count,null, offset, size);
+  }
+  public LSGetLikeModel(String objectId, String objectType, String contextId,
+                        Boolean count, String langugae,
+                        Integer offset, Integer size) {
     this.objectId = objectId;
     this.objectType = objectType;
     this.contextId = contextId;
     this.count = count;
+    this.language = langugae;
     this.offset = offset;
     this.size = size;
   }
-
   public String getObjectId() {
     return objectId;
   }
@@ -88,6 +95,14 @@ public class LSGetLikeModel implements Serializable {
 
   public void setCount(Boolean count) {
     this.count = count;
+  }
+
+  public String getLanguage() {
+    return language;
+  }
+
+  public void setLanguage(String language) {
+    this.language = language;
   }
 
   public Integer getOffset() {
