@@ -727,14 +727,14 @@ function getReportFCSeries(data, seriesno, name, type, isLinkDisabled, filterSer
         }
     }
 }
-function getHeading(summaries, dstate, ddist) {
+function getHeading(summaries, $scope) {
     var location = "";
-    if(checkNullEmpty(dstate)) {
-        location = "country";
-    } else if(checkNullEmpty(ddist)) {
+    if(checkNotNullEmpty($scope.ddist)) {
+        location = summaries.length > 1 ? $scope.resourceBundle['kiosks.lowercase'] : $scope.resourceBundle['kiosk.lowercase'];
+    } else if(checkNotNullEmpty($scope.dstate)) {
+        location = summaries.length > 1 ? "districts" : "district";
+    } else if(checkNotNullEmpty($scope.dcntry)){
         location = summaries.length > 1 ? "states" : "state";
-    } else {
-        location = summaries.length > 1 ?"districts" : "district";
     }
     return "Top " + summaries.length + " " + location
 }

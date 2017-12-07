@@ -144,7 +144,7 @@ angular.module('logistimo.storyboard.eventMapWidget', [])
                             invPieOrder, $timeout);
                     }else{
                         $scope.mapData = [];
-                        scope.mapOpt = {
+                        $scope.mapOpt = {
                             "nullEntityColor": "#cccccc",
                             "nullEntityAlpha": "50",
                             "hoverOnNull": "0",

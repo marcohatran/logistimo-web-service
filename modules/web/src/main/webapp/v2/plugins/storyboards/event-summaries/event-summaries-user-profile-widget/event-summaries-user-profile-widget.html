@@ -36,7 +36,7 @@
     <div ng-show="noData" class="col-sm-12" style="display: table; text-align:center; width:100%; height: {{widget.computedHeight}}px">
         <span class="widget-no-data">No data to display</span>
     </div>
-    <div ng-show="!wloading && !showError">
+    <div ng-show="!wloading && !showError && !noData">
         <div class="summary-title pt15" style="padding-bottom: 15px; border-bottom:1px solid #ddd;">
             {{heading}}
         </div>
@@ -44,12 +44,18 @@
                 <div class="panel-default" style="border-bottom:1px solid #ddd">
                     <div class="panel-body">
                         <div class="col-sm-8">
-                            <p class="widget-text table-min">{{item.name}}</p>
-                            <p class="widget-text table-min" style="color:grey;">{{item.title}}</p>
-                            <p class="widget-text table-min" style="color:grey;">{{item.user}}</p>
+                            <p class="widget-text user-profile-text table-min">{{item.name}}</p>
+                            <p class="widget-text user-profile-text table-min" style="color:grey;">{{item.title}}</p>
+                            <p ng-show="item.type == 'critical'" class="widget-text user-profile-text table-min" style="color:grey">{{item.subtitle}}</p>
+                            <p ng-show="item.type == 'critical'" class="widget-text table-min pt5" style="color:grey;text-transform: uppercase; font-size: medium; text-overflow: ellipsis">{{item.user}}</p>
                         </div>
-                        <div class="col-sm-4" ng-show="item.image_url">
+                        <div class="col-sm-4" ng-show="item.show_image && item.type != 'critical'">
                             <img class="widget-profile-image" src="{{item.image_url}}"/>
+                            <p class="widget-text table-min pt5" style="color:grey;font-size:medium; text-overflow: ellipsis; text-transform: uppercase;">{{item.user}}</p>
+                        </div>
+                        <div class="col-sm-4" ng-show="!item.show_image && item.type != 'critical'">
+                            <span class="glyphicon glyphicon-user" style="font-size: 50px; color: darkgrey"></span>
+                            <p class="widget-text table-min pt5" style="color:grey;text-transform: uppercase; font-size: medium; text-overflow: ellipsis">{{item.user}}</p>
                         </div>
                     </div>
                 </div>

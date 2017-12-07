@@ -55,12 +55,18 @@ angular.module('logistimo.storyboard.eventSummariesUserProfileWidget', [])
                 var profile = {name: "", title: "", user: "", image_url: ""};
                 profile.name = data.name;
                 profile.title = data.title;
+                profile.subtitle = data.subtitle;
+                profile.show_image = false;
+                profile.type = data.type;
                 if(checkNotNullEmpty(data.contacts)) {
                     if(checkNotNullEmpty(data.contacts[0].user)) {
                         profile.user = data.contacts[0].user;
                     }
                     if(checkNotNullEmpty(data.contacts[0].photo)) {
                         profile.image_url = data.contacts[0].photo[0].serving_url;
+                        if(checkNotNullEmpty(profile.image_url)) {
+                            profile.show_image = true;
+                        }
                     }
                 }
                 $scope.profiles.push(profile);
@@ -77,7 +83,7 @@ angular.module('logistimo.storyboard.eventSummariesUserProfileWidget', [])
             eventSummaryService.getEventSummariesByEventId($scope.currentDomain, $scope.curUser, $scope.widget.conf.threshold, $scope.offset, $scope.size).then(function (data) {
                 if(checkNotNullEmpty(data.data) && checkNotNullEmpty(data.data.summaries)) {
                     populateUserProfiles(data.data.summaries);
-                    $scope.heading = getHeading(data.data.summaries, $scope.dstate, $scope.ddist);
+                    $scope.heading = getHeading(data.data.summaries, $scope);
                 } else {
                     $scope.noData = true;
                 }

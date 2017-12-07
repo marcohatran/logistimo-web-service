@@ -134,6 +134,7 @@ authControllers.controller('BulletinBoardLoginController', ['$scope', 'iAuthServ
             $scope.lLoading = true;
             iAuthService.requestAccessKey().then(function (data) {
                 $scope.accessKey = data.data;
+                $scope.authInfo = $scope.resourceBundle['auth.info'];
                 $timeout($scope.checkAccessKey, 5000);
             }).catch(function error(msg) {
                 $scope.errorMsg = $scope.resourceBundle['login.unable'] + " " + msg;

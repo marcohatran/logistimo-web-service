@@ -4108,3 +4108,7 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
  background: none !important;
 }
 
+.user-profile-text {
+    font-size: larger;
+}
+
