@@ -244,13 +244,11 @@ public class InventoryBuilder {
     IInvntryEvntLog lastEventLog = invDao.getInvntryEvntLog(invntry);
 
     if (lastEventLog != null) {
-      model.se = lastEventLog.getType();
       if (invntry.getStockEvent() != -1) {
         model.ed = new Date().getTime() - lastEventLog.getStartDate().getTime();
       }
       model.se = invntry.getStockEvent();
     }
-    model.se = invntry.getStockEvent();
     return model;
   }
 
