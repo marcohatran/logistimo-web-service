@@ -24,6 +24,7 @@
 package com.logistimo.api.models;
 
 import com.logistimo.api.models.mobile.CurrentStock;
+import com.logistimo.events.entity.IEvent;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -76,7 +77,7 @@ public class InventoryDetailModel {
   /**
    * Stock event
    */
-  public int se;
+  public int se = IEvent.NORMAL;
   /**
    * Event duration
    */
