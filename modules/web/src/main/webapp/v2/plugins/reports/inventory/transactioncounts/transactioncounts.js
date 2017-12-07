@@ -167,7 +167,7 @@ registerWidget('itc', 'rpt-transaction-counts', 'Activity', 'Transaction counts'
                         $scope.tableCSVHeading = breakdownData.headings;
                         $scope.updateTableHeading($scope.tableCSVHeading, "yyyy-MM-dd");
                         $scope.tableData = sortObject(breakdownData.table);
-                        formatReportTableData($scope.tableData);
+                        reportCoreFunction().formatReportTableData($scope.tableData);
                         $scope.tableDataLength = Object.keys($scope.tableData).length;
                         $scope.noData = false;
                     } else if ($scope.tableDataLength == $scope.size) {
@@ -189,13 +189,13 @@ registerWidget('itc', 'rpt-transaction-counts', 'Activity', 'Transaction counts'
                 chartData = angular.copy($scope.allChartData);
             } else if(level != "d") {
                 $scope.sum_t_head = ["Type", "Count"];
-                $scope.sum_t = getReportSummaryTable(chartData, seriesNames, 4, 3);
+                $scope.sum_t = reportCoreFunction().getReportSummaryTable(chartData, seriesNames, 4, 3);
                 $scope.sum_cd = getSummaryFCData($scope.sum_t);
                 $scope.sum_cd_tot = getSummaryFCDataTotal($scope.sum_t);
             }
 
             var linkDisabled = level == "d" || $scope.filter.periodicity == "d";
-            var cLabel = getReportFCCategories(chartData,$scope.getReportDateFormat(level));
+            var cLabel = reportCoreFunction().getReportFCCategories(chartData,$scope.getReportDateFormat(level));
             var compareFields = [];
             angular.forEach(chartData, function (d) {
                 if (compareFields.indexOf(d.value[0].value) == -1) {
@@ -231,13 +231,13 @@ registerWidget('itc', 'rpt-transaction-counts', 'Activity', 'Transaction counts'
                 var ind = 0;
                 $scope.cType = "stackedcolumn2d";
                 for(var i = 4; i<= (seriesNames.length + 1) * 3; i+=3) {
-                    cData[ind] = getReportFCSeries(chartData, i, seriesNames[ind], "column2d", linkDisabled, filterSeriesIndex, "0");
+                    cData[ind] = reportCoreFunction().getReportFCSeries(chartData, i, seriesNames[ind], "column2d", linkDisabled, filterSeriesIndex, "0");
                     ind++;
                 }
             } else {
                 $scope.cType = "mscombi2d";
                 for (i = 0; i < compareFields.length; i++) {
-                    cData[i] = getReportFCSeries(chartData, seriesNo, compareFields[i], isCompare ? "line" : "column2d", linkDisabled, filterSeriesIndex, isCompare ? "0" : "1");
+                    cData[i] = reportCoreFunction().getReportFCSeries(chartData, seriesNo, compareFields[i], isCompare ? "line" : "column2d", linkDisabled, filterSeriesIndex, isCompare ? "0" : "1");
                 }
             }
             $scope.cOptions.caption = getHeading();
@@ -267,7 +267,7 @@ registerWidget('itc', 'rpt-transaction-counts', 'Activity', 'Transaction counts'
                 } else {
                     $scope.dtableHeading.push($scope.cOptions.caption);
                 }
-                $scope.dtableData = getReportTableData(cData, cLabel);
+                $scope.dtableData = reportCoreFunction().getReportTableData(cData, cLabel);
                 $scope.dtableDataLength = Object.keys($scope.dtableData).length;
                 $scope.dcOptions = angular.copy($scope.cOptions);
                 if(cLabel.length > 10) {
@@ -299,7 +299,7 @@ registerWidget('itc', 'rpt-transaction-counts', 'Activity', 'Transaction counts'
                     $scope.tableMetric = undefined;
                     $scope.tableHeading.push($scope.cOptions.caption);
                 }
-                $scope.tableData = getReportTableData(cData, cLabel,$scope.getReportDateFormat());
+                $scope.tableData = reportCoreFunction().getReportTableData(cData, cLabel,$scope.getReportDateFormat());
                 $scope.tableDataLength = Object.keys($scope.tableData).length;
 
             }

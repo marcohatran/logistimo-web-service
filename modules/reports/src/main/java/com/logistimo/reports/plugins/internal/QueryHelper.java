@@ -59,8 +59,10 @@ public class QueryHelper {
   private static final String ENTITY_TAG = "etag";
   private static final String USER = "user";
   private static final String USER_TAG = "utag";
+  private static final String ORDER_TAG = "otag";
   private static final String MATERIAL = "mat";
   private static final String ENTITY = "entity";
+  private static final String OTYPE = "otype";
   private static final String STATE = "st";
   private static final String COUNTRY = "cn";
   private static final String DISTRICT = "dis";
@@ -82,12 +84,14 @@ public class QueryHelper {
   public static final String QUERY_USER_TAG = "UTAG";
   public static final String QUERY_ENTITY_TAG = "KTAG";
   public static final String QUERY_MATERIAL_TAG = "MTAG";
+  public static final String QUERY_ORDER_TAG = "OTAG";
   private static final String QUERY_SIZE = "SIZE";
   private static final String QUERY_OFFSET = "OFFSET";
 
   public static final String QUERY = "QUERY";
   public static final String QUERY_MATERIAL = "MID";
   public static final String QUERY_ENTITY = "KID";
+  public static final String QUERY_ORDER_TYPE = "OTY";
   public static final String QUERY_LKID = "LKID";
   public static final String QUERY_COUNTRY = "CN";
   public static final String QUERY_STATE = "ST";
@@ -145,10 +149,12 @@ public class QueryHelper {
     QUERY_USER,
     QUERY_MATERIAL,
     QUERY_ENTITY,
+    QUERY_ORDER_TYPE,
     QUERY_LKID,
     QUERY_USER_TAG,
     QUERY_ENTITY_TAG,
     QUERY_MATERIAL_TAG,
+    QUERY_ORDER_TAG,
     QUERY_COUNTRY,
     QUERY_STATE,
     QUERY_DISTRICT,
@@ -156,17 +162,19 @@ public class QueryHelper {
     QUERY_CITY
   };
 
-  private static final List<String> NUMERIC_FIELDS = Arrays.asList(MATERIAL, ENTITY, SIZE, OFFSET, MYEAR, LKID,USER);
+  private static final List<String> NUMERIC_FIELDS = Arrays.asList(MATERIAL, ENTITY, SIZE, OFFSET, MYEAR, LKID, USER, OTYPE);
 
   static {
     OPTIONAL_FILTER_MAP = new HashMap<>(18);
     OPTIONAL_FILTER_MAP.put(USER, QUERY_USER);
     OPTIONAL_FILTER_MAP.put(MATERIAL, QUERY_MATERIAL);
     OPTIONAL_FILTER_MAP.put(ENTITY, QUERY_ENTITY);
+    OPTIONAL_FILTER_MAP.put(OTYPE, QUERY_ORDER_TYPE);
     OPTIONAL_FILTER_MAP.put(LKID, QUERY_LKID);
     OPTIONAL_FILTER_MAP.put(USER_TAG, QUERY_USER_TAG);
     OPTIONAL_FILTER_MAP.put(ENTITY_TAG, QUERY_ENTITY_TAG);
     OPTIONAL_FILTER_MAP.put(MATERIAL_TAG, QUERY_MATERIAL_TAG);
+    OPTIONAL_FILTER_MAP.put(ORDER_TAG, QUERY_ORDER_TAG);
     OPTIONAL_FILTER_MAP.put(COUNTRY, QUERY_COUNTRY);
     OPTIONAL_FILTER_MAP.put(STATE, QUERY_STATE);
     OPTIONAL_FILTER_MAP.put(DISTRICT, QUERY_DISTRICT);

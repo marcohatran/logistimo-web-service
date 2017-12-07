@@ -29,6 +29,7 @@ import com.logistimo.api.models.MenuStatsModel;
 import com.logistimo.api.models.configuration.AccountingConfigModel;
 import com.logistimo.api.models.configuration.AdminContactConfigModel;
 import com.logistimo.api.models.configuration.ApprovalsConfigModel;
+import com.logistimo.api.models.configuration.ApprovalsEnabledConfigModel;
 import com.logistimo.api.models.configuration.AssetConfigModel;
 import com.logistimo.api.models.configuration.CapabilitiesConfigModel;
 import com.logistimo.api.models.configuration.DashboardConfigModel;
@@ -1115,6 +1116,15 @@ public class ConfigurationModelsBuilder {
         model.psoa = psoas;
       }
     }
+    return model;
+  }
+
+  public ApprovalsEnabledConfigModel buildApprovalsEnabledConfigModel(Long domainId){
+    DomainConfig dc = DomainConfig.getInstance(domainId);
+    ApprovalsEnabledConfigModel model = new ApprovalsEnabledConfigModel();
+    model.itae = dc.isTransferApprovalEnabled();
+    model.ipae = dc.isPurchaseApprovalEnabled();
+    model.isae = dc.isSalesApprovalEnabled();
     return model;
   }
 

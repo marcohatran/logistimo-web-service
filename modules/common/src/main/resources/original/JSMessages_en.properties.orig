@@ -1159,3 +1159,4 @@ config.barcoding.enable=Enable Barcode scanning on mobile
 config.barcoding.rfid.enable=Enable barcode/RFID scanning
 profile.number=Number of profiles
 auth.info=Authorize this device using the key shown above.
+order.purchase=Purchase

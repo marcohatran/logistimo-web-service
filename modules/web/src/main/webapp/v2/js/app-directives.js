@@ -1935,6 +1935,7 @@ logistimoApp.directive('fusionChart', function () {
             width: "=",
             chartLabel: '=',
             chartData: '=',
+            chartLineData: '=',
             chartOptions: "=",
             chartId: "@",
             simple: "@",
@@ -1953,6 +1954,10 @@ logistimoApp.directive('fusionChart', function () {
                         } else {
                             dataSource.categories = [{"category": $scope.chartLabel}];
                             dataSource.dataset = $scope.chartData;
+                            if($scope.chartLineData) {
+                                dataSource.lineset = $scope.chartLineData;
+                            }
+
                         }
                         if ($scope.trend) {
                             dataSource.trendlines = {};

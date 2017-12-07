@@ -37,7 +37,8 @@ public enum ReportViewType {
   BY_ASSET("at"),
   BY_ASSET_TYPE("att"),
   BY_USER("ut"),
-  BY_ENTITY_TAGS("ktt");
+  BY_ENTITY_TAGS("ktt"),
+  BY_CUSTOMER("ct");
 
   private String value;
 

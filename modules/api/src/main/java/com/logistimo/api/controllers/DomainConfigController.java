@@ -42,6 +42,7 @@ import com.logistimo.api.models.UserMessageModel;
 import com.logistimo.api.models.configuration.AccountingConfigModel;
 import com.logistimo.api.models.configuration.AdminContactConfigModel;
 import com.logistimo.api.models.configuration.ApprovalsConfigModel;
+import com.logistimo.api.models.configuration.ApprovalsEnabledConfigModel;
 import com.logistimo.api.models.configuration.AssetConfigModel;
 import com.logistimo.api.models.configuration.BulletinBoardConfigModel;
 import com.logistimo.api.models.configuration.CapabilitiesConfigModel;
@@ -2454,6 +2455,18 @@ public class DomainConfigController {
       throw new InvalidServiceException("Error in fetching Approvals configuration");
     }
 
+  }
+
+  @RequestMapping(value = "/approvals-enabled", method = RequestMethod.GET)
+  public
+  @ResponseBody
+  ApprovalsEnabledConfigModel getApprovalsEnabledConfig() {
+    Long domainId = SecurityUtils.getCurrentDomainId();
+    try {
+      return builder.buildApprovalsEnabledConfigModel(domainId);
+    } catch (Exception e) {
+      throw new InvalidServiceException("Error in fetching Approvals enabled configuration");
+    }
   }
 
   /**

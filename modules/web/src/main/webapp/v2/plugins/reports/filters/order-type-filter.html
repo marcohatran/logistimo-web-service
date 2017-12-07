@@ -21,20 +21,9 @@
   ~ the commercial license, please contact us at opensource@logistimo.com
   -->
 
-<b>{{dtableMetric}}</b>
-<div>{{dtableCaption}}</div>
-<div class="report-table-container">
-    <table class="report-table">
-        <thead>
-            <tr>
-                <th ng-repeat="heading in dtableHeading">{{heading}}</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr ng-repeat="data in dtableData">
-                <td>{{data[0]}}</td>
-                <td class="text-center" uib-tooltip="{{d.tooltip}}" tooltip-append-to-body="true" ng-repeat="d in data.slice(1) track by $index"><span ng-bind-html="d.value"></span></td>
-            </tr>
-        </tbody>
-    </table>
-</div>
+<select ng-disabled="ngDisabled" ng-click="$event.stopPropagation();" class="form-control" ng-init="resourceBundle = $parent.resourceBundle" ng-model="filterModel">
+  <option value="">All</option>
+    <option value="1">Purchase</option>
+    <option value="2">Sales</option>
+    <option value="0">Transfers</option>
+</select>

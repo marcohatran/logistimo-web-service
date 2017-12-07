@@ -41,8 +41,14 @@ public enum ReportType {
   AS_TEMPERATURE_EXCURSION("ate", "Temperature excursions"),
   AS_UP_TIME("aut", "Up time"),
   AS_ASSET_STATUS("aas", "Asset status"),
-  ACTIVITY_USER("ua", "User activity");
-
+  ACTIVITY_USER("ua", "User activity"),
+  ORD_APPROVAL_RESPONSE_TIME("oart", "Approval response time"),
+  ORD_APPROVAL_REQUEST_STATUS("oars", "Approval request status"),
+  ORD_ORDER_STATUS("oos", "Order status"),
+  ORD_DEMAND("od", "Demand"),
+  ORD_ORDER_DISCREPANCIES("ood", "Order discrepancies"),
+  ORD_ORDER_RESPONSE_TIME("oort", "Order response time");
+  
   private String value;
   private String name;
 

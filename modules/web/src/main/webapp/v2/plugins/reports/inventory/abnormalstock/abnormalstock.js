@@ -188,7 +188,7 @@ registerWidget('ias', 'rpt-abnormal-stock', 'Inventory', 'Abnormal stock','inven
                         $scope.tableCSVHeading = breakdownData.headings;
                         $scope.updateTableHeading($scope.tableCSVHeading, "yyyy-MM-dd");
                         $scope.tableData = sortObject(breakdownData.table);
-                        formatReportTableData($scope.tableData);
+                        reportCoreFunction().formatReportTableData($scope.tableData);
                         $scope.tableDataLength = Object.keys($scope.tableData).length;
                         $scope.noData = false;
                     } else if ($scope.tableDataLength == $scope.size) {
@@ -210,7 +210,7 @@ registerWidget('ias', 'rpt-abnormal-stock', 'Inventory', 'Abnormal stock','inven
                 chartData = angular.copy($scope.allChartData);
             }
             var linkDisabled = level == "d" || $scope.filter.periodicity == "d";
-            var cLabel = getReportFCCategories(chartData, $scope.getReportDateFormat(level));
+            var cLabel = reportCoreFunction().getReportFCCategories(chartData, $scope.getReportDateFormat(level));
             var compareFields = [];
             angular.forEach(chartData, function (d) {
                 if (compareFields.indexOf(d.value[0].value) == -1) {
@@ -229,7 +229,7 @@ registerWidget('ias', 'rpt-abnormal-stock', 'Inventory', 'Abnormal stock','inven
             var seriesNo = getFilterIndex();
             var cData = [];
             for (var i = 0; i < compareFields.length; i++) {
-                cData[i] = getReportFCSeries(chartData, seriesNo, compareFields[i], isCompare ? "line" : "column2d", linkDisabled, filterSeriesIndex, isCompare ? "0" : "1");
+                cData[i] = reportCoreFunction().getReportFCSeries(chartData, seriesNo, compareFields[i], isCompare ? "line" : "column2d", linkDisabled, filterSeriesIndex, isCompare ? "0" : "1");
             }
             $scope.cOptions.caption = getHeading();
             $scope.cOptions.subcaption = $scope.getReportCaption();
@@ -253,7 +253,7 @@ registerWidget('ias', 'rpt-abnormal-stock', 'Inventory', 'Abnormal stock','inven
                 } else {
                     $scope.dtableHeading.push($scope.cOptions.caption);
                 }
-                $scope.dtableData = getReportTableData(cData, cLabel);
+                $scope.dtableData = reportCoreFunction().getReportTableData(cData, cLabel);
                 $scope.swapData($scope.dtableHeading, $scope.dtableData);
                 $scope.dtableDataLength = Object.keys($scope.dtableData).length;
                 $scope.dcOptions = angular.copy($scope.cOptions);
@@ -282,7 +282,7 @@ registerWidget('ias', 'rpt-abnormal-stock', 'Inventory', 'Abnormal stock','inven
                     $scope.tableMetric = undefined;
                     $scope.tableHeading.push($scope.cOptions.caption);
                 }
-                $scope.tableData = getReportTableData(cData, cLabel, $scope.getReportDateFormat());
+                $scope.tableData = reportCoreFunction().getReportTableData(cData, cLabel, $scope.getReportDateFormat());
                 $scope.swapData($scope.tableHeading, $scope.tableData);
                 $scope.tableDataLength = Object.keys($scope.tableData).length;
             }
