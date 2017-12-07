@@ -1,4 +1,3 @@
-angular.module('logistimo.storyboard', ['logistimo.storyboard.bulletinboards']);
 /*
  * Copyright © 2017 Logistimo.
  *
@@ -21,6 +20,8 @@ angular.module('logistimo.storyboard', ['logistimo.storyboard.bulletinboards']);
  * You can be released from the requirements of the license by purchasing a commercial license. To know more about
  * the commercial license, please contact us at opensource@logistimo.com
  */
+
+angular.module('logistimo.storyboard', ['logistimo.storyboard.bulletinboards']);
 
 /**
  * Created by naveensnair on 15/11/17.
@@ -140,6 +141,11 @@ angular.module('logistimo.storyboard.bulletinboards', ['logistimo.storyboard.das
             }, $scope.bulletinBoard.max * 1000);
         }
 
+        $scope.setBulletinBoardTitle = function (title, subTitle) {
+            $scope.title = title;
+            $scope.subTitle = subTitle;
+        };
+
         $scope.setTitles = function(title, info) {
             $scope.setBulletinBoardTitle(title, info);
         }
@@ -197,9 +203,17 @@ function LocalBBStorageRepository(promise){
         }
     }
 }
-function DashboardLayoutHandler(containerId,$timeout) {
+function DashboardLayoutHandler(containerId, $timeout, $window) {
+    function getViewportHeight() {
+        if ($window) {
+            return $window.innerHeight;
+        }
+        return -1;
+    }
+
     var ul = document.getElementById(containerId);
     var MAX_COLS_WIDTH = parseInt(getComputedStyle(ul).width, 10);
+    var MAX_HEIGHT = getViewportHeight();
     var sw = MAX_COLS_WIDTH / 12;
     var sh = 110;
     var PAD = 5; // Dont Change: From UI
@@ -753,6 +767,25 @@ function DashboardLayoutHandler(containerId,$timeout) {
         }
     }
 
+    function getMaxHeightGridNumber() {
+        var maxHeightNo = 0;
+        for (var k in widgets) {
+            if (widgets.hasOwnProperty(k)) {
+                var dw = widgets[k];
+                if (maxHeightNo < dw.y + dw.height) {
+                    maxHeightNo = dw.y + dw.height;
+                }
+            }
+        }
+        return maxHeightNo;
+    }
+
+    function computeSh() {
+        if (MAX_HEIGHT > 360 && getMaxHeightGridNumber() > 4) {
+            sh = (MAX_HEIGHT - 80) / getMaxHeightGridNumber();
+        }
+    }
+
     function setMaxHeight() {
         var maxHeight = 100;
         maxHeightNo = 0;
@@ -798,6 +831,7 @@ function DashboardLayoutHandler(containerId,$timeout) {
                 wid.computedHeight = wid.height * sh - PAD2;
                 wid.computedY = wid.y * sh + PAD;
             } else {
+                computeSh();
                 for (var k in widgets) {
                     if (widgets.hasOwnProperty(k)) {
                         wid = widgets[k];
@@ -870,11 +904,11 @@ angular.module('logistimo.storyboard.dashboards', ['logistimo.storyboard.widgets
             }]
         };
     })
-    .controller('DashboardViewController', ['dashboardRepository', '$scope', function (dashboardRepository, $scope) {
+    .controller('DashboardViewController', ['dashboardRepository', '$scope', '$window', function (dashboardRepository, $scope, $window) {
 
         function init() {
             function initDashboardLayout() {
-                var dashboardLayoutHandler = new DashboardLayoutHandler("allWid");
+                var dashboardLayoutHandler = new DashboardLayoutHandler("allWid", null, $window);
                 dashboardLayoutHandler.setWidgets($scope.db.widgets);
                 $scope.maxHeight = dashboardLayoutHandler.addComputeData();
                 dashboardLayoutHandler.setMaxHeight();
@@ -884,7 +918,7 @@ angular.module('logistimo.storyboard.dashboards', ['logistimo.storyboard.widgets
             if (!$scope.noInit) {
                 dashboardRepository.get($scope.dashboardId, $scope).then(function (dashboard) {
                     $scope.db = dashboard;
-                    if(!$scope.showTitle) {
+                    if (!$scope.showTitle) {
                         $scope.setTitles($scope.db.title, $scope.db.info);
                     }
                     if ($scope.db == null || $scope.db == "") {
@@ -910,7 +944,7 @@ angular.module('logistimo.storyboard.dashboards', ['logistimo.storyboard.widgets
     }])
     .controller('DashboardConfigureController', ['dashboardRepository', '$scope', '$timeout', function (dashboardRepository, $scope, $timeout) {
 
-        var dashboardLayoutHandler = new DashboardLayoutHandler("allWid", $timeout, $scope.maxHeight);
+        var dashboardLayoutHandler = new DashboardLayoutHandler("allWid", $timeout);
         $scope.init = function () {
             if ($scope.dashboard != undefined) {
                 $scope.widgets = $scope.dashboard.widgets;
@@ -918,6 +952,7 @@ angular.module('logistimo.storyboard.dashboards', ['logistimo.storyboard.widgets
                 $scope.widgets = {};
             }
             dashboardLayoutHandler.setWidgets($scope.widgets);
+            dashboardLayoutHandler.addComputeData();
             dashboardLayoutHandler.initEventListeners();
             dashboardLayoutHandler.setMaxHeight();
         };
@@ -1348,19 +1383,16 @@ angular.module('logistimo.storyboard').run(['$templateCache', function($template
 
 
     $templateCache.put('/angular-storyboards/src/bulletinboard/templates/view-bulletin-board.html',
-        "<div class=\"tab pane\">\n" +
-        "    <div class=\"box topbox\">\n" +
-        "        <div class=\"row\">\n" +
-        "            <div class=\"col-sm-12\">\n" +
-        "                <div ng-controller=\"BulletinBoardViewController\">\n" +
-        "                    <div ng-if=\"renderDashboardsPage == true\">\n" +
-        "                        <div ng-include=\"'/angular-storyboards/src/dashboard/templates/view-dashboard.html'\" ng-init=\"showTitle = showTitle\"></div>\n" +
-        "                    </div>\n" +
-        "                </div>\n" +
+        "<div class=\"row\">\n" +
+        "    <div class=\"col-sm-12\">\n" +
+        "        <div ng-controller=\"BulletinBoardViewController\">\n" +
+        "            <div ng-if=\"renderDashboardsPage == true\">\n" +
+        "                <div ng-include=\"'/angular-storyboards/src/dashboard/templates/view-dashboard.html'\"\n" +
+        "                     ng-init=\"showTitle = showTitle\"></div>\n" +
         "            </div>\n" +
         "        </div>\n" +
         "    </div>\n" +
-        "</div>"
+        "</div>\n"
     );
 
 
@@ -1549,40 +1581,38 @@ angular.module('logistimo.storyboard').run(['$templateCache', function($template
 
 
     $templateCache.put('/angular-storyboards/src/dashboard/templates/view-dashboard.html',
-        "<div class=\"tab pane\">\n" +
-        "    <div class=\"box topbox\">\n" +
-        "        <div class=\"row\">\n" +
-        "            <div class=\"col-sm-12\">\n" +
-        "                <div ng-controller=\"DashboardViewController\">\n" +
-        "                    <div ng-show=\"preview\" class=\"row pull-right\">\n" +
-        "                        <div class=\"col-sm-12\">\n" +
-        "                            <button type=\"button\" ng-click=\"previewDashboard()\" class=\"btn btn-primary\">{{resourceBundle['exit.preview']}}</button>\n" +
-        "                        </div>\n" +
+        "<div class=\"row\">\n" +
+        "    <div class=\"col-sm-12\">\n" +
+        "        <div ng-controller=\"DashboardViewController\">\n" +
+        "            <div ng-show=\"preview\" class=\"row pull-right\">\n" +
+        "                <div class=\"col-sm-12\">\n" +
+        "                    <button type=\"button\" ng-click=\"previewDashboard()\" class=\"btn btn-primary\">\n" +
+        "                        {{resourceBundle['exit.preview']}}\n" +
+        "                    </button>\n" +
+        "                </div>\n" +
+        "            </div>\n" +
+        "            <div>\n" +
+        "                <div class=\"row\" ng-if=\"showTitle\">\n" +
+        "                    <div class=\"col-sm-12 pt10\">\n" +
+        "                        <h2 style=\"text-align: center;margin: 0px\">{{db.title}}</h2>\n" +
         "                    </div>\n" +
-        "                    <div>\n" +
-        "                        <div class=\"row\" ng-if=\"showTitle\">\n" +
-        "                            <div class=\"col-sm-12 pt10\">\n" +
-        "                                <h2 style=\"text-align: center;margin: 0px\">{{db.title}}</h2>\n" +
-        "                            </div>\n" +
-        "                        </div>\n" +
-        "                        <div class=\"row\" ng-if=\"showTitle\">\n" +
-        "                            <div class=\"col-sm-12 pt10 pb10\">\n" +
-        "                                <h3 style=\"text-align: center;margin: 0px;color: #777;\">{{db.info}}</h3>\n" +
-        "                            </div>\n" +
-        "                        </div>\n" +
-        "                        <div class=\"row padding5\" id=\"viewDash\">\n" +
-        "                            <ul\n" +
-        "                                    style=\"list-style-type: none; padding: 0; display: block; margin: 0; position: relative; min-height: {{maxHeight}}\"\n" +
-        "                                    id=\"allWid\">\n" +
-        "                                <li class=\"dummy noLRpad\"\n" +
-        "                                    style=\"z-index: 1; position: absolute; padding:5px; display:list-item; width: {{widget.computedWidth}}px; left: {{widget.computedX}}px; top: {{widget.computedY}}px; height: {{widget.computedHeight}}px;max-height: {{widget.computedHeight}}px;\"\n" +
-        "                                    ng-controller=\"WidgetScopeController\"\n" +
-        "                                    ng-repeat=\"(id,widget) in db.widgets track by $index\">\n" +
-        "                                    <span ng-include=\"'/angular-storyboards/src/widget/templates/view-widget.html'\"></span>\n" +
-        "                                </li>\n" +
-        "                            </ul>\n" +
-        "                        </div>\n" +
+        "                </div>\n" +
+        "                <div class=\"row\" ng-if=\"showTitle\">\n" +
+        "                    <div class=\"col-sm-12 pt10 pb10\">\n" +
+        "                        <h3 style=\"text-align: center;margin: 0px;color: #777;\">{{db.info}}</h3>\n" +
         "                    </div>\n" +
+        "                </div>\n" +
+        "                <div class=\"row padding5\" id=\"viewDash\">\n" +
+        "                    <ul\n" +
+        "                            style=\"list-style-type: none; padding: 0; display: block; margin: 0; position: relative; min-height: {{maxHeight}}\"\n" +
+        "                            id=\"allWid\">\n" +
+        "                        <li class=\"dummy noLRpad\"\n" +
+        "                            style=\"z-index: 1; position: absolute; padding:5px; display:list-item; width: {{widget.computedWidth}}px; left: {{widget.computedX}}px; top: {{widget.computedY}}px; height: {{widget.computedHeight}}px;max-height: {{widget.computedHeight}}px;\"\n" +
+        "                            ng-controller=\"WidgetScopeController\"\n" +
+        "                            ng-repeat=\"(id,widget) in db.widgets track by $index\">\n" +
+        "                            <span ng-include=\"'/angular-storyboards/src/widget/templates/view-widget.html'\"></span>\n" +
+        "                        </li>\n" +
+        "                    </ul>\n" +
         "                </div>\n" +
         "            </div>\n" +
         "        </div>\n" +

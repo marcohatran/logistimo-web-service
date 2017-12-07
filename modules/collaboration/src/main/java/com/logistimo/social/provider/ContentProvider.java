@@ -74,21 +74,31 @@ public class ContentProvider {
   }
 
   public String generateContent(ContentQuerySpecs query) {
+    return generateContent(query,null);
+  }
+
+  public String generateContent(ContentQuerySpecs query, String lang) {
 
     if (!"event".equals(query.getContextType())) {
       return "";
     }
     String user = query.getUser();
     IUserAccount userAccount = usersService.getUserAccount(user);
+    Locale locale = null;
+    if(StringUtils.isEmpty(lang)){
+      locale = userAccount.getLocale();
+    } else {
+      locale = new Locale(lang);
+    }
     ContextModel eventContext = new GsonBuilder().create().fromJson(query.getContextAttribute(),ContextModel.class);
     String
         mainContent =
         CollaborationMessageUtil.constructMessage(
             eventContext.getCategory() + "." + eventContext.getEventType() + ".text"
-            , userAccount.getLocale()
+            , locale
             , new Object[]{userAccount.getFullName(),
                 getObjectText(query.getObjectId(), query.getObjectType()),
-                getDuration(eventContext, userAccount.getLocale())});
+                getDuration(eventContext, locale)});
     return mainContent;
   }
 

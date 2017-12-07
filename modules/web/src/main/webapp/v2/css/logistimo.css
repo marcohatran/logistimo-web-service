@@ -29,6 +29,15 @@
     padding-right: 0px;
 }
 
+.bulletin-body {
+    min-width: 1920px !important;
+    width: 1920px !important;
+    padding-bottom: 10px;
+    background-color: #eeeeee;
+    font-size: medium;
+    padding-right: 0;
+}
+
 .modal-open {
     overflow-y: auto;
 }

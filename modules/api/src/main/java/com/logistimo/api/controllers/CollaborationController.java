@@ -115,10 +115,11 @@ public class CollaborationController {
                                @RequestParam String object_id,
                                @RequestParam(required = false) String context_id,
                                @RequestParam(defaultValue = "false") boolean count,
+                               @RequestParam(required = false) String lang,
                                @RequestParam(defaultValue = PageParams.DEFAULT_OFFSET_STR) int offset,
                                @RequestParam(defaultValue = PageParams.DEFAULT_SIZE_STR) int size) {
 
-    return getLikeAction.invoke(object_id, object_type, context_id, count, offset, size);
+    return getLikeAction.invoke(object_id, object_type, context_id, count,lang, offset, size);
   }
 
 }

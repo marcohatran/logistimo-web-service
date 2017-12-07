@@ -70,7 +70,16 @@
     <script src="js/3rdparty/respond.min.js"></script>
     <![endif]-->
 </head>
+<!-- @if (NODE_ENV == 'PRODUCTION' || NODE_ENV == 'DEVELOPMENT') && BULLETIN_BOARD == 'NA' -->
 <body class="mainbody">
+<!-- @endif -->
+<!-- @if (NODE_ENV == 'PRODUCTION' || NODE_ENV == 'DEVELOPMENT') && BULLETIN_BOARD == 'BULLETIN_BOARD' -->
+<!-- comments:uncomment-block html -->
+<!--
+<body class="bulletin-body">
+-->
+<!-- endcomments -->
+<!-- @endif -->
     <div ng-show="showLoadIcon" class="loader">
     </div>
     <div ng-show="showLoadIcon" class="loader-content">

@@ -62,8 +62,8 @@ authServices.factory('iAuthService', ['APIService', '$rootScope', '$q', function
         getAccessToken: function () {
             var token = localStorage.getItem("x-access-token");
             var expires = localStorage.getItem("expires");
-            if (checkNotNullEmpty(token) && checkNotNullEmpty(expires)) {
-                if (expires > new Date().getTime()) {
+            if (checkNotNullEmpty(token)) {
+                if (checkNullEmpty(expires) || expires > new Date().getTime()) {
                     return token;
                 } else {
                     this.removeAccessToken();
