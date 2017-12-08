@@ -146,22 +146,14 @@ angular.module('logistimo.storyboard.storesActivityWidget', [])
         $scope.stackBarOptions.showLabels = 0;
         $scope.stackBarOptions.showXAxisLine = 0;
         $scope.stackBarOptions.showYAxisLine = 0;
-        $scope.stackBarOptions.maxBarHeight = 5;
+        $scope.stackBarOptions.maxBarHeight = 3;
         $scope.stackBarOptions.valueFontColor = '#ffffff';
 
         function setWidgetData(stackData) {
 
 
             $scope.wloading = false;
-            
-            /*if($scope.showChart) {
-                $scope.stackBarOptions.captionFont = 'Helvetica Neue", Arial';
-                $scope.stackBarOptions.subCaptionFontSize = 12;
-                $scope.stackBarOptions.subCaptionFontColor = '#a3a3a3';
-                $scope.stackBarOptions.captionFontBold = 0;
-                $scope.stackBarOptions.caption = $scope.activePercent + '% active';
-                $scope.stackBarOptions.subCaption = $scope.entDomainTotal + ' stores';
-            }*/
+
             $scope.storesActivityWidget = {
                 wId: $scope.widget.id,
                 cType: "stackedbar2d",
