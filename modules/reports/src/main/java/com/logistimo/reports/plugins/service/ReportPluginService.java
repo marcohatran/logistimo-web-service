@@ -243,9 +243,11 @@ public class ReportPluginService implements Service {
         case BY_ASSET_TYPE:
           return "T_ATT";
         case BY_ENTITY_TAGS:
-          return "T_KTAG";
+          return "T_KTT";
         case BY_USER:
           return "T_UT";
+        case BY_CUSTOMER:
+          return "T_CT";
         default:
           return null;
       }
