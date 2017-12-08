@@ -74,7 +74,7 @@ public interface OrderManagementService extends Service {
    */
   String shipNow(IOrder order, String transporter, String trackingId, String reason,
       Date expectedFulfilmentDate,
-      String userId, String ps, int source)
+      String userId, String ps, int source, String referenceId)
       throws ServiceException, ObjectNotFoundException, ValidationException;
 
   /**

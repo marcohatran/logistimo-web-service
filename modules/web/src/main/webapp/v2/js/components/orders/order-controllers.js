@@ -748,6 +748,7 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
             };
 
         function displayShipForm() {
+            $scope.order.ead = parseUrlDate($scope.order.ead);
             $scope.modalInstance = $uibModal.open({
                 templateUrl: 'views/orders/order-status.html',
                 scope: $scope,
@@ -922,6 +923,14 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                             $scope.newStatus.cdrsn = $scope.newStatus.cmrsn;
                         } else {
                             $scope.newStatus.cdrsn = $scope.newStatus.ncdrsn;
+                        }
+                    } else if($scope.newStatus.st == ORDER.COMPLETED) {
+                        if($scope.oCfg.eadm && checkNullEmpty($scope.newStatus.efd)) {
+                            $scope.showWarning($scope.resourceBundle['estimated.date.of.arrival.mandatory.error']);
+                            return;
+                        } else if($scope.oCfg.ridm && checkNullEmpty($scope.newStatus.rid)) {
+                            $scope.showWarning($scope.resourceBundle['reference.id.mandatory.error']);
+                            return;
                         }
                     }
                     $scope.newStatus.orderUpdatedAt = $scope.order.orderUpdatedAt;
@@ -2614,6 +2623,7 @@ ordControllers.controller('NewShipmentController', ['$scope', 'ordService', '$lo
         }).catch(function error(msg) {
             $scope.showErrorMsg(msg);
         }).finally(function(){
+            getMandatoryConfigText();
             $scope.hideLoading();
         });
         $scope.showLoading();
@@ -2643,6 +2653,16 @@ ordControllers.controller('NewShipmentController', ['$scope', 'ordService', '$lo
                     item.nq = angular.copy(item.ytcs);
                 }
             });
+        }
+        function getMandatoryConfigText() {
+            $scope.text = "";
+            if($scope.oCfg.eadm && $scope.oCfg.ridm) {
+                $scope.text = $scope.resourceBundle['estimated.date.of.arrival.reference.id.mandatory'];
+            } else if($scope.oCfg.eadm) {
+                $scope.text += $scope.resourceBundle['estimated.date.of.arrival.mandatory'];
+            } else if($scope.oCfg.ridm) {
+                $scope.text += $scope.resourceBundle['reference.id.mandatory'];
+            }
         }
         $scope.create = function (shipNow) {
             var ind = 0;
@@ -2702,6 +2722,7 @@ ordControllers.controller('NewShipmentController', ['$scope', 'ordService', '$lo
             $scope.shipment.transporter = $scope.transporter;
             $scope.shipment.trackingId = $scope.trackingId;
             $scope.shipment.ps = $scope.ps;
+            $scope.shipment.rid = $scope.rid;
             $scope.shipment.ead = formatDate($scope.ead);
             if (showDialog) {
                 $scope.shipment.ship = 0;
@@ -2720,6 +2741,13 @@ ordControllers.controller('NewShipmentController', ['$scope', 'ordService', '$lo
 
         $scope.shipNewShipment = function () {
             if ($scope.shipment.ship == 0) {
+                if($scope.oCfg.eadm && checkNullEmpty($scope.shipment.ead)) {
+                    $scope.showWarning($scope.resourceBundle['estimated.date.of.arrival.mandatory.error']);
+                    return;
+                } else if($scope.oCfg.ridm && checkNullEmpty($scope.shipment.rid)) {
+                    $scope.showWarning($scope.resourceBundle['reference.id.mandatory.error']);
+                    return;
+                }
                 $scope.shipment.changeStatus = 'sp';
             } else {
                 $scope.shipment.changeStatus = '';
@@ -3638,6 +3666,12 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService','request
                 if($scope.oCfg.tm && checkNullEmpty($scope.shipment.transporter)) {
                     $scope.showWarning($scope.resourceBundle['transportermandatory']);
                     return;
+                } else if($scope.oCfg.eadm && checkNullEmpty($scope.shipment.ead)) {
+                    $scope.showWarning($scope.resourceBundle['estimated.date.of.arrival.mandatory.error']);
+                    return;
+                } else if($scope.oCfg.ridm && checkNullEmpty($scope.shipment.rid)) {
+                    $scope.showWarning($scope.resourceBundle['reference.id.mandatory.error']);
+                    return;
                 }
             }
             $scope.modalInstance = $uibModal.open({
@@ -3740,6 +3774,16 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService','request
                 case 'ps':
                     ordService.updateShipmentPackageSize(content, $scope.sid, $scope.shipment.orderUpdatedAt).then(function(data) {
                         $scope.shipment.ps = $scope.shipment.tempPS;
+                        $scope.showSuccess(data.data.respMsg);
+                        $scope.shipment.orderUpdatedAt = data.data.orderUpdatedAt;
+                        $scope.toggleEdit(field);
+                    }).catch(function error(msg) {
+                        $scope.showErrorMsg(msg);
+                    });
+                    break;
+                case 'rid':
+                    ordService.updateShipmentReferenceId(content, $scope.sid, $scope.shipment.orderUpdatedAt).then(function(data) {
+                        $scope.shipment.rid = $scope.shipment.tempReferenceId;
                         $scope.showSuccess(data.data.respMsg);
                         $scope.shipment.orderUpdatedAt = data.data.orderUpdatedAt;
                         $scope.toggleEdit(field);
@@ -3850,6 +3894,8 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService','request
                 $scope.shipment.tempTrackingId = $scope.shipment.trackingId;
             }else if(field == 'ps'){
                 $scope.shipment.tempPS = $scope.shipment.ps;
+            }else if(field == 'rid') {
+                $scope.shipment.tempReferenceId = $scope.shipment.rid;
             }
             $scope.edit[field] = !$scope.edit[field];
         };
@@ -3953,6 +3999,7 @@ ordControllers.controller('ConsignmentController', ['$scope','$uibModal',  funct
         $scope.sel.selectedRows = [];
         if (newval) {
             for (var i = 0; i < $scope.order.its.length; i++) {
+                $scope.order.ead = parseUrlDate($scope.order.efd);
                 if($scope.order.its[i].q != $scope.order.its[i].isq) {
                     $scope.sel.selectedRows.push(i);
                 }

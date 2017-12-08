@@ -178,6 +178,7 @@ public class ShipmentService extends ServiceImpl implements IShipmentService {
       if (StringUtils.isNotEmpty(model.ead)) {
         shipment.setExpectedArrivalDate(sdf.parse(model.ead));
       }
+      shipment.setReferenceId(model.rid);
       shipment.setNumberOfItems(model.items != null ? model.items.size() : 0);
       shipment.setKioskId(model.customerId);
       shipment.setServicingKiosk(model.vendorId);
@@ -1240,10 +1241,13 @@ public class ShipmentService extends ServiceImpl implements IShipmentService {
           } else if ("ps".equals(entry.getKey())) {
             shipment.setPackageSize(entry.getValue());
           } else if ("rid".equals(entry.getKey())) {
-            try {
-              oms.updateOrderReferenceId(orderId, entry.getValue(), userId, pm);
-            } catch (ServiceException e) {
-              throw new SystemException(e);
+            shipment.setReferenceId(entry.getValue());
+            if(StringUtils.isEmpty(order.getReferenceID())) {
+              try {
+                oms.updateOrderReferenceId(orderId, entry.getValue(), userId, pm);
+              } catch (ServiceException e) {
+                throw new SystemException(e);
+              }
             }
           }
         });

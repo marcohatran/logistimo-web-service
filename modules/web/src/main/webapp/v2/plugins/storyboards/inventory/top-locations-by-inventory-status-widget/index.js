@@ -47,7 +47,8 @@ angular.module('logistimo.storyboard.topLocationsByInventoryStatusWidget', [])
     ['$scope', '$timeout', 'dashboardService', 'domainCfgService', 'INVENTORY', '$sce',
         function ($scope, $timeout, dashboardService, domainCfgService, INVENTORY, $sce) {
             var filter = angular.copy($scope.widget.conf);
-            var invPieColors, invPieOrder, mapRange, mapColors;
+            var invPieColors, invPieOrder, mapRange, mapColors, level;
+            level = getLevel();
             var fDate = (checkNotNullEmpty(filter.date) ? formatDate(filter.date) : undefined);
             $scope.showChart = false;
             $scope.wloading = true;
@@ -136,6 +137,25 @@ angular.module('logistimo.storyboard.topLocationsByInventoryStatusWidget', [])
                         $scope.wloading = false;
                     });
             };
+    
+            function getLevel(){
+                if(checkNullEmpty($scope.dstate)) {
+                    return 'country';
+                }else if(checkNullEmpty($scope.ddist)) {
+                    return 'state';
+                }else {
+                    return 'district'
+                }
+            }
+            if(checkNotNullEmpty(level)){
+                if(level == 'country'){
+                    level = 'states'
+                }else if (level == 'state'){
+                    level = 'districts'
+                }else if (level == 'district'){
+                    level = 'stores'
+                }
+            }
 
             $scope.barOpt = {
                 "showAxisLines": "0",
@@ -145,7 +165,7 @@ angular.module('logistimo.storyboard.topLocationsByInventoryStatusWidget', [])
                 "yAxisMaxValue": 100,
                 "captionFontSize": "12",
                 "captionAlignment": "center",
-                "caption": "Top 10 districts",
+                "caption": "Top 10 " + level,
                 "chartLeftMargin": "50",
                 "captionFontSize": "14",
                 "captionFontBold":1,

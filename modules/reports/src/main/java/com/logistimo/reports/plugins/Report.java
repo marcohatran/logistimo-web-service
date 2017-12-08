@@ -248,7 +248,7 @@ public class Report {
   public Long rac;
   public Long sac;
   public Long tac;
-  public Long diq;
+  public Float diq;
   public Float podq;
   public Float nodq;
   public Float psdq;
@@ -1097,7 +1097,7 @@ public class Report {
   public Long getTransferExpiredRequestCount() {
     return trerc == null ? 0 : trerc;
   }
-  public Long getDemandQty() { return diq == null ? 0 : diq; }
+  public Float getDemandQty() { return diq == null ? 0 : diq; }
 
 
   public Float getPositiveOrderDiscrepancyQuantity() {

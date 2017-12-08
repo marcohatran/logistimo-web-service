@@ -123,7 +123,11 @@ public class OrderExportHandler implements IExportHandler {
               .append(CharacterConstants.COMMA)
               .append(tagSb)
               .append(CharacterConstants.COMMA)
-              .append(crUpSb);
+              .append(crUpSb)
+              .append(CharacterConstants.COMMA)
+              .append(order.getExpectedArrivalDate() != null ?LocalDateUtil
+                  .formatCustom(order.getExpectedArrivalDate(), Constants.DATETIME_CSV_FORMAT,
+                      timezone) : CharacterConstants.EMPTY);
           if (it.hasNext()) {
             csv.append(CharacterConstants.NEWLINE);
           }
@@ -145,7 +149,9 @@ public class OrderExportHandler implements IExportHandler {
             .append(timeSb).append(CharacterConstants.COMMA)
             .append(locationSb).append(CharacterConstants.COMMA)
             .append(CharacterConstants.COMMA) // For material tags
-            .append(tagSb).append(CharacterConstants.COMMA).append(crUpSb);
+            .append(tagSb).append(CharacterConstants.COMMA).append(crUpSb).append(CharacterConstants.COMMA)
+            .append(order.getExpectedArrivalDate() != null ? LocalDateUtil
+                .formatCustom(order.getExpectedArrivalDate(), Constants.DATETIME_CSV_FORMAT, timezone) : CharacterConstants.EMPTY);
       }
 
 			/*// Add custom fields, if any
@@ -460,7 +466,8 @@ public class OrderExportHandler implements IExportHandler {
         .append(CharacterConstants.SPACE).append(jsMessages.getString("fullname.lower"))
         .append(CharacterConstants.COMMA)
         .append(messages.getString("status")).append(CharacterConstants.SPACE)
-        .append(jsMessages.getString("updatedon.lower"));
+        .append(jsMessages.getString("updatedon.lower")).append(CharacterConstants.COMMA)
+        .append(messages.getString("eda"));
 
 				/*if ( fc != null && !fc.isEmpty() ) {
                                         Iterator<String> fields = fc.keys();
