@@ -89,7 +89,7 @@ public class APISecurityFilter implements Filter {
         try {
           SecurityMgr.setSessionDetails(req.getHeader(X_ACCESS_USER));
         } catch (UnauthorizedException | ObjectNotFoundException e) {
-          xLogger.warn("Issue with api client authentication", e);
+          xLogger.warn("Issue with api client authentication", e.getMessage());
           resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
           return;
         } catch (Exception e) {
@@ -101,7 +101,7 @@ public class APISecurityFilter implements Filter {
         try {
           AuthenticationUtil.authenticateTokenAndSetSession(req);
         } catch (UnauthorizedException | ObjectNotFoundException e) {
-          xLogger.warn("Issue with api client authentication", e);
+          xLogger.warn("Issue with api client authentication", e.getMessage());
           resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
           return;
         } catch (Exception e) {

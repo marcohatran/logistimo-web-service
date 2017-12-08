@@ -37,7 +37,7 @@ approvalServices.factory('approvalService', ['APIService', function (apiService)
             }
             urlStr = urlStr + "&embed=order_meta";
 
-            return this.fetch(urlStr);
+            return apiService.get(urlStr);
         },
         fetchApproval: function(approvalId) {
             return apiService.get("/s2/api/order-approvals/" + approvalId);

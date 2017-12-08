@@ -61,8 +61,9 @@ authServices.factory('iAuthService', ['APIService', '$rootScope', '$q', function
         },
         getAccessToken: function () {
             var token = localStorage.getItem("x-access-token");
+            var expires = localStorage.getItem("expires");
             if (checkNotNullEmpty(token)) {
-                if (localStorage.getItem("expires") > new Date().getTime()) {
+                if (checkNullEmpty(expires) || expires > new Date().getTime()) {
                     return token;
                 } else {
                     this.removeAccessToken();
@@ -72,7 +73,9 @@ authServices.factory('iAuthService', ['APIService', '$rootScope', '$q', function
         },
         setAccessToken: function (accessToken, expires) {
             localStorage.setItem("x-access-token", accessToken);
-            localStorage.setItem("expires", expires);
+            if (checkNotNullEmpty(expires)) {
+                localStorage.setItem("expires", expires);
+            }
         },
         removeAccessToken: function () {
             localStorage.removeItem('x-access-token');

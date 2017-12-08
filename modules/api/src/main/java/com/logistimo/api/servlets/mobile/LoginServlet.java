@@ -34,6 +34,7 @@ import com.logistimo.communications.MessageHandlingException;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.SourceConstants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.exception.ValidationException;
 import com.logistimo.logger.XLog;
@@ -320,7 +321,7 @@ public class LoginServlet extends JsonRestServlet {
       //Generate authentication token and update the UserTokens table with userId, Token and Expires
       IUserToken token;
       try {
-        aus = Services.getService(AuthenticationServiceImpl.class);
+        aus = StaticApplicationContext.getBean(AuthenticationService.class);
         token = aus.generateUserToken(userId, SourceConstants.MOBILE);
         if (token != null) {
           resp.setHeader(Constants.TOKEN, token.getRawToken());

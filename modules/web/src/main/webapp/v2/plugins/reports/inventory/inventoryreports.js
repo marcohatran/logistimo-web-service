@@ -84,7 +84,7 @@ function InventoryReportController(s, timeout, getData, reportsServiceCore) {
                 tableHeading[0] = tableHeading[0].charAt(0).toUpperCase() + tableHeading[0].slice(1);
             }
             for (var i = 1; i < tableHeading.length; i++) {
-                tableHeading[i] = formatDateLabel(tableHeading[i], dateFormat);
+                tableHeading[i] = reportCoreFunction().formatDateLabel(tableHeading[i], dateFormat);
             }
         }
     };
@@ -700,5 +700,9 @@ function InventoryReportController(s, timeout, getData, reportsServiceCore) {
     }
 
     getDataNotAvailableText();
+
+    s.isText = function (value) {
+        return typeof value === 'string' || value instanceof String;
+    };
 
 }

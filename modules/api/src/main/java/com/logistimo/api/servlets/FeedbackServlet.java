@@ -25,10 +25,10 @@ package com.logistimo.api.servlets;
 
 import com.logistimo.AppFactory;
 import com.logistimo.auth.service.AuthenticationService;
-import com.logistimo.auth.service.impl.AuthenticationServiceImpl;
 import com.logistimo.communications.service.EmailService;
 import com.logistimo.config.models.GeneralConfig;
 import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.domains.service.DomainsService;
 import com.logistimo.domains.service.impl.DomainsServiceImpl;
 import com.logistimo.entities.entity.IKiosk;
@@ -81,7 +81,7 @@ public class FeedbackServlet extends HttpServlet {
     IUserAccount account;
     if (!"true".equals(request.getParameter("execute"))) {
       try {
-        AuthenticationService as = Services.getService(AuthenticationServiceImpl.class);
+        AuthenticationService as = StaticApplicationContext.getBean(AuthenticationService.class);
         as.authenticateToken(request.getHeader(Constants.TOKEN), 0);
         Map<String, String> params = new HashMap<>(4);
         params.put("text", data);

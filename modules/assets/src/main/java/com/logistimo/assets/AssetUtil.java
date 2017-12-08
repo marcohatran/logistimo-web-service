@@ -81,6 +81,7 @@ import javax.jdo.PersistenceManager;
  * Created by kaniyarasu on 12/11/15.
  */
 public class AssetUtil {
+
   public final static int HTTP_STATUS_UNAUTHORIZED = 401;
   public final static int HTTP_STATUS_CREATED = 201;
   public final static int HTTP_STATUS_NOTFOUND = 404;
@@ -175,9 +176,7 @@ public class AssetUtil {
   }
 
   public static IAsset verifyAndRegisterAsset(Long domainId, String userId, Long kioskId,
-                                              Map<String, Object> variableMap,
-                                              Map<String, Object> metaDataMap)
-      throws ServiceException {
+      Map<String, Object> variableMap, Map<String, Object> metaDataMap) throws ServiceException {
     String assetName = ((String) variableMap.get(ASSET_NAME));
     if (!((String) variableMap.get(SERIAL_NUMBER)).isEmpty()
         && !((String) variableMap.get(MANUFACTURER_NAME)).isEmpty()
@@ -214,7 +213,7 @@ public class AssetUtil {
           throw new ConfigurationException();
         }
         manufacturerId = asc.getManufacturerId(assetType,
-                ((String) variableMap.get(MANUFACTURER_NAME)).toLowerCase());
+            ((String) variableMap.get(MANUFACTURER_NAME)).toLowerCase());
       } catch (ConfigurationException e) {
         throw new ServiceException("Manufacturer is invalid.");
       }
@@ -240,8 +239,8 @@ public class AssetUtil {
         asset.setSerialId((String) variableMap.get(SERIAL_NUMBER));
         asset.setVendorId(manufacturerId);
         asset.setModel((String) variableMap.get(ASSET_MODEL));
-        if(variableMap.get(ASSET_YOM) != null) {
-          asset.setYom(Integer.valueOf((String)variableMap.get(ASSET_YOM)));
+        if (variableMap.get(ASSET_YOM) != null) {
+          asset.setYom(Integer.valueOf((String) variableMap.get(ASSET_YOM)));
         }
         asset.setType(assetType);
         asset.setCreatedBy(userId);
@@ -251,8 +250,8 @@ public class AssetUtil {
           asset.setKioskId(kioskId);
         }
 
-        AssetModel assetModel = AssetUtil.buildAssetModel(domainId,asset,metaDataMap);
-        if(variableMap.get(AssetUtil.TAGS) != null){
+        AssetModel assetModel = AssetUtil.buildAssetModel(domainId, asset, metaDataMap);
+        if (variableMap.get(AssetUtil.TAGS) != null) {
           assetModel.tags = (List<String>) variableMap.get(AssetUtil.TAGS);
         }
         //Registering in LS
@@ -309,7 +308,7 @@ public class AssetUtil {
           }
         }
         AssetModel assetModel = AssetUtil.buildAssetModel(domainId, asset, metaDataMap);
-        if(variableMap.get(AssetUtil.TAGS) != null){
+        if (variableMap.get(AssetUtil.TAGS) != null) {
           assetModel.tags = (List<String>) variableMap.get(AssetUtil.TAGS);
         }
         //Updating asset in LS
@@ -346,7 +345,7 @@ public class AssetUtil {
   }
 
   public static Boolean isManufacturerConfigured(Integer assetType, String manufacturerId,
-                                                 Long domainId) throws ServiceException {
+      Long domainId) throws ServiceException {
     try {
       DomainConfig dc = DomainConfig.getInstance(domainId);
       if (dc != null) {
@@ -445,7 +444,7 @@ public class AssetUtil {
 
 
   public static AssetSystemConfig.Model getAssetModel(Integer assetType, String manufacturerId,
-                                                      String model, Long domainId)
+      String model, Long domainId)
       throws ServiceException {
     try {
       DomainConfig dc = DomainConfig.getInstance(domainId);
@@ -481,7 +480,7 @@ public class AssetUtil {
   }
 
   public static AssetModel buildAssetModel(Long domainId, IAsset asset,
-                                           Map<String, Object> metaDataMap)
+      Map<String, Object> metaDataMap)
       throws ServiceException {
     AssetModel assetModel = new AssetModel();
     assetModel.dId = asset.getSerialId();
@@ -632,8 +631,7 @@ public class AssetUtil {
   }
 
   public static String getAssetsByTag(String tag, String q, String assetType, Integer workingStatus,
-                                      Integer alarmType, Integer alarmDuration, Integer awr,
-                                      Integer page, Integer size) {
+      Integer alarmType, Integer alarmDuration, Integer awr, Integer page, Integer size) {
     try {
       String urlStr = "v2/tags/" + encodeURLParameters(tag) + "/devices?";
 
@@ -707,13 +705,8 @@ public class AssetUtil {
     post("v2/devices/relation", data);
   }
 
-  public static TemperatureResponse getTemperatureResponse(String vendorId,
-                                                                           String deviceId,
-                                                                           String mpOrSensorId,
-                                                                           Integer assetType,
-                                                                           long startTime,
-                                                                           long endTime,
-                                                                           int pageNum, int size) {
+  public static TemperatureResponse getTemperatureResponse(String vendorId, String deviceId,
+      String mpOrSensorId, Integer assetType, long startTime, long endTime, int pageNum, int size) {
     GsonBuilder gsonBuilder = new GsonBuilder();
     Gson gson = gsonBuilder.create();
 
@@ -724,8 +717,8 @@ public class AssetUtil {
 
   // Get temperatures
   public static String getTemperatures(String vendorId, String deviceId, String mpOrSensorId,
-                                       Integer assetType, long startTime, long endTime, int pageNum,
-                                       int size) {
+      Integer assetType, long startTime, long endTime, int pageNum,
+      int size) {
     try {
       String
           path =
@@ -788,7 +781,7 @@ public class AssetUtil {
 
   // Private method to generate Asset events, for high excursion, low excursion and incursion
   public static void generateAssetEvents(Long domainId, EventSpec eventSpec,
-                                         IAssetStatus assetStatus, IAsset asset, int eventType) {
+      IAssetStatus assetStatus, IAsset asset, int eventType) {
     xLogger.fine("Entered generateTemperatureEvents");
     Map<String, EventSpec.ParamSpec> paramSpecs = eventSpec.getParamSpecs();
     // Multiple low excursion and high excursion events can be present based on different "remindminsafter" parameter
@@ -815,13 +808,18 @@ public class AssetUtil {
       }
       params.put(EventConstants.EVENT_TIME, assetStatus.getTs());
 
+      if (IAssetStatus.TYPE_STATE.equals(assetStatus.getType())) {
+        params.put(EventConstants.PARAM_STATUS, assetStatus.getStatus().toString());
+      }
+
       if (assetStatus.getTags() != null && !assetStatus.getTags().isEmpty()) {
         params.put(EventConstants.PARAM_ENTITYTAGSTOEXCLUDE, assetStatus.getTags());
       }
 
       try {
         EventPublisher.generate(domainId, eventType, params,
-            JDOUtils.getImplClass(IAssetStatus.class).getName(), String.valueOf(assetStatus.getId()),
+            JDOUtils.getImplClass(IAssetStatus.class).getName(),
+            String.valueOf(assetStatus.getId()),
             null);
       } catch (EventGenerationException e) {
         xLogger.warn("Exception when generating event for asset {0} in domain {1}: {2}",
@@ -876,8 +874,8 @@ public class AssetUtil {
 
   /**
    * Update asset tags in AMS for the given assets
+   *
    * @param assets List of assets to be moved
-   * @param assetTagsToRegister
    */
   public static void updateAssetTags(List<IAsset> assets, List<String> assetTagsToRegister) {
     try {
@@ -900,7 +898,7 @@ public class AssetUtil {
       ams = Services.getService(AssetManagementServiceImpl.class);
       List<IAsset> assets = ams.getAssetsByKiosk(kioskId);
       if (assets != null && !assets.isEmpty()) {
-       updateAssetTags(assets, assetTagsToRegister);
+        updateAssetTags(assets, assetTagsToRegister);
       }
     } catch (Exception e) {
       xLogger.severe("Error while updating asset tags for the kiosk {0}", kioskId, e);
@@ -968,7 +966,7 @@ public class AssetUtil {
 
   @SuppressWarnings("unchecked")
   public static Map<String, String> constructDeviceMetaDataFromJSON(String parentKey,
-                                                                    Map<String, Object> result) {
+      Map<String, Object> result) {
     Map<String, String> metaDataMap = new HashMap<>(1);
     String currentKey;
     for (String key : result.keySet()) {
@@ -989,7 +987,7 @@ public class AssetUtil {
   }
 
   public static void createAssetRelationship(Long domainId, IAsset fridgeAsset, IAsset sensorAsset,
-                                             List<String> assetTags)
+      List<String> assetTags)
       throws ServiceException {
     //Create relationship
     AssetSystemConfig.Model
@@ -1043,7 +1041,7 @@ public class AssetUtil {
   }
 
   private static List<IAssetRelation> buildAssetRelations(AssetRelationModel assetRelationModel,
-                                                         List<String> tags)
+      List<String> tags)
       throws ServiceException {
     List<IAssetRelation> assetRelationList = new ArrayList<>(assetRelationModel.data.size());
     for (AssetRelationModel.AssetRelations assetRelations : assetRelationModel.data) {
@@ -1054,15 +1052,14 @@ public class AssetUtil {
   }
 
   private static IAssetRelation buildAssetRelation(AssetRelationModel.AssetRelations assetRelations,
-                                                  String userId, List<String> tags) throws ServiceException {
+      String userId, List<String> tags) throws ServiceException {
     IAssetRelation assetRelation = JDOUtils.createInstance(IAssetRelation.class);
     // We support only on relation at this time.
     if (assetRelations.ras != null && assetRelations.ras.size() > 0) {
       AssetRelationModel.Relation relation = assetRelations.ras.get(0);
 
       try {
-        AssetManagementService
-            assetManagementService =
+        AssetManagementService assetManagementService =
             Services.getService(AssetManagementServiceImpl.class);
         IAsset asset, relationAsset = null;
         try {
@@ -1090,9 +1087,8 @@ public class AssetUtil {
             variableMap.put(AssetUtil.ASSET_TYPE, IAsset.TEMP_DEVICE);
             variableMap.put(AssetUtil.TAGS, tags);
             metaDataMap.put(AssetUtil.DEV_MODEL, AssetUtil.SENSOR_DEVICE_MODEL);
-            relationAsset =
-                AssetUtil.verifyAndRegisterAsset(asset.getDomainId(), userId, asset.getKioskId(),
-                    variableMap, metaDataMap);
+            relationAsset = AssetUtil.verifyAndRegisterAsset(asset.getDomainId(), userId,
+                asset.getKioskId(), variableMap, metaDataMap);
           } catch (ServiceException se) {
             xLogger.warn("{0} while register asset {1}, {2}", se.getMessage(), relation.vId,
                 relation.dId, se);
@@ -1120,13 +1116,9 @@ public class AssetUtil {
   }
 
   public static AssetModels.AssetPowerTransitions getAssetPowerTransition(String vendorId,
-                                                                          String deviceId,
-                                                                          Integer from,
-                                                                          Integer to) {
-    String
-        json =
-        get("v2/devices/power/" + vendorId + "/" + encodeURLParameters(deviceId) + "/" + from + "/"
-            + to);
+      String deviceId, Integer from, Integer to) {
+    String json = get("v2/devices/power/" + vendorId + "/" + encodeURLParameters(deviceId) + "/"
+        + from + "/" + to);
 
     if (json != null) {
       return gson.fromJson(json, AssetModels.AssetPowerTransitions.class);

@@ -1156,5 +1156,5 @@ config.rfid.enable=Activer l'analyse RFID sur mobile
 config.barcoding.enable=Activer l'analyse de code-barres sur mobile
 config.barcoding.rfid.enable=Activer le balayage de code-barres / RFID
 profile.number=Nombre de profils
-
-
+auth.info=Autorisez cet appareil en utilisant la clé ci-dessus.
+order.purchase=achat

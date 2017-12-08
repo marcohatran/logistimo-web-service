@@ -31,10 +31,12 @@ public class Report {
   public Long mid;
   public Long kid;
   public Long lkid;
+  public Long oty;
   public String uid;
   public Long mtag;
   public Long ktag;
   public Long utag;
+  public Long otag;
   public String atype;
   public String mtype;
   public String dmodel;
@@ -212,6 +214,82 @@ public class Report {
   //public Long dwn90;
   //public Long dwn100;
   public Map<String,Float> drsn;
+  public Long part;
+  public Long apoc;
+  public Long sart;
+  public Long asoc;
+  public Long tart;
+  public Long atoc;
+  public Long tarc;
+  public Long arc;
+  public Long rrc;
+  public Long crc;
+  public Long erc;
+  public Long ptarc;
+  public Long parc;
+  public Long prrc;
+  public Long pcrc;
+  public Long perc;
+  public Long starc;
+  public Long sarc;
+  public Long srrc;
+  public Long scrc;
+  public Long serc;
+  public Long trtarc;
+  public Long trarc;
+  public Long trrrc;
+  public Long trcrc;
+  public Long trerc;
+  public Long uco;
+  public Long sco;
+  public Long coc;
+  public Long ac;
+  public Long aac;
+  public Long rac;
+  public Long sac;
+  public Long tac;
+  public Long diq;
+  public Float podq;
+  public Float nodq;
+  public Float psdq;
+  public Float nsdq;
+  public Float pfdq;
+  public Float nfdq;
+  public Long podc;
+  public Long nodc;
+  public Long psdc;
+  public Long nsdc;
+  public Long pfdc;
+  public Long nfdc;
+  public Float ppodq;
+  public Float npodq;
+  public Float ppsdq;
+  public Float npsdq;
+  public Float ppfdq;
+  public Float npfdq;
+  public Long tdio;
+  public Long tdis;
+  public Long tdif;
+  public Map<String,Long> podcrsn;
+  public Map<String,Long> psdcrsn;
+  public Map<String,Long> pfdcrsn;
+  public Map<String,Long> nodcrsn;
+  public Map<String,Long> nsdcrsn;
+  public Map<String,Long> nfdcrsn;
+  public Map<String,Float> podqrsn;
+  public Map<String,Float> psdqrsn;
+  public Map<String,Float> pfdqrsn;
+  public Map<String,Float> nodqrsn;
+  public Map<String,Float> nsdqrsn;
+  public Map<String,Float> nfdqrsn;
+  public Map<String,Float> podprsn;
+  public Map<String,Float> psdprsn;
+  public Map<String,Float> pfdprsn;
+  public Map<String,Float> nodprsn;
+  public Map<String,Float> nsdprsn;
+  public Map<String,Float> nfdprsn;
+
+
 
   public Long getDomainId() {
     return did;
@@ -243,6 +321,14 @@ public class Report {
 
   public Long getUserTag() {
     return utag;
+  }
+
+  public Long getOrderTag() {
+    return otag;
+  }
+
+  public Long getOrderType() {
+    return oty;
   }
 
   public String getAssetType() {
@@ -482,6 +568,7 @@ public class Report {
 
   public Long getProcessingTimeCount() {
     return ptc == null ? 0 : ptc;
+
   }
 
   public Long getReceiptCount() {
@@ -936,5 +1023,212 @@ public class Report {
 
   public Long getMatAvailabilityGreaterThan70() {
     return sam70 == null ? 0 : sam70;
+  }
+
+  public Long getApprovedPurchaseOrdersCount() { return apoc == null ? 0 : apoc; }
+  public Long getApprovedSalesOrdersCount() { return asoc == null ? 0 : asoc; }
+  public Long getApprovedTransferOrdersCount() { return atoc == null ? 0 : atoc; }
+  public Long getPurchaseApprovalResponseTime() { return part == null ? 0 : part; }
+  public Long getSalesApprovalResponseTime() { return sart == null ? 0 : sart; }
+  public Long getTransferApprovalResponseTime() { return tart == null ? 0 : tart; }
+  public Long getUserCreatedOrdersCount() {
+    return uco == null ? 0 : uco;
+  }
+  public Long getSystemCreatedOrdersCount() {
+    return sco == null ? 0 : sco;
+  }
+  public Long getTotalApprovalsRequestCreatedCount() {
+    return tarc == null ? 0 : tarc;
+  }
+  public Long getApprovedRequestCount() {
+    return arc == null ? 0 : arc;
+  }
+  public Long getRejectedRequestCount() {
+    return rrc == null ? 0 : rrc;
+  }
+  public Long getCancelledRequestCount() {
+    return crc == null ? 0 : crc;
+  }
+  public Long getExpiredRequestCount() {
+    return erc == null ? 0 : erc;
+  }
+  public Long getPurchaseTotalApprovalsRequestCreatedCount() {
+    return ptarc == null ? 0 : ptarc;
+  }
+  public Long getPurchaseApprovedRequestCount() {
+    return parc == null ? 0 : parc;
+  }
+  public Long getPurchaseRejectedRequestCount() {
+    return prrc == null ? 0 : prrc;
+  }
+  public Long getPurchaseCancelledRequestCount() {
+    return pcrc == null ? 0 : pcrc;
+  }
+  public Long getPurchaseExpiredRequestCount() {
+    return perc == null ? 0 : perc;
+  }
+  public Long getSalesTotalApprovalsRequestCreatedCount() {
+    return starc == null ? 0 : starc;
+  }
+  public Long getSalesApprovedRequestCount() {
+    return sarc == null ? 0 : sarc;
+  }
+  public Long getSalesRejectedRequestCount() {
+    return srrc == null ? 0 : srrc;
+  }
+  public Long getSalesCancelledRequestCount() {
+    return scrc == null ? 0 : scrc;
+  }
+  public Long getSalesExpiredRequestCount() {
+    return serc == null ? 0 : serc;
+  }
+  public Long getTransferTotalApprovalsRequestCreatedCount() {
+    return trtarc == null ? 0 : trtarc;
+  }
+  public Long getTransferApprovedRequestCount() {
+    return trarc == null ? 0 : trarc;
+  }
+  public Long getTransferRejectedRequestCount() {
+    return trrrc == null ? 0 : trrrc;
+  }
+  public Long getTransferCancelledRequestCount() {
+    return trcrc == null ? 0 : trcrc;
+  }
+  public Long getTransferExpiredRequestCount() {
+    return trerc == null ? 0 : trerc;
+  }
+  public Long getDemandQty() { return diq == null ? 0 : diq; }
+
+
+  public Float getPositiveOrderDiscrepancyQuantity() {
+     return podq == null ? 0 : podq;
+  }
+  public Float getNegativeOrderDiscrepancyQuantity() {
+     return nodq == null ? 0 : nodq;
+  }
+  public Float getPositiveShippingDiscrepancyQuantity() {
+    return psdq == null ? 0 : psdq;
+  }
+  public Float getNegativeShippingDiscrepancyQuantity() {
+    return nsdq == null ? 0 : nsdq;
+  }
+  public Float getPositiveFulfillmentDiscrepancyQuantity() {
+     return pfdq == null ? 0 : pfdq;
+  }
+  public Float getNegativeFulfillmentDiscrepancyQuantity() {
+     return nfdq == null ? 0 : nfdq;
+  }
+  public Long getPositiveOrderDiscrepancyCount() {
+     return podc == null ? 0 : podc;
+  }
+  public Long getNegativeOrderDiscrepancyCount() {
+    return nodc == null ? 0 : nodc;
+  }
+  public Long getPositiveShippingDiscrepancyCount() {
+     return psdc == null ? 0 : psdc;
+  }
+  public Long getNegativeShippingDiscrepancyCount() {
+    return nsdc == null ? 0 : nsdc;
+  }
+  public Long getPositiveFulfillmentDiscrepancyCount() {
+     return pfdc == null ? 0 : pfdc;
+  }
+  public Long getNegativeFulfillmentDiscrepancyCount() {
+     return nfdc == null ? 0 : nfdc;
+  }
+  public Float getPositivePercentageOrderDiscrepancyQuantity() {
+     return ppodq == null ? 0 : ppodq;
+  }
+  public Float getNegativePercentageOrderDiscrepancyQuantity() {
+     return npodq == null ? 0 : npodq;
+  }
+  public Float getPositivePercentageShippingDiscrepancyQuantity() {
+     return ppsdq == null ? 0 : ppsdq;
+  }
+  public Float getNegativePercentageShippingDiscrepancyQuantity() {
+     return npsdq == null ? 0 : npsdq;
+  }
+  public Float getPositivePercentageFulfillmentDiscrepancyQuantity() {
+     return ppfdq == null ? 0 : ppfdq;
+  }
+  public Float getNegativePercentageFulfillmentDiscrepancyQuantity() {
+     return npfdq == null ? 0 : npfdq;
+  }
+  public Map<String,Long> getPositiveOrderDiscrepancyCountByReason() {
+    return podcrsn;
+  }
+  public Map<String,Long> getPositiveShippingDiscrepancyCountByReason() {
+    return psdcrsn;
+  }
+  public Map<String,Long> getPositiveFulfillmentDiscrepancyCountByReason() {
+    return pfdcrsn;
+  }
+  public Map<String,Long> getNegativeOrderDiscrepancyCountByReason() {
+    return nodcrsn;
+  }
+  public Map<String,Long> getNegativeShippingDiscrepancyCountByReason() {
+    return nsdcrsn;
+  }
+  public Map<String,Long> getNegativeFulfillmentDiscrepancyCountByReason() {
+    return nfdcrsn;
+  }
+  public Map<String,Float> getPositiveOrderDiscrepancyQuantityByReason() {
+    return podqrsn;
+  }
+  public Map<String,Float> getPositiveShippingDiscrepancyQuantityByReason() {
+    return psdqrsn;
+  }
+  public Map<String,Float> getPositiveFulfillmentDiscrepancyQuantityByReason() {
+    return pfdqrsn;
+  }
+  public Map<String,Float> getNegativeOrderDiscrepancyQuantityByReason() {
+    return nodqrsn;
+
+  }
+  public Map<String,Float> getNegativeShippingDiscrepancyQuantityByReason() {
+    return nsdqrsn;
+  }
+  public Map<String,Float> getNegativeFulfillmentDiscrepancyQuantityByReason() {
+    return nfdqrsn;
+  }
+  public Map<String,Float> getPositiveOrderDiscrepancyPercentageByReason() {
+    return podprsn;
+  }
+  public Map<String,Float> getPositiveShippingDiscrepancyPercentageByReason() {
+    return psdprsn;
+  }
+  public Map<String,Float> getPositiveFulfillmentDiscrepancyPercentageByReason() {
+    return pfdprsn;
+  }
+  public Map<String,Float> getNegativeOrderDiscrepancyPercentageByReason() {
+    return nodprsn;
+  }
+  public Map<String,Float> getNegativeShippingDiscrepancyPercentageByReason() {
+    return nsdprsn;
+  }
+  public Map<String,Float> getNegativeFulfillmentDiscrepancyPercentageByReason() {
+    return nfdprsn;
+  }
+  public Long getTotalOrderDiscrepancyCount() {
+     return (podc == null ? 0 : podc) + (nodc == null ? 0 : nodc);
+  }
+  public Long getTotalShippingDiscrepancyCount() {
+     return (psdc == null ? 0 : psdc) + (nsdc == null ? 0 : nsdc);
+  }
+  public Long getTotalFulfillmentDiscrepancyCount() {
+     return (pfdc == null ? 0 : pfdc) + (nfdc == null ? 0 : nfdc);
+  }
+  public Long getTotalDemandItemsOrderedCount() {
+     return tdio;
+  }
+  public Long getTotalDemandItemsShippedCount() {
+     return tdis;
+  }
+  public Long getTotalDemandItemsFulfilledCount(){
+     return tdif;
+  }
+
+  public Long getTotalLeadTime() {
+    return ((pt == null ? 0 : pt) + (dlt == null ? 0 : dlt));
   }
 }

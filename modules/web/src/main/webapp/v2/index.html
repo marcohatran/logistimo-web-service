@@ -70,7 +70,16 @@
     <script src="js/3rdparty/respond.min.js"></script>
     <![endif]-->
 </head>
+<!-- @if (NODE_ENV == 'PRODUCTION' || NODE_ENV == 'DEVELOPMENT') && BULLETIN_BOARD == 'NA' -->
 <body class="mainbody">
+<!-- @endif -->
+<!-- @if (NODE_ENV == 'PRODUCTION' || NODE_ENV == 'DEVELOPMENT') && BULLETIN_BOARD == 'BULLETIN_BOARD' -->
+<!-- comments:uncomment-block html -->
+<!--
+<body class="bulletin-body">
+-->
+<!-- endcomments -->
+<!-- @endif -->
     <div ng-show="showLoadIcon" class="loader">
     </div>
     <div ng-show="showLoadIcon" class="loader-content">
@@ -174,6 +183,7 @@
   	<script src="js/components/config/domaincfg-service.js"></script>
   	<script src="js/components/config/domaincfg-controller.js"></script>
   	<script src="js/components/config/config-service.js"></script>
+    <script src="js/components/config/config-controllers.js"></script>
     <script src="js/components/config/summarisation-controller.js"></script>
   	<script src="js/components/dashboard/dashboard-services.js"></script>
   	<script src="js/components/dashboard/dashboard-controllers.js"></script>
@@ -233,7 +243,6 @@
     <script src="plugins/storyboards/js/dashboard-repository.js"></script>
     <script src="plugins/storyboards/js/bulletinboard-repository.js"></script>
     <script src="plugins/storyboards/event-summaries/events-map-widget/index.js"></script>
-    <script src="plugins/storyboards/event-summaries/event-summaries-top-ten-widget/index.js"></script>
     <script src="plugins/storyboards/event-summaries/event-summaries-edit-template.js"></script>
 
     <script src="plugins/storyboards/inventory/inventory-status-donut-widget/index.js"></script>

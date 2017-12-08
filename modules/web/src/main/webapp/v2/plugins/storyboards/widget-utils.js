@@ -308,9 +308,9 @@ function constructMapData(event, init, scope, INVENTORY, $sce, mapRange, mapColo
                 o.label = n;
                 o.value = per;
                 if(eventIndicators){
-                    o.value = value;
+                    o.value = per;
                     o.label = o.value;
-                    o.displayValue = o.value.toString();
+                    o.displayValue = value.toString();
                     o.showLabel = 1;
                     scope.mapOpt.labelConnectorAlpha = 1;
                 }else{
@@ -589,7 +589,7 @@ function showError(msg, scope) {
         if (checkNotNullEmpty(msg.data.message)) {
             scope.errorMessage = cleanupString(msg.data.message);
         } else {
-            scope.errorMessage = cleanupString($scope.resourceBundle['general.error']);
+            scope.errorMessage = cleanupString(scope.resourceBundle['general.error']);
         }
     } else if (checkNotNullEmpty(msg.message)) {
         scope.errorMessage = cleanupString(msg.message);
@@ -726,6 +726,17 @@ function getReportFCSeries(data, seriesno, name, type, isLinkDisabled, filterSer
             return series;
         }
     }
+}
+function getHeading(summaries, $scope) {
+    var location = "";
+    if(checkNotNullEmpty($scope.ddist)) {
+        location = summaries.length > 1 ? $scope.resourceBundle['kiosks.lowercase'] : $scope.resourceBundle['kiosk.lowercase'];
+    } else if(checkNotNullEmpty($scope.dstate)) {
+        location = summaries.length > 1 ? "districts" : "district";
+    } else if(checkNotNullEmpty($scope.dcntry)){
+        location = summaries.length > 1 ? "states" : "state";
+    }
+    return "Top " + summaries.length + " " + location
 }
 
 function getDonutRadius(width, height) {

@@ -2471,7 +2471,10 @@ ordControllers.controller('order.MaterialController', ['$scope', 'invService',
         };
         $scope.recommendedQuantity = function(name){
             var opoq = -1;
-            var stock = name.validBatchStock || name.stk;
+            var stock = name.stk;
+            if(checkNotNull(name.validBatchStock)) {
+                stock = name.validBatchStock;
+            }
             if(name.im == 'sq'){
                 opoq = name.eoq;
             }else if(name.max > 0){

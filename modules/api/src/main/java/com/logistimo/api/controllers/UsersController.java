@@ -38,7 +38,6 @@ import com.logistimo.auth.SecurityConstants;
 import com.logistimo.auth.SecurityMgr;
 import com.logistimo.auth.SecurityUtil;
 import com.logistimo.auth.service.AuthenticationService;
-import com.logistimo.auth.service.impl.AuthenticationServiceImpl;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.auth.utils.SessionMgr;
 import com.logistimo.communications.MessageHandlingException;
@@ -117,6 +116,14 @@ public class UsersController {
 
   @Autowired
   private UsersService usersService;
+
+  private AuthenticationService authenticationService;
+
+  @Autowired
+  public void setAuthenticationService(
+      AuthenticationService authenticationService) {
+    this.authenticationService = authenticationService;
+  }
 
   private Results getUsers(String q, HttpServletRequest request, int offset, int size,
                            boolean isSuggest, boolean activeUsersOnly, boolean includeSuperusers,
@@ -653,10 +660,7 @@ public class UsersController {
       IUserAccount ua = builder.buildUserAccount(userModel, user);
       if (ua.getUserId() != null) {
         if (exp != userModel.atexp) {
-          AuthenticationService
-              aus =
-              Services.getService(AuthenticationServiceImpl.class, locale);
-          aus.clearUserTokens(userId, false);
+          authenticationService.clearUserTokens(userId, false);
         }
         as.updateAccount(ua, sUser.getUsername());
       } else {
@@ -685,7 +689,6 @@ public class UsersController {
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     try {
       UsersService as = Services.getService(UsersServiceImpl.class, locale);
-      AuthenticationService aus = Services.getService(AuthenticationServiceImpl.class);
       IUserAccount user = as.getUserAccount(userId);
       if (!GenericAuthoriser.authoriseUser(request, userId)) {
         throw new UnauthorizedException(backendMessages.getString("permission.denied"));
@@ -694,7 +697,7 @@ public class UsersController {
         return backendMessages.getString("invalid.lowercase");
       }
       as.changePassword(userId, opw, pw);
-      aus.clearUserTokens(userId, false);
+      authenticationService.clearUserTokens(userId, false);
       xLogger.info("AUDITLOG \t {0} \t {1} \t USER \t " +
               "UPDATE PASSWORD \t {2} \t {3}", domainId, sUser.getUsername(), userId,
           user.getFullName());
@@ -722,13 +725,12 @@ public class UsersController {
     Long domainId = SessionMgr.getCurrentDomain(request.getSession(), loggedInUserId);
     try {
       UsersService as = Services.getService(UsersServiceImpl.class, locale);
-      AuthenticationService aus = Services.getService(AuthenticationServiceImpl.class);
-      String newPassword = aus.generatePassword(userId);
+      String newPassword = authenticationService.generatePassword(userId);
       String msg = backendMessages.getString("password.reset.success") + ": " + newPassword;
       String logMsg = backendMessages.getString("password.reset.success.log");
       IUserAccount ua = as.getUserAccount(userId);
       as.changePassword(userId, null, newPassword);
-      aus.updateUserSession(userId, null);
+      authenticationService.updateUserSession(userId, null);
       MessageService
           ms =
           MessageService
@@ -758,7 +760,6 @@ public class UsersController {
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     try {
       UsersService as = Services.getService(UsersServiceImpl.class, locale);
-      AuthenticationService aus = Services.getService(AuthenticationServiceImpl.class);
       IUserAccount ua = as.getUserAccount(userId);
       if (GenericAuthoriser.authoriseUser(request, userId)) {
         if ("e".equals(action)) {
@@ -768,7 +769,7 @@ public class UsersController {
           return backendMessages.getString("user.account.enabled") + " " + MsgUtil.bold(userId);
         } else {
           as.disableAccount(userId);
-          aus.updateUserSession(userId, null);
+          authenticationService.updateUserSession(userId, null);
           xLogger.info("AUDITLOG \t {0} \t {1} \t USER \t " +
               "DISABLE \t {2} \t {3}", domainId, sUser.getUsername(), userId, ua.getFullName());
           return backendMessages.getString("user.account.disabled") + " " + MsgUtil.bold(userId);
@@ -1030,12 +1031,9 @@ public class UsersController {
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     if (userId != null) {
       try {
-        AuthenticationService
-            aus =
-            Services.getService(AuthenticationServiceImpl.class, locale);
         UsersService as = Services.getService(UsersServiceImpl.class, locale);
         IUserAccount userAccount = as.getUserAccount(userId);
-        success = aus.clearUserTokens(userId, false);
+        success = authenticationService.clearUserTokens(userId, false);
         if (success) {
           return backendMessages.getString("user.force.logout") + " " + MsgUtil
               .bold(userAccount.getFullName());

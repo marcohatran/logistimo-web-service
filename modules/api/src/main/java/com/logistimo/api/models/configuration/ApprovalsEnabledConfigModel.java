@@ -21,17 +21,13 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.reports.plugins.models;
+package com.logistimo.api.models.configuration;
 
-import com.logistimo.reports.models.ReportDataModel;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-public class TableResponseModel {
-  public List<String> headings = new ArrayList<>();
-  public Map<String, List<List<ReportDataModel>>> table;
-  public List<String> metrics;
-  public Map<String,List<String>> metricsMap;
+/**
+ * Created by vani on 17/11/17.
+ */
+public class ApprovalsEnabledConfigModel {
+  public boolean itae;
+  public boolean ipae;
+  public boolean isae;
 }

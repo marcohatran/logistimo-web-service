@@ -21,17 +21,24 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.reports.plugins.models;
+package com.logistimo.api.models;
 
-import com.logistimo.reports.models.ReportDataModel;
+import java.math.BigDecimal;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+/**
+ * Created by charan on 05/12/17.
+ */
+public class SimulateRequestModel {
+  public Long entityId;
+  public String startDate;
+  public int duration;
+  public String periodicity;
+  public BigDecimal stockOnHand;
+  public float issueMean;
+  public float issueStdDev;
+  public float receiptMean;
+  public float receiptStdDev;
+  public int zeroStockDaysLow;
+  public int zeroStockDaysHigh;
 
-public class TableResponseModel {
-  public List<String> headings = new ArrayList<>();
-  public Map<String, List<List<ReportDataModel>>> table;
-  public List<String> metrics;
-  public Map<String,List<String>> metricsMap;
 }

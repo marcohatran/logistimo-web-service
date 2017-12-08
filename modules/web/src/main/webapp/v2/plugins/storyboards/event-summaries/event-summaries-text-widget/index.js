@@ -63,7 +63,7 @@ angular.module('logistimo.storyboard.eventSummariesTextWidget', [])
             $scope.wloading = true;
             $scope.showError = false;
             $scope.noData = false;
-            eventSummaryService.getEventSummariesByEventId($scope.currentDomain, $scope.curUser, $scope.widget.conf.threshold, 0, 10).then(function (data) {
+            eventSummaryService.getEventSummariesDistribution($scope.currentDomain, $scope.curUser, $scope.widget.conf.threshold, false).then(function (data) {
                 if(checkNotNullEmpty(data.data) && checkNotNullEmpty(data.data.summaries)) {
                     buildSummariesText(data.data.summaries);
                 } else {

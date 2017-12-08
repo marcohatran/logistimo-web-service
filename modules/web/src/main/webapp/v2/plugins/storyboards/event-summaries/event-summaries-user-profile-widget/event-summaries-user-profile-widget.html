@@ -36,22 +36,28 @@
     <div ng-show="noData" class="col-sm-12" style="display: table; text-align:center; width:100%; height: {{widget.computedHeight}}px">
         <span class="widget-no-data">No data to display</span>
     </div>
-    <div ng-show="!wloading && !showError">
-        <div class="row">
-            <div class="col-sm-12"  ng-repeat="item in profiles">
-                <div class="panel panel-default" style="border:none;">
+    <div ng-show="!wloading && !showError && !noData">
+        <div class="summary-title pt15" style="padding-bottom:15px;">
+            {{heading}}
+        </div>
+            <div ng-repeat="item in profiles" class="user-profile-card">
+                <div class="panel-default">
                     <div class="panel-body">
                         <div class="col-sm-8">
-                            <p class="widget-text table-min">{{item.name}}</p>
-                            <p class="widget-text table-min" style="color:grey;">{{item.title}}</p>
-                            <p class="widget-text table-min" style="color:grey;">{{item.user}}</p>
+                            <p class="widget-text user-profile-text table-min">{{item.name}}</p>
+                            <p class="widget-text user-profile-text table-min" style="color:grey;">{{item.title}}</p>
+                            <p ng-show="item.type == 'critical'" class="widget-text user-profile-text table-min" style="color:grey">{{item.subtitle}}</p>
                         </div>
-                        <div class="col-sm-4">
+                        <div class="col-sm-4 text-center" ng-if="item.show_image">
                             <img class="widget-profile-image" src="{{item.image_url}}"/>
+                            <p class="widget-text table-min pt5 user-profile-name-text">{{item.user}}</p>
+                        </div>
+                        <div class="col-sm-4 text-center" ng-if="!item.show_image">
+                            <span class="glyphicon glyphicon-user" style="font-size: 50px; color: darkgrey"></span>
+                            <p class="widget-text table-min pt5 user-profile-name-text">{{item.user}}</p>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
     </div>
 </div>

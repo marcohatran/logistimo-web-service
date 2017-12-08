@@ -30,7 +30,7 @@ angular.module('logistimo.storyboard.eventMapWidget', [])
     ['$scope', '$timeout', 'dashboardService', 'domainCfgService', 'INVENTORY', '$sce','eventSummaryService',
         function ($scope, $timeout, dashboardService, domainCfgService, INVENTORY, $sce,eventSummaryService) {
             var filter = angular.copy($scope.widget.conf);
-            var invPieOrder, mapRange, mapColors;
+            var invPieOrder, mapRange, maxValue = 0;
             var fDate = (checkNotNullEmpty(filter.date) ? formatDate(filter.date) : undefined);
             $scope.showChart = false;
             $scope.wloading = true;
@@ -92,36 +92,81 @@ angular.module('logistimo.storyboard.eventMapWidget', [])
                 }
             }
             
+            Array.prototype.insert = function (index) {
+                this.splice.apply(this, [index, 0].concat(
+                    Array.prototype.slice.call(arguments, 1)));
+                return this;
+            };
 
             function loadLocationMap() {
-                var eventId = $scope.widget.conf.threshold;
-                eventSummaryService.getEventSummariesDistribution($scope.currentDomain,$scope.curUser,eventId,true).then(function(data){
+                var eventId = $scope.widget.conf.threshold, countDistribution =[];
+                eventSummaryService.getEventSummariesDistribution($scope.currentDomain,$scope.curUser,eventId,true).then(function(data) {
                     $scope.dashboardView = {};
-                    $scope.dashboardView.distribution = data.data.summaries[0].distribution;
-                    $scope.dashboardView.eventType = data.data.summaries[0].type;
-                    $scope.dashboardView.mLev = getLevel();
-                    $scope.dashboardView.event = {};
-                    $scope.dashboardView.event['es'] = {};
-                    $scope.dashboardView.event['es'] = getEventLocationData($scope.dashboardView.distribution);
-                    if(checkNotNullEmpty($scope.ddist)){
+                    if (checkNotNullEmpty($scope.ddist)) {
                         $scope.mapType = $scope.ddist;
-                        $scope.dashboardView.mTy = $scope.ddist;
-                    } else if(checkNotNullEmpty($scope.dstate)){
-                        $scope.mapType = $scope.dstate;
-                        $scope.dashboardView.mTy = $scope.dstate;
-                    } else if(checkNotNullEmpty($scope.dcntry)){
-                        $scope.mapType = $scope.locationMapping.data[$scope.dcntry].name;
+                        $scope.dashboardView.mTy = $scope.ddist.replace(' ', '');
+                        $scope.dashboardView.mTyNm = $scope.dstate;
+                        $scope.mapData = [];
+                    } else if (checkNotNullEmpty($scope.dstate)) {
+                        $scope.dashboardView.mTy = $scope.dstate.replace(' ', '');
+                        $scope.mapType = $scope.dashboardView.mTy;
+                        $scope.dashboardView.mTyNm = $scope.dstate;
+                    } else if (checkNotNullEmpty($scope.dcntry)) {
+                        $scope.dashboardView.mTy = $scope.dcntry.replace(' ', '');
+                        $scope.mapType = $scope.locationMapping.data[$scope.dashboardView.mTy].name;
                         $scope.dashboardView.mTy = $scope.dcntry;
                     }
-                    if($scope.dashboardView.eventType == 'performance'){
-                        mapColors['es'] = mapColors['n'];
-                        mapRange['es'] = mapRange['n'];
+                    $scope.dashboardView.mLev = getLevel();
+                    if (checkNotNullEmpty(data.data.summaries)) {
+                        $scope.dashboardView.distribution = data.data.summaries[0].distribution;
+                        $scope.dashboardView.eventType = data.data.summaries[0].type;
+                        countDistribution = getCounts($scope.dashboardView.distribution);
+                        maxValue = getMax(countDistribution);
+                        $scope.dashboardView.event = {};
+                        $scope.dashboardView.event['es'] = {};
+                        $scope.dashboardView.event['es'] = getEventLocationData($scope.dashboardView.distribution);
+                        
+                        if ($scope.dashboardView.eventType == 'performance') {
+                            mapColors['es'] = mapColors['n'];
+                            mapColors['es'].insert(0, '#cccccc');
+                            mapRange['es'] = mapRange['n'];
+                            mapRange['es'].insert(0, 0);
+                            mapRange['es'][1] = 0.1;
+
+                        } else {
+                            mapColors['es'] = mapColors[200];
+                            mapColors['es'].insert(0, '#cccccc');
+                            mapRange['es'] = mapRange[200];
+                            mapRange['es'].insert(0, 0);
+                            mapRange['es'][1] = 0.1;
+                        }
+                        constructMapData($scope.mapEvent, true, $scope, INVENTORY, $sce, mapRange, mapColors,
+                            invPieOrder, $timeout);
                     }else{
-                        mapColors['es'] = mapColors[200];
-                        mapRange['es'] = mapRange[200];
+                        $scope.mapData = [];
+                        $scope.mapOpt = {
+                            "nullEntityColor": "#cccccc",
+                            "nullEntityAlpha": "50",
+                            "hoverOnNull": "0",
+                            "showLabels": "0",
+                            "showCanvasBorder": "0",
+                            "useSNameInLabels": "0",
+                            "toolTipSepChar": ": ",
+                            "legendPosition": "BOTTOM",
+                            "borderColor": "FFFFFF",
+                            "interactiveLegend": 1,
+                            "exportEnabled": 0,
+                            "baseFontColor": "#000000",
+                            "captionFontSize": "14",
+                            "captionAlignment": "left",
+                            "legendPosition": "bottom", // we can set only bottom or right.
+                            "alignCaptionWithCanvas": 1,
+                            "labelConnectorAlpha":0,
+                            "captionFontBold":1,
+                            "captionFont":'Helvetica Neue, Arial'
+
+                        };
                     }
-                    constructMapData($scope.mapEvent, true, $scope, INVENTORY, $sce, mapRange, mapColors,
-                        invPieOrder, $timeout);
                     setWidgetData();
                 }).catch(function error(msg) {
                     showError(msg, $scope);
@@ -134,37 +179,47 @@ angular.module('logistimo.storyboard.eventMapWidget', [])
 
             function getLevel(){
                 $scope.dashboardView.mPTy = $scope.dcntry;
-                if(checkNotNullEmpty($scope.dstate)){
-                    if(checkNotNullEmpty($scope.ddist)){
-                        return 'district';
-                    }else {
-                        $scope.dashboardView.mPTy = $scope.dstate;
-                        return 'state';
-                    }
-                }else{
-                    return 'country'
+                if(checkNullEmpty($scope.dstate)) {
+                    return 'country';
+                }else if(checkNullEmpty($scope.ddist)) {
+                    return 'state';
+                }else {
+                    return 'district'
                 }
             }
-
 
             function getEventLocationData(obj){
                 var locData = obj;
                 var eventLocationData = {};
                 for (var i = 0; i < locData.length; i++) {
-
                     if($scope.dashboardView.mLev == 'country'){
                         eventLocationData[locData[i].location.state] = {};
                         eventLocationData[locData[i].location.state].value= locData[i].count;
-                        $scope.dashboardView.mTyNm = locData[i].location.state;
-
+                        eventLocationData[locData[i].location.state].per= getPercentile(locData[i].count);
                     } else if($scope.dashboardView.mLev == 'state'){
                         eventLocationData[locData[i].location.district] = {};
                         eventLocationData[locData[i].location.district].value= locData[i].count;
+                        eventLocationData[locData[i].location.district].per= getPercentile(locData[i].count);
                     }
-
                 }
                 return eventLocationData;
+            }
 
+            function getCounts(obj){
+                var locData = obj;
+                var locCounts = [];
+                for (var i = 0; i < locData.length; i++) {
+                    locCounts.push(locData[i].count);
+                }
+                return locCounts;
+            }
+
+            function getMax(arr){
+                return Math.max.apply(null, arr);
+            }
+
+            function getPercentile(n) {
+                return (n/maxValue) * 100;
             }
 
             function setWidgetData() {

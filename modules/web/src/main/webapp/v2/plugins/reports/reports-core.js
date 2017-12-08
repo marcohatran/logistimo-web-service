@@ -51,29 +51,41 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
 
     reportsPluginCore.controller('rptCoreController', ReportCoreController);
 
-    ReportCoreController.$inject = ['$scope', '$timeout','domainCfgService'];
+    ReportCoreController.$inject = ['$scope', '$timeout', 'domainCfgService'];
 
-    function ReportCoreController($scope, $timeout,domainCfgService ) {
+    function ReportCoreController($scope, $timeout, domainCfgService) {
 
-        $scope.loadingConfig = true;
-        if(!assetWidgets) {
+        var configLoadCount = 0;
+        $scope.loadingConfig = false;
+        function showLoadConfig(){
+            configLoadCount++;
+            $scope.loadingConfig = true;
+        }
+        function hideLoadConfig(){
+            configLoadCount--;
+            if(configLoadCount == 0) {
+                $scope.loadingConfig = false;
+            }
+        }
+        if (!assetWidgets) {
             assetWidgets = angular.copy(reportWidgets['Assets']);
         }
-        domainCfgService.getAssetCfg().then(function(data){
+        showLoadConfig();
+        domainCfgService.getAssetCfg().then(function (data) {
             switch (data.data.enable) {
                 case 0:
                     delete reportWidgets['Assets'];
                     break;
                 case 1:
                     for (var w in reportWidgets) {
-                        switch(w) {
+                        switch (w) {
                             case 'Assets':
                                 break;
                             case 'Activity':
                                 // Remove all reports other than Domain activity
                                 for (var i = reportWidgets[w].length - 1; i >= 0; i--) {
                                     if (reportWidgets[w][i].subReport !== 'Domain activity') {
-                                        reportWidgets[w].splice(i,1);
+                                        reportWidgets[w].splice(i, 1);
                                     }
                                 }
                                 break;
@@ -84,26 +96,51 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
                     }
                     break;
                 default:
-                    if(checkNullEmpty(reportWidgets['Assets'])) {
+                    if (checkNullEmpty(reportWidgets['Assets'])) {
                         reportWidgets['Assets'] = angular.copy(assetWidgets);
                         reportWidgets = sortObject(reportWidgets);
                     }
                     break;
             }
-        }).finally(function() {
-            $scope.loadingConfig = false;
+        }).finally(function () {
+            hideLoadConfig();
+        });
+
+        showLoadConfig();
+        domainCfgService.getApprovalsEnabledConfig().then(function (data) {
+            if (checkNotNullEmpty(data.data)) {
+                var transferApprovalsEnabled = data.data.itae;
+                var purchaseApprovalsEnabled = data.data.ipae;
+                var salesApprovalsEnabled = data.data.isae;
+                if (!transferApprovalsEnabled && !purchaseApprovalsEnabled && !salesApprovalsEnabled) {
+                    for (var w in reportWidgets) {
+                        if (w == 'Order') {
+                            for (var i = reportWidgets[w].length - 1; i >= 0; i--) {
+                                if (reportWidgets[w][i].id === 'oart' || reportWidgets[w][i].id === 'oars') {
+                                    reportWidgets[w].splice(i, 1);
+                                }
+                            }
+                        }
+                    }
+                }
+
+            }
+        }).catch(function error(msg) {
+            $scope.showErrorMsg(msg);
+        }).finally(function () {
+            hideLoadConfig();
         });
 
         $scope.$on("$routeChangeSuccess", function (event, current, previous) {
             if (current.params.rptid != previous.params.rptid) {
                 $scope.tempReport = $scope.report;
                 $scope.report = undefined;
-                $timeout(function(){
+                $timeout(function () {
                     $scope.rptid = current.params.rptid;
                     reloadWidget();
                     $scope.toggleMenu();
-                },100);
-            }else if(checkNotNullEmpty($scope.rptid)){
+                }, 100);
+            } else if (checkNotNullEmpty($scope.rptid)) {
                 $scope.hideMenu = true;
             }
         });
@@ -114,7 +151,7 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
             if ($scope.rptid == 'cr') {
                 $scope.heading = 'Custom report';
                 $scope.report = 'Custom Report';
-            } else if(checkNullEmpty($scope.rptid)) {
+            } else if (checkNullEmpty($scope.rptid)) {
                 $scope.hideMenu = false;
             } else {
                 for (var w in reportWidgets) {
@@ -122,7 +159,7 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
                         if (data.id == $scope.rptid) {
                             $scope.widget = data.widget;
                             $scope.heading = data.subReport;
-                            if(checkNotNullEmpty(data.helpFile)) {
+                            if (checkNotNullEmpty(data.helpFile)) {
                                 $scope.helpURL = "/v2/help/report/" + data.helpFile + ".html";
                             }
                             $scope.report = w;
@@ -135,6 +172,7 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
                 }
             }
         }
+
         reloadWidget();
 
         function getReportDataAsCSV(data, heading) {
@@ -158,30 +196,30 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
             var csvHeading = angular.copy(heading);
             var isKiosk = false;
             var isAsset = false;
-            if(csvHeading[0] == $scope.resourceBundle['kiosk']) {
+            if (csvHeading[0] == $scope.resourceBundle['kiosk']) {
                 csvHeading.splice(1, 0, $scope.resourceBundle['state']);
                 csvHeading.splice(1, 0, $scope.resourceBundle['district']);
                 csvHeading.splice(1, 0, $scope.resourceBundle['taluk']);
                 csvHeading.splice(1, 0, $scope.resourceBundle['city']);
                 isKiosk = true;
-            }else if(csvHeading[0] == $scope.resourceBundle['asset.serial.number']){
+            } else if (csvHeading[0] == $scope.resourceBundle['asset.serial.number']) {
                 isAsset = true;
             }
-            if(isAsset){
+            if (isAsset) {
                 var csvData = getAssetColumns(csvHeading);
-            }else{
+            } else {
                 csvData = csvHeading.join(comma);
             }
             csvData += nl;
-            for(var key in data) {
+            for (var key in data) {
                 var location = key.split("|");
-                if(isKiosk) {
+                if (isKiosk) {
                     csvData += location[0];
                     csvData += comma + location[2];
                     csvData += comma + location[3];
                     csvData += comma + location[4];
                     csvData += comma + location[5];
-                }else if(isAsset){
+                } else if (isAsset) {
                     var assetMetaData = key.split("|||");
                     var vid_sid = assetMetaData[0].split('_');
                     csvData += vid_sid.splice(1).join() + comma;
@@ -191,10 +229,10 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
                     csvData += comma + cleanupLocationField(assetMetaData[7]);
                     csvData += comma + cleanupLocationField(assetMetaData[8]);
                     csvData += comma + cleanupLocationField(assetMetaData[9]);
-                }else {
+                } else {
                     csvData += location[0];
                 }
-                for (var j = 0; j < heading.length-1; j++) {
+                for (var j = 0; j < heading.length - 1; j++) {
                     csvData += comma + data[key][j][tableSeriesNo].value || 0;
                 }
                 csvData += nl;
@@ -202,25 +240,25 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
             return csvData;
         }
 
-        function cleanupLocationField(location){
-            var value = ((checkNullEmpty(location) || location.trim() == ',') ? '':  location);
-            if(checkNotNullEmpty(value) && value.charAt(0) == ','){
+        function cleanupLocationField(location) {
+            var value = ((checkNullEmpty(location) || location.trim() == ',') ? '' : location);
+            if (checkNotNullEmpty(value) && value.charAt(0) == ',') {
                 value = value.substring(1);
             }
             return "\"" + value.trim() + "\"";
         }
 
-        function getAssetColumns(csvHeading){
+        function getAssetColumns(csvHeading) {
             return csvHeading[0] + ',' + $scope.resourceBundle['assetModel'] + ','
                 + $scope.resourceBundle['manufacturer'] + ',' + $scope.resourceBundle['kiosk']
-                + ',' + $scope.resourceBundle['city'] +',' + $scope.resourceBundle['taluk'] +','
-                + $scope.resourceBundle['district'] +',' + $scope.resourceBundle['state'] + ','
+                + ',' + $scope.resourceBundle['city'] + ',' + $scope.resourceBundle['taluk'] + ','
+                + $scope.resourceBundle['district'] + ',' + $scope.resourceBundle['state'] + ','
                 + $scope.resourceBundle['country'] + ',' + csvHeading.splice(1).join(',');
         }
 
         $scope.exportAsCSV = function (data, headings, fileName, tableSeriesNo) {
             var csvData;
-            if(tableSeriesNo !== undefined) {
+            if (tableSeriesNo !== undefined) {
                 csvData = getReportTableDataAsCSV(data, headings, tableSeriesNo);
             } else {
                 csvData = getReportDataAsCSV(data, headings);
@@ -229,7 +267,7 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
         };
 
         $scope.toggleMenu = function () {
-            if($scope.report) {
+            if ($scope.report) {
                 $scope.hideMenu = !$scope.hideMenu;
             }
         };
@@ -263,46 +301,49 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
     reportsPluginCore.directive('rptModelFilter', modelFilter);
     reportsPluginCore.directive('rptWidgetBase', widgetBase);
     reportsPluginCore.directive('rptLastRunTime', lastRunTime);
+    reportsPluginCore.directive('rptOrderTypeFilter', orderTypeFilter);
     reportsPluginCore.directive('rptExportData', exportData);
 
-    LocationFilterController.$inject = ['$scope','entityService'];
+    LocationFilterController.$inject = ['$scope', 'entityService'];
     MaterialFilterController.$inject = ['$scope', '$q', 'matService'];
     EntityFilterController.$inject = ['$scope', '$q', 'entityService'];
     EntityRelationFilterController.$inject = ['$scope', '$q', 'entityService'];
     TagFilterController.$inject = ['$scope', 'domainCfgService'];
     DateFilterController.$inject = ['$scope', '$timeout'];
     PeriodicityFilterController.$inject = ['$scope'];
-    AssetFilterController.$inject = ['$scope','domainCfgService'];
+    AssetFilterController.$inject = ['$scope', 'domainCfgService'];
     MonitorTypeFilterController.$inject = ['$scope'];
-    ManufacturerFilterController.$inject = ['$scope','domainCfgService'];
-    ModelFilterController.$inject = ['$scope','$q', 'assetService'];
-    AggregationLastRunTimeController.$inject = ['$scope','reportsServiceCore'];
+    ManufacturerFilterController.$inject = ['$scope', 'domainCfgService'];
+    ModelFilterController.$inject = ['$scope', '$q', 'assetService'];
+    AggregationLastRunTimeController.$inject = ['$scope', 'reportsServiceCore'];
+    OrderTypeFilterController.$inject = ['$scope'];
     ExportController.$inject = ['$scope'];
 
     function ageFilter() {
-        function getYears(offset){
+        function getYears(offset) {
             var currentYear = new Date().getFullYear();
             var years = [];
-            var i=0;
-            while ((currentYear + offset - i) >= 1980){
+            var i = 0;
+            while ((currentYear + offset - i) >= 1980) {
                 years.push(currentYear + offset - i);
                 i++;
             }
             return years;
         }
+
         return {
             restrict: 'E',
             scope: {
                 filterModel: '=',
                 filterType: '@',
-                preSelected:'=',
-                ngDisabled:'='
+                preSelected: '=',
+                ngDisabled: '='
             },
-            link: function(scope,element,attrs){
+            link: function (scope, element, attrs) {
                 scope.years = getYears(+attrs.offset);
                 scope.selected = scope.years[0];
             },
-            templateUrl: function() {
+            templateUrl: function () {
                 return 'plugins/reports/filters/asset-age.html';
             }
         };
@@ -323,7 +364,7 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
         reportCoreService.getAggregatedTime($scope.reportType).then(function (data) {
             $scope.lastRuntime = data.data;
         }).catch(function error() {
-            $scope.lastRuntime=undefined;
+            $scope.lastRuntime = undefined;
         });
     }
 
@@ -340,8 +381,8 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
     }
 
     function ExportController($scope) {
-        $scope.exportData = function() {
-            $scope.callback({reportType:$scope.reportType});
+        $scope.exportData = function () {
+            $scope.callback({reportType: $scope.reportType});
         }
     }
 
@@ -354,14 +395,14 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
                 multiple: '@',
                 limit: '@',
                 filterType: '@',
-                preSelected:'=',
-                ngDisabled:'='
+                preSelected: '=',
+                ngDisabled: '='
             },
             controller: LocationFilterController,
             bindToController: true,
             controllerAs: 'lf',
-            templateUrl: function(elem, attr) {
-                if(attr.multiple) {
+            templateUrl: function (elem, attr) {
+                if (attr.multiple) {
                     return 'plugins/reports/filters/multiple-location-filter.html';
                 } else {
                     return 'plugins/reports/filters/location-filter.html';
@@ -375,7 +416,7 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
         var lf = this;
         lf.limit = lf.limit || DEFAULT_COMPARE_LIMIT;
         lf.model = {selectModel: lf.filterModel};
-        if(lf.multiple) {
+        if (lf.multiple) {
             $scope.$watch('lf.filterModel', function (newValue, oldValue) {
                 if (newValue != oldValue) {
                     lf.model = {selectModel: newValue};
@@ -390,8 +431,8 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
             lf.loadingData = true;
             return entityService.getLocationSuggestion(text, lf.filterType).then(function (data) {
                 var d = [];
-                angular.forEach(data.data, function(l){
-                    if(checkNullEmpty(lf.preSelected) || l.label != lf.preSelected.label) {
+                angular.forEach(data.data, function (l) {
+                    if (checkNullEmpty(lf.preSelected) || l.label != lf.preSelected.label) {
                         d.push(l);
                     }
                 });
@@ -401,6 +442,7 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
             });
         };
     }
+
     function userFilter() {
         return {
             restrict: 'E',
@@ -408,17 +450,17 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
                 filterModel: '=',
                 placeHolder: '@',
                 limit: '@',
-                preSelected:'=',
+                preSelected: '=',
                 ngDisabled: '='
             },
             controller: UserFilterController,
-            templateUrl: function(elem, attr) {
-                    return 'plugins/reports/filters/user-filter.html';
+            templateUrl: function (elem, attr) {
+                return 'plugins/reports/filters/user-filter.html';
             }
         }
     }
-    function UserFilterController($scope, $q, userService) {
 
+    function UserFilterController($scope, $q, userService) {
 
 
         $scope.query = function (term) {
@@ -426,12 +468,12 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
             var deferred = $q.defer();
             userService.getDomainUsers(term, $scope.offset, $scope.size, undefined, false, true).then(function (data) {
                 for (var i in data.data.results) {
-                    data.data.results[i].text=data.data.results[i].fnm + ' [' + data.data.results[i].id + ']';
+                    data.data.results[i].text = data.data.results[i].fnm + ' [' + data.data.results[i].id + ']';
                 }
                 deferred.resolve(data.data.results);
             }).catch(function error(msg) {
                 deferred.reject(msg);
-            }).finally(function(){
+            }).finally(function () {
                 $scope.loadingData = false;
             });
             return deferred.promise;
@@ -447,12 +489,12 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
                 placeHolder: '@',
                 multiple: '@',
                 limit: '@',
-                preSelected:'=',
+                preSelected: '=',
                 ngDisabled: '='
             },
             controller: MaterialFilterController,
-            templateUrl: function(elem, attr) {
-                if(attr.multiple) {
+            templateUrl: function (elem, attr) {
+                if (attr.multiple) {
                     return 'plugins/reports/filters/multiple-material-filter.html';
                 } else {
                     return 'plugins/reports/filters/material-filter.html';
@@ -464,7 +506,7 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
     function MaterialFilterController($scope, $q, matService) {
         $scope.limit = $scope.limit || DEFAULT_COMPARE_LIMIT;
         $scope.model = {selectModel: $scope.filterModel};
-        if($scope.multiple) {
+        if ($scope.multiple) {
             $scope.$watch('filterModel', function (newValue, oldValue) {
                 if (newValue != oldValue) {
                     $scope.model = {selectModel: newValue};
@@ -481,14 +523,14 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
                 deferred.resolve(data.data.results);
             }).catch(function error(msg) {
                 deferred.reject(msg);
-            }).finally(function(){
+            }).finally(function () {
                 $scope.loadingData = false;
             });
             return deferred.promise;
         };
 
         function isSelected(i) {
-            if($scope.preSelected.mId == i.mId) {
+            if ($scope.preSelected.mId == i.mId) {
                 return true;
             }
             for (var m in $scope.filterModel) {
@@ -522,12 +564,12 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
                 placeHolder: '@',
                 multiple: '@',
                 limit: '@',
-                preSelected:'=',
+                preSelected: '=',
                 ngDisabled: '='
             },
             controller: EntityFilterController,
-            templateUrl: function(elem, attr) {
-                if(attr.multiple) {
+            templateUrl: function (elem, attr) {
+                if (attr.multiple) {
                     return 'plugins/reports/filters/multiple-entity-filter.html';
                 } else {
                     return 'plugins/reports/filters/entity-filter.html';
@@ -539,7 +581,7 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
     function EntityFilterController($scope, $q, entityService) {
         $scope.limit = $scope.limit || DEFAULT_COMPARE_LIMIT;
         $scope.model = {selectModel: $scope.filterModel};
-        if($scope.multiple) {
+        if ($scope.multiple) {
             $scope.$watch('filterModel', function (newValue, oldValue) {
                 if (newValue != oldValue) {
                     $scope.model = {selectModel: newValue};
@@ -557,14 +599,14 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
                 deferred.resolve(data.data.results);
             }).catch(function error(msg) {
                 deferred.reject(msg);
-            }).finally(function(){
+            }).finally(function () {
                 $scope.loadingData = false;
             });
             return deferred.promise;
         };
 
         function isSelected(i) {
-            if($scope.preSelected.id == i.id) {
+            if ($scope.preSelected.id == i.id) {
                 return true;
             }
             for (var m in $scope.filterModel) {
@@ -596,10 +638,10 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
                 filterModel: '=',
                 filterType: '=',
                 placeHolder: '@',
-                linkedId:'='
+                linkedId: '='
             },
             controller: EntityRelationFilterController,
-            templateUrl: function() {
+            templateUrl: function () {
                 return 'plugins/reports/filters/entity-relation-filter.html';
             }
         }
@@ -609,7 +651,7 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
         $scope.model = {selectModel: $scope.filterModel};
 
         $scope.entities = [];
-        if($scope.filterType == 'customer') {
+        if ($scope.filterType == 'customer') {
             entityService.getCustomers($scope.linkedId.id).then(function (data) {
                 $scope.entities = data.data.results || [];
             });
@@ -619,8 +661,8 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
             });
         }
 
-        $scope.$watch('linkedId',function(newValue, oldValue) {
-            if(!angular.equals(newValue,oldValue)) {
+        $scope.$watch('linkedId', function (newValue, oldValue) {
+            if (!angular.equals(newValue, oldValue)) {
                 $scope.model = {selectModel: undefined};
                 $scope.filterModel = undefined;
             }
@@ -634,9 +676,9 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
                 filterType: '@',
                 filterModel: '=',
                 placeHolder: '@',
-                multiple:'@',
+                multiple: '@',
                 limit: '@',
-                preSelected:'=',
+                preSelected: '=',
                 ngDisabled: '='
             },
             controller: TagFilterController,
@@ -662,6 +704,12 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
             });
         } else if ($scope.filterType === "user") {
             domainCfgService.getUserTagsCfg().then(function (data) {
+                $scope.tags = data.data.tags;
+                $scope.filter('');
+                $scope.loadingData = false;
+            });
+        } else if ($scope.filterType === "order") {
+            domainCfgService.getOrderTagsCfg().then(function (data) {
                 $scope.tags = data.data.tags;
                 $scope.filter('');
                 $scope.loadingData = false;
@@ -704,8 +752,8 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
                 minDate: '=',
                 maxDate: '=',
                 mode: '=',
-                opened:'=',
-                closeModel:'='
+                opened: '=',
+                closeModel: '='
             },
             controller: DateFilterController,
             templateUrl: 'plugins/reports/filters/date-filter.html'
@@ -720,12 +768,13 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
             $scope.dateOptions = $scope.mode == 'month' ? {minMode: 'month'} : {};
             $scope.dateOptions.minDate = $scope.minDate;
             $scope.dateOptions.maxDate = $scope.maxDate;
-            if($scope.mode == 'week') {
+            if ($scope.mode == 'week') {
                 $scope.dateOptions.showWeeks = true;
                 $scope.dateOptions.startingDay = 1;
                 $scope.dateOptions.dateDisabled = $scope.disabled;
             }
         }
+
         init();
         $scope.disabled = function (model) {
             return ($scope.mode == 'week' && model.date.getDay() != 1);
@@ -739,20 +788,20 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
             init();
         };
 
-        $scope.$watch("mode", function(newValue,oldValue){
-           if(newValue != oldValue) {
-               init();
-           }
+        $scope.$watch("mode", function (newValue, oldValue) {
+            if (newValue != oldValue) {
+                init();
+            }
         });
-        $scope.$watch("minDate", function(newValue,oldValue){
-           if(newValue != oldValue) {
-               init();
-           }
+        $scope.$watch("minDate", function (newValue, oldValue) {
+            if (newValue != oldValue) {
+                init();
+            }
         });
-        $scope.$watch("maxDate", function(newValue,oldValue){
-           if(newValue != oldValue) {
-               init();
-           }
+        $scope.$watch("maxDate", function (newValue, oldValue) {
+            if (newValue != oldValue) {
+                init();
+            }
         });
         $scope.IE = false;
         var ua = window.navigator.userAgent;
@@ -789,8 +838,8 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
             restrict: 'E',
             scope: {
                 filterModel: '=',
-                fromModel:'=',
-                toModel:'='
+                fromModel: '=',
+                toModel: '='
             },
             controller: PeriodicityFilterController,
             templateUrl: 'plugins/reports/filters/periodicity-filter.html'
@@ -799,7 +848,7 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
 
     function PeriodicityFilterController($scope) {
         $scope.filterModel = 'm';
-        $scope.closeDates = function() {
+        $scope.closeDates = function () {
             $scope.fromModel = false;
             $scope.toModel = false;
         }
@@ -825,7 +874,7 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
         $scope.loadingData = true;
         var count = 0;
         //$scope.showLoading();
-        domainCfgService.getAssetSysCfg('1').then(function(data) {
+        domainCfgService.getAssetSysCfg('1').then(function (data) {
             $scope.assets['1'] = data.data;
             addAllAsset(data.data);
         }).catch(function error(msg) {
@@ -834,7 +883,7 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
         });
 
         //$scope.showLoading();
-        domainCfgService.getAssetSysCfg('2').then(function(data) {
+        domainCfgService.getAssetSysCfg('2').then(function (data) {
             $scope.assets['2'] = data.data;
             addAllAsset(data.data);
         }).catch(function error(msg) {
@@ -843,10 +892,10 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
         });
 
         function addAllAsset(data) {
-            for(var key in data) {
+            for (var key in data) {
                 $scope.assets['all'][key] = data[key];
             }
-            if(++count == 2) {
+            if (++count == 2) {
                 $scope.loadingData = false;
             }
         }
@@ -886,7 +935,7 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
             restrict: 'E',
             scope: {
                 filterModel: '=',
-                ngDisabled:'='
+                ngDisabled: '='
             },
             controller: MonitorTypeFilterController,
             templateUrl: 'plugins/reports/filters/monitor-type-filter.html'
@@ -903,7 +952,7 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
                 filterType: '=',
                 filterModel: '=',
                 placeHolder: '@',
-                ngDisabled:'='
+                ngDisabled: '='
             },
             controller: ManufacturerFilterController,
             templateUrl: 'plugins/reports/filters/manufacturer-filter.html'
@@ -918,7 +967,7 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
         $scope.fType = 'all';
         $scope.loadingData = true;
         //$scope.showLoading();
-        domainCfgService.getAssetManufacturerSysCfg('1').then(function(data) {
+        domainCfgService.getAssetManufacturerSysCfg('1').then(function (data) {
             $scope.mf['1'] = data.data;
             count++;
             addAllMf(data.data);
@@ -928,7 +977,7 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
         });
 
         //$scope.showLoading();
-        domainCfgService.getAssetManufacturerSysCfg('2').then(function(data) {
+        domainCfgService.getAssetManufacturerSysCfg('2').then(function (data) {
             $scope.mf['2'] = data.data;
             count++;
             addAllMf(data.data);
@@ -938,10 +987,10 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
         });
 
         function addAllMf(data) {
-            for(var k in data) {
+            for (var k in data) {
                 $scope.mf['all'][k] = data[k];
             }
-            if(count == 2) {
+            if (count == 2) {
                 $scope.filter('');
                 $scope.loadingData = false;
             }
@@ -1002,6 +1051,30 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
         };
     }
 
+    function orderTypeFilter() {
+        return {
+            restrict: 'E',
+            scope: {
+                filterModel: '=',
+                ngDisabled: '='
+            },
+            controller: OrderTypeFilterController,
+            templateUrl: 'plugins/reports/filters/order-type-filter.html'
+        }
+    }
+
+    function OrderTypeFilterController($scope) {
+        $scope.model = {selectModel: $scope.filterModel};
+        $scope.$watch('filterModel', function (newValue, oldValue) {
+            if (newValue != oldValue) {
+                $scope.model = {selectModel: newValue};
+            }
+        });
+        $scope.$watch('model.selectModel', function (newValue) {
+            $scope.filterModel = newValue;
+        });
+    }
+
     function widgetBase($compile) {
         return {
             restrict: 'E',
@@ -1032,196 +1105,219 @@ function reportCoreService() {
             },
             exportData: function (json) {
                 return apiService.post(json, '/s2/api/plugins/report/export');
-        }
+            }
         }
     }]);
 }
 
-function getReportFCSeries(data, seriesno, name, type, isLinkDisabled, filterSeriesIndex, showvalue, color, noAnchor, zeroWithEmpty, forceSum, skipSeriesInLabel) {
-    if (checkNotNullEmpty(data) && data[0]) {
-        if (data[0].value.length > seriesno) {
-            var series = {};
-            series.seriesName = name;
-            series.renderAs = type;
-            series.showValues = showvalue ? showvalue : "1";
-            series.drawAnchors = noAnchor ? "0" : "1";
-            series.data = [];
-            var ind = 0;
-            var prevLabel = undefined;
-            var curLabel;
-            var found = false;
-            for (var i = data.length - 1; i >= 0; i--) {
-                var lData = data[i];
-                if(filterSeriesIndex >= 0) {
-                    curLabel = lData.label;
-                    if (found) {
-                        if (curLabel == prevLabel) {
-                            continue;
+function reportCoreFunction() {
+    return {
+        getReportFCSeries: function (data, seriesno, name, type, isLinkDisabled, filterSeriesIndex, showvalue, color, noAnchor, zeroWithEmpty, forceSum, skipSeriesInLabel, isSecValue, isTotalValue) {
+            if (checkNotNullEmpty(data) && data[0]) {
+                if (data[0].value.length > seriesno) {
+                    var series = {};
+                    series.seriesName = name;
+                    series.renderAs = type;
+                    series.showValues = showvalue ? showvalue : "1";
+                    series.drawAnchors = noAnchor ? "0" : "1";
+                    series.data = [];
+                    var ind = 0;
+                    var prevLabel = undefined;
+                    var curLabel;
+                    var found = false;
+                    for (var i = data.length - 1; i >= 0; i--) {
+                        var lData = data[i];
+                        if (isSecValue) {
+                            lData = angular.copy(lData);
+                            angular.forEach(lData.value, function (v) {
+                                if(checkNotNullEmpty(v.secValue)) {
+                                    v.value = -1 * v.secValue + "";
+                                }
+                                if (checkNotNullEmpty(v.secNum)) {
+                                    v.num = -1 * v.secNum;
+                                }
+                                if (checkNotNullEmpty(v.secDen)) {
+                                    v.den = v.secDen;
+                                }
+                            });
                         }
-                        found = false;
-                        prevLabel = undefined;
-                    }
-
-                    if(!found && ((i == 0 && lData.value[filterSeriesIndex].value != name) || (prevLabel != undefined && curLabel != prevLabel))) {
-                        var dummy = {};
-                        dummy.value = [];
-                        dummy.value[seriesno] = {};
-                        dummy.value[seriesno].value = "0";
-                        dummy.label = prevLabel;
-                        lData = dummy;
-                        if(prevLabel != undefined) {
-                            i++;
+                        if (isTotalValue) {
+                            lData = angular.copy(lData);
+                            angular.forEach(lData.value, function (v) {
+                                v.value = (parseFloat(v.value) + (-1 * parseFloat(v.secValue))) + "";
+                                v.num = v.den =undefined;
+                            });
                         }
-                        prevLabel = undefined;
-                        found = true;
-                    } else if(lData.value[filterSeriesIndex].value == name) {
-                        found = true;
-                        prevLabel = curLabel;
-                    } else {
-                        prevLabel = curLabel;
+                        if (filterSeriesIndex >= 0) {
+                            curLabel = lData.label;
+                            if (found) {
+                                if (curLabel == prevLabel) {
+                                    continue;
+                                }
+                                found = false;
+                                prevLabel = undefined;
+                            }
+
+                            if (!found && ((i == 0 && lData.value[filterSeriesIndex].value != name) || (prevLabel != undefined && curLabel != prevLabel))) {
+                                var dummy = {};
+                                dummy.value = [];
+                                dummy.value[seriesno] = {};
+                                dummy.value[seriesno].value = "0";
+                                dummy.label = prevLabel;
+                                lData = dummy;
+                                if (prevLabel != undefined) {
+                                    i++;
+                                }
+                                prevLabel = undefined;
+                                found = true;
+                            } else if (lData.value[filterSeriesIndex].value == name) {
+                                found = true;
+                                prevLabel = curLabel;
+                            } else {
+                                prevLabel = curLabel;
+                            }
+                            if (!found) {
+                                continue;
+                            }
+                        }
+                        var t = {};
+                        t.value = lData.value[seriesno].value || "0";
+                        if (zeroWithEmpty && (t.value == "0" || t.value == "0.0")) {
+                            t.value = "";
+                        }
+                        var dec = checkNotNullEmpty(t.value) ? t.value.indexOf(".") : -1;
+                        if (dec >= 0) {
+                            t.displayValue = reportCoreFunction().roundNumber(t.value);
+                        }
+                        if (!isLinkDisabled && !(t.value == "0" || t.value == "0.0")) {
+                            t.link = "JavaScript: angular.element(document.getElementById('cid')).scope().getDFChartData('" + lData.label + "');";
+                        }
+                        if (color) {
+                            t.color = color;
+                        }
+                        if (name && !skipSeriesInLabel) {
+                            t.toolText = "$seriesName, ";
+                        }
+                        if (forceSum || (checkNotNullEmpty(type) && (type.indexOf("Pie") == 0 || type.indexOf("Doughnut") == 0))) {
+                            t.toolText = (t.toolText ? t.toolText : "" ) + "$label: $value of $unformattedSum";
+                        } else {
+                            t.toolText = (t.toolText ? t.toolText : "" ) + "$label: " + reportCoreFunction().roundNumber(lData.value[seriesno].value, 2);
+                            if (lData.value[seriesno].num) {
+                                t.toolText += " (" + reportCoreFunction().roundNumber(lData.value[seriesno].num, 2) + " / " + reportCoreFunction().roundNumber(lData.value[seriesno].den, 2) + ")";
+                                t.tableTooltip = reportCoreFunction().roundNumber(lData.value[seriesno].num, 2) + " / " + reportCoreFunction().roundNumber(lData.value[seriesno].den, 2);
+                            }
+                        }
+                        series.data[ind++] = t;
                     }
-                    if(!found) {
-                        continue;
-                    }
+                    return series;
                 }
-                var t = {};
-                t.value = lData.value[seriesno].value || "0";
-                if (zeroWithEmpty && (t.value == "0" || t.value == "0.0")) {
-                    t.value = "";
-                }
-                var dec = checkNotNullEmpty(t.value) ? t.value.indexOf(".") : -1;
-                if (dec >= 0) {
-                    t.displayValue = roundNumber(t.value);
-                }
-                if (!isLinkDisabled && !(t.value == "0" || t.value == "0.0")) {
-                    t.link = "JavaScript: angular.element(document.getElementById('cid')).scope().getDFChartData('" + lData.label + "');";
-                }
-                if (color) {
-                    t.color = color;
-                }
-                if(name && !skipSeriesInLabel) {
-                    t.toolText = "$seriesName, ";
-                }
-                if (forceSum || (checkNotNullEmpty(type) && (type.indexOf("Pie") == 0 || type.indexOf("Doughnut") == 0))) {
-                    t.toolText = (t.toolText? t.toolText : "" ) + "$label: $value of $unformattedSum";
-                } else {
-                    t.toolText = (t.toolText? t.toolText : "" ) + "$label: " + roundNumber(lData.value[seriesno].value,2);
-                    if(lData.value[seriesno].num) {
-                        t.toolText += " (" + roundNumber(lData.value[seriesno].num,2) + " / " + roundNumber(lData.value[seriesno].den,2) +")";
-                        t.tableTooltip = roundNumber(lData.value[seriesno].num,2) + " / " + roundNumber(lData.value[seriesno].den,2);
-                    }
-                }
-                series.data[ind++] = t;
             }
-            return series;
-        }
-    }
-}
-
-function roundNumber(value, digits, forceRound) {
-    if(checkNotNullEmpty(value)) {
-        digits = digits || 0;
-        if(value  * 1 < 1 && !forceRound && digits == 0) {
-            digits = 2;
-        }
-        value = parseFloat(value).toFixed(digits);
-        var dec = checkNotNullEmpty(value) ? value.indexOf(".") : -1;
-        if (parseFloat(value.substr(dec + 1)) == 0) {
-            value = value.substr(0, dec);
-        }
-    }
-    return value || 0;
-}
-
-function getReportFCCategories(data, format) {
-    if (checkNotNullEmpty(data)) {
-        var category = [];
-        var labels = [];
-        var lIndex = 0;
-        var ind = 0;
-        format = format || "mmm dd, yyyy";
-        for (var i = data.length - 1; i >= 0; i--) {
-            if(labels.indexOf(data[i].label) == -1) {
-                var t = {};
-                t.label = formatLabel(data[i].label, format);
-                t.csvLabel = data[i].label;
-                labels[lIndex++] = data[i].label;
-                category[ind++] = t;
+        },
+        roundNumber: function (value, digits, forceRound) {
+            if (checkNotNullEmpty(value)) {
+                digits = digits || 0;
+                if (value * 1 < 1 && !forceRound && digits == 0) {
+                    digits = 2;
+                }
+                value = parseFloat(value).toFixed(digits);
+                var dec = checkNotNullEmpty(value) ? value.indexOf(".") : -1;
+                if (parseFloat(value.substr(dec + 1)) == 0) {
+                    value = value.substr(0, dec);
+                }
             }
-        }
-        return category;
-    }
-}
-
-function getReportTableData(data, labels, format) {
-    var tData = [];
-    format = format || "mmm dd, yyyy";
-    for (var i = labels.length - 1; i >= 0; i--) {
-        var tRow = [];
-        var label = formatDateLabel(labels[i].csvLabel, "yyyy-MM-dd");
-        tRow.push(labels[i].label);
-        for (var j = 0; j < data.length; j++) {
-            tRow.push(
-                {
-                    label: label,
-                    value:roundNumber(data[j].data[i].value, 2),
-                    tooltip:data[j].data[i].tableTooltip
+            return value || 0;
+        },
+        getReportFCCategories: function (data, format) {
+            if (checkNotNullEmpty(data)) {
+                var category = [];
+                var labels = [];
+                var lIndex = 0;
+                var ind = 0;
+                format = format || "mmm dd, yyyy";
+                for (var i = data.length - 1; i >= 0; i--) {
+                    if (labels.indexOf(data[i].label) == -1) {
+                        var t = {};
+                        t.label = formatLabel(data[i].label, format);
+                        t.csvLabel = data[i].label;
+                        labels[lIndex++] = data[i].label;
+                        category[ind++] = t;
+                    }
+                }
+                return category;
+            }
+        },
+        getReportTableData: function (data, labels, format) {
+            var tData = [];
+            format = format || "mmm dd, yyyy";
+            for (var i = labels.length - 1; i >= 0; i--) {
+                var tRow = [];
+                var label = reportCoreFunction().formatDateLabel(labels[i].csvLabel, "yyyy-MM-dd");
+                tRow.push(labels[i].label);
+                for (var j = 0; j < data.length; j++) {
+                    tRow.push(
+                        {
+                            label: label,
+                            value: reportCoreFunction().roundNumber(data[j].data[i].value, 2),
+                            tooltip: data[j].data[i].tableTooltip
+                        });
+                }
+                tData.push(tRow);
+            }
+            return tData;
+        },
+        formatDateLabel: function (label, format) {
+            switch (format) {
+                case "mmm yyyy":
+                    return FormatDate_MMM_YYYY(constructDate(label));
+                case "mmm dd, yyyy":
+                    return FormatDate_MMM_DD_YYYY(constructDate(label));
+                case "yyyy-MM-dd":
+                    return FormatDate_YYYY_MM_DD(constructDate(label));
+                default:
+                    return FormatDate_DD_MM_YYYY(constructDate(label));
+            }
+        },
+        getReportSummaryTable: function (data, labels, init, size) {
+            var sumTable = [];
+            var sumRow = [];
+            for (var i = 0; i < labels.length + 1; i++) {
+                sumRow[i] = 0;
+            }
+            size = size || 1;
+            for (i = 0; i < data.length; i++) {
+                for (var j = 0; j < labels.length; j++) {
+                    sumRow[j] += parseInt(data[i].value[j * size + init].value || 0)
+                }
+            }
+            var total = 0;
+            for (i = 0; i < labels.length; i++) {
+                sumTable[i] = [labels[i], sumRow[i]];
+                total += sumRow[i];
+            }
+            sumTable[labels.length] = ["Total", total];
+            return sumTable;
+        },
+        formatReportTableData: function (data) {
+            for (var key in data) {
+                angular.forEach(data[key], function (v) {
+                    angular.forEach(v, function (d) {
+                        var dec = checkNotNullEmpty(d.value) ? d.value.indexOf(".") : -1;
+                        if (dec >= 0) {
+                            d.value = reportCoreFunction().roundNumber(d.value, 2);
+                        }
+                        var secDec = checkNotNullEmpty(d.secValue) ? d.secValue.indexOf(".") : -1;
+                        if (secDec >= 0) {
+                            d.secValue = reportCoreFunction().roundNumber(d.secValue, 2);
+                        }
+                        if (checkNotNullEmpty(d.num)) {
+                            d.num = reportCoreFunction().roundNumber(d.num, 2);
+                        }
+                        if (checkNotNullEmpty(d.den)) {
+                            d.den = reportCoreFunction().roundNumber(d.den, 2);
+                        }
+                    });
                 });
+            }
         }
-        tData.push(tRow);
-    }
-    return tData;
-}
-
-function formatDateLabel(label, format) {
-    switch (format) {
-        case "mmm yyyy":
-            return FormatDate_MMM_YYYY(constructDate(label));
-        case "mmm dd, yyyy":
-            return FormatDate_MMM_DD_YYYY(constructDate(label));
-        case "yyyy-MM-dd":
-            return FormatDate_YYYY_MM_DD(constructDate(label));
-        default:
-            return FormatDate_DD_MM_YYYY(constructDate(label));
-    }
-}
-
-function getReportSummaryTable(data, labels, init, size) {
-    var sumTable = [];
-    var sumRow = [];
-    for (var i = 0; i < labels.length + 1; i++) {
-        sumRow[i] = 0;
-    }
-    size = size || 1;
-    for (i = 0; i < data.length; i++) {
-        for (var j = 0; j < labels.length; j++) {
-            sumRow[j] += parseInt(data[i].value[j * size + init].value || 0)
-        }
-    }
-    var total = 0;
-    for (i = 0; i < labels.length; i++) {
-        sumTable[i] = [labels[i], sumRow[i]];
-        total += sumRow[i];
-    }
-    sumTable[labels.length] = ["Total", total];
-    return sumTable;
-}
-
-function formatReportTableData(data) {
-    for (var key in data) {
-        angular.forEach(data[key], function (v) {
-            angular.forEach(v, function (d) {
-                var dec = checkNotNullEmpty(d.value) ? d.value.indexOf(".") : -1;
-                if (dec >= 0) {
-                    d.value = roundNumber(d.value, 2);
-                }
-                if (checkNotNullEmpty(d.num)) {
-                    d.num = roundNumber(d.num, 2);
-                }
-                if (checkNotNullEmpty(d.den)) {
-                    d.den = roundNumber(d.den, 2);
-                }
-            });
-        });
     }
 }

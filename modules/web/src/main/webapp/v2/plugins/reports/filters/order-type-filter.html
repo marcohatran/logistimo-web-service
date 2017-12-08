@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <!--
   ~ Copyright © 2017 Logistimo.
   ~
@@ -22,34 +21,9 @@
   ~ the commercial license, please contact us at opensource@logistimo.com
   -->
 
-<div ng-controller="eventSummaryTopTenWidgetController">
-  <div ng-if="wloading" class="row mt18 widget-loading">
-    <div class="text-center">
-      {{resourceBundle['loading.uppercase']}}... <span class="glyphicons glyphicons-cogwheel spin"></span>
-    </div>
-  </div>
-  <div ng-if="!wloading && showError" class="alert alert-danger">
-    <div class="text-center">
-      {{errorMessage}}
-    </div>
-  </div>
-  <div ng-show="noData" class="col-sm-12" style="display: table; text-align:center; width:100%; height: {{widget.computedHeight}}px">
-    <span class="widget-no-data">No data to display</span>
-  </div>
-  <div ng-show="!wloading && !showError">
-    <table class="table table-bordered-less table-striped table-logistimo">
-      <thead>
-      <tr>
-        <th>Location</th>
-        <th>Count</th>
-      </tr>
-      </thead>
-      <tbody>
-      <tr ng-repeat="item in eventSummaries">
-        <td>{{item.name}}</td>
-        <td>{{item.title}}</td>
-      </tr>
-      </tbody>
-      </table>
-  </div>
-</div>
+<select ng-disabled="ngDisabled" ng-click="$event.stopPropagation();" class="form-control" ng-init="resourceBundle = $parent.resourceBundle" ng-model="filterModel">
+  <option value="">All</option>
+    <option value="1">Purchase</option>
+    <option value="2">Sales</option>
+    <option value="0">Transfers</option>
+</select>

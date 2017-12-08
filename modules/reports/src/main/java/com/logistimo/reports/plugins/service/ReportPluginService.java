@@ -84,6 +84,7 @@ public class ReportPluginService implements Service {
   private static final String JSON_REPORT_TYPE = "type";
   private static final String JSON_REPORT_COMPARE = "compare";
   private static final String JSON_REPORT_VIEW_TYPE = "viewtype";
+  private static final String INVALID_REQUEST = "Invalid request";
 
   @Autowired ReportServiceCollection reportServiceCollection;
 
@@ -128,7 +129,7 @@ public class ReportPluginService implements Service {
       if (viewType == null) {
         xLogger.warn(
             "Invalid report view type found {0}", jsonObject.getString(JSON_REPORT_VIEW_TYPE));
-        throw new BadRequestException("Invalid request");
+        throw new BadRequestException(INVALID_REQUEST);
       }
 
       QueryRequestModel model = constructQueryRequestModel(domainId, jsonObject, viewType);
@@ -152,13 +153,13 @@ public class ReportPluginService implements Service {
     if (StringUtils.isBlank(reportType)) {
       xLogger.warn(
           "Invalid report type received {0}", reportType);
-      throw new BadRequestException("Invalid request");
+      throw new BadRequestException(INVALID_REQUEST);
     }
     String aggregationRunTimeKey = ReportsUtil.getAggregationReportType(reportType);
     if (StringUtils.isBlank(aggregationRunTimeKey)) {
       xLogger.warn(
           "report type not configured {0}", reportType);
-      throw new BadRequestException("Invalid request");
+      throw new BadRequestException(INVALID_REQUEST);
     }
     //Set the filters
     QueryRequestModel model = new QueryRequestModel();
@@ -288,6 +289,9 @@ public class ReportPluginService implements Service {
       case BY_MODEL:
         model.filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_DMODEL);
         break;
+      case BY_CUSTOMER:
+        finaliseFilterByCustomer(model);
+        break;
     }
   }
 
@@ -404,6 +408,11 @@ public class ReportPluginService implements Service {
     }
   }
 
+  private void finaliseFilterByCustomer(QueryRequestModel model) {
+    model.filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_LKID);
+    model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_LKID + CharacterConstants.UNDERSCORE + QueryHelper.QUERY, QueryHelper.QUERY_LKID + CharacterConstants.UNDERSCORE + QueryHelper.QUERY);
+  }
+
   private void prepareFilters(Long domainId, ReportViewType viewType,
                               QueryRequestModel model, Map<String, String> retainFilters)
       throws ServiceException {
@@ -444,6 +453,9 @@ public class ReportPluginService implements Service {
         model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_ATYPE, as.getAssetTypesForReports(
             model.filters.get(QueryHelper.TOKEN + QueryHelper.QUERY_DOMAIN),
             "1")); // only monitored
+        break;
+      case BY_CUSTOMER:
+        prepareFiltersByCustomer(model);
         break;
     }
   }
@@ -522,6 +534,10 @@ public class ReportPluginService implements Service {
       retainFilters.put(QueryHelper.TOKEN + QueryHelper.QUERY_MATERIAL_TAG,
           model.filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_MATERIAL_TAG));
     }
+  }
+
+  private void prepareFiltersByCustomer(QueryRequestModel model) {
+    model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_LKID, null);
   }
 
   private String getReportTableStartTime(JSONObject jsonObject, String endTime)

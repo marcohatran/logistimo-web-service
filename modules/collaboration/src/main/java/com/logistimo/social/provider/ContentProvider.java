@@ -33,7 +33,6 @@ import com.logistimo.exception.SystemException;
 import com.logistimo.logger.XLog;
 import com.logistimo.services.ServiceException;
 import com.logistimo.social.model.ContentQuerySpecs;
-import com.logistimo.social.util.CollaborationDomainUtil;
 import com.logistimo.social.util.CollaborationMessageUtil;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.impl.UsersServiceImpl;
@@ -75,22 +74,31 @@ public class ContentProvider {
   }
 
   public String generateContent(ContentQuerySpecs query) {
+    return generateContent(query,null);
+  }
+
+  public String generateContent(ContentQuerySpecs query, String lang) {
 
     if (!"event".equals(query.getContextType())) {
       return "";
     }
     String user = query.getUser();
     IUserAccount userAccount = usersService.getUserAccount(user);
-    Long dId = userAccount.getDomainId();
-    ContextModel eventContext = CollaborationDomainUtil.getEventContext(query.getContextId(), dId);
+    Locale locale = null;
+    if(StringUtils.isEmpty(lang)){
+      locale = userAccount.getLocale();
+    } else {
+      locale = new Locale(lang);
+    }
+    ContextModel eventContext = new GsonBuilder().create().fromJson(query.getContextAttribute(),ContextModel.class);
     String
         mainContent =
         CollaborationMessageUtil.constructMessage(
             eventContext.getCategory() + "." + eventContext.getEventType() + ".text"
-            , userAccount.getLocale()
+            , locale
             , new Object[]{userAccount.getFullName(),
                 getObjectText(query.getObjectId(), query.getObjectType()),
-                getDuration(eventContext, userAccount.getLocale())});
+                getDuration(eventContext, locale)});
     return mainContent;
   }
 

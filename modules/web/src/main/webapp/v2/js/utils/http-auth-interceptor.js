@@ -76,7 +76,9 @@
      * and broadcasts 'event:auth-forbidden'.
      */
         .config(['$httpProvider', function($httpProvider) {
-            $httpProvider.interceptors.push(['$rootScope', '$q', 'httpBuffer', function($rootScope, $q, httpBuffer) {
+            $httpProvider.interceptors.push(['$rootScope', '$q', 'httpBuffer', 'isBulletinBoard', function ($rootScope, $q, httpBuffer, isBulletinBoard) {
+                var source = isBulletinBoard ? "6" : "1";
+                var appName = isBulletinBoard ? "bb" : "web";
                 return {
                     'request': function (config) {
                         // do something on success
@@ -91,12 +93,12 @@
                         if (checkNotNullEmpty(token)) {
                             config.headers['x-access-token'] = token;
                         }
-                        config.headers['x-access-initiator'] = "1";
-                        config.headers['x-app-name'] = "web";
+                        config.headers['x-access-initiator'] = source;
+                        config.headers['x-app-name'] = appName;
                         return config;
                     },
                     responseError: function(rejection) {
-                        if (!rejection.config.ignoreAuthModule) {
+                        if (checkNotNullEmpty(rejection.config) || !rejection.config.ignoreAuthModule) {
                             switch (rejection.status) {
                                 case 401:
                                     var deferred = $q.defer();

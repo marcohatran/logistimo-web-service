@@ -141,14 +141,26 @@ logistimoApp.controller('eventSummariesTemplateController', ['$scope', '$timeout
                         populateCategories(d);
                         populateEventTypes(d);
                         populateThresholds(d);
+                        if(checkNotNullEmpty($scope.thresholds) && checkNotNullEmpty($scope.thresholds[$scope.widget.conf.event])) {
+                            if(checkNotNullEmpty($scope.widget.conf.event)) {
+                                $scope.summaryEvents = [];
+                                $scope.summaryEvents = $scope.events[$scope.widget.conf.category];
+                            }
+                            if(checkNotNullEmpty($scope.widget.conf.threshold)) {
+                                $scope.summaryThresholds = {};
+                                if(checkNotNullEmpty($scope.thresholds[$scope.widget.conf.event])) {
+                                    $scope.thresholds[$scope.widget.conf.event].forEach(function (data) {
+                                        $scope.summaryThresholds[data.id] = data.label;
+                                    });
+                                }
+                            }
+                        }
                     });
                 }
             }
         }).catch(function error(msg) {
             $scope.showErrorMsg(msg);
         }).finally(function () {
-            $scope.hideLoading();
-            $scope.loading = false;
             $scope.wloading = false;
         });
     }
@@ -159,7 +171,6 @@ logistimoApp.controller('eventSummariesTemplateController', ['$scope', '$timeout
         $scope.thresholds = {};
         $scope.eventIds = {};
         getEventSummariesConfig();
-        console.log($scope.thresholds);
     }
 
     init();

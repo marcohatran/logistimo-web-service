@@ -33,7 +33,7 @@
         <tbody>
             <tr ng-repeat="data in tableData">
                 <td>{{data[0]}}</td>
-                <td class="text-center" uib-tooltip="{{d.tooltip}}" tooltip-append-to-body="true" ng-repeat="d in data.slice(1) track by $index">{{d.value | number}}</td>
+                <td class="text-center" uib-tooltip="{{d.tooltip}}" tooltip-append-to-body="true" ng-repeat="d in data.slice(1) track by $index"><span ng-bind-html="d.value"></span></td>
             </tr>
         </tbody>
     </table>

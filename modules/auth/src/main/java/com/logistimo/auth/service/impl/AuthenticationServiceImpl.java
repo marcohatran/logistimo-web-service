@@ -93,7 +93,11 @@ public class AuthenticationServiceImpl extends ServiceImpl implements Authentica
   private static final String UPDATE_LAST_ACCESSED_TASK = "/s2/api/users/update/mobileaccessed";
   private static final String ACCESS_KEY_PREFIX = "ACCESSKEY_";
   private static final String DOMAIN_KEY_SEPARATOR = "_";
+  private static final String TOKEN_ACCESS_PREFIX = "at_";
   private static ITaskService taskService = AppFactory.get().getTaskService();
+  private static final int
+      WEB_TOKEN_INACTIVITY_MILLIS =
+      ConfigUtil.getInt(PropertyConstants.TOKEN_EXPIRE_WEB, 30) * 60_000;
 
   private MemcacheService memcacheService;
 
@@ -125,14 +129,19 @@ public class AuthenticationServiceImpl extends ServiceImpl implements Authentica
         updateUserSession(userId, null);
       }
       token = generateUuid();
-      Calendar c = Calendar.getInstance();
-      int validityInMinutes = getTokenValidityInMinutes(account, accessKey, source);
-      c.add(Calendar.MINUTE, validityInMinutes);
       iUserToken = JDOUtils.createInstance(IUserToken.class);
+
+      int validityInMinutes = getTokenValidityInMinutes(account, accessKey, source);
+      if (validityInMinutes > 0) {
+        Calendar c = Calendar.getInstance();
+        c.add(Calendar.MINUTE, validityInMinutes);
+        iUserToken.setExpires(c.getTime());
+      } else {
+        updateWebAccessTime(token);
+      }
       iUserToken.setUserId(userId);
       iUserToken.setToken(PasswordEncoder.MD5(token));
       iUserToken.setRawToken(token);
-      iUserToken.setExpires(c.getTime());
       iUserToken.setDomainId(domainId != null ? domainId : account.getDomainId());
       iUserToken.setAccessKey(accessKey);
       pm.makePersistent(iUserToken);
@@ -153,7 +162,7 @@ public class AuthenticationServiceImpl extends ServiceImpl implements Authentica
     if (StringUtils.isEmpty(isAccessKey)) {
       // Web app limit token access time
       if (SourceConstants.WEB.equals(source)) {
-        validityTimeInMinutes = ConfigUtil.getInt(PropertyConstants.TOKEN_EXPIRE_WEB, 30);
+        validityTimeInMinutes = -1;
       } else {
         //Mobile apps pick configuration
         if (account.getAuthenticationTokenExpiry() != 0) {
@@ -196,28 +205,53 @@ public class AuthenticationServiceImpl extends ServiceImpl implements Authentica
     }
 
     if (iUserToken != null) {
-      String userId = iUserToken.getUserId();
-      Date expires = iUserToken.getExpires();
-      Calendar calendar = Calendar.getInstance();
-      calendar.setTime(expires);
-      if (calendar.getTimeInMillis() < System.currentTimeMillis()) {
-        throw new UnauthorizedException("Expired Token " + token);
-      }
-      if (!Objects.equals(accessInitiator, Constants.LAST_ACCESSED_BY_SYSTEM)) {
-        Map<String, String> params = new HashMap<>(2);
-        params.put("userId", userId);
-        params.put("aTime", String.valueOf(System.currentTimeMillis()));
-        try {
-          taskService.schedule(ITaskService.QUEUE_DEFAULT, UPDATE_LAST_ACCESSED_TASK, params,
-              ITaskService.METHOD_POST);
-        } catch (TaskSchedulingException e) {
-          xLogger
-              .warn("Failed to update the last mobile accessed time for user : {0} ", userId, e);
-        }
+      if (iUserToken.getExpires() == null) {
+        checkWebTokenExpiry(token);
+        updateWebAccessTime(token);
+      } else {
+        checkTokenExpiry(iUserToken);
+        updateLastAccessTime(accessInitiator, iUserToken);
       }
       return iUserToken;
     } else {
       throw new UnauthorizedException("Invalid Token " + token);
+    }
+  }
+
+  private void updateWebAccessTime(String token) {
+    memcacheService.put(TOKEN_ACCESS_PREFIX + token, System.currentTimeMillis());
+  }
+
+  private void updateLastAccessTime(Integer accessInitiator, IUserToken iUserToken) {
+    if (!Objects.equals(accessInitiator, Constants.LAST_ACCESSED_BY_SYSTEM)) {
+      String userId = iUserToken.getUserId();
+      Map<String, String> params = new HashMap<>(2);
+      params.put("userId", userId);
+      params.put("aTime", String.valueOf(System.currentTimeMillis()));
+      try {
+        taskService.schedule(ITaskService.QUEUE_DEFAULT, UPDATE_LAST_ACCESSED_TASK, params,
+            ITaskService.METHOD_POST);
+      } catch (TaskSchedulingException e) {
+        xLogger
+            .warn("Failed to update the last mobile accessed time for user : {0} ", userId, e);
+      }
+    }
+  }
+
+  private void checkTokenExpiry(IUserToken iUserToken) {
+    Date expires = iUserToken.getExpires();
+    Calendar calendar = Calendar.getInstance();
+    calendar.setTime(expires);
+    if (calendar.getTimeInMillis() < System.currentTimeMillis()) {
+      throw new UnauthorizedException("Token expired");
+    }
+  }
+
+  private void checkWebTokenExpiry(String token) {
+    Long lastAccessTime = (Long) memcacheService.get(TOKEN_ACCESS_PREFIX + token);
+    if (lastAccessTime != null
+        && System.currentTimeMillis() > lastAccessTime + WEB_TOKEN_INACTIVITY_MILLIS) {
+      throw new UnauthorizedException("Token expired");
     }
   }
 

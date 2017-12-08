@@ -84,6 +84,7 @@ public class LSGetLikesCommand extends HystrixCommand<LSLikeResponseModel> {
     if (!StringUtils.isEmpty(request.getContextId())) {
       builder.queryParam("context_id", request.getContextId());
     }
+    builder.queryParam("count", request.getCount());
     builder.queryParam("offset", request.getOffset());
     builder.queryParam("size", request.getSize());
     link = builder.build();
@@ -166,7 +167,7 @@ public class LSGetLikesCommand extends HystrixCommand<LSLikeResponseModel> {
     querySpecs.setContextType(model.getContextType());
     querySpecs.setContextAttribute(model.getContextAttribute());
     querySpecs.setUser(model.getUser());
-    model.setTextSummary(contentProvider.generateContent(querySpecs));
+    model.setTextSummary(contentProvider.generateContent(querySpecs,request.getLanguage()));
     return model;
   }
 

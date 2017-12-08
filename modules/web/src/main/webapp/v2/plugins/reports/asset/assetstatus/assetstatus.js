@@ -167,7 +167,7 @@ registerWidget('aas', 'rpt-asset-status', 'Assets', 'Asset status','asset/assets
                         $scope.tableCSVHeading = breakdownData.headings;
                         $scope.updateTableHeading($scope.tableCSVHeading, "yyyy-MM-dd");
                         $scope.tableData = sortObject(breakdownData.table);
-                        formatReportTableData($scope.tableData);
+                        reportCoreFunction().formatReportTableData($scope.tableData);
                         $scope.tableDataLength = Object.keys($scope.tableData).length;
                         $scope.noData = false;
                     } else if ($scope.tableDataLength == $scope.size) {
@@ -189,7 +189,7 @@ registerWidget('aas', 'rpt-asset-status', 'Assets', 'Asset status','asset/assets
                 chartData = angular.copy($scope.allChartData);
             }
             var linkDisabled = level == "d" || $scope.filter.periodicity == "d";
-            var cLabel = getReportFCCategories(chartData,$scope.getReportDateFormat(level));
+            var cLabel = reportCoreFunction().getReportFCCategories(chartData,$scope.getReportDateFormat(level));
             var compareFields = [];
             angular.forEach(chartData, function (d) {
                 if (compareFields.indexOf(d.value[0].value) == -1) {
@@ -198,7 +198,7 @@ registerWidget('aas', 'rpt-asset-status', 'Assets', 'Asset status','asset/assets
             });
             var cData = [];
             for (var i = 0; i < compareFields.length; i++) {
-                cData[i] = getReportFCSeries(chartData,
+                cData[i] = reportCoreFunction().getReportFCSeries(chartData,
                     $scope.metrics.secondary * $scope.primaryMetric.length + $scope.metrics.primary * 1, compareFields[i],
                     "column2d", linkDisabled, 0);
             }
@@ -226,7 +226,7 @@ registerWidget('aas', 'rpt-asset-status', 'Assets', 'Asset status','asset/assets
                 } else {
                     $scope.dtableHeading.push($scope.cOptions.caption);
                 }
-                $scope.dtableData = getReportTableData(cData, cLabel);
+                $scope.dtableData = reportCoreFunction().getReportTableData(cData, cLabel);
                 $scope.dtableDataLength = Object.keys($scope.dtableData).length;
                 $scope.dcOptions = angular.copy($scope.cOptions);
                 if(cLabel.length > 10) {
@@ -254,7 +254,7 @@ registerWidget('aas', 'rpt-asset-status', 'Assets', 'Asset status','asset/assets
                     $scope.tableMetric = undefined;
                     $scope.tableHeading.push($scope.cOptions.caption);
                 }
-                $scope.tableData = getReportTableData(cData, cLabel,$scope.getReportDateFormat());
+                $scope.tableData = reportCoreFunction().getReportTableData(cData, cLabel,$scope.getReportDateFormat());
                 $scope.tableDataLength = Object.keys($scope.tableData).length;
             }
             if(!localData) {

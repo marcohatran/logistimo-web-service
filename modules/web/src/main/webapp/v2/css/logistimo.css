@@ -29,6 +29,15 @@
     padding-right: 0px;
 }
 
+.bulletin-body {
+    min-width: 1920px !important;
+    width: 1920px !important;
+    padding-bottom: 10px;
+    background-color: #eeeeee;
+    font-size: medium;
+    padding-right: 0;
+}
+
 .modal-open {
     overflow-y: auto;
 }
@@ -4073,11 +4082,8 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
     vertical-align: middle;
 }
 .bulletin-board-event-image {
-    display: table-cell;
-    vertical-align:top;
-    padding-top:10px;
-    padding-bottom:10px;
-    width: 30px;
+    display: inline-block;
+    float:left;
 }
 .widget-no-data {
     display: table-cell;
@@ -4095,3 +4101,39 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
     border-radius: 50px;
 }
 
+.summary-title {
+    font-family: "Helvetica Neue", Arial;
+    fill-opacity: 1;
+    fill: rgb(51, 51, 51);
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+    stroke: none;
+}
+.no-background {
+ background: none !important;
+}
+
+.user-profile-text {
+    font-size: larger;
+}
+.user-profile-card {
+    border-top:1px solid #ddd;
+    margin-left:10px;
+    margin-right:10px;
+}
+.user-profile-name-text {
+    color:grey;
+    font-size:small;
+    font-weight:bold;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+}
+.text-widget-container {
+    display: table-cell;
+    vertical-align: middle;
+}
+.text-widget-no-data {
+    display: table;
+    width:100%;
+}
