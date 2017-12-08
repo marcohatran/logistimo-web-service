@@ -59,6 +59,13 @@ registerWidget('itc', 'rpt-transaction-counts', 'Activity', 'Transaction counts'
 
         $scope.primaryMetric.push({name: "Number of transactions", value: "1"});
 
+        function addExtraMetric() {
+            if (typeof addSecondaryMetricOptions === "function") {
+                addSecondaryMetricOptions($scope.primaryMetric, reportType, $scope.resourceBundle);
+            }
+        }
+        addExtraMetric();
+
         $scope.secondaryMetric.push({name: "All transaction types", value: "0"});
         $scope.secondaryMetric.push({name: "Issues", value: "1"});
         $scope.secondaryMetric.push({name: "Receipts", value: "2"});
@@ -122,6 +129,14 @@ registerWidget('itc', 'rpt-transaction-counts', 'Activity', 'Transaction counts'
                 $scope.loading = true;
                 $scope.cData = $scope.cLabel = $scope.chartData = undefined;
             }
+
+            if($scope.activeMetric == 'kt' && $scope.primaryMetric.length>1){
+                $scope.metrics.primary = "1";
+                $scope.primaryMetric.splice(1,$scope.primaryMetric.length-1);
+            }else if($scope.primaryMetric.length==1){
+                addExtraMetric();
+            }
+
             if($scope.activeMetric == 'ot') {
                 $scope.showLoading();
                 reportsServiceCore.getReportData(angular.toJson(selectedFilters)).then(function (data) {
