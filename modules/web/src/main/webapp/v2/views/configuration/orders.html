@@ -203,6 +203,26 @@
                 <div class="bgr">
                     <div class="row">
                         <div class="col-sm-12">
+                            <div class="title-heading">{{resourceBundle['mandate.order.fields']}}</div>
+                            <p class="litetext">{{resourceBundle['mandate.order.fields.overview']}}</p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-11">
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">{{resourceBundle['sales.orders']}}</label>
+                                <div class="cbx col-sm-8">
+                                    <input class="cbx" type="checkbox" ng-model="orders.ridm"> {{resourceBundle['mandate.referenceid']}}<br/>
+                                    <input class="cbx" type="checkbox" ng-model="orders.eadm"> {{resourceBundle['mandate.estimateddateofarrival']}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bgr">
+                    <div class="row">
+                        <div class="col-sm-12">
                             <div class="title-heading">
                                 {{resourceBundle['config.orders.dataexport']}}
                             </div>

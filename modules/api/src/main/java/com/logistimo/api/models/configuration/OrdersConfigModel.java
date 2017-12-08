@@ -100,6 +100,14 @@ public class OrdersConfigModel {
    * Create orders only for these store types
    */
   public List<String> autoCreateEntityTags;
+  /**
+   * Mark reference id mandatory
+   */
+  private boolean ridm;
+  /**
+   * Mark estimated arrival date mandatory
+   */
+  private boolean eadm;
 
   public String getLogo() {
     return logo;
@@ -172,4 +180,10 @@ public class OrdersConfigModel {
   public void setShipmentTemplateDownloadLink(String shipmentTemplateDownloadLink) {
     this.shipmentTemplateDownloadLink = shipmentTemplateDownloadLink;
   }
+
+  public boolean isReferenceIdMandatory() { return  ridm; }
+  public void setReferenceIdMandatory(boolean ridm) { this.ridm = ridm; }
+
+  public boolean isExpectedArrivalDateMandatory() { return eadm; }
+  public void setExpectedArrivalDateMandatory(boolean eadm) { this.eadm = eadm; }
 }

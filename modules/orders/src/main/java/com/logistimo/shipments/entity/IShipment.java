@@ -128,4 +128,8 @@ public interface IShipment extends ICrossDomain {
   void setSrc(Integer src);
 
   boolean hasEAD();
+
+  String getReferenceId();
+
+  void setReferenceId(String rid);
 }

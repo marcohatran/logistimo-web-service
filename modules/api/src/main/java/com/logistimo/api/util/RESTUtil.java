@@ -27,6 +27,7 @@
 package com.logistimo.api.util;
 
 
+
 import com.logistimo.AppFactory;
 import com.logistimo.accounting.entity.IAccount;
 import com.logistimo.accounting.service.IAccountingService;
@@ -2279,11 +2280,23 @@ public class RESTUtil {
       // Configuration for automatic allocation and material status assignment to order
       ordCfg.put(JsonTagsZ.AUTO_ALLOCATE_INVENTORY_TO_ORDERS, oc.allocateStockOnConfirmation());
       ordCfg.put(JsonTagsZ.AUTO_ASSIGN_MATERIAL_STATUS_TO_ORDERS, oc.autoAssignFirstMatStatus());
+      ordCfg.put(JsonTagsZ.MANDATORY_FIELDS, getMandatoryOrderFields(oc));
     }
     if (dc.isTransporterMandatory()) {
       ordCfg.put(JsonTagsZ.TRANSPORTER_MANDATORY, dc.isTransporterMandatory());
     }
     return ordCfg;
+  }
+
+  protected static HashMap<String , Object> getMandatoryOrderFields(OrdersConfig oc) {
+    HashMap<String, Object> salesOrderConfig = new HashMap<>();
+    HashMap<String, Object> salesOrderFields = new HashMap<>();
+    HashMap<String, Boolean> shippingFields = new HashMap<>();
+    shippingFields.put(JsonTagsZ.REFERENCE_ID, oc.isReferenceIdMandatory());
+    shippingFields.put(JsonTagsZ.EXPECTED_TIME_OF_ARRIVAL, oc.isExpectedArrivalDateMandatory());
+    salesOrderFields.put(JsonTagsZ.SHIPPING, shippingFields);
+    salesOrderConfig.put(JsonTagsZ.SALES_ORDERS, salesOrderFields);
+    return salesOrderConfig;
   }
 
   public static final boolean materialExistsInKiosk(Long kioskId, Long materialId) {

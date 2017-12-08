@@ -32,6 +32,24 @@
                     <span class="badge currentstatus" ng-class="{'cancelled': shipment.statusCode == ORDER.CANCELLED}">{{ORDER.statusTxt[shipment.statusCode]}}</span>
                     <span class="suborder h5" ng-show="shipment.oty == 1">({{resourceBundle['order']}}: <a ng-href="#/orders/detail/{{shipment.orderId}}/" target="_blank">{{shipment.orderId}}</a>)</span>
                     <span class="suborder h5" ng-show="shipment.oty == 0">({{resourceBundle['transactions.transfer.upper']}}: <a ng-href="#/orders/transfers/detail/{{shipment.orderId}}/">{{shipment.orderId}}</a>)</span>
+                    <div>
+                        <span class="litetext lnk" ng-show="isUndef(shipment.rid) && !edit.rid && shipment.statusCode == 'op'" ng-class="{'required': oCfg.ridm && shipment.statusCode == 'op'}">{{"Add " + resourceBundle['referenceid'] }} </span>
+                        <span class="litetext lnk" ng-show="isDef(shipment.rid) && !edit.rid">{{resourceBundle['referenceid'] + ": " + shipment.rid }} </span>
+                        <div class="lnk">
+                            <div ng-show="edit.rid" style="width: 30%">
+                                <span class="litetext">{{resourceBundle['referenceid']}}:</span>
+                                <editable-text edit-model="shipment.tempReferenceId"
+                                               on-ok="updateShipmentField('rid', shipment.tempReferenceId)"
+                                               on-cancel="toggleEdit('rid')"
+                                               set-focus="">
+                                </editable-text>
+                            </div>
+                            <a ng-show="!edit.rid && (dp.vp || shipment.statusCode == 'op')"
+                               uib-tooltip="{{resourceBundle['edit']}}" tooltip-append-to-body="true" ng-click="toggleEdit('rid')">
+                                <span class="glyphicons glyphicons-edit pt2 ml15"></span>
+                            </a>
+                        </div>
+                    </div>
                     <span class="litetext"  >
                         {{resourceBundle['createdon']}} {{shipment.cOn}} {{resourceBundle['by']}}
                         <a ng-href="#/setup/users/all/details?userId={{shipment.userID}}" target="_blank"> {{shipment.createdBy}}</a>
@@ -193,7 +211,7 @@
                                         </div>
                                     </div>
                                     <div class="row mb10">
-                                        <label class="col-sm-4 control-label"> {{resourceBundle['eda']}} </label>
+                                        <label class="col-sm-4 control-label" ng-class="{'required': oCfg.eadm && shipment.statusCode == 'op'}"> {{resourceBundle['eda']}} </label>
 
                                         <div class="col-sm-7">
                                             <p class="capitalize" ng-hide="edit.sefd">

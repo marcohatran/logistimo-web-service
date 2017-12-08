@@ -1267,6 +1267,8 @@ public class ConfigurationModelsBuilder {
       model.setShipmentTemplate(oc.getShipmentTemplate());
       model.setShipmentTemplateName(oc.getShipmentTemplateName() != null ? oc.getShipmentTemplateName() : SHIPMENT_TEMPLATE);
       model.setShipmentTemplateDownloadLink(buildDownloadLink(oc.getShipmentTemplate(), oc.getShipmentTemplateName(), SHIPMENT_TEMPLATE));
+      model.setReferenceIdMandatory(oc.isReferenceIdMandatory());
+      model.setExpectedArrivalDateMandatory(oc.isExpectedArrivalDateMandatory());
     }
     if (dbc != null) {
       if (dbc.isPublic()) {

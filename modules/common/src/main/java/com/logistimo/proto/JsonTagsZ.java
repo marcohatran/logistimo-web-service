@@ -317,4 +317,10 @@ public class JsonTagsZ {
   public static final String NUMBER_OF_VENDORS = "numvnds";
   public static final String ENABLE_BARCODING_MOBULE = "ebc";
   public static final String ENABLE_RFIDS_MOBILE = "erf";
+
+  // Order configuration
+  public static final String MANDATORY_FIELDS = "mandfields";
+  public static final String SALES_ORDERS = "salesords";
+  public static final String SHIPPING = "shipping";
+  public static final String REFERENCE_ID = "refid";
 }

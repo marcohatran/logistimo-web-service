@@ -1484,6 +1484,8 @@ public class DomainConfigController {
       oc.setAutoCreatePdos(model.pdos);
       oc.setAutoCreateEntityTags(model.autoCreateEntityTags);
       oc.setAutoAssignFirstMaterialStatus(model.aafmsc);
+      oc.setReferenceIdMandatory(model.isReferenceIdMandatory());
+      oc.setExpectedArrivalDateMandatory(model.isExpectedArrivalDateMandatory());
       if (model.getLogo() != null) {
         if (oc.getInvoiceLogo() != null && !oc.getInvoiceLogo().equals(model.getLogo())) {
           blobstoreService.remove(oc.getInvoiceLogo());

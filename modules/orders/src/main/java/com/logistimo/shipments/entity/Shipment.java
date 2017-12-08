@@ -149,6 +149,9 @@ public class Shipment implements IShipment {
   @NotPersistent
   private List<ShipmentItem> items;
 
+  @Persistent
+  private String rid;
+
   @Override
   public String getShipmentId() {
     return id;
@@ -443,4 +446,10 @@ public class Shipment implements IShipment {
   public void setPackageSize(String ps) {
     this.ps = ps;
   }
+
+  @Override
+  public String getReferenceId() { return rid; }
+
+  @Override
+  public void setReferenceId(String rid) { this.rid = rid; }
 }

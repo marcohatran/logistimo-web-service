@@ -1160,3 +1160,15 @@ config.barcoding.rfid.enable=Enable barcode/RFID scanning
 profile.number=Number of profiles
 auth.info=Authorize this device using the key shown above.
 order.purchase=Purchase
+profile.number=Number of profiles
+mandate.order.fields=Mandatory order fields
+mandate.order.fields.overview=Specify the fields that should be mandatory in an order at different stages of the order lifecycle.
+mandate.referenceid=Make 'Reference Id' mandatory before shipping
+mandate.estimateddateofarrival=Make 'Estimated date of arrival' mandatory before shipping
+validate.ead.by.user=I confirm that the above date is correctly filled
+estimated.date.of.arrival.mandatory.error=Estimated date of arrival is mandatory and should be either today or later. Please enter a valid estimated date of arrival and try again.
+reference.id.mandatory.error=Reference id is mandatory before shipping. Please enter the Reference Id and try again.
+estimated.date.of.arrival.reference.id.mandatory=NOTE: Estimated date of arrival and reference id are mandatory at the time of shipping.
+estimated.date.of.arrival.mandatory=NOTE: Estimated date of arrival is mandatory at the time of shipping.
+reference.id.mandatory=NOTE: Reference id is mandatory at the time of shipping.
+

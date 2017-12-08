@@ -255,6 +255,9 @@ ordServices.factory('ordService', ['APIService', function (apiService) {
         },
         fetchPrimaryApprovers: function(orderId) {
             return apiService.get("/s2/api/orders/order/" + orderId + "/approvers");
+        },
+        updateShipmentReferenceId: function(updValue, sId, orderUpdatedAt) {
+            return apiService.post("'" + updValue + "'", '/s2/api/shipment/update/' + sId + '/referenceId?orderUpdatedAt=' + orderUpdatedAt);
         }
     }
 }]);
