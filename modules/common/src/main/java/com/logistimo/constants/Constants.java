@@ -37,6 +37,7 @@ public final class Constants {
    * Order approval locking key prefix
    */
   public static final String TX_OA = "TX_OA";
+  public static final String X_ACCESS_USER = "x-access-user";
 
   private Constants() {
   }

@@ -89,6 +89,38 @@ logistimoApp.factory('APIService', function ($http, $q, $rootScope) {
                 });
             }
             return $http({method: 'DELETE', url: urlStr})
+        },
+        serveFile: function (url, defaultFileName) {
+            if (!checkDomainAndReject()) {
+                $http({method: 'GET', url: url}).
+                    success(function (data,status, headers, config) {
+                        var fileName=headers()['content-disposition'];
+                        if(fileName) {
+                            fileName = fileName.substring(fileName.indexOf("=")+1);
+                        }else {
+                            fileName = defaultFileName;
+                        }
+                        if (window.navigator.msSaveOrOpenBlob) {
+                            var blob = new Blob([data]);  //csv data string as an array.
+                            // IE hack; see http://msdn.microsoft.com/en-us/library/ie/hh779016.aspx
+                            window.navigator.msSaveBlob(blob, fileName);
+                        } else {
+                            var anchor = angular.element('<a/>');
+                            anchor.css({display: 'none'}); // Make sure it's not visible
+                            angular.element(document.body).append(anchor); // Attach to document for FireFox
+
+                            anchor.attr({
+                                href: 'data:attachment/csv;charset=utf-8,' + encodeURI(data),
+                                target: '_blank',
+                                download: fileName
+                            })[0].click();
+                            anchor.remove();
+                        }
+                    }).
+                    error(function (data,status, headers, config) {
+                        $rootScope.showError(data.data);
+                    });
+            }
         }
     }
 });
