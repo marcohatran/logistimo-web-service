@@ -5,7 +5,7 @@ angular.module('logistimo.storyboard.assetsCountWidget', [])
     .config(function (widgetsRepositoryProvider) {
         widgetsRepositoryProvider.addWidget({
             id: "assetsCountWidget",
-            name: "Asset count",
+            name: "asset.count",
             templateUrl: "plugins/storyboards/assets/assets-count-widget/assets-count-widget.html",
             editTemplateUrl: "plugins/storyboards/assets/asset-edit-template.html",
             templateFilters: [

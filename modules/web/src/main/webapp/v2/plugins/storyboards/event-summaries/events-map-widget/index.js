@@ -5,7 +5,7 @@ angular.module('logistimo.storyboard.eventMapWidget', [])
     .config(function (widgetsRepositoryProvider) {
         widgetsRepositoryProvider.addWidget({
             id: "eventMapWidget",
-            name: "Event map",
+            name: "event.map",
             templateUrl: "plugins/storyboards/event-summaries/events-map-widget/event-map-widget.html",
             editTemplateUrl: "plugins/storyboards/event-summaries/event-summaries-edit-template.html",
             templateFilters: [

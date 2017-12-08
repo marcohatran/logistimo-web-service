@@ -5,7 +5,7 @@ angular.module('logistimo.storyboard.storesActivityWidget', [])
     .config(function (widgetsRepositoryProvider) {
         widgetsRepositoryProvider.addWidget({
             id: "storesActivityWidget",
-            name: "Entity activity bar",
+            name: "entity.activity.bar",
             templateUrl: "plugins/storyboards/inventory/stores-activity-widget/stores-activity-widget.html",
             editTemplateUrl: "plugins/storyboards/inventory/edit-template.html",
             templateFilters: [
@@ -91,6 +91,7 @@ angular.module('logistimo.storyboard.storesActivityWidget', [])
 
         function constructStackData(data) {
             $scope.entDomainTotal = (data.a || 0) + (data.i || 0);
+            $scope.activeEntityDomainTotal = (data.a || 0);
             var stackData = [];
             $scope.activeData = data.a ? data.a : 0;
             $scope.activePercent = getNormalPercent($scope.entDomainTotal, $scope.activeData);
@@ -146,7 +147,7 @@ angular.module('logistimo.storyboard.storesActivityWidget', [])
         $scope.stackBarOptions.showLabels = 0;
         $scope.stackBarOptions.showXAxisLine = 0;
         $scope.stackBarOptions.showYAxisLine = 0;
-        $scope.stackBarOptions.maxBarHeight = 3;
+        $scope.stackBarOptions.maxBarHeight = 5;
         $scope.stackBarOptions.valueFontColor = '#ffffff';
 
         function setWidgetData(stackData) {
@@ -161,7 +162,7 @@ angular.module('logistimo.storyboard.storesActivityWidget', [])
                 cLabel: [{label: 'Inv status'}],
                 cdata: stackData,
                 computedWidth: '100%',
-                computedHeight: parseInt($scope.widget.computedHeight, 10) - 30
+                computedHeight: parseInt($scope.widget.computedHeight, 10) - 50
             };
             $scope.showChart = true;
         }

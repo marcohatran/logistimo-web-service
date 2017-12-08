@@ -5,7 +5,7 @@ angular.module('logistimo.storyboard.storesCountWidget', [])
     .config(function (widgetsRepositoryProvider) {
         widgetsRepositoryProvider.addWidget({
             id: "storesCountWidget",
-            name: "Entity count",
+            name: "entity.count",
             templateUrl: "plugins/storyboards/inventory/stores-count-widget/stores-count-widget.html",
             editTemplateUrl: "plugins/storyboards/inventory/edit-template.html",
             templateFilters: [

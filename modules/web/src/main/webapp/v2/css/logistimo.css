@@ -4137,3 +4137,8 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
     display: table;
     width:100%;
 }
+.user-profile-last-card {
+    border-bottom:1px solid #ddd;
+    margin-left:10px;
+    margin-right:10px;
+}
