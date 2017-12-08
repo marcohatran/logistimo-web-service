@@ -471,4 +471,14 @@ public class ShipmentController {
     ResponseUtils.serveInlineFile(response, invoiceModel.getFileName(), "application/pdf",
         invoiceModel.getBytes());
   }
+
+  @RequestMapping(value = "/update/{sId}/referenceId", method = RequestMethod.POST)
+  public
+  @ResponseBody
+  ShipmentResponseModel updateShipmentReferenceId(@PathVariable String sId, @RequestBody String updValue,
+                                             @RequestParam(required = false, value = "orderUpdatedAt") String orderUpdatedAt,
+                                             HttpServletRequest request) {
+    return updateShipmentData("rid", updValue, orderUpdatedAt, sId, request,
+        "ship.reference.id.update.success", "ship.reference.id.update.error");
+  }
 }

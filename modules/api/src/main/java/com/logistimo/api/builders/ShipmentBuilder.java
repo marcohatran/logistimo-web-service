@@ -354,6 +354,7 @@ public class ShipmentBuilder {
           model.items.add(sim);
         }
       }
+      model.rid = s.getReferenceId();
       return model;
     } catch (Exception e) {
       xLogger.warn("Error while building shipment model", e);

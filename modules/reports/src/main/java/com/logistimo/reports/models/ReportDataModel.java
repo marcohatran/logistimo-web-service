@@ -31,14 +31,28 @@ public class ReportDataModel {
   public ReportDataModel(String value) {
     this.value = value;
   }
+  public ReportDataModel(String value, String secValue) {
+    this.value = value;
+    this.secValue = secValue;
+  }
 
   public ReportDataModel(String value, String num, String den) {
     this.value = value;
     this.num = num;
     this.den = den;
   }
-
+  public ReportDataModel(String value, String num, String den, String secValue, String secNum, String secDen) {
+    this.value = value;
+    this.num = num;
+    this.den = den;
+    this.secValue = secValue;
+    this.secNum = secNum;
+    this.secDen = secDen;
+  }
   public String value;
   public String num;
   public String den;
+  public String secValue;
+  public String secNum;
+  public String secDen;
 }

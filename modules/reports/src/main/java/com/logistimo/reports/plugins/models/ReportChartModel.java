@@ -26,6 +26,7 @@ package com.logistimo.reports.plugins.models;
 import com.logistimo.reports.models.ReportDataModel;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by mohan on 30/03/17.
@@ -34,4 +35,5 @@ public class ReportChartModel {
   public String label;
   public List<ReportDataModel> value;
   public List<String> metrics;
+  public Map<String,List<String>> metricsMap;
 }

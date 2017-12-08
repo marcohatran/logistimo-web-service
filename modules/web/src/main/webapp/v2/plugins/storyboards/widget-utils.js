@@ -749,3 +749,18 @@ function getDonutRadius(width, height) {
         pieRadius: (40 * minSide)
     };
 }
+
+function roundNumber(value, digits, forceRound) {
+    if (checkNotNullEmpty(value)) {
+        digits = digits || 0;
+        if (value * 1 < 1 && !forceRound && digits == 0) {
+            digits = 2;
+        }
+        value = parseFloat(value).toFixed(digits);
+        var dec = checkNotNullEmpty(value) ? value.indexOf(".") : -1;
+        if (parseFloat(value.substr(dec + 1)) == 0) {
+            value = value.substr(0, dec);
+        }
+    }
+    return value || 0;
+}

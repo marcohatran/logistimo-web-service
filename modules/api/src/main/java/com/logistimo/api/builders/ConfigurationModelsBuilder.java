@@ -29,6 +29,7 @@ import com.logistimo.api.models.MenuStatsModel;
 import com.logistimo.api.models.configuration.AccountingConfigModel;
 import com.logistimo.api.models.configuration.AdminContactConfigModel;
 import com.logistimo.api.models.configuration.ApprovalsConfigModel;
+import com.logistimo.api.models.configuration.ApprovalsEnabledConfigModel;
 import com.logistimo.api.models.configuration.AssetConfigModel;
 import com.logistimo.api.models.configuration.CapabilitiesConfigModel;
 import com.logistimo.api.models.configuration.DashboardConfigModel;
@@ -1118,6 +1119,15 @@ public class ConfigurationModelsBuilder {
     return model;
   }
 
+  public ApprovalsEnabledConfigModel buildApprovalsEnabledConfigModel(Long domainId){
+    DomainConfig dc = DomainConfig.getInstance(domainId);
+    ApprovalsEnabledConfigModel model = new ApprovalsEnabledConfigModel();
+    model.itae = dc.isTransferApprovalEnabled();
+    model.ipae = dc.isPurchaseApprovalEnabled();
+    model.isae = dc.isSalesApprovalEnabled();
+    return model;
+  }
+
   public DashboardConfigModel buildDashboardConfigModel(DashboardConfig config, Long domainId,
                                                         Locale locale, String timezone)
       throws ServiceException, ObjectNotFoundException {
@@ -1257,6 +1267,8 @@ public class ConfigurationModelsBuilder {
       model.setShipmentTemplate(oc.getShipmentTemplate());
       model.setShipmentTemplateName(oc.getShipmentTemplateName() != null ? oc.getShipmentTemplateName() : SHIPMENT_TEMPLATE);
       model.setShipmentTemplateDownloadLink(buildDownloadLink(oc.getShipmentTemplate(), oc.getShipmentTemplateName(), SHIPMENT_TEMPLATE));
+      model.setReferenceIdMandatory(oc.isReferenceIdMandatory());
+      model.setExpectedArrivalDateMandatory(oc.isExpectedArrivalDateMandatory());
     }
     if (dbc != null) {
       if (dbc.isPublic()) {

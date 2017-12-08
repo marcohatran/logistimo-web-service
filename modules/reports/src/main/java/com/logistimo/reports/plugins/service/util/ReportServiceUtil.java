@@ -66,6 +66,8 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -157,9 +159,7 @@ public class ReportServiceUtil {
           break;
         case MAP:
           try {
-            field.set(report,
-                new Gson().fromJson(row.getString(j), new TypeToken<Map<String, Float>>() {
-                }.getType()));
+            field.set(report, new Gson().fromJson(row.getString(j), field.getGenericType()));
           } catch (Exception e) {
             field.set(report, new HashMap(0));
           }
@@ -265,10 +265,17 @@ public class ReportServiceUtil {
   protected ReportDataModel addData(Object value) {
     return new ReportDataModel(value != null ? String.valueOf(value) : ZERO);
   }
+  protected ReportDataModel addData(Object value, Object secValue) {
+    return new ReportDataModel(value != null ? String.valueOf(value) : ZERO, secValue != null ? String.valueOf(secValue) : ZERO );
+  }
 
   protected ReportDataModel addData(Object value, Object numerator, Object denominator) {
     return new ReportDataModel(
         String.valueOf(value), String.valueOf(numerator), String.valueOf(denominator));
+  }
+  protected ReportDataModel addData(Object value, Object numerator, Object denominator, Object secValue, Object secNumerator, Object secDenominator) {
+    return new ReportDataModel(
+        String.valueOf(value), String.valueOf(numerator), String.valueOf(denominator), String.valueOf(secValue), String.valueOf(secNumerator), String.valueOf(secDenominator));
   }
 
   protected Double getHours(Object milliseconds) {
@@ -462,6 +469,9 @@ public class ReportServiceUtil {
         AssetSystemConfig assets = AssetSystemConfig.getInstance();
         key = assets.getAssetsNameByType(2).get(Integer.parseInt(id));
         break;
+      case BY_CUSTOMER:
+        key = getTableByCustomerKey(id);
+        break;
       default:
         key = id;
     }
@@ -488,13 +498,24 @@ public class ReportServiceUtil {
   }
 
   /**
-   * Mehtod to get user details based on ID and form the report table data
+   * Method to get user details based on ID and form the report table data
    */
   private String getUserDetailsById(String userId)
       throws ServiceException, ObjectNotFoundException {
     UsersService us = Services.getService(UsersServiceImpl.class);
     IUserAccount userAccount = us.getUserAccount(userId);
     return userAccount.getFullName() + CharacterConstants.PIPE + userId;
+  }
+
+  private String getTableByCustomerKey(String string) throws ServiceException {
+    String key;EntitiesService es = Services.getService(EntitiesServiceImpl.class);
+    IKiosk k = es.getKiosk(Long.valueOf(string), false);
+    key = k.getName() + CharacterConstants.PIPE + string +
+        CharacterConstants.PIPE + (StringUtils.isEmpty(k.getCity())? CharacterConstants.EMPTY : k.getCity()) +
+        CharacterConstants.PIPE + (StringUtils.isEmpty(k.getTaluk())? CharacterConstants.EMPTY : k.getTaluk()) +
+        CharacterConstants.PIPE + (StringUtils.isEmpty(k.getDistrict())? CharacterConstants.EMPTY : k.getDistrict()) +
+        CharacterConstants.PIPE + (StringUtils.isEmpty(k.getState())? CharacterConstants.EMPTY : k.getState());
+    return key;
   }
 
   protected Long getMillisInPeriod(String time, String periodicity) {

@@ -34,6 +34,12 @@
                     {{ORDER.statusTxt[nStatus]}}
                 </div>
             </div>
+            <div class="row mb10" ng-show="nStatus == 'cm'">
+                <label class="col-sm-4 control-label" ng-class="{'required':oCfg.ridm}"> {{resourceBundle['referenceid']}}</label>
+                <div class="col-sm-7">
+                    <input class="form-control" ng-model="newStatus.rid" ng-init="newStatus.rid = order.rid">
+                </div>
+            </div>
             <div class="form-group" ng-show="nStatus == 'cn'">
                 <label class="col-sm-4 control-label" ng-class="{'required' : oCfg.corm}">{{resourceBundle['providereason']}}</label>
                 <div class="col-sm-7">
@@ -65,11 +71,20 @@
                     <input class="form-control" ng-model="newStatus.tid">
                 </div>
             </div>
-            <div class="row mb10" ng-show="nStatus == 'cm'">
-                <label class="col-sm-4 control-label"> {{resourceBundle['eda']}}</label>
+            <div class="row" ng-show="nStatus == 'cm'">
+                <label class="col-sm-4 control-label" ng-class="{'required':oCfg.eadm}"> {{resourceBundle['eda']}}</label>
 
                 <div class="col-sm-7">
-                    <date-picker date-model="newStatus.efd" min-date="today"></date-picker>
+                    <date-picker date-model="newStatus.efd" ng-init="newStatus.efd = dates.efd" min-date="today"></date-picker>
+                </div>
+            </div>
+            <div class="row mb10" ng-show="nStatus == 'cm'">
+                <div ng-show="isDef(order.efd)">
+                    <label class="col-sm-4 control-label cbx"></label>
+                    <div class="col-sm-7">
+                        <input type="checkbox" ng-model="isEadValid" ng-click = "!isEadValid" class="cbx">
+                        <span class="litetext" style="display: inline;vertical-align: inherit"> {{resourceBundle['validate.ead.by.user']}}</span>
+                    </div>
                 </div>
             </div>
             <div class="row mb10" ng-show="nStatus == 'cm'">
@@ -97,7 +112,7 @@
         <div class="col-sm-12">
             <div class="pull-right">
                 <button class="btn btn-sm btn-primary"
-                        ng-click="saveStatus()" ng-disabled="statusLoading">
+                        ng-click="saveStatus()" ng-disabled="statusLoading || (isDef(order.efd) && !isEadValid)">
                     {{resourceBundle['save']}}
                 </button>
                 <button class="btn btn-sm btn-default"

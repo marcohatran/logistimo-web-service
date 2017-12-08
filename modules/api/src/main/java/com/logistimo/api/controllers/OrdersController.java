@@ -335,7 +335,7 @@ public class OrdersController {
             .isStatus(IOrder.FULFILLED)) {
           shipmentId =
               oms.shipNow(o, status.t, status.tid, status.cdrsn, efd, user.getUsername(),
-                  status.ps, SourceConstants.WEB);
+                  status.ps, SourceConstants.WEB, status.rid);
         } else if (o.isStatus(IOrder.COMPLETED)) {
           if (shipments == null || shipments.size() > 1) {
             xLogger.warn("Invalid order {0} ({1}) cannot fulfill, already has more shipments or " +

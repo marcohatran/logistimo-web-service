@@ -478,7 +478,7 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
 
   @Override
   public String shipNow(IOrder order, String transporter, String trackingId, String reason,
-      Date expectedFulfilmentDate, String userId, String ps, int source)
+      Date expectedFulfilmentDate, String userId, String ps, int source, String referenceId)
       throws ServiceException, ObjectNotFoundException, ValidationException {
     IShipmentService
         shipmentService =
@@ -504,6 +504,7 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
     model.userID = userId;
     model.items = new ArrayList<>();
     model.sdid = order.getDomainId();
+    model.rid = referenceId;
     DomainConfig dc = DomainConfig.getInstance(order.getDomainId());
     for (IDemandItem demandItem : order.getItems()) {
       if (BigUtil.greaterThanZero(demandItem.getQuantity())) {

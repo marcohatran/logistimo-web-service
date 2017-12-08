@@ -52,4 +52,8 @@ public class OrderStatusModel {
   public String ps;
 
   public String orderUpdatedAt;
+  /**
+   * Reference id
+   */
+  public String rid;
 }

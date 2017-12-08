@@ -499,3 +499,5 @@ orders.created.by.system=Le système a créé cette commande.
 upgrade.app.message=L'approbation de la commande est activée, ce qui nécessite une mise à niveau vers votre application mobile. Veuillez mettre à niveau l'application mobile pour continuer à utiliser les fonctionnalités de gestion des commandes.
 approvals.config.update.success=La configuration des approbations a été mise à jour avec succès.
 general.notification.update.success=Configuration des notifications mise à jour avec succès.
+ship.reference.id.update.success=ID de référence mis à jour avec succès.
+ship.reference.id.update.error=Erreur lors de la mise à jour de Reference ID

@@ -1157,5 +1157,16 @@ config.barcoding.enable=Activer l'analyse de code-barres sur mobile
 config.barcoding.rfid.enable=Activer le balayage de code-barres / RFID
 profile.number=Nombre de profils
 auth.info=Autorisez cet appareil en utilisant la clé ci-dessus.
+order.purchase=achat
+mandate.order.fields=Champs de commande obligatoires
+mandate.order.fields.overview=Spécifiez les champs qui devraient être obligatoires dans une commande à différentes étapes du cycle de vie de la commande.
+mandate.referenceid=Rendre l'identifiant de référence obligatoire avant l'expédition
+mandate.estimateddateofarrival=Rendez la 'Date d'arrivée estimée' obligatoire avant l'expédition
+validate.ead.by.user=Je confirme que la date ci-dessus est correctement remplie
+estimated.date.of.arrival.mandatory.error=La date d'arrivée prévue est obligatoire et devrait être aujourd'hui ou plus tard. Veuillez entrer une date d'arrivée estimée et réessayer.
+reference.id.mandatory.error=L'identifiant de référence est obligatoire avant l'expédition. Veuillez entrer l'identifiant de référence et réessayer.
+estimated.date.of.arrival.reference.id.mandatory=REMARQUE: La date d'arrivée estimée et l'identifiant de référence sont obligatoires au moment de l'expédition.
+estimated.date.of.arrival.mandatory=REMARQUE: La date d'arrivée estimée est obligatoire au moment de l'expédition.
+reference.id.mandatory=REMARQUE: L'identifiant de référence est obligatoire au moment de l'expédition.
 
 

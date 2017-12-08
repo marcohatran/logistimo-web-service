@@ -145,5 +145,9 @@ public class ShipmentModel {
    * Comment for shipment
    */
   public String comment;
+  /**
+   * Reference id
+   */
+  public String rid;
 
 }

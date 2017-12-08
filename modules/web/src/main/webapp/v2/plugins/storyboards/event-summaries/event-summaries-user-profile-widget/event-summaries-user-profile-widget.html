@@ -37,25 +37,24 @@
         <span class="widget-no-data">No data to display</span>
     </div>
     <div ng-show="!wloading && !showError && !noData">
-        <div class="summary-title pt15" style="padding-bottom: 15px; border-bottom:1px solid #ddd;">
+        <div class="summary-title pt15" style="padding-bottom:15px;">
             {{heading}}
         </div>
-            <div ng-repeat="item in profiles">
-                <div class="panel-default" style="border-bottom:1px solid #ddd">
+            <div ng-repeat="item in profiles" class="user-profile-card">
+                <div class="panel-default">
                     <div class="panel-body">
                         <div class="col-sm-8">
                             <p class="widget-text user-profile-text table-min">{{item.name}}</p>
                             <p class="widget-text user-profile-text table-min" style="color:grey;">{{item.title}}</p>
                             <p ng-show="item.type == 'critical'" class="widget-text user-profile-text table-min" style="color:grey">{{item.subtitle}}</p>
-                            <p ng-show="item.type == 'critical'" class="widget-text table-min pt5" style="color:grey;text-transform: uppercase; font-size: medium; text-overflow: ellipsis">{{item.user}}</p>
                         </div>
-                        <div class="col-sm-4" ng-show="item.show_image && item.type != 'critical'">
+                        <div class="col-sm-4 text-center" ng-if="item.show_image">
                             <img class="widget-profile-image" src="{{item.image_url}}"/>
-                            <p class="widget-text table-min pt5" style="color:grey;font-size:medium; text-overflow: ellipsis; text-transform: uppercase;">{{item.user}}</p>
+                            <p class="widget-text table-min pt5 user-profile-name-text">{{item.user}}</p>
                         </div>
-                        <div class="col-sm-4" ng-show="!item.show_image && item.type != 'critical'">
+                        <div class="col-sm-4 text-center" ng-if="!item.show_image">
                             <span class="glyphicon glyphicon-user" style="font-size: 50px; color: darkgrey"></span>
-                            <p class="widget-text table-min pt5" style="color:grey;text-transform: uppercase; font-size: medium; text-overflow: ellipsis">{{item.user}}</p>
+                            <p class="widget-text table-min pt5 user-profile-name-text">{{item.user}}</p>
                         </div>
                     </div>
                 </div>

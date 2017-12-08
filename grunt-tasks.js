@@ -147,6 +147,10 @@ module.exports = function(grunt, ref) {
                 src: '<%= baseurl %>/modules/web/src/main/webapp/v2/index.html',
                 dest: 'target/grunt/webapp/v2/bulletinboard.html'
             },
+            bulletinboardlist: {
+                src: '<%= baseurl %>/modules/web/src/main/webapp/v2/views/bulletinboard/list-bulletin-boards.html',
+                dest: 'target/grunt/webapp/v2/views/list-bulletin-boards.html'
+            },
             bulletinboardApp: {
                 src: '<%= baseurl %>/modules/web/src/main/webapp/v2/js/app.js',
                 dest: 'target/grunt/webapp/v2/js/bulletinboard-app.js'
@@ -314,6 +318,7 @@ module.exports = function(grunt, ref) {
                     'target/grunt/webapp/m/index.html': 'target/grunt/webapp/m/index.html',
                     'target/grunt/webapp/v2/index.html': 'target/grunt/webapp/v2/index.html',
                     'target/grunt/webapp/v2/bulletinboard.html': 'target/grunt/webapp/v2/bulletinboard.html',
+                    'target/grunt/webapp/v2/views/list-bulletin-boards.html': 'target/grunt/webapp/v2/views/list-bulletin-boards.html',
                     'target/grunt/webapp/v2/js/app.js': 'target/grunt/webapp/v2/js/app.js',
                     'target/grunt/webapp/v2/js/bulletinboard-app.js': 'target/grunt/webapp/v2/js/bulletinboard-app.js',
                     'target/grunt/webapp/v2/views/login.html': 'target/grunt/webapp/v2/views/login.html',
@@ -500,6 +505,7 @@ module.exports = function(grunt, ref) {
                 files: {
                     "target/grunt/webapp/v2/index.html": "target/grunt/webapp/v2/index.html",
                     "target/grunt/webapp/v2/bulletinboard.html": "target/grunt/webapp/v2/bulletinboard.html",
+                    "target/grunt/webapp/v2/views/list-bulletin-boards.html": "target/grunt/webapp/v2/views/list-bulletin-boards.html",
                     "target/grunt/webapp/v2/mobile-pwd-reset-success.html": "target/grunt/webapp/v2/mobile-pwd-reset-success.html",
                     "target/grunt/webapp/v2/password-reset-error.html": "target/grunt/webapp/v2/password-reset-error.html",
                     "target/grunt/webapp/v2/password-reset-success.html": "target/grunt/webapp/v2/password-reset-success.html",
@@ -618,6 +624,10 @@ module.exports = function(grunt, ref) {
                     {
                         src: 'target/grunt/webapp/v2/bulletinboard.html',
                         dest: 'target/grunt/webapp/v2/bulletinboard.html'
+                    },
+                    {
+                        src: 'target/grunt/webapp/v2/views/list-bulletin-boards.html',
+                        dest: 'target/grunt/webapp/v2/views/list-bulletin-boards.html'
                     }
                 ]
             }
@@ -664,12 +674,12 @@ module.exports = function(grunt, ref) {
         'propertiesToJSON:fr','shell:convertUTF8','copy:res2src','copy:rb2src']);
     grunt.registerTask('development',['clean:dist', 'env:dev', 'copy:src','copy:main','copy:properties','if:default',
         'rename:en', 'rename:fr', 'rename:hi', 'propertiesToJSON:en', 'propertiesToJSON:fr', 'shell:convertUTF8', 'if:rb',
-        'rename:resource', 'cssmin:prod', 'copy:bulletinboard', 'copy:bulletinboardApp', 'preprocess:beforeUglify',
+        'rename:resource', 'cssmin:prod', 'copy:bulletinboard', 'copy:bulletinboardlist','copy:bulletinboardApp', 'preprocess:beforeUglify',
         'env:bulletinboard', 'preprocess:bulletinboardUglify', 'env:dev', 'toggleComments', 'html2js', 'ngAnnotate',
         'string-replace:dist', 'uglify', 'preprocess:afterUglify', 'env:bulletinboard', 'preprocess:bulletinboardAfterUglify']);
     grunt.registerTask('production',['clean:dist', 'env:prod', 'copy:src','copy:main','copy:properties', 'if:default',
         'rename:en', 'rename:fr', 'rename:hi', 'propertiesToJSON:en', 'propertiesToJSON:fr', 'shell:convertUTF8', 'if:rb',
-        'rename:resource', 'cssmin:prod', 'copy:bulletinboard', 'copy:bulletinboardApp', 'preprocess:beforeUglify',
+        'rename:resource', 'cssmin:prod', 'copy:bulletinboard','copy:bulletinboardlist','copy:bulletinboardApp', 'preprocess:beforeUglify',
         'env:bulletinboard', 'preprocess:bulletinboardUglify', 'env:prod', 'toggleComments', 'html2js', 'ngAnnotate',
         'string-replace:dist', 'uglify', 'preprocess:afterUglify', 'env:bulletinboard', 'preprocess:bulletinboardAfterUglify']);
 

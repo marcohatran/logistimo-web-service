@@ -25,9 +25,12 @@ package com.logistimo.api.util;
 
 import com.logistimo.config.entity.Config;
 import com.logistimo.config.entity.IConfig;
+import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.InventoryConfig;
 import com.logistimo.config.models.MatStatusConfig;
+import com.logistimo.config.models.OrdersConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
+import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
 import com.logistimo.materials.entity.IMaterialManufacturers;
 import com.logistimo.materials.entity.MaterialManufacturers;
 import com.logistimo.proto.JsonTagsZ;
@@ -39,6 +42,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
@@ -92,7 +96,7 @@ public class RESTUtilTest {
 
   @Test
   public void testIsConfigModifiedModifiedSinceDateLesserThanLastUpdatedTime() throws Exception {
-    ConfigurationMgmtService configManagementService = mock(ConfigurationMgmtService.class);
+    ConfigurationMgmtServiceImpl configManagementService = mock(ConfigurationMgmtServiceImpl.class);
     IConfig mockConfig = new Config();
     mockConfig.setLastUpdated(getDate(0));
     when(configManagementService.getConfiguration(CONFIG_KEY))
@@ -161,6 +165,25 @@ public class RESTUtilTest {
   public void testEmptyManufacturerList() {
     List<Map<String, Object>> manufacturerList = RESTUtil.getManufacturerList(null);
     assertEquals(manufacturerList.size(), 0);
+  }
+
+  @Test
+  public void testGetMandatoryOrderFields() {
+    DomainConfig dc = new DomainConfig();
+    OrdersConfig oc = new OrdersConfig();
+    oc.setReferenceIdMandatory(true);
+    oc.setExpectedArrivalDateMandatory(false);
+    dc.setOrdersConfig(oc);
+    HashMap<String, Object> data = RESTUtil.getMandatoryOrderFields(oc);
+    HashMap<String, Object> salesOrderConfig =
+        (HashMap<String, Object>) data.get(JsonTagsZ.SALES_ORDERS);
+    HashMap<String, Object> shippingConfig =
+        (HashMap<String, Object>) salesOrderConfig.get(JsonTagsZ.SHIPPING);
+    assertEquals(data.entrySet().size(), 1);
+    assertEquals(salesOrderConfig.entrySet().size(), 1);
+    assertEquals(shippingConfig.entrySet().size(), 2);
+    assertEquals(shippingConfig.get(JsonTagsZ.REFERENCE_ID), true);
+    assertEquals(shippingConfig.get(JsonTagsZ.EXPECTED_TIME_OF_ARRIVAL), false);
   }
 
   private List<IMaterialManufacturers> setMaterialManufacturers(Long key, Long code, String name,

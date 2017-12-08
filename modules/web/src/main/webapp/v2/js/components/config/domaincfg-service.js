@@ -238,7 +238,10 @@ domainCfgServices.factory('domainCfgService', ['APIService', function (apiServic
             return apiService.get("/s2/api/config/domain/general-notifications");
         },
         updateGeneralNotificationsConfig: function(language) {
-            return apiService.post(language, "/s2/api/config/domain/general-notifications");
+            return apiService.post(language,"/s2/api/config/domain/general-notifications");
+        },
+        getApprovalsEnabledConfig: function () {
+            return apiService.get("/s2/api/config/domain/approvals-enabled");
         }
     }
 }]);

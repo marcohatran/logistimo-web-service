@@ -30,7 +30,7 @@ angular.module('logistimo.storyboard.eventMapWidget', [])
     ['$scope', '$timeout', 'dashboardService', 'domainCfgService', 'INVENTORY', '$sce','eventSummaryService',
         function ($scope, $timeout, dashboardService, domainCfgService, INVENTORY, $sce,eventSummaryService) {
             var filter = angular.copy($scope.widget.conf);
-            var invPieOrder, mapRange, maxValue = 0;
+            var invPieOrder, mapRange,mapColors, maxValue = 0;
             var fDate = (checkNotNullEmpty(filter.date) ? formatDate(filter.date) : undefined);
             $scope.showChart = false;
             $scope.wloading = true;
@@ -47,6 +47,8 @@ angular.module('logistimo.storyboard.eventMapWidget', [])
                 $scope.categoryId = $scope.widget.conf.category;
                 $scope.thresholdId = $scope.widget.conf.threshold;
                 $scope.init();
+                mapColors['es'] = mapColors['n'];
+                mapRange['es'] = mapRange['n'];
             });
 
             $scope.init = function () {
@@ -128,17 +130,11 @@ angular.module('logistimo.storyboard.eventMapWidget', [])
                         
                         if ($scope.dashboardView.eventType == 'performance') {
                             mapColors['es'] = mapColors['n'];
-                            mapColors['es'].insert(0, '#cccccc');
                             mapRange['es'] = mapRange['n'];
-                            mapRange['es'].insert(0, 0);
-                            mapRange['es'][1] = 0.1;
 
                         } else {
                             mapColors['es'] = mapColors[200];
-                            mapColors['es'].insert(0, '#cccccc');
                             mapRange['es'] = mapRange[200];
-                            mapRange['es'].insert(0, 0);
-                            mapRange['es'][1] = 0.1;
                         }
                         constructMapData($scope.mapEvent, true, $scope, INVENTORY, $sce, mapRange, mapColors,
                             invPieOrder, $timeout);
@@ -163,9 +159,12 @@ angular.module('logistimo.storyboard.eventMapWidget', [])
                             "alignCaptionWithCanvas": 1,
                             "labelConnectorAlpha":0,
                             "captionFontBold":1,
-                            "captionFont":'Helvetica Neue, Arial'
+                            "captionFont":'Helvetica Neue, Arial',
+                            "labelConnectorAlpha": 0,
+                            "displayValue": ""
 
                         };
+                        setMapRange('es', $scope, mapRange, mapColors);
                     }
                     setWidgetData();
                 }).catch(function error(msg) {
