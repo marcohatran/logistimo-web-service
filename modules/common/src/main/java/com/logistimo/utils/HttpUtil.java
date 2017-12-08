@@ -44,6 +44,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -278,13 +279,13 @@ public class HttpUtil {
   /**
    * Returns an optional If-Modified-Since date if it is present in the request header
    */
-  public static Optional<Date> getModifiedDate(HttpServletRequest request, String timezone) {
+  public static Optional<Date> getModifiedDate(HttpServletRequest request) {
     String ifModifiedHeader = request.getHeader(Constants.IF_MODIFIED_SINCE_HEADER);
     Date date = null;
     try {
       if (StringUtils.isNotBlank(ifModifiedHeader)) {
-        date = LocalDateUtil
-            .parseCustom(ifModifiedHeader, Constants.IF_MODIFIED_SINCE_DATE_FORMAT, timezone);
+        SimpleDateFormat sdf = new SimpleDateFormat(Constants.IF_MODIFIED_SINCE_DATE_FORMAT);
+        date = sdf.parse(ifModifiedHeader);
       }
     } catch (ParseException e) {
       // ignore
@@ -296,7 +297,8 @@ public class HttpUtil {
   /**
    * Sets the Last-Modified response header
    */
-  public static void setLastModifiedHeader(HttpServletResponse response, String dateValue) {
-    response.addHeader(Constants.LAST_MODIFIED_HEADER, dateValue);
+  public static void setLastModifiedHeader(HttpServletResponse response, Date  date) {
+    SimpleDateFormat sdf = new SimpleDateFormat(Constants.IF_MODIFIED_SINCE_DATE_FORMAT);
+    response.addHeader(Constants.LAST_MODIFIED_HEADER, sdf.format(date));
   }
 }

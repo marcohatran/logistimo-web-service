@@ -29,6 +29,7 @@ import junit.framework.TestCase;
 
 import org.junit.Test;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Optional;
 
@@ -51,7 +52,7 @@ public class HttpUtilTest extends TestCase {
     HttpServletRequest request = mock(HttpServletRequest.class);
     when(request.getHeader(Constants.IF_MODIFIED_SINCE_HEADER)).thenReturn(MODIFIED_SINCE_DATE);
     HttpUtil httpUtil = new HttpUtil();
-    assertNotSame(httpUtil.getModifiedDate(request, null), Optional.<Date>empty());
+    assertNotSame(httpUtil.getModifiedDate(request), Optional.<Date>empty());
   }
 
   @Test
@@ -59,7 +60,7 @@ public class HttpUtilTest extends TestCase {
     HttpServletRequest request = mock(HttpServletRequest.class);
     when(request.getHeader(Constants.IF_MODIFIED_SINCE_HEADER)).thenReturn(MODIFIED_SINCE_DATE);
     HttpUtil httpUtil = new HttpUtil();
-    assertNotSame(httpUtil.getModifiedDate(request, TIMEZONE), Optional.<Date>empty());
+    assertNotSame(httpUtil.getModifiedDate(request), Optional.<Date>empty());
   }
 
   @Test
@@ -67,7 +68,7 @@ public class HttpUtilTest extends TestCase {
     HttpServletRequest request = mock(HttpServletRequest.class);
     when(request.getHeader(Constants.IF_MODIFIED_SINCE_HEADER)).thenReturn("");
     HttpUtil httpUtil = new HttpUtil();
-    assertSame(httpUtil.getModifiedDate(request, null), Optional.<Date>empty());
+    assertSame(httpUtil.getModifiedDate(request), Optional.<Date>empty());
   }
 
   @Test
@@ -75,7 +76,7 @@ public class HttpUtilTest extends TestCase {
     HttpServletRequest request = mock(HttpServletRequest.class);
     when(request.getHeader(Constants.IF_MODIFIED_SINCE_HEADER)).thenReturn("56843754");
     HttpUtil httpUtil = new HttpUtil();
-    assertSame(httpUtil.getModifiedDate(request, null), Optional.<Date>empty());
+    assertSame(httpUtil.getModifiedDate(request), Optional.<Date>empty());
   }
 
   @Test
@@ -83,14 +84,16 @@ public class HttpUtilTest extends TestCase {
     HttpServletRequest request = mock(HttpServletRequest.class);
     when(request.getHeader(Constants.IF_MODIFIED_SINCE_HEADER)).thenReturn("56843754");
     HttpUtil httpUtil = new HttpUtil();
-    assertSame(httpUtil.getModifiedDate(request, TIMEZONE), Optional.<Date>empty());
+    assertSame(httpUtil.getModifiedDate(request), Optional.<Date>empty());
   }
 
   @Test
   public void testSetLastModifiedDate() {
     HttpServletResponse response = mock(HttpServletResponse.class);
     HttpUtil httpUtil = new HttpUtil();
-    httpUtil.setLastModifiedHeader(response, MODIFIED_SINCE_DATE);
-    verify(response).addHeader(Constants.LAST_MODIFIED_HEADER, MODIFIED_SINCE_DATE);
+    Date date = new Date();
+    httpUtil.setLastModifiedHeader(response, date);
+    verify(response).addHeader(Constants.LAST_MODIFIED_HEADER,
+        new SimpleDateFormat(Constants.IF_MODIFIED_SINCE_DATE_FORMAT).format(date));
   }
 }

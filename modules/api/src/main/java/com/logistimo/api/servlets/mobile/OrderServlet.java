@@ -192,7 +192,7 @@ public class OrderServlet extends JsonRestServlet {
     Long kioskId = null;
     int statusCode = HttpServletResponse.SC_OK;
     Optional<Date> modifiedSinceDate = Optional.empty();
-    String lastModified = "";
+    Date lastModified=null;
     JsonObject jsonObject = null;
     try {
       //Get kiosk from request
@@ -203,8 +203,8 @@ public class OrderServlet extends JsonRestServlet {
       //validate token and kiosk
       IUserAccount u = RESTUtil.authenticate(userId, null, kioskId, request, response);
 
-      modifiedSinceDate = HttpUtil.getModifiedDate(request, u.getTimezone());
-      lastModified = new Date().toString();
+      modifiedSinceDate = HttpUtil.getModifiedDate(request);
+      lastModified = new Date();
 
       //Get the max results from request
       int maxResults = PageParams.DEFAULT_SIZE;
@@ -368,8 +368,8 @@ public class OrderServlet extends JsonRestServlet {
       statusCode = HttpServletResponse.SC_UNAUTHORIZED;
     }
 
-    Optional<Date> modifiedSinceDate = HttpUtil.getModifiedDate(req, timezone);
-    String lastModified = new Date().toString();
+    Optional<Date> modifiedSinceDate = HttpUtil.getModifiedDate(req);
+    Date lastModified = new Date();
 
     List<IOrder> orders = null;
     boolean includeBatchDetails = true;
