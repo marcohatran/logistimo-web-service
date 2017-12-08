@@ -426,10 +426,10 @@ public class InventoryServlet extends JsonRestServlet {
       statusCode = HttpServletResponse.SC_UNAUTHORIZED;
     }
     int numInv = 0;
-    String lastModified = new Date().toString();
+    Date lastModified = new Date();
     // Get inventory list
     if (status) {
-      modifiedSinceDate = HttpUtil.getModifiedDate(req, timezone);
+      modifiedSinceDate = HttpUtil.getModifiedDate(req);
       try {
         // Get domain config
         DomainConfig dc = DomainConfig.getInstance(domainId);

@@ -1653,7 +1653,7 @@ public class SetupDataServlet extends JsonRestServlet {
         }
       }
       PageParams pageParams = new PageParams(offset, size);
-      String lastModified = new Date().toString();
+      Date lastModified = new Date();
       int numLinkedKiosks = 0;
       try {
         // Authenticate user
@@ -1662,8 +1662,7 @@ public class SetupDataServlet extends JsonRestServlet {
           userId = u.getUserId();
         }
         DomainConfig dc = DomainConfig.getInstance(u.getDomainId());
-        String timezone = (u.getTimezone() != null ? u.getTimezone() : Constants.TIMEZONE_DEFAULT);
-        Optional<Date> modifiedSinceDate = HttpUtil.getModifiedDate(req, timezone);
+        Optional<Date> modifiedSinceDate = HttpUtil.getModifiedDate(req);
         Results
             results =
             RESTUtil.getLinkedKiosks(kioskId, relationshipType, userId, true, dc, pageParams,

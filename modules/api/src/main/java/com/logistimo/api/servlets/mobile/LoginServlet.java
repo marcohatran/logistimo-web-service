@@ -39,6 +39,7 @@ import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.exception.ValidationException;
 import com.logistimo.logger.XLog;
 import com.logistimo.pagination.PageParams;
+import com.logistimo.proto.ProtocolException;
 import com.logistimo.proto.RestConstantsZ;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
@@ -215,7 +216,6 @@ public class LoginServlet extends JsonRestServlet {
       String onlyAuthenticateStr = req.getParameter(RestConstantsZ.ONLY_AUTHENTICATE);
       onlyAuthenticate = (onlyAuthenticateStr != null);
 
-
       // Get the user-agent and device details from header, if available
       String userAgentStr = req.getHeader(USER_AGENT);
       String deviceDetails = req.getHeader(DEVICE_DETAILS);
@@ -319,71 +319,82 @@ public class LoginServlet extends JsonRestServlet {
       }
 
       //Generate authentication token and update the UserTokens table with userId, Token and Expires
-      IUserToken token;
-      try {
-        aus = StaticApplicationContext.getBean(AuthenticationService.class);
-        token = aus.generateUserToken(userId, SourceConstants.MOBILE);
-        if (token != null) {
-          resp.setHeader(Constants.TOKEN, token.getRawToken());
-          resp.setHeader(Constants.EXPIRES, String.valueOf(token.getExpires().getTime()));
+
+        IUserToken token;
+        try {
+         if(!status){
+            jsonString =
+                RESTUtil.getJsonOutputAuthenticate(status, user, message, null, minResponseCode,
+                    onlyAuthenticate, forceIntegerForStock, start, null, pageParams);
+            sendJsonResponse(resp, HttpServletResponse.SC_UNAUTHORIZED, jsonString);
+            return;
+          }
+          aus = StaticApplicationContext.getBean(AuthenticationService.class);
+          token = aus.generateUserToken(userId, SourceConstants.MOBILE);
+          if (token != null) {
+            resp.setHeader(Constants.TOKEN, token.getRawToken());
+            resp.setHeader(Constants.EXPIRES, String.valueOf(token.getExpires().getTime()));
+          }
+        } catch (ObjectNotFoundException e) {
+          xLogger.warn("No user found with ID: {0}", userId);
+          status = false;
+          message = backendMessages.getString("error.invalidusername");
+        } catch (ServiceException|ProtocolException e) {
+          xLogger.severe("Service Exception during login: {0}", userId, e);
+          status = false;
+          message = backendMessages.getString("error.systemerror");
         }
-      } catch (ObjectNotFoundException e) {
-        xLogger.warn("No user found with ID: {0}", userId);
-        status = false;
-        message = backendMessages.getString("error.invalidusername");
-      } catch (ServiceException e) {
-        xLogger.severe("Service Exception during login: {0}", userId, e);
-        status = false;
-        message = backendMessages.getString("error.systemerror");
+
+
+
+        // FOR BACKWARD COMPATIBILITY: check whether stock has to be sent back as integer (it is float beyond mobile app. version 1.2.0)
+        forceIntegerForStock = RESTUtil.forceIntegerForStock(appVersion);
+        // Persist the user account object, to store the changes, esp. last reconnected time
+        // NOTE: we are doing this post sending response, so that respone time is not impacted
+        if (user != null) {
+          try {
+            as.updateMobileLoginFields(user);
+          } catch (Exception e) {
+            xLogger.severe("{0} when trying to store user account object {1} in domain {2}: {3}",
+                e.getClass().getName(), userId, domainId, e.getMessage());
+          }
+        }
+      }
+      Date lastModified = new Date();
+      Optional<Date> modifiedSinceDate = Optional.empty();
+      try {
+        // Get the domain configuration from the data store
+        DomainConfig dc = null;
+        if (domainId != null) {
+          dc = DomainConfig.getInstance(domainId);
+        }
+        modifiedSinceDate = HttpUtil.getModifiedDate(req);
+        jsonString =
+            RESTUtil.getJsonOutputAuthenticate(status, user, message, dc, minResponseCode,
+                onlyAuthenticate, forceIntegerForStock, start, modifiedSinceDate, pageParams);
+      } catch (Exception e2) {
+        xLogger.warn("Protocol exception during login: {0}", e2);
+        if (status) { // that is, login successful, but data formatting exception
+          status = false;
+          message = backendMessages.getString("error.nomaterials");
+          try {
+            jsonString =
+                RESTUtil
+                    .getJsonOutputAuthenticate(status, null, message, null, minResponseCode,
+                        onlyAuthenticate, forceIntegerForStock, start, modifiedSinceDate, null);
+          } catch (Exception e) {
+            xLogger.severe("Protocol exception after data formatting error (during login): {0}", e);
+            resp.setStatus(500);
+            return;
+          }
+        }
       }
 
-      // FOR BACKWARD COMPATIBILITY: check whether stock has to be sent back as integer (it is float beyond mobile app. version 1.2.0)
-      forceIntegerForStock = RESTUtil.forceIntegerForStock(appVersion);
-      // Persist the user account object, to store the changes, esp. last reconnected time
-      // NOTE: we are doing this post sending response, so that respone time is not impacted
-      if (user != null) {
-        try {
-          as.updateMobileLoginFields(user);
-        } catch (Exception e) {
-          xLogger.severe("{0} when trying to store user account object {1} in domain {2}: {3}",
-              e.getClass().getName(), userId, domainId, e.getMessage());
-        }
+      if (jsonString != null) {
+        HttpUtil.setLastModifiedHeader(resp, lastModified);
+        sendJsonResponse(resp, HttpServletResponse.SC_OK, jsonString);
       }
-    }
-    String lastModified = new Date().toString();
-    Optional<Date> modifiedSinceDate = Optional.empty();
-    try {
-      // Get the domain configuration from the data store
-      DomainConfig dc = null;
-      if (domainId != null) {
-        dc = DomainConfig.getInstance(domainId);
-      }
-      String timezone = (user != null ? user.getTimezone() : Constants.TIMEZONE_DEFAULT);
-      modifiedSinceDate = HttpUtil.getModifiedDate(req, timezone);
-      jsonString =
-          RESTUtil.getJsonOutputAuthenticate(status, user, message, dc, minResponseCode,
-              onlyAuthenticate, forceIntegerForStock, start, modifiedSinceDate, pageParams);
-    } catch (Exception e2) {
-      xLogger.warn("Protocol exception during login: {0}", e2);
-      if (status) { // that is, login successful, but data formatting exception
-        status = false;
-        message = backendMessages.getString("error.nomaterials");
-        try {
-          jsonString =
-              RESTUtil
-                  .getJsonOutputAuthenticate(status, null, message, null, minResponseCode,
-                      onlyAuthenticate, forceIntegerForStock, start, modifiedSinceDate, null);
-        } catch (Exception e) {
-          xLogger.severe("Protocol exception after data formatting error (during login): {0}", e);
-          resp.setStatus(500);
-          return;
-        }
-      }
-    }
-    if (jsonString != null) {
-      HttpUtil.setLastModifiedHeader(resp, lastModified);
-      sendJsonResponse(resp, HttpServletResponse.SC_OK, jsonString);
-    }
+
   }
 
   public void generateNewPassword(HttpServletRequest req, HttpServletResponse resp,
