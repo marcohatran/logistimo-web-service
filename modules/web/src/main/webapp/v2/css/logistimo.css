@@ -2021,7 +2021,7 @@ h6{
 
 .modal-backdrop {
     bottom: 0;
-    min-height: 10000px;
+    position: fixed;
     height: 100%;
 }
 
