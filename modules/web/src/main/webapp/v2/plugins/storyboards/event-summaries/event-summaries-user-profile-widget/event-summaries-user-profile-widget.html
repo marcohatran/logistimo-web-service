@@ -40,13 +40,17 @@
         <div class="summary-title pt15" style="padding-bottom:15px;">
             {{heading}}
         </div>
-            <div ng-repeat="item in profiles" class="user-profile-card">
+            <div ng-repeat="item in profiles" class="user-profile-card" ng-class="{'user-profile-last-card':$last}">
                 <div class="panel-default">
                     <div class="panel-body">
-                        <div class="col-sm-8">
+                        <div class="col-sm-8" ng-show="item.type == 'critical'">
                             <p class="widget-text user-profile-text table-min">{{item.name}}</p>
                             <p class="widget-text user-profile-text table-min" style="color:grey;">{{item.title}}</p>
-                            <p ng-show="item.type == 'critical'" class="widget-text user-profile-text table-min" style="color:grey">{{item.subtitle}}</p>
+                            <p class="widget-text user-profile-text table-min" style="color:grey">{{item.subtitle}}</p>
+                        </div>
+                        <div class="col-sm-8" ng-show="item.type == 'performance'">
+                            <p class="widget-text user-profile-text table-min">{{item.name}}</p>
+                            <p class="widget-text user-profile-text table-min" style="color:grey">{{item.subtitle}}</p>
                         </div>
                         <div class="col-sm-4 text-center" ng-if="item.show_image">
                             <img class="widget-profile-image" src="{{item.image_url}}"/>

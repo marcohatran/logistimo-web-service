@@ -33,7 +33,7 @@
                         <div class="panel-body">
                             <div class="col-sm-7 noLRpad">
                                 <span class="glyphicons glyphicons-upload uploadIcon col-sm-1"></span>
-                                <span class="form-control-static col-sm-11"><b>{{resourceBundle['bulkupload.mylastupload']}}:</b> <a href="/s2/api/export/download?key={{us.id}}" target="_new">{{us.fnm}}</a>
+                                <span class="form-control-static col-sm-11"><b>{{resourceBundle['bulkupload.mylastupload']}}:</b> <a ng-click="downloadDataFile('/s2/api/export/download?key='+us.id,us.fnm)">{{us.fnm}}</a>
                                     <span class="caption">{{resourceBundle['on']}} {{us.utm}}<span ng-show="isDef(us.unm)"> {{resourceBundle['by']}} <a href="/v2/index.html#/setup/users/all/details?userId={{us.uid}}" target="_new">{{us.unm}}</a></span></span>
                                 </span>
                             </div>
@@ -122,7 +122,8 @@
             <div class="col-sm-12">
                 <span class="glyphicons glyphicons-download uploadIcon"></span>
                 <span class="uploadBotSpace">
-                    <a href="/s2/api/export/uploadformat?type={{us.ty}}" target="_new">{{resourceBundle['bulkupload.downloaddatafile']}} {{us.tnm}}</a>
+                    <!-- a ng-href="/s2/api/export/uploadformat?type={{us.ty}}" target="_new">{{resourceBundle['bulkupload.downloaddatafile']}} {{us.tnm}}</a -->
+                    <a ng-click="downloadDataFile('/s2/api/export/uploadformat?type='+us.ty,us.ty+'.csv')">{{resourceBundle['bulkupload.downloaddatafile']}} {{us.tnm}}</a>
                 </span>
                 <span class="uploadBotSpace" ng-show="helpFile != null">
                     <a href="/s/help/index.html#!Documents/{{helpFile}}" target="_blank"><span class="glyphicons glyphicons-info-sign"></span></a>
@@ -133,7 +134,7 @@
             <div class="col-sm-12" ng-show="us.iut">
                 <span class="glyphicons glyphicons-download uploadIcon"></span>
                 <span class="uploadBotSpace">
-                    <a href="/s2/api/export/uploadformat?type=timezones" target="_new">{{resourceBundle['bulkupload.downloadtimezones']}}</a>
+                    <a ng-click="downloadDataFile('/s2/api/export/uploadformat?type=timezones','timezones.csv')" target="_new">{{resourceBundle['bulkupload.downloadtimezones']}}</a>
                 </span>
             </div>
         </div>

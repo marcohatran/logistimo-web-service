@@ -26,7 +26,7 @@
     logistimoApp.controller("AppController",
         function ($scope, $route, $routeParams, $location, $uibModal, requestContext, ngI18nResourceBundle, $timeout,
                   domainCfgService, exportService, userService, $window, $sce, iAuthService, $q, $rootScope,
-                  linkedDomainService, domainService, configService, dashboardService, isBulletinBoard) {
+                  linkedDomainService, domainService, configService, dashboardService, isBulletinBoard,APIService) {
             var renderContext = requestContext.getRenderContext();
 
             $scope.showpopup = 'showpopup';
@@ -813,6 +813,9 @@
                 }, 30000);
             };
             $scope.checkNetwork();
+            $scope.downloadDataFile = function(fileUrl,defaultFileName){
+                APIService.serveFile(fileUrl, defaultFileName);
+            }
         }
     );
 })(angular, logistimoApp);

@@ -341,7 +341,7 @@ label{
     border-bottom: 1px solid #eeeeee;
 }
 
-.container .logitron {
+.logitron {
     background-color: white;
     border: 1px solid #ddd;
     padding: 10px 15px;
@@ -2122,6 +2122,8 @@ h6{
     z-index: 1010;
     padding-bottom: 10000px;
     margin-bottom: -10000px;
+    padding-right: 10000px;
+    margin-right: -10000px;
     opacity: 0.2;
     background-color: black;
 }
@@ -4136,4 +4138,9 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
 .text-widget-no-data {
     display: table;
     width:100%;
+}
+.user-profile-last-card {
+    border-bottom:1px solid #ddd;
+    margin-left:10px;
+    margin-right:10px;
 }

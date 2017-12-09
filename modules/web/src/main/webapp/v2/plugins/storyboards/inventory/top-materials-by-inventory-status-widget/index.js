@@ -5,7 +5,7 @@ angular.module('logistimo.storyboard.topMaterialsByInventoryStatusWidget', [])
     .config(function (widgetsRepositoryProvider) {
         widgetsRepositoryProvider.addWidget({
             id: "topMaterialsByInventoryStatusWidget",
-            name: "Inventory top ten materials",
+            name: "inventory.top.ten.materials",
             templateUrl: "plugins/storyboards/inventory/" +
             "top-materials-by-inventory-status-widget/top-materials-by-inventory-status-widget.html",
             editTemplateUrl: "plugins/storyboards/inventory/edit-template.html",

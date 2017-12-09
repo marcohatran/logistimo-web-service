@@ -26,6 +26,7 @@ package com.logistimo.locations.client.impl;
 import com.logistimo.entity.ILocation;
 import com.logistimo.locations.client.LocationClient;
 import com.logistimo.locations.command.GetLocationCommand;
+import com.logistimo.locations.command.UpdateLocationMasterDataCommand;
 import com.logistimo.locations.constants.LocationConstants;
 import com.logistimo.locations.model.LocationRequestModel;
 import com.logistimo.locations.model.LocationResponseModel;
@@ -50,11 +51,22 @@ public class LocationServiceImpl implements LocationClient {
 
   @Override
   public LocationResponseModel getLocationIds(ILocation location) {
-    MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+    MultiValueMap<String, String> headers = new LinkedMultiValueMap<>(1);
     headers.add("x-app-name", "logistimo");
     LocationRequestModel model = convert(location);
     GetLocationCommand locationCommand = new GetLocationCommand(restTemplate, model, headers);
     return locationCommand.execute();
+  }
+
+  @Override
+  public void updateLocationsMasterdata(String locationsJson) {
+    MultiValueMap<String, String> headers = new LinkedMultiValueMap<>(1);
+    headers.add("x-app-name", "logistimo");
+    UpdateLocationMasterDataCommand
+        updateLocationMasterDataCommand =
+        new UpdateLocationMasterDataCommand(restTemplate, locationsJson, headers);
+    updateLocationMasterDataCommand.execute();
+    log.info("Add locations completed successfully");
   }
 
   private LocationRequestModel convert(ILocation location) {

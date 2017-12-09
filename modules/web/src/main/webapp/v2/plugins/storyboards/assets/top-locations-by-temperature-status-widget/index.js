@@ -5,7 +5,7 @@ angular.module('logistimo.storyboard.topLocationsByTemperatureStatusWidget', [])
     .config(function (widgetsRepositoryProvider) {
         widgetsRepositoryProvider.addWidget({
             id: "topLocationsByTemperatureStatusWidget",
-            name: "Asset top ten locations",
+            name: "asset.top.ten.locations",
             templateUrl: "plugins/storyboards/assets/" +
             "top-locations-by-temperature-status-widget/top-locations-by-temperature-status-widget.html",
             editTemplateUrl: "plugins/storyboards/assets/asset-edit-template.html",

@@ -2,7 +2,7 @@ angular.module('logistimo.storyboard.inventoryStatusDonutWidget', [])
     .config(function (widgetsRepositoryProvider) {
         widgetsRepositoryProvider.addWidget({
             id: "inventoryStatusDonutWidget",
-            name: "Inventory status donut",
+            name: "inventory.status.donut",
             templateUrl: "plugins/storyboards/inventory/inventory-status-donut-widget/inventory-status-donut-widget.html",
             editTemplateUrl: "plugins/storyboards/inventory/edit-template.html",
             templateFilters: [

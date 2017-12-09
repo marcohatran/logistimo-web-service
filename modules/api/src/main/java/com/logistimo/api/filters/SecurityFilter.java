@@ -23,13 +23,16 @@
 
 package com.logistimo.api.filters;
 
+import com.logistimo.api.auth.AuthenticationUtil;
 import com.logistimo.auth.SecurityConstants;
 import com.logistimo.auth.SecurityMgr;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.auth.utils.SessionMgr;
 import com.logistimo.constants.Constants;
+import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.logger.XLog;
 import com.logistimo.security.SecureUserDetails;
+import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.utils.ConfigUtil;
 
 import org.apache.commons.lang.StringUtils;
@@ -61,6 +64,9 @@ public class SecurityFilter implements Filter {
   private static final String AUTHENTICATE_URL = "/enc/authenticate";
   private static final String ACTION_UPDATESYSCONFIG = "updatesysconfig";
   private static final String TASK_ADMIN_URL = "/task/admin";
+  private static final String
+      ISSUE_WITH_API_CLIENT_AUTHENTICATION =
+      "Issue with api client authentication";
   private static boolean isForceNewUI = ConfigUtil.getBoolean("force.newui", false);
 
   @Override
@@ -81,12 +87,38 @@ public class SecurityFilter implements Filter {
     SecureUserDetails
         userDetails = null;
     // END BACKWARD COMPATIBILITY
-    if (!LOGIN_URL.equals(servletPath) && !AUTHENTICATE_URL.equals(servletPath) && (
+    if (!LOGIN_URL.equals(servletPath) && !AUTHENTICATE_URL.equals(servletPath) && !isDownloadFileLink(
+        servletPath, req) && (
         servletPath.isEmpty() || servletPath.equals("/") || servletPath.startsWith("/s/") || (
             servletPath.startsWith(TASK_URL) && StringUtils
                 .isBlank(req.getHeader(Constants.X_APP_ENGINE_TASK_NAME))))) {
-      userDetails = SecurityMgr
-          .getSessionDetails(req.getSession());
+      //this is meant for internal api client
+      if (StringUtils.isNotBlank(req.getHeader(Constants.X_ACCESS_USER))) {
+        try {
+          SecurityMgr.setSessionDetails(req.getHeader(Constants.X_ACCESS_USER));
+        } catch (UnauthorizedException | ObjectNotFoundException e) {
+          xLogger.warn(ISSUE_WITH_API_CLIENT_AUTHENTICATION, e.getMessage());
+          resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
+          return;
+        } catch (Exception e) {
+          xLogger.severe(ISSUE_WITH_API_CLIENT_AUTHENTICATION, e);
+          resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+          return;
+        }
+      } else if (StringUtils.isNotBlank(req.getHeader(Constants.TOKEN))) {
+        try {
+          AuthenticationUtil.authenticateTokenAndSetSession(req);
+        } catch (UnauthorizedException | ObjectNotFoundException e) {
+          xLogger.warn(ISSUE_WITH_API_CLIENT_AUTHENTICATION, e.getMessage());
+          resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
+          return;
+        } catch (Exception e) {
+          xLogger.severe(ISSUE_WITH_API_CLIENT_AUTHENTICATION, e);
+          resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+          return;
+        }
+      }
+      userDetails = SecurityMgr.getUserDetailsIfPresent();
       if (userDetails == null) { // session not authenticated yet; direct to login screen
         if (!(servletPath.startsWith(TASK_ADMIN_URL) && ACTION_UPDATESYSCONFIG
             .equals(request.getParameter(ACTION)))) {
@@ -123,9 +155,6 @@ public class SecurityFilter implements Filter {
 
       }
     }
-    if (userDetails != null) {
-      SecurityUtils.setUserDetails(userDetails);
-    }
     try {
       if (filterChain != null) {
         filterChain.doFilter(request, response);
@@ -135,6 +164,11 @@ public class SecurityFilter implements Filter {
         SecurityUtils.setUserDetails(null);
       }
     }
+  }
+
+  private boolean isDownloadFileLink(String servletPath, HttpServletRequest req) {
+    return "/s/export".equals(servletPath) && req.getParameter(ACTION) != null && "dl".equals(
+        req.getParameter(ACTION));
   }
 
   @Override

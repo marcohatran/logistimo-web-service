@@ -9,4 +9,6 @@ import com.logistimo.locations.model.LocationResponseModel;
 public interface LocationClient {
 
   LocationResponseModel getLocationIds(ILocation location);
+
+  void updateLocationsMasterdata(String locationsJson);
 }
