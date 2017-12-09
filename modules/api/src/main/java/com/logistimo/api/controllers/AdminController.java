@@ -31,6 +31,9 @@ import com.logistimo.api.models.SimulateRequestModel;
 import com.logistimo.api.util.KioskDataSimulator;
 import com.logistimo.auth.SecurityConstants;
 import com.logistimo.auth.utils.SecurityUtils;
+import com.logistimo.config.entity.IConfig;
+import com.logistimo.config.service.ConfigurationMgmtService;
+import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.events.handlers.EventHandler;
@@ -40,6 +43,7 @@ import com.logistimo.exception.ValidationException;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.service.InventoryManagementService;
 import com.logistimo.inventory.service.impl.InventoryManagementServiceImpl;
+import com.logistimo.locations.client.LocationClient;
 import com.logistimo.logger.XLog;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ServiceException;
@@ -51,6 +55,7 @@ import com.logistimo.users.entity.IUserDevice;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.users.service.impl.UsersServiceImpl;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -96,6 +101,13 @@ public class AdminController {
   private static final String REQUESTTYPE_EXECUTE = "execute";
   private static final String TASK_URL = "/task/datagenerator";
   private static final XLog xLogger = XLog.getLog(AdminController.class);
+
+  private LocationClient locationClient;
+
+  @Autowired
+  public void setLocationClient(LocationClient locationClient) {
+    this.locationClient = locationClient;
+  }
 
   @RequestMapping(value = "/dailyevents", method = RequestMethod.GET)
   public
@@ -223,6 +235,18 @@ public class AdminController {
       throw new InvalidServiceException(e);
     }
   }
+
+  @RequestMapping(value = "/update-locations-data", method = RequestMethod.POST)
+  public
+  @ResponseBody
+  void updateLocationsData() throws ServiceException {
+    ConfigurationMgmtService
+        cms =
+        Services.getService(ConfigurationMgmtServiceImpl.class);
+    IConfig c = cms.getConfiguration(IConfig.LOCATIONS);
+    locationClient.updateLocationsMasterdata(c.getConfig());
+  }
+
 
   @RequestMapping(value = "/notification-token", method = RequestMethod.GET)
   public

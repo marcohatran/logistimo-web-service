@@ -59,6 +59,9 @@ configServices.factory('configService', ['APIService', function (apiService) {
         },
         simulateData: function (simulateDataRequest) {
             return apiService.post(simulateDataRequest, '/s2/api/admin/simulate-data');
+        },
+        updateLocationsMasterData: function () {
+            return apiService.post({}, '/s2/api/admin/update-locations-data');
         }
     }
 }]);

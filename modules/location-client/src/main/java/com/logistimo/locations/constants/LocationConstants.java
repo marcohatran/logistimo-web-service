@@ -31,10 +31,12 @@ public class LocationConstants {
       LS_URL =
       ConfigUtil.get("location.service.url", "http://localhost:9090");
   private static final String LS_PATH = ConfigUtil.get("location.service.path", "/locations/ids");
+
   public static final Integer TIMED_OUT = ConfigUtil.getInt("location.service.timeout", 5000);
   public static final String APP_NAME = "logistimo";
   public static final String CLIENT_NAME = "LocationServiceClient";
   public static final String URL = LS_URL.concat(LS_PATH);
+  public static final String ADD_LOCATIONS_URL = LS_URL.concat("/admins/add-locations");
   public static final String STATE_LITERAL = "state";
   public static final String DIST_LITERAL = "district";
   public static final String SUBDIST_LITERAL = "taluk";
