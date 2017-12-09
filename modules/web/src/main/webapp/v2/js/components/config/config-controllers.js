@@ -84,6 +84,14 @@ systemCfgControllers.controller('SystemConfigController', ['$scope', 'configServ
             }
         });
 
+        $scope.updateLocationsMasterData = function(){
+            configService.updateLocationsMasterData().then(function(data){
+                $scope.showSuccess("Update succesful !! Please check the data or logs ");
+            }).catch(function (err) {
+                $scope.showError(err);
+            })
+        }
+
 
     }
 ]);
