@@ -32,7 +32,7 @@ exportServices.factory('exportService', ['APIService', function (apiService) {
         },*/
         scheduleBatchExport : function(type,extraParams) {
             if(type == "orders" && extraParams.indexOf("&values") >= 0){
-                window.location = '/s/export?type=orders&attachtoemail&format=csv' + extraParams;
+                apiService.serveFile('/s/export?type=orders&attachtoemail&format=csv' + extraParams,'orders.csv');
                 return "download complete";
             }
             var exportURL = '/s2/api/export/schedule/batch?type='+type;

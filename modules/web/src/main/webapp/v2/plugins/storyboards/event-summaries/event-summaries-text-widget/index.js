@@ -29,7 +29,7 @@ angular.module('logistimo.storyboard.eventSummariesTextWidget', [])
     .config(function (widgetsRepositoryProvider) {
         widgetsRepositoryProvider.addWidget({
             id: "eventSummariesTextWidget",
-            name: "Event summaries text",
+            name: "event.summaries.text",
             templateUrl: "plugins/storyboards/event-summaries/event-summaries-text-widget/event-summaries-text-widget.html",
             editTemplateUrl: "plugins/storyboards/event-summaries/event-summaries-edit-template.html",
             templateFilters: [{
@@ -55,6 +55,7 @@ angular.module('logistimo.storyboard.eventSummariesTextWidget', [])
                     $scope.subtitle = data.subtitle;
                     $scope.text = data.text;
                     $scope.category = data.category;
+                    $scope.type = data.type;
                 }
             });
         }

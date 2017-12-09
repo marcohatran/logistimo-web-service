@@ -27,8 +27,8 @@
 
 var blkUpControllers = angular.module('blkUpControllers', []);
 
-blkUpControllers.controller('BulkUploadController',['$scope','blkUpService','exportService',
-    function($scope,blkUpService,exportService){
+blkUpControllers.controller('BulkUploadController',['$scope','blkUpService','APIService',
+    function($scope,blkUpService,apiService){
         $scope.fileData = '';
         if($scope.uploadType == 'users'){
             $scope.helpFile = 'uploadusersinbulk.htm';
@@ -121,7 +121,8 @@ blkUpControllers.controller('BulkUploadController',['$scope','blkUpService','exp
                 return;
             }
             return true;
-        }
+        };
+
     }
 ]);
 

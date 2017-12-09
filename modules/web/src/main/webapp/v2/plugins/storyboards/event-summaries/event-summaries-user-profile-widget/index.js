@@ -28,7 +28,7 @@ angular.module('logistimo.storyboard.eventSummariesUserProfileWidget', [])
     .config(function (widgetsRepositoryProvider) {
         widgetsRepositoryProvider.addWidget({
             id: "eventSummariesUserProfileWidget",
-            name: "Event summaries user profile",
+            name: "event.summaries.user.profile",
             templateUrl: "plugins/storyboards/event-summaries/event-summaries-user-profile-widget/event-summaries-user-profile-widget.html",
             editTemplateUrl: "plugins/storyboards/event-summaries/event-summaries-edit-template.html",
             templateFilters: [{

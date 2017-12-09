@@ -22,7 +22,7 @@
  */
 
 var domainCfgServices = angular.module('domainCfgServices', []);
-domainCfgServices.factory('domainCfgService', ['APIService', function (apiService) {
+domainCfgServices.factory('domainCfgService', ['APIService','$http', function (apiService,$http) {
     return {
         getMaterialTagsCfg: function () {
             return apiService.get('/s2/api/config/domain/tags/materials');

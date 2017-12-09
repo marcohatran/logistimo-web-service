@@ -1168,5 +1168,20 @@ reference.id.mandatory.error=L'identifiant de référence est obligatoire avant 
 estimated.date.of.arrival.reference.id.mandatory=REMARQUE: La date d'arrivée estimée et l'identifiant de référence sont obligatoires au moment de l'expédition.
 estimated.date.of.arrival.mandatory=REMARQUE: La date d'arrivée estimée est obligatoire au moment de l'expédition.
 reference.id.mandatory=REMARQUE: L'identifiant de référence est obligatoire au moment de l'expédition.
-
+asset.count=Nombre d'actifs
+temp.excursion.trends=Tendances d'excursion de température
+asset.status.donut=Statut de l'élément beignet
+asset.status.map=Carte de statut de l'actif
+asset.top.ten.locations=Les dix meilleurs emplacements
+event.summaries.text=Texte des résumés d'événements
+event.summaries.user.profile=Profil d'utilisateur des résumés d'événements
+event.map=Carte de l'événement
+inventory.item.count=Nombre d'éléments d'inventaire
+inventory.status.donut=État de l'inventaire donut
+inventory.status.map=Carte d'état de l'inventaire
+stock.availability.abnormality.trends=Disponibilité des stocks ou tendances d'anomalies
+entity.activity.bar=Barre d'activité de l'entité
+entity.count=Nombre d'entités
+inventory.top.ten.locations=Inventaire top dix emplacements
+inventory.top.ten.materials=Inventaire top dix des matériaux
 

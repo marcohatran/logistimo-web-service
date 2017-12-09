@@ -263,7 +263,6 @@ function constructMapData(event, init, scope, INVENTORY, $sce, mapRange, mapColo
         "labelConnectorAlpha":0,
         "captionFontBold":1,
         "captionFont":'Helvetica Neue, Arial'
-
     };
     var addLink = false;
     if (!scope.showSwitch) {
@@ -313,6 +312,7 @@ function constructMapData(event, init, scope, INVENTORY, $sce, mapRange, mapColo
                     o.displayValue = value.toString();
                     o.showLabel = 1;
                     scope.mapOpt.labelConnectorAlpha = 1;
+                    scope.mapOpt.showEntityToolTip = 0;
                 }else{
                     o.displayValue = "";
                     scope.mapOpt.labelConnectorAlpha = 0;
@@ -742,7 +742,7 @@ function getHeading(summaries, $scope) {
 function getDonutRadius(width, height) {
     var minSide = Math.min(width, height);
     if (minSide == 2 && height == 2) {
-        minSide = 1.5;
+        minSide = 1.3;
     }
     return {
         doughnutRadius: (30 * minSide),

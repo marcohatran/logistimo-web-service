@@ -2481,8 +2481,8 @@ ordControllers.controller('order.MaterialController', ['$scope', 'invService',
         $scope.recommendedQuantity = function(name){
             var opoq = -1;
             var stock = name.stk;
-            if(checkNotNull(name.validBatchStock)) {
-                stock = name.validBatchStock;
+            if(checkNotNull($scope.validBatchStock)) {
+                stock = $scope.validBatchStock;
             }
             if(name.im == 'sq'){
                 opoq = name.eoq;
@@ -2509,7 +2509,7 @@ ordControllers.controller('order.MaterialController', ['$scope', 'invService',
                         }
                     }
                 }
-                material.validBatchStock = totalStock;
+                $scope.validBatchStock = totalStock;
                 updateMaterial(material);
             }).catch(function error(msg) {
                 $scope.showErrorMsg(msg);
