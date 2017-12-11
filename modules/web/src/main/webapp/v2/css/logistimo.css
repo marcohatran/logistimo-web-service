@@ -36,6 +36,7 @@
     background-color: #eeeeee;
     font-size: medium;
     padding-right: 0;
+    height:100vh;
 }
 
 .modal-open {
@@ -4143,8 +4144,4 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
     border-bottom:1px solid #ddd;
     margin-left:10px;
     margin-right:10px;
-}
-
-.view-port-height {
-    height: 100vh;
 }
