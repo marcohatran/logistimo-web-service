@@ -2624,7 +2624,7 @@ domainControllers.controller('SessionDashboardCtrl', ['$scope', '$timeout', '$sc
             $scope.$watch('material', function (newVal, oldVal) {
                 if (oldVal != newVal) {
                     if (newVal instanceof Object) {
-                        $scope.mtag = undefined;
+                        $scope.mtag = "";
                         addExtraFilter(newVal.id, newVal.text, 'mId');
                     } else if (newVal == undefined) {
                         addExtraFilter(newVal, undefined, 'mId');
