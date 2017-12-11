@@ -21,8 +21,20 @@
   ~ You can be released from the requirements of the license by purchasing a commercial license. To know more about
   ~ the commercial license, please contact us at opensource@logistimo.com
   -->
-
-<div class="tab pane">
+<!-- @if (NODE_ENV == 'PRODUCTION' || NODE_ENV == 'DEVELOPMENT') && BULLETIN_BOARD == 'BULLETIN_BOARD' -->
+<!-- comments:uncomment-block html -->
+<!--
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="pull-right">
+                    <img class="imagewrapper" src="images/evin_logo.png">
+                </div>
+            </div>
+        </div>
+    -->
+<!-- endcomments -->
+<!-- @endif -->
+<div ng-class="{'tab pane view-port-height' : isBulletinBoard, 'tab pane' : !isBulletinBoard}">
     <div class="box topbox">
         <div ng-controller="BulletinBoardsListingController">
             <div ng-show="bulletinBoards.length > 0">
@@ -46,8 +58,8 @@
                                             class="glyphicon glyphicon-play-circle" title="Play"
                                             style="font-size: 15px;"></span></a>
                                     <a ng-if="isBulletinBoard" ng-href="#/view/{{bulletinBoard.bbId}}"><span
-                                            class="glyphicon glyphicon-play-circle" title="Play"
-                                            style="font-size: 15px;"></span></a>&nbsp;&nbsp;
+                                            class="glyphicon glyphicon-play-circle large" title="Play">
+                                    </span></a>&nbsp;&nbsp;
                                     <a ng-if="!isBulletinBoard"
                                        href="#configuration/bulletin/detail/{{bulletinBoard.bbId}}"><span
                                             class="glyphicon glyphicon-cog" title="Configure"
