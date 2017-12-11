@@ -36,6 +36,7 @@
     background-color: #eeeeee;
     font-size: medium;
     padding-right: 0;
+    height:100vh;
 }
 
 .modal-open {
@@ -2021,7 +2022,7 @@ h6{
 
 .modal-backdrop {
     bottom: 0;
-    min-height: 10000px;
+    position: fixed;
     height: 100%;
 }
 

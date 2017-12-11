@@ -53,7 +53,7 @@
                             <p class="widget-text user-profile-text table-min" style="color:grey">{{item.subtitle}}</p>
                         </div>
                         <div class="col-sm-4 text-center" ng-if="item.show_image">
-                            <img class="widget-profile-image" src="{{item.image_url}}"/>
+                            <img class="widget-profile-image" ng-src="{{item.image_url}}"/>
                             <p class="widget-text table-min pt5 user-profile-name-text">{{item.user}}</p>
                         </div>
                         <div class="col-sm-4 text-center" ng-if="!item.show_image">

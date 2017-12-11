@@ -456,7 +456,8 @@ public class AssetManagementServiceImpl extends ServiceImpl implements AssetMana
             } else if (assetStatus.getStatus() == IAsset.STATUS_NORMAL) {
               eventType = IEvent.INCURSION;
             }
-          } else if (IAssetStatus.TYPE_STATE.equals(assetStatus.getType())) {
+          } else if (IAssetStatus.TYPE_STATE.equals(assetStatus.getType())
+              && assetStatus.getMpId() == 0) {
             eventType = IEvent.STATUS_CHANGE;
           }
         } else if (assetType == IAsset.MONITORING_ASSET) {
@@ -492,7 +493,8 @@ public class AssetManagementServiceImpl extends ServiceImpl implements AssetMana
             } else if (IAsset.STATUS_NORMAL == assetStatus.getStatus()) {
               eventType = IEvent.POWER_NORMAL;
             }
-          } else if (IAssetStatus.TYPE_STATE.equals(assetStatus.getType())) {
+          } else if (IAssetStatus.TYPE_STATE.equals(assetStatus.getType()) &&
+              StringUtils.isNotEmpty(assetStatus.getsId())) {
             eventType = IEvent.STATUS_CHANGE_TEMP;
           }
         }
