@@ -1186,6 +1186,7 @@ inventory.top.ten.materials=Inventaire top dix des matériaux
 ordertype.sales=Ventes
 ordertype.purchase=achat
 ordertype.transfer=Transfert
-reports.selectordertype=Order type should be selected
+reports.selectordertype=Le type de commande doit être sélectionné
+reports.bycustomer=Par le client
 
 
