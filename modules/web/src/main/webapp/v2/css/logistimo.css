@@ -4010,7 +4010,7 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
     color:#999;
 }
 .widget-text {
-    font-size: small;
+    font-size: larger;
     font-family: "Helvetica Neue", Arial;
     font-weight:normal;
     color: #2596cf;
@@ -4144,4 +4144,7 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
     border-bottom:1px solid #ddd;
     margin-left:10px;
     margin-right:10px;
+}
+.view-port-height {
+ height: 100vh;
 }

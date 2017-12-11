@@ -19,10 +19,6 @@ angular.module('logistimo.storyboard.temperatureStatusDonutWidget', [])
                     type: 'tPeriod'
                 },
                 {
-                    nameKey: 'exclude.temp.state',
-                    type: 'exTempState'
-                },
-                {
                     nameKey: 'include.entity.tag',
                     type: 'entityTag'
                 },
