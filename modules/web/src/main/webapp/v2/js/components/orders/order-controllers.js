@@ -1381,59 +1381,92 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                 }
             };
             function continueAddRow(material) {
-                var vs = checkNotNull(material.dInv) ? material.dInv.stk : 0;
-                var isBn = material.b == "yes";
-                var status = undefined;
-                if(material.ts) {
-                    status = checkNotNullEmpty($scope.tempmatstatus) ? $scope.tempmatstatus[0] : undefined;
+                $scope.validBatchStock = undefined;
+                if(material.be) {
+                    setValidBatchQuantity($scope.order.eid, material);
                 } else {
-                    status = checkNotNullEmpty($scope.matstatus) ? $scope.matstatus[0] : undefined;
+                    addMaterial(material);
                 }
-                var newItem = {
-                    nm: material.mnm,
-                    id: material.mId,
-                    q: Math.max(getOptimalOrderQuantity(material), 0),
-                    p: material.rp,
-                    tx: material.tx,
-                    event: material.event,
-                    oq: 0,
-                    vs: vs,
-                    d: 0,
-                    isBa: material.be,
-                    isBn: isBn,
-                    added: true,
-                    inv: material,
-                    min: material.reord,
-                    max: material.max,
-                    atpstk: material.atpstk,
-                    itstk: material.tstk,
-                    csavibper: material.sap,
-                    dInv: {stk: "0", event: -1},
-                    rq: getOptimalOrderQuantity(material),
-                    stk: material.stk,
-                    nrsn:'',
-                    qq: Math.max(getOptimalOrderQuantity(material), 0),
-                    tm: material.ts,
-                    mst: status
-                };
-                $scope.order.its.push(newItem);
-                if (checkNotNullEmpty($scope.order.vid)) {
-                    $scope.getVendInventory([material.mId]);
-                }
+            };
+
+        function addMaterial(material) {
+            var vs = checkNotNull(material.dInv) ? material.dInv.stk : 0;
+            var isBn = material.b == "yes";
+            var status = undefined;
+            if(material.ts) {
+                status = checkNotNullEmpty($scope.tempmatstatus) ? $scope.tempmatstatus[0] : undefined;
+            } else {
+                status = checkNotNullEmpty($scope.matstatus) ? $scope.matstatus[0] : undefined;
             }
+            var newItem = {
+                nm: material.mnm,
+                id: material.mId,
+                q: Math.max(getOptimalOrderQuantity(material), 0),
+                p: material.rp,
+                tx: material.tx,
+                event: material.event,
+                oq: 0,
+                vs: vs,
+                d: 0,
+                isBa: material.be,
+                isBn: isBn,
+                added: true,
+                inv: material,
+                min: material.reord,
+                max: material.max,
+                atpstk: material.atpstk,
+                itstk: material.tstk,
+                csavibper: material.sap,
+                dInv: {stk: "0", event: -1},
+                rq: getOptimalOrderQuantity(material),
+                stk: material.stk,
+                nrsn:'',
+                qq: Math.max(getOptimalOrderQuantity(material), 0),
+                tm: material.ts,
+                mst: status
+            };
+            $scope.order.its.push(newItem);
+            if (checkNotNullEmpty($scope.order.vid)) {
+                $scope.getVendInventory([material.mId]);
+            }
+        }
             function getOptimalOrderQuantity(material) {
-                var opoq = "-1";
+                var opoq = -1;
+                var stock = material.stk;
+                if(checkNotNull($scope.validBatchStock)) {
+                    stock = $scope.validBatchStock;
+                }
                 if (material.im == 'sq') {
                     opoq = material.eoq;
                 } else {
-                    if (material.max > 0 && material.stk >= material.max) {
-                        opoq = "0"
+                    if (material.max > 0 && stock >= material.max) {
+                        opoq = 0;
                     } else if (material.max > 0) {
-                        opoq = material.max - material.stk - material.tstk;
+                        opoq = material.max - stock - material.tstk;
                     }
                 }
                 return opoq;
             }
+        function setValidBatchQuantity(eid, material) {
+            $scope.showLoading();
+            invService.getBatchDetail(material.mId, eid, false).then(function (data) {
+                var batchDet = data.data;
+                var totalStock = 0;
+                if (checkNotNullEmpty(batchDet)) {
+                    for (var i = 0; i < batchDet.length; i++) {
+                        if (!batchDet[i].isExp) {
+                            totalStock = totalStock + batchDet[i].q;
+                        }
+                    }
+                }
+                $scope.validBatchStock = totalStock;
+                addMaterial(material);
+            }).catch(function error(msg) {
+                $scope.showErrorMsg(msg);
+            }).finally(function () {
+                $scope.hideLoading();
+            });
+        }
 
             $scope.removeRow = function (index) {
                 $scope.exRow.splice(index, 1);
@@ -2524,8 +2557,8 @@ ordControllers.controller('order.MaterialController', ['$scope', 'invService',
                     newVal = $scope.avMap[newVal.mId];
                     newVal.hide = true;
                 }
-                if (newVal.be) {
-                    var inv = $scope.type == "0" || $scope.type == "2" ? $scope.cInvMap[newVal.mId] : newVal;
+                var inv = $scope.type == "0" || $scope.type == "2" ? $scope.cInvMap[newVal.mId] : newVal;
+                if (inv.be) {
                     setValidBatchQuantity(inv, newVal);
                 } else {
                     updateMaterial(newVal);
