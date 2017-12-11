@@ -24,6 +24,7 @@
 package com.logistimo.entities.entity;
 
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -38,7 +39,7 @@ import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 
 @PersistenceCapable(identityType = IdentityType.APPLICATION, detachable = "true")
-public class PoolGroup implements IPoolGroup { // implements JsonBean {
+public class PoolGroup implements IPoolGroup, Serializable { // implements JsonBean {
 
   @PrimaryKey
   @Persistent(valueStrategy = IdGeneratorStrategy.IDENTITY)

@@ -26,6 +26,7 @@
  */
 package com.logistimo.entities.entity;
 
+import java.io.Serializable;
 import java.util.Date;
 
 import javax.jdo.annotations.IdGeneratorStrategy;
@@ -38,7 +39,7 @@ import javax.jdo.annotations.PrimaryKey;
  * @author juhee
  */
 @PersistenceCapable(identityType = IdentityType.APPLICATION, detachable = "true")
-public class KioskToPoolGroup implements IKioskToPoolGroup {
+public class KioskToPoolGroup implements IKioskToPoolGroup, Serializable {
 
   @PrimaryKey
   @Persistent(valueStrategy = IdGeneratorStrategy.IDENTITY)

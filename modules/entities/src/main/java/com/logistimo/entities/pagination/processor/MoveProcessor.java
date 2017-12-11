@@ -23,10 +23,15 @@
 
 package com.logistimo.entities.pagination.processor;
 
+import com.logistimo.AppFactory;
 import com.logistimo.assets.AssetUtil;
 import com.logistimo.assets.entity.IAsset;
+import com.logistimo.constants.CharacterConstants;
+import com.logistimo.constants.Constants;
+import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
+import com.logistimo.services.cache.MemcacheService;
 import com.logistimo.services.taskqueue.ITaskService;
 
 import com.logistimo.domains.IMultiDomain;
@@ -59,6 +64,14 @@ public class MoveProcessor implements Processor {
 
   private Set<Long> sourceDomainParents;
   private Set<Long> destDomainParents;
+  private MemcacheService memcacheService;
+
+  public MemcacheService getMemcacheService() {
+    if (memcacheService == null) {
+      memcacheService = AppFactory.get().getMemcacheService();
+    }
+    return memcacheService;
+  }
 
   /**
    * Process each {@code results} and moves it to {@code destDomainId} by updating domain id and
@@ -124,6 +137,11 @@ public class MoveProcessor implements Processor {
       } else {
         l.getClass().getMethod(MethodNameConstants.SET_DOMAIN_ID, destDomainId.getClass())
             .invoke(l, destDomainId);
+      }
+      if (l instanceof IUserAccount) {
+        memcacheService.delete(Constants.USER_KEY+ CharacterConstants.HASH+((IUserAccount) l).getUserId());
+      } else if (l instanceof IKiosk) {
+        memcacheService.delete(Constants.KIOSK_KEY+CharacterConstants.HASH+((IKiosk) l).getKioskId().toString());
       }
       pm.makePersistent(l);
     }
