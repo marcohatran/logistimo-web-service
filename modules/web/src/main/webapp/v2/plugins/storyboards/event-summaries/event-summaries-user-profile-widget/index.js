@@ -52,11 +52,10 @@ angular.module('logistimo.storyboard.eventSummariesUserProfileWidget', [])
 
         function populateUserProfiles(summaries) {
             summaries.forEach(function (data) {
-                var profile = {name: "", title: "", user: "", image_url: ""};
+                var profile = {name: "", title: "", subtitle: "", type: "", user: "", image_url: "", show_image: false};
                 profile.name = data.name;
                 profile.title = data.title;
                 profile.subtitle = data.subtitle;
-                profile.show_image = false;
                 profile.type = data.type;
                 if(checkNotNullEmpty(data.contacts)) {
                     if(checkNotNullEmpty(data.contacts[0].user)) {

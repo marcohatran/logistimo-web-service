@@ -112,23 +112,23 @@ function getPercent(data, wt) {
     // Available = ia, Stockout = iso, Normal = in, Min = imin, or Max = imax
     if (checkNotNullEmpty(wt)) {
         if (wt == 'ia') {
-            return (((data['n'] + data[201] + data[202]) / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
+            return (((data['n']?data['n']:0 + data[201]?data[201]:0 + data[202]?data[202]:0) / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
         } else if (wt == 'iso') {
-            return ((data[200] / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
+            return ((data[200]?data[200]:0 / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
         } else if (wt == 'in') {
-            return ((data['n'] / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
+            return ((data['n']?data['n']:0 / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
         } else if (wt == 'imin') {
-            return ((data[201]  / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
+            return ((data[201]?data[201]:0  / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
         } else if (wt == 'imax') {
-            return ((data[202]  / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
+            return ((data[202]?data[202]:0  / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
         } else if (wt == 'tn') {
-            return ((data['tn']  / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
+            return ((data['tn']?data['tn']:0  / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
         } else if (wt == 'tl') {
-            return ((data['tl'] / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
+            return ((data['tl']?data['tl']:0 / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
         } else if (wt == 'th') {
-            return ((data['th'] / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
+            return ((data['th']?data['th']:0 / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
         } else if (wt == 'tu') {
-            return ((data['tu'] / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
+            return ((data['tu']?data['tu']:0 / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
         }
     }
     return null;
@@ -195,11 +195,9 @@ function constructMapData(event, init, scope, INVENTORY, $sce, mapRange, mapColo
         subData = scope.dashboardView.event["es"];
         eventIndicators = true;
     }
+    allSubData = subData;
     if(eventIndicators){
         var allSubData = scope.dashboardView.event['es'];
-    }else {
-        var allSubData = iEntEvent ? scope.dashboardView.ent["i"] :
-            (iTempEvent ? subData : scope.dashboardView.inv["n"]);
     }
     var fPeriod;
     if (!iTempEvent) {
@@ -343,8 +341,10 @@ function constructMapData(event, init, scope, INVENTORY, $sce, mapRange, mapColo
         }
     }
     scope.mapEvent = event;
-    constructBarData(subData, allSubData, event, addLink, level, scope, mapRange, mapColors);
-    if (!isloc && (scope.mapEvent == 'n' || scope.mapEvent == '200' || scope.mapEvent == '201' || scope.mapEvent == '202')) {
+    if(checkNotNullEmpty(subData) && checkNotNullEmpty(allSubData)) {
+        constructBarData(subData, allSubData, event, addLink, level, scope, mapRange, mapColors);
+    }
+    if (!isloc && (scope.mapEvent == 'n' || scope.mapEvent == '200' || scope.mapEvent == '201' || scope.mapEvent == '202') && checkNotNullEmpty(subData) && checkNotNullEmpty(allSubData)) {
         constructMatBarData(subData['MAT_BD'].materials, allSubData['MAT_BD'].materials, event, scope, mapRange, mapColors, INVENTORY);
     } else {
         scope.matBarData = undefined;
