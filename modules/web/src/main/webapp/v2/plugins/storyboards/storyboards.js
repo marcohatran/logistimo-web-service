@@ -1386,7 +1386,7 @@ angular.module('logistimo.storyboard').run(['$templateCache', function($template
 
 
     $templateCache.put('/angular-storyboards/src/bulletinboard/templates/view-bulletin-board.html',
-        "<div class=\"row\">\n" +
+        "<div>\n" +
         "    <div class=\"col-sm-12\">\n" +
         "        <div ng-controller=\"BulletinBoardViewController\">\n" +
         "            <div ng-if=\"renderDashboardsPage == true\">\n" +
