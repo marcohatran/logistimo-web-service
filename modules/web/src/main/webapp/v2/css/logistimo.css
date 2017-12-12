@@ -4146,5 +4146,9 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
     margin-right:10px;
 }
 .view-port-height {
- height: 100vh;
+ height: 10000px;
+}
+.bulletin-container-hover {
+    transform: scale(1.1);
+    z-index:10;
 }

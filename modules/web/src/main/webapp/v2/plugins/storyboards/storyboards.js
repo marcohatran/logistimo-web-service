@@ -95,7 +95,7 @@ angular.module('logistimo.storyboard.bulletinboards', ['logistimo.storyboard.das
             $scope.bulletinBoard.dashboards.splice(index, 1);
         }
     }])
-    .controller('BulletinBoardsListingController', ['bulletinBoardRepository', '$scope', function (bulletinBoardRepository, $scope) {
+    .controller('BulletinBoardsListingController', ['bulletinBoardRepository', '$scope', '$window',function (bulletinBoardRepository, $scope, $window) {
         $scope.init = function () {
             $scope.bulletinBoards = {};
         };
@@ -103,7 +103,15 @@ angular.module('logistimo.storyboard.bulletinboards', ['logistimo.storyboard.das
 
         bulletinBoardRepository.getAll($scope).then(function (bulletinBoards) {
             $scope.bulletinBoards = bulletinBoards;
-        })
+        });
+
+        $scope.viewBulletinBoard = function(bulletinBoardId) {
+            if($scope.isBulletinBoard) {
+                $window.location.href = "#/view/" + bulletinBoardId;
+            } else {
+                $window.location.href="#configuration/bulletin/view/" + bulletinBoardId;
+            }
+        }
     }])
     .controller('BulletinBoardViewController', ['bulletinBoardRepository', '$scope','$timeout', function (bulletinBoardRepository, $scope, $timeout) {
         $scope.init = function () {
