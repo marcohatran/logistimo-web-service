@@ -56,7 +56,7 @@ public class OrderVisibilityUtils {
                                                       boolean isApproved) throws ServiceException {
     Date currentTime = new Date();
     order.setVisibleToCustomer(true);
-    order.setCustomerVisibilityTime(currentTime);
+    order.setCustomerVisibilityTime(order.getCreatedOn());
     order.setVisibleToVendor(isApproved);
     if (isApproved) {
       order.setVendorVisibilityTime(currentTime);
