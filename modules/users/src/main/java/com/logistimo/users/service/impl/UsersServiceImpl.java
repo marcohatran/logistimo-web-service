@@ -196,6 +196,10 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
           throw new UnauthorizedException(backendMessages.getString("permission.denied"));
         }
         tx.begin();
+        IUserAccount registeringUser = getUserAccount(account.getRegisteredBy());
+        if(SecurityUtil.compareRoles(registeringUser.getRole(),account.getRole()) < 0){
+          throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+        }
         //First check if the user already exists in the database
         @SuppressWarnings("unused")
         IUserAccount user = JDOUtils.getObjectById(IUserAccount.class, accountId, pm);
@@ -536,6 +540,10 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
         throw new UnauthorizedException(backendMessages.getString("permission.denied"));
       }
       tx.begin();
+      IUserAccount registeringUser = getUserAccount(updatedBy);
+      if(SecurityUtil.compareRoles(registeringUser.getRole(),account.getRole()) < 0){
+        throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+      }
       //First check if the user already exists in the database
       IUserAccount user = JDOUtils.getObjectById(IUserAccount.class, account.getUserId(), pm);
       //location check
