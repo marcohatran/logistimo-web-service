@@ -43,6 +43,7 @@ import com.logistimo.utils.NumberUtil;
 
 import org.apache.commons.lang.StringUtils;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -65,7 +66,9 @@ import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 
 @PersistenceCapable(identityType = IdentityType.APPLICATION, detachable = "true")
-public class Kiosk implements IKiosk {
+public class Kiosk implements IKiosk, Serializable {
+
+  private static final long serialVersionUID = 1l;
 
   // Logger
   private static final XLog xLogger = XLog.getLog(Kiosk.class);

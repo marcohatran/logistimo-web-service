@@ -31,6 +31,7 @@ import com.logistimo.utils.NumberUtil;
 
 import org.apache.commons.lang.StringUtils;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
@@ -46,7 +47,7 @@ import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 
 @PersistenceCapable(identityType = IdentityType.APPLICATION, detachable = "true")
-public class KioskLink implements IKioskLink {
+public class KioskLink implements IKioskLink, Serializable {
 
   private static final XLog xLogger = XLog.getLog(KioskLink.class);
 

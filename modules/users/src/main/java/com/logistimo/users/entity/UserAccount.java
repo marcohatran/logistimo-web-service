@@ -33,6 +33,7 @@ import com.logistimo.tags.TagUtil;
 import com.logistimo.tags.entity.ITag;
 import com.logistimo.tags.entity.Tag;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -51,17 +52,17 @@ import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 
 @PersistenceCapable(identityType = IdentityType.APPLICATION, detachable = "true")
-public class UserAccount implements IUserAccount, ILocation {
+public class UserAccount implements IUserAccount, ILocation,Serializable {
 
   // NOTE: All constants are represented as String with 3-5 chars, given that it minimizes GAE storage cost and is readable
+  private static final long serialVersionUID = 1l;
 
   @Persistent
-  String
-      nName;
+  private String nName;
   @Persistent(table = "USER_ACC_DOMAINS", defaultFetchGroup = "true")
   @Join
   @Element(column = "DOMAIN_ID")
-  List<Long> accDids; // List of domainIds accessible to this user
+  private List<Long> accDids; // List of domainIds accessible to this user
   @PrimaryKey
   @Persistent
   @Expose

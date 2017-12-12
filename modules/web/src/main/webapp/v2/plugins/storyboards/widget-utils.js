@@ -307,8 +307,10 @@ function constructMapData(event, init, scope, INVENTORY, $sce, mapRange, mapColo
                 if(eventIndicators){
                     o.value = per;
                     o.label = o.value;
-                    o.displayValue = value.toString();
-                    o.showLabel = 1;
+                    // o.displayValue = value.toString();
+                    o.displayValue = "";
+                    // o.showLabel = 1;
+                    o.showLabel = 0;
                     scope.mapOpt.labelConnectorAlpha = 1;
                     scope.mapOpt.showEntityToolTip = 0;
                 }else{

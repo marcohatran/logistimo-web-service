@@ -34,7 +34,7 @@
     -->
 <!-- endcomments -->
 <!-- @endif -->
-<div class="tab pane">
+<div ng-class="{'view-port-height' : isBulletinBoard, 'tab pane': !isBulletinBoard}">
     <div class="box topbox">
         <div ng-controller="BulletinBoardsListingController">
             <div ng-show="bulletinBoards.length > 0">
