@@ -26,9 +26,13 @@
 <!--
         <div class="row">
             <div class="col-sm-12">
-                <div class="pull-right">
-                    <img class="imagewrapper" src="images/evin_logo.png">
-                </div>
+            <div class="col-sm-6">
+                <h3>Bulletin boards</h3>
+            </div>
+            <div class="col-sm-6">
+                <img class="imagewrapper pull-right" src="images/evin_logo.png">
+            </div>
+            </div>
             </div>
         </div>
     -->
@@ -38,37 +42,22 @@
     <div class="box topbox">
         <div ng-controller="BulletinBoardsListingController">
             <div ng-show="bulletinBoards.length > 0">
-                <div class="row">
-                    <div class="col-sm-8">
-                        <table class="table table-bordered">
-                            <thead>
-                            <tr>
-                                <th class="col-sm-1">S.No</th>
-                                <th class="col-sm-4">{{resourceBundle['bulletin.board.upper']}}</th>
-                                <th class="col-sm-1">{{resourceBundle['action']}}</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr ng-repeat="(id, bulletinBoard) in bulletinBoards">
-                                <td>{{$index + 1}}</td>
-                                <td>{{bulletinBoard.name}}</td>
-                                <td>
+                <div class="row" style="padding-top:20px;">
+                    <div class="col-sm-12">
+                        <div ng-class="{'col-sm-3 panel panel-default noLRpad bulletin-container-hover': hovering, 'col-sm-3 panel panel-default noLRpad': !hovering}"
+                             ng-mouseenter="hovering=true" ng-mouseleave="hovering=false"
+                             ng-repeat="(id, bulletinBoard) in bulletinBoards"  ng-click="viewBulletinBoard(bulletinBoard.bbId)" style="margin-right:20px;transition: all .5s ease-in-out;height:200px;">
+                            <div class="panel-heading" style="background-color: #DDDDDD">{{bulletinBoard.name}}</div>
+                            <div class="panel-body col-sm-12">
+                                <div class="col-sm-8">{{bulletinBoard.desc}}</div>
+                                <div class="col-sm-4">
                                     <a ng-if="!isBulletinBoard"
-                                       ng-href="#configuration/bulletin/view/{{bulletinBoard.bbId}}"><span
-                                            class="glyphicon glyphicon-play-circle" title="Play"
-                                            style="font-size: 15px;"></span></a>
-                                    <a ng-if="isBulletinBoard" ng-href="#/view/{{bulletinBoard.bbId}}"><span
-                                            class="glyphicon glyphicon-play-circle large" title="Play">
-                                    </span></a>&nbsp;&nbsp;
-                                    <a ng-if="!isBulletinBoard"
-                                       href="#configuration/bulletin/detail/{{bulletinBoard.bbId}}"><span
-                                            class="glyphicon glyphicon-cog" title="Configure"
-                                            style="font-size: 15px;"></span></a>
-                                </td>
-                            </tr>
-
-                            </tbody>
-                        </table>
+                                       ng-href="#configuration/bulletin/detail/{{bulletinBoard.bbId}}">
+                                        <span class="glyphicon glyphicon-cog large pull-right" title="Configure"></span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
