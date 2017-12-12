@@ -1394,7 +1394,7 @@ angular.module('logistimo.storyboard').run(['$templateCache', function($template
     
     
     $templateCache.put('/angular-storyboards/src/bulletinboard/templates/view-bulletin-board.html',
-        "<div class=\"row\">\n" +
+        "<div>\n" +
         "    <div class=\"col-sm-12\">\n" +
         "        <div ng-controller=\"BulletinBoardViewController\">\n" +
         "            <div ng-if=\"renderDashboardsPage == true\">\n" +
@@ -1692,7 +1692,7 @@ angular.module('logistimo.storyboard').run(['$templateCache', function($template
     
     $templateCache.put('/angular-storyboards/src/widget/templates/view-widget.html',
         "<div ng-controller=\"WidgetsViewController\">\n" +
-        "    <div style=\"height: {{widget.computedHeight}}px; min-height: {{widget.computedHeight}}px;max-height: {{widget.computedHeight}}px; overflow: hidden; border: 1px solid #e1e1e1; padding: 2px\">\n" +
+        "    <div style=\"height: {{widget.computedHeight}}px; min-height: {{widget.computedHeight}}px;max-height: {{widget.computedHeight}}px; overflow: hidden; border: 1px solid #e1e1e1;background-color: #ffffff; padding: 2px\">\n" +
         "        <div ng-include=\"widgetTemplate.templateUrl\"></div>\n" +
         "    </div>\n" +
         "</div>"

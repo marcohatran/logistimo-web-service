@@ -196,6 +196,10 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
           throw new UnauthorizedException(backendMessages.getString("permission.denied"));
         }
         tx.begin();
+        IUserAccount registeringUser = getUserAccount(account.getRegisteredBy());
+        if(SecurityUtil.compareRoles(registeringUser.getRole(),account.getRole()) < 0){
+          throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+        }
         //First check if the user already exists in the database
         @SuppressWarnings("unused")
         IUserAccount user = JDOUtils.getObjectById(IUserAccount.class, accountId, pm);
@@ -522,8 +526,6 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
    */
   public void updateAccount(IUserAccount account, String updatedBy) throws ServiceException {
     xLogger.fine("Entering updateAccount");
-    boolean userExists = true;
-    String errMsg = null;
     Exception exception = null;
     Date now = new Date();
     PersistenceManager pm = PMF.get().getPersistenceManager();
@@ -538,6 +540,10 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
       tx.begin();
       //First check if the user already exists in the database
       IUserAccount user = JDOUtils.getObjectById(IUserAccount.class, account.getUserId(), pm);
+      IUserAccount registeringUser = getUserAccount(updatedBy);
+      if(SecurityUtil.compareRoles(registeringUser.getRole(),user.getRole()) < 0){
+        throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+      }
       //location check
       int locindex = new LocationComparator().compare(user, account);
       //If we get here, it means the user exists
@@ -627,21 +633,16 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
     } catch (JDOObjectNotFoundException e) {
       xLogger.warn("updateAccount: FAILED!! User {0} does not exist in the database",
           account.getUserId());
-      userExists = false;
       exception = e;
-    } catch (Exception e) {
-      errMsg = e.getMessage();
+    } catch(UnauthorizedException e){
+      throw e;
+    }catch (Exception e) {
       exception = e;
     } finally {
       if (tx.isActive()) {
         tx.rollback();
       }
       pm.close();
-    }
-    if (!userExists) {
-      errMsg =
-          messages.getString("user") + " '" + account.getUserId() + "' " + backendMessages
-              .getString("error.notfound");
     }
     if (exception != null) {
       throw new ServiceException(exception);
