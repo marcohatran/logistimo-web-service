@@ -143,12 +143,13 @@ angular.module('logistimo.storyboard.topMaterialsByInventoryStatusWidget', [])
                 "yAxisMaxValue": 100,
                 "captionFontSize": "12",
                 "captionAlignment": "center",
-                "caption": "Top 10 materials",
                 "chartLeftMargin": "50",
                 "captionFontSize": "14",
                 "captionFontBold":1,
                 "captionFont":'Helvetica Neue", Arial'
             };
+
+            $scope.chartTitle = "Top 10 materials";
 
             function setWidgetData() {
                 $scope.topMaterialsByInventoryStatus = {

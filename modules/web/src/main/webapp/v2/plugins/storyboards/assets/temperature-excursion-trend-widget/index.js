@@ -124,13 +124,12 @@ angular.module('logistimo.storyboard.temperatureExcursion', [])
         function setChartOptions() {
             $scope.cOptions = {
                 "theme": "fint",
-                "subCaptionFontSize": 10,
                 "yAxisNamePadding": 20,
                 "rotateValues": "0",
                 "placevaluesInside": 0,
                 "valueFontColor": "#000000"
             };
-            $scope.cHeight = $scope.widget.computedHeight;
+            $scope.cHeight = $scope.widget.computedHeight - 60;
             $scope.cWidth = "90%";
             $scope.cType = "mscombi2d";
         }
@@ -158,15 +157,15 @@ angular.module('logistimo.storyboard.temperatureExcursion', [])
                 for (var i = 0; i < compareFields.length; i++) {
                     cData[i] = getReportFCSeries(chartData, 27, compareFields[i], "line", linkDisabled, 0);
                 }
-                $scope.cOptions.caption = "Low excursions - % of assets with exposure (>= 1 hour)";
+                $scope.chartTitle = "Low excursions - % of assets with exposure (>= 1 hour)";
 
             } else {
                 for (var i = 0; i < compareFields.length; i++) {
                     cData[i] = getReportFCSeries(chartData, 26, compareFields[i], "line", linkDisabled, 0);
                 }
-                $scope.cOptions.caption = "High excursions - % of assets with exposure (>= 1 hour)";
+                $scope.chartTitle = "High excursions - % of assets with exposure (>= 1 hour)";
             }
-            $scope.cOptions.subcaption = getReportCaption($scope.filter);
+            $scope.chartSubTitle = getReportCaption($scope.filter);
             if ($scope.filter.periodicity != "m" && cLabel.length > 10) {
                 $scope.cOptions.rotateLabels = "1";
             } else {

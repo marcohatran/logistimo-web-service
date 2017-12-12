@@ -3589,6 +3589,9 @@ tr.alert.alert-warning.alert-warning-dark{
 .mbn10{
     margin-bottom: -10px;
 }
+.mbn20{
+    margin-bottom: -20px;
+}
 .headingHL{
     font-weight: bold;
 }
@@ -3985,35 +3988,40 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
 .widget-loading {
     color: #aaaaaa;
 }
-.widget-title{
-    font-size: 14px;
-    font-family: "Helvetica Neue", Arial;
-    font-weight:bold;
-}
-.widget-sub-title{
-    font-size: 12px;
-    font-family: "Helvetica Neue", Arial;
-    font-weight:bold;
+
+.widget {
+    font-family: Lato;
+    font-size:14px;
+    color: #707070;
 }
 
-.widget-title-text {
+.widget .widget-title{
+    font-size: larger;
+    font-weight:bold;
+    color: #039be5;
+    letter-spacing: 1.9px;
+}
+.widget .widget-sub-title{
+    font-weight:bold;
+    letter-spacing: 1.7px;
+}
+
+.widget .widget-title-text {
     font-size: large;
-    font-family: "Helvetica Neue", Arial;
+    margin-bottom:0px;
+}
+.widget .widget-sub-title-text {
     font-weight:normal;
     margin-bottom:0px;
 }
-.widget-sub-title-text {
+.widget .widget-text {
     font-size: larger;
-    font-family: "Helvetica Neue", Arial;
-    font-weight:normal;
-    margin-bottom:0px;
-    color:#999;
-}
-.widget-text {
-    font-size: larger;
-    font-family: "Helvetica Neue", Arial;
-    font-weight:normal;
     color: #2596cf;
+}
+.widget .widget-per{
+    font-size: small;
+    font-weight: 300;
+    text-align: center;
 }
 .mbn4{
     margin-bottom: -4px;
@@ -4152,3 +4160,24 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
     transform: scale(1.1);
     z-index:10;
 }
+
+.widget .widget-large-text {
+    font-size: 40px;
+    font-weight: 300;
+}
+
+.widget .bulletin-heading {
+    font-size: large;
+    font-weight: bold;
+    letter-spacing: 2.4px;
+    color: #039be5;
+}
+
+.widget .bulletin-subheading {
+    font-size: small;
+    letter-spacing: 1.9px;
+}
+
+/*tspan{
+    fill: #707070 !important;
+}*/

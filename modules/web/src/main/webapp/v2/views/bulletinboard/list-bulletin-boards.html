@@ -24,10 +24,10 @@
 <!-- @if (NODE_ENV == 'PRODUCTION' || NODE_ENV == 'DEVELOPMENT') && BULLETIN_BOARD == 'BULLETIN_BOARD' -->
 <!-- comments:uncomment-block html -->
 <!--
-        <div class="row">
+        <div class="row widget">
             <div class="col-sm-12">
             <div class="col-sm-6">
-                <h3>Bulletin boards</h3>
+                <span class="bulletin-heading" style="color:#707070">Bulletin boards</span>
             </div>
             <div class="col-sm-6">
                 <img class="imagewrapper pull-right" src="images/evin_logo.png">
@@ -45,7 +45,7 @@
                 <div class="row" style="padding-top:20px;">
                     <div class="col-sm-12">
                         <div ng-class="{'col-sm-3 panel panel-default noLRpad bulletin-container-hover': hovering, 'col-sm-3 panel panel-default noLRpad': !hovering}"
-                             ng-mouseenter="hovering=true" ng-mouseleave="hovering=false"
+                             ng-mouseenter="hovering=true" ng-mouseleave="hovering=false" ng-focus="hovering=true" ng-blur="hovering=false"
                              ng-repeat="(id, bulletinBoard) in bulletinBoards"  ng-click="viewBulletinBoard(bulletinBoard.bbId)" style="margin-right:20px;transition: all .5s ease-in-out;height:200px;">
                             <div class="panel-heading" style="background-color: #DDDDDD">{{bulletinBoard.name}}</div>
                             <div class="panel-body col-sm-12">

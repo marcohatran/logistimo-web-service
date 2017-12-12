@@ -22,7 +22,7 @@
   ~ the commercial license, please contact us at opensource@logistimo.com
   -->
 
-<div ng-controller="temperatureExcursionTrendWidgetController">
+<div ng-controller="temperatureExcursionTrendWidgetController" class="widget">
     <div ng-if="wLoading" class="row mt18 widget-loading">
         <div class="text-center">
             {{resourceBundle['loading.uppercase']}}... <span class="glyphicons glyphicons-cogwheel spin"></span>
@@ -34,8 +34,9 @@
         </div>
     </div>
     <div ng-if="!wLoading && !showError && renderChart">
-        <div class="col-sm-12 font-larger text-center text-bold">
-            <span class="font-large">{{widget.conf.title}}</span>
+        <div class="col-sm-12 text-center">
+            <span class="widget-title pt5">{{chartTitle | uppercase}}</span><br/>
+            <span class="widget-sub-title">{{chartSubTitle}}</span>
         </div>
         <fusion-chart type="cType" height="cHeight" width="cWidth" chart-label="cLabel"
                       chart-data="cData" chart-options="cOptions"

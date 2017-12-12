@@ -1,4 +1,4 @@
-<div ng-controller="inventoryCountWidgetController" class="count-widget" style="height:{{computedHeight}}px;">
+<div ng-controller="inventoryCountWidgetController" class="count-widget widget" style="height:{{computedHeight}}px;">
     <div ng-if="wloading" class="row mt18 widget-loading">
         <div class="text-center">
             {{resourceBundle['loading.uppercase']}}... <span class="glyphicons glyphicons-cogwheel spin"></span>
@@ -10,7 +10,8 @@
         </div>
     </div>
     <div ng-if="!wloading && !showError" class="count-text">
-        <div class="xlarge-grey-lbl">{{totalInv | number:0}}</div>
-        <div class="large-grey-lbl">{{resourceBundle['inventory.items']}}</div>
+        <div class="widget-title pt5">{{resourceBundle['inventory.items'] | uppercase}}</div>
+        <div class="widget-large-text">{{totalInv | number:0}}</div>
     </div>
+
 </div>
