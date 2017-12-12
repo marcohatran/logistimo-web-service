@@ -538,7 +538,7 @@ public class RESTUtil {
   @SuppressWarnings({"rawtypes", "unchecked"})
   public static List<ITransaction> getInventoryTransactions(UpdateInventoryInput updInventoryJson,
                                                             String transType, Date time,
-                                                            Locale locale) throws ServiceException {
+                                                            Locale locale, Long domainId) throws ServiceException {
     List<ITransaction> list = new ArrayList<ITransaction>();
 
     // Parameter checks
@@ -688,7 +688,8 @@ public class RESTUtil {
       if (actualDateOfTransStr != null) {
         try {
           actualDateOfTrans =
-              LocalDateUtil.parseCustom(actualDateOfTransStr, Constants.DATE_FORMAT, null);
+              LocalDateUtil.parseCustom(actualDateOfTransStr, Constants.DATE_FORMAT,
+                  DomainConfig.getInstance(domainId).getTimezone());
         } catch (Exception e) {
           xLogger.warn("Error while setting actual date of transaction", e);
         }
