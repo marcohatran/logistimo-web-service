@@ -1,4 +1,4 @@
-<div ng-controller="topLocationsByInventoryStatusWidgetController">
+<div ng-controller="topLocationsByInventoryStatusWidgetController" class="widget">
     <div ng-if="wloading" class="row mt18 widget-loading">
         <div class="text-center">
             {{resourceBundle['loading.uppercase']}}... <span class="glyphicons glyphicons-cogwheel spin"></span>
@@ -10,6 +10,7 @@
         </div>
     </div>
     <div ng-if="!wloading && !showError && showChart">
+        <div class="col-sm-12 text-center pt5 widget-title">{{chartTitle | uppercase}} </div>
         <fusion-chart type="topLocationsByInventoryStatusWidget.cType"
                       height="topLocationsByInventoryStatusWidget.computedHeight"
                       width="topLocationsByInventoryStatusWidget.computedWidth"

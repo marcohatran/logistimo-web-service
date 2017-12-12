@@ -1,4 +1,4 @@
-<div ng-controller="storesActivityWidgetController">
+<div ng-controller="storesActivityWidgetController" class="widget">
     <div ng-if="wloading" class="row mt18 widget-loading">
         <div class="text-center">
             {{resourceBundle['loading.uppercase']}}... <span class="glyphicons glyphicons-cogwheel spin"></span>
@@ -9,20 +9,19 @@
             {{errorMessage}}
         </div>
     </div>
-    <div ng-if="!wloading && !showError && showChart">
+    <div ng-if="!wloading && !showError && showChart" class="text-center">
+        <div class="widget-title pt5 mbn4"> {{resourceBundle['stores.active'] | uppercase}}  </div>
+        <div class="widget-sub-title mbn4"> {{activeEntityDomainTotal}}
+            {{resourceBundle['stores']}}
+        </div>
+        <div class="widget-per mbn20"> {{activePercent}}% </div>
+        <br/>
+
         <fusion-chart type="storesActivityWidget.cType" height="storesActivityWidget.computedHeight"
                       width="storesActivityWidget.computedWidth"
                       chart-label="storesActivityWidget.cLabel"
                       chart-data="storesActivityWidget.cdata" chart-options="storesActivityWidget.copt"
                       chart-id="{{storesActivityWidget.wId}}">
         </fusion-chart>
-        <div class="text-center position-relative mtm15 widget-title"> {{activePercent}}%
-            {{resourceBundle['stores.active']}}
-        </div>
-        <br/>
-
-        <div class="text-center position-relative mtm15 "> {{activeEntityDomainTotal}}
-            {{resourceBundle['stores']}}
-        </div>
     </div>
 </div>
