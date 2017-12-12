@@ -62,6 +62,7 @@ public class APISecurityFilter implements Filter {
   private static final String APP_VERSION = "web.app.ver";
   private static final XLog xLogger = XLog.getLog(APISecurityFilter.class);
   public static final String X_ACCESS_USER = "x-access-user";
+  private static final String ADMIN_URL = "/s2/api/admin";
   private String appVersion;
   private boolean appVerAvailable;
 
@@ -118,6 +119,10 @@ public class APISecurityFilter implements Filter {
                   servletPath.startsWith(AUTHENTICATE_URL)))) {
         resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication Required.");
           return;
+      }
+
+      if(servletPath.startsWith(ADMIN_URL) && !SecurityUtils.isSuperUser()){
+        resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Access is forbidden.");
       }
 
       if (filterChain != null) {
