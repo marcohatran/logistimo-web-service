@@ -924,7 +924,7 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                         } else {
                             $scope.newStatus.cdrsn = $scope.newStatus.ncdrsn;
                         }
-                    } else if($scope.newStatus.st == ORDER.COMPLETED) {
+                    } else if($scope.newStatus.st == ORDER.COMPLETED && $scope.order.oty == 2) {
                         if($scope.oCfg.eadm && checkNullEmpty($scope.newStatus.efd)) {
                             $scope.showWarning($scope.resourceBundle['estimated.date.of.arrival.mandatory.error']);
                             return;
@@ -1001,6 +1001,9 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                     $scope.order.efdLabel = data.data.respData;
                     $scope.order.orderUpdatedAt = data.data.order.orderUpdatedAt;
                     $scope.order.efd = $scope.dates.efd;
+                    if(checkNotNullEmpty($scope.dates.efd)) {
+                        $scope.order.isEfdValid = isNotPastDate($scope.dates.efd);
+                    }
                     $scope.toggleEdit('efdate');
                     $scope.showSuccess("<b>Estimated date of arrival</b> updated successfully");
                 }).catch(function error(msg) {
@@ -1197,6 +1200,9 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                             callCheckStatus(count);
                             $scope.order.sno = $scope.sno;
                             $scope.dates.efd = parseUrlDate($scope.order.efd);
+                            if(checkNotNullEmpty($scope.dates.efd)) {
+                                $scope.order.isEfdValid = isNotPastDate($scope.dates.efd);
+                            }
                             $scope.dates.edd = parseUrlDate($scope.order.edd);
                             if (checkNotNullEmpty($scope.order.vid) && $scope.order.vid > 0) {
                                 $scope.vendor = {id: $scope.order.vid, nm: $scope.order.vnm};
@@ -2773,7 +2779,7 @@ ordControllers.controller('NewShipmentController', ['$scope', 'ordService', '$lo
 
 
         $scope.shipNewShipment = function () {
-            if ($scope.shipment.ship == 0) {
+            if ($scope.shipment.ship == 0  && $scope.order.oty == 2) {
                 if($scope.oCfg.eadm && checkNullEmpty($scope.shipment.ead)) {
                     $scope.showWarning($scope.resourceBundle['estimated.date.of.arrival.mandatory.error']);
                     return;
@@ -3699,12 +3705,16 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService','request
                 if($scope.oCfg.tm && checkNullEmpty($scope.shipment.transporter)) {
                     $scope.showWarning($scope.resourceBundle['transportermandatory']);
                     return;
-                } else if($scope.oCfg.eadm && checkNullEmpty($scope.shipment.ead)) {
-                    $scope.showWarning($scope.resourceBundle['estimated.date.of.arrival.mandatory.error']);
-                    return;
-                } else if($scope.oCfg.ridm && checkNullEmpty($scope.shipment.rid)) {
-                    $scope.showWarning($scope.resourceBundle['reference.id.mandatory.error']);
-                    return;
+                }
+
+                if($scope.shipment.oty == 2) {
+                     if($scope.oCfg.eadm && checkNullEmpty($scope.shipment.ead)) {
+                        $scope.showWarning($scope.resourceBundle['estimated.date.of.arrival.mandatory.error']);
+                        return;
+                    } else if($scope.oCfg.ridm && checkNullEmpty($scope.shipment.rid)) {
+                        $scope.showWarning($scope.resourceBundle['reference.id.mandatory.error']);
+                        return;
+                    }
                 }
             }
             $scope.modalInstance = $uibModal.open({

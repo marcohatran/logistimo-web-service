@@ -1095,10 +1095,10 @@ function reportCoreService() {
     reportCoreService.factory('reportsServiceCore', ['APIService', function (apiService) {
         return {
             getReportData: function (json) {
-                return apiService.get('/s2/api/plugins/report/?json=' + json);
+                return apiService.get('/s2/api/plugins/report/?json=' + encodeURIComponent(json));
             },
             getReportBreakdownData: function (json) {
-                return apiService.get('/s2/api/plugins/report/breakdown?json=' + json);
+                return apiService.get('/s2/api/plugins/report/breakdown?json=' + encodeURIComponent(json));
             },
             getAggregatedTime: function (reportType) {
                 return apiService.get('/s2/api/plugins/report/last-run-time?reportType=' + reportType);
