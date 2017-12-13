@@ -22,8 +22,6 @@
   -->
 
 <select ng-disabled="ngDisabled" ng-click="$event.stopPropagation();" class="form-control" ng-init="resourceBundle = $parent.resourceBundle" ng-model="filterModel">
-  <option value="">All</option>
-    <option value="1">{{resourceBundle['ordertype.purchase']}}</option>
-    <option value="2">{{resourceBundle['ordertype.sales']}}</option>
-    <option value="0">{{resourceBundle['ordertype.transfer']}}</option>
+    <option value="">{{resourceBundle['reports.order.select.ordertype']}}</option>
+    <option ng-repeat="(key, value) in orderTypes track by $index" value="{{key}}">{{resourceBundle[value]}}</option>
 </select>

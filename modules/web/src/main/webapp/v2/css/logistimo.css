@@ -3998,12 +3998,10 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
 
 .widget .widget-title{
     font-size: larger;
-    font-weight:bold;
     color: #039be5;
     letter-spacing: 1.9px;
 }
 .widget .widget-sub-title{
-    font-weight:bold;
     letter-spacing: 1.7px;
 }
 

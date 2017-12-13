@@ -518,4 +518,8 @@ trimGeo = function(geo) {
         geo.lgt = geo.lng().toFixed(8);
     }
     return geo;
-}
+};
+
+isNotPastDate = function(date) {
+    return parseInt(formatDate(date)) >= (parseInt(formatDate(new Date())));
+};

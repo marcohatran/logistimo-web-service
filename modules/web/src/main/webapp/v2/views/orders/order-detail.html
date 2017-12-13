@@ -38,7 +38,7 @@
                         </span>
                         <span class="badge currentstatus" ng-class="{'cancelled':order.st == ORDER.CANCELLED}">{{order.status}}</span>
                         <div>
-                            <span class="litetext lnk" ng-show="!edit.rid && (order.st == ORDER.PENDING || order.st == ORDER.CONFIRMED || order.st == ORDER.BACKORDERED)">{{order.rid? resourceBundle['referenceid'] + ": " + order.rid : "Add " + resourceBundle['referenceid'] }} </span>
+                            <span class="litetext lnk" ng-show="!edit.rid && (order.st == ORDER.PENDING || order.st == ORDER.CONFIRMED || order.st == ORDER.BACKORDERED) && order.atv">{{order.rid? resourceBundle['referenceid'] + ": " + order.rid : "Add " + resourceBundle['referenceid'] }} </span>
                             <span class="litetext lnk" ng-show="order.rid && !(order.st == ORDER.PENDING || order.st == ORDER.CONFIRMED || order.st == ORDER.BACKORDERED)">{{order.rid? resourceBundle['referenceid'] + ": " + order.rid : "Add " + resourceBundle['referenceid'] }} </span>
                             <div class="lnk">
                                 <div ng-show="edit.rid" style="width: 30%">
@@ -50,7 +50,7 @@
                                                    set-focus="">
                                     </editable-text>
                                 </div>
-                                <a ng-show="!edit.rid && (dp.vp || order.st == ORDER.PENDING || order.st == ORDER.CONFIRMED || order.st == ORDER.BACKORDERED)"
+                                <a ng-show="!edit.rid && (dp.vp || order.st == ORDER.PENDING || order.st == ORDER.CONFIRMED || order.st == ORDER.BACKORDERED) && order.atv"
                                    uib-tooltip="{{resourceBundle['edit']}}" tooltip-append-to-body="true" ng-click="editRID()">
                                     <span ng-hide="!editMetaDataPermission" class="glyphicons glyphicons-edit pt2 ml15"></span>
                                 </a>

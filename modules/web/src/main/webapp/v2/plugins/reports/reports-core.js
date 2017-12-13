@@ -1056,7 +1056,8 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
             restrict: 'E',
             scope: {
                 filterModel: '=',
-                ngDisabled: '='
+                ngDisabled: '=',
+                hideTransfer: '=',
             },
             controller: OrderTypeFilterController,
             templateUrl: 'plugins/reports/filters/order-type-filter.html'
@@ -1065,6 +1066,14 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
 
     function OrderTypeFilterController($scope) {
         $scope.model = {selectModel: $scope.filterModel};
+        $scope.orderTypes = {};
+        $scope.orderTypes["1"] = 'ordertype.purchase';
+        $scope.orderTypes["2"] = 'order.sales';
+        $scope.orderTypes["0"] = 'ordertype.transfer';
+
+        if ($scope.hideTransfer) {
+            delete $scope.orderTypes["0"];
+        }
         $scope.$watch('filterModel', function (newValue, oldValue) {
             if (newValue != oldValue) {
                 $scope.model = {selectModel: newValue};
@@ -1095,10 +1104,10 @@ function reportCoreService() {
     reportCoreService.factory('reportsServiceCore', ['APIService', function (apiService) {
         return {
             getReportData: function (json) {
-                return apiService.get('/s2/api/plugins/report/?json=' + json);
+                return apiService.get('/s2/api/plugins/report/?json=' + encodeURIComponent(json));
             },
             getReportBreakdownData: function (json) {
-                return apiService.get('/s2/api/plugins/report/breakdown?json=' + json);
+                return apiService.get('/s2/api/plugins/report/breakdown?json=' + encodeURIComponent(json));
             },
             getAggregatedTime: function (reportType) {
                 return apiService.get('/s2/api/plugins/report/last-run-time?reportType=' + reportType);

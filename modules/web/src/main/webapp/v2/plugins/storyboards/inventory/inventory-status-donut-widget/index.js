@@ -157,7 +157,6 @@ angular.module('logistimo.storyboard.inventoryStatusDonutWidget', [])
                         centerLabelFontSize: 19,
                         centerLabelFont : 'Lato',
                         chartTopMargin: -30,
-                        baseFontColor: "red"
                     },
                     cdata: chartData,
                     computedWidth: '100%',

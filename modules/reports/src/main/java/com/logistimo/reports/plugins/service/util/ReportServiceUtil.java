@@ -25,7 +25,6 @@ package com.logistimo.reports.plugins.service.util;
 
 import com.google.common.collect.TreeBasedTable;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.config.models.AssetSystemConfig;
@@ -38,6 +37,7 @@ import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.logger.XLog;
 import com.logistimo.materials.service.MaterialCatalogService;
 import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
+import com.logistimo.reports.ReportsConstants;
 import com.logistimo.reports.constants.ReportCompareField;
 import com.logistimo.reports.constants.ReportViewType;
 import com.logistimo.reports.models.ReportDataModel;
@@ -66,8 +66,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -567,5 +565,16 @@ public class ReportServiceUtil {
         totalMillis = 0L;
     }
     return totalMillis;
+  }
+
+  protected float getAverageTime(float timeInDays, Long count) {
+    if (count == 0) {
+      return 0;
+    }
+    return timeInDays/count;
+  }
+
+  protected float getTimeInDays(Long timeInMillis) {
+    return (float) timeInMillis/ ReportsConstants.MILLISECONDS_PER_DAY;
   }
 }
