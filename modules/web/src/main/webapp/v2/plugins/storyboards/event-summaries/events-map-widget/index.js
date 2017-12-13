@@ -30,7 +30,7 @@ angular.module('logistimo.storyboard.eventMapWidget', [])
     ['$scope', '$timeout', 'dashboardService', 'domainCfgService', 'INVENTORY', '$sce','eventSummaryService',
         function ($scope, $timeout, dashboardService, domainCfgService, INVENTORY, $sce,eventSummaryService) {
             var filter = angular.copy($scope.widget.conf);
-            var invPieOrder, mapRange,mapColors, maxValue = 0, level;
+            var invPieOrder, mapRange,mapColors, maxValue = 0, level, mapName='';
             level = getLevel();
             var fDate = (checkNotNullEmpty(filter.date) ? formatDate(filter.date) : undefined);
             $scope.showChart = false;
@@ -163,7 +163,7 @@ angular.module('logistimo.storyboard.eventMapWidget', [])
                         }
                         constructMapData($scope.mapEvent, true, $scope, INVENTORY, $sce, mapRange, mapColors,
                             invPieOrder, $timeout);
-                        $scope.mapOpt.caption = constructTitle($scope.widget.conf.category, $scope.widget.conf.event);
+                        $scope.mapTitle = constructTitle($scope.widget.conf.category, $scope.widget.conf.event);
                     }else{
                         $scope.mapData = [];
                         $scope.mapOpt = {
@@ -174,24 +174,18 @@ angular.module('logistimo.storyboard.eventMapWidget', [])
                             "showCanvasBorder": "0",
                             "useSNameInLabels": "0",
                             "toolTipSepChar": ": ",
-                            "legendPosition": "BOTTOM",
                             "borderColor": "FFFFFF",
                             "interactiveLegend": 1,
                             "exportEnabled": 0,
                             "baseFontColor": "#000000",
-                            "captionFontSize": "14",
-                            "captionAlignment": "left",
                             "legendPosition": "bottom", // we can set only bottom or right.
                             "alignCaptionWithCanvas": 1,
                             "labelConnectorAlpha":0,
-                            "captionFontBold":1,
-                            "captionFont":'Helvetica Neue, Arial',
-                            "labelConnectorAlpha": 0,
                             "displayValue": ""
-
                         };
                         setMapRange('es', $scope, mapRange, mapColors);
                     }
+                    setTitle();
                     setWidgetData();
                 }).catch(function error(msg) {
                     showError(msg, $scope);
@@ -256,6 +250,14 @@ angular.module('logistimo.storyboard.eventMapWidget', [])
 
             function getPercentile(n) {
                 return (n/maxValue) * 100;
+            }
+
+            function setTitle() {
+                if ($scope.dashboardView.mLev == "country") {
+                    level = "state";
+                } else if ($scope.dashboardView.mLev == "state") {
+                    level = "district";
+                }
             }
 
             function setWidgetData() {
