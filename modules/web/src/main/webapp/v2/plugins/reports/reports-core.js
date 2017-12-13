@@ -1056,7 +1056,8 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
             restrict: 'E',
             scope: {
                 filterModel: '=',
-                ngDisabled: '='
+                ngDisabled: '=',
+                hideTransfer: '=',
             },
             controller: OrderTypeFilterController,
             templateUrl: 'plugins/reports/filters/order-type-filter.html'
@@ -1065,6 +1066,14 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
 
     function OrderTypeFilterController($scope) {
         $scope.model = {selectModel: $scope.filterModel};
+        $scope.orderTypes = {};
+        $scope.orderTypes["1"] = 'ordertype.purchase';
+        $scope.orderTypes["2"] = 'order.sales';
+        $scope.orderTypes["0"] = 'ordertype.transfer';
+
+        if ($scope.hideTransfer) {
+            delete $scope.orderTypes["0"];
+        }
         $scope.$watch('filterModel', function (newValue, oldValue) {
             if (newValue != oldValue) {
                 $scope.model = {selectModel: newValue};

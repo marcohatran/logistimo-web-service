@@ -1187,8 +1187,13 @@ entity.count=Entity count
 inventory.top.ten.locations=Inventory top ten locations
 inventory.top.ten.materials=Inventory top ten materials
 ordertype.purchase=Purchase
-ordertype.sales=Sales
 ordertype.transfer=Transfer
-reports.selectordertype=Order type should be selected
+reports.order.select.ordertype.message=Order type should be selected.
 reports.bycustomer=By customer
+reports.approvaltype=Approval type
+reports.approval.invalid.filtercombination.message=Entity and location filters cannot be selected as only transfer approval is enabled in this domain.
+reports.order.ordercreation.mode=Mode of creation
+reports.order.invalid.filtercombination.message=Entity and location filters cannot be selected when order type is Transfer.
+reports.order.select.ordertype=Select order type
+reports.order.select.entity.or.ordertype.message=Either entity or entity tag and order type should be selected.
 

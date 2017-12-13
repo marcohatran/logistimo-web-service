@@ -124,5 +124,5 @@ public interface ReportsConstants {
   String SORT_ASC = "sort_asc";
 
   public static final String ROWS="rows";
-  
+  int MILLISECONDS_PER_DAY = 86400000;
 }
