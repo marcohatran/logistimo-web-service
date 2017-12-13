@@ -135,7 +135,14 @@ angular.module('logistimo.storyboard.temperatureStatusDonutWidget', [])
                     alignCaptionWithCanvas: "1",
                     showToolTip: "0",
                     centerLabelFontSize: 19,
-                    centerLabelFont : 'Lato'
+                    centerLabelFont : 'Lato',
+                    centerLabelFontColor: "#d2d2d2",
+                    chartTopMargin: -30,
+                    bgColor: "#272727",
+                    bgAlpha : 100,
+                    baseFontColor:"#d2d2d2",
+                    baseFont : "Lato"
+    
                 },
                 cdata: chartData,
                 computedWidth: '100%',

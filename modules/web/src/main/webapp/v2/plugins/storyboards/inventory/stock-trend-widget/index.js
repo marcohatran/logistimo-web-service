@@ -154,7 +154,14 @@ angular.module('logistimo.storyboard.stockTrend', [])
                 "yAxisNamePadding": 20,
                 "rotateValues": "0",
                 "placevaluesInside": 0,
-                "valueFontColor": "#000000"
+                "valueFontColor": "#000000",
+                "bgColor": "#272727",
+                "bgAlpha" : "100",
+                "canvasBgAlpha": "100",
+                "canvasBgColor" : "#272727",
+                "baseFontColor" : "#d2d2d2",
+                "outCnvBaseFontColor" : "#d2d2d2",
+                "baseFont" : "Lato"
             };
             $scope.cHeight = $scope.widget.computedHeight - 60;
             $scope.cWidth = "90%";

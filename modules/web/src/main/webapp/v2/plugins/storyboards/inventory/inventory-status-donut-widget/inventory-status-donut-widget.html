@@ -11,8 +11,8 @@
     </div>
     <div ng-if="!wloading && !showError && showChart">
         <div class="col-sm-12 text-center pt5">
-            <span class="widget-title">{{widget.conf.title}}</span><br/>
-            <span class="widget-sub-title">{{totalInvText}}</span>
+            <span class="widget-title">{{widget.conf.title | uppercase}}</span><br/>
+            <span class="widget-sub-title">{{totalInvText | uppercase}}</span>
         </div>
         <fusion-chart type="inventoryStatusDonutWidget.cType" height="inventoryStatusDonutWidget.computedHeight"
                       width="inventoryStatusDonutWidget.computedWidth"

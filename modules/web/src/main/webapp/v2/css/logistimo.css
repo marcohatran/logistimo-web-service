@@ -33,7 +33,7 @@
     min-width: 1920px !important;
     width: 1920px !important;
     padding-bottom: 10px;
-    background-color: #eeeeee;
+    background-color: #0e0e0e;
     font-size: medium;
     padding-right: 0;
     height:100vh;
@@ -3992,17 +3992,18 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
 .widget {
     font-family: Lato;
     font-size:14px;
-    color: #707070;
-    background-color: #ffffff;
+    color: #a3a3a3;
+    background-color: #272727;
 }
 
 .widget .widget-title{
     font-size: larger;
-    color: #039be5;
-    letter-spacing: 1.9px;
+    color: #d0dada;
+    letter-spacing: 1.5px;
 }
 .widget .widget-sub-title{
-    letter-spacing: 1.7px;
+    letter-spacing: 1px;
+    color: #a3a3a3;
 }
 
 .widget .widget-title-text {
@@ -4015,12 +4016,13 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
 }
 .widget .widget-text {
     font-size: larger;
-    color: #2596cf;
+    color: #d0dada;
 }
 .widget .widget-per{
     font-size: small;
     font-weight: 300;
     text-align: center;
+    color: #a3a3a3;
 }
 .mbn4{
     margin-bottom: -4px;
@@ -4049,9 +4051,7 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
     text-align: center;
 }
 .bulletin-board-title {
-    background-color: white;
     padding: 5px 0px;
-    border-bottom: 1px solid #ddd;
 }
 
 .event-title{
@@ -4163,20 +4163,31 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
 .widget .widget-large-text {
     font-size: 40px;
     font-weight: 300;
+    color: #ffffff;
 }
 
 .widget .bulletin-heading {
-    font-size: large;
+    font-size: 20px;
     font-weight: bold;
     letter-spacing: 2.4px;
-    color: #039be5;
+    color: #d0dada;
 }
 
 .widget .bulletin-subheading {
-    font-size: small;
+    font-size: 16px;
     letter-spacing: 1.9px;
+    color:#999999;
 }
 
-/*tspan{
-    fill: #707070 !important;
-}*/
+.widget tspan{
+    fill: #d2d2d2 !important;
+}
+
+.bb-list-bg {
+    background-color: #171717;
+    border: none;
+}
+.bb-panel-bg{
+    background-color: #272727;
+    border:none;
+}

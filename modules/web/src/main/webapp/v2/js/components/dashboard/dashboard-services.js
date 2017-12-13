@@ -22,7 +22,8 @@
  */
 
 var dashboardServices = angular.module('dashboardServices', []);
-dashboardServices.factory('dashboardService', ['APIService', function (apiService) {
+dashboardServices.factory('dashboardService', ['APIService','$q', function (apiService,$q) {
+    var queue = {};
     return {
         getMonthlyStats: function (numMonths) {
             return apiService.get('/s/dashboard?action=getmonthlystats&months=' + numMonths);
@@ -71,9 +72,28 @@ dashboardServices.factory('dashboardService', ['APIService', function (apiServic
             if(checkNotNullEmpty(skipCache)) {
                 url += (url == ''? '?' : '&') + 'skipCache=' + skipCache;
             }
-
-            return apiService.get('/s2/api/dashboard/' + url, {duration: 30});
-
+            var defer = $q.defer();
+            if(!queue[url]){
+                queue[url] = [];
+            }
+            queue[url].push(defer);
+            if(queue[url].length == 1) {
+                apiService.get('/s2/api/dashboard/' + url).then(function (data) {
+                    console.log("Queue length : "+queue[url].length);
+                    queue[url].forEach(function(defer){
+                        defer.resolve(data);
+                    })
+                }).catch(function (err) {
+                    console.log("Reject Queue length : "+queue[url].length);
+                    queue[url].forEach(function(defer){
+                        defer.reject(err);
+                    })
+                }).finally(function(){
+                    console.log("Finally Queue length : "+queue[url].length);
+                    queue[url] = [];
+                });
+            }
+            return defer.promise;
         },
         getInv: function (state,district,period,eTag,skipCache) {
             var url = '';

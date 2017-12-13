@@ -248,11 +248,12 @@ function constructMapData(event, init, scope, INVENTORY, $sce, mapRange, mapColo
         "showCanvasBorder": "0",
         "useSNameInLabels": "0",
         "toolTipSepChar": ": ",
-        "borderColor": "FFFFFF",
+        "borderColor": "#171717",
         //"entityBorderHoverThickness": "2",
         "interactiveLegend": 1,
         "exportEnabled": 0,
-        "baseFontColor": "#000000",
+        "baseFont":"Lato",
+        "baseFontColor": "#d2d2d2",
         "captionFontSize": "14",
         "captionAlignment": "left",
         "legendPosition": "bottom", // we can set only bottom or right.
@@ -270,7 +271,8 @@ function constructMapData(event, init, scope, INVENTORY, $sce, mapRange, mapColo
         "legendIconBorderColor": "#e1e1e1",
         "legendIconBorderThickness": "1",
         "legendIconSides": "3",
-        "legendIconStartAngle": "60"
+        "legendIconStartAngle": "60",
+        "bgColor": "#272727"
     };
     var addLink = false;
     if (!scope.showSwitch) {

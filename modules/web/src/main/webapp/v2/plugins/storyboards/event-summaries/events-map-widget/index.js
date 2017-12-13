@@ -174,10 +174,11 @@ angular.module('logistimo.storyboard.eventMapWidget', [])
                             "showCanvasBorder": "0",
                             "useSNameInLabels": "0",
                             "toolTipSepChar": ": ",
-                            "borderColor": "FFFFFF",
+                            "borderColor": "#171717",
                             "interactiveLegend": 1,
                             "exportEnabled": 0,
-                            "baseFontColor": "#000000",
+                            "baseFont":"Lato",
+                            "baseFontColor": "#d2d2d2",
                             "legendPosition": "bottom", // we can set only bottom or right.
                             "alignCaptionWithCanvas": 1,
                             "labelConnectorAlpha":0,

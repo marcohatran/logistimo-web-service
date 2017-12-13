@@ -168,7 +168,11 @@ angular.module('logistimo.storyboard.topLocationsByInventoryStatusWidget', [])
                 "chartLeftMargin": "50",
                 "captionFontSize": "14",
                 "captionFontBold":1,
-                "captionFont":'Helvetica Neue", Arial',
+                "bgColor": "#272727",
+                "bgAlpha" : "100",
+                "canvasBgAlpha": "100",
+                "canvasBgColor" : "#272727",
+                "baseFont" : "Lato"
             };
             
             $scope.chartTitle = "Top 10 " + level;
