@@ -1409,17 +1409,18 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
   }
 
   @Override
-  public BigDecimal computeRecommendedOrderQuantity(IInvntry invntry) {
+  public BigDecimal computeRecommendedOrderQuantity(IInvntry invntry) throws ServiceException {
     BigDecimal roq = new BigDecimal(-1);
     if (IInvntry.MODEL_SQ.equals(invntry.getInventoryModel())) {
       roq =
           BigUtil.lesserThanZero(invntry.getEconomicOrderQuantity()) ? BigDecimal.ZERO
               : invntry.getEconomicOrderQuantity();
     } else if (BigUtil.greaterThanZero(invntry.getMaxStock())) {
+      BigDecimal usableStock = invntry.getStock().subtract(invntry.getExpiredStock());
       if (BigUtil
-          .lesserThan(invntry.getStock().add(invntry.getInTransitStock()), invntry.getMaxStock())) {
+          .lesserThan(usableStock.add(invntry.getInTransitStock()), invntry.getMaxStock())) {
         roq =
-            invntry.getMaxStock().subtract(invntry.getStock())
+            invntry.getMaxStock().subtract(usableStock)
                 .subtract(invntry.getInTransitStock());
       } else {
         roq = BigDecimal.ZERO;
@@ -1430,7 +1431,7 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
 
   // Get a demand item, given a transaction
   private IDemandItem getDemandItem(ITransaction trans, IMaterial m, IInvntry inv,
-      InventoryManagementService ims) {
+      InventoryManagementService ims) throws ServiceException {
     IDemandItem di = JDOUtils.createInstance(IDemandItem.class);
     di.setDomainId(trans.getDomainId());
     di.setKioskId(trans.getKioskId());

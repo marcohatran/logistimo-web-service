@@ -23,6 +23,7 @@
 
 package com.logistimo.orders.actions;
 
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.entity.IKioskLink;
 import com.logistimo.entities.entity.KioskLink;
 import com.logistimo.entities.service.EntitiesServiceImpl;
@@ -30,6 +31,7 @@ import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.inventory.entity.Invntry;
 import com.logistimo.inventory.entity.Transaction;
+import com.logistimo.inventory.service.InventoryManagementService;
 import com.logistimo.inventory.service.impl.InventoryManagementServiceImpl;
 import com.logistimo.orders.entity.DemandItem;
 import com.logistimo.orders.entity.IDemandItem;
@@ -40,6 +42,7 @@ import com.logistimo.utils.BigUtil;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.context.ApplicationContext;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -49,6 +52,8 @@ import java.util.Optional;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
@@ -59,6 +64,7 @@ import static org.mockito.Mockito.when;
 public class OrderAutomationActionTest {
 
   private OrderAutomationAction orderAutomationAction;
+  private InventoryManagementServiceImpl ims;
 
   @Before
   public void setup() throws ServiceException {
@@ -68,7 +74,7 @@ public class OrderAutomationActionTest {
         .thenReturn(new Results<>(null, null));
     when(ems.getKioskLinks(2l, IKioskLink.TYPE_VENDOR, null, null, null))
         .thenReturn(getKioskLink(2l));
-    InventoryManagementServiceImpl ims = mock(InventoryManagementServiceImpl.class);
+    ims = mock(InventoryManagementServiceImpl.class);
     when(ims.getInventory(2l, 2l)).thenReturn(getInvntry(1l, 2l, null, null));
     orderAutomationAction =
         new OrderAutomationAction(ims, orderManagementService, ems, null, null);
@@ -90,8 +96,15 @@ public class OrderAutomationActionTest {
   }
 
   @Test
-  public void testGetTransactionWithROQGreaterThanZero() {
+  public void testGetTransactionWithROQGreaterThanZero() throws ServiceException {
     IInvntry invntry = getInvntry(1l, 2l, BigDecimal.TEN, new BigDecimal(100));
+    ApplicationContext appContext = mock(ApplicationContext.class);
+
+    StaticApplicationContext context = new StaticApplicationContext();
+    context.setApplicationContext(appContext);
+
+    doReturn(ims).when(appContext).getBean(InventoryManagementService.class);
+    when(ims.getBatches(any(),any(),any())).thenReturn(new Results<>(null, null));
     assertNotEquals(orderAutomationAction.getTransaction(invntry), Optional.empty());
   }
 

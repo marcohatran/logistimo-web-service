@@ -24,6 +24,7 @@
 package com.logistimo.inventory.entity;
 
 import com.logistimo.domains.IOverlappedDomain;
+import com.logistimo.services.ServiceException;
 import com.logistimo.tags.entity.ITag;
 
 import java.math.BigDecimal;
@@ -254,4 +255,6 @@ public interface IInvntry extends IOverlappedDomain {
   Date getUpdatedOn();
 
   void setUpdatedOn(Date updatedOn);
+
+  BigDecimal getExpiredStock() throws ServiceException;
 }
