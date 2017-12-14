@@ -249,8 +249,8 @@ public class AuthenticationServiceImpl extends ServiceImpl implements Authentica
 
   private void checkWebTokenExpiry(String token) {
     Long lastAccessTime = (Long) memcacheService.get(TOKEN_ACCESS_PREFIX + token);
-    if (lastAccessTime != null
-        && System.currentTimeMillis() > lastAccessTime + WEB_TOKEN_INACTIVITY_MILLIS) {
+    if (lastAccessTime == null
+        || System.currentTimeMillis() > lastAccessTime + WEB_TOKEN_INACTIVITY_MILLIS) {
       throw new UnauthorizedException("Token expired");
     }
   }
