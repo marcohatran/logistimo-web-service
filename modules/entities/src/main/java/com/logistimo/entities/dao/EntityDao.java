@@ -283,7 +283,8 @@ public class EntityDao implements IEntityDao {
     }
     if (filters.getModifiedSince() != null) {
       SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATETIME_CSV_FORMAT);
-      sqlQuery.append(" AND CREATEDON >= ? ");
+      sqlQuery.append(" AND (K.LASTUPDATED >= ? OR CREATEDON >= ?)");
+      params.add(sdf.format(filters.getModifiedSince()));
       params.add(sdf.format(filters.getModifiedSince()));
     }
     if (buildCountQuery) {
