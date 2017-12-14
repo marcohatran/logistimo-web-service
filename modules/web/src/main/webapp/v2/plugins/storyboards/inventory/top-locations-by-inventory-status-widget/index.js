@@ -87,14 +87,16 @@ angular.module('logistimo.storyboard.topLocationsByInventoryStatusWidget', [])
 
                 if (checkNotNullEmpty(filter.topTenLocType)) {
                     var topTenLocType = filter.topTenLocType;
-                    if (topTenLocType == '0' || topTenLocType == '1') {
                         $scope.topTenLocType = topTenLocType;
                         if ($scope.topTenLocType == 0) {
                             $scope.mapEvent = invPieOrder[0];
-                        } else {
+                        } else if ($scope.topTenLocType == 1) {
                             $scope.mapEvent = invPieOrder[1];
+                        } else if ($scope.topTenLocType == 2) {
+                            $scope.mapEvent = invPieOrder[2];
+                        } else {
+                            $scope.mapEvent = invPieOrder[3];
                         }
-                    }
                 } else {
                     $scope.topTenLocType = "0";
                 }

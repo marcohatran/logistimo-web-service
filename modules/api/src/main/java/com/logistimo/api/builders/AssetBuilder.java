@@ -25,6 +25,7 @@ package com.logistimo.api.builders;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 
 import com.logistimo.api.models.AssetBaseModel;
 import com.logistimo.api.models.AssetDetailsModel;
@@ -44,6 +45,8 @@ import com.logistimo.assets.models.Temperature;
 import com.logistimo.assets.models.TemperatureResponse;
 import com.logistimo.assets.service.AssetManagementService;
 import com.logistimo.assets.service.impl.AssetManagementServiceImpl;
+import com.logistimo.auth.utils.SecurityUtils;
+import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.Constants;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.domains.entity.IDomain;
@@ -54,6 +57,8 @@ import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.logger.XLog;
 import com.logistimo.pagination.Results;
+import com.logistimo.reports.plugins.internal.ExportModel;
+import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.Services;
 import com.logistimo.users.entity.IUserAccount;
@@ -61,7 +66,10 @@ import com.logistimo.users.service.UsersService;
 import com.logistimo.users.service.impl.UsersServiceImpl;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.MsgUtil;
-
+import org.apache.commons.lang.StringUtils;
+import org.json.JSONObject;
+import java.lang.reflect.Type;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -818,5 +826,68 @@ public class AssetBuilder {
                 e.getMessage());
       }
     }
+  }
+
+  public ExportModel buildExportModel(String json) throws ParseException, ServiceException {
+    JSONObject jsonObject = new JSONObject(json);
+    Long domainId = SecurityUtils.getCurrentDomainId();
+    ExportModel eModel = new ExportModel();
+    final SecureUserDetails userDetails = SecurityUtils.getUserDetails();
+    eModel.userId = userDetails.getUsername();
+    eModel.timezone = userDetails.getTimezone();
+    eModel.locale = userDetails.getLocale().getLanguage();
+    eModel.filters = getFilters(jsonObject, domainId);
+    eModel.templateId = "assets";
+    eModel.additionalData = new HashMap<>();
+    eModel.additionalData.put("typeId", "DEFAULT");
+    DomainConfig dc = DomainConfig.getInstance(SecurityUtils.getCurrentDomainId());
+    eModel.additionalData.put("domainTimezone", dc.getTimezone());
+    eModel.additionalData.put("exportTime", LocalDateUtil
+        .formatCustom(new Date(), Constants.DATETIME_CSV_FORMAT, userDetails.getTimezone()));
+    Type type = new TypeToken<Map<String, String>>() {
+    }.getType();
+    eModel.titles = new Gson().fromJson(jsonObject.get("titles").toString(), type);
+    return eModel;
+  }
+
+  private Map<String,String> getFilters(JSONObject jsonObject,Long domainId){
+    Map<String, String> filters = new HashMap<>();
+    String entityId = null;
+    String loc = jsonObject.getString("loc");
+    if (jsonObject.has("entityId")) {
+      entityId = jsonObject.getString("entityId");
+    }
+    String tag = String.valueOf(domainId);
+    if (entityId != null) {
+      tag = "kiosk." + entityId;
+    } else if (StringUtils.isNotEmpty(loc)) {
+      tag += "." + loc;
+    }
+    filters.put("TOKEN_DID", String.valueOf(domainId));
+    filters.put("TOKEN_TAG", tag);
+    if (StringUtils.isNotEmpty(entityId)) {
+      filters.put("TOKEN_KID", entityId);
+    }
+    String assetType = jsonObject.getString("assetType");
+    if (StringUtils.isNotEmpty(assetType)) {
+      filters.put("TOKEN_AT", assetType);
+    }
+    if (jsonObject.has("alarmType")) {
+      Integer alarmType = jsonObject.getInt("alarmType");
+      filters.put("TOKEN_ALARM_TYPE", String.valueOf(alarmType));
+    }
+    if (jsonObject.has("alarmDuration")) {
+      Long alarmDuration = jsonObject.getLong("alarmDuration");
+      filters.put("TOKEN_ALARM_DURATION", String.valueOf(alarmDuration));
+    }
+    if (jsonObject.has("wsStatus")) {
+      Integer assetWorkingStatus = jsonObject.getInt("wsStatus");
+      filters.put("TOKEN_WS", String.valueOf(assetWorkingStatus));
+    }
+    if (jsonObject.has("awr")) {
+      Integer assetRel = jsonObject.getInt("awr");
+      filters.put("TOKEN_ASSET_WITH_REL", String.valueOf(assetRel));
+    }
+    return filters;
   }
 }

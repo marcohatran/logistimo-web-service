@@ -163,15 +163,17 @@ angular.module('logistimo.storyboard.temperatureExcursion', [])
             var cData = [];
             if($scope.widget.conf.excursionType == "1") {
                 for (var i = 0; i < compareFields.length; i++) {
-                    cData[i] = getReportFCSeries(chartData, 27, compareFields[i], "line", linkDisabled, 0);
+                    cData[i] = getReportFCSeries(chartData, 27, compareFields[i], "area", linkDisabled, 0);
                 }
                 $scope.chartTitle = "Low excursions - % of assets with exposure (>= 1 hour)";
+                $scope.cOptions.plotFillColor ="#00c0ef";
 
             } else {
                 for (var i = 0; i < compareFields.length; i++) {
-                    cData[i] = getReportFCSeries(chartData, 26, compareFields[i], "line", linkDisabled, 0);
+                    cData[i] = getReportFCSeries(chartData, 26, compareFields[i], "area", linkDisabled, 0);
                 }
                 $scope.chartTitle = "High excursions - % of assets with exposure (>= 1 hour)";
+                $scope.cOptions.plotFillColor ="#d9534f";
             }
             $scope.chartSubTitle = getReportCaption($scope.filter);
             if ($scope.filter.periodicity != "m" && cLabel.length > 10) {

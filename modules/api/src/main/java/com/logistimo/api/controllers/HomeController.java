@@ -26,6 +26,7 @@ package com.logistimo.api.controllers;
 import com.logistimo.api.builders.FChartBuilder;
 import com.logistimo.api.models.FChartModel;
 import com.logistimo.auth.utils.SessionMgr;
+import com.logistimo.constants.Constants;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.logger.XLog;
 import com.logistimo.reports.models.DomainCounts;
@@ -96,7 +97,8 @@ public class HomeController {
       DomainCounts domainCounts;
       ReportsService rs = Services.getService("reports",locale);
       repGenTime = rs.getRepGenTime(domainId, locale, sUser.getTimezone());
-      domainCounts = rs.getDomainCounts(domainId, cal.getTime(), period, periodType, mTag, matId);
+      domainCounts = rs.getDomainCounts(domainId, cal.getTime(), period, periodType, mTag, matId,
+          Constants.TYPE_ORDER);
       boolean
           isCurrentMonth =
           (cal.get(Calendar.MONTH) == Calendar.getInstance().get(Calendar.MONTH) + 1);

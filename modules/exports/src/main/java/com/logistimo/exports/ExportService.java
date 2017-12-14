@@ -32,7 +32,7 @@ import com.logistimo.exports.model.ExportConfigModel;
 import com.logistimo.exports.model.ExportRequestModel;
 import com.logistimo.reports.constants.ReportViewType;
 import com.logistimo.reports.plugins.internal.QueryHelper;
-import com.logistimo.reports.plugins.internal.ReportRequestModel;
+import com.logistimo.reports.plugins.internal.ExportModel;
 import com.logistimo.utils.JobUtil;
 
 import org.apache.camel.ExchangePattern;
@@ -49,7 +49,7 @@ public class ExportService {
 
   public static final String REPORT_VIEW_TYPE = "reportViewType";
 
-  public long scheduleReportExport(ReportRequestModel model) {
+  public long scheduleExport(ExportModel model, String jobSubType) {
     Map<String, String>
         filters = new HashMap<>(model.filters.size() + model.additionalData.size() + 1, 1);
     filters.putAll(model.filters);
@@ -61,7 +61,7 @@ public class ExportService {
     long jobId = JobUtil
         .createJob(SecurityUtils.getCurrentDomainId(), SecurityUtils.getUsername(), null,
             IJobStatus.TYPE_EXPORT,
-            "report", filters);
+            jobSubType, filters);
 
     ExportRequestModel exportRequestModel = new ExportRequestModel();
     ExportConfigModel ecModel = new ExportConfigModel();

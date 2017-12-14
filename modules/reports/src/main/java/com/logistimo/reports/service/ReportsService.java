@@ -92,11 +92,24 @@ public interface ReportsService extends Service {
                                String mTag, String matId) throws ServiceException;
 
   /**
+   * Get DomainCounts for a given report type
+   */
+  DomainCounts getDomainCounts(Long domainId, Date endDate, int period, String periodType,
+                               String mTag, String matId, String reportType) throws ServiceException;
+
+  /**
    * Get Slices
    */
   Results getSlices(Date startDate, Date endDate, String periodType, String oty, String oId,
                     String dt, String dv, boolean fillMissingSlices, PageParams pageParams)
       throws ServiceException;
+
+  /**
+   * Get slices for a given report type
+   */
+  Results getSlices(Date startDate, Date endDate, String periodType, String oty, String oId,
+                    String dt, String dv, boolean fillMissingSlices, PageParams pageParams,
+                    String reportType) throws ServiceException;
 
   Results getSlices(Date endDate, String periodType, String oty, String oId, String dt, String dv,
                     boolean fillMissingSlices, PageParams pageParams) throws ServiceException;

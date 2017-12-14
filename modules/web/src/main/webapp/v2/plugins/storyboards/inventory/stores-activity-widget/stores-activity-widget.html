@@ -10,9 +10,10 @@
         </div>
     </div>
     <div ng-if="!wloading && !showError && showChart" class="text-center">
-        <div class="widget-title pt5 mbn4"> {{resourceBundle['stores.active'] | uppercase}}  </div>
+        <div class="widget-title pt5 mbn4"> {{resourceBundle['home.activeentities'] | uppercase}}  </div>
         <div class="widget-sub-title mbn4"> {{activeEntityDomainTotal}}
-            {{resourceBundle['stores'] | uppercase}}
+            <span ng-if="activeEntityDomainTotal==0">{{resourceBundle['kiosks.lowercase'] | uppercase}}</span>
+            <span ng-if="activeEntityDomainTotal>0">{{(activeEntityDomainTotal>1?resourceBundle['kiosks.lowercase']:resourceBundle['kiosk']) | uppercase}}</span>
         </div>
         <div class="widget-per mbn20"> {{activePercent}}% </div>
         <br/>

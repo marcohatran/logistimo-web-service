@@ -161,6 +161,11 @@
                 </div>
             </div>
         </div>
+        <div class="row action-bar">
+            <div class="col-sm-8 noLRpad" ng-show="filtered.length > 0">
+                <export callback="exportData()"></export>
+            </div>
+        </div>
         <div class="box topbox mt5">
             <div class="row mt10">
                 <div class="col-sm-12">

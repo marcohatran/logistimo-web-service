@@ -41,7 +41,7 @@ import com.logistimo.reports.plugins.IExternalServiceClient;
 import com.logistimo.reports.plugins.internal.ExternalServiceClient;
 import com.logistimo.reports.plugins.internal.QueryHelper;
 import com.logistimo.reports.plugins.internal.QueryRequestModel;
-import com.logistimo.reports.plugins.internal.ReportRequestModel;
+import com.logistimo.reports.plugins.internal.ExportModel;
 import com.logistimo.reports.plugins.models.ReportChartModel;
 import com.logistimo.reports.plugins.models.TableResponseModel;
 import com.logistimo.reports.utils.ReportsUtil;
@@ -189,7 +189,7 @@ public class ReportPluginService implements Service {
     return null;
   }
 
-  public ReportRequestModel buildExportModel(String json) throws ParseException, ServiceException {
+  public ExportModel buildExportModel(String json) throws ParseException, ServiceException {
     JSONObject jsonObject = new JSONObject(json);
     final String reportViewType = jsonObject.getString(JSON_REPORT_VIEW_TYPE);
     ReportViewType viewType =
@@ -197,7 +197,7 @@ public class ReportPluginService implements Service {
     Long domainId = SecurityUtils.getCurrentDomainId();
     final QueryRequestModel model =
         constructQueryRequestModel(domainId, jsonObject, viewType);
-    ReportRequestModel eModel = new ReportRequestModel();
+    ExportModel eModel = new ExportModel();
     final SecureUserDetails userDetails = SecurityUtils.getUserDetails();
     eModel.userId = userDetails.getUsername();
     eModel.timezone = userDetails.getTimezone();

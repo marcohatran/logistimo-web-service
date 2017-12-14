@@ -30,7 +30,7 @@ import com.logistimo.constants.CharacterConstants;
 import com.logistimo.exception.BadRequestException;
 import com.logistimo.exports.ExportService;
 import com.logistimo.logger.XLog;
-import com.logistimo.reports.plugins.internal.ReportRequestModel;
+import com.logistimo.reports.plugins.internal.ExportModel;
 import com.logistimo.reports.plugins.models.ReportChartModel;
 import com.logistimo.reports.plugins.models.TableResponseModel;
 import com.logistimo.reports.plugins.service.ReportPluginService;
@@ -157,8 +157,8 @@ public class ReportPluginController {
   public
   @ResponseBody
   String exportData(@RequestBody String json) throws ParseException, ServiceException {
-    ReportRequestModel model = reportPluginService.buildExportModel(json);
-    long jobId = exportService.scheduleReportExport(model);
+    ExportModel model = reportPluginService.buildExportModel(json);
+    long jobId = exportService.scheduleExport(model,"report");
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", Locale.ENGLISH);
     IUserAccount u = usersService.getUserAccount(SecurityUtils.getUsername());
     return backendMessages.getString("export.success1") + " " + u.getEmail() + " "

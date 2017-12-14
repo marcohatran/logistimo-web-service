@@ -192,16 +192,18 @@ angular.module('logistimo.storyboard.stockTrend', [])
             if($scope.filter.type == "isa") {
                 for (var i = 0; i < compareFields.length; i++) {
                     cData[i] = getReportFCSeries(chartData, 2, compareFields[i],
-                        "line", linkDisabled, filterSeriesIndex, "1");
+                        "area", linkDisabled, filterSeriesIndex, "1");
                 }
                 $scope.chartTitle = "% of inventory items available (100% availability)";
+                $scope.cOptions.plotFillColor ="#1aaf5d";
 
             } else if ($scope.filter.type == "ias") {
                 for (var i = 0; i < compareFields.length; i++) {
                     cData[i] = getReportFCSeries(chartData, 13, compareFields[i],
-                        "line", linkDisabled, filterSeriesIndex, "1");
+                        "area", linkDisabled, filterSeriesIndex, "1");
                 }
                 $scope.chartTitle = "Zero stock - % of inventory items with this abnormality (100% of the time)";
+                $scope.cOptions.plotFillColor ="#d9534f";
             }
             $scope.chartSubTitle  = getReportCaption($scope.filter);
             if ($scope.filter.periodicity != "m" && cLabel.length > 10) {
