@@ -29,14 +29,17 @@ import com.logistimo.api.models.AuthLoginModel;
 import com.logistimo.api.models.ChangePasswordModel;
 import com.logistimo.api.models.UserDetailModel;
 import com.logistimo.api.models.mobile.ValidateOtpModel;
+import com.logistimo.auth.SecurityConstants;
 import com.logistimo.auth.service.AuthenticationService;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.SourceConstants;
 import com.logistimo.exception.BadRequestException;
+import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.exception.ValidationException;
 import com.logistimo.security.BadCredentialsException;
 import com.logistimo.security.UserDisabledException;
 import com.logistimo.services.ObjectNotFoundException;
+import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.Services;
 import com.logistimo.users.entity.IUserAccount;
@@ -56,7 +59,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
+import java.util.ResourceBundle;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
@@ -139,6 +144,12 @@ public class AuthControllerMV1 {
       }
       if (!user.isEnabled()) {
         throw new UserDisabledException("You account is disabled");
+      }
+      if ((SourceConstants.WEB.equals(actionInitiator) || SourceConstants.BULLETIN_BOARD
+          .equals(actionInitiator)) && SecurityConstants.ROLE_KIOSKOWNER.equals(user.getRole())) {
+        ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages",
+            Locale.getDefault());
+        throw new UnauthorizedException(backendMessages.getString("user.access.denied"),HttpStatus.FORBIDDEN);
       }
       generateUserToken(headers, userid, actionInitiator);
       user.setIPAddress(ipaddr);
