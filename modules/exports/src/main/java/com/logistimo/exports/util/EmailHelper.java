@@ -74,9 +74,9 @@ public class EmailHelper {
       throws MessageHandlingException, IOException, ServiceException {
     Map<String, String> model = jobStatus.getMetadataMap();
     IUserAccount u = us.getUserAccount(model.get(ExportConstants.USER_ID));
-    String reportName = ReportType.getReportName(model.get(ExportConstants.REPORT_TYPE));
+    String fileName = getFileName(jobStatus);
     final String exportTime = model.get(ExportConstants.EXPORT_TIME);
-    String subject = getMailSubject(model, reportName, exportTime);
+    String subject = getMailSubject(model, fileName, exportTime);
     List<String> userIds = StringUtil.getList(u.getEmail());
     List<String> addresses = new ArrayList<>();
     String[] addressArray = userIds.toArray(new String[userIds.size()]);
@@ -85,8 +85,8 @@ public class EmailHelper {
     if (StringUtils.isNotBlank(customMessage)) {
       message = customMessage;
     } else {
-      final String downloadLinkText = getDownloadLinkText(filePath, reportName, exportTime);
-      message = constructEmailMessage(u, reportName, downloadLinkText);
+      final String downloadLinkText = getDownloadLinkText(filePath, fileName, exportTime);
+      message = constructEmailMessage(u, fileName, downloadLinkText);
     }
     MessageService ms =
         MessageService.getInstance(MessageService.EMAIL, u.getCountry(), true, u.getDomainId(),
@@ -94,22 +94,22 @@ public class EmailHelper {
     ((EmailService) ms).sendHTML(null, addresses, subject, message, null);
   }
 
-  private String getMailSubject(Map<String, String> model, String reportName, String exportTime)
+  private String getMailSubject(Map<String, String> model, String fileName, String exportTime)
       throws ServiceException {
-    return "[Export] " + reportName + " for " +
+    return "[Export] " + fileName + " for " +
         ds.getDomain(Long.valueOf(model.get(ExportConstants.DOMAIN_ID))).getName() + " on " + exportTime;
   }
 
-  private String getDownloadLinkText(String filePath, String reportName, String exportTime) {
+  private String getDownloadLinkText(String filePath, String fileName, String exportTime) {
     String host = ConfigUtil.get("logi.host.server");
     String path = host == null ? "http://localhost:50070/webhdfs/v1" : "/media";
     String localStr = host == null ? "?op=OPEN" : "";
     return "<a href=\"" + (host == null ? "" : host) + path
-        + "/user/logistimoapp/dataexport/" + filePath + "/" + getFileName(reportName, exportTime)
+        + "/user/logistimoapp/dataexport/" + filePath + "/" + getFileName(fileName, exportTime)
         + localStr + "\">";
   }
 
-  private String constructEmailMessage(IUserAccount u, String reportName, String downloadLinkText) {
+  private String constructEmailMessage(IUserAccount u, String fileName, String downloadLinkText) {
     /**
      Dear <first name of the user>,
      As requested, the report '<report title>' is generated and can be viewed by clicking on this link <link>. Please contact <support info> for any further queries.
@@ -121,9 +121,9 @@ public class EmailHelper {
     message.append("<br/>Dear ").append(u.getFirstName()).append(",<br/><br/>");
     final String support = ConfigUtil.get("support.email", GeneralConfig.DEFAULT_SUPPORT_EMAIL);
     message.append("The export of ").append(CharacterConstants.SINGLE_QUOTES)
-        .append(reportName).append(CharacterConstants.SINGLE_QUOTES)
-        .append(" is now complete. Please click here ")
-        .append(downloadLinkText).append("</a>. to download the file.")
+        .append(fileName).append(CharacterConstants.SINGLE_QUOTES)
+        .append(" is now complete. Please click ")
+        .append(downloadLinkText).append("here </a> to download the file.")
         .append("<br/><br/>");
     message.append("Thank you,<br/>");
     message.append(ConfigUtil.get("support.team", GeneralConfig.DEFAULT_SUPPORT_TEAM)).append(
@@ -137,5 +137,14 @@ public class EmailHelper {
   public String getFileName(String fileName, String fileTime) {
     return fileName.replace(CharacterConstants.SPACE, CharacterConstants.UNDERSCORE) +
         CharacterConstants.UNDERSCORE + fileTime.replaceAll("[ :\\-]", CharacterConstants.UNDERSCORE) + ".csv";
+  }
+
+  public String getFileName(IJobStatus jobStatus ){
+    if (jobStatus.getSubType().equalsIgnoreCase("report")) {
+      return ReportType.getReportName(jobStatus.getMetadataMap().get(
+          ExportConstants.REPORT_TYPE));
+    } else {
+      return jobStatus.getSubType();
+    }
   }
 }
