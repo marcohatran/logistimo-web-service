@@ -24,51 +24,44 @@
 <!-- @if (NODE_ENV == 'PRODUCTION' || NODE_ENV == 'DEVELOPMENT') && BULLETIN_BOARD == 'BULLETIN_BOARD' -->
 <!-- comments:uncomment-block html -->
 <!--
-        <div class="row">
+        <div class="row widget">
             <div class="col-sm-12">
-                <div class="pull-right">
-                    <img class="imagewrapper" src="images/evin_logo.png">
-                </div>
+            <div class="col-sm-6">
+                <span class="bulletin-heading" style="position:relative;top:20px;font-family:Lato;text-transform:uppercase;">Bulletin boards</span>
+            </div>
+            <div class="col-sm-6">
+                <img class="imagewrapper pull-right" src="images/evin_small.png">
+            </div>
+            </div>
             </div>
         </div>
     -->
 <!-- endcomments -->
 <!-- @endif -->
-<div class="tab pane">
-    <div class="box topbox">
+<div ng-class="{'view-port-height' : isBulletinBoard, 'tab pane': !isBulletinBoard}">
+    <div ng-class="{'box topbox ': !isBulletinBoard, 'box topbox bb-list-bg':isBulletinBoard}">
         <div ng-controller="BulletinBoardsListingController">
             <div ng-show="bulletinBoards.length > 0">
-                <div class="row">
-                    <div class="col-sm-8">
-                        <table class="table table-bordered">
-                            <thead>
-                            <tr>
-                                <th class="col-sm-1">S.No</th>
-                                <th class="col-sm-4">{{resourceBundle['bulletin.board.upper']}}</th>
-                                <th class="col-sm-1">{{resourceBundle['action']}}</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr ng-repeat="(id, bulletinBoard) in bulletinBoards">
-                                <td>{{$index + 1}}</td>
-                                <td>{{bulletinBoard.name}}</td>
-                                <td>
-                                    <a ng-if="!isBulletinBoard"
-                                       ng-href="#configuration/bulletin/view/{{bulletinBoard.bbId}}"><span
-                                            class="glyphicon glyphicon-play-circle" title="Play"
-                                            style="font-size: 15px;"></span></a>
-                                    <a ng-if="isBulletinBoard" ng-href="#/view/{{bulletinBoard.bbId}}"><span
-                                            class="glyphicon glyphicon-play-circle large" title="Play">
-                                    </span></a>&nbsp;&nbsp;
-                                    <a ng-if="!isBulletinBoard"
-                                       href="#configuration/bulletin/detail/{{bulletinBoard.bbId}}"><span
-                                            class="glyphicon glyphicon-cog" title="Configure"
-                                            style="font-size: 15px;"></span></a>
-                                </td>
-                            </tr>
-
-                            </tbody>
-                        </table>
+                <div class="row" style="padding-top:20px;">
+                    <div class="col-sm-12">
+                        <div ng-class="{'col-sm-3 panel panel-default noLRpad bulletin-container-hover bb-panel-bg': hovering, 'col-sm-3 panel panel-default noLRpad bb-panel-bg': !hovering}"
+                             ng-mouseenter="hovering=true" ng-mouseleave="hovering=false" ng-focus="hovering=true" ng-blur="hovering=false"
+                             ng-repeat="(id, bulletinBoard) in bulletinBoards"  ng-click="viewBulletinBoard(bulletinBoard.bbId)" style="margin-right:20px;transition: all .5s ease-in-out;height:200px;">
+                            <div class="panel-body widget">
+                                <div class="col-sm-12">
+                                    <h1 class="widget-title">{{bulletinBoard.name}}</h1>
+                                </div>
+                                <hr style="border: 1px solid #d0dada">
+                                <div class="col-sm-12">
+                                    <div ng-class="{'col-sm-8 noleftpad pt10 widget-sub-title':!isBulletinBoard, 'col-sm-12 noleftpad pt10 widget-sub-title':isBulletinBoard}">{{bulletinBoard.desc}}</div>
+                                    <div class="col-sm-4" ng-if="!isBulletinBoard">
+                                        <a ng-href="#configuration/bulletin/detail/{{bulletinBoard.bbId}}">
+                                            <span class="glyphicon glyphicon-cog large pull-right" title="Configure"></span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

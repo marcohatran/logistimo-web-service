@@ -192,10 +192,10 @@ domainCfgServices.factory('domainCfgService', ['APIService','$http', function (a
             return apiService.get('/s2/api/config/domain/domaininfo');
         },
         getMapLocationMapping: function() {
-            return apiService.get('/s2/api/config/domain/map/locations');
+            return apiService.getCached('config_map_locations','/s2/api/config/domain/map/locations');
         },
         getSystemDashboardConfig: function() {
-            return apiService.get('/s2/api/config/domain/dashboards');
+            return apiService.getCached('config_dashboards','/s2/api/config/domain/dashboards');
         },
         getNotificationsMessage: function (start,end,offset, size) {
             offset = typeof offset !== 'undefined' ? offset : 0;

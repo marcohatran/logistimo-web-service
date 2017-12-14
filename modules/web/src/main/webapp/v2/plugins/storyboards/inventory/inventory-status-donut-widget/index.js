@@ -44,6 +44,7 @@ angular.module('logistimo.storyboard.inventoryStatusDonutWidget', [])
             var filter = angular.copy($scope.widget.conf);
             var invPieColors, invPieOrder;
             var fDate = (checkNotNullEmpty(filter.date) ? formatDate(filter.date) : undefined);
+            $scope.totalInvText = '';
             $scope.showChart = false;
             $scope.wloading = true;
             $scope.showError = false;
@@ -90,6 +91,8 @@ angular.module('logistimo.storyboard.inventoryStatusDonutWidget', [])
                     $scope.widType = "ia";
                 }
 
+                $scope.widget.conf.title = $scope.widget.conf.title.toUpperCase();
+
                 if (checkNotNullEmpty(filter.materialTag)) {
                     $scope.exFilter = constructModel(filter.materialTag);
                     $scope.exType = 'mTag';
@@ -112,7 +115,7 @@ angular.module('logistimo.storyboard.inventoryStatusDonutWidget', [])
             };
 
             function getData() {
-                var chartData = [],totalInv = 0, totalInvText = '';
+                var chartData = [],totalInv = 0;
                 dashboardService.get(undefined, undefined, $scope.exFilter, $scope.exType, $scope.period, undefined,
                     undefined, constructModel(filter.entityTag), fDate, constructModel(filter.exEntityTag), false).then(
                     function (data) {
@@ -121,11 +124,11 @@ angular.module('logistimo.storyboard.inventoryStatusDonutWidget', [])
                         var normalPercent = getPercent(data.data.invDomain, $scope.widType);
                         totalInv = getItemCount(data.data.invDomain, $scope.widType);
                         if(totalInv>1){
-                            totalInvText = totalInv + " inventory items";
+                            $scope.totalInvText = totalInv + " inventory items";
                         }else{
-                            totalInvText = totalInv + " inventory item";
+                            $scope.totalInvText = totalInv + " inventory item";
                         }
-                        setWidgetData(normalPercent, chartData, totalInvText);
+                        setWidgetData(normalPercent, chartData);
                     }).catch(function error(msg) {
                         showError(msg, $scope);
                     }).finally(function () {
@@ -134,7 +137,7 @@ angular.module('logistimo.storyboard.inventoryStatusDonutWidget', [])
                     });
             }
 
-            function setWidgetData(centerLabelPercent, chartData, totalInvText) {
+            function setWidgetData(centerLabelPercent, chartData) {
                 var radius = getDonutRadius($scope.widget.width,$scope.widget.height);
                 $scope.inventoryStatusDonutWidget = {
                     wId: $scope.widget.id,
@@ -148,12 +151,17 @@ angular.module('logistimo.storyboard.inventoryStatusDonutWidget', [])
                         showLegend: "0",
                         showValues: "0",
                         defaultCenterLabel: centerLabelPercent,
-                        subCaption: totalInvText,
                         captionOnTop: "0",
                         alignCaptionWithCanvas: "1",
                         showToolTip: "1",
                         centerLabelFontSize: 19,
-                        centerLabelFont : 'Helvetica Neue, Arial'
+                        centerLabelFont : 'Lato',
+                        centerLabelFontColor: "#d2d2d2",
+                        chartTopMargin: -30,
+                        bgColor: "#272727",
+                        bgAlpha : 100,
+                        baseFontColor:"#d2d2d2",
+                        baseFont : "Lato"
                     },
                     cdata: chartData,
                     computedWidth: '100%',

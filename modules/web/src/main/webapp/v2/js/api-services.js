@@ -32,40 +32,56 @@ logistimoApp.factory('APIService', function ($http, $q, $rootScope) {
         }
         return false;
     };
+    var cached = {};
+    var get = function (urlStr) {
+        if (checkDomainAndReject()) {
+            return $q(function (resolve, reject) {
+                reject();
+            });
+        }
+        if (!$rootScope.isBulletinBoard) {
+            return $http({method: 'GET', url: urlStr});
+        } else if (!$rootScope.networkAvailable) {
+            return $q(function (resolve, reject) {
+                var cache = localStorage.getItem(urlStr);
+                if (checkNotNullEmpty(cache)) {
+                    resolve(JSON.parse(cache).data);
+                } else {
+                    reject("Network is not available");
+                }
+            });
+        } else {
+            localStorage.removeItem(urlStr);
+            var promise = $http({method: 'GET', url: urlStr});
+            return $q(function (resolve, reject) {
+                promise.then(function (data) {
+                    localStorage.setItem(urlStr, JSON.stringify({
+                        ts: new Date(),
+                        data: data
+                    }));
+                    resolve(data);
+                }).catch(function (error) {
+                    reject(error);
+                });
+            });
+        }
+    };
     return {
-        get: function (urlStr) {
-            if (checkDomainAndReject()) {
-                return $q(function (resolve, reject) {
-                    reject();
-                });
-            }
-            if (!$rootScope.isBulletinBoard) {
-                return $http({method: 'GET', url: urlStr});
-            } else if (!$rootScope.networkAvailable) {
-                return $q(function (resolve, reject) {
-                    var cache = localStorage.getItem(urlStr);
-                    if (checkNotNullEmpty(cache)) {
-                        resolve(JSON.parse(cache).data);
-                    } else {
-                        reject("Network is not available");
-                    }
-                });
-            } else {
-                localStorage.removeItem(urlStr);
-                var promise = $http({method: 'GET', url: urlStr});
-                return $q(function (resolve, reject) {
-                    promise.then(function (data) {
-                        localStorage.setItem(urlStr, JSON.stringify({
-                            ts: new Date(),
-                            data: data
-                        }));
-                        resolve(data);
-                    }).catch(function (error) {
-                        reject(error);
-                    });
-                });
-            }
+        getCached: function(cacheKey, urlStr){
+            return $q(function (resolve, reject) {
+                if(cached[cacheKey]){
+                    resolve(cached[cacheKey]);
+                    return;
+                }
+                get(urlStr).then(function(data){
+                    cached[cacheKey] = data;
+                    resolve(data);
+                }).catch(function(err){
+                    reject(err);
+                })
+            });
         },
+        get: get,
         post: function (data, urlStr) {
             if (checkDomainAndReject()) {
                 return $q(function (resolve, reject) {

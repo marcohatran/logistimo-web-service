@@ -683,10 +683,10 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
       localPm = PMF.get().getPersistenceManager();
     }
     try {
-      IOrder order = getOrder(orderId, false, pm != null ? pm : localPm);
+      IOrder order = JDOUtils.getObjectById(IOrder.class, orderDao.createKey(orderId), localPm);
       order.setReferenceID(referenceId);
     } finally {
-      if (localPm != null) {
+      if (pm == null && localPm != null) {
         localPm.close();
       }
     }

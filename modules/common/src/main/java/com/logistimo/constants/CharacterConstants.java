@@ -55,4 +55,5 @@ public class CharacterConstants {
   public static final String ASTERISK = "*";
   public static final String PLUS = "+";
   public static final String AT = "@";
+  public static final String HASH = "#";
 }

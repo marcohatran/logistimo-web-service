@@ -11,7 +11,7 @@ angular.module('logistimo.storyboard.inventoryStatusMapWidget', [])
             templateFilters: [
                 {
                     nameKey: 'inventory.status',
-                    type: 'mapType',
+                    type: 'mapType'
                 },
                 {
                     nameKey: 'material.upper',
@@ -46,7 +46,7 @@ angular.module('logistimo.storyboard.inventoryStatusMapWidget', [])
     ['$scope', '$timeout', 'dashboardService', 'domainCfgService', 'INVENTORY', '$sce',
         function ($scope, $timeout, dashboardService, domainCfgService, INVENTORY, $sce) {
             var filter = angular.copy($scope.widget.conf);
-            var invPieColors, invPieOrder, mapRange, mapColors;
+            var invPieColors, invPieOrder, mapRange, mapColors, level='', mapName= '';
             var fDate = (checkNotNullEmpty(filter.date) ? formatDate(filter.date) : undefined);
             $scope.showChart = false;
             $scope.wloading = true;
@@ -89,8 +89,10 @@ angular.module('logistimo.storyboard.inventoryStatusMapWidget', [])
                         $scope.mapType = mapType;
                         if ($scope.mapType == 0) {
                             $scope.mapEvent = invPieOrder[0];
+                            mapName = "Availability";
                         } else {
                             $scope.mapEvent = invPieOrder[1];
+                            mapName = "Stock outs";
                         }
                     }
                 } else {
@@ -120,6 +122,7 @@ angular.module('logistimo.storyboard.inventoryStatusMapWidget', [])
                         }
                         constructMapData($scope.mapEvent, true, $scope, INVENTORY, $sce, mapRange, mapColors,
                             invPieOrder, $timeout);
+                        setTitle();
                         setWidgetData();
                     }).catch(function error(msg) {
                         showError(msg, $scope);
@@ -128,6 +131,15 @@ angular.module('logistimo.storyboard.inventoryStatusMapWidget', [])
                         $scope.wloading = false;
                     });
             };
+
+            function setTitle() {
+                if ($scope.dashboardView.mLev == "country") {
+                    level = "state";
+                } else if ($scope.dashboardView.mLev == "state") {
+                    level = "district";
+                }
+                $scope.mapTitle = mapName + " by " + level;
+            }
 
             function setWidgetData() {
                 $scope.inventoryStatusMapWidget = {

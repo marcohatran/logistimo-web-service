@@ -311,7 +311,7 @@ public class OrdersController {
       if (IOrder.COMPLETED.equals(status.st) || IOrder.FULFILLED.equals(status.st)) {
         SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATE_FORMAT_CSV);
         Date efd = null;
-        if (status.efd != null) {
+        if (StringUtils.isNotEmpty(status.efd)) {
           efd = sdf.parse(status.efd);
         }
 

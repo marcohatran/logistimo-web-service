@@ -1,4 +1,4 @@
-<div ng-controller="temperatureStatusDonutWidgetController">
+<div ng-controller="temperatureStatusDonutWidgetController" class="widget">
     <div ng-if="wloading" class="row mt18 widget-loading">
         <div class="text-center">
             {{resourceBundle['loading.uppercase']}}... <span class="glyphicons glyphicons-cogwheel spin"></span>
@@ -10,8 +10,9 @@
         </div>
     </div>
     <div ng-if="!wloading && !showError && showChart">
-        <div class="col-sm-12 text-center pt15">
-            <span class="widget-title">{{widget.conf.title}}</span>
+        <div class="col-sm-12 text-center pt5">
+            <span class="widget-title">{{widget.conf.title | uppercase}}</span><br/>
+            <span class="widget-sub-title">{{totalAssetsText | uppercase}}</span>
         </div>
         <fusion-chart type="temperatureStatusDonutWidget.cType" height="temperatureStatusDonutWidget.computedHeight"
                       width="temperatureStatusDonutWidget.computedWidth"

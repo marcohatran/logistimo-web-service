@@ -80,6 +80,7 @@ import com.logistimo.proto.JsonTagsZ;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.Services;
+import com.logistimo.services.cache.MemcacheService;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.services.impl.ServiceImpl;
 import com.logistimo.tags.TagUtil;
@@ -95,6 +96,7 @@ import com.logistimo.utils.StringUtil;
 
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -120,6 +122,20 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
   private static final XLog xLogger = XLog.getLog(EntitiesServiceImpl.class);
   private IEntityDao entityDao = new EntityDao();
   private ITagDao tagDao = new TagDao();
+
+  private MemcacheService memcacheService;
+
+  @Autowired
+  public void setCacheService(MemcacheService memcacheService) {
+    this.memcacheService = memcacheService;
+  }
+
+  public MemcacheService getMemcacheService() {
+    if (memcacheService == null) {
+      memcacheService = AppFactory.get().getMemcacheService();
+    }
+    return memcacheService;
+  }
 
   /**
    * Is the user associated with this kiosk
@@ -149,7 +165,7 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
           as = Services.getService(UsersServiceImpl.class);
           IUserAccount ua = as.getUserAccount(userId);
           Results kiosks = getKiosksForUser(ua, null, null, pm);
-          if(kiosks.getResults()!=null) {
+          if (kiosks.getResults() != null) {
             for (Object k : kiosks.getResults()) {
               IKiosk kiosk = (IKiosk) k;
               Permissions perms = kiosk.getPermissions();
@@ -249,13 +265,12 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
    * @param kioskId
    * @param newApprovers
    * @param userName
-   * @throws ServiceException
    */
+
   public void addApprovers(Long kioskId, List<IApprover> newApprovers, String userName) {
     StaticApplicationContext.getBean(UpdateApproversAction.class)
         .invoke(kioskId, newApprovers, userName);
   }
-
 
 
   /**
@@ -265,7 +280,7 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
    * @return
    */
   public boolean isAnApprover(String userId, Long domainId) {
-    if(StringUtils.isNotEmpty(userId) && domainId != null) {
+    if (StringUtils.isNotEmpty(userId) && domainId != null) {
       PersistenceManager pm = null;
       Query query = null;
       try {
@@ -277,7 +292,7 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
         params.put("userIdParam", userId);
         params.put("domainIdParam", domainId);
         IApprover approvers = (IApprover) query.executeWithMap(params);
-        if(approvers != null) {
+        if (approvers != null) {
           return true;
         }
       } catch (Exception e) {
@@ -315,7 +330,7 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
    */
   @Override
   public List<IApprover> getApprovers(Long kioskId, PersistenceManager pm) {
-    if(kioskId != null) {
+    if (kioskId != null) {
       Query query = null;
       try {
         query = pm.newQuery(JDOUtils.getImplClass(IApprover.class));
@@ -347,7 +362,7 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
    */
   public List<IApprover> getApprovers(Long kioskId, String orderType) {
     List<IApprover> appList = null;
-    if(kioskId != null) {
+    if (kioskId != null) {
       PersistenceManager pm = null;
       Query query = null;
       try {
@@ -379,7 +394,7 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
   }
 
   /**
-   * Get all the approvers for a given kioskId and order type and approver type
+   *  Get all the approvers for a given kioskId and order type and approver type
    * @param kioskId
    * @param type
    * @param orderType
@@ -387,7 +402,7 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
    */
   public List<IApprover> getApprovers(Long kioskId, int type, String orderType) {
     List<IApprover> appList = null;
-    if(kioskId != null) {
+    if (kioskId != null) {
       PersistenceManager pm = null;
       Query query = null;
       try {
@@ -421,13 +436,14 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
   }
 
   /**
-   * Get all the approvers for a given kioskId and approver type
+   *  Get all the approvers for a given kioskId and approver type
    * @param kioskId
+   * @param type
    * @return
    */
   public List<IApprover> getApprovers(Long kioskId, int type) {
     List<IApprover> appList = null;
-    if(kioskId != null) {
+    if (kioskId != null) {
       PersistenceManager pm = null;
       Query query = null;
       try {
@@ -458,6 +474,7 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
     return appList;
 
   }
+
   /**
    * Add a new kiosk in a given domain
    */
@@ -614,8 +631,9 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
         k.setName(kiosk.getName());
       }
 
-      if (!ObjectUtils.equals(k.getState(),kiosk.getState()) || !ObjectUtils.equals(k.getDistrict(),kiosk.getDistrict())
-          || !ObjectUtils.equals(k.getTaluk(),kiosk.getTaluk())) {
+      if (!ObjectUtils.equals(k.getState(), kiosk.getState()) || !ObjectUtils
+          .equals(k.getDistrict(), kiosk.getDistrict())
+          || !ObjectUtils.equals(k.getTaluk(), kiosk.getTaluk())) {
         updateDeviceTags =
             true; // state, district and taluk are used as tags for temperature devices (which are modeled as inventory items here)
       }
@@ -698,6 +716,8 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
             kiosk.getKioskId(), kiosk.getDomainId(), e.getMessage());
       }
       pm.makePersistent(k);
+      //remove kiosk from cache
+      removeKioskFromCache(Constants.KIOSK_KEY, k.getKioskId().toString());
       tx.commit();
     } catch (JDOObjectNotFoundException e) {
       xLogger.warn("updateKiosk: Kiosk {0} does not exist", kiosk.getKioskId());
@@ -787,13 +807,22 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
       throws ServiceException, ObjectNotFoundException {
     xLogger.fine("Entering getKiosk");
     IKiosk kiosk = null;
+    IKiosk cacheKiosk = (IKiosk) getMemcacheService()
+              .get(Constants.KIOSK_KEY + CharacterConstants.HASH + kioskId.toString());
+
+    if (null != cacheKiosk) {
+      kiosk = cacheKiosk;
+      if (!deep)
+        return kiosk;
+    }
     PersistenceManager pm = PMF.get().getPersistenceManager();
     try {
-      //Get the kiosk object from the database
-      kiosk = JDOUtils.getObjectById(IKiosk.class, kioskId, pm);
-      if (!deep) {
+      if (kiosk == null) {
+        //Get the kiosk object from the database
+        kiosk = JDOUtils.getObjectById(IKiosk.class, kioskId, pm);
         kiosk = pm.detachCopy(kiosk);
-        return kiosk;
+        if (!deep)
+          return kiosk;
       }
       //If we get here, it means the kiosk exists
       //We also need to get the kiosk to user mappings and set them in the kiosk object
@@ -801,37 +830,11 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
       if (users != null && !users.isEmpty()) {
         kiosk.setUsers(users);
       }
-      //We also need to get the kiosk to poolgroup mappings and set them in the kiosk object
-      List<IPoolGroup> poolGroups = new ArrayList<IPoolGroup>();
-      Query kioskToPoolGroupQuery = pm.newQuery(JDOUtils.getImplClass(IKioskToPoolGroup.class));
-      kioskToPoolGroupQuery.setFilter("kioskId == kioskIdParam");
-      kioskToPoolGroupQuery.declareParameters("Long kioskIdParam");
-      try {
-        List<IKioskToPoolGroup>
-            results =
-            (List<IKioskToPoolGroup>) kioskToPoolGroupQuery.execute(kioskId);
-        for (IKioskToPoolGroup mapping : results) {
-          try {
-            IPoolGroup
-                poolGroup =
-                JDOUtils.getObjectById(IPoolGroup.class, mapping.getPoolGroupId(), pm);
-            xLogger.fine("getKiosk: kiosk {0} is associated with poolgroup {1}", kioskId,
-                mapping.getPoolGroupId());
-            poolGroup = pm.detachCopy(poolGroup);
-            poolGroups.add(poolGroup);
-          } catch (JDOObjectNotFoundException e) {
-            xLogger.fine("No associated pool group found with id {0}", mapping.getPoolGroupId());
-          }
-        }
-        kiosk.setPoolGroups(poolGroups);
-      } finally {
-        kioskToPoolGroupQuery.closeAll();
-      }
     } catch (JDOObjectNotFoundException e) {
       xLogger.warn("getKiosk: Kiosk {0} does not exist", kioskId);
       throw new ObjectNotFoundException(
           messages.getString("kiosk") + " " + kioskId + " " + backendMessages
-          .getString("error.notfound"), e);
+              .getString("error.notfound"), e);
     } catch (Exception e) {
       throw new ServiceException(e.getMessage(), e);
     } finally {
@@ -839,6 +842,7 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
     }
 
     xLogger.fine("Exiting getKiosk");
+    getMemcacheService().put(Constants.KIOSK_KEY + CharacterConstants.HASH + kioskId, kiosk);
     return kiosk;
   }
 
@@ -908,8 +912,11 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
           xLogger.warn("Kiosk with id {0} not found. Ignoring it.", kioskId);
         }
       }
-
       pm.deletePersistentAll(kiosks);
+      //remove kiosks from cache
+      for (Long kioskId: kioskIds) {
+        removeKioskFromCache(Constants.KIOSK_KEY,kioskId.toString());
+      }
     } catch (Exception e) {
       throw new ServiceException(e);
     } finally {
@@ -1096,7 +1103,7 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
     if (SecurityUtil.compareRoles(role, SecurityConstants.ROLE_DOMAINOWNER) >= 0) {
       results = getAllKiosks(domainId, tags, excludedTags, pageParams);
     } else {
-      List<IKiosk> kiosks = (List<IKiosk>) getKiosksForUser(user,null,null).getResults();
+      List<IKiosk> kiosks = (List<IKiosk>) getKiosksForUser(user, null, null).getResults();
       // When user object is not fetched as deep, fetch all users kiosk here
       if (kiosks == null || kiosks.size() == 0) {
         Results kiosksForUser = getKiosksForUser(user, null, null);
@@ -1167,14 +1174,14 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
       parameters.add(routeTag);
     }
 
-    if(user.isRteEnabled() || routeTag != null){
+    if (user.isRteEnabled() || routeTag != null) {
       query += " ORDER BY UK.RI ASC";
     } else {
       query += " ORDER BY K.NAME ASC";
     }
 
     if (pageParams != null) {
-      query  +=
+      query +=
           " LIMIT " + pageParams.getOffset() + CharacterConstants.COMMA + pageParams.getSize();
     }
     // Execute
@@ -1298,14 +1305,14 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
           + "UK.KIOSKID = KT.KIOSKID AND UK.USERID = ? AND KT.ID = ? AND K.KIOSKID = UK.KIOSKID";
       parameters.add(userId);
       parameters.add(String.valueOf(tagDao.getTagByName(routeTag, ITag.KIOSK_TAG)));
-    }else{
+    } else {
       query = "select UK.KIOSKID FROM USERTOKIOSK UK, KIOSK K where UK.USERID = ?"
           + " AND K.KIOSKID = UK.KIOSKID";
       parameters.add(userId);
     }
     query += " ORDER BY K.NAME ASC";
     if (pageParams != null) {
-      query  +=
+      query +=
           " LIMIT " + pageParams.getOffset() + CharacterConstants.COMMA + pageParams.getSize();
     }
     // Execute
@@ -1768,7 +1775,8 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
    */
   @SuppressWarnings("unchecked")
   public Results getKioskLinks(Long kioskId, String linkType, String routeTag,
-                               String startsWith, PageParams pageParams, Boolean isCountOnly, Long linkedKioskId, String entityTag) throws ServiceException {
+                               String startsWith, PageParams pageParams, Boolean isCountOnly,
+                               Long linkedKioskId, String entityTag) throws ServiceException {
     xLogger.fine("Entering getKioskLinks");
     List<IKioskLink> links = null;
     if (kioskId == null) {
@@ -1785,7 +1793,9 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
       String orderBy = Constants.EMPTY;
       String limitStr = null;
       QueryParamsMetaData
-          queryParams = getKioskLinkQuery(isRteEnabled, hasRouteTag, routeTag, startsWith, linkedKioskId, entityTag, kioskId, linkType);
+          queryParams =
+          getKioskLinkQuery(isRteEnabled, hasRouteTag, routeTag, startsWith, linkedKioskId,
+              entityTag, kioskId, linkType);
       String sqlQuery = queryParams.query;
       List<String> parameters = queryParams.parameters;
       if (pageParams != null && linkedKioskId == null) {
@@ -1796,7 +1806,7 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
       Query query = null;
       Query cntQuery = null;
       try {
-        if(!isCountOnly) {
+        if (!isCountOnly) {
           query = pm.newQuery("javax.jdo.query.SQL", sqlQuery);
           query.setClass(KioskLink.class);
           links = (List<IKioskLink>) query.executeWithArray(parameters.toArray());
@@ -1830,12 +1840,14 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
       pm.close();
     }
     xLogger.fine("Exiting getKioskLinks");
-    return new Results(links, null, count, pageParams!=null?pageParams.getOffset():0);
+    return new Results(links, null, count, pageParams != null ? pageParams.getOffset() : 0);
   }
 
-  private QueryParamsMetaData getKioskLinkQuery(Boolean isRouteEnabled, Boolean hasRouteTag, String routeTag,
-                                      String startsWith, Long linkedKioskId, String entityTag,
-                                      Long kioskId, String linkType) {
+  private QueryParamsMetaData getKioskLinkQuery(Boolean isRouteEnabled, Boolean hasRouteTag,
+                                                String routeTag,
+                                                String startsWith, Long linkedKioskId,
+                                                String entityTag,
+                                                Long kioskId, String linkType) {
     String orderBy;
     String
         sqlQuery =
@@ -2722,16 +2734,18 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
   private String getLocFilterSubQuery(LocationSuggestionModel parentLocation) {
     StringBuilder filterQuery = new StringBuilder();
     if (parentLocation != null) {
-        if (StringUtils.isNotEmpty(parentLocation.state)) {
-            filterQuery.append(" AND STATE ")
-                .append(CharacterConstants.EQUALS).append(CharacterConstants.S_QUOTE)
-                .append(parentLocation.state).append(CharacterConstants.S_QUOTE).append(CharacterConstants.SPACE);
-        }
-        if (StringUtils.isNotEmpty(parentLocation.district)) {
-            filterQuery.append(" AND DISTRICT ")
-                .append(CharacterConstants.EQUALS).append(CharacterConstants.S_QUOTE)
-                .append(parentLocation.district).append(CharacterConstants.S_QUOTE).append(CharacterConstants.SPACE);
-        }
+      if (StringUtils.isNotEmpty(parentLocation.state)) {
+        filterQuery.append(" AND STATE ")
+            .append(CharacterConstants.EQUALS).append(CharacterConstants.S_QUOTE)
+            .append(parentLocation.state).append(CharacterConstants.S_QUOTE)
+            .append(CharacterConstants.SPACE);
+      }
+      if (StringUtils.isNotEmpty(parentLocation.district)) {
+        filterQuery.append(" AND DISTRICT ")
+            .append(CharacterConstants.EQUALS).append(CharacterConstants.S_QUOTE)
+            .append(parentLocation.district).append(CharacterConstants.S_QUOTE)
+            .append(CharacterConstants.SPACE);
+      }
     }
     return filterQuery.toString();
   }
@@ -2744,23 +2758,24 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
     try {
       query =
           pm.newQuery("javax.jdo.query.SQL",
-              "SELECT DISTINCT COUNTRY, STATE, DISTRICT, TALUK, CITY FROM KIOSK WHERE CITY COLLATE UTF8_GENERAL_CI LIKE '%" + text + "%' AND KIOSKID IN " +
+              "SELECT DISTINCT COUNTRY, STATE, DISTRICT, TALUK, CITY FROM KIOSK WHERE CITY COLLATE UTF8_GENERAL_CI LIKE '%"
+                  + text + "%' AND KIOSKID IN " +
                   "( SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID=" + domainId
                   + ") LIMIT 8");
       List stateList = (List) query.execute();
       for (Object st : stateList) {
-        String country = (String)((Object[])st)[0];
-        String state = (String)((Object[])st)[1];
-        String district = (String)((Object[])st)[2];
-        String taluk = (String)((Object[])st)[3];
-        String city = (String)((Object[])st)[4];
+        String country = (String) ((Object[]) st)[0];
+        String state = (String) ((Object[]) st)[1];
+        String district = (String) ((Object[]) st)[2];
+        String taluk = (String) ((Object[]) st)[3];
+        String city = (String) ((Object[]) st)[4];
         LocationSuggestionModel model = new LocationSuggestionModel();
         model.label = city;
         StringBuilder sl = new StringBuilder();
-        if(StringUtils.isNotBlank(taluk)) {
+        if (StringUtils.isNotBlank(taluk)) {
           sl.append(taluk).append(CharacterConstants.COMMA).append(CharacterConstants.SPACE);
         }
-        if(StringUtils.isNotBlank(district)) {
+        if (StringUtils.isNotBlank(district)) {
           sl.append(district).append(CharacterConstants.COMMA).append(CharacterConstants.SPACE);
         }
         model.subLabel = sl.append(state).toString();
@@ -2787,7 +2802,8 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
   }
 
   @Override
-  public List<LocationSuggestionModel> getTalukSuggestions(Long domainId, String text, LocationSuggestionModel parentLocation) {
+  public List<LocationSuggestionModel> getTalukSuggestions(Long domainId, String text,
+                                                           LocationSuggestionModel parentLocation) {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     Query query = null;
     List<LocationSuggestionModel> states = new ArrayList<>(8);
@@ -2802,17 +2818,17 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
                   + domainId
                   + ") "
                   + getLocFilterSubQuery(parentLocation)
-                  +"LIMIT 8");
+                  + "LIMIT 8");
       List stateList = (List) query.execute();
       for (Object st : stateList) {
-        String country = (String)((Object[])st)[0];
-        String state = (String)((Object[])st)[1];
-        String district = (String)((Object[])st)[2];
-        String taluk = (String)((Object[])st)[3];
+        String country = (String) ((Object[]) st)[0];
+        String state = (String) ((Object[]) st)[1];
+        String district = (String) ((Object[]) st)[2];
+        String taluk = (String) ((Object[]) st)[3];
         LocationSuggestionModel model = new LocationSuggestionModel();
         model.label = taluk;
         StringBuilder sl = new StringBuilder();
-        if(StringUtils.isNotBlank(district)) {
+        if (StringUtils.isNotBlank(district)) {
           sl.append(district).append(CharacterConstants.COMMA).append(CharacterConstants.SPACE);
         }
         model.subLabel = sl.append(state).toString();
@@ -2838,7 +2854,8 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
   }
 
   @Override
-  public List<LocationSuggestionModel> getDistrictSuggestions(Long domainId, String text, LocationSuggestionModel parentLocation) {
+  public List<LocationSuggestionModel> getDistrictSuggestions(Long domainId, String text,
+                                                              LocationSuggestionModel parentLocation) {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     Query query = null;
     List<LocationSuggestionModel> states = new ArrayList<>(8);
@@ -2853,12 +2870,12 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
                   + domainId
                   + ")"
                   + getLocFilterSubQuery(parentLocation)
-                  +" LIMIT 8");
+                  + " LIMIT 8");
       List stateList = (List) query.execute();
       for (Object st : stateList) {
-        String country = (String)((Object[])st)[0];
-        String state = (String)((Object[])st)[1];
-        String district = (String)((Object[])st)[2];
+        String country = (String) ((Object[]) st)[0];
+        String state = (String) ((Object[]) st)[1];
+        String district = (String) ((Object[]) st)[2];
         LocationSuggestionModel model = new LocationSuggestionModel();
         model.label = district;
         model.subLabel = state;
@@ -2890,13 +2907,14 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
     try {
       query =
           pm.newQuery("javax.jdo.query.SQL",
-              "SELECT DISTINCT COUNTRY,STATE  FROM KIOSK WHERE STATE COLLATE UTF8_GENERAL_CI LIKE '%" + text + "%' AND KIOSKID IN " +
+              "SELECT DISTINCT COUNTRY,STATE  FROM KIOSK WHERE STATE COLLATE UTF8_GENERAL_CI LIKE '%"
+                  + text + "%' AND KIOSKID IN " +
                   "( SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID=" + domainId
                   + ") LIMIT 8");
       List stateList = (List) query.execute();
       for (Object st : stateList) {
-        String country = (String)((Object[])st)[0];
-        String state = (String)((Object[])st)[1];
+        String country = (String) ((Object[]) st)[0];
+        String state = (String) ((Object[]) st)[1];
         LocationSuggestionModel model = new LocationSuggestionModel();
         model.label = state;
         model.country = country;
@@ -2940,6 +2958,10 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
   private class QueryParamsMetaData {
     private String query;
     private List<String> parameters;
+  }
+
+  private void removeKioskFromCache(String key, String kioskId) {
+    getMemcacheService().delete(key + CharacterConstants.HASH + kioskId);
   }
 
 }

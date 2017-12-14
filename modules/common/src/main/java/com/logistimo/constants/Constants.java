@@ -243,4 +243,7 @@ public final class Constants {
 
     return verticalDisplay;
   }
+
+  public static final String USER_KEY = "user";
+  public static final String KIOSK_KEY = "kiosk";
 }

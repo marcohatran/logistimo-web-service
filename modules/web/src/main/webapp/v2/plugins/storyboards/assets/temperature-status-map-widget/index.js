@@ -42,7 +42,7 @@ angular.module('logistimo.storyboard.temperatureStatusMapWidget', [])
     ['$scope', '$timeout', 'dashboardService', 'domainCfgService', 'INVENTORY', '$sce',
         function ($scope, $timeout, dashboardService, domainCfgService, INVENTORY, $sce) {
             var filter = angular.copy($scope.widget.conf);
-            var tempPieColors, tempPieOrder, mapRange, mapColors, asset = '';
+            var tempPieColors, tempPieOrder, mapRange, mapColors, asset = '',level='',mapName='';
             var fDate = (checkNotNullEmpty(filter.date) ? formatDate(filter.date) : undefined);
             $scope.showChart = false;
             $scope.wloading = true;
@@ -73,10 +73,18 @@ angular.module('logistimo.storyboard.temperatureStatusMapWidget', [])
 
                 if (checkNotNullEmpty(filter.assetStatus) && checkNotNullEmpty($scope.widget.conf.assetStatus)) {
                     $scope.mapEvent = $scope.widget.conf.assetStatus;
+                    if($scope.widget.conf.assetStatus == 'tn'){
+                        mapName = 'Normality'
+                    }else if($scope.widget.conf.assetStatus == 'tl'){
+                        mapName = 'Assets freezing'
+                    }else if($scope.widget.conf.assetStatus == 'th'){
+                        mapName = 'Assets heating'
+                    }else if($scope.widget.conf.assetStatus == 'tu'){
+                        mapName = 'Assets unknown'
+                    }
                 } else {
                     $scope.mapType = "tn";
                 }
-
             }
 
             if (checkNotNullEmpty($scope.widget.conf.asset) && $scope.widget.conf.asset.length > 0) {
@@ -108,6 +116,7 @@ angular.module('logistimo.storyboard.temperatureStatusMapWidget', [])
                         }
                         constructMapData($scope.mapEvent, true, $scope, INVENTORY, $sce, mapRange, mapColors,
                             tempPieOrder, $timeout);
+                        setTitle();
                         setWidgetData();
                     }).catch(function error(msg) {
                         showError(msg, $scope);
@@ -117,6 +126,15 @@ angular.module('logistimo.storyboard.temperatureStatusMapWidget', [])
                     });
             };
 
+            function setTitle() {
+                if ($scope.dashboardView.mLev == "country") {
+                    level = "state";
+                } else if ($scope.dashboardView.mLev == "state") {
+                    level = "district";
+                }
+                $scope.mapTitle = mapName + " by " + level;
+            }
+
             function setWidgetData() {
                 $scope.temperatureStatusMapWidget = {
                     wId: $scope.widget.id,
@@ -124,7 +142,7 @@ angular.module('logistimo.storyboard.temperatureStatusMapWidget', [])
                     copt: $scope.mapOpt,
                     cdata: $scope.mapData,
                     computedWidth: '100%',
-                    computedHeight: parseInt($scope.widget.computedHeight, 10) - 10,
+                    computedHeight: parseInt($scope.widget.computedHeight, 10) - 30,
                     colorRange: $scope.mapRange,
                     markers: $scope.markers
                 };

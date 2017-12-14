@@ -151,13 +151,19 @@ angular.module('logistimo.storyboard.stockTrend', [])
         function setChartOptions() {
             $scope.cOptions = {
                 "theme": "fint",
-                "subCaptionFontSize": 10,
                 "yAxisNamePadding": 20,
                 "rotateValues": "0",
                 "placevaluesInside": 0,
-                "valueFontColor": "#000000"
+                "valueFontColor": "#000000",
+                "bgColor": "#272727",
+                "bgAlpha" : "100",
+                "canvasBgAlpha": "100",
+                "canvasBgColor" : "#272727",
+                "baseFontColor" : "#d2d2d2",
+                "outCnvBaseFontColor" : "#d2d2d2",
+                "baseFont" : "Lato"
             };
-            $scope.cHeight = $scope.widget.computedHeight;
+            $scope.cHeight = $scope.widget.computedHeight - 60;
             $scope.cWidth = "90%";
             $scope.cType = "mscombi2d";
         }
@@ -188,16 +194,16 @@ angular.module('logistimo.storyboard.stockTrend', [])
                     cData[i] = getReportFCSeries(chartData, 2, compareFields[i],
                         "line", linkDisabled, filterSeriesIndex, "1");
                 }
-                $scope.cOptions.caption = "% of inventory items available (100% availability)";
+                $scope.chartTitle = "% of inventory items available (100% availability)";
 
             } else if ($scope.filter.type == "ias") {
                 for (var i = 0; i < compareFields.length; i++) {
                     cData[i] = getReportFCSeries(chartData, 13, compareFields[i],
                         "line", linkDisabled, filterSeriesIndex, "1");
                 }
-                $scope.cOptions.caption = "Zero stock - % of inventory items with this abnormality (100% of the time)";
+                $scope.chartTitle = "Zero stock - % of inventory items with this abnormality (100% of the time)";
             }
-            $scope.cOptions.subcaption = getReportCaption($scope.filter);
+            $scope.chartSubTitle  = getReportCaption($scope.filter);
             if ($scope.filter.periodicity != "m" && cLabel.length > 10) {
                 $scope.cOptions.rotateLabels = "1";
             } else {

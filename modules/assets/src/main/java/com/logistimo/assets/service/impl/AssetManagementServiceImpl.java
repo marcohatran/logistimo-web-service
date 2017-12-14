@@ -402,6 +402,7 @@ public class AssetManagementServiceImpl extends ServiceImpl implements AssetMana
     List<IAssetStatus> updated = new ArrayList<>();
     try {
       for (IAssetStatus assetStatusModel : assetStatusModelList) {
+        boolean firstWorkingStateChange = false;
         try {
           IAssetStatus assetStatus =
               getAssetStatus(assetStatusModel.getAssetId(), assetStatusModel.getMpId(),
@@ -409,6 +410,9 @@ public class AssetManagementServiceImpl extends ServiceImpl implements AssetMana
           if (assetStatus == null) {
             pm.makePersistent(assetStatusModel);
             assetStatusModel = pm.detachCopy(assetStatusModel);
+            if (IAssetStatus.TYPE_STATE.equals(assetStatusModel.getType())) {
+              firstWorkingStateChange = true;
+            }
           } else {
             if (Objects.equals(assetStatusModel.getStatus(), assetStatus.getStatus())) {
               continue;
@@ -419,7 +423,9 @@ public class AssetManagementServiceImpl extends ServiceImpl implements AssetMana
             assetStatus.setAbnStatus(assetStatusModel.getAbnStatus());
             assetStatus.setAttributes(assetStatusModel.getAttributes());
           }
-          updated.add(assetStatusModel);
+          if (!firstWorkingStateChange) {
+            updated.add(assetStatusModel);
+          }
         } catch (Exception e) {
           xLogger.severe("Error while persisting asset status for: {0}", assetStatusModel, e);
         }

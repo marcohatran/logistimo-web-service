@@ -1,4 +1,4 @@
-<div ng-controller="eventMapWidgetController">
+<div ng-controller="eventMapWidgetController" class="widget">
     <div ng-if="wloading" class="row mt18 widget-loading">
         <div class="text-center">
             {{resourceBundle['loading.uppercase']}}... <span class="glyphicons glyphicons-cogwheel spin"></span>
@@ -10,6 +10,8 @@
         </div>
     </div>
     <div ng-if="!wloading && !showError && showChart">
+        <div class="col-sm-12 text-center pt5 widget-title">{{mapTitle | uppercase}}
+        </div>
         <fusion-chart type="'maps/'+eventMapWidget.cType" height="eventMapWidget.computedHeight"
                       width="eventMapWidget.computedWidth"
                       chart-label="eventMapWidget.cLabel"

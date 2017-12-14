@@ -25,16 +25,16 @@ var configServices = angular.module('configServices', []);
 configServices.factory('configService', ['APIService', function (apiService) {
     return {
         getLocations: function () {
-            return apiService.get('/s2/api/config/locations');
+            return apiService.getCached('config_locations','/s2/api/config/locations');
         },
         getCurrentDomainLocations: function () {
             return apiService.get('/s2/api/config/locations/currentdomain');
         },
         getCurrencies: function () {
-            return apiService.get('/s2/api/config/currencies');
+            return apiService.getCached('config_currencies','/s2/api/config/currencies');
         },
         getLanguages: function () {
-            return apiService.get('/s2/api/config/languages');
+            return apiService.getCached('config_languages','/s2/api/config/languages');
         },
         getMobileLanguages: function () {
             return apiService.get('/s2/api/config/languages?type=mobile');
@@ -46,7 +46,7 @@ configServices.factory('configService', ['APIService', function (apiService) {
             return apiService.get('/s2/api/config/timezones/offset');
         },
         getGeneralConfig: function() {
-            return apiService.get('/s2/api/config/generalconfig');
+            return apiService.getCached('config_general','/s2/api/config/generalconfig');
         },
         getTimezonesKVReversed: function () {
             return apiService.get('/s2/api/config/timezoneskvreversed');

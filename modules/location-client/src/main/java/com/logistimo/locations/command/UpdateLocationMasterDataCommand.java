@@ -50,12 +50,14 @@ public class UpdateLocationMasterDataCommand extends HystrixCommand<Void> {
 
   private MultiValueMap headers;
 
+  private static final Integer TIMED_OUT= 6500;
+
   public UpdateLocationMasterDataCommand(RestTemplate restClient, String locationsJson,
                                          MultiValueMap headers) {
     super(Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(LocationConstants.CLIENT_NAME))
         .andCommandPropertiesDefaults(
             HystrixCommandProperties.Setter().
-                withExecutionTimeoutInMilliseconds(LocationConstants.TIMED_OUT)));
+                withExecutionTimeoutInMilliseconds(TIMED_OUT)));
     this.locationsJson = locationsJson;
     this.restClient = restClient;
     this.headers = headers;

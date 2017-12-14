@@ -86,7 +86,7 @@
                         if (checkNotNullEmpty(curDomain)) {
                             config.headers.d = "user:" + curDomain;
                         }
-                        if (config.url.startsWith("/s2")) {
+                        if (config.url.startsWith("/s2") || config.url.startsWith("/_ah/api")) {
                             config.url = $rootScope.basePath + config.url;
                         }
                         var token = localStorage.getItem("x-access-token");

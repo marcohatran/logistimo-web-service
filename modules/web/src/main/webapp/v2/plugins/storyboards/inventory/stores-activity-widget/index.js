@@ -135,7 +135,12 @@ angular.module('logistimo.storyboard.storesActivityWidget', [])
             "subCaptionFontSize": 10,
             "interactiveLegend": 0,
             "exportEnabled": 1,
-            "captionOnTop": 0
+            "captionOnTop": 0,
+            "chartTopMargin": -200,
+            "bgColor": "#272727",
+            "bgAlpha" : "100",
+            "canvasBgAlpha": "100",
+            "canvasBgColor" : "#272727"
         };
         $scope.pieOpt = [];
         $scope.pieOpt[0] = angular.copy($scope.pOpt);

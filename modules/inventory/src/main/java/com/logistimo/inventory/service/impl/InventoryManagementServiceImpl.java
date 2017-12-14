@@ -1325,14 +1325,6 @@ public class InventoryManagementServiceImpl extends ServiceImpl
     List<ITransaction> committedTransList = new ArrayList<>(1);
     List<IInvntry> toBeOptimized = new ArrayList<>(1);
     List<IInvntry> toBePredicted = new ArrayList<>(inventoryTransactions.size());
-    String timeZone = DomainConfig.getInstance(domainId).getTimezone();
-    //todo: Get time is using timezone. Need to check against user timezone for actual transaction date check.
-    Date currentDate;
-    if (StringUtils.isNotBlank(timeZone)) {
-      currentDate = Calendar.getInstance(TimeZone.getTimeZone(timeZone)).getTime();
-    } else {
-      currentDate = Calendar.getInstance().getTime();
-    }
     try {
       while (it.hasNext()) {
         ITransaction trans = it.next();
@@ -1379,7 +1371,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
             errors.add(trans);
             continue; // continue with the next object in the list
           }
-          if (trans.getAtd() != null && trans.getAtd().after(currentDate)) {
+          if (isAtdNotValid(domainId, trans.getAtd())) {
             trans.setMessage(backendMessages.getString("error.adt"));
             trans.setMsgCode("M006");
             errors.add(trans);
@@ -1573,6 +1565,17 @@ public class InventoryManagementServiceImpl extends ServiceImpl
     xLogger.fine("Exiting updateInventoryTransactions");
 
     return errors;
+  }
+
+  protected boolean isAtdNotValid(Long domainId, Date actualTransactionDate) {
+    String timeZone = DomainConfig.getInstance(domainId).getTimezone();
+    Date currentDate;
+    if (StringUtils.isNotBlank(timeZone)) {
+      currentDate = Calendar.getInstance(TimeZone.getTimeZone(timeZone)).getTime();
+    } else {
+      currentDate = Calendar.getInstance().getTime();
+    }
+    return actualTransactionDate != null && actualTransactionDate.after(currentDate);
   }
 
   private void doPostTransactionPredictions(Long domainId, List<IInvntry> toBePredicted) {

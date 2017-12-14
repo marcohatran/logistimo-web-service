@@ -22,24 +22,17 @@
   ~ the commercial license, please contact us at opensource@logistimo.com
   -->
 
-<div ng-controller="BulletinBoardRenderController">
-    <!--<div ng-show="showOffline" class="toast toast-warning" style="width: 100%; box-shadow: none; position: relative; overflow: hidden; margin: 0 0 6px; padding: 15px 15px 15px 60px;border-radius: 3px; top:5px;">
-        <button type="button" class="toast-close-button" ng-click="$event.stopPropagation(); predictiveDiv = false">×</button>
-        <div class="toast-icon glyphicons glyphicons-exclamation-sign"></div>
-        <div class="toast-message">
-            <span class="warning-color">{{offLineMessage}} since {{offLineSince}}</span>
-        </div>
-    </div>-->
+<div ng-controller="BulletinBoardRenderController" class="widget">
     <div class="bulletin-board-title col-sm-12">
-        <div class="col-sm-4 pull-left" style="top:5px;">
-            <div class="col-sm-12 pt5 noleftpad">
-                <h3 style="margin: 0px;">{{title}}</h3>
+        <div class="col-sm-6 pull-left" style="top:5px;">
+            <div class="col-sm-12 noleftpad">
+                <span class="bulletin-heading" style="margin: 0px;">{{title | uppercase}}</span>
             </div>
-            <div class="col-sm-12 pt5 noleftpad">
-                <h5 style="margin:0px;color: #777;">{{subTitle}}</h5>
+            <div class="col-sm-12 noleftpad">
+                <span class="bulletin-subheading" style="margin:0px;">{{subTitle | uppercase}}</span>
             </div>
         </div>
-        <div class="col-sm-5">
+        <div class="col-sm-3">
             <span class="alert alert-danger col-sm-12 text-center" ng-show="!networkAvailable">{{offLineMessage}}{{offLineSince}}</span>
         </div>
         <div class="col-sm-3">
@@ -49,7 +42,7 @@
                 </div>
             </div>
             <div ng-if="headerImage == undefined || headerImage == ''">
-                <img class="mainlogo pull-right" src="images/acquia_marina_logo.png">
+                <img class="mainlogo pull-right pt5" src="images/evin_small.png">
             </div>
         </div>
     </div>

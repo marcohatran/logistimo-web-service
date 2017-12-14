@@ -23,18 +23,21 @@
 
 package com.logistimo.entities.pagination.processor;
 
+import com.logistimo.AppFactory;
 import com.logistimo.assets.entity.IAsset;
-import com.logistimo.entities.service.EntitiesServiceImpl;
-import com.logistimo.services.taskqueue.ITaskService;
-
+import com.logistimo.constants.CharacterConstants;
+import com.logistimo.constants.Constants;
 import com.logistimo.domains.IMultiDomain;
+import com.logistimo.domains.utils.DomainsUtil;
+import com.logistimo.entities.service.EntitiesServiceImpl;
+import com.logistimo.logger.XLog;
 import com.logistimo.pagination.Results;
 import com.logistimo.pagination.processor.ProcessingException;
 import com.logistimo.pagination.processor.Processor;
 import com.logistimo.services.Services;
-import com.logistimo.constants.CharacterConstants;
-import com.logistimo.domains.utils.DomainsUtil;
-import com.logistimo.logger.XLog;
+import com.logistimo.services.cache.MemcacheService;
+import com.logistimo.services.taskqueue.ITaskService;
+import com.logistimo.users.entity.IUserAccount;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -51,6 +54,15 @@ import javax.jdo.PersistenceManager;
  */
 public class EntityDomainUpdateProcessor implements Processor {
   private static final XLog xLogger = XLog.getLog(EntityDomainUpdateProcessor.class);
+
+  private MemcacheService memcacheService;
+
+  public MemcacheService getMemcacheService() {
+    if (memcacheService == null) {
+      memcacheService = AppFactory.get().getMemcacheService();
+    }
+    return memcacheService;
+  }
 
   @SuppressWarnings("unchecked")
   @Override
@@ -115,8 +127,10 @@ public class EntityDomainUpdateProcessor implements Processor {
           mObject.removeDomainIds(new ArrayList<>(updateDomainIds));
         }
         pm.makePersistent(mObject);
+        if (mObject instanceof IUserAccount) {
+          memcacheService.delete(Constants.USER_KEY+CharacterConstants.HASH+((IUserAccount) mObject).getUserId());
+        }
       }
-
       if (list.get(0) instanceof IAsset) {
         Services.getService(EntitiesServiceImpl.class).registerOrUpdateDevices(list);
       }

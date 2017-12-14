@@ -22,7 +22,7 @@
   ~ the commercial license, please contact us at opensource@logistimo.com
   -->
 
-<div ng-controller="eventSummaryUserProfileWidgetController">
+<div ng-controller="eventSummaryUserProfileWidgetController" class="widget">
     <div ng-if="wloading" class="row mt18 widget-loading">
         <div class="text-center">
             {{resourceBundle['loading.uppercase']}}... <span class="glyphicons glyphicons-cogwheel spin"></span>
@@ -37,28 +37,28 @@
         <span class="widget-no-data">No data to display</span>
     </div>
     <div ng-show="!wloading && !showError && !noData">
-        <div class="summary-title pt15" style="padding-bottom:15px;">
-            {{heading}}
+        <div class="widget-title text-center pt15" style="padding-bottom:15px;">
+            {{heading | uppercase}}
         </div>
             <div ng-repeat="item in profiles" class="user-profile-card" ng-class="{'user-profile-last-card':$last}">
                 <div class="panel-default">
                     <div class="panel-body">
                         <div class="col-sm-8" ng-show="item.type == 'critical'">
-                            <p class="widget-text user-profile-text table-min">{{item.name}}</p>
-                            <p class="widget-text user-profile-text table-min" style="color:grey;">{{item.title}}</p>
-                            <p class="widget-text user-profile-text table-min" style="color:grey">{{item.subtitle}}</p>
+                            <p class="widget-title user-profile-text table-min">{{item.name | uppercase}}</p>
+                            <p class="widget-sub-title user-profile-text table-min">{{item.title}}</p>
+                            <p class="widget-sub-title user-profile-text table-min">{{item.subtitle}}</p>
                         </div>
                         <div class="col-sm-8" ng-show="item.type == 'performance'">
-                            <p class="widget-text user-profile-text table-min">{{item.name}}</p>
-                            <p class="widget-text user-profile-text table-min" style="color:grey">{{item.subtitle}}</p>
+                            <p class="widget-title user-profile-text table-min">{{item.name | uppercase}}</p>
+                            <p class="widget-sub-title user-profile-text table-min">{{item.subtitle}}</p>
                         </div>
                         <div class="col-sm-4 text-center" ng-if="item.show_image">
                             <img class="widget-profile-image" ng-src="{{item.image_url}}"/>
-                            <p class="widget-text table-min pt5 user-profile-name-text">{{item.user}}</p>
+                            <p class="widget-sub-title table-min pt5 user-profile-name-text">{{item.user | uppercase}}</p>
                         </div>
                         <div class="col-sm-4 text-center" ng-if="!item.show_image">
-                            <span class="glyphicon glyphicon-user" style="font-size: 50px; color: darkgrey"></span>
-                            <p class="widget-text table-min pt5 user-profile-name-text">{{item.user}}</p>
+                            <span class="glyphicon glyphicon-user"></span>
+                            <p class="widget-sub-title table-min pt5 user-profile-name-text">{{item.user | uppercase}}</p>
                         </div>
                     </div>
                 </div>

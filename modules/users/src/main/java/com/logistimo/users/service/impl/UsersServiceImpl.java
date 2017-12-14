@@ -56,6 +56,7 @@ import com.logistimo.pagination.Results;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.Services;
+import com.logistimo.services.cache.MemcacheService;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.services.impl.ServiceImpl;
 import com.logistimo.services.taskqueue.ITaskService;
@@ -77,6 +78,7 @@ import com.logistimo.utils.QueryUtil;
 import com.logistimo.utils.StringUtil;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.UnsupportedEncodingException;
@@ -109,6 +111,20 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
   private ITagDao tagDao = new TagDao();
   private IUserDao userDao = new UserDao();
   DomainsService domainsService = Services.getService(DomainsServiceImpl.class);
+
+  private MemcacheService memcacheService;
+
+  @Autowired
+  public void setCacheService(MemcacheService memcacheService) {
+    this.memcacheService = memcacheService;
+  }
+
+  public MemcacheService getMemcacheService() {
+    if (memcacheService == null) {
+      memcacheService = AppFactory.get().getMemcacheService();
+    }
+    return memcacheService;
+  }
 
   /**
    * Check to see if a user id exists in the system or not.
@@ -180,6 +196,10 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
           throw new UnauthorizedException(backendMessages.getString("permission.denied"));
         }
         tx.begin();
+        IUserAccount registeringUser = getUserAccount(account.getRegisteredBy());
+        if(SecurityUtil.compareRoles(registeringUser.getRole(),account.getRole()) < 0){
+          throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+        }
         //First check if the user already exists in the database
         @SuppressWarnings("unused")
         IUserAccount user = JDOUtils.getObjectById(IUserAccount.class, accountId, pm);
@@ -262,6 +282,13 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
       throw new IllegalArgumentException("Invalid user ID");
     }
 
+    IUserAccount
+        cacheUser =
+        (IUserAccount) getMemcacheService()
+            .get(Constants.USER_KEY + CharacterConstants.HASH + userId);
+    if (cacheUser != null) {
+      return cacheUser;
+    }
     PersistenceManager pm = PMF.get().getPersistenceManager();
     IUserAccount user = null;
     Exception exception = null;
@@ -270,6 +297,7 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
       //Get the user object from the database
       user = JDOUtils.getObjectById(IUserAccount.class, userId, pm);
       user = pm.detachCopy(user);
+      memcacheService.put(Constants.USER_KEY + CharacterConstants.HASH + userId, user);
       return user;
     } catch (JDOObjectNotFoundException e) {
       xLogger.warn("getUserAccount: User {0} does not exist in the database", userId);
@@ -405,7 +433,8 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
       IUserAccount u = it.next();
       if ((!activeUsersOnly || u.isEnabled()) &&
           (u.getUserId().equals(user.getUserId())
-              || SecurityUtil.compareRoles(role, u.getRole()) >= 0 || SecurityConstants.ROLE_SUPERUSER
+              || SecurityUtil.compareRoles(role, u.getRole()) >= 0
+              || SecurityConstants.ROLE_SUPERUSER
               .equals(role))) {
         filteredUsers.add(u);
       }
@@ -497,8 +526,6 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
    */
   public void updateAccount(IUserAccount account, String updatedBy) throws ServiceException {
     xLogger.fine("Entering updateAccount");
-    boolean userExists = true;
-    String errMsg = null;
     Exception exception = null;
     Date now = new Date();
     PersistenceManager pm = PMF.get().getPersistenceManager();
@@ -513,6 +540,10 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
       tx.begin();
       //First check if the user already exists in the database
       IUserAccount user = JDOUtils.getObjectById(IUserAccount.class, account.getUserId(), pm);
+      IUserAccount registeringUser = getUserAccount(updatedBy);
+      if(SecurityUtil.compareRoles(registeringUser.getRole(),user.getRole()) < 0){
+        throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+      }
       //location check
       int locindex = new LocationComparator().compare(user, account);
       //If we get here, it means the user exists
@@ -587,6 +618,8 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
       user.setCustomId(account.getCustomId());
       user.setTgs(tagDao.getTagsByNames(account.getTags(), ITag.USER_TAG));
       tx.commit();
+      //remove user from cache
+      removeUserFromCache(user.getUserId());
       // Generate event, if configured
       try {
         EventPublisher.generate(account.getDomainId(), IEvent.MODIFIED, null,
@@ -600,21 +633,16 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
     } catch (JDOObjectNotFoundException e) {
       xLogger.warn("updateAccount: FAILED!! User {0} does not exist in the database",
           account.getUserId());
-      userExists = false;
       exception = e;
-    } catch (Exception e) {
-      errMsg = e.getMessage();
+    } catch(UnauthorizedException e){
+      throw e;
+    }catch (Exception e) {
       exception = e;
     } finally {
       if (tx.isActive()) {
         tx.rollback();
       }
       pm.close();
-    }
-    if (!userExists) {
-      errMsg =
-          messages.getString("user") + " '" + account.getUserId() + "' " + backendMessages
-              .getString("error.notfound");
     }
     if (exception != null) {
       throw new ServiceException(exception);
@@ -625,17 +653,19 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
   @Override
   public List<Long> moveAccessibleDomains(String userId, Long srcDomainId, Long destDomainId)
       throws ServiceException {
-    return addAccessibleDomains(userId, Collections.singletonList(destDomainId),srcDomainId);
+    return addAccessibleDomains(userId, Collections.singletonList(destDomainId), srcDomainId);
   }
 
-  private List<Long> addAccessibleDomains(String userId, List<Long> accDomainIds, Long removeDomainId)
+  private List<Long> addAccessibleDomains(String userId, List<Long> accDomainIds,
+                                          Long removeDomainId)
       throws ServiceException {
     PersistenceManager pm = null;
     try {
       IUserAccount ua = getUserAccount(userId);
       List<Long> uAccDids = ua.getAccessibleDomainIds();
       if (uAccDids == null || uAccDids.isEmpty()) {
-        xLogger.warn("Error while adding accessible domains for user {0}, uAccDids is null ", userId);
+        xLogger
+            .warn("Error while adding accessible domains for user {0}, uAccDids is null ", userId);
         throw new InvalidServiceException(
             backendMessages.getString("user.addaccessibledomain.error1") + " \'" + userId + "\'");
       }
@@ -646,7 +676,7 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
         }
       }
 
-      if(removeDomainId != null) {
+      if (removeDomainId != null) {
         uAccDids.remove(removeDomainId);
       }
 
@@ -665,11 +695,13 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
       ua.setAccessibleDomainIds(uAccDids);
       pm = PMF.get().getPersistenceManager();
       pm.makePersistent(ua);
+      //remove from cache
+      removeUserFromCache(ua.getUserId());
       return uAccDids;
-    }catch (Exception e) {
+    } catch (Exception e) {
       throw new ServiceException(e);
     } finally {
-      if(pm != null) {
+      if (pm != null) {
         pm.close();
       }
     }
@@ -735,6 +767,8 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
               }
               xLogger.fine("deleteAccounts: deleting user {0} from the database", accountId);
               pm.deletePersistent(account);
+              //remove from cache
+              removeUserFromCache(accountId);
               aus.clearUserTokens(accountId, true);
               xLogger.info("AUDITLOG\t{0}\t{1}\tUSER\t " +
                   "DELETE\t{2}\t{3}", domainId, sUser, accountId, userName);
@@ -906,6 +940,8 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
         exception = e;
       }
       tx.commit();
+      //remove from cache
+      removeUserFromCache(userId);
     } finally {
       if (tx.isActive()) {
         tx.rollback();
@@ -944,6 +980,8 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
         exception = e;
       }
       tx.commit();
+      //remove from cache
+      removeUserFromCache(userId);
     } finally {
       if (tx.isActive()) {
         tx.rollback();
@@ -1039,7 +1077,8 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
    */
   @SuppressWarnings("unchecked")
   private Results findAllAccountsByDomain(Long domainId, String nameStartsWith,
-                                          PageParams pageParams, boolean includeChildDomainUsers, IUserAccount user)
+                                          PageParams pageParams, boolean includeChildDomainUsers,
+                                          IUserAccount user)
       throws ServiceException {
     xLogger.fine("Entering findAllAccountsByDomain");
 
@@ -1070,7 +1109,7 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
       declaration += ", String nNameParam1, String nNameParam2";
       lNameStartsWith = nameStartsWith.trim().toLowerCase();
     }
-    if(!isSuperUsers) {
+    if (!isSuperUsers) {
       filter = filter.concat(QueryConstants.AND).concat("role != 'ROLE_su'");
     }
     query.setFilter(filter);
@@ -1127,9 +1166,11 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
       u.setUserAgent(account.getUserAgent());
       u.setPreviousUserAgent(account.getPreviousUserAgent());
       u.setAppVersion(account.getAppVersion());
+      //remove from cache
+      removeUserFromCache(account.getUserId());
       Map<String, Object> params = new HashMap<>(1);
       params.put("ipaddress", account.getIPAddress());
-      EventPublisher.generate(u.getDomainId(),IEvent.IP_ADDRESS_MATCHED, params,
+      EventPublisher.generate(u.getDomainId(), IEvent.IP_ADDRESS_MATCHED, params,
           UserAccount.class.getName(), u.getKeyString(),
           null);
     } catch (Exception e) {
@@ -1241,7 +1282,7 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
     if (!paramName.equals("nName")) {
       order = paramName + " asc, " + order;
     }
-    if(!isSuperUsers) {
+    if (!isSuperUsers) {
       filter.append(QueryConstants.AND).append("role != 'ROLE_su'");
     }
     q.setFilter(filter.toString());
@@ -1438,6 +1479,7 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
     }
     return false;
   }
+
   /**
    * This method will update applicable location ids for an user
    */
@@ -1473,6 +1515,8 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
         IUserAccount user = JDOUtils.getObjectById(IUserAccount.class, userId, pm);
         // Only if the user exists, set the Ui preference.
         user.setUiPref(uiPref);
+        //remove from cache
+        removeUserFromCache(userId);
       } catch (JDOObjectNotFoundException e) {
         xLogger.warn("setUiPreferenceForUser: FAILED!! User {0} does not exist in the database",
             userId);
@@ -1706,15 +1750,21 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
       results = (List<IUserAccount>) pm.detachCopyAll(results);
       return results;
     } catch (Exception e) {
-      xLogger.warn("Error while fetching users for kiosk: {0} for user tag: {1}", objectId, userTags,
-          e);
+      xLogger
+          .warn("Error while fetching users for kiosk: {0} for user tag: {1}", objectId, userTags,
+              e);
       throw e;
     } finally {
       query.closeAll();
       pm.close();
     }
   }
+
   protected PersistenceManager getPM() {
     return PMF.get().getPersistenceManager();
+  }
+
+  private void removeUserFromCache(String userId) {
+    getMemcacheService().delete(Constants.USER_KEY + CharacterConstants.HASH + userId);
   }
 }

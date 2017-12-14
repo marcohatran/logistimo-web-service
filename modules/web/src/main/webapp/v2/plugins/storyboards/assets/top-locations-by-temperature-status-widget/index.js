@@ -152,9 +152,16 @@ angular.module('logistimo.storyboard.topLocationsByTemperatureStatusWidget', [])
                 "yAxisMaxValue": 100,
                 "captionFontSize": "12",
                 "captionAlignment": "center",
-                "caption": "Top 10 " + level,
-                "chartLeftMargin": "50"
+                "chartLeftMargin": "50",
+                "bgColor": "#272727",
+                "bgAlpha" : "100",
+                "canvasBgAlpha": "100",
+                "canvasBgColor" : "#272727",
+                "baseFont" : "Lato"
+    
             };
+    
+            $scope.chartTitle = "Top 10 " + level;
 
             function setWidgetData() {
                 $scope.topLocationsByTemperatureStatusWidget = {
@@ -163,7 +170,7 @@ angular.module('logistimo.storyboard.topLocationsByTemperatureStatusWidget', [])
                     copt: $scope.barOpt,
                     cdata: $scope.barData,
                     computedWidth: '90%',
-                    computedHeight: parseInt($scope.widget.computedHeight, 10) - 10,
+                    computedHeight: parseInt($scope.widget.computedHeight, 10) - 50,
                     colorRange: $scope.mapRange,
                     markers: $scope.markers
                 };

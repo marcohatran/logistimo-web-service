@@ -21,7 +21,7 @@
   ~ You can be released from the requirements of the license by purchasing a commercial license. To know more about
   ~ the commercial license, please contact us at opensource@logistimo.com
   -->
-<div ng-controller="eventSummariesTextWidgetController">
+<div ng-controller="eventSummariesTextWidgetController" class="widget">
   <div ng-if="wloading" class="row mt18 widget-loading">
     <div class="text-center">
       {{resourceBundle['loading.uppercase']}}... <span class="glyphicons glyphicons-cogwheel spin"></span>
@@ -48,13 +48,13 @@
           <img src="/v2/images/event-summary-thermometer.png">
         </div>
         <div class="col-sm-10" style="display: inline;float:left;" ng-show="type == 'critical'">
-          <p class="widget-title-text">{{title}}</p>
-          <p class="widget-sub-title-text">{{subtitle}}</p>
-          <p class="widget-text">{{text}}</p>
+          <span class="widget-title">{{title | uppercase}}</span><br/>
+          <span class="widget-sub-title user-profile-text">{{subtitle}}</span><br/>
+          <span class="widget-sub-title user-profile-text">{{text}}</span>
         </div>
         <div class="col-sm-10" style="display: inline;float:left;" ng-show="type == 'performance'">
-          <p class="widget-title-text">{{subtitle}}</p>
-          <p class="widget-sub-title-text">{{text}}</p>
+          <span class="widget-title">{{subtitle | uppercase}}</span><br/>
+          <span class="widget-sub-title user-profile-text">{{text}}</span>
         </div>
       </div>
     </div>

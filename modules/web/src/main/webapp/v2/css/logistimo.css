@@ -33,7 +33,7 @@
     min-width: 1920px !important;
     width: 1920px !important;
     padding-bottom: 10px;
-    background-color: #eeeeee;
+    background-color: #0e0e0e;
     font-size: medium;
     padding-right: 0;
     height:100vh;
@@ -3589,6 +3589,9 @@ tr.alert.alert-warning.alert-warning-dark{
 .mbn10{
     margin-bottom: -10px;
 }
+.mbn20{
+    margin-bottom: -20px;
+}
 .headingHL{
     font-weight: bold;
 }
@@ -3985,35 +3988,41 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
 .widget-loading {
     color: #aaaaaa;
 }
-.widget-title{
-    font-size: 14px;
-    font-family: "Helvetica Neue", Arial;
-    font-weight:bold;
-}
-.widget-sub-title{
-    font-size: 12px;
-    font-family: "Helvetica Neue", Arial;
-    font-weight:bold;
+
+.widget {
+    font-family: Lato;
+    font-size:14px;
+    color: #a3a3a3;
+    background-color: #272727;
 }
 
-.widget-title-text {
-    font-size: large;
-    font-family: "Helvetica Neue", Arial;
-    font-weight:normal;
-    margin-bottom:0px;
-}
-.widget-sub-title-text {
+.widget .widget-title{
     font-size: larger;
-    font-family: "Helvetica Neue", Arial;
+    color: #d0dada;
+    letter-spacing: 1.5px;
+}
+.widget .widget-sub-title{
+    letter-spacing: 1px;
+    color: #a3a3a3;
+}
+
+.widget .widget-title-text {
+    font-size: large;
+    margin-bottom:0px;
+}
+.widget .widget-sub-title-text {
     font-weight:normal;
     margin-bottom:0px;
-    color:#999;
 }
-.widget-text {
+.widget .widget-text {
+    font-size: larger;
+    color: #d0dada;
+}
+.widget .widget-per{
     font-size: small;
-    font-family: "Helvetica Neue", Arial;
-    font-weight:normal;
-    color: #2596cf;
+    font-weight: 300;
+    text-align: center;
+    color: #a3a3a3;
 }
 .mbn4{
     margin-bottom: -4px;
@@ -4042,9 +4051,7 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
     text-align: center;
 }
 .bulletin-board-title {
-    background-color: white;
     padding: 5px 0px;
-    border-bottom: 1px solid #ddd;
 }
 
 .event-title{
@@ -4144,4 +4151,43 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
     border-bottom:1px solid #ddd;
     margin-left:10px;
     margin-right:10px;
+}
+.view-port-height {
+ height: 10000px;
+}
+.bulletin-container-hover {
+    transform: scale(1.1);
+    z-index:10;
+}
+
+.widget .widget-large-text {
+    font-size: 40px;
+    font-weight: 300;
+    color: #ffffff;
+}
+
+.widget .bulletin-heading {
+    font-size: 20px;
+    font-weight: bold;
+    letter-spacing: 2.4px;
+    color: #d0dada;
+}
+
+.widget .bulletin-subheading {
+    font-size: 16px;
+    letter-spacing: 1.9px;
+    color:#999999;
+}
+
+.widget tspan{
+    fill: #d2d2d2 !important;
+}
+
+.bb-list-bg {
+    background-color: #171717;
+    border: none;
+}
+.bb-panel-bg{
+    background-color: #272727;
+    border:none;
 }

@@ -248,19 +248,31 @@ function constructMapData(event, init, scope, INVENTORY, $sce, mapRange, mapColo
         "showCanvasBorder": "0",
         "useSNameInLabels": "0",
         "toolTipSepChar": ": ",
-        "legendPosition": "BOTTOM",
-        "borderColor": "FFFFFF",
+        "borderColor": "#171717",
         //"entityBorderHoverThickness": "2",
         "interactiveLegend": 1,
         "exportEnabled": 0,
-        "baseFontColor": "#000000",
+        "baseFont":"Lato",
+        "baseFontColor": "#d2d2d2",
         "captionFontSize": "14",
         "captionAlignment": "left",
         "legendPosition": "bottom", // we can set only bottom or right.
         "alignCaptionWithCanvas": 1,
         "labelConnectorAlpha":0,
         "captionFontBold":1,
-        "captionFont":'Helvetica Neue, Arial'
+        "captionFont":'Lato',
+        "legendBgAlpha": "0",
+        "legendBorderAlpha": "0",
+        "legendShadow": "0",
+        "legendItemFontSize": "10",
+        "legendItemFontColor": "#666666",
+        "drawCustomLegendIcon": "0",
+        "legendIconAlpha": "100",
+        "legendIconBorderColor": "#e1e1e1",
+        "legendIconBorderThickness": "1",
+        "legendIconSides": "3",
+        "legendIconStartAngle": "60",
+        "bgColor": "#272727"
     };
     var addLink = false;
     if (!scope.showSwitch) {
@@ -268,11 +280,11 @@ function constructMapData(event, init, scope, INVENTORY, $sce, mapRange, mapColo
         var level = undefined;
         if (scope.dashboardView.mLev == "country") {
             level = "state";
-            scope.mapOpt.caption = "Availability by " + level;
+            scope.mapTitle = "Availability by " + level;
 
         } else if (scope.dashboardView.mLev == "state") {
             level = "district";
-            scope.mapOpt.caption = "Availability by " + level;
+            scope.mapTitle = "Availability by " + level;
         }
         for (var n in allSubData) {
             if (checkNotNullEmpty(n)) {
@@ -307,8 +319,10 @@ function constructMapData(event, init, scope, INVENTORY, $sce, mapRange, mapColo
                 if(eventIndicators){
                     o.value = per;
                     o.label = o.value;
-                    o.displayValue = value.toString();
-                    o.showLabel = 1;
+                    // o.displayValue = value.toString();
+                    o.displayValue = "";
+                    // o.showLabel = 1;
+                    o.showLabel = 0;
                     scope.mapOpt.labelConnectorAlpha = 1;
                     scope.mapOpt.showEntityToolTip = 0;
                 }else{
@@ -745,8 +759,8 @@ function getDonutRadius(width, height) {
         minSide = 1.3;
     }
     return {
-        doughnutRadius: (30 * minSide),
-        pieRadius: (40 * minSide)
+        doughnutRadius: (25 * minSide),
+        pieRadius: (35 * minSide)
     };
 }
 

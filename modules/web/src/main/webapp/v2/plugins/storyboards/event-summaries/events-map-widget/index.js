@@ -30,11 +30,14 @@ angular.module('logistimo.storyboard.eventMapWidget', [])
     ['$scope', '$timeout', 'dashboardService', 'domainCfgService', 'INVENTORY', '$sce','eventSummaryService',
         function ($scope, $timeout, dashboardService, domainCfgService, INVENTORY, $sce,eventSummaryService) {
             var filter = angular.copy($scope.widget.conf);
-            var invPieOrder, mapRange,mapColors, maxValue = 0;
+            var invPieOrder, mapRange,mapColors, maxValue = 0, level, mapName='';
+            level = getLevel();
             var fDate = (checkNotNullEmpty(filter.date) ? formatDate(filter.date) : undefined);
             $scope.showChart = false;
             $scope.wloading = true;
             $scope.showError = false;
+            $scope.dashboardView = {};
+            $scope.dashboardView.mPTy = $scope.dcntry;
             domainCfgService.getSystemDashboardConfig().then(function (data) {
                 var domainConfig = angular.fromJson(data.data);
                 mapColors = domainConfig.mc;
@@ -50,6 +53,26 @@ angular.module('logistimo.storyboard.eventMapWidget', [])
                 mapColors['es'] = mapColors['n'];
                 mapRange['es'] = mapRange['n'];
             });
+
+            function getLevel(){
+                if(checkNullEmpty($scope.dstate)) {
+                    return 'country';
+                }else if(checkNullEmpty($scope.ddist)) {
+                    return 'state';
+                }else {
+                    return 'district'
+                }
+            }
+
+            if(checkNotNullEmpty(level)){
+                if(level == 'country'){
+                    level = 'state';
+                }else if (level == 'state'){
+                    level = 'district';
+                }else if (level == 'district'){
+                    level = 'store';
+                }
+            }
 
             $scope.init = function () {
                 domainCfgService.getMapLocationMapping().then(function (data) {
@@ -127,17 +150,20 @@ angular.module('logistimo.storyboard.eventMapWidget', [])
                         $scope.dashboardView.event = {};
                         $scope.dashboardView.event['es'] = {};
                         $scope.dashboardView.event['es'] = getEventLocationData($scope.dashboardView.distribution);
-                        
-                        if ($scope.dashboardView.eventType == 'performance') {
+
+                        if(checkNotNullEmpty($scope.widget.conf.event) && $scope.widget.conf.event == "freezing"){
+                            mapColors['es'] = mapColors['tl'];
+                            mapRange['es'] = mapRange['tl'];
+                        }else if (checkNotNullEmpty($scope.dashboardView.eventType) && $scope.dashboardView.eventType == 'performance') {
                             mapColors['es'] = mapColors['n'];
                             mapRange['es'] = mapRange['n'];
-
-                        } else {
+                        }else {
                             mapColors['es'] = mapColors[200];
                             mapRange['es'] = mapRange[200];
                         }
                         constructMapData($scope.mapEvent, true, $scope, INVENTORY, $sce, mapRange, mapColors,
                             invPieOrder, $timeout);
+                        $scope.mapTitle = constructTitle($scope.widget.conf.category, $scope.widget.conf.event);
                     }else{
                         $scope.mapData = [];
                         $scope.mapOpt = {
@@ -148,24 +174,19 @@ angular.module('logistimo.storyboard.eventMapWidget', [])
                             "showCanvasBorder": "0",
                             "useSNameInLabels": "0",
                             "toolTipSepChar": ": ",
-                            "legendPosition": "BOTTOM",
-                            "borderColor": "FFFFFF",
+                            "borderColor": "#171717",
                             "interactiveLegend": 1,
                             "exportEnabled": 0,
-                            "baseFontColor": "#000000",
-                            "captionFontSize": "14",
-                            "captionAlignment": "left",
+                            "baseFont":"Lato",
+                            "baseFontColor": "#d2d2d2",
                             "legendPosition": "bottom", // we can set only bottom or right.
                             "alignCaptionWithCanvas": 1,
                             "labelConnectorAlpha":0,
-                            "captionFontBold":1,
-                            "captionFont":'Helvetica Neue, Arial',
-                            "labelConnectorAlpha": 0,
                             "displayValue": ""
-
                         };
                         setMapRange('es', $scope, mapRange, mapColors);
                     }
+                    setTitle();
                     setWidgetData();
                 }).catch(function error(msg) {
                     showError(msg, $scope);
@@ -175,15 +196,26 @@ angular.module('logistimo.storyboard.eventMapWidget', [])
                 });
 
             };
-
-            function getLevel(){
-                $scope.dashboardView.mPTy = $scope.dcntry;
-                if(checkNullEmpty($scope.dstate)) {
-                    return 'country';
-                }else if(checkNullEmpty($scope.ddist)) {
-                    return 'state';
-                }else {
-                    return 'district'
+            
+            function constructTitle(category,event){
+                if(category=='assets' && event == 'freezing'){
+                    return "Assets freezing by " + level;
+                }else if(category=='assets' && event == 'heating'){
+                    return "Assets heating by " + level;
+                }else if(category=='inventory' && event == 'stock_outs'){
+                    return "Stock outs by " + level;
+                }else if(category=='inventory' && event == 'stock_expiry'){
+                    return "Stock expiry by " + level;
+                }else if(category=='activity' && event == 'login'){
+                    return "No data activity by " + level;
+                }else if(category=='activity' && event == 'data_entry_performance_by_entity'){
+                    return "Good data entry performance by " + level;
+                }else if(category=='supply' && event == 'supply_performance'){
+                    return "Good supply performance by " + level;
+                }else if(category=='assets' && event == 'asset_performance_by_entity'){
+                    return "Good asset performance by " + level;
+                }else if(category=='inventory' && event == 'inventory_performance_by_entity'){
+                    return "Good stock management by " + level;
                 }
             }
 
@@ -219,6 +251,14 @@ angular.module('logistimo.storyboard.eventMapWidget', [])
 
             function getPercentile(n) {
                 return (n/maxValue) * 100;
+            }
+
+            function setTitle() {
+                if ($scope.dashboardView.mLev == "country") {
+                    level = "state";
+                } else if ($scope.dashboardView.mLev == "state") {
+                    level = "district";
+                }
             }
 
             function setWidgetData() {
