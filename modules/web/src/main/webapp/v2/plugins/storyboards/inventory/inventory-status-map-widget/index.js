@@ -46,7 +46,7 @@ angular.module('logistimo.storyboard.inventoryStatusMapWidget', [])
     ['$scope', '$timeout', 'dashboardService', 'domainCfgService', 'INVENTORY', '$sce',
         function ($scope, $timeout, dashboardService, domainCfgService, INVENTORY, $sce) {
             var filter = angular.copy($scope.widget.conf);
-            var invPieColors, invPieOrder, mapRange, mapColors, level='', mapName= '';
+            var invPieColors, invPieOrder, mapRange, mapColors, level='', mapName= '',barColor,filterText = '';
             var fDate = (checkNotNullEmpty(filter.date) ? formatDate(filter.date) : undefined);
             $scope.showChart = false;
             $scope.wloading = true;
@@ -54,9 +54,11 @@ angular.module('logistimo.storyboard.inventoryStatusMapWidget', [])
             domainCfgService.getSystemDashboardConfig().then(function (data) {
                 var domainConfig = angular.fromJson(data.data);
                 mapColors = domainConfig.mc;
-                $scope.mc = mapColors;
                 mapRange = domainConfig.mr;
+                mapRange['avlbl'] = mapRange['n'];
+                mapColors['avlbl'] = mapColors['n'];
                 $scope.mr = mapRange;
+                $scope.mc = mapColors;
                 invPieColors = domainConfig.pie.ic;
                 invPieOrder = domainConfig.pie.io;
                 $scope.mapEvent = invPieOrder[0];
@@ -89,15 +91,23 @@ angular.module('logistimo.storyboard.inventoryStatusMapWidget', [])
                     if ($scope.mapType == 0) {
                         $scope.mapEvent = invPieOrder[0];
                         mapName = "Availability";
+                        filterText = " - Normal";
                     } else if ($scope.mapType == 1){
                         $scope.mapEvent = invPieOrder[1];
                         mapName = "Stock outs";
+                        filterText = " ";
                     } else if ($scope.mapType == 2){
                         $scope.mapEvent = invPieOrder[2];
-                        mapName = "Minimum stock";
-                    } else {
+                        mapName = "Availability";
+                        filterText = " - Minimum";
+                    } else if ($scope.mapType == 3){
                         $scope.mapEvent = invPieOrder[3];
-                        mapName = "Maximum stock ";
+                        mapName = "Availability";
+                        filterText = " - Maximum";
+                    } else {
+                        $scope.mapEvent = 'avlbl';
+                        mapName = "Availability";
+                        filterText = " ";
                     }
                 } else {
                     $scope.mapType = "0";
@@ -117,6 +127,9 @@ angular.module('logistimo.storyboard.inventoryStatusMapWidget', [])
                     undefined, constructModel(filter.entityTag), fDate, constructModel(filter.exEntityTag),
                     false).then(function (data) {
                         $scope.dashboardView = data.data;
+                        if($scope.mapEvent == 'avlbl'){
+                            $scope.dashboardView.inv['avlbl'] = getAvailable($scope.dashboardView.inv);
+                        }
                         var linkText;
                         if ($scope.dashboardView.mLev == "country") {
                             linkText = $scope.locationMapping.data[$scope.dashboardView.mTy].name;
@@ -125,7 +138,7 @@ angular.module('logistimo.storyboard.inventoryStatusMapWidget', [])
                             $scope.mapType = $scope.dashboardView.mTy;
                         }
                         constructMapData($scope.mapEvent, true, $scope, INVENTORY, $sce, mapRange, mapColors,
-                            invPieOrder, $timeout);
+                            invPieOrder, $timeout,barColor);
                         setTitle();
                         setWidgetData();
                     }).catch(function error(msg) {
@@ -142,7 +155,7 @@ angular.module('logistimo.storyboard.inventoryStatusMapWidget', [])
                 } else if ($scope.dashboardView.mLev == "state") {
                     level = "district";
                 }
-                $scope.mapTitle = mapName + " by " + level;
+                $scope.mapTitle = mapName + " by " + level + filterText;
             }
 
             function setWidgetData() {

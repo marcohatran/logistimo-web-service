@@ -47,7 +47,7 @@ angular.module('logistimo.storyboard.topLocationsByInventoryStatusWidget', [])
     ['$scope', '$timeout', 'dashboardService', 'domainCfgService', 'INVENTORY', '$sce',
         function ($scope, $timeout, dashboardService, domainCfgService, INVENTORY, $sce) {
             var filter = angular.copy($scope.widget.conf);
-            var invPieColors, invPieOrder, mapRange, mapColors, level;
+            var invPieColors, invPieOrder, mapRange, mapColors, level, barColor;
             level = getLevel();
             var fDate = (checkNotNullEmpty(filter.date) ? formatDate(filter.date) : undefined);
             $scope.showChart = false;
@@ -56,9 +56,11 @@ angular.module('logistimo.storyboard.topLocationsByInventoryStatusWidget', [])
             domainCfgService.getSystemDashboardConfig().then(function (data) {
                 var domainConfig = angular.fromJson(data.data);
                 mapColors = domainConfig.mc;
-                $scope.mc = mapColors;
                 mapRange = domainConfig.mr;
+                mapRange['avlbl'] = mapRange['n'];
+                mapColors['avlbl'] = mapColors['n'];
                 $scope.mr = mapRange;
+                $scope.mc = mapColors;
                 invPieColors = domainConfig.pie.ic;
                 invPieOrder = domainConfig.pie.io;
                 $scope.mapEvent = invPieOrder[0];
@@ -90,12 +92,19 @@ angular.module('logistimo.storyboard.topLocationsByInventoryStatusWidget', [])
                         $scope.topTenLocType = topTenLocType;
                         if ($scope.topTenLocType == 0) {
                             $scope.mapEvent = invPieOrder[0];
+                            barColor = invPieColors[3];
                         } else if ($scope.topTenLocType == 1) {
                             $scope.mapEvent = invPieOrder[1];
+                            barColor = invPieColors[0];
                         } else if ($scope.topTenLocType == 2) {
                             $scope.mapEvent = invPieOrder[2];
-                        } else {
+                            barColor = invPieColors[1];
+                        } else if ($scope.topTenLocType == 3){
                             $scope.mapEvent = invPieOrder[3];
+                            barColor = invPieColors[2];
+                        } else {
+                            $scope.mapEvent = 'avlbl';
+                            barColor = invPieColors[3];
                         }
                 } else {
                     $scope.topTenLocType = "0";
@@ -115,6 +124,9 @@ angular.module('logistimo.storyboard.topLocationsByInventoryStatusWidget', [])
                     undefined, constructModel(filter.entityTag), fDate, constructModel(filter.exEntityTag),
                     false).then(function (data) {
                         $scope.dashboardView = data.data;
+                        if($scope.mapEvent == 'avlbl') {
+                            $scope.dashboardView.inv['avlbl'] = getAvailable($scope.dashboardView.inv);
+                        }
                         var linkText;
                         if ($scope.dashboardView.mLev == "country") {
                             linkText = $scope.locationMapping.data[$scope.dashboardView.mTy].name;
@@ -130,7 +142,7 @@ angular.module('logistimo.storyboard.topLocationsByInventoryStatusWidget', [])
                             $scope.mapData = [];
                         }
                         constructMapData($scope.mapEvent, true, $scope, INVENTORY, $sce, mapRange, mapColors,
-                            invPieOrder, $timeout, true);
+                            invPieOrder, $timeout, true,barColor);
                         setWidgetData();
                     }).catch(function error(msg) {
                         showError(msg, $scope);

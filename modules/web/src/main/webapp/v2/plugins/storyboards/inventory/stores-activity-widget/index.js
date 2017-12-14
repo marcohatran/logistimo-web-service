@@ -116,7 +116,7 @@ angular.module('logistimo.storyboard.storesActivityWidget', [])
         }
 
         function getNormalPercent(total, data) {
-            return (data / total * 100).toFixed(0);
+            return (data / total * 100).toFixed(1);
         }
 
         $scope.pOpt = {
