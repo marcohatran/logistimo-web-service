@@ -31,6 +31,7 @@ import com.logistimo.entity.IJobStatus;
 import com.logistimo.exports.model.ExportResponseModel;
 import com.logistimo.exports.util.EmailHelper;
 import com.logistimo.exports.util.ExportConstants;
+import com.logistimo.logger.XLog;
 import com.logistimo.reports.constants.ReportType;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
@@ -50,6 +51,8 @@ public class DataXExportStatusProcessor {
   private static Meter jmsMeter = MetricsUtil.getMeter(DataXExportStatusProcessor.class,
       "DataXExportStatusProcessor");
 
+  private static final XLog xLogger = XLog.getLog(DataXExportStatusProcessor.class);
+
   @Handler
   public void execute(ExportResponseModel model)
       throws MessageHandlingException, IOException, ServiceException {
@@ -60,16 +63,29 @@ public class DataXExportStatusProcessor {
     IJobStatus jobStatus = JobUtil.getJobById(jobId);
     EmailHelper emailHelper = StaticApplicationContext.getBean(EmailHelper.class);
     String fileName =
-        emailHelper.getFileName(ReportType.getReportName(jobStatus.getMetadataMap().get(
-            ExportConstants.REPORT_TYPE)),
+        emailHelper.getFileName(getFileName(jobStatus),
             jobStatus.getMetadataMap().get(ExportConstants.EXPORT_TIME));
     if (ExportConstants.STATUS_SUCCESS.equals(model.status)) {
-      emailHelper.sendMail(jobStatus, model.meshId);
-      JobUtil.setJobCompleted(jobStatus.getJobId(), IJobStatus.TYPE_EXPORT, 1, fileName,
-          backendMessages, model.meshId);
+      try {
+        emailHelper.sendMail(jobStatus, model.meshId);
+      } catch (Exception e) {
+        xLogger.warn("Email could not be sent!!", e);
+      } finally {
+        JobUtil.setJobCompleted(jobStatus.getJobId(), IJobStatus.TYPE_EXPORT, 1, fileName,
+            backendMessages, model.meshId);
+      }
     } else if (ExportConstants.STATUS_FAILED.equals(model.status)) {
       JobUtil.setJobFailed(jobId, model.reason);
       emailHelper.sendMail(jobStatus, model.meshId, "Error during export.");
+    }
+  }
+
+  private String getFileName(IJobStatus jobStatus ){
+    if (jobStatus.getSubType().equalsIgnoreCase("report")) {
+      return ReportType.getReportName(jobStatus.getMetadataMap().get(
+          ExportConstants.REPORT_TYPE));
+    } else {
+      return jobStatus.getSubType();
     }
   }
 }

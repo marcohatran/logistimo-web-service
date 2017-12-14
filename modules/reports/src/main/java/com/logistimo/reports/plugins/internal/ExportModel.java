@@ -28,7 +28,7 @@ import java.util.Map;
 /**
  * @author Mohan Raja
  */
-public class ReportRequestModel {
+public class ExportModel {
   public String userId;
   public String timezone;
   public String locale;

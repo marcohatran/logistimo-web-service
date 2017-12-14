@@ -882,6 +882,40 @@ assetControllers.controller('AssetsDetailsListingController', ['$scope', '$locat
 
         };
 
+        $scope.getCaption=function(){
+            var eid = $scope.entityId == '0' ? null : $scope.entityId;
+            var caption = checkNotNullEmpty(eid) ? ($scope.resourceBundle['kiosk'] + ": " + $scope.entity.nm + "   ") : " ";
+            caption += $scope.resourceBundle['type'] + ": " + $scope.assetTypeFilterText.join(",");
+            caption += "   " + "Relationships: " + $scope.awrDisplay;
+            caption += "   " + $scope.resourceBundle['alarms'] + ": " + $scope.filters[$scope.currentFilter].displayValue;
+            caption += "   " + $scope.resourceBundle['working.status'] + ": " + (($scope.assetWSFilter == 0) ? "All" : $scope.assetConfig.wses[$scope.assetWSFilter].dV);
+            return caption;
+        }
+
+        $scope.exportData=function(){
+            var selectedFilters = {};
+            var eid = $scope.entityId == '0' ? null : $scope.entityId;
+            selectedFilters.entityId = checkNotNullEmpty(eid) ? eid : undefined;
+            selectedFilters.assetType = checkNotNullEmpty($scope.assetTypeFilter) ? $scope.assetTypeFilter.join(",") : undefined;
+            selectedFilters.alarmType = checkNotNullEmpty($scope.currentFilter) ? $scope.currentFilter : undefined;
+            selectedFilters.wsStatus = checkNotNullEmpty($scope.assetWSFilter) ? $scope.assetWSFilter : undefined;
+            selectedFilters.awr = checkNotNullEmpty($scope.awr) ? $scope.awr : undefined;
+            selectedFilters.loc = $scope.location;
+            var duration = $scope.duration * $scope.filterDur[$scope.aDurationDisplay].factorValue;
+            selectedFilters.alarmDuration = checkNotNullEmpty(duration) ? duration : undefined;
+            var caption = $scope.getCaption();
+            selectedFilters['titles'] = {};
+            selectedFilters['titles']['filters'] = caption;
+            $scope.showLoading();
+            assetService.exportData(JSON.stringify(angular.toJson(selectedFilters))).then(function (data) {
+                $scope.showSuccess(data.data);
+            }).catch(function error(msg) {
+                $scope.showErrorMsg(msg);
+            }).finally(function () {
+                $scope.hideLoading();
+            });
+        };
+
         $scope.getAssets = function(init){
             var eid = $scope.entityId == '0' ? null : $scope.entityId;
             constructAssetTypeValue();

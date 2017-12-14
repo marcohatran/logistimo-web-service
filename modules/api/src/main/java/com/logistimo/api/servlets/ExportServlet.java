@@ -671,7 +671,7 @@ public class ExportServlet extends SgServlet {
 
   private void scheduleReportExport(HttpServletRequest req, HttpServletResponse resp,
                                     ResourceBundle backendMessages, ResourceBundle messages) {
-    xLogger.fine("Entering scheduleReportExport");
+    xLogger.fine("Entering scheduleExport");
     // Get request parameters
     String
         type =
@@ -772,7 +772,7 @@ public class ExportServlet extends SgServlet {
       xLogger.severe("{0} while sceduling report export task in domain {1}. Message: {2}",
           e.getClass().getName(), domainId, e.getMessage());
     }
-    xLogger.fine("Exiting scheduleReportExport");
+    xLogger.fine("Exiting scheduleExport");
   }
 
   // Finalize an export and send the email notification

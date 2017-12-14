@@ -120,12 +120,11 @@ public class EmailHelper {
     StringBuilder message = new StringBuilder();
     message.append("<br/>Dear ").append(u.getFirstName()).append(",<br/><br/>");
     final String support = ConfigUtil.get("support.email", GeneralConfig.DEFAULT_SUPPORT_EMAIL);
-    message.append("As requested, the report ").append(CharacterConstants.SINGLE_QUOTES)
+    message.append("The export of ").append(CharacterConstants.SINGLE_QUOTES)
         .append(reportName).append(CharacterConstants.SINGLE_QUOTES)
-        .append(" is generated and can be viewed by clicking on this ")
-        .append(downloadLinkText).append(" link").append("</a>. Please contact ")
-        .append(support)
-        .append(" for any further queries.<br/><br/>");
+        .append(" is now complete. Please click here ")
+        .append(downloadLinkText).append("</a>. to download the file.")
+        .append("<br/><br/>");
     message.append("Thank you,<br/>");
     message.append(ConfigUtil.get("support.team", GeneralConfig.DEFAULT_SUPPORT_TEAM)).append(
         "<br/><br/>");

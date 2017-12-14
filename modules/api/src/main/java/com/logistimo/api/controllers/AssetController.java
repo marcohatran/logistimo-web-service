@@ -53,19 +53,24 @@ import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
 import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
 import com.logistimo.exception.InvalidServiceException;
+import com.logistimo.exports.ExportService;
 import com.logistimo.logger.XLog;
 import com.logistimo.pagination.Navigator;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
+import com.logistimo.reports.plugins.internal.ExportModel;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.Services;
+import com.logistimo.users.entity.IUserAccount;
+import com.logistimo.users.service.UsersService;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.MsgUtil;
 
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -96,6 +101,18 @@ import javax.servlet.http.HttpServletRequest;
 public class AssetController {
   private static final XLog xLogger = XLog.getLog(AssetController.class);
   private AssetBuilder assetBuilder = new AssetBuilder();
+  private ExportService exportService;
+  private UsersService usersService;
+
+  @Autowired
+  private void setExportService(ExportService exportService) {
+    this.exportService = exportService;
+  }
+
+  @Autowired
+  private void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
+  }
 
   @RequestMapping(value = "/", method = RequestMethod.POST)
   public
@@ -687,4 +704,21 @@ public class AssetController {
       throws ServiceException {
     return assetBuilder.buildAssets(tempData);
   }
+
+  @RequestMapping(value = "/export", method = RequestMethod.POST)
+  public
+  @ResponseBody
+  String exportData(@RequestBody String json) throws ParseException, ServiceException {
+    ExportModel eModel = new AssetBuilder().buildExportModel(json);
+    long jobId = exportService.scheduleExport(eModel, "Assets");
+    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", Locale.ENGLISH);
+    IUserAccount u = usersService.getUserAccount(SecurityUtils.getUsername());
+    return backendMessages.getString("export.success1") + " " + u.getEmail() + " "
+        + backendMessages.getString("export.success2") + " "
+        + backendMessages.getString("exportstatusinfo2") + " "
+        + jobId + ". "
+        + backendMessages.getString("exportstatusinfo1");
+  }
+
+
 }

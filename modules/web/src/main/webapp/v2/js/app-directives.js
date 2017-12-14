@@ -2343,6 +2343,24 @@ logistimoApp.directive('noteData', function () {
     }
 });
 
+logistimoApp.directive('export', function () {
+    return {
+        restrict: 'E',
+        scope: {
+            reportType: '=',
+            callback: '&'
+        },
+        controller: ExportController,
+        template: '<div><button class="btn btn-sm btn-primary" ng-click="exportData()">Export</button></div>'
+    };
+});
+
+function ExportController($scope) {
+    $scope.exportData = function () {
+        $scope.callback();
+    }
+}
+
 logistimoApp.directive('exportData', function () {
     var batchTemplate = '<div class="modal-header ws">' +
         '<h3 class="modal-title">Export data</h3>' +

@@ -69,6 +69,9 @@ assetServices.factory('assetService', ['APIService', function (apiService) {
             }
             return apiService.get(urlStr);
         },
+        exportData: function(json) {
+            return apiService.post(json, '/s2/api/assets/export');
+        },
         getAssetDetails: function(manufactureId, assetId){
             return apiService.get("/s2/api/assets/" + manufactureId + "/" + encodeURI(assetId));
         },
