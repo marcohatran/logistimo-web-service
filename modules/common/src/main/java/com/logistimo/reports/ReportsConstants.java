@@ -106,6 +106,8 @@ public interface ReportsConstants {
   // Literals
   String MANDATORY = "mnd";
 
+  String ORDER_TYPE= "oty";
+
   // Filters by object - i.e. relevent set of filters per object
   /*
          List<String> DOMAIN_FILTERS = Arrays.asList( FILTER_DOMAIN, FILTER_STATE, FILTER_DISTRICT, FILTER_TALUK, FILTER_PINCODE, FILTER_KIOSK );

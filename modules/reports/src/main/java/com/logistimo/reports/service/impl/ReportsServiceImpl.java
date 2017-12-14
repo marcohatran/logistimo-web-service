@@ -148,19 +148,32 @@ public class ReportsServiceImpl extends ServiceImpl implements ReportsService {
     return new Results(new ArrayList<ISlice>(1),null);
   }
 
+  @SuppressWarnings({"unchecked"})
+  public DomainCounts getDomainCounts(Long domainId, Date endDate, int period, String periodType,
+                                      String mTag, String matId) throws ServiceException {
+    return getDomainCounts(domainId, endDate, period, periodType, mTag, matId, null);
+  }
+
   /**
    * Method that returns Slices for a domain, between startDate and endDate where endDate = startDate - historicalPeriod. The type of slices returned are DaySlice or MonthSlice
    * depending on the periodType. The results include missing slices also( which are initialized from the previous slices )
    */
   @SuppressWarnings({"unchecked"})
   public DomainCounts getDomainCounts(Long domainId, Date endDate, int period, String periodType,
-                                      String mTag, String matId) throws ServiceException {
+                                      String mTag, String matId, String reportType) throws ServiceException {
     return new DomainCounts(domainId);
+  }
+
+  @SuppressWarnings({"unchecked"})
+  public Results getSlices(Date startDate, Date endDate, String periodType, String oty, String oId,
+                           String dt, String dv, boolean fillMissingSlices, PageParams pageParams)
+      throws ServiceException {
+    return getSlices(startDate, endDate, periodType, oty, oId, dt, dv, fillMissingSlices, pageParams, null);
   }
 
   @SuppressWarnings("unchecked")
   public Results getSlices(Date stDate, Date endDate, String periodType, String oty, String oId,
-                           String dt, String dv, boolean fillMissingSlices, PageParams pageParams)
+                           String dt, String dv, boolean fillMissingSlices, PageParams pageParams, String reportType)
       throws ServiceException {
     xLogger.info("Entering getSlices");
     // If any of the parameters are null or empty, throw an IllegalArgumentException
