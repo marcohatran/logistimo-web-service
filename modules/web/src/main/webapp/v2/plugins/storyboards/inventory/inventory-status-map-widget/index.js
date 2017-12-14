@@ -85,15 +85,19 @@ angular.module('logistimo.storyboard.inventoryStatusMapWidget', [])
 
                 if (checkNotNullEmpty(filter.mapType)) {
                     var mapType = filter.mapType;
-                    if (mapType == '0' || mapType == '1') {
-                        $scope.mapType = mapType;
-                        if ($scope.mapType == 0) {
-                            $scope.mapEvent = invPieOrder[0];
-                            mapName = "Availability";
-                        } else {
-                            $scope.mapEvent = invPieOrder[1];
-                            mapName = "Stock outs";
-                        }
+                    $scope.mapType = mapType;
+                    if ($scope.mapType == 0) {
+                        $scope.mapEvent = invPieOrder[0];
+                        mapName = "Availability";
+                    } else if ($scope.mapType == 1){
+                        $scope.mapEvent = invPieOrder[1];
+                        mapName = "Stock outs";
+                    } else if ($scope.mapType == 2){
+                        $scope.mapEvent = invPieOrder[2];
+                        mapName = "Minimum stock";
+                    } else {
+                        $scope.mapEvent = invPieOrder[3];
+                        mapName = "Maximum stock ";
                     }
                 } else {
                     $scope.mapType = "0";

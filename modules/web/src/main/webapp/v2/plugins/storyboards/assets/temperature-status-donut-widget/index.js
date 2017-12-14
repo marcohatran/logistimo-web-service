@@ -61,6 +61,7 @@ angular.module('logistimo.storyboard.temperatureStatusDonutWidget', [])
                     tempPieColors[0] = tempPieColors[3];
                     tempPieColors[1] = tempPieColors[3];
                     tempPieColors[2] = tempPieColors[3];
+                    tempPieColors[3] = "#5F5F5F";
                     $scope.widget.conf.title = "Unknown";
                 }
             }
@@ -100,7 +101,7 @@ angular.module('logistimo.storyboard.temperatureStatusDonutWidget', [])
                 $scope.widget.conf.tPeriod, asset, constructModel(filter.entityTag), fDate,
                 constructModel(filter.exEntityTag), false).then(function (data) {
                     chartData = constructPieData(data.data.tempDomain, tempPieColors, tempPieOrder, INVENTORY,
-                        $scope.mapEvent, $scope.widget.conf.exTempState);
+                        $scope.mapEvent, undefined);
                     var normalPercent = getPercent(data.data.tempDomain, $scope.assetStatus);
                     totalAssets = getItemCount(data.data.tempDomain, $scope.assetStatus);
 

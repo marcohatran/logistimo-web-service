@@ -99,7 +99,7 @@ angular.module('logistimo.storyboard.storesActivityWidget', [])
             if (!checkNullEmptyObject(sData)) {
                 stackData.push(sData);
             }
-            sData = constructStack(data.i, "Inactive", entPieColors[1], $scope.entDomainTotal, "i");
+            sData = constructStack(data.i, "Inactive", "#cccccc", $scope.entDomainTotal, "i");
             if (!checkNullEmptyObject(sData)) {
                 stackData.push(sData);
             }

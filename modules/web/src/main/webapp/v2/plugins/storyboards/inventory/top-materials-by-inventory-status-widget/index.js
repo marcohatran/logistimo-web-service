@@ -86,13 +86,15 @@ angular.module('logistimo.storyboard.topMaterialsByInventoryStatusWidget', [])
 
                 if (checkNotNullEmpty(filter.topTenMatType)) {
                     var topTenMatType = filter.topTenMatType;
-                    if (topTenMatType == '0' || topTenMatType == '1') {
-                        $scope.topTenMatType = topTenMatType;
-                        if ($scope.topTenMatType == 0) {
-                            $scope.mapEvent = invPieOrder[0];
-                        } else {
-                            $scope.mapEvent = invPieOrder[1];
-                        }
+                    $scope.topTenMatType = topTenMatType;
+                    if ($scope.topTenMatType == 0) {
+                        $scope.mapEvent = invPieOrder[0];
+                    } else if ($scope.topTenMatType == 1) {
+                        $scope.mapEvent = invPieOrder[1];
+                    } else if ($scope.topTenMatType == 2) {
+                        $scope.mapEvent = invPieOrder[2];
+                    } else{
+                        $scope.mapEvent = invPieOrder[3];
                     }
                 } else {
                     $scope.topTenMatType = "0";

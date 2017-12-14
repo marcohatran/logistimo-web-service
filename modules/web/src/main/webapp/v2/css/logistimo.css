@@ -4191,3 +4191,7 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
     background-color: #272727;
     border:none;
 }
+
+.bb-large-icon {
+    font-size: 300%;
+}

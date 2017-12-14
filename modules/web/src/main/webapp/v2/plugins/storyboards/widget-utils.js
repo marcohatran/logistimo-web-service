@@ -86,7 +86,7 @@ function getTotalItems(data) {
     return totalInv;
 };
 
-function getItemCount(data, wt){
+function getItemCount(data, wt) {
     if (wt == 'ia') {
         return (data['n'] + data[201] + data[202]);
     } else if (wt == 'iso') {
@@ -102,9 +102,9 @@ function getItemCount(data, wt){
     } else if (wt == 'tl') {
         return (data['tl'] ? data['tl'] : 0);
     } else if (wt == 'th') {
-        return (data['th']? data['th'] : 0);
+        return (data['th'] ? data['th'] : 0);
     } else if (wt == 'tu') {
-        return (data['tu']? data['tu'] : 0);
+        return (data['tu'] ? data['tu'] : 0);
     }
 }
 
@@ -112,23 +112,24 @@ function getPercent(data, wt) {
     // Available = ia, Stockout = iso, Normal = in, Min = imin, or Max = imax
     if (checkNotNullEmpty(wt)) {
         if (wt == 'ia') {
-            return (((data['n']?data['n']:0 + data[201]?data[201]:0 + data[202]?data[202]:0) / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
+            return (((((data['n'] ? data['n'] : 0) + (data[201] ? data[201] : 0) + (data[202] ? data[202] : 0))) /
+                getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
         } else if (wt == 'iso') {
-            return ((data[200]?data[200]:0 / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
+            return ((((data[200] ? data[200] : 0) / getTotalItems(data)) * 100).toFixed(1)) * 1 + "%";
         } else if (wt == 'in') {
-            return ((data['n']?data['n']:0 / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
+            return ((((data['n'] ? data['n'] : 0) / getTotalItems(data)) * 100).toFixed(1)) * 1 + "%";
         } else if (wt == 'imin') {
-            return ((data[201]?data[201]:0  / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
+            return ((((data[201] ? data[201] : 0) / getTotalItems(data)) * 100).toFixed(1)) * 1 + "%";
         } else if (wt == 'imax') {
-            return ((data[202]?data[202]:0  / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
+            return ((((data[202] ? data[202] : 0) / getTotalItems(data)) * 100).toFixed(1)) * 1 + "%";
         } else if (wt == 'tn') {
-            return ((data['tn']?data['tn']:0  / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
+            return ((((data['tn'] ? data['tn'] : 0) / getTotalItems(data)) * 100).toFixed(1)) * 1 + "%";
         } else if (wt == 'tl') {
-            return ((data['tl']?data['tl']:0 / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
+            return ((((data['tl'] ? data['tl'] : 0) / getTotalItems(data)) * 100).toFixed(1)) * 1 + "%";
         } else if (wt == 'th') {
-            return ((data['th']?data['th']:0 / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
+            return ((((data['th'] ? data['th'] : 0) / getTotalItems(data)) * 100).toFixed(1)) * 1 + "%";
         } else if (wt == 'tu') {
-            return ((data['tu']?data['tu']:0 / getTotalItems(data) * 100).toFixed(1)) * 1 + "%";
+            return ((((data['tu'] ? data['tu'] : 0) / getTotalItems(data)) * 100).toFixed(1)) * 1 + "%";
         }
     }
     return null;
@@ -191,12 +192,12 @@ function constructMapData(event, init, scope, INVENTORY, $sce, mapRange, mapColo
         scope.caption = "Temperature";
         scope.subCaption = "<b>Status: </b> Unknown";
         iTempEvent = true;
-    } else if(event == 'es') {
+    } else if (event == 'es') {
         subData = scope.dashboardView.event["es"];
         eventIndicators = true;
     }
     allSubData = subData;
-    if(eventIndicators){
+    if (eventIndicators) {
         var allSubData = scope.dashboardView.event['es'];
     }
     var fPeriod;
@@ -216,14 +217,18 @@ function constructMapData(event, init, scope, INVENTORY, $sce, mapRange, mapColo
         if (iTempEvent) {
             if (fPeriod != 'M_0') {
                 var fp = fPeriod.substr(2);
-                scope.subCaption += (scope.subCaption == '' ? '' : ', ') + "<b>Period: </b>" + (fPeriod.indexOf('M') == 0 ? fp + " Minutes(s)" : (fPeriod.indexOf('H') == 0 ? fp + " Hour(s)" : fp + " Day(s)"));
+                scope.subCaption += (scope.subCaption == '' ? '' : ', ') + "<b>Period: </b>" +
+                    (fPeriod.indexOf('M') == 0 ? fp + " Minutes(s)" :
+                        (fPeriod.indexOf('H') == 0 ? fp + " Hour(s)" : fp + " Day(s)"));
             }
         } else {
             scope.subCaption += (scope.subCaption == '' ? '' : ', ') + "<b>Period:</b> " + fPeriod + " day(s)";
         }
     }
     if (checkNotNullEmpty(scope.eTag)) {
-        scope.subCaption += (scope.subCaption == '' ? '' : ', ') + "<b>" + scope.resourceBundle.kiosk + " tag(s): </b>" + scope.eTagText;
+        scope.subCaption +=
+            (scope.subCaption == '' ? '' : ', ') + "<b>" + scope.resourceBundle.kiosk + " tag(s): </b>" +
+            scope.eTagText;
     }
     if (checkNotNullEmpty(scope.asset) && iTempEvent) {
         scope.subCaption += (scope.subCaption == '' ? '' : ', ') + "<b>Asset Type:</b> ";
@@ -252,15 +257,15 @@ function constructMapData(event, init, scope, INVENTORY, $sce, mapRange, mapColo
         //"entityBorderHoverThickness": "2",
         "interactiveLegend": 1,
         "exportEnabled": 0,
-        "baseFont":"Lato",
+        "baseFont": "Lato",
         "baseFontColor": "#d2d2d2",
         "captionFontSize": "14",
         "captionAlignment": "left",
         "legendPosition": "bottom", // we can set only bottom or right.
         "alignCaptionWithCanvas": 1,
-        "labelConnectorAlpha":0,
-        "captionFontBold":1,
-        "captionFont":'Lato',
+        "labelConnectorAlpha": 0,
+        "captionFontBold": 1,
+        "captionFont": 'Lato',
         "legendBgAlpha": "0",
         "legendBorderAlpha": "0",
         "legendShadow": "0",
@@ -305,18 +310,22 @@ function constructMapData(event, init, scope, INVENTORY, $sce, mapRange, mapColo
                     }
                     filter = n;
                 } else if (scope.dashboardView.mLev == "state") {
-                    if (checkNotNullEmpty(scope.locationMapping.data[scope.dashboardView.mPTy].states[scope.dashboardView.mTyNm].districts[n])) {
+                    if (checkNotNullEmpty(
+                            scope.locationMapping.data[scope.dashboardView.mPTy].states[scope.dashboardView.mTyNm].districts[n])) {
                         if (scope.locationMapping.data[scope.dashboardView.mPTy] != undefined &&
-                            scope.locationMapping.data[scope.dashboardView.mPTy].states[scope.dashboardView.mTyNm] != undefined &&
-                            scope.locationMapping.data[scope.dashboardView.mPTy].states[scope.dashboardView.mTyNm].districts[n] != undefined) {
-                            o.id = scope.locationMapping.data[scope.dashboardView.mPTy].states[scope.dashboardView.mTyNm].districts[n].id;
+                            scope.locationMapping.data[scope.dashboardView.mPTy].states[scope.dashboardView.mTyNm] !=
+                            undefined &&
+                            scope.locationMapping.data[scope.dashboardView.mPTy].states[scope.dashboardView.mTyNm].districts[n] !=
+                            undefined) {
+                            o.id =
+                                scope.locationMapping.data[scope.dashboardView.mPTy].states[scope.dashboardView.mTyNm].districts[n].id;
                         }
                         filter = scope.dashboardView.mTyNm + "_" + n;
                     }
                 }
                 o.label = n;
                 o.value = per;
-                if(eventIndicators){
+                if (eventIndicators) {
                     o.value = per;
                     o.label = o.value;
                     // o.displayValue = value.toString();
@@ -325,7 +334,7 @@ function constructMapData(event, init, scope, INVENTORY, $sce, mapRange, mapColo
                     o.showLabel = 0;
                     scope.mapOpt.labelConnectorAlpha = 1;
                     scope.mapOpt.showEntityToolTip = 0;
-                }else{
+                } else {
                     o.displayValue = "";
                     scope.mapOpt.labelConnectorAlpha = 0;
                 }
@@ -339,7 +348,9 @@ function constructMapData(event, init, scope, INVENTORY, $sce, mapRange, mapColo
                 }
                 o.showLabel = "1";
                 if (checkNotNullEmpty(value)) {
-                    o.link = "JavaScript: angular.element(document.getElementById('cid')).scope().addFilter('" + filter + "','" + level + "')";
+                    o.link =
+                        "JavaScript: angular.element(document.getElementById('cid')).scope().addFilter('" + filter +
+                        "','" + level + "')";
                 }
                 mData.push(o);
             }
@@ -355,11 +366,14 @@ function constructMapData(event, init, scope, INVENTORY, $sce, mapRange, mapColo
         }
     }
     scope.mapEvent = event;
-    if(checkNotNullEmpty(subData) && checkNotNullEmpty(allSubData)) {
+    if (checkNotNullEmpty(subData) && checkNotNullEmpty(allSubData)) {
         constructBarData(subData, allSubData, event, addLink, level, scope, mapRange, mapColors);
     }
-    if (!isloc && (scope.mapEvent == 'n' || scope.mapEvent == '200' || scope.mapEvent == '201' || scope.mapEvent == '202') && checkNotNullEmpty(subData) && checkNotNullEmpty(allSubData)) {
-        constructMatBarData(subData['MAT_BD'].materials, allSubData['MAT_BD'].materials, event, scope, mapRange, mapColors, INVENTORY);
+    if (!isloc &&
+        (scope.mapEvent == 'n' || scope.mapEvent == '200' || scope.mapEvent == '201' || scope.mapEvent == '202') &&
+        checkNotNullEmpty(subData) && checkNotNullEmpty(allSubData)) {
+        constructMatBarData(subData['MAT_BD'].materials, allSubData['MAT_BD'].materials, event, scope, mapRange,
+            mapColors, INVENTORY);
     } else {
         scope.matBarData = undefined;
     }
@@ -412,12 +426,15 @@ function constructBarData(data, allData, event, addLink, level, scope, mapRange,
                             break;
                         }
                     }
+                    bd.color=mapColors[event][3];
                     if (addLink) {
                         var filter = bd.label;
                         if (scope.dashboardView.mLev == "state") {
                             filter = scope.dashboardView.mTyNm + "_" + bd.label;
                         }
-                        bd.link = "JavaScript: angular.element(document.getElementById('cid')).scope().addFilter('" + filter + "','" + level + "')";
+                        bd.link =
+                            "JavaScript: angular.element(document.getElementById('cid')).scope().addFilter('" + filter +
+                            "','" + level + "')";
                     } else if ((event == '200' || event == '201' || event == '202' || event == 'n')) {
                         var search = "?eid=" + kid;
                         if (checkNotNullEmpty(scope.mtag) && scope.mtag instanceof Array) {
@@ -431,11 +448,15 @@ function constructBarData(data, allData, event, addLink, level, scope, mapRange,
                                 search += "&dur=" + scope.period;
                             }
                         }
-                        bd.link = "JavaScript: angular.element(document.getElementById('cid')).scope().drillDownInventory('" + search + "')";
+                        bd.link =
+                            "JavaScript: angular.element(document.getElementById('cid')).scope().drillDownInventory('" +
+                            search + "')";
                     } else if (event == 'a' || event == 'i') {
                         var fromDate = angular.copy(scope.date || scope.today);
                         fromDate.setDate(fromDate.getDate() - (scope.period || scope.aper) + (scope.date ? 1 : 0));
-                        bd.link = "N-#/inventory/transactions/?eid=" + kid + "&from=" + formatDate2Url(fromDate) + "&to=" + formatDate2Url(scope.date || scope.today);
+                        bd.link =
+                            "N-#/inventory/transactions/?eid=" + kid + "&from=" + formatDate2Url(fromDate) + "&to=" +
+                            formatDate2Url(scope.date || scope.today);
                         if (checkNotNullEmpty(scope.mtag) && scope.mtag.length == 1) {
                             bd.link += "&tag=" + scope.mtag[0].text;
                         }
@@ -445,7 +466,8 @@ function constructBarData(data, allData, event, addLink, level, scope, mapRange,
                             at = '&at=' + scope.assetText.join(",");
                         }
                         if (!scope.iMan) {
-                            bd.link = "N-#/assets/all?eid=" + kid + "&alrm=" + (event == 'tn' ? '4' : (event == 'tu' ? '3' : '1')) + at + "&awr=1&ws=1";
+                            bd.link = "N-#/assets/all?eid=" + kid + "&alrm=" +
+                                (event == 'tn' ? '4' : (event == 'tu' ? '3' : '1')) + at + "&awr=1&ws=1";
                         }
                     }
                     var found = false;
@@ -510,6 +532,7 @@ function constructMatBarData(data, allData, event, scope, mapRange, mapColors, I
                             break;
                         }
                     }
+                    bd.color=mapColors[event][3];
                     // generate link to stock views page
                     var search;
                     if (checkNotNullEmpty(data[n].mid) && (event == INVENTORY.stock.STOCKOUT ||
@@ -528,13 +551,16 @@ function constructMatBarData(data, allData, event, scope, mapRange, mapColors, I
                         search += "&etag=" + scope.eTag.map(function (val) {
                                 return val.text;
                             }).join(',');
-                    } else if (checkNotNullEmpty(search) && checkNotNullEmpty(scope.excludeTag) && scope.excludeTag instanceof Array) {
+                    } else if (checkNotNullEmpty(search) && checkNotNullEmpty(scope.excludeTag) &&
+                        scope.excludeTag instanceof Array) {
                         search += "&eetag=" + scope.excludeTag.map(function (val) {
                                 return val.text;
                             }).join(',');
                     }
                     if (checkNotNullEmpty(search)) {
-                        bd.link = "JavaScript: angular.element(document.getElementById('cid')).scope().drillDownInventory('" + search + "')";
+                        bd.link =
+                            "JavaScript: angular.element(document.getElementById('cid')).scope().drillDownInventory('" +
+                            search + "')";
                     }
                     var found = false;
                     //Arrange data in descending order
@@ -636,7 +662,8 @@ function getReportFCCategories(data, format) {
 };
 
 function getReportCaption(filter) {
-    return "From: " + formatReportDate(filter.from, filter) + "   To: " + formatReportDate(filter.to, filter) + "   " + getFilterLabel()
+    return "From: " + formatReportDate(filter.from, filter) + "   To: " + formatReportDate(filter.to, filter) + "   " +
+        getFilterLabel()
 };
 
 function formatReportDate(date, filter) {
@@ -661,7 +688,8 @@ function getReportDateFormat(level, filter) {
     return (filter.periodicity == "m" && level == undefined) ? "mmm yyyy" : undefined;
 };
 
-function getReportFCSeries(data, seriesno, name, type, isLinkDisabled, filterSeriesIndex, showvalue, color, noAnchor, zeroWithEmpty, forceSum, skipSeriesInLabel) {
+function getReportFCSeries(data, seriesno, name, type, isLinkDisabled, filterSeriesIndex, showvalue, color, noAnchor,
+                           zeroWithEmpty, forceSum, skipSeriesInLabel) {
     if (checkNotNullEmpty(data) && data[0]) {
         if (data[0].value.length > seriesno) {
             var series = {};
@@ -686,7 +714,8 @@ function getReportFCSeries(data, seriesno, name, type, isLinkDisabled, filterSer
                         prevLabel = undefined;
                     }
 
-                    if (!found && ((i == 0 && lData.value[filterSeriesIndex].value != name) || (prevLabel != undefined && curLabel != prevLabel))) {
+                    if (!found && ((i == 0 && lData.value[filterSeriesIndex].value != name) ||
+                        (prevLabel != undefined && curLabel != prevLabel))) {
                         var dummy = {};
                         dummy.value = [];
                         dummy.value[seriesno] = {};
@@ -718,7 +747,8 @@ function getReportFCSeries(data, seriesno, name, type, isLinkDisabled, filterSer
                     t.displayValue = roundNumber(t.value);
                 }
                 if (!isLinkDisabled && !(t.value == "0" || t.value == "0.0")) {
-                    t.link = "JavaScript: angular.element(document.getElementById('cid')).scope().getDFChartData('" + lData.label + "');";
+                    t.link = "JavaScript: angular.element(document.getElementById('cid')).scope().getDFChartData('" +
+                        lData.label + "');";
                 }
                 if (color) {
                     t.color = color;
@@ -726,13 +756,17 @@ function getReportFCSeries(data, seriesno, name, type, isLinkDisabled, filterSer
                 if (name && !skipSeriesInLabel) {
                     t.toolText = "$seriesName, ";
                 }
-                if (forceSum || (checkNotNullEmpty(type) && (type.indexOf("Pie") == 0 || type.indexOf("Doughnut") == 0))) {
+                if (forceSum ||
+                    (checkNotNullEmpty(type) && (type.indexOf("Pie") == 0 || type.indexOf("Doughnut") == 0))) {
                     t.toolText = (t.toolText ? t.toolText : "" ) + "$label: $value of $unformattedSum";
                 } else {
-                    t.toolText = (t.toolText ? t.toolText : "" ) + "$label: " + roundNumber(lData.value[seriesno].value, 2);
+                    t.toolText =
+                        (t.toolText ? t.toolText : "" ) + "$label: " + roundNumber(lData.value[seriesno].value, 2);
                     if (lData.value[seriesno].num) {
-                        t.toolText += " (" + roundNumber(lData.value[seriesno].num, 2) + " / " + roundNumber(lData.value[seriesno].den, 2) + ")";
-                        t.tableTooltip = roundNumber(lData.value[seriesno].num, 2) + " / " + roundNumber(lData.value[seriesno].den, 2);
+                        t.toolText += " (" + roundNumber(lData.value[seriesno].num, 2) + " / " +
+                            roundNumber(lData.value[seriesno].den, 2) + ")";
+                        t.tableTooltip = roundNumber(lData.value[seriesno].num, 2) + " / " +
+                            roundNumber(lData.value[seriesno].den, 2);
                     }
                 }
                 series.data[ind++] = t;
@@ -743,11 +777,12 @@ function getReportFCSeries(data, seriesno, name, type, isLinkDisabled, filterSer
 }
 function getHeading(summaries, $scope) {
     var location = "";
-    if(checkNotNullEmpty($scope.ddist)) {
-        location = summaries.length > 1 ? $scope.resourceBundle['kiosks.lowercase'] : $scope.resourceBundle['kiosk.lowercase'];
-    } else if(checkNotNullEmpty($scope.dstate)) {
+    if (checkNotNullEmpty($scope.ddist)) {
+        location =
+            summaries.length > 1 ? $scope.resourceBundle['kiosks.lowercase'] : $scope.resourceBundle['kiosk.lowercase'];
+    } else if (checkNotNullEmpty($scope.dstate)) {
         location = summaries.length > 1 ? "districts" : "district";
-    } else if(checkNotNullEmpty($scope.dcntry)){
+    } else if (checkNotNullEmpty($scope.dcntry)) {
         location = summaries.length > 1 ? "states" : "state";
     }
     return "Top " + summaries.length + " " + location
