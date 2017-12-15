@@ -1577,7 +1577,6 @@ public class InventoryManagementServiceImpl extends ServiceImpl
     if (StringUtils.isNotBlank(timeZone)) {
       atd = LocalDateUtil.convertTZDateToUTC(timeZone, actualTransactionDate);
     } else {
-      currentDate = Calendar.getInstance().getTime();
       atd = actualTransactionDate;
     }
     return atd.after(currentDate);
