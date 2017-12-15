@@ -40,6 +40,7 @@
                                 <span class="litetext">{{resourceBundle['referenceid']}}:</span>
                                 <editable-text edit-model="shipment.tempReferenceId"
                                                on-ok="updateShipmentField('rid', shipment.tempReferenceId)"
+                                               max-length="100"
                                                on-cancel="toggleEdit('rid')"
                                                set-focus="">
                                 </editable-text>

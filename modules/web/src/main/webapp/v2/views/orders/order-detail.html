@@ -38,19 +38,19 @@
                         </span>
                         <span class="badge currentstatus" ng-class="{'cancelled':order.st == ORDER.CANCELLED}">{{order.status}}</span>
                         <div>
-                            <span class="litetext lnk" ng-show="!edit.rid && (order.st == ORDER.PENDING || order.st == ORDER.CONFIRMED || order.st == ORDER.BACKORDERED) && order.atv">{{order.rid? resourceBundle['referenceid'] + ": " + order.rid : "Add " + resourceBundle['referenceid'] }} </span>
-                            <span class="litetext lnk" ng-show="order.rid && !(order.st == ORDER.PENDING || order.st == ORDER.CONFIRMED || order.st == ORDER.BACKORDERED)">{{order.rid? resourceBundle['referenceid'] + ": " + order.rid : "Add " + resourceBundle['referenceid'] }} </span>
+                            <span class="litetext lnk" ng-show="isUndef(order.rid) && !edit.rid && (order.st == ORDER.PENDING || order.st == ORDER.CONFIRMED || order.st == ORDER.BACKORDERED) && (order.oty != 2 || (order.oty == 2 && order.atv))">{{"Add " + resourceBundle['referenceid'] }} </span>
+                            <span class="litetext lnk" ng-show="isDef(order.rid) && !edit.rid">{{resourceBundle['referenceid'] + ": " + order.rid }} </span>
                             <div class="lnk">
                                 <div ng-show="edit.rid" style="width: 30%">
                                     <span class="litetext">{{resourceBundle['referenceid']}}:</span>
                                     <editable-text edit-model="order.tempRID"
                                                    on-ok="updateRefId()"
-                                                   max-length="50"
+                                                   max-length="100"
                                                    on-cancel="toggleEdit('rid')"
                                                    set-focus="">
                                     </editable-text>
                                 </div>
-                                <a ng-show="!edit.rid && (dp.vp || order.st == ORDER.PENDING || order.st == ORDER.CONFIRMED || order.st == ORDER.BACKORDERED) && order.atv"
+                                <a ng-show="!edit.rid && (dp.vp || order.st == ORDER.PENDING || order.st == ORDER.CONFIRMED || order.st == ORDER.BACKORDERED) && (order.oty != 2 || (order.oty == 2 && order.atv))"
                                    uib-tooltip="{{resourceBundle['edit']}}" tooltip-append-to-body="true" ng-click="editRID()">
                                     <span ng-hide="!editMetaDataPermission" class="glyphicons glyphicons-edit pt2 ml15"></span>
                                 </a>

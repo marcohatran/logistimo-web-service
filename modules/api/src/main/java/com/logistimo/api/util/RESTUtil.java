@@ -906,7 +906,7 @@ public class RESTUtil {
     } catch (ObjectNotFoundException e) {
       errMsg = backendMessages != null ? backendMessages.getString("error.invalidusername") : null;
     } catch (UnauthorizedException e) {
-      throw new UnauthorizedException("Invalid token");
+      throw new UnauthorizedException("G006",new Object[]{});
     }
     // Check for error
     if (errMsg != null) {

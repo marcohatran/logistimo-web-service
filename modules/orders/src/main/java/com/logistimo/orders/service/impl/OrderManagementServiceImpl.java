@@ -678,7 +678,7 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
   @Override
   public void updateOrderReferenceId(Long orderId, String referenceId, String userId,
                                      PersistenceManager pm) throws ServiceException {
-    PersistenceManager localPm = null;
+    PersistenceManager localPm = pm;
     if (pm == null) {
       localPm = PMF.get().getPersistenceManager();
     }
