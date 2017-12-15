@@ -26,7 +26,6 @@ package com.logistimo.exports.util;
 import com.logistimo.communications.MessageHandlingException;
 import com.logistimo.communications.service.EmailService;
 import com.logistimo.communications.service.MessageService;
-import com.logistimo.config.models.GeneralConfig;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.domains.service.DomainsService;
 import com.logistimo.entity.IJobStatus;
@@ -106,7 +105,7 @@ public class EmailHelper {
     String localStr = host == null ? "?op=OPEN" : "";
     return "<a href=\"" + (host == null ? "" : host) + path
         + "/user/logistimoapp/dataexport/" + filePath + "/" + getFileName(fileName, exportTime)
-        + localStr + "\">";
+        + localStr + "\">here</a>";
   }
 
   private String constructEmailMessage(IUserAccount u, String fileName, String downloadLinkText) {
@@ -119,18 +118,13 @@ public class EmailHelper {
      */
     StringBuilder message = new StringBuilder();
     message.append("<br/>Dear ").append(u.getFirstName()).append(",<br/><br/>");
-    final String support = ConfigUtil.get("support.email", GeneralConfig.DEFAULT_SUPPORT_EMAIL);
     message.append("The export of ").append(CharacterConstants.SINGLE_QUOTES)
         .append(fileName).append(CharacterConstants.SINGLE_QUOTES)
         .append(" is now complete. Please click ")
-        .append(downloadLinkText).append("here </a> to download the file.")
+        .append(downloadLinkText).append(" to download the file.")
         .append("<br/><br/>");
-    message.append("Thank you,<br/>");
-    message.append(ConfigUtil.get("support.team", GeneralConfig.DEFAULT_SUPPORT_TEAM)).append(
-        "<br/><br/>");
-    message.append(
-        "Note: If you have not requested this file but have still received it, please inform ")
-        .append(support).append(" immediately");
+    message.append("Thank you.<br/>");
+
     return message.toString();
   }
 
