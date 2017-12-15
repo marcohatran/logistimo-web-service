@@ -34,10 +34,10 @@
                     {{ORDER.statusTxt[nStatus]}}
                 </div>
             </div>
-            <div class="row mb10" ng-show="nStatus == 'cm'">
+            <div class="row mb10" ng-show="nStatus == 'cm' && (order.oty != 2 || (order.oty == 2 && order.atv))">
                 <label class="col-sm-4 control-label" ng-class="{'required':oCfg.ridm && order.oty == 2}"> {{resourceBundle['referenceid']}}</label>
                 <div class="col-sm-7">
-                    <input class="form-control" ng-model="newStatus.rid" ng-init="newStatus.rid = order.oty == 2 ? order.rid : ''">
+                    <input class="form-control" ng-model="newStatus.rid" max-length="100" ng-init="newStatus.rid = order.oty == 2 ? order.rid : ''">
                 </div>
             </div>
             <div class="form-group" ng-show="nStatus == 'cn'">

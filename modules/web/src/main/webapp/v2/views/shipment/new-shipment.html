@@ -135,7 +135,7 @@
                             <div class="row">
                                 <label class="col-sm-4 control-label cbx ml10" ng-class="{'required': oCfg.ridm && order.oty == 2}">{{resourceBundle['referenceid']}}</label>
                                 <div class="col-sm-7 mb10">
-                                    <input type="text" class="form-control" ng-model="rid" ng-init="rid = order.oty == 2 ? order.rid: ''">
+                                    <input type="text" class="form-control" ng-model="rid" max-length="100" ng-init="rid = order.oty == 2 ? order.rid: ''">
                                 </div>
                             </div>
                         </div>
