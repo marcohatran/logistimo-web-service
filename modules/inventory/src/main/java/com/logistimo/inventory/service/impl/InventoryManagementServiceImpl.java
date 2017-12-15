@@ -115,7 +115,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.TimeZone;
 import java.util.stream.Collectors;
 
 import javax.jdo.JDOObjectNotFoundException;
@@ -1567,16 +1566,23 @@ public class InventoryManagementServiceImpl extends ServiceImpl
     return errors;
   }
 
-  protected boolean isAtdNotValid(Long domainId, Date actualTransactionDate) {
-    String timeZone = DomainConfig.getInstance(domainId).getTimezone();
-    Date currentDate;
-    if (StringUtils.isNotBlank(timeZone)) {
-      currentDate = Calendar.getInstance(TimeZone.getTimeZone(timeZone)).getTime();
-    } else {
-      currentDate = Calendar.getInstance().getTime();
-    }
-    return actualTransactionDate != null && actualTransactionDate.after(currentDate);
+  private boolean isAtdNotValid(Long domainId, Date actualTransactionDate) {
+    return actualTransactionDate == null || isAtdNotValid(
+        DomainConfig.getInstance(domainId).getTimezone(), actualTransactionDate,
+        Calendar.getInstance().getTime());
   }
+
+  protected boolean isAtdNotValid(String timeZone, Date actualTransactionDate, Date currentDate) {
+    Date atd;
+    if (StringUtils.isNotBlank(timeZone)) {
+      atd = LocalDateUtil.convertTZDateToUTC(timeZone, actualTransactionDate);
+    } else {
+      atd = actualTransactionDate;
+    }
+    return atd.after(currentDate);
+  }
+
+
 
   private void doPostTransactionPredictions(Long domainId, List<IInvntry> toBePredicted) {
     DomainConfig dc = DomainConfig.getInstance(domainId);

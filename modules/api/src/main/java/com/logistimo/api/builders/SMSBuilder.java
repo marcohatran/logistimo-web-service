@@ -29,7 +29,6 @@ import com.logistimo.api.models.SMSModel;
 import com.logistimo.api.models.SMSTransactionModel;
 import com.logistimo.api.util.SMSDecodeUtil;
 import com.logistimo.api.util.SMSUtil;
-import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.SourceConstants;
@@ -645,10 +644,7 @@ public class SMSBuilder {
     transaction.setQuantity(mobileTransModel.q);
     transaction.setSourceUserId(ua.getUserId());
     if (mobileTransModel.atd != null) {
-      Date
-          d =
-          LocalDateUtil.parseCustom(mobileTransModel.atd, Constants.DATE_FORMAT,
-              DomainConfig.getInstance(ua.getDomainId()).getTimezone());
+      Date d = LocalDateUtil.parseCustom(mobileTransModel.atd, Constants.DATE_FORMAT, null);
       transaction.setAtd(d);
     }
     transaction.setTimestamp(new Date());

@@ -1393,7 +1393,7 @@ public class MnlTransactionUtil {
           // Parse the actualTransDateStr string
           try {
             actualTransDate =
-                LocalDateUtil.parseCustom(actualTransDateStr, Constants.DATE_FORMAT, dc.getTimezone());
+                LocalDateUtil.parseCustom(actualTransDateStr, Constants.DATE_FORMAT, null);
             //To check whether given date is not greater than system time
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
             Date date = sdf.parse(sdf.format(new Date()));
@@ -1889,8 +1889,7 @@ public class MnlTransactionUtil {
         Calendar cal = GregorianCalendar.getInstance();
         try {
           reportingPeriod =
-              LocalDateUtil.parseCustom(reportingPeriodStr, Constants.DATE_FORMAT_CSV,
-                  DomainConfig.getInstance(mnlTransaction.getDomainId()).getTimezone());
+              LocalDateUtil.parseCustom(reportingPeriodStr, Constants.DATE_FORMAT_CSV, null);
           cal.setTime(reportingPeriod);
           LocalDateUtil.resetTimeFields(cal);
           mnlTransaction.setReportingPeriod(cal.getTime());

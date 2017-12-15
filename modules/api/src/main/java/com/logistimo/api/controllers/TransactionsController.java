@@ -546,7 +546,7 @@ public class TransactionsController {
         actualTransDate =
             LocalDateUtil
                 .parseCustom(String.valueOf(transaction.get("transactual")), Constants.DATE_FORMAT,
-                    dc.getTimezone());
+                    null);
       }
       LinkedTreeMap materials = (LinkedTreeMap) transaction.get("materials");
       List<String> berrorMaterials = new ArrayList<>(1);
