@@ -57,6 +57,9 @@ handlingUnitControllers.controller('AddHUController', ['$scope', 'handlingUnitSe
             } else if (checkNullEmpty($scope.qty)) {
                 $scope.showWarning("Quantity is mandatory");
                 return false;
+            } else if ($scope.qty <= 0) {
+                $scope.showWarning("Quantity should be greater than zero");
+                return false;
             }
             return true;
         }
