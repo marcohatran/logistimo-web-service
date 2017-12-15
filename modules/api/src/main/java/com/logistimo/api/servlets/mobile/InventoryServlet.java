@@ -667,7 +667,7 @@ public class InventoryServlet extends JsonRestServlet {
           // Get update transactions
           List<ITransaction>
               list =
-              RESTUtil.getInventoryTransactions(updInventoryJson, transType, now, locale, domainId);
+              RESTUtil.getInventoryTransactions(updInventoryJson, transType, now, locale);
           // Update the inventory transactions
           List<ITransaction> errorTrans = null;
           if (list == null) {
