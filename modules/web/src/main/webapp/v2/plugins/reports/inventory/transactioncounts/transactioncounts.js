@@ -130,7 +130,7 @@ registerWidget('itc', 'rpt-transaction-counts', 'Activity', 'Transaction counts'
                 $scope.cData = $scope.cLabel = $scope.chartData = undefined;
             }
 
-            if($scope.activeMetric == 'kt' && $scope.primaryMetric.length>1){
+            if($scope.activeMetric == 'kt'){
                 $scope.metrics.primary = "1";
                 $scope.primaryMetric.splice(1,$scope.primaryMetric.length-1);
             }else if($scope.primaryMetric.length==1){
