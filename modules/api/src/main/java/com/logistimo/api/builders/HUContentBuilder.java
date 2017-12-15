@@ -23,15 +23,16 @@
 
 package com.logistimo.api.builders;
 
-import com.logistimo.dao.JDOUtils;
-
-import com.logistimo.services.Services;
-import com.logistimo.logger.XLog;
 import com.logistimo.api.models.HUContentModel;
+import com.logistimo.dao.JDOUtils;
+import com.logistimo.exception.ValidationException;
+import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IHandlingUnitContent;
 import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.materials.service.MaterialCatalogService;
 import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
+import com.logistimo.services.Services;
+import com.logistimo.utils.BigUtil;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -53,6 +54,9 @@ public class HUContentBuilder {
   }
 
   public IHandlingUnitContent buildHUContent(HUContentModel model) {
+    if(BigUtil.lesserThanEqualsZero(model.quantity)){
+      throw new ValidationException("HU001", model.quantity);
+    }
     IHandlingUnitContent huc = JDOUtils.createInstance(IHandlingUnitContent.class);
     huc.setCntId(model.cntId);
     huc.setDomainId(model.dId);

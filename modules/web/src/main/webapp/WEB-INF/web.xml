@@ -195,7 +195,15 @@
 		<servlet-name>DomainsServlet</servlet-name>
 		<servlet-class>com.logistimo.api.servlets.mobile.DomainsServlet</servlet-class>
 	</servlet>
+    <servlet>
+        <servlet-name>metrics</servlet-name>
+        <servlet-class>com.codahale.metrics.servlets.AdminServlet</servlet-class>
+    </servlet>
 	<!--  SetupDataServlet added by Vani-->
+    <servlet-mapping>
+        <servlet-name>metrics</servlet-name>
+        <url-pattern>/metrics/*</url-pattern>
+    </servlet-mapping>
 	<servlet-mapping>
 		<servlet-name>Login</servlet-name>
 		<url-pattern>/l</url-pattern>
@@ -459,4 +467,10 @@
 			org.springframework.web.context.ContextLoaderListener
 		</listener-class>
 	</listener>
+    <listener>
+        <listener-class>com.logistimo.api.listeners.LogiHealthCheckServletContextListener</listener-class>
+    </listener>
+    <listener>
+        <listener-class>com.logistimo.api.listeners.LogiMetricsServletContextListener</listener-class>
+    </listener>
 </web-app>

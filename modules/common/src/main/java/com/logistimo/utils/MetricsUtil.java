@@ -27,6 +27,11 @@ import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
+import com.codahale.metrics.health.HealthCheckRegistry;
+import com.logistimo.healthchecks.ActiveMQHealthCheck;
+import com.logistimo.healthchecks.CacheHealthCheck;
+import com.logistimo.healthchecks.PMHealthCheck;
+import com.logistimo.healthchecks.ReadOnlyPMHealthCheck;
 
 
 /**
@@ -36,6 +41,14 @@ public class MetricsUtil {
 
   private static final MetricRegistry _metrics = new MetricRegistry();
   static JmxReporter _jmxReporter;
+  private static final HealthCheckRegistry hcRegistry = new HealthCheckRegistry();
+
+  static {
+    hcRegistry.register("database",new PMHealthCheck());
+    hcRegistry.register("Read only database",new ReadOnlyPMHealthCheck());
+    hcRegistry.register("Redis",new CacheHealthCheck());
+    hcRegistry.register("Active MQ",new ActiveMQHealthCheck());
+  }
 
   public static void startReporter() {
     _jmxReporter = JmxReporter.forRegistry(_metrics).build();
@@ -59,5 +72,9 @@ public class MetricsUtil {
       return _metrics.meter(MetricRegistry.name(clazz, key));
     }
     return meter;
+  }
+
+  public static HealthCheckRegistry getHCRegistry() {
+    return hcRegistry;
   }
 }

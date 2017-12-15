@@ -23,9 +23,12 @@
 
 package com.logistimo.services.cache;
 
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.Timer;
 import com.logistimo.constants.Constants;
 import com.logistimo.logger.XLog;
 import com.logistimo.services.utils.ConfigUtil;
+import com.logistimo.utils.MetricsUtil;
 
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.springframework.stereotype.Component;
@@ -67,11 +70,16 @@ public class RedisMemcacheService implements MemcacheService {
       "  for i,k in ipairs(keys) do" +
       "    local res = redis.call('del', k)" +
       "  end";
+  private static Meter cacheMeter = MetricsUtil
+      .getMeter(RedisMemcacheService.class, "redis.requests");
+  private static Timer timer = MetricsUtil.getTimer(RedisMemcacheService.class,"redis.response");
+
   private static final XLog LOGGER = XLog.getLog(RedisMemcacheService.class);
   private static byte[] MIN_INF = SafeEncoder.encode("-inf");
   private static byte[] MAX_INF = SafeEncoder.encode("+inf");
   private final int expiry;
   Pool<Jedis> pool = null;
+
 
   public RedisMemcacheService() {
     String[] sentinelsStr = ConfigUtil.getCSVArray("redis.sentinels");
@@ -91,6 +99,8 @@ public class RedisMemcacheService implements MemcacheService {
 
   @Override
   public Object get(String cacheKey) {
+    cacheMeter.mark();
+    Timer.Context context = timer.time();
     Jedis jedis = null;
     Object value = null;
     try {
@@ -100,6 +110,8 @@ public class RedisMemcacheService implements MemcacheService {
     } catch (Exception e) {
       LOGGER.warn("Failed to get key from cache {0}", cacheKey, e);
       pool.returnBrokenResource(jedis);
+    } finally {
+      context.stop()  ;
     }
     return value;
   }
@@ -253,6 +265,21 @@ public class RedisMemcacheService implements MemcacheService {
   @Override
   public void close() {
     pool.close();
+  }
+
+  @Override
+  public boolean check() {
+    Jedis jedis = null;
+    try {
+      jedis = pool.getResource();
+      return "pong".equalsIgnoreCase(jedis.ping());
+    } catch (Exception e) {
+      LOGGER.severe("Failed to ping redis {0}", e);
+      pool.returnBrokenResource(jedis);
+      return false;
+    } finally {
+      pool.returnResource(jedis);
+    }
   }
 
 

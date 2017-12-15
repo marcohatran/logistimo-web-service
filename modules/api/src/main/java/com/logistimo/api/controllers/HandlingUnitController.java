@@ -79,7 +79,7 @@ public class HandlingUnitController {
   @ResponseBody
   String createHandlingUnit(@RequestBody HUModel huModel, HttpServletRequest request) {
     if (huModel == null) {
-      throw new InvalidServiceException("Error while creating handing unit.");
+      throw new InvalidDataException("Error while creating handing unit.");
     }
     SecureUserDetails user = SecurityUtils.getUserDetails(request);
     Locale locale = user.getLocale();

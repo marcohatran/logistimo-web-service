@@ -21,35 +21,24 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.services.cache;
+package com.logistimo.healthchecks;
 
-public interface MemcacheService {
+import com.codahale.metrics.health.HealthCheck;
+import com.logistimo.context.StaticApplicationContext;
+import com.logistimo.services.cache.MemcacheService;
 
-  Object get(String cacheKey);
+/**
+ * Created by charan on 15/12/17.
+ */
+public class CacheHealthCheck extends HealthCheck {
 
-  /**
-   * Set cache object, default expiry 24 hours
-   */
-  void put(String cacheKey, Object obj);
 
-  /**
-   * set cache obj for given expiry period
-   *
-   * @param expiry in seconds
-   */
-  void put(String cacheKey, Object obj, int expiry);
-
-  boolean putIfNotExist(String cacheKey, Object obj);
-
-  boolean putMultiIfNotExists(String cacheKey1, Object obj1, String cacheKey2, Object obj2);
-
-  boolean delete(String key);
-
-  void deleteByPattern(String key);
-
-  boolean deleteMulti(String... keys);
-
-  void close();
-
-  boolean check();
+  @Override
+  protected Result check() throws Exception {
+    if (StaticApplicationContext.getBean(MemcacheService.class).check()) {
+      return Result.healthy();
+    } else {
+      return Result.unhealthy("Can't ping redis");
+    }
+  }
 }

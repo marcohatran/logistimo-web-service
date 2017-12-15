@@ -103,4 +103,9 @@ public class LocalMemcacheService implements MemcacheService {
   public void close() {
     this.cache.cleanUp();
   }
+
+  @Override
+  public boolean check() {
+    return true;
+  }
 }

@@ -21,35 +21,29 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.services.cache;
+package com.logistimo.healthchecks;
 
-public interface MemcacheService {
+import com.codahale.metrics.health.HealthCheck;
+import com.logistimo.AppFactory;
+import com.logistimo.exception.TaskSchedulingException;
+import com.logistimo.services.taskqueue.ITaskService;
 
-  Object get(String cacheKey);
+import java.util.Collections;
 
-  /**
-   * Set cache object, default expiry 24 hours
-   */
-  void put(String cacheKey, Object obj);
+/**
+ * Created by charan on 15/12/17.
+ */
+public class ActiveMQHealthCheck extends HealthCheck {
 
-  /**
-   * set cache obj for given expiry period
-   *
-   * @param expiry in seconds
-   */
-  void put(String cacheKey, Object obj, int expiry);
-
-  boolean putIfNotExist(String cacheKey, Object obj);
-
-  boolean putMultiIfNotExists(String cacheKey1, Object obj1, String cacheKey2, Object obj2);
-
-  boolean delete(String key);
-
-  void deleteByPattern(String key);
-
-  boolean deleteMulti(String... keys);
-
-  void close();
-
-  boolean check();
+  @Override
+  protected Result check() throws Exception {
+    ITaskService taskService = AppFactory.get().getTaskService();
+    try {
+      taskService.schedule(ITaskService.QUEUE_DEFAULT, "/metrics/ping", Collections.emptyMap(),
+          ITaskService.METHOD_GET);
+      return Result.healthy();
+    } catch (TaskSchedulingException e) {
+      return Result.unhealthy("Can't ping activemq");
+    }
+  }
 }
