@@ -23,14 +23,13 @@
 
 package com.logistimo.services.cache;
 
+import com.logistimo.logger.XLog;
 import com.logistimo.services.utils.ConfigUtil;
 
 import net.rubyeye.xmemcached.MemcachedClient;
 import net.rubyeye.xmemcached.MemcachedClientBuilder;
 import net.rubyeye.xmemcached.XMemcachedClientBuilder;
 import net.rubyeye.xmemcached.utils.AddrUtil;
-
-import com.logistimo.logger.XLog;
 
 import java.io.IOException;
 
@@ -143,5 +142,10 @@ public class MemcachedService implements MemcacheService {
         }
       }
     }
+  }
+
+  @Override
+  public boolean check() {
+    return true;
   }
 }

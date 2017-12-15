@@ -21,35 +21,24 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.services.cache;
+package com.logistimo.api.listeners;
 
-public interface MemcacheService {
 
-  Object get(String cacheKey);
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.servlets.MetricsServlet;
+import com.logistimo.utils.MetricsUtil;
 
-  /**
-   * Set cache object, default expiry 24 hours
-   */
-  void put(String cacheKey, Object obj);
 
-  /**
-   * set cache obj for given expiry period
-   *
-   * @param expiry in seconds
-   */
-  void put(String cacheKey, Object obj, int expiry);
+/**
+ * Created by charan on 15/12/17.
+ */
+public class LogiMetricsServletContextListener extends MetricsServlet.ContextListener {
 
-  boolean putIfNotExist(String cacheKey, Object obj);
+  public static final MetricRegistry METRIC_REGISTRY = MetricsUtil.getRegistry();
 
-  boolean putMultiIfNotExists(String cacheKey1, Object obj1, String cacheKey2, Object obj2);
+  @Override
+  protected MetricRegistry getMetricRegistry() {
+    return METRIC_REGISTRY;
+  }
 
-  boolean delete(String key);
-
-  void deleteByPattern(String key);
-
-  boolean deleteMulti(String... keys);
-
-  void close();
-
-  boolean check();
 }

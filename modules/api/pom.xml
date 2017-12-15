@@ -181,6 +181,16 @@
             <version>2.2.10</version>
         </dependency>
         <dependency>
+            <groupId>io.dropwizard.metrics</groupId>
+            <artifactId>metrics-servlets</artifactId>
+            <version>3.2.5</version>
+        </dependency>
+        <dependency>
+            <groupId>io.dropwizard.metrics</groupId>
+            <artifactId>metrics-healthchecks</artifactId>
+            <version>3.2.5</version>
+        </dependency>
+        <dependency>
             <groupId>com.netflix.hystrix</groupId>
             <artifactId>hystrix-metrics-event-stream</artifactId>
             <version>1.5.10</version>

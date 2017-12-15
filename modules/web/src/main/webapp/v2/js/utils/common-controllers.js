@@ -486,11 +486,14 @@ function LocationController($scope, configService) {
         if (checkNotNullEmpty($scope.s)) {
             $scope.setState($scope.s);
         }
+        if (checkNotNullEmpty($scope.d)) {
+            $scope.setDistrict($scope.d);
+        }
     }).catch(function error(msg) {
         $scope.showErrorMsg(msg);
     }).finally(function(){
         $scope.hideLoading();
-    });;
+    });
     $scope.clearAll = function () {
         $scope.states = {};
         $scope.districts = {};
@@ -563,6 +566,7 @@ function LocationController($scope, configService) {
         }
     };
     $scope.setDistrict = function (d) {
+        $scope.d = d;
         if (checkNotNullEmpty(d) && checkNotNullEmpty($scope.districts[d])) {
             $scope.taluks = $scope.districts[d].taluks;
             $scope.taluks = sortObject($scope.taluks);
