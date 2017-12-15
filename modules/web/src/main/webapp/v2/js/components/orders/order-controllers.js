@@ -1439,19 +1439,20 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
             function getOptimalOrderQuantity(material) {
                 var opoq = -1;
                 var stock = material.stk;
-                if(checkNotNull($scope.validBatchStock)) {
-                    stock = $scope.validBatchStock;
+                if(checkNotNull(material.validBatchStock)) {
+                    stock = material.validBatchStock;
                 }
                 if (material.im == 'sq') {
                     opoq = material.eoq;
                 } else {
-                    if (material.max > 0 && stock >= material.max) {
+                    if (material.max > 0 && (stock + material.tstk) >= material.max) {
                         opoq = 0;
                     } else if (material.max > 0) {
                         opoq = material.max - stock - material.tstk;
+                        opoq.toFixed(1);
                     }
                 }
-                return opoq;
+                return opoq.toFixed(0);
             }
         function setValidBatchQuantity(eid, material) {
             $scope.showLoading();
@@ -1465,7 +1466,7 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                         }
                     }
                 }
-                $scope.validBatchStock = totalStock;
+                material.validBatchStock = totalStock;
                 addMaterial(material);
             }).catch(function error(msg) {
                 $scope.showErrorMsg(msg);
@@ -2520,8 +2521,8 @@ ordControllers.controller('order.MaterialController', ['$scope', 'invService',
         $scope.recommendedQuantity = function(name){
             var opoq = -1;
             var stock = name.stk;
-            if(checkNotNull($scope.validBatchStock)) {
-                stock = $scope.validBatchStock;
+            if(checkNotNull(name.validBatchStock)) {
+                stock = name.validBatchStock;
             }
             if(name.im == 'sq'){
                 opoq = name.eoq;
@@ -2548,7 +2549,7 @@ ordControllers.controller('order.MaterialController', ['$scope', 'invService',
                         }
                     }
                 }
-                $scope.validBatchStock = totalStock;
+                inv.validBatchStock = totalStock;
                 updateMaterial(material);
             }).catch(function error(msg) {
                 $scope.showErrorMsg(msg);

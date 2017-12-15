@@ -240,7 +240,7 @@ public interface OrderManagementService extends Service {
       PersistenceManager pm) throws ServiceException;
 
 
-  BigDecimal computeRecommendedOrderQuantity(IInvntry invntry);
+  BigDecimal computeRecommendedOrderQuantity(IInvntry invntry) throws ServiceException;
 
   List<IDemandItem> getDemandItemByStatus(Long kioskId, Long materialId, Collection<String> status)
       throws ServiceException;

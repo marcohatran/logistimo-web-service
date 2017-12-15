@@ -29,9 +29,13 @@ package com.logistimo.inventory.entity;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.InventoryConfig;
 import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.events.entity.IEvent;
+import com.logistimo.inventory.service.InventoryManagementService;
 import com.logistimo.logger.XLog;
+import com.logistimo.pagination.Results;
 import com.logistimo.services.Resources;
+import com.logistimo.services.ServiceException;
 import com.logistimo.tags.TagUtil;
 import com.logistimo.tags.entity.ITag;
 import com.logistimo.tags.entity.Tag;
@@ -879,5 +883,18 @@ public class Invntry implements IInvntry {
   @Override
   public void setUpdatedOn(Date updatedOn) {
     this.uOn = updatedOn;
+  }
+
+  @Override
+  public BigDecimal getExpiredStock() throws ServiceException {
+    Results<IInvntryBatch>
+        results =
+        StaticApplicationContext.getApplicationContext().getBean(InventoryManagementService.class)
+            .getBatches(mId, kId, null);
+    if(results.getResults() != null && results.getResults().size() > 0){
+      return results.getResults().stream().filter(IInvntryBatch::isExpired)
+          .map(IInvntryBatch::getQuantity).reduce(BigDecimal::add).get();
+    }
+    return BigDecimal.ZERO;
   }
 }

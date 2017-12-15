@@ -271,9 +271,9 @@ public class OrderAutomationAction {
   }
 
   protected Optional<ITransaction> getTransaction(IInvntry invntry) {
-    BigDecimal roq = orderManagementService.computeRecommendedOrderQuantity(invntry);
-    if(BigUtil.greaterThanZero(roq)) {
-      try {
+    try {
+      BigDecimal roq = orderManagementService.computeRecommendedOrderQuantity(invntry);
+      if (BigUtil.greaterThanZero(roq)) {
         ITransaction t = JDOUtils.createInstance(ITransaction.class);
         t.setKioskId(invntry.getKioskId());
         t.setMaterialId(invntry.getMaterialId());
@@ -288,11 +288,12 @@ public class OrderAutomationAction {
         Optional<IKioskLink> vendor = chooseVendor(invntry.getKioskId(), invntry.getMaterialId());
         t.setLinkedKioskId(vendor.isPresent() ? vendor.get().getLinkedKioskId() : null);
         return Optional.of(t);
-      } catch (ServiceException e) {
-        LOGGER.warn("Error choosing vendor for inventory {0}:{1}", invntry.getKioskId(),
-            invntry.getMaterialId(), e);
       }
+    } catch (ServiceException e) {
+      LOGGER.warn("Error choosing vendor for inventory {0}:{1}", invntry.getKioskId(),
+          invntry.getMaterialId(), e);
     }
+
     return Optional.empty();
   }
 

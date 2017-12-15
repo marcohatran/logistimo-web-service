@@ -127,6 +127,7 @@ angular.module('logistimo.storyboard.eventMapWidget', [])
                 var eventId = $scope.widget.conf.threshold, countDistribution =[];
                 eventSummaryService.getEventSummariesDistribution($scope.currentDomain,$scope.curUser,eventId,true).then(function(data) {
                     $scope.dashboardView = {};
+                    $scope.dashboardView.mPTy = $scope.dcntry;
                     if (checkNotNullEmpty($scope.ddist)) {
                         $scope.mapType = $scope.ddist;
                         $scope.dashboardView.mTy = $scope.ddist.replace(' ', '');

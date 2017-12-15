@@ -135,7 +135,7 @@ function getPercent(data, wt) {
     return null;
 };
 
-function constructMapData(event, init, scope, INVENTORY, $sce, mapRange, mapColors, invPieOrder, $timeout, isloc) {
+function constructMapData(event, init, scope, INVENTORY, $sce, mapRange, mapColors, invPieOrder, $timeout, isloc ,barColor) {
     if (scope.mapEvent == event && !init) {
         return;
     }
@@ -162,6 +162,10 @@ function constructMapData(event, init, scope, INVENTORY, $sce, mapRange, mapColo
         subData = scope.dashboardView.inv["n"];
         scope.caption = "Inventory";
         scope.subCaption = "<b>Stock:</b> Normal";
+    } else if (event == 'avlbl') {
+        subData = scope.dashboardView.inv["avlbl"];
+        scope.caption = "Inventory";
+        scope.subCaption = "<b>Stock:</b> Available";
     } else if (event == 'a') {
         subData = scope.dashboardView.ent["a"];
         scope.caption = "Activity";
@@ -367,13 +371,13 @@ function constructMapData(event, init, scope, INVENTORY, $sce, mapRange, mapColo
     }
     scope.mapEvent = event;
     if (checkNotNullEmpty(subData) && checkNotNullEmpty(allSubData)) {
-        constructBarData(subData, allSubData, event, addLink, level, scope, mapRange, mapColors);
+        constructBarData(subData, allSubData, event, addLink, level, scope, mapRange, mapColors,barColor);
     }
     if (!isloc &&
-        (scope.mapEvent == 'n' || scope.mapEvent == '200' || scope.mapEvent == '201' || scope.mapEvent == '202') &&
+        (scope.mapEvent == 'n' || scope.mapEvent == '200' || scope.mapEvent == '201' || scope.mapEvent == '202' || scope.mapEvent == 'avlbl') &&
         checkNotNullEmpty(subData) && checkNotNullEmpty(allSubData)) {
         constructMatBarData(subData['MAT_BD'].materials, allSubData['MAT_BD'].materials, event, scope, mapRange,
-            mapColors, INVENTORY);
+            mapColors, INVENTORY,barColor);
     } else {
         scope.matBarData = undefined;
     }
@@ -389,7 +393,7 @@ function constructMapData(event, init, scope, INVENTORY, $sce, mapRange, mapColo
     }
 };
 
-function constructBarData(data, allData, event, addLink, level, scope, mapRange, mapColors) {
+function constructBarData(data, allData, event, addLink, level, scope, mapRange, mapColors,barColor) {
     var bData = [];
     for (var f in allData) {
         if (checkNotNullEmpty(f) && f != "MAT_BD") {
@@ -412,7 +416,7 @@ function constructBarData(data, allData, event, addLink, level, scope, mapRange,
                 var bd = bData[i];
                 if (n == bd.label) {
                     bd.value = per;
-                    bd.displayValue = bd.value + "%";
+                    bd.displayValue = bd.value.toFixed(2) + "%";
                     if (event == '200' || event == '201' || event == '202' || event == 'n') {
                         bd.toolText = value + " of " + den + (level == undefined ? " materials" : " inventory items");
                     } else if (event == 'a' || event == 'i') {
@@ -420,13 +424,13 @@ function constructBarData(data, allData, event, addLink, level, scope, mapRange,
                     } else if (event == 'tu' || event == 'tl' || event == 'th' || event == 'tn') {
                         bd.toolText = value + " of " + den + " assets";
                     }
-                    for (var r = 1; r < mapRange[event].length; r++) {
+                    /*for (var r = 1; r < mapRange[event].length; r++) {
                         if (per <= mapRange[event][r]) {
                             bd.color = mapColors[event][r - 1];
                             break;
                         }
-                    }
-                    bd.color=mapColors[event][3];
+                    }*/
+                    bd.color=barColor;
                     if (addLink) {
                         var filter = bd.label;
                         if (scope.dashboardView.mLev == "state") {
@@ -491,7 +495,7 @@ function constructBarData(data, allData, event, addLink, level, scope, mapRange,
     scope.barData = topTen(bData);
 }
 
-function constructMatBarData(data, allData, event, scope, mapRange, mapColors, INVENTORY) {
+function constructMatBarData(data, allData, event, scope, mapRange, mapColors, INVENTORY, barColor) {
     var bData = [];
     for (var f in allData) {
         if (checkNotNullEmpty(f)) {
@@ -526,13 +530,13 @@ function constructMatBarData(data, allData, event, scope, mapRange, mapColors, I
                     bd.value = Math.round(value / den * 1000) / 10;
                     bd.displayValue = bd.value + "%";
                     bd.toolText = value + " of " + den + " " + scope.resourceBundle['kiosks.lower'];
-                    for (var r = 1; r < mapRange[event].length; r++) {
+                    /*for (var r = 1; r < mapRange[event].length; r++) {
                         if (bd.value <= mapRange[event][r]) {
                             bd.color = mapColors[event][r - 1];
                             break;
                         }
-                    }
-                    bd.color=mapColors[event][3];
+                    }*/
+                    bd.color=barColor;
                     // generate link to stock views page
                     var search;
                     if (checkNotNullEmpty(data[n].mid) && (event == INVENTORY.stock.STOCKOUT ||
@@ -812,4 +816,33 @@ function roundNumber(value, digits, forceRound) {
         }
     }
     return value || 0;
+}
+
+function getAvailable(data){
+    var availableObject = {};
+    Object.keys(data).forEach(function(eventType){
+        if(eventType != "200"){
+            Object.keys(data[eventType]).forEach(function(location){
+                if(location != "MAT_BD"){
+                    if(checkNotNullEmpty(availableObject[location])) {
+                        availableObject[location].value +=  data[eventType][location].value;
+                        availableObject[location].per +=  data[eventType][location].per;
+                    }else{
+                        availableObject[location] = angular.copy(data[eventType][location]);
+                    }
+                }else{
+                    if(checkNotNullEmpty(data[eventType][location])) {
+                        if(checkNotNullEmpty(availableObject[location])) {
+                            Object.keys(data[eventType][location].materials).forEach(function (material) {
+                                availableObject[location].materials[material].value +=  data[eventType][location].materials[material].value;
+                            });
+                        }else{
+                            availableObject[location] = angular.copy(data[eventType][location]);
+                        }
+                    }
+                }
+            });
+        }
+    });
+    return availableObject;
 }

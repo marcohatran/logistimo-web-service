@@ -83,10 +83,15 @@ authControllers.controller('LoginController', ['$scope', 'iAuthService', 'authSe
                             }
                         }
                     }
-                }).catch(function err(msg){
+                }).catch(function err(response){
                     $scope.invalid = true;
                     $scope.showMsg = true;
-                    $scope.errorMsg = $scope.resourceBundle['login.unable'] + " " + msg ? msg.data ? msg.data.message : "" : "";
+                    if(response && response.status == 403){
+                        $scope.denied = true;
+                        $scope.errorMsg = $scope.resourceBundle['login.unable'] + " " + $scope.resourceBundle['user.access.denied'];
+                    }else {
+                        $scope.errorMsg = $scope.resourceBundle['login.unable'] + " " + response ? response.data ? response.data.message : "" : "";
+                    }
                 }).finally(function (){
                     $scope.lLoading = false;
                 });

@@ -47,7 +47,7 @@ angular.module('logistimo.storyboard.topMaterialsByInventoryStatusWidget', [])
     ['$scope', '$timeout', 'dashboardService', 'domainCfgService', 'INVENTORY', '$sce',
         function ($scope, $timeout, dashboardService, domainCfgService, INVENTORY, $sce) {
             var filter = angular.copy($scope.widget.conf);
-            var invPieColors, invPieOrder, mapColors, mapRange;
+            var invPieColors, invPieOrder, mapColors, mapRange,barColor;
             var fDate = (checkNotNullEmpty(filter.date) ? formatDate(filter.date) : undefined);
             $scope.showChart = false;
             $scope.wloading = true;
@@ -55,8 +55,10 @@ angular.module('logistimo.storyboard.topMaterialsByInventoryStatusWidget', [])
             domainCfgService.getSystemDashboardConfig().then(function (data) {
                 var domainConfig = angular.fromJson(data.data);
                 mapColors = domainConfig.mc;
-                $scope.mc = mapColors;
                 mapRange = domainConfig.mr;
+                mapRange['avlbl'] = mapRange['n'];
+                mapColors['avlbl'] = mapColors['n'];
+                $scope.mc = mapColors;
                 $scope.mr = mapRange;
                 invPieColors = domainConfig.pie.ic;
                 invPieOrder = domainConfig.pie.io;
@@ -89,12 +91,19 @@ angular.module('logistimo.storyboard.topMaterialsByInventoryStatusWidget', [])
                     $scope.topTenMatType = topTenMatType;
                     if ($scope.topTenMatType == 0) {
                         $scope.mapEvent = invPieOrder[0];
+                        barColor = invPieColors[3];
                     } else if ($scope.topTenMatType == 1) {
                         $scope.mapEvent = invPieOrder[1];
+                        barColor = invPieColors[0];
                     } else if ($scope.topTenMatType == 2) {
                         $scope.mapEvent = invPieOrder[2];
-                    } else{
+                        barColor = invPieColors[1];
+                    } else if($scope.topTenMatType == 3){
                         $scope.mapEvent = invPieOrder[3];
+                        barColor = invPieColors[2];
+                    }else{
+                        $scope.mapEvent = 'avlbl';
+                        barColor = invPieColors[3];
                     }
                 } else {
                     $scope.topTenMatType = "0";
@@ -115,6 +124,9 @@ angular.module('logistimo.storyboard.topMaterialsByInventoryStatusWidget', [])
                     undefined, constructModel(filter.entityTag), fDate, constructModel(filter.exEntityTag),
                     false).then(function (data) {
                         $scope.dashboardView = data.data;
+                        if($scope.mapEvent == 'avlbl') {
+                            $scope.dashboardView.inv['avlbl'] = getAvailable($scope.dashboardView.inv);
+                        }
                         var linkText;
                         if ($scope.dashboardView.mLev == "country") {
                             linkText = $scope.locationMapping.data[$scope.dashboardView.mTy].name;
@@ -127,7 +139,7 @@ angular.module('logistimo.storyboard.topMaterialsByInventoryStatusWidget', [])
                             $scope.mapData = [];
                         }
                         constructMapData($scope.mapEvent, true, $scope, INVENTORY, $sce, mapRange, mapColors,
-                            invPieOrder, $timeout);
+                            invPieOrder, $timeout,false, barColor);
                         setWidgetData();
                     }).catch(function error(msg) {
                         showError(msg, $scope);
