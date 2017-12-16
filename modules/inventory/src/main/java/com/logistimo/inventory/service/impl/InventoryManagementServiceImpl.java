@@ -1370,7 +1370,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
             errors.add(trans);
             continue; // continue with the next object in the list
           }
-          if (isAtdNotValid(domainId, trans.getAtd())) {
+          if (trans.getAtd() != null && isAtdNotValid(domainId, trans.getAtd())) {
             trans.setMessage(backendMessages.getString("error.adt"));
             trans.setMsgCode("M006");
             errors.add(trans);
@@ -1567,7 +1567,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
   }
 
   private boolean isAtdNotValid(Long domainId, Date actualTransactionDate) {
-    return actualTransactionDate == null || isAtdNotValid(
+    return isAtdNotValid(
         DomainConfig.getInstance(domainId).getTimezone(), actualTransactionDate,
         Calendar.getInstance().getTime());
   }
