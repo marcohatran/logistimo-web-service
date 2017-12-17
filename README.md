@@ -23,6 +23,7 @@ Pre-requisites
 * MariaDB 10.1.23
 * Redis 
 * ActiveMQ 5.14
+* Zookeeper
 * Hadoop CDH5
 * Tomcat 7
 * [Fusion charts](http://www.fusioncharts.com/) - This application utilises Fusion charts heavily for all charting needs. 
