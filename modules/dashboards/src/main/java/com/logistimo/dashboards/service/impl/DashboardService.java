@@ -533,7 +533,6 @@ public class DashboardService implements IDashboardService {
   private String getAllSessionQuery(Long domainId, Map<String, String> filters) {
     StringBuilder query = new StringBuilder();
     query.append("SELECT COUNT(1) COUNT");
-    StringBuilder groupBy = new StringBuilder(" GROUP BY NAME");
     StringBuilder where = new StringBuilder();
     where.append(" WHERE K.KIOSKID = KD.KIOSKID_OID AND KD.DOMAIN_ID = ").append(domainId);
 
@@ -574,14 +573,13 @@ public class DashboardService implements IDashboardService {
       query.append(", STATE NAME");
     }
     query.append(" FROM KIOSK K, KIOSK_DOMAINS KD")
-        .append(where).append(groupBy);
+        .append(where).append(" GROUP BY NAME");
     return query.toString();
   }
 
   private String getSessionQuery(Long domainId, Map<String, String> filters) {
     StringBuilder query = new StringBuilder();
     query.append("SELECT COUNT(1) CNT,DF,ATD,SUM(TCNT) TCNT,GROUP_BY_NAME");
-    StringBuilder groupBy = new StringBuilder(" GROUP BY ATD, DF, GROUP_BY_NAME");
     String groupNameClause;
     StringBuilder where = new StringBuilder();
     where.append(" WHERE ATD BETWEEN DATE_SUB('").append(filters.get("atd"))
@@ -638,7 +636,7 @@ public class DashboardService implements IDashboardService {
         .append(filters.get("diff"))
         .append(
             "' HOUR_SECOND)), ATD) END AS DF,ATD, COUNT(1) TCNT FROM TRANSACTION T, KIOSK_DOMAINS KD, KIOSK K")
-        .append(where).append(") A").append(groupBy);
+        .append(where).append(") A").append(" GROUP BY ATD, DF, GROUP_BY_NAME");
     return query.toString();
   }
 
