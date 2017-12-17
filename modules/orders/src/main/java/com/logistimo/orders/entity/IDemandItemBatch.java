@@ -23,7 +23,6 @@
 
 package com.logistimo.orders.entity;
 
-import com.logistimo.domains.IOverlappedDomain;
 import com.logistimo.inventory.entity.ITransaction;
 
 import java.math.BigDecimal;
@@ -33,7 +32,7 @@ import java.util.Map;
 /**
  * Created by charan on 20/05/15.
  */
-public interface IDemandItemBatch extends IOverlappedDomain {
+public interface IDemandItemBatch {
   String BATCH_ID = "bid";
   String QUANTITY = "quantity";
   String EXPIRY = "expiry";

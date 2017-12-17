@@ -847,7 +847,6 @@ public class MnlTransactionUtil {
                                                                   String type) {
     ITransaction trans = JDOUtils.createInstance(ITransaction.class);
     trans.setDomainId(mnlTrans.getDomainId()); // Mandatory for a transaction
-    trans.addDomainIds(mnlTrans.getDomainIds());
     trans.setSourceUserId(mnlTrans.getUserId()); // Mandatory for a transaction
     trans.setKioskId(mnlTrans.getKioskId());
     trans.setMaterialId(mnlTrans.getMaterialId());

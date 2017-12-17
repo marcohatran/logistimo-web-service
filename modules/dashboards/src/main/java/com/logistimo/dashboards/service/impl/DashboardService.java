@@ -533,7 +533,7 @@ public class DashboardService implements IDashboardService {
   private String getAllSessionQuery(Long domainId, Map<String, String> filters) {
     StringBuilder query = new StringBuilder();
     query.append("SELECT COUNT(1) COUNT");
-    StringBuilder groupBy = new StringBuilder(" GROUP BY ");
+    StringBuilder groupBy = new StringBuilder(" GROUP BY NAME");
     StringBuilder where = new StringBuilder();
     where.append(" WHERE K.KIOSKID = KD.KIOSKID_OID AND KD.DOMAIN_ID = ").append(domainId);
 
@@ -565,16 +565,13 @@ public class DashboardService implements IDashboardService {
         where.append("' AND DISTRICT = '").append(filters.get("district")).append("'");
       }
       query.append(", NAME");
-      groupBy.append(" NAME");
     } else if (filters.get("state") != null) {
       where.append(" AND COUNTRY = '").append(filters.get("country"))
           .append("' AND STATE = '").append(filters.get("state")).append("'");
-      query.append(", DISTRICT");
-      groupBy.append(" DISTRICT ");
+      query.append(", DISTRICT NAME");
     } else {
       where.append(" AND COUNTRY = '").append(filters.get("country")).append("'");
-      query.append(", STATE");
-      groupBy.append(" STATE");
+      query.append(", STATE NAME");
     }
     query.append(" FROM KIOSK K, KIOSK_DOMAINS KD")
         .append(where).append(groupBy);
@@ -583,12 +580,13 @@ public class DashboardService implements IDashboardService {
 
   private String getSessionQuery(Long domainId, Map<String, String> filters) {
     StringBuilder query = new StringBuilder();
-    query.append("SELECT COUNT(1) CNT,DF,ATD,SUM(TCNT) TCNT");
-    StringBuilder groupBy = new StringBuilder(" GROUP BY ATD, DF");
+    query.append("SELECT COUNT(1) CNT,DF,ATD,SUM(TCNT) TCNT,GROUP_BY_NAME");
+    StringBuilder groupBy = new StringBuilder(" GROUP BY ATD, DF, GROUP_BY_NAME");
+    String groupNameClause;
     StringBuilder where = new StringBuilder();
     where.append(" WHERE ATD BETWEEN DATE_SUB('").append(filters.get("atd"))
         .append("', INTERVAL 6 DAY) AND '")
-        .append(filters.get("atd")).append("' AND T.`KEY` = TD.KEY_OID AND TD.DOMAIN_ID = ")
+        .append(filters.get("atd")).append("' AND T.KID = K.KIOSKID AND T.KID = KD.KIOSKID_OID AND KD.DOMAIN_ID = ")
         .append(domainId);
 
     if (filters.get("type") != null) {
@@ -611,37 +609,35 @@ public class DashboardService implements IDashboardService {
     }
 
     if (filters.get("district") != null) {
-      where.append(" AND EXISTS( SELECT 1 FROM KIOSK WHERE KIOSKID = KID AND COUNTRY = '")
+      where.append(" AND K.COUNTRY = '")
           .append(filters.get("country"))
-          .append("' AND STATE = '").append(filters.get("state"));
+          .append("' AND K.STATE = '").append(filters.get("state"));
       if ("No District".equals(filters.get("district"))) {
-        where.append("' AND (DISTRICT IS NULL OR DISTRICT = ''))");
+        where.append("' AND (K.DISTRICT IS NULL OR K.DISTRICT = ''))");
       } else {
-        where.append("' AND DISTRICT = '").append(filters.get("district")).append("')");
+        where.append("' AND K.DISTRICT = '").append(filters.get("district")).append("'");
       }
-      query.append(",(SELECT NAME FROM KIOSK WHERE KIOSKID = KID) NAME");
-      groupBy.append(", (SELECT NAME FROM KIOSK WHERE KIOSKID = KID)");
+      groupNameClause = "K.NAME AS GROUP_BY_NAME";
     } else if (filters.get("state") != null) {
-      where.append(" AND EXISTS( SELECT 1 FROM KIOSK WHERE KIOSKID = KID AND COUNTRY = '")
+      where.append(" AND K.COUNTRY = '")
           .append(filters.get("country"))
-          .append("' AND STATE = '").append(filters.get("state")).append("')");
-      query.append(",(SELECT DISTRICT FROM KIOSK WHERE KIOSKID = KID) DISTRICT");
-      groupBy.append(", (SELECT DISTRICT FROM KIOSK WHERE KIOSKID = KID)");
+          .append("' AND K.STATE = '").append(filters.get("state")).append("'");
+      groupNameClause = "K.DISTRICT AS GROUP_BY_NAME";
     } else {
-      where.append(" AND EXISTS( SELECT 1 FROM KIOSK WHERE KIOSKID = KID AND COUNTRY = '")
-          .append(filters.get("country")).append("')");
-      query.append(",(SELECT STATE FROM KIOSK WHERE KIOSKID = KID) STATE");
-      groupBy.append(", (SELECT STATE FROM KIOSK WHERE KIOSKID = KID)");
+      where.append(" AND K.COUNTRY = '")
+          .append(filters.get("country")).append("'");
+      groupNameClause = "K.STATE AS GROUP_BY_NAME";
     }
     where.append(" GROUP BY CONCAT(KID, DF, ATD)");
-    query.append(" FROM (SELECT KID,CASE WHEN DATEDIFF(DATE(DATE_ADD(T, INTERVAL '")
+    query.append(" FROM (SELECT KID,").append(groupNameClause)
+        .append(",CASE WHEN DATEDIFF(DATE(DATE_ADD(T, INTERVAL '")
         .append(filters.get("diff"))
         .append("' HOUR_SECOND)), ATD) <= 0 THEN '1' WHEN DATEDIFF(DATE(DATE_ADD(T, INTERVAL '")
         .append(filters.get("diff"))
         .append("' HOUR_SECOND)), ATD) >= 3 THEN '3' ELSE DATEDIFF(DATE(DATE_ADD(T, INTERVAL '")
         .append(filters.get("diff"))
         .append(
-            "' HOUR_SECOND)), ATD) END AS DF,ATD, COUNT(1) TCNT FROM TRANSACTION T, TRANSACTION_DOMAINS TD")
+            "' HOUR_SECOND)), ATD) END AS DF,ATD, COUNT(1) TCNT FROM TRANSACTION T, KIOSK_DOMAINS KD, KIOSK K")
         .append(where).append(") A").append(groupBy);
     return query.toString();
   }

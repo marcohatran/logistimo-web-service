@@ -1021,10 +1021,6 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
             trans.setTimestamp(now);
           }
 
-          // Update the transaction with the domainId, and the parent domains (superdomains)
-          DomainsUtil
-              .addToDomain(trans, domainId, null);
-
           // Update trans. type
           trans.setType(transType);
           // Get material
@@ -1294,8 +1290,6 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
           userId = trans.getSourceUserId();
         }
 
-        // Add the transaction to this domain and parent domains
-        DomainsUtil.addToDomain(trans, domainId, null);
         trans.setType(transType);
 
         try {
@@ -1437,7 +1431,7 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
     di.setKioskId(trans.getKioskId());
     di.setMaterialId(trans.getMaterialId());
     di.setDomainId(trans.getDomainId());
-    di.addDomainIds(trans.getDomainIds());
+    di.addDomainIds(inv.getDomainIds());
 
     BigDecimal q = trans.getQuantity();
     di.setQuantity(q);

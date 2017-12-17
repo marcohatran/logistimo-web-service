@@ -587,15 +587,7 @@ public class DashboardController {
       ResultSet sessionRes = ds.getMainDashboardResults(domainId, filters, "sdb_session");
       ResultSet allSessionRes = ds.getMainDashboardResults(domainId, filters, "sdb_all_session");
 
-      String colFilter;
-      if ("district".equals(level) || districtFilter != null) {
-        colFilter = "NAME";
-      } else if ("state".equals(level) || stateFilter != null) {
-        colFilter = "DISTRICT";
-      } else {
-        colFilter = "STATE";
-      }
-      model = builder.getSessionData(allSessionRes, sessionRes, colFilter, pdf.parse(date));
+      model = builder.getSessionData(allSessionRes, sessionRes, pdf.parse(date));
       if (StringUtils.isBlank(filter) && stateFilter == null) {
         model.mTy = dc.getCountry();
         model.mLev = "country";
