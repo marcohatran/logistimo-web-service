@@ -611,7 +611,7 @@ public class DashboardService implements IDashboardService {
           .append(filters.get("country"))
           .append("' AND K.STATE = '").append(filters.get("state"));
       if ("No District".equals(filters.get("district"))) {
-        where.append("' AND (K.DISTRICT IS NULL OR K.DISTRICT = ''))");
+        where.append("' AND (K.DISTRICT IS NULL OR K.DISTRICT = '')");
       } else {
         where.append("' AND K.DISTRICT = '").append(filters.get("district")).append("'");
       }
