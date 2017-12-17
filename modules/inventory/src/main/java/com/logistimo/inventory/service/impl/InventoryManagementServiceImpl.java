@@ -1456,8 +1456,6 @@ public class InventoryManagementServiceImpl extends ServiceImpl
           if (tags != null && !tags.isEmpty()) {
             trans.setTgs(tagDao.getTagsByNames(tags, ITag.KIOSK_TAG), TagUtil.TYPE_ENTITY);
           }
-          // Include the transaction in all the parent domains (superdomains)
-          DomainsUtil.addToDomain(trans, in.getDomainId(), null);
           /**** Transactional object creation - trans, inv. update, inv. log creation ***/
           List objects = null;
           try {
@@ -1790,8 +1788,6 @@ public class InventoryManagementServiceImpl extends ServiceImpl
             updateList.add(inv);
             updateStockEventLog(oldStock, inv, pm, IInvntryEvntLog.SOURCE_STOCKUPDATE, domainId);
           }
-          // Remove this transaction from all parents (superdomains)
-          DomainsUtil.removeFromDomain(t, domainId, null);
         } catch (Exception e) {
           xLogger.warn("{0} when undoing transaction of type {1} for {2}-{3} in domain {4}: {5}",
               e.getClass().getName(), type, kioskId, materialId, t.getDomainId(), e.getMessage());
@@ -2048,8 +2044,6 @@ public class InventoryManagementServiceImpl extends ServiceImpl
       // Check if the linked kiosk is of a different domain than the source kiosk (superdomain)
       if (!linkedKiosk.getDomainId().equals(receipt.getDomainId())) {
         receipt.setDomainId(linkedKiosk.getDomainId());
-        receipt.setDomainIds(null);
-        DomainsUtil.addToDomain(receipt, linkedKiosk.getDomainId(), null);
       }
     } catch (Exception e) {
       xLogger.warn("{0} when getting linked kiosk {1} during transfer: {2}", e.getClass().getName(),
@@ -2253,7 +2247,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
     invBatch.setBatchManufacturedDate(trans.getBatchManufacturedDate());
     invBatch.setBatchManufacturer(trans.getBatchManufacturer());
     invBatch.setDomainId(trans.getDomainId());
-    invBatch.addDomainIds(trans.getDomainIds());
+    invBatch.addDomainIds(inv.getDomainIds());
     invBatch.setKioskId(trans.getKioskId(), inv.getKioskName());
     invBatch.setMaterialId(trans.getMaterialId());
     invntryDao.setInvBatchKey(invBatch);

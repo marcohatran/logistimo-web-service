@@ -26,36 +26,22 @@
  */
 package com.logistimo.inventory.entity;
 
-import com.logistimo.config.models.EventsConfig;
-import com.logistimo.entities.entity.IKiosk;
-import com.logistimo.entities.entity.Kiosk;
-import com.logistimo.materials.entity.Material;
+import com.logistimo.config.models.DomainConfig;
+import com.logistimo.constants.SourceConstants;
+import com.logistimo.logger.XLog;
+import com.logistimo.services.Resources;
 import com.logistimo.tags.TagUtil;
 import com.logistimo.tags.entity.ITag;
 import com.logistimo.tags.entity.Tag;
-import com.logistimo.users.entity.UserAccount;
-
-import com.logistimo.config.models.DomainConfig;
-import com.logistimo.services.Resources;
-
-import com.logistimo.services.impl.PMF;
 import com.logistimo.utils.BigUtil;
-import com.logistimo.constants.Constants;
-import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.NumberUtil;
-import com.logistimo.constants.SourceConstants;
-import com.logistimo.logger.XLog;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.ResourceBundle;
 
-import javax.jdo.PersistenceManager;
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Element;
 import javax.jdo.annotations.Extension;
@@ -83,10 +69,7 @@ public class Transaction implements ITransaction {
   @PrimaryKey
   @Persistent(valueStrategy = IdGeneratorStrategy.IDENTITY)
   private Long key;
-  @Persistent(table = "TRANSACTION_DOMAINS", defaultFetchGroup = "true")
-  @Join
-  @Element(column = "DOMAIN_ID")
-  private List<Long> dId;
+
   @Persistent
   private Long sdId; // source domain ID
   @Persistent
@@ -386,40 +369,6 @@ public class Transaction implements ITransaction {
 
   public void setDomainId(Long domainId) {
     sdId = domainId;
-  }
-
-  public List<Long> getDomainIds() {
-    return dId;
-  }
-
-  public void setDomainIds(List<Long> domainIds) {
-    this.dId = domainIds;
-  }
-
-  public void addDomainIds(List<Long> domainIds) {
-    if (domainIds == null || domainIds.isEmpty()) {
-      return;
-    }
-    if (this.dId == null) {
-      this.dId = new ArrayList<>();
-    }
-    for (Long dId : domainIds) {
-      if (!this.dId.contains(dId)) {
-        this.dId.add(dId);
-      }
-    }
-  }
-
-  public void removeDomainId(Long domainId) {
-    if (this.dId != null && !this.dId.isEmpty()) {
-      this.dId.remove(domainId);
-    }
-  }
-
-  public void removeDomainIds(List<Long> domainIds) {
-    if (this.dId != null && !this.dId.isEmpty()) {
-      this.dId.removeAll(domainIds);
-    }
   }
 
   @Override

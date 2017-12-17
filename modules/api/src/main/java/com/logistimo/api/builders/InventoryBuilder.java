@@ -110,7 +110,7 @@ public class InventoryBuilder {
                                                     Long domainId, Long entityId)
       throws ServiceException {
     List<InventoryModel> newInventory = null;
-    if (results != null) {
+    if (results != null && results.getResults() != null) {
       List inventory = results.getResults();
       newInventory = new ArrayList<>(inventory.size());
       Map<Long, String> domainNames = new HashMap<>(1);

@@ -453,7 +453,7 @@ public class DashboardBuilder {
   }
 
   public SessionDashboardModel getSessionData(ResultSet allSessionRes, ResultSet sessionRes,
-                                              String colFilter, Date atd)
+                                              Date atd)
       throws SQLException, ParseException {
     SessionDashboardModel model = new SessionDashboardModel();
     model.data = new HashMap<>();
@@ -472,13 +472,13 @@ public class DashboardBuilder {
         dd.put(df.format(calendar.getTime()), def);
         calendar.add(Calendar.DAY_OF_MONTH, 1);
       }
-      model.data.put(allSessionRes.getString(colFilter), dd);
+      model.data.put(allSessionRes.getString(2), dd);
     }
     SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATE_FORMAT_CSV);
     SimpleDateFormat fdf = new SimpleDateFormat(Constants.DATE_FORMAT_CUSTOMREPORT);
 
     while (sessionRes.next()) {
-      String dim = sessionRes.getString(colFilter);
+      String dim = sessionRes.getString(Constants.GROUP_BY_NAME);
       String dt = fdf.format(sdf.parse(sessionRes.getString("ATD")));
       List<DashboardChartModel> data = model.data.get(dim).get(dt);
       DashboardChartModel d = data.get(sessionRes.getInt("DF") - 1);
