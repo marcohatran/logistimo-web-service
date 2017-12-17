@@ -1448,18 +1448,16 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
     di.setMessage(trans.getMessage());
     di.setUserId(trans.getSourceUserId());
     // Set tags
-    if (inv != null) {
-      di.setTgs(tagDao.getTagsByNames(inv.getTags(TagUtil.TYPE_ENTITY), ITag.KIOSK_TAG),
-          TagUtil.TYPE_ENTITY);
-      di.setTgs(tagDao.getTagsByNames(inv.getTags(TagUtil.TYPE_MATERIAL), ITag.MATERIAL_TAG),
-          TagUtil.TYPE_MATERIAL);
-    }
+    di.setTgs(tagDao.getTagsByNames(inv.getTags(TagUtil.TYPE_ENTITY), ITag.KIOSK_TAG),
+        TagUtil.TYPE_ENTITY);
+    di.setTgs(tagDao.getTagsByNames(inv.getTags(TagUtil.TYPE_MATERIAL), ITag.MATERIAL_TAG),
+        TagUtil.TYPE_MATERIAL);
     if (trans.hasBatch()) {
       di.addBatch(JDOUtils.createInstance(IDemandItemBatch.class).init(trans));
     }
     // Add price metadata
     BigDecimal p = m.getRetailerPrice();
-    if (inv != null && BigUtil.notEqualsZero(inv.getRetailerPrice())) {
+    if (BigUtil.notEqualsZero(inv.getRetailerPrice())) {
       p = inv.getRetailerPrice();
     }
     if (BigUtil.greaterThanZero(p)) {
@@ -1467,10 +1465,8 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
       di.setCurrency(m.getCurrency());
     }
     // If inventory available, check/set tax rate
-    if (inv != null) {
-      di.setTax(inv.getTax());
-      di.setTimeToOrder(ims.getDurationFromRP(inv.getKey()));
-    }
+    di.setTax(inv.getTax());
+    di.setTimeToOrder(ims.getDurationFromRP(inv.getKey()));
     di.setShippedDiscrepancyReason(trans.getEditOrderQtyReason());
 
     return di;
