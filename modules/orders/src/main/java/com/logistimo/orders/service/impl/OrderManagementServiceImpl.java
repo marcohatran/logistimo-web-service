@@ -1020,7 +1020,7 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
           if (trans.getTimestamp() == null) {
             trans.setTimestamp(now);
           }
-
+          trans.setDomainId(domainId);
           // Update trans. type
           trans.setType(transType);
           // Get material

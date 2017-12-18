@@ -1456,6 +1456,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
           if (tags != null && !tags.isEmpty()) {
             trans.setTgs(tagDao.getTagsByNames(tags, ITag.KIOSK_TAG), TagUtil.TYPE_ENTITY);
           }
+          trans.setDomainId(in.getDomainId());
           /**** Transactional object creation - trans, inv. update, inv. log creation ***/
           List objects = null;
           try {

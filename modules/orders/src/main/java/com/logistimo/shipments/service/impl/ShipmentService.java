@@ -781,6 +781,7 @@ public class ShipmentService extends ServiceImpl implements IShipmentService {
         t.setReason(shipment.getReason());
         t.setKioskId(shipment.getServicingKiosk());
         t.setLinkedKioskId(shipment.getKioskId());
+        t.setDomainId(shipment.getLinkedDomainId());
         if (inv != null) {
           inv.setInTransitStock(inv.getInTransitStock().add(shipmentItem.getQuantity()));
           inTransitList.add(inv);
@@ -790,6 +791,7 @@ public class ShipmentService extends ServiceImpl implements IShipmentService {
         t.setQuantity(shipmentItem.getQuantity());
         t.setReason(shipment.getCancelledDiscrepancyReasons());
         t.setKioskId(shipment.getServicingKiosk());
+        t.setDomainId(shipment.getLinkedDomainId());
         if (ShipmentStatus.SHIPPED.equals(prevStatus) && inv != null) {
           BigDecimal inTransStock = inv.getInTransitStock().subtract(shipmentItem.getQuantity());
           inv.setInTransitStock(
@@ -802,6 +804,7 @@ public class ShipmentService extends ServiceImpl implements IShipmentService {
         t.setKioskId(shipmentItem.getKioskId());
         t.setLinkedKioskId(shipment.getServicingKiosk());
         t.setReason(shipmentItem.getFulfilledDiscrepancyReason());
+        t.setDomainId(shipment.getKioskDomainId());
         //Reduce quantity (instead of fulfilled quantity) , since in-transit is updated based on issue.
         BigDecimal inTransStock = inv.getInTransitStock().subtract(shipmentItem.getQuantity());
         inv.setInTransitStock(
