@@ -25,10 +25,10 @@
 <div ng-controller="BulletinBoardRenderController" class="widget">
     <div class="bulletin-board-title col-sm-12">
         <div class="col-sm-6 pull-left" style="top:5px;">
-            <div class="col-sm-12 noleftpad" ng-show="{{isDef(title)}}">
+            <div class="col-sm-12 noleftpad">
                 <span class="bulletin-heading" style="margin: 0px;">{{title | uppercase}}</span>
             </div>
-            <div class="col-sm-12 noleftpad" ng-show="{{isDef(subTitle)}}">
+            <div class="col-sm-12 noleftpad">
                 <span class="bulletin-subheading" style="margin:0px;">{{subTitle | uppercase}}</span>
             </div>
         </div>
@@ -47,4 +47,5 @@
         </div>
     </div>
     <div ng-include="'/angular-storyboards/src/bulletinboard/templates/view-bulletin-board.html'" ng-init="showTitle = false"></div>
+
 </div>
