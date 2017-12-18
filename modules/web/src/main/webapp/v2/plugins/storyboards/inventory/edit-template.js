@@ -20,6 +20,17 @@ logistimoApp.controller('templateController', ['$scope', '$timeout', 'domainCfgS
         query.callback(rData);
     };
 
+    $scope.primaryMetric = [];
+    $scope.primaryMetric.push({name: "Zero stock", value: "0"});
+    $scope.primaryMetric.push({name: "< Min", value: "1"});
+    $scope.primaryMetric.push({name: "> Max", value: "2"});
+
+    $scope.secondaryMetric = [];
+    $scope.secondaryMetric.push({name: "100% of the time", value: "0"});
+    $scope.secondaryMetric.push({name: ">= 90% of the time", value: "1"});
+    $scope.secondaryMetric.push({name: ">= 80% of the time", value: "2"});
+    $scope.secondaryMetric.push({name: ">= 70% of the time", value: "3"});
+
     $scope.filterStatus = function (query) {
 
         var sData = {results: []};

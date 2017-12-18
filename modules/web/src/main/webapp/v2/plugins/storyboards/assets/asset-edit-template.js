@@ -20,6 +20,13 @@ logistimoApp.controller('assetTemplateController', ['$scope', '$timeout', 'domai
         query.callback(rData);
     };
 
+    $scope.secondaryMetric = [];
+    $scope.secondaryMetric.push({name: ">= 1 hour", value: "0"});
+    $scope.secondaryMetric.push({name: ">= 2 hours", value: "1"});
+    $scope.secondaryMetric.push({name: ">= 3 hours", value: "2"});
+    $scope.secondaryMetric.push({name: ">= 5 hours", value: "3"});
+    $scope.secondaryMetric.push({name: ">= 10 hours", value: "4"});
+
     $scope.filterStatus = function (query) {
 
         var sData = {results: []};
@@ -47,6 +54,22 @@ logistimoApp.controller('assetTemplateController', ['$scope', '$timeout', 'domai
             }
         }
     });
+
+    $scope.$watch('widget.conf.excursionType', function (newVal, oldVal) {
+        if(oldVal != newVal) {
+            $scope.widget.conf.exposureTime = "";
+            $scope.secondaryMetric = [];
+            if(newVal == "0") {
+                $scope.secondaryMetric.push({name: ">= 1 hour", value: "0"});
+                $scope.secondaryMetric.push({name: ">= 5 hours", value: "3"});
+                $scope.secondaryMetric.push({name: ">= 10 hours", value: "4"});
+            } else if(newVal == "1") {
+                $scope.secondaryMetric.push({name: ">= 1 hour", value: "0"});
+                $scope.secondaryMetric.push({name: ">= 2 hours", value: "1"});
+                $scope.secondaryMetric.push({name: ">= 3 hours", value: "2"});
+            }
+        }
+    })
 
 }
 ]);

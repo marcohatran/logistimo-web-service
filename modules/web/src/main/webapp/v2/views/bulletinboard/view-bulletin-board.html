@@ -25,10 +25,10 @@
 <div ng-controller="BulletinBoardRenderController" class="widget">
     <div class="bulletin-board-title col-sm-12">
         <div class="col-sm-6 pull-left" style="top:5px;">
-            <div class="col-sm-12 noleftpad">
+            <div class="col-sm-12 noleftpad" ng-show="{{isDef(title)}}">
                 <span class="bulletin-heading" style="margin: 0px;">{{title | uppercase}}</span>
             </div>
-            <div class="col-sm-12 noleftpad">
+            <div class="col-sm-12 noleftpad" ng-show="{{isDef(subTitle)}}">
                 <span class="bulletin-subheading" style="margin:0px;">{{subTitle | uppercase}}</span>
             </div>
         </div>
@@ -42,7 +42,7 @@
                 </div>
             </div>
             <div ng-if="headerImage == undefined || headerImage == ''">
-                <img class="mainlogo pull-right pt5" src="images/evin_logo.png">
+                <img class="mainlogo pull-right pt5" src="images/acquia_marina_logo.png">
             </div>
         </div>
     </div>

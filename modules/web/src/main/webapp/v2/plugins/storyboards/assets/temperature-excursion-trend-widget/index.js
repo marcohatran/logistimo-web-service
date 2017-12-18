@@ -46,6 +46,10 @@ angular.module('logistimo.storyboard.temperatureExcursion', [])
                     type: 'excursionType'
                 },
                 {
+                    nameKey: 'exposure.time',
+                    type: 'exposureTime'
+                },
+                {
                     nameKey: 'period',
                     type: 'periodicity'
                 }
@@ -142,6 +146,32 @@ angular.module('logistimo.storyboard.temperatureExcursion', [])
             $scope.cType = "mscombi2d";
         }
 
+        function constructExcursionSeriesNumber(excursionType, exposureTime) {
+            var seriesNumber;
+            if(excursionType == "0") {
+                seriesNumber = 26;
+                $scope.chartTitle = "High excursions - % of assets with exposure (>= 1 hour)";
+                if(exposureTime == "3") {
+                    seriesNumber = 29;
+                    $scope.chartTitle = "High excursions - % of assets with exposure (>= 5 hours)";
+                } else if(exposureTime == "4") {
+                    seriesNumber = 32;
+                    $scope.chartTitle = "High excursions - % of assets with exposure (>= 10 hours)";
+                }
+            } else if(excursionType == "1") {
+                seriesNumber = 27;
+                $scope.chartTitle = "Low excursions - % of assets with exposure (>= 1 hours)";
+                if(exposureTime == "1") {
+                    seriesNumber = 30;
+                    $scope.chartTitle = "Low excursions - % of assets with exposure (>= 2 hours)";
+                } else if(exposureTime == "2") {
+                    seriesNumber = 33;
+                    $scope.chartTitle = "Low excursions - % of assets with exposure (>= 3 hours)";
+                }
+            }
+            return seriesNumber;
+        }
+
         function setChartData(localData, chartData, level) {
             if (!localData) {
                 $scope.loading = true;
@@ -161,19 +191,23 @@ angular.module('logistimo.storyboard.temperatureExcursion', [])
                 }
             }
             var cData = [];
-            if($scope.widget.conf.excursionType == "1") {
+            if($scope.widget.conf.excursionType == "0") {
+                var seriesNumber = constructExcursionSeriesNumber($scope.widget.conf.excursionType, $scope.widget.conf.exposureTime);
                 for (var i = 0; i < compareFields.length; i++) {
-                    cData[i] = getReportFCSeries(chartData, 27, compareFields[i], "area", linkDisabled, 0);
+                    cData[i] = getReportFCSeries(chartData, seriesNumber, compareFields[i], "area", linkDisabled, 0);
                 }
-                $scope.chartTitle = "Low excursions - % of assets with exposure (>= 1 hour)";
+                $scope.cOptions.plotFillColor ="#d9534f";
+            } else if($scope.widget.conf.excursionType == "1") {
+                var seriesNumber = constructExcursionSeriesNumber($scope.widget.conf.excursionType, $scope.widget.conf.exposureTime);
+                for (var i = 0; i < compareFields.length; i++) {
+                    cData[i] = getReportFCSeries(chartData, seriesNumber, compareFields[i], "area", linkDisabled, 0);
+                }
                 $scope.cOptions.plotFillColor ="#00c0ef";
-
             } else {
                 for (var i = 0; i < compareFields.length; i++) {
-                    cData[i] = getReportFCSeries(chartData, 26, compareFields[i], "area", linkDisabled, 0);
+                    cData[i] = getReportFCSeries(chartData, 13, compareFields[i], "area", linkDisabled, 0);
                 }
-                $scope.chartTitle = "High excursions - % of assets with exposure (>= 1 hour)";
-                $scope.cOptions.plotFillColor ="#d9534f";
+                $scope.cOptions.plotFillColor ="#1aaf5d";
             }
             $scope.chartSubTitle = getReportCaption($scope.filter);
             if ($scope.filter.periodicity != "m" && cLabel.length > 10) {

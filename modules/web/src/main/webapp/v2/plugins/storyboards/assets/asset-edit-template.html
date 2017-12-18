@@ -10,32 +10,21 @@
                        placeholder="Title">
             </div>
         </div>
-        <div class="col-sm-5" ng-if="filter.type=='entity'">
-            <entity-select ent-model="widget.conf.entity" classes="form-control"
-                           place-holder="{{resourceBundle.filterby}} {{resourceBundle['kiosks.lower']}}">
-            </entity-select>
-        </div>
-        <div class="col-sm-5" ng-if="filter.type=='material'">
-            <material-drop-down ng-model="widget.conf.material" mtag="widget.conf.material"></material-drop-down>
-        </div>
+
         <div class="col-sm-5" ng-if="filter.type=='entityTag'">
             <tag-select tags-model="widget.conf.entityTag" place-holder="All"
                         type="'entity'"
                         force-no-udf="'true'">
             </tag-select>
         </div>
+
         <div class="col-sm-5" ng-if="filter.type=='exEntityTag'">
             <tag-select tags-model="widget.conf.exEntityTag" place-holder="All"
                         type="'entity'"
                         force-no-udf="'true'">
             </tag-select>
         </div>
-        <div class="col-sm-5" ng-if="filter.type=='materialTag'">
-            <tag-select tags-model="widget.conf.materialTag" place-holder="All"
-                        type="'material'"
-                        force-no-udf="'true'">
-            </tag-select>
-        </div>
+
         <div class="col-sm-5" ng-if="filter.type=='date'">
             <date-picker date-model="widget.conf.date" min-date="createdOn" place-holder="Date"
                          max-date="today"></date-picker>
@@ -52,43 +41,6 @@
                 </select>
             </div>
         </div>
-
-        <div class="col-sm-5" ng-if="filter.type=='widType'">
-            <div class="col-sm-12 noLRpad btn-group">
-                <select ng-model="widget.conf.widType" class="form-control">
-                    <option value="0">Stock Available</option>
-                    <option value="1">Stock Out</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="col-sm-5" ng-if="filter.type=='mapType'">
-            <div class="col-sm-12 noLRpad btn-group">
-                <select ng-model="widget.conf.mapType" class="form-control">
-                    <option value="0">Stock Available</option>
-                    <option value="1">Stock Out</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="col-sm-5" ng-if="filter.type=='topTenLocType'">
-            <div class="col-sm-12 noLRpad btn-group">
-                <select ng-model="widget.conf.topTenLocType" class="form-control">
-                    <option value="0">Stock Available</option>
-                    <option value="1">Stock Out</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="col-sm-5" ng-if="filter.type=='topTenMatType'">
-            <div class="col-sm-12 noLRpad btn-group">
-                <select ng-model="widget.conf.topTenMatType" class="form-control">
-                    <option value="0">Stock Available</option>
-                    <option value="1">Stock Out</option>
-                </select>
-            </div>
-        </div>
-
 
         <div class="col-sm-5" ng-if="filter.type=='assetType'">
             <lg-uib-select multiple="'multiple" query="filterAssets(q)" ui-model="widget.conf.asset"
@@ -136,6 +88,15 @@
                 <select ng-model="widget.conf.excursionType" class="form-control">
                     <option value="0">High</option>
                     <option value="1">Low</option>
+                    <option value="2">Normal</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="col-sm-5" ng-if="filter.type == 'exposureTime'">
+            <div class="col-sm-12 noLRpad">
+                <select ng-model="widget.conf.exposureTime" class="form-control">
+                    <option ng-repeat="metric in secondaryMetric" value="{{metric.value}}">{{metric.name}}</option>
                 </select>
             </div>
         </div>

@@ -1193,6 +1193,6 @@ reports.order.select.entity.or.ordertype.message=La variable d'entité ou d'enti
 reports.approval.average.salesapproval.responsetime.days=Délai moyen de réception de l'approbation des ventes (jours)
 reports.approval.average.salesapproval.responsetime.days=Délai moyen de réception des approbations (jours)
 reports.approval.average.transferapproval.responsetime.days=Temps moyen de réponse d'approbation de transfert (jours)
-
-
+availability.time=Temps de disponibilité
+exposure.time=Temps d'exposition
 

@@ -1196,4 +1196,5 @@ reports.order.select.entity.or.ordertype.message=Either entity or entity tag and
 reports.approval.average.salesapproval.responsetime.days=Average sales approval response time (days)
 reports.approval.average.purchaseapproval.responsetime.days=Average purchase approval response time (days)
 reports.approval.average.transferapproval.responsetime.days=Average transfer approval response time (days)
-
+availability.time=Availability time
+exposure.time=Exposure time

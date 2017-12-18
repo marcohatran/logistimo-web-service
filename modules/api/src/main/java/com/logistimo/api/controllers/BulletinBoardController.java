@@ -41,7 +41,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.List;
@@ -124,10 +123,10 @@ public class BulletinBoardController {
     }
   }
 
-  @RequestMapping(value = "/delete", method = RequestMethod.POST)
+  @RequestMapping(value = "/delete/{bulletinBoardId}", method = RequestMethod.GET)
   public
   @ResponseBody
-  String delete(@RequestParam Long bulletinBoardId, HttpServletRequest request) {
+  String delete(@PathVariable Long bulletinBoardId, HttpServletRequest request) {
     String name;
     SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
     Locale locale = sUser.getLocale();
