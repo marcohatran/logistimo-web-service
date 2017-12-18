@@ -108,7 +108,7 @@ public class ShipmentController {
       if (model.changeStatus != null) {
         model.status = ShipmentStatus.getStatus(model.changeStatus);
       }
-      String shipId = ss.createShipment(model, SourceConstants.WEB);
+      String shipId = ss.createShipment(model, SourceConstants.WEB, false);
       ShipmentMaterialsModel m = new ShipmentMaterialsModel();
       if (StringUtils.isNotBlank(shipId)) {
         m.msg = "Shipment created successfully.";

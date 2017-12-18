@@ -89,5 +89,9 @@ public class MobileShipmentModel {
    * Comments
    */
   public MobileConversationModel cmnts;
+  /**
+   * Reference id
+   */
+  public String rid;
 
 }

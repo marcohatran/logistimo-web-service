@@ -34,10 +34,10 @@
                     {{ORDER.statusTxt[nStatus]}}
                 </div>
             </div>
-            <div class="row mb10" ng-show="nStatus == 'cm' && (order.oty != 2 || (order.oty == 2 && order.atv))">
+            <div class="row mb10" ng-show="nStatus == 'cm'">
                 <label class="col-sm-4 control-label" ng-class="{'required':oCfg.ridm && order.oty == 2}"> {{resourceBundle['referenceid']}}</label>
                 <div class="col-sm-7">
-                    <input class="form-control" ng-model="newStatus.rid" max-length="100" ng-init="newStatus.rid = order.oty == 2 ? order.rid : ''">
+                    <input class="form-control" ng-model="newStatus.rid" max-length="100" ng-init="newStatus.rid = order.rid">
                 </div>
             </div>
             <div class="form-group" ng-show="nStatus == 'cn'">
@@ -75,11 +75,11 @@
                 <label class="col-sm-4 control-label" ng-class="{'required':oCfg.eadm && order.oty == 2}"> {{resourceBundle['eda']}}</label>
 
                 <div class="col-sm-7">
-                    <date-picker date-model="newStatus.efd" ng-init="newStatus.efd = order.oty == 2 && order.isEfdValid ? dates.efd : ''" min-date="today"></date-picker>
+                    <date-picker date-model="newStatus.efd" ng-init="newStatus.efd = order.isEfdValid ? dates.efd : ''" min-date="today"></date-picker>
                 </div>
             </div>
             <div class="row mb10" ng-show="nStatus == 'cm'">
-                <div ng-show="isDef(order.efd) && order.oty == 2 && order.isEfdValid">
+                <div ng-show="isDef(order.efd) && order.isEfdValid">
                     <label class="col-sm-4 control-label cbx"></label>
                     <div class="col-sm-7">
                         <input type="checkbox" ng-model="isEadValid" ng-init="isEadValid = false" ng-click = "!isEadValid" class="cbx">
@@ -112,7 +112,7 @@
         <div class="col-sm-12">
             <div class="pull-right">
                 <button class="btn btn-sm btn-primary"
-                        ng-click="saveStatus()" ng-disabled="statusLoading || (isDef(order.efd) && !isEadValid)">
+                        ng-click="saveStatus()" ng-disabled="statusLoading || (isDef(order.efd) && order.isEfdValid && !isEadValid)">
                     {{resourceBundle['save']}}
                 </button>
                 <button class="btn btn-sm btn-default"

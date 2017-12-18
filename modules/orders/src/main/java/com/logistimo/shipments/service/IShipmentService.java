@@ -52,8 +52,7 @@ import javax.jdo.PersistenceManager;
  */
 public interface IShipmentService extends Service {
 
-  String createShipment(ShipmentModel model, int source)
-      throws ServiceException, ValidationException;
+  String createShipment(ShipmentModel model, int source, Boolean updateOrderFields) throws ServiceException, ValidationException;
 
   ResponseModel updateShipmentStatus(String shipmentId, ShipmentStatus status, String message,
                                      String userId, String reason, int source) throws LogiException;

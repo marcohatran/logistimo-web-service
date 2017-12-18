@@ -33,7 +33,7 @@
                     <span class="suborder h5" ng-show="shipment.oty == 1">({{resourceBundle['order']}}: <a ng-href="#/orders/detail/{{shipment.orderId}}/" target="_blank">{{shipment.orderId}}</a>)</span>
                     <span class="suborder h5" ng-show="shipment.oty == 0">({{resourceBundle['transactions.transfer.upper']}}: <a ng-href="#/orders/transfers/detail/{{shipment.orderId}}/">{{shipment.orderId}}</a>)</span>
                     <div>
-                        <span class="litetext lnk" ng-show="isUndef(shipment.rid) && !edit.rid && shipment.statusCode == 'op'" ng-class="{'required': oCfg.ridm && shipment.statusCode == 'op' && shipment.oty == 2}">{{"Add " + resourceBundle['referenceid'] }} </span>
+                        <span class="litetext lnk" ng-show="isUndef(shipment.rid) && !edit.rid && shipment.statusCode == 'op'" ng-class="{'required': oCfg.ridm && shipment.statusCode == 'op'}">{{"Add " + resourceBundle['referenceid'] }} </span>
                         <span class="litetext lnk" ng-show="isDef(shipment.rid) && !edit.rid">{{resourceBundle['referenceid'] + ": " + shipment.rid }} </span>
                         <div class="lnk">
                             <div ng-show="edit.rid" style="width: 30%">

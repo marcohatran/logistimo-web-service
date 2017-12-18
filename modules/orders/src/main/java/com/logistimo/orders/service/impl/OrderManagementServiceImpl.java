@@ -478,7 +478,7 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
 
   @Override
   public String shipNow(IOrder order, String transporter, String trackingId, String reason,
-      Date expectedFulfilmentDate, String userId, String ps, int source, String referenceId)
+      Date expectedFulfilmentDate, String userId, String ps, int source, String referenceId, Boolean updateOrderFields)
       throws ServiceException, ObjectNotFoundException, ValidationException {
     IShipmentService
         shipmentService =
@@ -518,7 +518,7 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
         model.items.add(shipmentItemModel);
       }
     }
-    return shipmentService.createShipment(model, source);
+    return shipmentService.createShipment(model, source, updateOrderFields);
   }
 
   private IMessage addMessageToOrder(Long orderId, Long domainId, String message,
@@ -1665,10 +1665,14 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
     return avgLeadTime;
   }
 
+  @Override
+  public void updateOrderMetadata(Long orderId, String updatedBy, PersistenceManager pm) {
+    updateOrderMetadata(orderId, updatedBy, pm, null, null, false);
+  }
 
   @Override
   public void updateOrderMetadata(Long orderId, String updatedBy,
-      PersistenceManager persistenceManager) {
+      PersistenceManager persistenceManager, String referenceId, Date expectedArrivalDate, Boolean updateOrderFields) {
     Boolean isLocalPersistentManager = Boolean.FALSE;
     if (persistenceManager == null) {
       persistenceManager = PMF.get().getPersistenceManager();
@@ -1677,6 +1681,10 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
     IOrder order = JDOUtils.getObjectById(IOrder.class, orderId, persistenceManager);
     order.setUpdatedBy(updatedBy);
     order.setUpdatedOn(new Date());
+    if(updateOrderFields) {
+      order.setReferenceID(referenceId);
+      order.setExpectedArrivalDate(expectedArrivalDate);
+    }
 
     if (isLocalPersistentManager) {
       persistenceManager.close();

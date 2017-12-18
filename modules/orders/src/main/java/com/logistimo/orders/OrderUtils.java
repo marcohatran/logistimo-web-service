@@ -139,7 +139,7 @@ public class OrderUtils {
         uo.message = backendMessages.getString("error.unabletofulfilorder");
       }
     } else if (IOrder.COMPLETED.equals(newStatus)) {
-      oms.shipNow(o, null, null, null, null, updatingUserId, null, source, null);
+      oms.shipNow(o, null, null, null, null, updatingUserId, null, source, null, true);
       if (message != null && !message.isEmpty()) {
         oms.addMessageToOrder(orderId, message, updatingUserId);
       }
@@ -219,7 +219,7 @@ public class OrderUtils {
     if (uosReq.hasReferenceId()) {
       oms.updateOrderReferenceId(uosReq.tid, uosReq.rid, uosReq.uid, null);
     }
-    oms.shipNow(o, uosReq.trsp, uosReq.trid, null, uosReq.ead, uosReq.uid, uosReq.pksz, source, uosReq.rid);
+    oms.shipNow(o, uosReq.trsp, uosReq.trid, null, uosReq.ead, uosReq.uid, uosReq.pksz, source, uosReq.rid, true);
     if (uosReq.ms != null && !uosReq.ms.isEmpty()) {
       oms.addMessageToOrder(uosReq.tid, uosReq.ms, uosReq.uid);
     }

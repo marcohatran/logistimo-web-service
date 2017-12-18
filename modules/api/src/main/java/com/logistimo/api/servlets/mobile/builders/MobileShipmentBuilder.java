@@ -155,6 +155,7 @@ public class MobileShipmentBuilder {
       msm.rsnps = s.getReason();
       msm.rsnco = s.getCancelledDiscrepancyReasons();
       msm.pksz = s.getPackageSize();
+      msm.rid = s.getReferenceId();
       if (s.getExpectedArrivalDate() != null) {
         msm.ead =
             LocalDateUtil.format(s.getExpectedArrivalDate(), locale, timezone);

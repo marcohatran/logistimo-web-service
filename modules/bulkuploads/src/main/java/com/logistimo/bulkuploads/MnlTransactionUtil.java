@@ -164,7 +164,7 @@ public class MnlTransactionUtil {
           // Mark order as shipped
           String
               shipmentId =
-              oms.shipNow(order, null, null, null, null, userId, null, SourceConstants.UPLOAD, null);
+              oms.shipNow(order, null, null, null, null, userId, null, SourceConstants.UPLOAD, null, false);
           shipmentService.fulfillShipment(shipmentId, userId, SourceConstants.UPLOAD);
         }
       } else {
