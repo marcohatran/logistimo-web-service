@@ -107,7 +107,7 @@ public class ContentProvider {
     String name = null;
     try {
       if ("domain".equalsIgnoreCase(objectType)) {
-        name = domainsService.getDomain(Long.valueOf(objectId)).getNormalizedName();
+        name = domainsService.getDomain(Long.valueOf(objectId)).getName();
       } else if ("store".equalsIgnoreCase(objectType)) {
         name = entitiesService.getKiosk(Long.valueOf(objectId)).getName();
       }

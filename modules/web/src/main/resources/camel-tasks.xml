@@ -40,6 +40,7 @@
         <!--error handler and redelivery processing-->
         <onException>
             <exception>java.lang.Exception</exception>
+            <log message="${exception.stacktrace}"/>
             <redeliveryPolicy maximumRedeliveries="{{task.queue.max.retry}}" redeliveryDelay="{{task.queue.waittime}}"/>
         </onException>
 
@@ -215,6 +216,7 @@
     <bean id="collabEventsRedeliveryPolicyConfig" class="org.apache.camel.processor.RedeliveryPolicy">
         <property name="maximumRedeliveries" value="3"/>
         <property name="redeliveryDelay" value="5000"/>
+        <property name="logStackTrace" value="true"/>
     </bean>
 
 
