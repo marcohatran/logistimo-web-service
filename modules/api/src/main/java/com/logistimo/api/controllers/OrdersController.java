@@ -309,11 +309,6 @@ public class OrdersController {
             LocalDateUtil.format(o.getUpdatedOn(), user.getLocale(), user.getTimezone()));
       }
       if (IOrder.COMPLETED.equals(status.st) || IOrder.FULFILLED.equals(status.st)) {
-        SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATE_FORMAT_CSV);
-        Date efd = null;
-        if (StringUtils.isNotEmpty(status.efd)) {
-          efd = sdf.parse(status.efd);
-        }
 
         IShipmentService shipmentService = Services.getService(ShipmentService.class,
             user.getLocale());
@@ -334,7 +329,7 @@ public class OrdersController {
         if (!o.isStatus(IOrder.COMPLETED) && !o.isStatus(IOrder.CANCELLED) && !o
             .isStatus(IOrder.FULFILLED)) {
           shipmentId =
-              oms.shipNow(o, status.t, status.tid, status.cdrsn, efd, user.getUsername(),
+              oms.shipNow(o, status.t, status.tid, status.cdrsn, status.efd, user.getUsername(),
                   status.ps, SourceConstants.WEB, status.rid);
         } else if (o.isStatus(IOrder.COMPLETED)) {
           if (shipments == null || shipments.size() > 1) {
