@@ -40,8 +40,8 @@
         <!--error handler and redelivery processing-->
         <onException>
             <exception>java.lang.Exception</exception>
-            <log message="${exception.stacktrace}"/>
             <redeliveryPolicy maximumRedeliveries="{{task.queue.max.retry}}" redeliveryDelay="{{task.queue.waittime}}"/>
+            <log message="${exception.stacktrace}"/>
         </onException>
 
 
