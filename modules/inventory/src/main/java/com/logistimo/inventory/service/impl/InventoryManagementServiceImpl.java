@@ -2625,12 +2625,12 @@ public class InventoryManagementServiceImpl extends ServiceImpl
     return getDailyConsumptionRate(inv, consumptionRate, frequency);
   }
 
-  public BigDecimal getDailyConsumptionRate(IInvntry inv, int crType, String frequency) {
+  public BigDecimal getDailyConsumptionRate(IInvntry inv, int crType, String manualCRFrequency) {
     if (InventoryConfig.CR_MANUAL == crType) {
       BigDecimal crMnl = inv.getConsumptionRateManual();
-      if (Constants.FREQ_WEEKLY.equals(frequency)) {
+      if (Constants.FREQ_WEEKLY.equals(manualCRFrequency)) {
         crMnl = crMnl.divide(Constants.WEEKLY_COMPUTATION, 3, BigDecimal.ROUND_HALF_UP);
-      } else if (Constants.FREQ_MONTHLY.equals(frequency)) {
+      } else if (Constants.FREQ_MONTHLY.equals(manualCRFrequency)) {
         crMnl = crMnl.divide(Constants.MONTHLY_COMPUTATION, 3, BigDecimal.ROUND_HALF_UP);
       }
       return crMnl;
