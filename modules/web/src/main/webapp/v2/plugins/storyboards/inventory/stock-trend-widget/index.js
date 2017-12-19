@@ -42,6 +42,14 @@ angular.module('logistimo.storyboard.stockTrend', [])
                     type: 'trendType'
                 },
                 {
+                    nameKey: 'abnormality.type',
+                    type: 'abnormalityType'
+                },
+                {
+                    nameKey: 'availability.time',
+                    type: 'stockAvailabilityTime'
+                },
+                {
                     nameKey: 'filter.material.tag',
                     type: 'materialTag'
                 },
@@ -168,6 +176,71 @@ angular.module('logistimo.storyboard.stockTrend', [])
             $scope.cType = "mscombi2d";
         }
 
+        function constructStockAvailabilitySeries(availabilityTime) {
+            var series = 2;
+            $scope.chartTitle = "% of inventory items available (100% of the time)";
+            if(availabilityTime == "1") {
+                series = 6;
+                $scope.chartTitle = "% of inventory items available (>= 90% of the time)";
+            } else if(availabilityTime == "2") {
+                series = 10;
+                $scope.chartTitle = "% of inventory items available (>= 80% of the time)";
+            } else if(availabilityTime == "3") {
+                series = 14;
+                $scope.chartTitle = "% of inventory items available (>= 70% of the time)";
+            }
+            return series;
+        }
+
+        function constructAbnormalStockSeries(type, availabilityTime) {
+            var series = 13;
+            $scope.chartTitle = "Zero stock - % of inventory items with this abnormality (100% of the time)";
+            $scope.cOptions.plotFillColor ="#d9534f";
+            if(type == "0") {
+                if(availabilityTime == "1") {
+                    series = 14;
+                    $scope.chartTitle = "Zero stock - % of inventory items with this abnormality (>= 90% of the time)";
+                } else if(availabilityTime == "2") {
+                    series = 15;
+                    $scope.chartTitle = "Zero stock - % of inventory items with this abnormality (>= 80% of the time)";
+                } else if(availabilityTime == "3") {
+                    series = 16;
+                    $scope.chartTitle = "Zero stock - % of inventory items with this abnormality (>= 70% of the time)";
+                }
+            } else if(type == "1") {
+                $scope.cOptions.plotFillColor ="#fad42e";
+                if(availabilityTime == "0") {
+                    series = 17;
+                    $scope.chartTitle = "< Min - % of inventory items with this abnormality (100% of the time)";
+                } else if(availabilityTime == "1") {
+                    series = 18;
+                    $scope.chartTitle = "< Min - % of inventory items with this abnormality (>= 90% of the time)";
+                } else if(availabilityTime == "2") {
+                    series = 19;
+                    $scope.chartTitle = "< Min - % of inventory items with this abnormality (>= 80% of the time)";
+                } else if(availabilityTime == "3") {
+                    series = 20;
+                    $scope.chartTitle = "< Min - % of inventory items with this abnormality (>= 70% of the time)";
+                }
+            } else if(type == "2") {
+                $scope.cOptions.plotFillColor ="#00c0ef";
+                if(availabilityTime == "0") {
+                    series = 21;
+                    $scope.chartTitle = "> Max - % of inventory items with this abnormality (100% of the time)";
+                } else if(availabilityTime == "1") {
+                    series = 22;
+                    $scope.chartTitle = "> Max - % of inventory items with this abnormality (>= 90% of the time)";
+                } else if(availabilityTime == "2") {
+                    series = 23;
+                    $scope.chartTitle = "> Max - % of inventory items with this abnormality (>= 80% of the time)";
+                } else if(availabilityTime == "3") {
+                    series = 24;
+                    $scope.chartTitle = "> Max - % of inventory items with this abnormality (>= 70% of the time)";
+                }
+            }
+            return series;
+        }
+
         function setChartData(localData, chartData, level) {
             if (!localData) {
                 $scope.loading = true;
@@ -190,20 +263,18 @@ angular.module('logistimo.storyboard.stockTrend', [])
             }
             var cData = [];
             if($scope.filter.type == "isa") {
+                var seriesNumber = constructStockAvailabilitySeries($scope.widget.conf.availableTime);
                 for (var i = 0; i < compareFields.length; i++) {
-                    cData[i] = getReportFCSeries(chartData, 2, compareFields[i],
+                    cData[i] = getReportFCSeries(chartData, seriesNumber, compareFields[i],
                         "area", linkDisabled, filterSeriesIndex, "1");
                 }
-                $scope.chartTitle = "% of inventory items available (100% availability)";
                 $scope.cOptions.plotFillColor ="#1aaf5d";
-
             } else if ($scope.filter.type == "ias") {
+                var seriesNumber = constructAbnormalStockSeries($scope.widget.conf.abnormalityType, $scope.widget.conf.availableTime);
                 for (var i = 0; i < compareFields.length; i++) {
-                    cData[i] = getReportFCSeries(chartData, 13, compareFields[i],
+                    cData[i] = getReportFCSeries(chartData, seriesNumber, compareFields[i],
                         "area", linkDisabled, filterSeriesIndex, "1");
                 }
-                $scope.chartTitle = "Zero stock - % of inventory items with this abnormality (100% of the time)";
-                $scope.cOptions.plotFillColor ="#d9534f";
             }
             $scope.chartSubTitle  = getReportCaption($scope.filter);
             if ($scope.filter.periodicity != "m" && cLabel.length > 10) {

@@ -27,17 +27,14 @@ import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.utils.BigUtil;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import javax.jdo.annotations.Element;
 import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.IdentityType;
-import javax.jdo.annotations.Join;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
@@ -51,10 +48,6 @@ public class DemandItemBatch implements IDemandItemBatch {
   private Long id; // id
   @Element(column = "dItmId")
   private DemandItem dmdItm;
-  @Persistent(table = "DEMANDITEMBATCH_DOMAINS", defaultFetchGroup = "true")
-  @Join
-  @Element(column = "DOMAIN_ID")
-  private List<Long> dId;
   @Persistent
   private Long sdId; // source domain Id
   @Persistent
@@ -81,7 +74,6 @@ public class DemandItemBatch implements IDemandItemBatch {
 
   @Override
   public IDemandItemBatch init(ITransaction trans) {
-    dId = trans.getDomainIds();
     sdId = trans.getDomainId();
     kId = trans.getKioskId();
     mId = trans.getMaterialId();
@@ -99,41 +91,6 @@ public class DemandItemBatch implements IDemandItemBatch {
 
   public void setDomainId(Long domainId) {
     sdId = domainId;
-  }
-
-  public List<Long> getDomainIds() {
-    return dId;
-  }
-
-  public void setDomainIds(List<Long> domainIds) {
-    this.dId.clear();
-    this.dId.addAll(domainIds);
-  }
-
-  public void addDomainIds(List<Long> domainIds) {
-    if (domainIds == null || domainIds.isEmpty()) {
-      return;
-    }
-    if (this.dId == null) {
-      this.dId = new ArrayList<>();
-    }
-    for (Long dId : domainIds) {
-      if (!this.dId.contains(dId)) {
-        this.dId.add(dId);
-      }
-    }
-  }
-
-  public void removeDomainId(Long domainId) {
-    if (this.dId != null && !this.dId.isEmpty()) {
-      this.dId.remove(domainId);
-    }
-  }
-
-  public void removeDomainIds(List<Long> domainIds) {
-    if (this.dId != null && !this.dId.isEmpty()) {
-      this.dId.removeAll(domainIds);
-    }
   }
 
   @Override

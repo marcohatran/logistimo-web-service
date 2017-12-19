@@ -23,7 +23,6 @@
 
 package com.logistimo.inventory.entity;
 
-import com.logistimo.domains.IOverlappedDomain;
 import com.logistimo.tags.entity.ITag;
 
 import java.math.BigDecimal;
@@ -34,7 +33,7 @@ import java.util.List;
  * Created by charan on 20/05/15.
  */
 public interface ITransaction
-    extends Cloneable, IOverlappedDomain {
+    extends Cloneable {
   // Transaction types
   String TYPE_ISSUE = "i";
   String TYPE_RECEIPT = "r";

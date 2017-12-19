@@ -30,7 +30,7 @@
                 <span class="bulletin-heading" style="position:relative;top:20px;font-family:Lato;text-transform:uppercase;">Bulletin boards</span>
             </div>
             <div class="col-sm-6">
-                <img class="imagewrapper pull-right" src="images/evin_logo.png">
+                <img class="imagewrapper pull-right" src="images/acquia_marina_logo.png">
             </div>
             </div>
             </div>
@@ -54,10 +54,11 @@
                                 <hr style="border: 1px solid #d0dada">
                                 <div class="col-sm-12">
                                     <div ng-class="{'col-sm-8 noleftpad pt10 widget-sub-title':!isBulletinBoard, 'col-sm-12 noleftpad pt10 widget-sub-title':isBulletinBoard}">{{bulletinBoard.desc}}</div>
-                                    <div class="col-sm-4" ng-if="!isBulletinBoard">
+                                    <div class="col-sm-4 pull-right" ng-if="!isBulletinBoard">
                                         <a ng-href="#configuration/bulletin/detail/{{bulletinBoard.bbId}}">
-                                            <span class="glyphicon glyphicon-cog large pull-right" title="Configure"></span>
+                                            <span class="glyphicon glyphicon-cog large" title="Configure" style="top:5px;"></span>&nbsp;&nbsp;
                                         </a>
+                                        <span class="glyphicon glyphicon-trash" ng-click="delete(bulletinBoard.bbId);$event.stopPropagation();" title="Delete" style="color:#285379;top:3px;font-size:120%;"></span>
                                     </div>
                                 </div>
                             </div>

@@ -1,3 +1,4 @@
+
 /*
  * Copyright © 2017 Logistimo.
  *
@@ -215,7 +216,7 @@ logistimoApp.config(function ($routeProvider) {
         action: "setup.users.all.msgstatus"
     }).when("/setup/users/all/upload", {
         action: "setup.users.all.upload"
-    }).when("/setup/.ent-grps/", {
+    }).when("/setup/ent-grps/", {
         action: "setup.ent-grps.all.list"
     }).when("/setup/ent-grps/all/", {
         action: "setup.ent-grps.all.list"

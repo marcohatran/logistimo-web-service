@@ -24,11 +24,15 @@
 package com.logistimo.social.provider;
 
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 
 import com.logistimo.collaboration.core.events.LikeRegisteredEvent;
 import com.logistimo.config.models.AdminContactConfig;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.EventSummaryConfigModel;
+import com.logistimo.logger.XLog;
 import com.logistimo.services.ServiceException;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.impl.UsersServiceImpl;
@@ -48,6 +52,8 @@ import java.util.Optional;
 @Component
 public class SubscriberProvider {
 
+  private static final XLog log = XLog.getLog(SubscriberProvider.class);
+
   UsersServiceImpl usersService;
 
   @Autowired
@@ -66,16 +72,28 @@ public class SubscriberProvider {
     return Collections.emptyList();
   }
 
-  private List<String> getStoreUserTagForEvent(String contextAttribute) {
-    EventSummaryConfigModel.Threshold
-        threshold =
-        new GsonBuilder().create()
-            .fromJson(contextAttribute, EventSummaryConfigModel.Threshold.class);
-    Optional<EventSummaryConfigModel.Condition> cond = threshold.getConditions().stream().
-        filter(condition -> condition.getName().equalsIgnoreCase("user_tags_responsible"))
-        .findFirst();
-    if (cond.isPresent()) {
-      return cond.get().getValues();
+  protected List<String> getStoreUserTagForEvent(String contextAttribute) {
+
+    JsonElement jsonElement;
+    JsonParser parser = new JsonParser();
+    String thresholdString = null;
+    try {
+      jsonElement = parser.parse(contextAttribute).getAsJsonObject().get("attribute");
+      thresholdString = jsonElement.getAsString();
+    } catch (JsonSyntaxException e) {
+      log.warn("Error encountered in parsing like context attribute {0}",contextAttribute);
+    }
+    if (!StringUtils.isEmpty(thresholdString)) {
+      EventSummaryConfigModel.Threshold
+          threshold =
+          new GsonBuilder().create()
+              .fromJson(thresholdString, EventSummaryConfigModel.Threshold.class);
+      Optional<EventSummaryConfigModel.Condition> cond = threshold.getConditions().stream().
+          filter(condition -> condition.getName().equalsIgnoreCase("user_tags_responsible"))
+          .findFirst();
+      if (cond.isPresent()) {
+        return cond.get().getValues();
+      }
     }
     return Collections.emptyList();
   }

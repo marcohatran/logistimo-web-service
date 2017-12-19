@@ -100,10 +100,14 @@ angular.module('logistimo.storyboard.bulletinboards', ['logistimo.storyboard.das
             $scope.bulletinBoards = {};
         };
         $scope.init();
-        
-        bulletinBoardRepository.getAll($scope).then(function (bulletinBoards) {
-            $scope.bulletinBoards = bulletinBoards;
-        });
+
+        function getAllBulletinBoards() {
+            bulletinBoardRepository.getAll($scope).then(function (bulletinBoards) {
+                $scope.bulletinBoards = bulletinBoards;
+            });
+        }
+
+        getAllBulletinBoards();
 
         $scope.viewBulletinBoard = function(bulletinBoardId) {
             if($scope.isBulletinBoard) {
@@ -111,6 +115,12 @@ angular.module('logistimo.storyboard.bulletinboards', ['logistimo.storyboard.das
             } else {
                 $window.location.href="#configuration/bulletin/view/" + bulletinBoardId;
             }
+        };
+
+        $scope.delete = function(bulletinBoardId) {
+          bulletinBoardRepository.delete(bulletinBoardId, $scope).then(function (data) {
+             getAllBulletinBoards();
+          });
         }
     }])
     .controller('BulletinBoardViewController', ['bulletinBoardRepository', '$scope','$timeout', function (bulletinBoardRepository, $scope, $timeout) {
@@ -1013,9 +1023,12 @@ angular.module('logistimo.storyboard.dashboards', ['logistimo.storyboard.widgets
     .controller('DashboardListingController', ['dashboardRepository', '$scope', function (dashboardRepository, $scope) {
         $scope.dashboards = {};
         
-        dashboardRepository.getAll($scope).then(function (dashboards) {
-            $scope.dashboards = dashboards;
-        });
+        function getAllDashboards() {
+            dashboardRepository.getAll($scope).then(function (dashboards) {
+                $scope.dashboards = dashboards;
+            });
+        }
+        getAllDashboards();
         
         $scope.checkNotNullEmpty = function (argument) {
             return typeof argument !== 'undefined' && argument != null && argument != "";
@@ -1024,6 +1037,12 @@ angular.module('logistimo.storyboard.dashboards', ['logistimo.storyboard.widgets
         $scope.checkNullEmpty = function (argument) {
             return !$scope.checkNotNullEmpty(argument);
         };
+
+        $scope.delete = function(dashboardId) {
+            dashboardRepository.delete(dashboardId, $scope).then(function (data) {
+               getAllDashboards();
+            });
+        }
     }])
     .controller('DashboardController', ['dashboardRepository', '$scope', function (dashboardRepository, $scope) {
         $scope.init = function () {

@@ -264,16 +264,24 @@ public class ReportServiceUtil {
     return new ReportDataModel(value != null ? String.valueOf(value) : ZERO);
   }
   protected ReportDataModel addData(Object value, Object secValue) {
-    return new ReportDataModel(value != null ? String.valueOf(value) : ZERO, secValue != null ? String.valueOf(secValue) : ZERO );
+    return new ReportDataModel(value != null ? String.valueOf(value) : ZERO,
+        secValue != null ? String.valueOf(secValue) : ZERO );
   }
 
   protected ReportDataModel addData(Object value, Object numerator, Object denominator) {
     return new ReportDataModel(
-        String.valueOf(value), String.valueOf(numerator), String.valueOf(denominator));
+        String.valueOf(value != null ? value : ZERO),
+        String.valueOf(numerator != null ? numerator : ZERO),
+        String.valueOf(denominator != null ? denominator : ZERO));
   }
   protected ReportDataModel addData(Object value, Object numerator, Object denominator, Object secValue, Object secNumerator, Object secDenominator) {
     return new ReportDataModel(
-        String.valueOf(value), String.valueOf(numerator), String.valueOf(denominator), String.valueOf(secValue), String.valueOf(secNumerator), String.valueOf(secDenominator));
+        String.valueOf(value != null ? value : ZERO),
+        String.valueOf(numerator != null ? numerator : ZERO),
+        String.valueOf(denominator != null ? denominator : ZERO),
+        String.valueOf(secValue != null ? secValue : ZERO),
+        String.valueOf(secNumerator != null ? secNumerator : ZERO),
+        String.valueOf(secDenominator != null ? secDenominator : ZERO));
   }
 
   protected Double getHours(Object milliseconds) {

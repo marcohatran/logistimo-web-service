@@ -21,77 +21,37 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.proto;
+package com.logistimo.inventory.service.impl;
 
-import java.util.List;
+import org.junit.Test;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
- * Created by vani on 03/11/16.
+ * Created by charan on 15/12/17.
  */
-public class MobileShipmentModel {
-  /**
-   * Shipment ID
-   */
-  public String sid;
-  /**
-   * Status
-   */
-  public String st;
-  /**
-   * Shipment status updated on
-   */
-  public String t;
-  /**
-   * Status changed to shipped on
-   */
-  public String ssht;
-  /**
-   * Shipment updated by user id
-   */
-  public String uid;
-  /**
-   * Shipment updated by user name
-   */
-  public String n;
-  /**
-   * Transporter name
-   */
-  public String trsp;
-  /**
-   * Transporter ID
-   */
-  public String trid;
-  /**
-   * Reason for partial shipment
-   */
-  public String rsnps;
-  /**
-   * Reason for cancelling shipment
-   */
-  public String rsnco;
-  /**
-   * Estimated date of arrival
-   */
-  public String ead;
-  /**
-   * Date of actual receipt
-   */
-  public String dar;
-  /**
-   * Shipment items
-   */
-  public List<MobileShipmentItemModel> mt;
-  /**
-   * Package size
-   */
-  public String pksz;
-  /**
-   * Comments
-   */
-  public MobileConversationModel cmnts;
-  /**
-   * Reference id
-   */
-  public String rid;
+public class InventoryManagementServiceImplTest {
+
+  @Test
+  public void testIsATDValid() throws ParseException {
+    InventoryManagementServiceImpl ims = new InventoryManagementServiceImpl();
+    SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+    assertFalse("ATD should be considered valid, but not",
+        ims.isAtdNotValid("Asia/Kolkata", df.parse("2017-12-16T01:30:00.000+0000"),
+            df.parse("2017-12-15T19:30:00.000+0000")));
+  }
+
+  @Test
+  public void testIsATDNotValid() throws ParseException {
+    InventoryManagementServiceImpl ims = new InventoryManagementServiceImpl();
+    SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+    assertTrue("ATD should be considered in future, but not",
+        ims.isAtdNotValid("Asia/Kolkata", df.parse("2017-12-16T01:30:00.000+0000"),
+            df.parse("2017-12-15T17:30:00.000+0000")));
+  }
 
 }

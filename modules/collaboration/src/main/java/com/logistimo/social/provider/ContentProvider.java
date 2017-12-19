@@ -31,6 +31,7 @@ import com.logistimo.domains.service.impl.DomainsServiceImpl;
 import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.exception.SystemException;
 import com.logistimo.logger.XLog;
+import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
 import com.logistimo.social.model.ContentQuerySpecs;
 import com.logistimo.social.util.CollaborationMessageUtil;
@@ -83,10 +84,18 @@ public class ContentProvider {
       return "";
     }
     String user = query.getUser();
-    IUserAccount userAccount = usersService.getUserAccount(user);
-    Locale locale = null;
+    IUserAccount userAccount = null;
+    String userName;
+    try {
+      userAccount = usersService.getUserAccount(user);
+      userName = userAccount.getFullName();
+    } catch (ObjectNotFoundException oex) {
+      log.warn("User {0} not found in like context",user);
+      userName = "Unknown";
+    }
+    Locale locale;
     if(StringUtils.isEmpty(lang)){
-      locale = userAccount.getLocale();
+      locale = Locale.ENGLISH;
     } else {
       locale = new Locale(lang);
     }
@@ -96,7 +105,7 @@ public class ContentProvider {
         CollaborationMessageUtil.constructMessage(
             eventContext.getCategory() + "." + eventContext.getEventType() + ".text"
             , locale
-            , new Object[]{userAccount.getFullName(),
+            , new Object[]{userName,
                 getObjectText(query.getObjectId(), query.getObjectType()),
                 getDuration(eventContext, locale)});
     return mainContent;
@@ -107,7 +116,7 @@ public class ContentProvider {
     String name = null;
     try {
       if ("domain".equalsIgnoreCase(objectType)) {
-        name = domainsService.getDomain(Long.valueOf(objectId)).getNormalizedName();
+        name = domainsService.getDomain(Long.valueOf(objectId)).getName();
       } else if ("store".equalsIgnoreCase(objectType)) {
         name = entitiesService.getKiosk(Long.valueOf(objectId)).getName();
       }

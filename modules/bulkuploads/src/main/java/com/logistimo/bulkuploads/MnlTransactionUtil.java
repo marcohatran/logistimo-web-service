@@ -164,7 +164,7 @@ public class MnlTransactionUtil {
           // Mark order as shipped
           String
               shipmentId =
-              oms.shipNow(order, null, null, null, null, userId, null, SourceConstants.UPLOAD, null);
+              oms.shipNow(order, null, null, null, null, userId, null, SourceConstants.UPLOAD, null, false);
           shipmentService.fulfillShipment(shipmentId, userId, SourceConstants.UPLOAD);
         }
       } else {
@@ -847,7 +847,6 @@ public class MnlTransactionUtil {
                                                                   String type) {
     ITransaction trans = JDOUtils.createInstance(ITransaction.class);
     trans.setDomainId(mnlTrans.getDomainId()); // Mandatory for a transaction
-    trans.addDomainIds(mnlTrans.getDomainIds());
     trans.setSourceUserId(mnlTrans.getUserId()); // Mandatory for a transaction
     trans.setKioskId(mnlTrans.getKioskId());
     trans.setMaterialId(mnlTrans.getMaterialId());
@@ -1393,7 +1392,7 @@ public class MnlTransactionUtil {
           // Parse the actualTransDateStr string
           try {
             actualTransDate =
-                LocalDateUtil.parseCustom(actualTransDateStr, Constants.DATE_FORMAT, dc.getTimezone());
+                LocalDateUtil.parseCustom(actualTransDateStr, Constants.DATE_FORMAT, null);
             //To check whether given date is not greater than system time
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
             Date date = sdf.parse(sdf.format(new Date()));
@@ -1889,8 +1888,7 @@ public class MnlTransactionUtil {
         Calendar cal = GregorianCalendar.getInstance();
         try {
           reportingPeriod =
-              LocalDateUtil.parseCustom(reportingPeriodStr, Constants.DATE_FORMAT_CSV,
-                  DomainConfig.getInstance(mnlTransaction.getDomainId()).getTimezone());
+              LocalDateUtil.parseCustom(reportingPeriodStr, Constants.DATE_FORMAT_CSV, null);
           cal.setTime(reportingPeriod);
           LocalDateUtil.resetTimeFields(cal);
           mnlTransaction.setReportingPeriod(cal.getTime());

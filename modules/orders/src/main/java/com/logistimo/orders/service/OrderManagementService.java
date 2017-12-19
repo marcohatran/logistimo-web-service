@@ -74,7 +74,7 @@ public interface OrderManagementService extends Service {
    */
   String shipNow(IOrder order, String transporter, String trackingId, String reason,
       Date expectedFulfilmentDate,
-      String userId, String ps, int source, String referenceId)
+      String userId, String ps, int source, String referenceId, Boolean updateOrderFields)
       throws ServiceException, ObjectNotFoundException, ValidationException;
 
   /**
@@ -260,6 +260,8 @@ public interface OrderManagementService extends Service {
    */
   BigDecimal getLeadTime(Long kid, Long mid, float orderPeriodicityInConfig,
       LeadTimeAvgConfig leadTimeAvgConfig, float leadTimeDefaultInConfig) throws ServiceException;
+
+  void updateOrderMetadata(Long orderId, String updatedBy, PersistenceManager pm, String referenceId, Date estimatedArrivalDate, Boolean updateOrderFields);
 
   void updateOrderMetadata(Long orderId, String updatedBy, PersistenceManager pm);
 

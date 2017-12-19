@@ -77,8 +77,19 @@ function DashboardRepository(apiService, $q) {
             });
             return deferred.promise;
         },
-        delete: function (dashboardId, scope) {
-
+        delete: function (dashboardId, $scope) {
+            var deferred = $q.defer();
+            $scope.showLoading();
+            apiService.get("/s2/api/dashboards/delete/" + dashboardId).then(function (data) {
+                deferred.resolve(data.data);
+                $scope.showSuccess(data.data);
+            }).catch(function error(msg) {
+                $scope.showErrorMsg(msg);
+                deferred.reject();
+            }).finally(function () {
+                $scope.hideLoading();
+            });
+            return deferred.promise;
         }
     }
 }

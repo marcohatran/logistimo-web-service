@@ -74,6 +74,22 @@
             </div>
         </div>
 
+        <div class="col-sm-5" ng-if="filter.type=='abnormalityType'">
+            <div class="col-sm-12 noLRpad btn-group">
+                <select ng-model="widget.conf.abnormalityType" class="form-control">
+                    <option ng-repeat="metric in primaryMetric" value="{{metric.value}}">{{metric.name}}</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="col-sm-5" ng-if="filter.type=='stockAvailabilityTime'">
+            <div class="col-sm-12 noLRpad btn-group">
+                <select ng-model="widget.conf.availableTime" class="form-control">
+                    <option ng-repeat="metric in secondaryMetric" value="{{metric.value}}">{{metric.name}}</option>
+                </select>
+            </div>
+        </div>
+
         <div class="col-sm-5" ng-if="filter.type=='mapType'">
             <div class="col-sm-12 noLRpad btn-group">
                 <select ng-model="widget.conf.mapType" class="form-control">

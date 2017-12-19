@@ -478,7 +478,7 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
 
   @Override
   public String shipNow(IOrder order, String transporter, String trackingId, String reason,
-      Date expectedFulfilmentDate, String userId, String ps, int source, String referenceId)
+      Date expectedFulfilmentDate, String userId, String ps, int source, String referenceId, Boolean updateOrderFields)
       throws ServiceException, ObjectNotFoundException, ValidationException {
     IShipmentService
         shipmentService =
@@ -518,7 +518,7 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
         model.items.add(shipmentItemModel);
       }
     }
-    return shipmentService.createShipment(model, source);
+    return shipmentService.createShipment(model, source, updateOrderFields);
   }
 
   private IMessage addMessageToOrder(Long orderId, Long domainId, String message,
@@ -678,7 +678,7 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
   @Override
   public void updateOrderReferenceId(Long orderId, String referenceId, String userId,
                                      PersistenceManager pm) throws ServiceException {
-    PersistenceManager localPm = null;
+    PersistenceManager localPm = pm;
     if (pm == null) {
       localPm = PMF.get().getPersistenceManager();
     }
@@ -1020,11 +1020,7 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
           if (trans.getTimestamp() == null) {
             trans.setTimestamp(now);
           }
-
-          // Update the transaction with the domainId, and the parent domains (superdomains)
-          DomainsUtil
-              .addToDomain(trans, domainId, null);
-
+          trans.setDomainId(domainId);
           // Update trans. type
           trans.setType(transType);
           // Get material
@@ -1294,8 +1290,6 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
           userId = trans.getSourceUserId();
         }
 
-        // Add the transaction to this domain and parent domains
-        DomainsUtil.addToDomain(trans, domainId, null);
         trans.setType(transType);
 
         try {
@@ -1437,7 +1431,7 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
     di.setKioskId(trans.getKioskId());
     di.setMaterialId(trans.getMaterialId());
     di.setDomainId(trans.getDomainId());
-    di.addDomainIds(trans.getDomainIds());
+    di.addDomainIds(inv.getDomainIds());
 
     BigDecimal q = trans.getQuantity();
     di.setQuantity(q);
@@ -1454,18 +1448,16 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
     di.setMessage(trans.getMessage());
     di.setUserId(trans.getSourceUserId());
     // Set tags
-    if (inv != null) {
-      di.setTgs(tagDao.getTagsByNames(inv.getTags(TagUtil.TYPE_ENTITY), ITag.KIOSK_TAG),
-          TagUtil.TYPE_ENTITY);
-      di.setTgs(tagDao.getTagsByNames(inv.getTags(TagUtil.TYPE_MATERIAL), ITag.MATERIAL_TAG),
-          TagUtil.TYPE_MATERIAL);
-    }
+    di.setTgs(tagDao.getTagsByNames(inv.getTags(TagUtil.TYPE_ENTITY), ITag.KIOSK_TAG),
+        TagUtil.TYPE_ENTITY);
+    di.setTgs(tagDao.getTagsByNames(inv.getTags(TagUtil.TYPE_MATERIAL), ITag.MATERIAL_TAG),
+        TagUtil.TYPE_MATERIAL);
     if (trans.hasBatch()) {
       di.addBatch(JDOUtils.createInstance(IDemandItemBatch.class).init(trans));
     }
     // Add price metadata
     BigDecimal p = m.getRetailerPrice();
-    if (inv != null && BigUtil.notEqualsZero(inv.getRetailerPrice())) {
+    if (BigUtil.notEqualsZero(inv.getRetailerPrice())) {
       p = inv.getRetailerPrice();
     }
     if (BigUtil.greaterThanZero(p)) {
@@ -1473,10 +1465,8 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
       di.setCurrency(m.getCurrency());
     }
     // If inventory available, check/set tax rate
-    if (inv != null) {
-      di.setTax(inv.getTax());
-      di.setTimeToOrder(ims.getDurationFromRP(inv.getKey()));
-    }
+    di.setTax(inv.getTax());
+    di.setTimeToOrder(ims.getDurationFromRP(inv.getKey()));
     di.setShippedDiscrepancyReason(trans.getEditOrderQtyReason());
 
     return di;
@@ -1675,10 +1665,14 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
     return avgLeadTime;
   }
 
+  @Override
+  public void updateOrderMetadata(Long orderId, String updatedBy, PersistenceManager pm) {
+    updateOrderMetadata(orderId, updatedBy, pm, null, null, false);
+  }
 
   @Override
   public void updateOrderMetadata(Long orderId, String updatedBy,
-      PersistenceManager persistenceManager) {
+      PersistenceManager persistenceManager, String referenceId, Date expectedArrivalDate, Boolean updateOrderFields) {
     Boolean isLocalPersistentManager = Boolean.FALSE;
     if (persistenceManager == null) {
       persistenceManager = PMF.get().getPersistenceManager();
@@ -1687,6 +1681,10 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
     IOrder order = JDOUtils.getObjectById(IOrder.class, orderId, persistenceManager);
     order.setUpdatedBy(updatedBy);
     order.setUpdatedOn(new Date());
+    if(updateOrderFields) {
+      order.setReferenceID(referenceId);
+      order.setExpectedArrivalDate(expectedArrivalDate);
+    }
 
     if (isLocalPersistentManager) {
       persistenceManager.close();

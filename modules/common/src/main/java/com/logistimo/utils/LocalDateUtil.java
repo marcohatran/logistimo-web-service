@@ -698,4 +698,18 @@ public class LocalDateUtil {
         cal.get(Calendar.DATE)));
 
   }
+
+  public static Date convertTZDateToUTC(String timeZone, Date tzDate) {
+    Date date;
+    SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+    format.setTimeZone(TimeZone.getTimeZone(timeZone));
+    String dateStr = format.format(tzDate);
+    try {
+      date = format.parse(dateStr);
+    } catch (ParseException e) {
+      //should not happen, given we use same formatter.
+      date = tzDate;
+    }
+    return date;
+  }
 }

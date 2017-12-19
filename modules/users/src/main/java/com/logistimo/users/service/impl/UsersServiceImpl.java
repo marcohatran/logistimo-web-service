@@ -297,7 +297,7 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
       //Get the user object from the database
       user = JDOUtils.getObjectById(IUserAccount.class, userId, pm);
       user = pm.detachCopy(user);
-      memcacheService.put(Constants.USER_KEY + CharacterConstants.HASH + userId, user);
+      getMemcacheService().put(Constants.USER_KEY + CharacterConstants.HASH + userId, user);
       return user;
     } catch (JDOObjectNotFoundException e) {
       xLogger.warn("getUserAccount: User {0} does not exist in the database", userId);

@@ -53,7 +53,6 @@ import com.logistimo.events.processor.EventPublisher;
 import com.logistimo.exception.InvalidDataException;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exception.LogiException;
-import com.logistimo.exception.SystemException;
 import com.logistimo.exception.ValidationException;
 import com.logistimo.inventory.entity.IInvAllocation;
 import com.logistimo.inventory.entity.IInvntry;
@@ -156,7 +155,7 @@ public class ShipmentService extends ServiceImpl implements IShipmentService {
    */
   @Override
   @SuppressWarnings("unchecked")
-  public String createShipment(ShipmentModel model, int source)
+  public String createShipment(ShipmentModel model, int source, Boolean updateOrderFields)
       throws ServiceException, ValidationException {
     LockUtil.LockStatus lockStatus = LockUtil.lock(Constants.TX_O + model.orderId);
     if (!LockUtil.isLocked(lockStatus)) {
@@ -175,8 +174,10 @@ public class ShipmentService extends ServiceImpl implements IShipmentService {
       shipment.setOrderId(model.orderId);
       shipment.setDomainId(model.sdid);
       shipment.setStatus(model.status != null ? model.status : ShipmentStatus.OPEN);
+      Date ead = null;
       if (StringUtils.isNotEmpty(model.ead)) {
-        shipment.setExpectedArrivalDate(sdf.parse(model.ead));
+        ead = sdf.parse(model.ead);
+        shipment.setExpectedArrivalDate(ead);
       }
       shipment.setReferenceId(model.rid);
       shipment.setNumberOfItems(model.items != null ? model.items.size() : 0);
@@ -321,10 +322,11 @@ public class ShipmentService extends ServiceImpl implements IShipmentService {
       // if both conversation and activity returns success, proceed to commit changes
       if (isDirectShipOrFulfil) {
         updateShipmentStatus(shipment.getShipmentId(), model.status, null, model.userID, pm, null,
-            shipment, source);
+            shipment, true, false, source, model.rid, ead, updateOrderFields);
+      } else {
+        OrderManagementService oms = Services.getService(OrderManagementServiceImpl.class);
+        oms.updateOrderMetadata(model.orderId, model.userID, pm);
       }
-      OrderManagementService oms = Services.getService(OrderManagementServiceImpl.class);
-      oms.updateOrderMetadata(model.orderId, model.userID, pm);
       generateEvent(model.sdid, IEvent.CREATED, shipment, null, null);
 
       tx.commit();
@@ -557,13 +559,24 @@ public class ShipmentService extends ServiceImpl implements IShipmentService {
         isOrderFulfil, source);
   }
 
+  private ResponseModel updateShipmentStatus(String shipmentId, ShipmentStatus status,
+                                             String message, String userId,
+                                             PersistenceManager pm, String reason,
+                                             IShipment shipment,
+                                             boolean updateOrderStatus, boolean isOrderFulfil,
+                                             int source) throws LogiException {
+    return updateShipmentStatus(shipmentId, status, message, userId, pm, reason, shipment,
+        updateOrderStatus, isOrderFulfil, source,
+        null, null, false);
+  }
+
 
   private ResponseModel updateShipmentStatus(String shipmentId, ShipmentStatus status,
       String message,
       String userId,
       PersistenceManager pm, String reason, IShipment shipment,
                                              boolean updateOrderStatus, boolean isOrderFulfil,
-                                             int source)
+                                             int source, String referenceId, Date estimatedDateOfArrival, Boolean updateOrderFields)
       throws LogiException {
     Long orderId = extractOrderId(shipmentId);
     LockUtil.LockStatus lockStatus = LockUtil.lock(Constants.TX_O + orderId);
@@ -694,7 +707,7 @@ public class ShipmentService extends ServiceImpl implements IShipmentService {
       if (updateOrderStatus) {
         updateOrderStatus(shipment.getOrderId(), shipment.getStatus(), userId, pm);
       }
-      oms.updateOrderMetadata(orderId, userId, pm);
+      oms.updateOrderMetadata(orderId, userId, pm, referenceId, estimatedDateOfArrival, updateOrderFields);
       if (closePM) {
         tx.commit();
       }
@@ -781,7 +794,7 @@ public class ShipmentService extends ServiceImpl implements IShipmentService {
         t.setReason(shipment.getReason());
         t.setKioskId(shipment.getServicingKiosk());
         t.setLinkedKioskId(shipment.getKioskId());
-        DomainsUtil.addToDomain(t, shipment.getLinkedDomainId(), null);
+        t.setDomainId(shipment.getLinkedDomainId());
         if (inv != null) {
           inv.setInTransitStock(inv.getInTransitStock().add(shipmentItem.getQuantity()));
           inTransitList.add(inv);
@@ -791,7 +804,7 @@ public class ShipmentService extends ServiceImpl implements IShipmentService {
         t.setQuantity(shipmentItem.getQuantity());
         t.setReason(shipment.getCancelledDiscrepancyReasons());
         t.setKioskId(shipment.getServicingKiosk());
-        DomainsUtil.addToDomain(t, shipment.getLinkedDomainId(), null);
+        t.setDomainId(shipment.getLinkedDomainId());
         if (ShipmentStatus.SHIPPED.equals(prevStatus) && inv != null) {
           BigDecimal inTransStock = inv.getInTransitStock().subtract(shipmentItem.getQuantity());
           inv.setInTransitStock(
@@ -803,8 +816,8 @@ public class ShipmentService extends ServiceImpl implements IShipmentService {
         t.setQuantity(shipmentItem.getFulfilledQuantity());
         t.setKioskId(shipmentItem.getKioskId());
         t.setLinkedKioskId(shipment.getServicingKiosk());
-        DomainsUtil.addToDomain(t, shipment.getKioskDomainId(), null);
         t.setReason(shipmentItem.getFulfilledDiscrepancyReason());
+        t.setDomainId(shipment.getKioskDomainId());
         //Reduce quantity (instead of fulfilled quantity) , since in-transit is updated based on issue.
         BigDecimal inTransStock = inv.getInTransitStock().subtract(shipmentItem.getQuantity());
         inv.setInTransitStock(
@@ -1242,13 +1255,6 @@ public class ShipmentService extends ServiceImpl implements IShipmentService {
             shipment.setPackageSize(entry.getValue());
           } else if ("rid".equals(entry.getKey())) {
             shipment.setReferenceId(entry.getValue());
-            if(StringUtils.isEmpty(order.getReferenceID())) {
-              try {
-                oms.updateOrderReferenceId(orderId, entry.getValue(), userId, pm);
-              } catch (ServiceException e) {
-                throw new SystemException(e);
-              }
-            }
           }
         });
 

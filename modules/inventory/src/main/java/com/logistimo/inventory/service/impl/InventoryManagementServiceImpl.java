@@ -115,7 +115,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.TimeZone;
 import java.util.stream.Collectors;
 
 import javax.jdo.JDOObjectNotFoundException;
@@ -1371,7 +1370,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
             errors.add(trans);
             continue; // continue with the next object in the list
           }
-          if (isAtdNotValid(domainId, trans.getAtd())) {
+          if (trans.getAtd() != null && isAtdNotValid(domainId, trans.getAtd())) {
             trans.setMessage(backendMessages.getString("error.adt"));
             trans.setMsgCode("M006");
             errors.add(trans);
@@ -1457,8 +1456,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
           if (tags != null && !tags.isEmpty()) {
             trans.setTgs(tagDao.getTagsByNames(tags, ITag.KIOSK_TAG), TagUtil.TYPE_ENTITY);
           }
-          // Include the transaction in all the parent domains (superdomains)
-          DomainsUtil.addToDomain(trans, in.getDomainId(), null);
+          trans.setDomainId(in.getDomainId());
           /**** Transactional object creation - trans, inv. update, inv. log creation ***/
           List objects = null;
           try {
@@ -1567,16 +1565,23 @@ public class InventoryManagementServiceImpl extends ServiceImpl
     return errors;
   }
 
-  protected boolean isAtdNotValid(Long domainId, Date actualTransactionDate) {
-    String timeZone = DomainConfig.getInstance(domainId).getTimezone();
-    Date currentDate;
-    if (StringUtils.isNotBlank(timeZone)) {
-      currentDate = Calendar.getInstance(TimeZone.getTimeZone(timeZone)).getTime();
-    } else {
-      currentDate = Calendar.getInstance().getTime();
-    }
-    return actualTransactionDate != null && actualTransactionDate.after(currentDate);
+  private boolean isAtdNotValid(Long domainId, Date actualTransactionDate) {
+    return isAtdNotValid(
+        DomainConfig.getInstance(domainId).getTimezone(), actualTransactionDate,
+        Calendar.getInstance().getTime());
   }
+
+  protected boolean isAtdNotValid(String timeZone, Date actualTransactionDate, Date currentDate) {
+    Date atd;
+    if (StringUtils.isNotBlank(timeZone)) {
+      atd = LocalDateUtil.convertTZDateToUTC(timeZone, actualTransactionDate);
+    } else {
+      atd = actualTransactionDate;
+    }
+    return atd.after(currentDate);
+  }
+
+
 
   private void doPostTransactionPredictions(Long domainId, List<IInvntry> toBePredicted) {
     DomainConfig dc = DomainConfig.getInstance(domainId);
@@ -1784,8 +1789,6 @@ public class InventoryManagementServiceImpl extends ServiceImpl
             updateList.add(inv);
             updateStockEventLog(oldStock, inv, pm, IInvntryEvntLog.SOURCE_STOCKUPDATE, domainId);
           }
-          // Remove this transaction from all parents (superdomains)
-          DomainsUtil.removeFromDomain(t, domainId, null);
         } catch (Exception e) {
           xLogger.warn("{0} when undoing transaction of type {1} for {2}-{3} in domain {4}: {5}",
               e.getClass().getName(), type, kioskId, materialId, t.getDomainId(), e.getMessage());
@@ -2042,8 +2045,6 @@ public class InventoryManagementServiceImpl extends ServiceImpl
       // Check if the linked kiosk is of a different domain than the source kiosk (superdomain)
       if (!linkedKiosk.getDomainId().equals(receipt.getDomainId())) {
         receipt.setDomainId(linkedKiosk.getDomainId());
-        receipt.setDomainIds(null);
-        DomainsUtil.addToDomain(receipt, linkedKiosk.getDomainId(), null);
       }
     } catch (Exception e) {
       xLogger.warn("{0} when getting linked kiosk {1} during transfer: {2}", e.getClass().getName(),
@@ -2247,7 +2248,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
     invBatch.setBatchManufacturedDate(trans.getBatchManufacturedDate());
     invBatch.setBatchManufacturer(trans.getBatchManufacturer());
     invBatch.setDomainId(trans.getDomainId());
-    invBatch.addDomainIds(trans.getDomainIds());
+    invBatch.addDomainIds(inv.getDomainIds());
     invBatch.setKioskId(trans.getKioskId(), inv.getKioskName());
     invBatch.setMaterialId(trans.getMaterialId());
     invntryDao.setInvBatchKey(invBatch);
@@ -2624,12 +2625,12 @@ public class InventoryManagementServiceImpl extends ServiceImpl
     return getDailyConsumptionRate(inv, consumptionRate, frequency);
   }
 
-  public BigDecimal getDailyConsumptionRate(IInvntry inv, int crType, String frequency) {
+  public BigDecimal getDailyConsumptionRate(IInvntry inv, int crType, String manualCRFrequency) {
     if (InventoryConfig.CR_MANUAL == crType) {
       BigDecimal crMnl = inv.getConsumptionRateManual();
-      if (Constants.FREQ_WEEKLY.equals(frequency)) {
+      if (Constants.FREQ_WEEKLY.equals(manualCRFrequency)) {
         crMnl = crMnl.divide(Constants.WEEKLY_COMPUTATION, 3, BigDecimal.ROUND_HALF_UP);
-      } else if (Constants.FREQ_MONTHLY.equals(frequency)) {
+      } else if (Constants.FREQ_MONTHLY.equals(manualCRFrequency)) {
         crMnl = crMnl.divide(Constants.MONTHLY_COMPUTATION, 3, BigDecimal.ROUND_HALF_UP);
       }
       return crMnl;

@@ -43,7 +43,7 @@ angular.module('logistimo.storyboard.topLocationsByTemperatureStatusWidget', [])
     ['$scope', '$timeout', 'dashboardService', 'domainCfgService', 'INVENTORY', '$sce',
         function ($scope, $timeout, dashboardService, domainCfgService, INVENTORY, $sce) {
             var filter = angular.copy($scope.widget.conf);
-            var tempPieColors, tempPieOrder, mapRange, mapColors, asset = '', level;
+            var tempPieColors, tempPieOrder, mapRange, mapColors, asset = '', level, barColor,invPieColors;
             level = getLevel();
             var fDate = (checkNotNullEmpty(filter.date) ? formatDate(filter.date) : undefined);
             $scope.showChart = false;
@@ -55,6 +55,7 @@ angular.module('logistimo.storyboard.topLocationsByTemperatureStatusWidget', [])
                 $scope.mc = mapColors;
                 mapRange = domainConfig.mr;
                 $scope.mr = mapRange;
+                invPieColors = domainConfig.pie.ic;
                 tempPieOrder = domainConfig.pie.to;
                 tempPieColors = domainConfig.pie.tc;
                 $scope.mapEvent = tempPieOrder[0];
@@ -75,6 +76,15 @@ angular.module('logistimo.storyboard.topLocationsByTemperatureStatusWidget', [])
 
                 if (checkNotNullEmpty(filter.assetStatus) && checkNotNullEmpty($scope.widget.conf.assetStatus)) {
                     $scope.mapEvent = $scope.widget.conf.assetStatus;
+                    if($scope.mapEvent=='tn'){
+                        barColor = invPieColors[3];
+                    }else if($scope.mapEvent=='tl'){
+                        barColor = invPieColors[2];
+                    }else if($scope.mapEvent=='th'){
+                        barColor = invPieColors[0];
+                    }else if($scope.mapEvent=='tu'){
+                        barColor = "#cccccc";
+                    }
                 } else {
                     $scope.mapType = "tn";
                 }
@@ -115,7 +125,7 @@ angular.module('logistimo.storyboard.topLocationsByTemperatureStatusWidget', [])
                             $scope.mapData = [];
                         }
                         constructMapData($scope.mapEvent, true, $scope, INVENTORY, $sce, mapRange, mapColors,
-                            tempPieOrder, $timeout);
+                            tempPieOrder, $timeout, true, barColor);
                         setWidgetData();
                     }).catch(function error(msg) {
                         showError(msg, $scope);

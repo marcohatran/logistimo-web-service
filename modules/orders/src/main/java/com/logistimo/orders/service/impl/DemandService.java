@@ -442,7 +442,7 @@ public class DemandService extends ServiceImpl implements IDemandService {
                 +
                 "FROM SHIPMENTITEM SI, SHIPMENTITEMBATCH SIB WHERE SI.ID = SIB.SIID AND SI.SID IN (SELECT ID FROM SHIPMENT WHERE ORDERID = OID) AND SI.MID = D.MID))) FDREASONS, "
                 +
-                "(SELECT MAX(CREATEDATE) FROM ACTIVITY WHERE OBJECTTYPE='ORDER' AND OBJECTID=OID) OSCT FROM DEMANDITEM D ");
+                "(SELECT OX.STON from `ORDER` OX where OX.ID = OID) OSCT FROM DEMANDITEM D ");
     List<String> parameters = new ArrayList<>(1);
     if (orderId != null) {
       sqlQuery.append("WHERE OID = ").append(CharacterConstants.QUESTION);

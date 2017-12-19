@@ -538,7 +538,7 @@ public class RESTUtil {
   @SuppressWarnings({"rawtypes", "unchecked"})
   public static List<ITransaction> getInventoryTransactions(UpdateInventoryInput updInventoryJson,
                                                             String transType, Date time,
-                                                            Locale locale, Long domainId) throws ServiceException {
+                                                            Locale locale) throws ServiceException {
     List<ITransaction> list = new ArrayList<ITransaction>();
 
     // Parameter checks
@@ -688,8 +688,7 @@ public class RESTUtil {
       if (actualDateOfTransStr != null) {
         try {
           actualDateOfTrans =
-              LocalDateUtil.parseCustom(actualDateOfTransStr, Constants.DATE_FORMAT,
-                  DomainConfig.getInstance(domainId).getTimezone());
+              LocalDateUtil.parseCustom(actualDateOfTransStr, Constants.DATE_FORMAT, null);
         } catch (Exception e) {
           xLogger.warn("Error while setting actual date of transaction", e);
         }
@@ -907,7 +906,7 @@ public class RESTUtil {
     } catch (ObjectNotFoundException e) {
       errMsg = backendMessages != null ? backendMessages.getString("error.invalidusername") : null;
     } catch (UnauthorizedException e) {
-      throw new UnauthorizedException("Invalid token");
+      throw new UnauthorizedException("G006",new Object[]{});
     }
     // Check for error
     if (errMsg != null) {

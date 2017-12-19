@@ -116,22 +116,22 @@ public class BulletinBoardDashboardController {
     }
   }
 
-  @RequestMapping(value = "/delete", method = RequestMethod.POST)
+  @RequestMapping(value = "/delete/{dbId}", method = RequestMethod.GET)
   public
   @ResponseBody
-  String delete(@RequestParam Long id, HttpServletRequest request) {
+  String delete(@PathVariable Long dbId, HttpServletRequest request) {
     String name;
     SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     try {
       BulletinBoardDashBoardService ds = Services.getService(BulletinBoardDashBoardService.class);
-      name = ds.deleteDashboard(id);
+      name = ds.deleteDashboard(dbId);
     } catch (ServiceException e) {
-      xLogger.severe("Error deleting Dashboard: {0}", id);
-      throw new InvalidServiceException("Error deleting Dashboard: " + id);
+      xLogger.severe("Error deleting Dashboard: {0}", dbId);
+      throw new InvalidServiceException("Error deleting Dashboard: " + dbId);
     }
-    return backendMessages.getString("dashboard") + " " + MsgUtil.bold(name) + " " + backendMessages
+    return backendMessages.getString("dashboard.upper") + " " + MsgUtil.bold(name) + " " + backendMessages
         .getString("deleted.success");
   }
 
