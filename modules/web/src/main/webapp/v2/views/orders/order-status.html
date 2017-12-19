@@ -79,7 +79,7 @@
                 </div>
             </div>
             <div class="row mb10" ng-show="nStatus == 'cm'">
-                <div ng-show="isDef(order.efd) && order.isEfdValid">
+                <div ng-show="isDef(order.efd) && order.isEfdValid && isDef(newStatus.efd)">
                     <label class="col-sm-4 control-label cbx"></label>
                     <div class="col-sm-7">
                         <input type="checkbox" ng-model="isEadValid" ng-init="isEadValid = false" ng-click = "!isEadValid" class="cbx">
@@ -112,7 +112,7 @@
         <div class="col-sm-12">
             <div class="pull-right">
                 <button class="btn btn-sm btn-primary"
-                        ng-click="saveStatus()" ng-disabled="statusLoading || (isDef(order.efd) && order.isEfdValid && !isEadValid)">
+                        ng-click="saveStatus()" ng-disabled="statusLoading || (isDef(order.efd) && order.isEfdValid && !isEadValid && isDef(newStatus.efd))">
                     {{resourceBundle['save']}}
                 </button>
                 <button class="btn btn-sm btn-default"

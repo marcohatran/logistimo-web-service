@@ -933,6 +933,7 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                             return;
                         }
                     }
+                    $scope.newStatus.efd = checkNotNullEmpty($scope.newStatus.efd) ? $scope.newStatus.efd : undefined;
                     $scope.newStatus.orderUpdatedAt = $scope.order.orderUpdatedAt;
                     $scope.statusLoading = true;
                     $scope.showLoading();
@@ -4043,7 +4044,6 @@ ordControllers.controller('ConsignmentController', ['$scope','$uibModal',  funct
         $scope.sel.selectedRows = [];
         if (newval) {
             for (var i = 0; i < $scope.order.its.length; i++) {
-                $scope.order.ead = parseUrlDate($scope.order.efd);
                 if($scope.order.its[i].q != $scope.order.its[i].isq) {
                     $scope.sel.selectedRows.push(i);
                 }
@@ -4052,6 +4052,7 @@ ordControllers.controller('ConsignmentController', ['$scope','$uibModal',  funct
     };
     $scope.createShipment = function () {
         if ($scope.sel.selectedRows.length > 0) {
+            $scope.order.ead = parseUrlDate($scope.order.efd);
             $scope.openView("createShipment", $scope.sel.selectedRows);
         } else {
             $scope.showWarning("Please select any material to create Shipment");
