@@ -3750,6 +3750,7 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService','request
                     $scope.newStatus.cdrsn = $scope.newStatus.ncdrsn;
                 }
             }
+            $scope.newStatus.efd = checkNotNullEmpty($scope.newStatus.efd) ? $scope.newStatus.efd : undefined;
             $scope.newStatus.orderUpdatedAt = $scope.shipment.orderUpdatedAt;
             $scope.statusLoading = true;
             $scope.showLoading();
