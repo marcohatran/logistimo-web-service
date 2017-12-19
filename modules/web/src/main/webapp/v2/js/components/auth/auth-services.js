@@ -25,7 +25,7 @@
  * Created by Mohan Raja on 03/04/15.
  */
 var authServices = angular.module('authServices', []);
-authServices.factory('iAuthService', ['APIService', '$rootScope', '$q', function (apiService, $rootScope, $q) {
+authServices.factory('iAuthService', ['APIService', '$rootScope', '$q', '$cookies', function (apiService, $rootScope, $q, $cookies) {
     return {
         login: function (userId,password,lang) {
             var urlStr = '/s2/api/mauth/login';
@@ -45,7 +45,6 @@ authServices.factory('iAuthService', ['APIService', '$rootScope', '$q', function
             var service = this;
             return $q(function (resolve, reject) {
                 apiService.get('/s2/api/auth/logout').then(function () {
-                    localStorage.removeItem("domain");
                     service.removeAccessToken();
                     resolve();
                 }).catch(function (err) {
@@ -73,6 +72,7 @@ authServices.factory('iAuthService', ['APIService', '$rootScope', '$q', function
         },
         setAccessToken: function (accessToken, expires) {
             localStorage.setItem("x-access-token", accessToken);
+            $cookies.put("x-access-token", accessToken, {path: "/"});
             if (checkNotNullEmpty(expires)) {
                 localStorage.setItem("expires", expires);
             }
@@ -80,12 +80,16 @@ authServices.factory('iAuthService', ['APIService', '$rootScope', '$q', function
         removeAccessToken: function () {
             localStorage.removeItem('x-access-token');
             localStorage.removeItem('expires');
+            localStorage.removeItem("domain");
+            $cookies.remove("x-access-token");
+            $cookies.remove("x-access-domain");
         },
         authorizeBulletinBoard: function (authKey) {
             return apiService.post(authKey, "/s2/api/auth/authorise-access-key");
         },
         requestAccessKey: function () {
             localStorage.removeItem("domain");
+            $cookies.remove("x-access-domain");
             return apiService.get("/s2/api/auth/request-access-key");
         },
         checkAccessKey: function (authKey) {

@@ -22,7 +22,7 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-var logistimoApp = angular.module('logistimoApp', ['ngSanitize','ngRoute', 'dashboardControllers', 'dashboardServices',
+var logistimoApp = angular.module('logistimoApp', ['ngCookies', 'ngSanitize', 'ngRoute', 'dashboardControllers', 'dashboardServices',
     'widgetControllers', 'widgetServices', 'configServices', 'domainCfgServices', 'domainCfgControllers', 'invServices',
     'invControllers', 'entityServices', 'entityControllers', 'homeControllers', 'homeServices', 'matServices',
     'matControllers', 'entGrpServices', 'entGrpControllers', 'trnServices', 'trnControllers', 'ordServices',

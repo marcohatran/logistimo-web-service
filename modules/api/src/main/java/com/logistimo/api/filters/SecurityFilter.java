@@ -105,7 +105,7 @@ public class SecurityFilter implements Filter {
           resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
           return;
         }
-      } else if (StringUtils.isNotBlank(req.getHeader(Constants.TOKEN))) {
+      } else if (AuthenticationUtil.hasAccessToken(req)) {
         try {
           AuthenticationUtil.authenticateTokenAndSetSession(req);
         } catch (UnauthorizedException | ObjectNotFoundException e) {

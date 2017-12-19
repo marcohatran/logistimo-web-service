@@ -22,7 +22,7 @@
  */
 
 var domainServices = angular.module('domainServices', []);
-domainServices.factory('domainService', ['APIService', '$q', function (apiService, $q) {
+domainServices.factory('domainService', ['APIService', '$q', '$cookies', function (apiService, $q, $cookies) {
     return {
         createDomain: function (domainName, desc) {
             var param = '?domainName=' + domainName + '&desc=' + desc;
@@ -39,6 +39,7 @@ domainServices.factory('domainService', ['APIService', '$q', function (apiServic
             return $q(function (resolve, reject) {
                 apiService.post(domainId, '/s2/api/domain/switch').then(function (data) {
                     localStorage.setItem("domain", domainId);
+                    $cookies.put("x-access-domain", domainId, {path: "/"});
                     resolve(data);
                 }).catch(function (err) {
                     reject(err);
