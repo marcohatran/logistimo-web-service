@@ -75,7 +75,7 @@ public class LikeRegisteredEventHandler implements Handler<LikeRegisteredEvent> 
     List<IUserAccount> users = null;
     try {
       users = getSubscribers(event);
-      log.info("total users {} to be notified for event {}",users != null?users.size():0,event);
+      log.info("total users {0} to be notified for event {1}",users != null?users.size():0, event);
     } catch (ServiceException e) {
       log.severe("Error occured during getting subscriber for event {0}", event, e);
       throw new SystemException(e, "CL001", event);
