@@ -81,15 +81,15 @@ authServices.factory('iAuthService', ['APIService', '$rootScope', '$q', '$cookie
             localStorage.removeItem('x-access-token');
             localStorage.removeItem('expires');
             localStorage.removeItem("domain");
-            $cookies.remove("x-access-token");
-            $cookies.remove("x-access-domain");
+            $cookies.remove("x-access-token", {path: "/"});
+            $cookies.remove("x-access-domain", {path: "/"});
         },
         authorizeBulletinBoard: function (authKey) {
             return apiService.post(authKey, "/s2/api/auth/authorise-access-key");
         },
         requestAccessKey: function () {
             localStorage.removeItem("domain");
-            $cookies.remove("x-access-domain");
+            $cookies.remove("x-access-domain", {path: "/"});
             return apiService.get("/s2/api/auth/request-access-key");
         },
         checkAccessKey: function (authKey) {
