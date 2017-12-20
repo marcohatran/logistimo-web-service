@@ -33,6 +33,9 @@
             {{errorMessage}}
         </div>
     </div>
+    <div ng-show="!wLoading && noData" class="col-sm-12 text-widget-no-data" style="text-align:center; height: {{widget.computedHeight}}px">
+        <span class="widget-no-data">No data to display</span>
+    </div>
     <div ng-if="!wLoading && !showError && renderChart">
         <div class="col-sm-12 text-center">
             <span class="widget-title pt5">{{chartTitle | uppercase}}</span><br/>

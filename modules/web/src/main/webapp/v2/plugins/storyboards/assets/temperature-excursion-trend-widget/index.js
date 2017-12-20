@@ -231,11 +231,11 @@ angular.module('logistimo.storyboard.temperatureExcursion', [])
 
         function getData() {
             $scope.wLoading = true;
+            $scope.noData = false;
             var selectedFilters = angular.copy($scope.filter);
             selectedFilters.from = formatDate2Url(selectedFilters.from);
             selectedFilters.to = formatDate2Url(selectedFilters.to);
             reportsServiceCore.getReportData(angular.toJson(selectedFilters)).then(function (data) {
-                $scope.noData = true;
                 if (checkNotNullEmpty(data.data)) {
                     var chartData = angular.fromJson(data.data);
                     chartData = sortByKeyDesc(chartData, 'label');
@@ -245,7 +245,8 @@ angular.module('logistimo.storyboard.temperatureExcursion', [])
                         $scope.allChartData = chartData;
                     }
                     setChartData(false, chartData, selectedFilters.level);
-                    $scope.noData = false;
+                } else {
+                    $scope.noData = true;
                 }
             }).catch(function error(msg) {
                 showError(msg, $scope);

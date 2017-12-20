@@ -1243,16 +1243,6 @@ angular.module('logistimo.storyboard').run(['$templateCache', function($template
         "                    <div class=\"row\">\n" +
         "                        <div class=\"col-sm-6\">\n" +
         "                            <div class=\"form-group\">\n" +
-        "                                <label class=\"col-sm-4 control-label required\">{{resourceBundle['min.display.time']}}</label>\n" +
-        "                                <div class=\"col-sm-6\">\n" +
-        "                                    <input type=\"text\" class=\"form-control\" placeholder=\"{{resourceBundle['time.in.seconds']}}\" ng-model=\"bulletinBoard.min\">\n" +
-        "                                </div>\n" +
-        "                            </div>\n" +
-        "                        </div>\n" +
-        "                    </div>\n" +
-        "                    <div class=\"row\">\n" +
-        "                        <div class=\"col-sm-6\">\n" +
-        "                            <div class=\"form-group\">\n" +
         "                                <label class=\"col-sm-4 control-label required\">{{resourceBundle['max.display.time']}}</label>\n" +
         "                                <div class=\"col-sm-6\">\n" +
         "                                    <input type=\"text\" class=\"form-control\" placeholder=\"{{resourceBundle['time.in.seconds']}}\" ng-model=\"bulletinBoard.max\">\n" +
