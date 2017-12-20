@@ -893,7 +893,7 @@ public class Invntry implements IInvntry {
             .getBatches(mId, kId, null);
     if(results.getResults() != null && results.getResults().size() > 0){
       return results.getResults().stream().filter(IInvntryBatch::isExpired)
-          .map(IInvntryBatch::getQuantity).reduce(BigDecimal::add).get();
+          .map(IInvntryBatch::getQuantity).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
     }
     return BigDecimal.ZERO;
   }
