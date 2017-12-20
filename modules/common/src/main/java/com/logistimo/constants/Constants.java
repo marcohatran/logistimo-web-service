@@ -39,6 +39,7 @@ public final class Constants {
   public static final String TX_OA = "TX_OA";
   public static final String X_ACCESS_USER = "x-access-user";
   public static final String GROUP_BY_NAME = "GROUP_BY_NAME";
+  public static final String DOMAIN = "x-access-domain";
 
   private Constants() {
   }
