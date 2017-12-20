@@ -385,12 +385,8 @@ public class ShipmentController {
   ShipmentResponseModel updateShipmentDate(@PathVariable String sId, @RequestBody String updValue,
                                            @RequestParam(required = false, value = "orderUpdatedAt") String orderUpdatedAt,
                                            HttpServletRequest request) {
-    if (StringUtils.isNotBlank(updValue)) {
-      return updateShipmentData("date", updValue, orderUpdatedAt, sId, request, " ",
-          "ship.expected.date.parse.error");
-    } else {
-      return null;
-    }
+    return updateShipmentData("date", updValue, orderUpdatedAt, sId, request, "ead.updated",
+        "ship.expected.date.parse.error");
   }
 
 
@@ -407,18 +403,16 @@ public class ShipmentController {
     try {
       if ("date".equals(updType)) {
         SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATE_FORMAT);
-        successMessage = LocalDateUtil
-            .format(sdf.parse(updValue), user.getLocale(), user.getTimezone(), true);
-
+        if(StringUtils.isNotEmpty(updValue)) {
+          successMessage = LocalDateUtil
+              .format(sdf.parse(updValue), user.getLocale(), user.getTimezone(), true);
+        }
       }
       IShipmentService ss = Services.getService(ShipmentService.class, user.getLocale());
       String userId = user.getUsername();
       shipment =
           ss.updateShipmentData(Collections.singletonMap(updType, updValue), orderUpdatedAt, sId,
               userId);
-      if (StringUtils.isEmpty(successMessage)) {
-        successMessage = backendMessages.getString(succesKey);
-      }
 
       model =
           new ShipmentResponseModel(successMessage,

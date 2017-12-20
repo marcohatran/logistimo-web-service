@@ -501,3 +501,4 @@ approvals.config.update.success=La configuration des approbations a été mise �
 general.notification.update.success=Configuration des notifications mise à jour avec succès.
 ship.reference.id.update.success=ID de référence mis à jour avec succès.
 ship.reference.id.update.error=Erreur lors de la mise à jour de Reference ID
+ead.updated=Date d'arrivée estimée mise à jour avec succès

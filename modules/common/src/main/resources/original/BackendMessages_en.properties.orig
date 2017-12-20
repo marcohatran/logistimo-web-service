@@ -504,3 +504,4 @@ deleted.success=deleted successfully.
 bulletin.board=Bulletin board
 ship.reference.id.update.success=Reference ID updated successfully.
 ship.reference.id.update.error=Error while updating Reference ID
+ead.updated=Estimated date of arrival updated successfully

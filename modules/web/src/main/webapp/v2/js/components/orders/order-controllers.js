@@ -1200,11 +1200,11 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                             count += 1;
                             callCheckStatus(count);
                             $scope.order.sno = $scope.sno;
-                            $scope.dates.efd = parseUrlDate($scope.order.efd);
+                            $scope.efdt = $scope.dates.efd = parseUrlDate($scope.order.efd);
                             if(checkNotNullEmpty($scope.dates.efd)) {
                                 $scope.order.isEfdValid = isNotPastDate($scope.dates.efd);
                             }
-                            $scope.dates.edd = parseUrlDate($scope.order.edd);
+                            $scope.eddt = $scope.dates.edd = parseUrlDate($scope.order.edd);
                             if (checkNotNullEmpty($scope.order.vid) && $scope.order.vid > 0) {
                                 $scope.vendor = {id: $scope.order.vid, nm: $scope.order.vnm};
                             }

@@ -964,7 +964,6 @@ packsize.empty=Package size cannot be empty.
 provide.reason=Please provide reason
 discrepancy.fulfillment.reasons.addinfo=semicolon separated list of <Shipment ID>:<Optional Batch ID>:<Reason>
 less.available.stock.toship=One or more materials doesn't have enough available stock to ship.
-ead.updated=Estimated date of arrival updated successfully
 allow.creating.partial.shipments=Allow creating partial shipments?
 allow.creating.shipments=Allow creating shipments
 created=Created

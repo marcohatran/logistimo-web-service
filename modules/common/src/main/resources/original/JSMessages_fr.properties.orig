@@ -966,7 +966,6 @@ packsize.empty=Taille de l'emballage ne peut pas être vide.
 provide.reason=Veuillez fournir une raison
 discrepancy.fulfillment.reasons.addinfo=Liste séparée par point-virgule de <ID d'expédition>: <ID de lot facultatif>: <Raison>
 less.available.stock.toship=Un ou plusieurs matériaux ne disposent pas d'une quantité suffisante de matériel disponible à expédier.
-ead.updated=Date d'arrivée estimée mise à jour avec succès
 allow.creating.partial.shipments=Permettre la création de livraisons partielles?
 allow.creating.shipments=Autoriser la création d'envois
 created=Créé
