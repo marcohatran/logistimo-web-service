@@ -53,7 +53,6 @@ public class APISecurityFilter implements Filter {
 
   public static final String ERROR_HEADER_NAME = "e";
   public static final String UPGRADE_REQUIRED_RESPONSE_CODE = "1";
-  public static final String DOMAIN_CHANGE_RESPONSE_CODE = "2";
   public static final String ASSET_STATUS_URL = "/s2/api/assetstatus";
   public static final String SMS_API_URL = "/s2/api/sms";
   public static final String APP_STATUS_URL = "/s2/api/app/status";
@@ -102,7 +101,6 @@ public class APISecurityFilter implements Filter {
         try {
           AuthenticationUtil.authenticateTokenAndSetSession(req);
         } catch (UnauthorizedException | ObjectNotFoundException e) {
-          xLogger.warn("Issue with api client authentication", e.getMessage());
           resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
           return;
         } catch (Exception e) {
