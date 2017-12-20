@@ -55,7 +55,10 @@ import com.logistimo.inventory.entity.InvntryLog;
 import com.logistimo.inventory.entity.Transaction;
 import com.logistimo.inventory.optimization.entity.OptimizerLog;
 import com.logistimo.logger.XLog;
+import com.logistimo.materials.entity.HandlingUnit;
+import com.logistimo.materials.entity.HandlingUnitContent;
 import com.logistimo.materials.entity.Material;
+import com.logistimo.materials.entity.MaterialManufacturers;
 import com.logistimo.mnltransactions.entity.MnlTransaction;
 import com.logistimo.orders.entity.DemandItem;
 import com.logistimo.orders.entity.DemandItemBatch;
@@ -115,7 +118,8 @@ public class LogistimoServicesListener implements ServletContextListener {
               Task.class, Transaction.class, Uploaded.class, UploadedMsgLog.class,
               UserAccount.class, UserToKiosk.class, Asset.class, AssetAttribute.class,
               AssetStatus.class,
-              AssetRelation.class};
+              AssetRelation.class, HandlingUnit.class, HandlingUnitContent.class,
+              MaterialManufacturers.class};
 
       PersistenceManager pm = null;
       try {

@@ -84,7 +84,7 @@
                         // do something on success
                         var curDomain = localStorage.getItem("domain");
                         if (checkNotNullEmpty(curDomain)) {
-                            config.headers.d = "user:" + curDomain;
+                            config.headers['x-access-domain'] = curDomain;
                         }
                         if (config.url.startsWith("/s2") || config.url.startsWith("/_ah/api")) {
                             config.url = $rootScope.basePath + config.url;

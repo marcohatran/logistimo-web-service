@@ -855,7 +855,7 @@ public class AssetBuilder {
     String entityId = null;
     String loc = jsonObject.getString("loc");
     if (jsonObject.has("entityId")) {
-      entityId = jsonObject.getString("entityId");
+      entityId = String.valueOf(jsonObject.getLong("entityId"));
     }
     String tag = String.valueOf(domainId);
     if (entityId != null) {
@@ -877,12 +877,12 @@ public class AssetBuilder {
       filters.put("TOKEN_ALARM_TYPE", String.valueOf(alarmType));
     }
     if (jsonObject.has("alarmDuration")) {
-      Long alarmDuration = jsonObject.getLong("alarmDuration");
+      Integer alarmDuration = jsonObject.getInt("alarmDuration");
       filters.put("TOKEN_ALARM_DURATION", String.valueOf(alarmDuration));
     }
     if (jsonObject.has("wsStatus")) {
       Integer assetWorkingStatus = jsonObject.getInt("wsStatus");
-      filters.put("TOKEN_WS", String.valueOf(assetWorkingStatus));
+      filters.put("TOKEN_WS", String.valueOf(assetWorkingStatus-1));
     }
     if (jsonObject.has("awr")) {
       Integer assetRel = jsonObject.getInt("awr");

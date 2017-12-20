@@ -389,7 +389,7 @@
         <init-param>
             <param-name>cors.allowed.headers</param-name>
             <param-value>
-                x-request-id,x-app-name,x-app-ver,x-access-user,X-AppEngine-TaskName,x-access-initiator,X-TempService-Signature,d,x-access-token,Content-Type,X-Requested-With,accept,Origin,Accept-Encoding,Accept-Language,Access-Control-Request-Method,Access-Control-Request-Headers
+                x-request-id,x-app-name,x-app-ver,x-access-user,X-AppEngine-TaskName,x-access-initiator,X-TempService-Signature,d,x-access-domain,x-access-token,Content-Type,X-Requested-With,accept,Origin,Accept-Encoding,Accept-Language,Access-Control-Request-Method,Access-Control-Request-Headers
             </param-value>
         </init-param>
         <init-param>
@@ -418,9 +418,6 @@
   		<url-pattern>/*</url-pattern>
 	</filter-mapping>
 
-	<welcome-file-list>
-		<welcome-file>s/index.jsp</welcome-file>
-	</welcome-file-list>
   <servlet-mapping>
 	<servlet-name>CustomReportsExportServlet</servlet-name>
 	<url-pattern>/s/customreportsexport</url-pattern>

@@ -2711,7 +2711,7 @@ widget-panel .panel {
     border-radius: 0;
 }
 
-#allWid [id^='ghost_'] {
+.allWid [id^='ghost_'] {
     background : #999;
     opacity : 0;
     -webkit-transition: all 0.25s linear;
@@ -2721,7 +2721,7 @@ widget-panel .panel {
     transition: all 0.25s linear;
 }
 
-#allWid, #allWid [id^='panel_'].dummy, widget-panel .panel.dummy, widget-panel .panel .dummy {
+.allWid, .allWid [id^='panel_'].dummy, widget-panel .panel.dummy, widget-panel .panel .dummy {
     -webkit-transition: all 0.25s ease-in;
     -moz-transition: all 0.25s ease-in;
     -ms-transition: all 0.25s ease-in;
@@ -4194,4 +4194,35 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
 
 .bb-large-icon {
     font-size: 300%;
+}
+
+.start-load {
+    position: fixed;
+    top: 10000px;
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        /*transform: translate3d(100%, 0, 0);*/
+    }
+
+    to {
+        opacity: 1;
+        /*transform: none;*/
+    }
+}
+
+.zipper.zipper-on-add {
+    animation: fadeIn 1s both;
 }

@@ -38,6 +38,7 @@ import com.logistimo.users.service.UsersService;
 
 import org.springframework.util.StringUtils;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 
 /**
@@ -55,20 +56,19 @@ public class AuthenticationUtil {
 
   public static void authenticateTokenAndSetSession(HttpServletRequest req)
       throws ServiceException {
-    String authToken = req.getHeader(Constants.TOKEN);
+    String authToken = getToken(req);
     AuthenticationService aus = StaticApplicationContext.getBean(AuthenticationService.class);
     IUserToken token = aus.authenticateToken(authToken, getSource(req));
     UsersService usersService = StaticApplicationContext.getBean(UsersService.class);
     SecurityMgr.setSessionDetails(usersService.getUserAccount(token.getUserId()));
     SecureUserDetails userDetails = SecurityUtils.getUserDetails();
     if (!token.hasAccessKey()) {
-      Long requestDomainId = SecurityUtils.getReqCookieDomain(req);
-      if (requestDomainId != null) {
-        if (usersService.hasAccessToDomain(userDetails.getUsername(), requestDomainId)) {
-          userDetails.setCurrentDomainId(requestDomainId);
-        } else {
-          userDetails.setCurrentDomainId(token.getDomainId());
-        }
+      Long requestDomainId = getRequestDomain(req);
+      if (requestDomainId != null && usersService
+          .hasAccessToDomain(userDetails.getUsername(), requestDomainId)) {
+        userDetails.setCurrentDomainId(requestDomainId);
+      } else {
+        userDetails.setCurrentDomainId(token.getDomainId());
       }
     } else {
       userDetails.setCurrentDomainId(token.getDomainId());
@@ -79,5 +79,44 @@ public class AuthenticationUtil {
   private static int getSource(HttpServletRequest req) {
     String sourceParam = req.getHeader(Constants.ACCESS_INITIATOR);
     return StringUtils.isEmpty(sourceParam) ? SourceConstants.WEB : Integer.parseInt(sourceParam);
+  }
+
+  public static boolean hasAccessToken(HttpServletRequest req) {
+    return StringUtils.hasText(getToken(req));
+  }
+
+  private static String getToken(HttpServletRequest req) {
+    return StringUtils.hasText(req.getHeader(Constants.TOKEN)) ? req.getHeader(Constants.TOKEN)
+        : getTokenCookie(req);
+  }
+
+  private static String getTokenCookie(HttpServletRequest req) {
+    Cookie[] cookies = req.getCookies();
+    if (cookies != null) {
+      for (Cookie cookie : cookies) {
+        if (Constants.TOKEN.equals(cookie.getName())) {
+          return cookie.getValue();
+        }
+      }
+    }
+    return null;
+  }
+
+  private static Long getRequestDomain(HttpServletRequest req) {
+    return StringUtils.hasText(req.getHeader(Constants.DOMAIN)) ? Long
+        .valueOf(req.getHeader(Constants.DOMAIN))
+        : getRequestDomainFromCookie(req);
+  }
+
+  private static Long getRequestDomainFromCookie(HttpServletRequest req) {
+    Cookie[] cookies = req.getCookies();
+    if (cookies != null) {
+      for (Cookie cookie : cookies) {
+        if (Constants.DOMAIN.equals(cookie.getName())) {
+          return Long.valueOf(cookie.getValue());
+        }
+      }
+    }
+    return null;
   }
 }
