@@ -79,17 +79,14 @@ dashboardServices.factory('dashboardService', ['APIService','$q', function (apiS
             queue[url].push(defer);
             if(queue[url].length == 1) {
                 apiService.get('/s2/api/dashboard/' + url).then(function (data) {
-                    console.log("Queue length : "+queue[url].length);
                     queue[url].forEach(function(defer){
                         defer.resolve(data);
                     })
                 }).catch(function (err) {
-                    console.log("Reject Queue length : "+queue[url].length);
                     queue[url].forEach(function(defer){
                         defer.reject(err);
                     })
                 }).finally(function(){
-                    console.log("Finally Queue length : "+queue[url].length);
                     queue[url] = [];
                 });
             }
