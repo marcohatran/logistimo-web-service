@@ -385,7 +385,7 @@ public class ShipmentController {
   ShipmentResponseModel updateShipmentDate(@PathVariable String sId, @RequestBody String updValue,
                                            @RequestParam(required = false, value = "orderUpdatedAt") String orderUpdatedAt,
                                            HttpServletRequest request) {
-    return updateShipmentData("date", updValue, orderUpdatedAt, sId, request, "ead.updated",
+    return updateShipmentData("date", updValue, orderUpdatedAt, sId, request, " ",
         "ship.expected.date.parse.error");
   }
 
@@ -413,6 +413,9 @@ public class ShipmentController {
       shipment =
           ss.updateShipmentData(Collections.singletonMap(updType, updValue), orderUpdatedAt, sId,
               userId);
+      if (!"date".equals(updType) && StringUtils.isEmpty(successMessage)) {
+        successMessage = backendMessages.getString(succesKey);
+      }
 
       model =
           new ShipmentResponseModel(successMessage,
