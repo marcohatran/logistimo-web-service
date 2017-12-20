@@ -26,7 +26,7 @@ angular.module('logistimo.storyboard', ['logistimo.storyboard.bulletinboards']);
  * Created by naveensnair on 15/11/17.
  */
 
-angular.module('logistimo.storyboard.bulletinboards', ['logistimo.storyboard.dashboards'])
+angular.module('logistimo.storyboard.bulletinboards', ['logistimo.storyboard.dashboards','ngAnimate'])
     .provider('bulletinBoardRepository', function () {
         return {
             $get: ['$q', function ($q) {
@@ -124,6 +124,7 @@ angular.module('logistimo.storyboard.bulletinboards', ['logistimo.storyboard.das
         }
     }])
     .controller('BulletinBoardViewController', ['bulletinBoardRepository', '$scope','$timeout', function (bulletinBoardRepository, $scope, $timeout) {
+        $scope.containerStyle = {"width": parseInt(getComputedStyle(document.getElementById("bulletin_board_view")).width, 10)};
         $scope.init = function () {
             $scope.renderDashboardsPage = false;
             if($scope.showTitle == undefined) {
@@ -166,7 +167,18 @@ angular.module('logistimo.storyboard.bulletinboards', ['logistimo.storyboard.das
         
         $scope.setTitles = function(title, info) {
             $scope.setBulletinBoardTitle(title, info);
-        }
+        };
+
+        $scope.isPrimary = function (index) {
+            return $scope.count == index;
+        };
+
+        $scope.isSecondary = function (index) {
+            if ($scope.count + 1 == $scope.bulletinBoard.dashboards.length) {
+                return index == 0;
+            }
+            return $scope.count + 1 == index;
+        };
         
     }]);
 
@@ -925,15 +937,17 @@ angular.module('logistimo.storyboard.dashboards', ['logistimo.storyboard.widgets
             }]
         };
     })
-    .controller('DashboardViewController', ['dashboardRepository', '$scope', '$window', function (dashboardRepository, $scope, $window) {
+    .controller('DashboardViewController', ['dashboardRepository', '$scope', '$window','$timeout', function (dashboardRepository, $scope, $window, $timeout) {
         
         function init() {
             function initDashboardLayout() {
-                var dashboardLayoutHandler = new DashboardLayoutHandler("allWid", null, $window);
-                dashboardLayoutHandler.setWidgets($scope.db.widgets);
-                $scope.maxHeight = dashboardLayoutHandler.addComputeData();
-                dashboardLayoutHandler.setMaxHeight();
-                $scope.renderingStatus = {};
+                $timeout(function () {
+                    var dashboardLayoutHandler = new DashboardLayoutHandler("allWid" + $scope.dashboardId, null, $window);
+                    dashboardLayoutHandler.setWidgets($scope.db.widgets);
+                    $scope.maxHeight = dashboardLayoutHandler.addComputeData();
+                    dashboardLayoutHandler.setMaxHeight();
+                    $scope.renderingStatus = {};
+                });
             }
             
             if (!$scope.noInit) {
@@ -1319,7 +1333,7 @@ angular.module('logistimo.storyboard').run(['$templateCache', function($template
         "    <div class=\"row padding5\" id=\"viewDash\">\n" +
         "        <ul\n" +
         "                style=\"list-style-type: none; padding: 0; display: block; margin: 0; position: relative; min-height: {{maxHeight}}\"\n" +
-        "                id=\"allWid\">\n" +
+        "                class=\"allWid\">\n" +
         "            <li class=\"dummy noLRpad\"\n" +
         "                style=\"z-index: 1; position: absolute; padding:5px; display:list-item; width: {{widget.computedWidth}}px; left: {{widget.computedX}}px; top: {{widget.computedY}}px; height: {{widget.computedHeight + 10}}px;\"\n" +
         "                ng-controller=\"WidgetScopeController\" ng-repeat=\"(id,widget) in dashboard.widgets\">\n" +
@@ -1400,19 +1414,23 @@ angular.module('logistimo.storyboard').run(['$templateCache', function($template
         "    </div>\n" +
         "</div>"
     );
-    
-    
+
+
     $templateCache.put('/angular-storyboards/src/bulletinboard/templates/view-bulletin-board.html',
         "<div>\n" +
         "    <div class=\"col-sm-12\">\n" +
-        "        <div ng-controller=\"BulletinBoardViewController\">\n" +
-        "            <div ng-if=\"renderDashboardsPage == true\">\n" +
-        "                <div ng-include=\"'/angular-storyboards/src/dashboard/templates/view-dashboard.html'\"\n" +
-        "                     ng-init=\"showTitle = showTitle\"></div>\n" +
+        "        <div ng-controller=\"BulletinBoardViewController\" id=\"bulletin_board_view\">\n" +
+        "            <div ng-repeat=\"dashboard in bulletinBoard.dashboards track by $index\">\n" +
+        "                <div ng-if=\"isPrimary($index) || isSecondary($index)\"\n" +
+        "                     ng-class=\"{'start-load' : isSecondary($index),'zipper-on': isPrimary($index)}\" class=\"zipper\"\n" +
+        "                     ng-style=\"containerStyle\">\n" +
+        "                    <div ng-include=\"'/angular-storyboards/src/dashboard/templates/view-dashboard.html'\"\n" +
+        "                         ng-init=\"showTitle = showTitle; dashboardId = dashboard.id\"></div>\n" +
+        "                </div>\n" +
         "            </div>\n" +
         "        </div>\n" +
         "    </div>\n" +
-        "</div>\n"
+        "</div>"
     );
     
     
@@ -1443,7 +1461,7 @@ angular.module('logistimo.storyboard').run(['$templateCache', function($template
         "            <div>\n" +
         "                <div class=\"row mt18 padding5\">\n" +
         "                    <ul style=\"list-style-type: none; padding: 0; display: block; margin: 0; position: relative; min-height: {{maxHeight}}\"\n" +
-        "                        id=\"allWid\">\n" +
+        "                        class=\"allWid\">\n" +
         "                        <li class=\"dummy noLRpad\" id=\"panel_{{widget.id}}\"\n" +
         "                            style=\"z-index: 1; position: absolute; padding:5px; display:list-item; width: {{widget.computedWidth}}px; left: {{widget.computedX}}px; top: {{widget.computedY}}px;\"\n" +
         "                            ng-repeat=\"(id,widget) in widgets\">\n" +
@@ -1598,8 +1616,8 @@ angular.module('logistimo.storyboard').run(['$templateCache', function($template
         "    </div>\n" +
         "</div>"
     );
-    
-    
+
+
     $templateCache.put('/angular-storyboards/src/dashboard/templates/view-dashboard.html',
         "<div class=\"row\">\n" +
         "    <div class=\"col-sm-12\">\n" +
@@ -1622,10 +1640,10 @@ angular.module('logistimo.storyboard').run(['$templateCache', function($template
         "                        <h3 style=\"text-align: center;margin: 0px;color: #777;\">{{db.info}}</h3>\n" +
         "                    </div>\n" +
         "                </div>\n" +
-        "                <div class=\"row padding5\" id=\"viewDash\">\n" +
+        "                <div class=\"row padding5\" id=\"viewDash{{dashboardId}}\">\n" +
         "                    <ul\n" +
         "                            style=\"list-style-type: none; padding: 0; display: block; margin: 0; position: relative; min-height: {{maxHeight}}\"\n" +
-        "                            id=\"allWid\">\n" +
+        "                            id=\"allWid{{dashboardId}}\" class=\"allWid\">\n" +
         "                        <li class=\"dummy noLRpad\"\n" +
         "                            style=\"z-index: 1; position: absolute; padding:5px; display:list-item; width: {{widget.computedWidth}}px; left: {{widget.computedX}}px; top: {{widget.computedY}}px; height: {{widget.computedHeight}}px;max-height: {{widget.computedHeight}}px;\"\n" +
         "                            ng-controller=\"WidgetScopeController\"\n" +
