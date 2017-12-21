@@ -4007,12 +4007,12 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
 }
 
 .widget .widget-title-text {
-    font-size: 1vmax;
+    font-size: 20px;
     color: #d0dada;
     letter-spacing: 1.5px;
 }
 .widget .widget-sub-title-text {
-    font-size: 1vmax;
+    font-size: 18px;
     letter-spacing: 1px;
     color: #a3a3a3;
 }
@@ -4226,13 +4226,13 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
 }
 
 .zipper.zipper-on-add {
-    animation: fadeIn 1s both;
+    animation: fadeIn 2s both;
 }
 
 .bulletin-domain {
     font-family: Lato;
     font-weight: bold;
-    font-size: 16px;
+    font-size: 20px;
     letter-spacing: 1.9px;
     color:#6f6f6f;
     position: relative;

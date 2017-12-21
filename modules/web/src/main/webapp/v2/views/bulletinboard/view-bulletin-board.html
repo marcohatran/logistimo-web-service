@@ -41,7 +41,7 @@
             <div ng-if="headerImage == undefined || headerImage == ''">
                 <img class="mainlogo pull-right pt5" src="images/acquia_marina_logo.png">
             </div>
-            <span ng-show="showDomain" class="bulletin-domain pull-right bulletin-domain">{{domainName | uppercase}} - </span>
+            <span ng-show="showDomain" class="bulletin-domain pull-right bulletin-domain">{{domainName | uppercase}} </span>
         </div>
     </div>
     <div ng-include="'/angular-storyboards/src/bulletinboard/templates/view-bulletin-board.html'" ng-init="showTitle = false"></div>

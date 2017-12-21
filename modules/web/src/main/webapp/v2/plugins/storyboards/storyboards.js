@@ -845,7 +845,7 @@ function DashboardLayoutHandler(containerId, $timeout, $window) {
         },
         addWidget: function(widget) {
             var newWid = {};
-            newWid.id = widget.name.replace(/[^a-zA-Z]/g,'')+new Date().getMilliseconds();
+            newWid.id = widget.name.replace(/[^a-zA-Z]/g,'')+new Date().getTime();
             newWid.name = widget.name;
             newWid.wid = newWid.id;
             newWid.widgetTemplateId = widget.id;
