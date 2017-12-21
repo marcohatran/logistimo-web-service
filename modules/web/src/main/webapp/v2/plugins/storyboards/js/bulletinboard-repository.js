@@ -78,11 +78,8 @@ function BulletinBoardRepository(apiService, $q) {
             if ($scope.isUndef(bulletinBoard.name)) {
                 $scope.showWarning("Name is mandatory");
                 return;
-            } else if ($scope.isUndef(bulletinBoard.min)) {
-                $scope.showWarning("Minimum scroll time is mandatory");
-                return;
             } else if ($scope.isUndef(bulletinBoard.max)) {
-                $scope.showWarning("Maximum scroll time is mandatory");
+                $scope.showWarning("Display time is mandatory");
                 return;
             } else if ($scope.isUndef(bulletinBoard.dashboards) || bulletinBoard.dashboards.length == 0) {
                 $scope.showWarning("Please configure dashboards");

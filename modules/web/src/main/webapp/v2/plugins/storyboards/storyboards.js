@@ -127,6 +127,8 @@ angular.module('logistimo.storyboard.bulletinboards', ['logistimo.storyboard.das
         $scope.containerStyle = {"width": parseInt(getComputedStyle(document.getElementById("bulletin_board_view")).width, 10)};
         $scope.init = function () {
             $scope.renderDashboardsPage = false;
+            $scope.titleMap = {};
+            $scope.subTitleMap = {};
             if($scope.showTitle == undefined) {
                 $scope.showTitle = true;
             }
@@ -159,14 +161,16 @@ angular.module('logistimo.storyboard.bulletinboards', ['logistimo.storyboard.das
             }, $scope.bulletinBoard.max * 1000);
         }
         
-        $scope.setBulletinBoardTitle = function (title, subTitle) {
+        $scope.setBulletinBoardTitle = function (title, subTitle, index) {
             $scope.title = title;
             $scope.subTitle = subTitle;
-            $scope.setBBTitle($scope.title, $scope.subTitle);
+            $scope.titleMap[index] = title;
+            $scope.subTitleMap[index] = subTitle;
+            $scope.setBBTitle($scope.titleMap[$scope.count], $scope.subTitleMap[$scope.count], index);
         };
         
-        $scope.setTitles = function(title, info) {
-            $scope.setBulletinBoardTitle(title, info);
+        $scope.setTitles = function(title, info, index) {
+            $scope.setBulletinBoardTitle(title, info, index);
         };
 
         $scope.isPrimary = function (index) {
@@ -940,6 +944,9 @@ angular.module('logistimo.storyboard.dashboards', ['logistimo.storyboard.widgets
     .controller('DashboardViewController', ['dashboardRepository', '$scope', '$window','$timeout', function (dashboardRepository, $scope, $window, $timeout) {
         
         function init() {
+            if(checkNullEmpty($scope.dashboardId) && $scope.preview) {
+                $scope.dashboardId = Math.floor(Math.random() * 10);
+            }
             function initDashboardLayout() {
                 $timeout(function () {
                     var dashboardLayoutHandler = new DashboardLayoutHandler("allWid" + $scope.dashboardId, null, $window);
@@ -954,7 +961,7 @@ angular.module('logistimo.storyboard.dashboards', ['logistimo.storyboard.widgets
                 dashboardRepository.get($scope.dashboardId, $scope).then(function (dashboard) {
                     $scope.db = dashboard;
                     if (!$scope.showTitle) {
-                        $scope.setTitles($scope.db.title, $scope.db.info);
+                        $scope.setTitles($scope.db.title, $scope.db.info, $scope.index);
                     }
                     if ($scope.db == null || $scope.db == "") {
                         $scope.db = {
@@ -1425,7 +1432,7 @@ angular.module('logistimo.storyboard').run(['$templateCache', function($template
         "                     ng-class=\"{'start-load' : isSecondary($index),'zipper-on': isPrimary($index)}\" class=\"zipper\"\n" +
         "                     ng-style=\"containerStyle\">\n" +
         "                    <div ng-include=\"'/angular-storyboards/src/dashboard/templates/view-dashboard.html'\"\n" +
-        "                         ng-init=\"showTitle = showTitle; dashboardId = dashboard.id\"></div>\n" +
+        "                         ng-init=\"showTitle = showTitle; dashboardId = dashboard.id; index = $index\"></div>\n" +
         "                </div>\n" +
         "            </div>\n" +
         "        </div>\n" +
@@ -1461,7 +1468,7 @@ angular.module('logistimo.storyboard').run(['$templateCache', function($template
         "            <div>\n" +
         "                <div class=\"row mt18 padding5\">\n" +
         "                    <ul style=\"list-style-type: none; padding: 0; display: block; margin: 0; position: relative; min-height: {{maxHeight}}\"\n" +
-        "                        class=\"allWid\">\n" +
+        "                        id=\"allWid\" class=\"allWid\">\n" +
         "                        <li class=\"dummy noLRpad\" id=\"panel_{{widget.id}}\"\n" +
         "                            style=\"z-index: 1; position: absolute; padding:5px; display:list-item; width: {{widget.computedWidth}}px; left: {{widget.computedX}}px; top: {{widget.computedY}}px;\"\n" +
         "                            ng-repeat=\"(id,widget) in widgets\">\n" +
