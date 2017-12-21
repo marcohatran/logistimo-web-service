@@ -453,7 +453,13 @@ function InventoryReportController(s, timeout, getData, reportsServiceCore) {
         selectedFilters['type'] = reportType;
         selectedFilters['viewtype'] = s.activeMetric;
         selectedFilters['titles'] = {};
-        selectedFilters['titles']['filters'] = s.tableCaption;
+        var periodicityDisplays = {
+            daily: s.resourceBundle['daily'],
+            weekly: s.resourceBundle['weekly'],
+            monthly: s.resourceBundle['monthly']
+        };
+        var filterTitles = "Periodicity: " + reportCoreFunction().getPeriodicityDisplay(s.filter.periodicity, periodicityDisplays) + "   " + s.tableCaption;
+        selectedFilters['titles']['filters'] = filterTitles;
         selectedFilters['titles']['metrics'] = s.tableMetric;
         selectedFilters['titles']['viewtype'] = s.activeMetric;
         selectedFilters['primaryMetricIndex'] = s.metrics.primary;

@@ -1306,6 +1306,25 @@ function reportCoreFunction() {
             sumTable[labels.length] = ["Total", total];
             return sumTable;
         },
+        getPeriodicityDisplay: function (periodicity, periodicityText) {
+            var display = '';
+            switch (periodicity) {
+
+                case 'd': {
+                    display = periodicityText.daily;
+                    break;
+                }
+                case 'w': {
+                    display = periodicityText.weekly;
+                    break;
+                }
+                default: {
+                    display = periodicityText.monthly;
+                    break;
+                }
+            }
+            return display;
+    },
         formatReportTableData: function (data) {
             for (var key in data) {
                 angular.forEach(data[key], function (v) {
