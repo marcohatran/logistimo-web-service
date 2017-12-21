@@ -889,6 +889,10 @@ assetControllers.controller('AssetsDetailsListingController', ['$scope', '$locat
             caption += "   " + "Relationships: " + $scope.awrDisplay;
             caption += "   " + $scope.resourceBundle['alarms'] + ": " + $scope.filters[$scope.currentFilter].displayValue;
             caption += "   " + $scope.resourceBundle['working.status'] + ": " + (($scope.assetWSFilter == 0) ? "All" : $scope.assetConfig.wses[$scope.assetWSFilter].dV);
+            if (checkNotNullEmpty($scope.duration)) {
+                var duration = $scope.duration + " " + $scope.filterDur[$scope.aDurationDisplay].displayValue;
+                caption += "   Duration : " + duration;
+            }
             return caption;
         }
 

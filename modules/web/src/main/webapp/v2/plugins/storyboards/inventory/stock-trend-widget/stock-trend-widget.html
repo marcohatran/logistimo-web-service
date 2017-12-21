@@ -37,8 +37,8 @@
         <span class="widget-no-data">No data to display</span>
     </div>
     <div ng-if="!wLoading && !showError && renderChart">
-        <div class="col-sm-12 text-center">
-            <span class="widget-title pt5">{{chartTitle | uppercase}}</span><br/>
+        <div class="col-sm-12 text-center pt5">
+            <span class="widget-title">{{chartTitle | uppercase}}</span><br/>
             <span class="widget-sub-title">{{chartSubTitle | uppercase}}</span>
         </div>
         <fusion-chart type="cType" height="cHeight" width="cWidth" chart-label="cLabel"

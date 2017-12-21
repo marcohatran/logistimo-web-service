@@ -273,7 +273,7 @@ function constructMapData(event, init, scope, INVENTORY, $sce, mapRange, mapColo
         "legendBgAlpha": "0",
         "legendBorderAlpha": "0",
         "legendShadow": "0",
-        "legendItemFontSize": "10",
+        "legendItemFontSize": "14",
         "legendItemFontColor": "#666666",
         "drawCustomLegendIcon": "0",
         "legendIconAlpha": "100",
@@ -397,7 +397,7 @@ function constructBarData(data, allData, event, addLink, level, scope, mapRange,
     var bData = [];
     for (var f in allData) {
         if (checkNotNullEmpty(f) && f != "MAT_BD") {
-            bData.push({"label": f});
+            bData.push({"label": f.toUpperCase()});
         }
     }
     for (var n in allData) {
@@ -499,7 +499,7 @@ function constructMatBarData(data, allData, event, scope, mapRange, mapColors, I
     var bData = [];
     for (var f in allData) {
         if (checkNotNullEmpty(f)) {
-            bData.push({"label": f});
+            bData.push({"label": f.toUpperCase()});
         }
     }
     for (var n in allData) {

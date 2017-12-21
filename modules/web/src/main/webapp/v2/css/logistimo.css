@@ -4007,12 +4007,14 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
 }
 
 .widget .widget-title-text {
-    font-size: large;
-    margin-bottom:0px;
+    font-size: 1vmax;
+    color: #d0dada;
+    letter-spacing: 1.5px;
 }
 .widget .widget-sub-title-text {
-    font-weight:normal;
-    margin-bottom:0px;
+    font-size: 1vmax;
+    letter-spacing: 1px;
+    color: #a3a3a3;
 }
 .widget .widget-text {
     font-size: larger;
