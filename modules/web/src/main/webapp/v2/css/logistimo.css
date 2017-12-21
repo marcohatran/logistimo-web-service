@@ -4228,3 +4228,13 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
 .zipper.zipper-on-add {
     animation: fadeIn 1s both;
 }
+
+.bulletin-domain {
+    font-family: Lato;
+    font-weight: bold;
+    font-size: 16px;
+    letter-spacing: 1.9px;
+    color:#6f6f6f;
+    position: relative;
+    top:20px;
+}

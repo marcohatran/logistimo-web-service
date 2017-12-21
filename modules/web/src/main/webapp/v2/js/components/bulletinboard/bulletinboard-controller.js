@@ -29,6 +29,10 @@ bulletinBoardControllers.controller('BulletinBoardRenderController', ['bulletinB
     function init() {
         $scope.title = "";
         $scope.subTitle = "";
+        $scope.showDomain = false;
+        if(checkNotNullEmpty($scope.domainName)) {
+            $scope.showDomain = true;
+        }
     }
 
     init();
