@@ -150,23 +150,23 @@ angular.module('logistimo.storyboard.temperatureExcursion', [])
             var seriesNumber;
             if(excursionType == "0") {
                 seriesNumber = 26;
-                $scope.chartTitle = "High excursions - % of assets with exposure (>= 1 hour)";
+                $scope.chartTitle = "% OF ASSETS WITH A HIGH EXCURSION (>= 1 hour)";
                 if(exposureTime == "3") {
                     seriesNumber = 29;
-                    $scope.chartTitle = "High excursions - % of assets with exposure (>= 5 hours)";
+                    $scope.chartTitle = "% OF ASSETS WITH A HIGH EXCURSION (>= 5 hours)";
                 } else if(exposureTime == "4") {
                     seriesNumber = 32;
-                    $scope.chartTitle = "High excursions - % of assets with exposure (>= 10 hours)";
+                    $scope.chartTitle = "% OF ASSETS WITH A HIGH EXCURSION (>= 10 hours)";
                 }
             } else if(excursionType == "1") {
                 seriesNumber = 27;
-                $scope.chartTitle = "Low excursions - % of assets with exposure (>= 1 hours)";
+                $scope.chartTitle = "% OF ASSETS WITH A LOW EXCURSION (>= 1 hour)";
                 if(exposureTime == "1") {
                     seriesNumber = 30;
-                    $scope.chartTitle = "Low excursions - % of assets with exposure (>= 2 hours)";
+                    $scope.chartTitle = "% OF ASSETS WITH A LOW EXCURSION (>= 2 hours)";
                 } else if(exposureTime == "2") {
                     seriesNumber = 33;
-                    $scope.chartTitle = "Low excursions - % of assets with exposure (>= 3 hours)";
+                    $scope.chartTitle = "% OF ASSETS WITH A LOW EXCURSION (>= 3 hours)";
                 }
             }
             return seriesNumber;
@@ -207,6 +207,7 @@ angular.module('logistimo.storyboard.temperatureExcursion', [])
                 for (var i = 0; i < compareFields.length; i++) {
                     cData[i] = getReportFCSeries(chartData, 13, compareFields[i], "area", linkDisabled, 0);
                 }
+                $scope.chartTitle = "AVERAGE NORMAL DURATION PER ASSET (HOURS)";
                 $scope.cOptions.plotFillColor ="#1aaf5d";
             }
             $scope.chartSubTitle = getReportCaption($scope.filter);

@@ -194,48 +194,48 @@ angular.module('logistimo.storyboard.stockTrend', [])
 
         function constructAbnormalStockSeries(type, availabilityTime) {
             var series = 13;
-            $scope.chartTitle = "Zero stock - % of inventory items with this abnormality (100% of the time)";
+            $scope.chartTitle = "% OF INVENTORY ITEMS STOCKED OUT (100% of the time)";
             $scope.cOptions.plotFillColor ="#d9534f";
             if(type == "0") {
                 if(availabilityTime == "1") {
                     series = 14;
-                    $scope.chartTitle = "Zero stock - % of inventory items with this abnormality (>= 90% of the time)";
+                    $scope.chartTitle = "% OF INVENTORY ITEMS STOCKED OUT (>= 90% of the time)";
                 } else if(availabilityTime == "2") {
                     series = 15;
-                    $scope.chartTitle = "Zero stock - % of inventory items with this abnormality (>= 80% of the time)";
+                    $scope.chartTitle = "% OF INVENTORY ITEMS STOCKED OUT (>= 80% of the time)";
                 } else if(availabilityTime == "3") {
                     series = 16;
-                    $scope.chartTitle = "Zero stock - % of inventory items with this abnormality (>= 70% of the time)";
+                    $scope.chartTitle = "% OF INVENTORY ITEMS STOCKED OUT (>= 70% of the time)";
                 }
             } else if(type == "1") {
                 $scope.cOptions.plotFillColor ="#fad42e";
                 if(availabilityTime == "0") {
                     series = 17;
-                    $scope.chartTitle = "< Min - % of inventory items with this abnormality (100% of the time)";
+                    $scope.chartTitle = "% OF INVENTORY ITEMS < MINIMUM (100% of the time)";
                 } else if(availabilityTime == "1") {
                     series = 18;
-                    $scope.chartTitle = "< Min - % of inventory items with this abnormality (>= 90% of the time)";
+                    $scope.chartTitle = "% OF INVENTORY ITEMS < MINIMUM (>= 90% of the time)";
                 } else if(availabilityTime == "2") {
                     series = 19;
-                    $scope.chartTitle = "< Min - % of inventory items with this abnormality (>= 80% of the time)";
+                    $scope.chartTitle = "% OF INVENTORY ITEMS < MINIMUM (>= 80% of the time)";
                 } else if(availabilityTime == "3") {
                     series = 20;
-                    $scope.chartTitle = "< Min - % of inventory items with this abnormality (>= 70% of the time)";
+                    $scope.chartTitle = "% OF INVENTORY ITEMS < MINIMUM (>= 70% of the time)";
                 }
             } else if(type == "2") {
                 $scope.cOptions.plotFillColor ="#00c0ef";
                 if(availabilityTime == "0") {
                     series = 21;
-                    $scope.chartTitle = "> Max - % of inventory items with this abnormality (100% of the time)";
+                    $scope.chartTitle = "% OF INVENTORY ITEMS > MAXIMUM (100% of the time)";
                 } else if(availabilityTime == "1") {
                     series = 22;
-                    $scope.chartTitle = "> Max - % of inventory items with this abnormality (>= 90% of the time)";
+                    $scope.chartTitle = "% OF INVENTORY ITEMS > MAXIMUM (>= 90% of the time)";
                 } else if(availabilityTime == "2") {
                     series = 23;
-                    $scope.chartTitle = "> Max - % of inventory items with this abnormality (>= 80% of the time)";
+                    $scope.chartTitle = "% OF INVENTORY ITEMS > MAXIMUM (>= 80% of the time)";
                 } else if(availabilityTime == "3") {
                     series = 24;
-                    $scope.chartTitle = "> Max - % of inventory items with this abnormality (>= 70% of the time)";
+                    $scope.chartTitle = "% OF INVENTORY ITEMS > MAXIMUM (>= 70% of the time)";
                 }
             }
             return series;
