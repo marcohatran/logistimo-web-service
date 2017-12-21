@@ -521,5 +521,5 @@ trimGeo = function(geo) {
 };
 
 isNotPastDate = function(date) {
-    return parseInt(formatDate(date)) >= (parseInt(formatDate(new Date())));
+    return (date.getTime() - new Date().setHours(0,0,0,0)) >= 0;
 };
