@@ -666,7 +666,7 @@ function getReportFCCategories(data, format) {
 };
 
 function getReportCaption(filter) {
-    return "From: " + formatReportDate(filter.from, filter) + "   To: " + formatReportDate(filter.to, filter) + "   " +
+    return "From: " + formatReportDate(filter.from, filter) + "    To: " + formatReportDate(filter.to, filter) + "   " +
         getFilterLabel()
 };
 

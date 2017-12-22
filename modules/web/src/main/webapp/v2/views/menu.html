@@ -81,6 +81,9 @@
                                     <a href="/m/index.html" target="_blank"
                                             >{{resourceBundle['home.html5browser']}}</a>
                                 </li>
+                                <li ng-if="iAU">
+                                    <a href="#/setup/auth" target="_blank">{{resourceBundle['authorize.upper']}} {{resourceBundle['bulletin.board.lower']}}</a>
+                                </li>
                             </ul>
                     </span>
                     <span class="userdomaininfo"><a href="/s/help/index.html" target="_blank"
@@ -233,6 +236,9 @@
                         </li>
                         <li ng-show="iAdm"><a href="#/setup/domains/">{{resourceBundle.domains}}</a></li>
                         <li ng-show="tempEnabled && (iSU || (iAdm && dp.av))"><a href="#/setup/assets/">{{resourceBundle.assets}}</a>
+                        </li>
+                        <li ng-show="iAdm || iSU">
+                            <a href="#/setup/auth">{{resourceBundle['authorize.upper']}}</a>
                         </li>
                     </ul>
                 </li>
