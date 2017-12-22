@@ -1242,7 +1242,6 @@ public class ShipmentService extends ServiceImpl implements IShipmentService {
             shipment.setReason(entry.getValue());//todo: update reason for shipment pending.
           } else if ("date".equals(entry.getKey())) {
             if (StringUtils.isNotBlank(entry.getValue())) {
-              SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATE_FORMAT);
               try {
                 shipment.setExpectedArrivalDate(sdf.parse(entry.getValue()));
               } catch (ParseException e) {
@@ -1268,7 +1267,7 @@ public class ShipmentService extends ServiceImpl implements IShipmentService {
         oms.updateOrderMetadata(orderId, userId, pm);
         tx.commit();
         return getShipmentById(sId);
-      } catch (InvalidServiceException e) {
+      } catch (InvalidServiceException | IllegalArgumentException e) {
         xLogger.warn("Error while updating shipment", e);
         throw e;
       } catch (LogiException le) {
@@ -1298,7 +1297,6 @@ public class ShipmentService extends ServiceImpl implements IShipmentService {
     ShipmentMaterialsModel sModel = new ShipmentMaterialsModel();
     sModel.sId = shipmentId;
     sModel.userId = userId;
-    SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATE_FORMAT);
     sModel.afd = sdf.format(new Date());
     sModel.items = new ArrayList<>();
     MaterialCatalogService
@@ -1475,7 +1473,6 @@ public class ShipmentService extends ServiceImpl implements IShipmentService {
               item.getDiscrepancyQuantity().add(sItem.getDiscrepancyQuantity()));
         }
         pm.makePersistentAll(items.values());
-        SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATE_FORMAT);
         shipment.setActualFulfilmentDate(sdf.parse(model.afd));
         pm.makePersistent(shipment);
         responseModel = updateShipmentStatus(model.sId, ShipmentStatus.FULFILLED, model.msg, model.userId,
