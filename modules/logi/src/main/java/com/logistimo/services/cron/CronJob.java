@@ -23,6 +23,8 @@
 
 package com.logistimo.services.cron;
 
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.Timer;
 import com.logistimo.AppFactory;
 import com.logistimo.services.cache.MemcacheService;
 import com.logistimo.services.utils.ConfigUtil;
@@ -30,6 +32,8 @@ import com.logistimo.services.utils.ConfigUtil;
 import org.apache.commons.codec.digest.DigestUtils;
 import com.logistimo.utils.HttpUtil;
 import com.logistimo.logger.XLog;
+import com.logistimo.utils.MetricsUtil;
+
 import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
@@ -45,7 +49,13 @@ public class CronJob implements Job {
 
   @Override
   public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
+
     JobDetail jobDetail = jobExecutionContext.getJobDetail();
+    //introducing codehale metrics
+    Timer timer = MetricsUtil.getTimer(CronJob.class,jobDetail.getDescription()+".timer");
+    Meter meter = MetricsUtil.getMeter(CronJob.class,jobDetail.getDescription()+".meter");
+    meter.mark();
+    Timer.Context context = timer.time();
     _logger.info("Cron triggered for {0}", jobDetail.getDescription());
     JobDataMap dataMap = jobDetail.getJobDataMap();
     try {
@@ -64,7 +74,8 @@ public class CronJob implements Job {
     } catch (Exception e) {
       _logger.warn("Scheduled job failed for url {0} with exception {1}", dataMap.getString("url"),
           e.getMessage(), e);
+    } finally {
+      context.stop();
     }
-
   }
 }

@@ -28,18 +28,17 @@ package com.logistimo.inventory.optimization.pagination.processor;
 
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.OptimizerConfig;
+import com.logistimo.constants.Constants;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.optimization.service.InventoryOptimizerService;
-import com.logistimo.services.taskqueue.ITaskService;
-
-import com.logistimo.pagination.Results;
-import com.logistimo.pagination.processor.ProcessingException;
-import com.logistimo.pagination.processor.Processor;
-import com.logistimo.services.Services;
-import com.logistimo.constants.Constants;
 import com.logistimo.logger.XLog;
+import com.logistimo.pagination.Results;
+import com.logistimo.pagination.processor.InstrumentedProcessor;
+import com.logistimo.pagination.processor.ProcessingException;
+import com.logistimo.services.Services;
+import com.logistimo.services.taskqueue.ITaskService;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -53,14 +52,14 @@ import javax.jdo.PersistenceManager;
 /**
  * @author Arun
  */
-public class InvOptimizationDQProcessor implements Processor {
+public class InvOptimizationDQProcessor extends InstrumentedProcessor {
 
   private static final XLog xLogger = XLog.getLog(InvOptimizationDQProcessor.class);
 
   @SuppressWarnings("unchecked")
   @Override
-  public String process(Long domainId, Results results, String prevOutput, PersistenceManager pm)
-      throws ProcessingException {
+  public String execute(Long domainId, Results results, String prevOutput,
+                        PersistenceManager pm) throws ProcessingException {
     xLogger.fine("Entered process");
     if (results == null) {
       return prevOutput;

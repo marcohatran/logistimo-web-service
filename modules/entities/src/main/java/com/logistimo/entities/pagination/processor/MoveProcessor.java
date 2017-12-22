@@ -28,19 +28,19 @@ import com.logistimo.assets.AssetUtil;
 import com.logistimo.assets.entity.IAsset;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
+import com.logistimo.constants.MethodNameConstants;
+import com.logistimo.domains.IMultiDomain;
+import com.logistimo.domains.utils.DomainsUtil;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
+import com.logistimo.logger.XLog;
+import com.logistimo.pagination.Results;
+import com.logistimo.pagination.processor.InstrumentedProcessor;
+import com.logistimo.pagination.processor.ProcessingException;
+import com.logistimo.services.Services;
 import com.logistimo.services.cache.MemcacheService;
 import com.logistimo.services.taskqueue.ITaskService;
-
-import com.logistimo.domains.IMultiDomain;
-import com.logistimo.pagination.Results;
-import com.logistimo.pagination.processor.Processor;
-import com.logistimo.services.Services;
-import com.logistimo.domains.utils.DomainsUtil;
-import com.logistimo.constants.MethodNameConstants;
-import com.logistimo.logger.XLog;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.users.service.impl.UsersServiceImpl;
@@ -59,7 +59,7 @@ import javax.jdo.PersistenceManager;
  * @author Mohan Raja
  * @see com.logistimo.entities.utils.EntityMover
  */
-public class MoveProcessor implements Processor {
+public class MoveProcessor extends InstrumentedProcessor {
   private static final XLog xLogger = XLog.getLog(MoveProcessor.class);
 
   private Set<Long> sourceDomainParents;
@@ -85,7 +85,8 @@ public class MoveProcessor implements Processor {
    */
   @SuppressWarnings("unchecked")
   @Override
-  public String process(Long destDomainId, Results results, String dummy, PersistenceManager pm) {
+  public String execute(Long destDomainId, Results results, String dummy, PersistenceManager pm) throws
+      ProcessingException {
     if (results == null) {
       xLogger.fine("result is null");
       return null;

@@ -23,14 +23,14 @@
 
 package com.logistimo.domains.processor;
 
+import com.logistimo.constants.MethodNameConstants;
 import com.logistimo.domains.IMultiDomain;
 import com.logistimo.domains.utils.DomainDeleter;
-import com.logistimo.pagination.Results;
-import com.logistimo.pagination.processor.ProcessingException;
-import com.logistimo.pagination.processor.Processor;
 import com.logistimo.domains.utils.DomainsUtil;
-import com.logistimo.constants.MethodNameConstants;
 import com.logistimo.logger.XLog;
+import com.logistimo.pagination.Results;
+import com.logistimo.pagination.processor.InstrumentedProcessor;
+import com.logistimo.pagination.processor.ProcessingException;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
@@ -45,7 +45,7 @@ import javax.jdo.PersistenceManager;
  * @author Mohan Raja
  * @see DomainDeleter
  */
-public class DomainDeleteProcessor implements Processor {
+public class DomainDeleteProcessor extends InstrumentedProcessor {
   private static final XLog xLogger = XLog.getLog(DomainDeleteProcessor.class);
 
   /**
@@ -60,7 +60,7 @@ public class DomainDeleteProcessor implements Processor {
    * @return null
    */
   @Override
-  public String process(Long domainId, Results results, String dummy, PersistenceManager pm)
+  public String execute(Long domainId, Results results, String dummy, PersistenceManager pm)
       throws ProcessingException {
     if (results == null) {
       xLogger.fine("result is null");

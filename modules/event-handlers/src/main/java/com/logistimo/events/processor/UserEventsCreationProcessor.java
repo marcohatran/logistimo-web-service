@@ -31,16 +31,15 @@ import com.logistimo.config.models.EventSpec;
 import com.logistimo.config.models.EventsConfig;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.events.EventConstants;
+import com.logistimo.events.entity.IEvent;
 import com.logistimo.events.handlers.EventHandler;
+import com.logistimo.logger.XLog;
+import com.logistimo.pagination.Results;
+import com.logistimo.pagination.processor.InstrumentedProcessor;
+import com.logistimo.pagination.processor.ProcessingException;
 import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.users.entity.IUserAccount;
-
-import com.logistimo.events.entity.IEvent;
-import com.logistimo.pagination.Results;
-import com.logistimo.pagination.processor.ProcessingException;
-import com.logistimo.pagination.processor.Processor;
 import com.logistimo.utils.LocalDateUtil;
-import com.logistimo.logger.XLog;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -57,7 +56,7 @@ import javax.jdo.PersistenceManager;
  *
  * @author Arun
  */
-public class UserEventsCreationProcessor implements Processor {
+public class UserEventsCreationProcessor extends InstrumentedProcessor {
 
   // Logger
   private static final XLog xLogger = XLog.getLog(UserEventsCreationProcessor.class);
@@ -87,7 +86,7 @@ public class UserEventsCreationProcessor implements Processor {
 
   @SuppressWarnings("unchecked")
   @Override
-  public String process(Long domainId, Results results, String prevOutput, PersistenceManager pm)
+  public String execute(Long domainId, Results results, String prevOutput, PersistenceManager pm)
       throws ProcessingException {
     xLogger.fine("Entered UserEventsCreationProcessor.process");
     if (results == null) {

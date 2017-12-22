@@ -24,14 +24,13 @@
 package com.logistimo.entities.pagination.processor;
 
 import com.logistimo.entities.entity.IKioskLink;
-import com.logistimo.services.taskqueue.ITaskService;
-
 import com.logistimo.entities.entity.IUserToKiosk;
-import com.logistimo.pagination.Results;
-import com.logistimo.pagination.processor.ProcessingException;
-import com.logistimo.pagination.processor.Processor;
-import com.logistimo.utils.StringUtil;
 import com.logistimo.logger.XLog;
+import com.logistimo.pagination.Results;
+import com.logistimo.pagination.processor.InstrumentedProcessor;
+import com.logistimo.pagination.processor.ProcessingException;
+import com.logistimo.services.taskqueue.ITaskService;
+import com.logistimo.utils.StringUtil;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -40,10 +39,10 @@ import java.util.StringTokenizer;
 
 import javax.jdo.PersistenceManager;
 
-public class UpdateRouteProcessor implements Processor {
+public class UpdateRouteProcessor extends InstrumentedProcessor {
   private static final XLog xLogger = XLog.getLog(UpdateRouteProcessor.class);
 
-  public String process(Long domainId, Results results, String routeQueryString,
+  public String execute(Long domainId, Results results, String routeQueryString,
                         PersistenceManager pm) throws ProcessingException {
     xLogger.fine("Entering process");
     try {

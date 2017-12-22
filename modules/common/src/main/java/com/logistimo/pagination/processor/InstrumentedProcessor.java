@@ -21,53 +21,35 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.domains.processor;
+package com.logistimo.pagination.processor;
 
-import com.logistimo.logger.XLog;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.Timer;
 import com.logistimo.pagination.Results;
-import com.logistimo.pagination.processor.InstrumentedProcessor;
-import com.logistimo.pagination.processor.ProcessingException;
-import com.logistimo.services.taskqueue.ITaskService;
-
-import java.util.List;
+import com.logistimo.utils.MetricsUtil;
 
 import javax.jdo.PersistenceManager;
 
 /**
- * @author Arun
+ * Created by kumargaurav on 22/12/17.
  */
-public class DeleteProcessor extends InstrumentedProcessor {
+public abstract class InstrumentedProcessor implements Processor {
 
-  private static final XLog xLogger = XLog.getLog(DeleteProcessor.class);
+  private final Timer timer = MetricsUtil.getTimer(this.getClass(),"timer");
+  private final Meter meter = MetricsUtil.getMeter(this.getClass(),"meter");
 
-  @SuppressWarnings({"rawtypes", "unchecked"})
   @Override
-  public String execute(Long domainId, Results results, String skipCounting, PersistenceManager pm)
+  public String process(Long domainId, Results results, String prevOutput, PersistenceManager pm)
       throws ProcessingException {
+    meter.mark();
+    Timer.Context context = timer.time();
     try {
-      if (results == null) {
-        return null;
-      }
-      // Get results
-      List list = results.getResults();
-
-      if (list == null || list.isEmpty()) {
-        return null;
-      }
-
-      pm.deletePersistentAll(list);
-      xLogger
-          .info("Deleted {0} objects of type {1} ", list.size(), list.get(0).getClass().getName());
-    } catch (Exception e) {
-      xLogger
-          .severe("{0} when deleting entities in domain {1}: {2}", e.getClass().getName(), domainId,
-              e.getMessage(), e);
+      return execute(domainId, results, prevOutput, pm);
+    } finally {
+      context.stop();
     }
-    return skipCounting;
   }
 
-  @Override
-  public String getQueueName() {
-    return ITaskService.QUEUE_DEFAULT;
-  }
+  public abstract String execute(Long domainId, Results results, String prevOutput, PersistenceManager pm)
+      throws ProcessingException;
 }

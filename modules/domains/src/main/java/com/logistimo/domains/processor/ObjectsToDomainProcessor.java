@@ -25,22 +25,21 @@ package com.logistimo.domains.processor;
 
 import com.google.gson.Gson;
 
+import com.logistimo.domains.ObjectsToDomainModel;
 import com.logistimo.domains.service.DomainsService;
 import com.logistimo.domains.service.impl.DomainsServiceImpl;
-import com.logistimo.services.taskqueue.ITaskService;
-
-import com.logistimo.domains.ObjectsToDomainModel;
-import com.logistimo.pagination.Results;
-import com.logistimo.pagination.processor.ProcessingException;
-import com.logistimo.pagination.processor.Processor;
-import com.logistimo.services.Services;
 import com.logistimo.logger.XLog;
+import com.logistimo.pagination.Results;
+import com.logistimo.pagination.processor.InstrumentedProcessor;
+import com.logistimo.pagination.processor.ProcessingException;
+import com.logistimo.services.Services;
+import com.logistimo.services.taskqueue.ITaskService;
 
 import java.util.List;
 
 import javax.jdo.PersistenceManager;
 
-public class ObjectsToDomainProcessor implements Processor {
+public class ObjectsToDomainProcessor extends InstrumentedProcessor {
 
   private static final XLog xLogger = XLog.getLog(ObjectsToDomainProcessor.class);
 
@@ -50,7 +49,7 @@ public class ObjectsToDomainProcessor implements Processor {
    */
   @SuppressWarnings("unchecked")
   @Override
-  public String process(Long domainId, Results results, String jsonAddObjectsToDomainModel,
+  public String execute(Long domainId, Results results, String jsonAddObjectsToDomainModel,
                         PersistenceManager pm) throws ProcessingException {
     xLogger.fine("Entered AddObjectsToDomainProcessor.process");
     if (results == null) {

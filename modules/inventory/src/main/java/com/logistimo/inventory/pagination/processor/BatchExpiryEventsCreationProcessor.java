@@ -29,17 +29,16 @@ package com.logistimo.inventory.pagination.processor;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.events.EventConstants;
+import com.logistimo.events.entity.IEvent;
 import com.logistimo.events.exceptions.EventGenerationException;
 import com.logistimo.events.processor.EventPublisher;
 import com.logistimo.inventory.entity.IInvntryBatch;
-import com.logistimo.services.taskqueue.ITaskService;
-
-import com.logistimo.events.entity.IEvent;
-import com.logistimo.pagination.Results;
-import com.logistimo.pagination.processor.ProcessingException;
-import com.logistimo.pagination.processor.Processor;
-import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.logger.XLog;
+import com.logistimo.pagination.Results;
+import com.logistimo.pagination.processor.InstrumentedProcessor;
+import com.logistimo.pagination.processor.ProcessingException;
+import com.logistimo.services.taskqueue.ITaskService;
+import com.logistimo.utils.LocalDateUtil;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -54,14 +53,14 @@ import javax.jdo.PersistenceManager;
  *
  * @author Arun
  */
-public class BatchExpiryEventsCreationProcessor implements Processor {
+public class BatchExpiryEventsCreationProcessor extends InstrumentedProcessor {
 
   // Logger
   private static final XLog xLogger = XLog.getLog(BatchExpiryEventsCreationProcessor.class);
 
   @SuppressWarnings("unchecked")
   @Override
-  public String process(Long domainId, Results results, String expiresInDaysStr,
+  public String execute(Long domainId, Results results, String expiresInDaysStr,
                         PersistenceManager pm) throws ProcessingException {
     xLogger.fine("Entered BatchExpiryEventsCreationProcessor.process");
     if (results == null) {

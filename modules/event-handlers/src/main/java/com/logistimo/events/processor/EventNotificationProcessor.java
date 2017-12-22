@@ -27,22 +27,22 @@
 package com.logistimo.events.processor;
 
 import com.logistimo.AppFactory;
+import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.EventSpec;
+import com.logistimo.constants.Constants;
 import com.logistimo.events.entity.IEvent;
 import com.logistimo.events.handlers.EventHandler;
+import com.logistimo.logger.XLog;
+import com.logistimo.pagination.Results;
+import com.logistimo.pagination.processor.InstrumentedProcessor;
+import com.logistimo.pagination.processor.ProcessingException;
 import com.logistimo.services.storage.StorageUtil;
 import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.services.utils.ConfigUtil;
+import com.logistimo.utils.JsonUtil;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import com.logistimo.config.models.DomainConfig;
-import com.logistimo.pagination.Results;
-import com.logistimo.pagination.processor.ProcessingException;
-import com.logistimo.pagination.processor.Processor;
-import com.logistimo.constants.Constants;
-import com.logistimo.utils.JsonUtil;
-import com.logistimo.logger.XLog;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -57,7 +57,7 @@ import javax.jdo.PersistenceManager;
 /**
  * @author Arun
  */
-public class EventNotificationProcessor implements Processor {
+public class EventNotificationProcessor extends InstrumentedProcessor {
 
   // Looger
   private static final XLog xLogger = XLog.getLog(EventNotificationProcessor.class);
@@ -69,7 +69,7 @@ public class EventNotificationProcessor implements Processor {
 
   @SuppressWarnings("unchecked")
   @Override
-  public String process(Long domainId, Results results, String eventDataJson, PersistenceManager pm)
+  public String execute(Long domainId, Results results, String eventDataJson, PersistenceManager pm)
       throws ProcessingException {
     xLogger.fine("Entered EventNotificationProcessor.process");
     if (results == null || results.getResults() == null) {

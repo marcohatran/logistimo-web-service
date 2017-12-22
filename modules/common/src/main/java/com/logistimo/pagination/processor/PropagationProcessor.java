@@ -26,13 +26,13 @@
  */
 package com.logistimo.pagination.processor;
 
+import com.logistimo.logger.XLog;
+import com.logistimo.pagination.PagedExec;
+import com.logistimo.pagination.Results;
 import com.logistimo.services.taskqueue.ITaskService;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import com.logistimo.pagination.PagedExec;
-import com.logistimo.pagination.Results;
-import com.logistimo.logger.XLog;
 
 import java.lang.reflect.Method;
 import java.util.Iterator;
@@ -43,13 +43,13 @@ import javax.jdo.PersistenceManager;
 /**
  * @author Arun
  */
-public class PropagationProcessor implements Processor {
+public class PropagationProcessor extends InstrumentedProcessor {
 
   private static final XLog xLogger = XLog.getLog(PropagationProcessor.class);
 
   @SuppressWarnings("rawtypes")
   @Override
-  public String process(Long domainId, Results results, String fieldDataJsonStr,
+  public String execute(Long domainId, Results results, String fieldDataJsonStr,
                         PersistenceManager pm) throws ProcessingException {
     xLogger.fine("Entered process");
     if (results == null) {
