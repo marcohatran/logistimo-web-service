@@ -98,7 +98,7 @@
                         return config;
                     },
                     responseError: function(rejection) {
-                        if (checkNotNullEmpty(rejection.config) || !(checkNotNullEmpty(rejection.config.ignoreAuthModule) && rejection.config.ignoreAuthModule)) {
+                        if (checkNotNullEmpty(rejection.config) && !(checkNotNullEmpty(rejection.config.ignoreAuthModule) && rejection.config.ignoreAuthModule)) {
                             switch (rejection.status) {
                                 case 401:
                                     var deferred = $q.defer();
