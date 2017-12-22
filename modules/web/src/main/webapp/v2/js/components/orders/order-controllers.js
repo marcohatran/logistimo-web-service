@@ -1075,11 +1075,7 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                     $scope.showLoading();
                     $scope.pmt.orderUpdatedAt = $scope.order.orderUpdatedAt;
                     ordService.updatePayment($scope.order.id, $scope.pmt).then(function (data) {
-                        $scope.order.pd = parseFloat($scope.pmt.pay) + parseFloat($scope.order.pd);
-                        $scope.order.po = $scope.pmt.po;
-                        $scope.order.avc = parseFloat($scope.order.avc) + parseFloat($scope.pmt.pay);
-                        $scope.order.orderUpdatedAt = data.data.order.orderUpdatedAt;
-                        $scope.order.udt = new Date();
+                        $scope.fetchOrder();
                         $scope.toggleEdit('pmt');
                         $scope.showSuccess($scope.resourceBundle['order.upd.pay.success']);
                     }).catch(function error(msg) {
@@ -1133,7 +1129,6 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                 $scope.showLoading();
                 ordService.updatePackage($scope.order.id, $scope.pkgs).then(function (data) {
                     $scope.order.pkgs = $scope.pkgs;
-                    $scope.order.udt = new Date();
                     $scope.toggleEdit('pkgs');
                     $scope.showSuccess($scope.resourceBundle['order.pkg.success']);
                 }).catch(function error(msg) {
