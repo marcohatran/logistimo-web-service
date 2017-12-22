@@ -26,6 +26,7 @@
  */
 package com.logistimo.events.processor;
 
+import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.EventSpec;
 import com.logistimo.config.models.EventsConfig;
 import com.logistimo.dao.JDOUtils;
@@ -33,17 +34,14 @@ import com.logistimo.events.EventConstants;
 import com.logistimo.events.entity.IEvent;
 import com.logistimo.events.generators.OrdersEventGenerator;
 import com.logistimo.events.handlers.EventHandler;
-import com.logistimo.orders.entity.IOrder;
-import com.logistimo.services.taskqueue.ITaskService;
-
-import com.logistimo.config.models.DomainConfig;
-import com.logistimo.pagination.Results;
-import com.logistimo.proto.JsonTagsZ;
-
-import com.logistimo.pagination.processor.ProcessingException;
-import com.logistimo.pagination.processor.Processor;
-import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.logger.XLog;
+import com.logistimo.orders.entity.IOrder;
+import com.logistimo.pagination.Results;
+import com.logistimo.pagination.processor.InstrumentedProcessor;
+import com.logistimo.pagination.processor.ProcessingException;
+import com.logistimo.proto.JsonTagsZ;
+import com.logistimo.services.taskqueue.ITaskService;
+import com.logistimo.utils.LocalDateUtil;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -59,7 +57,7 @@ import javax.jdo.PersistenceManager;
  *
  * @author Arun
  */
-public class OrderEventsCreationProcessor implements Processor {
+public class OrderEventsCreationProcessor extends InstrumentedProcessor {
 
   // Logger
   private static final XLog xLogger = XLog.getLog(OrderEventsCreationProcessor.class);
@@ -171,7 +169,7 @@ public class OrderEventsCreationProcessor implements Processor {
   // Generate events for orders - fulfillment due and expiry
   @SuppressWarnings("unchecked")
   @Override
-  public String process(Long domainId, Results results, String prevOutput, PersistenceManager pm)
+  public String execute(Long domainId, Results results, String prevOutput, PersistenceManager pm)
       throws ProcessingException {
     xLogger.fine("Entered OrderEventsGenerationProcessor.process");
     if (results == null) {

@@ -27,22 +27,21 @@
 package com.logistimo.events.processor;
 
 
+import com.logistimo.assets.entity.IAssetStatus;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.EventSpec;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.events.EventConstants;
+import com.logistimo.events.entity.IEvent;
 import com.logistimo.events.generators.EventGenerator;
 import com.logistimo.events.generators.EventGeneratorFactory;
 import com.logistimo.events.handlers.EventHandler;
-import com.logistimo.services.taskqueue.ITaskService;
-
-import com.logistimo.assets.entity.IAssetStatus;
-import com.logistimo.events.entity.IEvent;
-import com.logistimo.pagination.Results;
-import com.logistimo.pagination.processor.ProcessingException;
-import com.logistimo.pagination.processor.Processor;
-import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.logger.XLog;
+import com.logistimo.pagination.Results;
+import com.logistimo.pagination.processor.InstrumentedProcessor;
+import com.logistimo.pagination.processor.ProcessingException;
+import com.logistimo.services.taskqueue.ITaskService;
+import com.logistimo.utils.LocalDateUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -57,7 +56,7 @@ import javax.jdo.PersistenceManager;
  *
  * @author Charan
  */
-public class AssetEventsCreationProcessor implements Processor {
+public class AssetEventsCreationProcessor extends InstrumentedProcessor {
 
   // Logger
   private static final XLog xLogger = XLog.getLog(AssetEventsCreationProcessor.class);
@@ -65,7 +64,7 @@ public class AssetEventsCreationProcessor implements Processor {
   // Generate events for temperature no data.
   @SuppressWarnings("unchecked")
   @Override
-  public String process(Long domainId, Results results, String prevOutput, PersistenceManager pm)
+  public String execute(Long domainId, Results results, String prevOutput, PersistenceManager pm)
       throws ProcessingException {
     xLogger.fine("Entered TeEventsCreationProcessor.process");
     if (results == null) {

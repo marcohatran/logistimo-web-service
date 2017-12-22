@@ -62,6 +62,7 @@ import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.LockUtil;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -71,6 +72,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.io.IOException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.List;
@@ -88,6 +90,12 @@ import javax.servlet.http.HttpServletResponse;
 public class ShipmentController {
   private static final XLog xLogger = XLog.getLog(ShipmentController.class);
   ShipmentBuilder builder = new ShipmentBuilder();
+  private OrderManagementService orderManagementService;
+
+  @Autowired
+  private void setOrderManagementService(OrderManagementService service) {
+    this.orderManagementService = service;
+  }
 
   @RequestMapping(value = "/add/", method = RequestMethod.POST)
   public
@@ -416,13 +424,15 @@ public class ShipmentController {
       if (!"date".equals(updType) && StringUtils.isEmpty(successMessage)) {
         successMessage = backendMessages.getString(succesKey);
       }
-
       model =
           new ShipmentResponseModel(successMessage,
-              LocalDateUtil.formatCustom(shipment.getUpdatedOn(), Constants.DATETIME_FORMAT, null));
-    } catch (Exception e) {
+              LocalDateUtil.formatCustom(orderManagementService.getOrder(shipment.getOrderId()).getUpdatedOn(), Constants.DATETIME_FORMAT, null));
+    } catch (ParseException | IllegalArgumentException e) {
       xLogger.warn("Error while updating shipment", e);
       throw new InvalidServiceException(backendMessages.getString(errorKey));
+    } catch (Exception e) {
+      xLogger.warn("Error while updating shipment", e);
+      throw new InvalidServiceException(e);
     }
     return model;
   }

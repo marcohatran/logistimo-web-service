@@ -32,8 +32,8 @@ import com.logistimo.domains.utils.DomainsUtil;
 import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.logger.XLog;
 import com.logistimo.pagination.Results;
+import com.logistimo.pagination.processor.InstrumentedProcessor;
 import com.logistimo.pagination.processor.ProcessingException;
-import com.logistimo.pagination.processor.Processor;
 import com.logistimo.services.Services;
 import com.logistimo.services.cache.MemcacheService;
 import com.logistimo.services.taskqueue.ITaskService;
@@ -52,7 +52,7 @@ import javax.jdo.PersistenceManager;
  *
  * @author Mohan Raja
  */
-public class EntityDomainUpdateProcessor implements Processor {
+public class EntityDomainUpdateProcessor extends InstrumentedProcessor {
   private static final XLog xLogger = XLog.getLog(EntityDomainUpdateProcessor.class);
 
   private MemcacheService memcacheService;
@@ -66,7 +66,7 @@ public class EntityDomainUpdateProcessor implements Processor {
 
   @SuppressWarnings("unchecked")
   @Override
-  public String process(Long isAdd, Results results, String sDomainIds, PersistenceManager pm)
+  public String execute(Long isAdd, Results results, String sDomainIds, PersistenceManager pm)
       throws ProcessingException {
     if (results == null) {
       xLogger.fine("result is null");

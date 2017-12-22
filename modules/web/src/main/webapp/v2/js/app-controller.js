@@ -808,9 +808,6 @@
                         $scope.$broadcast("online");
                     }
                 }
-                $timeout(function () {
-                    $scope.checkNetwork();
-                }, 30000);
             };
             $scope.checkNetwork();
             $scope.downloadDataFile = function(fileUrl,defaultFileName){

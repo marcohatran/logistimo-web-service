@@ -24,31 +24,30 @@
 package com.logistimo.exports.pagination.processor;
 
 import com.logistimo.AppFactory;
+import com.logistimo.config.models.DomainConfig;
+import com.logistimo.constants.CharacterConstants;
 import com.logistimo.domains.entity.IDomain;
 import com.logistimo.domains.service.DomainsService;
 import com.logistimo.domains.service.impl.DomainsServiceImpl;
+import com.logistimo.exports.BulkExportMgr;
+import com.logistimo.exports.BulkExportMgr.ExportParams;
 import com.logistimo.exports.handlers.ExportHandlerUtil;
+import com.logistimo.logger.XLog;
+import com.logistimo.pagination.Results;
+import com.logistimo.pagination.processor.InstrumentedProcessor;
+import com.logistimo.pagination.processor.ProcessingException;
 import com.logistimo.reports.ReportsConstants;
 import com.logistimo.reports.entity.slices.ISlice;
 import com.logistimo.reports.generators.ReportData;
 import com.logistimo.reports.models.DomainUsageStats;
 import com.logistimo.reports.models.UsageStats;
+import com.logistimo.services.Resources;
+import com.logistimo.services.Services;
 import com.logistimo.services.storage.StorageUtil;
 import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.services.utils.ConfigUtil;
-
-import com.logistimo.config.models.DomainConfig;
-import com.logistimo.pagination.Results;
-import com.logistimo.pagination.processor.ProcessingException;
-import com.logistimo.pagination.processor.Processor;
-import com.logistimo.services.Resources;
-import com.logistimo.services.Services;
-import com.logistimo.exports.BulkExportMgr;
-import com.logistimo.exports.BulkExportMgr.ExportParams;
-import com.logistimo.constants.CharacterConstants;
 import com.logistimo.utils.JobUtil;
 import com.logistimo.utils.LocalDateUtil;
-import com.logistimo.logger.XLog;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -64,7 +63,7 @@ import javax.jdo.PersistenceManager;
  *
  * @author Arun
  */
-public class ExportProcessor implements Processor {
+public class ExportProcessor extends InstrumentedProcessor {
 
   public static final String DATAEXPORT_BUCKETNAME = "dataexport";
   public static final String SEPARATOR = "_";
@@ -203,7 +202,7 @@ public class ExportProcessor implements Processor {
   }
 
   @Override
-  public String process(Long domainId, Results results, String exportParamsJson,
+  public String execute(Long domainId, Results results, String exportParamsJson,
                         PersistenceManager pm) throws ProcessingException {
     xLogger.fine("Entered ExportProcessor.process");
     if (results == null) {

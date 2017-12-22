@@ -397,7 +397,7 @@ function constructBarData(data, allData, event, addLink, level, scope, mapRange,
     var bData = [];
     for (var f in allData) {
         if (checkNotNullEmpty(f) && f != "MAT_BD") {
-            bData.push({"label": f.toUpperCase()});
+            bData.push({"label": f.toUpperCase(), "oLabel": f});
         }
     }
     for (var n in allData) {
@@ -414,7 +414,7 @@ function constructBarData(data, allData, event, addLink, level, scope, mapRange,
             }
             for (var i = 0; i < bData.length; i++) {
                 var bd = bData[i];
-                if (n == bd.label) {
+                if (n == bd.oLabel) {
                     bd.value = per;
                     bd.displayValue = bd.value.toFixed(2) + "%";
                     if (event == '200' || event == '201' || event == '202' || event == 'n') {
@@ -432,9 +432,9 @@ function constructBarData(data, allData, event, addLink, level, scope, mapRange,
                     }*/
                     bd.color=barColor;
                     if (addLink) {
-                        var filter = bd.label;
+                        var filter = bd.oLabel;
                         if (scope.dashboardView.mLev == "state") {
-                            filter = scope.dashboardView.mTyNm + "_" + bd.label;
+                            filter = scope.dashboardView.mTyNm + "_" + bd.oLabel;
                         }
                         bd.link =
                             "JavaScript: angular.element(document.getElementById('cid')).scope().addFilter('" + filter +
@@ -499,7 +499,7 @@ function constructMatBarData(data, allData, event, scope, mapRange, mapColors, I
     var bData = [];
     for (var f in allData) {
         if (checkNotNullEmpty(f)) {
-            bData.push({"label": f.toUpperCase()});
+            bData.push({"label": f.toUpperCase(), "oLabel": f});
         }
     }
     for (var n in allData) {
@@ -526,7 +526,7 @@ function constructMatBarData(data, allData, event, scope, mapRange, mapColors, I
 
             for (var i = 0; i < bData.length; i++) {
                 var bd = bData[i];
-                if (n == bd.label) {
+                if (n == bd.oLabel) {
                     bd.value = Math.round(value / den * 1000) / 10;
                     bd.displayValue = bd.value + "%";
                     bd.toolText = value + " of " + den + " " + scope.resourceBundle['kiosks.lower'];
@@ -666,7 +666,7 @@ function getReportFCCategories(data, format) {
 };
 
 function getReportCaption(filter) {
-    return "From: " + formatReportDate(filter.from, filter) + "   To: " + formatReportDate(filter.to, filter) + "   " +
+    return "From: " + formatReportDate(filter.from, filter) + "    To: " + formatReportDate(filter.to, filter) + "   " +
         getFilterLabel()
 };
 
@@ -826,7 +826,7 @@ function getAvailable(data){
                 if(location != "MAT_BD"){
                     if(checkNotNullEmpty(availableObject[location])) {
                         availableObject[location].value +=  data[eventType][location].value;
-                        availableObject[location].per +=  data[eventType][location].per;
+                        availableObject[location].den +=  data[eventType][location].den;
                     }else{
                         availableObject[location] = angular.copy(data[eventType][location]);
                     }
@@ -835,10 +835,18 @@ function getAvailable(data){
                         if(checkNotNullEmpty(availableObject[location])) {
                             Object.keys(data[eventType][location].materials).forEach(function (material) {
                                 availableObject[location].materials[material].value +=  data[eventType][location].materials[material].value;
+                                availableObject[location].materials[material].den +=  data[eventType][location].materials[material].den;
                             });
                         }else{
                             availableObject[location] = angular.copy(data[eventType][location]);
                         }
+                    }
+                }
+            });
+            Object.keys(data[eventType]).forEach(function(location){
+                if(location != "MAT_BD"){
+                    if(checkNotNullEmpty(availableObject[location])) {
+                        availableObject[location].per = ((data[eventType][location].value/data[eventType][location].den) * 100).toFixed(2) * 1 ;
                     }
                 }
             });

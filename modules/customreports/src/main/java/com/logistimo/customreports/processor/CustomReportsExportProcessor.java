@@ -35,8 +35,8 @@ import com.logistimo.inventory.models.InvntrySnapshot;
 import com.logistimo.logger.XLog;
 import com.logistimo.orders.entity.IOrder;
 import com.logistimo.pagination.Results;
+import com.logistimo.pagination.processor.InstrumentedProcessor;
 import com.logistimo.pagination.processor.ProcessingException;
-import com.logistimo.pagination.processor.Processor;
 import com.logistimo.reports.service.ReportsService;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.Services;
@@ -51,7 +51,7 @@ import java.util.StringTokenizer;
 
 import javax.jdo.PersistenceManager;
 
-public class CustomReportsExportProcessor implements Processor {
+public class CustomReportsExportProcessor extends InstrumentedProcessor {
   private static final XLog xLogger = XLog.getLog(CustomReportsExportProcessor.class);
   private static final String DEMANDITEM_DELIMITER = "\n";
   private static final boolean isGAE = ConfigUtil.isGAE();
@@ -106,7 +106,7 @@ public class CustomReportsExportProcessor implements Processor {
   }
 
   @SuppressWarnings("unchecked")
-  public String process(Long domainId, Results results, String cstReportsExportParamsJson,
+  public String execute(Long domainId, Results results, String cstReportsExportParamsJson,
                         PersistenceManager pm) throws ProcessingException {
     xLogger.fine(
         "Entered CustomReportsExportProcessor.process. domainId: {0}, cstReportsExportParamsJson: {1}",

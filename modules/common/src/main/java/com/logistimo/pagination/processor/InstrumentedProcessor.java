@@ -21,35 +21,35 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
+package com.logistimo.pagination.processor;
+
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.Timer;
+import com.logistimo.pagination.Results;
+import com.logistimo.utils.MetricsUtil;
+
+import javax.jdo.PersistenceManager;
+
 /**
- * Created by naveensnair on 15/11/17.
+ * Created by kumargaurav on 22/12/17.
  */
-var bulletinBoardControllers = angular.module('bulletinBoardControllers', []);
-bulletinBoardControllers.controller('BulletinBoardRenderController', ['bulletinBoardRepository', 'dashboardRepository', '$scope', 'requestContext', function (bulletinBoardRepository, dashboardRepository, $scope, requestContext) {
-    function init() {
-        $scope.title = "";
-        $scope.subTitle = "";
-        $scope.showDomain = false;
-        if(checkNotNullEmpty($scope.domainName)) {
-            $scope.showDomain = true;
-        }
+public abstract class InstrumentedProcessor implements Processor {
+
+  private final Timer timer = MetricsUtil.getTimer(this.getClass(),"timer");
+  private final Meter meter = MetricsUtil.getMeter(this.getClass(),"meter");
+
+  @Override
+  public String process(Long domainId, Results results, String prevOutput, PersistenceManager pm)
+      throws ProcessingException {
+    meter.mark();
+    Timer.Context context = timer.time();
+    try {
+      return execute(domainId, results, prevOutput, pm);
+    } finally {
+      context.stop();
     }
+  }
 
-    init();
-
-    $scope.setBBTitle = function (title, subTitle) {
-        $scope.title = title;
-        $scope.subTitle = subTitle;
-    };
-
-    $scope.$on("offline", function () {
-        if ($scope.isUndef($scope.offLineSince)) {
-            $scope.offLineSince = $scope.formatDate(new Date());
-        }
-        $scope.offLineMessage = $scope.resourceBundle['network.unavailable'] + " ";
-    });
-
-    $scope.$on("online", function () {
-        $scope.offLineSince = "";
-    });
-}]);
+  public abstract String execute(Long domainId, Results results, String prevOutput, PersistenceManager pm)
+      throws ProcessingException;
+}

@@ -26,38 +26,38 @@
      <!-- Scheduled backups -->
     <cron>
         <url>/task/mrstarter?name=ScheduleTransactionDataExport&amp;kind=Domain</url>
-        <description>Schedule transaction data export tasks for a domain</description>
+        <description>Transaction exports</description>
         <schedule>every day 00:05</schedule> <!-- 05:35 am IST -->
     </cron>
     <cron>
         <url>/task/mrstarter?name=EntityHierarchy&amp;kind=Domain</url>
-        <description>Pre compute entity hierarchy</description>
+        <description>Entity hierarchy</description>
         <schedule>every day 21:30</schedule>
     </cron>
     <cron>
         <url>/task/mrstarter?name=ScheduleCustomReportsExport&amp;kind=Domain</url>
-        <description>Schedule Custom reports export tasks for a domain</description>
+        <description>Custom reports</description>
         <schedule>every day 01:15</schedule> <!-- 06:45 am IST -->
         <target>backend1</target>
     </cron>
     <cron>
         <url>/task/mrstarter?name=BatchEventNotifier&amp;kind=Domain</url>
-        <description>Notify events in batch (for daily/weekly notifications)</description>
+        <description>Notify events</description>
         <schedule>every day 02:30</schedule> <!-- 08:00 am IST -->
     </cron>
     <cron>
         <url>/task/mrstarter?name=DailyEventsCreator&amp;kind=Domain</url>
-        <description>Check and create events on a daily basis (such as no activity, order fulfilment due, user not logged-in)</description>
+        <description>Events generator</description>
         <schedule>every day 01:30</schedule> <!-- 07:00 am IST (this should be after the notification for previous day; else, this may get included in notifications for previous day) -->
     </cron>
     <cron>
         <url>/task/mrstarter?name=Optimizer&amp;kind=Domain</url>
-        <description>Optimize inventory and/or compute consumption/other parameters</description>
+        <description>Inventory optimization</description>
         <schedule>every day 00:30</schedule> <!-- 06:00 AM IST -->
     </cron>
     <cron>
         <url>/s2/api/orders/schedule-automation</url>
-        <description>Runs order automation tasks for relevant domains</description>
+        <description>Order automation</description>
         <schedule>every day 02:30</schedule>
         <!-- 06:00 AM IST -->
     </cron>

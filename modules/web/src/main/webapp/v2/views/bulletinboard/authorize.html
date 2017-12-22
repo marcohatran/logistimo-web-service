@@ -23,12 +23,19 @@
   -->
 
 <div ng-controller="BulletinBoardAuthController">
-    <div class="box topbox">
-        <div class="bizinfo bizinfo-last">
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="domain-title-heading marginlr0 mt5">
+                <h4>{{resourceBundle['bulletin.board.upper']}}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="box topbox plr0 pt0">
+        <div class="bizinfo bizinfo-last mt0">
             <form class="form-horizontal" name="Bulletinboard">
-                <div class="bgr">
+                <div class="bgr mlr0">
                     <div class="title-heading">
-                        {{resourceBundle['authorize.bulletin.board']}}
+                        {{resourceBundle['authorize.upper']}}
                     </div>
                     <div class="row">
                         <div class="col-sm-6">
@@ -46,7 +53,7 @@
                 </div>
                 <div class="row" id="sbt">
                     <div class="col-sm-6">
-                        <div class="pull-right">
+                        <div>
                             <button type="button" ng-click="authorizeBulletinBoard()" class="btn btn-primary">
                                 {{resourceBundle['authorize.upper']}}
                             </button>

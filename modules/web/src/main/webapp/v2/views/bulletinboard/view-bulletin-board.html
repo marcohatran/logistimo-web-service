@@ -24,7 +24,7 @@
 
 <div ng-controller="BulletinBoardRenderController" class="widget">
     <div class="bulletin-board-title col-sm-12">
-        <div class="col-sm-6 pull-left" style="top:5px;">
+        <div class="col-sm-4 pull-left" style="top:5px;">
             <div class="col-sm-12 noleftpad">
                 <span class="bulletin-heading" style="margin: 0px;">{{title | uppercase}}</span>
             </div>
@@ -32,17 +32,22 @@
                 <span class="bulletin-subheading" style="margin:0px;">{{subTitle | uppercase}}</span>
             </div>
         </div>
-        <div class="col-sm-3">
-            <span class="alert alert-danger col-sm-12 text-center" ng-show="!networkAvailable">{{offLineMessage}}{{offLineSince}}</span>
-        </div>
-        <div class="col-sm-3">
-            <div ng-if="headerImage != undefined && headerImage != ''">
-                <div class="imagewrapper pull-right">
-                    <div ng-bind-html="headerImage"></div>
-                </div>
+        <div class="col-sm-4">
+            <div class="bulletin-logo-container" ng-show="!networkAvailable">
+                <span class="alert alert-danger col-sm-12 text-center network">{{offLineMessage | uppercase}}{{offLineSince | uppercase}}</span>
             </div>
-            <div ng-if="headerImage == undefined || headerImage == ''">
-                <img class="mainlogo pull-right pt5" src="images/acquia_marina_logo.png">
+        </div>
+        <div class="col-sm-4 pull-right">
+            <div class="bulletin-logo-container">
+                <span ng-show="showDomain" class="bulletin-domain">{{domainName | uppercase}} </span>
+                <div ng-if="headerImage != undefined && headerImage != ''">
+                    <div class="imagewrapper">
+                        <div ng-bind-html="headerImage"></div>
+                    </div>
+                </div>
+                <div ng-if="headerImage == undefined || headerImage == ''">
+                    <img class="mainlogo pt5" src="images/acquia_marina_logo.png">
+                </div>
             </div>
         </div>
     </div>

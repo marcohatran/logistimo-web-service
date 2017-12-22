@@ -39,7 +39,7 @@
     <div ng-if="!wLoading && !showError && renderChart">
         <div class="col-sm-12 text-center pt5">
             <span class="widget-title">{{chartTitle | uppercase}}</span><br/>
-            <span class="widget-sub-title">{{chartSubTitle | uppercase}}</span>
+            <span class="widget-sub-title preserve-white-space">{{chartSubTitle | uppercase}}</span>
         </div>
         <fusion-chart type="cType" height="cHeight" width="cWidth" chart-label="cLabel"
                       chart-data="cData" chart-options="cOptions"

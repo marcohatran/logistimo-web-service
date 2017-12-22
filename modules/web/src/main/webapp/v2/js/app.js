@@ -430,8 +430,8 @@ logistimoApp.config(function ($routeProvider) {
         action: "configuration.dashboards.detail"
     }).when("/configuration/dashboards/view/:dashboardId", {
         action: "configuration.dashboards.view"
-    }).when("/configuration/bulletin/auth", {
-        action: "configuration.bulletin.auth"
+    }).when("/setup/auth", {
+        action: "setup.auth"
     });
 });
 /* @endif */

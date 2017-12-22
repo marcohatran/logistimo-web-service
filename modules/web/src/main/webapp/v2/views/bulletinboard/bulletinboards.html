@@ -30,9 +30,6 @@
         <li ng-class="{active: (subview == 'add' || subview == 'detail' || subview == 'view')}" ng-show="iSU"><a
                 href="#/configuration/bulletin/add/">{{resourceBundle['create']}}
             {{resourceBundle['bulletin.board.lower']}}</a></li>
-        <li ng-class="{active: (subview == 'auth')}">
-            <a href="#/configuration/bulletin/auth">{{resourceBundle['authorize.upper']}}</a>
-        </li>
     </ul>
     <div ng-switch="subview">
         <div class="tab-pane" ng-switch-when="list">
@@ -49,9 +46,5 @@
             <div ng-include="'views/bulletinboard/view-bulletin-board.html'"
                  ng-init="bulletinBoardId = getRequestParam('bulletinBoardId')"></div>
         </div>
-        <div class="tab-pane" ng-switch-when="auth">
-            <div ng-include="'views/bulletinboard/authorize.html'"></div>
-        </div>
-
     </div>
 </div>

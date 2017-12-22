@@ -183,7 +183,7 @@ angular.module('logistimo.storyboard.bulletinboards', ['logistimo.storyboard.das
             }
             return $scope.count + 1 == index;
         };
-        
+
     }]);
 
 
@@ -845,7 +845,7 @@ function DashboardLayoutHandler(containerId, $timeout, $window) {
         },
         addWidget: function(widget) {
             var newWid = {};
-            newWid.id = widget.name.replace(/[^a-zA-Z]/g,'')+new Date().getMilliseconds();
+            newWid.id = widget.name.replace(/[^a-zA-Z]/g,'')+new Date().getTime();
             newWid.name = widget.name;
             newWid.wid = newWid.id;
             newWid.widgetTemplateId = widget.id;
@@ -958,6 +958,7 @@ angular.module('logistimo.storyboard.dashboards', ['logistimo.storyboard.widgets
             }
             
             if (!$scope.noInit) {
+                $scope.checkNetwork();
                 dashboardRepository.get($scope.dashboardId, $scope).then(function (dashboard) {
                     $scope.db = dashboard;
                     if (!$scope.showTitle) {

@@ -26,13 +26,12 @@
  */
 package com.logistimo.inventory.pagination.processor;
 
-import com.logistimo.services.taskqueue.ITaskService;
-
 import com.logistimo.inventory.entity.IInvntry;
-import com.logistimo.pagination.Results;
-import com.logistimo.pagination.processor.ProcessingException;
-import com.logistimo.pagination.processor.Processor;
 import com.logistimo.logger.XLog;
+import com.logistimo.pagination.Results;
+import com.logistimo.pagination.processor.InstrumentedProcessor;
+import com.logistimo.pagination.processor.ProcessingException;
+import com.logistimo.services.taskqueue.ITaskService;
 
 import java.util.Iterator;
 import java.util.List;
@@ -44,14 +43,14 @@ import javax.jdo.PersistenceManager;
  *
  * @author Arun
  */
-public class InventoryResetProcessor implements Processor {
+public class InventoryResetProcessor extends InstrumentedProcessor {
 
   private static final XLog xLogger = XLog.getLog(InventoryResetProcessor.class);
 
 
   @SuppressWarnings("unchecked")
   @Override
-  public String process(Long domainId, Results results, String prevOutput, PersistenceManager pm)
+  public String execute(Long domainId, Results results, String prevOutput, PersistenceManager pm)
       throws ProcessingException {
     xLogger.fine("Entered InventoryResetProcessor.process");
     // Process results
