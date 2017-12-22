@@ -183,7 +183,7 @@ angular.module('logistimo.storyboard.bulletinboards', ['logistimo.storyboard.das
             }
             return $scope.count + 1 == index;
         };
-        
+
     }]);
 
 
@@ -958,6 +958,7 @@ angular.module('logistimo.storyboard.dashboards', ['logistimo.storyboard.widgets
             }
             
             if (!$scope.noInit) {
+                $scope.checkNetwork();
                 dashboardRepository.get($scope.dashboardId, $scope).then(function (dashboard) {
                     $scope.db = dashboard;
                     if (!$scope.showTitle) {

@@ -4247,3 +4247,10 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
 .preserve-white-space {
     white-space: pre;
 }
+
+.network {
+    font-family: Lato;
+    font-size: 16px;
+    letter-spacing: 1.9px;
+    font-weight: bold;
+}

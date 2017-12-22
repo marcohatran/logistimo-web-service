@@ -33,7 +33,9 @@
             </div>
         </div>
         <div class="col-sm-4">
-            <span class="alert alert-danger col-sm-12 text-center" ng-show="!networkAvailable">{{offLineMessage}}{{offLineSince}}</span>
+            <div class="bulletin-logo-container" ng-show="!networkAvailable">
+                <span class="alert alert-danger col-sm-12 text-center network">{{offLineMessage | uppercase}}{{offLineSince | uppercase}}</span>
+            </div>
         </div>
         <div class="col-sm-4 pull-right">
             <div class="bulletin-logo-container">
