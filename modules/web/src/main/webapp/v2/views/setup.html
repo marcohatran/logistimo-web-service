@@ -42,8 +42,8 @@
             <li ng-class="{enable: subview == 'assets' }" ng-show="(isTempMonOnly || isTempMonWLg) && (iSU || (iAdm && dp.av))">
                 <a href="#/setup/assets/">{{resourceBundle.assets}}</a>
             </li>
-			<li ng-if="iAU" ng-class="{enable: (subview == 'auth')}">
-				<a href="#/setup/auth">{{resourceBundle['bulletin.board.upper']}}</a>
+			<li ng-if="iAdm" ng-class="{enable: subview == 'auth'}">
+				<a href="#/setup/auth">{{resourceBundle['bulletin.board']}}</a>
 			</li>
         </ul>
 	</div>
@@ -75,7 +75,7 @@
 		<div ng-switch-when="handlingunits">
 			<div ng-include="'views/handlingunits/handling-units.html'"></div>
         </div>
-		<div class="tab-pane" ng-switch-when="auth">
+		<div ng-switch-when="auth">
 			<div ng-include="'views/bulletinboard/authorize.html'"></div>
 		</div>
 	</div>

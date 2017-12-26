@@ -63,9 +63,10 @@ public class BulletinBoardBuilder {
       if (model.sn) {
         showNav = model.sn;
       }
+
       config =
           new BBoardConfig(enabled, data_duration, refresh_duration, scroll_interval, pauseOnHover,
-              showNav, max_items);
+              showNav, max_items, model.getTokenExpiryInDays());
     }
 
     return config;
@@ -80,6 +81,7 @@ public class BulletinBoardBuilder {
       model.si = Integer.toString(config.getScrollInterval());
       model.iob = Integer.toString(config.getMaxItems());
       model.sn = config.showNav();
+      model.setTokenExpiryInDays(config.getExpiry());
     }
 
     return model;

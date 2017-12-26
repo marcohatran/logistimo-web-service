@@ -148,7 +148,7 @@ module.exports = function(grunt, ref) {
                 dest: 'target/grunt/webapp/v2/bulletinboard.html'
             },
             bulletinboardlist: {
-                src: '<%= baseurl %>/modules/web/src/main/webapp/v2/views/bulletinboard/list-bulletin-boards.html',
+                src: 'target/grunt/webapp/v2/views/bulletinboard/list-bulletin-boards.html',
                 dest: 'target/grunt/webapp/v2/views/list-bulletin-boards.html'
             },
             bulletinboardApp: {
@@ -318,7 +318,9 @@ module.exports = function(grunt, ref) {
                     'target/grunt/webapp/m/index.html': 'target/grunt/webapp/m/index.html',
                     'target/grunt/webapp/v2/index.html': 'target/grunt/webapp/v2/index.html',
                     'target/grunt/webapp/v2/bulletinboard.html': 'target/grunt/webapp/v2/bulletinboard.html',
-                    'target/grunt/webapp/v2/views/list-bulletin-boards.html': 'target/grunt/webapp/v2/views/list-bulletin-boards.html',
+                    'target/grunt/webapp/v2/views/bulletin-board-login.html': 'target/grunt/webapp/v2/views/bulletin-board-login.html',
+                    'target/grunt/webapp/v2/views/bulletinboard/list-bulletin-boards.html': 'target/grunt/webapp/v2/views/bulletinboard/list-bulletin-boards.html',
+                    'target/grunt/webapp/v2/views/bulletinboard/view-bulletin-board.html':'target/grunt/webapp/v2/views/bulletinboard/view-bulletin-board.html',
                     'target/grunt/webapp/v2/js/app.js': 'target/grunt/webapp/v2/js/app.js',
                     'target/grunt/webapp/v2/js/bulletinboard-app.js': 'target/grunt/webapp/v2/js/bulletinboard-app.js',
                     'target/grunt/webapp/v2/views/login.html': 'target/grunt/webapp/v2/views/login.html',

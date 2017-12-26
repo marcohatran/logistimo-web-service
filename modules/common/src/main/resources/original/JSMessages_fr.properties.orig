@@ -1195,4 +1195,6 @@ reports.approval.average.salesapproval.responsetime.days=Délai moyen de récept
 reports.approval.average.transferapproval.responsetime.days=Temps moyen de réponse d'approbation de transfert / libération (jours)
 availability.time=Temps de disponibilité
 exposure.time=Temps d'exposition
+bulletin.expiry.days=Nombre de jours
+bulletin.expiry.update.success=La configuration du tableau d'affichage est mise à jour
 

@@ -38,4 +38,13 @@ public class BulletinBoardConfigModel {
   public String lastUpdated;
   public String createdBy;
   public String fn;
+  private int tokenExpiryInDays; // number of days
+
+  public int getTokenExpiryInDays() {
+    return tokenExpiryInDays;
+  }
+
+  public void setTokenExpiryInDays(int tokenExpiryInDays) {
+    this.tokenExpiryInDays = tokenExpiryInDays;
+  }
 }

@@ -44,6 +44,7 @@ public class BBoardConfig implements Serializable {
   public static final int DATA_DURATION_DEFAULT = 30; // days
   public static final int REFRESH_DURATION_DEFAULT = 3600; // seconds
   public static final int MAX_ITEMS = 100;
+  public static final int DEFAULT_TOKEN_EXPIRY = 30;
 
   private static final long serialVersionUID = 1L;
   // JSON tags
@@ -54,6 +55,7 @@ public class BBoardConfig implements Serializable {
   private static final String PAUSE_ON_HOVER = "phvr";
   private static final String SHOW_NAV = "shnv";
   private static final String MAXITEMS = "mxitms";
+  private static final String EXPIRY = "exp";
 
   private int enabled = DISABLED;
   private int dataDuration = DATA_DURATION_DEFAULT; // days
@@ -62,12 +64,13 @@ public class BBoardConfig implements Serializable {
   private boolean pauseOnHover = false;
   private boolean showNav = false; // show slide navigator
   private int maxItems = MAX_ITEMS;
+  private int bulletinExpiry = DEFAULT_TOKEN_EXPIRY;
 
   public BBoardConfig() {
   }
 
   public BBoardConfig(int enabled, int dataDuration, int refreshDuration, int scrollInterval,
-                      boolean pauseOnHover, boolean showNav, int maxItems) {
+                      boolean pauseOnHover, boolean showNav, int maxItems, int expiry) {
     this.enabled = enabled;
     this.dataDuration = dataDuration;
     this.refreshDuration = refreshDuration;
@@ -75,6 +78,7 @@ public class BBoardConfig implements Serializable {
     this.pauseOnHover = pauseOnHover;
     this.showNav = showNav;
     this.maxItems = maxItems;
+    this.bulletinExpiry = expiry;
   }
 
   public BBoardConfig(JSONObject json) throws JSONException {
@@ -84,6 +88,11 @@ public class BBoardConfig implements Serializable {
     scrollInterval = json.getInt(SCROLL_INTERVAL);
     pauseOnHover = json.getBoolean(PAUSE_ON_HOVER);
     showNav = json.getBoolean(SHOW_NAV);
+    try {
+      bulletinExpiry = json.getInt(EXPIRY);
+    } catch (Exception e) {
+      // ignore
+    }
     try {
       maxItems = json.getInt(MAXITEMS);
     } catch (Exception e) {
@@ -100,6 +109,7 @@ public class BBoardConfig implements Serializable {
     json.put(PAUSE_ON_HOVER, pauseOnHover);
     json.put(SHOW_NAV, showNav);
     json.put(MAXITEMS, maxItems);
+    json.put(EXPIRY, bulletinExpiry);
     return json;
   }
 
@@ -133,5 +143,9 @@ public class BBoardConfig implements Serializable {
 
   public int getMaxItems() {
     return maxItems;
+  }
+
+  public int getExpiry() {
+    return bulletinExpiry;
   }
 }

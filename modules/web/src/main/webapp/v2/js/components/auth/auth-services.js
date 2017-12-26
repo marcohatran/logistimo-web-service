@@ -78,9 +78,7 @@ authServices.factory('iAuthService', ['APIService', '$rootScope', '$q', '$cookie
             }
         },
         removeAccessToken: function () {
-            localStorage.removeItem('x-access-token');
-            localStorage.removeItem('expires');
-            localStorage.removeItem("domain");
+            localStorage.clear();
             $cookies.remove("x-access-token", {path: "/"});
             $cookies.remove("x-access-domain", {path: "/"});
         },

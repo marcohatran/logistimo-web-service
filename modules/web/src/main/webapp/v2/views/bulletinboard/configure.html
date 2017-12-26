@@ -21,9 +21,10 @@
   ~ You can be released from the requirements of the license by purchasing a commercial license. To know more about
   ~ the commercial license, please contact us at opensource@logistimo.com
   -->
+
 <div class="box topbox">
     <div class="bizinfo bizinfo-last">
-        <div ng-controller="BulletinBoardAuthController">
+        <div ng-controller="BulletinBoardConfigController">
             <div class="row">
                 <div class="col-sm-12">
                     <div class="domain-title-heading marginlr0 mt5">
@@ -31,22 +32,22 @@
                     </div>
                 </div>
             </div>
-            <div class="box topbox plr0 pt0">
-                <div class="bizinfo bizinfo-last mt0">
-                    <form class="form-horizontal" name="Bulletinboard">
+            <div class="row mt18">
+                <div class="col-sm-12">
+                    <form class="form-horizontal" name="Bulletinboardexpiry">
                         <div class="bgr mlr0">
                             <div class="title-heading">
-                                {{resourceBundle['authorize.upper']}}
+                                {{resourceBundle['user.token.expiry']}}
                             </div>
                             <div class="row">
                                 <div class="col-sm-6">
                                     <div class="form-group">
-                                        <label class="col-sm-4 control-label required">{{resourceBundle['authorization.key']}}</label>
+                                        <label class="col-sm-4 control-label required">{{resourceBundle['config.authenticationtokenexpiry']}}</label>
 
                                         <div class="col-sm-6">
                                             <input type="text" class="form-control"
-                                                   placeholder="{{resourceBundle['enter.key']}}"
-                                                   ng-model="authKey" maxlength="50">
+                                                   placeholder="{{resourceBundle['bulletin.expiry.days']}}"
+                                                   ng-model="bb.tokenExpiryInDays" maxlength="50" only-digits>
                                         </div>
                                     </div>
                                 </div>
@@ -55,8 +56,9 @@
                         <div class="row" id="sbt">
                             <div class="col-sm-6">
                                 <div>
-                                    <button type="button" ng-click="authorizeBulletinBoard()" class="btn btn-primary">
-                                        {{resourceBundle['authorize.upper']}}
+                                    <button type="button" ng-click="saveExpiry()"
+                                            class="btn btn-primary">
+                                        {{resourceBundle['save']}}
                                     </button>
                                 </div>
                             </div>

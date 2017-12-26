@@ -41,7 +41,7 @@ logistimoApp.factory('APIService', function ($http, $q, $rootScope) {
         }
         if (!$rootScope.isBulletinBoard) {
             return $http({method: 'GET', url: urlStr});
-        } else if (!$rootScope.networkAvailable) {
+        } else if ($rootScope.networkAvailable === false) {
             return $q(function (resolve, reject) {
                 var cache = localStorage.getItem(urlStr);
                 if (checkNotNullEmpty(cache)) {

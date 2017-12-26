@@ -432,6 +432,8 @@ logistimoApp.config(function ($routeProvider) {
         action: "configuration.dashboards.view"
     }).when("/setup/auth", {
         action: "setup.auth"
+    }).when("/configuration/bulletin/config", {
+        action: "configuration.bulletin.config"
     });
 });
 /* @endif */
