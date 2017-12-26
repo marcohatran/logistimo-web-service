@@ -380,6 +380,46 @@ module.exports = function(grunt, ref) {
                         },{
                             pattern: /Entities/g,
                             replacement: "Stores"
+                        },
+                        {
+                            pattern: /vendor/g,
+                            replacement: "issuing store"
+                        },
+                        {
+                            pattern: /customer/g,
+                            replacement: "receiving store"
+                        },
+                        {
+                            pattern: /purchase\sorders/g,
+                            replacement: "indents (receipt)"
+                        },
+                        {
+                            pattern: /purchase\sorder/g,
+                            replacement: "indent (receipt)"
+                        },
+                        {
+                            pattern: /sales\sorders/g,
+                            replacement: "indents (issue)"
+                        },
+                        {
+                            pattern: /sales\sorder/g,
+                            replacement: "indent (issue)"
+                        },
+                        {
+                            pattern: /purchase/g,
+                            replacement: "receipt"
+                        },
+                        {
+                            pattern: /Purchase/g,
+                            replacement: "Receipt"
+                        },
+                        {
+                            pattern: /sales/g,
+                            replacement: "issue"
+                        },
+                        {
+                            pattern: /Sales/g,
+                            replacement: "Issue"
                         }
                     ]
                 }
