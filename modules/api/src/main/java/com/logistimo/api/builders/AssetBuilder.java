@@ -48,6 +48,7 @@ import com.logistimo.assets.service.impl.AssetManagementServiceImpl;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.domains.entity.IDomain;
 import com.logistimo.domains.service.DomainsService;
@@ -68,6 +69,8 @@ import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.MsgUtil;
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONObject;
+
+
 import java.lang.reflect.Type;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -828,11 +831,13 @@ public class AssetBuilder {
     }
   }
 
+
   public ExportModel buildExportModel(String json) throws ParseException, ServiceException {
     JSONObject jsonObject = new JSONObject(json);
     Long domainId = SecurityUtils.getCurrentDomainId();
     ExportModel eModel = new ExportModel();
     final SecureUserDetails userDetails = SecurityUtils.getUserDetails();
+    IDomain domain= StaticApplicationContext.getBean(DomainsService.class).getDomain(domainId);
     eModel.userId = userDetails.getUsername();
     eModel.timezone = userDetails.getTimezone();
     eModel.locale = userDetails.getLocale().getLanguage();
@@ -840,6 +845,7 @@ public class AssetBuilder {
     eModel.templateId = "assets";
     eModel.additionalData = new HashMap<>();
     eModel.additionalData.put("typeId", "DEFAULT");
+    eModel.additionalData.put("domainName",domain.getName());
     DomainConfig dc = DomainConfig.getInstance(SecurityUtils.getCurrentDomainId());
     eModel.additionalData.put("domainTimezone", dc.getTimezone());
     eModel.additionalData.put("exportTime", LocalDateUtil
