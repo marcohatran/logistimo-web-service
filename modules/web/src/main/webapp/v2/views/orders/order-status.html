@@ -112,7 +112,7 @@
         <div class="col-sm-12">
             <div class="pull-right">
                 <button class="btn btn-sm btn-primary"
-                        ng-click="saveStatus()" ng-disabled="statusLoading || (isDef(order.efd) && order.isEfdValid && !isEadValid && isDef(newStatus.efd))">
+                        ng-click="saveStatus()" ng-disabled="statusLoading || (nStatus == 'cm' && isDef(order.efd) && order.isEfdValid && !isEadValid && isDef(newStatus.efd))">
                     {{resourceBundle['save']}}
                 </button>
                 <button class="btn btn-sm btn-default"
