@@ -32,6 +32,13 @@ trnControllers.controller('TransactionsCtrl', ['$scope', 'trnService', 'domainCf
         $scope.localFilters = ['entity', 'material', 'type', 'batchId', 'from', 'to', 'cust', 'vend', 'etag', 'tag','atd'];
         $scope.filterMethods = ['updateFilters','searchBatch'];
         $scope.atd = false;
+        function getFromDate(parseUrlDate) {
+            if (checkNullEmpty(parseUrlDate)) {
+                return new Date(new Date().setDate(new Date().getDate() - 30));
+            }
+            return "";
+        }
+
         $scope.init = function (firstTimeInit) {
             if (typeof  $scope.showEntityFilter === 'undefined') {
                 $scope.showEntityFilter = true;
@@ -50,7 +57,7 @@ trnControllers.controller('TransactionsCtrl', ['$scope', 'trnService', 'domainCf
             $scope.type = requestContext.getParam("type") || "";
             $scope.tag = requestContext.getParam("tag") || "";
             $scope.etag = requestContext.getParam("etag") || "";
-            $scope.from = parseUrlDate(requestContext.getParam("from")) || "";
+            $scope.from = firstTimeInit ? getFromDate(parseUrlDate(requestContext.getParam("from"))) : parseUrlDate(requestContext.getParam("from"));
             $scope.to = parseUrlDate(requestContext.getParam("to")) || "";
             $scope.lEntityId = requestContext.getParam("lceid") || "";
             $scope.batchId = $scope.bid = requestContext.getParam("batchnm") || "";
