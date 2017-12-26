@@ -924,12 +924,12 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                         } else {
                             $scope.newStatus.cdrsn = $scope.newStatus.ncdrsn;
                         }
-                    } else if($scope.newStatus.st == ORDER.COMPLETED && $scope.order.oty == 2) {
-                        if($scope.oCfg.eadm && checkNullEmpty($scope.newStatus.efd)) {
-                            $scope.showWarning($scope.resourceBundle['estimated.date.of.arrival.mandatory.error']);
-                            return;
-                        } else if($scope.oCfg.ridm && checkNullEmpty($scope.newStatus.rid)) {
+                    } else if($scope.newStatus.st == ORDER.COMPLETED) {
+                        if ($scope.oCfg.ridm && checkNullEmpty($scope.newStatus.rid)) {
                             $scope.showWarning($scope.resourceBundle['reference.id.mandatory.error']);
+                            return;
+                        } else if ($scope.oCfg.eadm && checkNullEmpty($scope.newStatus.efd)) {
+                            $scope.showWarning($scope.resourceBundle['estimated.date.of.arrival.mandatory.error']);
                             return;
                         }
                     }
@@ -1046,7 +1046,7 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                     .then(function (data) {
                         $scope.order.rid = data.data.order.rid;
                         $scope.order.orderUpdatedAt = data.data.order.orderUpdatedAt;
-                        $scope.showSuccess("<b>Reference id</b> updated successfully");
+                        $scope.showSuccess("<b>Reference Id</b> updated successfully");
                 }).catch(function (errorMsg) {
                     $scope.showErrorMsg(errorMsg);
                 }).finally(function () {
@@ -2776,7 +2776,7 @@ ordControllers.controller('NewShipmentController', ['$scope', 'ordService', '$lo
 
 
         $scope.shipNewShipment = function () {
-            if ($scope.shipment.ship == 0  && $scope.order.oty == 2) {
+            if ($scope.shipment.ship == 0) {
                 if($scope.oCfg.eadm && checkNullEmpty($scope.shipment.ead)) {
                     $scope.showWarning($scope.resourceBundle['estimated.date.of.arrival.mandatory.error']);
                     return;
@@ -3704,14 +3704,12 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService','request
                     return;
                 }
 
-                if($scope.shipment.oty == 2) {
-                     if($scope.oCfg.eadm && checkNullEmpty($scope.shipment.ead)) {
-                        $scope.showWarning($scope.resourceBundle['estimated.date.of.arrival.mandatory.error']);
-                        return;
-                    } else if($scope.oCfg.ridm && checkNullEmpty($scope.shipment.rid)) {
-                        $scope.showWarning($scope.resourceBundle['reference.id.mandatory.error']);
-                        return;
-                    }
+                if($scope.oCfg.ridm && checkNullEmpty($scope.shipment.rid)) {
+                    $scope.showWarning($scope.resourceBundle['reference.id.mandatory.error']);
+                    return;
+                } else if($scope.oCfg.eadm && checkNullEmpty($scope.shipment.ead)) {
+                    $scope.showWarning($scope.resourceBundle['estimated.date.of.arrival.mandatory.error']);
+                    return;
                 }
             }
             $scope.modalInstance = $uibModal.open({

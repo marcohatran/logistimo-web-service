@@ -53,3 +53,39 @@ bulletinBoardControllers.controller('BulletinBoardRenderController', ['bulletinB
         $scope.offLineSince = "";
     });
 }]);
+
+bulletinBoardControllers.controller('BulletinBoardConfigController', ['domainCfgService', '$scope',
+    function(domainCfgService, $scope) {
+
+        $scope.saveExpiry = function() {
+                $scope.showLoading();
+                domainCfgService.setBulletinBoardCfg($scope.bb).then(function(data) {
+                    $scope.showSuccess($scope.resourceBundle['bulletin.expiry.update.success']);
+                }).catch(function error(msg) {
+                    $scope.showErrorMsg(msg,true);
+                }).finally(function(){
+                    $scope.getBulletinBoardConfig();
+                    $scope.hideLoading();
+                });
+        };
+
+        $scope.getBulletinBoardConfig = function() {
+            $scope.showLoading();
+            domainCfgService.getBulletinBoardCfg().then(function(data) {
+                if(checkNotNullEmpty(data.data)) {
+                    $scope.bb = data.data;
+                }
+            }).catch(function error(msg) {
+                $scope.showErrorMsg(msg,true);
+            }).finally(function(){
+                $scope.hideLoading();
+            });
+        };
+
+        function init() {
+            $scope.bb = {};
+            $scope.getBulletinBoardConfig();
+        }
+
+        init();
+    }]);

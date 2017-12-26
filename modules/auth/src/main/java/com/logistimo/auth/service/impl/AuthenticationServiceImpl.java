@@ -29,6 +29,7 @@ import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.communications.MessageHandlingException;
 import com.logistimo.communications.service.EmailService;
 import com.logistimo.communications.service.MessageService;
+import com.logistimo.config.models.BBoardConfig;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.PropertyConstants;
@@ -176,12 +177,9 @@ public class AuthenticationServiceImpl extends ServiceImpl implements Authentica
       }
     } else {
       //Bulletin board, use domain default
-      int
-          domainExpiry =
-          DomainConfig.getInstance(account.getDomainId()).getAccessKeyAuthTokenExpiry();
-      if (domainExpiry > 0) {
-        validityTimeInMinutes = domainExpiry * 1440;
-      }
+      DomainConfig domainConfig = DomainConfig.getInstance(account.getDomainId());
+      BBoardConfig bBoardConfig = domainConfig.getBBoardConfig();
+      validityTimeInMinutes = bBoardConfig.getExpiry() * 1440;
     }
 
     return validityTimeInMinutes;

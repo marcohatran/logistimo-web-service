@@ -29,6 +29,20 @@
                   linkedDomainService, domainService, configService, dashboardService, isBulletinBoard,APIService) {
             var renderContext = requestContext.getRenderContext();
 
+            $rootScope.networkAvailable = true;
+            $scope.checkNetwork = function(){
+                if ($rootScope.networkAvailable != navigator.onLine) {
+                    if(!navigator.onLine) {
+                        $rootScope.networkAvailable = false;
+                        $scope.$broadcast("offline");
+                    } else {
+                        $rootScope.networkAvailable = true;
+                        $scope.$broadcast("online");
+                    }
+                }
+            };
+            $scope.checkNetwork();
+
             $scope.showpopup = 'showpopup';
             $scope.hidepopup = 'hidepopup';
             $rootScope.basePath = '';
@@ -235,7 +249,6 @@
                     $scope.clearSesNConfig();
                     $scope.userLoggedOut = true;
                     $rootScope.currentDomain = undefined;
-                    localStorage.clear();
                     $scope.showBulletinBoardLogin();
                 }).catch(function error(msg) {
                     $scope.showErrorMsg(msg);
@@ -249,7 +262,11 @@
                 //On Session timeout, resetting language.
                 $scope.i18n = {language: $scope.languages[0]};
                 iAuthService.removeAccessToken();
-                $scope.showLogin();
+                if($rootScope.isBulletinBoard) {
+                    $scope.showBulletinBoardLogin();
+                } else {
+                    $scope.showLogin();
+                }
             });
 
             /**
@@ -797,19 +814,7 @@
                 $scope.initApp();
             }
 
-            $rootScope.networkAvailable = true;
-            $scope.checkNetwork = function(){
-                if ($rootScope.networkAvailable != navigator.onLine) {
-                    if(!navigator.onLine) {
-                        $rootScope.networkAvailable = false;
-                        $scope.$broadcast("offline");
-                    } else {
-                        $rootScope.networkAvailable = true;
-                        $scope.$broadcast("online");
-                    }
-                }
-            };
-            $scope.checkNetwork();
+
             $scope.downloadDataFile = function(fileUrl,defaultFileName){
                 APIService.serveFile(fileUrl, defaultFileName);
             }
