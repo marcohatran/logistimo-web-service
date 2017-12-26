@@ -4258,3 +4258,11 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
     letter-spacing: 1.9px;
     font-weight: bold;
 }
+
+.drop-down-bulletin-post {
+    padding: 3px 0px 3px 20px;
+    clear: both;
+    font-weight: 400;
+    color: #333;
+    white-space: nowrap;
+}

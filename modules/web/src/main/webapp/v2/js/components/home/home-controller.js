@@ -28,7 +28,6 @@ homeControllers.controller('homePageReportsCtrl', ['$scope', 'homePageService','
         $scope.vw = requestContext.getParam("vw") || "m";
         var dt = new Date();
         $scope.day = parseUrlDate(requestContext.getParam("day")) || new Date(dt.getFullYear(), dt.getMonth(), dt.getDate() );
-        $scope.enablePost = false;
         $scope.cType = "mscombi2d";
         $scope.cHeight = "250";
         $scope.cWidth = "600";
@@ -258,26 +257,55 @@ homeControllers.controller('homePageReportsCtrl', ['$scope', 'homePageService','
         }
     }
 ]);
-homeControllers.controller('ShortcutController',['$scope','domainCfgService',
-    function($scope,domainCfgService) {
+homeControllers.controller('ShortcutController',['$scope','$uibModal','domainCfgService',
+    function($scope,$uibModal,domainCfgService) {
         $scope.enableBB = false;
         $scope.getBulletinBoardConfiguration = function(){
             domainCfgService.getBulletinBoardCfg().then(function(data){
                 $scope.bb = data.data;
                 if($scope.bb.ecl > 0) {
                     $scope.enableBB = true;
-                    if($scope.iAdm){
-                        $scope.enablePost = true;
-                    }
                 }
             }).catch(function error(msg) {
                 $scope.showErrorMsg(msg);
             });
         };
-        //$scope.getBulletinBoardConfiguration();
+        $scope.getBulletinBoardConfiguration();
         $scope.showPostBoard = false;
         $scope.toggle = function() {
             $scope.showPostBoard = !$scope.showPostBoard;
+        };
+
+        $scope.open = function() {
+            $scope.modalInstance = $uibModal.open({
+                template: '<div class="modal-header ws">' +
+                '<h3 class="modal-title">' + $scope.resourceBundle['config.bulletinboard.posttoboardmsg'] +'</h3>' +
+                '</div>' +
+                '<div class="modal-body ws">' +
+                '<textarea rows="4" cols="50" name="comment" ng-model="msg" maxlength="160" style="width: 100%;" ng-click="$event.stopPropagation()"/>' +
+                '<span class="litetext">({{resourceBundle["config.bulletinboard.posttoboarddesc"]}})</span>' +
+                '</div>' +
+                '<div class="modal-footer ws">' +
+                '<button ng-click="postToBoard(msg)" class="btn btn-primary">{{resourceBundle["save"]}}</button>' +
+                '<button class="btn btn-default" ng-click="dismissModal()">' + $scope.resourceBundle['close'] + '</button>' +
+                '</div>',
+                scope: $scope
+            });
+        };
+
+        $scope.postToBoard = function (msg) {
+            if (checkNotNullEmpty(msg)) {
+                domainCfgService.postToBoard(msg).then(function (data) {
+                    $scope.dismissModal();
+                    $scope.showSuccess(data.data);
+                }).catch(function error(msg) {
+                    $scope.showErrorMsg(msg,true);
+                });
+            }
+        };
+
+        $scope.dismissModal = function() {
+            $scope.modalInstance.dismiss('cancel');
         };
     }
 ]);

@@ -47,13 +47,10 @@
                                 <li>
                                     <div ng-controller="ShortcutController">
         <span ng-if="enableBB">
-            <a href="/pub/board?domainid={{bb.did}}" target="_blank">{{resourceBundle['bulletinboard']}}
+            <a href="/pub/board?domainid={{bb.did}}" target="_blank" class="drop-down-bulletin-post">{{resourceBundle['bulletinboard.old']}}
             </a>
-            <p ng-if="enablePost" class="dummyLink automargin" ng-click="toggle()" style="display: inline-block;">
+            <p ng-if="iAdm" class="dummyLink automargin" ng-click="open();$event.stopPropagation()" style="display: inline-block;">
                 ({{resourceBundle['home.post']}})</p>
-            <div ng-if="showPostBoard">
-                <div ng-include="'views/configuration/message-to-board.html'"></div>
-            </div>
         </span>
                                     </div>
                                 </li>
@@ -82,7 +79,8 @@
                                             >{{resourceBundle['home.html5browser']}}</a>
                                 </li>
                                 <li ng-if="iAdm">
-                                    <a href="#/setup/auth" target="_blank">{{resourceBundle['authorize.upper']}} {{resourceBundle['bulletin.board.lower']}}</a>
+                                    <a href="#/setup/auth" target="_blank">{{resourceBundle['authorize.upper']}}
+                                        {{resourceBundle['bulletin.board.lower']}}</a>
                                 </li>
                             </ul>
                     </span>
