@@ -1197,4 +1197,5 @@ availability.time=Temps de disponibilité
 exposure.time=Temps d'exposition
 bulletin.expiry.days=Nombre de jours
 bulletin.expiry.update.success=La configuration du tableau d'affichage est mise à jour
+before.shipping.an.order=Avant d'expédier une commande
 
