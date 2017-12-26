@@ -77,6 +77,7 @@
      */
         .config(['$httpProvider', function($httpProvider) {
             $httpProvider.interceptors.push(['$rootScope', '$q', 'httpBuffer', 'isBulletinBoard', function ($rootScope, $q, httpBuffer, isBulletinBoard) {
+
                 var source = isBulletinBoard ? "6" : "1";
                 var appName = isBulletinBoard ? "bb" : "web";
                 return {
