@@ -84,7 +84,7 @@
                                 </div>
                             </div>
                             <div class="row mb10">
-                                <label class="col-sm-4 cbx control-label ml10" ng-class="{'required': oCfg.eadm && order.oty == 2}"> {{resourceBundle['eda']}}</label>
+                                <label class="col-sm-4 cbx control-label ml10" ng-class="{'required': oCfg.eadm}"> {{resourceBundle['eda']}}</label>
 
                                 <div class="col-sm-7">
                                     <date-picker date-model="ead" ng-init="ead = order.isEfdValid ? order.ead: ''" min-date="today" place-holder="{{resourceBundle['eda']}}"></date-picker>
@@ -133,14 +133,14 @@
                         </div>
                         <div class="col-sm-6 mt10">
                             <div class="row">
-                                <label class="col-sm-4 control-label cbx ml10" ng-class="{'required': oCfg.ridm && order.oty == 2}">{{resourceBundle['referenceid']}}</label>
+                                <label class="col-sm-4 control-label cbx ml10" ng-class="{'required': oCfg.ridm}">{{resourceBundle['referenceid']}}</label>
                                 <div class="col-sm-7 mb10">
                                     <input type="text" class="form-control" ng-model="rid" max-length="100" ng-init="rid = order.rid">
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="row ml10" ng-show="(oCfg.ridm || oCfg.eadm) && order.oty == 2">
+                    <div class="row ml10" ng-show="oCfg.ridm || oCfg.eadm">
                         <div class="litetext error-color cbx"> {{text}}
                         </div>
                     </div>
