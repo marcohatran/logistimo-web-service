@@ -195,7 +195,7 @@ public class ReportsServiceImpl extends ServiceImpl implements ReportsService {
     return getSlices(null, endDate, periodType, oty, oId, dt, dv, fillMissingSlices, pageParams);
   }
 
-  public String getRepGenTime(Long domainId, Locale locale, String timezone) {
+  public String getRepGenTime(Long domainId, Locale locale, String timezone, String appName) {
     try {
       MemcacheService cache = AppFactory.get().getMemcacheService();
       Date curDT = (Date) cache.get("RLU_" + domainId);

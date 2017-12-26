@@ -133,7 +133,7 @@ public class ReportController {
           r =
           rs.getReportData(fcRequest.rty, sdf.parse(fcRequest.stDate), sdf.parse(fcRequest.enDate),
               fcRequest.freq, filters, locale, timezone, null, dc, userId);
-      String repGenTime = rs.getRepGenTime(domainId, locale, timezone);
+      String repGenTime = rs.getRepGenTime(domainId, locale, timezone, null);
       if (r.getResults() == null) {
         return new ArrayList<>(0);
       }
