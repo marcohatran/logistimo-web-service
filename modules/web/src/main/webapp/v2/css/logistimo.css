@@ -908,6 +908,11 @@ tr.alert {
     position: absolute;
     top: 0px;
     left: 0px;
+    padding-bottom: 10000px;
+    margin-bottom: -10000px;
+    padding-right: 10000px;
+    margin-right: -10000px;
+    z-index:1010;
 }
 
 
