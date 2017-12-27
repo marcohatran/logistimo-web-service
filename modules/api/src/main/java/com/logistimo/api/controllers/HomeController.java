@@ -29,7 +29,6 @@ import com.logistimo.auth.utils.SessionMgr;
 import com.logistimo.constants.Constants;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.logger.XLog;
-import com.logistimo.reports.ReportsConstants;
 import com.logistimo.reports.models.DomainCounts;
 import com.logistimo.reports.service.ReportsService;
 import com.logistimo.security.SecureUserDetails;
@@ -97,7 +96,7 @@ public class HomeController {
       String repGenTime;
       DomainCounts domainCounts;
       ReportsService rs = Services.getService("reports",locale);
-      repGenTime = rs.getRepGenTime(domainId, locale, sUser.getTimezone(), ReportsConstants.ORDER_AGGREGATION_APP_NAME);
+      repGenTime = rs.getRepGenTime(domainId, locale, sUser.getTimezone());
       domainCounts = rs.getDomainCounts(domainId, cal.getTime(), period, periodType, mTag, matId,
           Constants.TYPE_ORDER);
       boolean

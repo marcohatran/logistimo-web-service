@@ -118,7 +118,7 @@ public interface ReportsService extends Service {
 
   void updateReportHours(Long domainId, Date date) throws Exception;
 
-  String getRepGenTime(Long domainId, Locale locale, String timezone, String appName) throws ServiceException;
+  String getRepGenTime(Long domainId, Locale locale, String timezone) throws ServiceException;
 
   List<? extends IDomainStats> getDomainStatistics(Long domainId);
 

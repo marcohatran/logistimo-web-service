@@ -103,7 +103,6 @@ public interface ReportsConstants {
   public final static String LOGISTIMO_AGGREGATION_NAME = "logistimo.agg.data.app";
   public final static String INVENTORY_DAY_TABLE = "did_mid_kid_day";
   public final static String TIME_FIELD = "t";
-  String ORDER_AGGREGATION_APP_NAME = "order.agg.app";
   // Literals
   String MANDATORY = "mnd";
 
