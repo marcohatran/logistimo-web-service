@@ -110,6 +110,8 @@ public class AuthControllerMV1 {
     int src = SourceConstants.MOBILE;
     if (!StringUtils.isEmpty(appName) && appName.equals(Constants.MMA_NAME)) {
       src = SourceConstants.MMA;
+    } else if (actionInitiator == 1) {
+      src = actionInitiator;
     }
     if (authToken != null) {
       user = AuthenticationUtil.authenticateToken(authToken, actionInitiator);
