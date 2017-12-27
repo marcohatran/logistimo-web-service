@@ -31,5 +31,6 @@ public class ReportAggregationConstants {
   public static final String LOGISTIMO_AGGREGATION_KEY="LogistimoAggregationApp";
   public static final String DEVICE_STATUS_AGGREGATION_KEY="DeviceStatusStateAggregationApp";
   public static final String ALARM_LOG_AGGREGATION_KEY="AlarmLogAggregationApp";
-  public static final String ORDER_AGGREGATION_KEY = "OrderAggregationApp";
+  private ReportAggregationConstants() {
+  }
 }

@@ -862,6 +862,12 @@ public class ReportsUtil {
       case INV_SUPPLY:
       case INV_UTILISATION:
       case ACTIVITY_USER:
+      case ORD_APPROVAL_RESPONSE_TIME:
+      case ORD_APPROVAL_REQUEST_STATUS:
+      case ORD_ORDER_STATUS:
+      case ORD_DEMAND:
+      case ORD_ORDER_DISCREPANCIES:
+      case ORD_ORDER_RESPONSE_TIME:
         return ReportAggregationConstants.LOGISTIMO_AGGREGATION_KEY;
       case AS_CAPACITY:
       case AS_SICKNESS_RATE:
@@ -869,13 +875,6 @@ public class ReportsUtil {
       case AS_POWER_AVAILABILITY:
       case AS_TEMPERATURE_EXCURSION:
         return ReportAggregationConstants.ALARM_LOG_AGGREGATION_KEY;
-      case ORD_APPROVAL_RESPONSE_TIME:
-      case ORD_APPROVAL_REQUEST_STATUS:
-      case ORD_ORDER_STATUS:
-      case ORD_DEMAND:
-      case ORD_ORDER_DISCREPANCIES:
-      case ORD_ORDER_RESPONSE_TIME:
-        return ReportAggregationConstants.ORDER_AGGREGATION_KEY;
       default:
         return CharacterConstants.EMPTY;
     }
