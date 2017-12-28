@@ -223,7 +223,7 @@ public class TransactionsController {
                   user.getUsername()), entityId, materialId, type, lEntityId, ktag, mtag, kioskIds,
               pageParams, bId, atd, reason);
       trnResults.setOffset(offset);
-      return builder.buildTransactions(trnResults, user, SecurityUtils.getDomainId(request));
+      return builder.buildTransactions(trnResults, user, SecurityUtils.getDomainId());
     } catch (ServiceException e) {
       xLogger.severe("Error in fetching transactions : {0}", e);
       throw new InvalidServiceException(backendMessages.getString("transactions.fetch.error"));

@@ -67,7 +67,7 @@ public class BulletinBoardController {
     SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    long domainId = SecurityUtils.getDomainId(request);
+    long domainId = SecurityUtils.getDomainId();
     String msg;
     try {
       BulletinBoardService bulletinBoardService = Services.getService(BulletinBoardService.class);
@@ -102,7 +102,7 @@ public class BulletinBoardController {
   public
   @ResponseBody
   List<BulletinBoardModel> getAll(HttpServletRequest request) {
-    long domainId = SecurityUtils.getDomainId(request);
+    long domainId = SecurityUtils.getDomainId();
     IBulletinBoardService bulletinBoardService = Services.getService(BulletinBoardService.class);
     List<IBulletinBoard> bulletinBoardList = bulletinBoardService.getBulletinBoards(domainId);
     return builder.buildBulletinBoardModelList(bulletinBoardList);

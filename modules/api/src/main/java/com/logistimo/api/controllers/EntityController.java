@@ -421,9 +421,9 @@ public class EntityController {
     try {
       as = Services.getService(EntitiesServiceImpl.class, locale);
       //TODO Extend behavior to check if the requested entity has a relation to user's entities. Temporarily commented.
-      if (!EntityAuthoriser.authoriseEntityDomain(sUser, entityId, SecurityUtils.getDomainId(request))) {
+      if (!EntityAuthoriser.authoriseEntityDomain(sUser, entityId, SecurityUtils.getDomainId())) {
         try {
-          if (srcEntityId == null || (!EntityAuthoriser.authoriseEntityDomain(sUser, srcEntityId, SecurityUtils.getDomainId(request))
+          if (srcEntityId == null || (!EntityAuthoriser.authoriseEntityDomain(sUser, srcEntityId, SecurityUtils.getDomainId())
               && as.getKioskLink(srcEntityId, IKioskLink.TYPE_VENDOR, entityId) == null)) {
             throw new UnauthorizedException(backendMessages.getString("permission.denied"));
           }
@@ -528,7 +528,7 @@ public class EntityController {
       as = Services.getService(EntitiesServiceImpl.class, locale);
       //TODO: Temporary fix. Required for Order listing on a sales order.
       if (!EntityAuthoriser
-          .authoriseEntityDomain(sUser, entityId, SecurityUtils.getDomainId(request))) {
+          .authoriseEntityDomain(sUser, entityId, SecurityUtils.getDomainId())) {
         throw new UnauthorizedException(backendMessages.getString("permission.denied"));
       }
       IKiosk k = as.getKiosk(entityId, false);
@@ -936,7 +936,7 @@ public class EntityController {
       }
       counts.put("oos", ims.getOutOfStockCounts(entityId));
       counts.put("invSz",
-          Counter.getMaterialCounter(SecurityUtils.getDomainId(request), entityId, null)
+          Counter.getMaterialCounter(SecurityUtils.getDomainId(), entityId, null)
               .getCount());
     } catch (ServiceException e) {
       xLogger.severe("Error in getting Status of materials", e);
@@ -1483,7 +1483,7 @@ public class EntityController {
       if (results.getResults() != null) {
         return new Results(builder.buildUserEntities(results.getResults()), null,
             pageParams == null ? 0
-                : Counter.getUserToKioskCounter(SecurityUtils.getDomainId(request), userId)
+                : Counter.getUserToKioskCounter(SecurityUtils.getDomainId(), userId)
                     .getCount(), o);
       }
     } catch (ServiceException | ObjectNotFoundException e) {
@@ -1634,7 +1634,7 @@ public class EntityController {
           SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
           Locale locale = sUser.getLocale();
           EntitiesService as = Services.getService(EntitiesServiceImpl.class, locale);
-          Long domainId = SecurityUtils.getDomainId(request);
+          Long domainId = SecurityUtils.getDomainId();
           kidList = as.getAllDomainKioskIds(domainId);
           if (kidList == null) {
             throw new ServiceException(
@@ -1787,7 +1787,7 @@ public class EntityController {
           SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
           Locale locale = sUser.getLocale();
           EntitiesService as = Services.getService(EntitiesServiceImpl.class, locale);
-          Long domainId = SecurityUtils.getDomainId(request);
+          Long domainId = SecurityUtils.getDomainId();
           List<Long> kIdList = as.getAllDomainKioskIds(domainId);
           if (kIdList == null) {
             throw new ServiceException(

@@ -56,11 +56,8 @@ public class SecurityUtils {
   private SecurityUtils() {
   }
 
-  public static Long getDomainId(HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(request
-        .getSession());
-    String userId = sUser.getUsername();
-    return SessionMgr.getCurrentDomain(request.getSession(), userId);
+  public static Long getDomainId() {
+    return getCurrentDomainId();
 
   }
 

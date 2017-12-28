@@ -59,7 +59,7 @@ public class GenericAuthoriser {
     Locale locale = sUser.getLocale();
     String rUserId = sUser.getUsername();
     String role = sUser.getRole();
-    Long domainId = SecurityUtils.getDomainId(request);
+    Long domainId = SecurityUtils.getDomainId();
     UsersService as = Services.getService(UsersServiceImpl.class, locale);
     return role.equals(SecurityConstants.ROLE_SUPERUSER) || as
         .hasAccessToUser(userId, rUserId, domainId, role);

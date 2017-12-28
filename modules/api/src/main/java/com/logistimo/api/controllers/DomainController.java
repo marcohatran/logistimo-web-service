@@ -213,7 +213,7 @@ public class DomainController {
               "dummy", 0);
       PageParams pageParams = new PageParams(navigator.getCursor(0), 0, 10);
       List<IDomain> domains = ds.getDomains(q == null ? "" : q, pageParams);
-      Long domainId = SecurityUtils.getDomainId(request);
+      Long domainId = SecurityUtils.getDomainId();
       for (int i = 0; i < domains.size(); i++) {
         if (domains.get(i).getId().equals(domainId)) {
           domains.remove(i);
