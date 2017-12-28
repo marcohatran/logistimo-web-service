@@ -83,7 +83,7 @@
         <route id="assetAlarmsRoute" errorHandlerRef="assetAlarmsErrorHandler" autoStartup="{{task.server}}">
             <from uri="activemq:queue:asset-alarms"/>
             <unmarshal ref="assetStatusRequest"/>
-            <log message="Routing message from queue to Logistimo Web ${body}"/>
+            <log message="Routing message from assets alarms queue to Logistimo with content : ${body}"/>
             <bean ref="assetAlarmsMessagingProcessor"/>
         </route>
 

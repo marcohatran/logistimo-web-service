@@ -506,13 +506,15 @@ public class AssetManagementServiceImpl extends ServiceImpl implements AssetMana
         }
         // NO_ACTIVITY event is handled during DailyEventsCreation
         // Log the high excursion, low excursion and incursion events. The NO_ACTIVITY event is handled by the DailyEventsGenerator
-        if (eventType != -1) {
+        if (eventType == IEvent.STATUS_CHANGE) {
+          AssetUtil.generateAssetStatusEvents(asset.getDomainId(), assetStatus, asset);
+        } else if (eventType != -1) {
           EventsConfig ec = DomainConfig.getInstance(asset.getDomainId()).getEventsConfig();
-          EventSpec tempEventSpec =
+          EventSpec eventSpec =
               ec.getEventSpec(eventType, JDOUtils.getImplClass(IAssetStatus.class).getName());
           // After getting tempEventSpec, call a private method to generate temperature events.
-          if (tempEventSpec != null) {
-            AssetUtil.generateAssetEvents(asset.getDomainId(), tempEventSpec, assetStatus, asset,
+          if (eventSpec != null) {
+            AssetUtil.generateAssetEvents(asset.getDomainId(), eventSpec, assetStatus, asset,
                 eventType);
           }
         }
