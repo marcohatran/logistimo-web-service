@@ -1289,7 +1289,7 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
         if (userId == null) {
           userId = trans.getSourceUserId();
         }
-
+        trans.setDomainId(domainId);
         trans.setType(transType);
 
         try {
