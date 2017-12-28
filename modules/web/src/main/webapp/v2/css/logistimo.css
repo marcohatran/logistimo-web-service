@@ -4026,7 +4026,7 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
     color: #d0dada;
 }
 .widget .widget-per{
-    font-size: small;
+    font-size: smaller;
     font-weight: 300;
     text-align: center;
     color: #a3a3a3;
@@ -4037,6 +4037,10 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
 
 .mbn6{
     margin-bottom: -6px;
+}
+
+.font-small{
+    font-size: small;
 }
 
 .large-grey-lbl {
