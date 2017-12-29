@@ -104,6 +104,7 @@ angular.module('logistimo.storyboard.temperatureStatusDonutWidget', [])
                     chartData = constructPieData(data.data.tempDomain, tempPieColors, tempPieOrder, INVENTORY,
                         $scope.mapEvent, undefined);
                     var normalPercent = getPercent(data.data.tempDomain, $scope.assetStatus);
+                    normalPercent = formatDecimal(normalPercent);
                     totalAssets = getItemCount(data.data.tempDomain, $scope.assetStatus);
 
                 if(totalAssets>1){

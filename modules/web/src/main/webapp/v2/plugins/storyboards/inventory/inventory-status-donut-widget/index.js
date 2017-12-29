@@ -122,6 +122,7 @@ angular.module('logistimo.storyboard.inventoryStatusDonutWidget', [])
                         chartData = constructPieData(data.data.invDomain, invPieColors, invPieOrder, INVENTORY,
                             $scope.mapEvent);
                         var normalPercent = getPercent(data.data.invDomain, $scope.widType);
+                        normalPercent = formatDecimal(normalPercent);
                         totalInv = getItemCount(data.data.invDomain, $scope.widType);
                         if(totalInv>1){
                             $scope.totalInvText = totalInv + " inventory items";

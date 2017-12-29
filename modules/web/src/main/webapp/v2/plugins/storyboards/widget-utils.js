@@ -854,3 +854,11 @@ function getAvailable(data){
     });
     return availableObject;
 }
+
+function formatDecimal(val){
+    var dec = checkNotNullEmpty(val) ? val.indexOf(".") : -1;
+    if (dec >= 0 && parseInt(val.substr(dec + 1)) == 0) {
+        val = val.substr(0,dec);
+    }
+    return val;
+}
