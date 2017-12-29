@@ -4112,6 +4112,7 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
 .bulletin-board-event-image {
     display: inline-block;
     float:left;
+    padding-top:5px;
 }
 .widget-no-data {
     display: table-cell;
