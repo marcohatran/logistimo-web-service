@@ -67,7 +67,7 @@ angular.module('logistimo.storyboard.temperatureStatusDonutWidget', [])
             }
 
             if(checkNotNullEmpty($scope.widget.conf.title)) {
-                $scope.widget.conf.title = $scope.widget.conf.title.toUpperCase();
+                $scope.widget.conf.title = $scope.widget.conf.title?$scope.widget.conf.title.toUpperCase():"";
             }
         }
 

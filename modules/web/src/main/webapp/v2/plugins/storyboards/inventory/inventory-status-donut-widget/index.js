@@ -91,7 +91,7 @@ angular.module('logistimo.storyboard.inventoryStatusDonutWidget', [])
                     $scope.widType = "ia";
                 }
 
-                $scope.widget.conf.title = $scope.widget.conf.title.toUpperCase();
+                $scope.widget.conf.title = $scope.widget.conf.title?$scope.widget.conf.title.toUpperCase():"";
 
                 if (checkNotNullEmpty(filter.materialTag)) {
                     $scope.exFilter = constructModel(filter.materialTag);
