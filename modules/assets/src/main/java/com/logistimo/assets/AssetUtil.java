@@ -782,7 +782,7 @@ public class AssetUtil {
   // Private method to generate Asset events, for high excursion, low excursion and incursion
   public static void generateAssetEvents(Long domainId, EventSpec eventSpec,
       IAssetStatus assetStatus, IAsset asset, int eventType) {
-    xLogger.fine("Entered generateTemperatureEvents");
+    xLogger.fine("Entered generateAssetEvents");
     Map<String, EventSpec.ParamSpec> paramSpecs = eventSpec.getParamSpecs();
     // Multiple low excursion and high excursion events can be present based on different "remindminsafter" parameter
     if (paramSpecs == null || paramSpecs.isEmpty()) {
@@ -825,6 +825,28 @@ public class AssetUtil {
         xLogger.warn("Exception when generating event for asset {0} in domain {1}: {2}",
             asset.getSerialId(), domainId, e.getMessage(), e);
       }
+    }
+  }
+
+  public static void generateAssetStatusEvents(Long domainId, IAssetStatus assetStatus,
+      IAsset asset) {
+
+    Map<String, Object> params = new HashMap<>(1);
+    params.put(EventConstants.EVENT_TIME, assetStatus.getTs());
+
+    params.put(EventConstants.PARAM_STATUS, assetStatus.getStatus().toString());
+
+    if (assetStatus.getTags() != null && !assetStatus.getTags().isEmpty()) {
+      params.put(EventConstants.PARAM_ENTITYTAGSTOEXCLUDE, assetStatus.getTags());
+    }
+
+    try {
+      EventPublisher.generate(domainId, IEvent.STATUS_CHANGE, params,
+          JDOUtils.getImplClass(IAssetStatus.class).getName(),
+          String.valueOf(assetStatus.getId()), null);
+    } catch (EventGenerationException e) {
+      xLogger.warn("Exception when generating event for asset {0} in domain {1}: {2}",
+          asset.getSerialId(), domainId, e.getMessage(), e);
     }
   }
 

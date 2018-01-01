@@ -140,7 +140,7 @@
                 $scope.showError($scope.resourceBundle['form.error']);
             };
             $scope.showError = function (message) {
-                if (checkNotNullEmpty(message) && message.indexOf("Login changed, rejecting deferred calls.") == -1) {
+                if (checkNotNullEmpty(message) && typeof(message) === "string" && message.indexOf("Login changed, rejecting deferred calls.") == -1) {
                     $scope.showNotification(cleanupString(message), 'error');
                 }
             };

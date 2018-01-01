@@ -32,6 +32,8 @@ import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
+import com.logistimo.domains.entity.IDomain;
+import com.logistimo.domains.service.DomainsService;
 import com.logistimo.exception.BadRequestException;
 import com.logistimo.logger.XLog;
 import com.logistimo.reports.ReportsConstants;
@@ -87,6 +89,13 @@ public class ReportPluginService implements Service {
   private static final String INVALID_REQUEST = "Invalid request";
 
   @Autowired ReportServiceCollection reportServiceCollection;
+
+  DomainsService domainsService;
+
+  @Autowired
+  public void setDomainsService(DomainsService domainsService) {
+    this.domainsService = domainsService;
+  }
 
   public List<ReportChartModel> getReportData(Long domainId, String json) {
     try {
@@ -198,6 +207,7 @@ public class ReportPluginService implements Service {
     final QueryRequestModel model =
         constructQueryRequestModel(domainId, jsonObject, viewType);
     ExportModel eModel = new ExportModel();
+    IDomain domain=domainsService.getDomain(domainId);
     final SecureUserDetails userDetails = SecurityUtils.getUserDetails();
     eModel.userId = userDetails.getUsername();
     eModel.timezone = userDetails.getTimezone();
@@ -209,6 +219,7 @@ public class ReportPluginService implements Service {
     eModel.additionalData.put("reportViewType", reportViewType);
     eModel.additionalData.put("queryId", model.queryId);
     eModel.additionalData.put("reportType", eModel.templateId);
+    eModel.additionalData.put("domainName", domain.getName());
     eModel.additionalData.put("primaryMetricIndex", jsonObject.getString("primaryMetricIndex"));
     eModel.additionalData.put("secondaryMetricIndex", jsonObject.getString("secondaryMetricIndex"));
     eModel.additionalData.put("tertiaryMetricIndex", jsonObject.getString("tertiaryMetricIndex"));

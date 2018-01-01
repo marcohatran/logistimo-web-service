@@ -41,8 +41,8 @@ import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.entity.IJobStatus;
 import com.logistimo.entity.IUploaded;
 import com.logistimo.exception.InvalidDataException;
+import com.logistimo.inventory.dao.impl.TransDao;
 import com.logistimo.inventory.entity.IInvntry;
-import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.materials.service.MaterialCatalogService;
@@ -52,7 +52,6 @@ import com.logistimo.orders.entity.IOrder;
 import com.logistimo.pagination.QueryParams;
 import com.logistimo.reports.ReportsConstants;
 import com.logistimo.reports.dao.IReportsDao;
-import com.logistimo.services.ServiceException;
 import com.logistimo.services.Services;
 import com.logistimo.services.UploadService;
 import com.logistimo.services.blobstore.BlobInfo;
@@ -893,6 +892,10 @@ public class CustomReportsExportMgr {
         throw new InvalidDataException("FilterBy parameter not given for " + type + "export");
       }
       return getInventoryAndTransCountResults(type, domainId, from, to, filterBy, aggrFrequency);
+    } else if (CustomReportConstants.TYPE_TRANSACTIONS.equals(type)) {
+      return new TransDao()
+          .buildTransactionsQuery(from, to, domainId, null, null, null, null, null, null, null,
+              null, false, null, null);
     } else {
       String queryStr = "";
       String paramsStr = " PARAMETERS ";
@@ -910,12 +913,6 @@ public class CustomReportsExportMgr {
             "SELECT FROM " + JDOUtils.getImplClass(IOrder.class).getName() + " WHERE " + queryStr;
         dateField = "cOn";
         orderingStr = "ORDER BY cOn DESC";
-      } else if (CustomReportConstants.TYPE_TRANSACTIONS.equals(type)) {
-        queryStr =
-            "SELECT FROM " + JDOUtils.getImplClass(ITransaction.class).getName() + " WHERE "
-                + queryStr;
-        dateField = "t";
-        orderingStr = "ORDER BY t DESC";
       } else if (CustomReportConstants.TYPE_MANUALTRANSACTIONS.equals(type)) {
         queryStr =
             "SELECT FROM " + JDOUtils.getImplClass(IMnlTransaction.class).getName() + " WHERE "

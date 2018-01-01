@@ -10,12 +10,11 @@
         </div>
     </div>
     <div ng-if="!wloading && !showError && showChart" class="text-center">
-        <div class="widget-title pt5 mbn4"> {{resourceBundle['home.activeentities'] | uppercase}}  </div>
-        <div class="widget-sub-title mbn4"> {{activeEntityDomainTotal}}
-            <span ng-if="activeEntityDomainTotal==0">{{resourceBundle['kiosks.lowercase'] | uppercase}}</span>
-            <span ng-if="activeEntityDomainTotal>0">{{(activeEntityDomainTotal>1?resourceBundle['kiosks.lowercase']:resourceBundle['kiosk']) | uppercase}}</span>
+        <div class="widget-title pt5"> {{resourceBundle['home.activeentities'] | uppercase}}  </div>
+        <div class="widget-sub-title font-small mbn15"> {{activeEntityDomainTotal}}
+            <span ng-if="activeEntityDomainTotal==0">{{resourceBundle['kiosks.lowercase'] | uppercase}} ({{activePercent}}%)</span>
+            <span ng-if="activeEntityDomainTotal>0">{{(activeEntityDomainTotal>1?resourceBundle['kiosks.lowercase']:resourceBundle['kiosk']) | uppercase}} ({{activePercent}}%)</span>
         </div>
-        <div class="widget-per mbn20"> {{activePercent}}% </div>
         <br/>
 
         <fusion-chart type="storesActivityWidget.cType" height="storesActivityWidget.computedHeight"

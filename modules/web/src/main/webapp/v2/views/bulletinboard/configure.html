@@ -39,15 +39,14 @@
                             <div class="title-heading">
                                 {{resourceBundle['user.token.expiry']}}
                             </div>
-                            <div class="row">
+                            <div class="row pt10">
                                 <div class="col-sm-6">
                                     <div class="form-group">
                                         <label class="col-sm-4 control-label required">{{resourceBundle['config.authenticationtokenexpiry']}}</label>
 
                                         <div class="col-sm-6">
-                                            <input type="text" class="form-control"
-                                                   placeholder="{{resourceBundle['bulletin.expiry.days']}}"
-                                                   ng-model="bb.tokenExpiryInDays" maxlength="50" only-digits>
+                                            <input type="text" class="form-control w30 dinline"
+                                                   ng-model="bb.tokenExpiryInDays" maxlength="50" only-digits>&nbsp;&nbsp;{{resourceBundle['config.days']}}
                                         </div>
                                     </div>
                                 </div>

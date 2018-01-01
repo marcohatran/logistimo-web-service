@@ -442,6 +442,13 @@ if (typeof updateRouteProviderConfig === "function") {
     updateRouteProviderConfig();
 }
 
+if (!String.prototype.startsWith) {
+    String.prototype.startsWith = function(searchString, position) {
+        position = position || 0;
+        return this.indexOf(searchString, position) === position;
+    };
+}
+
 logistimoApp.config(['$httpProvider', function($httpProvider) {
     var ua = window.navigator.userAgent;
     if(ua.indexOf( "MSIE ") > 0 || ua.indexOf('Trident/') > 0 || ua.indexOf('Edge/') > 0 || navigator.appVersion.indexOf("MSIE 9.0") !== -1) {

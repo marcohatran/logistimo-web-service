@@ -9,11 +9,10 @@
 <%@page import="com.logistimo.pagination.PageParams" %>
 <%@page import="com.logistimo.pagination.Results"%>
 <%@page import="com.logistimo.security.SecureUserDetails" %>
-<%@page import="com.logistimo.services.ServiceException" %>
 <%@page import="com.logistimo.services.Services" %>
 <%@page import="com.logistimo.users.service.UsersService" %>
 <%@page import="com.logistimo.users.service.impl.UsersServiceImpl" %>
-<%@ page import="java.util.List" %>
+<%@page import="java.util.List" %>
 <%@ page import="java.util.Locale" %>
 <%--
   ~ Copyright © 2017 Logistimo.
@@ -221,7 +220,7 @@ function removeDomains() {
 			else {
 				try {
 					ownerName = us.getUserAccount( ownerId ).getFullName();
-				} catch ( ServiceException e ) {
+                } catch (Exception e) {
 					ownerName = "[Unknown]";
 				}
 			}

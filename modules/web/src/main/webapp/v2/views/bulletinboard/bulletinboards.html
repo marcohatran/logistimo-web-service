@@ -26,11 +26,11 @@
      ng-init="init('configuration.bulletin')">
     <ul class="nav nav-tabs subnav-tabs">
         <li ng-class="{active: (subview == 'list')}"><a
-                href="#/configuration/bulletin/" ng-show="iSU">{{resourceBundle['bulletin.boards']}}</a></li>
-        <li ng-class="{active: (subview == 'add' || subview == 'detail' || subview == 'view')}" ng-show="iSU"><a
+                href="#/configuration/bulletin/" ng-show="iAdm">{{resourceBundle['bulletin.boards']}}</a></li>
+        <li ng-class="{active: (subview == 'add' || subview == 'detail' || subview == 'view')}" ng-show="iAdm"><a
                 href="#/configuration/bulletin/add/">{{resourceBundle['create']}}
             {{resourceBundle['bulletin.board.lower']}}</a></li>
-        <li ng-class="{active: (subview == 'config')}" ng-show="iSU"><a
+        <li ng-class="{active: (subview == 'config')}" ng-show="iAdm"><a
                 href="#/configuration/bulletin/config">{{resourceBundle['configure']}}</a></li>
     </ul>
     <div ng-switch="subview">

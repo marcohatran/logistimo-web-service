@@ -88,7 +88,7 @@ function getTotalItems(data) {
 
 function getItemCount(data, wt) {
     if (wt == 'ia') {
-        return (data['n'] + data[201] + data[202]);
+        return ((data['n']?data['n']:0) + (data[201]?data[201]:0) + (data[202]?data[202]:0));
     } else if (wt == 'iso') {
         return (data[200] ? data[200] : 0 );
     } else if (wt == 'in') {
@@ -853,4 +853,12 @@ function getAvailable(data){
         }
     });
     return availableObject;
+}
+
+function formatDecimal(val){
+    var dec = checkNotNullEmpty(val) ? val.indexOf(".") : -1;
+    if (dec >= 0 && parseInt(val.substr(dec + 1)) == 0) {
+        val = val.substr(0,dec);
+    }
+    return val;
 }

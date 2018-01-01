@@ -105,6 +105,7 @@ public class OrderAutomationAction {
     OrdersConfig ordersConfig = domainConfig.getOrdersConfig();
     if (domainConfig.isCapabilityDisabled(DomainConfig.CAPABILITY_ORDERS) || !ordersConfig
         .isCreationAutomated()) {
+      LOGGER.info("No Cheese !! Enabled orders first for this domain {0}", domainId);
       return;
     }
     Locale locale = domainConfig.getLocale();
@@ -123,6 +124,7 @@ public class OrderAutomationAction {
         invntryList =
         inventoryManagementService.getInventory(filters, null).getResults();
     if (invntryList == null || invntryList.isEmpty()) {
+      LOGGER.info("No results found for domain {0}", domainId);
       return;
     }
 

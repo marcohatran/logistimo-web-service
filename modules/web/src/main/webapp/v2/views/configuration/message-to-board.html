@@ -29,8 +29,12 @@
                     <b>{{resourceBundle['config.bulletinboard.posttoboardmsg']}}</b>
                 </div>
                 <div class="panel-body">
-                    <div class="col-sm-12">
-                        <textarea rows="4" cols="50" name="comment" ng-model="msg" maxlength="160" style="width: 100%;"/>
+                    <div ng-show="!shortcut" class="col-sm-12">
+                        <textarea rows="4" cols="50" name="comment" ng-model="msg" maxlength="160" style="width: 100%;" ng-click="$event.stopPropagation()"/>
+                        <span class="litetext">({{resourceBundle['config.bulletinboard.posttoboarddesc']}})</span>
+                    </div>
+                    <div ng-show="shortcut">
+                        <textarea rows="4" cols="50" name="comment" ng-model="msg" maxlength="160" style="width: 100%;" ng-click="$event.stopPropagation()"/>
                         <span class="litetext">({{resourceBundle['config.bulletinboard.posttoboarddesc']}})</span>
                     </div>
                     <div class="pull-right">

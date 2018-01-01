@@ -704,7 +704,7 @@ public class OrdersController {
       }
       Results or = oms.getOrders(domainId, entityId, status, startDate, endDate, otype, tgType, tag,
               kioskIds, pageParams, oty, rid, approvalStatus);
-      return builder.buildOrders(or, user, SecurityUtils.getDomainId(request));
+      return builder.buildOrders(or, user, SecurityUtils.getDomainId());
     } catch (Exception e) {
       xLogger.severe("Error in fetching orders for entity {0} of type {1}", entityId, otype, e);
       throw new InvalidServiceException(backendMessages.getString("orders.fetch.error"));

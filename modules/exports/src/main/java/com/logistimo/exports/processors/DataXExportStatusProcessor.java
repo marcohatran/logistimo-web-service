@@ -27,6 +27,8 @@ import com.codahale.metrics.Meter;
 import com.logistimo.communications.MessageHandlingException;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.context.StaticApplicationContext;
+import com.logistimo.domains.entity.IDomain;
+import com.logistimo.domains.service.DomainsService;
 import com.logistimo.entity.IJobStatus;
 import com.logistimo.exports.model.ExportResponseModel;
 import com.logistimo.exports.util.EmailHelper;
@@ -36,9 +38,7 @@ import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
 import com.logistimo.utils.JobUtil;
 import com.logistimo.utils.MetricsUtil;
-
 import org.apache.camel.Handler;
-
 import java.io.IOException;
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -59,11 +59,13 @@ public class DataXExportStatusProcessor {
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", Locale.ENGLISH);
     Long jobId = Long.parseLong(model.meshId.substring(model.meshId.lastIndexOf(
         CharacterConstants.UNDERSCORE) + 1));
+
     IJobStatus jobStatus = JobUtil.getJobById(jobId);
+    IDomain domain=StaticApplicationContext.getBean(DomainsService.class).getDomain(jobStatus.getDomainId());
     EmailHelper emailHelper = StaticApplicationContext.getBean(EmailHelper.class);
     String fileName =
         emailHelper.getFileName(emailHelper.getFileName(jobStatus),
-            jobStatus.getMetadataMap().get(ExportConstants.EXPORT_TIME));
+            jobStatus.getMetadataMap().get(ExportConstants.EXPORT_TIME),domain.getName());
     if (ExportConstants.STATUS_SUCCESS.equals(model.status)) {
       try {
         emailHelper.sendMail(jobStatus, model.meshId);

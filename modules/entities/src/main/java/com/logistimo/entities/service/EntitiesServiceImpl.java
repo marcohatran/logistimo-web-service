@@ -2466,6 +2466,10 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
       if (actType == IKiosk.TYPE_ORDERACTIVITY && k.getOrderActiveTime() == null) {
         k.setOrderActiveTime(timestamp);
       }
+      // Deleting entity information from cache
+      getMemcacheService()
+          .delete(Constants.KIOSK_KEY + CharacterConstants.HASH + entityId.toString());
+
     } catch (Exception e) {
       xLogger
           .warn("Exception when trying to update activity timestamps for entity {0}", entityId, e);

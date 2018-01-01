@@ -94,7 +94,8 @@ angular.module('logistimo.storyboard.storesActivityWidget', [])
             $scope.activeEntityDomainTotal = (data.a || 0);
             var stackData = [];
             $scope.activeData = data.a ? data.a : 0;
-            $scope.activePercent = getNormalPercent($scope.entDomainTotal, $scope.activeData);
+            var activePercent = getNormalPercent($scope.entDomainTotal, $scope.activeData);
+            $scope.activePercent = formatDecimal(activePercent);
             var sData = constructStack(data.a, "Active", entPieColors[0], $scope.entDomainTotal, "a");
             if (!checkNullEmptyObject(sData)) {
                 stackData.push(sData);
@@ -116,7 +117,11 @@ angular.module('logistimo.storyboard.storesActivityWidget', [])
         }
 
         function getNormalPercent(total, data) {
-            return (data / total * 100).toFixed(1);
+            if(total>0) {
+                return (data / total * 100).toFixed(1);
+            }else{
+                return 0;
+            }
         }
 
         $scope.pOpt = {

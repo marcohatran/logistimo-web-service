@@ -69,7 +69,7 @@ public class BulletinBoardDashboardController {
     SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    long domainId = SecurityUtils.getDomainId(request);
+    long domainId = SecurityUtils.getDomainId();
     try {
       IBulletinBoardDashBoardService ds = Services.getService(BulletinBoardDashBoardService.class);
       if (model.getDashboardId() != null) {

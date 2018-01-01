@@ -908,6 +908,11 @@ tr.alert {
     position: absolute;
     top: 0px;
     left: 0px;
+    padding-bottom: 10000px;
+    margin-bottom: -10000px;
+    padding-right: 10000px;
+    margin-right: -10000px;
+    z-index:1010;
 }
 
 
@@ -3592,6 +3597,9 @@ tr.alert.alert-warning.alert-warning-dark{
 .mbn20{
     margin-bottom: -20px;
 }
+.mbn15{
+    margin-bottom: -15px;
+}
 .headingHL{
     font-weight: bold;
 }
@@ -4021,13 +4029,21 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
     color: #d0dada;
 }
 .widget .widget-per{
-    font-size: small;
+    font-size: smaller;
     font-weight: 300;
     text-align: center;
     color: #a3a3a3;
 }
 .mbn4{
     margin-bottom: -4px;
+}
+
+.mbn6{
+    margin-bottom: -6px;
+}
+
+.font-small{
+    font-size: small;
 }
 
 .large-grey-lbl {
@@ -4096,6 +4112,7 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
 .bulletin-board-event-image {
     display: inline-block;
     float:left;
+    padding-top:5px;
 }
 .widget-no-data {
     display: table-cell;
@@ -4226,7 +4243,7 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
 }
 
 .zipper.zipper-on-add {
-    animation: fadeIn 2s both;
+    animation: fadeIn 4s both;
 }
 
 .bulletin-domain {
@@ -4253,4 +4270,12 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
     font-size: 16px;
     letter-spacing: 1.9px;
     font-weight: bold;
+}
+
+.drop-down-bulletin-post {
+    padding: 3px 0px 3px 20px;
+    clear: both;
+    font-weight: 400;
+    color: #333;
+    white-space: nowrap;
 }

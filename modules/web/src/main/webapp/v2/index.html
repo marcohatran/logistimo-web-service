@@ -87,11 +87,20 @@
         <spinner></spinner>
         <!-- span ng-bind="loadMessage"></span -->
     </div>
-	<div class="splash" ng-cloak="">
+    <!-- @if (NODE_ENV == 'PRODUCTION' || NODE_ENV == 'DEVELOPMENT') && BULLETIN_BOARD == 'NA' -->
+    <div class="splash" ng-cloak="">
         <div  class="loader-content">
             <spinner></spinner>
         </div>
-	</div>
+    </div>
+    <!-- @endif -->
+    <!-- @if (NODE_ENV == 'PRODUCTION' || NODE_ENV == 'DEVELOPMENT') && BULLETIN_BOARD == 'BULLETIN_BOARD' -->
+    <div class="splash" ng-cloak="" style="background-color: black">
+        <div class="loader-content">
+            <spinner></spinner>
+        </div>
+    </div>
+    <!-- @endif -->
 
     <!-- General 3rdparty inclusion(common for dev n prod) -->
     <script src="js/3rdparty/jquery.min.js"></script>
@@ -245,8 +254,6 @@
     <script src="plugins/storyboards/assets/asset-edit-template.js"></script>
     <script src="plugins/storyboards/js/dashboard-repository.js"></script>
     <script src="plugins/storyboards/js/bulletinboard-repository.js"></script>
-    <script src="plugins/storyboards/event-summaries/events-map-widget/index.js"></script>
-    <script src="plugins/storyboards/event-summaries/event-summaries-edit-template.js"></script>
 
     <script src="plugins/storyboards/inventory/inventory-status-donut-widget/index.js"></script>
     <script src="plugins/storyboards/inventory/stores-activity-widget/index.js"></script>
@@ -260,10 +267,6 @@
     <script src="plugins/storyboards/assets/assets-count-widget/index.js"></script>
     <script src="plugins/storyboards/assets/temperature-status-map-widget/index.js"></script>
     <script src="plugins/storyboards/assets/top-locations-by-temperature-status-widget/index.js"></script>
-    <script src="plugins/storyboards/inventory/stock-trend-widget/index.js"></script>
-    <script src="plugins/storyboards/assets/temperature-excursion-trend-widget/index.js"></script>
-    <script src="plugins/storyboards/event-summaries/event-summaries-text-widget/index.js"></script>
-    <script src="plugins/storyboards/event-summaries/event-summaries-user-profile-widget/index.js"></script>
 
 
 

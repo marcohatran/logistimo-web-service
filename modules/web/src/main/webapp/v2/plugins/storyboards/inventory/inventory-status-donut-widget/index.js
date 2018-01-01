@@ -91,7 +91,7 @@ angular.module('logistimo.storyboard.inventoryStatusDonutWidget', [])
                     $scope.widType = "ia";
                 }
 
-                $scope.widget.conf.title = $scope.widget.conf.title.toUpperCase();
+                $scope.widget.conf.title = $scope.widget.conf.title?$scope.widget.conf.title.toUpperCase():"";
 
                 if (checkNotNullEmpty(filter.materialTag)) {
                     $scope.exFilter = constructModel(filter.materialTag);
@@ -122,6 +122,7 @@ angular.module('logistimo.storyboard.inventoryStatusDonutWidget', [])
                         chartData = constructPieData(data.data.invDomain, invPieColors, invPieOrder, INVENTORY,
                             $scope.mapEvent);
                         var normalPercent = getPercent(data.data.invDomain, $scope.widType);
+                        normalPercent = formatDecimal(normalPercent);
                         totalInv = getItemCount(data.data.invDomain, $scope.widType);
                         if(totalInv>1){
                             $scope.totalInvText = totalInv + " inventory items";

@@ -631,7 +631,7 @@ public class DomainCounts {
       this.fulOrdrsChngPer = 0;
       this.pndgOrdrs = slice.getPendingOrderCount();
       this.pndgOrdrsChngPer = 0;
-      this.ordrRspTime = 0;
+      this.ordrRspTime = Math.round(((IReportsSlice) slice).getAverageOrderProcessingTime() * 100.0) / 100.0;
       this.ordrRspTimeChngPer = 0;
       this.stckOuts = slice.getStockoutEventCounts();
       this.stckOutsChngPer = 0;
@@ -639,7 +639,7 @@ public class DomainCounts {
       this.lessThanMinChngPer = 0;
       this.grtThanMax = slice.getGreaterThanMaxEventCounts();
       this.grtThanMaxChngPer = 0;
-      this.rplRspTime = 0;
+      this.rplRspTime = Math.round(((IReportsSlice) slice).getAverageStockoutResponseTime() * 100.0) / 100.0;
       this.rplRspTimeChngPer = 0;
       this.issues = slice.getIssueCount();
       this.rcpts = slice.getReceiptCount();

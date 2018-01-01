@@ -27,6 +27,7 @@ import com.logistimo.communications.MessageHandlingException;
 import com.logistimo.communications.service.EmailService;
 import com.logistimo.communications.service.MessageService;
 import com.logistimo.constants.CharacterConstants;
+import com.logistimo.domains.entity.IDomain;
 import com.logistimo.domains.service.DomainsService;
 import com.logistimo.entity.IJobStatus;
 import com.logistimo.reports.constants.ReportType;
@@ -73,6 +74,7 @@ public class EmailHelper {
       throws MessageHandlingException, IOException, ServiceException {
     Map<String, String> model = jobStatus.getMetadataMap();
     IUserAccount u = us.getUserAccount(model.get(ExportConstants.USER_ID));
+    IDomain domain = ds.getDomain(jobStatus.getDomainId());
     String fileName = getFileName(jobStatus);
     final String exportTime = model.get(ExportConstants.EXPORT_TIME);
     String subject = getMailSubject(model, fileName, exportTime);
@@ -84,7 +86,9 @@ public class EmailHelper {
     if (StringUtils.isNotBlank(customMessage)) {
       message = customMessage;
     } else {
-      final String downloadLinkText = getDownloadLinkText(filePath, fileName, exportTime);
+      final String
+          downloadLinkText =
+          getDownloadLinkText(filePath, fileName, exportTime, domain.getName());
       message = constructEmailMessage(u, fileName, downloadLinkText);
     }
     MessageService ms =
@@ -99,12 +103,13 @@ public class EmailHelper {
         ds.getDomain(Long.valueOf(model.get(ExportConstants.DOMAIN_ID))).getName() + " on " + exportTime;
   }
 
-  private String getDownloadLinkText(String filePath, String fileName, String exportTime) {
+  private String getDownloadLinkText(String filePath, String fileName, String exportTime,String domainName) {
     String host = ConfigUtil.get("logi.host.server");
     String path = host == null ? "http://localhost:50070/webhdfs/v1" : "/media";
     String localStr = host == null ? "?op=OPEN" : "";
     return "<a href=\"" + (host == null ? "" : host) + path
-        + "/user/logistimoapp/dataexport/" + filePath + "/" + getFileName(fileName, exportTime)
+        + "/user/logistimoapp/dataexport/" + filePath + "/" + getFileName(fileName, exportTime,
+        domainName)
         + localStr + "\">here</a>";
   }
 
@@ -128,9 +133,11 @@ public class EmailHelper {
     return message.toString();
   }
 
-  public String getFileName(String fileName, String fileTime) {
+  public String getFileName(String fileName, String fileTime,String domainName) {
     return fileName.replace(CharacterConstants.SPACE, CharacterConstants.UNDERSCORE) +
-        CharacterConstants.UNDERSCORE + fileTime.replaceAll("[ :\\-]", CharacterConstants.UNDERSCORE) + ".csv";
+        CharacterConstants.UNDERSCORE + domainName.replaceAll("[^a-zA-Z0-9_]", "")
+        + CharacterConstants.UNDERSCORE + fileTime
+        .replaceAll("[ :\\-]", CharacterConstants.UNDERSCORE) + ".csv";
   }
 
   public String getFileName(IJobStatus jobStatus ){

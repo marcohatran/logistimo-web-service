@@ -111,8 +111,8 @@ public class CustomReportsExportProcessor extends InstrumentedProcessor {
     xLogger.fine(
         "Entered CustomReportsExportProcessor.process. domainId: {0}, cstReportsExportParamsJson: {1}",
         domainId, cstReportsExportParamsJson);
-    if (results == null) {
-      xLogger.info("Results is null or has zero size");
+    if (results.getResults() == null ) {
+      xLogger.info("CustomReportsExportProcessor: Results is null or has zero size");
       return cstReportsExportParamsJson;
     }
     CustomReportsExportParams cstReportsExportParams = null;
