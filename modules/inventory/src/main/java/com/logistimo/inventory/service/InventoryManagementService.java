@@ -158,7 +158,8 @@ public interface InventoryManagementService extends Service {
    */
   void updateInventory(List<IInvntry> items, String user) throws ServiceException;
 
-  void updateInventory(List<IInvntry> items, String user, PersistenceManager pm, boolean closePM)
+  void updateInventory(List<IInvntry> items, String user, PersistenceManager pm, boolean closePM,
+                       boolean skipMinMaxLog)
       throws ServiceException;
 
   /**

@@ -897,11 +897,11 @@ public class InventoryManagementServiceImpl extends ServiceImpl
 
   public void updateInventory(List<IInvntry> items, String user) throws ServiceException {
     PersistenceManager pm = PMF.get().getPersistenceManager();
-    updateInventory(items, user, pm, true);
+    updateInventory(items, user, pm, true, false);
   }
 
   public void updateInventory(List<IInvntry> items, String user, PersistenceManager pm,
-                              boolean closePM) throws ServiceException {
+                              boolean closePM, boolean skipMinMaxLog) throws ServiceException {
     xLogger.fine("Entering updateInventory - num. of items = {0}", items.size());
     if (items == null || items.isEmpty()) {
       // nothing to remove
@@ -929,10 +929,11 @@ public class InventoryManagementServiceImpl extends ServiceImpl
           xLogger.warn("Unable to find inventory with key {0}", inventory.getKeyString());
           continue;
         }
-        if (BigUtil.notEquals(inventory.getReorderLevel(), in.getReorderLevel()) ||
+        if (!skipMinMaxLog && (BigUtil.notEquals(inventory.getReorderLevel(), in.getReorderLevel())
+            ||
             BigUtil.notEquals(inventory.getMaxStock(), in.getMaxStock()) ||
             BigUtil.notEquals(inventory.getMaxDuration(), in.getMaxDuration()) ||
-            BigUtil.notEquals(inventory.getMinDuration(), in.getMinDuration())) {
+            BigUtil.notEquals(inventory.getMinDuration(), in.getMinDuration()))) {
           mmUpdatedItems.add(in);
         }
         // Update the fields
@@ -973,7 +974,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
       throw new ServiceException(e);
     } finally {
       // Release locks
-      if (kidLockStatusMap != null && !kidLockStatusMap.isEmpty()) {
+      if (!kidLockStatusMap.isEmpty()) {
         LockUtil.releaseLocks(kidLockStatusMap, CharacterConstants.EMPTY);
       }
     }
