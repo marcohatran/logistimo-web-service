@@ -826,7 +826,7 @@ function getAvailable(data){
                 if(location != "MAT_BD"){
                     if(checkNotNullEmpty(availableObject[location])) {
                         availableObject[location].value +=  data[eventType][location].value;
-                        availableObject[location].den +=  data[eventType][location].den;
+                        availableObject[location].den =  data[eventType][location].den;
                     }else{
                         availableObject[location] = angular.copy(data[eventType][location]);
                     }
@@ -835,7 +835,7 @@ function getAvailable(data){
                         if(checkNotNullEmpty(availableObject[location])) {
                             Object.keys(data[eventType][location].materials).forEach(function (material) {
                                 availableObject[location].materials[material].value +=  data[eventType][location].materials[material].value;
-                                availableObject[location].materials[material].den +=  data[eventType][location].materials[material].den;
+                                availableObject[location].materials[material].den =  data[eventType][location].materials[material].den;
                             });
                         }else{
                             availableObject[location] = angular.copy(data[eventType][location]);
@@ -846,7 +846,7 @@ function getAvailable(data){
             Object.keys(data[eventType]).forEach(function(location){
                 if(location != "MAT_BD"){
                     if(checkNotNullEmpty(availableObject[location])) {
-                        availableObject[location].per = ((data[eventType][location].value/data[eventType][location].den) * 100).toFixed(2) * 1 ;
+                        availableObject[location].per = ((availableObject[location].value/availableObject[location].den) * 100).toFixed(2) * 1 ;
                     }
                 }
             });
