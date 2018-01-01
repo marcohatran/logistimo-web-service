@@ -130,7 +130,14 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
         }).finally(function () {
             hideLoadConfig();
         });
-
+        showLoadConfig();
+        domainCfgService.getDomainConfigMenuStats().then(function(data) {
+            if (checkNotNullEmpty(data.data) && (!data.data.iOrdTbEn)) {
+                delete reportWidgets['Order'];
+            }
+        }).finally(function () {
+            hideLoadConfig();
+        });
         $scope.$on("$routeChangeSuccess", function (event, current, previous) {
             if (current.params.rptid != previous.params.rptid) {
                 $scope.tempReport = $scope.report;
