@@ -55,6 +55,7 @@ import com.logistimo.events.processor.EventNotificationProcessor.EventNotificati
 import com.logistimo.events.processor.OrderEventsCreationProcessor;
 import com.logistimo.events.processor.UserEventsCreationProcessor;
 import com.logistimo.exception.TaskSchedulingException;
+import com.logistimo.inventory.dao.impl.TransDao;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.IInvntryBatch;
 import com.logistimo.inventory.entity.ITransaction;
@@ -68,6 +69,7 @@ import com.logistimo.pagination.Executor;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.PagedExec;
 import com.logistimo.pagination.QueryParams;
+import com.logistimo.pagination.Results;
 import com.logistimo.pagination.processor.ProcessingException;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
@@ -729,18 +731,12 @@ public class EventHandler {
       // Generate no order activity event, if needed
       hasNoActivity = noOrdersCreated && noOrderStatusChanges;
     } else if (JDOUtils.getImplClass(ITransaction.class).getName().equals(objectType)) {
-      String
-          queryStr =
-          "SELECT key FROM " + objectType
-              + " WHERE dId.contains(dIdParam) && t > startParam PARAMETERS Long dIdParam, Date startParam import java.util.Date; ORDER BY t desc";
-      Query q = pm.newQuery(queryStr);
-      QueryUtil.setPageParams(q, pageParams);
-      try {
-        List results = (List) q.execute(domainId, start);
-        hasNoActivity = results == null || results.isEmpty();
-      } finally {
-        q.closeAll();
-      }
+      Results res = new TransDao()
+          .getInventoryTransactions(start, null, domainId,
+              null, null, null, null, null,
+              null, null, pageParams, null, false, null, null, null);
+      List results = (res != null) ? res.getResults() : null;
+      hasNoActivity = results == null || results.isEmpty();
     } else if (JDOUtils.getImplClass(IUserAccount.class).getName()
         .equals(objectType)) { // no user login activity
       String
