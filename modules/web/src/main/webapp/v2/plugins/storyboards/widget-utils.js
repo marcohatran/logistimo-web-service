@@ -416,7 +416,7 @@ function constructBarData(data, allData, event, addLink, level, scope, mapRange,
                 var bd = bData[i];
                 if (n == bd.oLabel) {
                     bd.value = per;
-                    bd.displayValue = bd.value.toFixed(2) + "%";
+                    bd.displayValue = bd.value.toFixed(2).replace(/\.0+$/,'') + "%";
                     if (event == '200' || event == '201' || event == '202' || event == 'n') {
                         bd.toolText = value + " of " + den + (level == undefined ? " materials" : " inventory items");
                     } else if (event == 'a' || event == 'i') {
@@ -528,7 +528,7 @@ function constructMatBarData(data, allData, event, scope, mapRange, mapColors, I
                 var bd = bData[i];
                 if (n == bd.oLabel) {
                     bd.value = Math.round(value / den * 1000) / 10;
-                    bd.displayValue = bd.value + "%";
+                    bd.displayValue = bd.value.toFixed(2).replace(/\.0+$/,'') + "%";
                     bd.toolText = value + " of " + den + " " + scope.resourceBundle['kiosks.lower'];
                     /*for (var r = 1; r < mapRange[event].length; r++) {
                         if (bd.value <= mapRange[event][r]) {
@@ -821,7 +821,7 @@ function roundNumber(value, digits, forceRound) {
 function getAvailable(data){
     var availableObject = {};
     Object.keys(data).forEach(function(eventType){
-        if(eventType != "200"){
+        if(eventType == "201" || eventType == "202" || eventType == "n"){
             Object.keys(data[eventType]).forEach(function(location){
                 if(location != "MAT_BD"){
                     if(checkNotNullEmpty(availableObject[location])) {
