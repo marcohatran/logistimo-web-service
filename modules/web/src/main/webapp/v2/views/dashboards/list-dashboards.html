@@ -43,9 +43,9 @@
                                 <td>
                                     <a href="#configuration/dashboards/view/{{dashboard.dbId}}"><span
                                             class="glyphicon glyphicon-play-circle" title="View" style="font-size: 15px;"></span></a>&nbsp;&nbsp;
-                                    <a href="#configuration/dashboards/detail/{{dashboard.dbId}}"><span
+                                    <a href="#configuration/dashboards/detail/{{dashboard.dbId}}" ng-if="iSU || dp.ce"><span
                                             class="glyphicon glyphicon-cog" title="Configure" style="font-size: 15px;"></span></a>&nbsp;&nbsp;
-                                    <span class="glyphicon glyphicon-trash" title="Delete" ng-click="delete(dashboard.dbId)" style="color:#285379;"></span>
+                                    <span class="glyphicon glyphicon-trash" title="Delete" ng-click="delete(dashboard.dbId)" style="color:#285379;" ng-if="iSU || dp.ce"></span>
                                 </td>
                             </tr>
                             </tbody>
