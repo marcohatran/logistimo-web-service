@@ -83,5 +83,6 @@ logistimoApp.controller('templateController', ['$scope', '$timeout', 'domainCfgS
             }
         }
     });
+
 }
 ]);
