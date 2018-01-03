@@ -563,17 +563,17 @@ public class DashboardService implements IDashboardService {
       } else {
         where.append("' AND DISTRICT = '").append(filters.get("district")).append("'");
       }
-      query.append(", NAME");
+      query.append(", NAME LEVEL");
     } else if (filters.get("state") != null) {
       where.append(" AND COUNTRY = '").append(filters.get("country"))
           .append("' AND STATE = '").append(filters.get("state")).append("'");
-      query.append(", DISTRICT NAME");
+      query.append(", DISTRICT LEVEL");
     } else {
       where.append(" AND COUNTRY = '").append(filters.get("country")).append("'");
-      query.append(", STATE NAME");
+      query.append(", STATE LEVEL");
     }
     query.append(" FROM KIOSK K, KIOSK_DOMAINS KD")
-        .append(where).append(" GROUP BY NAME");
+        .append(where).append(" GROUP BY LEVEL");
     return query.toString();
   }
 

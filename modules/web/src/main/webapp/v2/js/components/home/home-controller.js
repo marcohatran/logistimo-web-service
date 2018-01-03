@@ -351,7 +351,7 @@ function($scope,homePageService,domainCfgService,requestContext,$location){
     $scope.getStats = function(){
         $scope.showLoading();
         $scope.hpr = {};
-        homePageService.getStats(formatDate2Url($scope.day),$scope.vw,"","").then(function(data) {
+        homePageService.getStats(formatDate2Url($scope.day),$scope.vw,"","","o").then(function(data) {
             if(checkNotNullEmpty(data.data)) {
                 $scope.hpr = data.data;
                 $scope.tm = $scope.hpr[0].repGenTime;
