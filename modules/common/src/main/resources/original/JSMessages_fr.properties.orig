@@ -1199,4 +1199,6 @@ bulletin.expiry.days=Nombre de jours
 bulletin.expiry.update.success=La configuration du tableau d'affichage est mise à jour
 before.shipping.an.order=Avant d'expédier une commande
 bulletinboard.old=Tableau d'affichage (ancien)
+authorized.success=Autorisé avec succès
+enter.key=Veuillez entrer la clé
 
