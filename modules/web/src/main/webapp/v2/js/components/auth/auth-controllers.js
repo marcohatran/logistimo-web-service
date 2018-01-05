@@ -118,14 +118,15 @@ authControllers.controller('BulletinBoardAuthController', ['$scope', 'iAuthServi
         if (checkNotNullEmpty($scope.authKey)) {
             $scope.showLoading();
             iAuthService.authorizeBulletinBoard($scope.authKey).then(function (data) {
-                $scope.showSuccess("Authorized successfully");
+                $scope.showSuccess($scope.resourceBundle['authorized.success']);
             }).catch(function err(msg) {
                 $scope.showErrorMsg(msg);
             }).finally(function () {
+                init();
                 $scope.hideLoading();
             })
         } else {
-            $scope.showWarning('Please enter the key');
+            $scope.showWarning($scope.resourceBundle['enter.key']);
         }
     }
 }]);

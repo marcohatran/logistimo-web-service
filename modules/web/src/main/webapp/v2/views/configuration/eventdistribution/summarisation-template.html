@@ -60,7 +60,7 @@
                                         <td ng-repeat="(key,value) in row">
                                             {{displayTable(row[key],key,value)}}
                                         </td>
-                                        <td class="text-center">
+                                        <td class="text-center" ng-if="iSU || dp.ce">
                                             <span class="glyphicons glyphicons-bin"
                                                   ng-click="remove(type,$index)"></span>
                                             <span class="glyphicons glyphicons-edit paddinglr5"
@@ -72,7 +72,7 @@
                                 <div class="codegray padding5" ng-if="config[subview][type]['rows'].length == 0">
                                     {{resourceBundle['error.no.config.available']}}
                                 </div>
-                                <div class="pt10">
+                                <div class="pt10" ng-if="iSU || dp.ce">
                                     <span ng-click="add(type)" class="btn btn-primary">{{resourceBundle['add']}}</span>
                                 </div>
                             </div>
@@ -83,7 +83,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="row noMargin">
+                <div class="row noMargin" ng-if="iSU || dp.ce">
                     <div class="col-sm-12 paddinglr5">
                         <button type="button" ng-click="updateConfig()" class="btn btn-primary"
                                 ng-disabled="editCounter.value!=0">{{resourceBundle['save']}}

@@ -24,8 +24,11 @@
 var homeServices = angular.module('homeServices', []);
 homeServices.factory('homePageService', ['APIService', function (apiService) {
     return {
-        getStats: function (month, vm,mtag,matId) {
+        getStats: function (month, vm,mtag,matId, reportType) {
             var param =  '?month=' + month + '&prd=' + vm+ '&mTag='+mtag +'&matId='+matId;
+            if(checkNotNullEmpty(reportType)) {
+                param = param + '&reportType='+reportType;
+            }
             return apiService.get('/s2/api/home/reports/stats/' + param);
         }
     }

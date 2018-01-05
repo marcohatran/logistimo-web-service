@@ -1066,7 +1066,7 @@ angular.module('logistimo.storyboard.dashboards', ['logistimo.storyboard.widgets
             });
         }
     }])
-    .controller('DashboardController', ['dashboardRepository', '$scope', function (dashboardRepository, $scope) {
+    .controller('DashboardController', ['dashboardRepository', '$scope', '$location', function (dashboardRepository, $scope, $location) {
         $scope.init = function () {
             $scope.renderDashboardConfigurePage = false;
             if ($scope.dashboardId != undefined) {
@@ -1092,8 +1092,8 @@ angular.module('logistimo.storyboard.dashboards', ['logistimo.storyboard.widgets
         $scope.saveDashboard = function (widgets) {
             $scope.dashboard.widgets = widgets;
             dashboardRepository.save($scope.dashboard, $scope).then(function (dashboard) {
-                $scope.widgets = {};
                 $scope.dashboard = {};
+                $location.path('/configuration/dashboards');
             });
         };
         

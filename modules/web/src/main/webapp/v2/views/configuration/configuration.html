@@ -32,7 +32,7 @@
                 <a href="#/configuration/inventory/">{{resourceBundle['inventory']}}</a></li>
             <li ng-if="!isTempMonOnly" ng-class="{ enable: subview == 'orders' }">
                 <a href="#/configuration/orders/">{{resourceBundle['orders']}}</a></li>
-            <li ng-class="{ enable: subview == 'approvals'}">
+            <li ng-if="!isTempMonOnly" ng-class="{ enable: subview == 'approvals'}">
                 <a href="#/configuration/approvals">{{resourceBundle['approvals.upper.case']}}</a>
             </li>
             <li ng-class="{ enable: subview == 'notifications' }">
@@ -52,13 +52,13 @@
             <li ng-if="hasChild && (iSU || dp.ce)" ng-class="{ enable: subview == 'options'}">
                 <a href="#/configuration/options/">{{resourceBundle['configuration.options']}}</a>
             </li>
-            <li ng-class="{ enable: subview == 'summarisation'}">
+            <li ng-if="!isTempMonOnly" ng-class="{ enable: subview == 'summarisation'}">
                 <a href="#/configuration/summarisation/">{{resourceBundle['event.summary']}}</a>
             </li>
-            <li ng-class="{enable: subview == 'bulletin' }">
+            <li ng-if="!isTempMonOnly" ng-class="{enable: subview == 'bulletin' }">
                 <a href="#/configuration/bulletin/">{{resourceBundle['bulletin.board.upper']}}</a>
             </li>
-            <li ng-class="{enable: subview == 'dashboards' }" ng-show="iAdm">
+            <li ng-if="!isTempMonOnly" ng-class="{enable: subview == 'dashboards' }">
                 <a href="#/configuration/dashboards/">{{resourceBundle['custom.dashboards']}}</a>
             </li>
         </ul>

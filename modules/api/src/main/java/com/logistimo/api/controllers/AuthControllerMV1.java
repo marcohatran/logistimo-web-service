@@ -122,7 +122,7 @@ public class AuthControllerMV1 {
       String userAgentStr = req.getHeader(USER_AGENT);
       String deviceDetails = req.getHeader(DEVICE_DETAILS);
       String deviceProfile = req.getHeader(DEVICE_PROFILE);
-      String ipaddr = req.getRemoteAddr();
+      String ipaddr = req.getHeader("X-REAL-IP");
       if (userAgentStr == null) {
         userAgentStr = "";
       }

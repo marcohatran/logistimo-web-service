@@ -69,7 +69,7 @@ logistimoApp.controller('assetTemplateController', ['$scope', '$timeout', 'domai
                 $scope.secondaryMetric.push({name: ">= 3 hours", value: "2"});
             }
         }
-    })
+    });
 
 }
 ]);

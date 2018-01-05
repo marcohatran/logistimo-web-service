@@ -54,7 +54,7 @@
                                 <hr style="border: 1px solid #d0dada">
                                 <div class="col-sm-12">
                                     <div ng-class="{'col-sm-8 noleftpad pt10 widget-sub-title':!isBulletinBoard, 'col-sm-12 noleftpad pt10 widget-sub-title':isBulletinBoard}">{{bulletinBoard.desc}}</div>
-                                    <div class="col-sm-4 pull-right" ng-if="!isBulletinBoard">
+                                    <div class="col-sm-4 pull-right" ng-if="!isBulletinBoard && (iSU || dp.ce)">
                                         <a ng-href="#configuration/bulletin/detail/{{bulletinBoard.bbId}}">
                                             <span class="glyphicon glyphicon-cog large" title="Configure" style="top:5px;"></span>&nbsp;&nbsp;
                                         </a>

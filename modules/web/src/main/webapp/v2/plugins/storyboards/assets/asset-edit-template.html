@@ -103,7 +103,7 @@
 
         <div class="col-sm-5" ng-if="filter.type=='periodicity'">
             <div class="col-sm-12 noLRpad btn-group">
-                <select ng-model="widget.conf.period" class="form-control">
+                <select ng-model="widget.conf.period" class="form-control" ng-change="widget.conf.duration = ''">
                     <option value="">-- Select period --</option>
                     <option value="m">Monthly</option>
                     <option value="w">Weekly</option>
@@ -111,5 +111,22 @@
                 </select>
             </div>
         </div>
+
+        <div class="col-sm-5" ng-if="filter.type=='duration'">
+            <div class="col-sm-12 noLRpad btn-group">
+                <select ng-model="widget.conf.duration" class="form-control">
+                    <option value="">-- Select period --</option>
+                    <option value="3" ng-show="widget.conf.period=='m'">3</option>
+                    <option value="4" ng-show="widget.conf.period=='w'">4</option>
+                    <option value="6" ng-show="widget.conf.period=='m'">6</option>
+                    <option value="7" ng-show="widget.conf.period=='d'">7</option>
+                    <option value="8" ng-show="widget.conf.period=='w'">8</option>
+                    <option value="12" ng-show="widget.conf.period=='m' || widget.conf.period=='w'">12</option>
+                    <option value="15" ng-show="widget.conf.period=='d'">15</option>
+                    <option value="30" ng-show="widget.conf.period=='d'">30</option>
+                </select>
+            </div>
+        </div>
+
     </div>
 </div>

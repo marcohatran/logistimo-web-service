@@ -60,9 +60,6 @@ public class OptimizerLog implements IOptimizerLog {
   @Persistent
   @Column(length = 2048)
   private String msg = null;
-  @Persistent
-  @Column(length = 2048)
-  private String inIds; // inventories IDs processed (kid:mid,...)
 
   @Override
   public Long getKey() {
@@ -122,16 +119,6 @@ public class OptimizerLog implements IOptimizerLog {
   @Override
   public void setNumItemsProcessed(int n) {
     this.n = n;
-  }
-
-  @Override
-  public String getInventoryIds() {
-    return inIds;
-  }
-
-  @Override
-  public void setInventoryIds(String inIds) {
-    this.inIds = inIds;
   }
 
   @Override

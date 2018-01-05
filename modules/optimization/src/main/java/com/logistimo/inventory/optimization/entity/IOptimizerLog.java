@@ -29,6 +29,7 @@ import java.util.Date;
  * Created by charan on 20/05/15.
  */
 public interface IOptimizerLog {
+
   // Computation types
   String TYPE_UNKNOWN = "un";
   String TYPE_PS = "ps";
@@ -57,10 +58,6 @@ public interface IOptimizerLog {
   int numItemsProcessed();
 
   void setNumItemsProcessed(int n);
-
-  String getInventoryIds();
-
-  void setInventoryIds(String inIds);
 
   String getMessage();
 

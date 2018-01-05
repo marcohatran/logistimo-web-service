@@ -1202,3 +1202,5 @@ bulletin.expiry.days=Number of days
 bulletin.expiry.update.success=Bulletin board expiry updated successfully
 before.shipping.an.order=Before shipping an order
 bulletinboard.old=Bulletin board (old)
+authorized.success=Authorized successfully
+enter.key=Please enter the key
