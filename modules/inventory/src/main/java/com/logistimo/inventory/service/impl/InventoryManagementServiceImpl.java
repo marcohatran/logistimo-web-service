@@ -1290,7 +1290,8 @@ public class InventoryManagementServiceImpl extends ServiceImpl
     boolean isOrder =
         ITransaction.TYPE_ORDER.equals(trkType) || IInvAllocation.Type.SHIPMENT.toString()
             .equals(trkType)
-            || IInvAllocation.Type.ORDER.toString().equals(trkType);
+            || ITransaction.TYPE_ORDER_SHIPMENT.equals(trkType)
+            || ITransaction.TYPE_TRANSFER_SHIPMENT.equals(trkType);
     try {
       if (!isOrder && !AppFactory.get().getAuthorizationService()
           .authoriseTransactionAccess(tType, domainId, userId)) {
