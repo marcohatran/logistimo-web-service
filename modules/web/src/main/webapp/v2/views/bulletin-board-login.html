@@ -25,23 +25,23 @@
     <div class="row">
         <div class="col-sm-12">
             <div class="text-center">
-                <img class="imagewrapper" src="images/acquia_marina_logo.png">
+                <img ng-class="{'imagewrapper':!isBulletinBoard, 'bulletin-image-wrapper':isBulletinBoard}" src="images/acquia_marina_logo.png">
             </div>
         </div>
     </div>
     <div class="bgr bgr-login">
         <div class="row mt10">
-            <div class="col-sm-10 col-sm-offset-1">
+            <div ng-class="{'col-sm-10 col-sm-offset-1':!isBulletinBoard, 'col-sm-12':isBulletinBoard}">
                 <p class="fc-color-red" ng-show="errMsg"><span class="glyphicons glyphicons-remove-circle"
                                                                style="top:2px;"></span>&nbsp;{{errorMsg}}
             </div>
         </div>
         <div class="row">
-            <div class="col-sm-10 col-sm-offset-1">
-                <h1 class="text-center">{{accessKey}}</h1>
+            <div ng-class="{'col-sm-10 col-sm-offset-1':!isBulletinBoard, 'col-sm-12':isBulletinBoard}">
+                <h1 ng-class="{'text-center':!isBulletinBoard, 'text-center bulletin-access-key':isBulletinBoard}">{{accessKey}}</h1>
             </div>
-            <div class="col-sm-10 col-sm-offset-1">
-                <p class="litetext text-center">{{resourceBundle['auth.info']}}</p>
+            <div ng-class="{'col-sm-10 col-sm-offset-1':!isBulletinBoard, 'col-sm-12 bulletin-auth-info':isBulletinBoard}">
+                <p ng-class="{'litetext text-center':!isBulletinBoard, 'litetext text-center':isBulletinBoard}">{{resourceBundle['auth.info']}}</p>
             </div>
         </div>
     </div>

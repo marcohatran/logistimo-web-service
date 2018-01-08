@@ -2103,6 +2103,10 @@ h6{
     min-width: 400px;
 }
 
+.bulletin-body > .login-modal-win > .modal-dialog {
+    width: 75%;
+}
+
 .loading-modal {
     background-color: black;
 }
@@ -4192,6 +4196,17 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
     color: #d0dada;
 }
 
+.widget .bulletin-board-header {
+    font-size: 250%;
+    font-weight: bold;
+    letter-spacing: 2.4px;
+    color: #d0dada;
+    position:relative;
+    top:5px;
+    font-family:Lato;
+    text-transform:uppercase;
+}
+
 .widget .bulletin-subheading {
     font-size: 16px;
     letter-spacing: 1.9px;
@@ -4278,4 +4293,31 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
     font-weight: 400;
     color: #333;
     white-space: nowrap;
+}
+
+.bulletin-auth {
+    font-family: lato;
+    font-weight: bold;
+}
+
+.bulletin-image-wrapper {
+    max-height: 100px;
+}
+
+.bulletin-heading-container {
+    display: flex;
+    min-height: 100px;
+    align-items: center;
+}
+
+.bulletin-auth-info > .litetext {
+    font-size: 300%;
+}
+
+.bulletin-auth-info > .bulletin-label {
+    font-size: 200%;
+}
+
+.bulletin-access-key {
+    font-size: 500%;
 }
