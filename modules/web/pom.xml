@@ -32,30 +32,31 @@
     <!-- Output to jar format -->
     <packaging>war</packaging>
 
-    <version>2.6.2</version>
+    <version>${build.version}</version>
 
     <name>web</name>
 
     <properties>
         <build.number>SNAPSHOT</build.number>
+        <build.version>2.6.3</build.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>com.logistimo</groupId>
             <artifactId>logistimo-api</artifactId>
-            <version>2.6.2</version>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.logistimo</groupId>
+            <artifactId>logistimo-collaboration</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.tomcat</groupId>
             <artifactId>tomcat-catalina</artifactId>
             <version>7.0.82</version>
             <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.logistimo</groupId>
-            <artifactId>logistimo-collaboration</artifactId>
-            <version>2.6.2</version>
         </dependency>
     </dependencies>
     <build>

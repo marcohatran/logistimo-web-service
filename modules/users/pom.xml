@@ -32,44 +32,45 @@
     <!-- Output to jar format -->
     <packaging>jar</packaging>
 
-    <version>2.6.2</version>
+    <version>${build.version}</version>
 
     <name>Users</name>
 
     <properties>
         <build.number>SNAPSHOT</build.number>
+        <build.version>2.6.3</build.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>com.logistimo</groupId>
             <artifactId>logistimo-common</artifactId>
-            <version>2.6.2</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.logistimo.events</groupId>
             <artifactId>logistimo-events-core</artifactId>
-            <version>2.6.2</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.logistimo</groupId>
             <artifactId>logistimo-config</artifactId>
-            <version>2.6.2</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.logistimo</groupId>
             <artifactId>logistimo-tags</artifactId>
-            <version>2.6.2</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.logistimo</groupId>
             <artifactId>logistimo-domains</artifactId>
-            <version>2.6.2</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.logistimo</groupId>
             <artifactId>logistimo-location-client</artifactId>
-            <version>2.6.2</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>

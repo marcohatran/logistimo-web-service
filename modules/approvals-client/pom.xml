@@ -32,11 +32,19 @@
     <!-- Output to jar format -->
     <packaging>jar</packaging>
 
-    <version>2.6.2</version>
+    <version>${build.version}</version>
 
     <name>approvals-client</name>
+    <properties>
+        <build.version>2.6.3</build.version>
+    </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>com.logistimo</groupId>
+            <artifactId>logistimo-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>javax.jdo</groupId>
             <artifactId>jdo-api</artifactId>
@@ -79,19 +87,9 @@
             <scope>runtime</scope>
         </dependency>
         <dependency>
-            <groupId>javax.ws.rs</groupId>
-            <artifactId>javax.ws.rs-api</artifactId>
-            <version>2.1-m05</version>
-        </dependency>
-        <dependency>
             <groupId>org.codehaus.jackson</groupId>
             <artifactId>jackson-core-asl</artifactId>
             <version>1.9.13</version>
-        </dependency>
-        <dependency>
-            <groupId>com.logistimo</groupId>
-            <artifactId>logistimo-common</artifactId>
-            <version>2.6.2</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>

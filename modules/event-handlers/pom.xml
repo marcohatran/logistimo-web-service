@@ -32,60 +32,61 @@
     <!-- Output to jar format -->
     <packaging>jar</packaging>
 
-    <version>2.6.2</version>
+    <version>${build.version}</version>
 
     <name>Event handlers</name>
 
     <properties>
         <build.number>SNAPSHOT</build.number>
         <camel-version>2.19.0</camel-version>
+        <build.version>2.6.3</build.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>com.logistimo</groupId>
             <artifactId>logistimo-common</artifactId>
-            <version>2.6.2</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.logistimo</groupId>
             <artifactId>logistimo-communications</artifactId>
-            <version>2.6.2</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.logistimo.events</groupId>
             <artifactId>logistimo-events-core</artifactId>
-            <version>2.6.2</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.logistimo</groupId>
             <artifactId>logistimo-config</artifactId>
-            <version>2.6.2</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.logistimo</groupId>
             <artifactId>logistimo-inventory</artifactId>
-            <version>2.6.2</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.logistimo</groupId>
             <artifactId>logistimo-materials</artifactId>
-            <version>2.6.2</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.logistimo</groupId>
             <artifactId>logistimo-orders</artifactId>
-            <version>2.6.2</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.logistimo</groupId>
             <artifactId>logistimo-entities</artifactId>
-            <version>2.6.2</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.logistimo</groupId>
             <artifactId>logistimo-accounting</artifactId>
-            <version>2.6.2</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.camel</groupId>

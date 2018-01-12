@@ -27,12 +27,13 @@
     <groupId>com.logistimo</groupId>
     <artifactId>logistimo-common</artifactId>
     <packaging>jar</packaging>
-    <version>2.6.2</version>
+    <version>${build.version}</version>
     <name>Common</name>
 
     <properties>
         <build.number>SNAPSHOT</build.number>
         <spring-version>4.3.8.RELEASE</spring-version>
+        <build.version>2.6.3</build.version>
     </properties>
 
     <dependencies>
