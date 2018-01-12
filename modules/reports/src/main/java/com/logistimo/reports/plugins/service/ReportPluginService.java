@@ -212,6 +212,9 @@ public class ReportPluginService implements Service {
     eModel.userId = userDetails.getUsername();
     eModel.timezone = userDetails.getTimezone();
     eModel.locale = userDetails.getLocale().getLanguage();
+    if(model.filters.containsKey(QueryHelper.TOKEN + QueryHelper.QUERY_DVID)) {
+      model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_DVID, CharacterConstants.EMPTY);
+    }
     eModel.filters = model.filters;
     eModel.templateId = jsonObject.getString(JSON_REPORT_TYPE);
     eModel.additionalData = new HashMap<>();
