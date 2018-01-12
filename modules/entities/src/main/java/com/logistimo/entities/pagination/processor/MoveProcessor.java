@@ -140,9 +140,9 @@ public class MoveProcessor extends InstrumentedProcessor {
             .invoke(l, destDomainId);
       }
       if (l instanceof IUserAccount) {
-        memcacheService.delete(Constants.USER_KEY+ CharacterConstants.HASH+((IUserAccount) l).getUserId());
+        getMemcacheService().delete(Constants.USER_KEY+ CharacterConstants.HASH+((IUserAccount) l).getUserId());
       } else if (l instanceof IKiosk) {
-        memcacheService.delete(Constants.KIOSK_KEY+CharacterConstants.HASH+((IKiosk) l).getKioskId().toString());
+        getMemcacheService().delete(Constants.KIOSK_KEY+CharacterConstants.HASH+((IKiosk) l).getKioskId().toString());
       }
       pm.makePersistent(l);
     }

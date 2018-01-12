@@ -128,7 +128,7 @@ public class EntityDomainUpdateProcessor extends InstrumentedProcessor {
         }
         pm.makePersistent(mObject);
         if (mObject instanceof IUserAccount) {
-          memcacheService.delete(Constants.USER_KEY+CharacterConstants.HASH+((IUserAccount) mObject).getUserId());
+          getMemcacheService().delete(Constants.USER_KEY+CharacterConstants.HASH+((IUserAccount) mObject).getUserId());
         }
       }
       if (list.get(0) instanceof IAsset) {
