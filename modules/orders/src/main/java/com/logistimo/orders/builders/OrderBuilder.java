@@ -109,6 +109,8 @@ public class OrderBuilder {
         }
         model.setOrderId(order.getOrderId());
         model.setCreatedAt(order.getCreatedOn());
+        model.setExpectedArrivalDate(order.getExpectedArrivalDate());
+        model.setDueDate(order.getDueDate());
         return model;
     }
 
