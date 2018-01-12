@@ -50,6 +50,7 @@ import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.utils.QueryUtil;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -167,9 +168,7 @@ public class DomainsServiceImpl extends ServiceImpl implements DomainsService {
       return allLinks;
     }
     // Get the next level of links
-    Iterator<IDomainLink> it = links.iterator();
-    while (it.hasNext()) {
-      IDomainLink dl = it.next();
+    for (IDomainLink dl : links) {
       List<IDomainLink> nextLinks = getDomainLinks(dl.getLinkedDomainId(), linkType, depth--);
       if (nextLinks != null && !nextLinks.isEmpty()) {
         allLinks.addAll(nextLinks);
@@ -181,6 +180,41 @@ public class DomainsServiceImpl extends ServiceImpl implements DomainsService {
 
   public List<IDomainLink> getAllDomainLinks(Long domainId, int linkType) throws ServiceException {
     return getDomainLinks(domainId, linkType, -1);
+  }
+
+  @Override
+  public boolean hasAncestor(Long childDomainId, Collection<Long> ancestorDomainIds) {
+    if (childDomainId == null) {
+      throw new IllegalArgumentException("Invalid domain Id");
+    }
+    Long currentDomainId = childDomainId;
+    PersistenceManager pm = PMF.get().getPersistenceManager();
+    String
+        queryStr =
+        "SELECT FROM " + JDOUtils.getImplClass(IDomainLink.class).getName()
+            + " WHERE dId == dIdParam && ty == tyParam PARAMETERS Long dIdParam, Integer tyParam ORDER BY nldnm ASC"; // sorted by linked domain name
+    Query q = pm.newQuery(queryStr);
+    QueryUtil.setPageParams(q, new PageParams(1));
+    q.setClass(JDOUtils.getImplClass(IDomainLink.class));
+    try {
+      IDomainLink parentLink = null;
+      do {
+        List<IDomainLink>
+            parentLinks =
+            (List<IDomainLink>) q.execute(currentDomainId, IDomainLink.TYPE_PARENT);
+        if (parentLinks != null && !parentLinks.isEmpty()) {
+          parentLink = parentLinks.get(0);
+          if (ancestorDomainIds.contains(parentLink.getLinkedDomainId())) {
+            return true;
+          }
+          currentDomainId = parentLink.getLinkedDomainId();
+        }
+      } while (parentLink != null);
+    } finally {
+      q.closeAll();
+      pm.close();
+    }
+    return false;
   }
 
   /**

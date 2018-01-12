@@ -1188,38 +1188,13 @@ public class UsersServiceImpl extends ServiceImpl implements UsersService {
       throws ServiceException, ObjectNotFoundException {
     IUserAccount userAccount = getUserAccount(username);
     List<Long> accDomains = userAccount.getAccessibleDomainIds();
-    if (SecurityUtil
-        .compareRoles(SecurityConstants.ROLE_SUPERUSER, userAccount.getRole()) == 0
-        || userAccount.getDomainId().equals(domainId)
-        || accDomains != null && accDomains.contains(domainId)
-        || checkAccess(userAccount.getDomainId(), domainId)) {
-      return true;
+    Set<Long> allDomains = new HashSet<>();
+    allDomains.add(userAccount.getDomainId());
+    if(accDomains != null){
+      allDomains.addAll(accDomains);
     }
-
-    if (accDomains != null) {
-      for (Long accDomainId : accDomains) {
-        if (checkAccess(accDomainId, domainId)) {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
-  private boolean checkAccess(Long userDomainId, Long domainId)
-      throws ServiceException {
-    List<IDomainLink>
-        domainLinks =
-        domainsService.getAllDomainLinks(userDomainId, IDomainLink.TYPE_CHILD);
-    if (domainLinks != null) {
-      for (IDomainLink domainLink : domainLinks) {
-        if (domainId.equals(domainLink.getLinkedDomainId())) {
-          return true;
-        }
-      }
-    }
-    return false;
+    return SecurityUtil.compareRoles(SecurityConstants.ROLE_SUPERUSER, userAccount.getRole()) == 0
+        || allDomains.contains(domainId) || domainsService.hasAncestor(domainId, allDomains);
   }
 
 

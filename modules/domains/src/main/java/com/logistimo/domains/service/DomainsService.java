@@ -26,13 +26,14 @@ package com.logistimo.domains.service;
 import com.logistimo.domains.entity.IDomain;
 import com.logistimo.domains.entity.IDomainLink;
 import com.logistimo.domains.entity.IDomainPermission;
+import com.logistimo.exception.TaskSchedulingException;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Service;
 import com.logistimo.services.ServiceException;
-import com.logistimo.exception.TaskSchedulingException;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface DomainsService extends Service {
@@ -63,6 +64,15 @@ public interface DomainsService extends Service {
    * Update/disable a give domain
    */
   void updateDomain(IDomain domain) throws ServiceException;
+
+  /**
+   *
+   * @param childDomainId - children domain ids
+   * @param ancestorDomainIds - collection of possible domain ids
+   * @return true - if one of the domain in ancestorDomainIds is an ancestor of the childDomainId
+   *         false - if none in ancestorDomainIds are ancestors
+   */
+  boolean hasAncestor(Long childDomainId, Collection<Long> ancestorDomainIds);
 
   /**
    * Get the linked domains of the given domain (returns a list of DomainLink)
