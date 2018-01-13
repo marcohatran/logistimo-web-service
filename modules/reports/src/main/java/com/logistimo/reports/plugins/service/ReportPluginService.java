@@ -215,6 +215,12 @@ public class ReportPluginService implements Service {
     if(model.filters.containsKey(QueryHelper.TOKEN + QueryHelper.QUERY_DVID)) {
       model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_DVID, CharacterConstants.EMPTY);
     }
+    if(model.filters.containsKey(QueryHelper.TOKEN + QueryHelper.QUERY_VENDOR_ID)) {
+      model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_VENDOR_ID, CharacterConstants.EMPTY);
+    }
+    if(model.filters.containsKey(QueryHelper.TOKEN + QueryHelper.QUERY_ATYPE)) {
+      model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_ATYPE, CharacterConstants.EMPTY);
+    }
     eModel.filters = model.filters;
     eModel.templateId = jsonObject.getString(JSON_REPORT_TYPE);
     eModel.additionalData = new HashMap<>();
