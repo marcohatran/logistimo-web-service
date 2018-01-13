@@ -123,7 +123,10 @@ public class EntityActivityQueryGenerator {
         .append(getDistinctEntityMaterialsWithTransactionsInPeriodQuery())
         .append(",KIOSK K, KIOSK_DOMAINS KD WHERE A.KID = K.KIOSKID AND K.KIOSKID = KD.KIOSKID_OID "
             + "AND KD.DOMAIN_ID = ").append(domainId).append(" ");
-    StringBuilder groupByClause = new StringBuilder(" GROUP BY ");
+    StringBuilder groupByClause = new StringBuilder();
+    if(!isCount) {
+      groupByClause.append(" GROUP BY ");
+    }
 
     StringBuilder whereClause = new StringBuilder();
     if (district != null) {
