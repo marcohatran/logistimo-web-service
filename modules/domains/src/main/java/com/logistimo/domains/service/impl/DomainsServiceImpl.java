@@ -188,30 +188,36 @@ public class DomainsServiceImpl extends ServiceImpl implements DomainsService {
       throw new IllegalArgumentException("Invalid domain Id");
     }
     Long currentDomainId = childDomainId;
-    PersistenceManager pm = PMF.get().getPersistenceManager();
     String
         queryStr =
         "SELECT FROM " + JDOUtils.getImplClass(IDomainLink.class).getName()
             + " WHERE dId == dIdParam && ty == tyParam PARAMETERS Long dIdParam, Integer tyParam ORDER BY nldnm ASC"; // sorted by linked domain name
-    Query q = pm.newQuery(queryStr);
-    QueryUtil.setPageParams(q, new PageParams(1));
-    q.setClass(JDOUtils.getImplClass(IDomainLink.class));
+    PersistenceManager pm = PMF.get().getPersistenceManager();
     try {
       IDomainLink parentLink = null;
       do {
-        List<IDomainLink>
-            parentLinks =
-            (List<IDomainLink>) q.execute(currentDomainId, IDomainLink.TYPE_PARENT);
-        if (parentLinks != null && !parentLinks.isEmpty()) {
-          parentLink = parentLinks.get(0);
-          if (ancestorDomainIds.contains(parentLink.getLinkedDomainId())) {
-            return true;
+        Query q = null;
+        try {
+          q = pm.newQuery(queryStr);
+          QueryUtil.setPageParams(q, new PageParams(1));
+          q.setClass(JDOUtils.getImplClass(IDomainLink.class));
+          List<IDomainLink>
+              parentLinks =
+              (List<IDomainLink>) q.execute(currentDomainId, IDomainLink.TYPE_PARENT);
+          if (parentLinks != null && !parentLinks.isEmpty()) {
+            parentLink = parentLinks.get(0);
+            if (ancestorDomainIds.contains(parentLink.getLinkedDomainId())) {
+              return true;
+            }
+            currentDomainId = parentLink.getLinkedDomainId();
           }
-          currentDomainId = parentLink.getLinkedDomainId();
+        } finally {
+          if (q != null) {
+            q.closeAll();
+          }
         }
       } while (parentLink != null);
     } finally {
-      q.closeAll();
       pm.close();
     }
     return false;
