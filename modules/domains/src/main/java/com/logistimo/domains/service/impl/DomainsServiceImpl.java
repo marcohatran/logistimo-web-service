@@ -50,6 +50,7 @@ import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.utils.QueryUtil;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -191,10 +192,11 @@ public class DomainsServiceImpl extends ServiceImpl implements DomainsService {
     String
         queryStr =
         "SELECT FROM " + JDOUtils.getImplClass(IDomainLink.class).getName()
-            + " WHERE dId == dIdParam && ty == tyParam PARAMETERS Long dIdParam, Integer tyParam ORDER BY nldnm ASC"; // sorted by linked domain name
+            + " WHERE dId == dIdParam && ty == tyParam PARAMETERS Long dIdParam, Integer tyParam"; // sorted by linked domain name
     PersistenceManager pm = PMF.get().getPersistenceManager();
     try {
       IDomainLink parentLink = null;
+      int count = 1;
       do {
         Query q = null;
         try {
@@ -216,7 +218,13 @@ public class DomainsServiceImpl extends ServiceImpl implements DomainsService {
             q.closeAll();
           }
         }
-      } while (parentLink != null);
+        if (count > 10) {
+          xLogger.warn(
+              "Ancestor check looped for {0} times, current domain Id {1} while checking for "
+                  + "childDomain {2} in ancestor Domains {3} ", count, currentDomainId,
+              childDomainId, Arrays.toString(ancestorDomainIds.toArray()));
+        }
+      } while (parentLink != null && count++ < 100);
     } finally {
       pm.close();
     }
