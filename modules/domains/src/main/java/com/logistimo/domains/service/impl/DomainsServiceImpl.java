@@ -195,11 +195,12 @@ public class DomainsServiceImpl extends ServiceImpl implements DomainsService {
             + " WHERE dId == dIdParam && ty == tyParam PARAMETERS Long dIdParam, Integer tyParam"; // sorted by linked domain name
     PersistenceManager pm = PMF.get().getPersistenceManager();
     try {
-      IDomainLink parentLink = null;
+      IDomainLink parentLink;
       int count = 1;
       do {
         Query q = null;
         try {
+          parentLink = null;
           q = pm.newQuery(queryStr);
           QueryUtil.setPageParams(q, new PageParams(1));
           q.setClass(JDOUtils.getImplClass(IDomainLink.class));
