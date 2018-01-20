@@ -204,6 +204,7 @@ public class ReportPluginService implements Service {
     ReportViewType viewType =
         ReportViewType.getViewType(reportViewType);
     Long domainId = SecurityUtils.getCurrentDomainId();
+    final Map<String, String> filters = QueryHelper.parseFilters(domainId, jsonObject);
     final QueryRequestModel model =
         constructQueryRequestModel(domainId, jsonObject, viewType);
     ExportModel eModel = new ExportModel();
@@ -212,13 +213,16 @@ public class ReportPluginService implements Service {
     eModel.userId = userDetails.getUsername();
     eModel.timezone = userDetails.getTimezone();
     eModel.locale = userDetails.getLocale().getLanguage();
-    if(model.filters.containsKey(QueryHelper.TOKEN + QueryHelper.QUERY_DVID)) {
+    if(!filters.containsKey(QueryHelper.TOKEN + QueryHelper.QUERY_DVID) &&
+        model.filters.containsKey(QueryHelper.TOKEN + QueryHelper.QUERY_DVID)) {
       model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_DVID, CharacterConstants.EMPTY);
     }
-    if(model.filters.containsKey(QueryHelper.TOKEN + QueryHelper.QUERY_VENDOR_ID)) {
+    if(!filters.containsKey(QueryHelper.TOKEN + QueryHelper.QUERY_VENDOR_ID) &&
+        model.filters.containsKey(QueryHelper.TOKEN + QueryHelper.QUERY_VENDOR_ID)) {
       model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_VENDOR_ID, CharacterConstants.EMPTY);
     }
-    if(model.filters.containsKey(QueryHelper.TOKEN + QueryHelper.QUERY_ATYPE)) {
+    if(!filters.containsKey(QueryHelper.TOKEN + QueryHelper.QUERY_ATYPE) &&
+        model.filters.containsKey(QueryHelper.TOKEN + QueryHelper.QUERY_ATYPE)) {
       model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_ATYPE, CharacterConstants.EMPTY);
     }
     eModel.filters = model.filters;
@@ -454,17 +458,21 @@ public class ReportPluginService implements Service {
         break;
       case BY_ASSET:
         as = Services.getService(AssetManagementServiceImpl.class);
-        model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_DVID,
-            as.getMonitoredAssetIdsForReport(model.filters));
+        if(!model.filters.containsKey(QueryHelper.TOKEN + QueryHelper.QUERY_DVID)) {
+          model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_DVID,
+              as.getMonitoredAssetIdsForReport(model.filters));
+        }
         break;
       case BY_ENTITY_TAGS:
         model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_ENTITY_TAG, null);
         break;
       case BY_MANUFACTURER:
         as = Services.getService(AssetManagementServiceImpl.class);
-        model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_VENDOR_ID,
-            as.getVendorIdsForReports(
-                model.filters.get(QueryHelper.TOKEN + QueryHelper.QUERY_DOMAIN)));
+        if(!model.filters.containsKey(QueryHelper.TOKEN + QueryHelper.QUERY_VENDOR_ID)) {
+          model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_VENDOR_ID,
+              as.getVendorIdsForReports(
+                  model.filters.get(QueryHelper.TOKEN + QueryHelper.QUERY_DOMAIN)));
+        }
         break;
       case BY_USER:
         prepareFiltersByUser(model, retainFilters);
@@ -472,9 +480,10 @@ public class ReportPluginService implements Service {
       case BY_ASSET_TYPE:
         model.filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_MTYPE);
         as = Services.getService(AssetManagementServiceImpl.class);
-        model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_ATYPE, as.getAssetTypesForReports(
-            model.filters.get(QueryHelper.TOKEN + QueryHelper.QUERY_DOMAIN),
-            "1")); // only monitored
+        if(!model.filters.containsKey(QueryHelper.TOKEN + QueryHelper.QUERY_ATYPE)) {
+          model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_ATYPE, as.getAssetTypesForReports(
+              model.filters.get(QueryHelper.TOKEN + QueryHelper.QUERY_DOMAIN), "1"));
+        }
         break;
       case BY_CUSTOMER:
         prepareFiltersByCustomer(model);

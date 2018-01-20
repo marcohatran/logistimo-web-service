@@ -50,14 +50,19 @@ trnControllers.controller('TransactionsCtrl', ['$scope', 'trnService', 'domainCf
             $scope.type = requestContext.getParam("type") || "";
             $scope.tag = requestContext.getParam("tag") || "";
             $scope.etag = requestContext.getParam("etag") || "";
-            if(firstTimeInit && !requestContext.getParam("from")) {
-                $timeout(function () {
-                    var d = new Date();
-                    d.setDate(d.getDate() - 30);
-                    $scope.from = d;
-                }, 0);
-            } else {
-                $scope.from = parseUrlDate(requestContext.getParam("from")) || "";
+            if(firstTimeInit) {
+                if(!requestContext.hasParam()) {
+                    $timeout(function () {
+                        var d = new Date();
+                        d.setDate(d.getDate() - 30);
+                        $scope.from = d;
+                    }, 0);
+                } else {
+                    $scope.from = parseUrlDate(requestContext.getParam("from")) || "";
+                    $timeout(function () {
+                        $scope.fetch();
+                    }, 0);
+                }
             }
             $scope.to = parseUrlDate(requestContext.getParam("to")) || "";
             $scope.lEntityId = requestContext.getParam("lceid") || "";
@@ -146,7 +151,6 @@ trnControllers.controller('TransactionsCtrl', ['$scope', 'trnService', 'domainCf
                 $scope.showErrorMsg(msg);
             });
         };
-        $scope.fetch();
         $scope.selectAll = function (newval) {
             for (var item in $scope.filtered) {
                 var ty = $scope.filtered[item]['ty'];
