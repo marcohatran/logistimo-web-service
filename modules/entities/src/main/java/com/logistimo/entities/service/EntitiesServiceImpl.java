@@ -32,22 +32,20 @@ import com.logistimo.assets.models.AssetModel;
 import com.logistimo.assets.models.AssetModels;
 import com.logistimo.auth.SecurityConstants;
 import com.logistimo.auth.SecurityUtil;
-import com.logistimo.config.models.DomainConfig;
+import com.logistimo.auth.service.AuthorizationService;
+import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.config.models.Permissions;
 import com.logistimo.config.models.ReportsConfig;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.QueryConstants;
-import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.domains.entity.IDomain;
 import com.logistimo.domains.entity.IDomainLink;
 import com.logistimo.domains.service.DomainsService;
-import com.logistimo.domains.service.impl.DomainsServiceImpl;
 import com.logistimo.domains.utils.DomainsUtil;
 import com.logistimo.domains.utils.EntityRemover;
 import com.logistimo.entities.actions.UpdateApproversAction;
-import com.logistimo.entities.dao.EntityDao;
 import com.logistimo.entities.dao.IEntityDao;
 import com.logistimo.entities.entity.IApprover;
 import com.logistimo.entities.entity.IKiosk;
@@ -78,18 +76,15 @@ import com.logistimo.pagination.QueryParams;
 import com.logistimo.pagination.Results;
 import com.logistimo.proto.JsonTagsZ;
 import com.logistimo.services.ObjectNotFoundException;
+import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.cache.MemcacheService;
 import com.logistimo.services.impl.PMF;
-import com.logistimo.services.impl.ServiceImpl;
 import com.logistimo.tags.TagUtil;
 import com.logistimo.tags.dao.ITagDao;
-import com.logistimo.tags.dao.TagDao;
 import com.logistimo.tags.entity.ITag;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
 import com.logistimo.utils.Counter;
 import com.logistimo.utils.QueryUtil;
 import com.logistimo.utils.StringUtil;
@@ -108,6 +103,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -117,24 +113,59 @@ import javax.jdo.Query;
 import javax.jdo.Transaction;
 
 @Service
-public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService {
+public class EntitiesServiceImpl implements EntitiesService {
 
   private static final XLog xLogger = XLog.getLog(EntitiesServiceImpl.class);
-  private IEntityDao entityDao = new EntityDao();
-  private ITagDao tagDao = new TagDao();
+  private IEntityDao entityDao;
+  private ITagDao tagDao;
 
   private MemcacheService memcacheService;
-
-  @Autowired
-  public void setCacheService(MemcacheService memcacheService) {
-    this.memcacheService = memcacheService;
-  }
+  private UsersService usersService;
+  private DomainsService domainsService;
+  private UpdateApproversAction updateApproversAction;
+  private LocationClient locationClient;
+  private AuthorizationService authorizationService;
 
   public MemcacheService getMemcacheService() {
     if (memcacheService == null) {
       memcacheService = AppFactory.get().getMemcacheService();
     }
     return memcacheService;
+  }
+
+  @Autowired
+  public void setEntityDao(IEntityDao entityDao) {
+    this.entityDao = entityDao;
+  }
+
+  @Autowired
+  public void setTagDao(ITagDao tagDao) {
+    this.tagDao = tagDao;
+  }
+
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
+  }
+
+  @Autowired
+  public void setDomainsService(DomainsService domainsService) {
+    this.domainsService = domainsService;
+  }
+
+  @Autowired
+  public void setUpdateApproversAction(UpdateApproversAction updateApproversAction) {
+    this.updateApproversAction = updateApproversAction;
+  }
+
+  @Autowired
+  public void setLocationClient(LocationClient locationClient) {
+    this.locationClient = locationClient;
+  }
+
+  @Autowired
+  public void setAuthorizationService(AuthorizationService authorizationService) {
+    this.authorizationService = authorizationService;
   }
 
   /**
@@ -160,18 +191,16 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
             return true;
           }
         }
-        UsersService as;
         try {
-          as = Services.getService(UsersServiceImpl.class);
-          IUserAccount ua = as.getUserAccount(userId);
+          IUserAccount ua = usersService.getUserAccount(userId);
           Results kiosks = getKiosksForUser(ua, null, null, pm);
           if (kiosks.getResults() != null) {
             for (Object k : kiosks.getResults()) {
               IKiosk kiosk = (IKiosk) k;
               Permissions perms = kiosk.getPermissions();
               if (perms != null && (
-                  checkRelationshipPermission(perms, IKioskLink.TYPE_CUSTOMER, as, kiosk, kioskId)
-                      || checkRelationshipPermission(perms, IKioskLink.TYPE_VENDOR, as, kiosk,
+                  checkRelationshipPermission(perms, IKioskLink.TYPE_CUSTOMER, kiosk, kioskId)
+                      || checkRelationshipPermission(perms, IKioskLink.TYPE_VENDOR, kiosk,
                       kioskId))) {
                 return true;
               }
@@ -194,11 +223,10 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
   }
 
   private boolean checkRelationshipPermission(Permissions perms, String relationshipType,
-                                              UsersService as, IKiosk k, Long kioskId)
+                                              IKiosk k, Long kioskId)
       throws ServiceException {
     if (perms.hasAccess(relationshipType, Permissions.MASTER, Permissions.OP_MANAGE)) {
-      List<IKioskLink>
-          kls =
+      List<IKioskLink> kls =
           getKioskLinks(k.getKioskId(), relationshipType, null, null, null).getResults();
       for (IKioskLink kl : kls) {
         if (kl.getLinkedKioskId().equals(kioskId)) {
@@ -234,15 +262,12 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
     if (pageParams != null) {
       QueryUtil.setPageParams(userToKioskQuery, pageParams);
     }
-    // Get the list of users associated with this kiosk
     try {
       List<IUserToKiosk> results = (List<IUserToKiosk>) userToKioskQuery.execute(kioskId);
       if (results != null && !results.isEmpty()) {
         cursor = QueryUtil.getCursor(results);
         users = new ArrayList<>();
-        Iterator<IUserToKiosk> it = results.iterator();
-        while (it.hasNext()) {
-          IUserToKiosk u2k = it.next();
+        for (IUserToKiosk u2k : results) {
           try {
             IUserAccount user = JDOUtils.getObjectById(IUserAccount.class, u2k.getUserId(), pm);
             user = pm.detachCopy(user);
@@ -268,8 +293,7 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
    */
 
   public void addApprovers(Long kioskId, List<IApprover> newApprovers, String userName) {
-    StaticApplicationContext.getBean(UpdateApproversAction.class)
-        .invoke(kioskId, newApprovers, userName);
+    updateApproversAction.invoke(kioskId, newApprovers, userName);
   }
 
 
@@ -480,10 +504,10 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
    */
   @SuppressWarnings("unchecked")
   public Long addKiosk(Long domainId, IKiosk kiosk) throws ServiceException {
-    xLogger.fine("Entering addKiosk: domain = {0}, kiosk = {1}", domainId, kiosk.getName());
     if (domainId == null || kiosk == null || kiosk.getName() == null || kiosk.getUser() == null) {
       throw new ServiceException("Invalid parameters for kiosk");
     }
+    xLogger.fine("Entering addKiosk: domain = {0}, kiosk = {1}", domainId, kiosk.getName());
     String errMsg = null;
     //Assuming that all fields except timeStamp are set by the calling function
     //Set the timeStamp to now
@@ -491,13 +515,10 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
     kiosk.setTimeStamp(now);
     kiosk.setLastUpdated(now);
     kiosk.setDomainId(domainId);
-    String sUserId = kiosk.getRegisteredBy();
-    // Trim extra spaces if any in kiosk name
     kiosk.setName(StringUtil.getTrimmedName(kiosk.getName()));
     PersistenceManager pm = PMF.get().getPersistenceManager();
     Transaction tx = pm.currentTransaction();
     try {
-      // Check if a kiosk by this name already exists??
       Query query = pm.newQuery(JDOUtils.getImplClass(IKiosk.class));
       query.setFilter("dId.contains(domainIdParam) && nName == nameParam");
       query.declareParameters("Long domainIdParam, String nameParam");
@@ -505,23 +526,22 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
       tx.begin();
       try {
         results = (List<IKiosk>) query.execute(domainId, kiosk.getName().toLowerCase());
-        results
-            .size(); // hack to ensure data is retrieved before PM is closed; TODO later figure out the appropriate mechanism to address this
+        results.size();
         results = (List<IKiosk>) pm.detachCopyAll(results);
       } finally {
         query.closeAll();
       }
+      final Locale locale = SecurityUtils.getLocale();
+      ResourceBundle messages = Resources.get().getBundle("Messages", locale);
+      ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+
       if (results == null || results.size() == 0) {
-        // Kiosk by this name does NOT exist; so save this
-        //add loc ids and fast fail if location service is down
         updateKioskLocationIds(kiosk);
-        // Check if custom ID is specified for the kiosk. If yes, check if the specified custom ID already exists.
         boolean customIdExists = false;
         if (kiosk.getCustomId() != null && !kiosk.getCustomId().isEmpty()) {
           customIdExists = checkIfCustomIdExists(kiosk);
         }
         if (customIdExists) {
-          // Custom ID already exists in the database!
           xLogger.warn("addKiosk: FAILED!! Cannot add kiosk {0}. Custom ID {1} already exists.",
               kiosk.getName(), kiosk.getCustomId());
           throw new ServiceException(
@@ -608,12 +628,15 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
     }
     boolean updateDeviceTags = false;
     Exception exception = null;
-    List<String> oldTags = null;
+    List<String> oldTags;
     String sUserId = StringUtils.isNotBlank(username) ? username : kiosk.getUpdatedBy();
     PersistenceManager pm = PMF.get().getPersistenceManager();
     Transaction tx = pm.currentTransaction();
     try {
-      if (!AppFactory.get().getAuthorizationService().authoriseUpdateKiosk(sUserId, domainId)) {
+      final Locale locale = SecurityUtils.getLocale();
+      ResourceBundle messages = Resources.get().getMessageBundle(locale);
+      ResourceBundle backendMessages = Resources.get().getBackendMessageBundle(locale);
+      if (!authorizationService.authoriseUpdateKiosk(sUserId, domainId)) {
         throw new UnauthorizedException(backendMessages.getString("permission.denied"));
       }
       //First check if the kiosk already exists in the database
@@ -752,8 +775,7 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
    * This method will update applicable location ids for a Kisok
    */
   private void updateKioskLocationIds(IKiosk kiosk) {
-    LocationClient client = StaticApplicationContext.getBean(LocationClient.class);
-    LocationResponseModel response = client.getLocationIds(kiosk);
+    LocationResponseModel response = locationClient.getLocationIds(kiosk);
     kiosk.setCountryId(response.getCountryId());
     kiosk.setStateId(response.getStateId());
     kiosk.setDistrictId(response.getDistrictId());
@@ -771,7 +793,7 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
 
   @SuppressWarnings("unchecked")
   public List<IKiosk> getKiosksByIds(List<Long> kioskIds) throws ServiceException {
-    List<IKiosk> kioskList = new ArrayList<IKiosk>(kioskIds.size());
+    List<IKiosk> kioskList = new ArrayList<>(kioskIds.size());
     PersistenceManager pm = PMF.get().getPersistenceManager();
     try {
       for (Long kioskId : kioskIds) {
@@ -832,6 +854,9 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
       }
     } catch (JDOObjectNotFoundException e) {
       xLogger.warn("getKiosk: Kiosk {0} does not exist", kioskId);
+      final Locale locale = SecurityUtils.getLocale();
+      ResourceBundle messages = Resources.get().getBundle("Messages", locale);
+      ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
       throw new ObjectNotFoundException(
           messages.getString("kiosk") + " " + kioskId + " " + backendMessages
               .getString("error.notfound"), e);
@@ -855,17 +880,13 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
 
     PersistenceManager pm = PMF.get().getPersistenceManager();
     PersistenceManager tagsPm = PMF.get().getPersistenceManager();
-    DomainConfig dc = DomainConfig.getInstance(domainId);
-    Locale locale = dc.getLocale();
-    if (locale == null) {
-      locale = new Locale(Constants.LANG_DEFAULT, Constants.COUNTRY_DEFAULT);
-    }
-    String timezone = dc.getTimezone();
     try {
-      if (!AppFactory.get().getAuthorizationService().authoriseUpdateKiosk(sUserId, domainId)) {
+      if (!authorizationService.authoriseUpdateKiosk(sUserId, domainId)) {
+        final Locale locale = SecurityUtils.getLocale();
+        ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
         throw new UnauthorizedException(backendMessages.getString("permission.denied"));
       }
-      List<IKiosk> kiosks = new ArrayList<IKiosk>(kioskIds.size());
+      List<IKiosk> kiosks = new ArrayList<>(kioskIds.size());
       List<String> sdFailedKiosks = new ArrayList<>(1);
       for (Long kioskId : kioskIds) {
         try {
@@ -880,6 +901,8 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
         }
       }
       if (!sdFailedKiosks.isEmpty()) {
+        final Locale locale = SecurityUtils.getLocale();
+        ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
         throw new ServiceException(
             backendMessages.getString("entity.deletion.permission.denied") + " : " + StringUtil
                 .getCSV(sdFailedKiosks));
@@ -1008,7 +1031,7 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
         userToKioskQuery.setFilter("userId == userIdParam");
         userToKioskQuery.declareParameters("String userIdParam");
         try {
-          results = new ArrayList<IKiosk>();
+          results = new ArrayList<>();
           List<IUserToKiosk> userToKioskQueryResults =
               (List<IUserToKiosk>) userToKioskQuery.execute(paramValue);
           for (IUserToKiosk mapping : userToKioskQueryResults) {
@@ -1066,10 +1089,10 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
   public List<Long> getAllKioskIds(Long domainId) {
     xLogger.fine("Entering getAllKioskIds");
     PersistenceManager pm = PMF.get().getPersistenceManager();
-    List<Long> kioskIds = new ArrayList<Long>(0);
+    List<Long> kioskIds = new ArrayList<>(0);
     try {
       String filter = "dId.contains(domainIdParam)";
-      Map<String, Object> params = new HashMap<String, Object>(1);
+      Map<String, Object> params = new HashMap<>(1);
       params.put("domainIdParam", domainId);
       Query
           query =
@@ -1108,7 +1131,7 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
       if (kiosks == null || kiosks.size() == 0) {
         Results kiosksForUser = getKiosksForUser(user, null, null);
         if (kiosksForUser == null) {
-          return new Results(null, null);
+          return new Results();
         }
         kiosks = kiosksForUser.getResults();
       }
@@ -1138,7 +1161,7 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
           }
         }
       }
-      results = new Results(kiosks, null);
+      results = new Results<>(kiosks, null);
     }
     xLogger.fine("Existing getKiosks");
     return results;
@@ -1410,27 +1433,18 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
     Exception exception = null;
     PersistenceManager pm = PMF.get().getPersistenceManager();
     try {
-      //First check if the poolgroup already exists in the database
       IPoolGroup pg = JDOUtils.getObjectById(IPoolGroup.class, group.getGroupId(), pm);
-      //If we get here, it means the poolgroup exists
-      //TODO: Update only those fields which have changed
       pg.setName(group.getName());
       pg.setDescription(group.getDescription());
       pg.setOwnerId(group.getOwnerId());
       pg.setUpdatedBy(group.getUpdatedBy());
       pg.setUpdatedOn(new Date());
-      //pg.setCreatedBy(group.getCreatedBy());
-      //check if the kiosk to poolgroup mappings have changed
       List<IKiosk> kiosks = (List<IKiosk>) group.getKiosks();
-      //Create a list of kioskIds from the list of users
-      List<Long> kioskIds = new ArrayList<Long>();
-      for (IKiosk kiosk : kiosks) {
-        kioskIds.add(kiosk.getKioskId());
-      }
+      List<Long> kioskIds = kiosks.stream().map(IKiosk::getKioskId).collect(Collectors.toList());
       Query query = pm.newQuery(JDOUtils.getImplClass(IKioskToPoolGroup.class));
       query.setFilter("poolGroupId == poolGroupIdParam");
       query.declareParameters("Long poolGroupIdParam");
-      List<Long> queryKioskIds = new ArrayList<Long>();
+      List<Long> queryKioskIds = new ArrayList<>();
       try {
         List<IKioskToPoolGroup> results = (List<IKioskToPoolGroup>)
             query.execute(group.getGroupId());
@@ -1478,7 +1492,10 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
       pm.close();
     }
     xLogger.fine("Exiting updatePoolGroup");
-    if (poolgroupExists == false) {
+    if (!poolgroupExists) {
+      final Locale locale = SecurityUtils.getLocale();
+      ResourceBundle messages = Resources.get().getBundle("Messages", locale);
+      ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
       errMsg = messages.getString("poolgroup") + " " + backendMessages.getString("error.notfound");
     }
     if (errMsg != null) {
@@ -1497,14 +1514,10 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
     Exception exception = null;
     PersistenceManager pm = PMF.get().getPersistenceManager();
     try {
-      //Get the poolgroup object from the database
       group = JDOUtils.getObjectById(IPoolGroup.class, groupId, pm);
       xLogger.info("getPoolGroup: Getting info for poolGroup {0}", groupId);
-      //If we get here, it means the poolgroup exists
-      //We also need to get the poolgroup to kiosk mappings
-      //and set them in the poolgroup object
       xLogger.fine("Getting kiosks associated with the poolgroup {0}", groupId);
-      List<IKiosk> kiosks = new ArrayList<IKiosk>();
+      List<IKiosk> kiosks = new ArrayList<>();
       Query kioskToPoolGroupQuery = pm.newQuery(JDOUtils.getImplClass(IKioskToPoolGroup.class));
       kioskToPoolGroupQuery.setFilter("poolGroupId == poolGroupIdParam");
       kioskToPoolGroupQuery.declareParameters("Long poolGroupIdParam");
@@ -1534,6 +1547,9 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
       group.setPinCode(owner.getPinCode());
     } catch (JDOObjectNotFoundException e) {
       xLogger.warn("getPoolGroup: FAILED!! PoolGroup {0} does not exist", groupId);
+      final Locale locale = SecurityUtils.getLocale();
+      ResourceBundle messages = Resources.get().getBundle("Messages", locale);
+      ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
       errMsg = messages.getString("poolgroup") + " " + backendMessages.getString("error.notfound");
       exception = e;
     } catch (Exception e) {
@@ -1557,22 +1573,14 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
     xLogger.fine("Entering deletePoolGroups");
     IPoolGroup poolGroup;
     PersistenceManager pm = PMF.get().getPersistenceManager();
-    DomainConfig dc = DomainConfig.getInstance(domainId);
-    Locale locale = dc.getLocale();
-    if (locale == null) {
-      locale = new Locale(Constants.LANG_DEFAULT, Constants.COUNTRY_DEFAULT);
-    }
-    String timezone = dc.getTimezone();
     try {
       for (Long poolGroupId : groupIds) {
         xLogger.fine("Deleting pool group {0}...", poolGroupId);
         try {
           poolGroup = JDOUtils.getObjectById(IPoolGroup.class, poolGroupId, pm);
-          // Delete all related entities
           EntityRemover
               .removeRelatedEntities(domainId, JDOUtils.getImplClass(IPoolGroup.class).getName(),
                   poolGroupId, false);
-          // Generate event, if configured
           try {
             EventPublisher
                 .generate(domainId, IEvent.DELETED, null,
@@ -1583,7 +1591,6 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
                 "Exception when generating event for poolgroup-deletion for poolgroup {0} in domain {1}: {2}",
                 poolGroupId, domainId, e.getMessage());
           }
-          // Delete the pool group
           pm.deletePersistent(poolGroup);
         } catch (JDOObjectNotFoundException e) {
           xLogger.warn("Pool group with id {0} not found. Ignoring it.", poolGroupId);
@@ -1605,18 +1612,15 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
   public List<IPoolGroup> findAllPoolGroups(Long domainId, int pageNumber, int numOfEntries) {
     xLogger.fine("Entering findAllPooLGroups");
     PersistenceManager pm = PMF.get().getPersistenceManager();
-    List<IPoolGroup> poolGroups = new ArrayList<IPoolGroup>();
+    List<IPoolGroup> poolGroups = new ArrayList<>();
 
-    // Formulate query
     Query query = pm.newQuery(JDOUtils.getImplClass(IPoolGroup.class));
     query.setFilter("dId == domainIdParam");
     query.declareParameters("Long domainIdParam");
     query.setOrdering("name asc");
-    // Execute query
     try {
       poolGroups = (List<IPoolGroup>) query.execute(domainId);
-      poolGroups
-          .size(); // TODO - temp. fix for retrieving all obejcts and avoid "object manager closed" exception
+      poolGroups .size();
       poolGroups = (List<IPoolGroup>) pm.detachCopyAll(poolGroups);
     } catch (Exception e) {
       xLogger.warn("Exception: {0}", e.getMessage());
@@ -1639,19 +1643,15 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
   @SuppressWarnings("unchecked")
   public List<Long> getPoolGroupIds(Long kioskId) throws ServiceException {
     xLogger.fine("Entered getPoolGroupIds");
-    List<Long> pids = new ArrayList<Long>();
-    // Get PM
+    List<Long> pids = new ArrayList<>();
     PersistenceManager pm = PMF.get().getPersistenceManager();
-    // Form query
     Query q = pm.newQuery(JDOUtils.getImplClass(IKioskToPoolGroup.class));
     q.setFilter("kioskId == kioskIdParam");
     q.declareParameters("Long kioskIdParam");
     try {
       List<IKioskToPoolGroup> results = (List<IKioskToPoolGroup>) q.execute(kioskId);
-      // Get the pids
-      for (IKioskToPoolGroup result : results) {
-        pids.add(result.getPoolGroupId());
-      }
+      pids.addAll(
+          results.stream().map(IKioskToPoolGroup::getPoolGroupId).collect(Collectors.toList()));
     } finally {
       try {
         q.closeAll();
@@ -1665,7 +1665,9 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
     return pids;
   }
 
-  // Supply-chain relationship (link) creation and management
+  /**
+   *  Supply-chain relationship (link) creation and management
+   */
   private String addKioskLink(Long domainId, IKioskLink link, PersistenceManager pm)
       throws ServiceException {
     xLogger.fine("Entering addKioskLink");
@@ -1817,7 +1819,7 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
             cntQueryStr =
             sqlQuery.replace("KL.`KEY` AS `KEY`, KL.*", QueryConstants.ROW_COUNT)
                 .replace(orderBy, CharacterConstants.EMPTY);
-        if (StringUtils.isNotEmpty(limitStr)) {
+        if (StringUtils.isNotBlank(limitStr)) {
           cntQueryStr = cntQueryStr.replace(limitStr, CharacterConstants.EMPTY);
         }
         cntQuery = pm.newQuery("javax.jdo.query.SQL", cntQueryStr);
@@ -1984,25 +1986,20 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
     String linkType;
     PersistenceManager pm = PMF.get().getPersistenceManager();
     try {
-      // Get the kiosk link objects
       List<IKioskLink> kioskLinks = new ArrayList<>();
       for (String linkId : linkIds) {
         IKioskLink kl = JDOUtils.getObjectById(IKioskLink.class, linkId, pm);
         kioskLinks.add(kl);
-        linkType = kl.getLinkType();//for auditlog
-        // Get the reverse link to delete as well
-        IKioskLink
-            rlink =
+        linkType = kl.getLinkType();
+        IKioskLink rlink =
             JDOUtils.getObjectById(IKioskLink.class, JDOUtils
                 .createKioskLinkId(kl.getLinkedKioskId(),
                     EntityUtils.getReverseLinkType(kl.getLinkType()), kl.getKioskId()), pm);
-        // Get the domain ID of the linked entity
         IKiosk linkedKiosk = JDOUtils.getObjectById(IKiosk.class, kl.getLinkedKioskId());
-        kioskName = JDOUtils.getObjectById(IKiosk.class, kl.getKioskId()).getName();//for auditlog
-        linkedKioskName = linkedKiosk.getName();//for auditlog
-        // Delete the links and remove them from the respective domains (superdomains)
-        DomainsUtil.removeFromDomain(kl, domainId, pm);
-        DomainsUtil.removeFromDomain(rlink, linkedKiosk.getDomainId(), pm);
+        kioskName = JDOUtils.getObjectById(IKiosk.class, kl.getKioskId()).getName();
+        linkedKioskName = linkedKiosk.getName();
+        DomainsUtil.removeFromDomain(kl, pm);
+        DomainsUtil.removeFromDomain(rlink, pm);
         xLogger.info("AUDITLOG\t{0}\t{1}\tENTITY\t " +
                 "DELETE RELATION\t{2}\t{3}\tLINKTYPE={4}", domainId, sUser, kioskName,
             linkedKioskName,
@@ -2033,18 +2030,6 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
     } catch (ObjectNotFoundException e) {
       return false;
     }
-  }
-
-  public void destroy() throws ServiceException {
-    xLogger.fine("Entering destroy");
-    // TODO Auto-generated method stub
-    xLogger.fine("Exiting destroy");
-  }
-
-  public void init(Services services) throws ServiceException {
-    xLogger.fine("Entering init");
-    // TODO Auto-generated method stub
-    xLogger.fine("Exiting init");
   }
 
   public void updateManagedEntitiesOrdering(Long domainId, String userId, String routeQueryString)
@@ -2357,9 +2342,8 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
     if (domainIds == null || domainIds.isEmpty()) {
       return;
     }
-    Iterator<Long> it = domainIds.iterator();
-    while (it.hasNext()) {
-      Counter.getKioskCounter(it.next()).increment(amount, pm);
+    for (Long domainId : domainIds) {
+      Counter.getKioskCounter(domainId).increment(amount, pm);
     }
   }
 
@@ -2435,10 +2419,7 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
    * @deprecated Moved to DomainsService, but presevered here to enable backward compatibility in JSPs
    */
   public IDomain getDomain(Long domainId) throws ServiceException, ObjectNotFoundException {
-    xLogger.fine("Entered getDomain");
-    DomainsService ds = Services.getService(DomainsServiceImpl.class);
-    xLogger.fine("Exiting getDomain");
-    return ds.getDomain(domainId);
+    return domainsService.getDomain(domainId);
   }
 
   /**
@@ -2447,10 +2428,7 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
    * @deprecated Moved to DomainsService, but preserved here to enable backward compatibility in JSPs
    */
   public Results getAllDomains(PageParams pageParams) throws ServiceException {
-    xLogger.fine("Entered getAllDomains");
-    DomainsService ds = Services.getService(DomainsServiceImpl.class);
-    xLogger.fine("Exiting getAllDomains");
-    return ds.getAllDomains(pageParams);
+    return domainsService.getAllDomains(pageParams);
   }
 
 
@@ -2640,7 +2618,7 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
   public List<String> getAssetTagsToRegister(Long kId)
       throws ServiceException, ObjectNotFoundException {
     IKiosk kiosk = getKiosk(kId, false);
-    List<String> tagsForDevices = new ArrayList<String>();
+    List<String> tagsForDevices = new ArrayList<>();
     String state = kiosk.getState();
     List<Long> dIds = kiosk.getDomainIds();
     for (Long dId : dIds) {
@@ -2694,7 +2672,6 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
   @Override
   public UserEntitiesModel getUserWithKiosks(String userId)
       throws ObjectNotFoundException, ServiceException {
-    UsersService usersService = Services.getService(UsersServiceImpl.class, this.getLocale());
     IUserAccount userAccount = usersService.getUserAccount(userId);
     Results results = getKiosksForUser(userAccount, null, null);
     return new UserEntitiesModel(userAccount, results.getResults());
@@ -2707,7 +2684,9 @@ public class EntitiesServiceImpl extends ServiceImpl implements EntitiesService 
     return new UserEntitiesModel(userAccount, results.getResults());
   }
 
-  // Get the linked kiosks that for a given kiosk
+  /**
+   *  Get the linked kiosks that for a given kiosk
+   */
   @SuppressWarnings("unchecked")
   @Override
   public Results getLinkedKiosks(Long kioskId, String linkType, String routeTag,

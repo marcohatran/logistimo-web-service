@@ -23,12 +23,15 @@
 
 package com.logistimo.api.builders;
 
-import com.logistimo.config.models.BBoardConfig;
 import com.logistimo.api.models.configuration.BulletinBoardConfigModel;
+import com.logistimo.config.models.BBoardConfig;
+
+import org.springframework.stereotype.Component;
 
 /**
  * Created by naveensnair on 18/12/14.
  */
+@Component
 public class BulletinBoardBuilder {
 
   public BBoardConfig buildBBoardConfig(BulletinBoardConfigModel model) {
@@ -38,7 +41,6 @@ public class BulletinBoardBuilder {
     int refresh_duration = BBoardConfig.REFRESH_DURATION_DEFAULT;
     int scroll_interval = BBoardConfig.SCROLL_INTERVAL_DEFAULT;
     int max_items = BBoardConfig.MAX_ITEMS;
-    boolean pauseOnHover = false;
     boolean showNav = false;
     if (model != null) {
       if (model.ecl != null) {
@@ -61,14 +63,11 @@ public class BulletinBoardBuilder {
         }
       }
       if (model.sn) {
-        showNav = model.sn;
+        showNav = true;
       }
-
-      config =
-          new BBoardConfig(enabled, data_duration, refresh_duration, scroll_interval, pauseOnHover,
+      config = new BBoardConfig(enabled, data_duration, refresh_duration, scroll_interval, false,
               showNav, max_items, model.getTokenExpiryInDays());
     }
-
     return config;
   }
 

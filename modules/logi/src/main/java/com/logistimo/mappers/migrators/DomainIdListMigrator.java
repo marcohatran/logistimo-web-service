@@ -23,13 +23,13 @@
 
 package com.logistimo.mappers.migrators;
 
+import com.logistimo.logger.XLog;
 import com.logistimo.services.mapper.DatastoreMutationPool;
 import com.logistimo.services.mapper.Entity;
 import com.logistimo.services.mapper.GenericMapper;
 import com.logistimo.services.mapper.Key;
 
 import org.apache.hadoop.io.NullWritable;
-import com.logistimo.logger.XLog;
 
 import java.util.ArrayList;
 import java.util.List;

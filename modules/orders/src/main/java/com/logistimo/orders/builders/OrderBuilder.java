@@ -25,8 +25,12 @@ package com.logistimo.orders.builders;
 
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.Constants;
-import com.logistimo.entities.builders.EntityBuilder;
-import com.logistimo.entities.models.*;
+import com.logistimo.entities.builders.EntityMinBuilder;
+import com.logistimo.entities.models.CustomerVendor;
+import com.logistimo.entities.models.DemandItemModel;
+import com.logistimo.entities.models.DurationOfStock;
+import com.logistimo.entities.models.Inventory;
+import com.logistimo.entities.models.Predictions;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.service.InventoryManagementService;
 import com.logistimo.logger.XLog;
@@ -40,6 +44,7 @@ import com.logistimo.orders.models.OrderModel;
 import com.logistimo.orders.service.OrderManagementService;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -58,7 +63,7 @@ public class OrderBuilder {
     OrderManagementService orderManagementService;
 
     @Autowired
-    EntityBuilder entityBuilder;
+    EntityMinBuilder entityMinBuilder;
 
     @Autowired
     MaterialCatalogService materialCatalogService;
@@ -97,14 +102,14 @@ public class OrderBuilder {
             model.setNumItems(order.getNumberOfItems());
         }
         if (isExtended) {
-            model.setCustomer(entityBuilder.build(order.getKioskId(), true));
+            model.setCustomer(entityMinBuilder.build(order.getKioskId(), true));
             if (order.getServicingKiosk() != null) {
-                model.setVendor(entityBuilder.build(order.getServicingKiosk(), true));
+                model.setVendor(entityMinBuilder.build(order.getServicingKiosk(), true));
             }
         } else {
-            model.setCustomer(entityBuilder.buildMeta(order.getKioskId()));
+            model.setCustomer(entityMinBuilder.buildMeta(order.getKioskId()));
             if (order.getServicingKiosk() != null) {
-                model.setVendor(entityBuilder.buildMeta(order.getServicingKiosk()));
+                model.setVendor(entityMinBuilder.buildMeta(order.getServicingKiosk()));
             }
         }
         model.setOrderId(order.getOrderId());

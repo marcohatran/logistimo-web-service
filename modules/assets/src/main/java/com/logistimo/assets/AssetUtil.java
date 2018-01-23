@@ -45,6 +45,7 @@ import com.logistimo.config.models.ConfigurationException;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.EventSpec;
 import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.domains.entity.IDomainLink;
 import com.logistimo.domains.utils.DomainsUtil;
@@ -54,7 +55,6 @@ import com.logistimo.events.exceptions.EventGenerationException;
 import com.logistimo.events.processor.EventPublisher;
 import com.logistimo.logger.XLog;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.http.HttpResponse;
 import com.logistimo.services.http.URLFetchService;
 import com.logistimo.services.impl.PMF;
@@ -230,7 +230,8 @@ public class AssetUtil {
         throw new ServiceException("Asset model is invalid or not configured.");
       }
 
-      AssetManagementService ams = Services.getService(AssetManagementServiceImpl.class);
+      AssetManagementService ams = StaticApplicationContext
+          .getBean(AssetManagementServiceImpl.class);
       IAsset asset = ams.getAsset(manufacturerId, (String) variableMap.get(SERIAL_NUMBER));
 
       if (asset == null) {
@@ -862,7 +863,7 @@ public class AssetUtil {
     AssetManagementService ams = null;
     PersistenceManager pm = PMF.get().getPersistenceManager();
     try {
-      ams = Services.getService(AssetManagementServiceImpl.class);
+      ams = StaticApplicationContext.getBean(AssetManagementServiceImpl.class);
       List<IAsset> assets = ams.getAssetsByKiosk(kioskId);
 
       if (assets != null && !assets.isEmpty()) {
@@ -917,7 +918,7 @@ public class AssetUtil {
   public static void updateAssetTags(Long kioskId, List<String> assetTagsToRegister) {
     AssetManagementService ams;
     try {
-      ams = Services.getService(AssetManagementServiceImpl.class);
+      ams = StaticApplicationContext.getBean(AssetManagementServiceImpl.class);
       List<IAsset> assets = ams.getAssetsByKiosk(kioskId);
       if (assets != null && !assets.isEmpty()) {
         updateAssetTags(assets, assetTagsToRegister);
@@ -932,7 +933,7 @@ public class AssetUtil {
     try {
       boolean isRelated = true;
       //Deleting asset relationship in LS
-      ams = Services.getService(AssetManagementServiceImpl.class);
+      ams = StaticApplicationContext.getBean(AssetManagementServiceImpl.class);
       if (Objects.equals(asset.getType(), IAsset.TEMP_DEVICE)) {
         IAssetRelation assetRelation = ams.getAssetRelationByRelatedAsset(asset.getId());
         if (assetRelation != null) {
@@ -1048,7 +1049,8 @@ public class AssetUtil {
       try {
         assetRelationList = buildAssetRelations(assetRelationModel, assetTags);
         for (IAssetRelation assetRelation : assetRelationList) {
-          AssetManagementService ams = Services.getService(AssetManagementServiceImpl.class);
+          AssetManagementService ams = StaticApplicationContext.getBean(
+              AssetManagementServiceImpl.class);
           ams.createOrUpdateAssetRelation(domainId, assetRelation);
         }
       } catch (ServiceException e) {
@@ -1082,7 +1084,7 @@ public class AssetUtil {
 
       try {
         AssetManagementService assetManagementService =
-            Services.getService(AssetManagementServiceImpl.class);
+            StaticApplicationContext.getBean(AssetManagementServiceImpl.class);
         IAsset asset, relationAsset = null;
         try {
           asset = assetManagementService.getAsset(assetRelations.vId, assetRelations.dId);

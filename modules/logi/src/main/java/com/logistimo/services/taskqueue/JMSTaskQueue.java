@@ -24,11 +24,11 @@
 package com.logistimo.services.taskqueue;
 
 import com.logistimo.AppFactory;
+import com.logistimo.constants.Constants;
+import com.logistimo.logger.XLog;
 
 import org.apache.camel.ExchangePattern;
 import org.apache.camel.ProducerTemplate;
-import com.logistimo.constants.Constants;
-import com.logistimo.logger.XLog;
 
 
 /**

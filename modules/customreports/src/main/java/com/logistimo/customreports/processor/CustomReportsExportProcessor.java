@@ -24,6 +24,7 @@
 package com.logistimo.customreports.processor;
 
 import com.logistimo.config.models.DomainConfig;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.customreports.CustomReportConstants;
 import com.logistimo.customreports.CustomReportsExportMgr;
 import com.logistimo.customreports.CustomReportsExportMgr.CustomReportsExportParams;
@@ -39,13 +40,11 @@ import com.logistimo.pagination.processor.InstrumentedProcessor;
 import com.logistimo.pagination.processor.ProcessingException;
 import com.logistimo.reports.service.ReportsService;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.services.utils.ConfigUtil;
 import com.logistimo.utils.JobUtil;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -95,12 +94,10 @@ public class CustomReportsExportProcessor extends InstrumentedProcessor {
                                                  CustomReportsExportMgr.CustomReportsExportParams cstReportsExportParams,
                                                  Long domainId) throws ServiceException {
     if (invntry != null) {
-      ReportsService reportsService = Services.getService("reports");
-      InvntrySnapshot
-          invSnapshot =
-          reportsService.getInventorySnapshot(invntry.getKioskId(), invntry.getMaterialId(),
-              cstReportsExportParams.snapshotDate, domainId);
-      return invSnapshot;
+      ReportsService reportsService = StaticApplicationContext
+          .getBean(ConfigUtil.get("reports"), ReportsService.class);
+      return reportsService.getInventorySnapshot(invntry.getKioskId(), invntry.getMaterialId(),
+          cstReportsExportParams.snapshotDate, domainId);
     }
     return null;
   }
@@ -135,7 +132,7 @@ public class CustomReportsExportProcessor extends InstrumentedProcessor {
       }
       // Get domain config.
       DomainConfig dc = DomainConfig.getInstance(domainId);
-      List exportables = null;
+      List exportables;
 
       // Get the CSV for this result set
       List<String> csvList = new ArrayList<>();
@@ -170,15 +167,14 @@ public class CustomReportsExportProcessor extends InstrumentedProcessor {
       }
       long startTime = System.currentTimeMillis();
       // Append the csv lines
-      Iterator it = exportables.iterator();
-      while (it.hasNext()) {
-        Object exportable = it.next();
+      for (Object exportable : exportables) {
         // If customReportsExportParams.type == HISTORICAL_INVENTORY_SNAPSHOT, then exportable is of type Invntry
         // But it has the current snapshot
         // Get the specific day's snapshot using DaySlice, i.e using Invntry and snap shot date, get the InvntrySnapshot object.
         // Then, convert the InvntrySnapshot object to csv.
         if (isInvSnapshot) {
-          exportable = getInventorySnapshot((IInvntry) exportable, cstReportsExportParams, domainId);
+          exportable =
+              getInventorySnapshot((IInvntry) exportable, cstReportsExportParams, domainId);
         }
         if (exportable != null) {
           // Add csv line

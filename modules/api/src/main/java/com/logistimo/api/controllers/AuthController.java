@@ -143,8 +143,7 @@ public class AuthController {
   @RequestMapping(value = "/login", method = RequestMethod.POST)
   public
   @ResponseBody
-  AuthModel login(@RequestBody AuthLoginModel authLoginModel, HttpServletRequest request,
-                  HttpServletResponse response) {
+  AuthModel login(@RequestBody AuthLoginModel authLoginModel, HttpServletRequest request) {
     try {
       HttpSession session = request.getSession();
       if (SecurityMgr.isLoggedInAsAnotherUser(session, authLoginModel.userId)) {
@@ -154,7 +153,7 @@ public class AuthController {
           userDetails =
           SecurityMgr.authenticate(authLoginModel.userId, authLoginModel.password);
       //Recreates and initialize the session after successful login.
-      SessionMgr.recreateSession(request, response, userDetails);
+      SessionMgr.recreateSession(request, userDetails);
       Long domainId = SecurityUtils.getReqCookieDomain(request);
       if (domainId != null) {
         if (usersService.hasAccessToDomain(userDetails.getUsername(), domainId)) {

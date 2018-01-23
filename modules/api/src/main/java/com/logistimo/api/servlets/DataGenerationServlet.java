@@ -26,8 +26,8 @@
  */
 package com.logistimo.api.servlets;
 
-import com.logistimo.constants.Constants;
 import com.logistimo.api.util.KioskDataSimulator;
+import com.logistimo.constants.Constants;
 import com.logistimo.logger.XLog;
 
 import java.io.IOException;

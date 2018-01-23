@@ -24,10 +24,9 @@
 package com.logistimo.api.servlets;
 
 import com.logistimo.AppFactory;
-import com.logistimo.services.mapred.IMapredService;
-
-import com.logistimo.services.mapred.MapReduceConstants;
 import com.logistimo.logger.XLog;
+import com.logistimo.services.mapred.IMapredService;
+import com.logistimo.services.mapred.MapReduceConstants;
 
 import java.io.IOException;
 import java.util.HashMap;

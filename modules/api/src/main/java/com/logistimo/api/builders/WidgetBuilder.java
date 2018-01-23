@@ -30,20 +30,41 @@ import com.logistimo.dashboards.entity.IWidget;
 import com.logistimo.dashboards.service.IDashboardService;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Mohan Raja
  */
+@Component
 public class WidgetBuilder {
+
+  private IDashboardService dashboardService;
+  private UsersService usersService;
+  private FChartBuilder fChartBuilder;
+
+  @Autowired
+  public void setDashboardService(IDashboardService dashboardService) {
+    this.dashboardService = dashboardService;
+  }
+
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
+  }
+
+  @Autowired
+  public void setfChartBuilder(FChartBuilder fChartBuilder) {
+    this.fChartBuilder = fChartBuilder;
+  }
 
   public IWidget buildWidget(WidgetModel model, long domainId, String userName) {
     IWidget wid = JDOUtils.createInstance(IWidget.class);
@@ -57,9 +78,8 @@ public class WidgetBuilder {
 
   public List<WidgetModel> buildWidgetModelList(List<IWidget> dbList) {
     List<WidgetModel> models = new ArrayList<>(dbList.size());
-    for (IWidget iWidget : dbList) {
-      models.add(buildWidgetModel(iWidget, false));
-    }
+    models.addAll(dbList.stream().map(iWidget -> buildWidgetModel(iWidget, false))
+        .collect(Collectors.toList()));
     return models;
   }
 
@@ -70,21 +90,19 @@ public class WidgetBuilder {
     model.nm = wid.getName();
     if (deep) {
       try {
-        UsersService as = Services.getService(UsersServiceImpl.class);
-        model.cByNm = as.getUserAccount(wid.getCreatedBy()).getFullName();
+        model.cByNm = usersService.getUserAccount(wid.getCreatedBy()).getFullName();
         model.cBy = wid.getCreatedBy();
         model.cOn = wid.getCreatedOn();
         model.desc = wid.getDesc();
       } catch (ObjectNotFoundException ignored) {
-        // ignore
       }
     }
     return model;
   }
 
-  public IWidget updateWidgetConfig(IDashboardService ds, WidgetConfigModel model)
+  public IWidget updateWidgetConfig(WidgetConfigModel model)
       throws ServiceException {
-    IWidget wid = ds.getWidget(model.wId);
+    IWidget wid = dashboardService.getWidget(model.wId);
     wid.setTitle(model.tit);
     wid.setSubtitle(model.stit);
     wid.setType(model.ty);
@@ -114,7 +132,7 @@ public class WidgetBuilder {
     model.sl = wid.getShowLeg();
     if (isData) {
       model.opt = constructChartOptions(wid);
-      model.data = new FChartBuilder().getAggrData(wid.getdId(), model.fq, model.nop, model.ag);
+      model.data = fChartBuilder.getAggrData(wid.getdId(), model.fq, model.nop, model.ag);
     }
     return model;
   }

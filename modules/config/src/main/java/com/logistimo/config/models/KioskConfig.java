@@ -23,16 +23,16 @@
 
 package com.logistimo.config.models;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import com.logistimo.config.entity.IConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
 import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
+import com.logistimo.context.StaticApplicationContext;
+import com.logistimo.logger.XLog;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
-import com.logistimo.logger.XLog;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.Serializable;
 
@@ -68,7 +68,8 @@ public class KioskConfig implements Serializable {
     String key = IConfig.CONFIG_KIOSK_PREFIX + kioskId.toString();
     // Get from kiosk configuration from the datastore using the key
     try {
-      ConfigurationMgmtService cms = Services.getService(ConfigurationMgmtServiceImpl.class);
+      ConfigurationMgmtService cms = StaticApplicationContext
+          .getBean(ConfigurationMgmtServiceImpl.class);
       String configStr = cms.getConfiguration(key).getConfig();
       xLogger.fine("configStr: " + configStr);
       kc = new KioskConfig(configStr);
@@ -86,8 +87,7 @@ public class KioskConfig implements Serializable {
   }
 
   public String toJSONString() throws JSONException {
-    String jsonString = toJSONObject().toString();
-    return jsonString;
+    return toJSONObject().toString();
   }
 
   public JSONObject toJSONObject() throws JSONException {

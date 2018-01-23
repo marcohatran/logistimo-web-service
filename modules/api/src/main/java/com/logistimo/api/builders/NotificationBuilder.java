@@ -30,15 +30,15 @@ import com.logistimo.api.models.configuration.NotificationsModel;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
 import com.logistimo.utils.LocalDateUtil;
 
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,7 +52,15 @@ import java.util.Map;
 /**
  * Created by naveensnair on 05/12/14.
  */
+@Component
 public class NotificationBuilder {
+
+  private UsersService usersService;
+
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
+  }
 
   public String buildModel(NotificationsConfigModel model, String eventConfigJson)
       throws ServiceException {
@@ -176,8 +184,7 @@ public class NotificationBuilder {
       model.lastUpdated =
           LocalDateUtil.format(new Date(Long.parseLong(val.get(1))), locale, timezone);
       try {
-        UsersService as = Services.getService(UsersServiceImpl.class, locale);
-        model.fn = as.getUserAccount(model.createdBy).getFullName();
+        model.fn = usersService.getUserAccount(model.createdBy).getFullName();
       } catch (Exception e) {
         //ignore.. get for display only.
       }
@@ -190,30 +197,21 @@ public class NotificationBuilder {
                                                                              String notifType)
       throws ServiceException {
 
-    List<String>
-        orderKeyList =
-        new ArrayList<String>(Arrays.asList(NotificationConstants.orderKeys));
-    List<String>
-            shipmentKeyList =
-            new ArrayList<String>(Arrays.asList(NotificationConstants.shipmentKeys));
-    List<String>
-        inventoryKeysList =
-        new ArrayList<String>(Arrays.asList(NotificationConstants.inventoryKeys));
-    List<String>
-        setupKeysList =
-        new ArrayList<String>(Arrays.asList(NotificationConstants.setupKeys));
-    List<String>
-        temperatureKeysList =
-        new ArrayList<String>(Arrays.asList(NotificationConstants.temperatureKeys));
-    List<String>
-        assetAlarmKeysList =
-        new ArrayList<String>(Arrays.asList(NotificationConstants.assetAlarmKeys));
-    List<String>
-        accountKeysList =
-        new ArrayList<String>(Arrays.asList(NotificationConstants.accountKeys));
-    Map<String, List<NotificationsConfigModel>>
-        notificationMap =
-        new HashMap<String, List<NotificationsConfigModel>>();
+    List<String> orderKeyList =
+        new ArrayList<>(Arrays.asList(NotificationConstants.orderKeys));
+    List<String> shipmentKeyList =
+        new ArrayList<>(Arrays.asList(NotificationConstants.shipmentKeys));
+    List<String> inventoryKeysList =
+        new ArrayList<>(Arrays.asList(NotificationConstants.inventoryKeys));
+    List<String> setupKeysList =
+        new ArrayList<>(Arrays.asList(NotificationConstants.setupKeys));
+    List<String> temperatureKeysList =
+        new ArrayList<>(Arrays.asList(NotificationConstants.temperatureKeys));
+    List<String> assetAlarmKeysList =
+        new ArrayList<>(Arrays.asList(NotificationConstants.assetAlarmKeys));
+    List<String> accountKeysList =
+        new ArrayList<>(Arrays.asList(NotificationConstants.accountKeys));
+    Map<String, List<NotificationsConfigModel>> notificationMap = new HashMap<>();
 
     if (StringUtils.isNotEmpty(config)) {
       try {
@@ -253,7 +251,7 @@ public class NotificationBuilder {
       throws ServiceException {
     if (jsonArray != null) {
       String event = "";
-      List<NotificationsConfigModel> notificationsConfigModelList = null;
+      List<NotificationsConfigModel> notificationsConfigModelList;
       try {
         for (int i = 0; i < jsonArray.length(); i++) {
           JSONObject jsonObject = jsonArray.getJSONObject(i);
@@ -389,7 +387,7 @@ public class NotificationBuilder {
           if (notificationMap.containsKey(Key)) {
             notificationsConfigModelList = notificationMap.get(Key);
           } else {
-            notificationsConfigModelList = new ArrayList<NotificationsConfigModel>();
+            notificationsConfigModelList = new ArrayList<>();
           }
           notificationsConfigModelList.add(model);
           notificationMap.put(Key, notificationsConfigModelList);
@@ -633,7 +631,7 @@ public class NotificationBuilder {
   }
 
   private String getStatus(String status) {
-    String modifiedStatus = "";
+    String modifiedStatus;
     if ("confirmed".equalsIgnoreCase(status)) {
       modifiedStatus = "cf";
     } else if ("cancelled".equalsIgnoreCase(status)) {
@@ -653,7 +651,7 @@ public class NotificationBuilder {
   }
 
   private String retrieveStatus(String status) {
-    String retrievedStatus = "";
+    String retrievedStatus;
     if ("cf".equalsIgnoreCase(status)) {
       retrievedStatus = "confirmed";
     } else if ("cn".equalsIgnoreCase(status)) {

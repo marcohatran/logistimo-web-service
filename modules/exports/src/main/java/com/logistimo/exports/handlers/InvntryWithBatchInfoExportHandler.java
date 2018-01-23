@@ -28,6 +28,7 @@ import com.logistimo.config.models.InventoryConfig;
 import com.logistimo.config.utils.DomainConfigUtil;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
@@ -39,7 +40,6 @@ import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.materials.service.MaterialCatalogService;
 import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
 import com.logistimo.services.Resources;
-import com.logistimo.services.Services;
 import com.logistimo.tags.TagUtil;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
@@ -48,6 +48,7 @@ import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.NumberUtil;
 import com.logistimo.utils.StringUtil;
+
 import org.apache.commons.lang.StringEscapeUtils;
 
 import java.util.List;
@@ -110,7 +111,8 @@ public class InvntryWithBatchInfoExportHandler implements IExportHandler {
           .append(messages.getString("max")).append(mmd).append(CharacterConstants.COMMA);
     }
     header.append(jsMessages.getString("abnormality.type")).append(CharacterConstants.COMMA)
-        .append(jsMessages.getString("abnormality.duration") + "-" + messages.getString("days")).append(CharacterConstants.COMMA)
+        .append(jsMessages.getString("abnormality.duration")).append("-")
+        .append(messages.getString("days")).append(CharacterConstants.COMMA)
         .append(messages.getString("material.retailerprice")).append(CharacterConstants.COMMA)
         .append(messages.getString("inventory.policy")).append(CharacterConstants.COMMA)
         .append(messages.getString("inventory.servicelevel")).append(CharacterConstants.COMMA)
@@ -168,9 +170,10 @@ public class InvntryWithBatchInfoExportHandler implements IExportHandler {
   public String toCSV(Locale locale, String timezone, DomainConfig dc, String type) {
     try {
       // Get services
-      EntitiesService as = Services.getService(EntitiesServiceImpl.class);
-      MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
-      UsersService us = Services.getService(UsersServiceImpl.class);
+      EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
+      MaterialCatalogService mcs = StaticApplicationContext.getBean(
+          MaterialCatalogServiceImpl.class);
+      UsersService us = StaticApplicationContext.getBean(UsersServiceImpl.class);
       IKiosk k = as.getKiosk(invntryWithBatchInfo.getKioskId(), false);
       IMaterial m = mcs.getMaterial(invntryWithBatchInfo.getMaterialId());
 

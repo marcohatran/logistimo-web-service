@@ -29,9 +29,6 @@ import com.logistimo.proto.MobileAccountingConfigModel;
 import com.logistimo.proto.MobileApprovalsConfigModel;
 import com.logistimo.proto.MobileApproversModel;
 import com.logistimo.proto.MobilePurchaseSalesOrdersApprovalModel;
-import com.logistimo.services.Services;
-import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
 
 import java.util.HashMap;
 import java.util.List;
@@ -142,17 +139,16 @@ public class MobileConfigBuilder {
       return null;
     }
     MobileUserBuilder mobileUserBuilder = new MobileUserBuilder();
-    UsersService us = Services.getService(UsersServiceImpl.class);
     MobileApproversModel approversModel = new MobileApproversModel();
     if (primaryApprovers != null && !primaryApprovers.isEmpty()) {
       approversModel.prm =
           mobileUserBuilder
-              .buildMobileUserModels(mobileUserBuilder.constructUserAccount(us, primaryApprovers));
+              .buildMobileUserModels(mobileUserBuilder.constructUserAccount(primaryApprovers));
     }
     if (secApprovers != null && !secApprovers.isEmpty()) {
       approversModel.scn =
           mobileUserBuilder
-              .buildMobileUserModels(mobileUserBuilder.constructUserAccount(us, secApprovers));
+              .buildMobileUserModels(mobileUserBuilder.constructUserAccount(secApprovers));
     }
     return approversModel;
   }

@@ -23,28 +23,14 @@
 
 package com.logistimo.shipments.entity;
 
-import com.logistimo.inventory.entity.IInvAllocation;
-import com.logistimo.inventory.service.InventoryManagementService;
-import com.logistimo.inventory.service.impl.InventoryManagementServiceImpl;
-import com.logistimo.materials.entity.IMaterial;
-import com.logistimo.materials.service.MaterialCatalogService;
-import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
-
-import com.logistimo.services.Services;
-import com.logistimo.proto.JsonTagsZ;
-import com.logistimo.utils.BigUtil;
-import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.logger.XLog;
+import com.logistimo.utils.BigUtil;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 
-import javax.jdo.PersistenceManager;
 import javax.jdo.annotations.Element;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.IdentityType;

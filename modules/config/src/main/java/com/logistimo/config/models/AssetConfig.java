@@ -25,10 +25,11 @@ package com.logistimo.config.models;
 
 import com.google.gson.Gson;
 
-import org.json.JSONObject;
+import com.logistimo.logger.XLog;
 import com.logistimo.proto.JsonTagsZ;
 import com.logistimo.utils.StringUtil;
-import com.logistimo.logger.XLog;
+
+import org.json.JSONObject;
 
 import java.io.Serializable;
 import java.util.ArrayList;

@@ -27,13 +27,13 @@ import com.logistimo.auth.SecurityConstants;
 import com.logistimo.auth.service.AuthorizationService;
 import com.logistimo.config.models.CapabilityConfig;
 import com.logistimo.config.models.DomainConfig;
-import com.logistimo.users.entity.IUserAccount;
-import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
-
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
+import com.logistimo.users.entity.IUserAccount;
+import com.logistimo.users.service.UsersService;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.List;
@@ -42,6 +42,8 @@ import java.util.Map;
 /**
  * Created by charan on 08/03/17.
  */
+
+@Service
 public class AuthorizationServiceImpl implements AuthorizationService {
 
   private static Map<String, String> trnscMap;
@@ -55,6 +57,13 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     trnscMap.put("t", "ts");
   }
 
+  private UsersService usersService;
+
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
+  }
+
   /**
    * Authorise a user to perform add,edit,remove Entities or Users, checks capability "Allow creation of entities" of user
    * also restricts Read-only and Asset-only users to perform these operations
@@ -65,9 +74,8 @@ public class AuthorizationServiceImpl implements AuthorizationService {
    */
   public boolean authoriseUpdateKiosk(String userId, Long domainId)
       throws ServiceException, ObjectNotFoundException {
-    UsersService as = Services.getService(UsersServiceImpl.class);
-    String uRole = as.getUserAccount(userId).getRole();
-    String permission = as.getUserAccount(userId).getPermission();
+    String uRole = usersService.getUserAccount(userId).getRole();
+    String permission = usersService.getUserAccount(userId).getPermission();
     if (!permission.equals(IUserAccount.PERMISSION_DEFAULT)) {
       return false;
     }
@@ -93,8 +101,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
    */
   public boolean authoriseTransactionAccess(String transType, Long domainId, String userId)
       throws ServiceException, ObjectNotFoundException {
-    UsersService as = Services.getService(UsersServiceImpl.class);
-    String uRole = as.getUserAccount(userId).getRole();
+    String uRole = usersService.getUserAccount(userId).getRole();
 
     DomainConfig dc = DomainConfig.getInstance(domainId);
     CapabilityConfig cConfig = dc.getCapabilityByRole(uRole);

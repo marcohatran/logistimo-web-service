@@ -34,11 +34,11 @@ import com.logistimo.config.entity.IConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
 import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
 import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entity.ILocation;
 import com.logistimo.logger.XLog;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.cache.MemcacheService;
 import com.logistimo.utils.StringUtil;
 
@@ -820,7 +820,8 @@ public class DomainConfig implements ILocation, Serializable {
     }
     // Get from datastore
     try {
-      ConfigurationMgmtService cms = Services.getService(ConfigurationMgmtServiceImpl.class);
+      ConfigurationMgmtService cms = StaticApplicationContext
+          .getBean(ConfigurationMgmtServiceImpl.class);
       String
           configStr =
           cms.getConfiguration(IConfig.CONFIG_PREFIX + domainId.toString()).getConfig();
@@ -1695,7 +1696,7 @@ public class DomainConfig implements ILocation, Serializable {
 
   public void setSupportConfigByRole(String role, SupportConfig sc) {
     if (supportConfigMap == null) {
-      supportConfigMap = new HashMap<String, SupportConfig>();
+      supportConfigMap = new HashMap<>();
     }
     supportConfigMap.put(role, sc);
   }

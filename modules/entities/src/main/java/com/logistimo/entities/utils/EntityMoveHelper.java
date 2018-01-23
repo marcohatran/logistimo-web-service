@@ -23,20 +23,20 @@
 
 package com.logistimo.entities.utils;
 
+import com.logistimo.constants.CharacterConstants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
+import com.logistimo.services.ServiceException;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.utils.MsgUtil;
-
-import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
-import com.logistimo.constants.CharacterConstants;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * The {@code EntityMoveHelper} class is a helper class for {@link EntityMover}.
@@ -59,8 +59,8 @@ public class EntityMoveHelper {
    */
   public static List<String> validateUsers(Set<String> userIds, List<Long> kIds)
       throws ServiceException {
-    List<String> userErrors = new ArrayList<String>();
-    EntitiesService as = Services.getService(EntitiesServiceImpl.class, null);
+    List<String> userErrors = new ArrayList<>();
+    EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
     StringBuilder missedKiosks = new StringBuilder();
     for (String userId : userIds) {
       List<Long> userKIds = as.getKioskIdsForUser(userId, null, null).getResults();
@@ -89,11 +89,10 @@ public class EntityMoveHelper {
    * @return set of unique user ids from list of {@code kiosks}
    */
   public static Set<String> extractUserIds(List<IKiosk> kiosks) {
-    Set<String> userIds = new HashSet<String>();
+    Set<String> userIds = new HashSet<>();
     for (IKiosk kiosk : kiosks) {
-      for (IUserAccount s : kiosk.getUsers()) {
-        userIds.add(s.getUserId());
-      }
+      userIds.addAll(
+          kiosk.getUsers().stream().map(IUserAccount::getUserId).collect(Collectors.toList()));
     }
     return userIds;
   }

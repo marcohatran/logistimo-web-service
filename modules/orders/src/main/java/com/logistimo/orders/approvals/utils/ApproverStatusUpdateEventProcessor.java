@@ -28,17 +28,16 @@ import com.logistimo.communications.MessageHandlingException;
 import com.logistimo.communications.service.MessageService;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.logger.XLog;
 import com.logistimo.orders.approvals.dao.IApprovalsDao;
-import com.logistimo.orders.approvals.dao.impl.ApprovalsDao;
 import com.logistimo.orders.entity.approvals.IOrderApprovalMapping;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.users.service.impl.UsersServiceImpl;
@@ -68,8 +67,6 @@ public class ApproverStatusUpdateEventProcessor {
   private static final String ACTIVE_STATUS = "ac";
   private static final String EXPIRED_STATUS = "ex";
 
-  private IApprovalsDao approvalDao = new ApprovalsDao();
-
   private static Meter jmsMeter = MetricsUtil
       .getMeter(ApproverStatusUpdateEventProcessor.class, "approverStatusUpdateEventMeter");
 
@@ -84,12 +81,12 @@ public class ApproverStatusUpdateEventProcessor {
 
     if (ORDER.equalsIgnoreCase(event.getType())) {
 
-      UsersService usersService = Services.getService(UsersServiceImpl.class);
-      EntitiesService entitiesService = Services.getService(EntitiesServiceImpl.class);
+      UsersService usersService = StaticApplicationContext.getBean(UsersServiceImpl.class);
+      EntitiesService entitiesService = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
 
       try {
-
-        IOrderApprovalMapping orderApprovalMapping = approvalDao
+        IApprovalsDao approvalsDao = StaticApplicationContext.getBean(IApprovalsDao.class);
+        IOrderApprovalMapping orderApprovalMapping = approvalsDao
             .getOrderApprovalMapping(event.getApprovalId());
 
         IUserAccount requester = usersService.getUserAccount(event.getRequesterId());

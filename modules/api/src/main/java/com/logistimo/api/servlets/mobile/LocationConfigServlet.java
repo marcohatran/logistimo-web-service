@@ -34,11 +34,11 @@ import com.logistimo.api.util.RESTUtil;
 import com.logistimo.config.entity.IConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
 import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.logger.XLog;
 import com.logistimo.proto.RestConstantsZ;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.users.entity.IUserAccount;
 
 import org.apache.commons.lang.StringUtils;
@@ -143,9 +143,8 @@ public class LocationConfigServlet extends SgServlet {
 
   private String getLocationConfig() {
     try {
-      ConfigurationMgmtService
-          cms =
-          Services.getService(ConfigurationMgmtServiceImpl.class);
+      ConfigurationMgmtService cms =
+          StaticApplicationContext.getBean(ConfigurationMgmtServiceImpl.class);
       IConfig config = cms.getConfiguration(IConfig.LOCATIONS);
       return config.getConfig();
     } catch (ServiceException e) {
@@ -164,26 +163,6 @@ public class LocationConfigServlet extends SgServlet {
       ServiceException {
   }
 
-    /*
-        private String authenticateUser(String userId, String password){
-		if ( StringUtils.isEmpty(userId) ) {
-			xLogger.severe( "Invalid user name or password" );
-			return "Invalid user name or password";
-		}
-		String responseText = null;
-		try {
-			AccountsService as = Services.getService( AccountsServiceImpl.class );
-			IUserAccount user = as.authenticateUser(userId, password);
-			if ( user == null )
-				responseText = "Invalid user name or password";
-		} catch ( Exception e ) {
-			xLogger.severe( e.getClass().getName() + ": " + e.getMessage() );
-			responseText = e.getClass().getName() + ": " + e.getMessage();
-		}
-		return responseText;
-	}
-	*/
-
   private LocationMetadataResponse format(String config) {
     JSONObject locations;
     try {
@@ -192,7 +171,7 @@ public class LocationConfigServlet extends SgServlet {
       Map<String, List<String>> districts = parseDistricts(locations.getJSONArray("districts"));
       Map<String, List<String>> taluks = parseTaluks(locations.getJSONArray("taluks"));
       LocationMetadataResponse h = new LocationMetadataResponse();
-      h.countries = new HashMap<String, Country>();
+      h.countries = new HashMap<>();
       for (String country : states.keySet()) {
         Country c = new Country();
         c.name = country;

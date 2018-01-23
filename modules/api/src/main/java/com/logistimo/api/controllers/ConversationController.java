@@ -27,29 +27,26 @@ import com.logistimo.api.builders.ConversationBuilder;
 import com.logistimo.api.models.ConversationModel;
 import com.logistimo.api.request.StringRequestObj;
 import com.logistimo.auth.utils.SecurityUtils;
-import com.logistimo.auth.utils.SessionMgr;
 import com.logistimo.constants.Constants;
 import com.logistimo.conversations.builders.MessageBuilder;
 import com.logistimo.conversations.entity.IConversation;
 import com.logistimo.conversations.entity.IMessage;
 import com.logistimo.conversations.models.MessageModel;
 import com.logistimo.conversations.service.ConversationService;
-import com.logistimo.conversations.service.impl.ConversationServiceImpl;
 import com.logistimo.exception.InvalidDataException;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.logger.XLog;
 import com.logistimo.orders.service.OrderManagementService;
-import com.logistimo.orders.service.impl.OrderManagementServiceImpl;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.shipments.service.impl.ShipmentService;
 import com.logistimo.utils.LocalDateUtil;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -64,8 +61,6 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
-import javax.servlet.http.HttpServletRequest;
-
 /**
  * Created by kumargaurav on 04/10/16.
  */
@@ -74,31 +69,56 @@ import javax.servlet.http.HttpServletRequest;
 public class ConversationController {
 
   private static final XLog xLogger = XLog.getLog(ConversationController.class);
-  private ConversationBuilder builder = new ConversationBuilder();
-  private MessageBuilder messageBuilder = new MessageBuilder();
 
+  private ConversationBuilder conversationBuilder;
+  private MessageBuilder messageBuilder;
+  private ConversationService conversationService;
+  private ShipmentService shipmentService;
+  private OrderManagementService orderManagementService;
+
+  @Autowired
+  public void setConversationBuilder(ConversationBuilder conversationBuilder) {
+    this.conversationBuilder = conversationBuilder;
+  }
+
+  @Autowired
+  public void setMessageBuilder(MessageBuilder messageBuilder) {
+    this.messageBuilder = messageBuilder;
+  }
+
+  @Autowired
+  public void setConversationService(ConversationService conversationService) {
+    this.conversationService = conversationService;
+  }
+
+  @Autowired
+  public void setShipmentService(ShipmentService shipmentService) {
+    this.shipmentService = shipmentService;
+  }
+
+  @Autowired
+  public void setOrderManagementService(OrderManagementService orderManagementService) {
+    this.orderManagementService = orderManagementService;
+  }
 
   @RequestMapping(value = "/", method = RequestMethod.POST)
   public
   @ResponseBody
   ConversationModel addEditConversation(@RequestBody final ConversationModel conversation,
-                                        @RequestParam(required = false, defaultValue = "false") boolean update,
-                                        HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+                                        @RequestParam(required = false, defaultValue = "false") boolean update) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
-    ConversationService service = null;
-    ConversationModel model = null;
+    Long domainId = sUser.getCurrentDomainId();
+    ConversationModel model;
     try {
       //setting domain id if client has not passed it
       if (null == conversation.domainId && null != domainId) {
         conversation.domainId = domainId;
       }
-      service = Services.getService(ConversationServiceImpl.class, locale);
-      IConversation conv = builder.buildConversation(conversation, sUser.getUsername(), !update);
-      conv = service.addEditConversation(conv, !update);
-      model = builder.buildModel(conv, sUser);
+      IConversation conv = conversationBuilder.buildConversation(conversation, !update);
+      conv = conversationService.addEditConversation(conv, !update);
+      model = conversationBuilder.buildModel(conv, sUser);
 
     } catch (ServiceException e) {
       xLogger.warn("Error while creating conversation {0}", conversation, e);
@@ -125,39 +145,31 @@ public class ConversationController {
   @RequestMapping(value = "/", method = RequestMethod.GET)
   public
   @ResponseBody
-  ConversationModel getConversation(@RequestParam(required = true) String conversationId,
-                                    HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
-
-    ConversationService service = null;
-    IConversation conv = null;
+  ConversationModel getConversation(@RequestParam(required = true) String conversationId) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
+    IConversation conv;
     try {
-      service = Services.getService(ConversationServiceImpl.class);
-      conv = service.getConversationById(conversationId);
-
+      conv = conversationService.getConversationById(conversationId);
     } catch (Exception e) {
       xLogger.warn("Error while creating getting conversion with id {0}", conversationId, e);
       throw new InvalidServiceException(e);
     }
 
-    return null == conv ? null : builder.buildModel(conv, sUser);
+    return null == conv ? null : conversationBuilder.buildModel(conv, sUser);
   }
 
   @RequestMapping(value = "/message", method = RequestMethod.POST)
   public
   @ResponseBody
   MessageModel addEditMessage(@RequestBody MessageModel model,
-                              @RequestParam(required = false, defaultValue = "false") boolean update,
-                              HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+                              @RequestParam(required = false, defaultValue = "false") boolean update) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    ConversationService service = null;
-    MessageModel retmodel = null;
+    MessageModel retmodel;
     try {
-      service = Services.getService(ConversationServiceImpl.class, locale);
       IMessage message = messageBuilder.buildMessage(model, sUser.getUsername(), !update);
-      message = service.addEditMessage(message, !update);
+      message = conversationService.addEditMessage(message, !update);
       retmodel = messageBuilder.buildModel(message);
 
     } catch (ServiceException e) {
@@ -192,18 +204,15 @@ public class ConversationController {
                       @RequestParam(required = false) String objId,
                       @RequestParam(required = false) boolean cnt,
                       @RequestParam(defaultValue = PageParams.DEFAULT_SIZE_STR) int size,
-                      @RequestParam(defaultValue = PageParams.DEFAULT_OFFSET_STR) int offset,
-                      HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+                      @RequestParam(defaultValue = PageParams.DEFAULT_OFFSET_STR) int offset) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Results res;
-    ConversationService service;
     try {
       PageParams pageParams = new PageParams(offset, size);
-      service = Services.getService(ConversationServiceImpl.class);
       if (cnt) {
-        res = service.getMessagesCount(conversationId, objType, objId, pageParams);
+        res = conversationService.getMessagesCount(conversationId, objType, objId, pageParams);
       } else {
-        res = service.getMessages(conversationId, objType, objId, pageParams);
+        res = conversationService.getMessages(conversationId, objType, objId, pageParams);
       }
       if (res != null && res.getResults() != null) {
         SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATETIME_FORMAT);
@@ -231,41 +240,30 @@ public class ConversationController {
   @ResponseBody
   Results getMessagesByTag(@RequestParam(required = true) String tag,
                            @RequestParam(defaultValue = PageParams.DEFAULT_SIZE_STR) int size,
-                           @RequestParam(defaultValue = PageParams.DEFAULT_OFFSET_STR) int offset,
-                           HttpServletRequest request) {
-    Results res = null;
-    ConversationService service = null;
+                           @RequestParam(defaultValue = PageParams.DEFAULT_OFFSET_STR) int offset) {
     try {
       PageParams pageParams = new PageParams(offset, size);
-      service = Services.getService(ConversationServiceImpl.class);
-      res = service.getMessagesByTags(tag, pageParams);
+      return conversationService.getMessagesByTags(tag, pageParams);
     } catch (Exception e) {
       xLogger.severe("Error while getting message for TAGS {0}", tag, e);
       throw new InvalidServiceException(e);
     }
-    return res;
   }
 
   @RequestMapping(value = "/message/{objType}/{objId}", method = RequestMethod.POST)
   public
   @ResponseBody
   MessageModel addMessage(@PathVariable String objType, @PathVariable String objId,
-                          @RequestBody StringRequestObj message, HttpServletRequest request) {
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
+                          @RequestBody StringRequestObj message) {
+    SecureUserDetails user = SecurityUtils.getUserDetails();
     try {
-      IMessage iMessage = null;
+      IMessage iMessage;
       if ("ORDER".equals(objType)) {
-        OrderManagementService oms = Services.getService(OrderManagementServiceImpl.class,
-            user.getLocale());
-        iMessage = oms.addMessageToOrder(Long.valueOf(objId), message.data, user.getUsername());
+        iMessage = orderManagementService.addMessageToOrder(Long.valueOf(objId), message.data, user.getUsername());
       } else if ("SHIPMENT".equals(objType)) {
-        ShipmentService
-            shipmentService =
-            Services.getService(ShipmentService.class, user.getLocale());
         iMessage = shipmentService.addMessage(objId, message.data, user.getUsername());
       } else if ("APPROVAL".equals(objType)) {
-        ConversationService cs = Services.getService(ConversationServiceImpl.class);
-        iMessage = cs.addMsgToConversation(objType, objId, message.data, user.getUsername(),
+        iMessage = conversationService.addMsgToConversation(objType, objId, message.data, user.getUsername(),
             Collections.singleton(objType + objId), user.getDomainId(), null);
       } else {
         throw new InvalidDataException("Unrecognised object type " + objType);
@@ -282,11 +280,11 @@ public class ConversationController {
 
   @ResponseBody
   @RequestMapping(value = "/add_message/{objectType}/{objectId}", method = RequestMethod.POST)
-  public MessageModel addMessageWithUserID(@PathVariable String objectType, @PathVariable String objectId,
-      @RequestBody StringRequestObj message, HttpServletRequest request) {
+  public MessageModel addMessageWithUserID(@PathVariable String objectType,
+                                           @PathVariable String objectId,
+                                           @RequestBody StringRequestObj message) {
     try {
-      ConversationService cs = Services.getService(ConversationServiceImpl.class);
-      IMessage iMessage = cs.addMsgToConversation(objectType, objectId, message.data,
+      IMessage iMessage = conversationService.addMsgToConversation(objectType, objectId, message.data,
           message.userId, Collections.singleton(objectType + objectId), message.domainId, null);
       return new MessageBuilder().buildModel(iMessage);
     } catch (Exception e) {

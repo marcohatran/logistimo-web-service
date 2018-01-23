@@ -27,10 +27,9 @@ import com.google.visualization.datasource.datatable.ColumnDescription;
 import com.google.visualization.datasource.datatable.DataTable;
 
 import com.logistimo.config.models.DomainConfig;
+import com.logistimo.logger.XLog;
 import com.logistimo.reports.generators.ReportData;
 import com.logistimo.reports.generators.ReportingDataException;
-
-import com.logistimo.logger.XLog;
 
 import java.util.Iterator;
 import java.util.List;

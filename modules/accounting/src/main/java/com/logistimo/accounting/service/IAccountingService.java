@@ -25,12 +25,10 @@ package com.logistimo.accounting.service;
 
 import com.logistimo.accounting.entity.IAccount;
 import com.logistimo.accounting.models.CreditData;
-
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
 import com.logistimo.services.ObjectNotFoundException;
-import com.logistimo.services.Service;
 import com.logistimo.services.ServiceException;
 
 import java.math.BigDecimal;
@@ -38,7 +36,7 @@ import java.math.BigDecimal;
 /**
  * Created by charan on 05/03/17.
  */
-public interface IAccountingService extends Service {
+public interface IAccountingService {
 
   // Update an account with payable or receivable (pass 0 to avoid any increments)
   void updateAccount(Long domainId, Long vendorId, Long customerId, int year, BigDecimal payable,

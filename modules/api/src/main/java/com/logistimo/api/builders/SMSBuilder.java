@@ -25,7 +25,6 @@ package com.logistimo.api.builders;
 
 import com.logistimo.api.constants.SMSConstants;
 import com.logistimo.api.models.InventoryTransactions;
-import com.logistimo.api.models.SMSModel;
 import com.logistimo.api.models.SMSTransactionModel;
 import com.logistimo.api.util.SMSDecodeUtil;
 import com.logistimo.api.util.SMSUtil;
@@ -35,17 +34,14 @@ import com.logistimo.constants.SourceConstants;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
-import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.exception.BadRequestException;
 import com.logistimo.exception.InvalidDataException;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.inventory.service.InventoryManagementService;
-import com.logistimo.inventory.service.impl.InventoryManagementServiceImpl;
 import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.materials.service.MaterialCatalogService;
-import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
 import com.logistimo.proto.MobileInvBatchModel;
 import com.logistimo.proto.MobileInvModel;
 import com.logistimo.proto.MobileTransErrModel;
@@ -53,14 +49,14 @@ import com.logistimo.proto.MobileTransErrorDetailModel;
 import com.logistimo.proto.MobileTransModel;
 import com.logistimo.proto.MobileUpdateInvTransResponse;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.PatternConstants;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
@@ -72,71 +68,45 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.stream.Collectors;
 
 /**
  * @author Mohan Raja
  */
+@Component
 public class SMSBuilder {
 
   private static final XLog xLogger = XLog.getLog(SMSBuilder.class);
   private static final int SMS_AUTH_TOKEN_LENGTH = 4;
 
-  public SMSModel constructSMSModel(String message) throws ServiceException {
-    SMSModel model = new SMSModel();
-    List<String> fields = Arrays.asList(message.split(SMSConstants.FIELD_SEPARATOR));
-    for (String field : fields) {
-      String[] keyValue = field.split(SMSConstants.KEY_SEPARATOR);
-      switch (keyValue[0]) {
-        case SMSConstants.TOKEN:
-          model.token = keyValue[1];
-          break;
-        case SMSConstants.TRANSACTION_TYPE:
-          model.type = keyValue[1];
-          break;
-        case SMSConstants.INVENTORY:
-          model.materials = new ArrayList<>();
-          List<String>
-              materials =
-              Arrays.asList(keyValue[1].split(SMSConstants.MATERIAL_SEPARATOR));
-          for (String material : materials) {
-            String[] mat = material.split(CharacterConstants.COMMA);
-            model.addMaterial(Long.parseLong(mat[0]), new BigDecimal(mat[1]),
-                new BigDecimal(mat[2]));
-          }
-          break;
-        case SMSConstants.PARTIAL_ID:
-          model.partialId = keyValue[1];
-          break;
-        case SMSConstants.SEND_TIMESTAMP:
-          model.saveTS = new Date(Long.parseLong(keyValue[1]));
-          break;
-        case SMSConstants.ACTUAL_TIMESTAMP:
-          model.actualTD = keyValue[1];
-          break;
-        case SMSConstants.USER_ID:
-          model.userId = keyValue[1];
-          break;
-        case SMSConstants.KIOSK_ID:
-          model.kioskId = Long.parseLong(keyValue[1]);
-          break;
-        case SMSConstants.DEST_KIOSK_ID:
-          model.destKioskId = Long.parseLong(keyValue[1]);
-          break;
-        default:
-          xLogger.warn("Unknown key,value found in SMS: " + Arrays.toString(keyValue));
-      }
-    }
-    if (model.materials != null && model.kioskId != null) {
-      updateMaterialDetails(model);
-    }
-    return model.isValid() ? model : null;
+  private InventoryManagementService inventoryManagementService;
+  private EntitiesService entitiesService;
+  private MaterialCatalogService materialCatalogService;
+  private UsersService usersService;
+
+  @Autowired
+  public void setInventoryManagementService(InventoryManagementService inventoryManagementService) {
+    this.inventoryManagementService = inventoryManagementService;
   }
 
+  @Autowired
+  public void setEntitiesService(EntitiesService entitiesService) {
+    this.entitiesService = entitiesService;
+  }
+
+  @Autowired
+  public void setMaterialCatalogService(MaterialCatalogService materialCatalogService) {
+    this.materialCatalogService = materialCatalogService;
+  }
+
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
+  }
 
   /**
    * Method to parse message and create a SMS transaction model
@@ -150,10 +120,7 @@ public class SMSBuilder {
 
     SMSTransactionModel model = new SMSTransactionModel();
     try {
-      //Split based on :
-      List<String>
-          fields =
-          Arrays.asList(message
+      List<String> fields = Arrays.asList(message
               .split(SMSConstants.FIELD_SEPARATOR + PatternConstants.ESCAPE_INSIDE_DOUBLE_QUOTES));
       String inventoryDetails = null;
       //Get fields
@@ -350,17 +317,6 @@ public class SMSBuilder {
   }
 
 
-  public void updateMaterialDetails(SMSModel model) throws ServiceException {
-    for (SMSModel.SMSInv material : model.materials) {
-      InventoryManagementService ims = new InventoryManagementServiceImpl();
-      IInvntry invntry = ims.getInvntryByShortID(model.kioskId, material.id);
-      if (invntry != null) {
-        material.matId = invntry.getMaterialId();
-        material.curStk = invntry.getStock();
-      }
-    }
-  }
-
   /**
    * Method to build  SMS response
    *
@@ -462,24 +418,22 @@ public class SMSBuilder {
     if (invBatchModelList != null && !invBatchModelList.isEmpty()) {
 
       //Create a set with the batchid received in the request
-      Set<String> batchIdSet=new HashSet<>();
-      for(MobileTransModel transModel:mobileTransModelList){
-        if(StringUtils.isNotBlank(transModel.bid)) {
-          batchIdSet.add(transModel.bid);
-        }
-      }
+      Set<String> batchIdSet=
+          mobileTransModelList.stream().filter(transModel -> StringUtils.isNotBlank(transModel.bid))
+              .map(transModel -> transModel.bid).collect(Collectors.toSet());
       //append batch information only for the requested batches
-      for (MobileInvBatchModel batchModel : invBatchModelList) {
-        if(batchIdSet.contains(batchModel.bid)){
-          //append inventory details
-          appendInventoryDetails(materialDetails, batchModel.q, batchModel.alq, invModel.itq);
-          //append batch Id
-          materialDetails.append(SMSConstants.COMMA_SEPARATOR).append(SMSConstants.DOUBLE_QUOTE)
-              .append(batchModel.bid).append(SMSConstants.DOUBLE_QUOTE)
-              .append(SMSConstants.COMMA_SEPARATOR);
-          batchIdSet.remove(batchModel.bid);
-        }
-      }
+      //append inventory details
+//append batch Id
+      invBatchModelList.stream().filter(batchModel -> batchIdSet.contains(batchModel.bid))
+          .forEach(batchModel -> {
+            //append inventory details
+            appendInventoryDetails(materialDetails, batchModel.q, batchModel.alq, invModel.itq);
+            //append batch Id
+            materialDetails.append(SMSConstants.COMMA_SEPARATOR).append(SMSConstants.DOUBLE_QUOTE)
+                .append(batchModel.bid).append(SMSConstants.DOUBLE_QUOTE)
+                .append(SMSConstants.COMMA_SEPARATOR);
+            batchIdSet.remove(batchModel.bid);
+          });
       batchIdSet.stream().forEach(bid -> {
         appendInventoryDetails(materialDetails, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
         //append batch Id
@@ -530,12 +484,11 @@ public class SMSBuilder {
   private Map<Long, List<MobileTransErrorDetailModel>> populateErrorMap(
       MobileUpdateInvTransResponse response) throws ServiceException {
     Map<Long, List<MobileTransErrorDetailModel>> map = null;
-    InventoryManagementService service = Services.getService(InventoryManagementServiceImpl.class);
     if (response.errs != null) {
       map = new HashMap<>();
       for (MobileTransErrModel errModel : response.errs) {
         //get inventory object based on kiosk id and material id
-        IInvntry invntry = service.getInventory(response.kid, errModel.mid);
+        IInvntry invntry = inventoryManagementService.getInventory(response.kid, errModel.mid);
         map.put(invntry.getShortId(), errModel.errdtl);
       }
 
@@ -571,24 +524,13 @@ public class SMSBuilder {
     List<ITransaction> transactionList;
     try {
       //Get source kiosk details
-      EntitiesService entityService = Services.getService(EntitiesServiceImpl.class);
-      IKiosk sourceKiosk = entityService.getKiosk(model.getKioskId());
-      InventoryManagementService
-          inventoryManagementService =
-          Services.getService(InventoryManagementServiceImpl.class);
-      MaterialCatalogService
-          materialCatalogService =
-          Services.getService(MaterialCatalogServiceImpl.class);
-      //Get user details
-      UsersService as = Services.getService(UsersServiceImpl.class);
-      IUserAccount ua = as.getUserAccount(model.getUserId());
+      IKiosk sourceKiosk = entitiesService.getKiosk(model.getKioskId());
+      IUserAccount ua = usersService.getUserAccount(model.getUserId());
 
       List<InventoryTransactions> list = model.getInventoryTransactionsList();
 
       for (InventoryTransactions inventoryTransactions : list) {
-        IInvntry
-            invntry =
-            inventoryManagementService.getInvntryByShortID(sourceKiosk.getKioskId(),
+        IInvntry invntry = inventoryManagementService.getInvntryByShortID(sourceKiosk.getKioskId(),
                 inventoryTransactions.getMaterialShortId());
         IMaterial material = materialCatalogService.getMaterial(invntry.getMaterialId());
         inventoryTransactions.setMaterialId(material.getMaterialId());

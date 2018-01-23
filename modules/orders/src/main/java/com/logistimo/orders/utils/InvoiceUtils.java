@@ -25,7 +25,6 @@ package com.logistimo.orders.utils;
 
 import com.logistimo.activity.entity.IActivity;
 import com.logistimo.activity.service.ActivityService;
-import com.logistimo.activity.service.impl.ActivityServiceImpl;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.Constants;
 import com.logistimo.entities.entity.IKiosk;
@@ -37,17 +36,15 @@ import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.materials.service.MaterialCatalogService;
 import com.logistimo.orders.entity.IDemandItem;
 import com.logistimo.orders.entity.IOrder;
-import com.logistimo.orders.service.impl.InvoiceItem;
+import com.logistimo.orders.models.InvoiceItem;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.storage.StorageUtil;
 import com.logistimo.shipments.ShipmentStatus;
 import com.logistimo.shipments.entity.IShipment;
 import com.logistimo.shipments.entity.IShipmentItem;
 import com.logistimo.shipments.entity.IShipmentItemBatch;
 import com.logistimo.shipments.service.IShipmentService;
-import com.logistimo.shipments.service.impl.ShipmentService;
 import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.LocalDateUtil;
 
@@ -106,6 +103,8 @@ public class InvoiceUtils {
   private final MaterialCatalogService materialService;
   private final EntitiesService entitiesService;
   private final StorageUtil storageUtil;
+  private IShipmentService shipmentService;
+  private ActivityService activityService;
 
   @Autowired
   public InvoiceUtils(InventoryManagementService inventoryService,
@@ -115,6 +114,16 @@ public class InvoiceUtils {
     this.materialService = materialService;
     this.entitiesService = entitiesService;
     this.storageUtil = storageUtil;
+  }
+
+  @Autowired
+  public void setShipmentService(IShipmentService shipmentService) {
+    this.shipmentService = shipmentService;
+  }
+
+  @Autowired
+  public void setActivityService(ActivityService activityService) {
+    this.activityService = activityService;
   }
 
   public boolean hasAccessToOrder(SecureUserDetails user, IOrder order) {
@@ -132,7 +141,6 @@ public class InvoiceUtils {
 
     int sno = 1;
 
-    IShipmentService shipmentService = Services.getService(ShipmentService.class);
     String shipmentQuantity = null;
 
     for (IDemandItem demandItem : order.getItems()) {
@@ -262,8 +270,6 @@ public class InvoiceUtils {
 
   private Map<Long, Map<String, BatchInfo>> getQuantityByBatches(Long orderId) {
 
-    IShipmentService shipmentService = Services.getService(ShipmentService.class);
-
     List<IShipment> shipments = shipmentService.getShipmentsByOrderId(orderId);
     Map<Long, Map<String, BatchInfo>> quantityByBatches = new HashMap<>();
 
@@ -365,8 +371,6 @@ public class InvoiceUtils {
   public Map<String, Object> getParameters(SecureUserDetails user, IOrder order,
       IShipment shipment)
       throws IOException, ServiceException, ClassNotFoundException {
-
-    ActivityService activityService = Services.getService(ActivityServiceImpl.class);
 
     IKiosk customer = entitiesService.getKiosk(order.getKioskId());
 

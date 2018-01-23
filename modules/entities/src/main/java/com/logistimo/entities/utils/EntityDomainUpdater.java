@@ -23,20 +23,18 @@
 
 package com.logistimo.entities.utils;
 
+import com.logistimo.constants.CharacterConstants;
+import com.logistimo.constants.QueryConstants;
+import com.logistimo.context.StaticApplicationContext;
+import com.logistimo.entities.pagination.processor.EntityDomainUpdateProcessor;
 import com.logistimo.entities.service.EntitiesService;
-import com.logistimo.entities.service.EntitiesServiceImpl;
-
-import com.logistimo.pagination.QueryParams;
+import com.logistimo.logger.XLog;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.PagedExec;
-import com.logistimo.entities.pagination.processor.EntityDomainUpdateProcessor;
+import com.logistimo.pagination.QueryParams;
 import com.logistimo.services.ServiceException;
-import com.logistimo.constants.CharacterConstants;
-
 import com.logistimo.services.utils.ConfigUtil;
 import com.logistimo.utils.PropertyUtil;
-import com.logistimo.constants.QueryConstants;
-import com.logistimo.logger.XLog;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -66,8 +64,8 @@ public class EntityDomainUpdater {
       throws ServiceException {
     String relatedObjectsStr = ConfigUtil.get(ENTITY_DOMAIN_UPDATE_PROP);
     Map<String, String[]> relatedClassesMap = PropertyUtil.parseProperty(relatedObjectsStr);
-    EntitiesService as = new EntitiesServiceImpl();
-    Long sourceDomainId = as.getKiosk(kioskId).getDomainId();
+    EntitiesService entityService = StaticApplicationContext.getBean(EntitiesService.class);
+    Long sourceDomainId = entityService.getKiosk(kioskId).getDomainId();
     for (String relatedClassName : relatedClassesMap.keySet()) {
       String[] fieldName = relatedClassesMap.get(relatedClassName);
       try {

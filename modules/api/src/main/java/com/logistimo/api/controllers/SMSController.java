@@ -40,16 +40,14 @@ import com.logistimo.inventory.TransactionUtil;
 import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.inventory.models.ErrorDetailModel;
 import com.logistimo.inventory.service.InventoryManagementService;
-import com.logistimo.inventory.service.impl.InventoryManagementServiceImpl;
 import com.logistimo.logger.XLog;
 import com.logistimo.proto.MobileMaterialTransModel;
 import com.logistimo.proto.MobileUpdateInvTransResponse;
-import com.logistimo.services.Services;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -70,7 +68,25 @@ import javax.servlet.http.HttpServletRequest;
 @RequestMapping("/sms")
 public class SMSController {
   private static final XLog xLogger = XLog.getLog(SMSController.class);
-  private SMSBuilder builder = new SMSBuilder();
+
+  private SMSBuilder smsBuilder;
+  private UsersService usersService;
+  private InventoryManagementService inventoryManagementService;
+
+  @Autowired
+  public void setSmsBuilder(SMSBuilder smsBuilder) {
+    this.smsBuilder = smsBuilder;
+  }
+
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
+  }
+
+  @Autowired
+  public void setInventoryManagementService(InventoryManagementService inventoryManagementService) {
+    this.inventoryManagementService = inventoryManagementService;
+  }
 
   /**
    * Method to process transaction
@@ -96,14 +112,13 @@ public class SMSController {
         return;
       }
       //populate model
-      model = builder.buildSMSModel(smsMessage.getMessage());
+      model = smsBuilder.buildSMSModel(smsMessage.getMessage());
       //Get user details
       if (!SMSConstants.V2.equals(model.getVersion())) {
         xLogger.severe("V=" + model.getVersion() + " version is not supported");
         return;
       }
-      UsersService as = Services.getService(UsersServiceImpl.class);
-      ua = as.getUserAccount(model.getUserId());
+      ua = usersService.getUserAccount(model.getUserId());
       //authorise user
       if (!GenericAuthoriser
           .authoriseSMS(smsMessage.getAddress(), ua.getMobilePhoneNumber(), model.getUserId(),
@@ -117,7 +132,7 @@ public class SMSController {
           SMSUtil.isDuplicateMsg(model.getSendTime(), model.getUserId(), model.getKioskId(),
               model.getPartialId());
       //check if duplicate transaction
-      Map<Long, List<ITransaction>> transactionMap = builder.buildTransaction(model);
+      Map<Long, List<ITransaction>> transactionMap = smsBuilder.buildTransaction(model);
 
       if (isDuplicate) {
         Integer status = TransactionUtil.getObjectFromCache(String.valueOf(model.getSendTime()),
@@ -126,10 +141,8 @@ public class SMSController {
             throw new LogiException("Transaction is in progress");
         }
       } else {
-        InventoryManagementService ims =
-            Services.getService(InventoryManagementServiceImpl.class);
         midErrorDetailModelsMap =
-            ims.updateMultipleInventoryTransactions(transactionMap, ua.getDomainId(),
+            inventoryManagementService.updateMultipleInventoryTransactions(transactionMap, ua.getDomainId(),
                 ua.getUserId());
       }
       MobileUpdateInvTransResponse
@@ -137,7 +150,7 @@ public class SMSController {
           createResponse(model, midErrorDetailModelsMap, ua.getDomainId(), isDuplicate);
       if (mobileUpdateInvTransResponse != null) {
         //send SMS
-        responseMsg = builder.buildResponse(model, mobileUpdateInvTransResponse, null);
+        responseMsg = smsBuilder.buildResponse(model, mobileUpdateInvTransResponse, null);
         MessageService ms = MessageService.getInstance(MessageService.SMS, ua.getCountry());
         ms.send(ua, responseMsg, MessageService.NORMAL, null, null, null);
       }
@@ -169,13 +182,13 @@ public class SMSController {
     try {
       if (userAccount == null && smsRequestModel!=null && smsRequestModel.getMessage() != null) {
         String userId = SMSUtil.getUserId(smsRequestModel.getMessage());
-        userAccount = Services.getService(UsersServiceImpl.class).getUserAccount(userId);
+        userAccount = usersService.getUserAccount(userId);
       }
       if (smsRequestModel != null && userAccount != null) {
         MessageService
             ms =
             MessageService.getInstance(MessageService.SMS, userAccount.getCountry());
-        ms.send(userAccount, builder.buildResponse(model, null, errorMsg), MessageService.NORMAL,
+        ms.send(userAccount, smsBuilder.buildResponse(model, null, errorMsg), MessageService.NORMAL,
             null,
             null, null);
       }

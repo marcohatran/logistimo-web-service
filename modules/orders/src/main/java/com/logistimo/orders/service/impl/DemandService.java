@@ -29,15 +29,12 @@ import com.logistimo.constants.QueryConstants;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
-import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.inventory.entity.IInvAllocation;
 import com.logistimo.inventory.entity.IInvntryBatch;
 import com.logistimo.inventory.service.InventoryManagementService;
-import com.logistimo.inventory.service.impl.InventoryManagementServiceImpl;
 import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.materials.service.MaterialCatalogService;
-import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
 import com.logistimo.models.orders.DiscrepancyModel;
 import com.logistimo.orders.entity.IDemandItem;
 import com.logistimo.orders.entity.IOrder;
@@ -47,18 +44,16 @@ import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.QueryParams;
 import com.logistimo.pagination.Results;
 import com.logistimo.proto.JsonTagsZ;
-import com.logistimo.services.Service;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.impl.PMF;
-import com.logistimo.services.impl.ServiceImpl;
 import com.logistimo.tags.dao.ITagDao;
-import com.logistimo.tags.dao.TagDao;
 import com.logistimo.tags.entity.ITag;
 import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.StringUtil;
 import com.sun.rowset.CachedRowSetImpl;
+
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
@@ -83,9 +78,39 @@ import javax.sql.rowset.CachedRowSet;
  * Created by smriti on 9/30/16.
  */
 @org.springframework.stereotype.Service
-public class DemandService extends ServiceImpl implements IDemandService {
+public class DemandService implements IDemandService {
   private static final XLog xLogger = XLog.getLog(DemandService.class);
-  private ITagDao tagDao = new TagDao();
+  private ITagDao tagDao;
+  private InventoryManagementService inventoryManagementService;
+  private EntitiesService entitiesService;
+  private MaterialCatalogService materialCatalogService;
+  private OrderManagementService orderManagementService;
+
+  @Autowired
+  public void setTagDao(ITagDao tagDao) {
+    this.tagDao = tagDao;
+  }
+
+  @Autowired
+  public void setInventoryManagementService(
+      InventoryManagementService inventoryManagementService) {
+    this.inventoryManagementService = inventoryManagementService;
+  }
+
+  @Autowired
+  public void setEntitiesService(EntitiesService entitiesService) {
+    this.entitiesService = entitiesService;
+  }
+
+  @Autowired
+  public void setMaterialCatalogService(MaterialCatalogService materialCatalogService) {
+    this.materialCatalogService = materialCatalogService;
+  }
+
+  @Autowired
+  public void setOrderManagementService(OrderManagementService orderManagementService) {
+    this.orderManagementService = orderManagementService;
+  }
 
   @Override
   public Results getDemandItems(Long domainId, Long kioskId, Long mId, String eTag, String mTag,
@@ -270,12 +295,9 @@ public class DemandService extends ServiceImpl implements IDemandService {
       } else {
         oId.add(orderId);
       }
-      InventoryManagementService
-          ims =
-          Services.getService(InventoryManagementServiceImpl.class);
       for (Long id : oId) {
         String tag = IInvAllocation.Type.ORDER + CharacterConstants.COLON + id;
-        ims.clearAllocationByTag(kioskId, materialId, tag);
+        inventoryManagementService.clearAllocationByTag(kioskId, materialId, tag);
       }
     } catch (ServiceException e) {
       throw e;
@@ -499,21 +521,6 @@ public class DemandService extends ServiceImpl implements IDemandService {
     return qp;
   }
 
-  @Override
-  public void init(Services services) throws ServiceException {
-
-  }
-
-  @Override
-  public void destroy() throws ServiceException {
-
-  }
-
-  @Override
-  public Class<? extends Service> getInterface() {
-    return null;
-  }
-
   private StringBuilder buildQueryForOids(Long domainId, String oType, Boolean excludeTransfer,
                                           Long kioskId, List<Long> kioskIds, String kioskTag,
                                           List<String> parameters) {
@@ -584,10 +591,6 @@ public class DemandService extends ServiceImpl implements IDemandService {
    */
   public List<DiscrepancyModel> getDiscrepancyModels(List objects) throws ServiceException {
     List<DiscrepancyModel> modelItems = new ArrayList<>(objects.size());
-    EntitiesService as = Services.getService(EntitiesServiceImpl.class);
-    MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
-    OrderManagementService oms = Services.getService(OrderManagementServiceImpl.class);
-
     Iterator iterator = objects.iterator();
     while (iterator.hasNext()) {
       DiscrepancyModel model = new DiscrepancyModel();
@@ -596,12 +599,12 @@ public class DemandService extends ServiceImpl implements IDemandService {
       IOrder o;
       Object[] di = (Object[]) iterator.next();
       try {
-        c = as.getKiosk((Long) di[1], false);
-        m = mcs.getMaterial((Long) di[2]);
-        o = oms.getOrder((Long) di[3]);
+        c = entitiesService.getKiosk((Long) di[1], false);
+        m = materialCatalogService.getMaterial((Long) di[2]);
+        o = orderManagementService.getOrder((Long) di[3]);
         if (o.getServicingKiosk() != null) {
           try {
-            v = as.getKiosk(o.getServicingKiosk(), false);
+            v = entitiesService.getKiosk(o.getServicingKiosk(), false);
           } catch (Exception e) {
             xLogger.warn(
                 "Ignoring exception while getting discrepancy model for demand item {0} with vendor id {1}",
@@ -682,8 +685,7 @@ public class DemandService extends ServiceImpl implements IDemandService {
       map.put(JsonTagsZ.RECOMMENDED_ORDER_QUANTITY,
           BigUtil.getFormattedValue(di.getRecommendedOrderQuantity()));
 
-      MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
-      IMaterial m = mcs.getMaterial(di.getMaterialId());
+      IMaterial m = materialCatalogService.getMaterial(di.getMaterialId());
       String customMaterialId = m.getCustomId();
       if (customMaterialId != null && !customMaterialId.isEmpty()) {
         map.put(JsonTagsZ.CUSTOM_MATERIALID, customMaterialId);
@@ -746,15 +748,11 @@ public class DemandService extends ServiceImpl implements IDemandService {
   public BigDecimal getAllocatedQuantityForDemandItem(String id, Long oId, Long mId) {
     BigDecimal alq = new BigDecimal(0);
     try {
-      InventoryManagementService
-          ims =
-          Services.getService(InventoryManagementServiceImpl.class);
-      OrderManagementService oms = Services.getService(OrderManagementServiceImpl.class);
-      IOrder o = oms.getOrder(oId);
+      IOrder o = orderManagementService.getOrder(oId);
       Long lkId = o.getServicingKiosk();
       List<IInvAllocation>
           iAllocs =
-          ims.getAllocationsByTypeId(lkId, mId, IInvAllocation.Type.ORDER, oId.toString());
+          inventoryManagementService.getAllocationsByTypeId(lkId, mId, IInvAllocation.Type.ORDER, oId.toString());
       if (iAllocs != null && !iAllocs.isEmpty()) {
         for (IInvAllocation iAlloc : iAllocs) {
           alq = alq.add(iAlloc.getQuantity());
@@ -771,15 +769,11 @@ public class DemandService extends ServiceImpl implements IDemandService {
   public String getMaterialStatusForDemandItem(String id, Long oId, Long mId) {
 
     try {
-      InventoryManagementService
-          ims =
-          Services.getService(InventoryManagementServiceImpl.class);
-      OrderManagementService oms = Services.getService(OrderManagementServiceImpl.class);
-      IOrder o = oms.getOrder(oId);
+      IOrder o = orderManagementService.getOrder(oId);
       Long lkId = o.getServicingKiosk();
       List<IInvAllocation>
           iAllocs =
-          ims.getAllocationsByTypeId(lkId, mId, IInvAllocation.Type.ORDER, oId.toString());
+          inventoryManagementService.getAllocationsByTypeId(lkId, mId, IInvAllocation.Type.ORDER, oId.toString());
       if (iAllocs != null && !iAllocs.isEmpty()) {
         return iAllocs.get(0).getMaterialStatus();
 
@@ -796,21 +790,17 @@ public class DemandService extends ServiceImpl implements IDemandService {
                                                                   Locale locale, String timezone) {
     List<Map<String, String>> batches = new ArrayList();
     try {
-      InventoryManagementService
-          ims =
-          Services.getService(InventoryManagementServiceImpl.class);
-      OrderManagementService oms = Services.getService(OrderManagementServiceImpl.class);
-      IOrder o = oms.getOrder(oId);
+      IOrder o = orderManagementService.getOrder(oId);
       Long lkId = o.getServicingKiosk();
       List<IInvAllocation>
           iAllocs =
-          ims.getAllocationsByTypeId(lkId, mId, IInvAllocation.Type.ORDER, oId.toString());
+          inventoryManagementService.getAllocationsByTypeId(lkId, mId, IInvAllocation.Type.ORDER, oId.toString());
 
       if (iAllocs != null && !iAllocs.isEmpty()) {
         for (IInvAllocation iAlloc : iAllocs) {
           if (iAlloc.getBatchId() != null && !iAlloc.getBatchId().isEmpty()) {
             Map<String, String> bMap = new HashMap();
-            IInvntryBatch b = ims.getInventoryBatch(lkId, mId, iAlloc.getBatchId(), null);
+            IInvntryBatch b = inventoryManagementService.getInventoryBatch(lkId, mId, iAlloc.getBatchId(), null);
             bMap.put(JsonTagsZ.BATCH_ID, b.getBatchId());
             if (b.getBatchExpiry() != null) {
               bMap.put(JsonTagsZ.BATCH_EXPIRY,
@@ -846,11 +836,10 @@ public class DemandService extends ServiceImpl implements IDemandService {
   public List<Map> getDemandItems(Collection<? extends IDemandItem> items, String currency,
                                          Locale locale, String timezone,
                                          boolean forceIntegerQuantity) {
-    List<Map> materialsList = null;
     if (items == null || items.size() == 0) {
-      return materialsList;
+      return null;
     }
-    materialsList = new ArrayList<>(1);
+    List<Map> materialsList = new ArrayList<>(1);
     Iterator<IDemandItem> it = (Iterator<IDemandItem>) items.iterator();
     while (it.hasNext()) {
       IDemandItem item = it.next();
@@ -862,39 +851,4 @@ public class DemandService extends ServiceImpl implements IDemandService {
 
     return materialsList;
   }
-
-    /*@Override
-    public IDemandItem getDemandItemByMaterial(Long orderId, Long materialId, PersistenceManager pm) {
-
-        PersistenceManager localPM = pm;
-        boolean useLocalPM = false;
-        if (localPM == null) {
-            localPM = PMF.get().getPersistenceManager();
-            useLocalPM = true;
-        }
-        Query q = null;
-        List<String> parameters = new ArrayList<>();
-        try {
-            q = localPM.newQuery("javax.jdo.query.SQL", "SELECT * FROM DEMANDITEM WHERE OID=? AND MID=?");
-            parameters.add(orderId.toString());
-            parameters.add(materialId.toString());
-            q.setClass(JDOUtils.getImplClass(IDemandItem.class));
-            q.setUnique(true);
-            IDemandItem idm = (IDemandItem) q.executeWithArray(parameters.toArray());
-            if (idm != null) {
-                idm = localPM.detachCopy(idm);
-            }
-            return idm;
-        } catch (Exception e) {
-            xLogger.severe("Error while fetching demand items for order {0} for material {1}", orderId,materialId, e);
-        } finally {
-            if (q != null) {
-                q.closeAll();
-            }
-            if (useLocalPM) {
-                localPM.close();
-            }
-        }
-        return null;
-    }*/
 }

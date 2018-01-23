@@ -23,12 +23,10 @@
 
 package com.logistimo.materials.entity;
 
-import com.logistimo.tags.entity.ITag;
-
 import com.logistimo.domains.ISubDomain;
 import com.logistimo.domains.ISuperDomain;
-import com.logistimo.events.IEvents;
 import com.logistimo.proto.JsonTagsZ;
+import com.logistimo.tags.entity.ITag;
 
 import java.math.BigDecimal;
 import java.util.Date;

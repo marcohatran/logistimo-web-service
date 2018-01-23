@@ -33,7 +33,6 @@ import com.logistimo.reports.entity.slices.IDomainStats;
 import com.logistimo.reports.generators.IReportDataGeneratorFactory;
 import com.logistimo.reports.generators.ReportData;
 import com.logistimo.reports.models.DomainCounts;
-import com.logistimo.services.Service;
 import com.logistimo.services.ServiceException;
 
 import java.util.Date;
@@ -41,7 +40,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-public interface ReportsService extends Service {
+public interface ReportsService {
 
   @SuppressWarnings("unchecked")
   InvntrySnapshot getInventorySnapshot(Long kioskId, Long materialId, Date date,

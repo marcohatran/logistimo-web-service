@@ -25,7 +25,7 @@ package com.logistimo.orders.actions;
 
 import com.logistimo.orders.entity.DemandItem;
 import com.logistimo.orders.entity.IDemandItem;
-import com.logistimo.orders.service.impl.InvoiceItem;
+import com.logistimo.orders.models.InvoiceItem;
 
 import net.sf.jasperreports.engine.JasperCompileManager;
 import net.sf.jasperreports.engine.JasperExportManager;

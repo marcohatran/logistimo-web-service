@@ -28,18 +28,18 @@ package com.logistimo.config.models;
 
 import com.google.gson.Gson;
 
+import com.logistimo.config.entity.IConfig;
+import com.logistimo.config.service.ConfigurationMgmtService;
+import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
+import com.logistimo.context.StaticApplicationContext;
+import com.logistimo.logger.XLog;
+import com.logistimo.services.ObjectNotFoundException;
+import com.logistimo.services.ServiceException;
+
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import com.logistimo.config.entity.IConfig;
-import com.logistimo.config.service.ConfigurationMgmtService;
-import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
-import com.logistimo.services.ObjectNotFoundException;
-import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
-import com.logistimo.logger.XLog;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -63,9 +63,9 @@ public class LocationConfig {
   // Map<country-code, Map<state,List<district>>>
   private Map<String, Map<String, List<String>>>
       lmap =
-      new HashMap<String, Map<String, List<String>>>();
+      new HashMap<>();
   // Map<country-code,country-name>
-  private Map<String, String> cmap = new HashMap<String, String>();
+  private Map<String, String> cmap = new HashMap<>();
 
   @SuppressWarnings("unchecked")
   public LocationConfig(String jsonCountries) throws ConfigurationException {
@@ -100,7 +100,7 @@ public class LocationConfig {
         Iterator<String> countryCodes = jcs.keys(); // only one country code per object
         if (countryCodes.hasNext()) {
           String countryCode = countryCodes.next();
-          Map<String, List<String>> stateMap = new HashMap<String, List<String>>();
+          Map<String, List<String>> stateMap = new HashMap<>();
           // Update location map
           lmap.put(countryCode, stateMap);
           // Get the states of this country
@@ -108,7 +108,7 @@ public class LocationConfig {
           for (int j = 0; j < statesOfCountry.length(); j++) {
             String state = statesOfCountry.getString(j);
             // Init. districts list
-            List<String> districts = new ArrayList<String>();
+            List<String> districts = new ArrayList<>();
             stateMap.put(state, districts);
             // Get the districts
             for (int d = 0; d < jdistricts.length(); d++) {
@@ -137,7 +137,8 @@ public class LocationConfig {
 
     LocationConfig lc = null;
     try {
-      ConfigurationMgmtService cms = Services.getService(ConfigurationMgmtServiceImpl.class);
+      ConfigurationMgmtService cms = StaticApplicationContext.getBean(
+          ConfigurationMgmtServiceImpl.class);
       String cconfigStr = cms.getConfiguration(IConfig.COUNTRIES).getConfig();
       if (countriesOnly) {
         lc = new LocationConfig(cconfigStr);
@@ -222,7 +223,8 @@ public class LocationConfig {
    */
   public static void initialize() {
     try {
-      ConfigurationMgmtService cms = Services.getService(ConfigurationMgmtServiceImpl.class);
+      ConfigurationMgmtService cms = StaticApplicationContext.getBean(
+          ConfigurationMgmtServiceImpl.class);
       String locationConfig = cms.getConfiguration(IConfig.LOCATIONS).getConfig();
       LocationModel lc = new Gson().fromJson(locationConfig, LocationModel.class);
       constructStateDistrictMaps(lc);

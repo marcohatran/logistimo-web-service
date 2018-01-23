@@ -36,18 +36,17 @@ import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.EventSpec;
 import com.logistimo.config.models.EventsConfig;
 import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.events.EventConstants;
 import com.logistimo.events.dao.IEventDao;
-import com.logistimo.events.dao.impl.EventDao;
 import com.logistimo.events.entity.IEvent;
 import com.logistimo.events.exceptions.EventGenerationException;
 import com.logistimo.events.generators.EventGenerator;
 import com.logistimo.events.generators.EventGeneratorFactory;
-import com.logistimo.events.models.EventData;
 import com.logistimo.events.models.ObjectData;
 import com.logistimo.events.processor.AssetEventsCreationProcessor;
 import com.logistimo.events.processor.EventNotificationProcessor;
@@ -55,7 +54,7 @@ import com.logistimo.events.processor.EventNotificationProcessor.EventNotificati
 import com.logistimo.events.processor.OrderEventsCreationProcessor;
 import com.logistimo.events.processor.UserEventsCreationProcessor;
 import com.logistimo.exception.TaskSchedulingException;
-import com.logistimo.inventory.dao.impl.TransDao;
+import com.logistimo.inventory.dao.ITransDao;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.IInvntryBatch;
 import com.logistimo.inventory.entity.ITransaction;
@@ -73,7 +72,6 @@ import com.logistimo.pagination.Results;
 import com.logistimo.pagination.processor.ProcessingException;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.services.utils.ConfigUtil;
@@ -91,7 +89,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -114,12 +111,11 @@ public class EventHandler {
   // Logger
   private static final XLog xLogger = XLog.getLog(EventHandler.class);
 
-  private static IEventDao eventDao = new EventDao();
-
   /**
    * Add an event to the data store. Its key is returned.
    */
   public static Long log(IEvent event) {
+    IEventDao eventDao = StaticApplicationContext.getBean(IEventDao.class);
     return eventDao.store(event);
   }
 
@@ -127,6 +123,7 @@ public class EventHandler {
    * Add events to the datastore in batch
    */
   public static void log(List<IEvent> events) {
+    IEventDao eventDao = StaticApplicationContext.getBean(IEventDao.class);
     eventDao.store(events);
   }
 
@@ -157,21 +154,21 @@ public class EventHandler {
       return null;
     }
     try {
-      List<IUserAccount> users = null;
+      List<IUserAccount> users;
       if (EventSpec.Subscriber.CUSTOMERS.equals(subscriberType) || EventSpec.Subscriber.VENDORS
           .equals(subscriberType)) {
         Long kioskId = (Long) oid;
-        EntitiesService as = Services.getService(EntitiesServiceImpl.class);
+        EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
         users = (List<IUserAccount>) as.getKiosk(kioskId).getUsers();
       } else if (EventSpec.Subscriber.ADMINISTRATORS.equals(subscriberType)) {
         Long domainId = (Long) oid;
-        UsersService as = Services.getService(UsersServiceImpl.class);
+        UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
         users =
             (List<IUserAccount>) as
                 .getUsers(domainId, SecurityConstants.ROLE_DOMAINOWNER, true, null, null).getResults();
       } else if (EventSpec.Subscriber.CREATOR.equals(subscriberType)) {
         String createrId = (String) oid;
-        UsersService as = Services.getService(UsersServiceImpl.class);
+        UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
         users = new ArrayList<>(1);
         users.add(as.getUserAccount(createrId));
       } else {
@@ -180,10 +177,8 @@ public class EventHandler {
       }
       List<String> userIds = null;
       if (users != null && !users.isEmpty()) {
-        userIds = new ArrayList<String>();
-        Iterator<IUserAccount> it = users.iterator();
-        while (it.hasNext()) {
-          IUserAccount u = it.next();
+        userIds = new ArrayList<>();
+        for (IUserAccount u : users) {
           if (u.isEnabled()) // add a user only if he/she is enabled
           {
             userIds.add(u.getUserId());
@@ -209,9 +204,7 @@ public class EventHandler {
         xLogger.severe("No durations to notify for domain {0}", domainId);
         return;
       }
-      Iterator<Entry<Integer, Duration>> it = durations.entrySet().iterator();
-      while (it.hasNext()) {
-        Entry<Integer, Duration> d = it.next();
+      for (Entry<Integer, Duration> d : durations.entrySet()) {
         Duration duration = d.getValue();
         String queryStr = "SELECT FROM " + JDOUtils.getImplClass(IEvent.class).getName() +
             " WHERE dId.contains(dIdParam) && t > startParam";
@@ -221,7 +214,7 @@ public class EventHandler {
           paramStr += ", Date endParam";
         }
         queryStr += paramStr + " import java.util.Date; ORDER BY t DESC";
-        Map<String, Object> params = new HashMap<String, Object>();
+        Map<String, Object> params = new HashMap<>();
         params.put("dIdParam", domainId);
         params.put("startParam",
             LocalDateUtil.getOffsetDate(duration.start, -1, Calendar.MILLISECOND));
@@ -250,10 +243,10 @@ public class EventHandler {
   // Get the time-ranges for generating event data - daily, weekly, monthy
   public static Map<Integer, Duration> getDurations(CustomDuration customDuration, Long domainId) {
     // Get the durations
-    Map<Integer, Duration> durations = new HashMap<Integer, Duration>();
+    Map<Integer, Duration> durations = new HashMap<>();
     if (customDuration != null) {
       if (customDuration.duration != null) {
-        durations.put(new Integer(customDuration.frequency), customDuration.duration);
+        durations.put(customDuration.frequency, customDuration.duration);
       }
       return durations;
     }
@@ -263,7 +256,7 @@ public class EventHandler {
     Duration daily = new Duration();
     cal.add(Calendar.DATE, -1);
     daily.start = cal.getTime();
-    durations.put(new Integer(EventSpec.NotifyOptions.DAILY), daily); // add daily
+    durations.put(EventSpec.NotifyOptions.DAILY, daily); // add daily
     // Reset time to now
     cal = LocalDateUtil.getZeroTime(timezone);
     if (ConfigUtil.getBoolean("notifications.weekly", false)
@@ -271,7 +264,7 @@ public class EventHandler {
       Duration weekly = new Duration();
       cal.add(Calendar.DATE, -7);
       weekly.start = cal.getTime();
-      durations.put(new Integer(EventSpec.NotifyOptions.WEEKLY), weekly);
+      durations.put(EventSpec.NotifyOptions.WEEKLY, weekly);
       // Reset time to now
       cal = LocalDateUtil.getZeroTime(timezone);
     }
@@ -282,12 +275,12 @@ public class EventHandler {
       // Move calendar to last day of previous month
       cal.add(Calendar.MONTH, -1);
       monthly.start = cal.getTime();
-      durations.put(new Integer(EventSpec.NotifyOptions.MONTHLY), monthly);
+      durations.put(EventSpec.NotifyOptions.MONTHLY, monthly);
     }
     return durations;
   }
 
-  public static boolean isEventValid(IEvent event, DomainConfig domainConfig,
+  public static boolean isEventValid(IEvent event,
                                      PersistenceManager persistenceManager) {
     String objectId = null;
     try {
@@ -505,7 +498,7 @@ public class EventHandler {
             queryStr =
             "SELECT FROM " + JDOUtils.getImplClass(IOrder.class).getName()
                 + " WHERE dId.contains(dIdParam) && cOn > startParam PARAMETERS Long dIdParam, Date startParam import java.util.Date; ORDER BY cOn desc";
-        Map<String, Object> params = new HashMap<String, Object>();
+        Map<String, Object> params = new HashMap<>();
         params.put("dIdParam", domainId);
         params.put("startParam", start);
         QueryParams qp = new QueryParams(queryStr, params);
@@ -534,7 +527,7 @@ public class EventHandler {
               queryStr =
               "SELECT FROM " + JDOUtils.getImplClass(IUserAccount.class).getName()
                   + " WHERE sdId == dIdParam && (lastLogin == null || lastLogin < endParam) && (lre == null || lre < endParam) PARAMETERS Long dIdParam, Date endParam import java.util.Date; ORDER BY lastLogin desc";
-          Map<String, Object> params = new HashMap<String, Object>();
+          Map<String, Object> params = new HashMap<>();
           params.put("dIdParam", domainId);
           params.put("endParam", LocalDateUtil.getOffsetDate(new Date(), -1 * inactiveDuration));
           QueryParams qp = new QueryParams(queryStr, params);
@@ -566,11 +559,9 @@ public class EventHandler {
     }
     DomainConfig dc = DomainConfig.getInstance(domainId);
     // Iterate on paramSpecs
-    Iterator<EventSpec.ParamSpec> it = paramSpecs.values().iterator();
-    while (it.hasNext()) {
-      EventSpec.ParamSpec paramSpec = it.next();
+    for (EventSpec.ParamSpec paramSpec : paramSpecs.values()) {
       // Get inactive duration offset
-      String inactiveDurationStr = null;
+      String inactiveDurationStr;
       int inactiveDuration = 0;
       Map<String, Object> eventParams = paramSpec.getParams();
       if (eventParams != null && !eventParams.isEmpty()) {
@@ -625,9 +616,7 @@ public class EventHandler {
     Map<String, Object> params = new HashMap<>(1);
 
     // Iterate on paramSpecs
-    Iterator<EventSpec.ParamSpec> it = paramSpecs.values().iterator();
-    while (it.hasNext()) {
-      EventSpec.ParamSpec paramSpec = it.next();
+    for (EventSpec.ParamSpec paramSpec : paramSpecs.values()) {
       // Get inactive duration offset
       String inactiveDurationStr;
       int inactiveDuration = 0;
@@ -645,7 +634,7 @@ public class EventHandler {
         }
         // Get the offset date using inactiveDuration. ( Offset date = today - inactiveDuration number of days )
         if (inactiveDuration > 0) {
-          AssetSystemConfig config = null;
+          AssetSystemConfig config;
           String csv = null;
           try {
             config = AssetSystemConfig.getInstance();
@@ -731,10 +720,9 @@ public class EventHandler {
       // Generate no order activity event, if needed
       hasNoActivity = noOrdersCreated && noOrderStatusChanges;
     } else if (JDOUtils.getImplClass(ITransaction.class).getName().equals(objectType)) {
-      Results res = new TransDao()
-          .getInventoryTransactions(start, null, domainId,
-              null, null, null, null, null,
-              null, null, pageParams, null, false, null, null, null);
+      ITransDao transDao = StaticApplicationContext.getBean(ITransDao.class);
+      Results res = transDao.getInventoryTransactions(start, null, domainId,
+          null, null, null, null, null, null, null, pageParams, null, false, null, null, null);
       List results = (res != null) ? res.getResults() : null;
       hasNoActivity = results == null || results.isEmpty();
     } else if (JDOUtils.getImplClass(IUserAccount.class).getName()
@@ -771,13 +759,11 @@ public class EventHandler {
         queryStr =
         "SELECT FROM " + JDOUtils.getImplClass(IInvntryBatch.class).getName()
             + " WHERE dId.contains(dIdParam) && vld == vldParam && bexp == bexpParam PARAMETERS Long dIdParam, Boolean vldParam, Date bexpParam import java.util.Date; ORDER BY bexp ASC";
-    Map<String, Object> params = new HashMap<String, Object>();
+    Map<String, Object> params = new HashMap<>();
     params.put("dIdParam", domainId);
     params.put("vldParam", Boolean.TRUE);
     // Iterate on params.
-    Iterator<EventSpec.ParamSpec> it = paramSpecs.values().iterator();
-    while (it.hasNext()) {
-      EventSpec.ParamSpec paramSpec = it.next();
+    for (EventSpec.ParamSpec paramSpec : paramSpecs.values()) {
       // Get expiry offset
       String expiresInDaysStr = null;
       int expiresInDays = 0;
@@ -821,12 +807,13 @@ public class EventHandler {
     if (!hasA && !hasB) {
       return true;
     }
-    if ((!hasA && hasB) || (hasA && !hasB)) {
+    if ((hasA && !hasB)) {
+      return false;
+    } else if ((!hasA)) {
       return false;
     }
-    Iterator<String> itA = a.iterator();
-    while (itA.hasNext()) {
-      if (b.contains(itA.next())) {
+    for (String anA : a) {
+      if (b.contains(anA)) {
         return true;
       }
     }
@@ -854,7 +841,7 @@ public class EventHandler {
 
   // Get Tag Params
   public static Map<String, Object> getTagParams(Object eventObject) {
-    Map<String, Object> params = new HashMap<String, Object>(1);
+    Map<String, Object> params = new HashMap<>(1);
     List<String> mTags = null, eTags = null, oTags = null;
 
     if (eventObject instanceof ITransaction) {
@@ -872,7 +859,8 @@ public class EventHandler {
       oTags = ((IOrder) eventObject).getTags(TagUtil.TYPE_ORDER);
     } else if (eventObject instanceof IShipment) {
         try {
-            OrderManagementService oms = Services.getService(OrderManagementServiceImpl.class);
+            OrderManagementService oms = StaticApplicationContext.getBean(
+                OrderManagementServiceImpl.class);
             eTags = oms.getOrder(((IShipment) eventObject).getOrderId()).getTags(TagUtil.TYPE_ENTITY);
             oTags = oms.getOrder(((IShipment) eventObject).getOrderId()).getTags(TagUtil.TYPE_ORDER);
         } catch (ObjectNotFoundException e) {
@@ -909,11 +897,6 @@ public class EventHandler {
     }
     return params.isEmpty() ? null : params;
   }
-
-  public static void generateEvent(EventData eventData) {
-
-  }
-
 
   public static class CustomDuration {
     public Duration duration = null;

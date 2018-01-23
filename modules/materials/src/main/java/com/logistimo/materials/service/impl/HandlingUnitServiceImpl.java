@@ -23,22 +23,22 @@
 
 package com.logistimo.materials.service.impl;
 
+import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.dao.JDOUtils;
+import com.logistimo.domains.utils.DomainsUtil;
+import com.logistimo.exception.InvalidDataException;
+import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IHandlingUnit;
 import com.logistimo.materials.service.IHandlingUnitService;
-
-import org.apache.commons.lang.StringUtils;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
-import com.logistimo.services.Service;
+import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.impl.PMF;
-import com.logistimo.services.impl.ServiceImpl;
-import com.logistimo.domains.utils.DomainsUtil;
 import com.logistimo.utils.QueryUtil;
-import com.logistimo.logger.XLog;
-import com.logistimo.exception.InvalidDataException;
+
+import org.apache.commons.lang.StringUtils;
+import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -46,6 +46,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.ResourceBundle;
 
 import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.PersistenceManager;
@@ -55,7 +56,8 @@ import javax.jdo.Transaction;
 /**
  * @author Mohan Raja
  */
-public class HandlingUnitServiceImpl extends ServiceImpl implements IHandlingUnitService {
+@Service
+public class HandlingUnitServiceImpl implements IHandlingUnitService {
 
   private static final XLog xLogger = XLog.getLog(HandlingUnitServiceImpl.class);
 
@@ -68,6 +70,7 @@ public class HandlingUnitServiceImpl extends ServiceImpl implements IHandlingUni
     IHandlingUnit handlingUnitByName = getHandlingUnitByName(domainId, handlingUnit.getName());
     if (handlingUnitByName != null) {
       xLogger.warn("add: Handling unit with name {0} already exists", handlingUnit.getName());
+      ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", SecurityUtils.getLocale());
       throw new ServiceException(
           backendMessages.getString("error.cannotadd") + ". '" + handlingUnit.getName() + "' "
               + backendMessages.getString("error.alreadyexists") + ".");
@@ -108,6 +111,7 @@ public class HandlingUnitServiceImpl extends ServiceImpl implements IHandlingUni
         List<IHandlingUnit> temp = getHandlingUnitListByName(domainId, handlingUnit.getName());
         for (IHandlingUnit iHu : temp) {
           if (!iHu.getId().equals(handlingUnit.getId())) {
+            ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", SecurityUtils.getLocale());
             throw new InvalidDataException("Handling unit " + hu.getName() + " " + backendMessages
                 .getString("error.alreadyexists"));
           }
@@ -153,6 +157,7 @@ public class HandlingUnitServiceImpl extends ServiceImpl implements IHandlingUni
     } catch (JDOObjectNotFoundException e) {
       xLogger.warn("get handling unit: FAILED!!! Handling unit {0} does not exist in the database",
           handlingUnitId, e);
+      ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", SecurityUtils.getLocale());
       throw new ServiceException(
           "Handling unit " + handlingUnitId + " " + backendMessages.getString("error.notfound"));
     } finally {
@@ -253,7 +258,7 @@ public class HandlingUnitServiceImpl extends ServiceImpl implements IHandlingUni
       } finally {
         query.closeAll();
       }
-      return new Results(hUnits, cursor);
+      return new Results<>(hUnits, cursor);
     } finally {
       pm.close();
     }
@@ -288,25 +293,5 @@ public class HandlingUnitServiceImpl extends ServiceImpl implements IHandlingUni
       }
       pm.close();
     }
-  }
-
-  @Override
-  public void init(Services services) throws ServiceException {
-
-  }
-
-  @Override
-  public void destroy() throws ServiceException {
-
-  }
-
-  @Override
-  public Class<? extends Service> getInterface() {
-    return HandlingUnitServiceImpl.class;
-  }
-
-  @Override
-  public Service clone() throws CloneNotSupportedException {
-    return null;
   }
 }

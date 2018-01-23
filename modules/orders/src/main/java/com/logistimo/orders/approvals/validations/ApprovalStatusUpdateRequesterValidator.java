@@ -51,7 +51,7 @@ public class ApprovalStatusUpdateRequesterValidator {
         .equals(ApprovalConstants.CANCELLED)) {
         Long kioskId = orderApprovalMapping.getKioskId();
       try {
-        if(!EntityAuthoriser.authoriseEntity(userDetails, kioskId)){
+        if(!EntityAuthoriser.authoriseEntity(kioskId)){
           throw new ValidationException("OA015", kioskId);
         }
       } catch (ServiceException e) {

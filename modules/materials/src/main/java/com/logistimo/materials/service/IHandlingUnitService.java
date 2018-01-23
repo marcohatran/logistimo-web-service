@@ -24,10 +24,8 @@
 package com.logistimo.materials.service;
 
 import com.logistimo.materials.entity.IHandlingUnit;
-
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
-import com.logistimo.services.Service;
 import com.logistimo.services.ServiceException;
 
 import java.util.List;
@@ -36,7 +34,7 @@ import java.util.Map;
 /**
  * @author Mohan Raja
  */
-public interface IHandlingUnitService extends Service {
+public interface IHandlingUnitService {
 
   Long addHandlingUnit(Long domainId, IHandlingUnit handlingUnit) throws ServiceException;
 

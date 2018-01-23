@@ -24,11 +24,10 @@
 package com.logistimo.services.mapper;
 
 import com.logistimo.AppFactory;
+import com.logistimo.logger.XLog;
 import com.logistimo.services.blobstore.BlobstoreRecordKey;
 import com.logistimo.services.blobstore.BlobstoreService;
 import com.logistimo.services.mapred.IMapredService;
-
-import com.logistimo.logger.XLog;
 
 import java.io.BufferedReader;
 import java.io.IOException;

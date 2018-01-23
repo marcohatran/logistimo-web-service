@@ -26,9 +26,9 @@ package com.logistimo.exports.handlers;
 import com.logistimo.communications.MessageHandlingException;
 import com.logistimo.communications.service.MessageService;
 import com.logistimo.config.models.DomainConfig;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entity.IMessageLog;
 import com.logistimo.services.ObjectNotFoundException;
-import com.logistimo.services.Services;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.users.service.impl.UsersServiceImpl;
@@ -61,7 +61,7 @@ public class MessageLogExportHandler implements IExportHandler {
     String name;
     String ph;
     try {
-      UsersService as = Services.getService(UsersServiceImpl.class, locale);
+      UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
       try {
         IUserAccount u = as.getUserAccount(messageLog.getUserId());
         MessageService smsService = MessageService.getInstance(MessageService.SMS, u.getCountry());

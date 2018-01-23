@@ -112,7 +112,7 @@ public class EventNotificationProcessor extends InstrumentedProcessor {
       while (eventsIt.hasNext()) {
         // Get next event
         IEvent event = eventsIt.next();
-        boolean isEventValid = EventHandler.isEventValid(event, dc, pm);
+        boolean isEventValid = EventHandler.isEventValid(event, pm);
         if (!isEventValid) {
           xLogger.fine(
               "Invalid event when notify event {0}  on object of type {1}, id {2} in domain {3};message in event = {4}",

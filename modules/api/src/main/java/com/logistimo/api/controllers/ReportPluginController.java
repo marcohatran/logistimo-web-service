@@ -23,9 +23,7 @@
 
 package com.logistimo.api.controllers;
 
-import com.logistimo.auth.SecurityMgr;
 import com.logistimo.auth.utils.SecurityUtils;
-import com.logistimo.auth.utils.SessionMgr;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.exception.BadRequestException;
 import com.logistimo.exports.ExportService;
@@ -56,8 +54,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
-import javax.servlet.http.HttpServletRequest;
-
 /**
  * Created by mohan on 02/03/17.
  */
@@ -70,9 +66,9 @@ public class ReportPluginController {
   private static final String JSON_REPORT_TYPE = "type";
   private static final String JSON_REPORT_VIEW_TYPE = "viewtype";
 
-  ReportPluginService reportPluginService;
-  ExportService exportService;
-  UsersService usersService;
+  private ReportPluginService reportPluginService;
+  private ExportService exportService;
+  private UsersService usersService;
 
   @Autowired
   private void setReportPluginService(ReportPluginService reportPluginService) {
@@ -92,7 +88,7 @@ public class ReportPluginController {
   @RequestMapping(value = "/", method = RequestMethod.GET)
   public
   @ResponseBody
-  List<ReportChartModel> getReportData(@RequestParam String json, HttpServletRequest request) {
+  List<ReportChartModel> getReportData(@RequestParam String json) {
     xLogger.fine("Entering getReportData");
     try {
       JSONObject jsonObject = new JSONObject(json);
@@ -100,10 +96,7 @@ public class ReportPluginController {
         xLogger.warn("Report type is mandatory.");
         throw new BadRequestException("Invalid request");
       }
-      SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
-      String userId = sUser.getUsername();
-      Long domainId = SessionMgr.getCurrentDomain(request.getSession(), userId);
-      return reportPluginService.getReportData(domainId, json);
+      return reportPluginService.getReportData(SecurityUtils.getCurrentDomainId(), json);
     } catch (Exception e) {
       xLogger.severe("Error while getting the report data", e);
       return null;
@@ -113,8 +106,7 @@ public class ReportPluginController {
   @RequestMapping(value = "/breakdown", method = RequestMethod.GET)
   public
   @ResponseBody
-  TableResponseModel getReportTableData(
-      @RequestParam String json, HttpServletRequest request) {
+  TableResponseModel getReportTableData(@RequestParam String json) {
     xLogger.fine("Entering getReportData");
     try {
       JSONObject jsonObject = new JSONObject(json);
@@ -122,10 +114,7 @@ public class ReportPluginController {
         xLogger.warn("Both report type and view type is mandatory.");
         throw new BadRequestException("Invalid request");
       }
-      SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
-      String userId = sUser.getUsername();
-      Long domainId = SessionMgr.getCurrentDomain(request.getSession(), userId);
-      return reportPluginService.getReportTableData(domainId, json);
+      return reportPluginService.getReportTableData(SecurityUtils.getCurrentDomainId(), json);
     } catch (Exception e) {
       xLogger.severe("Error while getting the data", e);
       return null;
@@ -138,7 +127,7 @@ public class ReportPluginController {
   @RequestMapping(value = "/last-run-time", method = RequestMethod.GET)
   public
   @ResponseBody
-  String getLastAggregatedTime(@RequestParam String reportType, HttpServletRequest request) {
+  String getLastAggregatedTime(@RequestParam String reportType) {
     xLogger.fine("In getLastAggregatedTime");
     try {
       Date date = reportPluginService.getLastAggregatedTime(reportType);

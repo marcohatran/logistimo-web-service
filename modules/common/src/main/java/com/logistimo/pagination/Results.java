@@ -50,6 +50,8 @@ public class Results <T> {
   protected int numFound;
   protected int offset;
 
+  public Results(){}
+
   @SuppressWarnings("rawtypes")
   public Results(List<T> results, String cursor) {
     this.results = results;

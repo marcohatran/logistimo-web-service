@@ -41,17 +41,13 @@ import com.logistimo.assets.models.AssetRelationModel;
 import com.logistimo.assets.models.DeviceConfigPushPullModel;
 import com.logistimo.assets.models.DeviceTempsModel;
 import com.logistimo.assets.service.AssetManagementService;
-import com.logistimo.assets.service.impl.AssetManagementServiceImpl;
-import com.logistimo.auth.SecurityMgr;
 import com.logistimo.auth.utils.SecurityUtils;
-import com.logistimo.auth.utils.SessionMgr;
 import com.logistimo.config.entity.IConfig;
 import com.logistimo.config.models.AssetConfig;
 import com.logistimo.config.models.AssetSystemConfig;
 import com.logistimo.config.models.ConfigurationException;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
-import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exports.ExportService;
 import com.logistimo.logger.XLog;
@@ -62,7 +58,6 @@ import com.logistimo.reports.plugins.internal.ExportModel;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.utils.LocalDateUtil;
@@ -100,9 +95,16 @@ import javax.servlet.http.HttpServletRequest;
 @RequestMapping("/assets")
 public class AssetController {
   private static final XLog xLogger = XLog.getLog(AssetController.class);
-  private AssetBuilder assetBuilder = new AssetBuilder();
+  private AssetBuilder assetBuilder;
   private ExportService exportService;
   private UsersService usersService;
+  private AssetManagementService assetManagementService;
+  private ConfigurationMgmtService configurationMgmtService;
+
+  @Autowired
+  public void setAssetBuilder(AssetBuilder assetBuilder) {
+    this.assetBuilder = assetBuilder;
+  }
 
   @Autowired
   private void setExportService(ExportService exportService) {
@@ -114,21 +116,26 @@ public class AssetController {
     this.usersService = usersService;
   }
 
+  @Autowired
+  public void setAssetManagementService(AssetManagementService assetManagementService) {
+    this.assetManagementService = assetManagementService;
+  }
+
+  @Autowired
+  public void setConfigurationMgmtService(ConfigurationMgmtService configurationMgmtService) {
+    this.configurationMgmtService = configurationMgmtService;
+  }
+
   @RequestMapping(value = "/", method = RequestMethod.POST)
   public
   @ResponseBody
   String createAssets(@RequestBody final AssetModel assetModel,
-                      @RequestParam(required = false, defaultValue = "false") boolean update,
-                      HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+                      @RequestParam(required = false, defaultValue = "false") boolean update) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    AssetManagementService ams = null;
     try {
-      ams = Services.getService(AssetManagementServiceImpl.class, locale);
-      long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
-
-      //Registering device in AMS
+      long domainId = sUser.getCurrentDomainId();
       if (!update) {
         assetModel.cb = sUser.getUsername();
       }
@@ -138,11 +145,11 @@ public class AssetController {
       //Registering device in LS
       if (!update) {
         IAsset asset = assetBuilder.buildAsset(assetModel, sUser.getUsername(), true);
-        ams.createAsset(domainId, asset, assetModel);
+        assetManagementService.createAsset(domainId, asset, assetModel);
       } else {
-        IAsset asset = ams.getAsset(assetModel.id);
+        IAsset asset = assetManagementService.getAsset(assetModel.id);
         asset = assetBuilder.buildAsset(asset, assetModel, sUser.getUsername(), false);
-        ams.updateAsset(domainId, asset, assetModel);
+        assetManagementService.updateAsset(domainId, asset, assetModel);
       }
 
       AssetSystemConfig asc = AssetSystemConfig.getInstance();
@@ -190,25 +197,23 @@ public class AssetController {
                     @RequestParam(defaultValue = PageParams.DEFAULT_SIZE_STR) int size,
                     @RequestParam(defaultValue = PageParams.DEFAULT_OFFSET_STR) int offset,
                     HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     String timezone = sUser.getTimezone();
-    AssetManagementService ams;
     Results assetResults;
     Navigator
         navigator =
         new Navigator(request.getSession(), "AssetController.getAssets", offset, size, "dummy", 0);
     PageParams pageParams = new PageParams(navigator.getCursor(offset), offset, size);
-    long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
+    long domainId = sUser.getCurrentDomainId();
     try {
       if (StringUtils.isNotBlank(q)) {
         q = AssetUtil.decodeURLParameters(q);
         assetResults = SearchUtil.findAssets(domainId, q, pageParams);
         assetResults.setNumFound(-1);
       } else {
-        ams = Services.getService(AssetManagementServiceImpl.class, locale);
-        assetResults = ams.getAssetsByDomain(domainId, at, pageParams);
+        assetResults = assetManagementService.getAssetsByDomain(domainId, at, pageParams);
       }
       assetResults.setOffset(offset);
       navigator.setResultParams(assetResults);
@@ -223,20 +228,14 @@ public class AssetController {
   @RequestMapping(value = "/{assetId}", method = RequestMethod.GET)
   public
   @ResponseBody
-  AssetDetailsModel getAssets(@PathVariable Long assetId,
-                              HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+  AssetDetailsModel getAssets(@PathVariable Long assetId) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     String timezone = sUser.getTimezone();
-    AssetManagementService ams;
     try {
-      ams = Services.getService(AssetManagementServiceImpl.class, locale);
-
-      //Fetching asset information from LS
-      AssetDetailsModel
-          assetDetailsModel =
-          assetBuilder.buildAssetDetailsModel(ams.getAsset(assetId), null, null, locale, timezone);
+      AssetDetailsModel assetDetailsModel =
+          assetBuilder.buildAssetDetailsModel(assetManagementService.getAsset(assetId), null, null, locale, timezone);
 
       //Fetching asset details from AMS, becuase asset meta is available only in AMS.
       AssetModel
@@ -268,13 +267,13 @@ public class AssetController {
                             @RequestParam(defaultValue = PageParams.DEFAULT_SIZE_STR) int size,
                             @RequestParam(defaultValue = PageParams.DEFAULT_OFFSET_STR) int offset,
                             HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     Navigator
         navigator =
         new Navigator(request.getSession(), "AssetController.getAssets", offset, size, "dummy", 0);
-    long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
+    long domainId = sUser.getCurrentDomainId();
     String tag = String.valueOf(domainId);
     if (eid != null) {
       tag = "kiosk." + eid;
@@ -302,9 +301,8 @@ public class AssetController {
   public
   @ResponseBody
   AssetDetailsModel getAsset(@PathVariable String manufacturerId,
-                             @PathVariable String assetId,
-                             HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+                             @PathVariable String assetId) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     assetId = AssetUtil.decodeURLParameters(assetId);
@@ -326,18 +324,14 @@ public class AssetController {
   public
   @ResponseBody
   Object getAssetRelations(@PathVariable String manufacturerId,
-                           @PathVariable String assetId,
-                           HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+                           @PathVariable String assetId) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     String timezone = sUser.getTimezone();
     assetId = AssetUtil.decodeURLParameters(assetId);
     try {
-      AssetManagementService
-          ams =
-          Services.getService(AssetManagementServiceImpl.class, locale);
-      IAsset asset = ams.getAsset(manufacturerId, assetId);
+      IAsset asset = assetManagementService.getAsset(manufacturerId, assetId);
       AssetSystemConfig asc = AssetSystemConfig.getInstance();
       if (asc != null && asset != null) {
         AssetSystemConfig.Asset assetConfig = asc.getAsset(asset.getType());
@@ -346,8 +340,8 @@ public class AssetController {
               .fromJson(AssetUtil.getAssetRelations(manufacturerId, assetId), JsonElement.class);
         } else {
           try {
-            IAssetRelation assetRelation = ams.getAssetRelationByRelatedAsset(asset.getId());
-            IAsset relatedAsset = ams.getAsset(assetRelation.getAssetId());
+            IAssetRelation assetRelation = assetManagementService.getAssetRelationByRelatedAsset(asset.getId());
+            IAsset relatedAsset = assetManagementService.getAsset(assetRelation.getAssetId());
             return assetBuilder.buildAssetDetailsModel(relatedAsset, null, null, locale, timezone);
           } catch (Exception e) {
             return null;
@@ -372,10 +366,8 @@ public class AssetController {
                             @RequestParam(required = false) String q,
                             @RequestParam(required = false) String at,
                             @RequestParam(required = false, defaultValue = "true") Boolean all,
-                            @RequestParam(required = false, defaultValue = "false") Boolean ns,
-                            HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
+                            @RequestParam(required = false, defaultValue = "false") Boolean ns) {
+    Long domainId = SecurityUtils.getCurrentDomainId();
     if (q == null) {
       q = "";
     }
@@ -383,10 +375,7 @@ public class AssetController {
     q = AssetUtil.decodeURLParameters(q);
     List<AssetModel> assetModels = new ArrayList<>(1);
     try {
-      AssetManagementService
-          ams =
-          Services.getService(AssetManagementServiceImpl.class, sUser.getLocale());
-      List<IAsset> assets = ams.getAssets(domainId, eid, q, at, all);
+      List<IAsset> assets = assetManagementService.getAssets(domainId, eid, q, at, all);
       if (assets != null && !assets.isEmpty()) {
         assetModels = assetBuilder.buildFilterModels(assets);
       }
@@ -404,29 +393,24 @@ public class AssetController {
       xLogger.warn("Exception: {0}", e.getMessage());
     }
 
-    return new Results(assetModels, null);
+    return new Results<>(assetModels, null);
   }
 
   @RequestMapping(value = "/relations", method = RequestMethod.POST)
   public
   @ResponseBody
   void createOrUpdateAssetRelations(@RequestBody AssetRelationModel assetRelationModel,
-                                    @RequestParam(required = false, defaultValue = "false") Boolean delete,
-                                    HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+                                    @RequestParam(required = false, defaultValue = "false") Boolean delete) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
-    AssetManagementService ams;
+    Long domainId = sUser.getCurrentDomainId();
     try {
-
-      //Creating/Deleting asset relationship in LS
-      ams = Services.getService(AssetManagementServiceImpl.class, locale);
       if (delete) {
         AssetUtil.createOrUpdateAssetRelations(new Gson().toJson(assetRelationModel));
         for (AssetRelationModel.AssetRelations assetRelations : assetRelationModel.data) {
-          IAsset asset = ams.getAsset(assetRelations.vId, assetRelations.dId);
-          ams.deleteAssetRelation(asset.getId(), domainId, asset);
+          IAsset asset = assetManagementService.getAsset(assetRelations.vId, assetRelations.dId);
+          assetManagementService.deleteAssetRelation(asset.getId(), domainId, asset);
         }
       } else {
         AssetUtil.createOrUpdateAssetRelations(new Gson().toJson(assetRelationModel));
@@ -434,7 +418,7 @@ public class AssetController {
             assetRelationList =
             assetBuilder.buildAssetRelations(assetRelationModel);
         for (IAssetRelation assetRelation : assetRelationList) {
-          ams.createOrUpdateAssetRelation(domainId, assetRelation);
+          assetManagementService.createOrUpdateAssetRelation(domainId, assetRelation);
         }
       }
     } catch (Exception e) {
@@ -452,10 +436,8 @@ public class AssetController {
                                   @RequestParam("size") Integer size,
                                   @RequestParam("sint") Integer samplingInt,
                                   @RequestParam(value = "edate", required = false) String endDate,
-                                  @RequestParam(value = "at", defaultValue = "1") Integer assetType,
-                                  HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
-    String timezone = sUser.getTimezone();
+                                  @RequestParam(value = "at", defaultValue = "1") Integer assetType) {
+    String timezone = SecurityUtils.getTimezone();
     deviceId = AssetUtil.decodeURLParameters(deviceId);
     long end = LocalDateUtil.getCurrentTimeInSeconds(timezone);
     //long end = -1;
@@ -492,22 +474,17 @@ public class AssetController {
   public
   @ResponseBody
   void updateAssetConfig(@RequestBody AssetModels.AssetConfigModel assetConfigModel,
-                         @RequestParam(defaultValue = "false") Boolean pushConfig,
-                         HttpServletRequest request)
+                         @RequestParam(defaultValue = "false") Boolean pushConfig)
       throws ServiceException, ConfigurationException {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
     if (assetConfigModel != null) {
       AssetUtil.registerConfig(new Gson().toJson(assetConfigModel));
 
       if (pushConfig && assetConfigModel.configuration != null
           && assetConfigModel.configuration.getComm() != null) {
         DeviceConfigPushPullModel deviceConfigPushPullModel = new DeviceConfigPushPullModel(
-            assetConfigModel.vId,
-            assetConfigModel.dId
-        );
-        deviceConfigPushPullModel.stub = sUser.getUsername();
-        AssetManagementService ams = Services.getService(AssetManagementServiceImpl.class);
-        IAsset asset = ams.getAsset(assetConfigModel.vId, assetConfigModel.dId);
+            assetConfigModel.vId, assetConfigModel.dId);
+        deviceConfigPushPullModel.stub = SecurityUtils.getUsername();
+        IAsset asset = assetManagementService.getAsset(assetConfigModel.vId, assetConfigModel.dId);
         if (AssetSystemConfig.getInstance().isConfigPullEnabled(asset.getType(),
             asset.getVendorId(), asset.getModel())
             && assetConfigModel.configuration.getComm().getChnl()
@@ -525,10 +502,9 @@ public class AssetController {
   AssetModels.DeviceStatsModel getStats(@PathVariable("vendorId") String vendorId,
                                         @PathVariable("deviceId") String deviceId,
                                         @RequestParam("from") String from,
-                                        @RequestParam("to") String to,
-                                        HttpServletRequest request) {
+                                        @RequestParam("to") String to) {
     deviceId = AssetUtil.decodeURLParameters(deviceId);
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     String timezone = sUser.getTimezone();
     Locale locale = sUser.getLocale();
     return assetBuilder
@@ -542,9 +518,8 @@ public class AssetController {
   AssetModels.TempDeviceRecentAlertsModel getRecentAlerts(@PathVariable("vendorId") String vendorId,
                                                           @PathVariable("deviceId") String deviceId,
                                                           @RequestParam("page") String page,
-                                                          @RequestParam("size") String size,
-                                                          HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
+                                                          @RequestParam("size") String size) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     String timezone = sUser.getTimezone();
     deviceId = AssetUtil.decodeURLParameters(deviceId);
@@ -570,22 +545,14 @@ public class AssetController {
   @RequestMapping(value = "/domain/location", method = RequestMethod.GET)
   public
   @ResponseBody
-  TemperatureDomainModel getDomainLocation(HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
-    String userId = sUser.getUsername();
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), userId);
-    DomainConfig dc = DomainConfig.getInstance(domainId);
-    Locale locale = sUser.getLocale();
+  TemperatureDomainModel getDomainLocation() {
+    DomainConfig dc = DomainConfig.getInstance(SecurityUtils.getCurrentDomainId());
     String topLocation = "India";
     String countryCode = dc != null && dc.getCountry() != null ? dc.getCountry() : "IN";
     String configuredState = dc != null ? dc.getState() : null;
 
     try {
-      ConfigurationMgmtService
-          cms =
-          Services.getService(ConfigurationMgmtServiceImpl.class, locale);
-
-      String strCountries = cms.getConfiguration(IConfig.LOCATIONS).getConfig();
+      String strCountries = configurationMgmtService.getConfiguration(IConfig.LOCATIONS).getConfig();
 
       if (strCountries != null && !strCountries.isEmpty()) {
         JSONObject jsonObject = new JSONObject(strCountries);
@@ -613,10 +580,8 @@ public class AssetController {
   @RequestMapping(value = "/device/config", method = RequestMethod.POST)
   public
   @ResponseBody
-  String pushPullDeviceConfig(@RequestBody DeviceConfigPushPullModel configModel,
-                              HttpServletRequest request) throws ServiceException {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
-    configModel.stub = sUser.getUsername();
+  String pushPullDeviceConfig(@RequestBody DeviceConfigPushPullModel configModel) throws ServiceException {
+    configModel.stub = SecurityUtils.getUsername();
     String json = new Gson().toJson(configModel);
     try {
       AssetUtil.pushDeviceConfig(json);
@@ -629,18 +594,17 @@ public class AssetController {
   @RequestMapping(value = "/delete", method = RequestMethod.POST)
   public
   @ResponseBody
-  String deleteAsset(@RequestBody AssetModels.AssetsDeleteModel assetsDeleteModel,
-                     HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
+  String deleteAsset(@RequestBody AssetModels.AssetsDeleteModel assetsDeleteModel) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     String userId = sUser.getUsername();
-    final Long domainId = SessionMgr.getCurrentDomain(request.getSession(), userId);
+    final Long domainId = sUser.getCurrentDomainId();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     if (assetsDeleteModel != null) {
       Map<String, List<String>> deleteModel = new HashMap<>(5);
       for (AssetModel assetModel : assetsDeleteModel.data) {
         if (!deleteModel.containsKey(assetModel.vId)) {
-          deleteModel.put(assetModel.vId, new ArrayList<String>(1));
+          deleteModel.put(assetModel.vId, new ArrayList<>(1));
         }
         deleteModel.get(assetModel.vId).add(assetModel.dId);
         assetModel.tags = new ArrayList<String>() {{
@@ -648,10 +612,8 @@ public class AssetController {
         }};
         assetModel.ub = userId;
 
-        AssetManagementService ams;
         try {
-          ams = Services.getService(AssetManagementServiceImpl.class, locale);
-          IAsset asset = ams.getAsset(assetModel.vId, assetModel.dId);
+          IAsset asset = assetManagementService.getAsset(assetModel.vId, assetModel.dId);
           AssetUtil.deleteRelationShip(asset, domainId);
         } catch (Exception e) {
           xLogger.warn("Error deleting asset relationship: " + assetsDeleteModel.toString(), e);
@@ -660,10 +622,8 @@ public class AssetController {
       }
 
       for (String key : deleteModel.keySet()) {
-        AssetManagementService ams;
         try {
-          ams = Services.getService(AssetManagementServiceImpl.class, locale);
-          ams.deleteAsset(key, deleteModel.get(key), domainId);
+          assetManagementService.deleteAsset(key, deleteModel.get(key), domainId);
         } catch (Exception e) {
           xLogger.warn("Error deleting asset: " + assetsDeleteModel.toString(), e);
           throw new InvalidServiceException(backendMessages.getString("asset.delete.error"));
@@ -684,13 +644,10 @@ public class AssetController {
   @RequestMapping(value = "/model", method = RequestMethod.GET)
   public
   @ResponseBody
-  List<String> getModelSuggestions(@RequestParam(required = false) String query,
-                                   HttpServletRequest request) throws ServiceException {
+  List<String> getModelSuggestions(@RequestParam(required = false) String query) throws ServiceException {
     try {
-      SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
-      Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
-      AssetManagementService as = Services.getService(AssetManagementServiceImpl.class);
-      return as.getModelSuggestion(domainId, query);
+      Long domainId = SecurityUtils.getCurrentDomainId();
+      return assetManagementService.getModelSuggestion(domainId, query);
     } catch (Exception e) {
       xLogger.warn("Error while getting model suggestions", e);
     }
@@ -709,7 +666,7 @@ public class AssetController {
   public
   @ResponseBody
   String exportData(@RequestBody String json) throws ParseException, ServiceException {
-    ExportModel eModel = new AssetBuilder().buildExportModel(json);
+    ExportModel eModel = assetBuilder.buildExportModel(json);
     long jobId = exportService.scheduleExport(eModel, "Assets");
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", Locale.ENGLISH);
     IUserAccount u = usersService.getUserAccount(SecurityUtils.getUsername());

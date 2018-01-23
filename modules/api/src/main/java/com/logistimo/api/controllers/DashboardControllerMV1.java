@@ -36,14 +36,13 @@ import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.dashboards.service.IDashboardService;
-import com.logistimo.dashboards.service.impl.DashboardService;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.logger.XLog;
-import com.logistimo.services.Services;
 import com.logistimo.services.cache.MemcacheService;
 import com.logistimo.utils.LocalDateUtil;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -79,6 +78,19 @@ public class DashboardControllerMV1 {
   public static final String INV = "inv";
   private static final XLog xLogger = XLog.getLog(DashboardControllerMV1.class);
 
+  private IDashboardService dashboardService;
+  private DashboardBuilder dashboardBuilder;
+
+  @Autowired
+  public void setDashboardService(IDashboardService dashboardService) {
+    this.dashboardService = dashboardService;
+  }
+
+  @Autowired
+  public void setDashboardBuilder(DashboardBuilder dashboardBuilder) {
+    this.dashboardBuilder = dashboardBuilder;
+  }
+
   @RequestMapping(value = "/inventory", method = RequestMethod.GET)
   public
   @ResponseBody
@@ -94,7 +106,6 @@ public class DashboardControllerMV1 {
       @RequestParam(value = "refresh", required = false, defaultValue = "true") Boolean refresh) {
 
     long domainId = SecurityUtils.getCurrentDomainId();
-    IDashboardService ds;
     DomainConfig dc = DomainConfig.getInstance(domainId);
     MobileInvDashboardModel dashboardModel;
     if (dc.getCountry() == null) {
@@ -127,11 +138,10 @@ public class DashboardControllerMV1 {
     Map<String, String>
         filters =
         buildQueryFilters(paramModel);
-    ds = Services.getService(DashboardService.class);
-    ResultSet invTyRes = ds.getMainDashboardResults(domainId, filters, INV, true, null);
-    ResultSet invAlRes = ds.getMainDashboardResults(domainId, filters, ALL_INV, true, null);
-    ResultSet acstRes = ds.getMainDashboardResults(domainId, filters, ACTIVITY, true, null);
-    ResultSet alstRes = ds.getMainDashboardResults(domainId, filters, ALL_ACTIVITY, true, null);
+    ResultSet invTyRes = dashboardService.getMainDashboardResults(domainId, filters, INV, true, null);
+    ResultSet invAlRes = dashboardService.getMainDashboardResults(domainId, filters, ALL_INV, true, null);
+    ResultSet acstRes = dashboardService.getMainDashboardResults(domainId, filters, ACTIVITY, true, null);
+    ResultSet alstRes = dashboardService.getMainDashboardResults(domainId, filters, ALL_ACTIVITY, true, null);
     //preparing the model
     dashboardModel =
         MobileInvDashboardBuilder.buildInvDashboard(invTyRes, invAlRes, acstRes, alstRes);
@@ -159,7 +169,6 @@ public class DashboardControllerMV1 {
       @RequestParam(value = "refresh", required = false, defaultValue = "true") Boolean refresh) {
 
     long domainId = SecurityUtils.getCurrentDomainId();
-    IDashboardService ds;
     DomainConfig dc = DomainConfig.getInstance(domainId);
     MobileInvDashboardDetails details;
     String country = dc.getCountry();
@@ -189,12 +198,10 @@ public class DashboardControllerMV1 {
     Map<String, String>
         filters =
         buildQueryFilters(paramModel);
-    ds = Services.getService(DashboardService.class);
-    ResultSet invTyRes = ds.getMainDashboardResults(domainId, filters, INV, false, groupby);
-    ResultSet invAlRes = ds.getMainDashboardResults(domainId, filters, ALL_INV, false, groupby);
-    ResultSet
-        alstRes =
-        ds.getMainDashboardResults(domainId, filters, "all_activity", false, null);
+    ResultSet invTyRes = dashboardService.getMainDashboardResults(domainId, filters, INV, false, groupby);
+    ResultSet invAlRes = dashboardService.getMainDashboardResults(domainId, filters, ALL_INV, false, groupby);
+    ResultSet alstRes =
+        dashboardService.getMainDashboardResults(domainId, filters, "all_activity", false, null);
     //preparing the model
     details =
         MobileInvDashboardBuilder
@@ -260,12 +267,9 @@ public class DashboardControllerMV1 {
     } else {
       colFilter = STATE;
     }
-    IDashboardService ds = Services.getService(DashboardService.class);
-    ResultSet tempRes = ds.getMainDashboardResults(domainId, filters, "temperature");
-    DashboardBuilder builder = new DashboardBuilder();
-    model =
-        builder
-            .getMainDashBoardData(null, null, null, null, tempRes, null, colFilter);
+    ResultSet tempRes = dashboardService.getMainDashboardResults(domainId, filters, "temperature");
+    model = dashboardBuilder.getMainDashBoardData(null, null, null, null, tempRes, null,
+        colFilter);
     if (StringUtils.isBlank(filter) && queryModel.state == null) {
       model.mLev = COUNTRY_LOWER;
     } else if (StringUtils.isBlank(filter) && queryModel.district == null) {
@@ -341,14 +345,12 @@ public class DashboardControllerMV1 {
     } else {
       colFilter = STATE;
     }
-    IDashboardService dashboardService = Services.getService(DashboardService.class);
     ResultSet activity = dashboardService.getMainDashboardResults(domainId, filters, ACTIVITY);
     ResultSet
         activityDomain =
         dashboardService.getMainDashboardResults(domainId, filters, ALL_ACTIVITY);
-    DashboardBuilder builder = new DashboardBuilder();
     model =
-        builder.getMainDashBoardData(null, null, activity, activityDomain, null, null, colFilter);
+        dashboardBuilder.getMainDashBoardData(null, null, activity, activityDomain, null, null, colFilter);
     if (StringUtils.isBlank(activityQueryModel.loc) && activityQueryModel.state == null) {
       model.mLev = COUNTRY_LOWER;
     } else if (StringUtils.isBlank(activityQueryModel.loc) && activityQueryModel.district == null) {

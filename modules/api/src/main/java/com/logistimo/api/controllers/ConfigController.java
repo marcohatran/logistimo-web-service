@@ -30,7 +30,6 @@ import com.logistimo.api.models.ConfigJSONModel;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.config.entity.IConfig;
 import com.logistimo.config.models.DomainConfig;
-import com.logistimo.config.service.ConfigurationMgmtService;
 import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.exception.InvalidServiceException;
@@ -40,11 +39,11 @@ import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.utils.LocalDateUtil;
 
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -53,7 +52,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.TreeMap;
@@ -68,15 +66,21 @@ import javax.servlet.http.HttpServletRequest;
 public class ConfigController {
   private static final XLog xLogger = XLog.getLog(AccountsController.class);
 
+  private ConfigurationMgmtServiceImpl configurationMgmtService;
+
+  @Autowired
+  public void setConfigurationMgmtService(ConfigurationMgmtServiceImpl configurationMgmtService) {
+    this.configurationMgmtService = configurationMgmtService;
+  }
+
   @RequestMapping(value = "/locations", method = RequestMethod.GET)
   public
   @ResponseBody
-  String getLocations(HttpServletRequest request) {
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
-    Locale locale = user.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+  String getLocations() {
+    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages",
+        SecurityUtils.getLocale());
     try {
-      return getObject(user.getLocale(), IConfig.LOCATIONS);
+      return getObject(IConfig.LOCATIONS);
     } catch (ServiceException e) {
       xLogger.severe("Error in getting Location details");
       throw new InvalidServiceException("Error in getting accounts details");
@@ -89,17 +93,13 @@ public class ConfigController {
   @RequestMapping(value = "/locations/currentdomain", method = RequestMethod.GET)
   public
   @ResponseBody
-  String getCurrentDomainLocations(HttpServletRequest request) {
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
-    Locale locale = user.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+  String getCurrentDomainLocations() {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
+    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", sUser.getLocale());
     try {
-      ConfigurationMgmtService
-          cms =
-          Services.getService(ConfigurationMgmtServiceImpl.class, locale);
-      String key = IConfig.CONFIG_PREFIX + user.getDomainId();
-      DomainConfig dc = new DomainConfig(cms.getConfiguration(key).getConfig());
-      String locations = getObject(user.getLocale(), IConfig.LOCATIONS);
+      String key = IConfig.CONFIG_PREFIX + sUser.getDomainId();
+      DomainConfig dc = new DomainConfig(configurationMgmtService.getConfiguration(key).getConfig());
+      String locations = getObject(IConfig.LOCATIONS);
       JSONObject jsonObject = new JSONObject(locations);
       return jsonObject.getJSONObject("data").getJSONObject(dc.getCountry()).toString();
     } catch (Exception e) {
@@ -111,16 +111,11 @@ public class ConfigController {
   @RequestMapping(value = "/currencies", method = RequestMethod.GET)
   public
   @ResponseBody
-  String getCurrencies(HttpServletRequest request) {
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
-    Locale locale = user.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+  String getCurrencies() {
+    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", SecurityUtils.getLocale());
     try {
-      return getObject(user.getLocale(), IConfig.CURRENCIES);
-    } catch (ServiceException e) {
-      xLogger.severe("Error in getting Currencies details");
-      throw new InvalidServiceException(backendMessages.getString("general.config.fetch.error"));
-    } catch (ObjectNotFoundException e) {
+      return getObject(IConfig.CURRENCIES);
+    } catch (ServiceException | ObjectNotFoundException e) {
       xLogger.severe("Error in getting Currencies details");
       throw new InvalidServiceException(backendMessages.getString("general.config.fetch.error"));
     }
@@ -129,21 +124,15 @@ public class ConfigController {
   @RequestMapping(value = "/languages", method = RequestMethod.GET)
   public
   @ResponseBody
-  String getLanguages(@RequestParam(required = false) String type, HttpServletRequest request) {
-    ResourceBundle backendMessages = null;
+  String getLanguages(@RequestParam(required = false) String type) {
+    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", SecurityUtils.getLocale());
     try {
-      SecureUserDetails user = SecurityUtils.getUserDetails(request);
-      Locale locale = user.getLocale();
-      backendMessages = Resources.get().getBundle("BackendMessages", locale);
       if ("mobile".equalsIgnoreCase(type)) {
-        return getObject(null, IConfig.LANGUAGES_MOBILE);
+        return getObject(IConfig.LANGUAGES_MOBILE);
       } else {
-        return getObject(user.getLocale(), IConfig.LANGUAGES);
+        return getObject(IConfig.LANGUAGES);
       }
-    } catch (ServiceException e) {
-      xLogger.severe("Error in getting Languages details");
-      throw new InvalidServiceException(backendMessages.getString("general.config.fetch.error"));
-    } catch (ObjectNotFoundException e) {
+    } catch (ServiceException | ObjectNotFoundException e) {
       xLogger.severe("Error in getting Languages details");
       throw new InvalidServiceException(backendMessages.getString("general.config.fetch.error"));
     }
@@ -167,20 +156,14 @@ public class ConfigController {
   public
   @ResponseBody
   Map<String, String> getTimezonesWithOffset(HttpServletRequest request) {
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
+    SecureUserDetails user = SecurityUtils.getUserDetails();
     return new TreeMap<>(
         LocalDateUtil.getTimeZoneNamesWithOffset(user.getLocale())); //sorted timezones
   }
 
-  private String getObject(Locale locale, String config)
+  private String getObject(String config)
       throws ServiceException, ObjectNotFoundException {
-    ConfigurationMgmtService cms;
-    if (null != locale) {
-      cms = Services.getService(ConfigurationMgmtServiceImpl.class, locale);
-    } else {
-      cms = Services.getService(ConfigurationMgmtServiceImpl.class, null);
-    }
-    IConfig c = cms.getConfiguration(config);
+    IConfig c = configurationMgmtService.getConfiguration(config);
     String jsonObject = null;
     if (c != null && c.getConfig() != null) {
       jsonObject = c.getConfig();
@@ -191,12 +174,10 @@ public class ConfigController {
   @RequestMapping(value = "/generalconfig", method = RequestMethod.GET)
   public
   @ResponseBody
-  String getGeneralConfig(HttpServletRequest request) {
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
-    Locale locale = user.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+  String getGeneralConfig() {
+    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", SecurityUtils.getLocale());
     try {
-      return getObject(user.getLocale(), IConfig.GENERALCONFIG);
+      return getObject(IConfig.GENERALCONFIG);
     } catch (ServiceException e) {
       xLogger.severe("Error in getting General Configuration details");
       throw new InvalidServiceException(backendMessages.getString("general.config.fetch.error"));
@@ -211,14 +192,10 @@ public class ConfigController {
   @ResponseBody
   String getConfigJson(@RequestParam(name = "config_type") String configType)
       throws ServiceException {
-    SecureUserDetails user = SecurityUtils.getUserDetails();
     if (!SecurityUtils.isSuperUser()) {
       throw new UnauthorizedException("Forbidden", HttpStatus.FORBIDDEN);
     }
-    ConfigurationMgmtServiceImpl
-        cms =
-        Services.getService(ConfigurationMgmtServiceImpl.class, user.getLocale());
-    IConfig config = cms.getConfiguration(configType);
+    IConfig config = configurationMgmtService.getConfiguration(configType);
     if (config != null && StringUtils.isNotEmpty(config.getConfig())) {
       return config.getConfig();
     }
@@ -234,14 +211,11 @@ public class ConfigController {
     if (!SecurityUtils.isSuperUser()) {
       throw new UnauthorizedException("Forbidden", HttpStatus.FORBIDDEN);
     }
-    ConfigurationMgmtServiceImpl
-        cms =
-        Services.getService(ConfigurationMgmtServiceImpl.class, user.getLocale());
     IConfig config = JDOUtils.createInstance(IConfig.class);
     config.setKey(configJSONModel.type);
     config.setConfig(configJSONModel.configJson);
     config.setUserId(user.getUsername());
-    cms.updateConfiguration(config);
+    configurationMgmtService.updateConfiguration(config);
     return configJSONModel.type + " updated successfully";
   }
 

@@ -23,10 +23,10 @@
 
 package com.logistimo.entities.entity;
 
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.logger.XLog;
-import com.logistimo.services.Services;
 import com.logistimo.utils.NumberUtil;
 
 import org.apache.commons.lang.StringUtils;
@@ -217,7 +217,7 @@ public class KioskLink implements IKioskLink, Serializable {
 
   @Override
   public void setRouteIndex(int ri) {
-    this.ri = new Integer(ri);
+    this.ri = ri;
   }
 
   @Override
@@ -276,7 +276,7 @@ public class KioskLink implements IKioskLink, Serializable {
   // Get the linked domain Id
   public Long getLinkedDomainId() {
     try {
-      EntitiesService as = Services.getService(EntitiesServiceImpl.class);
+      EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
       return as.getKiosk(getLinkedKioskId(), false).getDomainId();
     } catch (Exception e) {
       xLogger.warn("{0} when trying to get linked kiosk {1} for kiosk link {2}-{3}: {4}",
@@ -288,7 +288,7 @@ public class KioskLink implements IKioskLink, Serializable {
   // Get the kiosk domain Id
   public Long getKioskDomainId() {
     try {
-      EntitiesService as = Services.getService(EntitiesServiceImpl.class);
+      EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
       return as.getKiosk(getKioskId(), false).getDomainId();
     } catch (Exception e) {
       xLogger.warn("{0} when trying to get linked kiosk {1} for kiosk link {2}-{3}: {4}",

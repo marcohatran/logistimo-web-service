@@ -26,16 +26,13 @@
  */
 package com.logistimo.tags;
 
-import com.logistimo.AppFactory;
-import com.logistimo.services.taskqueue.ITaskService;
+import com.logistimo.constants.CharacterConstants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.tags.dao.ITagDao;
-import com.logistimo.tags.dao.TagDao;
 import com.logistimo.tags.entity.ITag;
+import com.logistimo.utils.StringUtil;
 
 import org.apache.commons.lang.StringUtils;
-import com.logistimo.constants.CharacterConstants;
-import com.logistimo.utils.StringUtil;
-import com.logistimo.logger.XLog;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,14 +55,10 @@ public class TagUtil {
   // URLs
   private static final String URL_CREATECONFIG = "/task/createconfig";
 
-  private static final XLog xLogger = XLog.getLog(TagUtil.class);
-  private static ITagDao tagDao = new TagDao();
-  private static ITaskService taskService = AppFactory.get().getTaskService();
-
   public static List<String> getList(List<? extends ITag> tgs) {
     List<String> tags = null;
     if (tgs != null) {
-      tags = new ArrayList<String>(tgs.size());
+      tags = new ArrayList<>(tgs.size());
       for (ITag tag : tgs) {
         if (tag.getName() != null) {
           tags.add(tag.getName());
@@ -81,18 +74,16 @@ public class TagUtil {
       return commaSepTags;
     }
     String[] tagsA = commaSepTags.split(",");
-    if (tagsA == null || tagsA.length == 0) {
+    if (tagsA.length == 0) {
       return commaSepTags.trim();
     }
     if (sort) {
       Arrays.sort(tagsA, new TagUtil.TagComparator());
     }
     String tTags = "";
-    ArrayList<String> tagsL = new ArrayList<String>();
-    ArrayList<String> dedupL = new ArrayList<String>();
+    ArrayList<String> dedupL = new ArrayList<>();
     for (int i = 0; i < tagsA.length; i++) {
       if (!dedupL.contains(tagsA[i].toLowerCase())) {
-        tagsL.add(tagsA[i]);
         dedupL.add(tagsA[i].toLowerCase());
         if (i != 0) {
           tTags += ",";
@@ -108,7 +99,7 @@ public class TagUtil {
     String[] arr = null;
     if (commaSepTags != null && !commaSepTags.isEmpty()) {
       arr = commaSepTags.split(",");
-      if (arr == null || arr.length == 0) {
+      if (arr.length == 0) {
         arr = new String[1];
         arr[0] = commaSepTags;
       }
@@ -128,6 +119,7 @@ public class TagUtil {
       return null;
     }
     List<String> tagNameList = StringUtil.getList(tags);
+    ITagDao tagDao = StaticApplicationContext.getBean(ITagDao.class);
     List<ITag> iTags = tagDao.getTagsByNames(tagNameList, type);
     if (iTags != null) {
       tagIds = getTagIdCSV(iTags, CharacterConstants.COMMA);
@@ -155,6 +147,7 @@ public class TagUtil {
   }
 
   public static String getTagById(Long id, int type) {
+    ITagDao tagDao = StaticApplicationContext.getBean(ITagDao.class);
     ITag iTag = tagDao.getTagById(id, type);
     return (iTag != null) ? iTag.getName() : "";
   }

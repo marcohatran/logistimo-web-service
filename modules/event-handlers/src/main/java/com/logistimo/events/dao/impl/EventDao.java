@@ -25,10 +25,11 @@ package com.logistimo.events.dao.impl;
 
 
 import com.logistimo.events.dao.IEventDao;
-
 import com.logistimo.events.entity.IEvent;
-import com.logistimo.services.impl.PMF;
 import com.logistimo.logger.XLog;
+import com.logistimo.services.impl.PMF;
+
+import org.springframework.stereotype.Repository;
 
 import java.util.Date;
 import java.util.Iterator;
@@ -39,6 +40,7 @@ import javax.jdo.PersistenceManager;
 /**
  * Created by charan on 16/03/15.
  */
+@Repository
 public class EventDao implements IEventDao {
 
   private static final XLog xLogger = XLog.getLog(EventDao.class);

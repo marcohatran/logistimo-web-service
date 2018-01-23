@@ -23,7 +23,6 @@
 
 package com.logistimo.events.templates;
 
-import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.EventsConfig;
 import com.logistimo.constants.Constants;
 import com.logistimo.entities.entity.IKiosk;
@@ -32,7 +31,6 @@ import com.logistimo.inventory.TransactionUtil;
 import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.Material;
-import com.logistimo.services.Resources;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.users.entity.UserAccount;
 import com.logistimo.utils.BigUtil;
@@ -43,7 +41,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.ResourceBundle;
 
 import javax.jdo.PersistenceManager;
 

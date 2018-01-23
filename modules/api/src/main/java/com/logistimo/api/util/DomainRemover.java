@@ -23,13 +23,12 @@
 
 package com.logistimo.api.util;
 
+import com.logistimo.context.StaticApplicationContext;
+import com.logistimo.domains.utils.DomainsUtil;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
-
-import com.logistimo.domains.utils.DomainsUtil;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
@@ -50,8 +49,8 @@ public class DomainRemover {
    * @param kioskId  Kiosk id from which the domain need to be removed.
    */
   public static String validateDomainRemove(Long domainId, Long kioskId) throws ServiceException {
-    EntitiesService as = new EntitiesServiceImpl();
-    IKiosk kiosk = as.getKiosk(kioskId);
+    EntitiesService entityService = StaticApplicationContext.getBean(EntitiesService.class);
+    IKiosk kiosk = entityService.getKiosk(kioskId);
     Set<Long> kioskParents = DomainsUtil.getDomainParents(kiosk.getDomainId(), true);
     if (kioskParents.contains(domainId)) {
       return "Source domain or ancestors of source domain can't be removed from entity.";
@@ -68,8 +67,8 @@ public class DomainRemover {
   public static void removeDomain(Long domainId, Long kioskId)
       throws ServiceException, NoSuchMethodException, IllegalAccessException,
       InvocationTargetException {
-    EntitiesService as = Services.getService(EntitiesServiceImpl.class);
-    IKiosk kiosk = as.getKiosk(kioskId);
+    EntitiesService entityService = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
+    IKiosk kiosk = entityService.getKiosk(kioskId);
     List<Long> niDomainIds = DomainsUtil.extractNonIntersectingDomainIds(domainId, kiosk);
     List<Long> domainIds = kiosk.getDomainIds();
     domainIds.removeAll(niDomainIds);

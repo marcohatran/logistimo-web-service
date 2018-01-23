@@ -23,9 +23,8 @@
 
 package com.logistimo.orders.entity;
 
-import com.logistimo.tags.entity.ITag;
-
 import com.logistimo.domains.IOverlappedDomain;
+import com.logistimo.tags.entity.ITag;
 
 import java.math.BigDecimal;
 import java.util.Date;

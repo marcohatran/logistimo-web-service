@@ -23,7 +23,7 @@
 
 package com.logistimo.api.builders;
 
-import com.logistimo.accounting.service.impl.AccountingServiceImpl;
+import com.logistimo.accounting.service.IAccountingService;
 import com.logistimo.api.models.DemandItemBatchModel;
 import com.logistimo.api.models.DemandModel;
 import com.logistimo.api.models.OrderApprovalTypesModel;
@@ -43,57 +43,46 @@ import com.logistimo.constants.PermissionConstants;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.domains.entity.IDomain;
 import com.logistimo.domains.service.DomainsService;
-import com.logistimo.domains.service.impl.DomainsServiceImpl;
 import com.logistimo.domains.utils.DomainsUtil;
 import com.logistimo.entities.auth.EntityAuthoriser;
 import com.logistimo.entities.entity.IApprover;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
-import com.logistimo.entities.service.EntitiesServiceImpl;
-import com.logistimo.inventory.dao.impl.InvntryDao;
+import com.logistimo.inventory.dao.IInvntryDao;
 import com.logistimo.inventory.entity.IInvAllocation;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.IInvntryBatch;
 import com.logistimo.inventory.entity.IInvntryEvntLog;
 import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.inventory.service.InventoryManagementService;
-import com.logistimo.inventory.service.impl.InventoryManagementServiceImpl;
 import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IHandlingUnit;
 import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.materials.service.IHandlingUnitService;
 import com.logistimo.materials.service.MaterialCatalogService;
-import com.logistimo.materials.service.impl.HandlingUnitServiceImpl;
-import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
 import com.logistimo.models.shipments.ShipmentItemBatchModel;
 import com.logistimo.models.shipments.ShipmentItemModel;
 import com.logistimo.orders.OrderUtils;
 import com.logistimo.orders.approvals.constants.ApprovalConstants;
-import com.logistimo.orders.approvals.dao.impl.ApprovalsDao;
+import com.logistimo.orders.approvals.dao.IApprovalsDao;
 import com.logistimo.orders.approvals.service.IOrderApprovalsService;
 import com.logistimo.orders.entity.IDemandItem;
 import com.logistimo.orders.entity.IOrder;
 import com.logistimo.orders.entity.approvals.IOrderApprovalMapping;
 import com.logistimo.orders.models.UpdatedOrder;
 import com.logistimo.orders.service.IDemandService;
-import com.logistimo.orders.service.OrderManagementService;
-import com.logistimo.orders.service.impl.DemandService;
-import com.logistimo.orders.service.impl.OrderManagementServiceImpl;
 import com.logistimo.pagination.Results;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.shipments.ShipmentStatus;
 import com.logistimo.shipments.entity.IShipment;
 import com.logistimo.shipments.entity.IShipmentItem;
 import com.logistimo.shipments.entity.IShipmentItemBatch;
 import com.logistimo.shipments.service.IShipmentService;
-import com.logistimo.shipments.service.impl.ShipmentService;
 import com.logistimo.tags.TagUtil;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
 import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.CommonUtils;
 import com.logistimo.utils.LocalDateUtil;
@@ -123,11 +112,80 @@ public class OrdersAPIBuilder {
 
   public static final String[] DEFAULT_EMBED = new String[]{OrdersAPIBuilder.PERMISSIONS};
 
+  private IOrderApprovalsService orderApprovalsService;
+  private IHandlingUnitService handlingUnitService;
+  private MaterialCatalogService materialCatalogService;
+  private InventoryManagementService inventoryManagementService;
+  private DomainsService domainsService;
+  private UsersService usersService;
+  private EntitiesService entitiesService;
+  private IAccountingService accountingService;
+  private IDemandService demandService;
+  private IShipmentService shipmentService;
+  private IInvntryDao invntryDao;
+  private IApprovalsDao approvalsDao;
 
   @Autowired
-  private IOrderApprovalsService orderApprovalsService;
+  public void setOrderApprovalsService(IOrderApprovalsService orderApprovalsService) {
+    this.orderApprovalsService = orderApprovalsService;
+  }
 
-  public Results buildOrders(Results results, SecureUserDetails user, Long domainId) {
+  @Autowired
+  public void setHandlingUnitService(IHandlingUnitService handlingUnitService) {
+    this.handlingUnitService = handlingUnitService;
+  }
+
+  @Autowired
+  public void setMaterialCatalogService(MaterialCatalogService materialCatalogService) {
+    this.materialCatalogService = materialCatalogService;
+  }
+
+  @Autowired
+  public void setInventoryManagementService(InventoryManagementService inventoryManagementService) {
+    this.inventoryManagementService = inventoryManagementService;
+  }
+
+  @Autowired
+  public void setDomainsService(DomainsService domainsService) {
+    this.domainsService = domainsService;
+  }
+
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
+  }
+
+  @Autowired
+  public void setEntitiesService(EntitiesService entitiesService) {
+    this.entitiesService = entitiesService;
+  }
+
+  @Autowired
+  public void setAccountingService(IAccountingService accountingService) {
+    this.accountingService = accountingService;
+  }
+
+  @Autowired
+  public void setDemandService(IDemandService demandService) {
+    this.demandService = demandService;
+  }
+
+  @Autowired
+  public void setShipmentService(IShipmentService shipmentService) {
+    this.shipmentService = shipmentService;
+  }
+
+  @Autowired
+  public void setInvntryDao(IInvntryDao invntryDao) {
+    this.invntryDao = invntryDao;
+  }
+
+  @Autowired
+  public void setApprovalsDao(IApprovalsDao approvalsDao) {
+    this.approvalsDao = approvalsDao;
+  }
+
+  public Results buildOrders(Results results, Long domainId) {
     List orders = results.getResults();
     List<OrderModel> newOrders = new ArrayList<>();
     int sno = results.getOffset() + 1;
@@ -135,36 +193,33 @@ public class OrdersAPIBuilder {
     for (Object obj : orders) {
       IOrder o = (IOrder) obj;
       // Add row
-      OrderModel model = build(o, user, domainId, domainNames);
+      OrderModel model = build(o, domainId, domainNames);
       if (model != null) {
         model.sno = sno++;
         newOrders.add(model);
       }
     }
-    return new Results(newOrders, results.getCursor(),
+    return new Results<>(newOrders, results.getCursor(),
         results.getNumFound(), results.getOffset());
   }
 
-  public OrderModel build(IOrder o, SecureUserDetails user, Long domainId,
+  public OrderModel build(IOrder o, Long domainId,
                           Map<Long, String> domainNames) {
     OrderModel model = new OrderModel();
     Long kioskId = o.getKioskId();
+    SecureUserDetails user = SecurityUtils.getUserDetails();
     Locale locale = user.getLocale();
     String timezone = user.getTimezone();
     IKiosk k;
     IKiosk vendor = null;
     try {
-      EntitiesService as = Services.getService(EntitiesServiceImpl.class, locale);
-      k = as.getKiosk(kioskId, false);
+      k = entitiesService.getKiosk(kioskId, false);
     } catch (Exception e) {
       xLogger.warn("{0} when getting kiosk data for order {1}: {2}",
           e.getClass().getName(), o.getOrderId(), e.getMessage());
       return null;
     }
     try {
-      DomainsService ds = Services.getService(DomainsServiceImpl.class);
-      UsersService as = Services.getService(UsersServiceImpl.class, locale);
-      EntitiesService es = Services.getService(EntitiesServiceImpl.class, locale);
       String domainName = domainNames.get(o.getDomainId());
 
       model.id = o.getOrderId();
@@ -181,7 +236,7 @@ public class OrdersAPIBuilder {
       model.rid = o.getReferenceID();
       if (o.getUpdatedBy() != null) {
         try {
-          model.uby = as.getUserAccount(o.getUpdatedBy()).getFullName();
+          model.uby = usersService.getUserAccount(o.getUpdatedBy()).getFullName();
           model.udt = LocalDateUtil.format(o.getUpdatedOn(), locale, timezone);
           model.orderUpdatedAt =
               LocalDateUtil.formatCustom(o.getUpdatedOn(), Constants.DATETIME_FORMAT, null);
@@ -194,7 +249,7 @@ public class OrdersAPIBuilder {
 
       if (model.uid != null) {
         try {
-          IUserAccount orderedBy = as.getUserAccount(model.uid);
+          IUserAccount orderedBy = usersService.getUserAccount(model.uid);
           model.unm = orderedBy.getFullName();
         } catch (Exception e) {
           xLogger.warn("{0} when getting details for user who created the order {1}: ",
@@ -210,7 +265,7 @@ public class OrdersAPIBuilder {
 
       if (vendorId != null) {
         try {
-          vendor = es.getKiosk(vendorId, false);
+          vendor = entitiesService.getKiosk(vendorId, false);
           model.vid = vendorId.toString();
           model.vnm = vendor.getName();
           model.vadd =
@@ -218,7 +273,7 @@ public class OrdersAPIBuilder {
                   vendor.getState());
           model.hva =
               EntityAuthoriser
-                  .authoriseEntity(vendorId, user.getRole(), locale, user.getUsername(), domainId);
+                  .authoriseEntity(vendorId, user.getRole(), user.getUsername(), domainId);
         } catch (Exception e) {
           xLogger.warn("{0} when getting vendor data for order {1}: {2}",
               e.getClass().getName(), o.getOrderId(), e.getMessage());
@@ -231,7 +286,7 @@ public class OrdersAPIBuilder {
       if (vPermission < 2 && model.vid != null) {
         vPermission =
             EntityAuthoriser
-                .authoriseEntityPerm(Long.valueOf(model.vid), user.getRole(), user.getLocale(),
+                .authoriseEntityPerm(Long.valueOf(model.vid), user.getRole(),
                     user.getUsername(), user.getDomainId());
       }
       model.atv = vPermission > 1;
@@ -241,7 +296,7 @@ public class OrdersAPIBuilder {
         Integer cPermission = vendor.getCustomerPerm();
         if (cPermission < 2 && model.eid != null) {
           cPermission =
-              EntityAuthoriser.authoriseEntityPerm(model.eid, user.getRole(), user.getLocale(),
+              EntityAuthoriser.authoriseEntityPerm(model.eid, user.getRole(),
                   user.getUsername(), user.getDomainId());
         }
         model.atc = cPermission > 1;
@@ -250,7 +305,7 @@ public class OrdersAPIBuilder {
       if (domainName == null) {
         IDomain domain = null;
         try {
-          domain = ds.getDomain(o.getDomainId());
+          domain = domainsService.getDomain(o.getDomainId());
         } catch (Exception e) {
           xLogger.warn("Error while fetching Domain {0}", o.getDomainId());
         }
@@ -283,75 +338,12 @@ public class OrdersAPIBuilder {
     return model;
   }
 
-  /*public OrderModel buildApprovalModel(OrderModel model, CreateApprovalResponse response, int approvalsSize) {
-    OrderApprovalModel approvalModel = new OrderApprovalModel();
-    if(response.getActiveApproverType().equals(Approver.PRIMARY)) {
-      approvalModel.setAprvs(model.getPrimaryApprovers());
-    } else {
-      approvalModel.setAprvs(model.getSecondaryApprovers());
-    }
-    approvalModel.setArs(approvalsSize);
-    approvalModel.setCt(response.getCreatedAt());
-    approvalModel.setUt(response.getUpdatedAt());
-    Long hours = (new Date().getTime() - response.getExpireAt().getTime()) / (60 * 60 * 1000);
-    approvalModel.setExpiryTime(hours);
-    approvalModel.setStatus(response.getStatus());
-
-
-    return model;
-  }*/
-
-  /*public OrderModel buildApproverDetails(OrderModel model) {
-    if(model.getPrimaryApprovers() != null) {
-      StringBuilder sb = new StringBuilder();
-      int j=0;
-      for(int i=0; i<model.getPrimaryApprovers().size(); i++) {
-        UserModel userModel = model.getPrimaryApprovers().get(i);
-        if(userModel.fnm != null) {
-          sb.append(userModel.fnm);
-          sb.append(SPACE);
-        }
-        if(userModel.lnm != null) {
-          sb.append(userModel.lnm);
-          sb.append(SPACE);
-        }
-        if(StringUtils.isNotEmpty(userModel.phm) || StringUtils.isNotEmpty(userModel.em)) {
-          sb.append("(");
-          boolean found = false;
-          if(userModel.phm != null) {
-            sb.append(userModel.phm);
-            found = true;
-          }
-          if(userModel.em != null) {
-            if(found){
-              sb.append(COMMA_SPACE);
-            }
-            sb.append(userModel.em);
-          }
-        }
-        if(i < model.getPrimaryApprovers().size()) {
-          sb.append(")");
-          j = j+1;
-        }
-        if(j < model.getPrimaryApprovers().size()) {
-          sb.append(COMMA_SPACE);
-        }
-      }
-      if(sb.length() > 0) {
-        model.setApproversDetail(sb.toString());
-      }
-    }
-    return model;
-  }*/
-
   /**
    * Returns the primary approvers for a particular order and approval type
    */
-  public List<UserContactModel> buildPrimaryApprovers(IOrder order, Locale locale,
-                                                      Integer approvalType)
+  public List<UserContactModel> buildPrimaryApprovers(IOrder order, Integer approvalType)
       throws ServiceException, ObjectNotFoundException {
     List<String> prApprovers = new ArrayList<>(1);
-    EntitiesService entitiesService = Services.getService(EntitiesServiceImpl.class, locale);
     if (IOrder.TRANSFER_ORDER == approvalType) {
       prApprovers = DomainConfig.getInstance(order.getDomainId()).getApprovalsConfig()
           .getOrderConfig().getPrimaryApprovers();
@@ -379,9 +371,6 @@ public class OrdersAPIBuilder {
       throws ObjectNotFoundException {
     List<UserContactModel> models = new ArrayList<>(1);
     if (approvers != null && !approvers.isEmpty()) {
-      UsersService
-          usersService =
-          Services.getService(UsersServiceImpl.class, SecurityUtils.getLocale());
       for (String s : approvers) {
         IUserAccount userAccount = usersService.getUserAccount(s);
         UserContactModel model = new UserContactModel();
@@ -395,31 +384,6 @@ public class OrdersAPIBuilder {
     return models;
   }
 
-  /*public OrderModel buildApprovalType(OrderModel model, IOrder order, Locale locale)
-      throws ServiceException {
-    OrderManagementService orderManagementService =
-        Services.getService(OrderManagementServiceImpl.class, locale);
-    if(IOrder.PURCHASE_ORDER.equals(order.getOrderType())) {
-      if(order.isVisibleToCustomer() && !order.isVisibleToVendor()) {
-        if(orderManagementService.isApprovalRequired(order, locale, IOrder.PURCHASE_ORDER)) {
-          model.setApprovalType(IOrder.PURCHASE_ORDER);
-        }
-      } else if(orderManagementService.isApprovalRequired(order, locale, IOrder.SALES_ORDER)) {
-        model.setApprovalType(IOrder.SALES_ORDER);
-      }
-    } else if(IOrder.SALES_ORDER.equals(order.getOrderType())) {
-      if(orderManagementService.isApprovalRequired(order, locale, IOrder.SALES_ORDER)) {
-        model.setApprovalType(IOrder.SALES_ORDER);
-      }
-    }else if(IOrder.TRANSFER_ORDER.equals(order.getOrderType())
-        && !order.isVisibleToCustomer() && !order.isVisibleToVendor()) {
-      if(orderManagementService.isApprovalRequired(order, locale)) {
-        model.setApprovalType(IOrder.TRANSFER);
-      }
-    }
-    return model;
-  }*/
-
   /**
    * Returns the permission to be restricted
    */
@@ -427,10 +391,8 @@ public class OrdersAPIBuilder {
                                           boolean isApprovalRequired, String userName) {
     Permissions model = new Permissions();
     List<String> permissions = new ArrayList<>(1);
-    ApprovalsDao approvalsDao = new ApprovalsDao();
     if (isApprovalRequired) {
-      IOrderApprovalMapping
-          approvalMapping =
+      IOrderApprovalMapping approvalMapping =
           approvalsDao.getOrderApprovalMapping(order.getOrderId(), approvalType);
 
       if (IOrder.PURCHASE_ORDER == approvalType) {
@@ -444,7 +406,7 @@ public class OrdersAPIBuilder {
               permissions.add(PermissionConstants.EDIT_META_DATA);
             }
           } else if (ApprovalConstants.APPROVED.equals(approvalMapping.getStatus())) {
-            if(orderModel.atc) {
+            if (orderModel.atc) {
               permissions.add(PermissionConstants.EDIT_META_DATA);
             }
             if (orderModel.atv) {
@@ -476,7 +438,7 @@ public class OrdersAPIBuilder {
               permissions.add(PermissionConstants.REOPEN);
               permissions.add(PermissionConstants.EDIT_META_DATA);
             }
-            if(orderModel.atc) {
+            if (orderModel.atc) {
               permissions.add(PermissionConstants.EDIT_META_DATA);
             }
           } else if (ApprovalConstants.APPROVED.equals(approvalMapping.getStatus())) {
@@ -501,7 +463,7 @@ public class OrdersAPIBuilder {
             permissions.add(PermissionConstants.REOPEN);
             permissions.add(PermissionConstants.EDIT_META_DATA);
           }
-          if(orderModel.atc) {
+          if (orderModel.atc) {
             permissions.add(PermissionConstants.EDIT_META_DATA);
           }
         }
@@ -517,7 +479,7 @@ public class OrdersAPIBuilder {
             if (userName.equals(approvalMapping.getCreatedBy())) {
               permissions.add(PermissionConstants.CANCEL);
             }
-            if(orderModel.atc) {
+            if (orderModel.atc) {
               permissions.add(PermissionConstants.EDIT_META_DATA);
             }
             if (orderModel.atv) {
@@ -559,55 +521,51 @@ public class OrdersAPIBuilder {
     return model;
   }
 
-
   /**
    * Gives the types of approval to be shown to the user
    */
   public List<OrderApprovalTypesModel> buildOrderApprovalTypesModel(OrderModel orderModel,
-                                                                    IOrder order,
-                                                                    SecureUserDetails user)
+                                                                    IOrder order)
       throws ServiceException, ObjectNotFoundException {
     List<OrderApprovalTypesModel> models = new ArrayList<>(1);
-    ApprovalsDao approvalsDao = new ApprovalsDao();
+    SecureUserDetails user = SecurityUtils.getUserDetails();
     if (order.isTransfer() &&
         (!(orderModel.isVisibleToCustomer() && orderModel.isVisibleToVendor()) ||
             (SecurityUtil.compareRoles(user.getRole(), SecurityConstants.ROLE_DOMAINOWNER) >= 0) ||
             user.getUsername().equals(order.getUserId()))
-        && orderApprovalsService.isApprovalRequired(order, IOrder.TRANSFER_ORDER))  {
-      buildTransferApprovalTypeModel(models, approvalsDao, order);
+        && orderApprovalsService.isApprovalRequired(order, IOrder.TRANSFER_ORDER)) {
+      buildTransferApprovalTypeModel(models, order);
     } else {
       if (order.isPurchase() && orderModel.isVisibleToCustomer() &&
           orderModel.atc &&
           orderApprovalsService.isApprovalRequired(order, IOrder.PURCHASE_ORDER)) {
-        buildPurchaseApprovalTypeModel(models, approvalsDao, order);
+        buildPurchaseApprovalTypeModel(models, order);
       }
       if (!order.isTransfer() && orderModel.isVisibleToVendor() &&
           orderModel.atv &&
           orderApprovalsService.isApprovalRequired(order, IOrder.SALES_ORDER)) {
-        buildSalesApprovalTypeModel(models, approvalsDao, order);
+        buildSalesApprovalTypeModel(models, order);
       }
     }
     return models;
   }
 
   private void buildSalesApprovalTypeModel(List<OrderApprovalTypesModel> models,
-                                           ApprovalsDao approvalsDao, IOrder order) {
-    IOrderApprovalMapping
-        orderApprovalMapping =
+                                           IOrder order) {
+    IOrderApprovalMapping orderApprovalMapping =
         approvalsDao.getOrderApprovalMapping(order.getOrderId(), IOrder.SALES_ORDER);
     if (orderApprovalMapping != null) {
       OrderApprovalTypesModel model = new OrderApprovalTypesModel();
       model.setType(ApprovalConstants.SALES);
       model.setId(orderApprovalMapping.getApprovalId());
-      List<IOrderApprovalMapping>
-          approvalMappings =
+      List<IOrderApprovalMapping> approvalMappings =
           approvalsDao.getTotalOrderApprovalMapping(order.getOrderId());
       if (approvalMappings != null && !approvalMappings.isEmpty()) {
         model.setCount(approvalMappings.size());
       }
       models.add(model);
     } else {
-      if(order.getStatus().equals(IOrder.PENDING) || order.getStatus().equals(IOrder.CONFIRMED)) {
+      if (order.getStatus().equals(IOrder.PENDING) || order.getStatus().equals(IOrder.CONFIRMED)) {
         OrderApprovalTypesModel model = new OrderApprovalTypesModel();
         model.setType(ApprovalConstants.SALES);
         models.add(model);
@@ -616,22 +574,20 @@ public class OrdersAPIBuilder {
   }
 
   private void buildPurchaseApprovalTypeModel(List<OrderApprovalTypesModel> models,
-                                              ApprovalsDao approvalsDao, IOrder order) {
-    IOrderApprovalMapping
-        orderApprovalMapping =
+                                              IOrder order) {
+    IOrderApprovalMapping orderApprovalMapping =
         approvalsDao.getOrderApprovalMapping(order.getOrderId(), IOrder.PURCHASE_ORDER);
     if (orderApprovalMapping != null) {
       OrderApprovalTypesModel model = new OrderApprovalTypesModel();
       model.setType(ApprovalConstants.PURCHASE);
       model.setId(orderApprovalMapping.getApprovalId());
-      List<IOrderApprovalMapping>
-          approvalMappings =
+      List<IOrderApprovalMapping> approvalMappings =
           approvalsDao.getTotalOrderApprovalMapping(order.getOrderId());
       if (approvalMappings != null && !approvalMappings.isEmpty()) {
         model.setCount(approvalMappings.size());
       }
       models.add(model);
-    } else if(!order.isVisibleToVendor()){
+    } else if (!order.isVisibleToVendor()) {
       OrderApprovalTypesModel model = new OrderApprovalTypesModel();
       model.setType(ApprovalConstants.PURCHASE);
       models.add(model);
@@ -639,104 +595,88 @@ public class OrdersAPIBuilder {
   }
 
   private void buildTransferApprovalTypeModel(List<OrderApprovalTypesModel> models,
-                                              ApprovalsDao approvalsDao, IOrder order) {
-    IOrderApprovalMapping
-        orderApprovalMapping =
+                                              IOrder order) {
+    IOrderApprovalMapping orderApprovalMapping =
         approvalsDao.getOrderApprovalMapping(order.getOrderId(), IOrder.TRANSFER_ORDER);
     if (orderApprovalMapping != null) {
       OrderApprovalTypesModel model = new OrderApprovalTypesModel();
       model.setType(ApprovalConstants.TRANSFER);
       model.setId(orderApprovalMapping.getApprovalId());
-      List<IOrderApprovalMapping>
-          approvalMappings =
+      List<IOrderApprovalMapping> approvalMappings =
           approvalsDao.getTotalOrderApprovalMapping(order.getOrderId());
       if (approvalMappings != null && !approvalMappings.isEmpty()) {
         model.setCount(approvalMappings.size());
       }
       models.add(model);
-    } else if(!order.isVisibleToVendor() || !order.isVisibleToCustomer()) {
+    } else if (!order.isVisibleToVendor() || !order.isVisibleToCustomer()) {
       OrderApprovalTypesModel model = new OrderApprovalTypesModel();
       model.setType(ApprovalConstants.TRANSFER);
       models.add(model);
     }
   }
 
-  public OrderModel buildFullOrderModel(IOrder order, SecureUserDetails user,
+  public OrderModel buildFullOrderModel(IOrder order,
                                         Long domainId, String[] embed) throws Exception {
-    OrderModel model = buildOrderModel(order, user, domainId);
-    includeApprovals(model, order, user, domainId,
+    OrderModel model = buildOrderModel(order, domainId);
+    includeApprovals(model, order, domainId,
         embed != null && Arrays.asList(embed).contains(PERMISSIONS));
     return model;
   }
 
-  private void includeApprovals(OrderModel model, IOrder order, SecureUserDetails user,
+  private void includeApprovals(OrderModel model, IOrder order,
                                 Long domainId, boolean includePermissions)
       throws ServiceException, ObjectNotFoundException {
     model.setApprovalTypesModels(buildOrderApprovalTypesModel(model,
-        order, user));
+        order));
     Integer approvalType = orderApprovalsService.getApprovalType(order);
     boolean isApprovalRequired = false;
     if (approvalType != null) {
       model.setApprover(
-          buildOrderApproverModel(user.getUsername(), approvalType, domainId, order));
+          buildOrderApproverModel(SecurityUtils.getUsername(), approvalType, domainId, order));
       isApprovalRequired = orderApprovalsService.isApprovalRequired(order, approvalType);
     }
     if (includePermissions) {
       Permissions
           permissions =
-          buildPermissionModel(order, model, approvalType, isApprovalRequired, user.getUsername());
+          buildPermissionModel(order, model, approvalType, isApprovalRequired,
+              SecurityUtils.getUsername());
       model.setPermissions(permissions);
     }
   }
 
-  public OrderModel buildOrderModel(IOrder order, SecureUserDetails user,
-                                    Long domainId) throws Exception {
+  public OrderModel buildOrderModel(IOrder order, Long domainId) throws Exception {
     Map<Long, String> domainNames = new HashMap<>(1);
-    OrderModel model = build(order, user, domainId, domainNames);
+    OrderModel model = build(order, domainId, domainNames);
     DomainConfig dc = DomainConfig.getInstance(domainId);
-    EntitiesService as = Services.getService(EntitiesServiceImpl.class, user.getLocale());
-    InventoryManagementService
-        ims =
-        Services.getService(InventoryManagementServiceImpl.class, user.getLocale());
     IKiosk k = null;
     IKiosk vendorKiosk = null;
+    SecureUserDetails user = SecurityUtils.getUserDetails();
     Locale locale = user.getLocale();
-    MaterialCatalogService
-        mcs =
-        Services.getService(MaterialCatalogServiceImpl.class, user.getLocale());
-
     boolean
         showStocks =
         IOrder.PENDING.equals(order.getStatus()) || IOrder.CONFIRMED.equals(order.getStatus())
             || IOrder.BACKORDERED.equals(order.getStatus());
-    // to the logged in user
     boolean showVendorStock = dc.autoGI() && order.getServicingKiosk() != null;
 
     if (order.getServicingKiosk() != null) {
       try {
-        vendorKiosk = as.getKiosk(order.getServicingKiosk(), false);
+        vendorKiosk = entitiesService.getKiosk(order.getServicingKiosk(), false);
       } catch (Exception e) {
         xLogger.warn("Error when trying to get kiosk {0} and create a new row for order {1}",
             order.getKioskId(), order.getOrderId(), e);
       }
     }
 
-    // Accounting
-    // Check if accounting is enabled
     boolean accountingEnabled = dc.isAccountingEnabled();
 
-    // Get the credit limit and amount paid for the customer
     String creditLimitErr = null;
     BigDecimal availableCredit = BigDecimal.ZERO;
-    // Get the credit limit and check against receivables
     if (accountingEnabled) {
       try {
         Long customerId = order.getKioskId();
-        // Get the credit limit
         if (customerId != null && model.vid != null) {
-          availableCredit = Services.getService(AccountingServiceImpl.class, locale)
-              .getCreditData(customerId,
-                  order.getServicingKiosk(), dc).availabeCredit;
+          availableCredit = accountingService.getCreditData(customerId,
+              order.getServicingKiosk(), dc).availabeCredit;
         }
       } catch (Exception e) {
         creditLimitErr = e.getMessage();
@@ -753,7 +693,7 @@ public class OrdersAPIBuilder {
 
     if (order.getKioskId() != null) {
       try {
-        k = as.getKiosk(order.getKioskId(), false);
+        k = entitiesService.getKiosk(order.getKioskId(), false);
       } catch (Exception e) {
         xLogger.warn(
             "{0} when trying to get kiosk {1} while fetching order details for order {2}: {3}",
@@ -775,13 +715,11 @@ public class OrdersAPIBuilder {
 
     }
 
-    UsersService accountsService = Services.getService(UsersServiceImpl.class);
     if (model.uid != null) {
       try {
-        IUserAccount orderedBy = accountsService.getUserAccount(model.uid);
+        IUserAccount orderedBy = usersService.getUserAccount(model.uid);
         model.unm = orderedBy.getFullName();
-      } catch (Exception e) {
-        // ignore
+      } catch (Exception ignored) {
       }
     }
     if (order.getOrderType() != null && order.getOrderType() == 0) {
@@ -808,8 +746,7 @@ public class OrdersAPIBuilder {
     model.dlt =
         LocalDateUtil.getFormattedMillisInHoursDays(order.getDeliveryLeadTime(), locale, true);
 
-    IShipmentService ss = Services.getService(ShipmentService.class);
-    List<IShipment> shipments = ss.getShipmentsByOrderId(order.getOrderId());
+    List<IShipment> shipments = shipmentService.getShipmentsByOrderId(order.getOrderId());
     Map<Long, Map<String, BigDecimal>> quantityByBatches = null;
     Map<Long, Map<String, DemandBatchMeta>> fQuantityByBatches = null;
     Map<Long, List<ShipmentItemModel>> fReasons = null;
@@ -824,7 +761,7 @@ public class OrdersAPIBuilder {
           fReasons = new HashMap<>();
         }
         if (ShipmentStatus.SHIPPED.equals(shipment.getStatus()) || isFulfilled) {
-          ss.includeShipmentItems(shipment);
+          shipmentService.includeShipmentItems(shipment);
           for (IShipmentItem iShipmentItem : shipment.getShipmentItems()) {
             if (iShipmentItem.getShipmentItemBatch() != null
                 && iShipmentItem.getShipmentItemBatch().size() > 0) {
@@ -833,8 +770,7 @@ public class OrdersAPIBuilder {
                   quantityByBatches
                       .put(iShipmentItem.getMaterialId(), new HashMap<>());
                 }
-                Map<String, BigDecimal>
-                    batches =
+                Map<String, BigDecimal> batches =
                     quantityByBatches.get(iShipmentItem.getMaterialId());
                 if (batches.containsKey(iShipmentItemBatch.getBatchId())) {
                   batches.put(iShipmentItemBatch.getBatchId(),
@@ -848,8 +784,7 @@ public class OrdersAPIBuilder {
                     fQuantityByBatches
                         .put(iShipmentItem.getMaterialId(), new HashMap<>());
                   }
-                  Map<String, DemandBatchMeta>
-                      fBatches =
+                  Map<String, DemandBatchMeta> fBatches =
                       fQuantityByBatches.get(iShipmentItem.getMaterialId());
                   if (fBatches.containsKey(iShipmentItemBatch.getBatchId())) {
                     fBatches.get(iShipmentItemBatch.getBatchId()).quantity =
@@ -858,8 +793,7 @@ public class OrdersAPIBuilder {
                     fBatches.get(iShipmentItemBatch.getBatchId()).bd
                         .add(getShipmentItemBatchBD(shipment.getShipmentId(), iShipmentItemBatch));
                   } else {
-                    DemandBatchMeta
-                        dMeta =
+                    DemandBatchMeta dMeta =
                         new DemandBatchMeta(iShipmentItemBatch.getFulfilledQuantity());
                     dMeta.bd
                         .add(getShipmentItemBatchBD(shipment.getShipmentId(), iShipmentItemBatch));
@@ -882,15 +816,14 @@ public class OrdersAPIBuilder {
         }
       }
     }
-    IDemandService dms = Services.getService(DemandService.class);
-    List<IDemandItem> items = dms.getDemandItems(order.getOrderId());
+    List<IDemandItem> items = demandService.getDemandItems(order.getOrderId());
     if (items != null) {
       Set<DemandModel> modelItems = new TreeSet<>();
       for (IDemandItem item : items) {
         Long mid = item.getMaterialId();
         IMaterial m;
         try {
-          m = mcs.getMaterial(item.getMaterialId());
+          m = materialCatalogService.getMaterial(item.getMaterialId());
         } catch (Exception e) {
           xLogger.warn("WARNING: " + e.getClass().getName() + " when getting material "
               + item.getMaterialId() + ": " + e.getMessage());
@@ -922,8 +855,10 @@ public class OrdersAPIBuilder {
         itemModel.astk = BigDecimal.ZERO;
         itemModel.tm = m.isTemperatureSensitive();
         if (showStocks) {
-          List<IInvAllocation> allocationList = ims.getAllocationsByTagMaterial(mid,
-              IInvAllocation.Type.ORDER + CharacterConstants.COLON + order.getOrderId());
+          List<IInvAllocation>
+              allocationList =
+              inventoryManagementService.getAllocationsByTagMaterial(mid,
+                  IInvAllocation.Type.ORDER + CharacterConstants.COLON + order.getOrderId());
           for (IInvAllocation ia : allocationList) {
             if (IInvAllocation.Type.ORDER.toString().equals(ia.getType())) {
               if (itemModel.isBa) {
@@ -933,13 +868,13 @@ public class OrdersAPIBuilder {
                 DemandItemBatchModel batchModel = new DemandItemBatchModel();
                 batchModel.q = ia.getQuantity();
                 batchModel.id = ia.getBatchId();
-                IInvntryBatch
-                    b =
-                    ims.getInventoryBatch(order.getServicingKiosk(), item.getMaterialId(),
-                        batchModel.id, null);
+                IInvntryBatch b = inventoryManagementService
+                        .getInventoryBatch(order.getServicingKiosk(), item.getMaterialId(),
+                            batchModel.id, null);
                 if (b == null) {
-                  b = ims.getInventoryBatch(order.getKioskId(), item.getMaterialId(),
-                      batchModel.id, null);
+                  b = inventoryManagementService
+                          .getInventoryBatch(order.getKioskId(), item.getMaterialId(),
+                              batchModel.id, null);
                 }
                 if (b == null) {
                   xLogger.warn("Error while getting inventory batch for kiosk {0}, material {1}, "
@@ -981,13 +916,14 @@ public class OrdersAPIBuilder {
                   batchModel.bd = fBatchMap.get(batchId).bd;
                 }
                 batchModel.id = batchId;
-                IInvntryBatch
-                    b =
-                    ims.getInventoryBatch(order.getServicingKiosk(), item.getMaterialId(),
-                        batchModel.id, null);
+                IInvntryBatch b = inventoryManagementService
+                        .getInventoryBatch(order.getServicingKiosk(), item.getMaterialId(),
+                            batchModel.id, null);
                 if (b == null) {
-                  b = ims.getInventoryBatch(order.getKioskId(), item.getMaterialId(), batchModel.id,
-                      null);
+                  b = inventoryManagementService
+                          .getInventoryBatch(order.getKioskId(), item.getMaterialId(),
+                              batchModel.id,
+                              null);
                 }
                 if (b == null) {
                   xLogger.warn("Error while getting inventory batch for kiosk {0}, material {1}, "
@@ -1015,46 +951,44 @@ public class OrdersAPIBuilder {
         }
         if (showVendorStock && showStocks) {
           try {
-            IInvntry inv = ims.getInventory(order.getServicingKiosk(), mid);
+            IInvntry inv = inventoryManagementService.getInventory(order.getServicingKiosk(), mid);
             if (inv != null) {
               itemModel.vs = inv.getStock();
-              itemModel.vsavibper = ims.getStockAvailabilityPeriod(inv, dc);
+              itemModel.vsavibper = inventoryManagementService.getStockAvailabilityPeriod(inv, dc);
               itemModel.atpstk =
                   inv.getAvailableStock(); //todo: Check Available to promise stock is right??????
               itemModel.itstk = inv.getInTransitStock();
               itemModel.vmax = inv.getMaxStock();
               itemModel.vmin = inv.getReorderLevel();
-              IInvntryEvntLog lastEventLog = new InvntryDao().getInvntryEvntLog(inv);
+              IInvntryEvntLog lastEventLog = invntryDao.getInvntryEvntLog(inv);
               if (lastEventLog != null) {
                 itemModel.vevent = inv.getStockEvent();
               }
             }
-          } catch (Exception e) {
-            // Its ok for vendor to not have inventory;
+          } catch (Exception ignored) {
           }
         }
         if (showStocks) {
           try {
-            IInvntry inv = ims.getInventory(order.getKioskId(), mid);
+            IInvntry inv = inventoryManagementService.getInventory(order.getKioskId(), mid);
             if (inv != null) {
               itemModel.stk = inv.getStock();
               itemModel.max = inv.getMaxStock();
               itemModel.min = inv.getReorderLevel();
-              IInvntryEvntLog lastEventLog = new InvntryDao().getInvntryEvntLog(inv);
+              IInvntryEvntLog lastEventLog = invntryDao.getInvntryEvntLog(inv);
               if (lastEventLog != null) {
                 itemModel.event = inv.getStockEvent();
               }
               itemModel.im = inv.getInventoryModel();
               itemModel.eoq = inv.getEconomicOrderQuantity();
-              itemModel.csavibper = ims.getStockAvailabilityPeriod(inv, dc);
+              itemModel.csavibper = inventoryManagementService.getStockAvailabilityPeriod(inv, dc);
             }
           } catch (Exception ignored) {
             // ignore
           }
         }
         try {
-          IHandlingUnitService hus = Services.getService(HandlingUnitServiceImpl.class);
-          Map<String, String> hu = hus.getHandlingUnitDataByMaterialId(mid);
+          Map<String, String> hu = handlingUnitService.getHandlingUnitDataByMaterialId(mid);
           if (hu != null) {
             itemModel.huQty = new BigDecimal(hu.get(IHandlingUnit.QUANTITY));
             itemModel.huName = hu.get(IHandlingUnit.NAME);
@@ -1063,9 +997,7 @@ public class OrdersAPIBuilder {
           xLogger.warn("Error while fetching Handling Unit {0}", mid, e);
         }
         modelItems.add(itemModel);
-
       }
-
       model.its = modelItems;
     }
     return model;
@@ -1082,16 +1014,16 @@ public class OrdersAPIBuilder {
   }
 
   public OrderResponseModel buildOrderResponseModel(UpdatedOrder updOrder,
-                                                    boolean includeOrder, SecureUserDetails sUser,
+                                                    boolean includeOrder,
                                                     Long domainId, boolean isFullOrder,
                                                     String[] embed)
       throws Exception {
     OrderModel order = null;
     if (includeOrder) {
       if (isFullOrder) {
-        order = buildFullOrderModel(updOrder.order, sUser, domainId, embed);
+        order = buildFullOrderModel(updOrder.order, domainId, embed);
       } else {
-        order = build(updOrder.order, sUser, domainId, new HashMap<>());
+        order = build(updOrder.order, domainId, new HashMap<>());
       }
     }
     return new OrderResponseModel(order, updOrder.message, updOrder.inventoryError, null);
@@ -1145,22 +1077,9 @@ public class OrdersAPIBuilder {
     return order;
   }
 
-  private class DemandBatchMeta {
-    public BigDecimal quantity;
-    List<ShipmentItemBatchModel> bd = new ArrayList<>();
-
-    DemandBatchMeta(BigDecimal quantity) {
-      this.quantity = quantity;
-    }
-  }
-
   public OrderApproverModel buildOrderApproverModel(String userId, Integer approvalType,
                                                     Long domainId, IOrder order) {
     OrderApproverModel orderApproverModel = null;
-
-    EntitiesService
-        entitiesService =
-        Services.getService(EntitiesServiceImpl.class, SecurityUtils.getLocale());
     if (IOrder.TRANSFER_ORDER == approvalType) {
       DomainConfig dc = DomainConfig.getInstance(domainId);
       ApprovalsConfig ac = dc.getApprovalsConfig();
@@ -1217,4 +1136,14 @@ public class OrdersAPIBuilder {
     }
     return orderApproverModel;
   }
+
+  private class DemandBatchMeta {
+    public BigDecimal quantity;
+    List<ShipmentItemBatchModel> bd = new ArrayList<>();
+
+    DemandBatchMeta(BigDecimal quantity) {
+      this.quantity = quantity;
+    }
+  }
+
 }

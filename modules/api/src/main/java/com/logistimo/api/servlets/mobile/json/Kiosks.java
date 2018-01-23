@@ -26,7 +26,6 @@ package com.logistimo.api.servlets.mobile.json;
 import com.google.gson.annotations.Expose;
 
 import com.logistimo.entities.entity.IKiosk;
-
 import com.logistimo.pagination.Results;
 
 import java.util.List;

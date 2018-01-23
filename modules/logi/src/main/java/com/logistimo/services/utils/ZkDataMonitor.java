@@ -27,6 +27,8 @@ package com.logistimo.services.utils;
  * node. It uses asynchronous ZooKeeper APIs.
  */
 
+import com.logistimo.logger.XLog;
+
 import org.apache.zookeeper.AsyncCallback.StatCallback;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.Code;
@@ -34,7 +36,6 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
-import com.logistimo.logger.XLog;
 
 import java.util.Arrays;
 

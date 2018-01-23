@@ -32,6 +32,7 @@ import com.logistimo.config.models.ReportObjDimType;
 import com.logistimo.config.models.ReportObjDimValue;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.domains.entity.IDomain;
 import com.logistimo.domains.service.DomainsService;
@@ -59,8 +60,8 @@ import com.logistimo.reports.service.ReportsService;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.impl.PMF;
+import com.logistimo.services.utils.ConfigUtil;
 import com.logistimo.tags.TagUtil;
 import com.logistimo.tags.entity.ITag;
 import com.logistimo.users.entity.IUserAccount;
@@ -129,22 +130,21 @@ public class ReportsUtil {
   // Get a map of filters, given a filter string format as follows:
   // <filter-type1>:<itemid-1>,<item-id2>,...;<filter-type2>...
   public static Map<String, String[]> getFilterMap(String filters) {
-    Map<String, String[]> filterMap = new HashMap<String, String[]>();
+    Map<String, String[]> filterMap = new HashMap<>();
     if (filters != null && !filters.isEmpty()) {
       String filtersArray[] = filters.split(";");
-      if (filtersArray == null || filtersArray.length == 0) {
+      if (filtersArray.length == 0) {
         filtersArray = new String[1];
         filtersArray[0] = filters;
       }
-      for (int i = 0; i < filtersArray.length; i++) {
-        String[] filterData = filtersArray[i].split(":");
+      for (String aFiltersArray : filtersArray) {
+        String[] filterData = aFiltersArray.split(":");
         String filterType = filterData[0];
         String[] filterVals = filterData[1].split(",");
-        if (filterVals == null || filterVals.length == 0) {
+        if (filterVals.length == 0) {
           filterVals = new String[1];
           filterVals[0] = filterData[1];
         }
-        // Update filter map
         filterMap.put(filterType, filterVals);
       }
     }
@@ -186,7 +186,9 @@ public class ReportsUtil {
     return qstr;
   }
 
-  // Get the filter display string, given a filter map
+  /**
+   *  Get the filter display string, given a filter map
+   */
   public static String getFilterDisplay(String startDate, String endDate,
                                         Map<String, String[]> filterMap, List<String> ignoreFilters,
                                         Locale locale) {
@@ -199,17 +201,12 @@ public class ReportsUtil {
     Arrays.sort(ftypes);
     try {
       // Get the services
-      EntitiesService as = Services.getService(EntitiesServiceImpl.class, locale);
-      UsersService us = Services.getService(UsersServiceImpl.class, locale);
-      DomainsService ds = Services.getService(DomainsServiceImpl.class, locale);
-      MaterialCatalogService
-          mcs =
-          Services.getService(MaterialCatalogServiceImpl.class, locale);
-      // Get the resource bundle
-      ResourceBundle
-          messages =
-          Resources.get()
-              .getBundle("Messages", locale); ///Resources.get().getBundle( "Messages", locale );
+      EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
+      UsersService us = StaticApplicationContext.getBean(UsersServiceImpl.class);
+      DomainsService ds = StaticApplicationContext.getBean(DomainsServiceImpl.class);
+      MaterialCatalogService mcs =
+          StaticApplicationContext.getBean(MaterialCatalogServiceImpl.class);
+      ResourceBundle messages = Resources.get().getBundle("Messages", locale);
       if (messages == null) {
         xLogger.warn("Could not get (null) resource bundle Messages_{0}",
             (locale == null ? null : locale.toString()));
@@ -218,8 +215,8 @@ public class ReportsUtil {
       disp =
           "<b>" + messages.getString("from") + "</b>: " + startDate + SEPARATOR + "<b>" + messages
               .getString("to") + "</b>: " + endDate + SEPARATOR;
-      for (int i = 0; i < ftypes.length; i++) {
-        String ftype = (String) ftypes[i];
+      for (Object ftype1 : ftypes) {
+        String ftype = (String) ftype1;
         if (ignoreFilters != null && ignoreFilters.contains(ftype)) {
           continue; // ignore this filter
         }
@@ -229,9 +226,6 @@ public class ReportsUtil {
         }
         // Get the name
         String name = messages.getString(DISPLAYNAMES_MAP.get(ftype));
-        if (name == null) {
-          name = ftype;
-        }
         disp += "<b>" + name + "</b>: ";
         // Get the displayable form of values
         for (int j = 0; j < values.length; j++) {
@@ -261,7 +255,9 @@ public class ReportsUtil {
     return disp;
   }
 
-  // Check if a non-domain Dimension is present
+  /**
+   *  Check if a non-domain Dimension is present
+   */
   public static boolean hasNonDomainDimension(Map<String, String[]> filterMap) {
     if (filterMap == null || filterMap.isEmpty()) {
       return false;
@@ -280,7 +276,9 @@ public class ReportsUtil {
     return hasNonDomainFilter;
   }
 
-  // Get the data from the daily or monthly slices
+  /**
+   *  Get the data from the daily or monthly slices
+   */
   @SuppressWarnings("unchecked")
   public static Results getSlices(String frequency, Date from, Date until, String objectType,
                                   String objectId, String dimType, String dimValue,
@@ -312,16 +310,14 @@ public class ReportsUtil {
     String
         declarations =
         " PARAMETERS String otyParam, String dtParam, String dvParam, Date fromParam";
-    Map<String, Object> params = new HashMap<String, Object>();
+    Map<String, Object> params = new HashMap<>();
     params.put("otyParam", objectType);
     params.put("dtParam", dimType);
     params.put("dvParam", dimValue);
     params.put("fromParam", LocalDateUtil.getOffsetDate(fromDate, -1, Calendar.MILLISECOND));
-    if (untilDate != null) {
-      queryFilters += " && d < untilParam";
-      declarations += ", Date untilParam";
-      params.put("untilParam", untilDate);
-    }
+    queryFilters += " && d < untilParam";
+    declarations += ", Date untilParam";
+    params.put("untilParam", untilDate);
     if (objectId != null) {
       queryFilters += " && oId == oIdParam";
       declarations += ", String oIdParam";
@@ -420,9 +416,9 @@ public class ReportsUtil {
         }
       }
       // Create the filter map
-      HashMap<String, Object> filters = new HashMap<String, Object>();
-      Long kioskId = null;
-      Long materialId = null;
+      HashMap<String, Object> filters = new HashMap<>();
+      Long kioskId;
+      Long materialId;
       // Add the domain filter
       if (StringUtils.isNotEmpty(domainIdStr)) {
         filters.put(ReportsConstants.FILTER_DOMAIN, domainId);
@@ -537,7 +533,6 @@ public class ReportsUtil {
     xLogger
         .info("Entering fillMissingSlices, between startDate: {0}, endDate: {1}, periodType: {2} ",
             startDate, endDate, periodType);
-    // If slices == null or empty, log a warning message and return null
     if (slices == null || slices.isEmpty()) {
       xLogger.warn("Inside fillMissingSlices, slices is null or empty");
       return null;
@@ -547,7 +542,7 @@ public class ReportsUtil {
       return null;
     }
     // The slices is assumed to be incomplete.
-    List<ISlice> newList = new ArrayList<ISlice>();
+    List<ISlice> newList = new ArrayList<>();
     int n = slices.size(); // Size of the incomplete arraylist of slices
     int i = n - 2;
     ISlice
@@ -602,7 +597,7 @@ public class ReportsUtil {
   private static List<ISlice> getNewSlices(ISlice fromSlice, Date toSliceDate, String periodType,
                                            Boolean initMissingSlicesWithDefaultValues) {
     Date nextSliceDate;
-    List<ISlice> newSlices = new ArrayList<ISlice>();
+    List<ISlice> newSlices = new ArrayList<>();
     nextSliceDate = getNextSliceDate(fromSlice.getDate(), periodType);
     ISlice prevSlice = fromSlice;
     while (diffInDates(toSliceDate, nextSliceDate, periodType) > 0) { // Earlier > 0
@@ -741,21 +736,21 @@ public class ReportsUtil {
     ReportObjDimType reportObjDimType = getObjectDimType(sliceMap);
     try {
       if (ReportsConstants.MATERIAL.equals(reportObjDimType.objType)) {
-        MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
-        IMaterial
-            material =
+        MaterialCatalogService mcs = StaticApplicationContext.getBean(
+            MaterialCatalogServiceImpl.class);
+        IMaterial material =
             mcs.getMaterial(Long.valueOf(sliceMap.get(ReportsConstants.MATERIAL).toString()));
         objectValue = material.getName();
       } else if (ReportsConstants.KIOSK.equals(reportObjDimType.objType)) {
-        EntitiesService as = Services.getService(EntitiesServiceImpl.class);
+        EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
         IKiosk k = as.getKiosk(Long.valueOf(sliceMap.get(ReportsConstants.KIOSK).toString()));
         objectValue = k.getName();
       } else if (ReportsConstants.USER.equals(reportObjDimType.objType)) {
-        UsersService as = Services.getService(UsersServiceImpl.class);
+        UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
         IUserAccount u = as.getUserAccount(sliceMap.get(ReportsConstants.USER).toString());
         objectValue = u.getFullName();
       } else {
-        DomainsService ds = Services.getService(DomainsServiceImpl.class);
+        DomainsService ds = StaticApplicationContext.getBean(DomainsServiceImpl.class);
         IDomain
             domain =
             ds.getDomain(Long.valueOf(sliceMap.get(ReportsConstants.DOMAIN).toString()));
@@ -763,7 +758,7 @@ public class ReportsUtil {
       }
 
       if (ReportsConstants.KIOSK.equals(reportObjDimType.dimType)) {
-        EntitiesService as = Services.getService(EntitiesServiceImpl.class);
+        EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
         IKiosk k = as.getKiosk(Long.valueOf(sliceMap.get(ReportsConstants.KIOSK).toString()));
         dimValue = k.getName();
       } else if (ReportsConstants.MATERIAL_TAG.equals(reportObjDimType.dimType)) {
@@ -781,7 +776,7 @@ public class ReportsUtil {
       } else if (ReportsConstants.COUNTRY.equals(reportObjDimType.dimType)) {
         dimValue = sliceMap.get(ReportsConstants.COUNTRY).toString();
       } else {
-        DomainsService ds = Services.getService(DomainsServiceImpl.class);
+        DomainsService ds = StaticApplicationContext.getBean(DomainsServiceImpl.class);
         IDomain domain = ds.getDomain(Long.valueOf(sliceMap.get("did").toString()));
         dimValue = domain.getName();
       }
@@ -833,7 +828,8 @@ public class ReportsUtil {
 
   public static IReportDataGeneratorFactory getReportDataGeneratorFactory()
       throws ServiceException {
-    return ((ReportsService) Services.getService("reports")).getReportDataGeneratorFactory();
+    return StaticApplicationContext.getBean(ConfigUtil.get("reports"),
+        ReportsService.class).getReportDataGeneratorFactory();
   }
 
   /**

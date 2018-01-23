@@ -24,14 +24,13 @@
 package com.logistimo.exports.handlers;
 
 import com.logistimo.config.models.DomainConfig;
+import com.logistimo.constants.Constants;
+import com.logistimo.logger.XLog;
 import com.logistimo.reports.models.DomainUsageStats;
-
 import com.logistimo.services.Resources;
 import com.logistimo.utils.BigUtil;
-import com.logistimo.constants.Constants;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.NumberUtil;
-import com.logistimo.logger.XLog;
 
 import java.util.Date;
 import java.util.Locale;

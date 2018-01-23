@@ -27,19 +27,15 @@ import com.logistimo.auth.service.AuthenticationService;
 import com.logistimo.auth.service.impl.AuthenticationServiceImpl;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.constants.CharacterConstants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.users.service.impl.UsersServiceImpl;
 import com.logistimo.utils.PatternConstants;
 
 import org.springframework.util.StringUtils;
-
-import java.util.Locale;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * Created by charan on 22/06/17.
@@ -47,26 +43,24 @@ import javax.servlet.http.HttpServletRequest;
 public class GenericAuthoriser {
 
   public static final Integer NO_ACCESS = 0;
-  public static final Integer VIEW_ACCESS = 1;
   public static final Integer MANAGE_MASTER_DATA = 2;
 
   private GenericAuthoriser() {
   }
 
-  public static boolean authoriseUser(HttpServletRequest request, String userId)
+  public static boolean authoriseUser(String userId)
       throws ServiceException {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
-    Locale locale = sUser.getLocale();
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     String rUserId = sUser.getUsername();
     String role = sUser.getRole();
     Long domainId = SecurityUtils.getDomainId();
-    UsersService as = Services.getService(UsersServiceImpl.class, locale);
+    UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
     return role.equals(SecurityConstants.ROLE_SUPERUSER) || as
         .hasAccessToUser(userId, rUserId, domainId, role);
   }
 
-  public static boolean authoriseAdmin(HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+  public static boolean authoriseAdmin() {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     String role = sUser.getRole();
     return SecurityUtil.compareRoles(role, SecurityConstants.ROLE_DOMAINOWNER) >= 0;
   }
@@ -76,7 +70,7 @@ public class GenericAuthoriser {
     boolean isAuthorised;
 
     //If token is present validate token else validate mobile number
-    AuthenticationService as = Services.getService(AuthenticationServiceImpl.class);
+    AuthenticationService as = StaticApplicationContext.getBean(AuthenticationServiceImpl.class);
     String token = as.getUserToken(userId);
     if( StringUtils.isEmpty(token) || StringUtils.isEmpty(tokenSuffix)
         || !token.endsWith(tokenSuffix)) {

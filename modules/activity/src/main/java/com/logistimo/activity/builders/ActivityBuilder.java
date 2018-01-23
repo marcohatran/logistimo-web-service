@@ -24,16 +24,15 @@
 package com.logistimo.activity.builders;
 
 import com.logistimo.activity.entity.IActivity;
-import com.logistimo.conversations.service.ConversationService;
-import com.logistimo.conversations.service.impl.ConversationServiceImpl;
-import com.logistimo.dao.JDOUtils;
-
-import com.logistimo.services.Services;
-import com.logistimo.constants.Constants;
-import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
-import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.activity.models.ActivityModel;
+import com.logistimo.constants.Constants;
+import com.logistimo.conversations.service.ConversationService;
+import com.logistimo.dao.JDOUtils;
+import com.logistimo.users.service.UsersService;
+import com.logistimo.utils.LocalDateUtil;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -42,7 +41,22 @@ import java.util.List;
 /**
  * Created by kumargaurav on 07/10/16.
  */
+
+@Component
 public class ActivityBuilder {
+
+  private ConversationService conversationService;
+  private UsersService usersService;
+
+  @Autowired
+  public void setConversationService(ConversationService conversationService) {
+    this.conversationService = conversationService;
+  }
+
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
+  }
 
   public IActivity buildActivity(ActivityModel model) {
 
@@ -77,8 +91,7 @@ public class ActivityBuilder {
     model.domainId = activity.getDomainId();
     model.messageId = activity.getMessageId();
     try {
-      ConversationService cs = Services.getService(ConversationServiceImpl.class);
-      model.message = cs.getMessageById(activity.getMessageId()).getMessage();
+      model.message = conversationService.getMessageById(activity.getMessageId()).getMessage();
     } catch (Exception e) {
       // ignored
     }
@@ -92,8 +105,7 @@ public class ActivityBuilder {
     model.action = activity.getAction();
     model.userId = activity.getUserId();
     try {
-      UsersService as = Services.getService(UsersServiceImpl.class);
-      model.userName = as.getUserAccount(activity.getUserId()).getFullName();
+      model.userName = usersService.getUserAccount(activity.getUserId()).getFullName();
     } catch (Exception e) {
       // ignored2
     }

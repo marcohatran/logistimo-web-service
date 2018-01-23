@@ -26,19 +26,18 @@
  */
 package com.logistimo.api.communications;
 
+import com.logistimo.communications.MessageHandlingException;
 import com.logistimo.communications.service.MessageService;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.service.InventoryManagementService;
 import com.logistimo.inventory.service.impl.InventoryManagementServiceImpl;
-import com.logistimo.users.entity.IUserAccount;
-
-import com.logistimo.communications.MessageHandlingException;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
+import com.logistimo.users.entity.IUserAccount;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -59,9 +58,7 @@ public class HumanProtocolMessageHandler extends MessageHandler {
   private static String GET_INVENTORY = "geti";
   private static String HELP = "help";
   // Limist
-  private static int
-      MAX_SMS_SIZE =
-      152;
+  private static int MAX_SMS_SIZE = 152;
   // since we add a 8-letter prefix for message sequence (e.g. [msg-1])
   private static int MAX_MATERIAL_NAME_SIZE = 20;
   // Properties
@@ -72,12 +69,12 @@ public class HumanProtocolMessageHandler extends MessageHandler {
       throws MessageHandlingException {
     super(wireType, message, address, recdOn);
     tokens = message.split(" ");
-    if (tokens == null || tokens.length == 0) {
+    if (tokens.length == 0) {
       tokens = new String[1];
       tokens[0] = message;
     }
     // Init. services
-    ims = Services.getService(InventoryManagementServiceImpl.class);
+    ims = StaticApplicationContext.getBean(InventoryManagementServiceImpl.class);
   }
 
   @Override
@@ -127,7 +124,7 @@ public class HumanProtocolMessageHandler extends MessageHandler {
               as.getUserAccount(userId); // NOTE: need to call this API to also get user's kiosks
           setUserDetails(userId);
           // Get the kiosk Id
-          EntitiesService es = Services.getService(EntitiesServiceImpl.class);
+          EntitiesService es = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
           List<IKiosk> kiosks = (List<IKiosk>) es.getKiosksForUser(u,null,null);
           if (kiosks == null || kiosks.size() == 0) {
             sendMessage(
@@ -173,7 +170,7 @@ public class HumanProtocolMessageHandler extends MessageHandler {
 
   // Get the inventory details, in the form of one or more messages
   private List<String> getInventoryDetails(List<IInvntry> list) throws ServiceException {
-    List<String> msgs = new ArrayList<String>();
+    List<String> msgs = new ArrayList<>();
     if (list == null || list.size() == 0) {
       msgs.add("No inventory is available");
       return msgs;

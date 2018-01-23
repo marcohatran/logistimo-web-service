@@ -23,9 +23,8 @@
 
 package com.logistimo.services.taskqueue;
 
-import com.logistimo.services.utils.ConfigUtil;
-
 import com.logistimo.logger.XLog;
+import com.logistimo.services.utils.ConfigUtil;
 
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;

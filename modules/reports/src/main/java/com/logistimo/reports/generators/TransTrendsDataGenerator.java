@@ -27,31 +27,15 @@
 package com.logistimo.reports.generators;
 
 import com.logistimo.config.models.DomainConfig;
-import com.logistimo.dao.JDOUtils;
-import com.logistimo.reports.ReportsConstants;
-import com.logistimo.reports.entity.slices.IDaySlice;
-import com.logistimo.reports.entity.slices.IMonthSlice;
-import com.logistimo.reports.entity.slices.ISlice;
-
+import com.logistimo.logger.XLog;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.QueryParams;
-import com.logistimo.services.impl.PMF;
-import com.logistimo.utils.LocalDateUtil;
-import com.logistimo.utils.QueryUtil;
-import com.logistimo.logger.XLog;
+import com.logistimo.reports.entity.slices.ISlice;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-
-import javax.jdo.PersistenceManager;
-import javax.jdo.Query;
 
 /**
  * @author Arun

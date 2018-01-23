@@ -25,7 +25,6 @@ package com.logistimo.api.servlets.mobile.json;
 
 import com.google.gson.annotations.Expose;
 
-
 import com.logistimo.inventory.entity.IInvntryBatch;
 
 import java.util.List;

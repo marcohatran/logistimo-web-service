@@ -38,20 +38,10 @@
 
     <properties>
         <build.number>SNAPSHOT</build.number>
-        <build.version>2.6.3</build.version>
+        <build.version>2.7.0</build.version>
     </properties>
 
     <dependencies>
-        <dependency>
-            <groupId>com.logistimo</groupId>
-            <artifactId>logistimo-common</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.logistimo.events</groupId>
-            <artifactId>logistimo-events-core</artifactId>
-            <version>${project.version}</version>
-        </dependency>
         <dependency>
             <groupId>com.logistimo</groupId>
             <artifactId>logistimo-inventory</artifactId>
@@ -59,17 +49,7 @@
         </dependency>
         <dependency>
             <groupId>com.logistimo</groupId>
-            <artifactId>logistimo-materials</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.logistimo</groupId>
             <artifactId>logistimo-orders</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.logistimo</groupId>
-            <artifactId>logistimo-entities</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

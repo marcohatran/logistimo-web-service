@@ -26,10 +26,10 @@ package com.logistimo.config.models;
 import com.logistimo.config.entity.IConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
 import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.logger.XLog;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.utils.ConfigUtil;
 
 import org.json.JSONObject;
@@ -158,7 +158,8 @@ public class GeneralConfig {
   // Get an instance of the GeneralConfig
   public static GeneralConfig getInstance() throws ConfigurationException {
     try {
-      ConfigurationMgmtService cms = Services.getService(ConfigurationMgmtServiceImpl.class);
+      ConfigurationMgmtService cms = StaticApplicationContext
+          .getBean(ConfigurationMgmtServiceImpl.class);
       IConfig c = cms.getConfiguration(IConfig.GENERALCONFIG);
       return new GeneralConfig(c.getConfig());
     } catch (ObjectNotFoundException e) {

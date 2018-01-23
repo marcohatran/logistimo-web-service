@@ -29,6 +29,9 @@ import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -36,7 +39,16 @@ import java.util.stream.Collectors;
 /**
  * Created by vani on 28/06/17.
  */
+@Component
 public class MobileUserBuilder {
+
+  private UsersService usersService;
+
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
+  }
+
   private static final XLog LOGGER = XLog.getLog(MobileUserBuilder.class);
   /**
    * Builds a list of user models as required by the mobile from a list of user account objects
@@ -47,7 +59,7 @@ public class MobileUserBuilder {
       return null;
     }
     return (users.stream()
-        .map(user -> buildMobileUserModel(user))
+        .map(this::buildMobileUserModel)
         .collect(Collectors.toList()));
   }
 
@@ -62,10 +74,9 @@ public class MobileUserBuilder {
 
   /**
    * Constructs a list of UserAccount objects from a list of user ids
-   * @param usersService
    * @param userIds
    */
-  public List<IUserAccount> constructUserAccount(UsersService usersService, List<String> userIds) {
+  public List<IUserAccount> constructUserAccount(List<String> userIds) {
     if (userIds == null || userIds.isEmpty()) {
       return null;
     }

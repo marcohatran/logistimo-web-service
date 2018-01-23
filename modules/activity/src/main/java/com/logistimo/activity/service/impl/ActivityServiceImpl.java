@@ -23,20 +23,17 @@
 
 package com.logistimo.activity.service.impl;
 
-import com.logistimo.activity.dao.impl.ActivityDao;
+import com.logistimo.activity.dao.IActivityDao;
 import com.logistimo.activity.entity.IActivity;
 import com.logistimo.activity.service.ActivityService;
-import com.logistimo.activity.dao.IActivityDao;
 import com.logistimo.dao.JDOUtils;
-
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
-import com.logistimo.services.Service;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.impl.PMF;
-import com.logistimo.services.impl.ServiceImpl;
-import com.logistimo.logger.XLog;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.Date;
 
@@ -46,25 +43,15 @@ import javax.jdo.PersistenceManager;
 /**
  * Created by kumargaurav on 07/10/16.
  */
-public class ActivityServiceImpl extends ServiceImpl implements ActivityService {
 
-  private static final XLog xLogger = XLog.getLog(ActivityServiceImpl.class);
+@Service
+public class ActivityServiceImpl implements ActivityService {
 
-  private IActivityDao activityDao = new ActivityDao();
+  private IActivityDao activityDao;
 
-  @Override
-  public void init(Services services) throws ServiceException {
-
-  }
-
-  @Override
-  public void destroy() throws ServiceException {
-
-  }
-
-  @Override
-  public Class<? extends Service> getInterface() {
-    return ActivityService.class;
+  @Autowired
+  public void setActivityDao(IActivityDao activityDao) {
+    this.activityDao = activityDao;
   }
 
   public IActivity createActivity(IActivity activity) throws ServiceException {

@@ -28,11 +28,11 @@ package com.logistimo.config.models;
 
 import com.logistimo.config.entity.IConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
+import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import com.logistimo.services.Services;
-import com.logistimo.constants.Constants;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -126,10 +126,11 @@ public class OptimizerConfig implements Serializable {
 
   // Get the specified run frequencies, if configured
   public static Map<String, Integer> getRunFrequencies() {
-    Map<String, Integer> freqs = new HashMap<String, Integer>();
+    Map<String, Integer> freqs = new HashMap<>();
     boolean makeDefault = false;
     try {
-      ConfigurationMgmtService cms = Services.getService(ConfigurationMgmtService.class);
+      ConfigurationMgmtService cms = StaticApplicationContext
+          .getBean(ConfigurationMgmtService.class);
       IConfig c = cms.getConfiguration(IConfig.OPTIMIZATION);
       String data = c.getConfig();
       if (data == null || data.isEmpty()) {
@@ -137,8 +138,8 @@ public class OptimizerConfig implements Serializable {
       } else {
         JSONObject json = new JSONObject(data);
         JSONObject jsonFreqs = json.getJSONObject("freqs");
-        freqs.put(Constants.TYPE_DQ, new Integer(jsonFreqs.getInt(Constants.TYPE_DQ)));
-        freqs.put(Constants.TYPE_PS, new Integer(jsonFreqs.getInt(Constants.TYPE_PS)));
+        freqs.put(Constants.TYPE_DQ, jsonFreqs.getInt(Constants.TYPE_DQ));
+        freqs.put(Constants.TYPE_PS, jsonFreqs.getInt(Constants.TYPE_PS));
       }
     } catch (Exception e) {
       makeDefault = true;
@@ -266,7 +267,7 @@ public class OptimizerConfig implements Serializable {
   }
 
   public JSONObject toJSONObject() throws ConfigurationException {
-    JSONObject json = null;
+    JSONObject json;
     try {
       json = new JSONObject();
       json.put(INVENTORY_MODEL, this.inventoryModel);

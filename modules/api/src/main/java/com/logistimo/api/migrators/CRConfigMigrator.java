@@ -23,11 +23,11 @@
 
 package com.logistimo.api.migrators;
 
+import com.logistimo.constants.CharacterConstants;
+import com.logistimo.logger.XLog;
 import com.logistimo.services.utils.ConfigUtil;
 
 import org.json.JSONObject;
-import com.logistimo.constants.CharacterConstants;
-import com.logistimo.logger.XLog;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

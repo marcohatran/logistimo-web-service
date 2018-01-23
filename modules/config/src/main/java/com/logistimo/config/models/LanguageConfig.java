@@ -26,12 +26,12 @@
  */
 package com.logistimo.config.models;
 
-import org.json.JSONException;
-
 import com.logistimo.config.entity.IConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
 import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
-import com.logistimo.services.Services;
+import com.logistimo.context.StaticApplicationContext;
+
+import org.json.JSONException;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -69,9 +69,10 @@ public class LanguageConfig extends JsonConfig {
   }
 
   public static LanguageConfig getInstance(String key) throws ConfigurationException {
-    String jsonStr = null;
+    String jsonStr;
     try {
-      ConfigurationMgmtService cms = Services.getService(ConfigurationMgmtServiceImpl.class);
+      ConfigurationMgmtService cms = StaticApplicationContext
+          .getBean(ConfigurationMgmtServiceImpl.class);
       IConfig config = cms.getConfiguration(key);
       jsonStr = config.getConfig();
     } catch (Exception e) {

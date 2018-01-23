@@ -40,7 +40,7 @@ import com.logistimo.logger.XLog;
 import com.logistimo.materials.service.MaterialCatalogService;
 import com.logistimo.orders.OrderResults;
 import com.logistimo.orders.approvals.constants.ApprovalConstants;
-import com.logistimo.orders.approvals.dao.impl.ApprovalsDao;
+import com.logistimo.orders.approvals.dao.IApprovalsDao;
 import com.logistimo.orders.entity.IDemandItem;
 import com.logistimo.orders.entity.IOrder;
 import com.logistimo.orders.models.OrderFilters;
@@ -84,14 +84,14 @@ public class OrderAutomationAction {
   private final InventoryManagementService inventoryManagementService;
   private final EntitiesService entitiesService;
   private final MaterialCatalogService materialsService;
-  private final ApprovalsDao approvalsDao;
+  private final IApprovalsDao approvalsDao;
 
   @Autowired
   public OrderAutomationAction(InventoryManagementService inventoryManagementService,
                                OrderManagementService orderManagementService,
                                EntitiesService entitiesService,
                                MaterialCatalogService materialsService,
-                               ApprovalsDao approvalsDao) {
+                               IApprovalsDao approvalsDao) {
     this.inventoryManagementService = inventoryManagementService;
     this.orderManagementService = orderManagementService;
     this.entitiesService = entitiesService;
@@ -225,7 +225,7 @@ public class OrderAutomationAction {
           kioskTransactions, new Date(), order.getDomainId(),
           ITransaction.TYPE_REORDER, message, null, null,
           null,
-          null, null,
+          null,
           true, null, order.getReferenceID());
       orderManagementService
           .updateOrder(order, SourceConstants.SYSTEM, true, true, Constants.SYSTEM_USER_ID);

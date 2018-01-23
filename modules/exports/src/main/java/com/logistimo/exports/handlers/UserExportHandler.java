@@ -27,13 +27,13 @@ import com.logistimo.auth.SecurityConstants;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.users.service.impl.UsersServiceImpl;
@@ -67,7 +67,7 @@ public class UserExportHandler implements IExportHandler {
             null, ubUserCustomId = null;
 
     try {
-      UsersService as = Services.getService(UsersServiceImpl.class);
+      UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
       if (user.getUpdatedBy() != null) {
         try {
           IUserAccount ubUser = as.getUserAccount(user.getUpdatedBy());
@@ -87,7 +87,7 @@ public class UserExportHandler implements IExportHandler {
         }
       }
       if (user.getPrimaryKiosk() != null) {
-        EntitiesService es = Services.getService(EntitiesServiceImpl.class);
+        EntitiesService es = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
         IKiosk pk = es.getKiosk(user.getPrimaryKiosk());
         pkName = pk.getName();
         pkCustomId = pk.getCustomId();
@@ -258,9 +258,9 @@ public class UserExportHandler implements IExportHandler {
     ResourceBundle bundle = Resources.get().getBundle("Messages", locale);
     String res = CharacterConstants.EMPTY;
     if (lgsrc != null) {
-      if (lgsrc.intValue() == 2) {
+      if (lgsrc == 2) {
         res =  bundle.getString("mob");
-      } else if (lgsrc.intValue() == 5) {
+      } else if (lgsrc == 5) {
         res =  bundle.getString("mob.mma");
       }
     }

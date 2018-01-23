@@ -27,15 +27,14 @@ import com.logistimo.api.builders.BulletinBoardDashBoardBuilder;
 import com.logistimo.api.models.BulletinBoardModel;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.bulletinboard.entity.IBulletinBoard;
-import com.logistimo.bulletinboard.service.IBulletinBoardService;
 import com.logistimo.bulletinboard.service.impl.BulletinBoardService;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.logger.XLog;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.Resources;
-import com.logistimo.services.Services;
 import com.logistimo.utils.MsgUtil;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -47,8 +46,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
-import javax.servlet.http.HttpServletRequest;
-
 /**
  * Created by naveensnair on 14/11/17.
  */
@@ -57,26 +54,37 @@ import javax.servlet.http.HttpServletRequest;
 public class BulletinBoardController {
   private static final XLog xLogger = XLog.getLog(BulletinBoardController.class);
 
-  BulletinBoardDashBoardBuilder builder = new BulletinBoardDashBoardBuilder();
   private static final String BULLETIN_BOARD = "bulletin.board";
+
+  private BulletinBoardDashBoardBuilder bulletinBoardDashboardBuilder;
+  private BulletinBoardService bulletinBoardService;
+
+  @Autowired
+  public void setBulletinBoardDashboardBuilder(
+      BulletinBoardDashBoardBuilder bulletinBoardDashboardBuilder) {
+    this.bulletinBoardDashboardBuilder = bulletinBoardDashboardBuilder;
+  }
+
+  @Autowired
+  public void setBulletinBoardService(BulletinBoardService bulletinBoardService) {
+    this.bulletinBoardService = bulletinBoardService;
+  }
 
   @RequestMapping(value = "/", method = RequestMethod.POST)
   public
   @ResponseBody
-  String create(@RequestBody BulletinBoardModel model, HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+  String create(@RequestBody BulletinBoardModel model) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     long domainId = SecurityUtils.getDomainId();
     String msg;
     try {
-      BulletinBoardService bulletinBoardService = Services.getService(BulletinBoardService.class);
       if (model.getBulletinBoardId() != null) {
-        IBulletinBoard
-            bulletinBoard =
+        IBulletinBoard bulletinBoard =
             bulletinBoardService.getBulletinBoard(model.getBulletinBoardId());
         bulletinBoard =
-            builder.buildBulletinBoardForUpdate(model, bulletinBoard, sUser.getUsername());
+            bulletinBoardDashboardBuilder.buildBulletinBoardForUpdate(model, bulletinBoard, sUser.getUsername());
         bulletinBoardService.updateBulletinBoard(bulletinBoard);
         msg =
             backendMessages.getString(BULLETIN_BOARD) + " " + MsgUtil.bold(model.getName()) + " "
@@ -84,7 +92,7 @@ public class BulletinBoardController {
       } else {
         IBulletinBoard
             bulletinBoard =
-            builder.buildBulletinBoard(model, domainId, sUser.getUsername());
+            bulletinBoardDashboardBuilder.buildBulletinBoard(model, domainId, sUser.getUsername());
         bulletinBoardService.createBulletinBoard(bulletinBoard);
         msg =
             backendMessages.getString(BULLETIN_BOARD) + " " + MsgUtil.bold(model.getName()) + " "
@@ -101,22 +109,18 @@ public class BulletinBoardController {
   @RequestMapping(value = "/all", method = RequestMethod.GET)
   public
   @ResponseBody
-  List<BulletinBoardModel> getAll(HttpServletRequest request) {
-    long domainId = SecurityUtils.getDomainId();
-    IBulletinBoardService bulletinBoardService = Services.getService(BulletinBoardService.class);
-    List<IBulletinBoard> bulletinBoardList = bulletinBoardService.getBulletinBoards(domainId);
-    return builder.buildBulletinBoardModelList(bulletinBoardList);
+  List<BulletinBoardModel> getAll() {
+    List<IBulletinBoard> bulletinBoardList = bulletinBoardService.getBulletinBoards(SecurityUtils.getDomainId());
+    return bulletinBoardDashboardBuilder.buildBulletinBoardModelList(bulletinBoardList);
   }
 
   @RequestMapping(value = "/{bulletinBoardId}", method = RequestMethod.GET)
   public
   @ResponseBody
-  BulletinBoardModel getBulletinBoard(@PathVariable Long bulletinBoardId,
-                                      HttpServletRequest request) {
+  BulletinBoardModel getBulletinBoard(@PathVariable Long bulletinBoardId) {
     try {
-      BulletinBoardService bulletinBoardService = Services.getService(BulletinBoardService.class);
       IBulletinBoard bulletinBoard = bulletinBoardService.getBulletinBoard(bulletinBoardId);
-      return builder.buildBulletinBoardModel(bulletinBoard);
+      return bulletinBoardDashboardBuilder.buildBulletinBoardModel(bulletinBoard);
     } catch (Exception e) {
       xLogger.warn("Error in getting BulletinBoard {0}", bulletinBoardId, e);
       throw new InvalidServiceException("Error in getting BulletinBoard " + bulletinBoardId);
@@ -126,13 +130,12 @@ public class BulletinBoardController {
   @RequestMapping(value = "/delete/{bulletinBoardId}", method = RequestMethod.GET)
   public
   @ResponseBody
-  String delete(@PathVariable Long bulletinBoardId, HttpServletRequest request) {
+  String delete(@PathVariable Long bulletinBoardId) {
     String name;
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     java.util.ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     try {
-      BulletinBoardService bulletinBoardService = Services.getService(BulletinBoardService.class);
       name = bulletinBoardService.deleteBulletinBoard(bulletinBoardId);
     } catch (Exception e) {
       xLogger.severe("Error deleting Dashboard: {0}", bulletinBoardId);

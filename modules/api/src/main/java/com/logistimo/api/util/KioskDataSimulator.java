@@ -23,21 +23,18 @@
 
 package com.logistimo.api.util;
 
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.JDOUtils;
-
 import com.logistimo.inventory.dao.ITransDao;
-import com.logistimo.inventory.dao.impl.TransDao;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.inventory.service.InventoryManagementService;
 import com.logistimo.inventory.service.impl.InventoryManagementServiceImpl;
-
+import com.logistimo.logger.XLog;
 import com.logistimo.services.DuplicationException;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.LocalDateUtil;
-import com.logistimo.logger.XLog;
 
 import java.math.BigDecimal;
 import java.util.Calendar;
@@ -110,11 +107,10 @@ public class KioskDataSimulator {
   private InventoryManagementService ims = null;
 
   private Random rand = null;
-  private ITransDao transDao = new TransDao();
 
   public KioskDataSimulator() throws ServiceException {
     // Init.
-    ims = Services.getService(InventoryManagementServiceImpl.class);
+    ims = StaticApplicationContext.getBean(InventoryManagementServiceImpl.class);
     rand = new Random();
 
     // Set the default dates to be 'days' days from now
@@ -264,7 +260,7 @@ public class KioskDataSimulator {
 
     // Get time increments (in days) for the transaction
     int incr = 1;
-    if (this.issuePeriodicity == PERIODICITY_WEEKLY) {
+    if (PERIODICITY_WEEKLY.equals(this.issuePeriodicity)) {
       incr = 7;
     }
 
@@ -282,6 +278,7 @@ public class KioskDataSimulator {
     trans1.setUseCustomTimestamp(
         true); // this ensures that the above timestamp is used by the system, instead of system assigned timestamp
     trans1.setSourceUserId(userId);
+    ITransDao transDao = StaticApplicationContext.getBean(ITransDao.class);
     transDao.setKey(trans1);
     // Store the transaction
     ims.updateInventoryTransaction(domainId, trans1, true);

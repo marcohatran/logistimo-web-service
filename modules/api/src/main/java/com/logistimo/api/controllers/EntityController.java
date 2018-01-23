@@ -48,10 +48,8 @@ import com.logistimo.api.util.DomainRemover;
 import com.logistimo.api.util.SearchUtil;
 import com.logistimo.auth.GenericAuthoriser;
 import com.logistimo.auth.SecurityConstants;
-import com.logistimo.auth.SecurityMgr;
 import com.logistimo.auth.SecurityUtil;
 import com.logistimo.auth.utils.SecurityUtils;
-import com.logistimo.auth.utils.SessionMgr;
 import com.logistimo.config.entity.IConfig;
 import com.logistimo.config.models.ApprovalsConfig;
 import com.logistimo.config.models.DomainConfig;
@@ -60,13 +58,12 @@ import com.logistimo.config.models.KioskConfig;
 import com.logistimo.config.models.Permissions;
 import com.logistimo.config.models.StockboardConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
-import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.domains.entity.IDomain;
 import com.logistimo.domains.service.DomainsService;
-import com.logistimo.domains.service.impl.DomainsServiceImpl;
 import com.logistimo.entities.auth.EntityAuthoriser;
 import com.logistimo.entities.entity.IApprover;
 import com.logistimo.entities.entity.IKiosk;
@@ -75,7 +72,6 @@ import com.logistimo.entities.models.EntityLinkModel;
 import com.logistimo.entities.models.LocationSuggestionModel;
 import com.logistimo.entities.models.UserEntitiesModel;
 import com.logistimo.entities.service.EntitiesService;
-import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.entities.utils.EntityDomainUpdater;
 import com.logistimo.entities.utils.EntityMover;
 import com.logistimo.exception.BadRequestException;
@@ -84,7 +80,6 @@ import com.logistimo.exception.TaskSchedulingException;
 import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.service.InventoryManagementService;
-import com.logistimo.inventory.service.impl.InventoryManagementServiceImpl;
 import com.logistimo.logger.XLog;
 import com.logistimo.models.ICounter;
 import com.logistimo.models.superdomains.DomainSuggestionModel;
@@ -96,13 +91,12 @@ import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.cache.MemcacheService;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.services.taskqueue.ITaskService;
+import com.logistimo.services.utils.ConfigUtil;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
 import com.logistimo.utils.Counter;
 import com.logistimo.utils.GsonUtils;
 import com.logistimo.utils.LocalDateUtil;
@@ -111,6 +105,7 @@ import com.logistimo.utils.QueryUtil;
 
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -143,22 +138,73 @@ public class EntityController {
   private static final String MOVE_ENTITY_TASK_URL = "/s2/api/entities/move";
   private static final String DOMAIN_ENTITY_TASK_URL = "/s2/api/entities/domainupdate";
 
-  EntityBuilder builder = new EntityBuilder();
-  InventoryBuilder invBuilder = new InventoryBuilder();
+  private EntityBuilder entityBuilder;
+  private InventoryBuilder inventoryBuilder;
+  private UserBuilder userBuilder;
+  private StockBoardBuilder stockBoardBuilder;
+  private EntitiesService entitiesService;
+  private UsersService usersService;
+  private InventoryManagementService inventoryManagementService;
+  private ConfigurationMgmtService configurationMgmtService;
+  private DomainsService domainsService;
+
+  @Autowired
+  public void setEntityBuilder(EntityBuilder entityBuilder) {
+    this.entityBuilder = entityBuilder;
+  }
+
+  @Autowired
+  public void setInventoryBuilder(InventoryBuilder inventoryBuilder) {
+    this.inventoryBuilder = inventoryBuilder;
+  }
+
+  @Autowired
+  public void setUserBuilder(UserBuilder userBuilder) {
+    this.userBuilder = userBuilder;
+  }
+
+  @Autowired
+  public void setStockBoardBuilder(StockBoardBuilder stockBoardBuilder) {
+    this.stockBoardBuilder = stockBoardBuilder;
+  }
+
+  @Autowired
+  public void setEntitiesService(EntitiesService entitiesService) {
+    this.entitiesService = entitiesService;
+  }
+
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
+  }
+
+  @Autowired
+  public void setInventoryManagementService(InventoryManagementService inventoryManagementService) {
+    this.inventoryManagementService = inventoryManagementService;
+  }
+
+  @Autowired
+  public void setConfigurationMgmtService(ConfigurationMgmtService configurationMgmtService) {
+    this.configurationMgmtService = configurationMgmtService;
+  }
+
+  @Autowired
+  public void setDomainsService(DomainsService domainsService) {
+    this.domainsService = domainsService;
+  }
 
   @RequestMapping(value = "/delete", method = RequestMethod.POST)
   public
   @ResponseBody
-  String delete(@RequestBody String entityIds, HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+  String delete(@RequestBody String entityIds) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
-    EntitiesService as;
+    Long domainId = sUser.getCurrentDomainId();
     int delCnt = 0;
-    StringBuffer entitiesNames = new StringBuffer();
+    StringBuilder entitiesNames = new StringBuilder();
     String[] entitiesArray = entityIds.split(",");
-    Map<String, String> params = new HashMap<String, String>();
+    Map<String, String> params = new HashMap<>();
     params.put("action", "remove");
     params.put("type", "kiosk");
     params.put("domainid", domainId.toString());
@@ -167,8 +213,7 @@ public class EntityController {
     for (String entityId : entitiesArray) {
       params.put("kioskid", entityId);
       try {
-        as = Services.getService(EntitiesServiceImpl.class, locale);
-        IKiosk k = as.getKiosk(Long.parseLong(entityId));
+        IKiosk k = entitiesService.getKiosk(Long.parseLong(entityId));
         entitiesNames.append(k.getName()).append(",");// getting entity names is just for logging
         AppFactory.get().getTaskService()
             .schedule(ITaskService.QUEUE_DEFAULT, CREATE_ENTITY_TASK_URL, params,
@@ -191,18 +236,16 @@ public class EntityController {
   @RequestMapping(value = "/", method = RequestMethod.POST)
   public
   @ResponseBody
-  String create(@RequestBody EntityModel entityModel, HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+  String create(@RequestBody EntityModel entityModel) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    EntitiesService as;
     IKiosk k =
-        builder.buildKiosk(entityModel, locale, sUser.getTimezone(), sUser.getUsername(), true);
+        entityBuilder.buildKiosk(entityModel, sUser.getUsername(), true);
     try {
-      as = Services.getService(EntitiesServiceImpl.class, locale);
       if (k.getName() != null) {
-        long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
-        as.addKiosk(domainId, k);
+        long domainId = sUser.getCurrentDomainId();
+        entitiesService.addKiosk(domainId, k);
         xLogger.info("AUDITLOG\t{0}\t{1}\tENTITY\t " +
             "CREATE\t{2}\t{3}", domainId, sUser.getUsername(), k.getKioskId(), k.getName());
       }
@@ -219,18 +262,16 @@ public class EntityController {
   @RequestMapping(value = "/approvers", method = RequestMethod.POST)
   public
   @ResponseBody
-  String setApprovers(@RequestBody EntityApproversModel model, HttpServletRequest request)
+  String setApprovers(@RequestBody EntityApproversModel model)
       throws ServiceException {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     try{
-      EntitiesService as = Services.getService(EntitiesServiceImpl.class, locale);
-      IKiosk kiosk = as.getKiosk(model.entityId);
-      List<IApprover>
-          approversList =
-          builder.buildApprovers(model, sUser.getUsername(), kiosk.getDomainId());
-      as.addApprovers(model.entityId, approversList, sUser.getUsername());
+      IKiosk kiosk = entitiesService.getKiosk(model.entityId);
+      List<IApprover> approversList =
+          entityBuilder.buildApprovers(model, sUser.getUsername(), kiosk.getDomainId());
+      entitiesService.addApprovers(model.entityId, approversList, sUser.getUsername());
       } catch (ServiceException se) {
     throw new InvalidServiceException(
         backendMessages.getString("kiosk.detail.fetch.error") + " " + model.entityId, se);
@@ -241,15 +282,13 @@ public class EntityController {
   @RequestMapping(value = "/approvers", method = RequestMethod.GET)
   public
   @ResponseBody
-  EntityApproversModel getApprovers(@RequestParam Long kioskId, HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+  EntityApproversModel getApprovers(@RequestParam Long kioskId) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     EntityApproversModel model = null;
-    EntitiesService as = Services.getService(EntitiesServiceImpl.class, locale);
-    UsersService us = Services.getService(UsersServiceImpl.class, locale);
-    List<IApprover> approversList = as.getApprovers(kioskId);
+    List<IApprover> approversList = entitiesService.getApprovers(kioskId);
     if (approversList != null && approversList.size() > 0) {
-      model = builder.buildApprovalsModel(approversList, us, locale, sUser.getTimezone());
+      model = entityBuilder.buildApprovalsModel(approversList, locale, sUser.getTimezone());
 
     }
     return model;
@@ -258,29 +297,25 @@ public class EntityController {
   @RequestMapping(value = "/update", method = RequestMethod.POST)
   public
   @ResponseBody
-  String updateEntity(@RequestBody EntityModel entityModel, HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+  String updateEntity(@RequestBody EntityModel entityModel) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
+    Long domainId = sUser.getCurrentDomainId();
     try {
-      EntitiesService as = Services.getService(EntitiesServiceImpl.class, locale);
-      IKiosk ksk = as.getKiosk(entityModel.id, false);
+      IKiosk ksk = entitiesService.getKiosk(entityModel.id, false);
       if (entityModel.be != ksk.isBatchMgmtEnabled()) {
-        InventoryManagementService ims = Services.getService(InventoryManagementServiceImpl.class);
-        if (!ims.validateEntityBatchManagementUpdate(ksk.getKioskId())) {
+        if (!inventoryManagementService.validateEntityBatchManagementUpdate(ksk.getKioskId())) {
           return null;
         }
       }
-      IKiosk k =
-          builder.buildKiosk(entityModel, locale, sUser.getTimezone(), sUser.getUsername(),
-              ksk, false);
+      IKiosk k = entityBuilder.buildKiosk(entityModel, sUser.getUsername(), ksk, false);
 
       if (k.getName() != null) {
-        if (!EntityAuthoriser.authoriseEntity(sUser, k.getKioskId())) {
+        if (!EntityAuthoriser.authoriseEntity(k.getKioskId())) {
           throw new UnauthorizedException(backendMessages.getString("permission.denied"));
         }
-        as.updateKiosk(k, domainId);
+        entitiesService.updateKiosk(k, domainId);
         xLogger.info("AUDITLOG\t{0}\t{1}\tENTITY\t " +
             "UPDATE\t{2}\t{3}", domainId, sUser.getUsername(), k.getKioskId(), k.getName());
       }
@@ -297,21 +332,18 @@ public class EntityController {
   @RequestMapping(value = "/entity/{entityId}", method = RequestMethod.GET)
   public
   @ResponseBody
-  EntityModel getEntityById(@PathVariable Long entityId, @RequestParam(required = false) Boolean skipAuthCheck, HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+  EntityModel getEntityById(@PathVariable Long entityId,
+                            @RequestParam(required = false) Boolean skipAuthCheck) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    EntitiesService as;
-    UsersService usersService;
     EntityModel model;
     try {
-      as = Services.getService(EntitiesServiceImpl.class, locale);
-      usersService = Services.getService(UsersServiceImpl.class, locale);
-      Integer permission = EntityAuthoriser.authoriseEntityPerm(sUser, entityId);
+      Integer permission = EntityAuthoriser.authoriseEntityPerm(entityId);
       if ((skipAuthCheck == null || !skipAuthCheck) && GenericAuthoriser.NO_ACCESS.equals(permission)) {
         throw new UnauthorizedException(backendMessages.getString("permission.denied"));
       }
-      IKiosk k = as.getKiosk(entityId);
+      IKiosk k = entitiesService.getKiosk(entityId);
       IUserAccount u = null;
       IUserAccount lu = null;
       boolean found = false;
@@ -362,7 +394,7 @@ public class EntityController {
           //do nothing
         }
       }
-      model = builder.buildModel(k, u, lu, locale, sUser.getTimezone());
+      model = entityBuilder.buildModel(k, u, lu, locale, sUser.getTimezone());
       model.perm = permission;
       model.appr = found;
       model.ipa = isPa;
@@ -381,24 +413,22 @@ public class EntityController {
   String getLinksCountByEntityId(@PathVariable Long entityId,
                                  @RequestParam(required = false) String q,
                                  @RequestParam(required = false) Long linkedEntityId,
-                                 @RequestParam(required = false) String entityTag,
-                                 HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+                                 @RequestParam(required = false) String entityTag) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     int customerCount;
     int vendorsCount;
     try {
-      if (!EntityAuthoriser.authoriseEntity(sUser, entityId)) {
+      if (!EntityAuthoriser.authoriseEntity(entityId)) {
         throw new UnauthorizedException(backendMessages.getString("permission.denied"));
       }
-      EntitiesService as = Services.getService(EntitiesServiceImpl.class);
       PageParams pageParams = new PageParams(1);
       customerCount =
-          as.getKioskLinks(entityId, IKioskLink.TYPE_CUSTOMER, null, q, pageParams, true, linkedEntityId, entityTag)
+          entitiesService.getKioskLinks(entityId, IKioskLink.TYPE_CUSTOMER, null, q, pageParams, true, linkedEntityId, entityTag)
               .getNumFound();
       vendorsCount =
-          as.getKioskLinks(entityId, IKioskLink.TYPE_VENDOR, null, q, pageParams, true, linkedEntityId, entityTag)
+          entitiesService.getKioskLinks(entityId, IKioskLink.TYPE_VENDOR, null, q, pageParams, true, linkedEntityId, entityTag)
               .getNumFound();
     } catch (ServiceException e) {
       xLogger.warn("Error in fetching Counts for " + entityId, e);
@@ -412,27 +442,24 @@ public class EntityController {
   public
   @ResponseBody
   Results getEntityUsers(@PathVariable Long entityId,
-                         @RequestParam(required = false) Long srcEntityId,
-                         HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+                         @RequestParam(required = false) Long srcEntityId) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    EntitiesService as;
     try {
-      as = Services.getService(EntitiesServiceImpl.class, locale);
       //TODO Extend behavior to check if the requested entity has a relation to user's entities. Temporarily commented.
       if (!EntityAuthoriser.authoriseEntityDomain(sUser, entityId, SecurityUtils.getDomainId())) {
         try {
           if (srcEntityId == null || (!EntityAuthoriser.authoriseEntityDomain(sUser, srcEntityId, SecurityUtils.getDomainId())
-              && as.getKioskLink(srcEntityId, IKioskLink.TYPE_VENDOR, entityId) == null)) {
+              && entitiesService.getKioskLink(srcEntityId, IKioskLink.TYPE_VENDOR, entityId) == null)) {
             throw new UnauthorizedException(backendMessages.getString("permission.denied"));
           }
         } catch (ObjectNotFoundException e) {
           throw new UnauthorizedException(backendMessages.getString("permission.denied"));
         }
       }
-      IKiosk k = as.getKiosk(entityId);
-      return new UserBuilder().buildUsers(new Results(k.getUsers(), null), sUser, false);
+      IKiosk k = entitiesService.getKiosk(entityId);
+      return userBuilder.buildUsers(new Results(k.getUsers(), null), sUser, false);
     } catch (ServiceException se) {
       xLogger.warn("Error fetching Entity details for " + entityId, se);
       throw new InvalidServiceException(
@@ -450,17 +477,14 @@ public class EntityController {
                              @RequestParam(required = false) Long linkedEntityId,
                              @RequestParam(required = false) String entityTag,
                              HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     String timezone = sUser.getTimezone();
-    EntitiesService as;
     try {
-      as = Services.getService(EntitiesServiceImpl.class, locale);
-      if (!EntityAuthoriser.authoriseEntity(sUser, entityId)) {
+      if (!EntityAuthoriser.authoriseEntity(entityId)) {
         throw new UnauthorizedException(backendMessages.getString("permission.denied"));
       }
-      IKiosk k = as.getKiosk(entityId, false);
       PageParams pageParams = null;
       int o = offset == null ? 0 : Integer.parseInt(offset);
       if (size != null && Integer.parseInt(size) > 0 || o > 0) {
@@ -470,14 +494,13 @@ public class EntityController {
                 "custEntity", 0);
         pageParams = new PageParams(navigator.getCursor(o), o, s);
       }
-      Results
-          results =
-          as.getKioskLinks(entityId, IKioskLink.TYPE_CUSTOMER, null, q, pageParams, false, linkedEntityId,
+      Results results =
+          entitiesService.getKioskLinks(entityId, IKioskLink.TYPE_CUSTOMER, null, q, pageParams, false, linkedEntityId,
               entityTag);
       List customers = results.getResults();
-      return new Results(builder
-          .buildEntityLinks(as, customers, locale, timezone, sUser.getUsername(),
-              sUser.getDomainId(), sUser.getRole()), null, results.getNumFound(), o);
+      return new Results<>(entityBuilder.buildEntityLinks(customers, locale, timezone,
+          sUser.getUsername(),
+          sUser.getDomainId(), sUser.getRole()), null, results.getNumFound(), o);
     } catch (ServiceException se) {
       xLogger.warn("Error fetching Entity Customers for " + entityId, se);
       throw new InvalidServiceException(
@@ -488,15 +511,11 @@ public class EntityController {
   @RequestMapping(value = "/{entityId}/relationship", method = RequestMethod.GET)
   public
   @ResponseBody
-  Integer getEntityRelationship(@PathVariable Long entityId, HttpServletRequest request) {
+  Integer getEntityRelationship(@PathVariable Long entityId) {
     Integer ty = -1;
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
-    Locale locale = user.getLocale();
-    EntitiesService as;
     try {
-      as = Services.getService(EntitiesServiceImpl.class, locale);
-      List customer = as.getKioskLinks(entityId, IKioskLink.TYPE_CUSTOMER, null, null, null).getResults();
-      List vendor = as.getKioskLinks(entityId, IKioskLink.TYPE_VENDOR, null, null, null).getResults();
+      List customer = entitiesService.getKioskLinks(entityId, IKioskLink.TYPE_CUSTOMER, null, null, null).getResults();
+      List vendor = entitiesService.getKioskLinks(entityId, IKioskLink.TYPE_VENDOR, null, null, null).getResults();
       if (customer.size() != 0 && vendor.size() == 0) {
         ty = 0;
       } else if (vendor.size() != 0 && customer.size() == 0) {
@@ -519,19 +538,16 @@ public class EntityController {
                            @RequestParam(required = false) Long linkedEntityId,
                            @RequestParam(required = false) String entityTag,
                            HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     String timezone = sUser.getTimezone();
-    EntitiesService as;
     try {
-      as = Services.getService(EntitiesServiceImpl.class, locale);
       //TODO: Temporary fix. Required for Order listing on a sales order.
       if (!EntityAuthoriser
           .authoriseEntityDomain(sUser, entityId, SecurityUtils.getDomainId())) {
         throw new UnauthorizedException(backendMessages.getString("permission.denied"));
       }
-      IKiosk k = as.getKiosk(entityId, false);
 
       PageParams pageParams = null;
       int o = offset == null ? 0 : Integer.parseInt(offset);
@@ -541,12 +557,11 @@ public class EntityController {
             new Navigator(request.getSession(), Constants.CURSOR_KIOSKLINKS, o, s, "custEntity", 0);
         pageParams = new PageParams(navigator.getCursor(o), o, s);
       }
-      Results
-          results =
-          as.getKioskLinks(entityId, IKioskLink.TYPE_VENDOR, null, q, pageParams, false, linkedEntityId, entityTag);
+      Results results =
+          entitiesService.getKioskLinks(entityId, IKioskLink.TYPE_VENDOR, null, q, pageParams, false, linkedEntityId, entityTag);
       List vendors = results.getResults();
-      return new Results(builder
-          .buildEntityLinks(as, vendors, locale, timezone, sUser.getUsername(),
+      return new Results<>(entityBuilder
+          .buildEntityLinks(vendors, locale, timezone, sUser.getUsername(),
               sUser.getDomainId(),
               sUser.getRole()), null, results.getNumFound(), o);
     } catch (ServiceException se) {
@@ -566,34 +581,28 @@ public class EntityController {
       @RequestParam(defaultValue = PageParams.DEFAULT_OFFSET_STR) int offset,
       @RequestParam(defaultValue = PageParams.DEFAULT_SIZE_STR) int size,
       @RequestParam(required = false) String q,
-      @RequestParam(required = false) Boolean mt,
       @RequestParam(required = false) Long linkedEntityId,
       HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     String userId = sUser.getUsername();
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
+    Long domainId = sUser.getCurrentDomainId();
     Locale locale = sUser.getLocale();
-    mt = mt != null ? mt : false;
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    EntitiesService as;
-    UsersService usersService;
     Results kioskResults;
     Navigator
         navigator =
         new Navigator(request.getSession(), "EntityController.getAll", offset, size, "dummy", 0);
     PageParams pageParams = new PageParams(navigator.getCursor(offset), offset, size);
     try {
-      as = Services.getService(EntitiesServiceImpl.class, locale);
-      usersService = Services.getService(UsersServiceImpl.class, locale);
       IUserAccount user = usersService.getUserAccount(userId);
       if (linkedEntityId == null && StringUtils.isNotBlank(q)) {
         kioskResults = SearchUtil.findKiosks(domainId, q, pageParams, user);
       } else if(linkedEntityId != null) {
         List<IKiosk> kiosk = new ArrayList<>();
-        kiosk.add(as.getKiosk(linkedEntityId));
-        kioskResults = new Results(kiosk, null);
+        kiosk.add(entitiesService.getKiosk(linkedEntityId));
+        kioskResults = new Results<>(kiosk, null);
       } else {
-        kioskResults = as.getKiosks(user, domainId, tag, extag, pageParams);
+        kioskResults = entitiesService.getKiosks(user, domainId, tag, extag, pageParams);
       }
       if (StringUtils.isBlank(q) && linkedEntityId == null
           && SecurityUtil.compareRoles(user.getRole(), SecurityConstants.ROLE_DOMAINOWNER) >= 0) {
@@ -603,16 +612,12 @@ public class EntityController {
         kioskResults.setNumFound(-1);
       }
       navigator.setResultParams(kioskResults);
-    } catch (ServiceException se) {
+    } catch (ServiceException | ObjectNotFoundException se) {
       xLogger.warn("Error fetching entities for domain" + domainId, se);
       throw new InvalidServiceException(
           backendMessages.getString("domain.kiosks.fetch.error") + " " + domainId);
-    } catch (ObjectNotFoundException e) {
-      xLogger.warn("Error fetching entities for domain" + domainId, e);
-      throw new InvalidServiceException(
-          backendMessages.getString("domain.kiosks.fetch.error") + " " + domainId);
     }
-    return builder.buildEntityResults(kioskResults, locale, sUser.getTimezone());
+    return entityBuilder.buildEntityResults(kioskResults, locale, sUser.getTimezone());
   }
 
   @RequestMapping(value = "/domain", method = RequestMethod.GET)
@@ -625,33 +630,27 @@ public class EntityController {
       @RequestParam(defaultValue = PageParams.DEFAULT_SIZE_STR) int size,
       @RequestParam(required = false) String q,
       HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
+    Long domainId = sUser.getCurrentDomainId();
     Locale locale = sUser.getLocale();
-    UsersService as;
-    EntitiesService es;
     Results kioskResults;
-    Navigator
-        navigator =
+    Navigator navigator =
         new Navigator(request.getSession(), "EntityController.getDomainEntities", offset, size,
             "dummy", 0);
     PageParams pageParams = new PageParams(navigator.getCursor(offset), offset, size);
     try {
-      as = Services.getService(UsersServiceImpl.class, locale);
-      es = Services.getService(EntitiesServiceImpl.class, locale);
-      IUserAccount user = as.getUserAccount(sUser.getUsername());
+      IUserAccount user = usersService.getUserAccount(sUser.getUsername());
       if (StringUtils.isNotBlank(q)) {
         kioskResults = SearchUtil.findDomainKiosks(domainId, q, pageParams, user);
         kioskResults.setNumFound(-1);
       } else {
         if (SecurityUtil.compareRoles(user.getRole(), SecurityConstants.ROLE_DOMAINOWNER) >= 0) {
-          kioskResults = es.getAllDomainKiosks(domainId, tag, extag, pageParams);
+          kioskResults = entitiesService.getAllDomainKiosks(domainId, tag, extag, pageParams);
           kioskResults.setNumFound(Counter.getDomainKioskCounter(domainId).getCount());
         } else {
-          UserEntitiesModel
-              userModel =
-              es.getUserWithKiosks(sUser.getUsername());
-          kioskResults = new Results(userModel.getKiosks(), null, userModel.getKiosks().size(), 0);
+          UserEntitiesModel userModel =
+              entitiesService.getUserWithKiosks(sUser.getUsername());
+          kioskResults = new Results<>(userModel.getKiosks(), null, userModel.getKiosks().size(), 0);
         }
       }
       navigator.setResultParams(kioskResults);
@@ -661,29 +660,24 @@ public class EntityController {
       throw new InvalidServiceException(
           backendMessages.getString("domain.kiosks.fetch.error") + " " + domainId);
     }
-    return builder.buildEntityResults(kioskResults, locale, sUser.getTimezone());
+    return entityBuilder.buildEntityResults(kioskResults, locale, sUser.getTimezone());
   }
 
   @RequestMapping(value = "/filter", method = RequestMethod.GET)
   public
   @ResponseBody
   Results getFilteredEntity(@RequestParam String text,
-                            @RequestParam(required = false, defaultValue = "false") boolean sdOnly,
-                            HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
+                            @RequestParam(required = false, defaultValue = "false") boolean sdOnly) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
+    Long domainId = sUser.getCurrentDomainId();
     if (text == null) {
-      text = "";
+      text = CharacterConstants.EMPTY;
     }
     text = text.toLowerCase();
-    List<IKiosk> kiosks = new ArrayList<IKiosk>();
+    List<IKiosk> kiosks = new ArrayList<>();
     PersistenceManager pm = null;
     try {
-      UsersService as =
-          Services.getService(UsersServiceImpl.class, sUser.getLocale());
-      IUserAccount user = as.getUserAccount(sUser.getUsername());
-      EntitiesService entitiesService = Services
-          .getService(EntitiesServiceImpl.class, sUser.getLocale());
+      IUserAccount user = usersService.getUserAccount(sUser.getUsername());
       if (SecurityUtil.compareRoles(user.getRole(), SecurityConstants.ROLE_DOMAINOWNER) < 0) {
         Results results = entitiesService.getKiosksForUser(user, null, null);
         if(results.getResults() != null) {
@@ -700,7 +694,7 @@ public class EntityController {
           filter = "sdId == domainIdParam";
         }
         String declaration = "Long domainIdParam";
-        Map<String, Object> params = new HashMap<String, Object>();
+        Map<String, Object> params = new HashMap<>();
         params.put("domainIdParam", domainId);
         if (!text.isEmpty()) {
           filter += " && nName.startsWith(txtParam)";
@@ -727,26 +721,24 @@ public class EntityController {
         pm.close();
       }
     }
-    return new Results(builder.buildFilterModelList(kiosks), QueryUtil.getCursor(kiosks));
+    return new Results<>(entityBuilder.buildFilterModelList(kiosks), QueryUtil.getCursor(kiosks));
   }
 
   @RequestMapping(value = "/addrelation", method = RequestMethod.POST)
   public
   @ResponseBody
-  String addRelation(@RequestBody RelationModel model, HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+  String addRelation(@RequestBody RelationModel model) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     String userId = sUser.getUsername();
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), userId);
-    EntitiesService as;
-    StringBuffer linkNames = new StringBuffer();
+    Long domainId = sUser.getCurrentDomainId();
+    StringBuilder linkNames = new StringBuilder();
     int cnt;
     try {
-      as = Services.getService(EntitiesServiceImpl.class, locale);
       Date now = new Date();
-      IKiosk k = as.getKiosk(model.entityId);
-      List<IKioskLink> links = new ArrayList<IKioskLink>();
+      IKiosk k = entitiesService.getKiosk(model.entityId);
+      List<IKioskLink> links = new ArrayList<>();
       for (String linkId : model.linkIds) {
         IKioskLink link = JDOUtils.createInstance(IKioskLink.class);
         link.setDomainId(domainId);
@@ -760,9 +752,9 @@ public class EntityController {
           link.setCreditLimit(model.cl);
         }
         links.add(link);
-        linkNames.append(as.getKiosk(Long.parseLong(linkId)).getName()).append(",");
+        linkNames.append(entitiesService.getKiosk(Long.parseLong(linkId)).getName()).append(",");
       }
-      as.addKioskLinks(domainId, links);
+      entitiesService.addKioskLinks(domainId, links);
 
       cnt = links.size();
       if (linkNames.length() > 0) {
@@ -782,22 +774,20 @@ public class EntityController {
   @RequestMapping(value = "/updaterelation", method = RequestMethod.POST)
   public
   @ResponseBody
-  String updateRelation(@RequestBody RelationModel model, HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+  String updateRelation(@RequestBody RelationModel model) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     String role = sUser.getRole();
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
-    EntitiesService as;
+    Long domainId = sUser.getCurrentDomainId();
     String linkedKioskName;
     try {
-      as = Services.getService(EntitiesServiceImpl.class, locale);
-      IKioskLink link = as.getKioskLink(model.linkIds[0]);
-      IKiosk k = as.getKiosk(model.entityId);
-      linkedKioskName = as.getKiosk(link.getKioskId()).getName();
+      IKioskLink link = entitiesService.getKioskLink(model.linkIds[0]);
+      IKiosk k = entitiesService.getKiosk(model.entityId);
+      linkedKioskName = entitiesService.getKiosk(link.getKioskId()).getName();
       if (SecurityConstants.ROLE_SERVICEMANAGER.equals(role)) {
         boolean hasPermission = false;
-        List<Long> eIds = as.getKioskIdsForUser(sUser.getUsername(), null, null).getResults();
+        List<Long> eIds = entitiesService.getKioskIdsForUser(sUser.getUsername(), null, null).getResults();
         if (eIds != null) {
           for (Long eId : eIds) {
             if (eId.equals(link.getLinkedKioskId())) {
@@ -818,16 +808,12 @@ public class EntityController {
       if (StringUtils.isNotBlank(String.valueOf(model.cl))) {
         link.setCreditLimit(model.cl);
       }
-      as.updateKioskLink(link);
+      entitiesService.updateKioskLink(link);
       xLogger.info("AUDITLOG\t{0}\t{1}\tENTITY\t " +
               "UPDATE RELATION \t{2}\t{3}\tLINKTYPE={4}", domainId, sUser.getUsername(),
           k.getName(),
           linkedKioskName, model.linkType);
-    } catch (ServiceException e) {
-      xLogger.warn("Error Updating Relationship for " + model.entityId, e);
-      throw new InvalidServiceException(
-          backendMessages.getString("relation.update.error") + " " + model.entityId);
-    } catch (ObjectNotFoundException e) {
+    } catch (ServiceException | ObjectNotFoundException e) {
       xLogger.warn("Error Updating Relationship for " + model.entityId, e);
       throw new InvalidServiceException(
           backendMessages.getString("relation.update.error") + " " + model.entityId);
@@ -838,21 +824,18 @@ public class EntityController {
   @RequestMapping(value = "/permission", method = RequestMethod.POST)
   public
   @ResponseBody
-  String setPermission(@RequestBody PermissionModel per, HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
+  String setPermission(@RequestBody PermissionModel per) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
+    Long domainId = sUser.getCurrentDomainId();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     if (per == null || per.eid == null) {
       throw new BadRequestException(backendMessages.getString("kiosk.id.unavailable"));
     }
-    EntitiesService as;
     try {
-      as = Services.getService(EntitiesServiceImpl.class, locale);
-      IKiosk k = as.getKiosk(per.eid, true);
-      EntityBuilder entityBuilder = new EntityBuilder();
+      IKiosk k = entitiesService.getKiosk(per.eid, true);
       k = entityBuilder.addRelationPermission(k, per);
-      as.updateKiosk(k, domainId, sUser.getUsername());
+      entitiesService.updateKiosk(k, domainId, sUser.getUsername());
       xLogger.info("AUDITLOG\t{0}\t{1}\tENTITY\t " +
           "SET PERMISSION \t{2}\t{3}", domainId, sUser.getUsername(), k.getKioskId(), k.getName());
     } catch (ServiceException e) {
@@ -864,15 +847,11 @@ public class EntityController {
   @RequestMapping(value = "/permission", method = RequestMethod.GET)
   public
   @ResponseBody
-  PermissionModel getPermission(@RequestParam Long eId, HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
-    Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+  PermissionModel getPermission(@RequestParam Long eId) {
+    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", SecurityUtils.getLocale());
     try {
-      EntitiesService as = Services.getService(EntitiesServiceImpl.class);
-      IKiosk kiosk;
-      kiosk = as.getKiosk(eId, false);
-      return builder.buildPermissionModel(kiosk, kiosk.getCustomerPerm(), kiosk.getVendorPerm());
+      IKiosk kiosk = entitiesService.getKiosk(eId, false);
+      return entityBuilder.buildPermissionModel(kiosk, kiosk.getCustomerPerm(), kiosk.getVendorPerm());
     } catch (ServiceException e) {
       throw new InvalidServiceException(backendMessages.getString("kiosk.setpermission.error"));
     }
@@ -887,31 +866,29 @@ public class EntityController {
       @RequestParam(defaultValue = PageParams.DEFAULT_SIZE_STR) int size,
       @RequestParam(required = false) String tag,
       HttpServletRequest request) {
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
-    Locale locale = user.getLocale();
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
+    Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     try {
-      Long domainId = SessionMgr.getCurrentDomain(request.getSession(), user.getUsername());
-      InventoryManagementService ims =
-          Services.getService(InventoryManagementServiceImpl.class, user.getLocale());
+      Long domainId = sUser.getCurrentDomainId();
       Navigator navigator =
           new Navigator(request.getSession(), "EntityController.getEntityMaterials", offset, size,
               "dummy/" + tag, 0);
       PageParams pageParams = new PageParams(navigator.getCursor(offset), offset, size);
       Results results;
-      if (!EntityAuthoriser.authoriseEntity(user, entityId)) {
+      if (!EntityAuthoriser.authoriseEntity(entityId)) {
         throw new UnauthorizedException(backendMessages.getString("permission.denied"));
       }
       if (tag != null) {
-        results = ims.getInventoryByKiosk(entityId, tag, pageParams);
+        results = inventoryManagementService.getInventoryByKiosk(entityId, tag, pageParams);
       } else {
-        results = ims.getInventoryByKiosk(entityId, pageParams);
+        results = inventoryManagementService.getInventoryByKiosk(entityId, pageParams);
       }
       ICounter counter = Counter.getMaterialCounter(domainId, entityId, tag);
       results.setNumFound(counter.getCount());
       results.setOffset(offset);
       navigator.setResultParams(results);
-      return invBuilder.buildInventoryModelListAsResult(results, user, domainId, entityId);
+      return inventoryBuilder.buildInventoryModelListAsResult(results, domainId, entityId);
     } catch (Exception e) {
       xLogger.severe("Error in getting Entity Materials", e);
       throw new InvalidServiceException(
@@ -923,18 +900,16 @@ public class EntityController {
   public
   @ResponseBody
   Map<String, Integer> getMaterialStats(
-      @PathVariable Long entityId, HttpServletRequest request) {
-    Map<String, Integer> counts = new HashMap<String, Integer>(2);
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+      @PathVariable Long entityId) {
+    Map<String, Integer> counts = new HashMap<>(2);
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     try {
-      InventoryManagementService ims =
-          Services.getService(InventoryManagementServiceImpl.class, sUser.getLocale());
-      if (!EntityAuthoriser.authoriseEntity(sUser, entityId)) {
+      if (!EntityAuthoriser.authoriseEntity(entityId)) {
         throw new UnauthorizedException(backendMessages.getString("permission.denied"));
       }
-      counts.put("oos", ims.getOutOfStockCounts(entityId));
+      counts.put("oos", inventoryManagementService.getOutOfStockCounts(entityId));
       counts.put("invSz",
           Counter.getMaterialCounter(SecurityUtils.getDomainId(), entityId, null)
               .getCount());
@@ -949,23 +924,22 @@ public class EntityController {
   @RequestMapping(value = "/monthlyStats/{entityId}", method = RequestMethod.GET)
   public
   @ResponseBody
-  List<EntitySummaryModel> getMonthlyStats(@PathVariable Long entityId,
-                                           HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+  List<EntitySummaryModel> getMonthlyStats(@PathVariable Long entityId) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
+    Long domainId = sUser.getCurrentDomainId();
     ReportsService rs;
     Results results;
     Date startDate = new Date();
     List<EntitySummaryModel> summaryModelList;
     try {
-      rs = Services.getService("reports",locale);
-      if (!EntityAuthoriser.authoriseEntity(sUser, entityId)) {
+      rs = StaticApplicationContext.getBean(ConfigUtil.get("reports"), ReportsService.class);
+      if (!EntityAuthoriser.authoriseEntity(entityId)) {
         throw new UnauthorizedException(backendMessages.getString("permission.denied"));
       }
       results = rs.getMonthlyUsageStatsForKiosk(domainId, entityId, startDate);
-      summaryModelList = builder.buildStatsMap(results.getResults());
+      summaryModelList = entityBuilder.buildStatsMap(results.getResults());
     } catch (ServiceException se) {
       xLogger.warn("Error fetching monthly reports for entity" + entityId);
       throw new InvalidServiceException(
@@ -978,15 +952,13 @@ public class EntityController {
   @RequestMapping(value = "/materials/", method = RequestMethod.POST)
   public
   @ResponseBody
-  String addMaterialsToEntities(@RequestBody AddMaterialsRequestObj addMaterialsRequestObj,
-                                HttpServletRequest request) {
-    Locale locale = null;
-    ResourceBundle backendMessages = null;
+  String addMaterialsToEntities(@RequestBody AddMaterialsRequestObj addMaterialsRequestObj) {
+    Locale locale;
+    ResourceBundle backendMessages;
     if (!addMaterialsRequestObj.execute) {
-      SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+      SecureUserDetails sUser = SecurityUtils.getUserDetails();
       addMaterialsRequestObj.userId = sUser.getUsername();
-      addMaterialsRequestObj.domainId =
-          SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
+      addMaterialsRequestObj.domainId = sUser.getCurrentDomainId();
       addMaterialsRequestObj.execute = true;
       locale = sUser.getLocale();
       backendMessages = Resources.get().getBundle("BackendMessages", locale);
@@ -1010,14 +982,9 @@ public class EntityController {
         throw new InvalidServiceException("Failed to schedule add materials to entities task");
       }
     }
-    UsersService as;
-    EntitiesService es;
     IUserAccount srcUser;
-
     try {
-      as = Services.getService(UsersServiceImpl.class);
-      es = Services.getService(EntitiesServiceImpl.class);
-      srcUser = as.getUserAccount(addMaterialsRequestObj.userId);
+      srcUser = usersService.getUserAccount(addMaterialsRequestObj.userId);
       locale = srcUser.getLocale();
 
     } catch (Exception e) {
@@ -1026,8 +993,8 @@ public class EntityController {
     }
     int addCnt = 0;
     if (addMaterialsRequestObj.materials != null && !addMaterialsRequestObj.materials.isEmpty()) {
-      Map<String, String> params = new HashMap<String, String>();
-      List<String> multiValuedParams = new ArrayList<String>(1);
+      Map<String, String> params = new HashMap<>();
+      List<String> multiValuedParams = new ArrayList<>(1);
       String midsStr = "";
       params.put("action", "add");
       params.put("type", "materialtokiosk");
@@ -1067,9 +1034,9 @@ public class EntityController {
           Results kioskResults;
 
           if (SecurityUtil.compareRoles(srcUser.getRole(), SecurityConstants.ROLE_DOMAINOWNER) >= 0) {
-            kioskResults = es.getAllDomainKiosks(addMaterialsRequestObj.domainId, null, null, null);
+            kioskResults = entitiesService.getAllDomainKiosks(addMaterialsRequestObj.domainId, null, null, null);
           } else {
-            kioskResults = es.getKiosks(srcUser, addMaterialsRequestObj.domainId, null, null, null);
+            kioskResults = entitiesService.getKiosks(srcUser, addMaterialsRequestObj.domainId, null, null, null);
           }
           if (kioskResults.getResults().size() > 0) {
             for (Object o : kioskResults.getResults()) {
@@ -1108,19 +1075,16 @@ public class EntityController {
   @RequestMapping(value = "/materials/remove/", method = RequestMethod.POST)
   public
   @ResponseBody
-  String removeMaterialsFromEntity(@RequestBody RemoveMaterialsRequestObj removeMaterialsRequestObj,
-                                   HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
+  String removeMaterialsFromEntity(@RequestBody RemoveMaterialsRequestObj removeMaterialsRequestObj) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
+    Long domainId = sUser.getCurrentDomainId();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    EntitiesService as;
     int addCnt = 0;
     Results kioskResults;
     if (removeMaterialsRequestObj.entityIds == null || removeMaterialsRequestObj.entityIds
         .isEmpty()) {
-      as = Services.getService(EntitiesServiceImpl.class, locale);
-      kioskResults = as.getAllKiosks(domainId, null, null, null);
+      kioskResults = entitiesService.getAllKiosks(domainId, null, null, null);
       if (kioskResults.getResults().size() > 0) {
         List entities = kioskResults.getResults();
         for (Object o : entities) {
@@ -1139,9 +1103,9 @@ public class EntityController {
             && removeMaterialsRequestObj.entityIds.size() > 0);
 
     if (hasMaterials) {
-      Map<String, String> params = new HashMap<String, String>();
-      List<String> multiValuedParams = new ArrayList<String>();
-      List<IKiosk> kiosks = new ArrayList<IKiosk>();
+      Map<String, String> params = new HashMap<>();
+      List<String> multiValuedParams = new ArrayList<>();
+      List<IKiosk> kiosks = new ArrayList<>();
       String midsStr = "";
       params.put("action", "remove");
       params.put("type", "materialtokiosk");
@@ -1163,11 +1127,10 @@ public class EntityController {
         params.put("materialid", midsStr);
         multiValuedParams.add("materialid");
       }
-      as = Services.getService(EntitiesServiceImpl.class, locale);
       if (hasKiosks) {
         for (int i = 0; i < removeMaterialsRequestObj.entityIds.size(); i++) {
           try {
-            kiosks.add(as.getKiosk(removeMaterialsRequestObj.entityIds.get(i)));
+            kiosks.add(entitiesService.getKiosk(removeMaterialsRequestObj.entityIds.get(i)));
           } catch (ServiceException e) {
             xLogger.warn(
                 "Error fetching entity for entityId" + removeMaterialsRequestObj.entityIds.get(i),
@@ -1219,26 +1182,22 @@ public class EntityController {
   public
   @ResponseBody
   String editMaterialsOfEntity(@PathVariable Long entityId,
-                               @RequestBody EditMaterialsReqObj editMaterialsReqObj,
-                               HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+                               @RequestBody EditMaterialsReqObj editMaterialsReqObj) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
-    InventoryManagementServiceImpl ims = new InventoryManagementServiceImpl();
-    EntitiesService as = new EntitiesServiceImpl();
+    Long domainId = sUser.getCurrentDomainId();
     List<InventoryModel> materials = editMaterialsReqObj.materials;
     int matCnt, errCnt = 0;
-    List<String> errMat = new ArrayList<String>();
+    List<String> errMat = new ArrayList<>();
     String kioskName;
     try {
-      if (!EntityAuthoriser.authoriseEntity(sUser, entityId)) {
+      if (!EntityAuthoriser.authoriseEntity(entityId)) {
         throw new UnauthorizedException(backendMessages.getString("permission.denied"));
       }
-      kioskName = as.getKiosk(entityId).getName();
-      List<IInvntry> inventories =
-          ims.getInventoryByKiosk(entityId, null).getResults(); // TODO: pagination?
-      Map<Long, IInvntry> invMap = new HashMap<Long, IInvntry>();
+      kioskName = entitiesService.getKiosk(entityId).getName();
+      List<IInvntry> inventories = inventoryManagementService.getInventoryByKiosk(entityId, null).getResults();
+      Map<Long, IInvntry> invMap = new HashMap<>();
       for (IInvntry inv : inventories) {
         invMap.put(inv.getMaterialId(), inv);
       }
@@ -1251,8 +1210,8 @@ public class EntityController {
       for (InventoryModel material : materials) {
         IInvntry inv = invMap.get(material.mId);
         if (inv != null) {
-          invBuilder.buildInvntry(domainId, kioskName, entityId, material, inv, sUser.getUsername(),
-              isDOS, isManual, mmd, ims);
+          inventoryBuilder.buildInvntry(domainId, kioskName, entityId, material, inv, sUser.getUsername(),
+              isDOS, isManual, mmd, inventoryManagementService);
           updItems.add(inv);
         } else {
           xLogger.warn("Expected material {0} not found in Entity {1} inventory", material.mnm,
@@ -1261,7 +1220,7 @@ public class EntityController {
           errMat.add(material.mId + ":" + material.mnm);
         }
       }
-      ims.updateInventory(updItems, sUser.getUsername());
+      inventoryManagementService.updateInventory(updItems, sUser.getUsername());
       matCnt = updItems.size();
     } catch (ServiceException e) {
       xLogger.warn("Exception when adding inventory: {0} to {1}", materials, entityId, e);
@@ -1285,15 +1244,14 @@ public class EntityController {
   @RequestMapping(value = "/reorder", method = RequestMethod.POST)
   public
   @ResponseBody
-  String updateEntityOrder(@RequestBody ReorderEntityRequestObj obj, HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+  String updateEntityOrder(@RequestBody ReorderEntityRequestObj obj) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     try {
-      Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
-      EntitiesService as = Services.getService(EntitiesServiceImpl.class, locale);
+      Long domainId = sUser.getCurrentDomainId();
       String noRouteTag = "--notag--";
-      Map<String, Integer> tMap = new HashMap<String, Integer>();
+      Map<String, Integer> tMap = new HashMap<>();
       if (obj.rta) {
         for (EntityModel model : obj.ordEntities) {
           String rt = StringUtils.isNotBlank(model.rt) ? model.rt : noRouteTag;
@@ -1301,7 +1259,7 @@ public class EntityController {
         }
       }
       final String empty = "";
-      Map<String, Long[]> tagOrderEntities = new HashMap<String, Long[]>(tMap.size());
+      Map<String, Long[]> tagOrderEntities = new HashMap<>(tMap.size());
       int noRouteIndex = 0;
       for (EntityModel model : obj.ordEntities) {
         String rt = obj.rta ?
@@ -1331,13 +1289,13 @@ public class EntityController {
               .append(tg).append(empty)
               .append(routeCSV).append(empty)
               .append(noRouteCSV).append(noRouteCSVVal);
-          as.updateRelatedEntitiesOrdering(domainId, obj.eid, obj.lt, routeQueryString.toString());
+          entitiesService.updateRelatedEntitiesOrdering(domainId, obj.eid, obj.lt, routeQueryString.toString());
         } else if (!tag.equals(noRouteTag)) {
           routeQueryString
               .append(tg).append(tag)
               .append(routeCSV).append(joinArray(tagOrderEntities.get(tag), comma))
               .append(noRouteCSV).append(noRouteCSVVal);
-          as.updateRelatedEntitiesOrdering(domainId, obj.eid, obj.lt, routeQueryString.toString());
+          entitiesService.updateRelatedEntitiesOrdering(domainId, obj.eid, obj.lt, routeQueryString.toString());
           routeQueryString.setLength(0);
         }
       }
@@ -1367,16 +1325,14 @@ public class EntityController {
   @RequestMapping(value = "/manreorder", method = RequestMethod.POST)
   public
   @ResponseBody
-  String updateManagedEntityOrder(@RequestBody ReorderEntityRequestObj obj,
-                                  HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+  String updateManagedEntityOrder(@RequestBody ReorderEntityRequestObj obj) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     try {
-      Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
-      EntitiesService as = Services.getService(EntitiesServiceImpl.class, locale);
+      Long domainId = sUser.getCurrentDomainId();
       String noRouteTag = "--notag--";
-      Map<String, Integer> tMap = new HashMap<String, Integer>();
+      Map<String, Integer> tMap = new HashMap<>();
       if (obj.rta) {
         for (EntityModel model : obj.ordEntities) {
           String rt = StringUtils.isNotBlank(model.rt) ? model.rt : noRouteTag;
@@ -1384,7 +1340,7 @@ public class EntityController {
         }
       }
       final String empty = "";
-      Map<String, Long[]> tagOrderEntities = new HashMap<String, Long[]>(tMap.size());
+      Map<String, Long[]> tagOrderEntities = new HashMap<>(tMap.size());
       int noRouteIndex = 0;
       for (EntityModel model : obj.ordEntities) {
         String rt = obj.rta ?
@@ -1414,13 +1370,14 @@ public class EntityController {
               .append(tg).append(empty)
               .append(routeCSV).append(empty)
               .append(noRouteCSV).append(noRouteCSVVal);
-          as.updateManagedEntitiesOrdering(domainId, obj.uid, routeQueryString.toString());
+          entitiesService.updateManagedEntitiesOrdering(domainId, obj.uid, routeQueryString.toString());
         } else if (!tag.equals(noRouteTag)) {
           routeQueryString
               .append(tg).append(tag)
               .append(routeCSV).append(joinArray(tagOrderEntities.get(tag), comma))
               .append(noRouteCSV).append(noRouteCSVVal);
-          as.updateManagedEntitiesOrdering(domainId, obj.uid, routeQueryString.toString());
+          entitiesService.updateManagedEntitiesOrdering(domainId, obj.uid,
+              routeQueryString.toString());
           routeQueryString.setLength(0);
         }
       }
@@ -1435,15 +1392,13 @@ public class EntityController {
   @RequestMapping(value = "/deleteRelation", method = RequestMethod.POST)
   public
   @ResponseBody
-  String deleteEntityRelation(@RequestBody List<String> linkIds, HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
+  String deleteEntityRelation(@RequestBody List<String> linkIds) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
+    Long domainId = sUser.getCurrentDomainId();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    EntitiesService as;
     try {
-      as = Services.getService(EntitiesServiceImpl.class, locale);
-      as.deleteKioskLinks(domainId, linkIds, sUser.getUsername());
+      entitiesService.deleteKioskLinks(domainId, linkIds, sUser.getUsername());
     } catch (ServiceException e) {
       xLogger.severe("Error in deleting Relationship for entities", e);
       throw new InvalidServiceException(backendMessages.getString("kiosk.relation.delete.error"));
@@ -1459,16 +1414,14 @@ public class EntityController {
                           @RequestParam(required = false) String size,
                           @RequestParam(required = false) String offset,
                           HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     try {
-      EntitiesService as = Services.getService(EntitiesServiceImpl.class, locale);
-      UsersService us = Services.getService(UsersServiceImpl.class, locale);
-      if (!GenericAuthoriser.authoriseUser(request, userId)) {
+      if (!GenericAuthoriser.authoriseUser(userId)) {
         throw new UnauthorizedException(backendMessages.getString("permission.denied"));
       }
-      IUserAccount u = us.getUserAccount(userId);
+      IUserAccount u = usersService.getUserAccount(userId);
       PageParams pageParams = null;
       int o = offset == null ? 0 : Integer.parseInt(offset);
       if (size != null && Integer.parseInt(size) > 0 || o > 0) {
@@ -1479,9 +1432,9 @@ public class EntityController {
                 "userEntity", 0);
         pageParams = new PageParams(navigator.getCursor(o), o, s);
       }
-      Results results = as.getKiosksForUser(u, null, pageParams);
+      Results results = entitiesService.getKiosksForUser(u, null, pageParams);
       if (results.getResults() != null) {
-        return new Results(builder.buildUserEntities(results.getResults()), null,
+        return new Results<>(entityBuilder.buildUserEntities(results.getResults()), null,
             pageParams == null ? 0
                 : Counter.getUserToKioskCounter(SecurityUtils.getDomainId(), userId)
                     .getCount(), o);
@@ -1497,15 +1450,13 @@ public class EntityController {
   @RequestMapping("/check/")
   public
   @ResponseBody
-  boolean checkEntityExist(@RequestParam String enm, HttpServletRequest request) {
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), user.getUsername());
-    Locale locale = user.getLocale();
+  boolean checkEntityExist(@RequestParam String enm) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
+    Long domainId = sUser.getCurrentDomainId();
+    Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     try {
-      EntitiesServiceImpl as =
-          Services.getService(EntitiesServiceImpl.class, user.getLocale());
-      if (as.getKioskByName(domainId, enm) != null) {
+      if (entitiesService.getKioskByName(domainId, enm) != null) {
         return true;
       }
     } catch (ServiceException e) {
@@ -1519,21 +1470,18 @@ public class EntityController {
   @RequestMapping(value = "/stockboard", method = RequestMethod.POST)
   public
   @ResponseBody
-  String setStockBoard(@RequestBody StockBoardModel model, HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+  String setStockBoard(@RequestBody StockBoardModel model) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    IConfig c = null;
-    KioskConfig kc = null;
-    StockboardConfig sbConfig = null;
-    StockBoardBuilder stockBoardBuilder = new StockBoardBuilder();
+    IConfig c;
+    KioskConfig kc;
+    StockboardConfig sbConfig;
     Long domainId = null;
-    String key = "";
+    String key;
     try {
       c = JDOUtils.createInstance(IConfig.class);
-      ConfigurationMgmtService cms =
-          Services.getService(ConfigurationMgmtServiceImpl.class, locale);
-      domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
+      domainId = sUser.getCurrentDomainId();
       if (model != null) {
         key = stockBoardBuilder.getKey(model.kid);
         kc = KioskConfig.getInstance(model.kid);
@@ -1542,7 +1490,7 @@ public class EntityController {
               "Failed to create KioskConfig object. Exiting from updateKioskConfig method...");
         }
         try {
-          if (cms.getConfiguration(key) != null) {
+          if (configurationMgmtService.getConfiguration(key) != null) {
             model.add = false;
           }
         } catch (ObjectNotFoundException e) {
@@ -1558,9 +1506,9 @@ public class EntityController {
         c.setLastUpdated(new Date());
         c.setConfig(kioskConfig);
         if (model.add) {
-          cms.addConfiguration(key, c);
+          configurationMgmtService.addConfiguration(key, c);
         } else {
-          cms.updateConfiguration(c);
+          configurationMgmtService.updateConfiguration(c);
         }
 
       }
@@ -1585,11 +1533,10 @@ public class EntityController {
   @RequestMapping(value = "/stockboard", method = RequestMethod.GET)
   public
   @ResponseBody
-  StockBoardModel getStockBoard(@RequestParam Long entityId, HttpServletRequest request) {
-    KioskConfig kc = null;
+  StockBoardModel getStockBoard(@RequestParam Long entityId) {
+    KioskConfig kc;
     StockBoardModel model = new StockBoardModel();
-    StockBoardBuilder stockBoardBuilder = new StockBoardBuilder();
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     try {
@@ -1631,11 +1578,8 @@ public class EntityController {
       }
       if (!execute) {
         if ("all".equalsIgnoreCase(kids)) {
-          SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
-          Locale locale = sUser.getLocale();
-          EntitiesService as = Services.getService(EntitiesServiceImpl.class, locale);
           Long domainId = SecurityUtils.getDomainId();
-          kidList = as.getAllDomainKioskIds(domainId);
+          kidList = entitiesService.getAllDomainKioskIds(domainId);
           if (kidList == null) {
             throw new ServiceException(
                 "Error in getting all " + backendMessages.getString("kiosk.lowercase")
@@ -1699,7 +1643,7 @@ public class EntityController {
         throw new ServiceException("Please select domain to remove from selected " + backendMessages
             .getString("kiosk.lowercase") + ".");
       }
-      SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+      SecureUserDetails sUser = SecurityUtils.getUserDetails();
       final String executeStr = "execute";
       boolean execute = (request.getParameter(executeStr) != null);
       if (!execute) {
@@ -1707,7 +1651,7 @@ public class EntityController {
         if (!message.equals("success")) {
           return message;
         }
-        Map<String, String> params = new HashMap<String, String>();
+        Map<String, String> params = new HashMap<>();
         params.put("kid", String.valueOf(kid));
         params.put(executeStr, "true");
         params.put("did", String.valueOf(did));
@@ -1742,18 +1686,16 @@ public class EntityController {
   @RequestMapping(value = "/domains", method = RequestMethod.GET)
   public
   @ResponseBody
-  List<EntityDomainModel> getDomainData(@RequestParam Long eId, HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+  List<EntityDomainModel> getDomainData(@RequestParam Long eId) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    EntitiesServiceImpl as;
     try {
-      as = Services.getService(EntitiesServiceImpl.class, locale);
-      if (!EntityAuthoriser.authoriseEntity(sUser, eId)) {
+      if (!EntityAuthoriser.authoriseEntity(eId)) {
         ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
         throw new UnauthorizedException(backendMessages.getString("permission.denied"));
       }
-      IKiosk k = as.getKiosk(eId);
-      return builder.buildEntityDomainData(k);
+      IKiosk k = entitiesService.getKiosk(eId);
+      return entityBuilder.buildEntityDomainData(k);
     } catch (ServiceException se) {
       xLogger.warn("Error fetching Entity's domain details for " + eId, se);
       ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
@@ -1784,11 +1726,8 @@ public class EntityController {
       boolean execute = request.getParameter(executeStr) != null;
       if (!execute) {
         if ("all".equalsIgnoreCase(eIds)) {
-          SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
-          Locale locale = sUser.getLocale();
-          EntitiesService as = Services.getService(EntitiesServiceImpl.class, locale);
           Long domainId = SecurityUtils.getDomainId();
-          List<Long> kIdList = as.getAllDomainKioskIds(domainId);
+          List<Long> kIdList = entitiesService.getAllDomainKioskIds(domainId);
           if (kIdList == null) {
             throw new ServiceException(
                 "Error in getting all " + backendMessages.getString("kiosk.lowercase")
@@ -1818,8 +1757,7 @@ public class EntityController {
         String[] did = dIds.split(CharacterConstants.COMMA);
         String dName;
         if (did.length == 1) {
-          DomainsService ds = Services.getService(DomainsServiceImpl.class);
-          dName = ds.getDomain(Long.valueOf(did[0])).getName();
+          dName = domainsService.getDomain(Long.valueOf(did[0])).getName();
         } else {
           dName = String.valueOf(did.length);
         }
@@ -1839,9 +1777,8 @@ public class EntityController {
       }
       String[] did = dIds.split(CharacterConstants.COMMA);
       if (did.length == 1) { // Move/Add Entity under entity
-        EntitiesService as = Services.getService(EntitiesServiceImpl.class);
         for (Long eId : eIdList) {
-          IKiosk k = as.getKiosk(eId);
+          IKiosk k = entitiesService.getKiosk(eId);
           if ((ADD.equals(type) && !k.getDomainIds().contains(Long.parseLong(did[0]))) ||
               //Add entity
               (!ADD.equals(type) && k.getDomainIds()
@@ -1876,30 +1813,25 @@ public class EntityController {
   List<DomainSuggestionModel> getAddDomainSuggestion(@RequestParam Long eId,
                                                      @RequestParam String text,
                                                      HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    EntitiesServiceImpl as;
-    UsersService us;
     try {
-      as = Services.getService(EntitiesServiceImpl.class, locale);
-      us = Services.getService(UsersServiceImpl.class, locale);
-
-      if (!EntityAuthoriser.authoriseEntity(sUser, eId)) {
+      if (!EntityAuthoriser.authoriseEntity(eId)) {
         ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
         throw new UnauthorizedException(backendMessages.getString("permission.denied"));
       }
-      IKiosk k = as.getKiosk(eId);
+      IKiosk k = entitiesService.getKiosk(eId);
       if (text == null) {
         text = CharacterConstants.EMPTY;
       }
       text = text.toLowerCase();
       PersistenceManager pm = null;
       try {
-        IUserAccount user = us.getUserAccount(sUser.getUsername());
+        IUserAccount user = usersService.getUserAccount(sUser.getUsername());
         if (SecurityConstants.ROLE_SUPERUSER.equals(user.getRole())) {
           pm = PMF.get().getPersistenceManager();
           Query query = pm.newQuery(JDOUtils.getImplClass(IDomain.class));
-          Map<String, Object> params = new HashMap<String, Object>();
+          Map<String, Object> params = new HashMap<>();
           if (!text.isEmpty()) {
             query.setFilter("nNm.startsWith(txtParam)");
             query.declareParameters("String txtParam");
@@ -1917,9 +1849,7 @@ public class EntityController {
           } finally {
             query.closeAll();
           }
-          return builder.buildEntityDomainSuggestions(k, domains);
-        } else if (SecurityConstants.ROLE_DOMAINOWNER.equals(user.getRole())) {
-          //Todo: Need to filter domains only with in user domain's children
+          return entityBuilder.buildEntityDomainSuggestions(k, domains);
         }
       } catch (Exception e) {
         xLogger.warn("Exception: {0}", e.getMessage());
@@ -1944,8 +1874,7 @@ public class EntityController {
                                       @RequestParam int actType) {
     try {
       if (entityId != null && timestamp != null) {
-        EntitiesService as = Services.getService(EntitiesServiceImpl.class);
-        as.updateEntityActivityTimestamps(entityId, new Date(timestamp), actType);
+        entitiesService.updateEntityActivityTimestamps(entityId, new Date(timestamp), actType);
       }
     } catch (Exception e) {
       xLogger.severe("Error while updating activity timestamps for kiosk: {0} for actType: {1}",
@@ -1956,21 +1885,17 @@ public class EntityController {
   @RequestMapping(value = "/networkview", method = RequestMethod.GET)
   public
   @ResponseBody
-  NetworkViewResponseObj getNetworkHierarchy(@RequestParam(required = false) Long domainId,
-                                             HttpServletRequest request) {
+  NetworkViewResponseObj getNetworkHierarchy(@RequestParam(required = false) Long domainId) {
     try {
-      SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+      SecureUserDetails sUser = SecurityUtils.getUserDetails();
       Locale locale = sUser.getLocale();
-      UsersService as = Services.getService(UsersServiceImpl.class, locale);
-      EntitiesService es = Services.getService(EntitiesServiceImpl.class, locale);
-      IUserAccount userAccount = as.getUserAccount(sUser.getUsername());
-      ;
+      IUserAccount userAccount = usersService.getUserAccount(sUser.getUsername());
       if (domainId == null) {
         domainId = sUser.getDomainId();
       }
       MemcacheService cache = AppFactory.get().getMemcacheService();
-      NetworkViewResponseObj obj = null;
-      List<EntityLinkModel> kioskLinks = null;
+      NetworkViewResponseObj obj;
+      List<EntityLinkModel> kioskLinks;
       String cacheKey = Constants.NW_HIERARCHY_CACHE_PREFIX + domainId;
       if (cache != null && cache.get(cacheKey) != null) {
         obj = (NetworkViewResponseObj) cache.get(cacheKey);
@@ -1981,8 +1906,8 @@ public class EntityController {
         }
       }
       kioskLinks =
-          es.getKioskLinksInDomain(domainId, userAccount.getUserId(), userAccount.getRole());
-      obj = builder.buildNetworkViewRequestObject(kioskLinks, domainId);
+          entitiesService.getKioskLinksInDomain(domainId, userAccount.getUserId(), userAccount.getRole());
+      obj = entityBuilder.buildNetworkViewRequestObject(kioskLinks, domainId);
       if (cache != null) {
         cache.put(cacheKey, obj, 24 * 60 * 60); // 1 day expiry
       }
@@ -1997,11 +1922,8 @@ public class EntityController {
   public @ResponseBody List<LocationSuggestionModel> getLocationSuggestion(
       @RequestParam String text,
       @RequestParam String type,
-      @RequestParam (required = false) String parentLoc,
-      HttpServletRequest request) {
+      @RequestParam(required = false) String parentLoc) {
     try {
-      SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
-      Locale locale = sUser.getLocale();
       LocationSuggestionModel parentLocation = null;
       if (StringUtils.isNotEmpty(parentLoc)) {
         try {
@@ -2010,17 +1932,16 @@ public class EntityController {
           xLogger.warn("Error while parsing super location", e);
         }
       }
-      Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
-      EntitiesService es = Services.getService(EntitiesServiceImpl.class, locale);
+      Long domainId = SecurityUtils.getCurrentDomainId();
       switch (type) {
         case "state":
-          return es.getStateSuggestions(domainId, text);
+          return entitiesService.getStateSuggestions(domainId, text);
         case "district":
-          return es.getDistrictSuggestions(domainId, text, parentLocation);
+          return entitiesService.getDistrictSuggestions(domainId, text, parentLocation);
         case "taluk":
-          return es.getTalukSuggestions(domainId, text, parentLocation);
+          return entitiesService.getTalukSuggestions(domainId, text, parentLocation);
         case "city":
-          return es.getCitySuggestions(domainId, text);
+          return entitiesService.getCitySuggestions(domainId, text);
       }
     } catch (Exception e) {
       xLogger.warn("Error while getting location suggestions", e);

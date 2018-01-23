@@ -38,7 +38,6 @@ import com.logistimo.entities.models.UserEntitiesModel;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
 import com.logistimo.services.ObjectNotFoundException;
-import com.logistimo.services.Service;
 import com.logistimo.services.ServiceException;
 import com.logistimo.users.entity.IUserAccount;
 
@@ -47,7 +46,7 @@ import java.util.List;
 
 import javax.jdo.PersistenceManager;
 
-public interface EntitiesService extends Service {
+public interface EntitiesService {
   /**
    * Get users associated with a given kiosk
    */

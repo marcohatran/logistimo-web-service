@@ -30,13 +30,12 @@ import com.logistimo.exception.TaskSchedulingException;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
 import com.logistimo.services.ObjectNotFoundException;
-import com.logistimo.services.Service;
 import com.logistimo.services.ServiceException;
 
 import java.util.Collection;
 import java.util.List;
 
-public interface DomainsService extends Service {
+public interface DomainsService {
 
   /*** Domain APIs ***/
 

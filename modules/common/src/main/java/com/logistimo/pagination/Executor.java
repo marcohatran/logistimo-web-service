@@ -23,11 +23,10 @@
 
 package com.logistimo.pagination;
 
-import com.logistimo.services.utils.ConfigUtil;
-
+import com.logistimo.exception.TaskSchedulingException;
 import com.logistimo.pagination.processor.ProcessingException;
 import com.logistimo.pagination.processor.Processor;
-import com.logistimo.exception.TaskSchedulingException;
+import com.logistimo.services.utils.ConfigUtil;
 
 /**
  * @author Mohan Raja

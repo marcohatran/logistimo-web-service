@@ -37,7 +37,6 @@ import com.logistimo.locations.model.LocationResponseModel;
 import com.logistimo.logger.XLog;
 import com.logistimo.pagination.Results;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.cache.MemcacheService;
 
 import java.util.List;
@@ -52,7 +51,7 @@ public class DomainLocIDConfigMigrator {
    * Migrate the domain config to update loc ids
    */
   public void updateDomainLocConfig() throws ServiceException {
-    DomainsService ds = Services.getService(DomainsServiceImpl.class);
+    DomainsService ds = StaticApplicationContext.getBean(DomainsServiceImpl.class);
     Results domains = ds.getAllDomains(null);
     List domainList = domains.getResults();
     if (domainList != null && domainList.size() > 0) {
@@ -109,9 +108,8 @@ public class DomainLocIDConfigMigrator {
               e);
       throw new ServiceException(e);
     }
-    ConfigurationMgmtService
-        cms =
-        Services.getService(ConfigurationMgmtServiceImpl.class);
+    ConfigurationMgmtService cms =
+        StaticApplicationContext.getBean(ConfigurationMgmtServiceImpl.class);
     IConfig config;
     try {
       config = cms.getConfiguration(IConfig.CONFIG_PREFIX + domain.getId());

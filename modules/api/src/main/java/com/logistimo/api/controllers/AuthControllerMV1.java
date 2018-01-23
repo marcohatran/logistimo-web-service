@@ -41,11 +41,9 @@ import com.logistimo.security.UserDisabledException;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.entity.IUserToken;
 import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,13 +73,24 @@ public class AuthControllerMV1 {
   private static final String USER_AGENT = "User-Agent";
   private static final String DEVICE_DETAILS = "Device-Details";
   private static final String DEVICE_PROFILE = "Device-Profile";
-  private static final UserBuilder ubuilder = new UserBuilder();
 
+  private UserBuilder userBuilder;
   private AuthenticationService authenticationService;
+  private UsersService usersService;
+
+  @Autowired
+  public void setUserBuilder(UserBuilder userBuilder) {
+    this.userBuilder = userBuilder;
+  }
 
   @Autowired
   public void setAuthenticationService(AuthenticationService authenticationService) {
     this.authenticationService = authenticationService;
+  }
+
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
   }
 
   /**
@@ -99,7 +108,6 @@ public class AuthControllerMV1 {
       throws ServiceException, BadCredentialsException,
       UserDisabledException {
     IUserAccount user;
-    UsersService as;
     Map<String, String> headers = new HashMap<>();
     String authToken = req.getHeader(Constants.TOKEN);
     String initiator = req.getHeader(Constants.ACCESS_INITIATOR);
@@ -135,9 +143,8 @@ public class AuthControllerMV1 {
       String userid = loginModel.userId;
       String password = loginModel.password;
 
-      as = Services.getService(UsersServiceImpl.class);
       try {
-        user = as.authenticateUser(userid, password, src);
+        user = usersService.authenticateUser(userid, password, src);
       } catch (ObjectNotFoundException oe) {
         throw new BadCredentialsException("Invalid user name or password");
       }
@@ -160,14 +167,14 @@ public class AuthControllerMV1 {
       user.setUserAgent(userAgentStr);
       user.setAppVersion(appVer);
       //to store the history of user login's
-      as.updateUserLoginHistory(userid, src, userAgentStr,
+      usersService.updateUserLoginHistory(userid, src, userAgentStr,
           ipaddr, new Date(), appVer);
       //update user account
-      as.updateMobileLoginFields(user);
+      usersService.updateMobileLoginFields(user);
     }
     //setting response headers
     setResponseHeaders(res, headers);
-    return ubuilder.buildMobileAuthResponseModel(user);
+    return userBuilder.buildMobileAuthResponseModel(user);
   }
 
   private void setResponseHeaders(HttpServletResponse response, Map<String, String> headers) {
@@ -223,9 +230,7 @@ public class AuthControllerMV1 {
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void resetPassword(@RequestBody ChangePasswordModel pwdModel)
       throws ServiceException, ValidationException {
-    UsersService us;
     authenticationService.validateOtpMMode(pwdModel.uid, pwdModel.otp);
-    us = Services.getService(UsersServiceImpl.class);
-    us.changePassword(pwdModel.uid, null, pwdModel.npd);
+    usersService.changePassword(pwdModel.uid, null, pwdModel.npd);
   }
 }

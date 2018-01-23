@@ -28,9 +28,7 @@ package com.logistimo.reports.entity.slices;
 
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.NumberUtil;
-import com.logistimo.logger.XLog;
 
-import java.math.BigDecimal;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;

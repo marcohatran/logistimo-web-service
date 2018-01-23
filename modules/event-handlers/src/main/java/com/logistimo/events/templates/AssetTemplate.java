@@ -29,13 +29,13 @@ import com.logistimo.config.models.AssetConfig;
 import com.logistimo.config.models.AssetSystemConfig;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.EventsConfig;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.entity.Kiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.logger.XLog;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.utils.LocalDateUtil;
@@ -67,21 +67,20 @@ public class AssetTemplate implements ITemplate {
   @Override
   public Map<String, String> getTemplateValues(Locale locale, String timezone,
                                                List<String> excludeVars, Date updationTime) {
-    HashMap<String, String> varMap = new HashMap<String, String>();
+    HashMap<String, String> varMap = new HashMap<>();
     PersistenceManager pm = PMF.get().getPersistenceManager();
     try {
       // Entity
       IKiosk k = null;
-      EntitiesService as = null;
-      as = Services.getService(EntitiesServiceImpl.class, locale);
+      EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
 
       if (as != null) {
         try {
           List<IUserAccount> users = as.getUsersForKiosk(asset.getKioskId(), null, pm).getResults();
           if (users != null) {
-            List<String> userIds = new ArrayList<String>();
-            List<String> userNames = new ArrayList<String>();
-            List<String> userPhones = new ArrayList<String>();
+            List<String> userIds = new ArrayList<>();
+            List<String> userNames = new ArrayList<>();
+            List<String> userPhones = new ArrayList<>();
             for (IUserAccount user : users) {
               userNames.add(user.getFullName());
               userIds.add(user.getUserId());

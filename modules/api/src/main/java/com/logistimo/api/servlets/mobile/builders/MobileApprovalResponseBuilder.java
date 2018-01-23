@@ -23,7 +23,6 @@
 
 package com.logistimo.api.servlets.mobile.builders;
 
-import com.logistimo.approvals.client.models.ApproverResponse;
 import com.logistimo.approvals.client.models.CreateApprovalResponse;
 import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.orders.approvals.actions.GetOrderApprovalAction;
@@ -31,18 +30,32 @@ import com.logistimo.orders.approvals.dao.IApprovalsDao;
 import com.logistimo.orders.entity.IOrder;
 import com.logistimo.orders.entity.approvals.IOrderApprovalMapping;
 import com.logistimo.proto.ApprovalResponse;
-import com.logistimo.proto.MobileApprovalResponse;
-import com.logistimo.services.Services;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@Component
 public class MobileApprovalResponseBuilder {
+
+  private UsersService usersService;
+  private IApprovalsDao approvalsDao;
+
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
+  }
+
+  @Autowired
+  public void setApprovalsDao(IApprovalsDao approvalsDao) {
+    this.approvalsDao = approvalsDao;
+  }
 
   private static final String GET_ORDER_APPROVAL_ACTION = "getOrderApprovalAction";
 
@@ -93,7 +106,7 @@ public class MobileApprovalResponseBuilder {
    * @return  approval mappings
    */
   private IOrderApprovalMapping getOrderApprovalMapping(IOrder o, Integer apprpovalType) {
-    return StaticApplicationContext.getBean(IApprovalsDao.class).getOrderApprovalMapping(o.getOrderId(), apprpovalType);
+    return approvalsDao.getOrderApprovalMapping(o.getOrderId(), apprpovalType);
   }
 
   /**
@@ -118,7 +131,6 @@ public class MobileApprovalResponseBuilder {
    */
   private void setUserDetails(String approverId, String requesterId,
                               ApprovalResponse response) {
-    UsersService usersService = Services.getService(UsersServiceImpl.class);
     Set<String> userIds = new HashSet<>(2);
     userIds.add(approverId);
     userIds.add(requesterId);

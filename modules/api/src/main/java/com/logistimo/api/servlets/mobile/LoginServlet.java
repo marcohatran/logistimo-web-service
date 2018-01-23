@@ -44,7 +44,6 @@ import com.logistimo.proto.RestConstantsZ;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.utils.ConfigUtil;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.entity.IUserToken;
@@ -111,7 +110,7 @@ public class LoginServlet extends JsonRestServlet {
       throws IOException, ServiceException, ValidationException {
     String action = req.getParameter(RestConstantsZ.ACTION);
     if (RestConstantsZ.ACTION_LOGIN.equalsIgnoreCase(action)) {
-      authenticateUser(req, resp, backendMessages, messages);
+      authenticateUser(req, resp, backendMessages);
     } else if (RestConstantsZ.ACTION_LOGOUT.equalsIgnoreCase(action)) {
       xLogger.info(
           "Logged out - does nothing, just there for backward compatibility, if at all needed");
@@ -129,7 +128,7 @@ public class LoginServlet extends JsonRestServlet {
   }
 
   public void authenticateUser(HttpServletRequest req, HttpServletResponse resp,
-                               ResourceBundle backendMessages, ResourceBundle messages)
+                               ResourceBundle backendMessages)
       throws IOException {
     xLogger.fine("Entering authenticateUser");
     UsersService as = null;
@@ -145,7 +144,7 @@ public class LoginServlet extends JsonRestServlet {
     Date start = null;
     // whether min. data is to be sent back - "1" = only kiosk info., in case of multiple kiosks; "2" = same as "1", but also do NOT send related kiosks info. (for each kiosk); null implies send back everything (kiosk info., materials and related kiosk info.)
     String minResponseCode = req.getParameter(RestConstantsZ.MIN_RESPONSE);
-    String locale = String.valueOf(new Locale(Constants.LANG_DEFAULT));
+    String locale;
     // Getting config by token
     String authtoken = req.getHeader(Constants.TOKEN);
     String sourceInitiatorStr = req.getHeader(Constants.ACCESS_INITIATOR);
@@ -242,7 +241,7 @@ public class LoginServlet extends JsonRestServlet {
       // Get the start date and time
       String startDateStr = req.getParameter(START);
       try {
-        as = Services.getService(UsersServiceImpl.class);
+        as = StaticApplicationContext.getBean(UsersServiceImpl.class);
         // Check if user ID and password is sent as Basic auth. header
         SecurityMgr.Credentials creds = SecurityMgr.getUserCredentials(req);
         if (creds != null) {
@@ -407,7 +406,7 @@ public class LoginServlet extends JsonRestServlet {
     String otp = req.getParameter(OTP);
     if (userId != null) {
       try {
-        AuthenticationService as = Services.getService(AuthenticationServiceImpl.class);
+        AuthenticationService as = StaticApplicationContext.getBean(AuthenticationServiceImpl.class);
         String successMsg;
         String au = req.getParameter("au");
         if (TYPE_EMAIL.equalsIgnoreCase(sendType)) {
@@ -437,7 +436,7 @@ public class LoginServlet extends JsonRestServlet {
         message = backendMessages.getString("password.otp.invalid");
       }
     } else {
-      xLogger.warn("Invalid forgot password request user: {0} and type: {1}", userId, sendType);
+      xLogger.warn("No user name to generate password of type: {1}", sendType);
       message = backendMessages.getString("error.invalidusername");
     }
     try {
@@ -458,7 +457,7 @@ public class LoginServlet extends JsonRestServlet {
     String sendType = request.getParameter(RestConstantsZ.TYPE);
     if (userId != null) {
       try {
-        AuthenticationService as = Services.getService(AuthenticationServiceImpl.class);
+        AuthenticationService as = StaticApplicationContext.getBean(AuthenticationServiceImpl.class);
         String successMsg = null;
         String host = request.getHeader("host");
         if (TYPE_EMAIL.equalsIgnoreCase(sendType)) {
@@ -484,7 +483,7 @@ public class LoginServlet extends JsonRestServlet {
         message = backendMessages.getString("error.systemerror");
       }
     } else {
-      xLogger.warn("Invalid forgot password request user: {0} and type: {1}", userId, sendType);
+      xLogger.warn("No user name to generate OTP of type: {0}", sendType);
       message = backendMessages.getString("error.invalidusername");
     }
     try {

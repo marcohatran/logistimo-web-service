@@ -27,33 +27,29 @@
 package com.logistimo.events.generators;
 
 import com.logistimo.AppFactory;
-import com.logistimo.dao.IDaoUtil;
-import com.logistimo.dao.JDOUtils;
-
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.EventSpec;
 import com.logistimo.config.models.EventSpec.ParamComparator;
 import com.logistimo.config.models.EventSpec.ParamSpec;
 import com.logistimo.config.models.EventSpec.Subscriber;
 import com.logistimo.config.models.EventsConfig;
+import com.logistimo.context.StaticApplicationContext;
+import com.logistimo.dao.IDaoUtil;
+import com.logistimo.dao.JDOUtils;
+import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.events.EventConstants;
 import com.logistimo.events.entity.IEvent;
-
-import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.events.handlers.EventHandler;
 import com.logistimo.events.models.ObjectData;
 import com.logistimo.inventory.dao.IInvntryDao;
 import com.logistimo.inventory.dao.ITransDao;
-import com.logistimo.inventory.dao.impl.InvntryDao;
-import com.logistimo.inventory.dao.impl.TransDao;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.IInvntryBatch;
 import com.logistimo.inventory.entity.ITransaction;
+import com.logistimo.logger.XLog;
 import com.logistimo.tags.TagUtil;
-
 import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.LocalDateUtil;
-import com.logistimo.logger.XLog;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -73,10 +69,6 @@ public class TransactionsEventGenerator extends EventGenerator {
 
   // Logger
   private static final XLog xLogger = XLog.getLog(TransactionsEventGenerator.class);
-
-  private IInvntryDao invntryDao = new InvntryDao();
-
-  private ITransDao transDao = new TransDao();
 
   private IDaoUtil daoUtil = AppFactory.get().getDaoUtil();
 
@@ -174,9 +166,11 @@ public class TransactionsEventGenerator extends EventGenerator {
     } else if (o instanceof ITransaction) {
       ITransaction trans = (ITransaction) o;
       try {
+        IInvntryDao invntryDao = StaticApplicationContext.getBean(IInvntryDao.class);
         IInvntry inv = invntryDao.findId(trans.getKioskId(), trans.getMaterialId());
         od.tags = inv.getTags(TagUtil.TYPE_MATERIAL); // TODO: for entity tags?
         od.kioskId = inv.getKioskId();
+        ITransDao transDao = StaticApplicationContext.getBean(ITransDao.class);
         od.oid = transDao.getKeyAsString(trans);
         od.materialId = trans.getMaterialId();
         if (ITransaction.TYPE_ISSUE.equals(trans.getType()) || ITransaction.TYPE_TRANSFER

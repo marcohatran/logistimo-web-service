@@ -26,13 +26,14 @@
  */
 package com.logistimo.api.servlets;
 
-import com.logistimo.communications.MessageHandlingException;
 import com.logistimo.api.communications.MessageRouter;
+import com.logistimo.communications.MessageHandlingException;
 import com.logistimo.communications.service.MessageService;
 import com.logistimo.communications.service.SMSService;
 import com.logistimo.entity.IMessageLog;
-import com.logistimo.utils.MessageUtil;
 import com.logistimo.logger.XLog;
+import com.logistimo.utils.MessageUtil;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;

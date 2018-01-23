@@ -23,14 +23,12 @@
 
 package com.logistimo.orders.service;
 
-import com.logistimo.pagination.QueryParams;
-import com.logistimo.orders.entity.IDemandItem;
-
-import com.logistimo.pagination.PageParams;
-import com.logistimo.pagination.Results;
-import com.logistimo.services.Service;
-import com.logistimo.services.ServiceException;
 import com.logistimo.models.orders.DiscrepancyModel;
+import com.logistimo.orders.entity.IDemandItem;
+import com.logistimo.pagination.PageParams;
+import com.logistimo.pagination.QueryParams;
+import com.logistimo.pagination.Results;
+import com.logistimo.services.ServiceException;
 
 import java.math.BigDecimal;
 import java.util.Collection;
@@ -44,7 +42,7 @@ import javax.jdo.PersistenceManager;
 /**
  * Created by smriti on 9/30/16.
  */
-public interface IDemandService extends Service {
+public interface IDemandService {
   @SuppressWarnings("rawtypes")
   List<Map> getDemandItems(Collection<? extends IDemandItem> items, String currency,
                            Locale locale, String timezone,

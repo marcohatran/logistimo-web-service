@@ -25,7 +25,6 @@ package com.logistimo.assets.models;
 
 import com.google.gson.JsonElement;
 
-
 import com.logistimo.config.models.AssetConfig;
 
 import java.util.List;

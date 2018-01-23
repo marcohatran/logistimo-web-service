@@ -38,7 +38,7 @@
 
     <properties>
         <build.number>SNAPSHOT</build.number>
-        <build.version>2.6.3</build.version>
+        <build.version>2.7.0</build.version>
     </properties>
 
     <dependencies>
@@ -60,6 +60,11 @@
         <dependency>
             <groupId>com.logistimo</groupId>
             <artifactId>logistimo-tags</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.logistimo</groupId>
+            <artifactId>logistimo-auth</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

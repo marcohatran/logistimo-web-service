@@ -31,6 +31,7 @@ import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.QueryConstants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.entities.models.LocationSuggestionModel;
 import com.logistimo.entities.service.EntitiesService;
@@ -41,10 +42,8 @@ import com.logistimo.logger.XLog;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.QueryParams;
 import com.logistimo.reports.ReportsConstants;
-import com.logistimo.services.Services;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.tags.dao.ITagDao;
-import com.logistimo.tags.dao.TagDao;
 import com.logistimo.tags.entity.ITag;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
@@ -71,7 +70,6 @@ import javax.jdo.Query;
 public class StockEventDataGenerator implements ReportDataGenerator {
 
   private static final XLog xLogger = XLog.getLog(StockEventDataGenerator.class);
-  private ITagDao tagDao = new TagDao();
 
   @SuppressWarnings("unchecked")
   @Override
@@ -93,7 +91,7 @@ public class StockEventDataGenerator implements ReportDataGenerator {
     QueryParams queryParams =
         getReportQuery(
             from, until, frequency, filters, locale, timezone, pageParams, dc, sourceUserId);
-    Query q = null;
+    Query q;
     if (isAbnormalStockReport) {
       q = pm.newQuery("javax.jdo.query.SQL", queryParams.query);
       q.setClass(JDOUtils.getImplClass(IInvntry.class));
@@ -110,7 +108,7 @@ public class StockEventDataGenerator implements ReportDataGenerator {
       if(isAbnormalStockReport) {
         queryParams =
             getReportQuery(
-                from, until, frequency, filters, locale, timezone, pageParams, dc, sourceUserId,
+                from, until, filters, pageParams, sourceUserId,
                 true);
         q = pm.newQuery("javax.jdo.query.SQL", queryParams.query);
         count = ((Long) ((List) q.executeWithMap(queryParams.params)).iterator().next()).intValue();
@@ -138,12 +136,13 @@ public class StockEventDataGenerator implements ReportDataGenerator {
   public QueryParams getReportQuery(Date from, Date until, String frequency,
                                     Map<String, Object> filters, Locale locale, String timezone,
                                     PageParams pageParams, DomainConfig dc, String sourceUserId) {
-    return getReportQuery(from, until, frequency, filters, locale, timezone, pageParams, dc, sourceUserId, false);
+    return getReportQuery(from, until, filters, pageParams, sourceUserId, false);
   }
 
-  public QueryParams getReportQuery(Date from, Date until, String frequency,
-                                    Map<String, Object> filters, Locale locale, String timezone,
-                                    PageParams pageParams, DomainConfig dc, String sourceUserId, boolean countQuery) {
+  public QueryParams getReportQuery(Date from, Date until,
+                                    Map<String, Object> filters,
+                                    PageParams pageParams, String sourceUserId,
+                                    boolean countQuery) {
       if (filters == null || filters.isEmpty()) {
           throw new IllegalArgumentException("Filters not specified");
       }
@@ -151,7 +150,7 @@ public class StockEventDataGenerator implements ReportDataGenerator {
               ((filters.get(ReportsConstants.FILTER_ABNORMALSTOCKVIEW) != null)
                       && (boolean) filters.get(ReportsConstants.FILTER_ABNORMALSTOCKVIEW));
       if(isAbnormalStockReport){
-          return getReportSqlQuery(from,until,filters,locale,dc,sourceUserId,pageParams, countQuery);
+          return getReportSqlQuery(from,until,filters, sourceUserId,pageParams, countQuery);
       }
       Integer eventType = (Integer) filters.get(ReportsConstants.FILTER_EVENT);
       Long domainId = (Long) filters.get(ReportsConstants.FILTER_DOMAIN);
@@ -176,12 +175,11 @@ public class StockEventDataGenerator implements ReportDataGenerator {
       if (sourceUserId != null) {
           try {
               // Get user
-            UsersService as = Services.getService(UsersServiceImpl.class, locale);
-            EntitiesService es = Services.getService(EntitiesServiceImpl.class, locale);
+            UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
+            EntitiesService es = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
               IUserAccount u = as.getUserAccount(sourceUserId);
               if (SecurityConstants.ROLE_SERVICEMANAGER.equals(u.getRole())) {
-                  kioskIds =
-                          es.getKioskIdsForUser(sourceUserId, null, null).getResults(); // TODO: pagination?
+                  kioskIds = es.getKioskIdsForUser(sourceUserId, null, null).getResults();
                   hasKioskIds = true;
               }
           } catch (Exception e) {
@@ -196,7 +194,7 @@ public class StockEventDataGenerator implements ReportDataGenerator {
       String filterStr = "";
       String importStr = "";
       String orderBy = " ORDER BY sd " + (ascendingOrder ? "ASC" : "DESC");
-      Map<String, Object> params = new HashMap<String, Object>();
+      Map<String, Object> params = new HashMap<>();
       if (eventType != null) {
           filterStr += "ty == tyParam";
           declaration += " Integer tyParam";
@@ -239,7 +237,8 @@ public class StockEventDataGenerator implements ReportDataGenerator {
           ///orderBy = " ORDER BY dr DESC";
       }
       // Tags, if any
-      if (materialId == null && materialTag != null && !materialTag.isEmpty()) {
+    ITagDao tagDao = StaticApplicationContext.getBean(ITagDao.class);
+    if (materialId == null && materialTag != null && !materialTag.isEmpty()) {
           filterStr += " && mtgs.contains(mtgsParam)";
           declaration += ",Long mtgsParam";
           params.put("mtgsParam", tagDao.getTagFilter(materialTag, ITag.MATERIAL_TAG));
@@ -275,7 +274,8 @@ public class StockEventDataGenerator implements ReportDataGenerator {
    * @return returns SQL QueryParams for Full abnormal inventory
    */
   public QueryParams getReportSqlQuery(Date from, Date until, Map<String, Object> filters,
-      Locale locale, DomainConfig dc, String sourceUserId, PageParams pageParams, boolean countQuery) {
+                                       String sourceUserId,
+                                       PageParams pageParams, boolean countQuery) {
     Integer abnormalBefore = (Integer) filters.get(ReportsConstants.FILTER_ABNORMALDURATION);
     Date abnormalBeforeDate =
         (abnormalBefore != null) ? LocalDateUtil.getOffsetDate(new Date(), -1*abnormalBefore) : null;
@@ -297,7 +297,7 @@ public class StockEventDataGenerator implements ReportDataGenerator {
     if (sourceUserId != null) {
       try {
         // Get user
-        UsersService as = Services.getService(UsersServiceImpl.class, locale);
+        UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
         IUserAccount u = as.getUserAccount(sourceUserId);
         if (SecurityConstants.ROLE_SERVICEMANAGER.equals(u.getRole())) {
           hasKioskIds = true;
@@ -308,15 +308,15 @@ public class StockEventDataGenerator implements ReportDataGenerator {
     }
 
     StringBuilder queryStr = new StringBuilder();
-    Map<String, Object> params = new HashMap<String, Object>(1);
+    Map<String, Object> params = new HashMap<>(1);
     queryStr.append("SELECT * FROM INVNTRY INV, INVNTRYEVNTLOG INVLOG WHERE INVLOG.KEY = INV.LSEV ");
     StringBuilder filterStr = new StringBuilder();
     String orderBy = " ORDER BY INVLOG.sd " + (ascendingOrder ? "ASC" : "DESC");
     if (eventType != null) {
-      filterStr.append(" AND INVLOG.TY = " + eventType);
+      filterStr.append(" AND INVLOG.TY = ").append(eventType);
     }
     if (kioskId != null) {
-      filterStr.append(" AND INVLOG.kId = " + kioskId);
+      filterStr.append(" AND INVLOG.kId = ").append(kioskId);
     } else if (hasKioskIds) {
       filterStr
           .append(" AND INV.KID IN (SELECT UK.KIOSKID FROM USERTOKIOSK UK WHERE USERID = '")

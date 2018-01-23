@@ -29,6 +29,7 @@ import com.logistimo.assets.entity.IAsset;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.MethodNameConstants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.domains.IMultiDomain;
 import com.logistimo.domains.utils.DomainsUtil;
 import com.logistimo.entities.entity.IKiosk;
@@ -38,7 +39,6 @@ import com.logistimo.logger.XLog;
 import com.logistimo.pagination.Results;
 import com.logistimo.pagination.processor.InstrumentedProcessor;
 import com.logistimo.pagination.processor.ProcessingException;
-import com.logistimo.services.Services;
 import com.logistimo.services.cache.MemcacheService;
 import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.users.entity.IUserAccount;
@@ -104,11 +104,11 @@ public class MoveProcessor extends InstrumentedProcessor {
       destDomainParents = DomainsUtil.getDomainParents(destDomainId, true);
       update(list, destDomainId, pm);
       if (o instanceof IAsset) {
-        EntitiesService es = Services.getService(EntitiesServiceImpl.class);
+        EntitiesService es = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
         AssetUtil.updateAssetTags((List<IAsset>) list,
             es.getAssetTagsToRegister(((IAsset) o).getKioskId()));
       } else if(o instanceof IUserAccount) {
-        UsersService us = Services.getService(UsersServiceImpl.class);
+        UsersService us = StaticApplicationContext.getBean(UsersServiceImpl.class);
         us.moveAccessibleDomains(((IUserAccount) o).getUserId(), sourceDomainId, destDomainId);
       }
     } catch (Exception e) {

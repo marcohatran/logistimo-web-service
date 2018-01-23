@@ -27,6 +27,7 @@ import com.logistimo.accounting.models.CreditData;
 import com.logistimo.accounting.service.IAccountingService;
 import com.logistimo.accounting.service.impl.AccountingServiceImpl;
 import com.logistimo.config.models.DomainConfig;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
@@ -35,7 +36,6 @@ import com.logistimo.logger.XLog;
 import com.logistimo.orders.service.IDemandService;
 import com.logistimo.orders.service.impl.DemandService;
 import com.logistimo.proto.JsonTagsZ;
-import com.logistimo.services.Services;
 import com.logistimo.tags.TagUtil;
 import com.logistimo.tags.entity.ITag;
 import com.logistimo.tags.entity.Tag;
@@ -57,7 +57,6 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -452,7 +451,7 @@ public class Order implements IOrder {
 
   @Override
   public void setDiscountType(int discountType) {
-    dtyp = new Integer(discountType);
+    dtyp = discountType;
   }
 
   @Override
@@ -559,7 +558,7 @@ public class Order implements IOrder {
   public void putField(String key, String value) {
     Map<String, String> map = getFields();
     if (map == null) {
-      map = new HashMap<String, String>();
+      map = new HashMap<>();
     }
     if (value != null) {
       map.put(key, value);
@@ -579,15 +578,13 @@ public class Order implements IOrder {
     if (fields == null || fields.isEmpty()) {
       return;
     }
-    Map<String, String> map = null;
+    Map<String, String> map;
     if (flds == null) {
-      map = new HashMap<String, String>();
+      map = new HashMap<>();
     } else {
       map = TransactionUtil.getMap(flds);
     }
-    Iterator<String> keys = fields.keySet().iterator();
-    while (keys.hasNext()) {
-      String key = keys.next();
+    for (String key : fields.keySet()) {
       String val = fields.get(key);
       if (val != null) {
         map.put(key, val);
@@ -625,12 +622,12 @@ public class Order implements IOrder {
     if (dlt == null) {
       return 0;
     }
-    return dlt.longValue();
+    return dlt;
   }
 
   @Override
   public void setDeliveryLeadTime(long dlt) {
-    this.dlt = new Long(dlt);
+    this.dlt = dlt;
   }
 
   @Override
@@ -643,12 +640,12 @@ public class Order implements IOrder {
     if (pt == null) {
       return 0;
     }
-    return pt.longValue();
+    return pt;
   }
 
   @Override
   public void setProcessingTime(long pt) {
-    this.pt = new Long(pt);
+    this.pt = pt;
   }
 
   @Override
@@ -765,9 +762,7 @@ public class Order implements IOrder {
     if (items == null || items.size() == 0 || materialId == null) {
       return null;
     }
-    Iterator<DemandItem> it = items.iterator();
-    while (it.hasNext()) {
-      IDemandItem di = it.next();
+    for (DemandItem di : items) {
       if (materialId.equals(di.getMaterialId())) {
         return di;
       }
@@ -799,9 +794,7 @@ public class Order implements IOrder {
       return BigDecimal.ZERO;
     }
     BigDecimal price = BigDecimal.ZERO, priceWithTax = BigDecimal.ZERO;
-    Iterator<DemandItem> it = items.iterator();
-    while (it.hasNext()) {
-      IDemandItem item = it.next();
+    for (DemandItem item : items) {
       if (BigUtil.notEqualsZero(item.getTax()) && includeTax) {
         priceWithTax =
             priceWithTax.add(item.computeTotalPrice(
@@ -1035,8 +1028,8 @@ public class Order implements IOrder {
       map.put(JsonTagsZ.REASONS_FOR_CANCELLING_ORDER, cdrsn);
     }
     if (includeItems && items != null && !items.isEmpty()) {
-      IDemandService ds = null;
-      ds = Services.getService(DemandService.class, locale);
+      IDemandService ds;
+      ds = StaticApplicationContext.getBean(DemandService.class);
       // Add items
       List<Map>
           materials =
@@ -1048,7 +1041,8 @@ public class Order implements IOrder {
     // Include accounting data (credit limit, available credit)
     if (includeAccountingData && skId != null) {
       try {
-        IAccountingService accountingService = Services.getService(AccountingServiceImpl.class);
+        IAccountingService accountingService = StaticApplicationContext.getBean(
+            AccountingServiceImpl.class);
         CreditData
             cd =
             accountingService.getCreditData(kId, skId, DomainConfig.getInstance(getDomainId()));
@@ -1067,7 +1061,7 @@ public class Order implements IOrder {
     }
     // Check custom IDs and include
     try {
-      EntitiesService as = Services.getService(EntitiesServiceImpl.class);
+      EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
       // Kiosk
       IKiosk k = as.getKiosk(kId, false);
       String customKioskId = k.getCustomId();
@@ -1084,7 +1078,7 @@ public class Order implements IOrder {
       }
       // User
       if (uId != null) {
-        IUserAccount user = Services.getService(UsersServiceImpl.class).getUserAccount(uId);
+        IUserAccount user = StaticApplicationContext.getBean(UsersServiceImpl.class).getUserAccount(uId);
         String customUserId = user.getCustomId();
         if (customUserId != null && !customUserId.isEmpty()) {
           map.put(JsonTagsZ.CUSTOM_USERID, customUserId);
@@ -1109,8 +1103,8 @@ public class Order implements IOrder {
   // Update payment history for this order
   private void updatePaymentHistory(BigDecimal paid) {
     try {
-      JSONObject json = null;
-      JSONArray array = null;
+      JSONObject json;
+      JSONArray array;
       if (ph != null) {
         json = new JSONObject(ph);
         array = json.getJSONArray(TIMELINE);
@@ -1147,7 +1141,7 @@ public class Order implements IOrder {
     } else {
       // Update payable in accounts
       try {
-        IAccountingService os = Services.getService(AccountingServiceImpl.class);
+        IAccountingService os = StaticApplicationContext.getBean(AccountingServiceImpl.class);
         os.updateAccount(getDomainId(), getServicingKiosk(), getKioskId(),
             LocalDateUtil.getCurrentYear(), payable, paid);
       } catch (Exception e) {
@@ -1165,9 +1159,7 @@ public class Order implements IOrder {
       return;
     }
     String status = getStatus();
-    Iterator<DemandItem> it = items.iterator();
-    while (it.hasNext()) {
-      IDemandItem di = it.next();
+    for (DemandItem di : items) {
       di.setStatus(status);
     }
     xLogger.fine("Exiting propagateStatus");
@@ -1216,7 +1208,7 @@ public class Order implements IOrder {
   public Long getLinkedDomainId() {
     try {
       if (skId != null) {
-        EntitiesService as = Services.getService(EntitiesServiceImpl.class);
+        EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
         return as.getKiosk(getServicingKiosk(), false).getDomainId();
       }
     } catch (Exception e) {
@@ -1231,7 +1223,7 @@ public class Order implements IOrder {
   public Long getKioskDomainId() {
     try {
       if (kId != null) {
-        EntitiesService as = Services.getService(EntitiesServiceImpl.class);
+        EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
         return as.getKiosk(getKioskId(), false).getDomainId();
       }
     } catch (Exception e) {

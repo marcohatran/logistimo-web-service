@@ -26,9 +26,10 @@
  */
 package com.logistimo.config.models;
 
+import com.logistimo.utils.BigUtil;
+
 import org.json.JSONException;
 import org.json.JSONObject;
-import com.logistimo.utils.BigUtil;
 
 import java.io.Serializable;
 import java.math.BigDecimal;

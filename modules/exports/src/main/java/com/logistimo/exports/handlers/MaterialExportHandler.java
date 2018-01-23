@@ -24,21 +24,21 @@
 package com.logistimo.exports.handlers;
 
 import com.logistimo.config.models.DomainConfig;
+import com.logistimo.constants.CharacterConstants;
+import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
+import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IMaterial;
+import com.logistimo.services.Resources;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.users.service.impl.UsersServiceImpl;
-
-import org.apache.commons.lang.StringEscapeUtils;
-import com.logistimo.services.Resources;
-import com.logistimo.services.Services;
 import com.logistimo.utils.BigUtil;
-import com.logistimo.constants.CharacterConstants;
-import com.logistimo.constants.Constants;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.NumberUtil;
 import com.logistimo.utils.StringUtil;
-import com.logistimo.logger.XLog;
+
+import org.apache.commons.lang.StringEscapeUtils;
 
 import java.util.List;
 import java.util.Locale;
@@ -108,11 +108,11 @@ public class MaterialExportHandler implements IExportHandler {
   // Get the CSV for this material
   @Override
   public String toCSV(Locale locale, String timezone, DomainConfig dc, String type) {
-    IUserAccount cbUser = null, ubUser = null;
+    IUserAccount cbUser, ubUser;
     String cbFullName = null, ubFullName = null, cbCustomID = null, ubCustomID = null;
     try {
       // Get services
-      UsersService as = Services.getService(UsersServiceImpl.class);
+      UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
       if (material.getCreatedBy() != null) {
         try {
           cbUser = as.getUserAccount(material.getCreatedBy());

@@ -30,6 +30,7 @@ import com.logistimo.AppFactory;
 import com.logistimo.api.util.KioskDataSimulator;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
@@ -44,7 +45,6 @@ import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
 import com.logistimo.proto.JsonTagsZ;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
@@ -116,8 +116,8 @@ public class DataServlet extends JsonRestServlet {
     String action = req.getParameter("action");
     xLogger.fine("Executing action {0}", action);
     try {
-      UsersService as = Services.getService(UsersServiceImpl.class);
-      EntitiesService es = Services.getService(EntitiesServiceImpl.class);
+      UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
+      EntitiesService es = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
       if (ACTION_GETUSER.equalsIgnoreCase(action)) {
         String userId = req.getParameter("userId");
         IUserAccount user = as.getUserAccount(userId);
@@ -144,9 +144,7 @@ public class DataServlet extends JsonRestServlet {
         xLogger.fine("Getting kiosk: {0}", kioskName);
         List<IKiosk> kiosks = es.findKiosks(Constants.DOMAINID_DEFAULT, JsonTagsZ.NAME, kioskName);
         if (kiosks != null) {
-          Iterator<IKiosk> it = kiosks.iterator();
-          while (it.hasNext()) {
-            IKiosk kiosk = it.next();
+          for (IKiosk kiosk : kiosks) {
             writeText(resp, (kiosk.getMapZ(false, null).toString() + "\n"));
           }
         }
@@ -154,7 +152,8 @@ public class DataServlet extends JsonRestServlet {
         String materialId = req.getParameter("materialId");
 
         if (materialId != null && StringUtil.isStringLong(materialId)) {
-          MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
+          MaterialCatalogService mcs = StaticApplicationContext.getBean(
+              MaterialCatalogServiceImpl.class);
           IMaterial material = mcs.getMaterial(Long.parseLong(materialId));
 
           if (material != null) {
@@ -284,9 +283,8 @@ public class DataServlet extends JsonRestServlet {
     }
 
     try {
-      InventoryManagementService
-          ims =
-          Services.getService(InventoryManagementServiceImpl.class);
+      InventoryManagementService ims =
+          StaticApplicationContext.getBean(InventoryManagementServiceImpl.class);
       // Get the materials associated with the kiosk
       List<IInvntry>
           inventories =
@@ -302,7 +300,7 @@ public class DataServlet extends JsonRestServlet {
         while (it.hasNext() && numMaterials < KioskDataSimulator.MATERIAL_LIMIT) {
           IInvntry inv = it.next();
           // Get the parameter map
-          Map<String, String> params = new HashMap<String, String>();
+          Map<String, String> params = new HashMap<>();
           // Add action and type parameters
           params.put("action", ACTION_SIMULATETRANSDATA);
           params.put(REQUESTTYPE_PARAM, REQUESTTYPE_EXECUTE);
@@ -321,13 +319,13 @@ public class DataServlet extends JsonRestServlet {
           // Add the material Id as a new parameter to the scheduled task URL
           params.put(MATERIALID_PARAM, inv.getMaterialId().toString());
           // Add the domain Id as a new parameter to the scheduled task URL
-          params.put(DOMAINID_PARAM, (domainId != null ? domainId.toString() : ""));
+          params.put(DOMAINID_PARAM, (domainId.toString()));
           // Add the user Id
           params.put(USERID_PARAM, (userId != null ? userId : ""));
           // Schedule the task of simulating trans. data for a given kiosk-material
           try {
-            taskService.schedule(taskService.QUEUE_DATASIMULATOR, TASK_URL, params, null,
-                taskService.METHOD_POST, domainId, userId, "SIMULATE_TRANS");
+            taskService.schedule(ITaskService.QUEUE_DATASIMULATOR, TASK_URL, params, null,
+                ITaskService.METHOD_POST, domainId, userId, "SIMULATE_TRANS");
             numMaterials++; // count materials for successful scheduling
           } catch (TaskSchedulingException e) {
             xLogger.warn("Exception while scheduling task for kiosk-material: {0}-{1} : {2}",
@@ -370,14 +368,14 @@ public class DataServlet extends JsonRestServlet {
     Long domainId = SecurityUtils.getCurrentDomainId();
 
     // Make the HTTP call to optimize servlet
-    Map<String, String> params = new HashMap<String, String>();
+    Map<String, String> params = new HashMap<>();
     params.put("domainid", domainId.toString());
     params.put("kioskid", kioskIdStr);
     params.put("force", "true");
     String message;
     try {
-      taskService.schedule(taskService.QUEUE_OPTIMZER, "/task/optimize", params, null,
-          taskService.METHOD_POST, domainId, sUser.getUsername(), "SIMULATE_ORDERS");
+      taskService.schedule(ITaskService.QUEUE_OPTIMZER, "/task/optimize", params, null,
+          ITaskService.METHOD_POST, domainId, sUser.getUsername(), "SIMULATE_ORDERS");
       message = "Successfully scheduled task to perform computations.";
     } catch (Exception e) {
       xLogger.severe("Exception when calling /task/optimize: {0} : {1}", e.getClass().getName(),

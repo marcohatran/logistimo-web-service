@@ -26,8 +26,6 @@
  */
 package com.logistimo.entity;
 
-import com.logistimo.entity.IMultipartMsg;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;

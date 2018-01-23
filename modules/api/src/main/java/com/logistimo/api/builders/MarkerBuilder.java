@@ -23,17 +23,18 @@
 
 package com.logistimo.api.builders;
 
-import com.logistimo.dao.JDOUtils;
-
-import com.logistimo.services.impl.PMF;
-import com.logistimo.utils.LocalDateUtil;
-import com.logistimo.utils.NumberUtil;
-import com.logistimo.logger.XLog;
 import com.logistimo.api.models.MarkerModel;
+import com.logistimo.dao.JDOUtils;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.inventory.TransactionUtil;
 import com.logistimo.inventory.entity.ITransaction;
+import com.logistimo.logger.XLog;
 import com.logistimo.orders.entity.IOrder;
+import com.logistimo.services.impl.PMF;
+import com.logistimo.utils.LocalDateUtil;
+import com.logistimo.utils.NumberUtil;
+
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -45,6 +46,7 @@ import javax.jdo.PersistenceManager;
 /**
  * Created by Mohan Raja on 05/05/15
  */
+@Component
 public class MarkerBuilder {
   private static final XLog xLogger = XLog.getLog(MarkerBuilder.class);
   private String transUid;

@@ -23,8 +23,6 @@
 
 package com.logistimo.entity;
 
-import com.logistimo.entity.IDownloaded;
-
 import java.util.Date;
 
 import javax.jdo.annotations.IdGeneratorStrategy;

@@ -24,6 +24,7 @@
 package com.logistimo.events.templates;
 
 import com.logistimo.config.models.EventsConfig;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.conversations.entity.IMessage;
 import com.logistimo.conversations.service.ConversationService;
 import com.logistimo.conversations.service.impl.ConversationServiceImpl;
@@ -37,7 +38,6 @@ import com.logistimo.orders.entity.IDemandItem;
 import com.logistimo.orders.entity.IOrder;
 import com.logistimo.orders.service.IDemandService;
 import com.logistimo.orders.service.impl.DemandService;
-import com.logistimo.services.Services;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.users.entity.UserAccount;
 import com.logistimo.utils.BigUtil;
@@ -45,7 +45,6 @@ import com.logistimo.utils.LocalDateUtil;
 
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -68,7 +67,7 @@ public class OrderTemplate implements ITemplate {
                                                List<String> excludeVars, Date updationTime) {
     // Get the variable map for SMS message formation
     // NOTE: Order status is deliberately OMITTED so that it can be replaced by the Javascript function
-    HashMap<String, String> varMap = new HashMap<String, String>();
+    HashMap<String, String> varMap = new HashMap<>();
     PersistenceManager pm = PMF.get().getPersistenceManager();
     try {
       if (excludeVars == null || !excludeVars.contains(EventsConfig.VAR_CREATIONTIME)) {
@@ -86,7 +85,7 @@ public class OrderTemplate implements ITemplate {
         }
         varMap.put(EventsConfig.VAR_CUSTOMERCITY, k.getCity());
       }
-      ConversationService cs = Services.getService(ConversationServiceImpl.class, locale);
+      ConversationService cs = StaticApplicationContext.getBean(ConversationServiceImpl.class);
       IMessage msg = cs.getLastMessage(null, "ORDER", order.getOrderId().toString()); //conversationId is optional
       if (msg != null && msg.getMessage() != null && (excludeVars == null || !excludeVars.contains(EventsConfig.VAR_COMMENT))) {
         if (msg.getMessage().length() > 100) {
@@ -125,8 +124,9 @@ public class OrderTemplate implements ITemplate {
       if (size > 0 && (excludeVars == null || !excludeVars.contains(EventsConfig.VAR_MATERIALS)
           || !excludeVars.contains(EventsConfig.VAR_MATERIALSWITHMETADATA))) {
         try {
-          MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
-          IDemandService ds = Services.getService(DemandService.class);
+          MaterialCatalogService mcs = StaticApplicationContext.getBean(
+              MaterialCatalogServiceImpl.class);
+          IDemandService ds = StaticApplicationContext.getBean(DemandService.class);
           List<IDemandItem> items = ds.getDemandItems(order.getOrderId());
           String materialsStr = "", materialsWithMetadataStr = "";
           if (items != null && !items.isEmpty()) {
@@ -235,9 +235,7 @@ public class OrderTemplate implements ITemplate {
       // Check if there are any additional order fields
       Map<String, String> fields = order.getFields();
       if (fields != null && !fields.isEmpty()) {
-        Iterator<String> it = fields.keySet().iterator();
-        while (it.hasNext()) {
-          String key = it.next();
+        for (String key : fields.keySet()) {
           String value = fields.get(key);
           if (value != null) {
             varMap.put("%" + key + "%", value);

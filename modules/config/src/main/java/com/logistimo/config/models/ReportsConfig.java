@@ -29,14 +29,14 @@ package com.logistimo.config.models;
 import com.logistimo.config.entity.IConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
 import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.JDOUtils;
+import com.logistimo.logger.XLog;
+import com.logistimo.services.ObjectNotFoundException;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import com.logistimo.services.ObjectNotFoundException;
-import com.logistimo.services.Services;
-import com.logistimo.logger.XLog;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -62,7 +62,7 @@ public class ReportsConfig {
 
   // Properties
   private Long domainId = null;
-  private Map<String, List<String>> filters = new HashMap<String, List<String>>();
+  private Map<String, List<String>> filters = new HashMap<>();
   private boolean dirty = false;
 
   private ReportsConfig(Long domainId) {
@@ -77,7 +77,7 @@ public class ReportsConfig {
     while (en.hasNext()) {
       String key = en.next();
       JSONArray array = json.getJSONArray(key);
-      List<String> values = new ArrayList<String>();
+      List<String> values = new ArrayList<>();
       for (int i = 0; i < array.length(); i++) {
         values.add(array.getString(i));
       }
@@ -105,7 +105,8 @@ public class ReportsConfig {
   public static String getJSONString() {
     // Get from datastore
     try {
-      ConfigurationMgmtService cms = Services.getService(ConfigurationMgmtServiceImpl.class);
+      ConfigurationMgmtService cms = StaticApplicationContext
+          .getBean(ConfigurationMgmtServiceImpl.class);
       return cms.getConfiguration(IConfig.REPORTS).getConfig();
     } catch (Exception e) {
       xLogger.severe("Service exception: {0}", e.getMessage());
@@ -117,7 +118,8 @@ public class ReportsConfig {
   public static String getJSONString(Long domainId) {
     // Get from datastore
     try {
-      ConfigurationMgmtService cms = Services.getService(ConfigurationMgmtServiceImpl.class);
+      ConfigurationMgmtService cms = StaticApplicationContext.getBean(
+          ConfigurationMgmtServiceImpl.class);
       return cms.getConfiguration(IConfig.REPORTS + "." + domainId).getConfig();
     } catch (Exception e) {
       xLogger.warn("Service exception: {0}", e.getMessage());
@@ -131,7 +133,7 @@ public class ReportsConfig {
     try {
       JSONObject json = new JSONObject(getJSONString());
       JSONArray types = json.getJSONArray("types"); // types should be the same as resource keys
-      list = new ArrayList<String>();
+      list = new ArrayList<>();
       for (int i = 0; i < types.length(); i++) {
         list.add(types.getString(i));
       }
@@ -146,10 +148,7 @@ public class ReportsConfig {
       return null;
     }
     JSONArray array = new JSONArray();
-    Iterator<String> it = values.iterator();
-    while (it.hasNext()) {
-      array.put(it.next());
-    }
+    values.forEach(array::put);
     return array;
   }
 
@@ -216,7 +215,8 @@ public class ReportsConfig {
     }
     // Get from datastore
     try {
-      ConfigurationMgmtService cms = Services.getService(ConfigurationMgmtServiceImpl.class);
+      ConfigurationMgmtService cms = StaticApplicationContext.getBean(
+          ConfigurationMgmtServiceImpl.class);
       String configStr = toJSONString();
       String key = IConfig.REPORTS + "." + domainId;
       try {
@@ -245,9 +245,7 @@ public class ReportsConfig {
       return null;
     }
     JSONObject json = new JSONObject();
-    Iterator<String> keys = filters.keySet().iterator();
-    while (keys.hasNext()) {
-      String key = keys.next();
+    for (String key : filters.keySet()) {
       List<String> values = filters.get(key);
       JSONArray array = toJSONArray(values);
       if (array != null) {

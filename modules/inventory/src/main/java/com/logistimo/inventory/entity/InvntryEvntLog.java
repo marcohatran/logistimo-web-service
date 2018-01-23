@@ -26,15 +26,13 @@
  */
 package com.logistimo.inventory.entity;
 
+import com.logistimo.context.StaticApplicationContext;
+import com.logistimo.logger.XLog;
 import com.logistimo.tags.TagUtil;
 import com.logistimo.tags.dao.ITagDao;
-import com.logistimo.tags.dao.TagDao;
 import com.logistimo.tags.entity.ITag;
 import com.logistimo.tags.entity.Tag;
-
 import com.logistimo.utils.NumberUtil;
-
-import com.logistimo.logger.XLog;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -61,7 +59,6 @@ public class InvntryEvntLog implements IInvntryEvntLog {
 
   private static final XLog xLogger = XLog.getLog(InvntryEvntLog.class);
 
-  private static ITagDao tagDao = new TagDao();
   @Persistent
   Integer
       ty;
@@ -127,6 +124,7 @@ public class InvntryEvntLog implements IInvntryEvntLog {
     sd = start;
     ed = null;
     List<String> tags = inv.getTags(TagUtil.TYPE_MATERIAL);
+    ITagDao tagDao = StaticApplicationContext.getBean(ITagDao.class);
     if (tags != null && !tags.isEmpty()) {
       setTgs(tagDao.getTagsByNames(tags, ITag.MATERIAL_TAG), TagUtil.TYPE_MATERIAL);
     }
@@ -231,7 +229,7 @@ public class InvntryEvntLog implements IInvntryEvntLog {
 
   @Override
   public void setType(int type) {
-    ty = new Integer(type);
+    ty = type;
   }
 
   @Override

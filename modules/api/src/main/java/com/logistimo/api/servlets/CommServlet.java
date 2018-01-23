@@ -33,12 +33,12 @@ import com.logistimo.communications.MessageHandlingException;
 import com.logistimo.communications.ServiceResponse;
 import com.logistimo.communications.service.MessageService;
 import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.logger.XLog;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
@@ -49,7 +49,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 
@@ -141,15 +140,13 @@ public class CommServlet extends SgServlet {
     SecureUserDetails sUser = SecurityMgr.getUserDetailsIfPresent();
     String sendingUserId = null;
     Long domainId = null;
-    Locale locale = null;
     if (sUser != null) {
       sendingUserId = sUser.getUsername();
       domainId = SecurityUtils.getCurrentDomainId();
-      locale = sUser.getLocale();
     }
     // Send the message to selected users or schedule sending to all users
     if (allUsers) {
-      scheduleSendingToAllUsers(request, domainId, locale, sendingUserId, msgType, msgTemplate,
+      scheduleSendingToAllUsers(request, domainId, sendingUserId, msgType, msgTemplate,
           sendMessage, pushUrl, customApp);
       if (!isBatch) {
         msg =
@@ -222,7 +219,7 @@ public class CommServlet extends SgServlet {
       }
     }
     // Get the accounts service
-    UsersService as = Services.getService(UsersServiceImpl.class);
+    UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
     try {
       IUserAccount sendingUser = as.getUserAccount(sendingUserId);
       // Get the user Ids
@@ -232,9 +229,9 @@ public class CommServlet extends SgServlet {
         userIds[0] = userIdsStr;
       }
       // Get the user's phone numbers or email addresses, as required
-      List<IUserAccount> users = new ArrayList<IUserAccount>();
-      for (int i = 0; i < userIds.length; i++) {
-        users.add(as.getUserAccount(userIds[i]));
+      List<IUserAccount> users = new ArrayList<>();
+      for (String userId : userIds) {
+        users.add(as.getUserAccount(userId));
       }
       // Send message
       sendSMSMessage(msgType, sendMessage, users, pushUrl, sendingUser, customApp,
@@ -263,7 +260,7 @@ public class CommServlet extends SgServlet {
 
   // Schedule a task to send message to all users
   @SuppressWarnings("unchecked")
-  private void scheduleSendingToAllUsers(HttpServletRequest request, Long domainId, Locale locale,
+  private void scheduleSendingToAllUsers(HttpServletRequest request, Long domainId,
                                          String sendingUserId, String msgType, String msgTemplate,
                                          String sendMessage, String pushUrl, boolean customApp) {
     xLogger.fine("Entered scheduleSendingToAllUsers");
@@ -279,7 +276,7 @@ public class CommServlet extends SgServlet {
     }
     // Process the very first request for users in batch (size nor cursor are not passed first time)
     if (sizeStr == null && offsetStr == null) {
-      Map<String, String> params = new HashMap<String, String>();
+      Map<String, String> params = new HashMap<>();
       params.put("msgtype", msgType);
       params.put("msgtemplate", msgTemplate);
       params.put("message", sendMessage);
@@ -295,9 +292,9 @@ public class CommServlet extends SgServlet {
       }
       // Schedule the first task in the chain
       try {
-        taskService
-            .schedule(taskService.QUEUE_MESSAGE, TASK_URL, params, null, taskService.METHOD_POST,
-                domainId, sendingUserId, "SMS_ALL_USERS");
+        taskService.schedule(ITaskService.QUEUE_MESSAGE, TASK_URL, params, null,
+            ITaskService.METHOD_POST,
+            domainId, sendingUserId, "SMS_ALL_USERS");
       } catch (Exception e) {
         xLogger.severe(
             "Exception when scheduling task to send message: sending user = {0}, message = {1}, push-url = {2}, domainId = {3}: {4}",
@@ -315,11 +312,11 @@ public class CommServlet extends SgServlet {
     int offset = offsetStr != null ? Integer.parseInt(offsetStr) : 0;
     // Get the page parameters
     PageParams pageParams = new PageParams(null, offset, size);
-    Results results = null;
-    IUserAccount sendingUser = null;
+    Results results;
+    IUserAccount sendingUser;
     try {
       // Get service
-      UsersService as = Services.getService(UsersServiceImpl.class, locale);
+      UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
       sendingUser = as.getUserAccount(sendingUserId);
       results = as.getUsers(domainId, sendingUser, true, null, pageParams);
     } catch (Exception e) {
@@ -360,7 +357,7 @@ public class CommServlet extends SgServlet {
     // Schedule the first task in the chain
     try {
       taskService
-          .schedule(taskService.QUEUE_MESSAGE, TASK_URL, params, null, taskService.METHOD_POST,
+          .schedule(ITaskService.QUEUE_MESSAGE, TASK_URL, params, null, ITaskService.METHOD_POST,
               domainId, sendingUserId, "SMS_ALL_USERS");
     } catch (Exception e) {
       xLogger.severe(
@@ -415,7 +412,7 @@ public class CommServlet extends SgServlet {
       return;
     }
     Iterator<IUserAccount> it = users.iterator();
-    Map<String, String> params = new HashMap<String, String>();
+    Map<String, String> params = new HashMap<>();
     while (it.hasNext()) {
       IUserAccount u = it.next();
       params.put("u", u.getUserId());
@@ -425,9 +422,9 @@ public class CommServlet extends SgServlet {
       params.put("n", "s"); // send SMS
       // Schedule task to create custom JAR and notify user
       try {
-        taskService
-            .schedule(taskService.QUEUE_MESSAGE, GETJAR_URL, params, null, taskService.METHOD_POST,
-                -1, null, "SMS_APP_PUSH");
+        taskService.schedule(ITaskService.QUEUE_MESSAGE, GETJAR_URL, params, null,
+            ITaskService.METHOD_POST,
+            -1, null, "SMS_APP_PUSH");
       } catch (Exception e) {
         xLogger.warn(
             "Unable to schedule task to send custom JAR to user {0} with locale {1}: {2} : {3}",

@@ -39,7 +39,7 @@
     <properties>
         <build.number>SNAPSHOT</build.number>
         <camel-version>2.19.0</camel-version>
-        <build.version>2.6.3</build.version>
+        <build.version>2.7.0</build.version>
     </properties>
 
     <dependencies>

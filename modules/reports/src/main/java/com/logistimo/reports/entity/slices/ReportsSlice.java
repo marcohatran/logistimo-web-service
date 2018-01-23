@@ -24,13 +24,12 @@
 package com.logistimo.reports.entity.slices;
 
 import com.logistimo.reports.ReportsConstants;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.NumberUtil;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.math.BigDecimal;
 import java.util.Calendar;

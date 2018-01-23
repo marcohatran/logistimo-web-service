@@ -31,10 +31,10 @@ import com.logistimo.AppFactory;
 import com.logistimo.communications.service.MessageService;
 import com.logistimo.config.models.EventSpec;
 import com.logistimo.events.entity.IEvent;
+import com.logistimo.logger.XLog;
 import com.logistimo.services.taskqueue.ITaskService;
 
 import org.datanucleus.enhancer.Persistable;
-import com.logistimo.logger.XLog;
 
 import java.util.HashMap;
 import java.util.Map;

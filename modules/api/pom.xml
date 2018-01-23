@@ -36,7 +36,7 @@
 
     <name>api</name>
     <properties>
-        <build.version>2.6.3</build.version>
+        <build.version>2.7.0</build.version>
     </properties>
     <dependencies>
         <dependency>

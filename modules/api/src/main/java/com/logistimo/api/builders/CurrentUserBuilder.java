@@ -26,44 +26,53 @@ package com.logistimo.api.builders;
 import com.logistimo.api.models.CurrentUserModel;
 import com.logistimo.auth.SecurityConstants;
 import com.logistimo.auth.utils.SecurityUtils;
-import com.logistimo.auth.utils.SessionMgr;
 import com.logistimo.domains.service.DomainsService;
-import com.logistimo.domains.service.impl.DomainsServiceImpl;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.models.UserEntitiesModel;
 import com.logistimo.entities.service.EntitiesService;
-import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.users.entity.IUserAccount;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
-import javax.servlet.http.HttpServletRequest;
-
 /**
- * Created by Mohan Raja on 19/03/15.
+ * @author Mohan Raja
  */
+@Component
 public class CurrentUserBuilder {
-  public CurrentUserModel buildCurrentUserModel(HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+
+  private EntitiesService entitiesService;
+  private DomainsService domainsService;
+
+  @Autowired
+  public void setEntitiesService(EntitiesService entitiesService) {
+    this.entitiesService = entitiesService;
+  }
+
+  @Autowired
+  public void setDomainsService(DomainsService domainsService) {
+    this.domainsService = domainsService;
+  }
+
+  public CurrentUserModel buildCurrentUserModel() {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     String userId = sUser.getUsername();
     Locale locale = sUser.getLocale();
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), userId);
+    Long domainId = sUser.getCurrentDomainId();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     try {
-      EntitiesService as = Services.getService(EntitiesServiceImpl.class, locale);
-      DomainsService ds = Services.getService(DomainsServiceImpl.class, locale);
-      String domainName = ds.getDomain(domainId).getName();
-      UserEntitiesModel userEntitiesModel = as.getUserWithKiosks(userId);
+      String domainName = domainsService.getDomain(domainId).getName();
+      UserEntitiesModel userEntitiesModel = entitiesService.getUserWithKiosks(userId);
       IUserAccount user = userEntitiesModel.getUserAccount();
       String loggedUserLng = user.getLanguage();
       CurrentUserModel model = new CurrentUserModel();

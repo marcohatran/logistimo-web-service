@@ -23,6 +23,7 @@
 
 package com.logistimo.inventory.predictions.utils;
 
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.orders.entity.IDemandItem;
 import com.logistimo.orders.entity.IOrder;
@@ -30,7 +31,6 @@ import com.logistimo.orders.service.OrderManagementService;
 import com.logistimo.orders.service.impl.OrderManagementServiceImpl;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.utils.ConfigUtil;
 import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.LocalDateUtil;
@@ -65,7 +65,7 @@ public class PredictiveUtil {
    */
   private static Map<String, IDemandItem> getDemandItems(IInvntry inv)
       throws ServiceException, ObjectNotFoundException, ParseException {
-    OrderManagementService oms = Services.getService(OrderManagementServiceImpl.class);
+    OrderManagementService oms = StaticApplicationContext.getBean(OrderManagementServiceImpl.class);
     List<String> status = Arrays.asList(IOrder.COMPLETED, IOrder.CONFIRMED);
     List<IDemandItem>
         demandItems =
@@ -106,7 +106,7 @@ public class PredictiveUtil {
    */
   private static String getStatusUpdate(IDemandItem dm)
       throws ServiceException, ObjectNotFoundException {
-    OrderManagementService oms = Services.getService(OrderManagementServiceImpl.class);
+    OrderManagementService oms = StaticApplicationContext.getBean(OrderManagementServiceImpl.class);
     IOrder order = oms.getOrder(dm.getOrderId());
     return sdf.format(
         order.getStatusUpdatedOn() != null ? order.getStatusUpdatedOn() : order.getCreatedOn());

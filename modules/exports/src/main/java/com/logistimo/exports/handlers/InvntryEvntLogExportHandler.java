@@ -24,6 +24,9 @@
 package com.logistimo.exports.handlers;
 
 import com.logistimo.config.models.DomainConfig;
+import com.logistimo.constants.CharacterConstants;
+import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
@@ -32,21 +35,18 @@ import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.IInvntryEvntLog;
 import com.logistimo.inventory.service.InventoryManagementService;
 import com.logistimo.inventory.service.impl.InventoryManagementServiceImpl;
+import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.materials.service.MaterialCatalogService;
 import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
-
-import org.apache.commons.lang.StringEscapeUtils;
 import com.logistimo.services.Resources;
-import com.logistimo.services.Services;
 import com.logistimo.tags.TagUtil;
 import com.logistimo.utils.BigUtil;
-import com.logistimo.constants.CharacterConstants;
-import com.logistimo.constants.Constants;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.NumberUtil;
 import com.logistimo.utils.StringUtil;
-import com.logistimo.logger.XLog;
+
+import org.apache.commons.lang.StringEscapeUtils;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -114,11 +114,10 @@ public class InvntryEvntLogExportHandler implements  IExportHandler {
         locale, timezone, invntryEvntLog.getKioskId(), invntryEvntLog.getMaterialId(), invntryEvntLog.getStartDate(), invntryEvntLog.getEndDate());
     try {
       // Get services
-      EntitiesService as = Services.getService(EntitiesServiceImpl.class);
-      MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
-      InventoryManagementService
-          ims =
-          Services.getService(InventoryManagementServiceImpl.class);
+      EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
+      MaterialCatalogService mcs = StaticApplicationContext.getBean(MaterialCatalogServiceImpl.class);
+      InventoryManagementService ims =
+          StaticApplicationContext.getBean(InventoryManagementServiceImpl.class);
 
       IKiosk k = as.getKiosk(invntryEvntLog.getKioskId(), false);
       IMaterial m = mcs.getMaterial(invntryEvntLog.getMaterialId());

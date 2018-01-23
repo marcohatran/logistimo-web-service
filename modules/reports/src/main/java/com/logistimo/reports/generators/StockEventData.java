@@ -33,18 +33,17 @@ import com.google.visualization.datasource.datatable.TableRow;
 import com.google.visualization.datasource.datatable.value.DateTimeValue;
 import com.google.visualization.datasource.datatable.value.ValueType;
 
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.inventory.dao.IInvntryDao;
-import com.logistimo.inventory.dao.impl.InvntryDao;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.IInvntryEvntLog;
+import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IMaterial;
-
 import com.logistimo.services.impl.PMF;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.NumberUtil;
-import com.logistimo.logger.XLog;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -63,7 +62,6 @@ import javax.jdo.PersistenceManager;
 public class StockEventData extends ReportData {
 
   private static final XLog xLogger = XLog.getLog(StockEventData.class);
-  private IInvntryDao invntryDao = new InvntryDao();
 
   /**
    * @param from
@@ -90,7 +88,7 @@ public class StockEventData extends ReportData {
     // Instantiate the DataTable for Google Visualization data formatting
     DataTable data = new DataTable();
     // Add the column descriptions
-    ArrayList<ColumnDescription> cd = new ArrayList<ColumnDescription>();
+    ArrayList<ColumnDescription> cd = new ArrayList<>();
     cd.add(new ColumnDescription("m", ValueType.TEXT, messages.getString("material")));
     cd.add(new ColumnDescription("k", ValueType.TEXT, messages.getString("kiosk")));
     cd.add(new ColumnDescription("stk", ValueType.NUMBER, messages.getString("stock")));
@@ -152,6 +150,7 @@ public class StockEventData extends ReportData {
       Long materialId = invEventLog.getMaterialId();
       tr.addCell(JDOUtils.getObjectById(IMaterial.class, materialId, pm).getName());
       tr.addCell(JDOUtils.getObjectById(IKiosk.class, kioskId, pm).getName());
+      IInvntryDao invntryDao = StaticApplicationContext.getBean(IInvntryDao.class);
       IInvntry invntry = invntryDao.getInvntry(invEventLog);
       tr.addCell(invntry.getStock().longValue());
       tr.addCell(invntry.getReorderLevel().longValue());

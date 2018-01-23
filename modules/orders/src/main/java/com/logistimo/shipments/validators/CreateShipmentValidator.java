@@ -23,6 +23,7 @@
 
 package com.logistimo.shipments.validators;
 
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
@@ -43,7 +44,6 @@ import com.logistimo.orders.service.OrderManagementService;
 import com.logistimo.orders.validators.UpdateOrderStatusValidator;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.utils.MsgUtil;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -95,7 +95,7 @@ public class CreateShipmentValidator {
         materialsNotExistingInVendor =
         getMaterialsNotExistingInKiosk(model.vendorId, model.items);
     if (materialsNotExistingInVendor != null && !materialsNotExistingInVendor.isEmpty()) {
-      EntitiesService as = Services.getService(EntitiesServiceImpl.class);
+      EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
       IKiosk vnd = as.getKiosk(model.vendorId, false);
       throw new ValidationException("I003", MsgUtil.bold(vnd.getName()),
           MaterialUtils.getMaterialNamesString(
@@ -109,8 +109,9 @@ public class CreateShipmentValidator {
     try {
       InventoryManagementService
           ims =
-          Services.getService(InventoryManagementServiceImpl.class);
-      MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
+          StaticApplicationContext.getBean(InventoryManagementServiceImpl.class);
+      MaterialCatalogService mcs = StaticApplicationContext.getBean(
+          MaterialCatalogServiceImpl.class);
       for (ShipmentItemModel shipmentItem : models) {
         IInvntry inv = ims.getInventory(kioskId, shipmentItem.mId);
         if (inv == null) {

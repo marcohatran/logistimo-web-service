@@ -26,8 +26,9 @@
  */
 package com.logistimo.api.util;
 
+import com.logistimo.api.util.MapUtil.GeoData.Point;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.JDOUtils;
-
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.entity.IKioskLink;
 import com.logistimo.entities.service.EntitiesService;
@@ -35,20 +36,15 @@ import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.inventory.TransactionUtil;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.ITransaction;
+import com.logistimo.logger.XLog;
 import com.logistimo.orders.entity.IOrder;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.impl.PMF;
-
 import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.LocalDateUtil;
-
-import com.logistimo.api.util.MapUtil.GeoData.Point;
-
 import com.logistimo.utils.NumberUtil;
-import com.logistimo.logger.XLog;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -126,7 +122,7 @@ public class MapUtil {
     GeoData geoData = new GeoData();
     if (inventories != null && inventories.size() > 0) {
       // Get the accounts service
-      EntitiesService as = Services.getService(EntitiesServiceImpl.class);
+      EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
       // Init. max stock (required for scaling the markers)
       BigDecimal maxStock = BigDecimal.ZERO;
       // Init. bounding box coordinates (required for centering the map to this box)
@@ -210,10 +206,10 @@ public class MapUtil {
     double latNorth = 0, lngEast = 0, latSouth = 0, lngWest = 0;
     boolean justStarted = true;
     Iterator it = objects.iterator();
-    double lat = 0, lng = 0, accuracy = 0;
+    double lat, lng, accuracy;
     Date transTimestamp = null;
     String transUid = null;
-    String tid = null;
+    String tid;
     PersistenceManager pm = PMF.get().getPersistenceManager();
     try {
       while (it.hasNext()) {
@@ -341,28 +337,18 @@ public class MapUtil {
   // Expand the list of kiosks to include each kiosk's customers, if present
   @SuppressWarnings("unchecked")
   private static Results expandToCustomers(List<IKiosk> kiosks, PageParams pageParams) {
-    List<IKiosk> exKiosks = new ArrayList<IKiosk>();
+    List<IKiosk> exKiosks = new ArrayList<>();
     String cursor = null;
     exKiosks.addAll(kiosks);
-    Iterator<IKiosk> it = kiosks.iterator();
-    while (it.hasNext()) {
-      IKiosk k = it.next();
+    for (IKiosk k : kiosks) {
       // Get the customers
       try {
-        Results
-            results =
-            Services.getService(EntitiesServiceImpl.class)
-                .getLinkedKiosks(k.getKioskId(), IKioskLink.TYPE_CUSTOMER, null, pageParams);
+        Results results = StaticApplicationContext.getBean(EntitiesServiceImpl.class)
+            .getLinkedKiosks(k.getKioskId(), IKioskLink.TYPE_CUSTOMER, null, pageParams);
         List<IKiosk> customers = results.getResults();
         cursor = results.getCursor();
         if (customers != null && !customers.isEmpty()) {
-          Iterator<IKiosk> custIt = customers.iterator();
-          while (custIt.hasNext()) {
-            IKiosk c = custIt.next();
-            if (!exKiosks.contains(c)) {
-              exKiosks.add(c);
-            }
-          }
+          customers.stream().filter(c -> !exKiosks.contains(c)).forEach(exKiosks::add);
         }
       } catch (ServiceException e) {
         xLogger.warn("ServiceException when getting customers for kiosk {0}: {1}", k.getKioskId(),
@@ -442,7 +428,7 @@ public class MapUtil {
 
   public static class GeoData {
     //public String geoCodes = "[]"; // JSON array of geo-codes (format specific to kiosks, materials or demand)
-    public List<Point> points = new ArrayList<Point>();
+    public List<Point> points = new ArrayList<>();
     public String
         latLngBounds =
         "[]";
@@ -457,12 +443,11 @@ public class MapUtil {
 
     public String toJSONString() {
       String geoCodes = "[";
-      Iterator<Point> it = points.iterator();
-      while (it.hasNext()) {
+      for (Point point : points) {
         if (geoCodes.length() > 1) {
           geoCodes += ",";
         }
-        geoCodes += it.next().toJSONString();
+        geoCodes += point.toJSONString();
       }
       geoCodes += "]";
       return "{ \"geocodes\": " + geoCodes + ", \"size\": " + size + ", \"cursor\": \"" + cursor

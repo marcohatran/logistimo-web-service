@@ -42,12 +42,13 @@ import com.logistimo.pagination.Results;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.tags.dao.ITagDao;
-import com.logistimo.tags.dao.TagDao;
 import com.logistimo.tags.entity.ITag;
 import com.logistimo.utils.QueryUtil;
 import com.logistimo.utils.StringUtil;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -61,11 +62,17 @@ import javax.jdo.Query;
 /**
  * Created by charan on 17/02/15.
  */
+@Repository
 public class EntityDao implements IEntityDao {
 
   private static final XLog xLogger = XLog.getLog(EntityDao.class);
 
-  ITagDao tagDao = new TagDao();
+  private ITagDao tagDao;
+
+  @Autowired
+  public void setTagDao(ITagDao tagDao) {
+    this.tagDao = tagDao;
+  }
 
   public Results getAllKiosks(Long domainId, String tag, String excludedTags,PageParams pageParams) {
     return getKiosks(domainId, tag, excludedTags, pageParams, false);

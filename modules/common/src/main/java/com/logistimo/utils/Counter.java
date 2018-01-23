@@ -24,9 +24,8 @@
 package com.logistimo.utils;
 
 import com.logistimo.AppFactory;
-
-import com.logistimo.models.ICounter;
 import com.logistimo.constants.QueryConstants;
+import com.logistimo.models.ICounter;
 
 import org.apache.commons.lang.StringUtils;
 

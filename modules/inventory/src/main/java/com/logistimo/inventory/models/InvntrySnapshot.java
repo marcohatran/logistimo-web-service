@@ -23,19 +23,18 @@
 
 package com.logistimo.inventory.models;
 
+import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.inventory.entity.IInvntry;
+import com.logistimo.logger.XLog;
 import com.logistimo.materials.service.MaterialCatalogService;
 import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
-import com.logistimo.tags.TagUtil;
-
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
+import com.logistimo.tags.TagUtil;
 import com.logistimo.utils.BigUtil;
-import com.logistimo.constants.Constants;
 import com.logistimo.utils.NumberUtil;
-import com.logistimo.logger.XLog;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -332,16 +331,16 @@ public class InvntrySnapshot {
     this.ordp = invntry.getOrderPeriodicity();
     this.sfstk = invntry.getSafetyStock();
     this.t = invntry.getTimestamp();
-    EntitiesService es = null;
+    EntitiesService es;
     try {
-      es = Services.getService(EntitiesServiceImpl.class);
+      es = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
       this.knm = es.getKiosk(invntry.getKioskId()).getName();
     } catch (ServiceException e) {
       e.printStackTrace();
     }
-    MaterialCatalogService mcs = null;
+    MaterialCatalogService mcs;
     try {
-      mcs = Services.getService(MaterialCatalogServiceImpl.class);
+      mcs = StaticApplicationContext.getBean(MaterialCatalogServiceImpl.class);
       this.mnm = mcs.getMaterial(invntry.getMaterialId()).getName();
     } catch (ServiceException e) {
       e.printStackTrace();

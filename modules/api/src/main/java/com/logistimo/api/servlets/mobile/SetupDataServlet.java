@@ -30,8 +30,6 @@ import com.logistimo.api.util.GsonUtil;
 import com.logistimo.api.util.RESTUtil;
 import com.logistimo.auth.SecurityConstants;
 import com.logistimo.auth.SecurityUtil;
-import com.logistimo.auth.service.AuthenticationService;
-import com.logistimo.auth.service.impl.AuthenticationServiceImpl;
 import com.logistimo.bulkuploads.BulkUploadMgr;
 import com.logistimo.communications.MessageHandlingException;
 import com.logistimo.communications.service.MessageService;
@@ -39,6 +37,7 @@ import com.logistimo.config.models.CapabilityConfig;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.domains.entity.IDomain;
 import com.logistimo.domains.service.DomainsService;
@@ -60,7 +59,6 @@ import com.logistimo.proto.RestConstantsZ;
 import com.logistimo.proto.SetupDataInput;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.users.entity.IUserAccount;
@@ -74,6 +72,7 @@ import org.apache.commons.lang.StringUtils;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -103,20 +102,20 @@ public class SetupDataServlet extends JsonRestServlet {
                                            String sendingUserId) {
     xLogger.fine("Entered notifyPasswordToUser");
     try {
-      DomainsService ds = Services.getService(DomainsServiceImpl.class);
+      DomainsService ds = StaticApplicationContext.getBean(DomainsServiceImpl.class);
       IDomain d = ds.getDomain(domainId);
       // Get the params
       String
           message =
           "Welcome to " + d.getName() + ". You may login anytime using your user ID '" + userId
               + "' and password '" + password + "'.";
-      Map<String, String> params = new HashMap<String, String>();
+      Map<String, String> params = new HashMap<>();
       params.put("message", message);
       params.put("userids", userId);
       params.put("sendinguserid", sendingUserId);
       params.put("domainid", domainId.toString());
-      taskService.schedule(taskService.QUEUE_MESSAGE, "/task/communicator", params, null,
-          taskService.METHOD_POST, domainId, sendingUserId, "PASSWORD_CHANGE");
+      taskService.schedule(ITaskService.QUEUE_MESSAGE, "/task/communicator", params, null,
+          ITaskService.METHOD_POST, domainId, sendingUserId, "PASSWORD_CHANGE");
     } catch (Exception e) {
       xLogger.warn(
           "{0} when notifying login credentials to user {1} (registered via mobile) in domain {2}: {3}",
@@ -145,11 +144,11 @@ public class SetupDataServlet extends JsonRestServlet {
       if (usersSemiColonSeparated != null && !usersSemiColonSeparated.isEmpty()) {
         String[] users = usersSemiColonSeparated.split(";");
         xLogger.fine("userId: {0}", userId);
-        for (int i = 0; i < users.length; i++) {
+        for (String user : users) {
           if (isManagedEntity) {
             break;
           }
-          isManagedEntity = (userId.equals(users[i]));
+          isManagedEntity = (userId.equals(user));
         }
       }
     }
@@ -159,7 +158,7 @@ public class SetupDataServlet extends JsonRestServlet {
     // Update related entity tag/index and
     xLogger.fine("Now setting route info...");
     try {
-      EntitiesService as = Services.getService(EntitiesServiceImpl.class);
+      EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
       // If managed entity, set the managed entity route info.
       if (isManagedEntity) {
         as.setManagedEntityRouteInfo(domainId, userId, kioskId, routeTag, routeIndex);
@@ -167,13 +166,13 @@ public class SetupDataServlet extends JsonRestServlet {
       // If related entity, set the link type. Obtain the list of linked kiosk ids for this entity.
       // TODO: Obtain the lkid list. We have only lk name list here. How to get lkids???
       if (isRelatedEntity) {
-        String linkType = null;
-        List<String> lkNamesList = null;
+        String linkType;
+        List<String> lkNamesList;
         if (hasCustomers) {
           // Set link type to vendors
           linkType = IKioskLink.TYPE_VENDOR;
           lkNamesList = getList(customers);
-        } else if (hasVendors) {
+        } else {
           // Set link type to vendors
           linkType = IKioskLink.TYPE_CUSTOMER;
           lkNamesList = getList(vendors);
@@ -217,14 +216,12 @@ public class SetupDataServlet extends JsonRestServlet {
     List<String> list = null;
     if (ssv != null && !ssv.isEmpty()) {
       String[] itemsArray = ssv.split(";");
-      if (itemsArray == null || itemsArray.length == 0) {
+      if (itemsArray.length == 0) {
         itemsArray = new String[1];
         itemsArray[0] = ssv;
       }
-      list = new ArrayList<String>();
-      for (int i = 0; i < itemsArray.length; i++) {
-        list.add(itemsArray[i]);
-      }
+      list = new ArrayList<>();
+      Collections.addAll(list, itemsArray);
     }
     return list;
   }
@@ -234,9 +231,7 @@ public class SetupDataServlet extends JsonRestServlet {
                                             SetupDataInput sdInput) {
     xLogger.fine("Entered hasSetupPermission");
     // Determine whether add/edit of kiosk/user
-    boolean
-        isAdd =
-        (BulkUploadMgr.OP_ADD.equals(action) ? true : false); // if not isAdd, then it is edit
+    boolean isAdd = (BulkUploadMgr.OP_ADD.equals(action));
     // Get the capabilities config.
     DomainConfig dc = DomainConfig.getInstance(domainId);
     CapabilityConfig cc = dc.getCapabilityByRole(role);
@@ -259,7 +254,7 @@ public class SetupDataServlet extends JsonRestServlet {
       // Check the type of entity being added: if there are customer/vendor relationship then entity being added is a vendor/customer; otherwise, managed entity
       Hashtable<String, String> kioskData = sdInput.getKiosk();
 
-      String value = null;
+      String value;
       boolean
           isEntityVendor =
           ((value = kioskData.get(JsonTagsZ.CUSTOMERS)) != null && (!value.isEmpty()));
@@ -292,19 +287,19 @@ public class SetupDataServlet extends JsonRestServlet {
     String action = req.getParameter(RestConstantsZ.ACTION);
     if (RestConstantsZ.ACTION_CREATEUSERKIOSK.equalsIgnoreCase(action)
         || RestConstantsZ.ACTION_UPDATEUSERKIOSK.equalsIgnoreCase(action)) {
-      setupData(req, resp, backendMessages, messages, action);
+      setupData(req, resp, backendMessages, action);
     } else if (RestConstantsZ.ACTION_UPDATEPASSWORD.equalsIgnoreCase(action)) {
-      updatePassword(req, resp, backendMessages, messages, action);
+      updatePassword(req, resp, backendMessages);
     } else if (RestConstantsZ.ACTION_RESETPASSWORD.equalsIgnoreCase(action)) {
-      resetPassword(req, resp, backendMessages, messages, action);
+      resetPassword(req, resp, backendMessages);
     } else if (RestConstantsZ.ACTION_REMOVE.equalsIgnoreCase(action)) {
-      remove(req, resp, backendMessages, messages, action);
+      remove(req, resp, backendMessages);
     } else if (RestConstantsZ.ACTION_CREATERELATIONSHIP.equalsIgnoreCase(action)
         || RestConstantsZ.ACTION_UPDATERELATIONSHIP.equalsIgnoreCase(action)
         || RestConstantsZ.ACTION_REMOVERELATIONSHIP.equalsIgnoreCase(action)) {
-      manageRelationship(req, resp, backendMessages, messages, action);
+      manageRelationship(req, resp, backendMessages, action);
     } else if (RestConstantsZ.ACTION_GETRELATEDENTITIES.equalsIgnoreCase(action)) {
-      getRelatedEntities(req, resp, backendMessages, messages);
+      getRelatedEntities(req, resp);
     } else {
       throw new ServiceException("Invalid action: " + action);
     }
@@ -313,16 +308,15 @@ public class SetupDataServlet extends JsonRestServlet {
 
   @SuppressWarnings("unchecked")
   private void setupData(HttpServletRequest req, HttpServletResponse resp,
-                         ResourceBundle backendMessages, ResourceBundle messages, String action)
+                         ResourceBundle backendMessages, String action)
       throws IOException, ServiceException {
     xLogger.fine("Entering setupData");
     boolean status = true;
     Long domainId = null;
     String role = null;
     String errMsg = null; // service error
-    Vector<String>
-        dataErrors =
-        new Vector<String>(); // data errors - Vector of error messages used by SetupDataOutput
+    // data errors - Vector of error messages used by SetupDataOutput
+    Vector<String> dataErrors = new Vector<>();
     String localeStr = Constants.LANG_DEFAULT;
     String kioskId = null;
     String uId = null;
@@ -334,13 +328,11 @@ public class SetupDataServlet extends JsonRestServlet {
     xLogger.fine("type: {0}", type);
     if (type == null || type.isEmpty()) {
       errMsg = "Invalid parameter transaction type: " + type;
-      status = false;
       sendSetupDataError(resp, uId, kioskId, dataErrors, localeStr, errMsg, statusCode);
       return;
     } else if (!(RestConstantsZ.TYPE_USER.equalsIgnoreCase(type) || RestConstantsZ.TYPE_KIOSK
         .equalsIgnoreCase(type) || RestConstantsZ.TYPE_USERKIOSK.equalsIgnoreCase(type))) {
       errMsg = "Invalid parameter transaction type: " + type;
-      status = false;
       sendSetupDataError(resp, uId, kioskId, dataErrors, localeStr, errMsg, statusCode);
       return;
     }
@@ -349,7 +341,6 @@ public class SetupDataServlet extends JsonRestServlet {
     String jsonString = req.getParameter(RestConstantsZ.JSON_STRING);
     if (jsonString == null || jsonString.isEmpty()) {
       errMsg = "Invalid parameter json string while setting up data: " + jsonString;
-      status = false;
       sendSetupDataError(resp, uId, kioskId, dataErrors, localeStr, errMsg, statusCode);
       return;
     }
@@ -405,9 +396,9 @@ public class SetupDataServlet extends JsonRestServlet {
     }
 
     // Only if the caller is authenticated, proceed
-    BulkUploadMgr.EntityContainer uec, eec = null;
+    BulkUploadMgr.EntityContainer uec, eec;
     // Create a SetupDataInput object
-    SetupDataInput setupDataInput = new SetupDataInput();
+    SetupDataInput setupDataInput;
     Hashtable<String, String> user = null;
     try {
       setupDataInput = GsonUtil.setupDataInputFromJson(jsonString);
@@ -432,8 +423,8 @@ public class SetupDataServlet extends JsonRestServlet {
       Hashtable<String, String> kiosk = null;
       String kioskCSV = null;
       if (RestConstantsZ.TYPE_USERKIOSK.equalsIgnoreCase(type)) {
-        UsersService as = Services.getService(UsersServiceImpl.class);
-        EntitiesService es = Services.getService(EntitiesServiceImpl.class);
+        UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
+        EntitiesService es = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
         user = setupDataInput.getUser();
         userCSV = getUserCSV(user, bulkUploadOp);
         if (userCSV != null) {
@@ -477,7 +468,6 @@ public class SetupDataServlet extends JsonRestServlet {
         }
 
         if (userCSV == null || userCSV.isEmpty()) {
-          status = false;
           dataErrors.add("No valid data passed");
           sendSetupDataError(resp, uId, kioskId, dataErrors, localeStr, errMsg, statusCode);
           return;
@@ -487,7 +477,6 @@ public class SetupDataServlet extends JsonRestServlet {
             xLogger.fine("user entityId: {0}", uec.entityId);
             if (uec.hasErrors()) {
               dataErrors.addAll(uec.messages);
-              status = false;
               sendSetupDataError(resp, uId, kioskId, dataErrors, localeStr, errMsg, statusCode);
               return;
             } else {
@@ -505,7 +494,6 @@ public class SetupDataServlet extends JsonRestServlet {
           kioskCSV = getKioskCSV(kiosk, bulkUploadOp);
         }
         if (kioskCSV == null || kioskCSV.isEmpty()) {
-          status = false;
           dataErrors.add("No valid data is passed");
           sendSetupDataError(resp, uId, kioskId, dataErrors, localeStr, errMsg, statusCode);
           return;
@@ -516,11 +504,10 @@ public class SetupDataServlet extends JsonRestServlet {
             xLogger.fine("kiosk entityId: {0}", eec.entityId);
             if (eec.hasErrors()) {
               dataErrors.addAll(eec.messages);
-              status = false;
               sendSetupDataError(resp, uId, kioskId, dataErrors, localeStr, errMsg, statusCode);
               return;
             } else {
-              kioskId = ((Long) eec.entityId).toString();
+              kioskId = eec.entityId.toString();
               // If geo-accuracy/geo-error were sent, update the kiosk with the same
               String geoAccuracy = kiosk.get(JsonTagsZ.GEO_ACCURACY);
               Object
@@ -565,7 +552,7 @@ public class SetupDataServlet extends JsonRestServlet {
                       e.getClass().getName(), userId, kioskId, e.getMessage());
                 }
               } else if (isAdd || (routeTag == null)) {
-                ri = new Integer(IUserToKiosk.DEFAULT_ROUTE_INDEX);
+                ri = IUserToKiosk.DEFAULT_ROUTE_INDEX;
               }
               // Update route tag info.
               updateRouteTag(domainId, userId, ((Long) eec.entityId), routeTag, ri, kiosk, isAdd);
@@ -576,7 +563,6 @@ public class SetupDataServlet extends JsonRestServlet {
     } catch (Exception e) {
       xLogger.severe("SetupDataServlet Protocol Exception: {0}", e.getClass().getName(), e);
       errMsg = backendMessages.getString("error.systemerror");
-      status = false;
       sendSetupDataError(resp, uId, kioskId, dataErrors, localeStr, errMsg, statusCode);
       return;
     }
@@ -593,8 +579,8 @@ public class SetupDataServlet extends JsonRestServlet {
 
       // If user Id is not null, and password notification is required, then do so
       if (uId != null && notifyPassword && user != null) {
-        notifyPasswordToUser((String) user.get(JsonTagsZ.USER_ID),
-            (String) user.get(JsonTagsZ.PASSWORD), domainId, userId);
+        notifyPasswordToUser(user.get(JsonTagsZ.USER_ID),
+            user.get(JsonTagsZ.PASSWORD), domainId, userId);
       }
     } catch (Exception e) {
       xLogger
@@ -605,14 +591,11 @@ public class SetupDataServlet extends JsonRestServlet {
   }
 
   private void updatePassword(HttpServletRequest req, HttpServletResponse resp,
-                              ResourceBundle backendMessages, ResourceBundle messages,
-                              String action) throws IOException, ServiceException {
+                              ResourceBundle backendMessages) throws IOException, ServiceException {
     xLogger.fine("Entering updatePassword");
-    boolean status = true;
-    Locale locale = new Locale(Constants.LANG_DEFAULT);
-    String errMsg = null;
-    String token = req.getHeader(Constants.TOKEN);
-    IUserAccount u = validateCaller(req, resp, backendMessages, messages, action, null);
+    Locale locale;
+    String errMsg;
+    IUserAccount u = validateCaller(req, resp, backendMessages, null);
 
     if (u == null) {
       xLogger.severe("Failed to validate caller.");
@@ -628,7 +611,6 @@ public class SetupDataServlet extends JsonRestServlet {
           .warn("{0} does not have permission to perform this operation. Role = {1}", u.getUserId(),
               role);
       errMsg = "You do not have permission to perform this operation";
-      status = false;
       sendBasicError(resp, locale.toString(), errMsg, null, HttpServletResponse.SC_OK);
       return;
     }
@@ -636,13 +618,12 @@ public class SetupDataServlet extends JsonRestServlet {
     // If the caller is authorized, proceed
 
     // Create AccountsService object
-    UsersService as = Services.getService(UsersServiceImpl.class, locale);
+    UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
     String userId = req.getParameter(RestConstantsZ.ENDUSER_ID);
     String password = req.getParameter(RestConstantsZ.OLD_PASSWORD);
     String upPassword = req.getParameter(RestConstantsZ.UPDATED_PASSWORD);
     // If end user id is null or empty, set error message and return
     if (userId == null || userId.isEmpty()) {
-      status = false;
       errMsg = "Invalid user name of the end user whose password is to be updated";
       sendBasicError(resp, locale.toString(), errMsg, null, HttpServletResponse.SC_OK);
       return;
@@ -650,7 +631,6 @@ public class SetupDataServlet extends JsonRestServlet {
 
     // If oldPassword is null or empty, set the error message and return
     if (password == null || password.isEmpty()) {
-      status = false;
       errMsg = "Invalid old password";
       sendBasicError(resp, locale.toString(), errMsg, null, HttpServletResponse.SC_OK);
       return;
@@ -658,7 +638,6 @@ public class SetupDataServlet extends JsonRestServlet {
 
     // If updatedPassword is null or empty, set error message and return
     if (upPassword == null || upPassword.isEmpty()) {
-      status = false;
       errMsg = "Invalid new/updated password";
       sendBasicError(resp, locale.toString(), errMsg, null, HttpServletResponse.SC_OK);
       return;
@@ -666,7 +645,6 @@ public class SetupDataServlet extends JsonRestServlet {
 
     if (as == null) {
       // Failed to create AccountsService. Set the status to false and set the errMsg appropriately. And return.
-      status = false;
       errMsg = "Failed to create AccountsService";
       sendBasicError(resp, locale.toString(), errMsg, null, HttpServletResponse.SC_OK);
       return;
@@ -678,7 +656,6 @@ public class SetupDataServlet extends JsonRestServlet {
       xLogger.severe("ServiceException while changing password for user {0}, Msg: {1}", userId,
           e.getMessage(), e);
       errMsg = e.getMessage();
-      status = false;
       sendBasicError(resp, locale.toString(), errMsg, null, HttpServletResponse.SC_OK);
       return;
     }
@@ -686,12 +663,12 @@ public class SetupDataServlet extends JsonRestServlet {
     // Successfully updated password.
     // Create a BasicOutput object
     try {
-      xLogger.fine("status: {0}, errMsg: {1}", status, errMsg);
+      xLogger.fine("status: {0}, errMsg: {1}", true, null);
       //	BasicOutput updatePasswordOutput = new BasicOutput( status, errMsg, null, locale.toString(), RESTUtil.VERSION_01 );
       //	sendJsonResponse( resp, HttpServletResponse.SC_OK, updatePasswordOutput.toJSONString() );
       String
           updatePasswordOutput =
-          GsonUtil.basicOutputToJson(status, errMsg, null, locale.toString(), RESTUtil.VERSION_01);
+          GsonUtil.basicOutputToJson(true, null, null, locale.toString(), RESTUtil.VERSION_01);
       sendJsonResponse(resp, HttpServletResponse.SC_OK, updatePasswordOutput);
 
     } catch (Exception e) {
@@ -704,22 +681,21 @@ public class SetupDataServlet extends JsonRestServlet {
   }
 
   private void resetPassword(HttpServletRequest req, HttpServletResponse resp,
-                             ResourceBundle backendMessages, ResourceBundle messages, String action)
+                             ResourceBundle backendMessages)
       throws IOException, ServiceException {
     xLogger.fine("Entering resetPassword");
-    boolean status = true;
     Locale locale = new Locale(Constants.LANG_DEFAULT);
-    String errMsg = null;
+    String errMsg;
     Long domainId = null;
-    String userId = null;
-    String country = Constants.COUNTRY_DEFAULT;
+    String userId;
+    String country;
 
     // Read the request parameters. If uid, p are both given, then it's the admin trying to reset a user's password
     userId = req.getParameter(RestConstantsZ.USER_ID);
     String password = req.getParameter(RestConstantsZ.PASSWORD);
 
     if ((userId != null && !userId.isEmpty()) || (password != null && !password.isEmpty())) {
-      IUserAccount u = validateCaller(req, resp, backendMessages, messages, action, null);
+      IUserAccount u = validateCaller(req, resp, backendMessages, null);
       if (u == null) {
         xLogger.severe("Failed to validate caller.");
         return;
@@ -731,22 +707,19 @@ public class SetupDataServlet extends JsonRestServlet {
       // Obtain the locale of the caller
       locale = u.getLocale();
       domainId = u.getDomainId(); // Domain id of the caller
-      country = u.getCountry(); // Country of the caller
       if (SecurityUtil.compareRoles(role, SecurityConstants.ROLE_DOMAINOWNER) < 0) {
         xLogger.warn("{0} does not have permission to perform this operation. Role = {1}",
             u.getUserId(), role);
         errMsg = "You do not have permission to perform this operation";
-        status = false;
         sendBasicError(resp, locale.toString(), errMsg, null, HttpServletResponse.SC_OK);
         return;
       }
     }
 
     // Create AccountsService object
-    UsersService as = Services.getService(UsersServiceImpl.class, locale);
+    UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
     if (as == null) {
       // Failed to create AccountsService. Set the status to false and set the errMsg appropriately. And return.
-      status = false;
       errMsg = "Failed to create AccountsService";
       sendBasicError(resp, locale.toString(), errMsg, null, HttpServletResponse.SC_OK);
       return;
@@ -758,24 +731,21 @@ public class SetupDataServlet extends JsonRestServlet {
 
     // Check if endUserId is null or empty
     if (endUserId == null || endUserId.isEmpty()) {
-      status = false;
       errMsg = "Invalid user name of the end user whose password is to be reset";
       sendBasicError(resp, locale.toString(), errMsg, null, HttpServletResponse.SC_OK);
       return;
     }
     // Check if newPassword is null or empty
     if (newPassword == null || newPassword.isEmpty()) {
-      status = false;
       errMsg = "Invalid new password";
       sendBasicError(resp, locale.toString(), errMsg, null, HttpServletResponse.SC_OK);
       return;
     }
     // Check if the end user exists in the system
-    IUserAccount eu = null;
+    IUserAccount eu;
     try {
       eu = as.getUserAccount(endUserId);
       if (eu == null) {
-        status = false;
         errMsg = "Invalid User ID. User does not exist in the system.";
         sendBasicError(resp, locale.toString(), errMsg, null, HttpServletResponse.SC_OK);
         return;
@@ -783,14 +753,13 @@ public class SetupDataServlet extends JsonRestServlet {
       locale = eu.getLocale();
       country = eu.getCountry(); // Country of the user
     } catch (ObjectNotFoundException e) {
-      status = false;
       errMsg = "Invalid User ID. User does not exist in the system.";
       sendBasicError(resp, locale.toString(), errMsg, null, HttpServletResponse.SC_OK);
       return;
     }
 
     // Proceed to reset the password
-    if (domainId == null || (domainId != null && domainId.equals(eu.getDomainId()))) {
+    if (domainId == null || (domainId.equals(eu.getDomainId()))) {
       try {
         as.changePassword(endUserId, null, newPassword);
       } catch (ServiceException e) {
@@ -798,7 +767,6 @@ public class SetupDataServlet extends JsonRestServlet {
             .severe("ServiceException while resetting password for user {0}, Msg: {1}", endUserId,
                 e.getMessage(), e);
         errMsg = e.getMessage();
-        status = false;
         sendBasicError(resp, locale.toString(), errMsg, null, HttpServletResponse.SC_OK);
         return;
       }
@@ -807,7 +775,6 @@ public class SetupDataServlet extends JsonRestServlet {
           "Caller Domain ID: {0}, End User Domain ID: {1}, Domain IDs are different. Cannot reset password.",
           domainId, eu.getDomainId());
       errMsg = "You do not have permission to reset the password of a user in another domain";
-      status = false;
       sendBasicError(resp, locale.toString(), errMsg, null, HttpServletResponse.SC_OK);
       return;
     }
@@ -836,7 +803,6 @@ public class SetupDataServlet extends JsonRestServlet {
         xLogger.severe("{0} while sending message during reset password for user {1}. Message: {2}",
             e.getClass().getName(), endUserId, e.getMessage(), e);
         errMsg = e.getMessage();
-        status = false;
         sendBasicError(resp, locale.toString(), errMsg, null, HttpServletResponse.SC_OK);
         return;
       } catch (ObjectNotFoundException onfe) {
@@ -844,7 +810,6 @@ public class SetupDataServlet extends JsonRestServlet {
             "{0} while getting user account for user {1} during reset password. Message: {2}",
             onfe.getClass().getName(), endUserId, onfe.getMessage(), onfe);
         errMsg = onfe.getMessage();
-        status = false;
         sendBasicError(resp, locale.toString(), errMsg, null, HttpServletResponse.SC_OK);
         return;
       }
@@ -853,13 +818,13 @@ public class SetupDataServlet extends JsonRestServlet {
     // Send Success output
     // Create the BasicOutput object
     try {
-      xLogger.fine("status: {0}, endUserId: {1}, password: {2}, errMsg: {3}", status, endUserId,
-          newPassword, errMsg);
+      xLogger.fine("status: {0}, endUserId: {1}, password: {2}, errMsg: {3}", true, endUserId,
+          newPassword, null);
       //BasicOutput basicOutput = new BasicOutput( status, errMsg, null, locale.toString(), RESTUtil.VERSION_01 );
       //sendJsonResponse( resp, HttpServletResponse.SC_OK, basicOutput.toJSONString() );
       String
           basicOutput =
-          GsonUtil.basicOutputToJson(status, errMsg, null, locale.toString(), RESTUtil.VERSION_01);
+          GsonUtil.basicOutputToJson(true, null, null, locale.toString(), RESTUtil.VERSION_01);
       sendJsonResponse(resp, HttpServletResponse.SC_OK, basicOutput);
 
     } catch (Exception e) {
@@ -872,15 +837,15 @@ public class SetupDataServlet extends JsonRestServlet {
   }
 
   private void remove(HttpServletRequest req, HttpServletResponse resp,
-                      ResourceBundle backendMessages, ResourceBundle messages, String action)
+                      ResourceBundle backendMessages)
       throws IOException, ServiceException {
     xLogger.fine("Entering remove");
     boolean status = true;
-    Locale locale = null;
+    Locale locale;
     String errMsg = null;
-    Long domainId = null;
+    Long domainId;
 
-    IUserAccount u = validateCaller(req, resp, backendMessages, messages, action, null);
+    IUserAccount u = validateCaller(req, resp, backendMessages, null);
     if (u == null) {
       xLogger.severe("Failed to validate caller.");
       return;
@@ -900,7 +865,7 @@ public class SetupDataServlet extends JsonRestServlet {
       status = false;
     }
 
-    if (status == false) {
+    if (!status) {
       // Authorization failed. Return
       sendBasicError(resp, locale.toString(), errMsg, null, HttpServletResponse.SC_OK);
       return;
@@ -914,24 +879,17 @@ public class SetupDataServlet extends JsonRestServlet {
     // Read the request parameters
     if ((endUserIds == null || endUserIds.isEmpty()) && (kioskIds == null || kioskIds.isEmpty())
         && (materialIds == null || materialIds.isEmpty())) {
-      status = false;
       errMsg = "Nothing to remove. Please specify the ids of users/kiosk/materials to remove";
       sendBasicError(resp, locale.toString(), errMsg, null, HttpServletResponse.SC_OK);
       return;
     }
-    EntitiesService as = null;
-    UsersService us = null;
-    MaterialCatalogService ms = null;
-
-    // Get the AccountsService and MaterialService instances
-    as = Services.getService(EntitiesServiceImpl.class, locale);
-    us = Services.getService(UsersServiceImpl.class, locale);
-    ms = Services.getService(MaterialCatalogServiceImpl.class, locale);
+    EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
+    UsersService us = StaticApplicationContext.getBean(UsersServiceImpl.class);
+    MaterialCatalogService ms = StaticApplicationContext.getBean(MaterialCatalogServiceImpl.class);
 
     // If status is false or as is null, send error message and return
     if (as == null || ms == null) {
       xLogger.severe("Either status is false or as is null or ms is null");
-      status = false;
       errMsg = "Failed to create AccountsService or MaterialCatalogService";
       sendBasicError(resp, locale.toString(), errMsg, null, HttpServletResponse.SC_OK);
       return;
@@ -944,18 +902,15 @@ public class SetupDataServlet extends JsonRestServlet {
       // Remove Kiosk(s)
       // Form a list of kiosk ids from the comma separated kiosk id values
       List<String> kioskIdsStrList = StringUtil.getList(kioskIds);
-      List<Long> kioskIdsList = null;
+      List<Long> kioskIdsList;
       // Convert the list of Strings to list of Long
       if (kioskIdsStrList != null && !kioskIdsStrList.isEmpty()) {
-        kioskIdsList = new ArrayList<Long>();
-        Iterator<String> kioskIdsIter = kioskIdsStrList.iterator();
-        while (kioskIdsIter.hasNext()) {
-          String kioskIdStr = kioskIdsIter.next();
+        kioskIdsList = new ArrayList<>();
+        for (String kioskIdStr : kioskIdsStrList) {
           try {
             kioskIdsList.add(Long.valueOf(kioskIdStr));
           } catch (NumberFormatException nfe) {
             errMsg = "NumberFormatException while deleting kiosks. Invalid kiosk Id " + kioskIdStr;
-            status = false;
             sendBasicError(resp, locale.toString(), errMsg, null, HttpServletResponse.SC_OK);
             return;
           }
@@ -966,7 +921,6 @@ public class SetupDataServlet extends JsonRestServlet {
           xLogger.severe("ServiceException while deleting kiosks {0} for domain {1}, Msg: {2}",
               kioskIdsList, domainId, e.getMessage(), e);
           errMsg = e.getMessage();
-          status = false;
           sendBasicError(resp, locale.toString(), errMsg, null, HttpServletResponse.SC_OK);
           return;
         }
@@ -982,7 +936,6 @@ public class SetupDataServlet extends JsonRestServlet {
         xLogger.severe("ServiceException while deleting users {0} for domain {1}, Msg: {2}",
             endUserIds, domainId, e.getMessage(), e);
         errMsg = e.getMessage();
-        status = false;
         sendBasicError(resp, locale.toString(), errMsg, null, HttpServletResponse.SC_OK);
         return;
       }
@@ -991,18 +944,15 @@ public class SetupDataServlet extends JsonRestServlet {
       // Remove Material(s)
       // Form a list of material ids from the comma separated kiosk id values
       List<String> materialIdsStrList = StringUtil.getList(materialIds);
-      List<Long> materialIdsList = null;
+      List<Long> materialIdsList;
       // Convert the list of Strings to list of Long
       if (materialIdsStrList != null && !materialIdsStrList.isEmpty()) {
-        materialIdsList = new ArrayList<Long>();
-        Iterator<String> materialIdsIter = materialIdsStrList.iterator();
-        while (materialIdsIter.hasNext()) {
-          String materialIdStr = materialIdsIter.next();
+        materialIdsList = new ArrayList<>();
+        for (String materialIdStr : materialIdsStrList) {
           try {
             materialIdsList.add(Long.valueOf(materialIdStr));
           } catch (NumberFormatException nfe) {
             errMsg = "Error while deleting materials.";
-            status = false;
             sendBasicError(resp, locale.toString(), errMsg, null, HttpServletResponse.SC_OK);
             return;
           }
@@ -1013,7 +963,6 @@ public class SetupDataServlet extends JsonRestServlet {
           xLogger.severe("ServiceException while deleting materials {0} for domain {1}, Msg: {2}",
               materialIdsList, domainId, e.getMessage(), e);
           errMsg = e.getMessage();
-          status = false;
           sendBasicError(resp, locale.toString(), errMsg, null, HttpServletResponse.SC_OK);
           return;
         }
@@ -1021,36 +970,34 @@ public class SetupDataServlet extends JsonRestServlet {
     }
 
     // If remove users/kiosks/materials has succeeded
-    if (status) {
-      // Create the RemoveOutput object
-      try {
-        xLogger.fine("status: {0}, errMsg: {1}", status, errMsg);
-        //BasicOutput removeOutput = new BasicOutput( status, errMsg, null, locale.toString(), RESTUtil.VERSION_01 );
-        //sendJsonResponse( resp, HttpServletResponse.SC_OK, removeOutput.toJSONString() );
-        String
-            removeOutput =
-            GsonUtil
-                .basicOutputToJson(status, errMsg, null, locale.toString(), RESTUtil.VERSION_01);
-        sendJsonResponse(resp, HttpServletResponse.SC_OK, removeOutput);
+    // Create the RemoveOutput object
+    try {
+      xLogger.fine("status: {0}, errMsg: {1}", true, null);
+      //BasicOutput removeOutput = new BasicOutput( status, errMsg, null, locale.toString(), RESTUtil.VERSION_01 );
+      //sendJsonResponse( resp, HttpServletResponse.SC_OK, removeOutput.toJSONString() );
+      String
+          removeOutput =
+          GsonUtil
+              .basicOutputToJson(true, null, null, locale.toString(), RESTUtil.VERSION_01);
+      sendJsonResponse(resp, HttpServletResponse.SC_OK, removeOutput);
 
-      } catch (Exception e) {
-        xLogger
-            .severe("SetupDataServlet Protocol Exception: Class: {0} : {1}", e.getClass().getName(),
-                e.getMessage(), e);
-        resp.setStatus(500);
-      }
+    } catch (Exception e) {
+      xLogger
+          .severe("SetupDataServlet Protocol Exception: Class: {0} : {1}", e.getClass().getName(),
+              e.getMessage(), e);
+      resp.setStatus(500);
     }
     xLogger.fine("Exiting remove");
   }
 
   private String getUserCSV(Hashtable<String, String> ht, String operType) {
     xLogger.fine("ht = {0}", ht);
-    String csv = null;
+    String csv;
     if (ht == null || ht.isEmpty()) {
       xLogger.severe("User hashtable is null");
       return null;
     }
-    String value = null;
+    String value;
     csv = operType + "," + ht.get(JsonTagsZ.USER_ID);
     String password = ht.get(JsonTagsZ.PASSWORD);
     if (password == null) {
@@ -1135,12 +1082,12 @@ public class SetupDataServlet extends JsonRestServlet {
   }
 
   private String getKioskCSV(Hashtable<String, String> ht, String operType) {
-    String csv = null;
+    String csv;
     if (ht == null || ht.isEmpty()) {
       xLogger.severe("Kiosk hashtable is null");
       return null;
     }
-    String value = null;
+    String value;
     csv = operType + ",\"" + ht.get(JsonTagsZ.NAME) + "\",";
     csv += ht.get(JsonTagsZ.USERS) + ",";
     csv += ht.get(JsonTagsZ.COUNTRY) + ",";
@@ -1263,16 +1210,16 @@ public class SetupDataServlet extends JsonRestServlet {
   }
 
   private void manageRelationship(HttpServletRequest req, HttpServletResponse resp,
-                                  ResourceBundle backendMessages, ResourceBundle messages,
+                                  ResourceBundle backendMessages,
                                   String action) throws IOException, ServiceException {
     xLogger.fine("Entering manageRelationship");
     boolean status = true;
-    Locale locale = null;
-    String errMsg = null;
-    Vector<String> errMsgs = new Vector<String>();
+    Locale locale;
+    String errMsg;
+    Vector<String> errMsgs = new Vector<>();
     ///String country = Constants.COUNTRY_DEFAULT;
     ///String language = Constants.LANG_DEFAULT;
-    IUserAccount u = validateCaller(req, resp, backendMessages, messages, action, errMsgs);
+    IUserAccount u = validateCaller(req, resp, backendMessages, errMsgs);
     if (u == null) {
       xLogger.severe("Failed to validate caller.");
       return;
@@ -1295,19 +1242,18 @@ public class SetupDataServlet extends JsonRestServlet {
     locale = u.getLocale();
     Long domainId = u.getDomainId();
     // Create AccountsService object
-    EntitiesService as = Services.getService(EntitiesServiceImpl.class, locale);
+    EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
 
     // Get the json input string
     String jsonString = req.getParameter(RestConstantsZ.JSON_STRING);
     if (jsonString == null || jsonString.isEmpty()) {
       errMsg = "Invalid parameter json string while managing relationship";
-      status = false;
       sendBasicError(resp, locale.toString(), errMsg, errMsgs, HttpServletResponse.SC_OK);
       return;
     }
 
     // Create the RelationshipInput
-    RelationshipInput ri = new RelationshipInput();
+    RelationshipInput ri;
     try {
       //ri.fromJSONString( jsonString );
       ri = GsonUtil.relationshipInputFromJson(jsonString);
@@ -1318,7 +1264,7 @@ public class SetupDataServlet extends JsonRestServlet {
       String type = ri.getLinkType(); // Type of relationship as specified
       List<IKioskLink>
           kskLnks =
-          getKioskLinks(resp, suserName, ri, locale, as, errMsgs,
+          getKioskLinks(resp, suserName, ri, locale, errMsgs,
               domainId); // Get KioskLink objects based on String ids of the linked kiosks
 
       List<String> kskLnkIds = null; // List of KioskLink object Ids ( keys )
@@ -1329,51 +1275,47 @@ public class SetupDataServlet extends JsonRestServlet {
 
       if (kskLnks == null || kskLnks.isEmpty()) {
         xLogger.severe("Linked Kiosk Ids is not specified");
-        status = false;
         errMsg = "Linked Kiosk Ids is not specified";
         sendBasicError(resp, locale.toString(), errMsg, errMsgs, HttpServletResponse.SC_OK);
         return;
       }
 
       // Iterate through the linked kiosks. And form an array list of KioskLink ids
-      Iterator<IKioskLink> kskLnksIter = kskLnks.iterator();
-      while (kskLnksIter.hasNext()) {
+      for (IKioskLink kskLnk1 : kskLnks) {
         if (kskLnkIds == null) {
-          kskLnkIds = new ArrayList<String>();
+          kskLnkIds = new ArrayList<>();
         }
-        IKioskLink kskLnk = kskLnksIter.next();
-        if (kskLnk != null) {
+        if (kskLnk1 != null) {
           if (RestConstantsZ.ACTION_REMOVERELATIONSHIP.equalsIgnoreCase(action)) {
-            if (as.hasKioskLink(kskLnk.getKioskId(), kskLnk.getLinkType(),
-                kskLnk.getLinkedKioskId())) {
-              kskLnkIds.add(kskLnk.getId()); // Add the kiosk link id to the list of kiosk link ids
+            if (as.hasKioskLink(kskLnk1.getKioskId(), kskLnk1.getLinkType(),
+                kskLnk1.getLinkedKioskId())) {
+              kskLnkIds.add(kskLnk1.getId()); // Add the kiosk link id to the list of kiosk link ids
             } else {
-              errMsgs.add("Error: KioskLink " + kskLnk.getId() + " does not exist");
+              errMsgs.add("Error: KioskLink " + kskLnk1.getId() + " does not exist");
             }
           } else {
-            kskLnkIds.add(kskLnk.getId()); // Add the kiosk link id to the list of kiosk link ids
+            kskLnkIds.add(kskLnk1.getId()); // Add the kiosk link id to the list of kiosk link ids
           }
         }
       }
       // If the action is remove or update, first remove the existing kiosk links
       if (RestConstantsZ.ACTION_REMOVERELATIONSHIP.equalsIgnoreCase(action)) {
-        removeRelationship(req, resp, backendMessages, messages, as, kskLnkIds, errMsgs, domainId);
+        removeRelationship(as, kskLnkIds, errMsgs, domainId);
       } else if (RestConstantsZ.ACTION_CREATERELATIONSHIP.equalsIgnoreCase(action)) {
         // If action is create, then create new kiosk links
-        createRelationship(req, resp, backendMessages, messages, as, kskLnks, domainId);
+        createRelationship(as, kskLnks, domainId);
       } else if (RestConstantsZ.ACTION_UPDATERELATIONSHIP.equalsIgnoreCase(action)) {
         // Remove the links if and then create new links. specified
         List<String> kskLnkIdsToBeRemoved = null;
         if (lnkKidsRm != null && !lnkKidsRm
             .isEmpty()) { // If the lnkKidsRm is specified, get the KioskLinkId (key)
           // Iterate through kskLnkIdsRm
-          Iterator<String> lnkKidsRmIter = lnkKidsRm.iterator();
-          while (lnkKidsRmIter.hasNext()) {
+          for (String aLnkKidsRm : lnkKidsRm) {
             if (kskLnkIdsToBeRemoved == null) {
-              kskLnkIdsToBeRemoved = new ArrayList<String>();
+              kskLnkIdsToBeRemoved = new ArrayList<>();
             }
             kskLnkIdsToBeRemoved
-                .add(JDOUtils.createKioskLinkId(kioskId, type, Long.valueOf(lnkKidsRmIter.next())));
+                .add(JDOUtils.createKioskLinkId(kioskId, type, Long.valueOf(aLnkKidsRm)));
           }
 
         } else {
@@ -1384,20 +1326,19 @@ public class SetupDataServlet extends JsonRestServlet {
           if (kskLnksToBeRemoved == null || kskLnksToBeRemoved.isEmpty()) {
             throw new ServiceException("Links to be removed is null");
           }
-          Iterator<IKioskLink> kskLnksToBeRemovedIter = kskLnksToBeRemoved.iterator();
 
-          while (kskLnksToBeRemovedIter.hasNext()) {
+          for (IKioskLink aKskLnksToBeRemoved : kskLnksToBeRemoved) {
             if (kskLnkIdsToBeRemoved == null) {
-              kskLnkIdsToBeRemoved = new ArrayList<String>();
+              kskLnkIdsToBeRemoved = new ArrayList<>();
             }
-            kskLnkIdsToBeRemoved.add(kskLnksToBeRemovedIter.next().getId());
+            kskLnkIdsToBeRemoved.add(aKskLnksToBeRemoved.getId());
           }
         }
-        removeRelationship(req, resp, backendMessages, messages, as, kskLnkIdsToBeRemoved, errMsgs,
+        removeRelationship(as, kskLnkIdsToBeRemoved, errMsgs,
             domainId);
 
         // Create new relationship now
-        createRelationship(req, resp, backendMessages, messages, as, kskLnks, domainId);
+        createRelationship(as, kskLnks, domainId);
       } else {
         // Error case. Should never come here.
         xLogger.severe("ERROR!");
@@ -1417,7 +1358,7 @@ public class SetupDataServlet extends JsonRestServlet {
             GsonUtil.basicOutputToJson(true, null, null, locale.toString(), RESTUtil.VERSION_01);
         sendJsonResponse(resp, HttpServletResponse.SC_OK, basicOutput);
 
-      } catch (Exception e) {
+      } catch (Exception ignored) {
 
       }
     }
@@ -1425,7 +1366,7 @@ public class SetupDataServlet extends JsonRestServlet {
   }
 
   private List<IKioskLink> getKioskLinks(HttpServletResponse resp, String uid, RelationshipInput ri,
-                                         Locale locale, EntitiesService as, Vector<String> errMsgs,
+                                         Locale locale, Vector<String> errMsgs,
                                          Long domainId) throws IOException {
     xLogger.fine("Entering getKioskLinks");
     String kioskIdStr = ri.getKioskId();
@@ -1433,7 +1374,7 @@ public class SetupDataServlet extends JsonRestServlet {
     String type = ri.getLinkType();
     @SuppressWarnings("rawtypes")
     Vector lks = ri.getLinkedKiosks();
-    String errMsg = null;
+    String errMsg;
     if (lks == null || lks.isEmpty()) {
       xLogger.severe("Error while managing relationship. No linked kiosks are specified.");
       errMsg = "Error while managing relationship. No linked kiosks are specified.";
@@ -1450,7 +1391,7 @@ public class SetupDataServlet extends JsonRestServlet {
       while (lksEnum.hasMoreElements()) {
         // Create a new list only the first time
         if (kskLnks == null) {
-          kskLnks = new ArrayList<IKioskLink>();
+          kskLnks = new ArrayList<>();
         }
 
         IKioskLink kl = JDOUtils.createInstance(IKioskLink.class);
@@ -1518,9 +1459,7 @@ public class SetupDataServlet extends JsonRestServlet {
     return kskLnks;
   }
 
-  private void createRelationship(HttpServletRequest req, HttpServletResponse resp,
-                                  ResourceBundle backendMessages, ResourceBundle messages,
-                                  EntitiesService as, List<IKioskLink> kskLnks, Long domainId)
+  private void createRelationship(EntitiesService as, List<IKioskLink> kskLnks, Long domainId)
       throws IOException, ServiceException {
     xLogger.fine("Entering createRelationship");
     if (kskLnks == null || kskLnks.isEmpty()) {
@@ -1531,9 +1470,7 @@ public class SetupDataServlet extends JsonRestServlet {
     xLogger.fine("Exiting createRelationship");
   }
 
-  private void removeRelationship(HttpServletRequest req, HttpServletResponse resp,
-                                  ResourceBundle backendMessages, ResourceBundle messages,
-                                  EntitiesService as, List<String> kskLnkIds,
+  private void removeRelationship(EntitiesService as, List<String> kskLnkIds,
                                   Vector<String> errMsgs, Long domainId)
       throws IOException, ServiceException {
     xLogger.fine("Entering removeRelationship");
@@ -1553,8 +1490,8 @@ public class SetupDataServlet extends JsonRestServlet {
 
   // NOTE: The returned user-account object will NOT have associated kiosks; if you need it, then you will need to get it separately (say, via a as.getUserAccount( userId, true );
   private IUserAccount validateCaller(HttpServletRequest req, HttpServletResponse resp,
-                                      ResourceBundle backendMessages, ResourceBundle messages,
-                                      String action, Vector<String> errMsgs)
+                                      ResourceBundle backendMessages,
+                                      Vector<String> errMsgs)
       throws IOException, ServiceException {
     xLogger.fine("Entering validateCaller");
     String errMsg = null; // In case of Success, errMsg = null
@@ -1567,14 +1504,13 @@ public class SetupDataServlet extends JsonRestServlet {
     // Authenticate the user
     String userId = req.getParameter(RestConstantsZ.USER_ID);
     String password = req.getParameter(RestConstantsZ.PASSWORD);
-    AuthenticationService aus = Services.getService(AuthenticationServiceImpl.class);
     String token = req.getHeader(Constants.TOKEN);
     String sourceInitiatorStr = req.getHeader(Constants.ACCESS_INITIATOR);
     int actionInitiator = -1;
     if (sourceInitiatorStr != null) {
       try {
         actionInitiator = Integer.parseInt(sourceInitiatorStr);
-      } catch (NumberFormatException e) {
+      } catch (NumberFormatException ignored) {
 
       }
     }
@@ -1620,8 +1556,7 @@ public class SetupDataServlet extends JsonRestServlet {
 
   // Get related entities, along with pagination
   @SuppressWarnings("unchecked")
-  private void getRelatedEntities(HttpServletRequest req, HttpServletResponse resp,
-                                  ResourceBundle backendMessages, ResourceBundle messages) {
+  private void getRelatedEntities(HttpServletRequest req, HttpServletResponse resp) {
     xLogger.fine("Entered getRelatedEntities");
     // Get the request parameters
     String userId = req.getParameter(RestConstantsZ.USER_ID);
@@ -1633,67 +1568,64 @@ public class SetupDataServlet extends JsonRestServlet {
     String errMsg = null;
     boolean status = true;
     int statusCode = HttpServletResponse.SC_OK;
-    if (kioskIdStr == null || kioskIdStr.isEmpty() || relationshipType == null || relationshipType
+    if (kioskIdStr != null && !kioskIdStr.isEmpty() && relationshipType != null && !relationshipType
         .isEmpty()) {
-      errMsg = "Invalid parameters";
-      status = false;
-    } else {
-      Long kioskId = Long.valueOf(kioskIdStr);
-      int size = PageParams.DEFAULT_SIZE;
-      if (sizeStr != null && !sizeStr.isEmpty()) {
-        size = Integer.parseInt(sizeStr);
-      }
-      String offsetStr = req.getParameter(Constants.OFFSET);
-      int offset = 0;
-      if (StringUtils.isNotBlank(offsetStr)) {
-        try {
-          offset = Integer.parseInt(offsetStr);
-        } catch (Exception e) {
-          xLogger.warn("Invalid offset {0}: {1}", offsetStr, e.getMessage());
+          Long kioskId = Long.valueOf(kioskIdStr);
+          int size = PageParams.DEFAULT_SIZE;
+          if (sizeStr != null && !sizeStr.isEmpty()) {
+            size = Integer.parseInt(sizeStr);
+          }
+          String offsetStr = req.getParameter(Constants.OFFSET);
+          int offset = 0;
+          if (StringUtils.isNotBlank(offsetStr)) {
+            try {
+              offset = Integer.parseInt(offsetStr);
+            } catch (Exception e) {
+              xLogger.warn("Invalid offset {0}: {1}", offsetStr, e.getMessage());
+            }
+          }
+          PageParams pageParams = new PageParams(offset, size);
+          Date lastModified = new Date();
+          int numLinkedKiosks = 0;
+          try {
+            // Authenticate user
+            IUserAccount u = RESTUtil.authenticate(userId, password, kioskId, req, resp);
+            if (userId == null) {
+              userId = u.getUserId();
+            }
+            DomainConfig dc = DomainConfig.getInstance(u.getDomainId());
+            Optional<Date> modifiedSinceDate = HttpUtil.getModifiedDate(req);
+            Results
+                results =
+                RESTUtil.getLinkedKiosks(kioskId, relationshipType, userId, true, dc, pageParams,
+                    modifiedSinceDate);
+            linkedKiosks = (Vector<Hashtable<String, String>>) results.getResults();
+            numLinkedKiosks = results.getNumFound();
+          } catch (ServiceException e) {
+            errMsg = e.getMessage();
+            status = false;
+          } catch (UnauthorizedException e) {
+            errMsg = e.getMessage();
+            status = false;
+            statusCode = HttpServletResponse.SC_UNAUTHORIZED;
+          } catch (Exception e) {
+            errMsg = "System error occurred. Please notify administrator. [" + e.getMessage() + "]";
+            status = false;
+          }
+          try {
+            String
+                Jsongro =
+                GsonUtil.getRelationshipsOutputToJson(status, relationshipType, linkedKiosks, errMsg,
+                    numLinkedKiosks, RESTUtil.VERSION_01);
+            HttpUtil.setLastModifiedHeader(resp, lastModified);
+            sendJsonResponse(resp, statusCode, Jsongro);
+          } catch (Exception e) {
+            xLogger.severe(
+                "{0} when sending JSON response for getRelatedEntities for kiosk {1} and relationships {2}: {3}",
+                e.getClass().getName(), kioskIdStr, relationshipType, e.getMessage(), e);
+            resp.setStatus(500);
+          }
         }
-      }
-      PageParams pageParams = new PageParams(offset, size);
-      Date lastModified = new Date();
-      int numLinkedKiosks = 0;
-      try {
-        // Authenticate user
-        IUserAccount u = RESTUtil.authenticate(userId, password, kioskId, req, resp);
-        if (userId == null) {
-          userId = u.getUserId();
-        }
-        DomainConfig dc = DomainConfig.getInstance(u.getDomainId());
-        Optional<Date> modifiedSinceDate = HttpUtil.getModifiedDate(req);
-        Results
-            results =
-            RESTUtil.getLinkedKiosks(kioskId, relationshipType, userId, true, dc, pageParams,
-                modifiedSinceDate);
-        linkedKiosks = (Vector<Hashtable<String, String>>) results.getResults();
-        numLinkedKiosks = results.getNumFound();
-      } catch (ServiceException e) {
-        errMsg = e.getMessage();
-        status = false;
-      } catch (UnauthorizedException e) {
-        errMsg = e.getMessage();
-        status = false;
-        statusCode = HttpServletResponse.SC_UNAUTHORIZED;
-      } catch (Exception e) {
-        errMsg = "System error occurred. Please notify administrator. [" + e.getMessage() + "]";
-        status = false;
-      }
-      try {
-        String
-            Jsongro =
-            GsonUtil.getRelationshipsOutputToJson(status, relationshipType, linkedKiosks, errMsg,
-                numLinkedKiosks, RESTUtil.VERSION_01);
-        HttpUtil.setLastModifiedHeader(resp, lastModified);
-        sendJsonResponse(resp, statusCode, Jsongro);
-      } catch (Exception e) {
-        xLogger.severe(
-            "{0} when sending JSON response for getRelatedEntities for kiosk {1} and relationships {2}: {3}",
-            e.getClass().getName(), kioskIdStr, relationshipType, e.getMessage(), e);
-        resp.setStatus(500);
-      }
-    }
     xLogger.fine("Exiting getRelatedEntities");
   }
 

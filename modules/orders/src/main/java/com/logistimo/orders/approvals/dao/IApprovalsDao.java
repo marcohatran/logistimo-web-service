@@ -30,6 +30,7 @@ import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Created by naveensnair on 21/06/17.
@@ -54,6 +55,8 @@ public interface IApprovalsDao {
   void updateOrderApprovalStatus(String approvalId, StatusModel model, String userId);
 
   IOrderApprovalMapping getOrderApprovalMapping(Long orderId, String status);
+
+  List<IOrderApprovalMapping> getTotalOrderApprovalMapping(Long orderId);
 
   IOrderApprovalMapping getOrderApprovalMapping(Long orderId);
 

@@ -33,7 +33,7 @@
     <properties>
         <build.number>SNAPSHOT</build.number>
         <spring-version>4.3.8.RELEASE</spring-version>
-        <build.version>2.6.3</build.version>
+        <build.version>2.7.0</build.version>
     </properties>
 
     <dependencies>

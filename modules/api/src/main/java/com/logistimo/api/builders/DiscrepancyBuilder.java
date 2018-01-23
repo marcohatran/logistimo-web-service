@@ -23,26 +23,27 @@
 
 package com.logistimo.api.builders;
 
+import com.logistimo.api.models.DiscrepancyUIModel;
+import com.logistimo.auth.utils.SecurityUtils;
+import com.logistimo.constants.Constants;
+import com.logistimo.domains.entity.IDomain;
+import com.logistimo.domains.service.DomainsService;
+import com.logistimo.entities.entity.IKiosk;
+import com.logistimo.entities.service.EntitiesService;
+import com.logistimo.logger.XLog;
+import com.logistimo.models.orders.DiscrepancyModel;
+import com.logistimo.orders.OrderUtils;
+import com.logistimo.orders.entity.IDemandItem;
+import com.logistimo.orders.entity.IOrder;
 import com.logistimo.pagination.Results;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
-import com.logistimo.constants.Constants;
-import com.logistimo.models.orders.DiscrepancyModel;
 import com.logistimo.utils.LocalDateUtil;
-import com.logistimo.logger.XLog;
-import com.logistimo.api.models.DiscrepancyUIModel;
-import com.logistimo.domains.entity.IDomain;
-import com.logistimo.domains.service.DomainsService;
-import com.logistimo.domains.service.impl.DomainsServiceImpl;
-import com.logistimo.entities.entity.IKiosk;
-import com.logistimo.entities.service.EntitiesService;
-import com.logistimo.entities.service.EntitiesServiceImpl;
-import com.logistimo.orders.OrderUtils;
-import com.logistimo.orders.entity.IDemandItem;
-import com.logistimo.orders.entity.IOrder;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -54,39 +55,47 @@ import java.util.ResourceBundle;
 /**
  * Created by vani on 04/10/16.
  */
+@Component
 public class DiscrepancyBuilder {
   private static final XLog xLogger = XLog.getLog(DiscrepancyBuilder.class);
 
-  public Results buildDiscrepancyModels(Results results, SecureUserDetails user)
-      throws ServiceException, ObjectNotFoundException {
-    List<DiscrepancyUIModel> discUIModels = null;
-    List<DiscrepancyModel> discModels = null;
-    EntitiesService as = Services.getService(EntitiesServiceImpl.class);
-    if (results != null) {
-      discModels = results.getResults();
-      int count = results.getOffset() + 1;
-      discUIModels = new ArrayList<>(discModels.size());
-      for (DiscrepancyModel dModel : discModels) {
-        DiscrepancyUIModel duiModel = build(dModel, as, user);
-        duiModel.sno = count++;
-        if (duiModel != null) {
-          discUIModels.add(duiModel);
-        }
-      }
-    }
-    Results
-        finalResults =
-        new Results(discUIModels, results.getCursor(), results.getNumFound(), results.getOffset());
-    return finalResults;
+  private DomainsService domainsService;
+  private EntitiesService entitiesService;
+
+  @Autowired
+  public void setDomainsService(DomainsService domainsService) {
+    this.domainsService = domainsService;
   }
 
-  public DiscrepancyUIModel build(DiscrepancyModel dm, EntitiesService as, SecureUserDetails user) {
-    Locale locale = user.getLocale();
-    String timezone = user.getTimezone();
+  @Autowired
+  public void setEntitiesService(EntitiesService entitiesService) {
+    this.entitiesService = entitiesService;
+  }
+
+  public Results buildDiscrepancyModels(Results results)
+      throws ServiceException, ObjectNotFoundException {
+    if (results != null) {
+      List<DiscrepancyModel> discModels = results.getResults();
+      int count = results.getOffset() + 1;
+      List<DiscrepancyUIModel> discUIModels = new ArrayList<>(discModels.size());
+      for (DiscrepancyModel dModel : discModels) {
+        DiscrepancyUIModel duiModel = build(dModel);
+        duiModel.sno = count++;
+        discUIModels.add(duiModel);
+      }
+      return new Results<>(discUIModels, results.getCursor(), results.getNumFound(), results.getOffset());
+    }
+    return null;
+  }
+
+  public DiscrepancyUIModel build(DiscrepancyModel dm) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
+    Locale locale = sUser.getLocale();
+    String timezone = sUser.getTimezone();
     IKiosk c, v;
     Map<Long, String> domainNames = new HashMap<>(1);
     try {
-      c = as.getKiosk(dm.cId, false);
+      c = entitiesService.getKiosk(dm.cId, false);
     } catch (Exception e) {
       xLogger.warn("Error while fetching Kiosk {0}", dm.cId);
       return null;
@@ -151,7 +160,7 @@ public class DiscrepancyBuilder {
     duiModel.vid = dm.vId;
     duiModel.vnm = dm.vnm;
     try {
-      v = as.getKiosk(dm.vId, false);
+      v = entitiesService.getKiosk(dm.vId, false);
       duiModel.vadd = v != null ? v.getFormattedAddress() : null;
     } catch (Exception e) {
       xLogger.warn("Ignoring Exception while getting vendor kiosk with id {0}", dm.vId);
@@ -162,8 +171,7 @@ public class DiscrepancyBuilder {
     if (domainName == null) {
       IDomain domain = null;
       try {
-        DomainsService ds = Services.getService(DomainsServiceImpl.class);
-        domain = ds.getDomain(dm.sdid);
+        domain = domainsService.getDomain(dm.sdid);
       } catch (Exception e) {
         xLogger.warn("Error while fetching Domain {0}", dm.sdid);
       }

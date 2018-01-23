@@ -24,12 +24,11 @@
 package com.logistimo.mappers;
 
 import com.logistimo.customreports.CustomReportsExportMgr;
+import com.logistimo.logger.XLog;
+import com.logistimo.services.impl.PMF;
 import com.logistimo.services.mapper.Entity;
 import com.logistimo.services.mapper.GenericMapper;
 import com.logistimo.services.mapper.Key;
-
-import com.logistimo.services.impl.PMF;
-import com.logistimo.logger.XLog;
 
 import java.io.IOException;
 

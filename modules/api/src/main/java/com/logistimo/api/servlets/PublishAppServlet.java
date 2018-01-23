@@ -24,15 +24,14 @@
 package com.logistimo.api.servlets;
 
 import com.logistimo.AppFactory;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.JDOUtils;
-import com.logistimo.services.blobstore.BlobstoreService;
-
 import com.logistimo.entity.IUploaded;
-import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
-import com.logistimo.services.UploadService;
-import com.logistimo.services.impl.UploadServiceImpl;
 import com.logistimo.logger.XLog;
+import com.logistimo.services.ServiceException;
+import com.logistimo.services.UploadService;
+import com.logistimo.services.blobstore.BlobstoreService;
+import com.logistimo.services.impl.UploadServiceImpl;
 
 import java.io.IOException;
 import java.util.Date;
@@ -78,18 +77,17 @@ public class PublishAppServlet extends SgServlet {
     // If it fails, then redirects the user to an error page.
     Map<String, String> blobs = blobstoreService.getUploadedBlobs(req);
     Iterator<Entry<String, String>> entries = blobs.entrySet().iterator();
-    List<IUploaded> uploads = new Vector<IUploaded>();
+    List<IUploaded> uploads = new Vector<>();
 
     while (entries.hasNext()) {
-      Entry<String, String> thisEntry = (Entry<String, String>) entries.next();
-      String fileName = (String) thisEntry.getKey();
-      String blobKey = (String) thisEntry.getValue();
+      Entry<String, String> thisEntry = entries.next();
+      String fileName = thisEntry.getKey();
+      String blobKey = thisEntry.getValue();
       if (blobKey == null) {
         xLogger.severe("BlobKey is null for file {0} ", fileName);
         throw new ServiceException("Blobkey is null for file " + fileName);
       }
       xLogger.info("fileName = {0} : blobKey = {1} ", fileName, blobKey);
-      String blobKeyStr = blobKey;
 
       // Create an Uploaded object and set it's attributes
       IUploaded u = JDOUtils.createInstance(IUploaded.class);
@@ -100,7 +98,7 @@ public class PublishAppServlet extends SgServlet {
       u.setLocale(locale);
       u.setUserId(userId);
       u.setTimeStamp(timeStamp);
-      u.setBlobKey(blobKeyStr);
+      u.setBlobKey(blobKey);
       String key = JDOUtils.createUploadedKey(fileName, version, locale);
       u.setId(key);
 
@@ -120,9 +118,7 @@ public class PublishAppServlet extends SgServlet {
     xLogger.fine("Entered writeToDataStore");
 
     try {
-      UploadService ums = null;
-      // Create the UploadMgmtServiceImpl object
-      ums = Services.getService(UploadServiceImpl.class);
+      UploadService ums = StaticApplicationContext.getBean(UploadServiceImpl.class);
       ums.addNewUpload(uploads);
     } catch (ServiceException se) {
       xLogger.severe("ServiceException: {0}", se.getMessage());

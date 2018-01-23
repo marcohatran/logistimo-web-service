@@ -28,7 +28,7 @@
     <parent>
         <artifactId>logistimo</artifactId>
         <groupId>com.logistimo</groupId>
-        <version>2.6.3</version>
+        <version>2.7.0</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -37,7 +37,7 @@
     <artifactId>logistimo-bulletinboard</artifactId>
     <properties>
         <build.number>SNAPSHOT</build.number>
-        <build.version>2.6.3</build.version>
+        <build.version>2.7.0</build.version>
     </properties>
 
     <dependencies>

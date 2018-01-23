@@ -27,6 +27,7 @@ import com.logistimo.AppFactory;
 import com.logistimo.assets.entity.IAsset;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.domains.IMultiDomain;
 import com.logistimo.domains.utils.DomainsUtil;
 import com.logistimo.entities.service.EntitiesServiceImpl;
@@ -34,7 +35,6 @@ import com.logistimo.logger.XLog;
 import com.logistimo.pagination.Results;
 import com.logistimo.pagination.processor.InstrumentedProcessor;
 import com.logistimo.pagination.processor.ProcessingException;
-import com.logistimo.services.Services;
 import com.logistimo.services.cache.MemcacheService;
 import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.users.entity.IUserAccount;
@@ -132,7 +132,7 @@ public class EntityDomainUpdateProcessor extends InstrumentedProcessor {
         }
       }
       if (list.get(0) instanceof IAsset) {
-        Services.getService(EntitiesServiceImpl.class).registerOrUpdateDevices(list);
+        StaticApplicationContext.getBean(EntitiesServiceImpl.class).registerOrUpdateDevices(list);
       }
     } catch (Exception e) {
       xLogger

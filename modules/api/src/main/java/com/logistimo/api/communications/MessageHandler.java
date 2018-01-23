@@ -29,13 +29,13 @@ package com.logistimo.api.communications;
 import com.logistimo.communications.MessageHandlingException;
 import com.logistimo.communications.service.MessageService;
 import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.logger.XLog;
 import com.logistimo.materials.service.MaterialCatalogService;
 import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.users.service.impl.UsersServiceImpl;
@@ -93,8 +93,8 @@ public abstract class MessageHandler {
     this.message = message;
     this.address = address;
     this.recdOn = recdOn;
-    as = Services.getService(UsersServiceImpl.class);
-    mcs = Services.getService(MaterialCatalogServiceImpl.class);
+    as = StaticApplicationContext.getBean(UsersServiceImpl.class);
+    mcs = StaticApplicationContext.getBean(MaterialCatalogServiceImpl.class);
     ///delayBetweenCalls = msgservice.getMillisBetweenCalls();
   }
 
@@ -246,7 +246,7 @@ public abstract class MessageHandler {
       countryCode = Constants.COUNTRY_DEFAULT;
     }
     // Get the message service
-    MessageService msgservice = null;
+    MessageService msgservice;
     if (domainId != null) {
       msgservice =
           MessageService

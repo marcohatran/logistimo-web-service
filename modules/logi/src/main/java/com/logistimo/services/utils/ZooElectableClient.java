@@ -26,13 +26,14 @@
  */
 package com.logistimo.services.utils;
 
+import com.logistimo.logger.XLog;
+
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
-import com.logistimo.logger.XLog;
 
 import java.io.IOException;
 import java.util.Collections;

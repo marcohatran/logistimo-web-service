@@ -23,12 +23,10 @@
 
 package com.logistimo.inventory.predictions.service;
 
-import com.logistimo.services.Service;
-
 /**
  * Created by charan on 08/03/17.
  */
-public interface PredictionService extends Service {
+public interface PredictionService {
   void updateInventoryPredictions(String invId);
   void updateOrderPredictions(String orderId);
 }

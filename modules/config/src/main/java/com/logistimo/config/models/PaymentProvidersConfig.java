@@ -23,17 +23,17 @@
 
 package com.logistimo.config.models;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import com.logistimo.config.entity.IConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
 import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
+import com.logistimo.context.StaticApplicationContext;
+import com.logistimo.logger.XLog;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
-import com.logistimo.logger.XLog;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,7 +57,8 @@ public class PaymentProvidersConfig {
   // Get an instance of the Payments config
   public static PaymentProvidersConfig getInstance() throws ConfigurationException {
     try {
-      ConfigurationMgmtService cms = Services.getService(ConfigurationMgmtServiceImpl.class);
+      ConfigurationMgmtService cms = StaticApplicationContext
+          .getBean(ConfigurationMgmtServiceImpl.class);
       IConfig c = cms.getConfiguration(IConfig.PAYMENTPROVIDERSCONFIG);
       return new PaymentProvidersConfig(c.getConfig());
     } catch (ObjectNotFoundException e) {
@@ -86,7 +87,7 @@ public class PaymentProvidersConfig {
     if (providers != null) {
       JSONArray keys = providers.names();
       if (keys != null && keys.length() > 0) {
-        providerConfigList = new ArrayList<ProviderConfig>();
+        providerConfigList = new ArrayList<>();
         for (int i = 0; i < keys.length(); i++) {
           try {
             String pn = keys.getString(i);

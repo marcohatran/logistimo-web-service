@@ -27,14 +27,11 @@
 package com.logistimo.api.communications;
 
 import com.logistimo.api.util.RESTUtil;
-import com.logistimo.communications.service.MessageService;
-import com.logistimo.dao.JDOUtils;
-
 import com.logistimo.communications.MessageHandlingException;
+import com.logistimo.communications.service.MessageService;
+import com.logistimo.constants.Constants;
+import com.logistimo.dao.JDOUtils;
 import com.logistimo.entity.IMultipartMsg;
-import com.logistimo.services.ObjectNotFoundException;
-import com.logistimo.services.ServiceException;
-
 import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.proto.AuthenticateInput;
 import com.logistimo.proto.AuthenticateOutput;
@@ -55,9 +52,9 @@ import com.logistimo.proto.UpdateInventoryInput;
 import com.logistimo.proto.UpdateInventoryOutput;
 import com.logistimo.proto.UpdateOrderInput;
 import com.logistimo.proto.UpdateOrderStatusInput;
+import com.logistimo.services.ObjectNotFoundException;
+import com.logistimo.services.ServiceException;
 import com.logistimo.users.entity.IUserAccount;
-
-import com.logistimo.constants.Constants;
 import com.logistimo.utils.HttpUtil;
 
 import java.io.IOException;

@@ -23,24 +23,24 @@
 
 package com.logistimo.entities.utils;
 
+import com.logistimo.constants.CharacterConstants;
+import com.logistimo.constants.QueryConstants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.entity.IKiosk;
+import com.logistimo.entities.pagination.processor.MoveProcessor;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
-import com.logistimo.pagination.QueryParams;
-import com.logistimo.services.utils.ConfigUtil;
-import com.logistimo.utils.MsgUtil;
-
-import org.apache.commons.lang.StringUtils;
+import com.logistimo.logger.XLog;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.PagedExec;
-import com.logistimo.entities.pagination.processor.MoveProcessor;
+import com.logistimo.pagination.QueryParams;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
-import com.logistimo.constants.CharacterConstants;
+import com.logistimo.services.utils.ConfigUtil;
+import com.logistimo.utils.MsgUtil;
 import com.logistimo.utils.PropertyUtil;
-import com.logistimo.constants.QueryConstants;
-import com.logistimo.logger.XLog;
+
+import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -74,7 +74,7 @@ public class EntityMover {
    * @param kiosks List of kiosk id to validate
    */
   public static String validateMoveEntitiesToDomain(List<Long> kiosks) throws ServiceException {
-    EntitiesService as = Services.getService(EntitiesServiceImpl.class, null);
+    EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
     List<IKiosk> kioskList = as.getKiosksByIds(kiosks);
     Set<String> users = EntityMoveHelper.extractUserIds(kioskList);
     List<String> errors = EntityMoveHelper.validateUsers(users, kiosks);
@@ -112,7 +112,7 @@ public class EntityMover {
    */
   public static void moveEntitiesToDomain(List<Long> kiosks, Long destDomainId, String sDid)
       throws ServiceException {
-    EntitiesService as = Services.getService(EntitiesServiceImpl.class, null);
+    EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
     List<IKiosk> kioskList = as.getKiosksByIds(kiosks);
     Set<String> users = EntityMoveHelper.extractUserIds(kioskList);
     Long sourceDomainId = kioskList.get(0).getDomainId();
@@ -126,7 +126,7 @@ public class EntityMover {
       try {
         List ids;
         if (relatedClassName.endsWith("UserAccount")) {
-          ids = new ArrayList<String>(users);
+          ids = new ArrayList<>(users);
         } else {
           ids = kiosks;
         }
@@ -195,7 +195,7 @@ public class EntityMover {
     xLogger.fine("Entering constructQueryParam");
     StringBuilder queryStr = new StringBuilder();
     StringBuilder qDeclarations = new StringBuilder();
-    Map<String, Object> paramMap = new HashMap<String, Object>(2);
+    Map<String, Object> paramMap = new HashMap<>(2);
 
     queryStr.append(QueryConstants.SELECT_FROM).append(className);
     queryStr.append(QueryConstants.WHERE);

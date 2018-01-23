@@ -25,6 +25,7 @@ package com.logistimo.services.utils;
 
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.QueryConstants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.domains.IMultiDomain;
 import com.logistimo.entities.entity.IKiosk;
@@ -37,7 +38,7 @@ import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.models.ICounter;
 import com.logistimo.orders.entity.IOrder;
 import com.logistimo.services.impl.PMF;
-import com.logistimo.tags.dao.TagDao;
+import com.logistimo.tags.dao.ITagDao;
 import com.logistimo.tags.entity.ITag;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.utils.Counter;
@@ -155,7 +156,8 @@ public class LogiCounter implements ICounter {
         if (isValueValid(value)) {
           if (value.contains(CharacterConstants.COMMA)) {
             List<String> tags = StringUtil.getList(value, true);
-            List<ITag> tagIdList = new TagDao().getTagsByNames(tags, ITag.KIOSK_TAG);
+            ITagDao tagDao = StaticApplicationContext.getBean(ITagDao.class);
+            List<ITag> tagIdList = tagDao.getTagsByNames(tags, ITag.KIOSK_TAG);
             filter.append(QueryConstants.AND).append(CharacterConstants.O_BRACKET);
             int i = 0;
             for (ITag iTag : tagIdList) {

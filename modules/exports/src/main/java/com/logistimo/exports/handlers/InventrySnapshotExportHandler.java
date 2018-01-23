@@ -24,25 +24,24 @@
 package com.logistimo.exports.handlers;
 
 import com.logistimo.config.models.DomainConfig;
+import com.logistimo.constants.CharacterConstants;
+import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.inventory.models.InvntrySnapshot;
+import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.materials.service.MaterialCatalogService;
 import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
-
-import org.apache.commons.lang.StringEscapeUtils;
 import com.logistimo.services.Resources;
-import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.utils.BigUtil;
-import com.logistimo.constants.CharacterConstants;
-import com.logistimo.constants.Constants;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.NumberUtil;
 import com.logistimo.utils.StringUtil;
-import com.logistimo.logger.XLog;
+
+import org.apache.commons.lang.StringEscapeUtils;
 
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -102,21 +101,12 @@ public class InventrySnapshotExportHandler implements IExportHandler {
   public String toCSV(Locale locale, String timezone, DomainConfig dc, String type) {
     xLogger.fine("Entering toCSV. locale: {0}, timezone: {1}", locale, timezone);
     try {
-      // Get services
-
-      EntitiesService es = null;
-      IKiosk k = null;
-      IMaterial m = null;
-      try {
-        es = Services.getService(EntitiesServiceImpl.class);
-        k = es.getKiosk(invSnapshot.getkId());
-        MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
-        m = mcs.getMaterial(invSnapshot.getmId());
-        invSnapshot.setKnm(k.getName());
-      } catch (ServiceException e) {
-        e.printStackTrace();
-      }
-
+      EntitiesService es = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
+      IKiosk k = es.getKiosk(invSnapshot.getkId());
+      MaterialCatalogService mcs = StaticApplicationContext.getBean(
+          MaterialCatalogServiceImpl.class);
+      IMaterial m = mcs.getMaterial(invSnapshot.getmId());
+      invSnapshot.setKnm(k.getName());
       String csv = invSnapshot.getkId() + CharacterConstants.COMMA +
           (k.getCustomId() != null ? StringEscapeUtils.escapeCsv(k.getCustomId())
               : CharacterConstants.EMPTY) + CharacterConstants.COMMA +

@@ -23,7 +23,6 @@
 
 package com.logistimo.orders.approvals.validations;
 
-import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.entities.auth.EntityAuthoriser;
 import com.logistimo.exception.ValidationException;
 import com.logistimo.orders.approvals.ApprovalType;
@@ -48,10 +47,10 @@ public class ApprovalRequesterValidator {
 
     try {
       boolean hasAccessToCustomer =
-          EntityAuthoriser.authoriseEntityPerm(SecurityUtils.getUserDetails(), order.getKioskId())
+          EntityAuthoriser.authoriseEntityPerm(order.getKioskId())
               > 0;
       boolean hasAccessToVendor = EntityAuthoriser.authoriseEntityPerm(
-          SecurityUtils.getUserDetails(), order.getServicingKiosk()) > 0;
+          order.getServicingKiosk()) > 0;
       if (approvalRequestModel.getApprovalType() == null) {
         throw new ValidationException("OA017", new Object[0]);
       }

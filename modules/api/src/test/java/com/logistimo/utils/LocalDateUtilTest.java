@@ -23,8 +23,6 @@
 
 package com.logistimo.utils;
 
-import com.logistimo.utils.LocalDateUtil;
-
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

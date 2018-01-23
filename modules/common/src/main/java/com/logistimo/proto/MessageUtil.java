@@ -29,8 +29,9 @@
 package com.logistimo.proto;
 
 
-import org.apache.commons.codec.binary.Hex;
 import com.logistimo.proto.utils.StringTokenizer;
+
+import org.apache.commons.codec.binary.Hex;
 
 import java.util.Enumeration;
 import java.util.Hashtable;

@@ -24,14 +24,11 @@
 package com.logistimo.events.templates;
 
 import com.logistimo.accounting.entity.IAccount;
-import com.logistimo.assets.entity.AssetStatus;
 import com.logistimo.assets.entity.IAsset;
 import com.logistimo.assets.entity.IAssetRelation;
 import com.logistimo.assets.entity.IAssetStatus;
-import com.logistimo.assets.models.Temperature;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.entity.IPoolGroup;
-import com.logistimo.events.entity.IEvent;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.IInvntryBatch;
 import com.logistimo.inventory.entity.ITransaction;
@@ -40,12 +37,6 @@ import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.orders.entity.IOrder;
 import com.logistimo.shipments.entity.IShipment;
 import com.logistimo.users.entity.IUserAccount;
-
-
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 
 /**
  * Created by charan on 09/03/17.

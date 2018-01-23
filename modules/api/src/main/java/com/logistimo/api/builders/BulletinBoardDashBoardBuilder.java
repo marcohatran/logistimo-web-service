@@ -29,6 +29,8 @@ import com.logistimo.bulletinboard.entity.IBulletinBoard;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.dashboards.entity.IDashboard;
 
+import org.springframework.stereotype.Component;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -38,8 +40,9 @@ import java.util.stream.Collectors;
 /**
  * @author Mohan Raja
  */
-public class BulletinBoardDashBoardBuilder {
 
+@Component
+public class BulletinBoardDashBoardBuilder {
 
   public IDashboard buildDashboard(BulletinBoardDashBoardModel model, Long domainId,
                                    String userName) {

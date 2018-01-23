@@ -31,6 +31,7 @@ import com.logistimo.auth.SecurityMgr;
 import com.logistimo.auth.SecurityUtil;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.logger.XLog;
@@ -44,7 +45,7 @@ import com.logistimo.reports.models.UsageStats;
 import com.logistimo.reports.service.ReportsService;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
+import com.logistimo.services.utils.ConfigUtil;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.utils.Counter;
 import com.logistimo.utils.LocalDateUtil;
@@ -78,8 +79,7 @@ public class DashboardServlet extends JsonRestServlet {
   private static final String ACTION_GETDOMAINCOUNTS = "getdomaincounts";
 
   // Get monthly stats. for dashboard display
-  private static void getMonthlyStats(HttpServletRequest request, HttpServletResponse response,
-                                      ResourceBundle backendMessages, ResourceBundle messages)
+  private static void getMonthlyStats(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
     xLogger.fine("Entered getMonthlyStats");
     // Get the domain ID
@@ -95,7 +95,8 @@ public class DashboardServlet extends JsonRestServlet {
           // ignore; return default months data
         }
       }
-      ReportsService svc = Services.getService("reports");
+      ReportsService svc = StaticApplicationContext.getBean(ConfigUtil.get("reports"),
+          ReportsService.class);
       String json = svc.getMonthlyStatsJSON(domainId, months);
       writeText(response, json);
     } catch (Exception e) {
@@ -110,9 +111,7 @@ public class DashboardServlet extends JsonRestServlet {
   // Get monthly stats. for dashboard display
   @SuppressWarnings("unchecked")
   private static void getMonthlyUsageStatsForDomain(HttpServletRequest request,
-                                                    HttpServletResponse response,
-                                                    ResourceBundle backendMessages,
-                                                    ResourceBundle messages) throws IOException {
+                                                    HttpServletResponse response) throws IOException {
     xLogger.fine("Entered getMonthlyUsageStatsForDomain");
     // Get the domain ID
     String domainIdStr = request.getParameter("domainid");
@@ -128,7 +127,7 @@ public class DashboardServlet extends JsonRestServlet {
       return;
     }
     Long domainId = null;
-    Date startDate = null;
+    Date startDate;
     int offset = 0;
     try {
       domainId = Long.parseLong(domainIdStr);
@@ -140,7 +139,8 @@ public class DashboardServlet extends JsonRestServlet {
       }
 
       // Proceed only if the mandatory attributes are present.
-      ReportsService rs = Services.getService("reports");
+      ReportsService rs = StaticApplicationContext.getBean(ConfigUtil.get("reports"),
+          ReportsService.class);
       PageParams pageParams = new PageParams(null, offset, size);
       Results results = rs.getMonthlyUsageStatsForDomain(domainId, startDate, pageParams);
       List<IMonthSlice> resultsList = results.getResults();
@@ -163,8 +163,7 @@ public class DashboardServlet extends JsonRestServlet {
   }
 
   // Get counts for a domain
-  private static void getDomainCounts(HttpServletRequest request, HttpServletResponse response,
-                                      ResourceBundle backendMessages, ResourceBundle messages)
+  private static void getDomainCounts(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
     xLogger.fine("Entered getDomainCounts");
     // Read the request parameters. All parameters are mandatory
@@ -185,8 +184,8 @@ public class DashboardServlet extends JsonRestServlet {
 
     int period;
     Long domainId = null;
-    Date endDate = null;
-    Date startDate = null;
+    Date endDate;
+    Date startDate;
     try {
       period = Integer.parseInt(periodStr);
       domainId = Long.parseLong(domainIdStr);
@@ -206,7 +205,8 @@ public class DashboardServlet extends JsonRestServlet {
       startDate = cal.getTime();
       xLogger.info("startDate: {0}, endDate: {1}", startDate.toString(), endDate.toString());
       // Call ReportsService API to get domain counts
-      ReportsService rs = Services.getService("reports");
+      ReportsService rs = StaticApplicationContext.getBean(ConfigUtil.get("reports"),
+          ReportsService.class);
       DomainCounts
           domainCounts =
           rs.getDomainCounts(domainId, endDate, period, periodTypeStr, null, null);
@@ -231,15 +231,15 @@ public class DashboardServlet extends JsonRestServlet {
     xLogger.fine("Entered processGet");
     String action = request.getParameter("action");
     if (ACTION_GETKIOSKS.equals(action)) {
-      getKiosks(request, response, backendMessages, messages);
+      getKiosks(request, response);
     } else if (GETMONTHLYSTATS.equals(action)) {
-      getMonthlyStats(request, response, backendMessages, messages);
+      getMonthlyStats(request, response);
     } else if (ACTION_GETMONTHLYUSAGESTATSACROSSDOMAINS.equals(action)) {
-      getMonthlyUsageStatsAcrossDomains(request, response, backendMessages, messages);
+      getMonthlyUsageStatsAcrossDomains(request, response);
     } else if (ACTION_GETMONTHLYUSAGESTATSFORDOMAIN.equals(action)) {
-      getMonthlyUsageStatsForDomain(request, response, backendMessages, messages);
+      getMonthlyUsageStatsForDomain(request, response);
     } else if (ACTION_GETDOMAINCOUNTS.equals(action)) {
-      getDomainCounts(request, response, backendMessages, messages);
+      getDomainCounts(request, response);
     } else {
       try {
         String message = "Invalid action: " + action;
@@ -263,8 +263,7 @@ public class DashboardServlet extends JsonRestServlet {
   }
 
   // Get the stock view dashboard
-  private void getKiosks(HttpServletRequest request, HttpServletResponse response,
-                         ResourceBundle backendMessages, ResourceBundle messages)
+  private void getKiosks(HttpServletRequest request, HttpServletResponse response)
       throws ServiceException {
     xLogger.fine("Entered getKiosks");
     // Get the parameters
@@ -279,7 +278,7 @@ public class DashboardServlet extends JsonRestServlet {
     }
     PageParams pageParams = new PageParams(cursor, size);
     // Authenticate user
-    String jsonOutput = null;
+    String jsonOutput;
     try {
       IUserAccount u = RESTUtil.authenticate(userId, password, null, request, response);
       Long domainId = null;
@@ -289,7 +288,7 @@ public class DashboardServlet extends JsonRestServlet {
         domainId = SecurityUtils.getCurrentDomainId();
       }
       Results results;
-      EntitiesService as = Services.getService(EntitiesServiceImpl.class);
+      EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
       if (SecurityUtil.compareRoles(u.getRole(), SecurityConstants.ROLE_DOMAINOWNER) >= 0) {
         results = as.getAllKiosks(domainId, null, null, pageParams);
       } else {
@@ -314,9 +313,7 @@ public class DashboardServlet extends JsonRestServlet {
   // Get the monthly statistics across all domains
   @SuppressWarnings("unchecked")
   private void getMonthlyUsageStatsAcrossDomains(HttpServletRequest request,
-                                                 HttpServletResponse response,
-                                                 ResourceBundle backendMessages,
-                                                 ResourceBundle messages) throws ServiceException {
+                                                 HttpServletResponse response) throws ServiceException {
     xLogger.fine("Entering getMonthlyUsageStatsAcrossDomains");
     // Read the cursor, size, start date (1st of months)
     // Query the MonthSlice table - get all month slices with oty = 'domain' and dt = 'domain' and d > (1st of month - 1 millisec) and order by tc desc (cursor and size is set)
@@ -340,10 +337,11 @@ public class DashboardServlet extends JsonRestServlet {
       }
       // Get the start and end dates
       SimpleDateFormat df = new SimpleDateFormat(Constants.DATE_FORMAT);
-      Date startDate = null;
+      Date startDate;
       startDate = df.parse(startDateStr);
       // Proceed only if the mandatory attributes are present.
-      ReportsService rs = Services.getService("reports");
+      ReportsService rs = StaticApplicationContext.getBean(ConfigUtil.get("reports"),
+          ReportsService.class);
       PageParams pageParams = new PageParams(null, offset, size);
       Results results = rs.getUsageStatsAcrossDomains(startDate, pageParams);
       List<IMonthSlice> resultsList = results.getResults();
@@ -351,10 +349,10 @@ public class DashboardServlet extends JsonRestServlet {
         // From the List<MonthSlice> get UsageStats object
         UsageStats usageStats = new UsageStats(results);
         xLogger.fine("usageStats.domainUsageStatsList: {0}",
-            (usageStats == null || usageStats.getDomainUsageStatsList() == null ? "NULL"
+            (usageStats.getDomainUsageStatsList() == null ? "NULL"
                 : usageStats.getDomainUsageStatsList().toString()));
         xLogger.fine("usageStats.toJSONString(): {0}",
-            (usageStats == null ? "NULL" : usageStats.toJSONString()));
+            (usageStats.toJSONString()));
         // Convert the usageStats object to JSON and return it.
         writeText(response, usageStats.toJSONString());
       } else {

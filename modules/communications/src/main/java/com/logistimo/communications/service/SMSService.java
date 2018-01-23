@@ -24,6 +24,8 @@
 package com.logistimo.communications.service;
 
 import com.logistimo.AppFactory;
+import com.logistimo.communications.MessageHandlingException;
+import com.logistimo.communications.ServiceResponse;
 import com.logistimo.config.entity.IConfig;
 import com.logistimo.config.models.ConfigurationException;
 import com.logistimo.config.models.GeneralConfig;
@@ -31,19 +33,16 @@ import com.logistimo.config.models.SMSConfig;
 import com.logistimo.config.models.SMSConfig.ProviderConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
 import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
+import com.logistimo.constants.CharacterConstants;
+import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
+import com.logistimo.services.Resources;
 import com.logistimo.services.cache.MemcacheService;
+import com.logistimo.utils.HttpUtil;
+import com.logistimo.utils.MessageUtil;
 
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang.StringUtils;
-
-import com.logistimo.communications.MessageHandlingException;
-import com.logistimo.communications.ServiceResponse;
-import com.logistimo.services.Resources;
-import com.logistimo.services.Services;
-import com.logistimo.constants.CharacterConstants;
-import com.logistimo.constants.Constants;
-import com.logistimo.utils.HttpUtil;
-import com.logistimo.utils.MessageUtil;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -228,7 +227,8 @@ public class SMSService extends MessageService {
     try {
       SimpleDateFormat df = new SimpleDateFormat(SMS_DATE_FORMAT);
       String date = df.format(new Date());
-      ConfigurationMgmtService cms = Services.getService(ConfigurationMgmtServiceImpl.class);
+      ConfigurationMgmtService cms = StaticApplicationContext.getBean(
+          ConfigurationMgmtServiceImpl.class);
       IConfig c = cms.getConfiguration(IConfig.GENERALCONFIG);
       GeneralConfig config = new GeneralConfig(c.getConfig());
       MemcacheService cache = AppFactory.get().getMemcacheService();
@@ -273,8 +273,8 @@ public class SMSService extends MessageService {
 
   private Map<String, List<String>> getTemplate() {
     Map<String, List<String>> template = new HashMap<>(2);
-    template.put(FORMATTED, new ArrayList<String>(1));
-    template.put(UNFORMATTED, new ArrayList<String>(1));
+    template.put(FORMATTED, new ArrayList<>(1));
+    template.put(UNFORMATTED, new ArrayList<>(1));
     return template;
   }
 
@@ -283,7 +283,8 @@ public class SMSService extends MessageService {
       SimpleDateFormat df = new SimpleDateFormat(SMS_DATE_FORMAT);
       String date = df.format(new Date());
       MemcacheService cache = AppFactory.get().getMemcacheService();
-      ConfigurationMgmtService cms = Services.getService(ConfigurationMgmtServiceImpl.class);
+      ConfigurationMgmtService cms = StaticApplicationContext.getBean(
+          ConfigurationMgmtServiceImpl.class);
       IConfig c = cms.getConfiguration(IConfig.GENERALCONFIG);
       GeneralConfig config = new GeneralConfig(c.getConfig());
       String domainKey = SMS_PREFIX + domainId + CharacterConstants.UNDERSCORE + date;

@@ -23,23 +23,22 @@
 
 package com.logistimo.api.builders;
 
-import com.logistimo.pagination.Results;
-import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
-import com.logistimo.utils.BigUtil;
-import com.logistimo.utils.LocalDateUtil;
-import com.logistimo.utils.NumberUtil;
 import com.logistimo.api.models.UploadDataViewModel;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
-import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.materials.service.MaterialCatalogService;
-import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
 import com.logistimo.mnltransactions.entity.IMnlTransaction;
+import com.logistimo.pagination.Results;
+import com.logistimo.services.ServiceException;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
+import com.logistimo.utils.BigUtil;
+import com.logistimo.utils.LocalDateUtil;
+import com.logistimo.utils.NumberUtil;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,27 +47,42 @@ import java.util.Locale;
 /**
  * Created by mohan raja on 22/01/15
  */
+@Component
 public class UploadDataViewBuilder {
+
+  private MaterialCatalogService materialCatalogService;
+  private EntitiesService entitiesService;
+  private UsersService usersService;
+
+  @Autowired
+  public void setMaterialCatalogService(MaterialCatalogService materialCatalogService) {
+    this.materialCatalogService = materialCatalogService;
+  }
+
+  @Autowired
+  public void setEntitiesService(EntitiesService entitiesService) {
+    this.entitiesService = entitiesService;
+  }
+
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
+  }
 
   public List<UploadDataViewModel> build(Results results, Locale locale, Long eid, String timezone)
       throws ServiceException {
     int size = results.getSize();
     if (size > 0) {
       List<IMnlTransaction> manUpTransactions = results.getResults();
-      List<UploadDataViewModel> models = new ArrayList<UploadDataViewModel>(size);
-      MaterialCatalogService
-          mc =
-          Services.getService(MaterialCatalogServiceImpl.class, locale);
-      EntitiesService as = Services.getService(EntitiesServiceImpl.class, locale);
-      UsersService usersService = Services.getService(UsersServiceImpl.class, locale);
+      List<UploadDataViewModel> models = new ArrayList<>(size);
       IKiosk k = null;
       if (eid != null) {
-        k = as.getKiosk(eid);
+        k = entitiesService.getKiosk(eid);
       }
       for (IMnlTransaction manUpTrans : manUpTransactions) {
         UploadDataViewModel model = new UploadDataViewModel();
         try {
-          IMaterial m = mc.getMaterial(manUpTrans.getMaterialId());
+          IMaterial m = materialCatalogService.getMaterial(manUpTrans.getMaterialId());
           model.mnm = m.getName();
           model.mid = m.getMaterialId();
         } catch (ServiceException ignored) {
@@ -77,7 +91,7 @@ public class UploadDataViewBuilder {
         IKiosk kiosk = k;
         try {
           if (k == null) {
-            kiosk = as.getKiosk(manUpTrans.getKioskId(), false);
+            kiosk = entitiesService.getKiosk(manUpTrans.getKioskId(), false);
           }
         } catch (Exception e) {
           continue;
@@ -85,7 +99,7 @@ public class UploadDataViewBuilder {
         IKiosk vendor = null;
         try {
           if (manUpTrans.getVendorId() != null) {
-            vendor = as.getKiosk(manUpTrans.getVendorId(), false);
+            vendor = entitiesService.getKiosk(manUpTrans.getVendorId(), false);
           }
         } catch (Exception e) {
           continue;

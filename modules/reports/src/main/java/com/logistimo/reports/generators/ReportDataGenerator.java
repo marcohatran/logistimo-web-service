@@ -27,7 +27,6 @@
 package com.logistimo.reports.generators;
 
 import com.logistimo.config.models.DomainConfig;
-
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.QueryParams;
 
@@ -47,7 +46,6 @@ public interface ReportDataGenerator {
    * @param from    Date from which report is desired
    * @param until   Date until which report is desired
    * @param filters Filters (such as kiosk, materials, or location) for reporting; filter types are defined in Report interface
-   * @param userId  The user ID of the user requesting the report
    * @return An instance of the relevant report data, which can be processed further
    * @throws ReportingDataException Thrown if there was error in retrieving data
    */

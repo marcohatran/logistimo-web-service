@@ -23,8 +23,8 @@
 
 package com.logistimo.bulkuploads.headers;
 
-import com.logistimo.services.Resources;
 import com.logistimo.constants.CharacterConstants;
+import com.logistimo.services.Resources;
 
 import java.util.Locale;
 import java.util.ResourceBundle;

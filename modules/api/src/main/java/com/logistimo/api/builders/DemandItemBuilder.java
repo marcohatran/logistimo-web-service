@@ -27,34 +27,26 @@
 package com.logistimo.api.builders;
 
 import com.logistimo.api.models.DemandModel;
-import com.logistimo.config.models.DomainConfig;
-import com.logistimo.config.models.InventoryConfig;
+import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.constants.Constants;
 import com.logistimo.domains.entity.IDomain;
 import com.logistimo.domains.service.DomainsService;
-import com.logistimo.domains.service.impl.DomainsServiceImpl;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
-import com.logistimo.entities.service.EntitiesServiceImpl;
-import com.logistimo.inventory.dao.impl.InvntryDao;
-import com.logistimo.inventory.entity.IInvntry;
-import com.logistimo.inventory.entity.IInvntryEvntLog;
-import com.logistimo.inventory.service.InventoryManagementService;
-import com.logistimo.inventory.service.impl.InventoryManagementServiceImpl;
 import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.materials.service.MaterialCatalogService;
-import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
 import com.logistimo.orders.entity.IDemandItem;
 import com.logistimo.pagination.Results;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.utils.CommonUtils;
 import com.logistimo.utils.LocalDateUtil;
 
-import java.math.BigDecimal;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -65,30 +57,45 @@ import java.util.Set;
 /**
  * @author charan
  */
+@Component
 public class DemandItemBuilder {
 
   private static final XLog xLogger = XLog.getLog(DemandItemBuilder.class);
 
-  EntityBuilder entityBuilder = new EntityBuilder();
+  private EntityBuilder entityBuilder;
+  private DomainsService domainsService;
+  private MaterialCatalogService materialCatalogService;
+  private EntitiesService entitiesService;
 
-  public Results buildDemandItems(Results results, SecureUserDetails user)
-      throws ServiceException, ObjectNotFoundException {
-    return buildDemandItems(results, user, false);
+  @Autowired
+  public void setEntityBuilder(EntityBuilder entityBuilder) {
+    this.entityBuilder = entityBuilder;
+  }
+
+  @Autowired
+  public void setDomainsService(DomainsService domainsService) {
+    this.domainsService = domainsService;
+  }
+
+  @Autowired
+  public void setMaterialCatalogService(MaterialCatalogService materialCatalogService) {
+    this.materialCatalogService = materialCatalogService;
+  }
+
+  @Autowired
+  public void setEntitiesService(EntitiesService entitiesService) {
+    this.entitiesService = entitiesService;
   }
 
   public Results buildDemandItems(Results results, SecureUserDetails user, boolean skipDuplicates)
       throws ServiceException, ObjectNotFoundException {
-    List demandItems = null;
+    List demandItems;
     List<DemandModel> modelItems = null;
     if (results != null) {
       demandItems = results.getResults();
-      modelItems = new ArrayList<DemandModel>(demandItems.size());
-      MaterialCatalogService mcs = Services.getService(
-          MaterialCatalogServiceImpl.class, user.getLocale());
-      EntitiesService as = Services.getService(
-          EntitiesServiceImpl.class);
+      modelItems = new ArrayList<>(demandItems.size());
       int count = results.getOffset() + 1;
-      Set<String> kioskMaterials = new HashSet<String>(demandItems.size());
+      Set<String> kioskMaterials = new HashSet<>(demandItems.size());
       Map<Long, String> domainNames = new HashMap<>(1);
       for (Object obj : demandItems) {
         IDemandItem item = (IDemandItem) obj;
@@ -96,9 +103,9 @@ public class DemandItemBuilder {
         if (skipDuplicates && kioskMaterials.contains(km)) {
           continue; // This is already processed
         }
-        IMaterial m = null;
+        IMaterial m;
         try {
-          m = mcs.getMaterial(item.getMaterialId());
+          m = materialCatalogService.getMaterial(item.getMaterialId());
         } catch (Exception e) {
           xLogger.warn("WARNING: " + e.getClass().getName()
               + " when getting material " + item.getMaterialId()
@@ -106,7 +113,7 @@ public class DemandItemBuilder {
           continue;
         }
         // Add row
-        DemandModel model = build(item, m, user, as, domainNames);
+        DemandModel model = build(item, m, domainNames);
         if (model != null) {
           model.sno = count++;
           model.ts =
@@ -118,33 +125,24 @@ public class DemandItemBuilder {
         }
       }
     }
-    Results finalResults = new Results(modelItems, results.getCursor(), -1,
-        results.getOffset());
-    return finalResults;
+    return new Results<>(modelItems, results.getCursor(), -1, results.getOffset());
   }
 
-  /**
-   * @param
-   * @param user
-   * @param as
-   * @return
-   * @throws Exception
-   */
   private DemandModel build(IDemandItem item, IMaterial m,
-                            SecureUserDetails user, EntitiesService as,
                             Map<Long, String> domainNames)
       throws ServiceException, ObjectNotFoundException {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     DemandModel itemModel = new DemandModel();
     Long kioskId = item.getKioskId();
-    IKiosk k = null;
+    IKiosk k;
     try {
-      k = as.getKiosk(kioskId);
+      k = entitiesService.getKiosk(kioskId);
     } catch (Exception e) {
       xLogger.warn("Error while fetching Kiosk {0}", item.getKioskId());
       return null;
     }
-    itemModel.e = entityBuilder.buildBaseModel(k, user.getLocale(),
-        user.getTimezone(), "");
+    itemModel.e = entityBuilder.buildBaseModel(k, sUser.getLocale(),
+        sUser.getTimezone(), "");
     itemModel.nm = m.getName();
     itemModel.oid = item.getOrderId();
     itemModel.c = item.getCurrency();
@@ -165,8 +163,7 @@ public class DemandItemBuilder {
     if (domainName == null) {
       IDomain domain = null;
       try {
-        DomainsService ds = Services.getService(DomainsServiceImpl.class);
-        domain = ds.getDomain(item.getDomainId());
+        domain = domainsService.getDomain(item.getDomainId());
       } catch (Exception e) {
         xLogger.warn("Error while fetching Domain {0}", item.getDomainId());
       }
@@ -182,47 +179,4 @@ public class DemandItemBuilder {
     return itemModel;
   }
 
-  public List<DemandModel> getDemandItems(List<IDemandItem> demandItems, SecureUserDetails sUser)
-      throws ServiceException {
-    List<DemandModel> demandModelList = new ArrayList<>();
-    try {
-      MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
-      EntitiesService es = Services.getService(EntitiesServiceImpl.class);
-      InventoryManagementService ims = Services.getService(InventoryManagementServiceImpl.class);
-      DomainConfig dc = DomainConfig.getInstance(sUser.getDomainId());
-      for (IDemandItem item : demandItems) {
-        DemandModel model = new DemandModel();
-        IMaterial material = mcs.getMaterial(item.getMaterialId());
-        model.id = item.getMaterialId();
-        model.nm = material.getName();
-        IKiosk kiosk = es.getKiosk(item.getKioskId());
-        model.e = entityBuilder.buildBaseModel(kiosk, sUser.getLocale(),
-            sUser.getTimezone(), "");
-        model.oid = item.getOrderId();
-        model.rq = item.getRecommendedOrderQuantity();
-        model.p = item.getFormattedPrice();
-        model.a = CommonUtils.getFormattedPrice(item.computeTotalPrice(false));
-        model.q = item.getQuantity();
-        model.isBa = material.isBatchEnabled();
-        IInvntry inv = ims.getInventory(item.getKioskId(), item.getMaterialId());
-        if (inv != null) {
-          IInvntryEvntLog lastEventLog = new InvntryDao().getInvntryEvntLog(inv);
-          if (lastEventLog != null) {
-            model.event = inv.getStockEvent();
-          }
-          model.csavibper =
-              ims.getStockAvailabilityPeriod(inv, dc).setScale(1, BigDecimal.ROUND_HALF_UP);
-          model.crFreq =
-              InventoryConfig.getFrequencyDisplay(dc.getInventoryConfig().getDisplayCRFreq(), false,
-                  sUser.getLocale());
-        }
-        demandModelList.add(model);
-      }
-    } catch (Exception e) {
-      xLogger.warn("Error while fetching demand items in domain: {0}", sUser.getDomainId(), e);
-      throw new ServiceException(e);
-    }
-
-    return demandModelList;
-  }
 }

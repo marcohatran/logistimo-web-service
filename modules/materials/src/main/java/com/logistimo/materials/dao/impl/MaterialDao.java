@@ -23,20 +23,19 @@
 
 package com.logistimo.materials.dao.impl;
 
-import com.logistimo.dao.DaoFactory;
-
+import com.logistimo.logger.XLog;
 import com.logistimo.materials.dao.IMaterialDao;
 import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.materials.entity.Material;
-
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.tags.dao.ITagDao;
-import com.logistimo.tags.dao.TagDao;
 import com.logistimo.tags.entity.ITag;
 import com.logistimo.utils.QueryUtil;
-import com.logistimo.logger.XLog;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -49,11 +48,17 @@ import javax.jdo.Query;
 /**
  * Created by charan on 13/02/15.
  */
+@Repository
 public class MaterialDao implements IMaterialDao {
 
   private static final XLog xLogger = XLog.getLog(MaterialDao.class);
 
-  private ITagDao tagDao = new TagDao();
+  private ITagDao tagDao;
+
+  @Autowired
+  public void setTagDao(ITagDao tagDao) {
+    this.tagDao = tagDao;
+  }
 
   @Override
   public String getKeyString(Long materialId) {
@@ -127,7 +132,7 @@ public class MaterialDao implements IMaterialDao {
       List<Material> data = (List<Material>) query.execute();
       if (data != null) {
         data = (List<Material>) pm.detachCopyAll(data);
-        return new Results(data, null);
+        return new Results<>(data, null);
       }
     } catch (Exception e) {
       xLogger.severe(
@@ -150,11 +155,11 @@ public class MaterialDao implements IMaterialDao {
   public Results getAllMaterials(Long domainId, String tag, PageParams pageParams) {
     xLogger.fine("Entering getAllMaterials");
     PersistenceManager pm = PMF.get().getPersistenceManager();
-    List<IMaterial> materials = new ArrayList<IMaterial>();
+    List<IMaterial> materials = new ArrayList<>();
     // Formulate query
     String filters = "dId.contains(domainIdParam)";
     String declaration = "Long domainIdParam";
-    Map<String, Object> params = new HashMap<String, Object>();
+    Map<String, Object> params = new HashMap<>();
     params.put("domainIdParam", domainId);
     if (tag != null) {
       filters += " && tgs.contains(tagsParam)";
@@ -185,7 +190,7 @@ public class MaterialDao implements IMaterialDao {
     }
 
     xLogger.fine("Exiting getAllMaterials");
-    return new Results(materials, cursor);
+    return new Results<>(materials, cursor);
   }
 
   @Override
@@ -226,10 +231,7 @@ public class MaterialDao implements IMaterialDao {
   @Override
   public boolean checkMaterialExists(Long domainId, String materialName) {
     List<IMaterial> results = getMaterialByName(domainId, materialName);
-    if (results != null && results.size() > 0) {
-      return true;
-    }
-    return false;
+    return results != null && results.size() > 0;
   }
 
 }

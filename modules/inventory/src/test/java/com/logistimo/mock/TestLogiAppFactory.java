@@ -24,7 +24,6 @@ package com.logistimo.mock;
 
 import com.logistimo.AppFactory;
 import com.logistimo.auth.service.AuthenticationService;
-import com.logistimo.auth.service.AuthorizationService;
 import com.logistimo.dao.DaoException;
 import com.logistimo.dao.IDaoUtil;
 import com.logistimo.logger.ILogger;
@@ -86,11 +85,6 @@ public class TestLogiAppFactory extends AppFactory {
 
   @Override
   public ICounter getCounter() {
-    return null;
-  }
-
-  @Override
-  public AuthorizationService getAuthorizationService() {
     return null;
   }
 

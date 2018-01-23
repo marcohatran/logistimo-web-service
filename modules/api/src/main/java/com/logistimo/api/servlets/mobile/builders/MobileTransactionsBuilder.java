@@ -30,17 +30,14 @@ import com.logistimo.constants.Constants;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
-import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.inventory.TransactionUtil;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.inventory.models.ErrorDetailModel;
 import com.logistimo.inventory.service.InventoryManagementService;
-import com.logistimo.inventory.service.impl.InventoryManagementServiceImpl;
 import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.materials.service.MaterialCatalogService;
-import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
 import com.logistimo.proto.MobileGeoModel;
 import com.logistimo.proto.MobileInvModel;
 import com.logistimo.proto.MobileMaterialTransModel;
@@ -52,15 +49,15 @@ import com.logistimo.proto.MobileTransactionsModel;
 import com.logistimo.proto.MobileUpdateInvTransRequest;
 import com.logistimo.proto.MobileUpdateInvTransResponse;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.tags.TagUtil;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.StringUtil;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -75,6 +72,7 @@ import java.util.Set;
 /**
  * Created by vani on 18/01/17.
  */
+@Component
 public class MobileTransactionsBuilder {
   private static final XLog xLogger = XLog.getLog(MobileTransactionsBuilder.class);
 
@@ -83,6 +81,31 @@ public class MobileTransactionsBuilder {
   private static final int PARTIAL_ERROR = 2;
 
   private static final String VERSION_01 = "01";
+
+  private EntitiesService entitiesService;
+  private UsersService usersService;
+  private MaterialCatalogService materialCatalogService;
+  private InventoryManagementService inventoryManagementService;
+
+  @Autowired
+  public void setEntitiesService(EntitiesService entitiesService) {
+    this.entitiesService = entitiesService;
+  }
+
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
+  }
+
+  @Autowired
+  public void setMaterialCatalogService(MaterialCatalogService materialCatalogService) {
+    this.materialCatalogService = materialCatalogService;
+  }
+
+  @Autowired
+  public void setInventoryManagementService(InventoryManagementService inventoryManagementService) {
+    this.inventoryManagementService = inventoryManagementService;
+  }
 
   /**
    * Builds a transactions request object as required by the mobile from a json string
@@ -105,16 +128,10 @@ public class MobileTransactionsBuilder {
       return mtsm;
     }
     List<MobileTransactionModel> mtmList = new ArrayList<>(transactions.size());
-    EntitiesService as;
-    UsersService us;
-    MaterialCatalogService mcs;
-    as = Services.getService(EntitiesServiceImpl.class);
-    us = Services.getService(UsersServiceImpl.class);
-    mcs = Services.getService(MaterialCatalogServiceImpl.class);
     for (ITransaction transaction : transactions) {
       IMaterial m;
       try {
-        m = mcs.getMaterial(transaction.getMaterialId());
+        m = materialCatalogService.getMaterial(transaction.getMaterialId());
       } catch (ServiceException e) {
         xLogger.warn("Exception while getting material for material ID {0}",
             transaction.getMaterialId()); // Material may have been deleted, skip this transaction
@@ -135,7 +152,7 @@ public class MobileTransactionsBuilder {
       mtm.cstk = transaction.getClosingStock();
       mtm.uid = transaction.getSourceUserId();
       try {
-        IUserAccount u = us.getUserAccount(mtm.uid);
+        IUserAccount u = usersService.getUserAccount(mtm.uid);
         mtm.u = u.getFullName();
       } catch (Exception e) {
         xLogger.warn("Exception while getting user name for userId: {0}: ",
@@ -144,7 +161,7 @@ public class MobileTransactionsBuilder {
       mtm.lkid = transaction.getLinkedKioskId();
       if (mtm.lkid != null) {
         try {
-          IKiosk lk = as.getKiosk(mtm.lkid, false);
+          IKiosk lk = entitiesService.getKiosk(mtm.lkid, false);
           mtm.lknm = lk.getName();
         } catch (Exception e) {
           xLogger.warn("Exception while getting kiosk name for linked kiosk Id: {0}: ",
@@ -256,12 +273,10 @@ public class MobileTransactionsBuilder {
      mids.add(mobileMaterialTransModel.mid);
    }
    List<MobileInvModel> mobInvList = new ArrayList<>();
-   EntitiesService es = Services.getService(EntitiesServiceImpl.class);
-   InventoryManagementService ims = Services.getService(InventoryManagementServiceImpl.class);
    for (Long mid : mids) {
      IInvntry inventory;
      try {
-       inventory = ims.getInventory(kioskId, mid);
+       inventory = inventoryManagementService.getInventory(kioskId, mid);
        if (inventory == null) {
           xLogger.warn("Inventory does not exist for kid {0} and mid {1}", kioskId, mid);
           continue;
@@ -272,7 +287,7 @@ public class MobileTransactionsBuilder {
      }
      MobileInvModel
          inv =
-         new MobileInventoryBuilder().buildMobileInvModel(inventory, domainId, userId, ims, es);
+         new MobileInventoryBuilder().buildMobileInvModel(inventory, domainId, userId);
      if (inv != null) {
        mobInvList.add(inv);
      }

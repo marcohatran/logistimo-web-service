@@ -33,7 +33,6 @@ import com.logistimo.auth.SecurityConstants;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.config.entity.IConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
-import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.events.handlers.EventHandler;
@@ -42,18 +41,15 @@ import com.logistimo.exception.TaskSchedulingException;
 import com.logistimo.exception.ValidationException;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.service.InventoryManagementService;
-import com.logistimo.inventory.service.impl.InventoryManagementServiceImpl;
 import com.logistimo.locations.client.LocationClient;
 import com.logistimo.logger.XLog;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.cache.MemcacheService;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.users.entity.IUserDevice;
 import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -68,10 +64,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
@@ -103,20 +97,36 @@ public class AdminController {
   private static final XLog xLogger = XLog.getLog(AdminController.class);
 
   private LocationClient locationClient;
+  private ConfigurationMgmtService configurationMgmtService;
+  private UsersService usersService;
+  private InventoryManagementService inventoryManagementService;
 
   @Autowired
   public void setLocationClient(LocationClient locationClient) {
     this.locationClient = locationClient;
   }
 
+  @Autowired
+  public void setConfigurationMgmtService(ConfigurationMgmtService configurationMgmtService) {
+    this.configurationMgmtService = configurationMgmtService;
+  }
+
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
+  }
+
+  @Autowired
+  public void setInventoryManagementService(InventoryManagementService inventoryManagementService) {
+    this.inventoryManagementService = inventoryManagementService;
+  }
+
   @RequestMapping(value = "/dailyevents", method = RequestMethod.GET)
   public
   @ResponseBody
-  void dailyExport(@RequestParam Long dId, HttpServletRequest request) {
+  void dailyExport(@RequestParam Long dId) {
     try {
-      SecureUserDetails
-          sUser =
-          SecurityUtils.getUserDetails(request);
+      SecureUserDetails sUser = SecurityUtils.getUserDetails();
       if (sUser.getRole().equals(SecurityConstants.ROLE_SUPERUSER) && dId != null) {
         EventHandler.createDailyEvents(dId);
       } else {
@@ -130,11 +140,9 @@ public class AdminController {
   @RequestMapping(value = "/burstcache", method = RequestMethod.GET)
   public
   @ResponseBody
-  void burstCache(HttpServletRequest request) {
+  void burstCache() {
     try {
-      SecureUserDetails
-          sUser =
-          SecurityUtils.getUserDetails(request);
+      SecureUserDetails sUser = SecurityUtils.getUserDetails();
       if (sUser.getRole().equals(SecurityConstants.ROLE_SUPERUSER)) {
         PMF.get().getDataStoreCache().evictAll();
       } else {
@@ -149,11 +157,9 @@ public class AdminController {
   public
   @ResponseBody
   void batchExport(@RequestParam Long dId, @RequestParam(required = false) Date start,
-                   @RequestParam(required = false) Date end, HttpServletRequest request) {
+                   @RequestParam(required = false) Date end) {
     try {
-      SecureUserDetails
-          sUser =
-          SecurityUtils.getUserDetails(request);
+      SecureUserDetails sUser = SecurityUtils.getUserDetails();
       if (sUser.getRole().equals(SecurityConstants.ROLE_SUPERUSER) && dId != null) {
         EventHandler.CustomDuration customDuration = null;
         if (start != null || end != null) {
@@ -174,11 +180,9 @@ public class AdminController {
   @RequestMapping(value = "/burstDashboardCache", method = RequestMethod.GET)
   public
   @ResponseBody
-  void burstDashboardCache(HttpServletRequest request) {
+  void burstDashboardCache() {
     try {
-      SecureUserDetails
-          sUser =
-          SecurityUtils.getUserDetails(request);
+      SecureUserDetails sUser = SecurityUtils.getUserDetails();
       xLogger.info("User {0} requested for object cache burst", sUser.getUsername());
       if (sUser.getRole().equals(SecurityConstants.ROLE_SUPERUSER)) {
         MemcacheService mcs = AppFactory.get().getMemcacheService();
@@ -240,10 +244,7 @@ public class AdminController {
   public
   @ResponseBody
   void updateLocationsData() throws ServiceException {
-    ConfigurationMgmtService
-        cms =
-        Services.getService(ConfigurationMgmtServiceImpl.class);
-    IConfig c = cms.getConfiguration(IConfig.LOCATIONS);
+    IConfig c = configurationMgmtService.getConfiguration(IConfig.LOCATIONS);
     locationClient.updateLocationsMasterdata(c.getConfig());
   }
 
@@ -252,14 +253,10 @@ public class AdminController {
   public
   @ResponseBody
   String getUserDeviceToken(@RequestParam String userId, @RequestParam String appName,
-                            HttpServletRequest request, HttpServletResponse response) {
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
-    Locale locale = user.getLocale();
+                            HttpServletResponse response) {
     IUserDevice result = null;
     try {
-      UsersService as = Services.getService(UsersServiceImpl.class, locale);
-      result = as.getUserDevice(userId, appName);
-
+      result = usersService.getUserDevice(userId, appName);
     } catch (ServiceException e) {
       xLogger.warn("Error while getting device token for user {0}", userId, e);
       try {
@@ -268,7 +265,7 @@ public class AdminController {
         xLogger.warn("Error while getting device token for user {0}", userId, e1);
       }
     }
-    return (result != null) ? result.getToken() : "";
+    return (result != null) ? result.getToken() : CharacterConstants.EMPTY;
   }
 
   @RequestMapping(value = "/simulate-data", method = RequestMethod.POST)
@@ -277,14 +274,8 @@ public class AdminController {
   String simulateData(@RequestBody SimulateRequestModel simulateRequestModel)
       throws ServiceException, TaskSchedulingException {
     String message;
-    InventoryManagementService
-        ims =
-        Services.getService(InventoryManagementServiceImpl.class);
-    // Get the materials associated with the kiosk
-    List<IInvntry>
-        inventories =
-        ims.getInventoryByKiosk(simulateRequestModel.entityId, null)
-            .getResults(); // TODO: pagination
+    List<IInvntry> inventories =
+        inventoryManagementService.getInventoryByKiosk(simulateRequestModel.entityId, null).getResults();
 
     if (inventories == null || inventories.size() == 0) {
       throw new ValidationException(

@@ -23,30 +23,30 @@
 
 package com.logistimo.api.builders;
 
+import com.logistimo.api.constants.AggregationConstants;
+import com.logistimo.api.models.FChartModel;
+import com.logistimo.constants.CharacterConstants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dashboards.entity.IWidget;
 import com.logistimo.inventory.dao.IInvntryDao;
-import com.logistimo.inventory.dao.impl.InvntryDao;
 import com.logistimo.inventory.entity.IInvntry;
-import com.logistimo.reports.ReportsConstants;
-import com.logistimo.reports.entity.slices.Counts;
-import com.logistimo.reports.entity.slices.ISlice;
-import com.logistimo.reports.entity.slices.IReportsSlice;
-import com.logistimo.reports.service.ReportsService;
-import com.logistimo.reports.service.impl.ReportsServiceImpl;
-import com.logistimo.services.utils.ConfigUtil;
-
-import com.logistimo.reports.models.DomainCounts;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
+import com.logistimo.reports.ReportsConstants;
+import com.logistimo.reports.entity.slices.Counts;
+import com.logistimo.reports.entity.slices.IReportsSlice;
+import com.logistimo.reports.entity.slices.ISlice;
 import com.logistimo.reports.generators.ReportData;
+import com.logistimo.reports.models.DomainCounts;
+import com.logistimo.reports.service.ReportsService;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
-import com.logistimo.api.constants.AggregationConstants;
+import com.logistimo.services.utils.ConfigUtil;
 import com.logistimo.utils.BigUtil;
-import com.logistimo.constants.CharacterConstants;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.NumberUtil;
-import com.logistimo.api.models.FChartModel;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.text.ParseException;
@@ -64,10 +64,17 @@ import java.util.Map;
 /**
  * Created by Mohan Raja on 19/02/15
  */
+@Component
 public class FChartBuilder {
 
   private static final int PREDICTIVE_FUTURE_DAYS = ConfigUtil.getInt("predictive.future.days", 30);
-  private IInvntryDao invDao = new InvntryDao();
+
+  private IInvntryDao invDao;
+
+  @Autowired
+  public void setInvDao(IInvntryDao invDao) {
+    this.invDao = invDao;
+  }
 
   public List<FChartModel> buildConsumptionChartModel(ReportData r, String repGenTime) {
     Iterator<? extends ISlice> it = r.getResults().iterator();
@@ -128,7 +135,7 @@ public class FChartBuilder {
     if (it.hasNext()) {
       nextSlice = it.next();
     }
-    List<FChartModel> models = new ArrayList<FChartModel>(r.getResults().size());
+    List<FChartModel> models = new ArrayList<>(r.getResults().size());
     while (nextSlice != null) {
       IReportsSlice monthSlice = (IReportsSlice) nextSlice;
       FChartModel model = new FChartModel();
@@ -138,7 +145,7 @@ public class FChartBuilder {
       model.label =
           cal.get(Calendar.YEAR) + "-" + (cal.get(Calendar.MONTH) + 1) + "-" + cal
               .get(Calendar.DAY_OF_MONTH);
-      List<String> value = new ArrayList<String>();
+      List<String> value = new ArrayList<>();
       value.add(NumberUtil.getFormattedValue(monthSlice.getAverageOrderProcessingTime()));
       value.add(NumberUtil.getFormattedValue(monthSlice.getAverageOrderDeliveryTime()));
       model.value = value;
@@ -158,7 +165,7 @@ public class FChartBuilder {
     if (it.hasNext()) {
       nextSlice = it.next();
     }
-    List<FChartModel> models = new ArrayList<FChartModel>(r.getResults().size());
+    List<FChartModel> models = new ArrayList<>(r.getResults().size());
     while (nextSlice != null) {
       IReportsSlice monthSlice = (IReportsSlice) nextSlice;
       FChartModel model = new FChartModel();
@@ -168,7 +175,7 @@ public class FChartBuilder {
       model.label =
           cal.get(Calendar.YEAR) + "-" + (cal.get(Calendar.MONTH) + 1) + "-" + cal
               .get(Calendar.DAY_OF_MONTH);
-      List<String> value = new ArrayList<String>();
+      List<String> value = new ArrayList<>();
       value.add(NumberUtil.getFormattedValue(monthSlice.getAverageStockoutResponseTime()));
       value
           .add(NumberUtil.getFormattedValue(monthSlice.getAverageLessThanMinResponseTimeAverage()));
@@ -190,7 +197,7 @@ public class FChartBuilder {
     if (it.hasNext()) {
       nextSlice = it.next();
     }
-    List<FChartModel> models = new ArrayList<FChartModel>(r.getResults().size());
+    List<FChartModel> models = new ArrayList<>(r.getResults().size());
     Calendar prevCal = null;
     Counts counts = new Counts();
 
@@ -218,7 +225,7 @@ public class FChartBuilder {
 
   public List<FChartModel> buildUAChartModel(ReportData r, String repGenTime) {
     Iterator<? extends ISlice> it = r.getResults().iterator();
-    List<FChartModel> models = new ArrayList<FChartModel>(r.getResults().size());
+    List<FChartModel> models = new ArrayList<>(r.getResults().size());
     while (it.hasNext()) {
       ISlice slice = it.next();
       Calendar cal = GregorianCalendar.getInstance();
@@ -228,7 +235,7 @@ public class FChartBuilder {
       model.label =
           cal.get(Calendar.YEAR) + "-" + (cal.get(Calendar.MONTH) + 1) + "-" + cal
               .get(Calendar.DAY_OF_MONTH);
-      List<String> value = new ArrayList<String>();
+      List<String> value = new ArrayList<>();
       value.add(NumberUtil.getFormattedValue(slice.getLoginCounts()));
       value.add(NumberUtil.getFormattedValue(slice.getIssueCount()));
       value.add(NumberUtil.getFormattedValue(slice.getReceiptCount()));
@@ -248,7 +255,7 @@ public class FChartBuilder {
     model.label =
         cal.get(Calendar.YEAR) + "-" + (cal.get(Calendar.MONTH) + 1) + "-" + cal
             .get(Calendar.DAY_OF_MONTH);
-    List<String> value = new ArrayList<String>();
+    List<String> value = new ArrayList<>();
     value.add(String.valueOf(counts.i));
     value.add(String.valueOf(counts.r));
     value.add(String.valueOf(counts.s));
@@ -271,7 +278,7 @@ public class FChartBuilder {
   public List<FChartModel> buildHDashboardChartModel(DomainCounts counts, String periodType,
                                                      Boolean isCurrentMonth, String repGenTime) {
     if (counts != null && counts.getCounts() != null) {
-      List<FChartModel> modelList = new ArrayList<FChartModel>();
+      List<FChartModel> modelList = new ArrayList<>();
       List<DomainCounts.Counts> countsList = counts.getCounts();
       SimpleDateFormat simpleDateFormat;
       if (periodType.equals("monthly")) {
@@ -320,7 +327,6 @@ public class FChartBuilder {
   public List<FChartModel> getAggrData(Long did, String fq, int period, String aggregation)
       throws ServiceException {
     List<FChartModel> models = new ArrayList<>(period);
-    ReportsService rs = Services.getService(ReportsServiceImpl.class);
     SimpleDateFormat simpleDateFormat;
     String freq = IWidget.MONTHLY.equals(fq) ? ISlice.MONTHLY : ISlice.DAILY;
     if (ISlice.MONTHLY.equals(freq)) {
@@ -328,9 +334,9 @@ public class FChartBuilder {
     } else {
       simpleDateFormat = new SimpleDateFormat("MMM dd, yyyy");
     }
-    Results
-        r =
-        rs.getSlices(new Date(), freq, "d", String.valueOf(did), "dmn", String.valueOf(did), true,
+    ReportsService reportsService = StaticApplicationContext.getBean(ConfigUtil.get("reports"), ReportsService.class);
+    Results r =
+        reportsService.getSlices(new Date(), freq, "d", String.valueOf(did), "dmn", String.valueOf(did), true,
             new PageParams(period));
     Iterable<ISlice> slices = (List<ISlice>) r.getResults();
     for (ISlice slice : slices) {

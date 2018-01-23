@@ -27,14 +27,13 @@
 package com.logistimo.api.communications;
 
 import com.logistimo.AppFactory;
+import com.logistimo.communications.MessageHandlingException;
 import com.logistimo.communications.service.MessageService;
 import com.logistimo.communications.service.SMSService;
-import com.logistimo.services.taskqueue.ITaskService;
-
-import com.logistimo.communications.MessageHandlingException;
-import com.logistimo.utils.HttpUtil;
 import com.logistimo.exception.TaskSchedulingException;
 import com.logistimo.logger.XLog;
+import com.logistimo.services.taskqueue.ITaskService;
+import com.logistimo.utils.HttpUtil;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;

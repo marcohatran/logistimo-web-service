@@ -24,10 +24,10 @@
 package com.logistimo.services.taskqueue;
 
 import com.codahale.metrics.Meter;
+import com.logistimo.logger.XLog;
 import com.logistimo.utils.MetricsUtil;
 
 import org.apache.camel.Handler;
-import com.logistimo.logger.XLog;
 
 /**
  * Created by charan on 10/10/14.

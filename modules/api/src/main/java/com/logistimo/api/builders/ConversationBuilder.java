@@ -23,41 +23,47 @@
 
 package com.logistimo.api.builders;
 
+import com.logistimo.api.models.ConversationModel;
 import com.logistimo.conversations.entity.IConversation;
 import com.logistimo.conversations.service.ConversationService;
-import com.logistimo.conversations.service.impl.ConversationServiceImpl;
 import com.logistimo.dao.JDOUtils;
-
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.utils.LocalDateUtil;
-import com.logistimo.api.models.ConversationModel;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.Date;
 
 /**
  * Created by kumargaurav on 04/10/16.
  */
+@Component
 public class ConversationBuilder {
 
+  private ConversationService conversationService;
 
-  public IConversation buildConversation(ConversationModel model, String userId, boolean isCreate)
+  @Autowired
+  public void setConversationService(ConversationService conversationService) {
+    this.conversationService = conversationService;
+  }
+
+  public IConversation buildConversation(ConversationModel model, boolean isCreate)
       throws ServiceException {
 
-    IConversation conversation = null;
+    IConversation conversation;
     if (isCreate) {
       conversation = JDOUtils.createInstance(IConversation.class);
     } else {
-      ConversationService service = Services.getService(ConversationServiceImpl.class);
-      conversation = service.getConversationById(model.id);
+      conversation = conversationService.getConversationById(model.id);
     }
-    return buildConversation(conversation, model, userId, isCreate);
+    return buildConversation(conversation, model, isCreate);
   }
 
 
   public IConversation buildConversation(IConversation conversation, ConversationModel model,
-                                         String userId, boolean isCreate) {
+                                         boolean isCreate) {
 
     conversation.setObjectId(model.objectId);
     conversation.setObjectType(model.objectType);

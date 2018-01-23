@@ -27,7 +27,8 @@
 package com.logistimo.reports.generators;
 
 import com.logistimo.config.models.DomainConfig;
-
+import com.logistimo.context.StaticApplicationContext;
+import com.logistimo.logger.XLog;
 import com.logistimo.orders.entity.IDemandItem;
 import com.logistimo.orders.service.OrderManagementService;
 import com.logistimo.orders.service.impl.OrderManagementServiceImpl;
@@ -36,8 +37,6 @@ import com.logistimo.pagination.QueryParams;
 import com.logistimo.pagination.Results;
 import com.logistimo.reports.ReportsConstants;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
-import com.logistimo.logger.XLog;
 
 import java.util.Date;
 import java.util.List;
@@ -80,7 +79,7 @@ public class DemandBoardDataGenerator implements ReportDataGenerator {
                                   PageParams pageParams, DomainConfig dc, String sourceUserId)
       throws ReportingDataException {
     xLogger.fine("Entered getReportData");
-    DemandBoardData dbd = null;
+    DemandBoardData dbd;
     ///if ( from == null )
     ///	throw new ReportingDataException( "From date is not specified. It is mandatory" );
     Long domainId = (Long) filters.get(ReportsConstants.FILTER_DOMAIN);
@@ -93,7 +92,8 @@ public class DemandBoardDataGenerator implements ReportDataGenerator {
           "Neither domain ID, kiosk ID or material ID are specified. At least one of them must be specified");
     }
     try {
-      OrderManagementService oms = Services.getService(OrderManagementServiceImpl.class);
+      OrderManagementService oms = StaticApplicationContext
+          .getBean(OrderManagementServiceImpl.class);
       Results
           results =
           oms.getDemandItems(domainId, kioskId, materialId, kioskTag, materialTag, from,

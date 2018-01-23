@@ -144,7 +144,7 @@ public class AuthServlet extends JsonRestServlet {
       // Authenticate this user
       SecureUserDetails userDetails = SecurityMgr.authenticate(userId, password);
       // Initialize session
-      SessionMgr.recreateSession(req, resp, userDetails);
+      SessionMgr.recreateSession(req, userDetails);
       // Get IP address
       String ipAddress = isGAE ? req.getRemoteAddr() : req.getHeader("X-REAL-IP");
       // Update the user's last login time

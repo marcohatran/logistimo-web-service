@@ -30,13 +30,13 @@ import com.logistimo.config.models.EventSpec;
 import com.logistimo.config.models.EventsConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
 import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.domains.entity.IDomain;
 import com.logistimo.domains.service.DomainsService;
 import com.logistimo.domains.service.impl.DomainsServiceImpl;
 import com.logistimo.logger.XLog;
 import com.logistimo.pagination.Results;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.cache.MemcacheService;
 
 import java.util.LinkedHashMap;
@@ -53,7 +53,7 @@ public class EventsConfigMigrator {
    * Migrate the events config
    */
   public void migrateEventsConfig() throws ServiceException {
-    DomainsService ds = Services.getService(DomainsServiceImpl.class);
+    DomainsService ds = StaticApplicationContext.getBean(DomainsServiceImpl.class);
     Results domains = ds.getAllDomains(null);
     List domainList = domains.getResults();
     if (domainList != null && domainList.size() > 0) {
@@ -114,9 +114,8 @@ public class EventsConfigMigrator {
     if (changed) {
       ec.setEventSpecs(newSpecs);
       domainConfig.setEventsConfig(ec);
-      ConfigurationMgmtService
-          cms =
-          Services.getService(ConfigurationMgmtServiceImpl.class);
+      ConfigurationMgmtService cms =
+          StaticApplicationContext.getBean(ConfigurationMgmtServiceImpl.class);
       IConfig config;
       try {
         config = cms.getConfiguration(IConfig.CONFIG_PREFIX + domain.getId());

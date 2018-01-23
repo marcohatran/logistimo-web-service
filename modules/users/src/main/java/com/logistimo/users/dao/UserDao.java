@@ -23,22 +23,22 @@
 
 package com.logistimo.users.dao;
 
+import com.logistimo.constants.CharacterConstants;
+import com.logistimo.constants.Constants;
+import com.logistimo.constants.QueryConstants;
 import com.logistimo.dao.JDOUtils;
+import com.logistimo.logger.XLog;
 import com.logistimo.pagination.QueryParams;
+import com.logistimo.services.impl.PMF;
 import com.logistimo.tags.dao.ITagDao;
-import com.logistimo.tags.dao.TagDao;
 import com.logistimo.tags.entity.ITag;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.entity.UserAccount;
 
-import com.logistimo.services.impl.PMF;
-import com.logistimo.constants.CharacterConstants;
-import com.logistimo.constants.Constants;
-import com.logistimo.constants.QueryConstants;
-import com.logistimo.logger.XLog;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -49,6 +49,7 @@ import javax.jdo.Query;
 /**
  * Created by charan on 03/03/15.
  */
+@Component
 public class UserDao implements IUserDao {
   private static final String DID_EQ_FILTER = "sdId == domainIdParam";
   private static final String DOMAIN_ID_PARAM = "domainIdParam";
@@ -57,7 +58,12 @@ public class UserDao implements IUserDao {
   private static final String ROLE_SU_FILTER = "role != roleParam";
   private static final String ROLE_SU_PARAM = "roleParam";
   private XLog xLogger = XLog.getLog(UserDao.class);
-  private ITagDao tagDao = new TagDao();
+  private ITagDao tagDao;
+
+  @Autowired
+  public void setTagDao(ITagDao tagDao) {
+    this.tagDao = tagDao;
+  }
 
   /**
    * Get the query params object based on the domain Id and the filters selected. This is used in the service during display and during export.
@@ -88,7 +94,7 @@ public class UserDao implements IUserDao {
     // Form query params.
     StringBuilder filter = new StringBuilder();
     StringBuilder declaration = new StringBuilder();
-    Map<String, Object> params = new HashMap<String, Object>();
+    Map<String, Object> params = new HashMap<>();
     if (includeChildDomainUsers) {
       filter.append(DID_CONTAINS_FILTER);
     } else {
@@ -117,9 +123,7 @@ public class UserDao implements IUserDao {
       // Get filters keys
       Set<String> keys = filters.keySet();
       // Iterate through keys.
-      Iterator<String> keysIter = keys.iterator();
-      while (keysIter.hasNext()) {
-        String paramName = keysIter.next();
+      for (String paramName : keys) {
         Object paramValue = filters.get(paramName);
         // Fields are Strings
         boolean isParamNotEmpty = !(paramValue == null);

@@ -24,9 +24,9 @@
 package com.logistimo.users;
 
 import com.logistimo.auth.SecurityConstants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.logger.XLog;
 import com.logistimo.services.Resources;
-import com.logistimo.services.Services;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.users.service.impl.UsersServiceImpl;
@@ -95,8 +95,7 @@ public class UserUtils {
     List<String> userIds = null;
     List<String> uIds = null;
     List<String> uTIds = null;
-    UsersService as;
-    as = Services.getService(UsersServiceImpl.class, Locale.ENGLISH);
+    UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
     if (StringUtils.isNotEmpty(userIdsCSV)) {
       uIds = as.getEnabledUserIds(Arrays.asList(userIdsCSV.split(",")));
     }

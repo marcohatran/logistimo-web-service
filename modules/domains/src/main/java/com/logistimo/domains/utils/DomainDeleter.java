@@ -24,20 +24,18 @@
 package com.logistimo.domains.utils;
 
 import com.logistimo.AppFactory;
+import com.logistimo.constants.CharacterConstants;
+import com.logistimo.constants.QueryConstants;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.domains.entity.IDomain;
 import com.logistimo.domains.entity.IDomainLink;
-import com.logistimo.pagination.QueryParams;
-import com.logistimo.services.taskqueue.ITaskService;
-
-import com.logistimo.constants.CharacterConstants;
-import com.logistimo.services.utils.ConfigUtil;
-import com.logistimo.utils.PropertyUtil;
-import com.logistimo.constants.QueryConstants;
 import com.logistimo.logger.XLog;
-
+import com.logistimo.pagination.QueryParams;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.impl.PMF;
+import com.logistimo.services.taskqueue.ITaskService;
+import com.logistimo.services.utils.ConfigUtil;
+import com.logistimo.utils.PropertyUtil;
 
 import java.util.HashMap;
 import java.util.Map;

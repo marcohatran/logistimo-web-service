@@ -38,7 +38,7 @@
 
     <properties>
         <build.number>SNAPSHOT</build.number>
-        <build.version>2.6.3</build.version>
+        <build.version>2.7.0</build.version>
     </properties>
 
     <dependencies>

@@ -34,9 +34,7 @@ import com.logistimo.dashboards.querygenerators.EntityActivityQueryGenerator;
 import com.logistimo.dashboards.service.IDashboardService;
 import com.logistimo.exception.SystemException;
 import com.logistimo.logger.XLog;
-import com.logistimo.services.Service;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.services.utils.ConfigUtil;
 import com.logistimo.tags.entity.ITag;
@@ -52,7 +50,6 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import javax.jdo.PersistenceManager;
@@ -63,37 +60,10 @@ import javax.sql.rowset.CachedRowSet;
 /**
  * @author Mohan Raja
  */
+@org.springframework.stereotype.Service
 public class DashboardService implements IDashboardService {
   private static final XLog xLogger = XLog.getLog(DashboardService.class);
   private static final int PREDICTIVE_PERIOD = ConfigUtil.getInt("predictive.period", 7);
-
-  @Override
-  public void init(Services services) throws ServiceException {
-  }
-
-  @Override
-  public void destroy() throws ServiceException {
-  }
-
-  @Override
-  public Class<? extends Service> getInterface() {
-    return DashboardService.class;
-  }
-
-  @Override
-  public void loadResources(Locale locale) {
-
-  }
-
-  @Override
-  public Locale getLocale() {
-    return null;
-  }
-
-  @Override
-  public Service clone() throws CloneNotSupportedException {
-    throw new CloneNotSupportedException();
-  }
 
   @Override
   public void createDashboard(IDashboard ds) throws ServiceException {
@@ -252,10 +222,6 @@ public class DashboardService implements IDashboardService {
       String name = db.getName();
       if ("nm".equals(ty)) {
         db.setName(val);
-      } else if ("desc".equals(ty)) {
-        //db.setDesc(val);
-      } else if ("conf".equals(ty)) {
-        //db.setConf(val);
       }
       pm.makePersistent(db);
       return name;
@@ -1228,7 +1194,6 @@ public class DashboardService implements IDashboardService {
     Query query = pm.newQuery("javax.jdo.query.SQL",sb.toString());
     query.setUnique(true);
     Object object = query.execute();
-    Integer count = ((Long) object).intValue();
-    return count;
+    return ((Long) object).intValue();
   }
 }

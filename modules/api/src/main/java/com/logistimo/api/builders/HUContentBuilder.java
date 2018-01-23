@@ -30,9 +30,10 @@ import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IHandlingUnitContent;
 import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.materials.service.MaterialCatalogService;
-import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
-import com.logistimo.services.Services;
 import com.logistimo.utils.BigUtil;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -42,8 +43,17 @@ import java.util.Set;
 /**
  * Created by yuvaraj on 16/07/16.
  */
+
+@Component
 public class HUContentBuilder {
   private static final XLog xLogger = XLog.getLog(EntityBuilder.class);
+
+  private MaterialCatalogService materialCatalogService;
+
+  @Autowired
+  public void setMaterialCatalogService(MaterialCatalogService materialCatalogService) {
+    this.materialCatalogService = materialCatalogService;
+  }
 
   public Set<IHandlingUnitContent> buildHUContentSet(List<HUContentModel> lModel) {
     Set<IHandlingUnitContent> items = new HashSet<>(lModel.size());
@@ -82,9 +92,6 @@ public class HUContentBuilder {
     cm.ty = huc.getTy();
     cm.cntId = huc.getCntId();
     try {
-      MaterialCatalogService
-          materialCatalogService =
-          Services.getService(MaterialCatalogServiceImpl.class);
       IMaterial m = materialCatalogService.getMaterial(huc.getCntId());
       cm.cntName = m.getName();
     } catch (Exception e) {

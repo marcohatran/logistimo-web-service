@@ -23,9 +23,9 @@
 
 package com.logistimo.api.controllers;
 
+import com.logistimo.logger.XLog;
 import com.logistimo.services.utils.ConfigUtil;
 
-import com.logistimo.logger.XLog;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;

@@ -23,33 +23,29 @@
 
 package com.logistimo.dao.impl;
 
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.IDaoUtil;
 import com.logistimo.dao.JDOUtils;
-
-import com.logistimo.entity.BBoard;
-
 import com.logistimo.domains.IMultiDomain;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
+import com.logistimo.entity.BBoard;
 import com.logistimo.entity.IUploaded;
 import com.logistimo.entity.IUploadedMsgLog;
-import com.logistimo.pagination.QueryParams;
+import com.logistimo.logger.XLog;
 import com.logistimo.orders.entity.IDemandItem;
 import com.logistimo.orders.entity.IOrder;
-import com.logistimo.services.Services;
-import com.logistimo.services.utils.ConfigUtil;
-import com.logistimo.tags.TagUtil;
-import com.logistimo.tags.dao.ITagDao;
-import com.logistimo.tags.dao.TagDao;
-import com.logistimo.tags.entity.ITag;
-
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.PagedExec;
+import com.logistimo.pagination.QueryParams;
 import com.logistimo.pagination.processor.PropagationProcessor;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.impl.PMF;
+import com.logistimo.services.utils.ConfigUtil;
+import com.logistimo.tags.TagUtil;
+import com.logistimo.tags.dao.ITagDao;
+import com.logistimo.tags.entity.ITag;
 import com.logistimo.utils.StringUtil;
-import com.logistimo.logger.XLog;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -66,7 +62,6 @@ import javax.jdo.Query;
 public class DaoUtil implements IDaoUtil {
 
   private static final XLog xLogger = XLog.getLog(DaoUtil.class);
-  private static ITagDao tagDao = new TagDao();
 
   @Override
   @SuppressWarnings({"unchecked", "rawtypes"})
@@ -105,6 +100,7 @@ public class DaoUtil implements IDaoUtil {
     paramTypes[0] = List.class;
     paramTypes[1] = String.class;
     Object[] paramValues = new Object[2];
+    ITagDao tagDao = StaticApplicationContext.getBean(ITagDao.class);
     paramValues[0] = tagDao.getTagsByNames(tags, getITagType(tagType));
     paramValues[1] = tagType;
     PropagationProcessor.FieldData
@@ -329,7 +325,7 @@ public class DaoUtil implements IDaoUtil {
 
   @Override
   public IMultiDomain getKioskDomains(Long kioskId) throws ServiceException {
-    EntitiesService entitiesService = Services.getService(EntitiesServiceImpl.class);
+    EntitiesService entitiesService = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
     return entitiesService.getKiosk(kioskId);
   }
 

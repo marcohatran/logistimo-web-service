@@ -26,8 +26,6 @@
  */
 package com.logistimo.entity;
 
-import com.logistimo.entity.IALog;
-
 import java.util.Date;
 
 import javax.jdo.annotations.Extension;

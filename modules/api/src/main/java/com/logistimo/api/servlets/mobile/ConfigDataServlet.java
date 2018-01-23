@@ -26,20 +26,18 @@ package com.logistimo.api.servlets.mobile;
 import com.logistimo.api.servlets.SgServlet;
 import com.logistimo.auth.SecurityConstants;
 import com.logistimo.auth.SecurityUtil;
+import com.logistimo.config.entity.IConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
 import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
+import com.logistimo.constants.SourceConstants;
+import com.logistimo.context.StaticApplicationContext;
+import com.logistimo.logger.XLog;
+import com.logistimo.proto.RestConstantsZ;
+import com.logistimo.services.ObjectNotFoundException;
+import com.logistimo.services.ServiceException;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.users.service.impl.UsersServiceImpl;
-
-import com.logistimo.config.entity.IConfig;
-
-import com.logistimo.services.ObjectNotFoundException;
-import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
-import com.logistimo.proto.RestConstantsZ;
-import com.logistimo.constants.SourceConstants;
-import com.logistimo.logger.XLog;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -79,7 +77,7 @@ public class ConfigDataServlet extends SgServlet {
     // Authenticate user
     String responseText = null;
     try {
-      UsersService as = Services.getService(UsersServiceImpl.class);
+      UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
       IUserAccount user = as.authenticateUser(userId, password, SourceConstants.MOBILE);
       if (user == null) {
         responseText = "Invalid user name or password";
@@ -97,7 +95,8 @@ public class ConfigDataServlet extends SgServlet {
     }
     // Get the configuration
     try {
-      ConfigurationMgmtService cms = Services.getService(ConfigurationMgmtServiceImpl.class);
+      ConfigurationMgmtService cms = StaticApplicationContext.getBean(
+          ConfigurationMgmtServiceImpl.class);
       IConfig config = cms.getConfiguration(key);
       responseText = config.getConfig();
     } catch (ObjectNotFoundException e) {

@@ -44,16 +44,13 @@ import com.logistimo.logger.XLog;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.cache.MemcacheService;
 import com.logistimo.services.impl.PMF;
-import com.logistimo.services.impl.ServiceImpl;
 import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.services.utils.ConfigUtil;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.entity.IUserToken;
 import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
 import com.logistimo.utils.PasswordEncoder;
 
 import org.apache.commons.lang.StringUtils;
@@ -81,6 +78,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
+import java.util.ResourceBundle;
 import java.util.UUID;
 
 import javax.jdo.JDOObjectNotFoundException;
@@ -88,7 +86,7 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 
 @Service
-public class AuthenticationServiceImpl extends ServiceImpl implements AuthenticationService {
+public class AuthenticationServiceImpl implements AuthenticationService {
 
   private static final XLog xLogger = XLog.getLog(AuthenticationServiceImpl.class);
   private static final String UPDATE_LAST_ACCESSED_TASK = "/s2/api/users/update/mobileaccessed";
@@ -102,9 +100,16 @@ public class AuthenticationServiceImpl extends ServiceImpl implements Authentica
 
   private MemcacheService memcacheService;
 
+  private UsersService usersService;
+
   @Autowired
   public void setCacheService(MemcacheService memcacheService) {
     this.memcacheService = memcacheService;
+  }
+
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
   }
 
   public IUserToken generateUserToken(String userId, Integer source) throws ServiceException {
@@ -119,8 +124,7 @@ public class AuthenticationServiceImpl extends ServiceImpl implements Authentica
     if (StringUtils.isEmpty(userId)) {
       throw new ServiceException("User id is null or empty.");
     }
-    UsersService as = Services.getService(UsersServiceImpl.class);
-    IUserAccount account = as.getUserAccount(userId);
+    IUserAccount account = usersService.getUserAccount(userId);
     IUserToken iUserToken;
     String token;
     PersistenceManager pm = PMF.get().getPersistenceManager();
@@ -362,13 +366,12 @@ public class AuthenticationServiceImpl extends ServiceImpl implements Authentica
   public String generateOTP(String userId, int mode, String src, String hostUri)
       throws MessageHandlingException, IOException, ServiceException, ObjectNotFoundException,
       InvalidDataException {
-    UsersService as = Services.getService(UsersServiceImpl.class, null);
-    IUserAccount account = as.getUserAccount(userId);
+    IUserAccount account = usersService.getUserAccount(userId);
     if (!account.isEnabled()) {
       throw new ObjectNotFoundException("USR001", userId);
     }
     Locale locale = account.getLocale();
-    backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     MemcacheService cache = AppFactory.get().getMemcacheService();
     if (mode == 1) {
       String email = account.getEmail();
@@ -446,10 +449,9 @@ public class AuthenticationServiceImpl extends ServiceImpl implements Authentica
                               String au)
       throws ServiceException, ObjectNotFoundException, MessageHandlingException, IOException,
       InputMismatchException, ValidationException {
-    UsersService as = Services.getService(UsersServiceImpl.class, null);
-    IUserAccount account = as.getUserAccount(userId);
+    IUserAccount account = usersService.getUserAccount(userId);
     Locale locale = account.getLocale();
-    backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     String sendType = null;
     String sendMode = null;
     if (mode == 0) {
@@ -477,7 +479,7 @@ public class AuthenticationServiceImpl extends ServiceImpl implements Authentica
       }
     }
     String newPassword = generatePassword(userId);
-    as.changePassword(userId, null, newPassword);
+    usersService.changePassword(userId, null, newPassword);
     xLogger.info("AUDITLOG\t{0}\t{1}\tUSER\t " +
             "FORGOT PASSWORD\t{2}\t{3}", account.getDomainId(), account.getFullName(), userId,
         account.getFullName());
@@ -619,9 +621,10 @@ public class AuthenticationServiceImpl extends ServiceImpl implements Authentica
         if (resetKey.equals(cache.get("RESET_" + userId))) {
           if (StringUtils.isNotEmpty(newPassword) && StringUtils.isNotEmpty(confirmPassword)) {
             if (newPassword.equals(confirmPassword)) {
-              UsersService as = Services.getService(UsersServiceImpl.class);
-              as.changePassword(userId, null, newPassword);
+              usersService.changePassword(userId, null, newPassword);
               cache.delete("RESET_" + userId);
+              ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages",
+                  SecurityUtils.getLocale());
               return backendMessages.getString("pwd.forgot.success");
             } else {
               throw new InputMismatchException("Password mismatch");

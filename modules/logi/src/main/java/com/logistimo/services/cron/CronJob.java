@@ -26,14 +26,13 @@ package com.logistimo.services.cron;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Timer;
 import com.logistimo.AppFactory;
+import com.logistimo.logger.XLog;
 import com.logistimo.services.cache.MemcacheService;
 import com.logistimo.services.utils.ConfigUtil;
-
-import org.apache.commons.codec.digest.DigestUtils;
 import com.logistimo.utils.HttpUtil;
-import com.logistimo.logger.XLog;
 import com.logistimo.utils.MetricsUtil;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
