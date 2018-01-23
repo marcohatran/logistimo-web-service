@@ -28,14 +28,12 @@ package com.logistimo.api.servlets;
 
 import com.google.gson.Gson;
 
-import com.logistimo.config.entity.IConfig;
-import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
 import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.domains.CopyConfigModel;
 import com.logistimo.logger.XLog;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 
 import java.io.IOException;
 import java.util.ResourceBundle;
@@ -87,7 +85,8 @@ public class ConfigurationServlet extends SgServlet {
       CopyConfigModel ccm = new Gson().fromJson(data, CopyConfigModel.class);
       srcDomainId = ccm.getSourceDomainId();
       destDomainId = ccm.getDestinationDomainId();
-      ConfigurationMgmtService cms = Services.getService(ConfigurationMgmtServiceImpl.class);
+      ConfigurationMgmtService cms = StaticApplicationContext.getBean(
+          ConfigurationMgmtServiceImpl.class);
       cms.copyConfiguration(srcDomainId, destDomainId);
     } catch (Exception e) {
       xLogger.severe("{0} when copying config. from domain {1} to domain {2}: {3}",
@@ -97,9 +96,4 @@ public class ConfigurationServlet extends SgServlet {
     xLogger.fine("Exiting copyConfiguration");
   }
 
-  private class ConfigContainer {
-    public IConfig c = null;
-    public DomainConfig dc = null;
-    public boolean add = false;
-  }
 }

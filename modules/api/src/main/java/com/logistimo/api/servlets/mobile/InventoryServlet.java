@@ -29,7 +29,6 @@ package com.logistimo.api.servlets.mobile;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import com.logistimo.AppFactory;
 import com.logistimo.api.servlets.JsonRestServlet;
 import com.logistimo.api.servlets.mobile.builders.MobileTransactionsBuilder;
 import com.logistimo.api.servlets.mobile.json.GetInventoryBatchesOutput;
@@ -41,6 +40,7 @@ import com.logistimo.config.models.InventoryConfig;
 import com.logistimo.config.models.KioskConfig;
 import com.logistimo.config.models.StockboardConfig;
 import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
@@ -48,8 +48,6 @@ import com.logistimo.exception.InvalidDataException;
 import com.logistimo.exception.LogiException;
 import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.inventory.TransactionUtil;
-import com.logistimo.inventory.dao.ITransDao;
-import com.logistimo.inventory.dao.impl.TransDao;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.IInvntryBatch;
 import com.logistimo.inventory.entity.ITransaction;
@@ -66,8 +64,6 @@ import com.logistimo.proto.RestConstantsZ;
 import com.logistimo.proto.UpdateInventoryInput;
 import com.logistimo.services.DuplicationException;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
-import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.HttpUtil;
@@ -109,12 +105,7 @@ public class InventoryServlet extends JsonRestServlet {
   // Params.
   private static final String MATERIAL_ID = "mid";
 
-  // Task URL
-
-  private static ITaskService taskService = AppFactory.get().getTaskService();
-  private ITransDao transDao = new TransDao();
-
-  MobileTransactionsBuilder mobTransBuilder = new MobileTransactionsBuilder();
+  MobileTransactionsBuilder mobileTransactionsBuilder = StaticApplicationContext.getBean(MobileTransactionsBuilder.class);
 
   // Get the material info. including material-id to stock-on-hand for the update-inventory return object
   @SuppressWarnings({"rawtypes", "unchecked"})
@@ -129,7 +120,7 @@ public class InventoryServlet extends JsonRestServlet {
     InventoryConfig ic = dc.getInventoryConfig();
     Iterator<ITransaction> it = list.iterator();
     // Duplicate check for materials
-    ArrayList<Long> uniqueIds = new ArrayList<Long>();
+    ArrayList<Long> uniqueIds = new ArrayList<>();
     while (it.hasNext()) {
       ITransaction in = it.next();
       Long materialId = in.getMaterialId();
@@ -141,7 +132,7 @@ public class InventoryServlet extends JsonRestServlet {
         if (inventory != null) {
           Hashtable ht = new Hashtable();
           ht.put(JsonTagsZ.MATERIAL_ID, materialId.toString());
-          String stockStr = null;
+          String stockStr;
           if (forceIntegerForStock) {
             stockStr = String.valueOf(inventory.getStock().intValue());
           } else {
@@ -213,10 +204,9 @@ public class InventoryServlet extends JsonRestServlet {
       return null;
     }
 
-    Vector<Hashtable> errorMsgs = new Vector<Hashtable>();
-    InventoryManagementService
-        ims =
-        Services.getService(InventoryManagementServiceImpl.class);
+    Vector<Hashtable> errorMsgs = new Vector<>();
+    InventoryManagementService ims =
+        StaticApplicationContext.getBean(InventoryManagementServiceImpl.class);
     DomainConfig dc = DomainConfig.getInstance(domainId);
     Hashtable<Long, Hashtable> midMht = new Hashtable<>();
     for (ITransaction inTrans : errors) {
@@ -283,11 +273,11 @@ public class InventoryServlet extends JsonRestServlet {
       throws ServletException, IOException, ServiceException {
     String action = req.getParameter(RestConstantsZ.ACTION);
     if (RestConstantsZ.ACTION_GETINVENTORY.equalsIgnoreCase(action)) {
-      getInventory(req, resp, backendMessages, messages);
+      getInventory(req, resp, backendMessages);
     } else if (RestConstantsZ.ACTION_EXPORT.equals(action)) {
-      scheduleExport(req, resp, backendMessages, messages);
+      scheduleExport(req, resp, backendMessages);
     } else if (ACTION_GETINVENTORYBATCHES.equals(action)) {
-      getInventoryBatches(req, resp, backendMessages, messages);
+      getInventoryBatches(req, resp, backendMessages);
     } else {
       xLogger.severe("Invalid action: " + action);
     }
@@ -300,9 +290,9 @@ public class InventoryServlet extends JsonRestServlet {
     // Get the post parameters
     String action = req.getParameter(RestConstantsZ.ACTION);
     if (RestConstantsZ.ACTION_GETINVENTORY.equalsIgnoreCase(action)) {
-      getInventory(req, resp, backendMessages, messages);
+      getInventory(req, resp, backendMessages);
     } else if (RestConstantsZ.ACTION_UPDINVENTORY.equalsIgnoreCase(action)) {
-      updateInventoryTransactionsv1(req, resp, backendMessages, messages);
+      updateInventoryTransactionsv1(req, resp, backendMessages);
     } else if (RestConstantsZ.ACTION_UPDATEINVENTORYTRANSACTIONS.equalsIgnoreCase(action)) {
       updateInventoryTransactions(req, resp, backendMessages);
     } else {
@@ -313,7 +303,7 @@ public class InventoryServlet extends JsonRestServlet {
   // Get inventory data
   @SuppressWarnings("unchecked")
   public void getInventory(HttpServletRequest req, HttpServletResponse resp,
-                           ResourceBundle backendMessages, ResourceBundle messages)
+                           ResourceBundle backendMessages)
       throws IOException, ServiceException {
     String errMessage = null;
     Long kioskId = null;
@@ -377,7 +367,7 @@ public class InventoryServlet extends JsonRestServlet {
           StockboardConfig sbc = (kioskConfig != null ? kioskConfig.getStockboardConfig() : null);
           if (sbc != null && sbc.getEnabled() == StockboardConfig.PUBLIC) {
             hasPublicStockboard = true;
-            EntitiesService as = Services.getService(EntitiesServiceImpl.class);
+            EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
             IKiosk k = as.getKiosk(kioskId, false);
             domainId = k.getDomainId();
             DomainConfig dc = DomainConfig.getInstance(domainId);
@@ -403,7 +393,7 @@ public class InventoryServlet extends JsonRestServlet {
               RESTUtil.authenticate(strUserId, password, kioskId, req,
                   resp); // NOTE: throws ServiceException in case of invalid credentials or no authentication
           // Get the currency from the kiosk
-          EntitiesService as = Services.getService(EntitiesServiceImpl.class);
+          EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
           IKiosk k = as.getKiosk(kioskId, false);
           currency = k.getCurrency();
           if (currency == null) {
@@ -475,13 +465,12 @@ public class InventoryServlet extends JsonRestServlet {
   // Get valid batches of inventory
   @SuppressWarnings("unchecked")
   public void getInventoryBatches(HttpServletRequest req, HttpServletResponse resp,
-                                  ResourceBundle backendMessages, ResourceBundle messages)
+                                  ResourceBundle backendMessages)
       throws IOException, ServiceException {
     String errMessage = null;
     Long kioskId = null;
     Long materialId = null;
     boolean status = true;
-    String currency = null;
     int statusCode = HttpServletResponse.SC_OK;
     // Get request parameters
     String strKioskId = req.getParameter(RestConstantsZ.KIOSK_ID);
@@ -549,9 +538,8 @@ public class InventoryServlet extends JsonRestServlet {
     if (status) {
       try {
         // Get the batches
-        InventoryManagementService
-            ims =
-            Services.getService(InventoryManagementServiceImpl.class);
+        InventoryManagementService ims =
+            StaticApplicationContext.getBean(InventoryManagementServiceImpl.class);
         Results<IInvntryBatch> results = ims.getValidBatches(materialId, kioskId, pageParams);
         batches = results.getResults();
         if (batches == null) {
@@ -584,11 +572,10 @@ public class InventoryServlet extends JsonRestServlet {
 
   @SuppressWarnings("rawtypes")
   public void updateInventoryTransactionsv1(HttpServletRequest req, HttpServletResponse resp,
-                                          ResourceBundle backendMessages, ResourceBundle messages)
+                                            ResourceBundle backendMessages)
       throws IOException {
     boolean status = true;
     String message = null;
-    Vector materials = null; // map of material-id and stock-on-hand
     List materialList = new ArrayList();
     Vector errors = null; // map of material-id and error message
     InventoryManagementService ims = null;
@@ -616,7 +603,7 @@ public class InventoryServlet extends JsonRestServlet {
         message = "Invalid input parameters.";
       } else {
         // Parse the JSON input array, and get the list of transaction objects (issued and/or received)
-        UpdateInventoryInput updInventoryJson = new UpdateInventoryInput();
+        UpdateInventoryInput updInventoryJson;
         //updInventoryJson.fromJSONString( jsonString );
         updInventoryJson = GsonUtil.updateInventoryInputFromJson(jsonString);
 
@@ -648,8 +635,8 @@ public class InventoryServlet extends JsonRestServlet {
             timezone = u.getTimezone();
             appVersion = u.getAppVersion();
             // Get services
-            ims = Services.getService(InventoryManagementServiceImpl.class, locale);
-            as = Services.getService(EntitiesServiceImpl.class, locale);
+            ims = StaticApplicationContext.getBean(InventoryManagementServiceImpl.class);
+            as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
           } catch (ServiceException e) {
             message = e.getMessage();
             status = false;
@@ -667,7 +654,7 @@ public class InventoryServlet extends JsonRestServlet {
           // Get update transactions
           List<ITransaction>
               list =
-              RESTUtil.getInventoryTransactions(updInventoryJson, transType, now, locale);
+              RESTUtil.getInventoryTransactions(updInventoryJson, transType, now);
           // Update the inventory transactions
           List<ITransaction> errorTrans = null;
           if (list == null) {
@@ -720,11 +707,7 @@ public class InventoryServlet extends JsonRestServlet {
             // Get the error hash tables
             if (!isDuplicateUpdate) {
               errors = getErrorMessages(errorTrans, locale, timezone, domainId);
-              if (errors != null && errors.size() > 0) {
-                status = false;
-              } else {
-                status = true;
-              }
+              status = !(errors != null && errors.size() > 0);
             }
             // Get formatted time
             formattedTime = LocalDateUtil.format(now, locale, timezone);
@@ -800,7 +783,7 @@ public class InventoryServlet extends JsonRestServlet {
 
   // Schedule export of inventory data
   private void scheduleExport(HttpServletRequest req, HttpServletResponse resp,
-                              ResourceBundle backendMessages, ResourceBundle messages) {
+                              ResourceBundle backendMessages) {
     xLogger.fine("Entered scheduleExport");
     int statusCode = HttpServletResponse.SC_OK;
     // Send response back to client
@@ -836,7 +819,7 @@ public class InventoryServlet extends JsonRestServlet {
       if (StringUtils.isEmpty(reqJsonStr)) {
         throw new InvalidDataException(backendMessages.getString("error.invaliddata.frommobile"));
       }
-      mobUpdateInvTransReq = mobTransBuilder.buildMobileUpdateInvTransRequest(reqJsonStr);
+      mobUpdateInvTransReq = mobileTransactionsBuilder.buildMobileUpdateInvTransRequest(reqJsonStr);
       validateMobileUpdateInvTransRequest(mobUpdateInvTransReq, backendMessages);
       IUserAccount u = RESTUtil.authenticate(mobUpdateInvTransReq.uid, null, mobUpdateInvTransReq.kid, req, resp);
       domainId = u.getDomainId();
@@ -848,13 +831,13 @@ public class InventoryServlet extends JsonRestServlet {
         isDuplicate = true;
       }
       if (!isDuplicate) {
-        Map<Long,List<ITransaction>> materialTransactionsMap = mobTransBuilder.buildMaterialTransactionsMap(mobUpdateInvTransReq.uid, mobUpdateInvTransReq.kid,
+        Map<Long,List<ITransaction>> materialTransactionsMap = mobileTransactionsBuilder.buildMaterialTransactionsMap(mobUpdateInvTransReq.uid, mobUpdateInvTransReq.kid,
             mobUpdateInvTransReq.trns);
         if (materialTransactionsMap == null || materialTransactionsMap.isEmpty()) {
           throw new InvalidDataException(backendMessages.getString("error.invaliddata.frommobile"));
         }
         InventoryManagementService ims =
-            Services.getService(InventoryManagementServiceImpl.class);
+            StaticApplicationContext.getBean(InventoryManagementServiceImpl.class);
         midErrorDetailModelsMap = ims.updateMultipleInventoryTransactions(materialTransactionsMap, domainId,
             mobUpdateInvTransReq.uid);
       } else {
@@ -906,7 +889,7 @@ public class InventoryServlet extends JsonRestServlet {
   private String createMobUpdateInvTransRespJsonStr(MobileUpdateInvTransRequest mobUpdateInvTransReq, String errorMessage, Map<Long,List<ErrorDetailModel>> midErrorDetailModelsMap, Long domainId, boolean isDuplicate) {
     MobileUpdateInvTransResponse
         mobUpdateInvTransResp =
-        mobTransBuilder.buildMobileUpdateInvTransResponse(
+        mobileTransactionsBuilder.buildMobileUpdateInvTransResponse(
             domainId, mobUpdateInvTransReq.uid, mobUpdateInvTransReq.kid,
             mobUpdateInvTransReq.pid, errorMessage, midErrorDetailModelsMap,
             mobUpdateInvTransReq.trns);

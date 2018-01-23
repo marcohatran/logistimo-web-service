@@ -26,8 +26,6 @@
  */
 package com.logistimo.domains.entity;
 
-import com.logistimo.domains.entity.IDomain;
-
 import java.util.Date;
 
 import javax.jdo.annotations.IdGeneratorStrategy;

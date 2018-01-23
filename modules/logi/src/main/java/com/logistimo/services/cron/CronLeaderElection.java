@@ -23,12 +23,12 @@
 
 package com.logistimo.services.cron;
 
+import com.logistimo.logger.XLog;
 import com.logistimo.services.taskqueue.DelayScheduler;
 import com.logistimo.services.utils.ConfigUtil;
 import com.logistimo.services.utils.ZooElectableClient;
 
 import org.apache.zookeeper.KeeperException;
-import com.logistimo.logger.XLog;
 
 import java.io.IOException;
 

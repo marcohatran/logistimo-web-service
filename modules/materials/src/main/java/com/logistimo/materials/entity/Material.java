@@ -29,23 +29,17 @@ package com.logistimo.materials.entity;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import com.logistimo.config.models.EventsConfig;
+import com.logistimo.constants.Constants;
 import com.logistimo.tags.TagUtil;
 import com.logistimo.tags.entity.ITag;
 import com.logistimo.tags.entity.Tag;
-
-import com.logistimo.constants.Constants;
-import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.NumberUtil;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Element;

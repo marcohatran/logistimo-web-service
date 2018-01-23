@@ -38,7 +38,6 @@ import com.logistimo.orders.models.UpdatedOrder;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
 import com.logistimo.services.ObjectNotFoundException;
-import com.logistimo.services.Service;
 import com.logistimo.services.ServiceException;
 
 import java.io.IOException;
@@ -49,7 +48,7 @@ import java.util.List;
 
 import javax.jdo.PersistenceManager;
 
-public interface OrderManagementService extends Service {
+public interface OrderManagementService {
 
   /**
    * Generates invoice for a given order
@@ -224,20 +223,20 @@ public interface OrderManagementService extends Service {
       PersistenceManager pm, String reason) throws ServiceException;
 
   void modifyOrder(IOrder o, String userId, List<ITransaction> transactions, Date timestamp,
-      Long domainId, String transType, String message,
-      String utcEstimatedFulfillmentTimeRanges,
-      String utcConfirmedFulfillmentTimeRange, BigDecimal payment,
-      String paymentOption, String packageSize, boolean allowEmptyOrders,
-      List<String> orderTags, String referenceId)
+                   Long domainId, String transType, String message,
+                   String utcEstimatedFulfillmentTimeRanges,
+                   String utcConfirmedFulfillmentTimeRange, BigDecimal payment,
+                   String paymentOption, boolean allowEmptyOrders,
+                   List<String> orderTags, String referenceId)
       throws ServiceException;
 
   void modifyOrder(IOrder o, String userId, List<ITransaction> transactions, Date timestamp,
-      Long domainId, String transType, String message,
-      String utcEstimatedFulfillmentTimeRanges,
-      String utcConfirmedFulfillmentTimeRange, BigDecimal payment,
-      String paymentOption, String packageSize, boolean allowEmptyOrders,
-      List<String> orderTags, String referenceId,
-      PersistenceManager pm) throws ServiceException;
+                   Long domainId, String transType, String message,
+                   String utcEstimatedFulfillmentTimeRanges,
+                   String utcConfirmedFulfillmentTimeRange, BigDecimal payment,
+                   String paymentOption, boolean allowEmptyOrders,
+                   List<String> orderTags, String referenceId,
+                   PersistenceManager pm) throws ServiceException;
 
 
   BigDecimal computeRecommendedOrderQuantity(IInvntry invntry) throws ServiceException;

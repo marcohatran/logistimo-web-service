@@ -25,8 +25,6 @@ package com.logistimo.inventory.optimization.service;
 
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.inventory.entity.IInvntry;
-
-import com.logistimo.services.Service;
 import com.logistimo.services.ServiceException;
 
 import java.util.Date;
@@ -35,7 +33,7 @@ import java.util.Locale;
 
 import javax.jdo.PersistenceManager;
 
-public interface InventoryOptimizerService extends Service {
+public interface InventoryOptimizerService {
 
   /**
    * Optimize for the list of inventories specified

@@ -27,13 +27,13 @@ import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.utils.DomainConfigUtil;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.events.entity.Event;
 import com.logistimo.events.entity.IEvent;
 import com.logistimo.inventory.dao.IInvntryDao;
-import com.logistimo.inventory.dao.impl.InvntryDao;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.IInvntryEvntLog;
 import com.logistimo.inventory.service.InventoryManagementService;
@@ -43,7 +43,6 @@ import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.materials.service.MaterialCatalogService;
 import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
 import com.logistimo.services.Resources;
-import com.logistimo.services.Services;
 import com.logistimo.tags.TagUtil;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.impl.UsersServiceImpl;
@@ -51,9 +50,9 @@ import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.NumberUtil;
 import com.logistimo.utils.StringUtil;
+
 import org.apache.commons.lang.StringEscapeUtils;
 
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -65,8 +64,7 @@ public class InvntryExportHandler implements IExportHandler {
 
     private static final XLog xLogger = XLog.getLog(InvntryExportHandler.class);
 
-    IInvntry invntry;
-    private IInvntryDao invDao = new InvntryDao();
+    private IInvntry invntry;
 
     public InvntryExportHandler(IInvntry invntry) {
         this.invntry = invntry;
@@ -77,12 +75,12 @@ public class InvntryExportHandler implements IExportHandler {
         xLogger.fine("Entering toCSV. locale: {0}, timezone: {1}", locale, timezone);
         try {
             // Get services
-            EntitiesService as = Services.getService(EntitiesServiceImpl.class);
-            UsersServiceImpl us = Services.getService(UsersServiceImpl.class);
-            MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
-            InventoryManagementService
-                    ims =
-                    Services.getService(InventoryManagementServiceImpl.class);
+            EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
+            UsersServiceImpl us = StaticApplicationContext.getBean(UsersServiceImpl.class);
+            MaterialCatalogService mcs = StaticApplicationContext.getBean(
+                MaterialCatalogServiceImpl.class);
+            InventoryManagementService ims =
+                StaticApplicationContext.getBean(InventoryManagementServiceImpl.class);
 
             IKiosk k = as.getKiosk(invntry.getKioskId(), false);
             IMaterial m = mcs.getMaterial(invntry.getMaterialId());
@@ -138,12 +136,11 @@ public class InvntryExportHandler implements IExportHandler {
                     .append(BigUtil.getFormattedValue(invntry.getReorderLevel())).append(CharacterConstants.COMMA)
                     .append(BigUtil.getFormattedValue(invntry.getMaxStock())).append(CharacterConstants.COMMA);
             try {
-                IInvntryEvntLog lastEventLog = invDao.getInvntryEvntLog(invntry);
+              IInvntryDao invntryDao = StaticApplicationContext.getBean(IInvntryDao.class);
+                IInvntryEvntLog lastEventLog = invntryDao.getInvntryEvntLog(invntry);
                 if (lastEventLog != null && invntry.getStockEvent() != IEvent.NORMAL) {
                     csv.append(
-                            (lastEventLog != null && invntry.getStockEvent() != IEvent.NORMAL)
-                                    ? Event.getEventName(invntry.getStockEvent(), locale)
-                                    : CharacterConstants.EMPTY).append(CharacterConstants.COMMA);
+                        Event.getEventName(invntry.getStockEvent(), locale)).append(CharacterConstants.COMMA);
                     csv.append((System.currentTimeMillis() - lastEventLog.getStartDate().getTime())
                             / LocalDateUtil.MILLISECS_PER_DAY).append(CharacterConstants.COMMA);
                 } else {
@@ -229,36 +226,37 @@ public class InvntryExportHandler implements IExportHandler {
         String mcrUnits = invntry.getMCRUnits(locale);
         String mmd = DomainConfigUtil.getMinMaxDuration(dc);
         header.append(messages.getString("kiosk")).append(CharacterConstants.SPACE)
-                .append(jsMessages.getString("id")).append(CharacterConstants.COMMA)
-                .append(messages.getString("customid.entity")).append(CharacterConstants.COMMA)
-                .append(messages.getString("kiosk.name")).append(CharacterConstants.COMMA)
-                .append(messages.getString("material")).append(CharacterConstants.SPACE)
-                .append(jsMessages.getString("id")).append(CharacterConstants.COMMA)
-                .append(messages.getString("customid.material")).append(CharacterConstants.COMMA)
-                .append(messages.getString("material.name")).append(CharacterConstants.COMMA)
-                .append(messages.getString("country")).append(CharacterConstants.COMMA)
-                .append(messages.getString("state")).append(CharacterConstants.COMMA)
-                .append(messages.getString("district")).append(CharacterConstants.COMMA)
-                .append(messages.getString("taluk")).append(CharacterConstants.COMMA)
-                .append(messages.getString("village")).append(CharacterConstants.COMMA)
-                .append(messages.getString("streetaddress")).append(CharacterConstants.COMMA)
-                .append(messages.getString("zipcode")).append(CharacterConstants.COMMA)
-                .append(messages.getString("latitude")).append(CharacterConstants.COMMA)
-                .append(messages.getString("longitude")).append(CharacterConstants.COMMA)
-                .append(messages.getString("accuracy")).append(CharacterConstants.SPACE)
-                .append(CharacterConstants.O_BRACKET).append(messages.getString("meters"))
-                .append(CharacterConstants.C_BRACKET).append(CharacterConstants.COMMA)
-                .append(jsMessages.getString("gps")).append(CharacterConstants.SPACE)
-                .append(messages.getString("errors.small")).append(CharacterConstants.COMMA)
-                .append(messages.getString("kiosk")).append(CharacterConstants.SPACE)
-                .append(jsMessages.getString("tags.lower")).append(CharacterConstants.COMMA)
-                .append(messages.getString("material")).append(CharacterConstants.SPACE)
-                .append(jsMessages.getString("tags.lower")).append(CharacterConstants.COMMA)
-                .append(messages.getString("material.stockonhand")).append(CharacterConstants.COMMA)
-                .append(messages.getString("inventory.reorderlevel")).append(CharacterConstants.COMMA)
-                .append(messages.getString("max")).append(CharacterConstants.COMMA)
-                .append(jsMessages.getString("abnormality.type")).append(CharacterConstants.COMMA)
-                .append(jsMessages.getString("abnormality.duration") + "-" + messages.getString("days")).append(CharacterConstants.COMMA);
+            .append(jsMessages.getString("id")).append(CharacterConstants.COMMA)
+            .append(messages.getString("customid.entity")).append(CharacterConstants.COMMA)
+            .append(messages.getString("kiosk.name")).append(CharacterConstants.COMMA)
+            .append(messages.getString("material")).append(CharacterConstants.SPACE)
+            .append(jsMessages.getString("id")).append(CharacterConstants.COMMA)
+            .append(messages.getString("customid.material")).append(CharacterConstants.COMMA)
+            .append(messages.getString("material.name")).append(CharacterConstants.COMMA)
+            .append(messages.getString("country")).append(CharacterConstants.COMMA)
+            .append(messages.getString("state")).append(CharacterConstants.COMMA)
+            .append(messages.getString("district")).append(CharacterConstants.COMMA)
+            .append(messages.getString("taluk")).append(CharacterConstants.COMMA)
+            .append(messages.getString("village")).append(CharacterConstants.COMMA)
+            .append(messages.getString("streetaddress")).append(CharacterConstants.COMMA)
+            .append(messages.getString("zipcode")).append(CharacterConstants.COMMA)
+            .append(messages.getString("latitude")).append(CharacterConstants.COMMA)
+            .append(messages.getString("longitude")).append(CharacterConstants.COMMA)
+            .append(messages.getString("accuracy")).append(CharacterConstants.SPACE)
+            .append(CharacterConstants.O_BRACKET).append(messages.getString("meters"))
+            .append(CharacterConstants.C_BRACKET).append(CharacterConstants.COMMA)
+            .append(jsMessages.getString("gps")).append(CharacterConstants.SPACE)
+            .append(messages.getString("errors.small")).append(CharacterConstants.COMMA)
+            .append(messages.getString("kiosk")).append(CharacterConstants.SPACE)
+            .append(jsMessages.getString("tags.lower")).append(CharacterConstants.COMMA)
+            .append(messages.getString("material")).append(CharacterConstants.SPACE)
+            .append(jsMessages.getString("tags.lower")).append(CharacterConstants.COMMA)
+            .append(messages.getString("material.stockonhand")).append(CharacterConstants.COMMA)
+            .append(messages.getString("inventory.reorderlevel")).append(CharacterConstants.COMMA)
+            .append(messages.getString("max")).append(CharacterConstants.COMMA)
+            .append(jsMessages.getString("abnormality.type")).append(CharacterConstants.COMMA)
+            .append(jsMessages.getString("abnormality.duration")).append("-")
+            .append(messages.getString("days")).append(CharacterConstants.COMMA);
 
         if (!mmd.isEmpty()) {
             header.append(messages.getString("inventory.reorderlevel")).append(mmd)

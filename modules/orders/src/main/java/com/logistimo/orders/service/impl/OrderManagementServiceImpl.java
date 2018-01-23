@@ -27,23 +27,19 @@ import com.ibm.icu.util.Calendar;
 import com.logistimo.AppFactory;
 import com.logistimo.activity.entity.IActivity;
 import com.logistimo.activity.service.ActivityService;
-import com.logistimo.activity.service.impl.ActivityServiceImpl;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.EventSpec;
 import com.logistimo.config.models.LeadTimeAvgConfig;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
-import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.conversations.entity.IMessage;
 import com.logistimo.conversations.service.ConversationService;
-import com.logistimo.conversations.service.impl.ConversationServiceImpl;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.domains.utils.DomainsUtil;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.entity.IKioskLink;
 import com.logistimo.entities.service.EntitiesService;
-import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.events.entity.IEvent;
 import com.logistimo.events.models.CustomOptions;
 import com.logistimo.events.processor.EventPublisher;
@@ -56,14 +52,11 @@ import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.inventory.exceptions.InventoryAllocationException;
 import com.logistimo.inventory.service.InventoryManagementService;
-import com.logistimo.inventory.service.impl.InventoryManagementServiceImpl;
 import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IHandlingUnit;
 import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.materials.service.IHandlingUnitService;
 import com.logistimo.materials.service.MaterialCatalogService;
-import com.logistimo.materials.service.impl.HandlingUnitServiceImpl;
-import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
 import com.logistimo.models.shipments.ShipmentItemModel;
 import com.logistimo.models.shipments.ShipmentModel;
 import com.logistimo.orders.OrderResults;
@@ -74,7 +67,6 @@ import com.logistimo.orders.actions.GetFilteredOrdersAction;
 import com.logistimo.orders.approvals.actions.OrderVisibilityAction;
 import com.logistimo.orders.dao.IOrderDao;
 import com.logistimo.orders.dao.OrderUpdateStatus;
-import com.logistimo.orders.dao.impl.OrderDao;
 import com.logistimo.orders.entity.IDemandItem;
 import com.logistimo.orders.entity.IDemandItemBatch;
 import com.logistimo.orders.entity.IOrder;
@@ -89,19 +81,16 @@ import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
+import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.impl.PMF;
-import com.logistimo.services.impl.ServiceImpl;
 import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.services.utils.ConfigUtil;
 import com.logistimo.shipments.ShipmentStatus;
 import com.logistimo.shipments.entity.IShipment;
 import com.logistimo.shipments.service.IShipmentService;
-import com.logistimo.shipments.service.impl.ShipmentService;
 import com.logistimo.tags.TagUtil;
 import com.logistimo.tags.dao.ITagDao;
-import com.logistimo.tags.dao.TagDao;
 import com.logistimo.tags.entity.ITag;
 import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.LocalDateUtil;
@@ -109,6 +98,7 @@ import com.logistimo.utils.LockUtil;
 import com.logistimo.utils.QueryUtil;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -121,9 +111,10 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.ResourceBundle;
 import java.util.Set;
 
 import javax.jdo.JDOObjectNotFoundException;
@@ -135,15 +126,104 @@ import javax.jdo.Transaction;
  * @author arun
  */
 @Service
-public class OrderManagementServiceImpl extends ServiceImpl implements OrderManagementService {
+public class OrderManagementServiceImpl implements OrderManagementService {
 
   private static final XLog xLogger = XLog.getLog(OrderManagementServiceImpl.class);
   private static final String
       UPDATE_ENTITYACTIVITYTIMESTAMPS_TASK =
       "/s2/api/entities/task/updateentityactivitytimestamps";
 
-  private ITagDao tagDao = new TagDao();
-  private IOrderDao orderDao = new OrderDao();
+  private ITagDao tagDao;
+  private IOrderDao orderDao;
+  private IHandlingUnitService handlingUnitService;
+  private ConversationService conversationService;
+  private IShipmentService shipmentService;
+  private EntitiesService entitiesService;
+  private MaterialCatalogService materialCatalogService;
+  private ActivityService activityService;
+  private IDemandService demandService;
+  private InventoryManagementService inventoryManagementService;
+
+  private GenerateOrderEventsAction generateOrderEventsAction;
+  private GenerateOrderInvoiceAction generateOrderInvoiceAction;
+  private GetFilteredOrdersAction getFilteredOrdersAction;
+  private UpdateOrderStatusValidator updateOrderStatusValidator;
+  private OrderVisibilityAction orderVisibilityAction;
+
+  @Autowired
+  public void setTagDao(ITagDao tagDao) {
+    this.tagDao = tagDao;
+  }
+
+  @Autowired
+  public void setOrderDao(IOrderDao orderDao) {
+    this.orderDao = orderDao;
+  }
+
+  @Autowired
+  public void setHandlingUnitService(IHandlingUnitService handlingUnitService) {
+    this.handlingUnitService = handlingUnitService;
+  }
+
+  @Autowired
+  public void setConversationService(ConversationService conversationService) {
+    this.conversationService = conversationService;
+  }
+
+  @Autowired
+  public void setShipmentService(IShipmentService shipmentService) {
+    this.shipmentService = shipmentService;
+  }
+
+  @Autowired
+  public void setEntitiesService(EntitiesService entitiesService) {
+    this.entitiesService = entitiesService;
+  }
+
+  @Autowired
+  public void setMaterialCatalogService(MaterialCatalogService materialCatalogService) {
+    this.materialCatalogService = materialCatalogService;
+  }
+
+  @Autowired
+  public void setActivityService(ActivityService activityService) {
+    this.activityService = activityService;
+  }
+
+  @Autowired
+  public void setDemandService(IDemandService demandService) {
+    this.demandService = demandService;
+  }
+
+  @Autowired
+  public void setInventoryManagementService(InventoryManagementService inventoryManagementService) {
+    this.inventoryManagementService = inventoryManagementService;
+  }
+
+  @Autowired
+  public void setGenerateOrderEventsAction(GenerateOrderEventsAction generateOrderEventsAction) {
+    this.generateOrderEventsAction = generateOrderEventsAction;
+  }
+
+  @Autowired
+  public void setGenerateOrderInvoiceAction(GenerateOrderInvoiceAction generateOrderInvoiceAction) {
+    this.generateOrderInvoiceAction = generateOrderInvoiceAction;
+  }
+
+  @Autowired
+  public void setGetFilteredOrdersAction(GetFilteredOrdersAction getFilteredOrdersAction) {
+    this.getFilteredOrdersAction = getFilteredOrdersAction;
+  }
+
+  @Autowired
+  public void setUpdateOrderStatusValidator(UpdateOrderStatusValidator updateOrderStatusValidator) {
+    this.updateOrderStatusValidator = updateOrderStatusValidator;
+  }
+
+  @Autowired
+  public void setOrderVisibilityAction(OrderVisibilityAction orderVisibilityAction) {
+    this.orderVisibilityAction = orderVisibilityAction;
+  }
 
   private static ITaskService getTaskService(){
     return AppFactory.get().getTaskService();
@@ -193,8 +273,7 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
       o = JDOUtils.getObjectById(IOrder.class, orderDao.createKey(orderId), localPM);
       o = localPM.detachCopy(o);
       if (includeItems) {
-        IDemandService ds = Services.getService(DemandService.class, this.getLocale());
-        o.setItems(ds.getDemandItems(orderId));
+        o.setItems(demandService.getDemandItems(orderId));
       }
     } catch (JDOObjectNotFoundException e) {
       throw new ObjectNotFoundException("O009", orderId);
@@ -236,7 +315,6 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
     }
     UpdatedOrder uo = new UpdatedOrder();
     boolean useLocalPM = pm == null;
-    // Init. services and data
     if (useLocalPM) {
       pm = PMF.get().getPersistenceManager();
     }
@@ -259,9 +337,8 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
           }
         }
         if (isOrderCompleted) {
-          IShipmentService ss = Services.getService(ShipmentService.class);
-          List<IShipment> shipments = ss.getShipmentsByOrderId(order.getOrderId());
-          String newOrderStatus = ss.getOverallStatus(shipments, true, order.getOrderId());
+          List<IShipment> shipments = shipmentService.getShipmentsByOrderId(order.getOrderId());
+          String newOrderStatus = shipmentService.getOverallStatus(shipments, true, order.getOrderId());
           pm.makePersistentAll(order.getItems());
           updateOrderStatus(order.getOrderId(), newOrderStatus, userId, null, null, source, pm,
               null);
@@ -361,32 +438,23 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
         return new UpdatedOrder(o);
       }
 
-      IDemandService ds = Services.getService(DemandService.class);
-      List<IDemandItem> demandList = ds.getDemandItems(orderId, pm);
+      List<IDemandItem> demandList = demandService.getDemandItems(orderId, pm);
       o.setItems(demandList);
-      StaticApplicationContext.getBean(UpdateOrderStatusValidator.class)
-          .validateOrderStatusChange(o,
-              newStatus);
+      updateOrderStatusValidator.validateOrderStatusChange(o, newStatus);
       domainId = o.getDomainId();
       DomainConfig dc = DomainConfig.getInstance(domainId);
       String tag = IInvAllocation.Type.ORDER + CharacterConstants.COLON + orderId;
-      InventoryManagementService
-          ims =
-          Services.getService(InventoryManagementServiceImpl.class,
-              this.getLocale());
-
       if (newStatus.equals(IOrder.CANCELLED)) {
         o.setCancelledDiscrepancyReason(crsn);
-        IShipmentService ss = Services.getService(ShipmentService.class, this.getLocale());
-        List<IShipment> shipments = ss.getShipmentsByOrderId(orderId, pm);
+        List<IShipment> shipments = shipmentService.getShipmentsByOrderId(orderId, pm);
         for (IShipment shipment : shipments) {
           xLogger
               .info("Cancelling shipment {0} for order {1}", orderId, shipment.getShipmentId());
-          ss.updateShipmentStatus(shipment.getShipmentId(), ShipmentStatus.CANCELLED, message,
+          shipmentService.updateShipmentStatus(shipment.getShipmentId(), ShipmentStatus.CANCELLED, message,
               updatingUserId, crsn, false, pm, source);
         }
         if (dc.autoGI()) {
-          ims.clearAllocationByTag(null, null, tag, pm);
+          inventoryManagementService.clearAllocationByTag(null, null, tag, pm);
         }
 
       } else if (newStatus.equals(IOrder.CONFIRMED) && dc.autoGI() && dc.getOrdersConfig()
@@ -394,7 +462,7 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
         boolean autoAssignStatus = dc.getOrdersConfig().autoAssignFirstMatStatus();
         for (IDemandItem d : demandList) {
           try {
-            ims.allocateAutomatically(o.getServicingKiosk(), d.getMaterialId(),
+            inventoryManagementService.allocateAutomatically(o.getServicingKiosk(), d.getMaterialId(),
                 IInvAllocation.Type.ORDER,
                 String.valueOf(d.getOrderId()), tag, d.getQuantity(), d.getUserId(),
                 autoAssignStatus, pm);
@@ -480,13 +548,6 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
   public String shipNow(IOrder order, String transporter, String trackingId, String reason,
       Date expectedFulfilmentDate, String userId, String ps, int source, String referenceId, Boolean updateOrderFields)
       throws ServiceException, ObjectNotFoundException, ValidationException {
-    IShipmentService
-        shipmentService =
-        Services.getService(ShipmentService.class, this.getLocale());
-    MaterialCatalogService
-        mcs =
-        Services.getService(MaterialCatalogServiceImpl.class, this.getLocale());
-    EntitiesService as = Services.getService(EntitiesServiceImpl.class, this.getLocale());
     ShipmentModel model = new ShipmentModel();
     if (expectedFulfilmentDate != null) {
       model.ead = new SimpleDateFormat(Constants.DATE_FORMAT).format(expectedFulfilmentDate);
@@ -497,7 +558,7 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
     model.orderId = order.getOrderId();
     model.customerId = order.getKioskId();
     model.vendorId = order.getServicingKiosk();
-    IKiosk vendor = as.getKiosk(model.vendorId, false);
+    IKiosk vendor = entitiesService.getKiosk(model.vendorId, false);
     model.reason = reason;
     model.status = ShipmentStatus.SHIPPED;
     model.tags = order.getTags(TagUtil.TYPE_ORDER);
@@ -512,7 +573,7 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
         shipmentItemModel.mId = demandItem.getMaterialId();
         shipmentItemModel.q = demandItem.getQuantity();
         shipmentItemModel.afo = dc.autoGI();
-        IMaterial material = mcs.getMaterial(shipmentItemModel.mId);
+        IMaterial material = materialCatalogService.getMaterial(shipmentItemModel.mId);
         shipmentItemModel.isBa = material.isBatchEnabled() && vendor.isBatchMgmtEnabled();
         shipmentItemModel.mnm = material.getName();
         model.items.add(shipmentItemModel);
@@ -524,11 +585,9 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
   private IMessage addMessageToOrder(Long orderId, Long domainId, String message,
       String updatingUserId,
       PersistenceManager pm) throws ServiceException {
-    ConversationService cs =
-        Services.getService(ConversationServiceImpl.class, this.getLocale());
     IMessage
         iMessage =
-        cs.addMsgToConversation("ORDER", orderId.toString(), message, updatingUserId,
+        conversationService.addMsgToConversation("ORDER", orderId.toString(), message, updatingUserId,
             Collections.singleton("ORDER:" + orderId), domainId, pm);
     generateOrderCommentEvent(domainId, IEvent.COMMENTED, JDOUtils.getImplClassName(IOrder.class),
         orderId.toString(), null, null);
@@ -548,7 +607,7 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
         customOptions.message = message;
         if (userIds != null && !userIds.isEmpty()) {
           Map<Integer, List<String>> userIdsMap = new HashMap<>();
-          userIdsMap.put(Integer.valueOf(EventSpec.NotifyOptions.IMMEDIATE), userIds);
+          userIdsMap.put(EventSpec.NotifyOptions.IMMEDIATE, userIds);
           customOptions.userIds = userIdsMap;
         }
       }
@@ -564,9 +623,6 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
   private void addStatusHistory(Long orderId, String oldStatus, String newStatus, Long domainId,
       IMessage iMessage,
       String userId, PersistenceManager pm) {
-    ActivityService
-        activityService =
-        Services.getService(ActivityServiceImpl.class, this.getLocale());
     activityService
         .createActivity(IActivity.TYPE.ORDER.name(), String.valueOf(orderId), "STATUS", oldStatus,
             newStatus,
@@ -608,8 +664,7 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
 
   @Override
   public Results getOrders(OrderFilters orderFilters, PageParams pageParams) {
-    return StaticApplicationContext.getBean(GetFilteredOrdersAction.class)
-        .invoke(orderFilters, pageParams);
+    return getFilteredOrdersAction.invoke(orderFilters, pageParams);
   }
 
   /**
@@ -926,7 +981,6 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
       throw new ServiceException("Unknown domain");
     }
     boolean useLocalPM = pm == null;
-    // Init. services and data
     if (useLocalPM) {
       pm = PMF.get().getPersistenceManager();
     }
@@ -954,15 +1008,14 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
       try {
         // Get the order
         o = JDOUtils.getObjectById(IOrder.class, trackingId, pm);
-        IDemandService ds = Services.getService(DemandService.class);
-        o.setItems(ds.getDemandItems(o.getOrderId(), pm));
+        o.setItems(demandService.getDemandItems(o.getOrderId(), pm));
         xLogger.fine("inventoryTransactions: {0}, order size: {1}",
             (inventoryTransactions == null ? "NULL" : inventoryTransactions.size()), o.size());
         o.setDueDate(reqByDate);
         o.setExpectedArrivalDate(eta);
         modifyOrder(o, userId, inventoryTransactions, now, domainId, transType, message,
             utcExpectedFulfillmentTimeRangesCSV, utcConfirmedFulfillmentTimeRange, payment,
-            paymentOption, packageSize, allowEmptyOrders, orderTags, referenceId, pm);
+            paymentOption, allowEmptyOrders, orderTags, referenceId, pm);
         // Prevent an order from being edited out of all items, unless empty orders are allowed
         if (!allowEmptyOrders && o.size() == 0) {
           throw new ServiceException("Order has no items with a quantity greater than zero");
@@ -986,6 +1039,9 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
         xLogger
             .severe("Order with i {0} not found while re-ordering for kiosk {1}: {2}", trackingId,
                 kioskId, e.getMessage(), e);
+        final Locale locale = SecurityUtils.getLocale();
+        ResourceBundle messages = Resources.get().getBundle("Messages", locale);
+        ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
         throw new ServiceException(
             messages.getString("order") + " " + trackingId + " " + backendMessages
                 .getString("error.notfound"));
@@ -1006,16 +1062,10 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
       }
     } else {
       // First time order
-      MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
-      InventoryManagementService
-          ims =
-          Services.getService(InventoryManagementServiceImpl.class);
       List<IDemandItem> demandList = new ArrayList<>(); // demand list
       if (inventoryTransactions != null && !inventoryTransactions.isEmpty()) {
-        Iterator<ITransaction> it = inventoryTransactions.iterator();
         // Get the transactions and demand items
-        while (it.hasNext()) {
-          ITransaction trans = it.next();
+        for (ITransaction trans : inventoryTransactions) {
           // Update timestamp, if needed
           if (trans.getTimestamp() == null) {
             trans.setTimestamp(now);
@@ -1025,9 +1075,9 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
           trans.setType(transType);
           // Get material
           Long materialId = trans.getMaterialId();
-          IMaterial m = mcs.getMaterial(materialId);
+          IMaterial m = materialCatalogService.getMaterial(materialId);
           // Get inventory
-          IInvntry inv = ims.getInventory(trans.getKioskId(), materialId);
+          IInvntry inv = inventoryManagementService.getInventory(trans.getKioskId(), materialId);
           if (inv == null) {
             xLogger.warn(
                 "Inv. for kiosk-material {0}-{1} in domain {2} is not available. Cannot process order.",
@@ -1048,8 +1098,7 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
             throw new ServiceException(e.getCode(), e.getMessage());
           }
           // Add to demand list
-          demandList.add(getDemandItem(trans, m, inv,
-              ims)); // if transaction has batch, then a DemandItemBatch is also created within the demand item
+          demandList.add(getDemandItem(trans, m, inv)); // if transaction has batch, then a DemandItemBatch is also created within the demand item
         } // end while
       }
       // Make the updated objects persistent
@@ -1062,8 +1111,7 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
           List<String> kioskTags = null;
           // Get kiosk
           if (kioskId != null) {
-            EntitiesService as = Services.getService(EntitiesServiceImpl.class);
-            IKiosk k = as.getKiosk(kioskId, false);
+            IKiosk k = entitiesService.getKiosk(kioskId, false);
             taxPercent = k.getTax();
             currency = k.getCurrency();
             kioskTags = k.getTags();
@@ -1078,16 +1126,16 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
             tx.begin();
           }
           // Update order data
-          createOrder(o, domainId, kioskId, userId, demandList, message, taxPercent, currency,
+          createOrder(o, domainId, kioskId, userId, demandList, taxPercent, currency,
               servicingKioskId, latitude, longitude, geoAccuracy, geoErrorCode,
               utcExpectedFulfillmentTimeRangesCSV, utcConfirmedFulfillmentTimeRange, payment,
-              paymentOption, packageSize, kioskTags, orderTags, orderType, referenceId);
+              paymentOption, kioskTags, orderTags, orderType, referenceId);
           o.setNumberOfItems(demandList.size());
           o.setExpectedArrivalDate(eta);
           o.setDueDate(reqByDate);
           o.setSrc(source);
           DomainConfig dc = DomainConfig.getInstance(domainId);
-          StaticApplicationContext.getBean(OrderVisibilityAction.class).invoke(o, domainId);
+          orderVisibilityAction.invoke(o, domainId);
           o = pm.makePersistent(o);
           demandList = (List<IDemandItem>) pm.makePersistentAll(demandList);
           demandList = (List<IDemandItem>) pm.detachCopyAll(demandList);
@@ -1100,7 +1148,7 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
                 String tag = IInvAllocation.Type.ORDER.toString().concat(":")
                     .concat(String.valueOf(d.getOrderId()));
                 try {
-                  ims.allocateAutomatically(o.getServicingKiosk(), d.getMaterialId(),
+                  inventoryManagementService.allocateAutomatically(o.getServicingKiosk(), d.getMaterialId(),
                       IInvAllocation.Type.ORDER, String.valueOf(d.getOrderId()), tag,
                       d.getOriginalQuantity(), d.getUserId(), autoAssignStatus, pm);
                   d.setStatus(IOrder.CONFIRMED);
@@ -1158,13 +1206,11 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
   }
 
   private void validateHU(BigDecimal quantity, Long mId, String mName) throws LogiException {
-    IHandlingUnitService hus = Services.getService(HandlingUnitServiceImpl.class);
-    Map<String, String> huData = hus.getHandlingUnitDataByMaterialId(mId);
+    Map<String, String> huData = handlingUnitService.getHandlingUnitDataByMaterialId(mId);
     if (huData != null) {
       if (BigUtil.notEqualsZero(quantity.remainder(new BigDecimal(huData.get("quantity"))))) {
         if (mName == null) {
-          MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
-          IMaterial m = mcs.getMaterial(mId);
+          IMaterial m = materialCatalogService.getMaterial(mId);
           mName = m.getName();
         }
         throw new LogiException("T001", quantity.stripTrailingZeros().toPlainString(), mName,
@@ -1175,12 +1221,11 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
 
   // Get an order given a demand list
   private void createOrder(
-      IOrder o, Long domainId, Long kioskId, String userId, List<IDemandItem> items, String message,
+      IOrder o, Long domainId, Long kioskId, String userId, List<IDemandItem> items,
       BigDecimal taxPercent, String currency, Long servicingKioskId, Double latitude,
       Double longitude,
       Double geoAccuracy, String geoErrorCode, String utcEstimatedFulfillmentTimeRangesCSV,
       String utcConfirmedFulfillmentTimeRange, BigDecimal payment, String paymentOption,
-      String packageSize,
       List<String> kioskTags, List<String> orderTags, Integer orderType, String referenceId
   ) throws ServiceException {
     xLogger.fine("Entered createOrder");
@@ -1227,59 +1272,45 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
 
     // Update the demand items with order id and compute price
     if (items != null && !items.isEmpty()) {
-      Iterator<IDemandItem> it = items.iterator();
-      while (it.hasNext()) {
-        IDemandItem item = it.next();
-        // Add order id to item
+      for (IDemandItem item : items) {
         item.updateOId(o);
       }
-      // Add the items to the order
       o.setItems(items);
-      // Lastly, calculate total order price and set it (ensure tax, if any, is set before a price computation)
-      o.setTotalPrice(
-          o.computeTotalPrice()); // NOTE: price computation is always taken from this function to ensure correct computations (even at cost of minor inefficiency)
+      o.setTotalPrice(o.computeTotalPrice());
       o.setReferenceID(referenceId);
     }
     o.setDomainId(domainId);
-    // Update other order metadata
     updateOrderMetadata(o, utcEstimatedFulfillmentTimeRangesCSV, utcConfirmedFulfillmentTimeRange,
-        payment, paymentOption, packageSize);
+        payment, paymentOption);
   }
 
   @Override
   public void modifyOrder(IOrder o, String userId, List<ITransaction> transactions, Date timestamp,
-      Long domainId, String transType, String message,
-      String utcEstimatedFulfillmentTimeRanges,
-      String utcConfirmedFulfillmentTimeRange, BigDecimal payment,
-      String paymentOption, String packageSize, boolean allowEmptyOrders,
-      List<String> orderTags, String referenceId)
+                          Long domainId, String transType, String message,
+                          String utcEstimatedFulfillmentTimeRanges,
+                          String utcConfirmedFulfillmentTimeRange, BigDecimal payment,
+                          String paymentOption, boolean allowEmptyOrders,
+                          List<String> orderTags, String referenceId)
       throws ServiceException {
     modifyOrder(o, userId, transactions, timestamp, domainId, transType, message,
         utcEstimatedFulfillmentTimeRanges, utcConfirmedFulfillmentTimeRange, payment, paymentOption,
-        packageSize, allowEmptyOrders, orderTags, referenceId, null);
+        allowEmptyOrders, orderTags, referenceId, null);
   }
 
   @Override
   // Modify order status and its items
   public void modifyOrder(IOrder o, String userId, List<ITransaction> transactions, Date timestamp,
-      Long domainId,
-      String transType, String message,
-      String utcEstimatedFulfillmentTimeRanges,
-      String utcConfirmedFulfillmentTimeRange,
-      BigDecimal payment, String paymentOption, String packageSize,
-      boolean allowEmptyOrders,
-      List<String> orderTags, String referenceId,
-      PersistenceManager pm) throws ServiceException {
+                          Long domainId,
+                          String transType, String message,
+                          String utcEstimatedFulfillmentTimeRanges,
+                          String utcConfirmedFulfillmentTimeRange,
+                          BigDecimal payment, String paymentOption,
+                          boolean allowEmptyOrders,
+                          List<String> orderTags, String referenceId,
+                          PersistenceManager pm) throws ServiceException {
     Date t = null;
-    MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
-    InventoryManagementService
-        ims =
-        Services.getService(InventoryManagementServiceImpl.class);
     if (transactions != null && !transactions.isEmpty()) {
-      Iterator<ITransaction> it = transactions.iterator();
-      while (it.hasNext()) {
-        ITransaction trans = it.next();
-        // Update transaction data
+      for (ITransaction trans : transactions) {
         if (trans.getTimestamp() == null) {
           trans.setTimestamp(timestamp);
           t = timestamp;
@@ -1303,9 +1334,8 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
           Long materialId = trans.getMaterialId();
           // A new item has to be added to the order
           try {
-            item =
-                getDemandItem(trans, mcs.getMaterial(trans.getMaterialId()),
-                    ims.getInventory(trans.getKioskId(), materialId), ims);
+            item = getDemandItem(trans, materialCatalogService.getMaterial(trans.getMaterialId()),
+                    inventoryManagementService.getInventory(trans.getKioskId(), materialId));
             if (item.getOrderId() == null) {
               item.updateOId(o);
             }
@@ -1358,7 +1388,7 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
     DomainsUtil.addToDomain(o, o.getDomainId(), null);
     // Update other order metadata
     updateOrderMetadata(o, utcEstimatedFulfillmentTimeRanges, utcConfirmedFulfillmentTimeRange,
-        payment, paymentOption, packageSize);
+        payment, paymentOption);
     // Set timestamp and user
     if (t == null) {
       t = new Date();
@@ -1366,10 +1396,7 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
     o.setUpdatedOn(t);
     o.setUpdatedBy(userId);
     if (message != null) {
-      ConversationService
-          cs =
-          Services.getService(ConversationServiceImpl.class, this.getLocale());
-      cs.addMsgToConversation("ORDER", String.valueOf(o.getOrderId()), message, userId,
+      conversationService.addMsgToConversation("ORDER", String.valueOf(o.getOrderId()), message, userId,
           Collections.singleton("ORDER:" + o.getOrderId())
           , o.getDomainId(), pm);
       generateOrderCommentEvent(domainId, IEvent.COMMENTED, JDOUtils.getImplClassName(IOrder.class),
@@ -1380,8 +1407,8 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
 
   // Update other order metadata (fulfillment times, payment options, package size, etc.)
   private void updateOrderMetadata(IOrder o, String utcEstimatedFulfillmentTimeRangesCSV,
-      String utcConfirmedFulfillmentTimeRange, BigDecimal payment,
-      String paymentOption, String packageSize) {
+                                   String utcConfirmedFulfillmentTimeRange, BigDecimal payment,
+                                   String paymentOption) {
     // Update estimated fulfillment time ranges
     if (utcEstimatedFulfillmentTimeRangesCSV != null) {
       o.setExpectedFulfillmentTimeRangesCSV(utcEstimatedFulfillmentTimeRangesCSV);
@@ -1424,8 +1451,7 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
   }
 
   // Get a demand item, given a transaction
-  private IDemandItem getDemandItem(ITransaction trans, IMaterial m, IInvntry inv,
-      InventoryManagementService ims) throws ServiceException {
+  private IDemandItem getDemandItem(ITransaction trans, IMaterial m, IInvntry inv) throws ServiceException {
     IDemandItem di = JDOUtils.createInstance(IDemandItem.class);
     di.setDomainId(trans.getDomainId());
     di.setKioskId(trans.getKioskId());
@@ -1466,7 +1492,7 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
     }
     // If inventory available, check/set tax rate
     di.setTax(inv.getTax());
-    di.setTimeToOrder(ims.getDurationFromRP(inv.getKey()));
+    di.setTimeToOrder(inventoryManagementService.getDurationFromRP(inv.getKey()));
     di.setShippedDiscrepancyReason(trans.getEditOrderQtyReason());
 
     return di;
@@ -1475,8 +1501,8 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
   // Generate order events, if configured
   private void generateEvent(Long domainId, int eventId, IOrder o, String message,
       List<String> userIds) {
-    StaticApplicationContext.getBean(GenerateOrderEventsAction.class)
-        .invoke(domainId, eventId, o.getOrderId(), o.getStatus(), message, userIds);
+    generateOrderEventsAction.invoke(domainId, eventId, o.getOrderId(), o.getStatus(),
+        message, userIds);
   }
 
   @Override
@@ -1599,14 +1625,12 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
       excludeProcessingTime = leadTimeAvgConfig.getExcludeOrderProcTime();
     }
 
-    InventoryManagementService ims = Services.getService(InventoryManagementServiceImpl.class);
-    EntitiesService es = Services.getService(EntitiesServiceImpl.class);
-    Results results = es.getLinkedKiosks(kid, IKioskLink.TYPE_VENDOR, null, null);
+    Results results = entitiesService.getLinkedKiosks(kid, IKioskLink.TYPE_VENDOR, null, null);
     boolean kskHasMoreThanOneVnd = false;
     if (results.getResults().size() > 1) {
       kskHasMoreThanOneVnd = true;
     }
-    IInvntry inv = ims.getInventory(kid, mid);
+    IInvntry inv = inventoryManagementService.getInventory(kid, mid);
     BigDecimal orderPeriodicity = inv.getOrderPeriodicity();
     if (BigUtil.equalsZero(orderPeriodicity)) {
       orderPeriodicity = BigDecimal.valueOf(orderPeriodicityInConfig);
@@ -1646,9 +1670,8 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
     try {
       List queryResults = (List) query.executeWithArray(parameters.toArray());
       if (queryResults != null && !queryResults.isEmpty()) {
-        Iterator iterator = queryResults.iterator();
-        while (iterator.hasNext()) {
-          Object[] resultsArray = (Object[]) iterator.next();
+        for (Object queryResult : queryResults) {
+          Object[] resultsArray = (Object[]) queryResult;
           avgLeadTime = (BigDecimal) resultsArray[0];
           long numberOfOrders = (long) resultsArray[1];
           if (numberOfOrders < minNumberOfOrders) {
@@ -1734,7 +1757,7 @@ public class OrderManagementServiceImpl extends ServiceImpl implements OrderMana
       throws ServiceException, IOException, ValidationException, ObjectNotFoundException {
     IOrder order = getOrder(orderId, true);
     SecureUserDetails user = SecurityUtils.getUserDetails();
-    return StaticApplicationContext.getBean(GenerateOrderInvoiceAction.class).invoke(order, user);
+    return generateOrderInvoiceAction.invoke(order, user);
   }
 
 }

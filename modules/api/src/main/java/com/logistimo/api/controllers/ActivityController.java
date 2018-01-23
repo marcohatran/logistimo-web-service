@@ -27,7 +27,6 @@ import com.logistimo.activity.builders.ActivityBuilder;
 import com.logistimo.activity.entity.IActivity;
 import com.logistimo.activity.models.ActivityModel;
 import com.logistimo.activity.service.ActivityService;
-import com.logistimo.activity.service.impl.ActivityServiceImpl;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.constants.Constants;
 import com.logistimo.exception.InvalidServiceException;
@@ -36,10 +35,9 @@ import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.Resources;
-import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.utils.LocalDateUtil;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -49,10 +47,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Locale;
 import java.util.ResourceBundle;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * Created by kumargaurav on 07/10/16.
@@ -65,25 +60,23 @@ public class ActivityController {
   private static final XLog xLogger = XLog.getLog(ActivityController.class);
   private ActivityBuilder builder = new ActivityBuilder();
 
+  private ActivityService activityService;
+
+  @Autowired
+  public void setActivityService(ActivityService activityService) {
+    this.activityService = activityService;
+  }
+
   @RequestMapping(value = "/", method = RequestMethod.POST)
   public
   @ResponseBody
-  ActivityModel createActivity(@RequestBody ActivityModel model,
-                               HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
-    Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    ActivityService activityService = null;
-    ActivityModel retmodel = null;
+  ActivityModel createActivity(@RequestBody ActivityModel model) {
+    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", SecurityUtils.getLocale());
+    ActivityModel retmodel;
     try {
-      activityService = Services.getService(ActivityServiceImpl.class);
       IActivity activity = builder.buildActivity(model);
       activity = activityService.createActivity(activity);
       retmodel = builder.buildModel(activity);
-
-    } catch (ServiceException se) {
-      xLogger.warn("Error while creating activity {0}", model, se);
-      throw new InvalidServiceException(backendMessages.getString("activity.create.error"));
     } catch (Exception e) {
       xLogger.warn("Error while creating activity {0}", model, e);
       throw new InvalidServiceException(backendMessages.getString("activity.create.error"));
@@ -101,14 +94,11 @@ public class ActivityController {
                       @RequestParam(required = false) String userId,
                       @RequestParam(required = false) String tag,
                       @RequestParam(defaultValue = PageParams.DEFAULT_SIZE_STR) int size,
-                      @RequestParam(defaultValue = PageParams.DEFAULT_OFFSET_STR) int offset,
-                      HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+                      @RequestParam(defaultValue = PageParams.DEFAULT_OFFSET_STR) int offset) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     try {
       PageParams pageParams = new PageParams(offset, size);
-      ActivityService activityService = Services.getService(ActivityServiceImpl.class);
-      Results
-          results =
+      Results results =
           activityService.getActivity(objectId, objectType, from == null ? null
                   : LocalDateUtil
                       .parseCustom(from, Constants.DATETIME_CSV_FORMAT, sUser.getTimezone()),

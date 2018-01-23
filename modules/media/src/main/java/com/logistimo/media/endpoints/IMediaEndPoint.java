@@ -24,7 +24,6 @@
 package com.logistimo.media.endpoints;
 
 import com.logistimo.media.entity.IMedia;
-
 import com.logistimo.services.ServiceException;
 
 import java.util.List;

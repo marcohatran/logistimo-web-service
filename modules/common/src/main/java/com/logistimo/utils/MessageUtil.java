@@ -26,17 +26,15 @@
  */
 package com.logistimo.utils;
 
-import com.logistimo.dao.JDOUtils;
-
 import com.logistimo.communications.MessageHandlingException;
+import com.logistimo.dao.JDOUtils;
 import com.logistimo.entity.IMessageLog;
 import com.logistimo.entity.IMultipartMsg;
+import com.logistimo.logger.XLog;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.impl.PMF;
-
-import com.logistimo.logger.XLog;
 
 import java.util.Calendar;
 import java.util.Collections;

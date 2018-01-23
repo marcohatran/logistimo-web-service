@@ -24,29 +24,27 @@
 package com.logistimo.entities.utils;
 
 import com.logistimo.assets.entity.IAsset;
+import com.logistimo.constants.CharacterConstants;
+import com.logistimo.constants.QueryConstants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.JDOUtils;
+import com.logistimo.entities.pagination.processor.EntityDomainUpdateProcessor;
 import com.logistimo.entities.service.EntitiesService;
-import com.logistimo.entities.service.EntitiesServiceImpl;
-
-import com.logistimo.pagination.QueryParams;
+import com.logistimo.logger.XLog;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.PagedExec;
-import com.logistimo.entities.pagination.processor.EntityDomainUpdateProcessor;
+import com.logistimo.pagination.QueryParams;
 import com.logistimo.services.ServiceException;
-import com.logistimo.constants.CharacterConstants;
-
 import com.logistimo.services.utils.ConfigUtil;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.utils.PropertyUtil;
-import com.logistimo.constants.QueryConstants;
-import com.logistimo.logger.XLog;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Arrays;
 
 /**
  * The {@code DomainLinkUpdater} class adds/removes domain ids based on linked domain from all entities and its related objects.
@@ -70,11 +68,11 @@ public class DomainLinkUpdater {
       throws ServiceException {
     String relatedObjectsStr = ConfigUtil.get(ENTITY_DOMAIN_UPDATE_PROP);
     Map<String, String[]> relatedClassesMap = PropertyUtil.parseProperty(relatedObjectsStr);
-    EntitiesService as = new EntitiesServiceImpl();
+    EntitiesService entityService = StaticApplicationContext.getBean(EntitiesService.class);
     Set<Long> kioskIds = new HashSet<>();
     List<String> childDomainIds = Arrays.asList(childDomainIdsStr.split(CharacterConstants.COMMA));
     for (String child : childDomainIds) {
-      kioskIds.addAll(as.getAllKioskIds(Long.parseLong(child)));
+      kioskIds.addAll(entityService.getAllKioskIds(Long.parseLong(child)));
     }
     for (Long kioskId : kioskIds) {
       for (String relatedClassName : relatedClassesMap.keySet()) {

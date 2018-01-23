@@ -25,7 +25,6 @@ package com.logistimo.dashboards.service;
 
 import com.logistimo.dashboards.entity.IDashboard;
 import com.logistimo.dashboards.entity.IWidget;
-import com.logistimo.services.Service;
 import com.logistimo.services.ServiceException;
 
 import java.sql.ResultSet;
@@ -36,7 +35,7 @@ import java.util.Map;
 /**
  * @author Mohan Raja
  */
-public interface IDashboardService extends Service {
+public interface IDashboardService {
   void createDashboard(IDashboard ds) throws ServiceException;
 
   void createWidget(IWidget wid) throws ServiceException;

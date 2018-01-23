@@ -27,6 +27,8 @@
 package com.logistimo.inventory.service.impl;
 
 import com.logistimo.AppFactory;
+import com.logistimo.auth.service.AuthorizationService;
+import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.config.models.ConfigurationException;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.InventoryConfig;
@@ -34,14 +36,12 @@ import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.QueryConstants;
 import com.logistimo.constants.SourceConstants;
-import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.domains.utils.DomainsUtil;
 import com.logistimo.domains.utils.EntityRemover;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.models.LocationSuggestionModel;
 import com.logistimo.entities.service.EntitiesService;
-import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.events.EventConstants;
 import com.logistimo.events.entity.IEvent;
 import com.logistimo.events.exceptions.EventGenerationException;
@@ -53,8 +53,6 @@ import com.logistimo.inventory.TransactionUtil;
 import com.logistimo.inventory.actions.UpdateMultipleInventoryTransactionsAction;
 import com.logistimo.inventory.dao.IInvntryDao;
 import com.logistimo.inventory.dao.ITransDao;
-import com.logistimo.inventory.dao.impl.InvntryDao;
-import com.logistimo.inventory.dao.impl.TransDao;
 import com.logistimo.inventory.entity.IInvAllocation;
 import com.logistimo.inventory.entity.IInventoryMinMaxLog;
 import com.logistimo.inventory.entity.IInvntry;
@@ -71,25 +69,20 @@ import com.logistimo.materials.entity.IHandlingUnit;
 import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.materials.service.IHandlingUnitService;
 import com.logistimo.materials.service.MaterialCatalogService;
-import com.logistimo.materials.service.impl.HandlingUnitServiceImpl;
-import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
 import com.logistimo.models.shipments.ShipmentItemBatchModel;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.QueryParams;
 import com.logistimo.pagination.Results;
 import com.logistimo.services.DuplicationException;
 import com.logistimo.services.ObjectNotFoundException;
-import com.logistimo.services.Service;
+import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.UnauthorizedRequestException;
 import com.logistimo.services.impl.PMF;
-import com.logistimo.services.impl.ServiceImpl;
 import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.services.utils.ConfigUtil;
 import com.logistimo.tags.TagUtil;
 import com.logistimo.tags.dao.ITagDao;
-import com.logistimo.tags.dao.TagDao;
 import com.logistimo.tags.entity.ITag;
 import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.LocalDateUtil;
@@ -98,6 +91,7 @@ import com.logistimo.utils.QueryUtil;
 import com.logistimo.utils.StringUtil;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.math.BigDecimal;
 import java.text.ParseException;
@@ -114,6 +108,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -127,8 +122,7 @@ import javax.jdo.Transaction;
  * @author arun, juhee
  */
 @org.springframework.stereotype.Service
-public class InventoryManagementServiceImpl extends ServiceImpl
-    implements InventoryManagementService {
+public class InventoryManagementServiceImpl implements InventoryManagementService {
 
   // Logger
   private static final XLog xLogger = XLog.getLog(InventoryManagementServiceImpl.class);
@@ -141,9 +135,57 @@ public class InventoryManagementServiceImpl extends ServiceImpl
   private static Set<String> vldTransTypes = new HashSet<>(Arrays.asList(ITransaction.TYPE_ISSUE,
       ITransaction.TYPE_RECEIPT, ITransaction.TYPE_PHYSICALCOUNT, ITransaction.TYPE_TRANSFER,
       ITransaction.TYPE_WASTAGE, ITransaction.TYPE_RETURN));
-  private ITagDao tagDao = new TagDao();
-  private IInvntryDao invntryDao = new InvntryDao();
-  private ITransDao transDao = new TransDao();
+
+  private ITagDao tagDao;
+  private IInvntryDao invntryDao;
+  private ITransDao transDao;
+
+  private MaterialCatalogService materialCatalogService;
+  private EntitiesService entitiesService;
+  private IHandlingUnitService handlingUnitService;
+  private UpdateMultipleInventoryTransactionsAction updateMultipleInventoryTransactionsAction;
+  private AuthorizationService authorizationService;
+
+  @Autowired
+  public void setTagDao(ITagDao tagDao) {
+    this.tagDao = tagDao;
+  }
+
+  @Autowired
+  public void setInvntryDao(IInvntryDao invntryDao) {
+    this.invntryDao = invntryDao;
+  }
+
+  @Autowired
+  public void setTransDao(ITransDao transDao) {
+    this.transDao = transDao;
+  }
+
+  @Autowired
+  public void setMaterialCatalogService(MaterialCatalogService materialCatalogService) {
+    this.materialCatalogService = materialCatalogService;
+  }
+
+  @Autowired
+  public void setEntitiesService(EntitiesService entitiesService) {
+    this.entitiesService = entitiesService;
+  }
+
+  @Autowired
+  public void setHandlingUnitService(IHandlingUnitService handlingUnitService) {
+    this.handlingUnitService = handlingUnitService;
+  }
+
+  @Autowired
+  public void setUpdateMultipleInventoryTransactionsAction(
+      UpdateMultipleInventoryTransactionsAction updateMultipleInventoryTransactionsAction) {
+    this.updateMultipleInventoryTransactionsAction = updateMultipleInventoryTransactionsAction;
+  }
+
+  @Autowired
+  public void setAuthorizationService(AuthorizationService authorizationService) {
+    this.authorizationService = authorizationService;
+  }
 
   private static ITaskService getTaskService() {
     return AppFactory.get().getTaskService();
@@ -243,9 +285,6 @@ public class InventoryManagementServiceImpl extends ServiceImpl
     return kidTransTimeMap;
   }
 
-  /* (non-Javadoc)
-     * @see org.lggi.samaanguru.service.InventoryManagementService#getInventory(java.lang.Long, java.lang.Long)
-     */
   public IInvntry getInventory(Long kioskId, Long materialId) throws ServiceException {
     if (kioskId == null || materialId == null) {
       throw new IllegalArgumentException("Invalid kiosk ID or material ID");
@@ -550,8 +589,8 @@ public class InventoryManagementServiceImpl extends ServiceImpl
       queryStr.append(CharacterConstants.C_BRACKET);
     }
     declaration += locationParamDeclaration.toString();
-    queryStr.append(locSubQuery.toString() + kioskVariableDeclaration + " PARAMETERS " + declaration
-        + ordering);
+    queryStr.append(locSubQuery.toString()).append(kioskVariableDeclaration).append(" PARAMETERS ")
+        .append(declaration).append(ordering);
     PersistenceManager pm = PMF.get().getPersistenceManager();
     Query q = pm.newQuery(queryStr.toString());
     if (pageParams != null) {
@@ -738,7 +777,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
       pm.close();
     }
     xLogger.fine("Exiting getValidBatchesByBatchId");
-    return new Results(results, cursor);
+    return new Results<>(results, cursor);
   }
 
   /**
@@ -816,7 +855,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
           DomainsUtil.addToDomain(item, domainId, null);
           item.setUpdatedBy(user);
           // Update the material tags
-          List<String> tags = null;
+          List<String> tags;
           if (item.getTags(TagUtil.TYPE_MATERIAL) == null) {
             try {
               IMaterial m = JDOUtils.getObjectById(IMaterial.class, item.getMaterialId(), pm);
@@ -902,11 +941,11 @@ public class InventoryManagementServiceImpl extends ServiceImpl
 
   public void updateInventory(List<IInvntry> items, String user, PersistenceManager pm,
                               boolean closePM, boolean skipMinMaxLog) throws ServiceException {
-    xLogger.fine("Entering updateInventory - num. of items = {0}", items.size());
     if (items == null || items.isEmpty()) {
       // nothing to remove
       throw new ServiceException("No inventory items to update");
     }
+    xLogger.fine("Entering updateInventory - num. of items = {0}", items.size());
     Map<Long, LockUtil.LockStatus> kidLockStatusMap = new HashMap<>();
     try {
       List<IInvntry> updatedItems = new ArrayList<>();
@@ -918,6 +957,8 @@ public class InventoryManagementServiceImpl extends ServiceImpl
               LockUtil.lock(String.valueOf(kioskId), LOCK_RETRY_COUNT,
                   LOCK_RETRY_DELAY_IN_MILLISECONDS);
           if (!LockUtil.isLocked(lockStatus)) {
+            ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages",
+                SecurityUtils.getLocale());
             throw new ServiceException(backendMessages.getString("lockinventory.failed"));
           }
           kidLockStatusMap.put(kioskId, lockStatus);
@@ -987,35 +1028,22 @@ public class InventoryManagementServiceImpl extends ServiceImpl
       throw new ServiceException("Invalid kiosk ID or material IDs"); // nothing to remove
     }
     xLogger.fine("Entered removeInventory");
-    DomainConfig dc = DomainConfig.getInstance(domainId);
-    Locale locale = dc.getLocale();
-    if (locale == null) {
-      locale = new Locale(Constants.LANG_DEFAULT, Constants.COUNTRY_DEFAULT);
-    }
-    Iterator<Long> it = materialIds.iterator();
-    while (it.hasNext()) {
-      Long materialId = it.next();
-      // Create the keys array
+    for (Long materialId : materialIds) {
       Object[] keys = new Object[2];
       keys[0] = kioskId;
       keys[1] = materialId;
       PersistenceManager pm = PMF.get().getPersistenceManager();
       try {
-        // Get the inventory object
         IInvntry inv = getInventory(kioskId, materialId, pm);
         if (inv == null) {
           continue;
         }
-        // Close open event if any in this inventory item
         if (!closeOpenEvent(inv.getKey(), pm)) {
           continue;
         }
-        // Generate event
         try {
-          // Get the material and entity tags if configured.
-          EventPublisher
-              .generate(domainId, IEvent.DELETED, null,
-                  JDOUtils.getImplClassName(IInvntry.class), inv.getKeyString(), null, inv);
+          EventPublisher.generate(domainId, IEvent.DELETED, null,
+              JDOUtils.getImplClassName(IInvntry.class), inv.getKeyString(), null, inv);
         } catch (EventGenerationException e) {
           xLogger.warn(
               "Exception when generating event for inventory-deletion for material-kiosk {0}:{1} in domain {2}: {3}",
@@ -1027,7 +1055,8 @@ public class InventoryManagementServiceImpl extends ServiceImpl
         //TemperatureUtil.removeDevices(domainId, kioskId, materialId);
         // Remove the entities from Inventory table all related tables
         EntityRemover
-            .removeRelatedEntities(domainId, JDOUtils.getImplClass(IInvntry.class).getName(), keys,
+            .removeRelatedEntities(domainId, JDOUtils.getImplClass(IInvntry.class).getName(),
+                keys,
                 false);
       } catch (Exception e) {
         xLogger.severe("Exception {0} when removing inventory for kiosk-material {1}-{2} : {3}",
@@ -1036,7 +1065,6 @@ public class InventoryManagementServiceImpl extends ServiceImpl
         pm.close();
       }
     }
-
     xLogger.fine("Exiting removeInventory");
   }
 
@@ -1120,7 +1148,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
     // Get the query and params
     String query = "SELECT FROM " + JDOUtils.getImplClass(ITransaction.class).getName()
             + " WHERE uId == uIdParam && t > fromParam";
-    Map<String, Object> params = new HashMap<String, Object>();
+    Map<String, Object> params = new HashMap<>();
     params.put("uIdParam", userId);
     params.put("fromParam", LocalDateUtil.getOffsetDate(fromDate, -1, Calendar.MILLISECOND));
     if (toDate != null) {
@@ -1290,12 +1318,15 @@ public class InventoryManagementServiceImpl extends ServiceImpl
     boolean isOrder =
         ITransaction.TYPE_ORDER.equals(trkType) || IInvAllocation.Type.SHIPMENT.toString()
             .equals(trkType)
-            || IInvAllocation.Type.ORDER.toString().equals(trkType);
+            || ITransaction.TYPE_ORDER_SHIPMENT.equals(trkType)
+            || ITransaction.TYPE_TRANSFER_SHIPMENT.equals(trkType);
+    Locale locale = SecurityUtils.getLocale();
+    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     try {
-      if (!isOrder && !AppFactory.get().getAuthorizationService()
-          .authoriseTransactionAccess(tType, domainId, userId)) {
-        throw new UnauthorizedRequestException("UA001", this.getLocale(),
-            TransactionUtil.getDisplayName(tType, this.getLocale()), userId);
+      if (!isOrder && !authorizationService.authoriseTransactionAccess(tType, domainId,
+          userId)) {
+        throw new UnauthorizedRequestException("UA001", locale,
+            TransactionUtil.getDisplayName(tType, locale), userId);
       }
     } catch (ObjectNotFoundException e) {
       xLogger.severe("Error loading UserAccount in Authoriser updateInventoryTransaction", e);
@@ -1424,10 +1455,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
           if (ITransaction.TYPE_TRANSFER.equals(tType)) {
             linkedKioskInv = getInventory(trans.getLinkedKioskId(), materialId, pm);
             if (linkedKioskInv == null) {
-              MaterialCatalogService
-                  mcs =
-                  Services.getService(MaterialCatalogServiceImpl.class);
-              IMaterial m = mcs.getMaterial(materialId);
+              IMaterial m = materialCatalogService.getMaterial(materialId);
               StringBuilder message = new StringBuilder(m.getName());
               if (trans.hasBatch()) {
                 message.append("(").append(trans.getBatchId()).append(")");
@@ -1459,7 +1487,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
           }
           trans.setDomainId(in.getDomainId());
           /**** Transactional object creation - trans, inv. update, inv. log creation ***/
-          List objects = null;
+          List objects;
           try {
             if (ITransaction.TYPE_TRANSFER.equals(tType)) {
               objects = createTransactableObjectsForTransfer(trans, in, invBatch, linkedKioskInv,
@@ -1604,12 +1632,10 @@ public class InventoryManagementServiceImpl extends ServiceImpl
   }
 
   private void checkHandlinkUnitErrors(ITransaction trans) throws LogiException {
-    IHandlingUnitService hus = Services.getService(HandlingUnitServiceImpl.class);
-    Map<String, String> huMap = hus.getHandlingUnitDataByMaterialId(trans.getMaterialId());
+    Map<String, String> huMap = handlingUnitService.getHandlingUnitDataByMaterialId(trans.getMaterialId());
     if (huMap != null && BigUtil.notEqualsZero(
         trans.getQuantity().remainder(new BigDecimal(huMap.get(IHandlingUnit.QUANTITY))))) {
-      MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
-      String matName = mcs.getMaterial(trans.getMaterialId()).getName();
+      String matName = materialCatalogService.getMaterial(trans.getMaterialId()).getName();
       throw new LogiException("T001", trans.getQuantity().stripTrailingZeros().toPlainString(),
           matName, huMap.get(IHandlingUnit.NAME), huMap.get(IHandlingUnit.QUANTITY), matName);
     }
@@ -1636,7 +1662,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
       throw new ServiceException("Invalid parameter passed");
     }
 
-    List<ITransaction> list = new ArrayList<ITransaction>();
+    List<ITransaction> list = new ArrayList<>();
     list.add(inventoryTransaction);
     List<ITransaction> errorList = updateInventoryTransactions(domainId, list, false, skipPred);
     if (errorList != null && !errorList.isEmpty()) {
@@ -1675,7 +1701,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
       throw new ServiceException("Invalid parameter passed");
     }
 
-    List<ITransaction> list = new ArrayList<ITransaction>();
+    List<ITransaction> list = new ArrayList<>();
     list.add(inventoryTransaction);
     List<ITransaction> errorList = updateInventoryTransactions(domainId, list, false, skipPred, pm);
     if (errorList != null && !errorList.isEmpty()) {
@@ -1695,19 +1721,13 @@ public class InventoryManagementServiceImpl extends ServiceImpl
       throw new ServiceException("No transaction IDs specified");
     }
     Date now = new Date();
-    // Get PM
-    List<ITransaction>
-        deleteList =
-        new ArrayList<ITransaction>(1); // list of transactions to be deleted
-    List<ITransaction>
-        errorList =
-        new ArrayList<ITransaction>(1); // list of transactions that could not be un-done.
-    List<IInvntryLog> logList = new ArrayList<IInvntryLog>(1);
-    List<IInvntry> updateList = new ArrayList<IInvntry>(1);
+    List<ITransaction> deleteList = new ArrayList<>(1);
+    List<ITransaction> errorList = new ArrayList<>(1);
+    List<IInvntryLog> logList = new ArrayList<>(1);
+    List<IInvntry> updateList = new ArrayList<>(1);
     Iterator<String> ids = transactionIds.iterator();
-    // Get the transaction objects, and segregate into issues/receipts/errors
-    List<ITransaction> issues = new ArrayList<ITransaction>(1);
-    List<ITransaction> receipts = new ArrayList<ITransaction>(1);
+    List<ITransaction> issues = new ArrayList<>(1);
+    List<ITransaction> receipts = new ArrayList<>(1);
     PersistenceManager pm = PMF.get().getPersistenceManager();
     try {
       while (ids.hasNext()) {
@@ -1739,26 +1759,21 @@ public class InventoryManagementServiceImpl extends ServiceImpl
         domainId = issues.get(0).getDomainId();
       }
       // Undo transactions
-      Iterator<ITransaction> it = issues.iterator();
-      while (it.hasNext()) {
-        ITransaction t = it.next();
+      for (ITransaction t : issues) {
         String type = t.getType();
         Long kioskId = t.getKioskId();
         Long materialId = t.getMaterialId();
         try {
-          // Get the corresponding inventory object
           IInvntry inv = getInventory(kioskId, materialId, pm);
           if (inv == null) {
             continue;
           }
           BigDecimal oldStock = inv.getStock();
-          // Update batch if needed
           IInvntryBatch invBatch = null;
           if (t.hasBatch()) {
             invBatch = getInventoryBatch(kioskId, materialId, t.getBatchId(), pm);
           }
           boolean isUpdated = false;
-          // Take action depending on tranaction type - either issue/receipt
           if (ITransaction.TYPE_ISSUE.equals(type) || ITransaction.TYPE_WASTAGE.equals(type)) {
             BigDecimal stock = inv.getStock().add(t.getQuantity());
             inv.setStock(stock);
@@ -1826,7 +1841,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
     Query query = null;
     try {
       pm = PMF.get().getPersistenceManager();
-      Map<String, Object> params = new HashMap<String, Object>(1);
+      Map<String, Object> params = new HashMap<>(1);
       query =
           pm.newQuery("select key from " + JDOUtils.getImplClass(IInvntry.class).getName()
               + " where kId == kIdParam && stk == 0f PARAMETERS Long kIdParam");
@@ -1930,11 +1945,8 @@ public class InventoryManagementServiceImpl extends ServiceImpl
       }
     }
 
-    EntitiesService as = Services.getService(EntitiesServiceImpl.class, this.getLocale());
-    MaterialCatalogService mcs =
-        Services.getService(MaterialCatalogServiceImpl.class, this.getLocale());
-    IKiosk kiosk = as.getKiosk(trans.getKioskId(), false);
-    IMaterial material = mcs.getMaterial(trans.getMaterialId());
+    IKiosk kiosk = entitiesService.getKiosk(trans.getKioskId(), false);
+    IMaterial material = materialCatalogService.getMaterial(trans.getMaterialId());
     if (kiosk.isBatchMgmtEnabled() && material.isBatchEnabled() && !trans.hasBatch()) {
       throw new LogiException("M009", kiosk.getName(), material.getName());
     }
@@ -1971,7 +1983,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
       trans.setBatchManufacturedDate(null);
       trans.setBatchManufacturer(null);
     }
-    List<Object> objects = new ArrayList<Object>();
+    List<Object> objects = new ArrayList<>();
     objects.add(trans);
     objects.add(inv);
     objects.add(iLog);
@@ -2007,7 +2019,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
       throws ObjectNotFoundException, ServiceException {
     Long localts = System.currentTimeMillis() + 1;
     // Ensure issue and receipt have different timestamps, so they are sequenced appropriately in views.
-    List<Object> objects = new ArrayList<Object>();
+    List<Object> objects = new ArrayList<>();
     // Update the opening/closing stock for the transfer transaction (same as current stock, since this trans. does not update stock directly)
     updateStockInTransferTrans(trans, inv, invBatch);
     objects.add(trans);
@@ -2453,13 +2465,12 @@ public class InventoryManagementServiceImpl extends ServiceImpl
 
   private void generateAbnormalStockEvent(ITransaction trans, IInvntry inv, BigDecimal prevStock,
                                           Long domainId, boolean isStockUpdatedFirstTime) {
-    Map<String, Object> params = null;
 
     BigDecimal stock = inv.getStock();
     // Out of stock
     if (BigUtil.equalsZero(stock)) {
       try {
-        EventPublisher.generate(domainId, IEvent.STOCKOUT, params,
+        EventPublisher.generate(domainId, IEvent.STOCKOUT, null,
             JDOUtils.getImplClassName(IInvntry.class), invntryDao.getInvKeyAsString(inv), null);
       } catch (EventGenerationException e) {
         xLogger.warn(
@@ -2476,7 +2487,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
     if (inv.isStockUnsafe() && (BigUtil.equalsZero(prevStock) || BigUtil
         .greaterThan(prevStock, safetyStock))) {
       try {
-        EventPublisher.generate(domainId, IEvent.UNDERSTOCK, params,
+        EventPublisher.generate(domainId, IEvent.UNDERSTOCK, null,
             JDOUtils.getImplClassName(IInvntry.class), invntryDao.getInvKeyAsString(inv), null);
       } catch (EventGenerationException e) {
         xLogger.warn(
@@ -2488,7 +2499,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
     BigDecimal maxStock = inv.getMaxStock();
     if (inv.isStockExcess() && BigUtil.lesserThanEquals(prevStock, maxStock)) {
       try {
-        EventPublisher.generate(domainId, IEvent.OVERSTOCK, params,
+        EventPublisher.generate(domainId, IEvent.OVERSTOCK, null,
             JDOUtils.getImplClassName(IInvntry.class), invntryDao.getInvKeyAsString(inv), null);
       } catch (EventGenerationException e) {
         xLogger.warn(
@@ -2509,7 +2520,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
         isPrevStockAbnormal);
     if (!isStockUpdatedFirstTime && isPrevStockAbnormal && !isCurStockAbnormal) {
       try {
-        EventPublisher.generate(domainId, IEvent.STOCK_REPLENISHED, params,
+        EventPublisher.generate(domainId, IEvent.STOCK_REPLENISHED, null,
             JDOUtils.getImplClassName(IInvntry.class), invntryDao.getInvKeyAsString(inv), null);
       } catch (EventGenerationException e) {
         xLogger.warn(
@@ -2541,20 +2552,6 @@ public class InventoryManagementServiceImpl extends ServiceImpl
       }
     }
     return invBatch;
-  }
-
-  public void destroy() throws ServiceException {
-    // TODO Auto-generated method stub
-  }
-
-  public Class<? extends Service> getInterface() {
-    xLogger.fine("Entering getInterface");
-    xLogger.fine("Exiting getInterface");
-    return InventoryManagementServiceImpl.class;
-  }
-
-  public void init(Services services) throws ServiceException {
-    // TODO Auto-generated method stub
   }
 
   public Long getShortId(Long kioskId) {
@@ -2917,7 +2914,6 @@ public class InventoryManagementServiceImpl extends ServiceImpl
    * @param quantity Quantity to allocate, if non batch material
    * @param batchDetails Batch details with Batch ID, Quantity and other meta, if batch material
    * @param userId ID of user who is allocating the inventory
-   * @return -
    */
   @Override
   public void allocate(Long kid, Long mid, IInvAllocation.Type type, String typeId, String tag,
@@ -2935,12 +2931,8 @@ public class InventoryManagementServiceImpl extends ServiceImpl
       closePM = true;
     }
     try {
-      IKiosk ksk = null;
-      IMaterial mat = null;
-      EntitiesService as = Services.getService(EntitiesServiceImpl.class);
-      MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
-      ksk = as.getKiosk(kid, false);
-      mat = mcs.getMaterial(mid);
+      IKiosk ksk = entitiesService.getKiosk(kid, false);
+      IMaterial mat = materialCatalogService.getMaterial(mid);
       List<IInvAllocation> allocations;
       boolean isQuantityChanged = false;
       if (quantity != null) {
@@ -2958,20 +2950,20 @@ public class InventoryManagementServiceImpl extends ServiceImpl
               incrementInvAllocation(allocation, allocDiff, tag, userId, null, pm);
               isQuantityChanged = true;
             } else {
-              String kiosk = null;
-              String material = null;
+              String kiosk;
+              String materialName;
               try {
-                kiosk = as.getKiosk(kid).getName();
+                kiosk = getKioskName(kid);
               } catch (Exception e) {
                 kiosk = "(" + kid + ")";
               }
               try {
-                material = mcs.getMaterial(mid).getName();
+                materialName = getMaterialName(mid);
               } catch (Exception e) {
-                material = "(" + mid + ")";
+                materialName = "(" + mid + ")";
               }
               throw new InventoryAllocationException("IA001", kiosk,
-                  material, invntry.getAvailableStock(), allocDiff);
+                  materialName, invntry.getAvailableStock(), allocDiff);
             }
           }
           if (isQuantityChanged || !Objects
@@ -3001,15 +2993,15 @@ public class InventoryManagementServiceImpl extends ServiceImpl
                 incrementInvAllocation(allocation, allocDiff, tag, userId, null, pm);
                 isQuantityChanged = true;
               } else {
-                String kiosk = null;
-                String material = null;
+                String kiosk;
+                String material;
                 try {
-                  kiosk = as.getKiosk(kid).getName();
+                  kiosk = getKioskName(kid);
                 } catch (Exception e) {
                   kiosk = "(" + kid + ")";
                 }
                 try {
-                  material = mcs.getMaterial(mid).getName();
+                  material = getMaterialName(mid);
                 } catch (Exception e) {
                   material = "(" + mid + ")";
                 }
@@ -3061,14 +3053,12 @@ public class InventoryManagementServiceImpl extends ServiceImpl
         tx.begin();
       }
 
-      MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
-      final IMaterial material = mcs.getMaterial(mid);
+      final IMaterial material = materialCatalogService.getMaterial(mid);
 
       boolean isBatch = material.isBatchEnabled();
 
       if (isBatch) {
-        EntitiesService es = Services.getService(EntitiesServiceImpl.class);
-        isBatch = es.getKiosk(kid).isBatchMgmtEnabled();
+        isBatch = entitiesService.getKiosk(kid).isBatchMgmtEnabled();
       }
       String matStatus = null;
       if (autoAssignStatus) {
@@ -3149,7 +3139,6 @@ public class InventoryManagementServiceImpl extends ServiceImpl
    * @param mid Material Id
    * @param type Type
    * @param typeId ID of type object
-   * @return -
    */
   @Override
   public void clearAllocation(Long kid, Long mid, IInvAllocation.Type type, String typeId)
@@ -3177,7 +3166,6 @@ public class InventoryManagementServiceImpl extends ServiceImpl
    * @param kid Kiosk Id
    * @param mid Material Id
    * @param tag Tag
-   * @return -
    */
   @Override
   public void clearAllocationByTag(Long kid, Long mid, String tag) throws ServiceException {
@@ -3490,7 +3478,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
           newQuantity = BigUtil.lesserThanZero(newQuantity) ? BigDecimal.ZERO : inv.getStock();
           isCorrected = true;
         } else {
-          throw new InventoryAllocationException("IA001", this.getLocale(), getKioskName(kioskId),
+          throw new InventoryAllocationException("IA001", SecurityUtils.getLocale(), getKioskName(kioskId),
               getMaterialName(materialId), inv.getAvailableStock(), quantity.abs());
         }
       }
@@ -3509,7 +3497,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
             inv.setAllocatedStock(inv.getStock());
           }
         } else {
-          throw new InventoryAllocationException("IA003", this.getLocale(), inv.getKioskName(),
+          throw new InventoryAllocationException("IA003", SecurityUtils.getLocale(), inv.getKioskName(),
               inv.getMaterialName(), inv.getAllocatedStock(), quantity.abs(), inv.getStock());
         }
       } else if (isClear && BigUtil.lesserThanZero(inv.getAllocatedStock())) {
@@ -3541,7 +3529,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
             newQuantity = invBatch.getQuantity();
             isCorrected = true;
           } else {
-            throw new InventoryAllocationException("IA002", this.getLocale(), inv.getKioskName(),
+            throw new InventoryAllocationException("IA002", SecurityUtils.getLocale(), inv.getKioskName(),
                 inv.getMaterialName(), invBatch.getBatchId(),
                 invBatch.getAvailableStock(), newQuantity);
           }
@@ -3575,7 +3563,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
               invBatch.setAllocatedStock(invBatch.getQuantity());
             }
           } else {
-            throw new InventoryAllocationException("IA004", this.getLocale(), inv.getKioskName(),
+            throw new InventoryAllocationException("IA004", SecurityUtils.getLocale(), inv.getKioskName(),
                 inv.getMaterialName(), invBatch.getBatchId(), invBatch.getAllocatedStock(),
                 invBatch.getQuantity());
           }
@@ -3600,13 +3588,11 @@ public class InventoryManagementServiceImpl extends ServiceImpl
   }
 
   private String getMaterialName(Long materialId) throws ServiceException {
-    return StaticApplicationContext.getBean(MaterialCatalogService.class).getMaterial(materialId)
-        .getName();
+    return materialCatalogService.getMaterial(materialId).getName();
   }
 
   private String getKioskName(Long kioskId) throws ServiceException {
-    return StaticApplicationContext.getBean(EntitiesService.class).getKiosk(kioskId, false)
-        .getName();
+    return entitiesService.getKiosk(kioskId, false).getName();
   }
 
   private boolean closeOpenEvent(Long invId, PersistenceManager pm) {
@@ -3616,12 +3602,8 @@ public class InventoryManagementServiceImpl extends ServiceImpl
     }
     Query query = null;
     try {
-      StringBuilder queryStr = new StringBuilder("SELECT * FROM INVNTRYEVNTLOG WHERE INVID = ");
-      queryStr.append(invId);
-      queryStr.append(" AND ED IS NULL");
-      query =
-          pm.newQuery("javax.jdo.query.SQL",
-              queryStr.toString());
+      query = pm.newQuery("javax.jdo.query.SQL",
+              "SELECT * FROM INVNTRYEVNTLOG WHERE INVID = " + invId + " AND ED IS NULL");
       query.setClass(JDOUtils.getImplClass(IInvntryEvntLog.class));
       query.setUnique(true);
       IInvntryEvntLog invntryEvntLog = (IInvntryEvntLog) query.execute();
@@ -3689,7 +3671,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
   public boolean validateEntityBatchManagementUpdate(Long kioskId) throws ServiceException {
     if (kioskId == null) {
       throw new ServiceException(
-          "Invalid or null kioskId {0} while changing batch management on entity", kioskId);
+          "Invalid or null kioskId while changing batch management on entity");
     }
     boolean allowUpdate = false;
     PersistenceManager pm = PMF.get().getPersistenceManager();
@@ -3705,8 +3687,8 @@ public class InventoryManagementServiceImpl extends ServiceImpl
       Map<Long, List<ITransaction>> materialTransactionsMap, Long domainId, String userId)
       throws ServiceException {
     try {
-      return StaticApplicationContext.getBean(UpdateMultipleInventoryTransactionsAction.class)
-          .execute(materialTransactionsMap, domainId, userId);
+      return updateMultipleInventoryTransactionsAction.execute(materialTransactionsMap,
+          domainId, userId);
     } catch (ConfigurationException e) {
       throw new ServiceException(e);
     }
@@ -3736,22 +3718,16 @@ public class InventoryManagementServiceImpl extends ServiceImpl
     if (expDateBatchQtyMap == null || expDateBatchQtyMap.isEmpty()) {
       return BigDecimal.ZERO;
     }
-    InventoryManagementService ims = Services
-        .getService(InventoryManagementServiceImpl.class, this.getLocale());
-    IInvntry inv = ims.getInventory(kId, mId);
-    BigDecimal ucs = calculateUnconsumableStock(expDateBatchQtyMap, inv.getConsumptionRateDaily());
-    return ucs;
+    IInvntry inv = getInventory(kId, mId);
+    return calculateUnconsumableStock(expDateBatchQtyMap, inv.getConsumptionRateDaily());
   }
 
   private Map<Date, BigDecimal> getExpDateBatchQtyMap(Long kId, Long mId) throws ServiceException {
-    Map<Date, BigDecimal> expDateBatchQtyMap = null;
-    InventoryManagementService ims = Services.getService(InventoryManagementServiceImpl.class);
-    IInvntry inv = ims.getInventory(kId, mId);
+    IInvntry inv = getInventory(kId, mId);
     Long domainId = inv.getDomainId();
     DomainConfig dc = DomainConfig.getInstance(domainId);
     BigDecimal orderPeriodicity = inv.getOrderPeriodicity();
     if (BigUtil.equalsZero(orderPeriodicity)) {
-      // Set it to default value in config
       orderPeriodicity = new BigDecimal(dc.getOptimizerConfig().getMinAvgOrderPeriodicity());
     }
     Date currentDate = new Date();
@@ -3761,7 +3737,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
       xLogger.warn(
           "Invalid nextOrderDateStr: {0} when trying to calculate unusable stock for kId: {1}, mid: {2}",
           nextOrderDateStr, kId, mId);
-      return expDateBatchQtyMap;
+      return null;
     }
     List<String> parameters = new ArrayList<>(1);
     StringBuilder sqlQuery = new StringBuilder(
@@ -3769,10 +3745,11 @@ public class InventoryManagementServiceImpl extends ServiceImpl
     parameters.add(String.valueOf(kId));
     sqlQuery.append(" AND MID = ?");
     parameters.add(String.valueOf(mId));
-    sqlQuery.append(" AND BEXP <= '" + nextOrderDateStr)
+    sqlQuery.append(" AND BEXP <= '").append(nextOrderDateStr)
         .append("' GROUP BY BEXP ORDER BY BEXP ASC");
     PersistenceManager pm = PMF.get().getPersistenceManager();
     Query query = pm.newQuery("javax.jdo.query.SQL", sqlQuery.toString());
+    Map<Date, BigDecimal> expDateBatchQtyMap = null;
     try {
       List queryResults = (List) query.executeWithArray(parameters.toArray());
       if (queryResults != null && !queryResults.isEmpty()) {
@@ -3812,7 +3789,7 @@ public class InventoryManagementServiceImpl extends ServiceImpl
     Set<Date> keySet = expDateBatchQtyMap.keySet();
     for (Date ed : keySet) {
       bq = expDateBatchQtyMap.get(ed);
-      int cd = 0;
+      int cd;
       if (BigUtil.equalsZero(c)) {
         ucs = ucs.add(bq);
         continue;

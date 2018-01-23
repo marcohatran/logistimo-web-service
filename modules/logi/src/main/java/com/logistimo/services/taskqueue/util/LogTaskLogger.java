@@ -23,11 +23,10 @@
 
 package com.logistimo.services.taskqueue.util;
 
-import com.logistimo.services.taskqueue.TaskOptions;
-
 import com.logistimo.entity.ITask;
 import com.logistimo.entity.Task;
 import com.logistimo.logger.XLog;
+import com.logistimo.services.taskqueue.TaskOptions;
 
 import redis.clients.util.MurmurHash;
 

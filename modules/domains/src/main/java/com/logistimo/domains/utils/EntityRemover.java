@@ -27,12 +27,11 @@
 package com.logistimo.domains.utils;
 
 import com.logistimo.domains.processor.DeleteProcessor;
-
+import com.logistimo.logger.XLog;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.PagedExec;
 import com.logistimo.pagination.QueryParams;
 import com.logistimo.services.ServiceException;
-import com.logistimo.logger.XLog;
 import com.logistimo.services.utils.ConfigUtil;
 
 import java.util.ArrayList;

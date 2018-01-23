@@ -23,26 +23,23 @@
 
 package com.logistimo.api.servlets.mobile.builders;
 
-import com.logistimo.services.Services;
-
+import com.logistimo.constants.Constants;
 import com.logistimo.inventory.entity.IInvAllocation;
 import com.logistimo.inventory.entity.IInvntryBatch;
 import com.logistimo.inventory.service.InventoryManagementService;
-import com.logistimo.inventory.service.impl.InventoryManagementServiceImpl;
+import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.materials.service.MaterialCatalogService;
-import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
 import com.logistimo.orders.entity.IDemandItem;
 import com.logistimo.orders.entity.IOrder;
 import com.logistimo.orders.service.IDemandService;
 import com.logistimo.orders.service.OrderManagementService;
-import com.logistimo.orders.service.impl.DemandService;
-import com.logistimo.orders.service.impl.OrderManagementServiceImpl;
 import com.logistimo.proto.MobileDemandItemBatchModel;
 import com.logistimo.proto.MobileDemandItemModel;
-import com.logistimo.constants.Constants;
 import com.logistimo.utils.LocalDateUtil;
-import com.logistimo.logger.XLog;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,8 +48,34 @@ import java.util.Locale;
 /**
  * Created by vani on 04/11/16.
  */
+@Component
 public class MobileDemandBuilder {
   private static final XLog xLogger = XLog.getLog(MobileDemandBuilder.class);
+
+  private IDemandService demandService;
+  private MaterialCatalogService materialCatalogService;
+  private InventoryManagementService inventoryManagementService;
+  private OrderManagementService orderManagementService;
+
+  @Autowired
+  public void setDemandService(IDemandService demandService) {
+    this.demandService = demandService;
+  }
+
+  @Autowired
+  public void setMaterialCatalogService(MaterialCatalogService materialCatalogService) {
+    this.materialCatalogService = materialCatalogService;
+  }
+
+  @Autowired
+  public void setInventoryManagementService(InventoryManagementService inventoryManagementService) {
+    this.inventoryManagementService = inventoryManagementService;
+  }
+
+  @Autowired
+  public void setOrderManagementService(OrderManagementService orderManagementService) {
+    this.orderManagementService = orderManagementService;
+  }
 
   List<MobileDemandItemModel> buildMobileDemandItemModels(List<IDemandItem> items, Locale locale,
                                                           String timezone,
@@ -83,12 +106,11 @@ public class MobileDemandBuilder {
     mdim.oq = item.getOriginalQuantity();
     mdim.roq = item.getRecommendedOrderQuantity();
     try {
-      IDemandService ds = Services.getService(DemandService.class);
       mdim.alq =
-          ds.getAllocatedQuantityForDemandItem(item.getIdAsString(), item.getOrderId(),
+          demandService.getAllocatedQuantityForDemandItem(item.getIdAsString(), item.getOrderId(),
               item.getMaterialId());
       mdim.mst =
-          ds.getMaterialStatusForDemandItem(item.getIdAsString(), item.getOrderId(),
+          demandService.getMaterialStatusForDemandItem(item.getIdAsString(), item.getOrderId(),
               item.getMaterialId());
     } catch (Exception e) {
       xLogger
@@ -105,8 +127,7 @@ public class MobileDemandBuilder {
     mdim.ms = item.getMessage();
     mdim.rsn = item.getReason();
     try {
-      MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
-      IMaterial m = mcs.getMaterial(item.getMaterialId());
+      IMaterial m = materialCatalogService.getMaterial(item.getMaterialId());
       mdim.mnm = m.getName();
       if (m.getCustomId() != null && !m.getCustomId().isEmpty()) {
         mdim.cmid = m.getCustomId();
@@ -134,21 +155,17 @@ public class MobileDemandBuilder {
                                                                   String timezone) {
     List<MobileDemandItemBatchModel> batches = new ArrayList<>(1);
     try {
-      InventoryManagementService
-          ims =
-          Services.getService(InventoryManagementServiceImpl.class);
-      OrderManagementService oms = Services.getService(OrderManagementServiceImpl.class);
-      IOrder o = oms.getOrder(oid);
+      IOrder o = orderManagementService.getOrder(oid);
       Long lkId = o.getServicingKiosk();
       List<IInvAllocation>
           iAllocs =
-          ims.getAllocationsByTypeId(lkId, mid, IInvAllocation.Type.ORDER, oid.toString());
+          inventoryManagementService.getAllocationsByTypeId(lkId, mid, IInvAllocation.Type.ORDER, oid.toString());
 
       if (iAllocs != null && !iAllocs.isEmpty()) {
         for (IInvAllocation iAlloc : iAllocs) {
           if (iAlloc.getBatchId() != null && !iAlloc.getBatchId().isEmpty()) {
             MobileDemandItemBatchModel mdibm = new MobileDemandItemBatchModel();
-            IInvntryBatch b = ims.getInventoryBatch(lkId, mid, iAlloc.getBatchId(), null);
+            IInvntryBatch b = inventoryManagementService.getInventoryBatch(lkId, mid, iAlloc.getBatchId(), null);
             if (b != null) {
               mdibm.bid = b.getBatchId();
               if (b.getBatchExpiry() != null) {

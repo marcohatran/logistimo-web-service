@@ -26,8 +26,6 @@
  */
 package com.logistimo.entity;
 
-import com.logistimo.entity.IMessageLog;
-
 import java.util.Date;
 
 import javax.jdo.annotations.Column;

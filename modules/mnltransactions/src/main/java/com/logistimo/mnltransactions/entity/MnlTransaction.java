@@ -23,37 +23,17 @@
 
 package com.logistimo.mnltransactions.entity;
 
-import com.logistimo.services.Resources;
-import com.logistimo.services.Services;
-import com.logistimo.utils.BigUtil;
-import com.logistimo.constants.Constants;
-import com.logistimo.utils.LocalDateUtil;
-import com.logistimo.utils.NumberUtil;
-import com.logistimo.utils.StringUtil;
-
-import com.logistimo.config.models.DomainConfig;
-import com.logistimo.entities.entity.IKiosk;
-import com.logistimo.entities.service.EntitiesService;
-import com.logistimo.entities.service.EntitiesServiceImpl;
-import com.logistimo.materials.entity.IMaterial;
-import com.logistimo.materials.service.MaterialCatalogService;
-import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
+import com.logistimo.logger.XLog;
 import com.logistimo.tags.TagUtil;
-import com.logistimo.tags.dao.TagDao;
 import com.logistimo.tags.entity.ITag;
 import com.logistimo.tags.entity.Tag;
-
-import com.logistimo.logger.XLog;
+import com.logistimo.utils.BigUtil;
+import com.logistimo.utils.NumberUtil;
 
 import java.math.BigDecimal;
-import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.List;
-import java.util.Locale;
-import java.util.ResourceBundle;
 
 import javax.jdo.annotations.Element;
 import javax.jdo.annotations.IdGeneratorStrategy;

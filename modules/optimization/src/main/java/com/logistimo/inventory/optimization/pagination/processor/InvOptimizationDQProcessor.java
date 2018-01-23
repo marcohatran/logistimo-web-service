@@ -29,6 +29,7 @@ package com.logistimo.inventory.optimization.pagination.processor;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.OptimizerConfig;
 import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.inventory.entity.IInvntry;
@@ -37,8 +38,8 @@ import com.logistimo.logger.XLog;
 import com.logistimo.pagination.Results;
 import com.logistimo.pagination.processor.InstrumentedProcessor;
 import com.logistimo.pagination.processor.ProcessingException;
-import com.logistimo.services.Services;
 import com.logistimo.services.taskqueue.ITaskService;
+import com.logistimo.services.utils.ConfigUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -83,9 +84,8 @@ public class InvOptimizationDQProcessor extends InstrumentedProcessor {
     }
     try {
       // Get service
-      InventoryOptimizerService
-          ios =
-          Services.getService("optimizer", locale);
+      InventoryOptimizerService ios = StaticApplicationContext.getBean(ConfigUtil.get("optimizer"),
+          InventoryOptimizerService.class);
       xLogger.info("InvOptimizationDQProcessor: Computing DQ for domain = {0}...", domainId);
       // Optimize
       ios.optimize(domainId, filteredInventories, dc, false, true, locale, pm);
@@ -111,10 +111,10 @@ public class InvOptimizationDQProcessor extends InstrumentedProcessor {
       return null;
     }
     Iterator<IInvntry> it = inventories.iterator();
-    List<IInvntry> filteredInventories = new ArrayList<IInvntry>();
+    List<IInvntry> filteredInventories = new ArrayList<>();
     Map<Long, Boolean>
         optMap =
-        new HashMap<Long, Boolean>(); // kioskId --> boolean (true, if opt. reqd)
+        new HashMap<>(); // kioskId --> boolean (true, if opt. reqd)
     while (it.hasNext()) {
       IInvntry inv = it.next();
       if (!domainId.equals(inv.getDomainId())) {
@@ -131,7 +131,7 @@ public class InvOptimizationDQProcessor extends InstrumentedProcessor {
           IKiosk k = JDOUtils.getObjectById(IKiosk.class, kioskId, pm);
           // Optimization not required, if the kiosk is not configured for optimization
           boolean noOptRequired = isEOQ && !k.isOptimizationOn();
-          optMap.put(kioskId, Boolean.valueOf(!noOptRequired));
+          optMap.put(kioskId, !noOptRequired);
           if (noOptRequired) {
             xLogger.fine("Skipping EOQ optimization for kiosk {0}", k.getKioskId());
             continue;

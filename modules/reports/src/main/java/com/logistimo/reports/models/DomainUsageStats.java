@@ -27,16 +27,14 @@ import com.google.gson.Gson;
 import com.google.gson.annotations.Expose;
 
 import com.logistimo.config.models.DomainConfig;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.domains.entity.IDomain;
 import com.logistimo.domains.service.DomainsService;
 import com.logistimo.domains.service.impl.DomainsServiceImpl;
-import com.logistimo.reports.entity.slices.IMonthSlice;
-
-import com.logistimo.services.Services;
-
-import com.logistimo.utils.Counter;
-import com.logistimo.models.ICounter;
 import com.logistimo.logger.XLog;
+import com.logistimo.models.ICounter;
+import com.logistimo.reports.entity.slices.IMonthSlice;
+import com.logistimo.utils.Counter;
 
 import java.math.BigDecimal;
 
@@ -231,7 +229,7 @@ public class DomainUsageStats {
       this.t = monthSlice.getDate().getTime();
       try {
         // Set the domain name
-        DomainsService ds = Services.getService(DomainsServiceImpl.class);
+        DomainsService ds = StaticApplicationContext.getBean(DomainsServiceImpl.class);
         IDomain d = ds.getDomain(this.dId);
         if (d != null) {
           this.dName = d.getName();

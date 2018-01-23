@@ -31,6 +31,7 @@ import com.logistimo.assets.entity.IAssetRelation;
 import com.logistimo.assets.entity.IAssetStatus;
 import com.logistimo.assets.models.AssetModel;
 import com.logistimo.assets.service.AssetManagementService;
+import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.config.models.AssetSystemConfig;
 import com.logistimo.config.models.ConfigurationException;
 import com.logistimo.config.models.DomainConfig;
@@ -44,11 +45,9 @@ import com.logistimo.events.processor.EventPublisher;
 import com.logistimo.logger.XLog;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
-import com.logistimo.services.Service;
+import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.impl.PMF;
-import com.logistimo.services.impl.ServiceImpl;
 import com.logistimo.utils.QueryUtil;
 import com.sun.rowset.CachedRowSetImpl;
 
@@ -61,8 +60,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.ResourceBundle;
 
 import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.PersistenceManager;
@@ -74,24 +75,11 @@ import javax.sql.rowset.CachedRowSet;
 /**
  * Created by kaniyarasu on 02/11/15.
  */
-public class AssetManagementServiceImpl extends ServiceImpl implements AssetManagementService {
+
+@org.springframework.stereotype.Service
+public class AssetManagementServiceImpl implements AssetManagementService {
 
   private static final XLog xLogger = XLog.getLog(AssetManagementServiceImpl.class);
-
-  @Override
-  public void init(Services services) throws ServiceException {
-
-  }
-
-  @Override
-  public void destroy() throws ServiceException {
-
-  }
-
-  @Override
-  public Class<? extends Service> getInterface() {
-    return AssetManagementService.class;
-  }
 
   @Override
   public void createAsset(Long domainId, IAsset asset, final AssetModel assetModel)
@@ -155,6 +143,8 @@ public class AssetManagementServiceImpl extends ServiceImpl implements AssetMana
         asset.setDomainId(domainId);
         asset = (IAsset) DomainsUtil.addToDomain(asset, domainId, pm);
       } else {
+        final Locale locale = SecurityUtils.getLocale();
+        ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
         throw new ServiceException(
             asset.getSerialId() + "(" + asset.getVendorId() + ") " + backendMessages
                 .getString("error.alreadyexists"));
@@ -184,6 +174,9 @@ public class AssetManagementServiceImpl extends ServiceImpl implements AssetMana
       asset = pm.detachCopy(asset);
     } catch (JDOObjectNotFoundException e) {
       xLogger.warn("getAsset: Asset {0} does not exist", assetId);
+      final Locale locale = SecurityUtils.getLocale();
+      ResourceBundle messages = Resources.get().getBundle("Messages", locale);
+      ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
       errMsg =
           messages.getString("asset") + " " + assetId + " " + backendMessages
               .getString("error.notfound");
@@ -321,6 +314,8 @@ public class AssetManagementServiceImpl extends ServiceImpl implements AssetMana
   @Override
   public List<IAsset> getAssetsByKiosk(Long kioskId, Integer assetType) throws ServiceException {
     if (kioskId == null || assetType == null) {
+      final Locale locale = SecurityUtils.getLocale();
+      ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
       throw new ServiceException(
           backendMessages.getString("kiosk") + " and AssetType are mandatory");
     }
@@ -539,7 +534,7 @@ public class AssetManagementServiceImpl extends ServiceImpl implements AssetMana
       try {
         assets = (List<IAsset>) query.execute(manufacturerId, serialIds);
         for (IAsset asset : assets) {
-          deleteAssetRelation(asset.getId(), domainId, asset, pm);
+          deleteAssetRelation(asset.getId(), domainId, pm);
         }
         for (IAsset asset : assets) {
           EventPublisher
@@ -608,13 +603,13 @@ public class AssetManagementServiceImpl extends ServiceImpl implements AssetMana
       throws ServiceException {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     try {
-      deleteAssetRelation(assetId, domainId, asset, pm);
+      deleteAssetRelation(assetId, domainId, pm);
     } finally {
       pm.close();
     }
   }
 
-  public void deleteAssetRelation(Long assetId, Long domainId, IAsset asset, PersistenceManager pm)
+  public void deleteAssetRelation(Long assetId, Long domainId, PersistenceManager pm)
       throws ServiceException {
     try {
       Query query = pm.newQuery(JDOUtils.getImplClass(IAssetRelation.class));
@@ -796,12 +791,13 @@ public class AssetManagementServiceImpl extends ServiceImpl implements AssetMana
       AssetSystemConfig.Asset assetData = asc.assets.get(asset.getType());
       Integer assetType = assetData.type;
       if (assetType == IAsset.MONITORED_ASSET) {
-        AssetSystemConfig.Manufacturer
-            manc =
+        AssetSystemConfig.Manufacturer manc =
             assetData.getManufacturers().get(asset.getVendorId().toLowerCase());
         String regex = manc.serialFormat;
         if (StringUtils.isNotBlank(regex)) {
           if (!asset.getSerialId().matches(regex)) {
+            final Locale locale = SecurityUtils.getLocale();
+            ResourceBundle messages = Resources.get().getBundle("Messages", locale);
             String errorMessage = messages.getString("serialno.format").concat("\n").concat(
                 manc.serialFormatDescription);
             throw new IllegalArgumentException(errorMessage);
@@ -810,6 +806,8 @@ public class AssetManagementServiceImpl extends ServiceImpl implements AssetMana
         regex = manc.modelFormat;
         if (StringUtils.isNotBlank(regex)) {
           if (!asset.getModel().matches(regex)) {
+            final Locale locale = SecurityUtils.getLocale();
+            ResourceBundle messages = Resources.get().getBundle("Messages", locale);
             String errorMessage = messages.getString("modelno.format").concat("\n").concat(
                 manc.modelFormatDescription);
             throw new IllegalArgumentException(errorMessage);

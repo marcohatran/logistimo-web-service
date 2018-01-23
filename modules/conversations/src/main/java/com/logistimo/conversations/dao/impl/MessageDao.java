@@ -23,22 +23,24 @@
 
 package com.logistimo.conversations.dao.impl;
 
+import com.logistimo.constants.CharacterConstants;
+import com.logistimo.constants.QueryConstants;
 import com.logistimo.conversations.builders.MessageBuilder;
+import com.logistimo.conversations.dao.IMessageDao;
 import com.logistimo.conversations.entity.Conversation;
+import com.logistimo.conversations.entity.IMessage;
 import com.logistimo.conversations.entity.Message;
 import com.logistimo.conversations.models.MessageModel;
-import com.logistimo.conversations.dao.IMessageDao;
 import com.logistimo.dao.JDOUtils;
-
-import org.apache.commons.lang.StringUtils;
-import com.logistimo.conversations.entity.IMessage;
+import com.logistimo.logger.XLog;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.impl.PMF;
-import com.logistimo.constants.CharacterConstants;
-import com.logistimo.constants.QueryConstants;
-import com.logistimo.logger.XLog;
+
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -51,11 +53,17 @@ import javax.jdo.Query;
 /**
  * Created by kumargaurav on 05/10/16.
  */
+@Repository
 public class MessageDao implements IMessageDao {
 
   private static final XLog xLogger = XLog.getLog(MessageDao.class);
 
-  private MessageBuilder msgBuilder = new MessageBuilder();
+  private MessageBuilder messageBuilder;
+
+  @Autowired
+  public void setMessageBuilder(MessageBuilder messageBuilder) {
+    this.messageBuilder = messageBuilder;
+  }
 
   public IMessage getMessageById(String messageId) throws ServiceException {
 
@@ -119,8 +127,7 @@ public class MessageDao implements IMessageDao {
       query = pm.newQuery("javax.jdo.query.SQL", queryString.toString());
       query.setClass(Message.class);
 
-      List<Message> msgList = null;
-      msgList = (List<Message>) query.executeWithArray(queryParamArray.toArray());
+      List<Message> msgList = (List<Message>) query.executeWithArray(queryParamArray.toArray());
       msgList = (List<Message>) pm.detachCopyAll(msgList);
       if (msgList.size() > 0)
         message = msgList.get(0);
@@ -208,10 +215,10 @@ public class MessageDao implements IMessageDao {
       if (null != msgList) {
         messageModelList = new ArrayList<>();
         for (IMessage message : msgList) {
-          messageModelList.add(msgBuilder.buildModel(message));
+          messageModelList.add(messageBuilder.buildModel(message));
         }
       }
-      res = new Results(messageModelList, null, count, pageParams.getOffset());
+      res = new Results<>(messageModelList, null, count, pageParams.getOffset());
     } finally {
       if (query != null) {
         try {
@@ -241,7 +248,7 @@ public class MessageDao implements IMessageDao {
     Query query = null;
     Query msgQuery = null;
     Query cntQuery = null;
-    List<String> convids = null;
+    List<String> convids;
     List<String> paramArray = new ArrayList<>();
     List<String> paramArray1 = new ArrayList<>();
     Results res = null;
@@ -272,7 +279,7 @@ public class MessageDao implements IMessageDao {
       StringBuilder queryString = new StringBuilder("SELECT * FROM MESSAGE");
       queryString.append(" WHERE CONVERSATIONID IN ");
       queryString.append(CharacterConstants.O_BRACKET);
-      for (String id : convids) {
+      for (String ignored : convids) {
         queryString.append(CharacterConstants.QUESTION).append(CharacterConstants.COMMA);
       }
       queryString.setLength(queryString.length() - 1);
@@ -307,10 +314,10 @@ public class MessageDao implements IMessageDao {
       if (null != msgList) {
         messageModelList = new ArrayList<>();
         for (IMessage message : msgList) {
-          messageModelList.add(msgBuilder.buildModel(message));
+          messageModelList.add(messageBuilder.buildModel(message));
         }
       }
-      res = new Results(messageModelList, null, count, pageParams.getOffset());
+      res = new Results<>(messageModelList, null, count, pageParams.getOffset());
     } finally {
       if (query != null) {
         try {

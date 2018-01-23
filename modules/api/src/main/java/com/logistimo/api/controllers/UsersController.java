@@ -35,23 +35,19 @@ import com.logistimo.api.request.UserFilterRequestObj;
 import com.logistimo.api.util.UserMessageUtil;
 import com.logistimo.auth.GenericAuthoriser;
 import com.logistimo.auth.SecurityConstants;
-import com.logistimo.auth.SecurityMgr;
 import com.logistimo.auth.SecurityUtil;
 import com.logistimo.auth.service.AuthenticationService;
 import com.logistimo.auth.utils.SecurityUtils;
-import com.logistimo.auth.utils.SessionMgr;
 import com.logistimo.communications.MessageHandlingException;
 import com.logistimo.communications.service.MessageService;
 import com.logistimo.config.entity.IConfig;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
-import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
 import com.logistimo.constants.Constants;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.models.UserEntitiesModel;
 import com.logistimo.entities.service.EntitiesService;
-import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.entity.IMessageLog;
 import com.logistimo.exception.BadRequestException;
 import com.logistimo.exception.InvalidDataException;
@@ -69,13 +65,11 @@ import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.users.UserUtils;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.entity.IUserLoginHistory;
 import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
 import com.logistimo.utils.Counter;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.MessageUtil;
@@ -111,40 +105,68 @@ import javax.servlet.http.HttpServletRequest;
 public class UsersController {
   private static final XLog xLogger = XLog.getLog(UsersController.class);
   private static final String ACTIVE_USERS = "au";
-  UserBuilder builder = new UserBuilder();
-  UserMessageBuilder messageBuilder = new UserMessageBuilder();
-
-  @Autowired
+  private UserBuilder userBuilder;
+  private UserMessageBuilder messageBuilder;
   private UsersService usersService;
-
   private AuthenticationService authenticationService;
+  private EntitiesService entitiesService;
+  private ConfigurationMgmtService configurationMgmtService;
+  private EntityBuilder entityBuilder;
 
   @Autowired
-  public void setAuthenticationService(
-      AuthenticationService authenticationService) {
+  public void setUserBuilder(UserBuilder userBuilder) {
+    this.userBuilder = userBuilder;
+  }
+
+  @Autowired
+  public void setMessageBuilder(UserMessageBuilder messageBuilder) {
+    this.messageBuilder = messageBuilder;
+  }
+
+  @Autowired
+  public void setAuthenticationService(AuthenticationService authenticationService) {
     this.authenticationService = authenticationService;
+  }
+
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
+  }
+
+  @Autowired
+  public void setEntitiesService(EntitiesService entitiesService) {
+    this.entitiesService = entitiesService;
+  }
+
+  @Autowired
+  public void setConfigurationMgmtService(ConfigurationMgmtService configurationMgmtService) {
+    this.configurationMgmtService = configurationMgmtService;
+  }
+
+  @Autowired
+  public void setEntityBuilder(EntityBuilder entityBuilder) {
+    this.entityBuilder = entityBuilder;
   }
 
   private Results getUsers(String q, HttpServletRequest request, int offset, int size,
                            boolean isSuggest, boolean activeUsersOnly, boolean includeSuperusers,
                            boolean includeChildDomainUsers) {
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
-    Locale locale = user.getLocale();
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
+    Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), user.getUsername());
+    Long domainId = sUser.getCurrentDomainId();
     Results results;
     try {
-      UsersService as = Services.getService(UsersServiceImpl.class, user.getLocale());
-      IUserAccount loggedInUser = as.getUserAccount(user.getUsername());
+      IUserAccount loggedInUser = usersService.getUserAccount(sUser.getUsername());
       Navigator
           navigator =
           new Navigator(request.getSession(), "UsersController.getUsers", offset, size, "dummy", 0);
       PageParams pageParams = new PageParams(navigator.getCursor(offset), offset, size);
       results =
-          as.getUsers(domainId, loggedInUser, activeUsersOnly, includeSuperusers, q, pageParams,
+          usersService.getUsers(domainId, loggedInUser, activeUsersOnly, includeSuperusers, q, pageParams,
               includeChildDomainUsers);
       navigator.setResultParams(results);
-      if (SecurityUtil.compareRoles(user.getRole(), SecurityConstants.ROLE_DOMAINOWNER) >= 0
+      if (SecurityUtil.compareRoles(sUser.getRole(), SecurityConstants.ROLE_DOMAINOWNER) >= 0
           && StringUtils.isBlank(q)) {
         ICounter counter = Counter.getUserCounter(domainId);
         results.setNumFound(counter.getCount());
@@ -152,14 +174,14 @@ public class UsersController {
         results.setNumFound(-1);
       }
     } catch (ObjectNotFoundException e) {
-      xLogger.warn("Unable to fetch logged in user details", e);
+      xLogger.warn("Unable to fetch logged in sUser details", e);
       throw new InvalidServiceException(backendMessages.getString("users.logged.fetch"));
     } catch (ServiceException e) {
-      xLogger.severe("Unable to fetch logged in user details", e);
+      xLogger.severe("Unable to fetch logged in sUser details", e);
       throw new InvalidServiceException(backendMessages.getString("users.logged.fetch"));
     }
     results.setOffset(offset);
-    return builder.buildUsers(results, user, isSuggest);
+    return userBuilder.buildUsers(results, sUser, isSuggest);
   }
 
 
@@ -171,19 +193,17 @@ public class UsersController {
       @RequestParam(defaultValue = PageParams.DEFAULT_SIZE_STR) int size,
       @RequestParam(required = false) String q,
       @PathVariable String role, HttpServletRequest request) {
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
-    Locale locale = user.getLocale();
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
+    Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), user.getUsername());
+    Long domainId = sUser.getCurrentDomainId();
     Results results;
     try {
-      UsersService as = Services.getService(UsersServiceImpl.class, user.getLocale());
-      Navigator
-          navigator =
+      Navigator navigator =
           new Navigator(request.getSession(), "UsersController.getUserByRole", offset, size,
               "dummy", 0);
       PageParams pageParams = new PageParams(navigator.getCursor(offset), offset, size);
-      if (SecurityConstants.ROLE_SUPERUSER.equals(role) && !user.getRole()
+      if (SecurityConstants.ROLE_SUPERUSER.equals(role) && !sUser.getRole()
           .equals(SecurityConstants.ROLE_SUPERUSER)) {
         throw new UnauthorizedException(backendMessages.getString("user.unauthorized"));
       }
@@ -191,9 +211,9 @@ public class UsersController {
                 role = rRole;
             }*/
       if (SecurityConstants.ROLE_SUPERUSER.equals(role)) {
-        results = new Results(as.getSuperusers(), null);
+        results = new Results<>(usersService.getSuperusers(), null);
       } else {
-        results = as.getUsers(domainId, role, true, q, pageParams);
+        results = usersService.getUsers(domainId, role, true, q, pageParams);
       }
       navigator.setResultParams(results);
       results.setNumFound(-1);
@@ -201,18 +221,17 @@ public class UsersController {
       xLogger.severe("Error in getting users by role", e);
       throw new InvalidServiceException(backendMessages.getString("user.by.role.error"));
     }
-    return builder.buildUsers(results, user, false);
+    return userBuilder.buildUsers(results, sUser, false);
   }
 
   @RequestMapping(value = "/roles", method = RequestMethod.GET)
   public
   @ResponseBody
-  Map<String, String> getRoles(@RequestParam boolean edit, @RequestParam String euid,
-                               HttpServletRequest request) {
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
+  Map<String, String> getRoles(@RequestParam boolean edit, @RequestParam String euid) {
+    SecureUserDetails user = SecurityUtils.getUserDetails();
     String role = user.getRole();
     String uid = user.getUsername();
-    Map<String, String> roles = new LinkedHashMap<String, String>();
+    Map<String, String> roles = new LinkedHashMap<>();
     roles.put("ROLE_ko", "kioskowner");
     if (edit && SecurityConstants.ROLE_SERVICEMANAGER.equals(role) && StringUtils.isNotBlank(euid)
         && euid.equals(uid)) {
@@ -256,20 +275,18 @@ public class UsersController {
       throw new IllegalArgumentException("paramName and ParamValue is not supplied");
     }
 
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
-    Locale locale = user.getLocale();
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
+    Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), user.getUsername());
+    Long domainId = sUser.getCurrentDomainId();
     Set<String> elementSet;
     try {
-      UsersService as = Services.getService(UsersServiceImpl.class, user.getLocale());
-      Navigator
-          navigator =
+      Navigator navigator =
           new Navigator(request.getSession(), "UsersController.getUserByRole", 0, 10, "dummy", 0);
       PageParams pageParams = new PageParams(navigator.getCursor(0), 0, 10);
-      IUserAccount loggedInUser = as.getUserAccount(user.getUsername());
+      IUserAccount loggedInUser = usersService.getUserAccount(sUser.getUsername());
       elementSet =
-          as.getElementSetByUserFilter(domainId, loggedInUser, paramName, paramValue, pageParams);
+          usersService.getElementSetByUserFilter(domainId, loggedInUser, paramName, paramValue, pageParams);
     } catch (ObjectNotFoundException e) {
       xLogger.warn("Unable to fetch logged in user details", e);
       throw new InvalidServiceException(backendMessages.getString("users.logged.fetch"));
@@ -286,17 +303,15 @@ public class UsersController {
   Results getFilteredDomainUsers(
       @RequestBody UserFilterRequestObj filters,
       HttpServletRequest request) {
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
-    Locale locale = user.getLocale();
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
+    Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), user.getUsername());
+    Long domainId = sUser.getCurrentDomainId();
     DomainConfig dc = DomainConfig.getInstance(domainId);
     Results results;
     try {
-      UsersService as = Services.getService(UsersServiceImpl.class, user.getLocale());
-      IUserAccount loggedInUser = as.getUserAccount(user.getUsername());
-      Navigator
-          navigator =
+      IUserAccount loggedInUser = usersService.getUserAccount(sUser.getUsername());
+      Navigator navigator =
           new Navigator(request.getSession(), "UsersController.getFilteredDomainUsers",
               filters.offset, filters.size, "dummy", 0);
       PageParams
@@ -352,7 +367,7 @@ public class UsersController {
       if (filters.tgs != null && !filters.tgs.isEmpty()) {
         fMap.put("utag", filters.tgs);
       }
-      results = as.getUsersByFilter(domainId, loggedInUser, fMap, pageParams);
+      results = usersService.getUsersByFilter(domainId, loggedInUser, fMap, pageParams);
       navigator.setResultParams(results);
     } catch (ObjectNotFoundException e) {
       xLogger.warn("Unable to fetch logged in user details", e);
@@ -361,20 +376,19 @@ public class UsersController {
       xLogger.severe("Unable to fetch logged in user details", e);
       throw new InvalidServiceException(backendMessages.getString("users.logged.fetch"));
     }
-    return builder.buildUsers(results, user, false);
+    return userBuilder.buildUsers(results, sUser, false);
   }
 
   @RequestMapping("/check/")
   public
   @ResponseBody
-  boolean checkUserExist(@RequestParam String userid, HttpServletRequest request) {
+  boolean checkUserExist(@RequestParam String userid) {
     if (StringUtils.isNotEmpty(userid)) {
-      SecureUserDetails user = SecurityUtils.getUserDetails(request);
+      SecureUserDetails user = SecurityUtils.getUserDetails();
       Locale locale = user.getLocale();
       ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
       try {
-        UsersService as = Services.getService(UsersServiceImpl.class, user.getLocale());
-        if (as.userExists(userid)) {
+        if (usersService.userExists(userid)) {
           return true;
         }
       } catch (ServiceException e) {
@@ -391,36 +405,30 @@ public class UsersController {
   public
   @ResponseBody
   boolean checkCustomIDExists(@RequestParam String customId,
-                             @RequestParam(required = false) String userId,
-                             HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
-    boolean customIdExists = false;
+                              @RequestParam(required = false) String userId) {
     try {
-      UsersService as = Services.getService(UsersServiceImpl.class);
-      customIdExists = as.customIdExists(domainId, customId, userId);
+      return usersService.customIdExists(SecurityUtils.getCurrentDomainId(), customId, userId);
     } catch (ServiceException e) {
       xLogger.warn("Error while adding or updating user Account : Custom ID {0} already exists.",
           customId);
     }
-    return customIdExists;
+    return false;
   }
 
   @RequestMapping(value = "/", method = RequestMethod.POST)
   public
   @ResponseBody
-  String create(@RequestBody UserModel userModel, HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+  String create(@RequestBody UserModel userModel) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    IUserAccount ua = builder.buildUserAccount(userModel);
+    IUserAccount ua = userBuilder.buildUserAccount(userModel);
     ua.setRegisteredBy(sUser.getUsername());
     ua.setUpdatedBy(sUser.getUsername());
     try {
-      UsersService as = Services.getService(UsersServiceImpl.class, locale);
       if (ua.getUserId() != null) {
         long domainId = SecurityUtils.getCurrentDomainId();
-        ua = as.addAccount(domainId, ua);
+        ua = usersService.addAccount(domainId, ua);
         xLogger.info("AUDITLOG \t {0} \t {1} \t USER \t " +
                 "CREATE \t {2} \t {3}", domainId, sUser.getUsername(), ua.getUserId(),
             ua.getFullName());
@@ -439,25 +447,23 @@ public class UsersController {
   @RequestMapping(value = "/delete/", method = RequestMethod.POST)
   public
   @ResponseBody
-  String delete(@RequestBody String userIds, HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
+  String delete(@RequestBody String userIds) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
+    Long domainId = sUser.getCurrentDomainId();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     int usrCnt, errCnt = 0;
     StringBuilder errMsg = new StringBuilder();
-    List<String> errUsr = new ArrayList<String>();
+    List<String> errUsr = new ArrayList<>();
     try {
-      UsersService as = Services.getService(UsersServiceImpl.class, locale);
       String[] usersArray = userIds.split(",");
-      ArrayList<String> users = new ArrayList<String>(usersArray.length);
+      ArrayList<String> users = new ArrayList<>(usersArray.length);
       for (String userId : usersArray) {
-        if (GenericAuthoriser.authoriseUser(request, userId.trim())) {
+        if (GenericAuthoriser.authoriseUser(userId.trim())) {
           try {
-            EntitiesService es = Services.getService(EntitiesServiceImpl.class,locale);
-            Results results = es.getKioskIdsForUser(userId, null, null);
+            Results results = entitiesService.getKioskIdsForUser(userId, null, null);
             if (results.getResults() != null && !results.getResults().isEmpty()) {
-              IUserAccount u = as.getUserAccount(userId);
+              IUserAccount u = usersService.getUserAccount(userId);
               errMsg.append(" - ").append(u.getFullName())
                   .append(" ").append(backendMessages.getString("user.cannotdelete")).append(" ")
                   .append(results.getResults().size())
@@ -474,7 +480,7 @@ public class UsersController {
           errUsr.add(userId.trim());
         }
       }
-      as.deleteAccounts(domainId, users, sUser.getUsername());
+      usersService.deleteAccounts(domainId, users, sUser.getUsername());
       usrCnt = users.size();
     } catch (ServiceException e) {
       xLogger.warn("Error deleting User details of " + userIds, e);
@@ -506,9 +512,8 @@ public class UsersController {
   public
   @ResponseBody
   UserModel getUserById(@PathVariable String userId,
-                        @RequestParam(required = false) boolean isDetail,
-                        HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+                        @RequestParam(required = false) boolean isDetail) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     String timezone = sUser.getTimezone();
@@ -516,30 +521,26 @@ public class UsersController {
     IUserAccount lu = null;
     UserModel model;
     try {
-      UsersService as = Services.getService(UsersServiceImpl.class, locale);
-      if (!GenericAuthoriser.authoriseUser(request, userId)) {
+      if (!GenericAuthoriser.authoriseUser(userId)) {
         throw new UnauthorizedException(backendMessages.getString("permission.denied"));
       }
-      EntitiesService service = Services.getService(EntitiesServiceImpl.class);
-      UserEntitiesModel userEntitiesModel = service.getUserWithKiosks(userId);
+      UserEntitiesModel userEntitiesModel = entitiesService.getUserWithKiosks(userId);
       IUserAccount ua = userEntitiesModel.getUserAccount();
       if (ua.getRegisteredBy() != null) {
         try {
-          rb = as.getUserAccount(ua.getRegisteredBy());
-        } catch (Exception e) {
-          //ignored
+          rb = usersService.getUserAccount(ua.getRegisteredBy());
+        } catch (Exception ignored) {
         }
       }
       if (ua.getUpdatedBy() != null) {
         try {
-          lu = as.getUserAccount(ua.getUpdatedBy());
-        } catch (Exception e) {
-          //ignored
+          lu = usersService.getUserAccount(ua.getUpdatedBy());
+        } catch (Exception ignored) {
         }
       }
-      model = builder.buildUserModel(ua, rb, lu, locale, sUser.getTimezone(), false);
+      model = userBuilder.buildUserModel(ua, rb, lu, locale, sUser.getTimezone(), false);
       if (userEntitiesModel.getKiosks() != null) {
-        model.entities = new EntityBuilder().buildUserEntities(userEntitiesModel.getKiosks());
+        model.entities = entityBuilder.buildUserEntities(userEntitiesModel.getKiosks());
       }
       if (isDetail) {
         setDisplayNames(locale, timezone, model);
@@ -555,15 +556,14 @@ public class UsersController {
   @RequestMapping(value = "/user/meta/{userId:.+}", method = RequestMethod.GET)
   public
   @ResponseBody
-  UserModel getUserMetaById(@PathVariable String userId, HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+  UserModel getUserMetaById(@PathVariable String userId) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     UserModel model;
     try {
-      UsersService as = Services.getService(UsersServiceImpl.class, locale);
-      IUserAccount ua = as.getUserAccount(userId);
-      model = builder.buildUserModel(ua, locale, sUser.getTimezone(), true, null);
+      IUserAccount ua = usersService.getUserAccount(userId);
+      model = userBuilder.buildUserModel(ua, locale, sUser.getTimezone(), true, null);
     } catch (ObjectNotFoundException se) {
       xLogger.warn("Error fetching User details for " + userId, se);
       throw new InvalidServiceException(
@@ -576,27 +576,24 @@ public class UsersController {
   public
   @ResponseBody
   List<UserModel> getUsersByIds(@RequestParam String userIds,
-                                @RequestParam(required = false) boolean isMessage,
-                                HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+                                @RequestParam(required = false) boolean isMessage) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     String[] ids;
     if (!"null".equalsIgnoreCase(userIds)) {
       ids = userIds.split(",");
-      List<UserModel> models = new ArrayList<UserModel>(ids.length);
+      List<UserModel> models = new ArrayList<>(ids.length);
       try {
-        UsersService as = Services.getService(UsersServiceImpl.class, locale);
-        EntitiesService es = Services.getService(EntitiesServiceImpl.class, locale);
         for (String id : ids) {
           try {
-            if (GenericAuthoriser.authoriseUser(request, id)) {
-              IUserAccount ua = as.getUserAccount(id);
+            if (GenericAuthoriser.authoriseUser(id)) {
+              IUserAccount ua = usersService.getUserAccount(id);
               List<IKiosk> kiosks = null;
               if (!isMessage) {
-                kiosks = es.getKiosksForUser(ua, null, null).getResults();
+                kiosks = entitiesService.getKiosksForUser(ua, null, null).getResults();
               }
-              UserModel model = builder.buildUserModel(ua, locale, sUser.getTimezone(), isMessage,
+              UserModel model = userBuilder.buildUserModel(ua, locale, sUser.getTimezone(), isMessage,
                   kiosks);
               models.add(model);
             }
@@ -611,7 +608,7 @@ public class UsersController {
       }
       return models;
     }
-    return new ArrayList<UserModel>();
+    return new ArrayList<>();
   }
 
   private void setDisplayNames(Locale locale, String timezone, UserModel model) {
@@ -642,27 +639,25 @@ public class UsersController {
   @RequestMapping(value = "/user/{userId:.+}", method = RequestMethod.POST)
   public
   @ResponseBody
-  String updateUser(@RequestBody UserModel userModel, @PathVariable String userId,
-                    HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
+  String updateUser(@RequestBody UserModel userModel, @PathVariable String userId) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
+    Long domainId = sUser.getCurrentDomainId();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     try {
-      UsersService as = Services.getService(UsersServiceImpl.class, locale);
-      if (!GenericAuthoriser.authoriseUser(request, userModel.id)) {
+      if (!GenericAuthoriser.authoriseUser(userModel.id)) {
         throw new UnauthorizedException(backendMessages.getString("permission.denied"));
       }
-      IUserAccount user = as.getUserAccount(userModel.id);
+      IUserAccount user = usersService.getUserAccount(userModel.id);
       user.setUpdatedBy(sUser.getUsername());
       int exp = user.getAuthenticationTokenExpiry();
       userModel.pw = user.getEncodedPassword();
-      IUserAccount ua = builder.buildUserAccount(userModel, user);
+      IUserAccount ua = userBuilder.buildUserAccount(userModel, user);
       if (ua.getUserId() != null) {
         if (exp != userModel.atexp) {
           authenticationService.clearUserTokens(userId, false);
         }
-        as.updateAccount(ua, sUser.getUsername());
+        usersService.updateAccount(ua, sUser.getUsername());
       } else {
         throw new BadRequestException(backendMessages.getString("user.id.none"));
       }
@@ -682,21 +677,20 @@ public class UsersController {
   public
   @ResponseBody
   String updateUserPassword(@RequestParam String userId, @RequestParam String opw,
-                            @RequestParam String pw, HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
+                            @RequestParam String pw) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
+    Long domainId = sUser.getCurrentDomainId();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     try {
-      UsersService as = Services.getService(UsersServiceImpl.class, locale);
-      IUserAccount user = as.getUserAccount(userId);
-      if (!GenericAuthoriser.authoriseUser(request, userId)) {
+      IUserAccount user = usersService.getUserAccount(userId);
+      if (!GenericAuthoriser.authoriseUser(userId)) {
         throw new UnauthorizedException(backendMessages.getString("permission.denied"));
       }
-      if (as.authenticateUser(userId, opw, null) == null) {
+      if (usersService.authenticateUser(userId, opw, null) == null) {
         return backendMessages.getString("invalid.lowercase");
       }
-      as.changePassword(userId, opw, pw);
+      usersService.changePassword(userId, opw, pw);
       authenticationService.clearUserTokens(userId, false);
       xLogger.info("AUDITLOG \t {0} \t {1} \t USER \t " +
               "UPDATE PASSWORD \t {2} \t {3}", domainId, sUser.getUsername(), userId,
@@ -716,20 +710,18 @@ public class UsersController {
   @RequestMapping(value = "/resetpassword/", method = RequestMethod.GET)
   public
   @ResponseBody
-  String resetUserPassword(@RequestParam String userId, @RequestParam String sendType,
-                           HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+  String resetUserPassword(@RequestParam String userId, @RequestParam String sendType) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     String loggedInUserId = sUser.getUsername();
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), loggedInUserId);
+    Long domainId = sUser.getCurrentDomainId();
     try {
-      UsersService as = Services.getService(UsersServiceImpl.class, locale);
       String newPassword = authenticationService.generatePassword(userId);
       String msg = backendMessages.getString("password.reset.success") + ": " + newPassword;
       String logMsg = backendMessages.getString("password.reset.success.log");
-      IUserAccount ua = as.getUserAccount(userId);
-      as.changePassword(userId, null, newPassword);
+      IUserAccount ua = usersService.getUserAccount(userId);
+      usersService.changePassword(userId, null, newPassword);
       authenticationService.updateUserSession(userId, null);
       MessageService
           ms =
@@ -752,23 +744,21 @@ public class UsersController {
   @RequestMapping(value = "/userstate/", method = RequestMethod.GET)
   public
   @ResponseBody
-  String enableDisableUser(@RequestParam String userId, @RequestParam String action,
-                           HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
+  String enableDisableUser(@RequestParam String userId, @RequestParam String action) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
+    Long domainId = sUser.getCurrentDomainId();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     try {
-      UsersService as = Services.getService(UsersServiceImpl.class, locale);
-      IUserAccount ua = as.getUserAccount(userId);
-      if (GenericAuthoriser.authoriseUser(request, userId)) {
+      IUserAccount ua = usersService.getUserAccount(userId);
+      if (GenericAuthoriser.authoriseUser(userId)) {
         if ("e".equals(action)) {
-          as.enableAccount(userId);
+          usersService.enableAccount(userId);
           xLogger.info("AUDITLOG \t {0} \t {1} \t USER \t " +
               "ENABLE \t {2} \t {3}", domainId, sUser.getUsername(), userId, ua.getFullName());
           return backendMessages.getString("user.account.enabled") + " " + MsgUtil.bold(userId);
         } else {
-          as.disableAccount(userId);
+          usersService.disableAccount(userId);
           authenticationService.updateUserSession(userId, null);
           xLogger.info("AUDITLOG \t {0} \t {1} \t USER \t " +
               "DISABLE \t {2} \t {3}", domainId, sUser.getUsername(), userId, ua.getFullName());
@@ -787,7 +777,7 @@ public class UsersController {
   @RequestMapping(value = "/sendmessage/", method = RequestMethod.POST)
   public
   @ResponseBody
-  String sendMessage(@RequestBody UserMessageModel model, HttpServletRequest request) {
+  String sendMessage(@RequestBody UserMessageModel model) {
     if (model.type == null || model.type.isEmpty()) {
       model.type = "sms";
     }
@@ -795,18 +785,18 @@ public class UsersController {
       model.pushURL = null;
     }
     boolean allUsers = StringUtils.isEmpty(model.userIds);
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     String senderUserId = null;
     Long domainId = null;
     Locale locale = null;
     if (sUser != null) {
       senderUserId = sUser.getUsername();
-      domainId = SessionMgr.getCurrentDomain(request.getSession(), senderUserId);
+      domainId = sUser.getCurrentDomainId();
       locale = sUser.getLocale();
     }
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     if (allUsers) {
-      UserMessageUtil.scheduleSendingToAllUsers(model, domainId, locale, null, null, senderUserId);
+      UserMessageUtil.scheduleSendingToAllUsers(model, domainId, null, null, senderUserId);
     } else {
       try {
         UserMessageUtil.sendToSelectedUsers(model, senderUserId, domainId);
@@ -826,9 +816,9 @@ public class UsersController {
       @RequestParam(defaultValue = PageParams.DEFAULT_OFFSET_STR) int offset,
       @RequestParam(defaultValue = PageParams.DEFAULT_SIZE_STR) int size,
       HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     String userId = sUser.getUsername();
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), userId);
+    Long domainId = sUser.getCurrentDomainId();
     String role = sUser.getRole();
     Navigator
         navigator =
@@ -851,35 +841,31 @@ public class UsersController {
     }
 
     String timezone = sUser.getTimezone();
-    UsersService as;
-    as = Services.getService(UsersServiceImpl.class, locale);
-
     int no = offset;
-    List<UserMessageModel> userMessageStatus = new ArrayList<UserMessageModel>();
+    List<UserMessageModel> userMessageStatus = new ArrayList<>();
     for (Object res : results.getResults()) {
       IMessageLog ml = (IMessageLog) res;
       try {
         userMessageStatus
-            .add(messageBuilder.buildUserMessageModel(ml, as, locale, userId, ++no, timezone));
+            .add(messageBuilder.buildUserMessageModel(ml, locale, userId, ++no, timezone));
       } catch (Exception e) {
         xLogger.warn("Error in building message status", e);
       }
     }
-    return new Results(userMessageStatus, results.getCursor(), -1, offset);
+    return new Results<>(userMessageStatus, results.getCursor(), -1, offset);
   }
 
   @RequestMapping(value = "/switch", method = RequestMethod.GET)
   public
   @ResponseBody
-  boolean switchConsole(HttpServletRequest request) {
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
+  boolean switchConsole() {
+    SecureUserDetails user = SecurityUtils.getUserDetails();
     Locale locale = user.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     try {
-      UsersService as = Services.getService(UsersServiceImpl.class, user.getLocale());
-      IUserAccount ua = as.getUserAccount(user.getUsername());
+      IUserAccount ua = usersService.getUserAccount(user.getUsername());
       ua.setUiPref(false);
-      as.updateAccount(ua, user.getUsername());
+      usersService.updateAccount(ua, user.getUsername());
       return true;
     } catch (ObjectNotFoundException e) {
       xLogger.warn("Unable to fetch logged in user details", e);
@@ -895,12 +881,9 @@ public class UsersController {
   @RequestMapping(value = "/generalconfig", method = RequestMethod.GET)
   public
   @ResponseBody
-  String getGeneralConfig(HttpServletRequest request) {
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
-    Locale locale = user.getLocale();
-
+  String getGeneralConfig() {
     try {
-      return getObject(user.getLocale(), IConfig.GENERALCONFIG);
+      return getObject(IConfig.GENERALCONFIG);
     } catch (ServiceException e) {
       xLogger.severe("Error in getting General Configuration details");
       throw new InvalidServiceException("Error in getting General Config details");
@@ -911,15 +894,9 @@ public class UsersController {
     }
   }
 
-  private String getObject(Locale locale, String config)
+  private String getObject(String config)
       throws ServiceException, ObjectNotFoundException {
-    ConfigurationMgmtService cms;
-    if (null != locale) {
-      cms = Services.getService(ConfigurationMgmtServiceImpl.class, locale);
-    } else {
-      cms = Services.getService(ConfigurationMgmtServiceImpl.class, null);
-    }
-    IConfig c = cms.getConfiguration(config);
+    IConfig c = configurationMgmtService.getConfiguration(config);
     String jsonObject = null;
     if (c != null && c.getConfig() != null) {
       jsonObject = c.getConfig();
@@ -931,9 +908,9 @@ public class UsersController {
   public
   @ResponseBody
   AddRemoveAccDomainsResponseObj addAccessibleDomains(
-      @RequestBody AddAccDomainsRequestObj addAccDomainsReqObj, HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
+      @RequestBody AddAccDomainsRequestObj addAccDomainsReqObj) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
+    Long domainId = sUser.getCurrentDomainId();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
 
@@ -946,12 +923,10 @@ public class UsersController {
     }
 
     try {
-      UsersService us = Services.getService(UsersServiceImpl.class);
-      List<Long> finalUserAccDomainIds = us.addAccessibleDomains(addAccDomainsReqObj.userId,
+      List<Long> finalUserAccDomainIds = usersService.addAccessibleDomains(addAccDomainsReqObj.userId,
           addAccDomainsReqObj.accDids);
 
       AddRemoveAccDomainsResponseObj resp = new AddRemoveAccDomainsResponseObj();
-      UserBuilder userBuilder = new UserBuilder();
       resp.accDsm = userBuilder.buildAccDmnSuggestionModelList(finalUserAccDomainIds);
       resp.respMsg = backendMessages.getString("user") + " \'" + addAccDomainsReqObj.userId + "\' "
           + backendMessages.getString("user.addaccessibledomain.success");
@@ -972,23 +947,20 @@ public class UsersController {
   public
   @ResponseBody
   AddRemoveAccDomainsResponseObj removeAccessibleDomains(@RequestParam String userId,
-                                                         @RequestParam Long domainId,
-                                                         HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+                                                         @RequestParam Long domainId) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     String returnMsg;
     List<DomainSuggestionModel> respAccDsm;
     try {
-      UsersService as = Services.getService(UsersServiceImpl.class, locale);
-
       if (domainId == null) {
         xLogger.warn("Error while removing accessible domain for user {0}", userId);
         throw new InvalidServiceException(
             backendMessages.getString("user.removeaccessibledomains.error1") + " \'" + userId
                 + "\'");
       }
-      IUserAccount ua = as.getUserAccount(userId);
+      IUserAccount ua = usersService.getUserAccount(userId);
       List<Long> uAccDids = ua.getAccessibleDomainIds();
       if (uAccDids != null && !uAccDids.isEmpty()) {
         uAccDids.remove(domainId);
@@ -998,11 +970,10 @@ public class UsersController {
       }
 
       ua.setAccessibleDomainIds(uAccDids);
-      as.updateAccount(ua, sUser.getUsername());
+      usersService.updateAccount(ua, sUser.getUsername());
       returnMsg =
           backendMessages.getString("user") + " \'" + userId + "\' " + backendMessages
               .getString("user.removeaccessibledomain.success");
-      UserBuilder userBuilder = new UserBuilder();
       respAccDsm = userBuilder.buildAccDmnSuggestionModelList(ua.getAccessibleDomainIds());
       AddRemoveAccDomainsResponseObj resp = new AddRemoveAccDomainsResponseObj();
       resp.accDsm = respAccDsm;
@@ -1022,17 +993,16 @@ public class UsersController {
   @RequestMapping(value = "/forcelogoutonmobile", method = RequestMethod.GET)
   public
   @ResponseBody
-  String forceLogoutOnMobile(@RequestParam String userId, HttpServletRequest request)
+  String forceLogoutOnMobile(@RequestParam String userId)
       throws ServiceException {
     Boolean success;
     String msg;
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     if (userId != null) {
       try {
-        UsersService as = Services.getService(UsersServiceImpl.class, locale);
-        IUserAccount userAccount = as.getUserAccount(userId);
+        IUserAccount userAccount = usersService.getUserAccount(userId);
         success = authenticationService.clearUserTokens(userId, false);
         if (success) {
           return backendMessages.getString("user.force.logout") + " " + MsgUtil
@@ -1068,10 +1038,8 @@ public class UsersController {
   @ResponseBody
   String updateMobileUserLastAccessTime(@RequestParam String userId, @RequestParam Long aTime) {
     if (userId != null && aTime != null) {
-      UsersService as;
       try {
-        as = Services.getService(UsersServiceImpl.class);
-        as.updateLastMobileAccessTime(userId, aTime);
+        usersService.updateLastMobileAccessTime(userId, aTime);
       } catch (Exception e) {
         xLogger.warn(" {0} while updating last transacted time for the user, {1}", e.getMessage(),
             userId, e);
@@ -1118,6 +1086,6 @@ public class UsersController {
     List<IUserAccount>
         results =
         usersService.getUsersByTag(objectId, objectType, StringUtil.getList(userTags));
-    return builder.buildAdminContactModel(results);
+    return userBuilder.buildAdminContactModel(results);
   }
 }

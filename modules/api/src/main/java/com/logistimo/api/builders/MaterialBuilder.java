@@ -24,32 +24,31 @@
 package com.logistimo.api.builders;
 
 import com.logistimo.api.models.MaterialModel;
+import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.InventoryConfig;
 import com.logistimo.constants.Constants;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.domains.entity.IDomain;
 import com.logistimo.domains.service.DomainsService;
-import com.logistimo.domains.service.impl.DomainsServiceImpl;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IHandlingUnit;
 import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.materials.service.IHandlingUnitService;
-import com.logistimo.materials.service.impl.HandlingUnitServiceImpl;
 import com.logistimo.pagination.Results;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
 import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.LocalDateUtil;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -57,11 +56,30 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Component
 public class MaterialBuilder {
   private static final XLog xLogger = XLog.getLog(MaterialBuilder.class);
+  private UsersService usersService;
+  private DomainsService domainsService;
+  private IHandlingUnitService handlingUnitService;
 
-  public Results buildMaterialModelListWithEntity(Results results, SecureUserDetails sUser,
-                                                  Results eResults, Long domainId, IKiosk k) {
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
+  }
+
+  @Autowired
+  public void setDomainsService(DomainsService domainsService) {
+    this.domainsService = domainsService;
+  }
+
+  @Autowired
+  public void setHandlingUnitService(IHandlingUnitService handlingUnitService) {
+    this.handlingUnitService = handlingUnitService;
+  }
+
+  public Results buildMaterialModelListWithEntity(Results results, Results eResults,
+                                                  Long domainId, IKiosk k) {
     List<IMaterial> materials = results.getResults();
     List<MaterialModel> newInventory = new ArrayList<>(materials.size());
     Map<Long, String> domainNames = new HashMap<>(1);
@@ -71,7 +89,7 @@ public class MaterialBuilder {
     InventoryConfig ic = domainConfig.getInventoryConfig();
     boolean allowManualConsumptionRates = (ic != null && ic.getManualCRFreq() != null);
     for (IMaterial material : materials) {
-      MaterialModel item = buildMaterialModel(material, sUser, itemCount, domainNames);
+      MaterialModel item = buildMaterialModel(material, itemCount, domainNames);
       if (item != null) {
         IInvntry inv = getInventory(item.mId, invntries);
         item.isAdded = inv != null;
@@ -99,7 +117,7 @@ public class MaterialBuilder {
         itemCount++;
       }
     }
-    return new Results(newInventory, results.getCursor(), results.getNumFound(),
+    return new Results<>(newInventory, results.getCursor(), results.getNumFound(),
         results.getOffset());
   }
 
@@ -112,47 +130,42 @@ public class MaterialBuilder {
     return null;
   }
 
-  public Results buildMaterialModelList(Results results,
-                                        SecureUserDetails sUser, Long domainId)
+  public Results buildMaterialModelList(Results results)
       throws ServiceException {
     List materials = results.getResults();
-    List<MaterialModel> newInventory = new ArrayList<MaterialModel>(
+    List<MaterialModel> newInventory = new ArrayList<>(
         materials.size());
     int itemCount = results.getOffset() + 1;
     Map<Long, String> domainNames = new HashMap<>(1);
-    UsersService as = null;
-    as = Services.getService(UsersServiceImpl.class);
     for (Object material : materials) {
       MaterialModel item = buildMaterialModel((IMaterial) material,
-          sUser, itemCount, domainNames);
+          itemCount, domainNames);
       if (item != null) {
-        if (as != null) {
-          try {
-            IUserAccount ua;
-            if (StringUtils.isNotBlank(item.ludBy)) {
-              ua = as.getUserAccount(item.ludBy);
-              item.ludByn = ua.getFullName();
-            } else if (StringUtils.isNotBlank(item.creBy)) {
-              ua = as.getUserAccount(item.creBy);
-              item.ludBy = ua.getUserId();
-              item.ludByn = ua.getFullName();
-            }
-          } catch (ObjectNotFoundException e) {
-            xLogger.warn("User {0} not found", item.ludBy);
+        try {
+          IUserAccount ua;
+          if (StringUtils.isNotBlank(item.ludBy)) {
+            ua = usersService.getUserAccount(item.ludBy);
+            item.ludByn = ua.getFullName();
+          } else if (StringUtils.isNotBlank(item.creBy)) {
+            ua = usersService.getUserAccount(item.creBy);
+            item.ludBy = ua.getUserId();
+            item.ludByn = ua.getFullName();
           }
+        } catch (ObjectNotFoundException e) {
+          xLogger.warn("User {0} not found", item.ludBy);
         }
         newInventory.add(item);
         itemCount++;
       }
     }
-    return new Results(newInventory, results.getCursor(), results.getNumFound(),
+    return new Results<>(newInventory, results.getCursor(), results.getNumFound(),
         results.getOffset());
   }
 
   public MaterialModel buildMaterialModel(IMaterial material, IUserAccount cb, IUserAccount ub,
-                                          SecureUserDetails sUser, int itemCount,
+                                          int itemCount,
                                           Map<Long, String> domainNames) {
-    MaterialModel model = buildMaterialModel(material, sUser, itemCount, domainNames);
+    MaterialModel model = buildMaterialModel(material, itemCount, domainNames);
 
     if (cb != null) {
       model.creByn = cb.getFullName();
@@ -164,10 +177,9 @@ public class MaterialBuilder {
 
   }
 
-  public MaterialModel buildMaterialModel(IMaterial material,
-                                          SecureUserDetails sUser, int itemCount,
+  public MaterialModel buildMaterialModel(IMaterial material, int itemCount,
                                           Map<Long, String> domainNames) {
-    DomainsService ds = Services.getService(DomainsServiceImpl.class);
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     MaterialModel model = new MaterialModel();
     model.sno = itemCount;
     model.mId = material.getMaterialId();
@@ -205,7 +217,7 @@ public class MaterialBuilder {
     if (domainName == null) {
       IDomain domain = null;
       try {
-        domain = ds.getDomain(material.getDomainId());
+        domain = domainsService.getDomain(material.getDomainId());
       } catch (Exception e) {
         xLogger.warn("Error while fetching Domain {0}", material.getDomainId());
       }
@@ -217,8 +229,7 @@ public class MaterialBuilder {
       domainNames.put(material.getDomainId(), domainName);
     }
     try {
-      IHandlingUnitService hus = Services.getService(HandlingUnitServiceImpl.class);
-      Map<String, String> hu = hus.getHandlingUnitDataByMaterialId(material.getMaterialId());
+      Map<String, String> hu = handlingUnitService.getHandlingUnitDataByMaterialId(material.getMaterialId());
       if (hu != null) {
         model.huId = Long.valueOf(hu.get(IHandlingUnit.HUID));
         model.huQty = new BigDecimal(hu.get(IHandlingUnit.QUANTITY));

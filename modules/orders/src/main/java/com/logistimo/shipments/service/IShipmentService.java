@@ -32,7 +32,6 @@ import com.logistimo.models.shipments.ShipmentModel;
 import com.logistimo.orders.models.PDFResponseModel;
 import com.logistimo.pagination.Results;
 import com.logistimo.services.ObjectNotFoundException;
-import com.logistimo.services.Service;
 import com.logistimo.services.ServiceException;
 import com.logistimo.shipments.ShipmentStatus;
 import com.logistimo.shipments.entity.IShipment;
@@ -50,7 +49,7 @@ import javax.jdo.PersistenceManager;
 /**
  * Created by Mohan Raja on 29/09/16
  */
-public interface IShipmentService extends Service {
+public interface IShipmentService {
 
   String createShipment(ShipmentModel model, int source, Boolean updateOrderFields) throws ServiceException, ValidationException;
 

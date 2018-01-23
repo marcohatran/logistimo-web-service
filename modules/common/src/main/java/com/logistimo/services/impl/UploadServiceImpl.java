@@ -24,15 +24,12 @@
 package com.logistimo.services.impl;
 
 import com.logistimo.dao.JDOUtils;
-
 import com.logistimo.entity.IDownloaded;
 import com.logistimo.entity.IUploaded;
-import com.logistimo.services.ObjectNotFoundException;
-import com.logistimo.services.Service;
-import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
-import com.logistimo.services.UploadService;
 import com.logistimo.logger.XLog;
+import com.logistimo.services.ObjectNotFoundException;
+import com.logistimo.services.ServiceException;
+import com.logistimo.services.UploadService;
 
 import java.util.Date;
 import java.util.List;
@@ -41,17 +38,15 @@ import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 
-
-public class UploadServiceImpl extends ServiceImpl implements UploadService {
+@org.springframework.stereotype.Service
+public class UploadServiceImpl implements UploadService {
 
   private static final XLog xLogger = XLog.getLog(UploadServiceImpl.class);
 
   public IUploaded getUploaded(String filename, String version, String locale)
       throws ServiceException, ObjectNotFoundException {
     String key = JDOUtils.createUploadedKey(filename, version, locale);
-    IUploaded uploaded = getUploaded(key);
-
-    return uploaded;
+    return getUploaded(key);
   }
 
   @SuppressWarnings("unchecked")
@@ -143,7 +138,7 @@ public class UploadServiceImpl extends ServiceImpl implements UploadService {
         upload.setTimeStamp(new Date());
       }
       upload = pm.makePersistent(upload);
-      upload = pm.detachCopy(upload);
+      pm.detachCopy(upload);
     } finally {
       pm.close();
     }
@@ -159,11 +154,8 @@ public class UploadServiceImpl extends ServiceImpl implements UploadService {
     }
 
     // Iterate through the list of uploads.
-    for (IUploaded u : uploads) {
-      if (u.getId() == null) {
-        u.setId(JDOUtils.createUploadedKey(u.getFileName(), u.getVersion(), u.getLocale()));
-      }
-    }
+    uploads.stream().filter(u -> u.getId() == null).forEach(u ->
+        u.setId(JDOUtils.createUploadedKey(u.getFileName(), u.getVersion(), u.getLocale())));
 
     // Write the list of Uploaded objects to the datastore.
     try {
@@ -237,22 +229,6 @@ public class UploadServiceImpl extends ServiceImpl implements UploadService {
       throw new ServiceException(errMsg);
     }
 
-  }
-
-  @Override
-  public void init(Services services) throws ServiceException {
-    // TODO Auto-generated method stub
-  }
-
-  @Override
-  public void destroy() throws ServiceException {
-    // TODO Auto-generated method stub
-  }
-
-  @Override
-  public Class<? extends Service> getInterface() {
-    // TODO Auto-generated method stub
-    return UploadServiceImpl.class;
   }
 }
 

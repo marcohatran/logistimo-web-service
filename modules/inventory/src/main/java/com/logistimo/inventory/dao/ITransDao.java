@@ -55,8 +55,7 @@ public interface ITransDao {
                                    String materialTag, List<Long> kioskIds, PageParams pageParams,
                                    String bid,
                                    boolean atd, String reason, List<String> excludeReasons,
-                                   PersistenceManager pm)
-      throws ServiceException;
+                                   PersistenceManager pm);
 
   QueryParams buildTransactionsQuery(Date sinceDate, Date untilDate, Long domainId, Long kioskId,
                                      Long materialId, List<String> transTypes, Long linkedKioskId,

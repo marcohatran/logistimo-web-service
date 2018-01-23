@@ -23,37 +23,35 @@
 
 package com.logistimo.api.builders;
 
-import org.apache.commons.lang.StringUtils;
-import com.logistimo.config.models.DomainConfig;
-import com.logistimo.pagination.Results;
-import com.logistimo.security.SecureUserDetails;
-import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
-import com.logistimo.utils.BigUtil;
-import com.logistimo.constants.CharacterConstants;
-import com.logistimo.constants.Constants;
-import com.logistimo.utils.StringUtil;
-import com.logistimo.logger.XLog;
 import com.logistimo.api.models.DemandBreakdownModel;
 import com.logistimo.api.models.DemandModel;
+import com.logistimo.auth.utils.SecurityUtils;
+import com.logistimo.config.models.DomainConfig;
+import com.logistimo.constants.CharacterConstants;
+import com.logistimo.constants.Constants;
 import com.logistimo.domains.entity.IDomain;
 import com.logistimo.domains.service.DomainsService;
-import com.logistimo.domains.service.impl.DomainsServiceImpl;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
-import com.logistimo.entities.service.EntitiesServiceImpl;
-import com.logistimo.inventory.dao.impl.InvntryDao;
+import com.logistimo.inventory.dao.IInvntryDao;
 import com.logistimo.inventory.entity.IInvAllocation;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.IInvntryBatch;
 import com.logistimo.inventory.entity.IInvntryEvntLog;
 import com.logistimo.inventory.service.InventoryManagementService;
-import com.logistimo.inventory.service.impl.InventoryManagementServiceImpl;
+import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IHandlingUnit;
 import com.logistimo.materials.service.IHandlingUnitService;
 import com.logistimo.materials.service.MaterialCatalogService;
-import com.logistimo.materials.service.impl.HandlingUnitServiceImpl;
-import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
+import com.logistimo.pagination.Results;
+import com.logistimo.security.SecureUserDetails;
+import com.logistimo.services.ServiceException;
+import com.logistimo.utils.BigUtil;
+import com.logistimo.utils.StringUtil;
+
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
@@ -64,35 +62,73 @@ import java.util.Map;
 /**
  * Created by smriti on 10/3/16.
  */
+@Component
 public class DemandBuilder {
   private static final XLog xLogger = XLog.getLog(DemandBuilder.class);
-  EntityBuilder eb = new EntityBuilder();
 
-  public Results buildDemandModelList(Results results, Long kioskId, Long materialId,
-                                      SecureUserDetails sUser) throws ServiceException {
+  private EntityBuilder entityBuilder;
+  private EntitiesService entitiesService;
+  private InventoryManagementService inventoryManagementService;
+  private DomainsService domainsService;
+  private MaterialCatalogService materialCatalogService;
+  private IHandlingUnitService handlingUnitService;
+  private IInvntryDao invntryDao;
+
+  @Autowired
+  public void setEntityBuilder(EntityBuilder entityBuilder) {
+    this.entityBuilder = entityBuilder;
+  }
+
+  @Autowired
+  public void setEntitiesService(EntitiesService entitiesService) {
+    this.entitiesService = entitiesService;
+  }
+
+  @Autowired
+  public void setInventoryManagementService(InventoryManagementService inventoryManagementService) {
+    this.inventoryManagementService = inventoryManagementService;
+  }
+
+  @Autowired
+  public void setDomainsService(DomainsService domainsService) {
+    this.domainsService = domainsService;
+  }
+
+  @Autowired
+  public void setMaterialCatalogService(MaterialCatalogService materialCatalogService) {
+    this.materialCatalogService = materialCatalogService;
+  }
+
+  @Autowired
+  public void setHandlingUnitService(IHandlingUnitService handlingUnitService) {
+    this.handlingUnitService = handlingUnitService;
+  }
+
+  @Autowired
+  public void setInvntryDao(IInvntryDao invntryDao) {
+    this.invntryDao = invntryDao;
+  }
+
+  public Results buildDemandModelList(Results results, Long kioskId, Long materialId) throws ServiceException {
     List items = results.getResults();
     List<DemandModel> modelItems = new ArrayList<>(results.getSize());
     for (Object item : items) {
-      modelItems.add(buildDemandModel(sUser, kioskId, materialId, (Object[]) item, true));
+      modelItems.add(buildDemandModel(kioskId, materialId, (Object[]) item, true));
     }
-    return new Results(modelItems, results.getCursor(), results.getNumFound(), results.getOffset());
+    return new Results<>(modelItems, results.getCursor(), results.getNumFound(), results.getOffset());
   }
 
-  public DemandModel buildDemandModel(SecureUserDetails sUser, Long kioskId, Long materialId,
+  public DemandModel buildDemandModel(Long kioskId, Long materialId,
                                       Object[] item, boolean deep) throws ServiceException {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     DemandModel model = new DemandModel();
-    EntitiesService as = Services.getService(EntitiesServiceImpl.class);
     String kidStr = String.valueOf(item[0]);
-    InventoryManagementService
-        ims =
-        Services.getService(InventoryManagementServiceImpl.class);
     if (StringUtils.isNotEmpty(kidStr)) {
-      IKiosk k = as.getKiosk(Long.parseLong(kidStr), false);
+      IKiosk k = entitiesService.getKiosk(Long.parseLong(kidStr), false);
       if (deep) {
-        model.e = eb.buildBaseModel(k, sUser.getLocale(), sUser.getTimezone(), sUser.getUsername());
+        model.e = entityBuilder.buildBaseModel(k, sUser.getLocale(), sUser.getTimezone(), sUser.getUsername());
         try {
-          DomainsService ds = Services.getService(DomainsServiceImpl.class);
-          IDomain domain = ds.getDomain(model.e.sdid);
+          IDomain domain = domainsService.getDomain(model.e.sdid);
           model.e.sdname = domain.getName();
         } catch (Exception e) {
           xLogger.warn("Error while fetching Domain {0}", model.e.sdid);
@@ -100,10 +136,10 @@ public class DemandBuilder {
       }
       if (materialId != null) {
         DomainConfig dc = DomainConfig.getInstance(k.getDomainId());
-        IInvntry inv = ims.getInventory(k.getKioskId(), materialId);
+        IInvntry inv = inventoryManagementService.getInventory(k.getKioskId(), materialId);
         if (inv != null) {
-          model.csavibper = ims.getStockAvailabilityPeriod(inv, dc);
-          IInvntryEvntLog lastEventLog = new InvntryDao().getInvntryEvntLog(inv);
+          model.csavibper = inventoryManagementService.getStockAvailabilityPeriod(inv, dc);
+          IInvntryEvntLog lastEventLog = invntryDao.getInvntryEvntLog(inv);
           if (lastEventLog != null) {
             model.event = lastEventLog.getType();
           }
@@ -149,7 +185,7 @@ public class DemandBuilder {
       if (oid.size() > 0) {
         for (String id : oid) {
           String tag = IInvAllocation.Type.ORDER + CharacterConstants.COLON + id;
-          List<IInvAllocation> allocations = ims.getAllocationsByTagMaterial(model.id, tag);
+          List<IInvAllocation> allocations = inventoryManagementService.getAllocationsByTagMaterial(model.id, tag);
           if (allocations != null) {
             inv.addAll(allocations);
           }
@@ -168,13 +204,12 @@ public class DemandBuilder {
       }
       model.mst = item[13] == null ? null : String.valueOf(item[13]);
       String tag = IInvAllocation.Type.ORDER + CharacterConstants.COLON + String.valueOf(model.oid);
-      inv = ims.getAllocationsByTagMaterial(materialId, tag);
+      inv = inventoryManagementService.getAllocationsByTagMaterial(materialId, tag);
     }
-    MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
-    model.tm = mcs.getMaterial(model.id).isTemperatureSensitive();
+    model.tm = materialCatalogService.getMaterial(model.id).isTemperatureSensitive();
     model.astk = BigDecimal.ZERO;
     List<DemandBreakdownModel> list = new ArrayList<>();
-    Results<IInvntryBatch> rs = ims.getValidBatches(materialId, kioskId, null);
+    Results<IInvntryBatch> rs = inventoryManagementService.getValidBatches(materialId, kioskId, null);
     if (rs.getSize() > 0) {
       model.isBa = true;
       for (IInvntryBatch ib : rs.getResults()) {
@@ -235,8 +270,7 @@ public class DemandBuilder {
     // model.yta = model.q.subtract(model.astk);
     model.yta = model.q.subtract(model.astk.add(model.sq));
     try {
-      IHandlingUnitService hus = Services.getService(HandlingUnitServiceImpl.class);
-      Map<String, String> hu = hus.getHandlingUnitDataByMaterialId(model.id);
+      Map<String, String> hu = handlingUnitService.getHandlingUnitDataByMaterialId(model.id);
       if (hu != null) {
         model.huQty = new BigDecimal(hu.get(IHandlingUnit.QUANTITY));
         model.huName = hu.get(IHandlingUnit.NAME);

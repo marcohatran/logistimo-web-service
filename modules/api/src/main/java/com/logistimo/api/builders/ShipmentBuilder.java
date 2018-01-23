@@ -23,27 +23,23 @@
 
 package com.logistimo.api.builders;
 
+import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.domains.service.DomainsService;
-import com.logistimo.domains.service.impl.DomainsServiceImpl;
 import com.logistimo.entities.auth.EntityAuthoriser;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
-import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.inventory.entity.IInvAllocation;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.IInvntryBatch;
 import com.logistimo.inventory.service.InventoryManagementService;
-import com.logistimo.inventory.service.impl.InventoryManagementServiceImpl;
 import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IHandlingUnit;
 import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.materials.service.IHandlingUnitService;
 import com.logistimo.materials.service.MaterialCatalogService;
-import com.logistimo.materials.service.impl.HandlingUnitServiceImpl;
-import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
 import com.logistimo.models.shipments.ShipmentItemBatchModel;
 import com.logistimo.models.shipments.ShipmentItemModel;
 import com.logistimo.models.shipments.ShipmentModel;
@@ -51,20 +47,19 @@ import com.logistimo.orders.entity.IDemandItem;
 import com.logistimo.orders.entity.IOrder;
 import com.logistimo.orders.service.IDemandService;
 import com.logistimo.orders.service.OrderManagementService;
-import com.logistimo.orders.service.impl.DemandService;
-import com.logistimo.orders.service.impl.OrderManagementServiceImpl;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.shipments.ShipmentStatus;
 import com.logistimo.shipments.entity.IShipment;
 import com.logistimo.shipments.entity.IShipmentItem;
 import com.logistimo.shipments.entity.IShipmentItemBatch;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
 import com.logistimo.utils.CommonUtils;
 import com.logistimo.utils.LocalDateUtil;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
@@ -76,14 +71,63 @@ import java.util.Map;
 /**
  * Created by yuvaraj on 11/10/16.
  */
+@Component
 public class ShipmentBuilder {
   private static final XLog xLogger = XLog.getLog(ShipmentBuilder.class);
 
-  public List<ShipmentModel> buildShipmentModels(List<IShipment> shipmentList,
-                                                 SecureUserDetails user) {
+  private UsersService usersService;
+  private EntitiesService entitiesService;
+  private OrderManagementService orderManagementService;
+  private InventoryManagementService inventoryManagementService;
+  private IDemandService demandService;
+  private DomainsService domainsService;
+  private MaterialCatalogService materialCatalogService;
+  private IHandlingUnitService handlingUnitService;
+
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
+  }
+
+  @Autowired
+  public void setEntitiesService(EntitiesService entitiesService) {
+    this.entitiesService = entitiesService;
+  }
+
+  @Autowired
+  public void setOrderManagementService(OrderManagementService orderManagementService) {
+    this.orderManagementService = orderManagementService;
+  }
+
+  @Autowired
+  public void setInventoryManagementService(InventoryManagementService inventoryManagementService) {
+    this.inventoryManagementService = inventoryManagementService;
+  }
+
+  @Autowired
+  public void setDemandService(IDemandService demandService) {
+    this.demandService = demandService;
+  }
+
+  @Autowired
+  public void setDomainsService(DomainsService domainsService) {
+    this.domainsService = domainsService;
+  }
+
+  @Autowired
+  public void setMaterialCatalogService(MaterialCatalogService materialCatalogService) {
+    this.materialCatalogService = materialCatalogService;
+  }
+
+  @Autowired
+  public void setHandlingUnitService(IHandlingUnitService handlingUnitService) {
+    this.handlingUnitService = handlingUnitService;
+  }
+
+  public List<ShipmentModel> buildShipmentModels(List<IShipment> shipmentList) {
     List<ShipmentModel> smList = new ArrayList<>(shipmentList.size());
     for (IShipment s : shipmentList) {
-      ShipmentModel shipmentModel = buildShipmentModel(s, user, false);
+      ShipmentModel shipmentModel = buildShipmentModel(s, false);
       if (shipmentModel == null) {
         continue;
       }
@@ -92,18 +136,13 @@ public class ShipmentBuilder {
     return smList;
   }
 
-  public ShipmentModel buildShipmentModel(IShipment s, SecureUserDetails user, boolean deep) {
+  public ShipmentModel buildShipmentModel(IShipment s, boolean deep) {
     try {
-      UsersService as = Services.getService(UsersServiceImpl.class);
-      EntitiesService entitiesService = Services.getService(EntitiesServiceImpl.class);
-      InventoryManagementService
-          ims =
-          Services.getService(InventoryManagementServiceImpl.class);
-      OrderManagementService oms = Services.getService(OrderManagementServiceImpl.class);
+      SecureUserDetails sUser = SecurityUtils.getUserDetails();
       ShipmentModel model = new ShipmentModel();
       IOrder order;
       try {
-        order = oms.getOrder(s.getOrderId());
+        order = orderManagementService.getOrder(s.getOrderId());
         model.oty = order.getOrderType();
       } catch (Exception e) {
         xLogger.warn("Order not available for shipment.", e);
@@ -128,36 +167,36 @@ public class ShipmentBuilder {
         model.ead = sdf.format(s.getExpectedArrivalDate());
         model.eadLabel =
             LocalDateUtil
-                .format(s.getExpectedArrivalDate(), user.getLocale(), user.getTimezone(), true);
+                .format(s.getExpectedArrivalDate(), sUser.getLocale(), sUser.getTimezone(), true);
       }
       if (s.getActualFulfilmentDate() != null) {
-        model.afd = LocalDateUtil.format(s.getActualFulfilmentDate(), user.getLocale(),
-            user.getTimezone(), true);
+        model.afd = LocalDateUtil.format(s.getActualFulfilmentDate(), sUser.getLocale(),
+            sUser.getTimezone(), true);
       }
       model.userID = s.getCreatedBy();
       try {
-        IUserAccount cUser = as.getUserAccount(s.getCreatedBy());
+        IUserAccount cUser = usersService.getUserAccount(s.getCreatedBy());
         model.createdBy = cUser.getFullName();
       } catch (Exception e) {
-        xLogger.warn("Failed to get created user Id {0}", s.getCreatedBy(), e);
+        xLogger.warn("Failed to get created sUser Id {0}", s.getCreatedBy(), e);
         model.createdBy = s.getCreatedBy();
       }
 
-      model.cOn = LocalDateUtil.format(s.getCreatedOn(), user.getLocale(), user.getTimezone());
+      model.cOn = LocalDateUtil.format(s.getCreatedOn(), sUser.getLocale(), sUser.getTimezone());
 
       if (s.getUpdatedBy() != null) {
         try {
-          IUserAccount uUSer = as.getUserAccount(s.getUpdatedBy());
+          IUserAccount uUSer = usersService.getUserAccount(s.getUpdatedBy());
           model.upBy = uUSer.getFullName();
         } catch (Exception e) {
-          xLogger.warn("Failed to get updated user Id", e);
+          xLogger.warn("Failed to get updated sUser Id", e);
           model.upBy = s.getUpdatedBy();
         }
         model.upId = s.getUpdatedBy();
       }
 
       if (s.getUpdatedOn() != null) {
-        model.upOn = LocalDateUtil.format(s.getUpdatedOn(), user.getLocale(), user.getTimezone());
+        model.upOn = LocalDateUtil.format(s.getUpdatedOn(), sUser.getLocale(), sUser.getTimezone());
       }
 
       model.customerId = s.getKioskId();
@@ -175,8 +214,8 @@ public class ShipmentBuilder {
               if (vPermission < 2 && model.vendorId != null) {
                 vPermission =
                     EntityAuthoriser
-                        .authoriseEntityPerm(model.vendorId, user.getRole(), user.getLocale(),
-                            user.getUsername(), user.getDomainId());
+                        .authoriseEntityPerm(model.vendorId, sUser.getRole(),
+                            sUser.getUsername(), sUser.getDomainId());
               }
               model.atv = vPermission > 1;
               model.atvv = vPermission > 0;
@@ -200,8 +239,8 @@ public class ShipmentBuilder {
               if (cPermission < 2) {
                 cPermission =
                     EntityAuthoriser
-                        .authoriseEntityPerm(model.customerId, user.getRole(), user.getLocale(),
-                            user.getUsername(), user.getDomainId());
+                        .authoriseEntityPerm(model.customerId, sUser.getRole(),
+                            sUser.getUsername(), sUser.getDomainId());
               }
               model.atc = cPermission > 1;
               model.atvc = cPermission > 0;
@@ -213,8 +252,7 @@ public class ShipmentBuilder {
       }
       model.orderId = s.getOrderId();
       model.sdid = s.getDomainId();
-      DomainsService ds = Services.getService(DomainsServiceImpl.class);
-      model.sdname = ds.getDomain(s.getDomainId()).getName();
+      model.sdname = domainsService.getDomain(s.getDomainId()).getName();
       DomainConfig dc = DomainConfig.getInstance(s.getDomainId());
 
       List<IShipmentItem> items = (List<IShipmentItem>) s.getShipmentItems();
@@ -222,15 +260,14 @@ public class ShipmentBuilder {
       Map<String, BigDecimal> orderAllocations = null;
       Map<Long, BigDecimal> availableQuantity = null;
       if (isOpen) {
-        IDemandService des = Services.getService(DemandService.class);
-        List<IDemandItem> dItems = des.getDemandItems(model.orderId);
+        List<IDemandItem> dItems = demandService.getDemandItems(model.orderId);
         availableQuantity = new HashMap<>(dItems.size());
         for (IDemandItem dItem : dItems) {
           availableQuantity
               .put(dItem.getMaterialId(), dItem.getQuantity().subtract(dItem.getShippedQuantity()));
         }
         String tag = IInvAllocation.Type.ORDER + CharacterConstants.COLON + model.orderId;
-        List<IInvAllocation> orderAllocationList = ims.getAllocationsByTag(tag);
+        List<IInvAllocation> orderAllocationList = inventoryManagementService.getAllocationsByTag(tag);
         if (orderAllocationList != null && orderAllocationList.size() > 0) {
           orderAllocations = new HashMap<>();
           for (IInvAllocation allocation : orderAllocationList) {
@@ -253,11 +290,10 @@ public class ShipmentBuilder {
       }
       if (items != null) {
         model.items = new ArrayList<>(items.size());
-        MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
         for (IShipmentItem item : items) {
           Long mid = item.getMaterialId();
 
-          IMaterial m = mcs.getMaterial(item.getMaterialId());
+          IMaterial m = materialCatalogService.getMaterial(item.getMaterialId());
           ShipmentItemModel sim = new ShipmentItemModel();
           sim.mId = mid;
           sim.q = item.getQuantity();
@@ -277,7 +313,7 @@ public class ShipmentBuilder {
           List<IShipmentItemBatch> bList = null;
           if (isOpen) {
             allocationList =
-                ims.getAllocationsByTypeId(model.vendorId, item.getMaterialId(),
+                inventoryManagementService.getAllocationsByTypeId(model.vendorId, item.getMaterialId(),
                     IInvAllocation.Type.SHIPMENT, model.sId);
           } else {
             if (sim.isBa) {
@@ -326,24 +362,23 @@ public class ShipmentBuilder {
               }
             }
           }
-          IInvntry invVendor = ims.getInventory(s.getServicingKiosk(), sim.mId);
-          IInvntry custVendor = ims.getInventory(s.getKioskId(), sim.mId);
+          IInvntry invVendor = inventoryManagementService.getInventory(s.getServicingKiosk(), sim.mId);
+          IInvntry custVendor = inventoryManagementService.getInventory(s.getKioskId(), sim.mId);
           if (invVendor != null) {
             sim.vs = invVendor.getStock();
             sim.vmax = invVendor.getMaxStock();
             sim.vmin = invVendor.getReorderLevel();
-            sim.vsavibper = ims.getStockAvailabilityPeriod(invVendor, dc);
+            sim.vsavibper = inventoryManagementService.getStockAvailabilityPeriod(invVendor, dc);
             sim.atpstk = invVendor.getAvailableStock();
           }
           if (custVendor != null) {
             sim.stk = custVendor.getStock();
             sim.max = custVendor.getMaxStock();
             sim.min = custVendor.getReorderLevel();
-            sim.csavibper = ims.getStockAvailabilityPeriod(custVendor, dc);
+            sim.csavibper = inventoryManagementService.getStockAvailabilityPeriod(custVendor, dc);
           }
           try {
-            IHandlingUnitService hus = Services.getService(HandlingUnitServiceImpl.class);
-            Map<String, String> hu = hus.getHandlingUnitDataByMaterialId(mid);
+            Map<String, String> hu = handlingUnitService.getHandlingUnitDataByMaterialId(mid);
             if (hu != null) {
               sim.huQty = new BigDecimal(hu.get(IHandlingUnit.QUANTITY));
               sim.huName = hu.get(IHandlingUnit.NAME);
@@ -365,12 +400,11 @@ public class ShipmentBuilder {
   private ShipmentItemBatchModel getShipmentItemBatchModel(Long vendorId, Long customerId,
       Long materialId, String batchId, BigDecimal quantity, BigDecimal fulfilQty, String smst,
       String fmst, String frsn) throws ServiceException {
-    InventoryManagementService ims = Services.getService(InventoryManagementServiceImpl.class);
     ShipmentItemBatchModel sibm = new ShipmentItemBatchModel();
     IInvntryBatch batch;
-    batch = ims.getInventoryBatch(vendorId, materialId, batchId, null);
+    batch = inventoryManagementService.getInventoryBatch(vendorId, materialId, batchId, null);
     if (batch == null) {
-      batch = ims.getInventoryBatch(customerId, materialId, batchId, null);
+      batch = inventoryManagementService.getInventoryBatch(customerId, materialId, batchId, null);
     }
     if (batch != null) {
       sibm.e = batch.getBatchExpiry() != null ? LocalDateUtil.formatCustom(batch.getBatchExpiry(),
@@ -387,9 +421,8 @@ public class ShipmentBuilder {
     sibm.fmst = fmst;
     sibm.frsn = frsn;
     try {
-      IHandlingUnitService hus = Services.getService(HandlingUnitServiceImpl.class);
       if (batch != null) {
-        Map<String, String> hu = hus.getHandlingUnitDataByMaterialId(batch.getMaterialId());
+        Map<String, String> hu = handlingUnitService.getHandlingUnitDataByMaterialId(batch.getMaterialId());
         if (hu != null) {
         sibm.huQty = new BigDecimal(hu.get(IHandlingUnit.QUANTITY));
         sibm.huName = hu.get(IHandlingUnit.NAME);

@@ -28,26 +28,25 @@ package com.logistimo.api.servlets;
 
 import com.logistimo.AppFactory;
 import com.logistimo.auth.SecurityConstants;
-import com.logistimo.dao.JDOUtils;
-import com.logistimo.domains.entity.IDomain;
-import com.logistimo.events.handlers.BBHandler;
-import com.logistimo.events.handlers.EventHandler;
-import com.logistimo.services.blobstore.BlobstoreService;
-import com.logistimo.services.storage.StorageUtil;
-import com.logistimo.users.entity.IUserAccount;
-
 import com.logistimo.communications.service.EmailService;
 import com.logistimo.communications.service.MessageService;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.EventSpec;
 import com.logistimo.config.models.EventSpec.NotifyOptions;
-import com.logistimo.events.entity.IEvent;
-import com.logistimo.events.processor.EventNotificationProcessor.EventNotificationData;
-import com.logistimo.services.ServiceException;
-import com.logistimo.services.impl.PMF;
 import com.logistimo.constants.Constants;
-import com.logistimo.utils.LocalDateUtil;
+import com.logistimo.dao.JDOUtils;
+import com.logistimo.domains.entity.IDomain;
+import com.logistimo.events.entity.IEvent;
+import com.logistimo.events.handlers.BBHandler;
+import com.logistimo.events.handlers.EventHandler;
+import com.logistimo.events.processor.EventNotificationProcessor.EventNotificationData;
 import com.logistimo.logger.XLog;
+import com.logistimo.services.ServiceException;
+import com.logistimo.services.blobstore.BlobstoreService;
+import com.logistimo.services.impl.PMF;
+import com.logistimo.services.storage.StorageUtil;
+import com.logistimo.users.entity.IUserAccount;
+import com.logistimo.utils.LocalDateUtil;
 
 import java.io.IOException;
 import java.text.ParseException;
@@ -111,7 +110,7 @@ public class NotifierServlet extends SgServlet {
       // Get the domain conifg.
       DomainConfig dc = DomainConfig.getInstance(domainId);
 
-      boolean isEventValid = EventHandler.isEventValid(event, dc, pm);
+      boolean isEventValid = EventHandler.isEventValid(event, pm);
       if (!isEventValid) {
         xLogger.warn(
             "Invalid event when notify event {0}  on object of type {1}, id {2} in domain {3};message in event = {4}",

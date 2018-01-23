@@ -27,9 +27,7 @@ import com.logistimo.api.builders.ShipmentBuilder;
 import com.logistimo.api.models.OrderStatusModel;
 import com.logistimo.api.models.ShipmentResponseModel;
 import com.logistimo.api.util.ResponseUtils;
-import com.logistimo.auth.SecurityMgr;
 import com.logistimo.auth.utils.SecurityUtils;
-import com.logistimo.auth.utils.SessionMgr;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.SourceConstants;
@@ -46,17 +44,14 @@ import com.logistimo.models.shipments.ShipmentModel;
 import com.logistimo.orders.entity.IOrder;
 import com.logistimo.orders.models.PDFResponseModel;
 import com.logistimo.orders.service.OrderManagementService;
-import com.logistimo.orders.service.impl.OrderManagementServiceImpl;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.shipments.ShipmentStatus;
 import com.logistimo.shipments.entity.IShipment;
-import com.logistimo.shipments.service.IShipmentService;
 import com.logistimo.shipments.service.impl.ShipmentService;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.LockUtil;
@@ -79,7 +74,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
@@ -89,34 +83,43 @@ import javax.servlet.http.HttpServletResponse;
 @RequestMapping("/shipment")
 public class ShipmentController {
   private static final XLog xLogger = XLog.getLog(ShipmentController.class);
-  ShipmentBuilder builder = new ShipmentBuilder();
+  private ShipmentBuilder shipmentBuilder;
   private OrderManagementService orderManagementService;
+  private ShipmentService shipmentService;
+
+  @Autowired
+  public void setShipmentBuilder(ShipmentBuilder shipmentBuilder) {
+    this.shipmentBuilder = shipmentBuilder;
+  }
 
   @Autowired
   private void setOrderManagementService(OrderManagementService service) {
     this.orderManagementService = service;
   }
 
+  @Autowired
+  private void setShipmentService(ShipmentService shipmentService) {
+    this.shipmentService = shipmentService;
+  }
+
   @RequestMapping(value = "/add/", method = RequestMethod.POST)
   public
   @ResponseBody
-  ShipmentMaterialsModel addShipment(@RequestBody ShipmentModel model, HttpServletRequest request)
+  ShipmentMaterialsModel addShipment(@RequestBody ShipmentModel model)
       throws ValidationException {
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     String userId = sUser.getUsername();
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), userId);
+    Long domainId = sUser.getCurrentDomainId();
     ResourceBundle
         backendMessages =
         Resources.get().getBundle("BackendMessages", sUser.getLocale());
     try {
-
       model.userID = userId;
       model.sdid = domainId;
-      IShipmentService ss = Services.getService(ShipmentService.class);
       if (model.changeStatus != null) {
         model.status = ShipmentStatus.getStatus(model.changeStatus);
       }
-      String shipId = ss.createShipment(model, SourceConstants.WEB, false);
+      String shipId = shipmentService.createShipment(model, SourceConstants.WEB, false);
       ShipmentMaterialsModel m = new ShipmentMaterialsModel();
       if (StringUtils.isNotBlank(shipId)) {
         m.msg = "Shipment created successfully.";
@@ -145,12 +148,10 @@ public class ShipmentController {
   @RequestMapping(value = "/detail/{sID}", method = RequestMethod.GET)
   public
   @ResponseBody
-  ShipmentModel getShipment(@PathVariable String sID, HttpServletRequest request) {
+  ShipmentModel getShipment(@PathVariable String sID) {
     try {
-      SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
-      IShipmentService ss = Services.getService(ShipmentService.class);
-      IShipment shipment = ss.getShipment(sID);
-      return builder.buildShipmentModel(shipment, sUser, true);
+      IShipment shipment = shipmentService.getShipment(sID);
+      return shipmentBuilder.buildShipmentModel(shipment, true);
     } catch (Exception e) {
       xLogger.severe("Error while getting shipment", e);
       throw new InvalidServiceException("Error while getting shipments");
@@ -172,13 +173,11 @@ public class ShipmentController {
                        @RequestParam(required = false) String eftFrom,
                        @RequestParam(required = false) String eftTo,
                        @RequestParam(required = false) String trans,
-                       @RequestParam(required = false) String trackId,
-                       HttpServletRequest request) {
+                       @RequestParam(required = false) String trackId) {
     try {
-      SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
+      SecureUserDetails sUser = SecurityUtils.getUserDetails();
       String userId = sUser.getUsername();
-      Long domainId = SessionMgr.getCurrentDomain(request.getSession(), userId);
-      IShipmentService ss = Services.getService(ShipmentService.class);
+      Long domainId = sUser.getCurrentDomainId();
       SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATE_FORMAT);
       if (to != null && !to.isEmpty()) {
         to = sdf.format(LocalDateUtil.getOffsetDate(sdf.parse(to), 1));
@@ -186,11 +185,11 @@ public class ShipmentController {
       if (eftTo != null && !eftTo.isEmpty()) {
         eftTo = sdf.format(LocalDateUtil.getOffsetDate(sdf.parse(eftTo), 1));
       }
-      Results shipments = ss.getShipments(userId, domainId, custId, vendId,
+      Results shipments = shipmentService.getShipments(userId, domainId, custId, vendId,
           from != null ? sdf.parse(from) : null, to != null ? sdf.parse(to) : null,
           eftFrom != null ? sdf.parse(eftFrom) : null, eftTo != null ? sdf.parse(eftTo) : null,
           trans, trackId, ShipmentStatus.getStatus(status), size, offset);
-      return new Results(builder.buildShipmentModels(shipments.getResults(), sUser), null,
+      return new Results(shipmentBuilder.buildShipmentModels(shipments.getResults()), null,
           shipments.getNumFound(), shipments.getOffset());
     } catch (Exception e) {
       xLogger.severe("Error while creating shipments", e);
@@ -202,9 +201,9 @@ public class ShipmentController {
   public
   @ResponseBody
   String updateShipmentItems(@RequestBody ShipmentMaterialsModel model,
-                             HttpServletRequest request, HttpServletResponse response) {
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
-    Locale locale = user.getLocale();
+                             HttpServletResponse response) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
+    Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     Long
         orderId =
@@ -214,15 +213,14 @@ public class ShipmentController {
       throw new InvalidServiceException(new ServiceException("O002", orderId));
     }
     try {
-      IShipmentService ss = Services.getService(ShipmentService.class, user.getLocale());
-      model.userId = user.getUsername();
+      model.userId = sUser.getUsername();
       boolean isSuccess;
       ResponseModel responseModel = new ResponseModel();
       if (model.isFulfil) {
-        responseModel = ss.fulfillShipment(model, model.userId, SourceConstants.WEB);
+        responseModel = shipmentService.fulfillShipment(model, model.userId, SourceConstants.WEB);
         isSuccess = responseModel.status;
       } else {
-        isSuccess = ss.updateShipment(model);
+        isSuccess = shipmentService.updateShipment(model);
       }
       if (isSuccess) {
         String returnMessage = backendMessages.getString("shipments.updated.successfully")
@@ -261,9 +259,9 @@ public class ShipmentController {
   public
   @ResponseBody
   String updateShipmentStatus(@PathVariable String shipId, @RequestBody OrderStatusModel status,
-                              HttpServletRequest request, HttpServletResponse response)
+                              HttpServletResponse response)
       throws ValidationException, ServiceException, ObjectNotFoundException {
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
+    SecureUserDetails user = SecurityUtils.getUserDetails();
     Locale locale = user.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     Long orderId = Long.parseLong(shipId.substring(0, shipId.indexOf(CharacterConstants.HYPHEN)));
@@ -279,18 +277,16 @@ public class ShipmentController {
     } else {
       throw new InvalidServiceException("Invalid status to update");
     }
-    OrderManagementService oms = Services.getService(OrderManagementServiceImpl.class, locale);
-    IOrder o = oms.getOrder(orderId, true);
+    IOrder o = orderManagementService.getOrder(orderId, true);
     if (!status.orderUpdatedAt
         .equals(LocalDateUtil.formatCustom(o.getUpdatedOn(), Constants.DATETIME_FORMAT, null))) {
       throw new ValidationException("O004", user.getUsername(),
           LocalDateUtil.format(o.getUpdatedOn(), user.getLocale(), user.getTimezone()));
     }
     try {
-      IShipmentService ss = Services.getService(ShipmentService.class, user.getLocale());
       ResponseModel
           responseModel =
-          ss.updateShipmentStatus(shipId, shipmentStatus, status.msg, user.getUsername(),
+          shipmentService.updateShipmentStatus(shipId, shipmentStatus, status.msg, user.getUsername(),
               status.cdrsn, SourceConstants.WEB);
       boolean isSuccess = responseModel.status;
       if (!isSuccess) {
@@ -324,21 +320,18 @@ public class ShipmentController {
   @RequestMapping("/{orderId}")
   public
   @ResponseBody
-  List<ShipmentModel> getShipmentsByOrderId(@PathVariable Long orderId,
-                                            HttpServletRequest request) {
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
+  List<ShipmentModel> getShipmentsByOrderId(@PathVariable Long orderId) {
+    SecureUserDetails user = SecurityUtils.getUserDetails();
     Locale locale = user.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     try {
-      IShipmentService ss = Services.getService(ShipmentService.class, user.getLocale());
-      List<IShipment> shipments = ss.getShipmentsByOrderId(orderId);
-      OrderManagementService os = Services.getService(OrderManagementServiceImpl.class);
-      IOrder order = os.getOrder(orderId);
+      List<IShipment> shipments = shipmentService.getShipmentsByOrderId(orderId);
+      IOrder order = orderManagementService.getOrder(orderId);
       if (order.getServicingKiosk() != null) {
         Integer
             vPermission =
             EntityAuthoriser.authoriseEntityPerm(order.getServicingKiosk(), user.getRole(),
-                user.getLocale(), user.getUsername(), user.getDomainId());
+                user.getUsername(), user.getDomainId());
 
         if (vPermission < 1) {
           for (int i = 0; i < shipments.size(); i++) {
@@ -349,7 +342,7 @@ public class ShipmentController {
           }
         }
       }
-      return builder.buildShipmentModels(shipments, user);
+      return shipmentBuilder.buildShipmentModels(shipments);
     } catch (Exception e) {
       xLogger.warn("Error while getting shipments for order {0}", orderId, e);
       throw new InvalidServiceException(backendMessages.getString("shipments.fetch.error"));
@@ -360,9 +353,8 @@ public class ShipmentController {
   public
   @ResponseBody
   ShipmentResponseModel updateShipmentInfo(@PathVariable String sId, @RequestBody String updValue,
-                                           @RequestParam(required = false, value = "orderUpdatedAt") String orderUpdatedAt,
-                                           HttpServletRequest request) {
-    return updateShipmentData("tpName", updValue, orderUpdatedAt, sId, request,
+                                           @RequestParam(required = false, value = "orderUpdatedAt") String orderUpdatedAt) {
+    return updateShipmentData("tpName", updValue, orderUpdatedAt, sId,
         "ship.transporter.update.success", "ship.transporter.update.error");
   }
 
@@ -371,9 +363,8 @@ public class ShipmentController {
   @ResponseBody
   ShipmentResponseModel updateShipmentTrackingId(@PathVariable String sId,
                                                  @RequestBody String updValue,
-                                                 @RequestParam(required = false, value = "orderUpdatedAt") String orderUpdatedAt,
-                                                 HttpServletRequest request) {
-    return updateShipmentData("tId", updValue, orderUpdatedAt, sId, request,
+                                                 @RequestParam(required = false, value = "orderUpdatedAt") String orderUpdatedAt) {
+    return updateShipmentData("tId", updValue, orderUpdatedAt, sId,
         "ship.tracking.id.update.success", "ship.tracking.id.update.error");
   }
 
@@ -381,9 +372,8 @@ public class ShipmentController {
   public
   @ResponseBody
   ShipmentResponseModel updateShipmentReason(@PathVariable String sId, @RequestBody String updValue,
-                                             @RequestParam(required = false, value = "orderUpdatedAt") String orderUpdatedAt,
-                                             HttpServletRequest request) {
-    return updateShipmentData("rsn", updValue, orderUpdatedAt, sId, request,
+                                             @RequestParam(required = false, value = "orderUpdatedAt") String orderUpdatedAt) {
+    return updateShipmentData("rsn", updValue, orderUpdatedAt, sId,
         "ship.reason.update.success", "ship.reason.update.error");
   }
 
@@ -391,18 +381,17 @@ public class ShipmentController {
   public
   @ResponseBody
   ShipmentResponseModel updateShipmentDate(@PathVariable String sId, @RequestBody String updValue,
-                                           @RequestParam(required = false, value = "orderUpdatedAt") String orderUpdatedAt,
-                                           HttpServletRequest request) {
-    return updateShipmentData("date", updValue, orderUpdatedAt, sId, request, " ",
+                                           @RequestParam(required = false, value = "orderUpdatedAt") String orderUpdatedAt) {
+    return updateShipmentData("date", updValue, orderUpdatedAt, sId, " ",
         "ship.expected.date.parse.error");
   }
 
 
   private ShipmentResponseModel updateShipmentData(String updType, String updValue,
                                                    String orderUpdatedAt,
-                                                   String sId, HttpServletRequest request,
+                                                   String sId,
                                                    String succesKey, String errorKey) {
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
+    SecureUserDetails user = SecurityUtils.getUserDetails();
     Locale locale = user.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     IShipment shipment;
@@ -416,10 +405,9 @@ public class ShipmentController {
               .format(sdf.parse(updValue), user.getLocale(), user.getTimezone(), true);
         }
       }
-      IShipmentService ss = Services.getService(ShipmentService.class, user.getLocale());
       String userId = user.getUsername();
       shipment =
-          ss.updateShipmentData(Collections.singletonMap(updType, updValue), orderUpdatedAt, sId,
+          shipmentService.updateShipmentData(Collections.singletonMap(updType, updValue), orderUpdatedAt, sId,
               userId);
       if (!"date".equals(updType) && StringUtils.isEmpty(successMessage)) {
         successMessage = backendMessages.getString(succesKey);
@@ -441,14 +429,9 @@ public class ShipmentController {
   @RequestMapping(value = "/transfilter", method = RequestMethod.GET)
   public
   @ResponseBody
-  List<String> getTransSuggestions(@RequestParam String text, HttpServletRequest request) {
-    List<String> transporters;
+  List<String> getTransSuggestions(@RequestParam String text) {
     try {
-      SecureUserDetails user = SecurityUtils.getUserDetails(request);
-      Long domainId = SessionMgr.getCurrentDomain(request.getSession(), user.getUsername());
-      IShipmentService ss = Services.getService(ShipmentService.class, request.getLocale());
-      transporters = ss.getTransporterSuggestions(domainId, text);
-      return transporters;
+      return shipmentService.getTransporterSuggestions(SecurityUtils.getCurrentDomainId(), text);
     } catch (Exception e) {
       xLogger.warn("Error in getting id for suggestions", e);
     }
@@ -459,21 +442,16 @@ public class ShipmentController {
   public
   @ResponseBody
   ShipmentResponseModel updateShipmentPackageSize(@PathVariable String sId,
-                                                  @RequestBody String updValue,
-                                                  HttpServletRequest request) {
-    return updateShipmentData("ps", updValue, null, sId, request,
+                                                  @RequestBody String updValue) {
+    return updateShipmentData("ps", updValue, null, sId,
         "ship.package.size.update.success", "ship.package.size.update.error");
   }
 
   @RequestMapping(value = "/{shipmentId}/invoice", method = RequestMethod.GET)
   public
   @ResponseBody
-  void generateInvoice(@PathVariable String shipmentId, HttpServletRequest request,
-                       HttpServletResponse response)
+  void generateInvoice(@PathVariable String shipmentId, HttpServletResponse response)
       throws ServiceException, IOException, ValidationException, ObjectNotFoundException {
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
-    Locale locale = user.getLocale();
-    IShipmentService shipmentService = Services.getService(ShipmentService.class, locale);
     PDFResponseModel invoiceModel = shipmentService.generateShipmentVoucher(shipmentId);
     ResponseUtils.serveInlineFile(response, invoiceModel.getFileName(), "application/pdf",
         invoiceModel.getBytes());
@@ -482,10 +460,10 @@ public class ShipmentController {
   @RequestMapping(value = "/update/{sId}/referenceId", method = RequestMethod.POST)
   public
   @ResponseBody
-  ShipmentResponseModel updateShipmentReferenceId(@PathVariable String sId, @RequestBody String updValue,
-                                             @RequestParam(required = false, value = "orderUpdatedAt") String orderUpdatedAt,
-                                             HttpServletRequest request) {
-    return updateShipmentData("rid", updValue, orderUpdatedAt, sId, request,
+  ShipmentResponseModel updateShipmentReferenceId(@PathVariable String sId,
+                                                  @RequestBody String updValue,
+                                                  @RequestParam(required = false, value = "orderUpdatedAt") String orderUpdatedAt) {
+    return updateShipmentData("rid", updValue, orderUpdatedAt, sId,
         "ship.reference.id.update.success", "ship.reference.id.update.error");
   }
 }

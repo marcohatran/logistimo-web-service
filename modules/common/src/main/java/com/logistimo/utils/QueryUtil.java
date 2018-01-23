@@ -28,7 +28,6 @@ package com.logistimo.utils;
 
 import com.logistimo.AppFactory;
 import com.logistimo.dao.IDaoUtil;
-
 import com.logistimo.pagination.PageParams;
 
 import java.util.List;

@@ -23,21 +23,22 @@
 
 package com.logistimo.api.builders;
 
+import com.logistimo.api.models.JobStatusModel;
 import com.logistimo.entity.IJobStatus;
+import com.logistimo.exports.BulkExportMgr;
 import com.logistimo.exports.handlers.ExportHandlerUtil;
+import com.logistimo.logger.XLog;
 import com.logistimo.pagination.Results;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
-import com.logistimo.utils.LocalDateUtil;
-import com.logistimo.utils.StringUtil;
-import com.logistimo.logger.XLog;
-import com.logistimo.api.models.JobStatusModel;
-import com.logistimo.exports.BulkExportMgr;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
+import com.logistimo.utils.LocalDateUtil;
+import com.logistimo.utils.StringUtil;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -48,24 +49,32 @@ import java.util.Map;
 /**
  * Created by vani on 27/10/15.
  */
+@Component
 public class JobStatusBuilder {
   private static final XLog xLogger = XLog.getLog(JobStatusBuilder.class);
 
+  private UsersService usersService;
+
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
+  }
+
   public Results buildJobs(Results results, SecureUserDetails user) throws ServiceException {
-    List<JobStatusModel> models = null;
     if (results != null && results.getSize() > 0) {
-      models =
+      List<JobStatusModel> models =
           buildJobStatusModels(results.getResults(), user.getLocale(), user.getTimezone(),
               results.getOffset());
+      return new Results<>(models, results.getCursor(), results.getNumFound(), results.getOffset());
     }
-    return new Results(models, results.getCursor(), results.getNumFound(), results.getOffset());
+    return new Results<>(null,null);
   }
 
   public List<JobStatusModel> buildJobStatusModels(List jobs, Locale locale, String timeZone,
                                                    int offset) throws ServiceException {
     List<JobStatusModel> models = null;
     if (jobs != null) {
-      models = new ArrayList<JobStatusModel>(jobs.size());
+      models = new ArrayList<>(jobs.size());
       int count = offset + 1;
       for (Object job : jobs) {
         JobStatusModel model = buildJobStatusModel((IJobStatus) job, locale, timeZone);
@@ -104,10 +113,9 @@ public class JobStatusBuilder {
     model.on = job.getOutputName();
     model.ofl = job.getOutputFileLocation();
     model.crby = job.getCreatedBy();
-    UsersService as = Services.getService(UsersServiceImpl.class, locale);
     if (model.crby != null) {
       try {
-        IUserAccount cbyUsr = as.getUserAccount(model.crby);
+        IUserAccount cbyUsr = usersService.getUserAccount(model.crby);
         model.crbyFn = cbyUsr.getFullName();
       } catch (ObjectNotFoundException e) {
         xLogger.warn("ObjectNotFoundException occurred while finding user for export job {0}",
@@ -123,7 +131,7 @@ public class JobStatusBuilder {
         // Iterate through the model.rcp list and get a map of recepient user ids and their full names
         for (String rcpId : rcpList) {
           try {
-            IUserAccount ua = as.getUserAccount(rcpId);
+            IUserAccount ua = usersService.getUserAccount(rcpId);
             model.rcp.put(rcpId, ua.getFullName());
           } catch (ObjectNotFoundException e) {
             xLogger.warn("ObjectNotFoundException occurred while finding user for export job {0}",

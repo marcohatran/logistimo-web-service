@@ -40,9 +40,7 @@ import com.logistimo.api.models.UserContactModel;
 import com.logistimo.api.util.DedupUtil;
 import com.logistimo.api.util.ResponseUtils;
 import com.logistimo.auth.SecurityConstants;
-import com.logistimo.auth.SecurityMgr;
 import com.logistimo.auth.utils.SecurityUtils;
-import com.logistimo.auth.utils.SessionMgr;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.EventsConfig;
 import com.logistimo.config.models.OrdersConfig;
@@ -51,7 +49,6 @@ import com.logistimo.constants.Constants;
 import com.logistimo.constants.SourceConstants;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.entities.service.EntitiesService;
-import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.events.generators.EventGeneratorFactory;
 import com.logistimo.events.generators.OrdersEventGenerator;
 import com.logistimo.exception.BadRequestException;
@@ -64,7 +61,6 @@ import com.logistimo.inventory.entity.IInvAllocation;
 import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.inventory.exceptions.InventoryAllocationException;
 import com.logistimo.inventory.service.InventoryManagementService;
-import com.logistimo.inventory.service.impl.InventoryManagementServiceImpl;
 import com.logistimo.logger.XLog;
 import com.logistimo.models.shipments.ShipmentItemBatchModel;
 import com.logistimo.orders.OrderResults;
@@ -78,8 +74,6 @@ import com.logistimo.orders.models.PDFResponseModel;
 import com.logistimo.orders.models.UpdatedOrder;
 import com.logistimo.orders.service.IDemandService;
 import com.logistimo.orders.service.OrderManagementService;
-import com.logistimo.orders.service.impl.DemandService;
-import com.logistimo.orders.service.impl.OrderManagementServiceImpl;
 import com.logistimo.pagination.Navigator;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
@@ -87,16 +81,12 @@ import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
-import com.logistimo.services.blobstore.BlobstoreService;
 import com.logistimo.services.cache.MemcacheService;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.shipments.entity.IShipment;
 import com.logistimo.shipments.service.IShipmentService;
-import com.logistimo.shipments.service.impl.ShipmentService;
 import com.logistimo.tags.TagUtil;
 import com.logistimo.tags.dao.ITagDao;
-import com.logistimo.tags.dao.TagDao;
 import com.logistimo.tags.entity.ITag;
 import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.LocalDateUtil;
@@ -139,7 +129,9 @@ public class OrdersController {
   private static final String CACHE_KEY = "order";
   private static final String BACKEND_MESSAGES = "BackendMessages";
 
-  private OrdersAPIBuilder builder;
+  private OrdersAPIBuilder orderAPIBuilder;
+
+  private DemandBuilder demandBuilder;
 
   private IOrderApprovalsService orderApprovalsService;
 
@@ -147,11 +139,26 @@ public class OrdersController {
 
   private ScheduleOrderAutomationAction scheduleOrderAutomation;
 
-  private BlobstoreService blobstoreService;
+  private IShipmentService shipmentService;
+
+  private OrderManagementService orderManagementService;
+
+  private InventoryManagementService inventoryManagementService;
+
+  private IDemandService demandService;
+
+  private EntitiesService entitiesService;
+
+  private ITagDao tagDao;
 
   @Autowired
-  public void setBuilder(OrdersAPIBuilder builder) {
-    this.builder = builder;
+  public void setOrderAPIBuilder(OrdersAPIBuilder orderAPIBuilder) {
+    this.orderAPIBuilder = orderAPIBuilder;
+  }
+
+  @Autowired
+  public void setDemandBuilder(DemandBuilder demandBuilder) {
+    this.demandBuilder = demandBuilder;
   }
 
   @Autowired
@@ -174,26 +181,43 @@ public class OrdersController {
   }
 
   @Autowired
-  public OrdersController setBlobstoreService(
-      BlobstoreService blobstoreService) {
-    this.blobstoreService = blobstoreService;
-    return this;
+  public void setShipmentService(IShipmentService shipmentService) {
+    this.shipmentService = shipmentService;
+  }
+
+  @Autowired
+  public void setOrderManagementService(OrderManagementService orderManagementService) {
+    this.orderManagementService = orderManagementService;
+  }
+
+  @Autowired
+  public void setInventoryManagementService(InventoryManagementService inventoryManagementService) {
+    this.inventoryManagementService = inventoryManagementService;
+  }
+
+  @Autowired
+  public void setDemandService(IDemandService demandService) {
+    this.demandService = demandService;
+  }
+
+  @Autowired
+  public void setEntitiesService(EntitiesService entitiesService) {
+    this.entitiesService = entitiesService;
+  }
+
+  @Autowired
+  public void setTagDao(ITagDao tagDao) {
+    this.tagDao = tagDao;
   }
 
   @RequestMapping("/order/{orderId}")
   public
   @ResponseBody
   OrderModel getOrder(@PathVariable Long orderId,
-                      @RequestParam(required = false, value = "embed") String[] embed,
-                      HttpServletRequest request) throws Exception {
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
-    Locale locale = user.getLocale();
+                      @RequestParam(required = false, value = "embed") String[] embed) throws Exception {
     OrderModel model;
-
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), user.getUsername());
-    OrderManagementService oms =
-        Services.getService(OrderManagementServiceImpl.class, locale);
-    IOrder order = oms.getOrder(orderId);
+    Long domainId = SecurityUtils.getCurrentDomainId();
+    IOrder order = orderManagementService.getOrder(orderId);
     if (order == null || domainId == null) {
       throw new InvalidServiceException(CharacterConstants.EMPTY);
     }
@@ -201,7 +225,7 @@ public class OrdersController {
     if (domainIds != null && !domainIds.contains(domainId)) {
       throw new UnauthorizedException(CharacterConstants.EMPTY, HttpStatus.FORBIDDEN);
     }
-    model = builder.buildFullOrderModel(order, user, domainId, embed);
+    model = orderAPIBuilder.buildFullOrderModel(order, domainId, embed);
     return model;
 
   }
@@ -211,10 +235,8 @@ public class OrdersController {
   @ResponseBody
   List<UserContactModel> getPrimaryApprovers(@PathVariable Long orderId)
       throws ServiceException, ObjectNotFoundException {
-    OrderManagementService oms = Services.getService(OrderManagementServiceImpl.class);
-    IOrder order = oms.getOrder(orderId);
-    return builder.buildPrimaryApprovers(order, SecurityUtils.getLocale(),
-        orderApprovalsService.getApprovalType(order));
+    IOrder order = orderManagementService.getOrder(orderId);
+    return orderAPIBuilder.buildPrimaryApprovers(order, orderApprovalsService.getApprovalType(order));
   }
 
   @RequestMapping("/")
@@ -263,19 +285,15 @@ public class OrdersController {
   OrderResponseModel updateVendor(@PathVariable Long orderId, @RequestBody OrderUpdateModel model,
                                   HttpServletRequest request) {
     return updateOrder("vend", orderId, model.orderUpdatedAt, null, Long.valueOf(model.updateValue),
-        null, null, null, request);
+        null, null, request);
   }
 
   @RequestMapping(value = "/order/{orderId}/invoice", method = RequestMethod.GET)
   public
   @ResponseBody
-  void generateInvoice(@PathVariable Long orderId, HttpServletRequest request,
-                       HttpServletResponse response)
+  void generateInvoice(@PathVariable Long orderId, HttpServletResponse response)
       throws ServiceException, IOException, ValidationException, ObjectNotFoundException {
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
-    Locale locale = user.getLocale();
-    OrderManagementService oms = Services.getService(OrderManagementServiceImpl.class, locale);
-    PDFResponseModel invoiceModel = oms.generateInvoiceForOrder(orderId);
+    PDFResponseModel invoiceModel = orderManagementService.generateInvoiceForOrder(orderId);
     ResponseUtils.serveInlineFile(response, invoiceModel.getFileName(), "application/pdf",
         invoiceModel.getBytes());
   }
@@ -286,7 +304,7 @@ public class OrdersController {
   OrderResponseModel updateTransporter(@PathVariable Long orderId,
                                        @RequestBody OrderUpdateModel model,
                                        HttpServletRequest request) {
-    return updateOrder("trans", orderId, model.orderUpdatedAt, null, null, null, model.updateValue,
+    return updateOrder("trans", orderId, model.orderUpdatedAt, null, null, null,
         null, request);
   }
 
@@ -295,23 +313,19 @@ public class OrdersController {
   @ResponseBody
   OrderResponseModel updateStatus(@PathVariable Long orderId, @RequestBody OrderStatusModel status,
                                   HttpServletRequest request) {
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
+    SecureUserDetails user = SecurityUtils.getUserDetails();
     Locale locale = user.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     Long domainId = SecurityUtils.getCurrentDomainId();
     try {
       UpdatedOrder updOrder;
-      OrderManagementService oms = Services.getService(OrderManagementServiceImpl.class, locale);
-      IOrder o = oms.getOrder(orderId, true);
+      IOrder o = orderManagementService.getOrder(orderId, true);
       if (status.orderUpdatedAt != null && !status.orderUpdatedAt
           .equals(LocalDateUtil.formatCustom(o.getUpdatedOn(), Constants.DATETIME_FORMAT, null))) {
         throw new LogiException("O004", user.getUsername(),
             LocalDateUtil.format(o.getUpdatedOn(), user.getLocale(), user.getTimezone()));
       }
       if (IOrder.COMPLETED.equals(status.st) || IOrder.FULFILLED.equals(status.st)) {
-
-        IShipmentService shipmentService = Services.getService(ShipmentService.class,
-            user.getLocale());
         List<IShipment> shipments = shipmentService.getShipmentsByOrderId(orderId);
         String shipmentId;
         if (status.st.equals(IOrder.COMPLETED)) {
@@ -328,9 +342,8 @@ public class OrdersController {
         }
         if (!o.isStatus(IOrder.COMPLETED) && !o.isStatus(IOrder.CANCELLED) && !o
             .isStatus(IOrder.FULFILLED)) {
-          shipmentId =
-              oms.shipNow(o, status.t, status.tid, status.cdrsn, status.efd, user.getUsername(),
-                  status.ps, SourceConstants.WEB, status.rid, true);
+          shipmentId = orderManagementService.shipNow(o, status.t, status.tid, status.cdrsn,
+              status.efd, user.getUsername(), status.ps, SourceConstants.WEB, status.rid, true);
         } else if (o.isStatus(IOrder.COMPLETED)) {
           if (shipments == null || shipments.size() > 1) {
             xLogger.warn("Invalid order {0} ({1}) cannot fulfill, already has more shipments or " +
@@ -354,16 +367,16 @@ public class OrdersController {
 
         //Messages added to order, anyone using ship now will not be using shipments.
         if (status.msg != null) {
-          oms.addMessageToOrder(orderId, status.msg, user.getUsername());
+          orderManagementService.addMessageToOrder(orderId, status.msg, user.getUsername());
         }
-        o = oms.getOrder(orderId);
+        o = orderManagementService.getOrder(orderId);
         updOrder = new UpdatedOrder(o);
       } else {
-        updOrder = oms.updateOrderStatus(orderId, status.st,
+        updOrder = orderManagementService.updateOrderStatus(orderId, status.st,
             user.getUsername(), status.msg, status.users,
             SourceConstants.WEB, null, status.cdrsn);
       }
-      return builder.buildOrderResponseModel(updOrder, true, user, domainId, true,
+      return orderAPIBuilder.buildOrderResponseModel(updOrder, true, domainId, true,
           OrdersAPIBuilder.DEFAULT_EMBED);
     } catch (ServiceException ie) {
       xLogger.severe("Error in updating order status", ie);
@@ -391,7 +404,7 @@ public class OrdersController {
                                    @RequestBody PaymentModel paymentDetails,
                                    HttpServletRequest request) {
     return updateOrder("pmt", orderId, paymentDetails.orderUpdatedAt, paymentDetails, null, null,
-        null, null, request);
+        null, request);
   }
 
   @RequestMapping(value = "/order/{orderId}/fulfillmenttime", method = RequestMethod.POST)
@@ -400,7 +413,7 @@ public class OrdersController {
   OrderResponseModel updateFulfillmentTime(@PathVariable Long orderId,
                                            @RequestBody OrderUpdateModel model,
                                            HttpServletRequest request) {
-    return updateOrder("cft", orderId, model.orderUpdatedAt, null, null, model.updateValue, null,
+    return updateOrder("cft", orderId, model.orderUpdatedAt, null, null, model.updateValue,
         null, request);
   }
 
@@ -410,7 +423,7 @@ public class OrdersController {
   OrderResponseModel updateExpectedFulfillmentDate(@PathVariable Long orderId,
                                                    @RequestBody OrderUpdateModel model,
                                                    HttpServletRequest request) {
-    return updateOrder("efd", orderId, model.orderUpdatedAt, null, null, model.updateValue, null,
+    return updateOrder("efd", orderId, model.orderUpdatedAt, null, null, model.updateValue,
         null, request);
   }
 
@@ -419,7 +432,7 @@ public class OrdersController {
   @ResponseBody
   OrderResponseModel updateDueDate(@PathVariable Long orderId, @RequestBody OrderUpdateModel model,
                                    HttpServletRequest request) {
-    return updateOrder("edd", orderId, model.orderUpdatedAt, null, null, model.updateValue, null,
+    return updateOrder("edd", orderId, model.orderUpdatedAt, null, null, model.updateValue,
         null, request);
   }
 
@@ -427,14 +440,12 @@ public class OrdersController {
   public
   @ResponseBody
   String getOrderStatusJSON(@PathVariable Long orderId, HttpServletRequest request) {
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
+    SecureUserDetails user = SecurityUtils.getUserDetails();
     Locale locale = user.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), user.getUsername());
-    OrderManagementService oms;
+    Long domainId = SecurityUtils.getCurrentDomainId();
     try {
-      oms = Services.getService(OrderManagementServiceImpl.class, user.getLocale());
-      IOrder order = oms.getOrder(orderId);
+      IOrder order = orderManagementService.getOrder(orderId);
       List<String> excludeVars = new ArrayList<>(1);
       excludeVars.add(EventsConfig.VAR_ORDERSTATUS);
       OrdersEventGenerator eg = (OrdersEventGenerator) EventGeneratorFactory
@@ -452,10 +463,10 @@ public class OrdersController {
   OrderResponseModel updateDemandItems(@PathVariable Long orderId,
                                        @RequestBody OrderMaterialsModel model,
                                        HttpServletRequest request) {
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
+    SecureUserDetails user = SecurityUtils.getUserDetails();
     Locale locale = user.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), user.getUsername());
+    Long domainId = SecurityUtils.getCurrentDomainId();
     LockUtil.LockStatus lockStatus = LockUtil.lock(Constants.TX_O + orderId);
     if (!LockUtil.isLocked(lockStatus)) {
       throw new InvalidServiceException(new ServiceException("O002", orderId));
@@ -463,10 +474,7 @@ public class OrdersController {
     PersistenceManager pm = null;
     Transaction tx = null;
     try {
-      OrderManagementService
-          oms =
-          Services.getService(OrderManagementServiceImpl.class, user.getLocale());
-      IOrder order = oms.getOrder(orderId);
+      IOrder order = orderManagementService.getOrder(orderId);
       if (order == null) {
         throw new BadRequestException(backendMessages.getString("order.none") + " " + orderId);
       }
@@ -482,31 +490,27 @@ public class OrdersController {
             OrderUtils.getStatusDisplay(order.getStatus(), locale)));
       }
       DomainConfig dc = DomainConfig.getInstance(domainId);
-      IDemandService dms = Services.getService(DemandService.class);
-      order.setItems(dms.getDemandItems(orderId));
-      List<ITransaction> transactions = builder.buildTransactionsForNewItems(order, model.items);
+      order.setItems(demandService.getDemandItems(orderId));
+      List<ITransaction> transactions = orderAPIBuilder.buildTransactionsForNewItems(order, model.items);
       if (transactions != null && !transactions.isEmpty()) {
-        oms.
-
+        orderManagementService.
             modifyOrder(order, user.getUsername(), transactions, new Date(), domainId,
-                ITransaction.TYPE_REORDER, model.msg, null, null, BigDecimal.ZERO, null, null,
+                ITransaction.TYPE_REORDER, model.msg, null, null, BigDecimal.ZERO, null,
                 dc.allowEmptyOrders(), order.getTags(TagUtil.TYPE_ORDER),
                 order.getReferenceID());
       }
-      order = builder.buildOrderMaterials(order, model.items);
+      order = orderAPIBuilder.buildOrderMaterials(order, model.items);
       //TODO use OrderManagementServiceImpl updateOrderWithAllocations
       String oIdStr = String.valueOf(order.getOrderId());
       pm = PMF.get().getPersistenceManager();
       tx = pm.currentTransaction();
       tx.begin();
       if (dc.autoGI() && order.getServicingKiosk() != null) {
-        InventoryManagementService
-            ims =
-            Services.getService(InventoryManagementServiceImpl.class);
         String tag = IInvAllocation.Type.ORDER.toString() + CharacterConstants.COLON + oIdStr;
         for (DemandModel item : model.items) {
           List<ShipmentItemBatchModel> batchDetails = null;
-          List<IInvAllocation> invAllocations = ims.getAllocationsByTagMaterial(item.id, tag);
+          List<IInvAllocation> invAllocations = inventoryManagementService
+              .getAllocationsByTagMaterial(item.id, tag);
           BigDecimal totalShipmentAllocation = BigDecimal.ZERO;
           for (IInvAllocation invAllocation : invAllocations) {
             if (IInvAllocation.Type.SHIPMENT.toString().equals(invAllocation.getType())) {
@@ -533,18 +537,19 @@ public class OrdersController {
             }
           }
           if (item.astk != null || batchDetails != null) {
-            ims.allocate(order.getServicingKiosk(), item.id, IInvAllocation.Type.ORDER, oIdStr, tag,
+            inventoryManagementService.allocate(order.getServicingKiosk(), item.id,
+                IInvAllocation.Type.ORDER, oIdStr, tag,
                 item.astk, batchDetails, user.getUsername(), pm, item.isBa ? null : item.mst);
           } else {
-            ims.clearAllocation(order.getServicingKiosk(), item.id, IInvAllocation.Type.ORDER,
-                String.valueOf(orderId), pm);
+            inventoryManagementService.clearAllocation(order.getServicingKiosk(), item.id,
+                IInvAllocation.Type.ORDER, String.valueOf(orderId), pm);
           }
         }
       }
-      UpdatedOrder updorder =
-          oms.updateOrder(order, SourceConstants.WEB, true, true, user.getUsername());
+      UpdatedOrder updorder = orderManagementService
+          .updateOrder(order, SourceConstants.WEB, true, true, user.getUsername());
       tx.commit();
-      return builder.buildOrderResponseModel(updorder, true, user, domainId, true,
+      return orderAPIBuilder.buildOrderResponseModel(updorder, true, domainId, true,
           OrdersAPIBuilder.DEFAULT_EMBED);
     } catch (InventoryAllocationException ie) {
       xLogger.severe("Error in updating demand items for order {0}", orderId, ie);
@@ -580,16 +585,14 @@ public class OrdersController {
 
   private OrderResponseModel updateOrder(String updType, Long orderId, String orderUpdatedAt,
                                          PaymentModel paymentDetails,
-                                         Long vendorId, String data, String transporter,
+                                         Long vendorId, String data,
                                          List<String> tags, HttpServletRequest request) {
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
+    SecureUserDetails user = SecurityUtils.getUserDetails();
     Locale locale = user.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     try {
-      Long domainId = SessionMgr.getCurrentDomain(request.getSession(), user.getUsername());
-      OrderManagementService oms =
-          Services.getService(OrderManagementServiceImpl.class, user.getLocale());
-      IOrder order = oms.getOrder(orderId);
+      Long domainId = SecurityUtils.getCurrentDomainId();
+      IOrder order = orderManagementService.getOrder(orderId);
       boolean fullOrder = false;
       if (order == null) {
         throw new Exception(backendMessages.getString("order.none") + " " + orderId);
@@ -599,30 +602,16 @@ public class OrdersController {
             LocalDateUtil.format(order.getUpdatedOn(), user.getLocale(), user.getTimezone()));
       }
       String labelText = null;
-      IDemandService ds = Services.getService(DemandService.class);
-      order.setItems(ds.getDemandItems(orderId));
+      order.setItems(demandService.getDemandItems(orderId));
       if (updType.equals("pmt") && paymentDetails != null) {
         order.addPayment(paymentDetails.pay);
         order.setPaymentOption(paymentDetails.po);
       } else if (updType.equals("vend")) {
         fullOrder = true;
         order.setServicingKiosk(vendorId);
-      } else if (updType.equals("trans")) {
-                /*if (transporter == null || transporter.trim().isEmpty()) {
-                    order.clearTransporters();
-                } else if (order.getTransporter(ITransporter.TYPE_FREEFORM, transporter) == null) {
-                    order.clearTransporters();
-                    ITransporter t = JDOUtils.createInstance(ITransporter.class);
-                    orderDao.setOrderForTransporter(t, order);
-                    t.setTransporterId(transporter);
-                    t.setType(ITransporter.TYPE_FREEFORM);
-                    t.setDomainId(domainId);
-                    order.addTransporter(t);
-                }*/
       } else if (updType.equals("cft")) {
         order.setConfirmedFulfillmentTimeRange(data);
       } else if (updType.equals("tgs")) {
-        ITagDao tagDao = new TagDao();
         order.setTgs(tagDao.getTagsByNames(tags, ITag.ORDER_TAG), TagUtil.TYPE_ORDER);
       } else if (updType.equals("rid")) {
         order.setReferenceID(data);
@@ -649,10 +638,10 @@ public class OrdersController {
       }
       order.setUpdatedBy(user.getUsername());
       order.setUpdatedOn(new Date());
-      UpdatedOrder updOrder = oms.updateOrder(order, SourceConstants.WEB);
+      UpdatedOrder updOrder = orderManagementService.updateOrder(order, SourceConstants.WEB);
       OrderResponseModel
           orderResponseModel =
-          builder.buildOrderResponseModel(updOrder, true, user, domainId, fullOrder,
+          orderAPIBuilder.buildOrderResponseModel(updOrder, true, domainId, fullOrder,
               fullOrder ? OrdersAPIBuilder.DEFAULT_EMBED : null);
       orderResponseModel.respData = labelText;
       return orderResponseModel;
@@ -669,12 +658,11 @@ public class OrdersController {
                            String status, String from, String until, String otype, String tgType,
                            String tag, Integer oty, String rid, String approvalStatus,
                            HttpServletRequest request) {
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
+    SecureUserDetails user = SecurityUtils.getUserDetails();
     Locale locale = user.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     try {
-      Long domainId = SessionMgr.getCurrentDomain(request.getSession(),
-          user.getUsername());
+      Long domainId = SecurityUtils.getCurrentDomainId();
       DomainConfig dc = DomainConfig.getInstance(domainId);
       Date startDate = null;
       Date endDate = null;
@@ -689,22 +677,20 @@ public class OrdersController {
           new Navigator(request.getSession(), "OrdersController.getOrders", offset, size, "dummy",
               0);
       PageParams pageParams = new PageParams(navigator.getCursor(offset), offset, size);
-      OrderManagementService oms = Services.getService(OrderManagementServiceImpl.class);
       List<Long> kioskIds = null;
       if (user.getUsername() != null) {
         // Get user
-        EntitiesService as = Services.getService(EntitiesServiceImpl.class, user.getLocale());
         if (SecurityConstants.ROLE_SERVICEMANAGER.equals(user.getRole())) {
-          kioskIds = as.getKioskIdsForUser(user.getUsername(), null, null)
-              .getResults(); // TODO: pagination?
+          kioskIds = entitiesService.getKioskIdsForUser(user.getUsername(), null, null)
+              .getResults();
           if (kioskIds == null || kioskIds.isEmpty()) {
-            return new Results(null, null, 0, offset);
+            return new Results<>(null, null, 0, offset);
           }
         }
       }
-      Results or = oms.getOrders(domainId, entityId, status, startDate, endDate, otype, tgType, tag,
-              kioskIds, pageParams, oty, rid, approvalStatus);
-      return builder.buildOrders(or, user, SecurityUtils.getDomainId());
+      Results or = orderManagementService.getOrders(domainId, entityId, status, startDate, endDate,
+          otype, tgType, tag, kioskIds, pageParams, oty, rid, approvalStatus);
+      return orderAPIBuilder.buildOrders(or, SecurityUtils.getDomainId());
     } catch (Exception e) {
       xLogger.severe("Error in fetching orders for entity {0} of type {1}", entityId, otype, e);
       throw new InvalidServiceException(backendMessages.getString("orders.fetch.error"));
@@ -714,10 +700,9 @@ public class OrdersController {
   @RequestMapping(value = "/add/", method = RequestMethod.POST)
   public
   @ResponseBody
-  OrderMaterialsModel createOrder(@RequestBody Map<String, Object> orders,
-                                  HttpServletRequest request) {
+  OrderMaterialsModel createOrder(@RequestBody Map<String, Object> orders) {
     xLogger.fine("Entered create Order");
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale;
     if (sUser.getLocale() != null) {
       locale = sUser.getLocale();
@@ -727,7 +712,7 @@ public class OrdersController {
     ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     ResourceBundle messages = Resources.get().getBundle("Messages", locale);
     String userId = sUser.getUsername();
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), userId);
+    Long domainId = SecurityUtils.getCurrentDomainId();
     OrderMaterialsModel model = new OrderMaterialsModel();
     MemcacheService cache = null;
     String signature = orders.get("signature") != null ?
@@ -766,9 +751,7 @@ public class OrdersController {
       if (orders.get("efd") != null) {
         efd = sdf.parse(orders.get("efd").toString());
       }
-      List<ITransaction> transList = new ArrayList<ITransaction>();
-      OrderManagementService oms =
-          Services.getService(OrderManagementServiceImpl.class, locale);
+      List<ITransaction> transList = new ArrayList<>();
       Date now = new Date();
       LinkedTreeMap materials = (LinkedTreeMap) orders.get("materials");
       for (Object m : materials.keySet()) {
@@ -787,11 +770,9 @@ public class OrdersController {
       }
       boolean removeSignature = false;
       if (!skipCheck && vendorKioskId != null) {
-        DemandBuilder b = new DemandBuilder();
         for (ITransaction iTransaction : transList) {
-          IDemandService ds = Services.getService(DemandService.class);
-          Results dItems = ds.getDemandDetails(kioskId, iTransaction.getMaterialId(), true, false,
-              IOrder.TYPE_PURCHASE, false);
+          Results dItems = demandService.getDemandDetails(kioskId, iTransaction.getMaterialId(),
+              true, false, IOrder.TYPE_PURCHASE, false);
           for (Object item : dItems.getResults()) {
             Object[] f = (Object[]) item;
             String kidStr = String.valueOf(f[0]);
@@ -801,7 +782,7 @@ public class OrdersController {
                 if (model.items == null) {
                   model.items = new ArrayList<>();
                 }
-                model.items.add(b.buildDemandModel(sUser, kioskId, iTransaction.getMaterialId(), f,
+                model.items.add(demandBuilder.buildDemandModel(kioskId, iTransaction.getMaterialId(), f,
                     false));
               }
             }
@@ -813,7 +794,7 @@ public class OrdersController {
       }
       if (model.items == null) {
         OrderResults orderResults =
-            oms.updateOrderTransactions(domainId, userId, ITransaction.TYPE_ORDER,
+            orderManagementService.updateOrderTransactions(domainId, userId, ITransaction.TYPE_ORDER,
                 transList, kioskId, null, ordMsg, dc.autoOrderGeneration(), vendorKioskId, null,
                 null, null,
                 null, null, null, BigDecimal.ZERO, null, null, dc.allowEmptyOrders(), oTag, oType,
@@ -895,9 +876,8 @@ public class OrdersController {
   @RequestMapping(value = "/order/reasons/{type}", method = RequestMethod.GET)
   public
   @ResponseBody
-  List<String> getOrderReasons(@PathVariable String type, HttpServletRequest request) {
-    SecureUserDetails user = SecurityMgr.getUserDetails(request.getSession());
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), user.getUsername());
+  List<String> getOrderReasons(@PathVariable String type) {
+    Long domainId = SecurityUtils.getCurrentDomainId();
     DomainConfig dc = DomainConfig.getInstance(domainId);
     OrdersConfig oc = dc.getOrdersConfig();
     String reasons = null;
@@ -931,7 +911,7 @@ public class OrdersController {
                                      @RequestBody OrderUpdateModel model,
                                      HttpServletRequest request) {
     List<String> tags = StringUtil.getList(model.updateValue, true);
-    return updateOrder("tgs", orderId, model.orderUpdatedAt, null, null, null, null, tags, request);
+    return updateOrder("tgs", orderId, model.orderUpdatedAt, null, null, null, tags, request);
   }
 
   @RequestMapping(value = "/order/{orderId}/referenceid", method = RequestMethod.POST)
@@ -940,7 +920,7 @@ public class OrdersController {
   OrderResponseModel updateReferenceID(@PathVariable Long orderId,
                                        @RequestBody OrderUpdateModel model,
                                        HttpServletRequest request) {
-    return updateOrder("rid", orderId, model.orderUpdatedAt, null, null, model.updateValue, null,
+    return updateOrder("rid", orderId, model.orderUpdatedAt, null, null, model.updateValue,
         null, request);
   }
 
@@ -954,23 +934,18 @@ public class OrdersController {
     List<String> rid;
     List<Long> kioskIds = null;
     try {
-      SecureUserDetails user = SecurityUtils.getUserDetails(request);
-      Long domainId = SessionMgr.getCurrentDomain(request.getSession(), user.getUsername());
+      SecureUserDetails user = SecurityUtils.getUserDetails();
+      Long domainId = SecurityUtils.getCurrentDomainId();
       if (user.getUsername() != null) {
         // Get user
         if (SecurityConstants.ROLE_SERVICEMANAGER.equals(user.getRole())) {
-          EntitiesService
-              as =
-              Services.getService(EntitiesServiceImpl.class, user.getLocale());
-          kioskIds = as.getKioskIdsForUser(user.getUsername(), null, null).getResults();
+          kioskIds = entitiesService.getKioskIdsForUser(user.getUsername(), null, null).getResults();
           if (kioskIds == null || kioskIds.isEmpty()) {
             return new ArrayList<>(1);
           }
         }
       }
-      OrderManagementService oms =
-          Services.getService(OrderManagementServiceImpl.class, request.getLocale());
-      rid = oms.getIdSuggestions(domainId, id, type, oty, kioskIds);
+      rid = orderManagementService.getIdSuggestions(domainId, id, type, oty, kioskIds);
       return rid;
     } catch (Exception e) {
       xLogger

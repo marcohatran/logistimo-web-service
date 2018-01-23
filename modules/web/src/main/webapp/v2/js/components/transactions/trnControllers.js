@@ -22,8 +22,8 @@
  */
 
 var trnControllers = angular.module('trnControllers', []);
-trnControllers.controller('TransactionsCtrl', ['$scope', 'trnService', 'domainCfgService', 'entityService', 'requestContext', '$location', 'exportService',
-    function ($scope, trnService, domainCfgService, entityService, requestContext, $location, exportService) {
+trnControllers.controller('TransactionsCtrl', ['$scope', 'trnService', 'domainCfgService', 'entityService', 'requestContext', '$location', 'exportService','$timeout',
+    function ($scope, trnService, domainCfgService, entityService, requestContext, $location, exportService,$timeout) {
         $scope.wparams = [
             ["tag", "tag"], ["etag", "etag"], ["type", "type"], ["from", "from", "", formatDate2Url],
             ["to", "to", "", formatDate2Url], ["o", "offset"], ["s", "size"],["batchnm","bid"],
@@ -32,19 +32,12 @@ trnControllers.controller('TransactionsCtrl', ['$scope', 'trnService', 'domainCf
         $scope.localFilters = ['entity', 'material', 'type', 'batchId', 'from', 'to', 'cust', 'vend', 'etag', 'tag','atd'];
         $scope.filterMethods = ['updateFilters','searchBatch'];
         $scope.atd = false;
-        function getFromDate(parseUrlDate) {
-            if (checkNullEmpty(parseUrlDate)) {
-                return new Date(new Date().setDate(new Date().getDate() - 30));
-            }
-            return "";
-        }
-
         $scope.init = function (firstTimeInit) {
-            if (typeof  $scope.showEntityFilter === 'undefined') {
-                $scope.showEntityFilter = true;
+        if (typeof  $scope.showEntityFilter === 'undefined') {
+            $scope.showEntityFilter = true;
                 if(firstTimeInit){
-                    $scope.wparams.push(["eid", "entity.id"]);
-                }
+            $scope.wparams.push(["eid", "entity.id"]);
+        }
             }
             if (checkNotNullEmpty(requestContext.getParam("mid"))) {
                 if(checkNullEmpty($scope.material) || $scope.material.mId != parseInt(requestContext.getParam("mid"))) {
@@ -57,7 +50,20 @@ trnControllers.controller('TransactionsCtrl', ['$scope', 'trnService', 'domainCf
             $scope.type = requestContext.getParam("type") || "";
             $scope.tag = requestContext.getParam("tag") || "";
             $scope.etag = requestContext.getParam("etag") || "";
-            $scope.from = firstTimeInit ? getFromDate(parseUrlDate(requestContext.getParam("from"))) : parseUrlDate(requestContext.getParam("from"));
+            if(firstTimeInit) {
+                if(!requestContext.hasParam()) {
+                    $timeout(function () {
+                        var d = new Date();
+                        d.setDate(d.getDate() - 30);
+                        $scope.from = d;
+                    }, 0);
+                } else {
+                    $scope.from = parseUrlDate(requestContext.getParam("from")) || "";
+                    $timeout(function () {
+                        $scope.fetch();
+                    }, 0);
+                }
+            }
             $scope.to = parseUrlDate(requestContext.getParam("to")) || "";
             $scope.lEntityId = requestContext.getParam("lceid") || "";
             $scope.batchId = $scope.bid = requestContext.getParam("batchnm") || "";
@@ -145,7 +151,6 @@ trnControllers.controller('TransactionsCtrl', ['$scope', 'trnService', 'domainCf
                 $scope.showErrorMsg(msg);
             });
         };
-        $scope.fetch();
         $scope.selectAll = function (newval) {
             for (var item in $scope.filtered) {
                 var ty = $scope.filtered[item]['ty'];

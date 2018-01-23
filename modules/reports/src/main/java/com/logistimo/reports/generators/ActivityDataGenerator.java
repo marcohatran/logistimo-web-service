@@ -30,7 +30,6 @@ import com.logistimo.config.models.DomainConfig;
 import com.logistimo.logger.XLog;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.QueryParams;
-import com.logistimo.reports.entity.slices.ISlice;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -53,7 +52,7 @@ public class ActivityDataGenerator implements ReportDataGenerator {
                                   Map<String, Object> filters, Locale locale, String timezone,
                                   PageParams pageParams, DomainConfig dc, String sourceUserId)
       throws ReportingDataException {
-    return new ActivityData(from, until, filters, locale, timezone, new ArrayList<ISlice>(1), null);
+    return new ActivityData(from, until, filters, locale, timezone, new ArrayList<>(1), null);
   }
 
   @Override

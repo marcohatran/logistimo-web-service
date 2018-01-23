@@ -26,20 +26,18 @@ package com.logistimo.api.mappers;
 import com.logistimo.AppFactory;
 import com.logistimo.api.builders.EntityBuilder;
 import com.logistimo.api.request.NetworkViewResponseObj;
+import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.models.EntityLinkModel;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
+import com.logistimo.logger.XLog;
+import com.logistimo.mappers.NullWritable;
 import com.logistimo.services.cache.MemcacheService;
 import com.logistimo.services.mapper.Entity;
 import com.logistimo.services.mapper.GenericMapper;
 import com.logistimo.services.mapper.Key;
-
-import com.logistimo.services.Services;
-import com.logistimo.constants.Constants;
 import com.logistimo.services.utils.StopWatch;
-import com.logistimo.logger.XLog;
-
-import com.logistimo.mappers.NullWritable;
 
 import java.util.List;
 
@@ -47,7 +45,6 @@ public class EntityHierarchy extends GenericMapper<Key, Entity, NullWritable, Nu
 
   private static final XLog xLogger = XLog.getLog(EntityHierarchy.class);
 
-  EntityBuilder builder = new EntityBuilder();
 
   @Override
   public void map(Key key, Entity entity, Context context) {
@@ -63,8 +60,9 @@ public class EntityHierarchy extends GenericMapper<Key, Entity, NullWritable, Nu
       xLogger.info("Creating Hierarchy for domain {0} {1}", domainId, name);
       NetworkViewResponseObj obj;
       String cacheKey = Constants.NW_HIERARCHY_CACHE_PREFIX + domainId;
-      EntitiesService as = Services.getService(EntitiesServiceImpl.class);
+      EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
       List<EntityLinkModel> entityLinks = as.getKioskLinksInDomain(domainId, null, null);
+      EntityBuilder builder = StaticApplicationContext.getBean(EntityBuilder.class);
       obj = builder.buildNetworkViewRequestObject(entityLinks, domainId);
       cache.put(cacheKey, obj, 24 * 60 * 60); // 1 day expiry
       xLogger.info("Hierarchy created for domain {0} {1} in {2}", domainId, name,

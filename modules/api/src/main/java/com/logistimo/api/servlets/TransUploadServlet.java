@@ -26,9 +26,8 @@ package com.logistimo.api.servlets;
 
 import com.logistimo.bulkuploads.BulkUploadMgr;
 import com.logistimo.bulkuploads.MnlTransactionUtil;
-
-import com.logistimo.services.ServiceException;
 import com.logistimo.logger.XLog;
+import com.logistimo.services.ServiceException;
 
 import java.io.IOException;
 import java.util.ResourceBundle;
@@ -59,7 +58,7 @@ public class TransUploadServlet extends SgServlet {
     xLogger.fine("Entering processPost");
     String actionStr = request.getParameter("action");
     if (TransUploadServlet.ACTION_TRANSACTIONIMPORT.equals(actionStr)) {
-      importTransactions(request, response, backendMessages, messages);
+      importTransactions(request, response, backendMessages);
     } else {
       xLogger.severe("Invalid actionStr. {0}", actionStr);
     }
@@ -68,7 +67,7 @@ public class TransUploadServlet extends SgServlet {
   }
 
   private void importTransactions(HttpServletRequest request, HttpServletResponse response,
-                                  ResourceBundle backendMessages, ResourceBundle messages)
+                                  ResourceBundle backendMessages)
       throws ServletException, IOException, ServiceException {
     xLogger.fine("Entering transactionImport");
     String userIdStr = request.getParameter("userid");
@@ -90,11 +89,11 @@ public class TransUploadServlet extends SgServlet {
     }
     if (BulkUploadMgr.TYPE_TRANSACTIONS.equals(type)) {
       MnlTransactionUtil
-          .parseUploadedTransactions(backendMessages, messages, domainId, kioskId, userIdStr,
+          .parseUploadedTransactions(backendMessages, domainId, kioskId, userIdStr,
               blobKeyStr);
     } else if (BulkUploadMgr.TYPE_TRANSACTIONS_CUM_INVENTORY_METADATA.equals(type)) {
       MnlTransactionUtil
-          .parseUploadedManualTransactions(backendMessages, messages, domainId, kioskId, userIdStr,
+          .parseUploadedManualTransactions(backendMessages, domainId, kioskId, userIdStr,
               blobKeyStr);
     }
     xLogger.fine("Exiting transactionImport");

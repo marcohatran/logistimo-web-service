@@ -26,9 +26,10 @@
  */
 package com.logistimo.proto;
 
+import com.logistimo.proto.utils.StringTokenizer;
+
 import org.json.JSONException;
 import org.json.JSONObject;
-import com.logistimo.proto.utils.StringTokenizer;
 
 import java.util.Vector;
 

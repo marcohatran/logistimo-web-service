@@ -30,26 +30,25 @@ import com.logistimo.AppFactory;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.EventSpec;
 import com.logistimo.config.models.EventsConfig;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.IDaoUtil;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.entities.entity.IKiosk;
+import com.logistimo.events.entity.IEvent;
 import com.logistimo.events.handlers.EventHandler;
 import com.logistimo.events.models.ObjectData;
 import com.logistimo.events.templates.TemplateUtils;
+import com.logistimo.logger.XLog;
 import com.logistimo.orders.entity.IOrder;
+import com.logistimo.services.impl.PMF;
 import com.logistimo.shipments.entity.IShipment;
-
-import org.apache.commons.lang.StringUtils;
-import com.logistimo.events.entity.IEvent;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.users.service.impl.UsersServiceImpl;
 
+import org.apache.commons.lang.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import com.logistimo.services.Services;
-import com.logistimo.services.impl.PMF;
-import com.logistimo.logger.XLog;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -96,7 +95,7 @@ public class OrdersEventGenerator extends EventGenerator {
       return EventHandler.getSubsribers(subscriber.type, skid);
     } else if (EventSpec.Subscriber.ADMINISTRATORS.equals(subscriber.type) && o != null
         && o instanceof IOrder) {
-      Long did = (o instanceof IOrder) ? ((IOrder) o).getDomainId() : ((IShipment) o).getDomainId();
+      Long did = ((IOrder) o).getDomainId();
       return EventHandler
           .getSubsribers(subscriber.type, domainId != null ? domainId : did);
     } else if (EventSpec.Subscriber.CREATOR.equals(subscriber.type) && o != null && o instanceof IOrder) {
@@ -175,7 +174,7 @@ public class OrdersEventGenerator extends EventGenerator {
           }
         }
         case IEvent.EXPIRED: {
-          int inactiveDuration = getInactiveDuration((Map<String, Object>) event.getParams());
+          int inactiveDuration = getInactiveDuration(event.getParams());
           if (inactiveDuration > 0) {
             // Get the order
             try {
@@ -191,7 +190,7 @@ public class OrdersEventGenerator extends EventGenerator {
           }
         }
         case IEvent.STATUS_CHANGE: {
-            Map<String, Object> params = (Map<String, Object>) event.getParams();
+            Map<String, Object> params = event.getParams();
             if (params != null && !params.isEmpty()) {
               // Get the state at event time
               String eventStatus = (String) params.get(PARAM_STATUS);
@@ -231,9 +230,8 @@ public class OrdersEventGenerator extends EventGenerator {
       d = stOn;
     }
     // Get the difference between now and d
-    float daysDiff = (now.getTime() - d.getTime()) / 86400000F;
 
-    return daysDiff;
+    return (now.getTime() - d.getTime()) / 86400000F;
   }
 
   // Check if an order is inactive / expired, given a start date of inactive duration
@@ -254,7 +252,7 @@ public class OrdersEventGenerator extends EventGenerator {
   // Convenience method to get an order's status change messages, as a JSON (status-value --> completed notification message) (used in vieworder.jsp)
   public String getOrderStatusJSON(IOrder o, Locale locale, String timezone,
                                    List<String> excludeVars) {
-    Map<String, EventSpec.ParamSpec> statusParamSpecMap = new HashMap<String, EventSpec.ParamSpec>();
+    Map<String, EventSpec.ParamSpec> statusParamSpecMap = new HashMap<>();
     EventsConfig ec = DomainConfig.getInstance(domainId).getEventsConfig();
     // Get the param. spec. for status change event with no params. (i.e. check if it matches any kind of status params)
     EventSpec.ParamSpec
@@ -268,10 +266,8 @@ public class OrdersEventGenerator extends EventGenerator {
       List<String>
           statuses =
           Arrays.asList(IOrder.CANCELLED, IOrder.COMPLETED, IOrder.CONFIRMED, IOrder.FULFILLED);
-      Iterator<String> it = statuses.iterator();
-      while (it.hasNext()) {
-        String status = it.next();
-        Map<String, Object> params = new HashMap<String, Object>();
+      for (String status : statuses) {
+        Map<String, Object> params = new HashMap<>();
         params.put(OrdersEventGenerator.PARAM_STATUS, status);
         EventSpec.ParamSpec
             pSpec =
@@ -293,9 +289,7 @@ public class OrdersEventGenerator extends EventGenerator {
         TemplateUtils.getTemplateType(o).getTemplateValues(locale, timezone, excludeVars, new Date());
     try {
       JSONObject json = new JSONObject();
-      Iterator<Map.Entry<String, EventSpec.ParamSpec>> it1 = statusParamSpecMap.entrySet().iterator();
-      while (it1.hasNext()) {
-        Map.Entry<String, EventSpec.ParamSpec> entry = it1.next();
+      for (Map.Entry<String, EventSpec.ParamSpec> entry : statusParamSpecMap.entrySet()) {
         String status = entry.getKey();
         EventSpec.ParamSpec pSpec = entry.getValue();
         // Status JSON
@@ -311,20 +305,20 @@ public class OrdersEventGenerator extends EventGenerator {
         }
         // Get the subscribers
         EventGenerator eg = EventGeneratorFactory.getEventGenerator(o.getDomainId(), "Order");
-        List<EventSpec.Subscriber> subscribers = pSpec.getSubscribers(EventSpec.NotifyOptions.IMMEDIATE);
+        List<EventSpec.Subscriber>
+            subscribers =
+            pSpec.getSubscribers(EventSpec.NotifyOptions.IMMEDIATE);
         if (subscribers != null && !subscribers.isEmpty()) {
           JSONArray subsArray = new JSONArray();
-          List<String> uniqueUserIds = new ArrayList<String>();
-          Iterator<EventSpec.Subscriber> subsIt = subscribers.iterator();
-          while (subsIt.hasNext()) {
-            EventSpec.Subscriber s = subsIt.next();
+          List<String> uniqueUserIds = new ArrayList<>();
+          for (EventSpec.Subscriber s : subscribers) {
             List<String> userIds = eg.getSubscriberIds(s, o);
             xLogger.fine("subsriber: {0}, userIds: {1}", s.type, userIds);
             if (userIds == null || userIds.isEmpty()) {
               continue;
             }
             Iterator<String> userIdsIter = userIds.iterator();
-            UsersService as = Services.getService(UsersServiceImpl.class);
+            UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
             while (userIdsIter.hasNext()) {
               String userId = userIdsIter.next();
               if (!uniqueUserIds.contains(userId)) {
@@ -341,7 +335,6 @@ public class OrdersEventGenerator extends EventGenerator {
                   // ignore
                   xLogger.warn("{0} when getting user account {1} in domain {2}: {3}",
                       e.getClass().getName(), userId, o.getDomainId(), e.getMessage());
-                  continue;
                 }
               }
             }

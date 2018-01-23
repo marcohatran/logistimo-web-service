@@ -26,11 +26,9 @@ package com.logistimo.assets.service;
 import com.logistimo.assets.entity.IAsset;
 import com.logistimo.assets.entity.IAssetRelation;
 import com.logistimo.assets.entity.IAssetStatus;
-
 import com.logistimo.assets.models.AssetModel;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
-import com.logistimo.services.Service;
 import com.logistimo.services.ServiceException;
 
 import java.util.List;
@@ -39,7 +37,7 @@ import java.util.Map;
 /**
  * Created by kaniyarasu on 02/11/15.
  */
-public interface AssetManagementService extends Service {
+public interface AssetManagementService {
 
   void createAsset(Long domainId, IAsset asset, AssetModel assetModel) throws ServiceException;
 

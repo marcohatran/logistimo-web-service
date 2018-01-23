@@ -26,7 +26,6 @@ package com.logistimo.dao;
 import com.logistimo.domains.IMultiDomain;
 import com.logistimo.services.ServiceException;
 
-import java.util.Collection;
 import java.util.List;
 
 import javax.jdo.PersistenceManager;

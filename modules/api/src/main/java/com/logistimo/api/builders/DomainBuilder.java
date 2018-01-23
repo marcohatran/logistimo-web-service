@@ -39,6 +39,9 @@ import com.logistimo.models.superdomains.DomainSuggestionModel;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -48,14 +51,22 @@ import java.util.Set;
 /**
  * Created by naveensnair on 01/07/15.
  */
+@Component
 public class DomainBuilder {
+
+  private DomainsService domainsService;
+
+  @Autowired
+  public void setDomainsService(DomainsService domainsService) {
+    this.domainsService = domainsService;
+  }
 
   public List<DomainSuggestionModel> buildChildSuggestion(List<IDomain> domainList) {
     List<DomainSuggestionModel> suggestionModels = null;
     DomainSuggestionModel domainSuggestionModel;
 
     if (domainList != null) {
-      suggestionModels = new ArrayList<DomainSuggestionModel>();
+      suggestionModels = new ArrayList<>();
       for (IDomain i : domainList) {
         domainSuggestionModel = new DomainSuggestionModel();
         domainSuggestionModel.id = i.getId();
@@ -67,13 +78,13 @@ public class DomainBuilder {
   }
 
   public List<IDomainLink> buildDomainLink(List<DomainSuggestionModel> suggestionModels,
-                                           Long domainId, DomainsService ds) {
+                                           Long domainId) {
     List<IDomainLink> domainLinkList = null;
     if (suggestionModels != null && suggestionModels.size() > 0) {
       try {
-        domainLinkList = new ArrayList<IDomainLink>();
+        domainLinkList = new ArrayList<>();
         for (DomainSuggestionModel d : suggestionModels) {
-          IDomain domain = ds.getDomain(domainId);
+          IDomain domain = domainsService.getDomain(domainId);
           IDomainLink iDomainLink = JDOUtils.createInstance(IDomainLink.class);
           iDomainLink.setDomainId(domainId, domain.getName());
           iDomainLink.setLinkedDomainId(d.id, d.text);
@@ -139,13 +150,12 @@ public class DomainBuilder {
   }
 
   public List<DomainSuggestionModel> buildLinkedDomainModelList(List<IDomainLink> linkedDomainList,
-                                                                DomainsService ds,
                                                                 Long currentDomain) {
-    List<DomainSuggestionModel> linkedDomains = new ArrayList<DomainSuggestionModel>();
+    List<DomainSuggestionModel> linkedDomains = new ArrayList<>();
     int sno = 1;
     if (linkedDomainList != null && linkedDomainList.size() > 0) {
       for (IDomainLink i : linkedDomainList) {
-        DomainSuggestionModel model = buildLinkedDomainModel(ds, i, currentDomain);
+        DomainSuggestionModel model = buildLinkedDomainModel(i, currentDomain);
         if (IDomainLink.TYPE_PARENT != model.type) {
           model.sno = sno++;
         }
@@ -155,11 +165,10 @@ public class DomainBuilder {
     return linkedDomains;
   }
 
-  public DomainSuggestionModel buildLinkedDomainModel(DomainsService ds, IDomainLink i,
-                                                      Long currentDomain) {
+  public DomainSuggestionModel buildLinkedDomainModel(IDomainLink i, Long currentDomain) {
     DomainSuggestionModel model = new DomainSuggestionModel();
     try {
-      IDomain iDomain = ds.getDomain(i.getLinkedDomainId());
+      IDomain iDomain = domainsService.getDomain(i.getLinkedDomainId());
       model.id = iDomain.getId();
       model.text = iDomain.getName();
       model.dsc = iDomain.getDescription();
@@ -176,16 +185,14 @@ public class DomainBuilder {
         }
       }
       return model;
-    } catch (ServiceException e) {
-      throw new InvalidServiceException("Unable to fetch domain details for the domain" + i);
-    } catch (ObjectNotFoundException e) {
+    } catch (ServiceException | ObjectNotFoundException e) {
       throw new InvalidServiceException("Unable to fetch domain details for the domain" + i);
     }
   }
 
   public List<IDomain> buildDomainSwitchSuggestions(List<IDomainLink> linkedDomainList,
-                                                    DomainsService ds, IDomain currentDomain) {
-    List<IDomain> domains = new ArrayList<IDomain>();
+                                                    IDomain currentDomain) {
+    List<IDomain> domains = new ArrayList<>();
     IDomain domain = null;
     if (currentDomain != null) {
       domains.add(currentDomain);
@@ -194,16 +201,14 @@ public class DomainBuilder {
       for (IDomainLink i : linkedDomainList) {
         try {
           if (i.getType() == 1) {
-            domain = ds.getDomain(i.getDomainId());
+            domain = domainsService.getDomain(i.getDomainId());
           } else if (i.getType() == 0) {
-            domain = ds.getDomain(i.getLinkedDomainId());
+            domain = domainsService.getDomain(i.getLinkedDomainId());
           }
           if (domain != null) {
             domains.add(domain);
           }
-        } catch (ServiceException e) {
-          throw new InvalidServiceException("Unable to fetch domain details for the domain");
-        } catch (ObjectNotFoundException e) {
+        } catch (ServiceException | ObjectNotFoundException e) {
           throw new InvalidServiceException("Unable to fetch domain details for the domain");
         }
       }
@@ -211,9 +216,8 @@ public class DomainBuilder {
     return domains;
   }
 
-  public List<IDomain> buildParentList(List<IDomainLink> linkedDomainList, DomainsService ds,
-                                       IDomain currentDomain) {
-    List<IDomain> domains = new ArrayList<IDomain>();
+  public List<IDomain> buildParentList(List<IDomainLink> linkedDomainList, IDomain currentDomain) {
+    List<IDomain> domains = new ArrayList<>();
     IDomain domain = null;
     if (currentDomain != null) {
       domains.add(currentDomain);
@@ -222,16 +226,14 @@ public class DomainBuilder {
       for (IDomainLink i : linkedDomainList) {
         try {
           if (i.getType() == 1) {
-            domain = ds.getDomain(i.getLinkedDomainId());
+            domain = domainsService.getDomain(i.getLinkedDomainId());
           } else if (i.getType() == 0) {
-            domain = ds.getDomain(i.getDomainId());
+            domain = domainsService.getDomain(i.getDomainId());
           }
           if (domain != null) {
             domains.add(domain);
           }
-        } catch (ServiceException e) {
-          throw new InvalidServiceException("Unable to fetch domain details for the domain");
-        } catch (ObjectNotFoundException e) {
+        } catch (ServiceException | ObjectNotFoundException e) {
           throw new InvalidServiceException("Unable to fetch domain details for the domain");
         }
       }

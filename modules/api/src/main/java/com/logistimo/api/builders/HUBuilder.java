@@ -23,29 +23,47 @@
 
 package com.logistimo.api.builders;
 
+import com.logistimo.api.models.HUModel;
+import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.dao.JDOUtils;
-
+import com.logistimo.domains.service.DomainsService;
+import com.logistimo.materials.entity.IHandlingUnit;
+import com.logistimo.materials.entity.IHandlingUnitContent;
 import com.logistimo.pagination.Results;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
-import com.logistimo.utils.LocalDateUtil;
-import com.logistimo.api.models.HUModel;
-import com.logistimo.domains.service.DomainsService;
-import com.logistimo.domains.service.impl.DomainsServiceImpl;
-import com.logistimo.materials.entity.IHandlingUnit;
-import com.logistimo.materials.entity.IHandlingUnitContent;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
+import com.logistimo.utils.LocalDateUtil;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+@Component
 public class HUBuilder {
 
-  private HUContentBuilder cBuilder = new HUContentBuilder();
+  private HUContentBuilder huContentBuilder;
+  private DomainsService domainsService;
+  private UsersService usersService;
+
+  @Autowired
+  public void setHuContentBuilder(HUContentBuilder huContentBuilder) {
+    this.huContentBuilder = huContentBuilder;
+  }
+
+  @Autowired
+  public void setDomainsService(DomainsService domainsService) {
+    this.domainsService = domainsService;
+  }
+
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
+  }
 
   public IHandlingUnit buildHandlingUnit(HUModel model) {
     IHandlingUnit hu = JDOUtils.createInstance(IHandlingUnit.class);
@@ -53,14 +71,13 @@ public class HUBuilder {
     hu.setDescription(model.description);
     hu.setId(model.id);
     if (model.contents != null) {
-      hu.setContents(cBuilder.buildHUContentSet(model.contents));
+      hu.setContents(huContentBuilder.buildHUContentSet(model.contents));
     }
     return hu;
   }
 
-  public HUModel buildHUModel(IHandlingUnit hu, IUserAccount cb, IUserAccount ub,
-                              SecureUserDetails sUser) {
-    HUModel model = buildHUModel(hu, sUser);
+  public HUModel buildHUModel(IHandlingUnit hu, IUserAccount cb, IUserAccount ub) {
+    HUModel model = buildHUModel(hu);
     if (cb != null) {
       model.cbName = cb.getFullName();
     }
@@ -70,7 +87,8 @@ public class HUBuilder {
     return model;
   }
 
-  public HUModel buildHUModel(IHandlingUnit hu, SecureUserDetails sUser) {
+  public HUModel buildHUModel(IHandlingUnit hu) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     HUModel model = new HUModel();
     model.id = hu.getId();
     model.name = hu.getName();
@@ -83,31 +101,29 @@ public class HUBuilder {
         LocalDateUtil.format(hu.getLastUpdated(), sUser.getLocale(), sUser.getTimezone());
     model.sdId = hu.getDomainId();
     try {
-      DomainsService ds = Services.getService(DomainsServiceImpl.class);
-      model.sdname = ds.getDomain(model.sdId).getName();
-      UsersService as = Services.getService(UsersServiceImpl.class);
-      IUserAccount ua = as.getUserAccount(model.ub);
+      model.sdname = domainsService.getDomain(model.sdId).getName();
+      IUserAccount ua = usersService.getUserAccount(model.ub);
       model.ubName = ua.getFullName();
-      ua = as.getUserAccount(model.cb);
+      ua = usersService.getUserAccount(model.cb);
       model.cbName = ua.getFullName();
     } catch (Exception ignored) {
       // ignore
     }
-    model.contents = cBuilder.buildHUContentModelList((Set<IHandlingUnitContent>) hu.getContents());
+    model.contents = huContentBuilder.buildHUContentModelList((Set<IHandlingUnitContent>) hu.getContents());
     return model;
   }
 
-  public Results buildHandlingUnitModelList(Results results, SecureUserDetails sUser)
+  public Results buildHandlingUnitModelList(Results results)
       throws ServiceException {
     List huList = results.getResults();
     List<HUModel> newInventory = new ArrayList<>(huList.size());
     for (Object material : huList) {
-      HUModel item = buildHUModel((IHandlingUnit) material, sUser);
+      HUModel item = buildHUModel((IHandlingUnit) material);
       if (item != null) {
         newInventory.add(item);
       }
     }
-    return new Results(newInventory, results.getCursor(), results.getNumFound(),
+    return new Results<>(newInventory, results.getCursor(), results.getNumFound(),
         results.getOffset());
   }
 }

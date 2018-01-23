@@ -41,6 +41,8 @@ public class OrderModel {
   private Date createdAt;
   @SerializedName("num_items")
   private int numItems;
+  private Date expectedArrivalDate;
+  private Date dueDate;
 
   public EntityMinModel getCustomer() {
     return customer;
@@ -88,5 +90,21 @@ public class OrderModel {
 
   public void setType(Integer type) {
     this.type = type;
+  }
+
+  public void setExpectedArrivalDate(Date expectedArrivalDate) {
+    this.expectedArrivalDate = expectedArrivalDate;
+  }
+
+  public void setDueDate(Date dueDate) {
+    this.dueDate = dueDate;
+  }
+
+  public Date getExpectedArrivalDate() {
+    return expectedArrivalDate;
+  }
+
+  public Date getDueDate() {
+    return dueDate;
   }
 }

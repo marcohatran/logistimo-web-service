@@ -41,19 +41,15 @@ import com.logistimo.entity.IMessageLog;
 import com.logistimo.events.entity.IEvent;
 import com.logistimo.inventory.dao.IInvntryDao;
 import com.logistimo.inventory.dao.ITransDao;
-import com.logistimo.inventory.dao.impl.InvntryDao;
-import com.logistimo.inventory.dao.impl.TransDao;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.IInvntryBatch;
 import com.logistimo.inventory.entity.IInvntryEvntLog;
 import com.logistimo.inventory.models.InventoryFilters;
 import com.logistimo.inventory.models.InvntryWithBatchInfo;
 import com.logistimo.inventory.service.InventoryManagementService;
-import com.logistimo.inventory.service.impl.InventoryManagementServiceImpl;
 import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.materials.service.MaterialCatalogService;
-import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
 import com.logistimo.mnltransactions.entity.IMnlTransaction;
 import com.logistimo.models.orders.DiscrepancyModel;
 import com.logistimo.orders.actions.GetFilteredOrdersQueryAction;
@@ -64,7 +60,6 @@ import com.logistimo.orders.service.IDemandService;
 import com.logistimo.orders.service.OrderManagementService;
 import com.logistimo.orders.service.impl.DemandService;
 import com.logistimo.orders.service.impl.OrderManagementServiceImpl;
-import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.QueryParams;
 import com.logistimo.pagination.Results;
 import com.logistimo.reports.ReportsConstants;
@@ -75,12 +70,9 @@ import com.logistimo.reports.generators.ReportDataGenerator;
 import com.logistimo.reports.utils.ReportsUtil;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.tags.dao.ITagDao;
-import com.logistimo.tags.dao.TagDao;
 import com.logistimo.tags.entity.ITag;
 import com.logistimo.users.dao.IUserDao;
-import com.logistimo.users.dao.UserDao;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.users.service.impl.UsersServiceImpl;
@@ -133,8 +125,6 @@ public class BulkExportMgr {
   private static final XLog xLogger = XLog.getLog(BulkExportMgr.class);
   // Backend for export
   private static String EXPORT_BACKEND = "backend1";
-  private static IUserDao accountDao = new UserDao();
-  private static ITagDao tagDao = new TagDao();
 
   private BulkExportMgr(){
 
@@ -152,7 +142,8 @@ public class BulkExportMgr {
     }
     if (TYPE_USERS.equals(type)) {
       Map<String, Object> filters = getFilterParams(domainId, req);
-      return accountDao.getQueryParams(domainId, filters, true);
+      IUserDao userDao = StaticApplicationContext.getBean(IUserDao.class);
+      return userDao.getQueryParams(domainId, filters, true);
     }
 
     // Get the req. parameters, if any
@@ -187,7 +178,7 @@ public class BulkExportMgr {
     String pdos = req.getParameter("pdos");
     boolean hasAtd = false;
     if (req.getParameter("atd") != null) {
-      hasAtd = req.getParameter("atd").equals("true") ? true : false;
+      hasAtd = req.getParameter("atd").equals("true");
     }
     String discType = req.getParameter("disctype"); // Type of discrepancy
     String eTags =
@@ -197,7 +188,7 @@ public class BulkExportMgr {
         req.getParameter("eetag"); // Entity tags, multiple possible in case of Inventory export
     String mTag = req.getParameter("mtag"); // Material tag
     String orderIdStr = req.getParameter("orderid"); // Order ID
-    boolean etrn = req.getParameter("etrn") != null ? true : false; // Exclude transfer orders
+    boolean etrn = req.getParameter("etrn") != null; // Exclude transfer orders
     String approvalStatus = req.getParameter("approvalstatus");
     String referenceId = req.getParameter("refid");
     String tagType = req.getParameter("tagtype");
@@ -299,8 +290,8 @@ public class BulkExportMgr {
       return getReportQueryParams(type, domainId, iReportDataGeneratorFactory, req);
       // TODO: return getReportQueryParams(...) - use ReportDataGeneratorFactory, get generator instance based on type, ReportDataGenerator.getQueryParams(...filters...) - DO NULL CHECK AND LOG Severe error; for filters use ReportUtils.getFilters
     }
-    UsersService as = Services.getService(UsersServiceImpl.class);
-    EntitiesService es = Services.getService(EntitiesServiceImpl.class);
+    UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
+    EntitiesService es = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
     // Get the kiosk ids for the user who initiated the export
     String sourceUserId = req.getParameter("sourceuserid");
     IUserAccount user = as.getUserAccount(sourceUserId);
@@ -309,7 +300,7 @@ public class BulkExportMgr {
       kioskIds = es.getKioskIdsForUser(user.getUserId(), null, null).getResults();
     }
     if (TYPE_DISCREPANCIES.equals(type)) {
-      IDemandService ds = Services.getService(DemandService.class);
+      IDemandService ds = StaticApplicationContext.getBean(DemandService.class);
       return ds.getQueryParams(
           domainId,
           oType,
@@ -325,7 +316,7 @@ public class BulkExportMgr {
           discType,
           null);
     } else if (TYPE_INVENTORY.equals(type) || (TYPE_INVENTORYBATCH.equals(type))) {
-      IInvntryDao invntryDao = new InvntryDao();
+      IInvntryDao invntryDao = StaticApplicationContext.getBean(IInvntryDao.class);
       return invntryDao.buildInventoryQuery(
           new InventoryFilters().withKioskId(kioskId).
               withMaterialId(materialId)
@@ -336,7 +327,7 @@ public class BulkExportMgr {
               .withLocation(location)
               .withPdos(pdos), false);
     } else if (TYPE_TRANSACTIONS.equals(type)) {
-      ITransDao transDao = new TransDao();
+      ITransDao transDao = StaticApplicationContext.getBean(ITransDao.class);
       return transDao.buildTransactionsQuery(from, to, domainId, kioskId, materialId,
           trnType != null ? Collections.singletonList(trnType) : null, lkIdParam, eTags, mTag,
           kioskIds, batchIdStr, hasAtd, reason, null);
@@ -362,7 +353,7 @@ public class BulkExportMgr {
     String variablesStr = "";
     String orderingStr = null;
     String dateField = null;
-    Map<String, Object> params = new HashMap<String, Object>();
+    Map<String, Object> params = new HashMap<>();
     // Generic query parameters
     // kioskId or domainId
     if (kioskId != null) {
@@ -413,6 +404,7 @@ public class BulkExportMgr {
           paramsStr += ",String bidParam";
           params.put("bidParam", batchIdStr);
         }
+        ITagDao tagDao = StaticApplicationContext.getBean(ITagDao.class);
         if (materialId == null && StringUtils.isNotEmpty(mTag)) {
           List<String> tags = StringUtil.getList(mTag, true);
           queryStr.append(QueryConstants.AND).append(CharacterConstants.O_BRACKET);
@@ -593,9 +585,9 @@ public class BulkExportMgr {
     Locale locale = dc.getLocale();
     String timezone = dc.getTimezone();
     if (sourceUserIdStr != null && !sourceUserIdStr.isEmpty()) {
-      IUserAccount sourceUser = null;
+      IUserAccount sourceUser;
       try {
-        UsersService as = Services.getService(UsersServiceImpl.class);
+        UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
         sourceUser = as.getUserAccount(sourceUserIdStr);
         locale = sourceUser.getLocale();
       } catch (Exception e) {
@@ -605,13 +597,12 @@ public class BulkExportMgr {
         return null;
       }
     }
-    PageParams pageParams = null;
     QueryParams qp = null;
     try {
       ReportDataGenerator rdg = iReportDataGeneratorFactory.getInstance(type);
       qp =
           rdg.getReportQuery(
-              from, to, frequencyStr, filters, locale, timezone, pageParams, dc, sourceUserIdStr);
+              from, to, frequencyStr, filters, locale, timezone, null, dc, sourceUserIdStr);
     } catch (Exception e) {
       xLogger.severe(
           "{0} while getting report query params for type {1} in domain {2}. Message: {3}",
@@ -622,7 +613,7 @@ public class BulkExportMgr {
   }
 
   public static Map<String, String> getExportBackendHeader() {
-    Map<String, String> headers = new HashMap<String, String>();
+    Map<String, String> headers = new HashMap<>();
     headers.put("Host", AppFactory.get().getBackendService().getBackendAddress(EXPORT_BACKEND));
     return headers;
   }
@@ -643,14 +634,10 @@ public class BulkExportMgr {
     }
 
     Iterator<IInvntry> invListIter = res.getResults().iterator();
-    MaterialCatalogService mcs;
-    InventoryManagementService ims;
-    EntitiesService as;
-    IInvntryDao invDao;
-    mcs = Services.getService(MaterialCatalogServiceImpl.class);
-    ims = Services.getService(InventoryManagementServiceImpl.class);
-    as = Services.getService(EntitiesServiceImpl.class);
-    invDao = new InvntryDao();
+    MaterialCatalogService mcs = StaticApplicationContext.getBean(MaterialCatalogService.class);
+    InventoryManagementService ims = StaticApplicationContext.getBean(InventoryManagementService.class);
+    EntitiesService as = StaticApplicationContext.getBean(EntitiesService.class);
+    IInvntryDao invDao =  StaticApplicationContext.getBean(IInvntryDao.class);
     while (invListIter.hasNext()) {
       IInvntry inv = invListIter.next();
       Long mId = inv.getMaterialId();
@@ -800,7 +787,7 @@ public class BulkExportMgr {
       if (res == null) {
         return discExportList;
       }
-      IDemandService ds = Services.getService(DemandService.class);
+      IDemandService ds = StaticApplicationContext.getBean(DemandService.class);
       discModels = ds.getDiscrepancyModels(res.getResults());
       for (DiscrepancyModel dm : discModels) {
         DiscrepancyExportableModel dem = new DiscrepancyExportableModel(dm);
@@ -818,7 +805,8 @@ public class BulkExportMgr {
       if (res == null) {
         return ordWithItemsList;
       }
-      OrderManagementService oms = Services.getService(OrderManagementServiceImpl.class);
+      OrderManagementService oms = StaticApplicationContext.getBean(
+          OrderManagementServiceImpl.class);
       List<IOrder> ords = res.getResults();
       for (IOrder or : ords) {
         IOrder orwithIt = oms.getOrder(or.getOrderId(), true);
@@ -835,7 +823,7 @@ public class BulkExportMgr {
     if (messages == null) {
       return "unknown";
     }
-    String name = "";
+    String name;
     if (IJobStatus.INPROGRESS == status) {
       name = messages.getString("inprogress");
     } else if (IJobStatus.COMPLETED == status) {
@@ -962,17 +950,17 @@ public class BulkExportMgr {
       size = json.getInt(SIZE_KEY);
       try {
         assetId = json.getString(ASSETID_KEY);
-      } catch (Exception e) {
+      } catch (Exception ignored) {
 
       }
       try {
         asseTyNm = json.getString(ASSETYPENAME_KEY);
-      } catch (Exception e) {
+      } catch (Exception ignored) {
 
       }
       try {
         sensorName = json.getString(SENSORNAME_KEY);
-      } catch (Exception e) {
+      } catch (Exception ignored) {
 
       }
       try {

@@ -29,19 +29,15 @@ import com.logistimo.api.models.MaterialModel;
 import com.logistimo.api.util.SearchUtil;
 import com.logistimo.auth.GenericAuthoriser;
 import com.logistimo.auth.utils.SecurityUtils;
-import com.logistimo.auth.utils.SessionMgr;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
-import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.exception.InvalidDataException;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.inventory.service.InventoryManagementService;
-import com.logistimo.inventory.service.impl.InventoryManagementServiceImpl;
 import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.materials.service.MaterialCatalogService;
-import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
 import com.logistimo.models.ICounter;
 import com.logistimo.pagination.Navigator;
 import com.logistimo.pagination.PageParams;
@@ -49,15 +45,14 @@ import com.logistimo.pagination.Results;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
 import com.logistimo.utils.Counter;
 import com.logistimo.utils.MsgUtil;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -78,26 +73,56 @@ import javax.servlet.http.HttpServletRequest;
 public class MaterialsController {
   private static final XLog xLogger = XLog.getLog(MaterialsController.class);
   private static final String CREATEENTITY_TASK_URL = "/task/createentity";
-  MaterialBuilder mBuilder = new MaterialBuilder();
+
+  private MaterialBuilder mBuilder;
+  private MaterialCatalogService materialCatalogService;
+  private UsersService usersService;
+  private InventoryManagementService inventoryManagementService;
+  private EntitiesService entitiesService;
+
+  @Autowired
+  public void setmBuilder(MaterialBuilder mBuilder) {
+    this.mBuilder = mBuilder;
+  }
+
+  @Autowired
+  public void setMaterialCatalogService(MaterialCatalogService materialCatalogService) {
+    this.materialCatalogService = materialCatalogService;
+  }
+
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
+  }
+
+  @Autowired
+  public void setInventoryManagementService(InventoryManagementService inventoryManagementService) {
+    this.inventoryManagementService = inventoryManagementService;
+  }
+
+  @Autowired
+  public void setEntitiesService(EntitiesService entitiesService) {
+    this.entitiesService = entitiesService;
+  }
 
   @RequestMapping(value = "/delete", method = RequestMethod.POST)
   public
   @ResponseBody
-  String delete(@RequestBody String materialIds, HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+  String delete(@RequestBody String materialIds) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    StringBuffer matNames = new StringBuffer();
+    StringBuilder matNames = new StringBuilder();
     if (materialIds == null || materialIds.trim().equals("")) {
       throw new InvalidServiceException(backendMessages.getString("materials.delete.none"));
     }
-    if (!GenericAuthoriser.authoriseAdmin(request)) {
+    if (!GenericAuthoriser.authoriseAdmin()) {
       throw new UnauthorizedException(backendMessages.getString("permission.denied"));
     }
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
+    Long domainId = sUser.getCurrentDomainId();
 
     String[] materialsArray = materialIds.split(",");
-    Map<String, String> params = new HashMap<String, String>(5);
+    Map<String, String> params = new HashMap<>(5);
     params.put("action", "remove");
     params.put("type", "materials");
     params.put("domainid", String.valueOf(domainId));
@@ -105,9 +130,6 @@ public class MaterialsController {
     for (String mat : materialsArray) {
       params.put("materialids", mat);
       try {
-        MaterialCatalogService
-            materialCatalogService =
-            Services.getService(MaterialCatalogServiceImpl.class, locale);
         IMaterial m = materialCatalogService.getMaterial(Long.parseLong(mat));
         matNames.append(m.getName())
             .append(",");//we are getting material object only to log the material name
@@ -132,33 +154,30 @@ public class MaterialsController {
   @RequestMapping(value = "/material/{materialId}", method = RequestMethod.GET)
   public
   @ResponseBody
-  MaterialModel getMaterialById(@PathVariable Long materialId, HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+  MaterialModel getMaterialById(@PathVariable Long materialId) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    MaterialCatalogServiceImpl materialCatalogService;
     IUserAccount cb = null;
     IUserAccount ub = null;
     try {
-      UsersService as = Services.getService(UsersServiceImpl.class, locale);
-      materialCatalogService = Services.getService(MaterialCatalogServiceImpl.class, locale);
       IMaterial m = materialCatalogService.getMaterial(materialId);
       Map<Long, String> domainNames = new HashMap<>(1);
       if (m.getCreatedBy() != null) {
         try {
-          cb = as.getUserAccount(m.getCreatedBy());
+          cb = usersService.getUserAccount(m.getCreatedBy());
         } catch (Exception e) {
           //ignore
         }
       }
       if (m.getLastUpdatedBy() != null) {
         try {
-          ub = as.getUserAccount(m.getLastUpdatedBy());
+          ub = usersService.getUserAccount(m.getLastUpdatedBy());
         } catch (Exception e) {
           //ignore
         }
       }
-      return mBuilder.buildMaterialModel(m, cb, ub, sUser, 1, domainNames);
+      return mBuilder.buildMaterialModel(m, cb, ub, 1, domainNames);
     } catch (ServiceException e) {
       xLogger.warn("Error Fetching Material details for " + materialId, e);
       throw new InvalidServiceException(
@@ -169,15 +188,13 @@ public class MaterialsController {
   @RequestMapping("/check/")
   public
   @ResponseBody
-  boolean checkMaterialExist(@RequestParam String mnm, HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+  boolean checkMaterialExist(@RequestParam String mnm) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
-    MaterialCatalogServiceImpl ims;
+    Long domainId = sUser.getCurrentDomainId();
     try {
-      ims = Services.getService(MaterialCatalogServiceImpl.class, locale);
-      IMaterial m = ims.getMaterialByName(domainId, mnm);
+      IMaterial m = materialCatalogService.getMaterialByName(domainId, mnm);
       if (m != null) {
         return true;
       }
@@ -200,14 +217,11 @@ public class MaterialsController {
       @RequestParam(required = false) boolean ihu,
       @RequestParam(required = false) String entityId,
       HttpServletRequest request) {
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
-    Locale locale = user.getLocale();
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
+    Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), user.getUsername());
+    Long domainId = sUser.getCurrentDomainId();
     try {
-      MaterialCatalogService
-          mc =
-          Services.getService(MaterialCatalogServiceImpl.class, user.getLocale());
       Navigator
           navigator =
           new Navigator(request.getSession(), "MaterialsController.getDomainMaterials", offset,
@@ -216,12 +230,12 @@ public class MaterialsController {
       Results results;
       if (StringUtils.isNotBlank(q)) {
         if (ihu) {
-          results = mc.searchMaterialsNoHU(domainId, q);
+          results = materialCatalogService.searchMaterialsNoHU(domainId, q);
         } else {
           results = SearchUtil.findMaterials(domainId, q, pageParams);
         }
       } else {
-        results = mc.getAllMaterials(domainId, tag, pageParams);
+        results = materialCatalogService.getAllMaterials(domainId, tag, pageParams);
       }
       if (StringUtils.isBlank(q)) {
         ICounter counter = Counter.getMaterialCounter(domainId, tag);
@@ -236,15 +250,11 @@ public class MaterialsController {
       results.setOffset(offset);
       navigator.setResultParams(results);
       if (StringUtils.isNotBlank(entityId)) {
-        InventoryManagementService
-            ims =
-            Services.getService(InventoryManagementServiceImpl.class, user.getLocale());
-        Results eResults = ims.getInventoryByKiosk(Long.valueOf(entityId), null);
-        EntitiesService as = Services.getService(EntitiesServiceImpl.class, locale);
-        IKiosk k = as.getKiosk(Long.valueOf(entityId));
-        return mBuilder.buildMaterialModelListWithEntity(results, user, eResults, domainId, k);
+        Results eResults = inventoryManagementService.getInventoryByKiosk(Long.valueOf(entityId), null);
+        IKiosk k = entitiesService.getKiosk(Long.valueOf(entityId));
+        return mBuilder.buildMaterialModelListWithEntity(results, eResults, domainId, k);
       } else {
-        return mBuilder.buildMaterialModelList(results, user, domainId);
+        return mBuilder.buildMaterialModelList(results);
       }
     } catch (ServiceException e) {
       xLogger.warn("Error Fetching Material details for domain " + domainId, e);
@@ -256,21 +266,19 @@ public class MaterialsController {
   @RequestMapping(value = "/create", method = RequestMethod.POST)
   public
   @ResponseBody
-  String create(@RequestBody MaterialModel materialModel, HttpServletRequest request) {
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
-    Locale locale = user.getLocale();
+  String create(@RequestBody MaterialModel materialModel) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
+    Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    if (!GenericAuthoriser.authoriseAdmin(request)) {
+    if (!GenericAuthoriser.authoriseAdmin()) {
       throw new UnauthorizedException(backendMessages.getString("permission.denied"));
     }
-    MaterialCatalogServiceImpl materialCatalogService;
     IMaterial m = mBuilder.buildMaterial(materialModel);
-    m.setCreatedBy(user.getUsername());
-    m.setLastUpdatedBy(user.getUsername());
+    m.setCreatedBy(sUser.getUsername());
+    m.setLastUpdatedBy(sUser.getUsername());
     try {
-      materialCatalogService = Services.getService(MaterialCatalogServiceImpl.class, locale);
       if (m.getName() != null) {
-        long domainId = SessionMgr.getCurrentDomain(request.getSession(), user.getUsername());
+        long domainId = sUser.getCurrentDomainId();
         IMaterial temp = materialCatalogService.getMaterialByName(domainId, m.getName());
         if (temp != null) {
           throw new InvalidDataException(
@@ -279,7 +287,7 @@ public class MaterialsController {
         } else {
           materialCatalogService.addMaterial(domainId, m);
           xLogger.info("AUDITLOG\t {0}\t {1}\t MATERIAL\t " +
-              "CREATE \t {2} \t {3}", domainId, user.getUsername(), m.getMaterialId(), m.getName());
+              "CREATE \t {2} \t {3}", domainId, sUser.getUsername(), m.getMaterialId(), m.getName());
         }
       } else {
         throw new InvalidDataException(backendMessages.getString("material.no.name"));
@@ -297,24 +305,20 @@ public class MaterialsController {
   @RequestMapping(value = "/update", method = RequestMethod.POST)
   public
   @ResponseBody
-  String updateMaterial(@RequestBody MaterialModel materialModel, HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+  String updateMaterial(@RequestBody MaterialModel materialModel) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    if (!GenericAuthoriser.authoriseAdmin(request)) {
+    if (!GenericAuthoriser.authoriseAdmin()) {
       throw new UnauthorizedException(backendMessages.getString("permission.denied"));
     }
-    MaterialCatalogServiceImpl materialCatalogService;
-    InventoryManagementService ims;
     IMaterial m = mBuilder.buildMaterial(materialModel);
     m.setLastUpdatedBy(sUser.getUsername());
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
+    Long domainId = sUser.getCurrentDomainId();
     try {
-      materialCatalogService = Services.getService(MaterialCatalogServiceImpl.class, locale);
       IMaterial mat = materialCatalogService.getMaterial(m.getMaterialId());
       if (mat.isBatchEnabled() != m.isBatchEnabled()) {
-        ims = Services.getService(InventoryManagementServiceImpl.class);
-        if(!ims.validateMaterialBatchManagementUpdate(m.getMaterialId())) {
+        if(!inventoryManagementService.validateMaterialBatchManagementUpdate(m.getMaterialId())) {
           return null;
         }
       }

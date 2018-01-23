@@ -26,10 +26,9 @@
  */
 package com.logistimo.services.taskqueue;
 
-import com.logistimo.services.taskqueue.util.TaskUtil;
-
 import com.logistimo.exception.TaskSchedulingException;
 import com.logistimo.logger.XLog;
+import com.logistimo.services.taskqueue.util.TaskUtil;
 import com.logistimo.services.utils.ConfigUtil;
 
 import org.springframework.context.ApplicationContext;

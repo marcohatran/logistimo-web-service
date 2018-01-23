@@ -26,6 +26,7 @@ package com.logistimo.orders.approvals.utils;
 import com.logistimo.approvals.client.models.Approver;
 import com.logistimo.config.models.ApprovalsConfig;
 import com.logistimo.config.models.DomainConfig;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.entity.IApprover;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
@@ -35,7 +36,6 @@ import com.logistimo.orders.approvals.ApprovalType;
 import com.logistimo.orders.entity.IOrder;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,8 +52,7 @@ public class ApprovalUtils {
   public static List<Approver> getApproversForOrderType(IOrder order, ApprovalType approvalType)
       throws ServiceException, ValidationException {
 
-    ApprovalsConfig.OrderConfig
-        orderConfig = null;
+    ApprovalsConfig.OrderConfig orderConfig;
     int expiry;
     List<Approver> approvers = new ArrayList<>();
     List<String> primaryApprovers;
@@ -68,7 +67,7 @@ public class ApprovalUtils {
       String
           type;
       Long kioskId;
-      EntitiesService entitiesService = Services.getService(EntitiesServiceImpl.class);
+      EntitiesService entitiesService = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
 
       if (ApprovalType.PURCHASE_ORDER.equals(approvalType)) {
         type = IApprover.PURCHASE_ORDER;

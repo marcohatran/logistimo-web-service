@@ -23,7 +23,8 @@
 
 package com.logistimo.social.provider;
 
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Before;
 
 import java.util.List;
 

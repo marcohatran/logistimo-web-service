@@ -26,12 +26,13 @@
  */
 package com.logistimo.config.models;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 import com.logistimo.services.Resources;
 import com.logistimo.utils.JsonUtil;
 import com.logistimo.utils.StringUtil;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.Serializable;
 import java.util.ArrayList;

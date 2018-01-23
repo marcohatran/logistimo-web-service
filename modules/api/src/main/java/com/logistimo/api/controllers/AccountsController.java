@@ -25,11 +25,9 @@ package com.logistimo.api.controllers;
 
 import com.logistimo.accounting.entity.IAccount;
 import com.logistimo.accounting.service.IAccountingService;
-import com.logistimo.accounting.service.impl.AccountingServiceImpl;
 import com.logistimo.api.builders.AccountBuilder;
 import com.logistimo.api.models.AccountModel;
-import com.logistimo.auth.SecurityMgr;
-import com.logistimo.auth.utils.SessionMgr;
+import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.entities.auth.EntityAuthoriser;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exception.UnauthorizedException;
@@ -40,8 +38,8 @@ import com.logistimo.pagination.Results;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -60,7 +58,19 @@ import javax.servlet.http.HttpServletRequest;
 @RequestMapping("/accounts")
 public class AccountsController {
   private static final XLog xLogger = XLog.getLog(AccountsController.class);
-  AccountBuilder builder = new AccountBuilder();
+
+  private AccountBuilder accountBuilder;
+  private IAccountingService accountingService;
+
+  @Autowired
+  public void setAccountBuilder(AccountBuilder accountBuilder) {
+    this.accountBuilder = accountBuilder;
+  }
+
+  @Autowired
+  public void setAccountingService(IAccountingService accountingService) {
+    this.accountingService = accountingService;
+  }
 
   @RequestMapping("/")
   public
@@ -71,11 +81,10 @@ public class AccountsController {
       @RequestParam(defaultValue = PageParams.DEFAULT_OFFSET_STR) int offset,
       @RequestParam(defaultValue = PageParams.DEFAULT_SIZE_STR) int size,
       HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
-    String userId = sUser.getUsername();
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = null;
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), userId);
+    ResourceBundle backendMessages;
+    Long domainId = sUser.getCurrentDomainId();
     Navigator
         navigator =
         new Navigator(request.getSession(), "AccountsController.getAccounts", offset, size,
@@ -83,28 +92,23 @@ public class AccountsController {
     PageParams pageParams = new PageParams(navigator.getCursor(offset), offset, size);
     backendMessages = Resources.get().getBundle("BackendMessages", locale);
     try {
-      IAccountingService
-          oms =
-          Services.getService(AccountingServiceImpl.class, locale);
       Results results;
-      if (EntityAuthoriser.authoriseEntity(sUser, Long.valueOf(kioskId))) {
+      if (EntityAuthoriser.authoriseEntity(Long.valueOf(kioskId))) {
         if (IAccount.RECEIVABLE.equals(type)) {
           results =
-              oms.getAccounts(Long.valueOf(kioskId), null, Integer.valueOf(yr), sb, pageParams);
+              accountingService.getAccounts(Long.valueOf(kioskId), null, Integer.valueOf(yr), sb, pageParams);
         } else {
           results =
-              oms.getAccounts(null, Long.valueOf(kioskId), Integer.valueOf(yr), sb, pageParams);
+              accountingService.getAccounts(null, Long.valueOf(kioskId), Integer.valueOf(yr), sb, pageParams);
         }
       } else {
         throw new UnauthorizedException(backendMessages.getString("permission.denied"));
       }
       navigator.setResultParams(results);
       results.setNumFound(-1);
-      List<AccountModel>
-          models =
-          builder.buildAccountModelList(results.getResults(), type, locale, Long.parseLong(kioskId),
-              domainId);
-      return new Results(models, results.getCursor(), results.getNumFound(), results.getOffset());
+      List<AccountModel> models = accountBuilder.buildAccountModelList(results.getResults(), type,
+          Long.parseLong(kioskId), domainId);
+      return new Results<>(models, results.getCursor(), results.getNumFound(), results.getOffset());
     } catch (ServiceException e) {
       xLogger.severe("Error in getting accounts details");
       throw new InvalidServiceException(backendMessages.getString("account.error"));
@@ -115,6 +119,6 @@ public class AccountsController {
   public
   @ResponseBody
   AccountModel getAccountsConfig() {
-    return builder.buildAccountConfigModel();
+    return accountBuilder.buildAccountConfigModel();
   }
 }

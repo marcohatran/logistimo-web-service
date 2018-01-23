@@ -165,7 +165,7 @@ public class QueryHelper {
   private static final List<String> NUMERIC_FIELDS = Arrays.asList(MATERIAL, ENTITY, SIZE, OFFSET, MYEAR, LKID, USER, OTYPE);
 
   static {
-    OPTIONAL_FILTER_MAP = new HashMap<>(18);
+    OPTIONAL_FILTER_MAP = new HashMap<>(21,1);
     OPTIONAL_FILTER_MAP.put(USER, QUERY_USER);
     OPTIONAL_FILTER_MAP.put(MATERIAL, QUERY_MATERIAL);
     OPTIONAL_FILTER_MAP.put(ENTITY, QUERY_ENTITY);

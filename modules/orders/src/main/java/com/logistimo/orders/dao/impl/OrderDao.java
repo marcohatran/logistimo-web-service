@@ -34,7 +34,7 @@ import com.logistimo.services.impl.PMF;
 import com.logistimo.tags.TagUtil;
 import com.logistimo.utils.BigUtil;
 
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -47,7 +47,7 @@ import javax.jdo.Query;
 /**
  * Created by charan on 03/03/15.
  */
-@Repository
+@Component
 public class OrderDao implements IOrderDao {
 
   private static final XLog xlogger = XLog.getLog(OrderDao.class);

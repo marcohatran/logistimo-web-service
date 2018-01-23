@@ -28,9 +28,7 @@ import com.logistimo.api.builders.DomainBuilder;
 import com.logistimo.api.models.superdomains.DomainModel;
 import com.logistimo.api.request.AddDomainLinksRequestObj;
 import com.logistimo.auth.SecurityConstants;
-import com.logistimo.auth.SecurityMgr;
 import com.logistimo.auth.utils.SecurityUtils;
-import com.logistimo.auth.utils.SessionMgr;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.dao.JDOUtils;
@@ -38,7 +36,6 @@ import com.logistimo.domains.entity.IDomain;
 import com.logistimo.domains.entity.IDomainLink;
 import com.logistimo.domains.entity.IDomainPermission;
 import com.logistimo.domains.service.DomainsService;
-import com.logistimo.domains.service.impl.DomainsServiceImpl;
 import com.logistimo.entities.utils.DomainLinkUpdater;
 import com.logistimo.exception.InvalidDataException;
 import com.logistimo.exception.InvalidServiceException;
@@ -52,16 +49,15 @@ import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.MsgUtil;
 import com.logistimo.utils.QueryUtil;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -90,31 +86,45 @@ import javax.servlet.http.HttpServletRequest;
 public class LinkedDomainController {
   private static final XLog xLogger = XLog.getLog(DomainConfigController.class);
   private static final String DOMAIN_LINK_UPDATE_TASK_URL = "/s2/api/linked/domain/domainupdate";
-  DomainBuilder domainBuilder = new DomainBuilder();
+
+  private DomainBuilder domainBuilder;
+  private DomainsService domainsService;
+  private UsersService usersService;
+
+  @Autowired
+  public void setDomainBuilder(DomainBuilder domainBuilder) {
+    this.domainBuilder = domainBuilder;
+  }
+
+  @Autowired
+  public void setDomainsService(DomainsService domainsService) {
+    this.domainsService = domainsService;
+  }
+
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
+  }
 
   @SuppressWarnings("unchecked")
-
   @RequestMapping(value = "/add", method = RequestMethod.POST)
   public
   @ResponseBody
-  String addChildrenToDomain(@RequestBody AddDomainLinksRequestObj model,
-                             HttpServletRequest request) {
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
-    Long domainId = null;
+  String addChildrenToDomain(@RequestBody AddDomainLinksRequestObj model) {
+    Long domainId;
     if (model.domainId == null) {
-      domainId = SessionMgr.getCurrentDomain(request.getSession(), user.getUsername());
+      domainId = SecurityUtils.getCurrentDomainId();
     } else {
       domainId = model.domainId;
     }
     try {
-      DomainsService ds = Services.getService(DomainsServiceImpl.class);
       List<IDomainLink>
           domainLinkList =
-          domainBuilder.buildDomainLink(model.domainModel.ldl, domainId, ds);
+          domainBuilder.buildDomainLink(model.domainModel.ldl, domainId);
       IDomainPermission
           permission =
           domainBuilder.buildDomainPermission(model.domainModel, domainId);
-      ds.addDomainLinks(domainLinkList, permission);
+      domainsService.addDomainLinks(domainLinkList, permission);
       StringBuilder sb = new StringBuilder();
       for (DomainSuggestionModel domainSuggestionModel : model.domainModel.ldl) {
         sb.append(domainSuggestionModel.id).append(CharacterConstants.COMMA);
@@ -156,22 +166,19 @@ public class LinkedDomainController {
   public
   @ResponseBody
   List<DomainSuggestionModel> getChildren(@RequestParam(required = false) Integer depth,
-                                          @RequestParam(required = false) Long domainId,
-                                          HttpServletRequest request) {
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
+                                          @RequestParam(required = false) Long domainId) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     if (domainId == null) {
-      domainId = SessionMgr.getCurrentDomain(request.getSession(), user.getUsername());
+      domainId = sUser.getCurrentDomainId();
     }
-    Long currentDomain = SessionMgr.getCurrentDomain(request.getSession(), user.getUsername());
-
+    Long currentDomain = sUser.getCurrentDomainId();
     List<IDomainLink> childDomains;
     try {
       if (domainId != null) {
-        DomainsService ds = Services.getService(DomainsServiceImpl.class);
         childDomains =
-            ds.getDomainLinks(domainId, IDomainLink.TYPE_CHILD, depth == null ? 0 : depth);
+            domainsService.getDomainLinks(domainId, IDomainLink.TYPE_CHILD, depth == null ? 0 : depth);
         if (childDomains != null && childDomains.size() > 0) {
-          return domainBuilder.buildLinkedDomainModelList(childDomains, ds, currentDomain);
+          return domainBuilder.buildLinkedDomainModelList(childDomains, currentDomain);
         }
       }
     } catch (ServiceException e) {
@@ -186,22 +193,20 @@ public class LinkedDomainController {
   @ResponseBody
   DomainModel getDomainPermission(
       @RequestParam(required = false, defaultValue = "false") boolean action,
-      @RequestParam(required = false) Long domainId, HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+      @RequestParam(required = false) Long domainId) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     boolean iMan = SecurityConstants.ROLE_SERVICEMANAGER.equals(sUser.getRole());
     Long userDomainId = sUser.getDomainId();
     if (domainId == null) {
-      domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
+      domainId = sUser.getCurrentDomainId();
     }
     try {
       IDomainPermission userDomainPermission = null;
-      DomainsService ds = Services.getService(DomainsServiceImpl.class);
-      UsersService as = Services.getService(UsersServiceImpl.class);
-      IDomain domain = ds.getDomainPermission(domainId);
-      IDomainPermission permission = ds.getLinkedDomainPermission(domainId);
-      IUserAccount account = as.getUserAccount(sUser.getUsername());
+      IDomain domain = domainsService.getDomainPermission(domainId);
+      IDomainPermission permission = domainsService.getLinkedDomainPermission(domainId);
+      IUserAccount account = usersService.getUserAccount(sUser.getUsername());
       if (SecurityConstants.ROLE_DOMAINOWNER.equals(sUser.getRole())) {
-        userDomainPermission = ds.getLinkedDomainPermission(userDomainId);
+        userDomainPermission = domainsService.getLinkedDomainPermission(userDomainId);
       }
       boolean viewPermission = IUserAccount.PERMISSION_VIEW.equals(account.getPermission());
       boolean assetPermission = IUserAccount.PERMISSION_ASSET.equals(account.getPermission());
@@ -225,13 +230,11 @@ public class LinkedDomainController {
     if (domainId != null) {
       IDomainLink parentDomainLink;
       try {
-        DomainsService ds = Services.getService(DomainsServiceImpl.class);
-        parentDomainLink = ds.getDomainLinks(domainId, IDomainLink.TYPE_PARENT, 0).get(0);
-        List<IDomainLink>
-            childLinksOfParent =
-            ds.getDomainLinks(parentDomainLink.getLinkedDomainId(), IDomainLink.TYPE_CHILD, 0);
+        parentDomainLink = domainsService.getDomainLinks(domainId, IDomainLink.TYPE_PARENT, 0).get(0);
+        List<IDomainLink> childLinksOfParent =
+            domainsService.getDomainLinks(parentDomainLink.getLinkedDomainId(), IDomainLink.TYPE_CHILD, 0);
         boolean hasChild = childLinksOfParent.size() > 1;
-        ds.deleteDomainLink(parentDomainLink, hasChild);
+        domainsService.deleteDomainLink(parentDomainLink, hasChild);
         Map<String, String> params = new HashMap<>();
         params.put("domainId", String.valueOf(parentDomainLink.getLinkedDomainId()));
         params.put("childDomainIds", String.valueOf(domainId));
@@ -253,15 +256,13 @@ public class LinkedDomainController {
   @RequestMapping(value = "/push", method = RequestMethod.GET)
   public
   @ResponseBody
-  String pushConfiguration(HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
+  String pushConfiguration() {
+    Long domainId = SecurityUtils.getCurrentDomainId();
     try {
-      DomainsService ds = Services.getService(DomainsServiceImpl.class);
-      List<IDomainLink> domainLinkList = ds.getDomainLinks(domainId, IDomainLink.TYPE_CHILD, -1);
+      List<IDomainLink> domainLinkList = domainsService.getDomainLinks(domainId, IDomainLink.TYPE_CHILD, -1);
       if (domainLinkList != null && domainLinkList.size() > 0) {
         for (IDomainLink iDomainLink : domainLinkList) {
-          ds.copyConfiguration(domainId, iDomainLink.getLinkedDomainId());
+          domainsService.copyConfiguration(domainId, iDomainLink.getLinkedDomainId());
         }
       }
     } catch (ServiceException | TaskSchedulingException e) {
@@ -278,28 +279,25 @@ public class LinkedDomainController {
   @RequestMapping(value = "/suggestions", method = RequestMethod.GET)
   public
   @ResponseBody
-  List<IDomain> suggestLinkedDomains(HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
+  List<IDomain> suggestLinkedDomains() {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Long domainId = sUser.getDomainId();
     try {
       List<IDomain> suggestions = new ArrayList<>();
-      DomainsService ds = Services.getService(DomainsServiceImpl.class);
-      UsersService as = Services.getService(UsersServiceImpl.class);
-      IUserAccount ua = as.getUserAccount(sUser.getUsername());
+      IUserAccount ua = usersService.getUserAccount(sUser.getUsername());
       List<IDomainLink> fullDomainLinks = new ArrayList<>();
       for (Long dId : ua.getAccessibleDomainIds()) {
-        List<IDomainLink> childDomains = ds.getAllDomainLinks(dId, IDomainLink.TYPE_CHILD);
+        List<IDomainLink> childDomains = domainsService.getAllDomainLinks(dId, IDomainLink.TYPE_CHILD);
         if (childDomains != null && childDomains.size() > 0) {
           fullDomainLinks.addAll(childDomains);
         }
         if (!domainId.equals(dId)) {
-          suggestions.add(ds.getDomain(dId));
+          suggestions.add(domainsService.getDomain(dId));
         }
       }
-      IDomain currentDomain = ds.getDomain(domainId);
-      List<IDomain>
-          sugg =
-          domainBuilder.buildDomainSwitchSuggestions(fullDomainLinks, ds, currentDomain);
+      IDomain currentDomain = domainsService.getDomain(domainId);
+      List<IDomain> sugg =
+          domainBuilder.buildDomainSwitchSuggestions(fullDomainLinks, currentDomain);
       if (sugg != null) {
         suggestions.addAll(sugg);
       }
@@ -313,19 +311,16 @@ public class LinkedDomainController {
   public
   @ResponseBody
   List<IDomain> getParents(@RequestParam(required = false) Long domainId,
-                           @RequestParam Integer domainType, HttpServletRequest request) {
+                           @RequestParam Integer domainType) {
     List<IDomain> domains;
     List<IDomainLink> linkedDomains;
-    DomainBuilder domainBuilder = new DomainBuilder();
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
     if (domainId == null) {
-      domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
+      domainId = SecurityUtils.getCurrentDomainId();
     }
     try {
-      DomainsService ds = Services.getService(DomainsServiceImpl.class);
-      linkedDomains = ds.getAllDomainLinks(domainId, domainType);
-      IDomain currentDomain = ds.getDomain(domainId);
-      domains = domainBuilder.buildParentList(linkedDomains, ds, currentDomain);
+      linkedDomains = domainsService.getAllDomainLinks(domainId, domainType);
+      IDomain currentDomain = domainsService.getDomain(domainId);
+      domains = domainBuilder.buildParentList(linkedDomains, currentDomain);
       return domains;
     } catch (ServiceException | ObjectNotFoundException e) {
       throw new InvalidServiceException("Unable to fetch domain details for the domain");
@@ -338,11 +333,9 @@ public class LinkedDomainController {
   List<IDomain> fetchLinkedDomainsById(@PathVariable Long domainId, @RequestParam Integer type) {
     List<IDomain> domains;
     List<IDomainLink> linkedDomains;
-    DomainBuilder domainBuilder = new DomainBuilder();
     try {
-      DomainsService ds = Services.getService(DomainsServiceImpl.class);
-      linkedDomains = ds.getAllDomainLinks(domainId, type);
-      domains = domainBuilder.buildDomainSwitchSuggestions(linkedDomains, ds, null);
+      linkedDomains = domainsService.getAllDomainLinks(domainId, type);
+      domains = domainBuilder.buildDomainSwitchSuggestions(linkedDomains, null);
       return domains;
     } catch (ServiceException e) {
       throw new InvalidServiceException("Unable to fetch domain details for the domain");
@@ -353,32 +346,29 @@ public class LinkedDomainController {
   @RequestMapping(value = "/updatepermission", method = RequestMethod.POST)
   public
   @ResponseBody
-  String updateChildDomainPermissions(@RequestBody DomainModel model, HttpServletRequest request) {
+  String updateChildDomainPermissions(@RequestBody DomainModel model) {
     if (model == null) {
       throw new InvalidDataException("No domain data found to update.");
     }
-    DomainsService ds = Services.getService(DomainsServiceImpl.class);
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
+    SecureUserDetails user = SecurityUtils.getUserDetails();
     String username = user.getUsername();
     Long domainId = model.dId;
     IDomainPermission permission = domainBuilder.buildDomainPermission(model, domainId);
-    ds.updateDomainPermission(permission, model.dId, username);
+    domainsService.updateDomainPermission(permission, model.dId, username);
     return MsgUtil.bold(model.name) + " domain permissions updated successfully.";
   }
 
   @RequestMapping(value = "/domain", method = RequestMethod.GET)
   public
   @ResponseBody
-  IDomain fetchDomainById(@RequestParam Long domainId, HttpServletRequest request) {
+  IDomain fetchDomainById(@RequestParam Long domainId) {
     try {
       if (domainId == null) {
         throw new ServiceException("Domain is not available");
       }
-      SecureUserDetails user = SecurityUtils.getUserDetails(request);
-      DomainsService ds = Services.getService(DomainsServiceImpl.class);
-      IDomain domain = ds.getDomain(domainId);
-      String
-          dateStr =
+      SecureUserDetails user = SecurityUtils.getUserDetails();
+      IDomain domain = domainsService.getDomain(domainId);
+      String dateStr =
           LocalDateUtil.format(domain.getCreatedOn(), user.getLocale(), user.getTimezone());
       domain.setCreatedOn(LocalDateUtil.parse(dateStr, user.getLocale(), user.getTimezone()));
       return domain;
@@ -410,11 +400,11 @@ public class LinkedDomainController {
     List<IDomain> domains = null;
     List<IDomain> finalDomainList = null;
     List<IDomainLink> domainList = null;
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
 
     Long currentDomain = reqDomainId;
     if (currentDomain == null) {
-      currentDomain = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
+      currentDomain = sUser.getCurrentDomainId();
     }
 
     Locale locale = sUser.getLocale();
@@ -448,8 +438,7 @@ public class LinkedDomainController {
       Long linkedDomainId = null;
       finalDomainList = new ArrayList<>(domains.size());
       try {
-        DomainsService ds = Services.getService(DomainsServiceImpl.class);
-        domainList = ds.getDomainLinks(currentDomain, 1, -1);
+        domainList = domainsService.getDomainLinks(currentDomain, 1, -1);
       } catch (Exception e) {
         xLogger.severe("unable to get the get the details for domainId", e);
       }

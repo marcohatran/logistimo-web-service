@@ -27,11 +27,10 @@ package com.logistimo.reports.generators;
 import com.google.visualization.datasource.datatable.DataTable;
 
 import com.logistimo.config.models.DomainConfig;
+import com.logistimo.logger.XLog;
 import com.logistimo.reports.ReportsConstants;
 import com.logistimo.reports.entity.slices.ISlice;
-
 import com.logistimo.services.Resources;
-import com.logistimo.logger.XLog;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;

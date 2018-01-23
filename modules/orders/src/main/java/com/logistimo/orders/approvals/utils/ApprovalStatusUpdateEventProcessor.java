@@ -28,12 +28,12 @@ import com.logistimo.communications.MessageHandlingException;
 import com.logistimo.communications.service.MessageService;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.logger.XLog;
 import com.logistimo.orders.approvals.dao.IApprovalsDao;
-import com.logistimo.orders.approvals.dao.impl.ApprovalsDao;
 import com.logistimo.orders.entity.IOrder;
 import com.logistimo.orders.entity.approvals.IOrderApprovalMapping;
 import com.logistimo.orders.service.OrderManagementService;
@@ -41,7 +41,6 @@ import com.logistimo.orders.service.impl.OrderManagementServiceImpl;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
@@ -74,7 +73,6 @@ public class ApprovalStatusUpdateEventProcessor {
   private static final String CANCELLED_STATUS = "cn";
   private static final String EXPIRED_STATUS = "ex";
 
-  private IApprovalsDao approvalDao = new ApprovalsDao();
   private static Meter jmsMeter = MetricsUtil
       .getMeter(ApprovalStatusUpdateEventProcessor.class, "approvalStatusUpdateEventMeter");
   private static final XLog xLogger = XLog.getLog(ApprovalStatusUpdateEventProcessor.class);
@@ -87,15 +85,15 @@ public class ApprovalStatusUpdateEventProcessor {
 
     if (ORDER.equalsIgnoreCase(event.getType())) {
 
-      UsersService usersService = Services.getService(UsersServiceImpl.class);
-      EntitiesService entitiesService = Services.getService(EntitiesServiceImpl.class);
-      OrderManagementService orderManagementService = Services.getService(
+      UsersService usersService = StaticApplicationContext.getBean(UsersServiceImpl.class);
+      EntitiesService entitiesService = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
+      OrderManagementService orderManagementService = StaticApplicationContext.getBean(
           OrderManagementServiceImpl.class);
       PersistenceManager pm = PMF.get().getPersistenceManager();
 
       try {
-
-        IOrderApprovalMapping orderApprovalMapping = approvalDao
+        IApprovalsDao approvalsDao = StaticApplicationContext.getBean(IApprovalsDao.class);
+        IOrderApprovalMapping orderApprovalMapping = approvalsDao
             .getOrderApprovalMapping(event.getApprovalId());
         IOrder order = orderManagementService.getOrder(orderApprovalMapping.getOrderId());
 
@@ -105,7 +103,7 @@ public class ApprovalStatusUpdateEventProcessor {
         }
 
         pm.makePersistent(order);
-        approvalDao.updateOrderApprovalStatus(Long.valueOf(event.getTypeId()),
+        approvalsDao.updateOrderApprovalStatus(Long.valueOf(event.getTypeId()),
             event.getApprovalId(), event.getStatus());
 
         IUserAccount requester = usersService.getUserAccount(event.getRequesterId());

@@ -85,7 +85,7 @@ module.exports = function(grunt, ref) {
                 options: {
                     test: function(){ return grunt.config('custom') != undefined; }
                 },
-                ifTrue: ['copy:favicon', 'copy:helpFavicon', 'string-replace:custom']
+                ifTrue: ['copy:favicon', 'string-replace:custom']
 
             },
             rb: {
@@ -120,10 +120,6 @@ module.exports = function(grunt, ref) {
             favicon: {
                 src: 'target/grunt/webapp/<%= custom.favicon%>',
                 dest: 'target/grunt/webapp/titleiconnew.ico'
-            },
-            helpFavicon: {
-                src: 'target/grunt/webapp/s/help/themes/Tabs/images/<%= custom.favicon%>',
-                dest: 'target/grunt/webapp/s/help/themes/Tabs/images/titleiconnew.ico'
             },
             resource : {
                 expand: true,
@@ -554,9 +550,6 @@ module.exports = function(grunt, ref) {
                     "target/grunt/webapp/v2/views/menu.html": "target/grunt/webapp/v2/views/menu.html",
                     "target/grunt/webapp/v2/views/login.html": "target/grunt/webapp/v2/views/login.html",
                     "target/grunt/webapp/v2/views/forgot-password.html": "target/grunt/webapp/v2/views/forgot-password.html",
-                    "target/grunt/webapp/s/board.jsp": "target/grunt/webapp/s/board.jsp",
-                    "target/grunt/webapp/s/pageheader.jsp": "target/grunt/webapp/s/pageheader.jsp",
-                    "target/grunt/webapp/s/orders/demandboard_public.jsp": "target/grunt/webapp/s/orders/demandboard_public.jsp",
                     "target/grunt/resources/samaanguru.properties": "<%= baseurl %>/modules/common/src/main/resources/samaanguru.properties",
                     "target/grunt/webapp/v2/password-request.html": "target/grunt/webapp/v2/password-request.html"
                 }
@@ -628,18 +621,6 @@ module.exports = function(grunt, ref) {
                     {
                         src: 'target/grunt/webapp/v2/views/forgot-password.html',
                         dest: 'target/grunt/webapp/v2/views/forgot-password.html'
-                    },
-                    {
-                        src: 'target/grunt/webapp/s/board.jsp',
-                        dest: 'target/grunt/webapp/s/board.jsp'
-                    },
-                    {
-                        src: 'target/grunt/webapp/s/pageheader.jsp',
-                        dest: 'target/grunt/webapp/s/pageheader.jsp'
-                    },
-                    {
-                        src: 'target/grunt/webapp/s/orders/demandboard_public.jsp',
-                        dest: 'target/grunt/webapp/s/orders/demandboard_public.jsp'
                     },
                     {
                         src: 'target/grunt/webapp/v2/js/app-controller.js',

@@ -23,18 +23,18 @@
 
 package com.logistimo.api.servlets.mobile.builders;
 
+import com.logistimo.constants.Constants;
+import com.logistimo.conversations.models.MessageModel;
+import com.logistimo.conversations.service.ConversationService;
+import com.logistimo.logger.XLog;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
-import com.logistimo.services.Services;
-
-import com.logistimo.conversations.service.ConversationService;
-import com.logistimo.conversations.service.impl.ConversationServiceImpl;
 import com.logistimo.proto.MobileConversationModel;
 import com.logistimo.proto.MobileMessageModel;
-import com.logistimo.constants.Constants;
 import com.logistimo.utils.LocalDateUtil;
-import com.logistimo.logger.XLog;
-import com.logistimo.conversations.models.MessageModel;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -45,19 +45,26 @@ import java.util.Locale;
 /**
  * Created by vani on 04/11/16.
  */
+@Component
 public class MobileConversationBuilder {
   public static final String CONVERSATION_OBJECT_TYPE_ORDER = "ORDER";
   public static final String CONVERSATION_OBJECT_TYPE_SHIPMENT = "SHIPMENT";
   private static final XLog xLogger = XLog.getLog(MobileOrderBuilder.class);
 
+  private ConversationService conversationService;
+
+  @Autowired
+  public void setConversationService(ConversationService conversationService) {
+    this.conversationService = conversationService;
+  }
+
   public MobileConversationModel build(String objectType, String objectId, Locale locale,
                                        String timezone) {
     MobileConversationModel mcm = new MobileConversationModel();
     try {
-      ConversationService cs = Services.getService(ConversationServiceImpl.class);
       PageParams pp = new PageParams(0, 10);
-      Results res = cs.getMessages(null, objectType, objectId, pp);
-      Results allMsgs = cs.getMessagesCount(null, objectType, objectId, pp);
+      Results res = conversationService.getMessages(null, objectType, objectId, pp);
+      Results allMsgs = conversationService.getMessagesCount(null, objectType, objectId, pp);
       int count = 0;
       if (allMsgs != null) {
         List<MessageModel> fullList = res.getResults();

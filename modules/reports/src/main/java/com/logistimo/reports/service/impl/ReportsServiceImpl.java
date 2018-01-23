@@ -43,12 +43,11 @@ import com.logistimo.reports.generators.ReportDataGenerator;
 import com.logistimo.reports.generators.ReportDataGeneratorFactory;
 import com.logistimo.reports.models.DomainCounts;
 import com.logistimo.reports.service.ReportsService;
-import com.logistimo.services.Service;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.cache.MemcacheService;
-import com.logistimo.services.impl.ServiceImpl;
 import com.logistimo.utils.LocalDateUtil;
+
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -59,7 +58,9 @@ import java.util.Map;
 /**
  * @author arun
  */
-public class ReportsServiceImpl extends ServiceImpl implements ReportsService {
+
+@Service(value = "com.logistimo.reports.service.impl.ReportsServiceImpl")
+public class ReportsServiceImpl implements ReportsService {
 
   private static final XLog xLogger = XLog.getLog(ReportsServiceImpl.class);
 
@@ -94,24 +95,6 @@ public class ReportsServiceImpl extends ServiceImpl implements ReportsService {
       // Added this block because getReportData does not throw ReportingDataException in StockEventDataGenerator.
       throw new ServiceException(e.getMessage());
     }
-  }
-
-  public void destroy() throws ServiceException {
-    xLogger.fine("Entering destroy");
-    // TODO Auto-generated method stub
-    xLogger.fine("Exiting destroy");
-  }
-
-  public Class<? extends Service> getInterface() {
-    xLogger.fine("Entering getInterface");
-    xLogger.fine("Exiting getInterface");
-    return ReportsServiceImpl.class;
-  }
-
-  public void init(Services services) throws ServiceException {
-    xLogger.fine("Entering init");
-    // TODO Auto-generated method stub
-    xLogger.fine("Exiting init");
   }
 
   /**

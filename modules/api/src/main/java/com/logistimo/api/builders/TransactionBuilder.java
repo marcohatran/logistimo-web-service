@@ -28,26 +28,23 @@ import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.Constants;
 import com.logistimo.domains.entity.IDomain;
 import com.logistimo.domains.service.DomainsService;
-import com.logistimo.domains.service.impl.DomainsServiceImpl;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
-import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.inventory.TransactionUtil;
 import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.materials.service.MaterialCatalogService;
-import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
 import com.logistimo.pagination.Results;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
 import com.logistimo.utils.CommonUtils;
 import com.logistimo.utils.LocalDateUtil;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -55,49 +52,63 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+@Component
 public class TransactionBuilder {
   private static final XLog xLogger = XLog.getLog(TransactionBuilder.class);
+
+  private EntitiesService entitiesService;
+  private UsersService usersService;
+  private MaterialCatalogService materialCatalogService;
+  private DomainsService domainsService;
+
+  @Autowired
+  public void setEntitiesService(EntitiesService entitiesService) {
+    this.entitiesService = entitiesService;
+  }
+
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
+  }
+
+  @Autowired
+  public void setMaterialCatalogService(MaterialCatalogService materialCatalogService) {
+    this.materialCatalogService = materialCatalogService;
+  }
+
+  @Autowired
+  public void setDomainsService(DomainsService domainsService) {
+    this.domainsService = domainsService;
+  }
 
   public Results buildTransactions(Results trnResults, SecureUserDetails user, Long domainId)
       throws ServiceException {
     List transactions = trnResults.getResults();
     List<TransactionModel> finalTransactions = new ArrayList<>(
         transactions.size());
-    EntitiesService as = Services.getService(
-        EntitiesServiceImpl.class, user.getLocale());
-    UsersService us = Services.getService(
-        UsersServiceImpl.class, user.getLocale());
-    MaterialCatalogService mc = Services.getService(
-        MaterialCatalogServiceImpl.class, user.getLocale());
     DomainConfig dc = DomainConfig.getInstance(domainId);
-    DomainsService ds = Services.getService(DomainsServiceImpl.class);
     Map<Long, String> domainNames = new HashMap<>(1);
     int itemCount = trnResults.getOffset() + 1;
     for (Object trn : transactions) {
-      TransactionModel model = buildTransaction((ITransaction) trn, as, us,
-          mc, dc, user.getLocale(), user.getTimezone(), itemCount, ds, domainNames);
+      TransactionModel model = buildTransaction((ITransaction) trn,
+          dc, user.getLocale(), user.getTimezone(), itemCount, domainNames);
       if (model != null) {
         finalTransactions.add(model);
         itemCount++;
       }
     }
-    Results finalResults = new Results(finalTransactions,
-        trnResults.getCursor(), trnResults.getNumFound(),
+    return new Results<>(finalTransactions, trnResults.getCursor(), trnResults.getNumFound(),
         trnResults.getOffset());
-    return finalResults;
   }
 
   public TransactionModel buildTransaction(ITransaction trn,
-                                           EntitiesService accountsService,
-                                           UsersService usersService,
-                                           MaterialCatalogService materialCatalogService,
                                            DomainConfig domainConfig, Locale locale,
-                                           String timezone, int itemCount, DomainsService ds,
+                                           String timezone, int itemCount,
                                            Map<Long, String> domainNames) {
     TransactionModel model = new TransactionModel();
     model.mid = trn.getMaterialId();
     model.sno = itemCount;
-    IMaterial material = null;
+    IMaterial material;
     try {
       material = materialCatalogService.getMaterial(trn.getMaterialId());
     } catch (ServiceException e) {
@@ -113,7 +124,7 @@ public class TransactionBuilder {
     model.lkId = trn.getLinkedKioskId();
     if (model.lkId != null) {
       try {
-        IKiosk k1 = accountsService.getKiosk(model.lkId, false);
+        IKiosk k1 = entitiesService.getKiosk(model.lkId, false);
         if (k1 != null) {
           model.lknm = k1.getName();
           model.lklt = k1.getLatitude();
@@ -128,7 +139,7 @@ public class TransactionBuilder {
     model.eid = trn.getKioskId();
     if (model.lkId == null || (model.lklt == 0 && model.lkln == 0)) {
       try {
-        IKiosk k = accountsService.getKiosk(model.eid, false);
+        IKiosk k = entitiesService.getKiosk(model.eid, false);
         model.lklt = k.getLatitude();
         model.lkln = k.getLongitude();
         model.enMap = true;
@@ -137,7 +148,7 @@ public class TransactionBuilder {
       }
     }
     try {
-      IKiosk k = accountsService.getKiosk(model.eid, false);
+      IKiosk k = entitiesService.getKiosk(model.eid, false);
       model.enm = (model.eid != null ? k.getName() : "");
       model.eadd = CommonUtils.getAddress(k.getCity(), k.getTaluk(), k.getDistrict(), k.getState());
     } catch (ServiceException e) {
@@ -172,7 +183,7 @@ public class TransactionBuilder {
     if (domainName == null) {
       IDomain domain = null;
       try {
-        domain = ds.getDomain(trn.getDomainId());
+        domain = domainsService.getDomain(trn.getDomainId());
       } catch (Exception e) {
         xLogger.warn("Error while fetching Domain {0}", trn.getDomainId());
       }

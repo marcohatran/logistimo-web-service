@@ -29,15 +29,15 @@ package com.logistimo.config.models;
 import com.logistimo.config.entity.IConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
 import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
+import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
+import com.logistimo.logger.XLog;
+import com.logistimo.services.ObjectNotFoundException;
+import com.logistimo.services.ServiceException;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import com.logistimo.services.ObjectNotFoundException;
-import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
-import com.logistimo.constants.Constants;
-import com.logistimo.logger.XLog;
 
 /**
  * Represents SMS Gateway and related configuration
@@ -67,7 +67,8 @@ public class SMSConfig {
   // Get an instance of the SMS config
   public static SMSConfig getInstance() throws ConfigurationException {
     try {
-      ConfigurationMgmtService cms = Services.getService(ConfigurationMgmtServiceImpl.class);
+      ConfigurationMgmtService cms = StaticApplicationContext
+          .getBean(ConfigurationMgmtServiceImpl.class);
       IConfig c = cms.getConfiguration(IConfig.SMSCONFIG);
       return new SMSConfig(c.getConfig());
     } catch (ObjectNotFoundException e) {
@@ -92,7 +93,7 @@ public class SMSConfig {
   // Get the providers for a given country and direction (incoming/outgoing)
   // NOTE: "incoming" is from user to our service; "outgoing" is from our service to the user
   public String getProviderId(String countryCode, String direction) {
-    JSONObject countryJson = null;
+    JSONObject countryJson;
     try {
       try {
         countryJson = countryConfig.getJSONObject(countryCode);

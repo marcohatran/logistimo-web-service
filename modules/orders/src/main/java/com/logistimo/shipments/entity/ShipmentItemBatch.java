@@ -23,8 +23,8 @@
 
 package com.logistimo.shipments.entity;
 
-import com.logistimo.utils.BigUtil;
 import com.logistimo.logger.XLog;
+import com.logistimo.utils.BigUtil;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;

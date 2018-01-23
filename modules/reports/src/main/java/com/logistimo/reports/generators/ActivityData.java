@@ -32,10 +32,9 @@ import com.google.visualization.datasource.datatable.TableRow;
 import com.google.visualization.datasource.datatable.value.DateValue;
 import com.google.visualization.datasource.datatable.value.ValueType;
 
-import com.logistimo.reports.entity.slices.ISlice;
-
-import com.logistimo.utils.BigUtil;
 import com.logistimo.logger.XLog;
+import com.logistimo.reports.entity.slices.ISlice;
+import com.logistimo.utils.BigUtil;
 
 import java.util.Calendar;
 import java.util.Date;

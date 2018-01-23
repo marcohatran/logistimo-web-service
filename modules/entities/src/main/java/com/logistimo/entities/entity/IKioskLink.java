@@ -24,7 +24,6 @@
 package com.logistimo.entities.entity;
 
 import com.logistimo.domains.ICrossDomain;
-import com.logistimo.entities.entity.IUserToKiosk;
 
 import java.math.BigDecimal;
 import java.util.Date;

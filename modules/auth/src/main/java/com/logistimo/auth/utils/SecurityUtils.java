@@ -25,7 +25,6 @@ package com.logistimo.auth.utils;
 
 
 import com.logistimo.auth.SecurityConstants;
-import com.logistimo.auth.SecurityMgr;
 import com.logistimo.auth.SecurityUtil;
 import com.logistimo.config.models.AssetSystemConfig;
 import com.logistimo.config.models.ConfigurationException;
@@ -58,11 +57,6 @@ public class SecurityUtils {
 
   public static Long getDomainId() {
     return getCurrentDomainId();
-
-  }
-
-  public static SecureUserDetails getUserDetails(HttpServletRequest request) {
-    return SecurityMgr.getUserDetails(request.getSession());
   }
 
   public static String getReqCookieUserDomain(HttpServletRequest req) {
@@ -140,6 +134,10 @@ public class SecurityUtils {
 
   public static Locale getLocale() {
     return getUserDetails().getLocale();
+  }
+
+  public static String getTimezone() {
+    return getUserDetails().getTimezone();
   }
 
   public static Long getUserSourceDomainId() {

@@ -24,9 +24,9 @@
 package com.logistimo.exports.handlers;
 
 import com.logistimo.config.models.DomainConfig;
-import com.logistimo.config.models.FieldsConfig;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
@@ -41,7 +41,6 @@ import com.logistimo.orders.entity.IOrder;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.tags.TagUtil;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
@@ -73,16 +72,12 @@ public class OrderExportHandler implements IExportHandler {
   }
 
   public String toCSV(Locale locale, String timezone, DomainConfig dc, String type) {
-    FieldsConfig fc = null;
-    if (dc != null) {
-      fc = dc.getOrderFields();
-    }
-
     try {
       // Get services
-      EntitiesService as = Services.getService(EntitiesServiceImpl.class);
-      UsersService usersService = Services.getService(UsersServiceImpl.class);
-      MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
+      EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
+      UsersService usersService = StaticApplicationContext.getBean(UsersServiceImpl.class);
+      MaterialCatalogService mcs = StaticApplicationContext.getBean(
+          MaterialCatalogServiceImpl.class);
       IKiosk c = as.getKiosk(order.getKioskId(), false);
       IKiosk v = null;
       try {
@@ -94,12 +89,12 @@ public class OrderExportHandler implements IExportHandler {
       }
 
       StringBuilder csv = new StringBuilder();
-      StringBuilder orderDetSb = getOrderDetailsSb(locale, timezone, c, v);
+      StringBuilder orderDetSb = getOrderDetailsSb(locale, c, v);
       StringBuilder accSb = getAccountingSb(dc);
       StringBuilder orPrSb = getOrderPricingSb(dc);
-      StringBuilder timeSb = getTimeSb(dc);
-      StringBuilder locationSb = getLocationSb(dc, c, locale);
-      StringBuilder tagSb = getTagSb(dc);
+      StringBuilder timeSb = getTimeSb();
+      StringBuilder locationSb = getLocationSb(c, locale);
+      StringBuilder tagSb = getTagSb();
       StringBuilder crUpSb = getCreatedUpdatedSb(usersService, timezone);
 
       // Iterate over items and get the itemSb
@@ -179,7 +174,7 @@ public class OrderExportHandler implements IExportHandler {
     }
   }
 
-  private StringBuilder getOrderDetailsSb(Locale locale, String timezone, IKiosk c, IKiosk v) {
+  private StringBuilder getOrderDetailsSb(Locale locale, IKiosk c, IKiosk v) {
 
     String oid = String.valueOf(order.getIdString());
     String status = OrderUtils.getStatusDisplay(order.getStatus(), locale);
@@ -266,7 +261,7 @@ public class OrderExportHandler implements IExportHandler {
     return accSb;
   }
 
-  StringBuilder getTimeSb(DomainConfig dc) {
+  StringBuilder getTimeSb() {
     StringBuilder timeSb = new StringBuilder();
     timeSb.append(String.format("%.2f", order.getProcessingTimeInHours()))
         .append(CharacterConstants.COMMA)
@@ -274,7 +269,7 @@ public class OrderExportHandler implements IExportHandler {
     return timeSb;
   }
 
-  StringBuilder getLocationSb(DomainConfig dc, IKiosk c, Locale locale) {
+  StringBuilder getLocationSb(IKiosk c, Locale locale) {
     StringBuilder locationSb = new StringBuilder();
     locationSb.append(c.getCountry() != null ? StringEscapeUtils.escapeCsv(c.getCountry())
         : CharacterConstants.EMPTY).append(CharacterConstants.COMMA)
@@ -299,7 +294,7 @@ public class OrderExportHandler implements IExportHandler {
     return locationSb;
   }
 
-  private StringBuilder getTagSb(DomainConfig dc) {
+  private StringBuilder getTagSb() {
     StringBuilder tagSb = new StringBuilder();
     List<String> ktgs = order.getTags(TagUtil.TYPE_ENTITY);
     List<String> otgs = order.getTags(TagUtil.TYPE_ORDER);
@@ -368,7 +363,6 @@ public class OrderExportHandler implements IExportHandler {
 
   @Override
   public String getCSVHeader(Locale locale, DomainConfig dc, String type) {
-    FieldsConfig fc = null;
     ResourceBundle messages = Resources.get().getBundle("Messages", locale);
     ResourceBundle jsMessages = Resources.get().getBundle("JSMessages", locale);
     StringBuilder headerSb = new StringBuilder();

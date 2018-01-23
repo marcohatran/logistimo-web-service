@@ -29,11 +29,9 @@ package com.logistimo.inventory.optimization.service.impl;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.optimization.service.InventoryOptimizerService;
-import com.logistimo.logger.XLog;
-import com.logistimo.services.Service;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
-import com.logistimo.services.impl.ServiceImpl;
+
+import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.List;
@@ -45,10 +43,8 @@ import javax.jdo.PersistenceManager;
  * @author arun
  *         Implementation of an inventory optimizer
  */
-public class InventoryOptimizerServiceVanillaImpl extends ServiceImpl
-    implements InventoryOptimizerService {
-
-  private static final XLog xLogger = XLog.getLog(InventoryOptimizerServiceVanillaImpl.class);
+@Service
+public class InventoryOptimizerServiceVanillaImpl implements InventoryOptimizerService {
 
   /**
    * Optimize for the list of inventories specified
@@ -65,24 +61,6 @@ public class InventoryOptimizerServiceVanillaImpl extends ServiceImpl
   @SuppressWarnings("unchecked")
   public Date getLastRunDate(String runType) {
     return new Date();
-  }
-
-  public void destroy() throws ServiceException {
-    xLogger.fine("Entering destroy");
-    // TODO Auto-generated method stub
-    xLogger.fine("Exiting destroy");
-  }
-
-  public Class<? extends Service> getInterface() {
-    xLogger.fine("Entering getInterface");
-    xLogger.fine("Exiting getInterface");
-    return InventoryOptimizerServiceVanillaImpl.class;
-  }
-
-  public void init(Services services) throws ServiceException {
-    xLogger.fine("Entering init");
-    // TODO Auto-generated method stub
-    xLogger.fine("Exiting init");
   }
 
 }

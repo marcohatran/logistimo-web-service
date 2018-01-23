@@ -24,11 +24,10 @@
 package com.logistimo.services.mapper;
 
 import com.logistimo.AppFactory;
-import com.logistimo.services.mapred.IMapredService;
-import com.logistimo.services.taskqueue.TaskService;
-
 import com.logistimo.exception.TaskSchedulingException;
 import com.logistimo.logger.XLog;
+import com.logistimo.services.mapred.IMapredService;
+import com.logistimo.services.taskqueue.TaskService;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -28,14 +28,56 @@
     <parent>
         <artifactId>logistimo</artifactId>
         <groupId>com.logistimo</groupId>
-        <version>2.6.2</version>
+        <version>2.7.0</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
+
+    <version>${build.version}</version>
+
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>logistimo-collaboration</artifactId>
 
+    <properties>
+        <build.version>2.7.0</build.version>
+    </properties>
+
     <dependencies>
+        <dependency>
+            <groupId>com.logistimo</groupId>
+            <artifactId>logistimo-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.logistimo</groupId>
+            <artifactId>logistimo-users</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.logistimo</groupId>
+            <artifactId>logistimo-config</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.logistimo</groupId>
+            <artifactId>logistimo-communications</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.logistimo</groupId>
+            <artifactId>logistimo-entities</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.logistimo</groupId>
+            <artifactId>logistimo-media</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.logistimo</groupId>
+            <artifactId>collaboration-core</artifactId>
+            <version>0.1.0</version>
+        </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
@@ -73,49 +115,9 @@
             <scope>runtime</scope>
         </dependency>
         <dependency>
-            <groupId>javax.ws.rs</groupId>
-            <artifactId>javax.ws.rs-api</artifactId>
-            <version>2.1-m05</version>
-        </dependency>
-        <dependency>
             <groupId>org.codehaus.jackson</groupId>
             <artifactId>jackson-core-asl</artifactId>
             <version>1.9.13</version>
-        </dependency>
-        <dependency>
-            <groupId>com.logistimo</groupId>
-            <artifactId>logistimo-common</artifactId>
-            <version>2.6.2</version>
-        </dependency>
-        <dependency>
-            <groupId>com.logistimo</groupId>
-            <artifactId>logistimo-users</artifactId>
-            <version>2.6.2</version>
-        </dependency>
-        <dependency>
-            <groupId>com.logistimo</groupId>
-            <artifactId>logistimo-config</artifactId>
-            <version>2.6.2</version>
-        </dependency>
-        <dependency>
-            <groupId>com.logistimo</groupId>
-            <artifactId>logistimo-communications</artifactId>
-            <version>2.6.2</version>
-        </dependency>
-        <dependency>
-            <groupId>com.logistimo</groupId>
-            <artifactId>logistimo-entities</artifactId>
-            <version>2.6.2</version>
-        </dependency>
-        <dependency>
-            <groupId>com.logistimo</groupId>
-            <artifactId>logistimo-media</artifactId>
-            <version>2.6.2</version>
-        </dependency>
-        <dependency>
-            <groupId>com.logistimo</groupId>
-            <artifactId>collaboration-core</artifactId>
-            <version>0.1.0</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>

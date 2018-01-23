@@ -25,7 +25,6 @@ package com.logistimo.materials.entity;
 
 import com.logistimo.domains.ISubDomain;
 import com.logistimo.domains.ISuperDomain;
-import com.logistimo.events.IEvents;
 
 import java.math.BigDecimal;
 import java.util.Date;

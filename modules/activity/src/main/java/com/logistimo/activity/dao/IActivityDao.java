@@ -24,7 +24,6 @@
 package com.logistimo.activity.dao;
 
 import com.logistimo.activity.entity.IActivity;
-
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
 import com.logistimo.services.ServiceException;

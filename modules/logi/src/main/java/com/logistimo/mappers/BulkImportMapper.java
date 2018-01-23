@@ -29,14 +29,13 @@ package com.logistimo.mappers;
 
 import com.logistimo.bulkuploads.BulkImportMapperContants;
 import com.logistimo.bulkuploads.BulkUploadMgr;
+import com.logistimo.entity.UploadedMsgLog;
+import com.logistimo.logger.XLog;
 import com.logistimo.services.blobstore.BlobstoreRecordKey;
 import com.logistimo.services.mapper.DatastoreMutationPool;
 import com.logistimo.services.mapper.Entity;
 import com.logistimo.services.mapper.GenericMapper;
 import com.logistimo.services.mapper.Key;
-
-import com.logistimo.entity.UploadedMsgLog;
-import com.logistimo.logger.XLog;
 
 import java.util.Date;
 

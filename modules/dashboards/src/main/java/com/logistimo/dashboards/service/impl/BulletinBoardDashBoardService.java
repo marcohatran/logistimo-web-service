@@ -29,7 +29,8 @@ import com.logistimo.dashboards.service.IBulletinBoardDashBoardService;
 import com.logistimo.logger.XLog;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.impl.PMF;
-import com.logistimo.services.impl.ServiceImpl;
+
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
@@ -39,8 +40,8 @@ import javax.jdo.Query;
 /**
  * Created by naveensnair on 13/11/17.
  */
-public class BulletinBoardDashBoardService extends ServiceImpl
-    implements IBulletinBoardDashBoardService {
+@Service
+public class BulletinBoardDashBoardService implements IBulletinBoardDashBoardService {
 
   private static final XLog xLogger = XLog.getLog(IBulletinBoardDashBoardService.class);
 

@@ -39,17 +39,16 @@ import com.logistimo.logger.XLog;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.UploadService;
 import com.logistimo.services.blobstore.BlobInfo;
 import com.logistimo.services.blobstore.BlobstoreService;
-import com.logistimo.services.impl.UploadServiceImpl;
 import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.NumberUtil;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -64,240 +63,24 @@ import javax.servlet.http.HttpServletRequest;
 /**
  * Created by naveensnair on 26/12/14.
  */
+@Component
 public class CustomReportsBuilder {
 
   public static final XLog xLogger = XLog.getLog(DomainConfigController.class);
 
   BlobstoreService blobstoreService = AppFactory.get().getBlobstoreService();
 
-  public CustomReportsConfig.Config updateCustomReportsConfiguration(CustomReportsConfigModel model,
-                                                                     BlobstoreService blobstoreService) {
+  private UsersService usersService;
+  private UploadService uploadService;
 
-    CustomReportsConfig.Config config = new CustomReportsConfig.Config();
-
-    updateTemplateInfo(model, config);
-    updateInventorySheet(model, config);
-    updateUsersSheet(model, config);
-    updateEntitiesSheet(model, config);
-    updateMaterialsSheet(model, config);
-    updateOrdersSheet(model, config);
-    updateTransactionSheet(model, config);
-    updateTransactionCountSheet(model, config);
-    updateInventoryTrendsSheet(model, config);
-    updateHistoricalInventorySnapShotSheetName(model, config);
-    updateFrequency(model, config);
-    updateMailingAddress(model, config);
-
-    return config;
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
   }
 
-  public void updateTemplateInfo(CustomReportsConfigModel model,
-                                 CustomReportsConfig.Config config) {
-    String templateName = "";
-    String description = "";
-    if (model.tn != null) {
-      templateName = model.tn;
-    }
-    if (model.dsc != null) {
-      description = model.dsc;
-    }
-
-    config.fileName = templateName;
-
-  }
-
-  public void updateInventorySheet(CustomReportsConfigModel model,
-                                   CustomReportsConfig.Config config) {
-    if (model.invsn != null && !model.invsn.isEmpty()) {
-      if (model.ib) {
-        Map<String, String> invBatchSheetDataMap = new HashMap<String, String>();
-        invBatchSheetDataMap.put(CustomReportsConfig.SHEETNAME, model.invsn);
-        config.typeSheetDataMap
-            .put(CustomReportConstants.TYPE_INVENTORYBATCH, invBatchSheetDataMap);
-      } else {
-        Map<String, String> invSheetDataMap = new HashMap<String, String>();
-        invSheetDataMap.put(CustomReportsConfig.SHEETNAME, model.invsn);
-        config.typeSheetDataMap.put(CustomReportConstants.TYPE_INVENTORY, invSheetDataMap);
-      }
-    }
-  }
-
-  public void updateUsersSheet(CustomReportsConfigModel model, CustomReportsConfig.Config config) {
-    if (model.usn != null && !model.usn.isEmpty()) {
-      Map<String, String> usersSheetDataMap = new HashMap<String, String>();
-      usersSheetDataMap.put(CustomReportsConfig.SHEETNAME, model.usn);
-      config.typeSheetDataMap.put(CustomReportConstants.TYPE_USERS, usersSheetDataMap);
-    }
-  }
-
-  public void updateEntitiesSheet(CustomReportsConfigModel model,
-                                  CustomReportsConfig.Config config) {
-    if (model.ksn != null && !model.ksn.isEmpty()) {
-      Map<String, String> entitiesSheetDataMap = new HashMap<String, String>();
-      entitiesSheetDataMap.put(CustomReportsConfig.SHEETNAME, model.ksn);
-      config.typeSheetDataMap.put(CustomReportConstants.TYPE_ENTITIES, entitiesSheetDataMap);
-    }
-  }
-
-  public void updateMaterialsSheet(CustomReportsConfigModel model,
-                                   CustomReportsConfig.Config config) {
-    if (model.msn != null && !model.msn.isEmpty()) {
-      Map<String, String> materialsSheetDataMap = new HashMap<String, String>();
-      materialsSheetDataMap.put(CustomReportsConfig.SHEETNAME, model.msn);
-      config.typeSheetDataMap.put(CustomReportConstants.TYPE_MATERIALS, materialsSheetDataMap);
-    }
-  }
-
-  public void updateOrdersSheet(CustomReportsConfigModel model, CustomReportsConfig.Config config) {
-    if (model.osn != null && !model.osn.isEmpty()) {
-      Map<String, String> ordersSheetDataMap = new HashMap<String, String>();
-      ordersSheetDataMap.put(CustomReportsConfig.SHEETNAME, model.osn);
-      if (model.ogf) {
-        ordersSheetDataMap
-            .put(CustomReportsConfig.DATA_DURATION_SAMEAS_REPGENFREQ, CustomReportsConfig.TRUE);
-        if (model.od != null && !model.od.isEmpty()) {
-          ordersSheetDataMap.put(CustomReportsConfig.DATA_DURATION, model.od);
-        }
-      } else {
-        ordersSheetDataMap
-            .put(CustomReportsConfig.DATA_DURATION_SAMEAS_REPGENFREQ, CustomReportsConfig.FALSE);
-      }
-
-      config.typeSheetDataMap.put(CustomReportConstants.TYPE_ORDERS, ordersSheetDataMap);
-    }
-  }
-
-  public void updateTransactionSheet(CustomReportsConfigModel model,
-                                     CustomReportsConfig.Config config) {
-    if (model.tsn != null && !model.tsn.isEmpty()) {
-      Map<String, String> transactionsSheetDataMap = new HashMap<String, String>();
-      transactionsSheetDataMap.put(CustomReportsConfig.SHEETNAME, model.tsn);
-      if (model.tgf) {
-        transactionsSheetDataMap
-            .put(CustomReportsConfig.DATA_DURATION_SAMEAS_REPGENFREQ, CustomReportsConfig.TRUE);
-      } else {
-        transactionsSheetDataMap
-            .put(CustomReportsConfig.DATA_DURATION_SAMEAS_REPGENFREQ, CustomReportsConfig.FALSE);
-        if (model.td != null && !model.td.isEmpty()) {
-          transactionsSheetDataMap.put(CustomReportsConfig.DATA_DURATION, model.td);
-        }
-      }
-      config.typeSheetDataMap
-          .put(CustomReportConstants.TYPE_TRANSACTIONS, transactionsSheetDataMap);
-    }
-  }
-
-  public void updateTransactionCountSheet(CustomReportsConfigModel model,
-                                          CustomReportsConfig.Config config) {
-    if (model.tcsn != null && model.tcsn.isEmpty()) {
-      Map<String, String> transactionCountsSheetDataMap = new HashMap<String, String>();
-      transactionCountsSheetDataMap.put(CustomReportsConfig.SHEETNAME, model.tcsn);
-      if (model.tcrgf) {
-        transactionCountsSheetDataMap
-            .put(CustomReportsConfig.DATA_DURATION_SAMEAS_REPGENFREQ, CustomReportsConfig.TRUE);
-      } else {
-        transactionCountsSheetDataMap
-            .put(CustomReportsConfig.DATA_DURATION_SAMEAS_REPGENFREQ, CustomReportsConfig.FALSE);
-        if (model.tcd != null && model.tcd.isEmpty()) {
-          transactionCountsSheetDataMap.put(CustomReportsConfig.DATA_DURATION, model.tcd);
-        }
-      }
-      if (model.tct != null && model.tct.isEmpty()) {
-        transactionCountsSheetDataMap.put(CustomReportsConfig.AGGREGATEFREQ, model.tct);
-      }
-      if (model.tce != null && model.tce.isEmpty()) {
-        transactionCountsSheetDataMap.put(CustomReportsConfig.FILTERBY, model.tce);
-      }
-
-      config.typeSheetDataMap
-          .put(CustomReportConstants.TYPE_TRANSACTIONCOUNTS, transactionCountsSheetDataMap);
-    }
-  }
-
-  public void updateInventoryTrendsSheet(CustomReportsConfigModel model,
-                                         CustomReportsConfig.Config config) {
-    if (model.itsn != null && model.itsn.isEmpty()) {
-      Map<String, String> inventoryTrendsSheetDataMap = new HashMap<String, String>();
-      inventoryTrendsSheetDataMap.put(CustomReportsConfig.SHEETNAME, model.itsn);
-      if (model.itrgf) {
-        inventoryTrendsSheetDataMap
-            .put(CustomReportsConfig.DATA_DURATION_SAMEAS_REPGENFREQ, CustomReportsConfig.TRUE);
-      } else {
-        inventoryTrendsSheetDataMap
-            .put(CustomReportsConfig.DATA_DURATION_SAMEAS_REPGENFREQ, CustomReportsConfig.FALSE);
-        if (model.itd != null && model.itd.isEmpty()) {
-          inventoryTrendsSheetDataMap.put(CustomReportsConfig.DATA_DURATION, model.itd);
-        }
-      }
-      if (model.itt != null && model.itt.isEmpty()) {
-        inventoryTrendsSheetDataMap.put(CustomReportsConfig.AGGREGATEFREQ, model.itt);
-      }
-      if (model.ite != null && model.ite.isEmpty()) {
-        inventoryTrendsSheetDataMap.put(CustomReportsConfig.FILTERBY, model.ite);
-      }
-
-      config.typeSheetDataMap
-          .put(CustomReportConstants.TYPE_INVENTORYTRENDS, inventoryTrendsSheetDataMap);
-    }
-  }
-
-  public void updateHistoricalInventorySnapShotSheetName(CustomReportsConfigModel model,
-                                                         CustomReportsConfig.Config config) {
-    if (model.hsn != null && !model.hsn.isEmpty()) {
-      Map<String, String> historicalInvSnapshotSheetDataMap = new HashMap<String, String>();
-      historicalInvSnapshotSheetDataMap.put(CustomReportsConfig.SHEETNAME, model.hsn);
-      if (model.hd != null && model.hd.isEmpty()) {
-        historicalInvSnapshotSheetDataMap.put(CustomReportsConfig.DATA_DURATION, model.hd);
-      }
-      config.typeSheetDataMap.put(CustomReportConstants.TYPE_HISTORICAL_INVENTORYSNAPSHOT,
-          historicalInvSnapshotSheetDataMap);
-    }
-  }
-
-  public void updateFrequency(CustomReportsConfigModel model, CustomReportsConfig.Config config) {
-    if (model.rgt != null && !model.rgt.isEmpty()) {
-
-      if (CustomReportConstants.FREQUENCY_DAILY.equalsIgnoreCase(model.rgt)) {
-        if (model.rgth != null && !model.rgth.isEmpty()) {
-          config.dailyTime = model.rgth;
-        }
-      } else if (CustomReportConstants.FREQUENCY_WEEKLY.equalsIgnoreCase(model.rgt)) {
-        if (model.rgtw != null && !model.rgtw.isEmpty()) {
-          config.dayOfWeek = Integer.parseInt(model.rgtw);
-        }
-      } else if (CustomReportConstants.FREQUENCY_MONTHLY.equalsIgnoreCase(model.rgt)) {
-        if (model.rgtm != null && model.rgtm.isEmpty()) {
-          config.dayOfMonth = Integer.parseInt(model.rgtm);
-        }
-      }
-    }
-  }
-
-  public void updateMailingAddress(CustomReportsConfigModel model,
-                                   CustomReportsConfig.Config config) {
-    if (model.mn != null && model.mn.isEmpty()) {
-      config.managers = buildMailers(model.mn);
-    }
-    if (model.an != null && model.an.isEmpty()) {
-      config.users = buildMailers(model.an);
-    }
-    if (model.sn != null && model.sn.isEmpty()) {
-      config.superUsers = buildMailers(model.sn);
-    }
-    config.extUsers = model.exusrs;
-    config.usrTgs = model.usrTgs;
-
-  }
-
-  public List<String> buildMailers(List<UserModel> users) {
-    List<String> mailers = new ArrayList<String>();
-    if (users.size() > 0) {
-      for (UserModel user : users) {
-        mailers.add(user.id);
-      }
-    }
-
-    return mailers;
+  @Autowired
+  public void setUploadService(UploadService uploadService) {
+    this.uploadService = uploadService;
   }
 
   // Create/update an existing an Uploaded object.
@@ -316,23 +99,18 @@ public class CustomReportsBuilder {
         BlobInfo blobInfo = blobstoreService.getBlobInfo(blobKey);
         String fileName = blobInfo.getFilename();
         // Create an uploaded object
-        IUploaded uploaded = null;
-        UploadService svc = null;
-        String
-            uploadedFileName =
+        String uploadedFileName =
             CustomReportsConfig.Config.getFileNameWithDomainId(templateName, domainId);
         // Generate a 5 digit random number and append it to the uploadedFileName, just to make sure that the uploaded key is unique
         uploadedFileName += NumberUtil.generateFiveDigitRandomNumber();
 
-        String
-            uploadedKey =
+        String uploadedKey =
             JDOUtils.createUploadedKey(uploadedFileName, CustomReportsConfig.VERSION,
                 Constants.LANG_DEFAULT);
         boolean isUploadedNew = false;
+        IUploaded uploaded;
         try {
-          svc = Services.getService(UploadServiceImpl.class);
-          uploaded = svc.getUploaded(uploadedKey);
-          // Found an older upload, remove the older blob
+          uploaded = uploadService.getUploaded(uploadedKey);
           try {
             blobstoreService.remove(uploaded.getBlobKey());
           } catch (Exception e) {
@@ -361,9 +139,9 @@ public class CustomReportsBuilder {
         try {
           // Persist upload metadata
           if (isUploadedNew) {
-            svc.addNewUpload(uploaded);
+            uploadService.addNewUpload(uploaded);
           } else {
-            svc.updateUploaded(uploaded);
+            uploadService.updateUploaded(uploaded);
           }
           return uploaded;
         } catch (Exception e) {
@@ -408,33 +186,33 @@ public class CustomReportsBuilder {
     }
     if (model.invsn != null && !model.invsn.isEmpty()) {
       if (model.ib) {
-        Map<String, String> invBatchSheetDataMap = new HashMap<String, String>();
+        Map<String, String> invBatchSheetDataMap = new HashMap<>();
         invBatchSheetDataMap.put(CustomReportsConfig.SHEETNAME, model.invsn);
         config.typeSheetDataMap
             .put(CustomReportConstants.TYPE_INVENTORYBATCH, invBatchSheetDataMap);
       } else {
-        Map<String, String> invSheetDataMap = new HashMap<String, String>();
+        Map<String, String> invSheetDataMap = new HashMap<>();
         invSheetDataMap.put(CustomReportsConfig.SHEETNAME, model.invsn);
         config.typeSheetDataMap.put(CustomReportConstants.TYPE_INVENTORY, invSheetDataMap);
       }
     }
     if (model.usn != null && !model.usn.isEmpty()) {
-      Map<String, String> usersSheetDataMap = new HashMap<String, String>();
+      Map<String, String> usersSheetDataMap = new HashMap<>();
       usersSheetDataMap.put(CustomReportsConfig.SHEETNAME, model.usn);
       config.typeSheetDataMap.put(CustomReportConstants.TYPE_USERS, usersSheetDataMap);
     }
     if (model.ksn != null && !model.ksn.isEmpty()) {
-      Map<String, String> entitiesSheetDataMap = new HashMap<String, String>();
+      Map<String, String> entitiesSheetDataMap = new HashMap<>();
       entitiesSheetDataMap.put(CustomReportsConfig.SHEETNAME, model.ksn);
       config.typeSheetDataMap.put(CustomReportConstants.TYPE_ENTITIES, entitiesSheetDataMap);
     }
     if (model.msn != null && !model.msn.isEmpty()) {
-      Map<String, String> materialsSheetDataMap = new HashMap<String, String>();
+      Map<String, String> materialsSheetDataMap = new HashMap<>();
       materialsSheetDataMap.put(CustomReportsConfig.SHEETNAME, model.msn);
       config.typeSheetDataMap.put(CustomReportConstants.TYPE_MATERIALS, materialsSheetDataMap);
     }
     if (model.osn != null && !model.osn.isEmpty()) {
-      Map<String, String> ordersSheetDataMap = new HashMap<String, String>();
+      Map<String, String> ordersSheetDataMap = new HashMap<>();
       ordersSheetDataMap.put(CustomReportsConfig.SHEETNAME, model.osn);
       // Add data duration data to the ordersSheetDataMap
       if (!model.ogf) {
@@ -451,7 +229,7 @@ public class CustomReportsBuilder {
       config.typeSheetDataMap.put(CustomReportConstants.TYPE_ORDERS, ordersSheetDataMap);
     }
     if (model.tsn != null && !model.tsn.isEmpty()) {
-      Map<String, String> transactionsSheetDataMap = new HashMap<String, String>();
+      Map<String, String> transactionsSheetDataMap = new HashMap<>();
       transactionsSheetDataMap.put(CustomReportsConfig.SHEETNAME, model.tsn);
       // Add data duration data to the transactionsSheetDataMap
       if (!model.tgf) {
@@ -469,7 +247,7 @@ public class CustomReportsBuilder {
           .put(CustomReportConstants.TYPE_TRANSACTIONS, transactionsSheetDataMap);
     }
     if (model.mtsn != null && !model.mtsn.isEmpty()) {
-      Map<String, String> manualTransactionsSheetDataMap = new HashMap<String, String>();
+      Map<String, String> manualTransactionsSheetDataMap = new HashMap<>();
       manualTransactionsSheetDataMap.put(CustomReportsConfig.SHEETNAME, model.mtsn);
       // Add data duration data to the transactionsSheetDataMap
       if (!model.mtgf) {
@@ -487,7 +265,7 @@ public class CustomReportsBuilder {
           .put(CustomReportConstants.TYPE_MANUALTRANSACTIONS, manualTransactionsSheetDataMap);
     }
     if (model.tcsn != null && !model.tcsn.isEmpty()) {
-      Map<String, String> transactioncountsSheetDataMap = new HashMap<String, String>();
+      Map<String, String> transactioncountsSheetDataMap = new HashMap<>();
       transactioncountsSheetDataMap.put(CustomReportsConfig.SHEETNAME, model.tcsn);
       // Add data duration data to the transactioncountsSheetDataMap
       if (!model.tcrgf) {
@@ -513,7 +291,7 @@ public class CustomReportsBuilder {
       xLogger.fine("typeSheetDataMap: {0}", config.typeSheetDataMap);
     }
     if (model.itsn != null && !model.itsn.isEmpty()) {
-      Map<String, String> inventorytrendsSheetDataMap = new HashMap<String, String>();
+      Map<String, String> inventorytrendsSheetDataMap = new HashMap<>();
       inventorytrendsSheetDataMap.put(CustomReportsConfig.SHEETNAME, model.itsn);
       // Add data duration data to the inventorytrendsSheetDataMap
       if (!model.itrgf) {
@@ -539,7 +317,7 @@ public class CustomReportsBuilder {
       xLogger.fine("typeSheetDataMap: {0}", config.typeSheetDataMap);
     }
     if (model.hsn != null && !model.hsn.isEmpty()) {
-      Map<String, String> historicalInvSnapshotSheetDataMap = new HashMap<String, String>();
+      Map<String, String> historicalInvSnapshotSheetDataMap = new HashMap<>();
       historicalInvSnapshotSheetDataMap.put(CustomReportsConfig.SHEETNAME, model.hsn);
       if (model.hd != null && !model.hd.isEmpty()) {
         historicalInvSnapshotSheetDataMap.put(CustomReportsConfig.DATA_DURATION, model.hd);
@@ -581,7 +359,7 @@ public class CustomReportsBuilder {
 
     xLogger.fine("managerUsersStr: {0}", model.mn);
     if (model.mn != null && !model.mn.isEmpty()) {
-      List<String> managers = new ArrayList<String>();
+      List<String> managers = new ArrayList<>();
       for (UserModel m : model.mn) {
         managers.add(m.id);
       }
@@ -592,7 +370,7 @@ public class CustomReportsBuilder {
     }
     xLogger.fine("adminUsersStr: {0}", model.an);
     if (model.an != null && !model.an.isEmpty()) {
-      List<String> administrators = new ArrayList<String>();
+      List<String> administrators = new ArrayList<>();
       for (UserModel a : model.an) {
         administrators.add(a.id);
       }
@@ -601,7 +379,7 @@ public class CustomReportsBuilder {
       }
     }
     if (model.sn != null && !model.sn.isEmpty()) {
-      List<String> superusers = new ArrayList<String>();
+      List<String> superusers = new ArrayList<>();
       for (UserModel s : model.sn) {
         superusers.add(s.id);
       }
@@ -645,8 +423,7 @@ public class CustomReportsBuilder {
       model.lastUpdated =
           LocalDateUtil.format(new Date(Long.parseLong(val.get(1))), locale, timezone);
       try {
-        UsersService as = Services.getService(UsersServiceImpl.class, locale);
-        model.fn = as.getUserAccount(model.createdBy).getFullName();
+        model.fn = usersService.getUserAccount(model.createdBy).getFullName();
       } catch (Exception e) {
         //ignore.. get for display only.
       }
@@ -659,16 +436,11 @@ public class CustomReportsBuilder {
     boolean success = false;
     xLogger.fine("Entering removeUploadedObject");
     if (uploadedKey != null && !uploadedKey.isEmpty()) {
-      UploadService svc;
-
       try {
-        svc = Services.getService(UploadServiceImpl.class);
-        IUploaded uploaded = svc.getUploaded(uploadedKey);
-        // Remove the blob from the blobstore.
+        IUploaded uploaded = uploadService.getUploaded(uploadedKey);
         String blobKeyStr = uploaded.getBlobKey();
         blobstoreService.remove(blobKeyStr);
-        // Now remove the uploaded object
-        svc.removeUploaded(uploadedKey);
+        uploadService.removeUploaded(uploadedKey);
         success = true;
       } catch (ObjectNotFoundException onfe) {
         xLogger.warn("Uploaded object not found, ignoring.. " + onfe.getMessage());
@@ -703,15 +475,13 @@ public class CustomReportsBuilder {
         if (c.typeSheetDataMap.containsKey(CustomReportConstants.TYPE_INVENTORYBATCH) ||
             c.typeSheetDataMap.containsKey(CustomReportConstants.TYPE_INVENTORY)) {
           if (c.typeSheetDataMap.containsKey(CustomReportConstants.TYPE_INVENTORYBATCH)) {
-            Map<String, String> invBatchSheetDataMap = new HashMap<String, String>();
-            invBatchSheetDataMap =
+            Map<String, String> invBatchSheetDataMap =
                 c.typeSheetDataMap.get(CustomReportConstants.TYPE_INVENTORYBATCH);
             model.invsn = invBatchSheetDataMap.get(CustomReportsConfig.SHEETNAME);
             model.ib = true;
           } else {
             if (c.typeSheetDataMap.containsKey(CustomReportConstants.TYPE_INVENTORY)) {
-              Map<String, String> invSheetDataMap = new HashMap<String, String>();
-              invSheetDataMap = c.typeSheetDataMap.get(CustomReportConstants.TYPE_INVENTORY);
+              Map<String, String> invSheetDataMap = c.typeSheetDataMap.get(CustomReportConstants.TYPE_INVENTORY);
               model.invsn = invSheetDataMap.get(CustomReportsConfig.SHEETNAME);
               model.ib = false;
             }
@@ -719,26 +489,22 @@ public class CustomReportsBuilder {
         }
 
         if (c.typeSheetDataMap.containsKey(CustomReportConstants.TYPE_USERS)) {
-          Map<String, String> usersSheetDataMap = new HashMap<String, String>();
-          usersSheetDataMap = c.typeSheetDataMap.get(CustomReportConstants.TYPE_USERS);
+          Map<String, String> usersSheetDataMap = c.typeSheetDataMap.get(CustomReportConstants.TYPE_USERS);
           model.usn = usersSheetDataMap.get(CustomReportsConfig.SHEETNAME);
         }
 
         if (c.typeSheetDataMap.containsKey(CustomReportConstants.TYPE_ENTITIES)) {
-          Map<String, String> entitiesSheetDataMap = new HashMap<String, String>();
-          entitiesSheetDataMap = c.typeSheetDataMap.get(CustomReportConstants.TYPE_ENTITIES);
+          Map<String, String> entitiesSheetDataMap = c.typeSheetDataMap.get(CustomReportConstants.TYPE_ENTITIES);
           model.ksn = entitiesSheetDataMap.get(CustomReportsConfig.SHEETNAME);
         }
 
         if (c.typeSheetDataMap.containsKey(CustomReportConstants.TYPE_MATERIALS)) {
-          Map<String, String> materialsSheetDataMap = new HashMap<String, String>();
-          materialsSheetDataMap = c.typeSheetDataMap.get(CustomReportConstants.TYPE_MATERIALS);
+          Map<String, String> materialsSheetDataMap = c.typeSheetDataMap.get(CustomReportConstants.TYPE_MATERIALS);
           model.msn = materialsSheetDataMap.get(CustomReportsConfig.SHEETNAME);
         }
 
         if (c.typeSheetDataMap.containsKey(CustomReportConstants.TYPE_ORDERS)) {
-          Map<String, String> ordersSheetDataMap = new HashMap<String, String>();
-          ordersSheetDataMap = c.typeSheetDataMap.get(CustomReportConstants.TYPE_ORDERS);
+          Map<String, String> ordersSheetDataMap = c.typeSheetDataMap.get(CustomReportConstants.TYPE_ORDERS);
           if (ordersSheetDataMap.containsKey(CustomReportsConfig.DATA_DURATION_SAMEAS_REPGENFREQ)) {
             if (ordersSheetDataMap.get(CustomReportsConfig.DATA_DURATION_SAMEAS_REPGENFREQ)
                 .equalsIgnoreCase(CustomReportsConfig.TRUE)) {
@@ -753,8 +519,7 @@ public class CustomReportsBuilder {
         }
 
         if (c.typeSheetDataMap.containsKey(CustomReportConstants.TYPE_TRANSACTIONS)) {
-          Map<String, String> transactionsSheetDataMap = new HashMap<String, String>();
-          transactionsSheetDataMap =
+          Map<String, String> transactionsSheetDataMap =
               c.typeSheetDataMap.get(CustomReportConstants.TYPE_TRANSACTIONS);
           if (transactionsSheetDataMap
               .containsKey(CustomReportsConfig.DATA_DURATION_SAMEAS_REPGENFREQ)) {
@@ -771,8 +536,7 @@ public class CustomReportsBuilder {
         }
 
         if (c.typeSheetDataMap.containsKey(CustomReportConstants.TYPE_MANUALTRANSACTIONS)) {
-          Map<String, String> manualTransactionsSheetDataMap = new HashMap<String, String>();
-          manualTransactionsSheetDataMap =
+          Map<String, String> manualTransactionsSheetDataMap =
               c.typeSheetDataMap.get(CustomReportConstants.TYPE_MANUALTRANSACTIONS);
           if (manualTransactionsSheetDataMap
               .containsKey(CustomReportsConfig.DATA_DURATION_SAMEAS_REPGENFREQ)) {
@@ -790,9 +554,8 @@ public class CustomReportsBuilder {
         }
 
         if (c.typeSheetDataMap.containsKey(CustomReportConstants.TYPE_TRANSACTIONCOUNTS)) {
-          Map<String, String> transactionCountsSheetDataMap = new HashMap<String, String>();
           if (c.typeSheetDataMap.containsKey(CustomReportConstants.TYPE_TRANSACTIONCOUNTS)) {
-            transactionCountsSheetDataMap =
+            Map<String, String> transactionCountsSheetDataMap =
                 c.typeSheetDataMap.get(CustomReportConstants.TYPE_TRANSACTIONCOUNTS);
             if (transactionCountsSheetDataMap
                 .get(CustomReportsConfig.DATA_DURATION_SAMEAS_REPGENFREQ)
@@ -816,9 +579,8 @@ public class CustomReportsBuilder {
         }
 
         if (c.typeSheetDataMap.containsKey(CustomReportConstants.TYPE_INVENTORYTRENDS)) {
-          Map<String, String> inventoryTrendsSheetDataMap = new HashMap<String, String>();
           if (c.typeSheetDataMap.containsKey(CustomReportConstants.TYPE_INVENTORYTRENDS)) {
-            inventoryTrendsSheetDataMap =
+            Map<String, String> inventoryTrendsSheetDataMap =
                 c.typeSheetDataMap.get(CustomReportConstants.TYPE_INVENTORYTRENDS);
             if (inventoryTrendsSheetDataMap.get(CustomReportsConfig.DATA_DURATION_SAMEAS_REPGENFREQ)
                 .equalsIgnoreCase(CustomReportsConfig.TRUE)) {
@@ -841,10 +603,8 @@ public class CustomReportsBuilder {
 
         }
 
-        if (c.typeSheetDataMap
-            .containsKey(CustomReportConstants.TYPE_HISTORICAL_INVENTORYSNAPSHOT)) {
-          Map<String, String> historicalInvSnapshotSheetDataMap = new HashMap<String, String>();
-          historicalInvSnapshotSheetDataMap =
+        if (c.typeSheetDataMap.containsKey(CustomReportConstants.TYPE_HISTORICAL_INVENTORYSNAPSHOT)) {
+          Map<String, String> historicalInvSnapshotSheetDataMap =
               c.typeSheetDataMap.get(CustomReportConstants.TYPE_HISTORICAL_INVENTORYSNAPSHOT);
           model.hsn = historicalInvSnapshotSheetDataMap.get(CustomReportsConfig.SHEETNAME);
           model.hd = historicalInvSnapshotSheetDataMap.get(CustomReportsConfig.DATA_DURATION);

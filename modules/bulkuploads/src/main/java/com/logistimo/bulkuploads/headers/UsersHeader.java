@@ -23,7 +23,6 @@
 
 package com.logistimo.bulkuploads.headers;
 
-import com.logistimo.bulkuploads.BulkUploadMgr;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.services.Resources;
 import com.logistimo.utils.FieldLimits;

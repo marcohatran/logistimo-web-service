@@ -33,9 +33,7 @@ import com.logistimo.api.models.TransactionDomainConfigModel;
 import com.logistimo.api.models.TransactionModel;
 import com.logistimo.api.util.DedupUtil;
 import com.logistimo.auth.SecurityConstants;
-import com.logistimo.auth.SecurityMgr;
 import com.logistimo.auth.utils.SecurityUtils;
-import com.logistimo.auth.utils.SessionMgr;
 import com.logistimo.config.models.ActualTransConfig;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.InventoryConfig;
@@ -48,18 +46,15 @@ import com.logistimo.entities.auth.EntityAuthoriser;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.entity.IKioskLink;
 import com.logistimo.entities.service.EntitiesService;
-import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.exception.BadRequestException;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.inventory.TransactionUtil;
 import com.logistimo.inventory.dao.ITransDao;
-import com.logistimo.inventory.dao.impl.TransDao;
 import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.inventory.service.InventoryManagementService;
-import com.logistimo.inventory.service.impl.InventoryManagementServiceImpl;
 import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IMaterial;
-import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
+import com.logistimo.materials.service.MaterialCatalogService;
 import com.logistimo.pagination.Navigator;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
@@ -68,15 +63,14 @@ import com.logistimo.services.DuplicationException;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.cache.MemcacheService;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.MsgUtil;
 import com.logistimo.utils.StringUtil;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -104,8 +98,48 @@ import javax.servlet.http.HttpServletRequest;
 public class TransactionsController {
 
   private static final XLog xLogger = XLog.getLog(TransactionsController.class);
-  TransactionBuilder builder = new TransactionBuilder();
-  ITransDao transDao =new TransDao();
+  private TransactionBuilder transactionBuilder;
+  private MarkerBuilder markerBuilder;
+  private ITransDao transDao;
+  private InventoryManagementService inventoryManagementService;
+  private EntitiesService entitiesService;
+  private UsersService usersService;
+  private MaterialCatalogService materialCatalogService;
+
+  @Autowired
+  public void setTransactionBuilder(TransactionBuilder transactionBuilder) {
+    this.transactionBuilder = transactionBuilder;
+  }
+
+  @Autowired
+  public void setMarkerBuilder(MarkerBuilder markerBuilder) {
+    this.markerBuilder = markerBuilder;
+  }
+
+  @Autowired
+  public void setTransDao(ITransDao transDao) {
+    this.transDao = transDao;
+  }
+
+  @Autowired
+  public void setInventoryManagementService(InventoryManagementService inventoryManagementService) {
+    this.inventoryManagementService = inventoryManagementService;
+  }
+
+  @Autowired
+  public void setEntitiesService(EntitiesService entitiesService) {
+    this.entitiesService = entitiesService;
+  }
+
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
+  }
+
+  @Autowired
+  public void setMaterialCatalogService(MaterialCatalogService materialCatalogService) {
+    this.materialCatalogService = materialCatalogService;
+  }
 
   @RequestMapping("/entity/{entityId}")
   public
@@ -175,9 +209,9 @@ public class TransactionsController {
                                           String from, String to, int offset, int size, String ktag,
                                           String mtag, String type, Long entityId, Long lEntityId,
                                           Long materialId, String bId, boolean atd, String reason) {
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
-    Locale locale = user.getLocale();
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), user.getUsername());
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
+    Locale locale = sUser.getLocale();
+    Long domainId = sUser.getCurrentDomainId();
     DomainConfig dc = DomainConfig.getInstance(domainId);
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     try {
@@ -196,34 +230,23 @@ public class TransactionsController {
           xLogger.warn("Exception when parsing start date " + to, e);
         }
       }
-      Navigator
-          navigator =
+      Navigator navigator =
           new Navigator(request.getSession(), "TransactionsController.getAndBuildTransactions",
               offset, size, "dummy", 0);
       PageParams pageParams = new PageParams(navigator.getCursor(offset), offset, size);
-      InventoryManagementService
-          ims =
-          Services.getService(InventoryManagementServiceImpl.class, user.getLocale());
-      EntitiesService
-          accountsService =
-          Services.getService(EntitiesServiceImpl.class, user.getLocale());
       Results trnResults;
       List<Long> kioskIds = null;
-      if (SecurityConstants.ROLE_SERVICEMANAGER.equals(user.getRole())) {
-        kioskIds =
-            accountsService.getKioskIdsForUser(user.getUsername(), null, null)
-                .getResults(); // TODO pagination ?
-        if (kioskIds == null || kioskIds.isEmpty()) {
-          return new Results(null, null, 0, offset);
+      if (SecurityConstants.ROLE_SERVICEMANAGER.equals(sUser.getRole())) {
+        kioskIds = entitiesService.getKioskIdsForUser(sUser.getUsername(), null, null).getResults();
+        if (kioskIds.isEmpty()) {
+          return new Results();
         }
       }
-      trnResults =
-          ims.getInventoryTransactions(startDate, endDate,
-              SessionMgr.getCurrentDomain(request.getSession(),
-                  user.getUsername()), entityId, materialId, type, lEntityId, ktag, mtag, kioskIds,
+      trnResults = inventoryManagementService.getInventoryTransactions(startDate, endDate,
+              domainId, entityId, materialId, type, lEntityId, ktag, mtag, kioskIds,
               pageParams, bId, atd, reason);
       trnResults.setOffset(offset);
-      return builder.buildTransactions(trnResults, user, SecurityUtils.getDomainId());
+      return transactionBuilder.buildTransactions(trnResults, sUser, SecurityUtils.getDomainId());
     } catch (ServiceException e) {
       xLogger.severe("Error in fetching transactions : {0}", e);
       throw new InvalidServiceException(backendMessages.getString("transactions.fetch.error"));
@@ -234,7 +257,7 @@ public class TransactionsController {
   public
   @ResponseBody
   String undoTransactions(@RequestBody String[] tids, HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale;
     if (sUser != null) {
       locale = sUser.getLocale();
@@ -255,10 +278,7 @@ public class TransactionsController {
     }
     List<String> tidsL = StringUtil.getList(tids);
     try {
-      InventoryManagementService
-          ims =
-          Services.getService(InventoryManagementServiceImpl.class, locale);
-      List<ITransaction> errorList = ims.undoTransactions(tidsL);
+      List<ITransaction> errorList = inventoryManagementService.undoTransactions(tidsL);
       int errors = errorList.size();
       int successes = tidsL.size() - errors;
       if (successes > 0 && errors == 0) {
@@ -277,18 +297,17 @@ public class TransactionsController {
   @RequestMapping(value = "/transconfig/", method = RequestMethod.GET)
   public
   @ResponseBody
-  TransactionDomainConfigModel getTransactionConfig(@RequestParam Long kioskId,
-                                                    HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
+  TransactionDomainConfigModel getTransactionConfig(@RequestParam Long kioskId) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     String userId = sUser.getUsername();
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), userId);
+    Long domainId = sUser.getCurrentDomainId();
     String role = sUser.getRole();
     DomainConfig dc = DomainConfig.getInstance(domainId);
     InventoryConfig ic = dc.getInventoryConfig();
     TransactionDomainConfigModel model = new TransactionDomainConfigModel();
     Map<String, String> reasons = ic.getTransReasons();
     model.showCInv = ic.getPermissions() != null && ic.getPermissions().invCustomersVisible;
-    Map<String, List<String>> fReasons = new HashMap<String, List<String>>(reasons.size());
+    Map<String, List<String>> fReasons = new HashMap<>(reasons.size());
     for (String key : reasons.keySet()) {
       String reasonCSV;
       if (ITransaction.TYPE_WASTAGE.equals(key)) {
@@ -302,21 +321,16 @@ public class TransactionsController {
       }
     }
     model.reasons = fReasons;
-    EntitiesService as = null;
     try {
-      as = Services.getService(EntitiesServiceImpl.class);
-      UsersService us = Services.getService(UsersServiceImpl.class);
-      List
-          cust =
-          as.getKioskLinks(kioskId, IKioskLink.TYPE_CUSTOMER, null, null, null).getResults();
-      model.customers = constructKioskMap(as, cust);
-      List vend = as.getKioskLinks(kioskId, IKioskLink.TYPE_VENDOR, null, null, null).getResults();
-      model.vendors = constructKioskMap(as, vend);
+      List cust = entitiesService.getKioskLinks(kioskId, IKioskLink.TYPE_CUSTOMER, null, null, null).getResults();
+      model.customers = constructKioskMap(cust);
+      List vend = entitiesService.getKioskLinks(kioskId, IKioskLink.TYPE_VENDOR, null, null, null).getResults();
+      model.vendors = constructKioskMap(vend);
       model.isMan = SecurityConstants.ROLE_SERVICEMANAGER.equals(role);
 //            if (!model.isMan) {
-      IUserAccount u = us.getUserAccount(userId);
-      List dest = as.getKiosks(u, domainId, null, null, null).getResults();
-      model.dest = constructKioskMap(as, dest);
+      IUserAccount u = usersService.getUserAccount(userId);
+      List dest = entitiesService.getKiosks(u, domainId, null, null, null).getResults();
+      model.dest = constructKioskMap(dest);
 //            }
       ActualTransConfig atci = ic.getActualTransConfigByType(ITransaction.TYPE_ISSUE);
       model.atdi = atci != null ? atci.getTy() : ActualTransConfig.ACTUAL_NONE;
@@ -335,9 +349,9 @@ public class TransactionsController {
 
       PageParams pageParams = new PageParams(1);
       model.noc =
-          as.getKioskLinks(kioskId, IKioskLink.TYPE_CUSTOMER, null, null, pageParams).getNumFound();
+          entitiesService.getKioskLinks(kioskId, IKioskLink.TYPE_CUSTOMER, null, null, pageParams).getNumFound();
       model.nov =
-          as.getKioskLinks(kioskId, IKioskLink.TYPE_VENDOR, null, null, pageParams).getNumFound();
+          entitiesService.getKioskLinks(kioskId, IKioskLink.TYPE_VENDOR, null, null, pageParams).getNumFound();
     } catch (ServiceException | ObjectNotFoundException e) {
       xLogger.severe("Error in getting Transaction Domain Config: {0}", e);
     }
@@ -346,14 +360,14 @@ public class TransactionsController {
     return model;
   }
 
-  private List<TransactionModel> constructKioskMap(EntitiesService as, List cust)
+  private List<TransactionModel> constructKioskMap(List cust)
       throws ServiceException {
     List<TransactionModel> kioskList = new ArrayList<>(cust.size());
     for (Object o : cust) {
       IKiosk kiosk = null;
       if (o instanceof IKioskLink) {
         try {
-          kiosk = as.getKiosk(((IKioskLink) o).getLinkedKioskId(), false);
+          kiosk = entitiesService.getKiosk(((IKioskLink) o).getLinkedKioskId(), false);
         } catch (Exception e) {
           xLogger.warn("Kiosk not found: {0}", ((IKioskLink) o).getLinkedKioskId());
           continue;
@@ -369,10 +383,8 @@ public class TransactionsController {
   @RequestMapping(value = "/reasons", method = RequestMethod.GET)
   public
   @ResponseBody
-  List<String> getReasons(@RequestParam String type, String[] tags, HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
-    String userId = sUser.getUsername();
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), userId);
+  List<String> getReasons(@RequestParam String type, String[] tags) {
+    Long domainId = SecurityUtils.getCurrentDomainId();
     DomainConfig dc = DomainConfig.getInstance(domainId);
     InventoryConfig ic = dc.getInventoryConfig();
     StringBuilder reasons = new StringBuilder();
@@ -427,11 +439,8 @@ public class TransactionsController {
   @RequestMapping(value = "/matStatus", method = RequestMethod.GET)
   public
   @ResponseBody
-  List<String> getMatStatus(@RequestParam String type, Boolean ts, HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
-    String userId = sUser.getUsername();
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), userId);
-    DomainConfig dc = DomainConfig.getInstance(domainId);
+  List<String> getMatStatus(@RequestParam String type, Boolean ts) {
+    DomainConfig dc = DomainConfig.getInstance(SecurityUtils.getCurrentDomainId());
     InventoryConfig ic = dc.getInventoryConfig();
     List<String> statusList = null;
     if (type != null && !type.isEmpty()) {
@@ -468,8 +477,8 @@ public class TransactionsController {
   @RequestMapping(value = "/add/", method = RequestMethod.POST)
   public
   @ResponseBody
-  String addTransaction(@RequestBody Map<String, Object> transaction, HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
+  String addTransaction(@RequestBody Map<String, Object> transaction) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale;
     if (sUser.getLocale() != null) {
       locale = sUser.getLocale();
@@ -478,7 +487,7 @@ public class TransactionsController {
     }
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     String userId = sUser.getUsername();
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), userId);
+    Long domainId = sUser.getCurrentDomainId();
 
     MemcacheService cache = null;
     String signature =
@@ -521,22 +530,15 @@ public class TransactionsController {
     }
     boolean checkBatchMgmt = ITransaction.TYPE_TRANSFER.equals(transType);
     //String reason = (String) transaction.get("reason");
-    EntitiesService as;
     try {
-      MaterialCatalogServiceImpl mcs = null;
       IKiosk kiosk = null;
       IKiosk destKiosk = null;
       if (checkBatchMgmt) {
-        as = Services.getService(EntitiesServiceImpl.class, locale);
-        kiosk = as.getKiosk(kioskId, false);
-        destKiosk = as.getKiosk(linkedKioskId, false);
+        kiosk = entitiesService.getKiosk(kioskId, false);
+        destKiosk = entitiesService.getKiosk(linkedKioskId, false);
         checkBatchMgmt = !kiosk.isBatchMgmtEnabled() && destKiosk.isBatchMgmtEnabled();
-        mcs = Services.getService(MaterialCatalogServiceImpl.class, locale);
       }
-      List<ITransaction> transList = new ArrayList<ITransaction>();
-      InventoryManagementService
-          ims =
-          Services.getService(InventoryManagementServiceImpl.class, locale);
+      List<ITransaction> transList = new ArrayList<>();
       Date now = new Date();
       Date actualTransDate = null;
       if (transMandate && !transaction.containsKey("transactual")) {
@@ -564,7 +566,7 @@ public class TransactionsController {
         }
         // float quantity = Long.parseLong(String.valueOf(materials.get(m)));
         if (checkBatchMgmt) {
-          IMaterial material = mcs.getMaterial(materialId);
+          IMaterial material = materialCatalogService.getMaterial(materialId);
           if (material.isBatchEnabled()) {
             berrorMaterials.add(material.getName());
           }
@@ -626,7 +628,7 @@ public class TransactionsController {
         transList.add(trans);
       }
 
-      List<ITransaction> errors = ims.updateInventoryTransactions(domainId, transList, true);
+      List<ITransaction> errors = inventoryManagementService.updateInventoryTransactions(domainId, transList, true);
       if (errors != null && errors.size() > 0) {
         StringBuilder errorMsg = new StringBuilder();
         for (ITransaction error : errors) {
@@ -679,22 +681,17 @@ public class TransactionsController {
   public
   @ResponseBody
   List<MarkerModel> getActualRoute(@RequestParam String userId, @RequestParam String from,
-                                   @RequestParam String to, HttpServletRequest request) {
+                                   @RequestParam String to) {
     try {
-      SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
-      Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
-      DomainConfig dc = DomainConfig.getInstance(domainId);
-      InventoryManagementService
-          ims =
-          Services.getService(InventoryManagementServiceImpl.class);
+      SecureUserDetails sUser = SecurityUtils.getUserDetails();
+      DomainConfig dc = DomainConfig.getInstance(sUser.getCurrentDomainId());
       Results
           results =
-          ims.getInventoryTransactionsByUser(userId,
+          inventoryManagementService.getInventoryTransactionsByUser(userId,
               LocalDateUtil.parseCustom(from, Constants.DATE_FORMAT_CSV, dc.getTimezone()),
               LocalDateUtil.parseCustom(to, Constants.DATE_FORMAT_CSV, dc.getTimezone()), null);
-      return new MarkerBuilder()
-          .buildMarkerListFromTransactions(results.getResults(), sUser.getLocale(),
-              sUser.getTimezone());
+      return markerBuilder.buildMarkerListFromTransactions(results.getResults(),
+          sUser.getLocale(), sUser.getTimezone());
     } catch (ServiceException | ParseException e) {
       xLogger.severe("Error in reading destination inventories: {0}", e);
     }
@@ -704,18 +701,12 @@ public class TransactionsController {
   @RequestMapping(value = "/checkpermission", method = RequestMethod.GET)
   public
   @ResponseBody
-  Integer checkPermission(@RequestParam String userId, @RequestParam Long kioskId,
-                          HttpServletRequest request) {
+  Integer checkPermission(@RequestParam String userId, @RequestParam Long kioskId) {
     Integer permission = 0;
     try {
-      SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
-      Locale locale = sUser.getLocale();
-      UsersService as = Services.getService(UsersServiceImpl.class, locale);
-      IUserAccount userAccount = as.getUserAccount(userId);
-      permission =
-          EntityAuthoriser
-              .authoriseEntityPerm(kioskId, userAccount.getRole(), userAccount.getLocale(), userId,
-                  userAccount.getDomainId());
+      IUserAccount userAccount = usersService.getUserAccount(userId);
+      permission = EntityAuthoriser.authoriseEntityPerm(kioskId,
+          userAccount.getRole(), userId, userAccount.getDomainId());
     } catch (ServiceException | ObjectNotFoundException e) {
       xLogger.severe("Error in reading user details : {0}", userId);
     }
@@ -724,12 +715,9 @@ public class TransactionsController {
   @RequestMapping(value = "/statusmandatory", method = RequestMethod.GET)
   public
   @ResponseBody
-  Map<String,Boolean> getStatusMandatory(HttpServletRequest request) {
+  Map<String,Boolean> getStatusMandatory() {
     Map<String,Boolean> statusList = new HashMap<>(5);
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
-    String userId = sUser.getUsername();
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), userId);
-    DomainConfig dc = DomainConfig.getInstance(domainId);
+    DomainConfig dc = DomainConfig.getInstance(SecurityUtils.getCurrentDomainId());
     InventoryConfig ic = dc.getInventoryConfig();
     MatStatusConfig msc = ic.getMatStatusConfigByType(ITransaction.TYPE_ISSUE);
     if(msc != null) {

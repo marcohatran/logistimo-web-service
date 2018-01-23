@@ -25,43 +25,24 @@ package com.logistimo.inventory.entity;
 
 import com.google.gson.annotations.Expose;
 
-import com.logistimo.config.models.EventsConfig;
-import com.logistimo.entities.entity.IKiosk;
-import com.logistimo.entities.entity.Kiosk;
-import com.logistimo.entities.service.EntitiesService;
-import com.logistimo.entities.service.EntitiesServiceImpl;
-import com.logistimo.inventory.service.InventoryManagementService;
-import com.logistimo.inventory.service.impl.InventoryManagementServiceImpl;
-import com.logistimo.materials.entity.IMaterial;
-import com.logistimo.materials.entity.Material;
-import com.logistimo.materials.service.MaterialCatalogService;
-import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
+import com.logistimo.config.models.DomainConfig;
+import com.logistimo.constants.Constants;
+import com.logistimo.logger.XLog;
+import com.logistimo.proto.JsonTagsZ;
 import com.logistimo.tags.TagUtil;
 import com.logistimo.tags.entity.ITag;
 import com.logistimo.tags.entity.Tag;
-
-import com.logistimo.config.models.DomainConfig;
-import com.logistimo.services.Resources;
-import com.logistimo.services.Services;
-import com.logistimo.services.impl.PMF;
-import com.logistimo.proto.JsonTagsZ;
 import com.logistimo.utils.BigUtil;
-import com.logistimo.constants.Constants;
 import com.logistimo.utils.LocalDateUtil;
-import com.logistimo.logger.XLog;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.ResourceBundle;
 
-import javax.jdo.PersistenceManager;
 import javax.jdo.annotations.Element;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.IdentityType;

@@ -25,6 +25,7 @@ package com.logistimo.exports.handlers;
 
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
@@ -34,7 +35,6 @@ import com.logistimo.materials.service.MaterialCatalogService;
 import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
 import com.logistimo.mnltransactions.entity.IMnlTransaction;
 import com.logistimo.services.Resources;
-import com.logistimo.services.Services;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.StringUtil;
 
@@ -93,8 +93,9 @@ public class MnlTransExportHandler implements IExportHandler {
   @Override
   public String toCSV(Locale locale, String timezone, DomainConfig dc, String type) {
     try {
-      EntitiesService as = Services.getService(EntitiesServiceImpl.class);
-      MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
+      EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
+      MaterialCatalogService mcs = StaticApplicationContext.getBean(
+          MaterialCatalogServiceImpl.class);
       IKiosk k = as.getKiosk(mnlTransaction.getKioskId(), false);
       IMaterial m = mcs.getMaterial(mnlTransaction.getMaterialId());
       String csv = "\"" + k.getName() + "\",\"" + m.getName() + "\"," +

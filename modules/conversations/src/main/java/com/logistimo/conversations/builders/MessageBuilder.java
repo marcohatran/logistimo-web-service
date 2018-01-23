@@ -23,34 +23,46 @@
 
 package com.logistimo.conversations.builders;
 
+import com.logistimo.constants.Constants;
+import com.logistimo.conversations.entity.IMessage;
 import com.logistimo.conversations.models.MessageModel;
 import com.logistimo.conversations.service.ConversationService;
-import com.logistimo.conversations.service.impl.ConversationServiceImpl;
 import com.logistimo.dao.JDOUtils;
-
-import com.logistimo.conversations.entity.IMessage;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
-import com.logistimo.constants.Constants;
-import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
+import com.logistimo.utils.LocalDateUtil;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.Date;
 
 /**
  * Created by kumargaurav on 05/10/16.
  */
+@Component
 public class MessageBuilder {
+
+  private UsersService usersService;
+  private ConversationService conversationService;
+
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
+  }
+
+  @Autowired
+  public void setConversationService(ConversationService conversationService) {
+    this.conversationService = conversationService;
+  }
 
   public IMessage buildMessage(MessageModel model, String userId, boolean isCreate)
       throws ServiceException {
-    IMessage message = null;
+    IMessage message;
     if (isCreate) {
       message = JDOUtils.createInstance(IMessage.class);
     } else {
-      ConversationService service = Services.getService(ConversationServiceImpl.class);
-      message = service.getMessageById(model.messageId);
+      message = conversationService.getMessageById(model.messageId);
     }
     return buildMessage(message, model, userId, isCreate);
   }
@@ -81,8 +93,7 @@ public class MessageBuilder {
     model.conversationId = message.getConversationId();
     model.userId = message.getUserId();
     try {
-      UsersService as = Services.getService(UsersServiceImpl.class);
-      model.userName = as.getUserAccount(model.userId).getFullName();
+      model.userName = usersService.getUserAccount(model.userId).getFullName();
     } catch (Exception ignored) {
       //Ignore exception
     }

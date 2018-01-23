@@ -38,18 +38,16 @@ import com.logistimo.api.models.InventoryModel;
 import com.logistimo.api.models.InvntryBatchModel;
 import com.logistimo.api.models.MarkerModel;
 import com.logistimo.assets.service.AssetManagementService;
-import com.logistimo.assets.service.impl.AssetManagementServiceImpl;
 import com.logistimo.auth.SecurityConstants;
-import com.logistimo.auth.SecurityMgr;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.auth.utils.SessionMgr;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.auth.EntityAuthoriser;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.models.LocationSuggestionModel;
 import com.logistimo.entities.service.EntitiesService;
-import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.inventory.entity.IInventoryMinMaxLog;
@@ -58,12 +56,9 @@ import com.logistimo.inventory.entity.IInvntryBatch;
 import com.logistimo.inventory.predictions.service.PredictionService;
 import com.logistimo.inventory.predictions.utils.PredictiveUtil;
 import com.logistimo.inventory.service.InventoryManagementService;
-import com.logistimo.inventory.service.impl.InventoryManagementServiceImpl;
 import com.logistimo.logger.XLog;
 import com.logistimo.materials.service.MaterialCatalogService;
-import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
 import com.logistimo.orders.service.OrderManagementService;
-import com.logistimo.orders.service.impl.OrderManagementServiceImpl;
 import com.logistimo.pagination.Navigator;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
@@ -71,22 +66,21 @@ import com.logistimo.reports.ReportsConstants;
 import com.logistimo.reports.entity.slices.ISlice;
 import com.logistimo.reports.generators.ReportData;
 import com.logistimo.reports.service.ReportsService;
-import com.logistimo.reports.service.impl.ReportsServiceImpl;
 import com.logistimo.reports.utils.ReportsUtil;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.utils.ConfigUtil;
 import com.logistimo.users.entity.IUserAccount;
-import com.logistimo.users.service.impl.UsersServiceImpl;
+import com.logistimo.users.service.UsersService;
 import com.logistimo.utils.Counter;
 import com.logistimo.utils.LocalDateUtil;
 
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -112,13 +106,70 @@ public class InventoryController {
 
   public static final String CURSOR_STOCK_EVENTS = "cursorstockevents";
   private static final XLog xLogger = XLog.getLog(InventoryController.class);
-  private static final int
-      PREDICTIVE_HISTORY_DAYS =
+  private static final int PREDICTIVE_HISTORY_DAYS =
       ConfigUtil.getInt("predictive.history.days", 30);
   private static final String ALL = "0";
 
-  InventoryBuilder builder = new InventoryBuilder();
-  FChartBuilder fcBuilder = new FChartBuilder();
+  private InventoryBuilder inventoryBuilder;
+  private FChartBuilder fcBuilder;
+  private MarkerBuilder markerBuilder;
+
+  private InventoryManagementService inventoryManagementService;
+
+  private EntitiesService entitiesService;
+
+  private AssetManagementService assetManagementService;
+
+  private MaterialCatalogService materialCatalogService;
+
+  private UsersService usersService;
+
+  private OrderManagementService orderManagementService;
+
+  @Autowired
+  public void setInventoryBuilder(InventoryBuilder inventoryBuilder) {
+    this.inventoryBuilder = inventoryBuilder;
+  }
+
+  @Autowired
+  public void setFcBuilder(FChartBuilder fcBuilder) {
+    this.fcBuilder = fcBuilder;
+  }
+
+  @Autowired
+  public void setMarkerBuilder(MarkerBuilder markerBuilder) {
+    this.markerBuilder = markerBuilder;
+  }
+
+  @Autowired
+  public void setInventoryManagementService(InventoryManagementService inventoryManagementService) {
+    this.inventoryManagementService = inventoryManagementService;
+  }
+
+  @Autowired
+  public void setEntitiesService(EntitiesService entitiesService) {
+    this.entitiesService = entitiesService;
+  }
+
+  @Autowired
+  public void setAssetManagementService(AssetManagementService assetManagementService) {
+    this.assetManagementService = assetManagementService;
+  }
+
+  @Autowired
+  public void setMaterialCatalogService(MaterialCatalogService materialCatalogService) {
+    this.materialCatalogService = materialCatalogService;
+  }
+
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
+  }
+
+  @Autowired
+  public void setOrderManagementService(OrderManagementService orderManagementService) {
+    this.orderManagementService = orderManagementService;
+  }
 
   @RequestMapping(value = "/entity/{entityId}", method = RequestMethod.GET)
   public
@@ -156,10 +207,6 @@ public class InventoryController {
                 offset, size, "base/test", numTotalInv);
       }
       PageParams pageParams = new PageParams(navigator.getCursor(offset), offset, size);
-      InventoryManagementService
-          ims =
-          Services.getService(InventoryManagementServiceImpl.class, sUser.getLocale());
-
       Results results;
       if (startsWith == null) {
         if (abType != null) {
@@ -174,30 +221,25 @@ public class InventoryController {
           filters.put(ReportsConstants.FILTER_LATEST, true);
           filters.put(ReportsConstants.FILTER_ABNORMALSTOCKVIEW, true);
 
-          ReportsService reportsService = Services.getService(ReportsServiceImpl.class);
-          ReportData
-              reportData =
-              reportsService
-                  .getReportData(ReportsConstants.TYPE_STOCKEVENT, null, null,
-                      ReportsConstants.FREQ_DAILY, filters,
-                      locale, timezone, pageParams, dc, userId);
+          ReportsService reportsService = StaticApplicationContext.getBean(ConfigUtil.get("reports"), ReportsService.class);
+          ReportData reportData = reportsService.getReportData(
+              ReportsConstants.TYPE_STOCKEVENT, null, null,
+              ReportsConstants.FREQ_DAILY, filters, locale, timezone, pageParams, dc, userId);
           results = new Results(reportData.getResults(), null);
           results.setNumFound(reportData.getNumFound());
         } else {
-          results =
-              ims.getInventory(domainId, entityId, null, null, null, null, tag, matType, onlyNZStk, pdos,
-                  null, pageParams);
+          results = inventoryManagementService.getInventory(domainId, entityId, null, null, null,
+              null, tag, matType, onlyNZStk, pdos, null, pageParams);
         }
       } else {
-        results = ims.searchKioskInventory(entityId, tag, startsWith, pageParams);
+        results = inventoryManagementService.searchKioskInventory(entityId, tag, startsWith, pageParams);
         results.setNumFound(-1);
       }
       navigator.setResultParams(results);
       results.setOffset(offset);
-      Results res = builder.buildInventoryModelListAsResult(results, sUser, domainId, entityId);
+      Results res = inventoryBuilder.buildInventoryModelListAsResult(results, domainId, entityId);
       if ("true".equals(fetchTemp) && res.getSize() > 0) {
-        AssetManagementService ams = Services.getService(AssetManagementServiceImpl.class,locale);
-        ((InventoryModel) res.getResults().get(0)).assets = ams.getTemperatureStatus(entityId);
+        ((InventoryModel) res.getResults().get(0)).assets = assetManagementService.getTemperatureStatus(entityId);
       }
       return res;
     } catch (ServiceException e) {
@@ -209,15 +251,10 @@ public class InventoryController {
   @RequestMapping(value = "/domain/{entityId}", method = RequestMethod.GET)
   public
   @ResponseBody
-  InventoryDomainModel getEntityInventoryDomainConfig(@PathVariable Long entityId,
-                                                      HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails();
-    String userId = sUser.getUsername();
-    Locale locale = sUser.getLocale();
+  InventoryDomainModel getEntityInventoryDomainConfig(@PathVariable Long entityId) {
     try {
-      EntitiesService as = Services.getService(EntitiesServiceImpl.class, locale);
-      IKiosk kiosk = as.getKiosk(entityId, false);
-      return builder.buildInventoryDomainModel(request, userId, locale, kiosk);
+      IKiosk kiosk = entitiesService.getKiosk(entityId, false);
+      return inventoryBuilder.buildInventoryDomainModel(kiosk);
     } catch (ServiceException e) {
       throw new InvalidServiceException("");
     }
@@ -226,11 +263,8 @@ public class InventoryController {
   @RequestMapping(value = "/domain/", method = RequestMethod.GET)
   public
   @ResponseBody
-  InventoryDomainModel getInventoryDomainConfig(HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
-    String userId = sUser.getUsername();
-    Locale locale = sUser.getLocale();
-    return builder.buildInventoryDomainModel(request, userId, locale, null);
+  InventoryDomainModel getInventoryDomainConfig() {
+    return inventoryBuilder.buildInventoryDomainModel(null);
   }
 
   private LocationSuggestionModel parseLocation(String loc) {
@@ -266,23 +300,16 @@ public class InventoryController {
     Locale locale = sUser.getLocale();
     int numTotalInv = -1;
     LocationSuggestionModel location = parseLocation(loc);
-    Navigator
-        navigator =
+    Navigator navigator =
         new Navigator(request.getSession(), "InventoryController.getInventoryByMaterial", offset,
             size, "base/test", numTotalInv);
     PageParams pageParams = new PageParams(navigator.getCursor(offset), offset, size);
     try {
-      InventoryManagementService
-          ims =
-          Services.getService(InventoryManagementServiceImpl.class, sUser.getLocale());
       List<Long> kioskIds = null;
       if (SecurityConstants.ROLE_SERVICEMANAGER.equals(sUser.getRole())) {
-        EntitiesService
-            as =
-            Services.getService(EntitiesServiceImpl.class, sUser.getLocale());
-        kioskIds = as.getKioskIdsForUser(userId, null, pageParams).getResults();
+        kioskIds = entitiesService.getKioskIdsForUser(userId, null, pageParams).getResults();
         if (kioskIds == null || kioskIds.isEmpty()) {
-          return new Results(null, null, 0, offset);
+          return new Results<>(null, null, 0, offset);
         }
         if (kioskIds.size() > Constants.MAX_LIST_SIZE_FOR_CONTAINS_QUERY) {
           kioskIds =
@@ -302,22 +329,18 @@ public class InventoryController {
         filters.put(ReportsConstants.FILTER_LATEST, true);
         filters.put(ReportsConstants.FILTER_ABNORMALSTOCKVIEW, true);
 
-        ReportsService reportsService = Services.getService(ReportsServiceImpl.class);
-        ReportData
-            reportData =
-            reportsService
-                .getReportData(ReportsConstants.TYPE_STOCKEVENT, null, null,
-                    ReportsConstants.FREQ_DAILY, filters,
-                    locale, timezone, pageParams, dc, userId);
+        ReportsService reportsService = StaticApplicationContext.getBean(ConfigUtil.get("reports"), ReportsService.class);
+        ReportData reportData = reportsService.getReportData(
+            ReportsConstants.TYPE_STOCKEVENT, null, null, ReportsConstants.FREQ_DAILY, filters,
+            locale, timezone, pageParams, dc, userId);
         results = new Results(reportData.getResults(), null);
         results.setNumFound(reportData.getNumFound());
       }else {
-          results =
-            ims.getInventory(domainId, null, kioskIds, etag, eetag, materialId, null, matType, onlyNZStk,
-                pdos, location, pageParams);
+          results = inventoryManagementService.getInventory(domainId, null, kioskIds, etag, eetag,
+              materialId, null, matType, onlyNZStk, pdos, location, pageParams);
       }
       results.setOffset(offset);
-      return builder.buildInventoryModelListAsResult(results, sUser, domainId, null);
+      return inventoryBuilder.buildInventoryModelListAsResult(results, domainId, null);
     } catch (ServiceException e) {
       throw new InvalidServiceException("");
     }
@@ -339,52 +362,41 @@ public class InventoryController {
       HttpServletRequest request) {
     boolean hasExpiresBefore = (ebf != null && !ebf.isEmpty());
     boolean hasBatchId = StringUtils.isNotEmpty(bno);
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     String userId = sUser.getUsername();
     Locale locale = sUser.getLocale();
     String timezone = sUser.getTimezone();
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), userId);
+    Long domainId = SecurityUtils.getCurrentDomainId();
     LocationSuggestionModel location = parseLocation(loc);
     int total = 0;
-    Navigator
-        navigator =
+    Navigator navigator =
         new Navigator(request.getSession(), "InventoryController.getBatchMaterial", offset, size,
             "batchmaterial", total);
     PageParams pageParams = new PageParams(navigator.getCursor(offset), offset, size);
-    EntitiesService as;
-    MaterialCatalogService mc;
     try {
-      InventoryManagementService
-          ims =
-          Services.getService(InventoryManagementServiceImpl.class, locale);
-      mc = Services.getService(MaterialCatalogServiceImpl.class, locale);
-      as = Services.getService(EntitiesServiceImpl.class, locale);
       Long matId = StringUtils.isNotBlank(mid) ? Long.parseLong(mid) : null;
-      Results
-          results =
+      Results results =
           getResults(ebf, hasExpiresBefore, bno, hasBatchId, matId, etag, eetag, mtag, domainId,
-              pageParams, ims, location);
+              pageParams, location);
       if (results != null) {
         navigator.setResultParams(results);
         List<IInvntryBatch> inventory = results.getResults();
-        IUserAccount user = Services.getService(UsersServiceImpl.class,locale).getUserAccount(userId);
+        IUserAccount user = usersService.getUserAccount(userId);
         List<IKiosk> myKiosks = null;
         if (SecurityConstants.ROLE_SERVICEMANAGER.equals(user.getRole())) {
-          myKiosks = as.getKiosks(user, domainId, null, null, null).getResults();
+          myKiosks = entitiesService.getKiosks(user, domainId, null, null, null).getResults();
           if (myKiosks == null || myKiosks.isEmpty()) {
-            return new Results(null, null, 0, offset);
+            return new Results<>(null, null, 0, offset);
           }
         }
         List<InventoryBatchMaterialModel>
             models =
-            builder.buildInventoryBatchMaterialModels(offset, locale, timezone, as, mc, inventory,
+            inventoryBuilder.buildInventoryBatchMaterialModels(offset, locale, timezone, entitiesService, materialCatalogService, inventory,
                 myKiosks);
         int numFound = models.size() > 0 ? -1 : 0;
-        return new Results(models, results.getCursor(), numFound, offset);
+        return new Results<>(models, results.getCursor(), numFound, offset);
       }
-    } catch (ServiceException e) {
-      xLogger.warn("Error fetching batch material details: {0} ", e);
-    } catch (ObjectNotFoundException e) {
+    } catch (ServiceException | ObjectNotFoundException e) {
       xLogger.warn("Error fetching batch material details: {0} ", e);
     }
     return null;
@@ -392,18 +404,18 @@ public class InventoryController {
 
   private Results getResults(String ebf, boolean hasExpiresBefore, String bno, boolean hasBatchId,
                              Long mid, String kioskTags, String excludedKioskTags, String materialTags, Long domainId,
-                             PageParams pageParams, InventoryManagementService ims, LocationSuggestionModel location)
+                             PageParams pageParams, LocationSuggestionModel location)
       throws ServiceException {
     Date end;
     Results results = null;
     DomainConfig dc = DomainConfig.getInstance(domainId);
     if (mid != null && hasBatchId) {
-      results = ims.getInventoryByBatchId(mid, bno, pageParams, domainId, kioskTags, excludedKioskTags, location);
+      results = inventoryManagementService.getInventoryByBatchId(mid, bno, pageParams, domainId, kioskTags, excludedKioskTags, location);
     } else if (hasExpiresBefore) {
       try {
         end = LocalDateUtil.parseCustom(ebf, Constants.DATE_FORMAT, dc.getTimezone());
         results =
-            ims.getInventoryByBatchExpiry(domainId, mid, null, end, kioskTags, excludedKioskTags, materialTags, location,
+            inventoryManagementService.getInventoryByBatchExpiry(domainId, mid, null, end, kioskTags, excludedKioskTags, materialTags, location,
                 pageParams);
       } catch (Exception e) {
         xLogger.warn("Exception when trying to parse expiry date: {0}", e);
@@ -419,16 +431,11 @@ public class InventoryController {
   @ResponseBody
   List<InvntryBatchModel> getBatchMaterialById(@RequestParam Long kid, @RequestParam Long mid,
                                                @RequestParam(required = false) boolean allBatch,
-                                               @RequestParam(required = false) Long allocOrderId,
-                                               HttpServletRequest request) {
+                                               @RequestParam(required = false) Long allocOrderId) {
     try {
-      SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
-      // RESTUtil.authenticate(uid, null, kid, request);
-      InventoryManagementService
-          ims =
-          Services.getService(InventoryManagementServiceImpl.class);
-      Results<IInvntryBatch> results = ims.getBatches(mid, kid, null);
-      return builder.buildInvntryBatchModel(results, allBatch, sUser, allocOrderId);
+      SecureUserDetails sUser = SecurityUtils.getUserDetails();
+      Results<IInvntryBatch> results = inventoryManagementService.getBatches(mid, kid, null);
+      return inventoryBuilder.buildInvntryBatchModel(results, allBatch, sUser, allocOrderId);
     } catch (ServiceException e) {
       xLogger.severe("InventoryController Exception: {0}", e.getMessage(), e);
     }
@@ -448,11 +455,11 @@ public class InventoryController {
       size = Integer.parseInt(sizeStr);
     }
     try {
-      SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
+      SecureUserDetails sUser = SecurityUtils.getUserDetails();
       String userId = sUser.getUsername();
       Locale locale = sUser.getLocale();
       String timezone = sUser.getTimezone();
-      Long domainId = SessionMgr.getCurrentDomain(request.getSession(), userId);
+      Long domainId = SecurityUtils.getCurrentDomainId();
       DomainConfig dc = null;
       if (domainId != null) {
         dc = DomainConfig.getInstance(domainId);
@@ -470,13 +477,11 @@ public class InventoryController {
 
       xLogger.fine("filters: {0}", filters);
       PageParams pageParams = new PageParams(null, size);
-      ReportsService rs = Services.getService("reports", locale);
-      ReportData
-          r =
-          rs.getReportData(reportType, null, null, frequency, filters, locale, timezone, pageParams,
-              dc, userId);
+      ReportsService reportsService = StaticApplicationContext.getBean(ConfigUtil.get("reports"), ReportsService.class);
+      ReportData r = reportsService.getReportData(reportType, null, null, frequency,
+          filters, locale, timezone, pageParams, dc, userId);
       if (r != null) {
-        return builder.buildAbnormalStockModelList(r.getResults(), locale, timezone);
+        return inventoryBuilder.buildAbnormalStockModelList(r.getResults(), locale, timezone);
       } else {
         xLogger.warn("Report data returned NULL");
       }
@@ -490,44 +495,34 @@ public class InventoryController {
   }
 
   @RequestMapping(value = "/location", method = RequestMethod.GET)
-  public @ResponseBody Results getInventoryByLocation(@RequestParam(required = false) String kioskTags,
-                                                      @RequestParam(required = false) String excludedKioskTags,
-                                                      @RequestParam(required = false) String materialTags,
-                                                      @RequestParam(required = false, defaultValue = "0") int offset,
-                                                      @RequestParam(required = false, defaultValue = "50") int size,
-                                                      @RequestParam(required = false) String loc,
-                                                      @RequestParam(required = false) String pdos,
-                                                      HttpServletRequest request) {
-      SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
-      String userId = sUser.getUsername();
+  public @ResponseBody Results getInventoryByLocation(
+      @RequestParam(required = false) String kioskTags,
+      @RequestParam(required = false) String excludedKioskTags,
+      @RequestParam(required = false) String materialTags,
+      @RequestParam(required = false, defaultValue = "0") int offset,
+      @RequestParam(required = false, defaultValue = "50") int size,
+      @RequestParam(required = false) String loc,
+      @RequestParam(required = false) String pdos) {
       PageParams pageParams = new PageParams(null, offset, size);
-      Long domainId = SessionMgr.getCurrentDomain(request.getSession(), userId);
+      Long domainId = SecurityUtils.getCurrentDomainId();
       DomainConfig dc = null;
       if (domainId != null) {
           dc = DomainConfig.getInstance(domainId);
       }
       LocationSuggestionModel location = parseLocation(loc);
       try{
-      InventoryManagementService ims =
-          Services.getService(InventoryManagementServiceImpl.class, sUser.getLocale());
-      List results =
-          ims.getInvntryByLocation(domainId, location, kioskTags, excludedKioskTags, materialTags, pdos, pageParams)
-              .getResults();
+      List results = inventoryManagementService.getInvntryByLocation(domainId, location, kioskTags,
+          excludedKioskTags, materialTags, pdos, pageParams).getResults();
       if (results != null) {
-        EntitiesService accountsService =
-            Services.getService(EntitiesServiceImpl.class, sUser.getLocale());
-        MaterialCatalogService mCatalogService =
-            Services.getService(MaterialCatalogServiceImpl.class, sUser.getLocale());
         List<InventoryModel> inventoryModelList = new ArrayList<>(results.size());
         Map<Long, String> domainNames = new HashMap<>(1);
         for (int i = 0; i < results.size(); i++) {
           IInvntry inv = (IInvntry) results.get(i);
           inventoryModelList.add(
-              builder.buildInventoryModel(inv, dc, accountsService, mCatalogService,
-                  Services.getService(UsersServiceImpl.class), ims,
-                  accountsService.getKiosk(inv.getKioskId(), false), sUser, offset + i + 1, domainNames));
+              inventoryBuilder.buildInventoryModel(inv, dc,
+                  entitiesService.getKiosk(inv.getKioskId(), false), offset + i + 1, domainNames));
         }
-        return new Results(inventoryModelList, null, -1, offset);
+        return new Results<>(inventoryModelList, null, -1, offset);
       }
     } catch (ServiceException e) {
       xLogger.warn("Exception in getInventoryByLocation", e);
@@ -550,16 +545,14 @@ public class InventoryController {
                                   @RequestParam(required = false, defaultValue = "0") int offset,
                                   @RequestParam(required = false, defaultValue = "50") int size,
                                   HttpServletRequest request) {
-    String cursor;
     HttpSession session = request.getSession();
-    cursor = SessionMgr.getCursor(session, CURSOR_STOCK_EVENTS, offset);
-
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
+    String cursor = SessionMgr.getCursor(session, CURSOR_STOCK_EVENTS, offset);
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     String userId = sUser.getUsername();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     String timezone = sUser.getTimezone();
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), userId);
+    Long domainId = SecurityUtils.getCurrentDomainId();
     DomainConfig dc = null;
     if (domainId != null) {
       dc = DomainConfig.getInstance(domainId);
@@ -571,7 +564,7 @@ public class InventoryController {
       timezone = dc.getTimezone();
     }
     LocationSuggestionModel location = parseLocation(loc);
-    Map<String, Object> filters = new HashMap<String, Object>();
+    Map<String, Object> filters = new HashMap<>();
     filters.put(ReportsConstants.FILTER_DOMAIN, domainId);
     filters.put(ReportsConstants.FILTER_EVENT, eventType);
     filters.put(ReportsConstants.FILTER_LATEST, true);
@@ -602,38 +595,29 @@ public class InventoryController {
         if(BooleanUtils.isTrue(inDetail)){
           filters.put(ReportsConstants.FILTER_ABNORMALSTOCKVIEW, true);
         }
-        ReportsService reportsService = Services.getService("reports");
-        ReportData
-          reportData =
-          reportsService
-              .getReportData(ReportsConstants.TYPE_STOCKEVENT, null, null, ReportsConstants.FREQ_DAILY, filters,
-                      locale, timezone, pageParams, dc, userId);
+
+      ReportsService reportsService = StaticApplicationContext.getBean(ConfigUtil.get("reports"), ReportsService.class);
+      ReportData reportData = reportsService.getReportData(
+            ReportsConstants.TYPE_STOCKEVENT, null, null, ReportsConstants.FREQ_DAILY, filters,
+            locale, timezone, pageParams, dc, userId);
         List results = reportData.getResults();
         List modelList;
         if(BooleanUtils.isTrue(inDetail)){
-            InventoryManagementService
-                    ims =
-                    Services.getService(InventoryManagementServiceImpl.class, sUser.getLocale());
-            EntitiesService
-                    accountsService =
-                    Services.getService(EntitiesServiceImpl.class, sUser.getLocale());
-            MaterialCatalogService
-                    mCatalogService =
-                    Services.getService(MaterialCatalogServiceImpl.class, sUser.getLocale());
             List<InventoryModel> inventoryModelList = new ArrayList<>();
             Map<Long, String> domainNames = new HashMap<>(1);
 
             for (int i = 0; i < results.size(); i++) {
                 IInvntry inv = (IInvntry) results.get(i);
-                inventoryModelList.add(builder.buildInventoryModel(inv, dc, accountsService, mCatalogService,
-                    Services.getService(UsersServiceImpl.class),
-                        ims, accountsService.getKiosk(inv.getKioskId(), false), sUser, offset + i + 1, domainNames));
+                inventoryModelList.add(
+                    inventoryBuilder.buildInventoryModel(inv, dc,
+                        entitiesService.getKiosk(inv.getKioskId(), false),
+                        offset + i + 1, domainNames));
             }
             modelList = inventoryModelList;
         } else {
             List<InventoryAbnStockModel>
                     abnModelList =
-                    builder.buildAbnormalStockModelList(results, locale, timezone);
+                    inventoryBuilder.buildAbnormalStockModelList(results, locale, timezone);
             cursor = reportData.getCursor();
             if (cursor != null) {
                 int nextOffset = offset + size;
@@ -654,26 +638,17 @@ public class InventoryController {
   @RequestMapping(value = "/inventoryByMaterial/", method = RequestMethod.GET)
   public
   @ResponseBody
-  Results getInventoryByMaterial(@RequestParam Long kioskId, @RequestParam Long[] materials,
-                                 HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
-    String userId = sUser.getUsername();
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), userId);
-    Locale locale = sUser.getLocale();
+  Results getInventoryByMaterial(@RequestParam Long kioskId, @RequestParam Long[] materials) {
     try {
-      InventoryManagementService
-          ims =
-          Services.getService(InventoryManagementServiceImpl.class, locale);
-      List<IInvntry> dInventories = new ArrayList<IInvntry>(materials.length);
+      List<IInvntry> dInventories = new ArrayList<>(materials.length);
       for (Long material : materials) {
-        IInvntry inv = ims.getInventory(kioskId, material);
+        IInvntry inv = inventoryManagementService.getInventory(kioskId, material);
         if (inv != null) {
           dInventories.add(inv);
         }
       }
-      return builder
-          .buildInventoryModelListAsResult(new Results(dInventories, "dinv"), sUser, domainId,
-              null);
+      return inventoryBuilder.buildInventoryModelListAsResult(new Results<>(dInventories, "dinv"),
+          SecurityUtils.getCurrentDomainId(), null);
     } catch (ServiceException e) {
       xLogger.severe("Error in reading destination inventories: {0}", e);
     }
@@ -684,19 +659,12 @@ public class InventoryController {
   public
   @ResponseBody
   List<FChartModel> getInventoryPredictiveStk(@RequestParam Long kioskId,
-                                              @RequestParam Long materialId,
-                                              HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
-    Locale locale = sUser.getLocale();
+                                              @RequestParam Long materialId) {
     try {
-      ReportsService rs = Services.getService("reports", locale);
-//            Calendar stDate = new GregorianCalendar();
-//            stDate.add(Calendar.DAY_OF_MONTH, -PREDICTIVE_HISTORY_DAYS);
-      // oty = "m", dt = "ksk"
-      Results
-          ds =
-          rs.getSlices(new Date(), ISlice.DAILY, ISlice.OTYPE_MATERIAL, String.valueOf(materialId),
-              ISlice.KIOSK, String.valueOf(kioskId), true, new PageParams(PREDICTIVE_HISTORY_DAYS));
+      ReportsService reportsService = StaticApplicationContext.getBean(ConfigUtil.get("reports"), ReportsService.class);
+      Results ds = reportsService.getSlices(new Date(), ISlice.DAILY, ISlice.OTYPE_MATERIAL,
+          String.valueOf(materialId), ISlice.KIOSK, String.valueOf(kioskId), true,
+          new PageParams(PREDICTIVE_HISTORY_DAYS));
       if (ds != null) {
         List<ISlice> slices = ds.getResults();
         if (slices != null && !slices.isEmpty() && slices.size() > (PREDICTIVE_HISTORY_DAYS + 1)) {
@@ -704,12 +672,9 @@ public class InventoryController {
             slices.remove(j);
           }
         }
-        InventoryManagementService
-            ims =
-            Services.getService(InventoryManagementServiceImpl.class);
-        IInvntry inv = ims.getInventory(kioskId, materialId);
+        IInvntry inv = inventoryManagementService.getInventory(kioskId, materialId);
         return fcBuilder.buildPredChartModel(slices, PredictiveUtil.getOrderStkPredictions(inv),
-            ims.getDailyConsumptionRate(inv), inv.getStock());
+            inventoryManagementService.getDailyConsumptionRate(inv), inv.getStock());
       }
     } catch (Exception e) {
       xLogger.severe("Error in reading stocks wtih predictive: {0}", e);
@@ -721,19 +686,16 @@ public class InventoryController {
   public
   @ResponseBody
   List<MarkerModel> getActualRoute(@RequestParam String userId, @RequestParam String from,
-                                   @RequestParam String to, HttpServletRequest request) {
+                                   @RequestParam String to) {
     try {
-      SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
-      Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
+      SecureUserDetails sUser = SecurityUtils.getUserDetails();
+      Long domainId = SecurityUtils.getCurrentDomainId();
       DomainConfig dc = DomainConfig.getInstance(domainId);
-      OrderManagementService oms = Services.getService(OrderManagementServiceImpl.class);
-      Results
-          results =
-          oms.getOrders(userId,
+      Results results = orderManagementService.getOrders(userId,
               LocalDateUtil.parseCustom(from, Constants.DATE_FORMAT_CSV, dc.getTimezone()),
               LocalDateUtil.parseCustom(to, Constants.DATE_FORMAT_CSV, dc.getTimezone()), null);
-      return new MarkerBuilder()
-          .buildMarkerListFromOrders(results.getResults(), sUser.getLocale(), sUser.getTimezone());
+      return markerBuilder.buildMarkerListFromOrders(results.getResults(),
+          sUser.getLocale(), sUser.getTimezone());
     } catch (ServiceException e) {
       xLogger.severe("Error in reading destination inventories: {0}", e);
     } catch (ParseException e) {
@@ -749,13 +711,12 @@ public class InventoryController {
                         @RequestParam(required = false) String invId) {
     try {
       if (orderId != null) {
-        PredictionService oms = Services.getService("predictions");
+        PredictionService oms = StaticApplicationContext.getBean(ConfigUtil.get("predictions"), PredictionService.class);
         oms.updateOrderPredictions(orderId);
       } else if (invId != null) {
-        PredictionService
-            ims =
-            Services.getService("predictions");
-        ims.updateInventoryPredictions(invId);
+        PredictionService ps = StaticApplicationContext.getBean(ConfigUtil.get("predictions"),
+            PredictionService.class);
+        ps.updateInventoryPredictions(invId);
       }
     } catch (Exception e) {
       xLogger.severe("Error while updating predictions orderId: {0}, invId {1}", orderId, invId, e);
@@ -765,20 +726,12 @@ public class InventoryController {
   @RequestMapping(value = "/invHistory", method = RequestMethod.GET)
   public
   @ResponseBody
-  List<InventoryMinMaxLogModel> getInventoryHistory(@RequestParam String invId,
-                                                    HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
-    ResourceBundle
-        backendMessages =
-        Resources.get().getBundle("BackendMessages", sUser.getLocale());
+  List<InventoryMinMaxLogModel> getInventoryHistory(@RequestParam String invId) {
     if (invId == null) {
       return null;
     }
-    InventoryManagementService
-        ims =
-        Services.getService(InventoryManagementServiceImpl.class, sUser.getLocale());
-    List<IInventoryMinMaxLog> logs = ims.fetchMinMaxLog(invId);
-    return builder.buildInventoryMinMaxLogModel(logs, sUser, backendMessages);
+    List<IInventoryMinMaxLog> logs = inventoryManagementService.fetchMinMaxLog(invId);
+    return inventoryBuilder.buildInventoryMinMaxLogModel(logs);
   }
 
   @RequestMapping(value = "/entity/{entityId}/{materialId}", method = RequestMethod.GET)
@@ -788,19 +741,13 @@ public class InventoryController {
       @PathVariable Long entityId,
       @PathVariable Long materialId) throws ServiceException, ObjectNotFoundException {
 
-    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Long domainId = SecurityUtils.getCurrentDomainId();
-    InventoryManagementService
-        ims =
-        Services.getService(InventoryManagementServiceImpl.class, null);
-    Results results =
-        ims.getInventory(domainId, entityId, null, null, null, materialId, null, IInvntry.ALL, false,
-            null, null,
-            new PageParams(0, 1));
+    Results results = inventoryManagementService.getInventory(domainId, entityId, null, null, null,
+        materialId, null, IInvntry.ALL, false, null, null, new PageParams(0, 1));
     if (results.getResults().isEmpty()) {
       throw new ObjectNotFoundException("Inventory not found");
     }
-    return builder
-        .buildMInventoryDetail((IInvntry) results.getResults().get(0), domainId, entityId, sUser);
+    return inventoryBuilder
+        .buildMInventoryDetail((IInvntry) results.getResults().get(0), domainId, entityId);
   }
 }

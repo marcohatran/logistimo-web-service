@@ -30,13 +30,13 @@ import com.logistimo.AppFactory;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.SourceConstants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.logger.XLog;
 import com.logistimo.security.BadCredentialsException;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.security.UserDisabledException;
 import com.logistimo.services.ObjectNotFoundException;
-import com.logistimo.services.Services;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.users.service.impl.UsersServiceImpl;
@@ -101,7 +101,7 @@ public class SecurityMgr {
    * @deprecated in 2.5.0 , see SecurityUtils.getUserDetails.
    */
   @Deprecated
-  public static SecureUserDetails getUserDetails(HttpSession session) {
+  public static SecureUserDetails getUserDetails() {
     return SecurityUtils.getUserDetails();
   }
 
@@ -113,7 +113,7 @@ public class SecurityMgr {
   // Authenticate user
   public static SecureUserDetails authenticate(String userId, String password)
       throws Exception {
-    UsersService as = Services.getService(UsersServiceImpl.class);
+    UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
     // Authenticate user
     IUserAccount user = as.authenticateUser(userId, password, SourceConstants.WEB);
     if (user == null) {
@@ -126,7 +126,7 @@ public class SecurityMgr {
   }
 
   public static void setSessionDetails(String userId) throws ObjectNotFoundException {
-    UsersService as = Services.getService(UsersServiceImpl.class);
+    UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
     IUserAccount user = as.getUserAccount(userId);
     setSessionDetails(user);
   }
@@ -154,7 +154,7 @@ public class SecurityMgr {
 
   // Check if dev. server
   public static boolean isDevServer() {
-    return System.getProperty("mode", "dev") == "dev";
+    return "dev".equalsIgnoreCase(System.getProperty("mode", "dev"));
   }
 
   // Get the application name - e.g. logistimo-web, logistimo-dev

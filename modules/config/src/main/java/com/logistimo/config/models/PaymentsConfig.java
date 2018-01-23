@@ -23,9 +23,10 @@
 
 package com.logistimo.config.models;
 
+import com.logistimo.logger.XLog;
+
 import org.json.JSONException;
 import org.json.JSONObject;
-import com.logistimo.logger.XLog;
 
 import java.io.Serializable;
 import java.util.ArrayList;

@@ -34,6 +34,7 @@ import com.logistimo.config.models.EventSpec.ParamComparator;
 import com.logistimo.config.models.EventSpec.ParamSpec;
 import com.logistimo.config.models.EventSpec.Subscriber;
 import com.logistimo.config.models.EventsConfig;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.events.EventConstants;
@@ -51,8 +52,6 @@ import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.orders.entity.IOrder;
-import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.shipments.entity.IShipment;
 import com.logistimo.tags.TagUtil;
 import com.logistimo.users.service.UsersService;
@@ -65,7 +64,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -106,24 +104,20 @@ public class EventGenerator {
       return;
     }
     EventGenerator eg = EventGeneratorFactory.getEventGenerator(domainId, objectType);
-    customOptions.userIds = new HashMap<Integer, List<String>>();
-    Iterator<Entry<Integer, List<Subscriber>>> it = subscriberMap.entrySet().iterator();
-    while (it.hasNext()) {
-      Entry<Integer, List<Subscriber>> entry = it.next();
+    customOptions.userIds = new HashMap<>();
+    for (Entry<Integer, List<Subscriber>> entry : subscriberMap.entrySet()) {
       Integer freq = entry.getKey();
       // Get users Id list from custom options
       List<String> customUserIds = customOptions.userIds.get(freq);
       if (customUserIds == null) {
-        customUserIds = new ArrayList<String>();
+        customUserIds = new ArrayList<>();
         customOptions.userIds.put(freq, customUserIds);
       }
       List<Subscriber> subscribers = entry.getValue();
       if (subscribers == null || subscribers.isEmpty()) {
         continue;
       }
-      Iterator<Subscriber> subsIt = subscribers.iterator();
-      while (subsIt.hasNext()) {
-        Subscriber s = subsIt.next();
+      for (Subscriber s : subscribers) {
         List<String> userIds = null;
         if (Subscriber.ADMINISTRATORS.equals(s.type)) {
           userIds = eg.getSubscriberIds(s, domainId);
@@ -134,9 +128,7 @@ public class EventGenerator {
         if (userIds == null || userIds.isEmpty()) {
           continue;
         }
-        Iterator<String> userIdsIt = userIds.iterator();
-        while (userIdsIt.hasNext()) {
-          String userId = userIdsIt.next();
+        for (String userId : userIds) {
           if (!customUserIds.contains(userId)) {
             customUserIds.add(userId);
           }
@@ -174,7 +166,7 @@ public class EventGenerator {
 
   // Get inactive duration start date from event params
   protected static Date getInactiveDurationStart(IEvent event) {
-    int inactiveDurationDays = getInactiveDuration((Map<String, Object>) event.getParams());
+    int inactiveDurationDays = getInactiveDuration(event.getParams());
     if (inactiveDurationDays > 0) {
       Calendar cal = GregorianCalendar.getInstance();
       cal.setTime(event.getTimestamp());
@@ -207,7 +199,7 @@ public class EventGenerator {
       return userIds;
     }
     List<String> eUids;
-    UsersService as = Services.getService(UsersServiceImpl.class);
+    UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
     eUids = as.getEnabledUserIds(userIds);
     return eUids;
   }
@@ -218,7 +210,7 @@ public class EventGenerator {
       return userTags;
     }
     List<String> eUids;
-    UsersService as = Services.getService(UsersServiceImpl.class);
+    UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
     eUids = as.getEnabledUserIdsWithTags(userTags, domainId);
     return eUids;
   }
@@ -251,7 +243,7 @@ public class EventGenerator {
   public static boolean paramMatched(Map<String, Object> params1, Map<String, Object> params2,
                                      String paramName) {
     String paramValue1 = null, paramValue2 = null;
-    boolean hasParamValue1 = false, hasParamValue2 = false;
+    boolean hasParamValue1, hasParamValue2;
     if (params1 != null && !params1.isEmpty()) {
       paramValue1 = (String) params1.get(paramName);
     }
@@ -263,29 +255,17 @@ public class EventGenerator {
     boolean paramMatched = false;
     if (!hasParamValue1 && !hasParamValue2) {
       paramMatched = true;
-    } else if (!hasParamValue1 && hasParamValue2 || hasParamValue1 && !hasParamValue2) {
+    } else if (!hasParamValue1 || !hasParamValue2) {
       paramMatched = false;
     } else {
       if (paramName != null && !paramName.isEmpty()) {
         if (paramName.equalsIgnoreCase(EventConstants.PARAM_INACTIVEDURATION)) {
-          if (Integer.parseInt(paramValue1) == Integer.parseInt(paramValue2)) {
-            paramMatched = true;
-          } else {
-            paramMatched = false;
-          }
+          paramMatched = Integer.parseInt(paramValue1) == Integer.parseInt(paramValue2);
         } else if (paramName.equalsIgnoreCase(EventConstants.PARAM_REMINDMINSAFTER)) {
-          if (Integer.parseInt(paramValue1) == Integer.parseInt(paramValue2)) {
-            paramMatched = true;
-          } else {
-            paramMatched = false;
-          }
+          paramMatched = Integer.parseInt(paramValue1) == Integer.parseInt(paramValue2);
         } else if (paramName
             .equalsIgnoreCase(EventConstants.PARAM_STOCKCOUNTTHRESHOLD)) {
-          if (Float.parseFloat(paramValue1) >= Float.parseFloat(paramValue2)) {
-            paramMatched = true;
-          } else {
-            paramMatched = false;
-          }
+          paramMatched = Float.parseFloat(paramValue1) >= Float.parseFloat(paramValue2);
         } else {
           paramMatched = paramValue1.equalsIgnoreCase(paramValue2);
         }
@@ -306,37 +286,21 @@ public class EventGenerator {
     EventsConfig ec = dc.getEventsConfig();
     ParamComparator paramComparator = null;
     if (eventId == IEvent.NO_ACTIVITY) { // no activity event comparator
-      paramComparator = new ParamComparator() {
-        @Override
-        public boolean compare(Map<String, Object> params1,
-                               Map<String, Object> params2) { // params1 is from actual event; params2 is from event spec.
-          String t1 = (String) params1.get(EventConstants.PARAM_INACTIVEDURATION);
-          String t2 = (String) params2.get(EventConstants.PARAM_INACTIVEDURATION);
-          if (t1 != null && t2 != null) {
-            return Float.parseFloat(t1) >= Float.parseFloat(t2);
-          } else {
-            return false;
-          }
-        }
+      paramComparator = (params1, params2) -> { // params1 is from actual event; params2 is from event spec.
+        String t1 = (String) params1.get(EventConstants.PARAM_INACTIVEDURATION);
+        String t2 = (String) params2.get(EventConstants.PARAM_INACTIVEDURATION);
+        return t1 != null && t2 != null && Float.parseFloat(t1) >= Float.parseFloat(t2);
       };
     }
     if (JDOUtils.getImplClass(IKiosk.class).getName().equals(objectType)) {
       if (eventId == IEvent.CREATED || eventId == IEvent.MODIFIED || eventId == IEvent.DELETED) {
-        paramComparator = new ParamComparator() {
-          @Override
-          public boolean compare(Map<String, Object> params1, Map<String, Object> params2) {
-            return tagParamsNotMatched(params1, params2, TagUtil.TYPE_ENTITY);
-          }
-        };
+        paramComparator =
+            (params1, params2) -> tagParamsNotMatched(params1, params2, TagUtil.TYPE_ENTITY);
       }
     } else if (JDOUtils.getImplClass(IMaterial.class).getName().equals(objectType)) {
       if (eventId == IEvent.CREATED || eventId == IEvent.MODIFIED || eventId == IEvent.DELETED) {
-        paramComparator = new ParamComparator() {
-          @Override
-          public boolean compare(Map<String, Object> params1, Map<String, Object> params2) {
-            return tagParamsNotMatched(params1, params2, TagUtil.TYPE_MATERIAL);
-          }
-        };
+        paramComparator =
+            (params1, params2) -> tagParamsNotMatched(params1, params2, TagUtil.TYPE_MATERIAL);
       }
 
     } else if (JDOUtils.getImplClass(IInvntry.class).getName().equals(objectType)) {
@@ -344,163 +308,119 @@ public class EventGenerator {
           || eventId == IEvent.STOCKOUT
           || eventId == IEvent.UNDERSTOCK || eventId == IEvent.OVERSTOCK
           || eventId == IEvent.STOCK_REPLENISHED) {
-        paramComparator = new ParamComparator() {
-          @Override
-          public boolean compare(Map<String, Object> params1, Map<String, Object> params2) {
-            return tagParamsNotMatched(params1, params2, TagUtil.TYPE_ENTITY)
-                && tagParamsNotMatched(params1, params2, TagUtil.TYPE_MATERIAL);
-          }
-        };
+        paramComparator = (params1, params2) -> tagParamsNotMatched(params1, params2, TagUtil.TYPE_ENTITY)
+            && tagParamsNotMatched(params1, params2, TagUtil.TYPE_MATERIAL);
       }
     } else if (JDOUtils.getImplClass(ITransaction.class).getName().equals(objectType)) {
       if (eventId == IEvent.STOCK_COUNTED || eventId == IEvent.STOCK_ISSUED
           || eventId == IEvent.STOCK_RECEIVED || eventId == IEvent.STOCK_TRANSFERRED
           || eventId == IEvent.STOCK_WASTED) {
-        paramComparator = new ParamComparator() {
-          @Override
-          public boolean compare(Map<String, Object> params1, Map<String, Object> params2) {
-            boolean
-                tagParamsNotMatched =
-                tagParamsNotMatched(params1, params2, TagUtil.TYPE_MATERIAL) && tagParamsNotMatched(
-                    params1, params2, TagUtil.TYPE_ENTITY);
-            boolean
-                paramMatched =
-                paramMatched(params1, params2, EventConstants.PARAM_STATUS)
-                    && paramMatched(params1, params2, EventConstants.PARAM_REASON);
-            return paramMatched && tagParamsNotMatched;
-          }
+        paramComparator = (params1, params2) -> {
+          boolean
+              tagParamsNotMatched =
+              tagParamsNotMatched(params1, params2, TagUtil.TYPE_MATERIAL) && tagParamsNotMatched(
+                  params1, params2, TagUtil.TYPE_ENTITY);
+          boolean
+              paramMatched =
+              paramMatched(params1, params2, EventConstants.PARAM_STATUS)
+                  && paramMatched(params1, params2, EventConstants.PARAM_REASON);
+          return paramMatched && tagParamsNotMatched;
         };
       }
     } else if (JDOUtils.getImplClass(IOrder.class).getName().equals(objectType)) {
       if (eventId == IEvent.CREATED || eventId == IEvent.MODIFIED || eventId == IEvent.PAID
           || eventId == IEvent.FULFILLMENT_DUE) {
-        paramComparator = new ParamComparator() {
-          @Override
-          public boolean compare(Map<String, Object> params1, Map<String, Object> params2) {
-            return tagParamsNotMatched(params1, params2, TagUtil.TYPE_ORDER) && tagParamsNotMatched(
+        paramComparator =
+            (params1, params2) -> tagParamsNotMatched(params1, params2, TagUtil.TYPE_ORDER) && tagParamsNotMatched(
                 params1, params2, TagUtil.TYPE_ENTITY);
-
-          }
-        };
       } else if (eventId == IEvent.STATUS_CHANGE) {
-        paramComparator = new ParamComparator() {
-          @Override
-          public boolean compare(Map<String, Object> params1, Map<String, Object> params2) {
-            boolean
-                tagParamsNotMatched =
-                tagParamsNotMatched(params1, params2, TagUtil.TYPE_ORDER) && tagParamsNotMatched(
-                    params1, params2, TagUtil.TYPE_ENTITY);
-            boolean
-                paramMatched =
-                paramMatched(params1, params2, OrdersEventGenerator.PARAM_STATUS);
-            return paramMatched && tagParamsNotMatched;
+        paramComparator = (params1, params2) -> {
+          boolean
+              tagParamsNotMatched =
+              tagParamsNotMatched(params1, params2, TagUtil.TYPE_ORDER) && tagParamsNotMatched(
+                  params1, params2, TagUtil.TYPE_ENTITY);
+          boolean
+              paramMatched =
+              paramMatched(params1, params2, OrdersEventGenerator.PARAM_STATUS);
+          return paramMatched && tagParamsNotMatched;
 
-          }
         };
       } else if (eventId == IEvent.EXPIRED) {
-        paramComparator = new ParamComparator() {
-          @Override
-          public boolean compare(Map<String, Object> params1, Map<String, Object> params2) {
-            boolean
-                tagParamsNotMatched =
-                tagParamsNotMatched(params1, params2, TagUtil.TYPE_ORDER) && tagParamsNotMatched(
-                    params1, params2, TagUtil.TYPE_ENTITY);
-            boolean
-                paramMatched =
-                paramMatched(params1, params2, EventConstants.PARAM_INACTIVEDURATION);
-            return paramMatched && tagParamsNotMatched;
+        paramComparator = (params1, params2) -> {
+          boolean
+              tagParamsNotMatched =
+              tagParamsNotMatched(params1, params2, TagUtil.TYPE_ORDER) && tagParamsNotMatched(
+                  params1, params2, TagUtil.TYPE_ENTITY);
+          boolean
+              paramMatched =
+              paramMatched(params1, params2, EventConstants.PARAM_INACTIVEDURATION);
+          return paramMatched && tagParamsNotMatched;
 
-          }
         };
       }
     } else if (JDOUtils.getImplClass(IShipment.class).getName().equals(objectType)) {
       if (eventId == IEvent.CREATED || eventId == IEvent.MODIFIED) {
-        paramComparator = new ParamComparator() {
-          @Override
-          public boolean compare(Map<String, Object> params1, Map<String, Object> params2) {
-            return tagParamsNotMatched(params1, params2, TagUtil.TYPE_ORDER) && tagParamsNotMatched(
+        paramComparator =
+            (params1, params2) -> tagParamsNotMatched(params1, params2, TagUtil.TYPE_ORDER) && tagParamsNotMatched(
                     params1, params2, TagUtil.TYPE_ENTITY);
-
-          }
-        };
       } else if (eventId == IEvent.STATUS_CHANGE) {
-        paramComparator = new ParamComparator() {
-          @Override
-          public boolean compare(Map<String, Object> params1, Map<String, Object> params2) {
-            boolean
-                    tagParamsNotMatched =
-                    tagParamsNotMatched(params1, params2, TagUtil.TYPE_ORDER) && tagParamsNotMatched(
-                            params1, params2, TagUtil.TYPE_ENTITY);
-            boolean
-                    paramMatched =
-                    paramMatched(params1, params2, OrdersEventGenerator.PARAM_STATUS);
-            return paramMatched && tagParamsNotMatched;
+        paramComparator = (params1, params2) -> {
+          boolean
+                  tagParamsNotMatched =
+                  tagParamsNotMatched(params1, params2, TagUtil.TYPE_ORDER) && tagParamsNotMatched(
+                          params1, params2, TagUtil.TYPE_ENTITY);
+          boolean
+                  paramMatched =
+                  paramMatched(params1, params2, OrdersEventGenerator.PARAM_STATUS);
+          return paramMatched && tagParamsNotMatched;
 
-          }
         };
       }
     } else if (JDOUtils.getImplClass(IInvntryBatch.class).getName().equals(objectType)) {
       if (eventId == IEvent.EXPIRED) {
-        paramComparator = new ParamComparator() {
-          @Override
-          public boolean compare(Map<String, Object> params1, Map<String, Object> params2) {
-            boolean
-                tagParamsNotMatched =
-                tagParamsNotMatched(params1, params2, TagUtil.TYPE_MATERIAL) && tagParamsNotMatched(
-                    params1, params2, TagUtil.TYPE_ENTITY);
-            boolean
-                paramMatched =
-                paramMatched(params1, params2, EventConstants.PARAM_EXPIRESINDAYS);
-            return paramMatched && tagParamsNotMatched;
-          }
+        paramComparator = (params1, params2) -> {
+          boolean
+              tagParamsNotMatched =
+              tagParamsNotMatched(params1, params2, TagUtil.TYPE_MATERIAL) && tagParamsNotMatched(
+                  params1, params2, TagUtil.TYPE_ENTITY);
+          boolean
+              paramMatched =
+              paramMatched(params1, params2, EventConstants.PARAM_EXPIRESINDAYS);
+          return paramMatched && tagParamsNotMatched;
         };
       }
     } else if (JDOUtils.getImplClass(IAccount.class).getName().equals(objectType)) {
       if (eventId == IEvent.CREDIT_LIMIT_EXCEEDED) {
-        paramComparator = new ParamComparator() {
-          @Override
-          public boolean compare(Map<String, Object> params1, Map<String, Object> params2) {
-            return tagParamsNotMatched(params1, params2, TagUtil.TYPE_ENTITY);
-          }
-        };
+        paramComparator =
+            (params1, params2) -> tagParamsNotMatched(params1, params2, TagUtil.TYPE_ENTITY);
       }
     } else if (JDOUtils.getImplClass(IAssetStatus.class).getName().equals(objectType)) {
       if (eventId == IEvent.HIGH_EXCURSION || eventId == IEvent.LOW_EXCURSION
           || eventId == IEvent.HIGH_WARNING || eventId == IEvent.LOW_WARNING
           || eventId == IEvent.HIGH_ALARM || eventId == IEvent.LOW_ALARM || IEvent.ASSET_ALARM_GROUP
           .contains(eventId)) {
-        paramComparator = new ParamComparator() {
-          @Override
-          public boolean compare(Map<String, Object> params1, Map<String, Object> params2) {
-            boolean
-                tagParamsNotMatched =
-                tagParamsNotMatched(params1, params2, TagUtil.TYPE_ENTITY);
-            boolean
-                paramMatched =
-                paramMatched(params1, params2, EventConstants.PARAM_REMINDMINSAFTER);
-            return paramMatched && tagParamsNotMatched;
-          }
+        paramComparator = (params1, params2) -> {
+          boolean
+              tagParamsNotMatched =
+              tagParamsNotMatched(params1, params2, TagUtil.TYPE_ENTITY);
+          boolean
+              paramMatched =
+              paramMatched(params1, params2, EventConstants.PARAM_REMINDMINSAFTER);
+          return paramMatched && tagParamsNotMatched;
         };
       } else if (eventId == IEvent.NO_ACTIVITY) {
-        paramComparator = new ParamComparator() {
-          @Override
-          public boolean compare(Map<String, Object> params1, Map<String, Object> params2) {
-            boolean
-                tagParamsNotMatched =
-                tagParamsNotMatched(params1, params2, TagUtil.TYPE_ENTITY);
-            boolean
-                paramMatched =
-                paramMatched(params1, params2, EventConstants.PARAM_INACTIVEDURATION);
-            return paramMatched && tagParamsNotMatched;
-          }
+        paramComparator = (params1, params2) -> {
+          boolean
+              tagParamsNotMatched =
+              tagParamsNotMatched(params1, params2, TagUtil.TYPE_ENTITY);
+          boolean
+              paramMatched =
+              paramMatched(params1, params2, EventConstants.PARAM_INACTIVEDURATION);
+          return paramMatched && tagParamsNotMatched;
         };
       } else if (eventId == IEvent.INCURSION || IEvent.ASSET_ALARM_NORMAL_GROUP.contains(eventId)) {
-        paramComparator = new ParamComparator() {
-          @Override
-          public boolean compare(Map<String, Object> params1, Map<String, Object> params2) {
-            return tagParamsNotMatched(params1, params2, TagUtil.TYPE_ENTITY);
-          }
-        };
+        paramComparator =
+            (params1, params2) -> tagParamsNotMatched(params1, params2, TagUtil.TYPE_ENTITY);
       }
     }
     return ec.matchEvent(objectType, eventId, params, paramComparator);
@@ -546,10 +466,8 @@ public class EventGenerator {
         Map<Integer, List<Subscriber>> subscriberMap = paramSpec.getSubcribers();
         // Get the list of user Ids per frequency
         if (subscriberMap != null && !subscriberMap.isEmpty()) {
-          customOptions.userIds = new HashMap<Integer, List<String>>();
-          Iterator<Entry<Integer, List<Subscriber>>> it = subscriberMap.entrySet().iterator();
-          while (it.hasNext()) {
-            Entry<Integer, List<Subscriber>> entry = it.next();
+          customOptions.userIds = new HashMap<>();
+          for (Entry<Integer, List<Subscriber>> entry : subscriberMap.entrySet()) {
             Integer freq = entry.getKey();
             List<Subscriber> subscribers = entry.getValue();
             if (subscribers == null || subscribers.isEmpty()) {
@@ -557,17 +475,13 @@ public class EventGenerator {
             }
             List<String> userIds = customOptions.userIds.get(freq);
             if (userIds == null) {
-              userIds = new ArrayList<String>();
+              userIds = new ArrayList<>();
               customOptions.userIds.put(freq, userIds);
             }
-            Iterator<Subscriber> it2 = subscribers.iterator();
-            while (it2.hasNext()) {
-              Subscriber s = it2.next();
+            for (Subscriber s : subscribers) {
               List<String> uids = eg.getSubscriberIds(s, o);
               if (uids != null && !uids.isEmpty()) {
-                Iterator<String> it3 = uids.iterator();
-                while (it3.hasNext()) {
-                  String uId = it3.next();
+                for (String uId : uids) {
                   if (!userIds.contains(uId)) {
                     userIds.add(uId);
                   }

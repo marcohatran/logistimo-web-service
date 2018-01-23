@@ -27,7 +27,6 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import com.logistimo.assets.service.AssetManagementService;
-import com.logistimo.assets.service.impl.AssetManagementServiceImpl;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.CharacterConstants;
@@ -40,17 +39,15 @@ import com.logistimo.reports.ReportsConstants;
 import com.logistimo.reports.constants.ReportCompareField;
 import com.logistimo.reports.constants.ReportViewType;
 import com.logistimo.reports.plugins.IExternalServiceClient;
+import com.logistimo.reports.plugins.internal.ExportModel;
 import com.logistimo.reports.plugins.internal.ExternalServiceClient;
 import com.logistimo.reports.plugins.internal.QueryHelper;
 import com.logistimo.reports.plugins.internal.QueryRequestModel;
-import com.logistimo.reports.plugins.internal.ExportModel;
 import com.logistimo.reports.plugins.models.ReportChartModel;
 import com.logistimo.reports.plugins.models.TableResponseModel;
 import com.logistimo.reports.utils.ReportsUtil;
 import com.logistimo.security.SecureUserDetails;
-import com.logistimo.services.Service;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.utils.LocalDateUtil;
 
 import org.apache.commons.lang.StringUtils;
@@ -70,7 +67,6 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import javax.ws.rs.core.Response;
@@ -79,7 +75,7 @@ import javax.ws.rs.core.Response;
  * @author Mohan Raja
  */
 @org.springframework.stereotype.Service
-public class ReportPluginService implements Service {
+public class ReportPluginService {
 
   private static final XLog xLogger = XLog.getLog(ReportPluginService.class);
 
@@ -90,11 +86,17 @@ public class ReportPluginService implements Service {
 
   @Autowired ReportServiceCollection reportServiceCollection;
 
-  DomainsService domainsService;
+  private DomainsService domainsService;
+  private AssetManagementService assetManagementService;
 
   @Autowired
   public void setDomainsService(DomainsService domainsService) {
     this.domainsService = domainsService;
+  }
+
+  @Autowired
+  public void setAssetManagementService(AssetManagementService assetManagementService) {
+    this.assetManagementService = assetManagementService;
   }
 
   public List<ReportChartModel> getReportData(Long domainId, String json) {
@@ -113,11 +115,9 @@ public class ReportPluginService implements Service {
         model.filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_DISTRICT);
       }
       final String type = jsonObject.getString(JSON_REPORT_TYPE);
-      final IReportService reportBuilder =
-          reportServiceCollection.getReportService(type);
+      final IReportService reportBuilder = reportServiceCollection.getReportService(type);
 
-      model.filters.put(QueryHelper.TOKEN_COLUMNS,
-          reportBuilder.getColumns(model.filters, ReportViewType.OVERVIEW));
+      model.filters.put(QueryHelper.TOKEN_COLUMNS, reportBuilder.getColumns(model.filters, ReportViewType.OVERVIEW));
 
       model.queryId = QueryHelper.getQueryID(model.filters, type);
       Response response = externalServiceClient.postRequest(model);
@@ -204,6 +204,7 @@ public class ReportPluginService implements Service {
     ReportViewType viewType =
         ReportViewType.getViewType(reportViewType);
     Long domainId = SecurityUtils.getCurrentDomainId();
+    final Map<String, String> filters = QueryHelper.parseFilters(domainId, jsonObject);
     final QueryRequestModel model =
         constructQueryRequestModel(domainId, jsonObject, viewType);
     ExportModel eModel = new ExportModel();
@@ -212,6 +213,18 @@ public class ReportPluginService implements Service {
     eModel.userId = userDetails.getUsername();
     eModel.timezone = userDetails.getTimezone();
     eModel.locale = userDetails.getLocale().getLanguage();
+    if(!filters.containsKey(QueryHelper.TOKEN + QueryHelper.QUERY_DVID) &&
+        model.filters.containsKey(QueryHelper.TOKEN + QueryHelper.QUERY_DVID)) {
+      model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_DVID, CharacterConstants.EMPTY);
+    }
+    if(!filters.containsKey(QueryHelper.TOKEN + QueryHelper.QUERY_VENDOR_ID) &&
+        model.filters.containsKey(QueryHelper.TOKEN + QueryHelper.QUERY_VENDOR_ID)) {
+      model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_VENDOR_ID, CharacterConstants.EMPTY);
+    }
+    if(!filters.containsKey(QueryHelper.TOKEN + QueryHelper.QUERY_ATYPE) &&
+        model.filters.containsKey(QueryHelper.TOKEN + QueryHelper.QUERY_ATYPE)) {
+      model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_ATYPE, CharacterConstants.EMPTY);
+    }
     eModel.filters = model.filters;
     eModel.templateId = jsonObject.getString(JSON_REPORT_TYPE);
     eModel.additionalData = new HashMap<>();
@@ -429,7 +442,6 @@ public class ReportPluginService implements Service {
   private void prepareFilters(Long domainId, ReportViewType viewType,
                               QueryRequestModel model, Map<String, String> retainFilters)
       throws ServiceException {
-    AssetManagementService as;
     switch (viewType) {
       case BY_MATERIAL:
         prepareFiltersByMaterial(model, retainFilters);
@@ -444,28 +456,30 @@ public class ReportPluginService implements Service {
         model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_DMODEL, null);
         break;
       case BY_ASSET:
-        as = Services.getService(AssetManagementServiceImpl.class);
-        model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_DVID,
-            as.getMonitoredAssetIdsForReport(model.filters));
+        if(!model.filters.containsKey(QueryHelper.TOKEN + QueryHelper.QUERY_DVID)) {
+          model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_DVID,
+              assetManagementService.getMonitoredAssetIdsForReport(model.filters));
+        }
         break;
       case BY_ENTITY_TAGS:
         model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_ENTITY_TAG, null);
         break;
       case BY_MANUFACTURER:
-        as = Services.getService(AssetManagementServiceImpl.class);
-        model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_VENDOR_ID,
-            as.getVendorIdsForReports(
-                model.filters.get(QueryHelper.TOKEN + QueryHelper.QUERY_DOMAIN)));
+        if(!model.filters.containsKey(QueryHelper.TOKEN + QueryHelper.QUERY_VENDOR_ID)) {
+          model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_VENDOR_ID,
+              assetManagementService.getVendorIdsForReports(
+                  model.filters.get(QueryHelper.TOKEN + QueryHelper.QUERY_DOMAIN)));
+        }
         break;
       case BY_USER:
         prepareFiltersByUser(model, retainFilters);
         break;
       case BY_ASSET_TYPE:
         model.filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_MTYPE);
-        as = Services.getService(AssetManagementServiceImpl.class);
-        model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_ATYPE, as.getAssetTypesForReports(
-            model.filters.get(QueryHelper.TOKEN + QueryHelper.QUERY_DOMAIN),
-            "1")); // only monitored
+        if(!model.filters.containsKey(QueryHelper.TOKEN + QueryHelper.QUERY_ATYPE)) {
+          model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_ATYPE, assetManagementService.getAssetTypesForReports(
+              model.filters.get(QueryHelper.TOKEN + QueryHelper.QUERY_DOMAIN), "1"));
+        }
         break;
       case BY_CUSTOMER:
         prepareFiltersByCustomer(model);
@@ -572,35 +586,5 @@ public class ReportPluginService implements Service {
         toTime = mDateTimeFormatter.parseDateTime(endTime);
         return mDateTimeFormatter.print(toTime.minusDays(QueryHelper.DAYS_LIMIT - 1));
     }
-  }
-
-  @Override
-  public void init(Services services) throws ServiceException {
-
-  }
-
-  @Override
-  public void destroy() throws ServiceException {
-
-  }
-
-  @Override
-  public Class<? extends Service> getInterface() {
-    return ReportPluginService.class;
-  }
-
-  @Override
-  public void loadResources(Locale locale) {
-
-  }
-
-  @Override
-  public Locale getLocale() {
-    return null;
-  }
-
-  @Override
-  public Service clone() throws CloneNotSupportedException {
-    return null;
   }
 }

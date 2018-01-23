@@ -23,8 +23,8 @@
 
 package com.logistimo.api.request;
 
-import com.logistimo.config.models.CustomReportsConfig;
 import com.logistimo.api.models.configuration.CustomReportsConfigModel;
+import com.logistimo.config.models.CustomReportsConfig;
 
 /**
  * Created by naveensnair on 04/02/15.

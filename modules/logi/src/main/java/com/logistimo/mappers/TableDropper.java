@@ -27,12 +27,11 @@
 package com.logistimo.mappers;
 
 
+import com.logistimo.logger.XLog;
 import com.logistimo.services.mapper.DatastoreMutationPool;
 import com.logistimo.services.mapper.Entity;
 import com.logistimo.services.mapper.GenericMapper;
 import com.logistimo.services.mapper.Key;
-
-import com.logistimo.logger.XLog;
 
 /**
  * Drops an entire datastore table.

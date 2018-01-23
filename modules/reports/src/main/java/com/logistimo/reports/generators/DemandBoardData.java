@@ -33,23 +33,21 @@ import com.google.visualization.datasource.datatable.TableCell;
 import com.google.visualization.datasource.datatable.TableRow;
 import com.google.visualization.datasource.datatable.value.ValueType;
 
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
+import com.logistimo.logger.XLog;
 import com.logistimo.materials.service.MaterialCatalogService;
 import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
 import com.logistimo.orders.entity.IDemandItem;
 import com.logistimo.reports.ReportsConstants;
-import com.logistimo.users.entity.IUserAccount;
-
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
+import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.utils.LocalDateUtil;
-import com.logistimo.logger.XLog;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -110,8 +108,9 @@ public class DemandBoardData extends ReportData {
     DataTable data = new DataTable();
     try {
       // Init. services
-      EntitiesService as = Services.getService(EntitiesServiceImpl.class);
-      MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
+      EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
+      MaterialCatalogService mcs = StaticApplicationContext.getBean(
+          MaterialCatalogServiceImpl.class);
       // Init. data table
       // Add columns
       data.addColumn(new ColumnDescription(ID_ORDERID, ValueType.TEXT, NAME_ORDERID));
@@ -146,12 +145,10 @@ public class DemandBoardData extends ReportData {
       boolean latest = "true".equals(latestFlag);
       List<String> kioskMaterials = null;
       if (latest) {
-        kioskMaterials = new ArrayList<String>();
+        kioskMaterials = new ArrayList<>();
       }
       // Add rows to data table
-      Iterator<IDemandItem> it = results.iterator();
-      while (it.hasNext()) {
-        IDemandItem item = it.next();
+      for (IDemandItem item : (Iterable<IDemandItem>) results) {
         Long materialId = item.getMaterialId();
         Long kioskId = item.getKioskId();
         // Check if only latest entries are to be included

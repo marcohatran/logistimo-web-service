@@ -24,18 +24,16 @@
 package com.logistimo.api.util;
 
 import com.logistimo.AppFactory;
-import com.logistimo.services.taskqueue.ITaskService;
-
+import com.logistimo.api.models.UserMessageModel;
 import com.logistimo.communications.MessageHandlingException;
-import com.logistimo.communications.service.MessageService;
 import com.logistimo.communications.ServiceResponse;
+import com.logistimo.communications.service.MessageService;
+import com.logistimo.context.StaticApplicationContext;
+import com.logistimo.logger.XLog;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
-import com.logistimo.logger.XLog;
-
-import com.logistimo.api.models.UserMessageModel;
+import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.users.service.impl.UsersServiceImpl;
@@ -45,7 +43,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -61,7 +58,7 @@ public class UserMessageUtil {
 
   private static ITaskService taskService = AppFactory.get().getTaskService();
 
-  public static void scheduleSendingToAllUsers(UserMessageModel model, Long domainId, Locale locale,
+  public static void scheduleSendingToAllUsers(UserMessageModel model, Long domainId,
                                                String cursor, String size, String senderUserId) {
     // Parameters used when sending to all users
     if (size == null && cursor == null) {
@@ -80,7 +77,7 @@ public class UserMessageUtil {
     IUserAccount sendingUser;
     try {
       // Get service
-      UsersService as = Services.getService(UsersServiceImpl.class, locale);
+      UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
       sendingUser = as.getUserAccount(senderUserId);
       results = as.getUsers(domainId, sendingUser, true, null, pageParams);
     } catch (Exception e) {
@@ -100,13 +97,13 @@ public class UserMessageUtil {
       return; // we are done
     }
 
-    ScheduleMessageWithCursor(model, domainId, size, results, sendingUser);
+    ScheduleMessageWithCursor(model, domainId, size, sendingUser);
     xLogger.fine("Exiting scheduleSendingToAllUsers");
   }
 
   private static void ScheduleMessageWithoutCursor(UserMessageModel model, Long domainId,
                                                    String sendingUserId) {
-    Map<String, String> params = new HashMap<String, String>();
+    Map<String, String> params = new HashMap<>();
     params.put("msgtype", model.type);
     params.put("msgtemplate", model.template);
     params.put("message", model.text);
@@ -127,8 +124,8 @@ public class UserMessageUtil {
   }
 
   private static void ScheduleMessageWithCursor(UserMessageModel model, Long domainId, String size,
-                                                Results results, IUserAccount sendingUser) {
-    Map<String, String> params = new HashMap<String, String>();
+                                                IUserAccount sendingUser) {
+    Map<String, String> params = new HashMap<>();
     params.put("msgtype", model.type);
     params.put("msgtemplate", model.template);
     params.put("message", model.text);
@@ -153,7 +150,7 @@ public class UserMessageUtil {
 
   public static void sendToSelectedUsers(UserMessageModel model, String senderUserId, Long domainId)
       throws ServiceException {
-    UsersService as = Services.getService(UsersServiceImpl.class);
+    UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
     try {
       IUserAccount sendingUser = as.getUserAccount(senderUserId);
       // Get the user Ids
@@ -220,7 +217,7 @@ public class UserMessageUtil {
       return;
     }
     Iterator<IUserAccount> it = users.iterator();
-    Map<String, String> params = new HashMap<String, String>();
+    Map<String, String> params = new HashMap<>();
     while (it.hasNext()) {
       IUserAccount u = it.next();
       params.put("u", u.getUserId());

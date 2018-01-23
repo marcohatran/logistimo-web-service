@@ -30,12 +30,12 @@ import com.logistimo.api.models.DomainStatisticsModel;
 import com.logistimo.api.models.FChartModel;
 import com.logistimo.api.request.FusionChartRequest;
 import com.logistimo.auth.GenericAuthoriser;
-import com.logistimo.auth.utils.SessionMgr;
+import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.domains.entity.IDomainLink;
 import com.logistimo.domains.service.DomainsService;
-import com.logistimo.domains.service.impl.DomainsServiceImpl;
 import com.logistimo.exception.BadRequestException;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exception.UnauthorizedException;
@@ -47,11 +47,11 @@ import com.logistimo.reports.service.ReportsService;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.utils.ConfigUtil;
 import com.logistimo.utils.LocalDateUtil;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -71,10 +71,6 @@ import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
 
-import javax.servlet.http.HttpServletRequest;
-
-import static com.logistimo.auth.SecurityMgr.getUserDetails;
-
 /**
  * Created by Mohan Raja on 30/01/15
  */
@@ -85,22 +81,46 @@ public class ReportController {
 
   private static final XLog xLogger = XLog.getLog(ReportController.class);
 
+  private DomainsService domainsService;
+  private DomainBuilder domainBuilder;
+  private DomainStatisticsBuilder domainStatisticsBuilder;
+  private FChartBuilder fChartBuilder;
+
+  @Autowired
+  public void setDomainsService(DomainsService domainsService) {
+    this.domainsService = domainsService;
+  }
+
+  @Autowired
+  public void setDomainBuilder(DomainBuilder domainBuilder) {
+    this.domainBuilder = domainBuilder;
+  }
+
+  @Autowired
+  public void setDomainStatisticsBuilder(DomainStatisticsBuilder domainStatisticsBuilder) {
+    this.domainStatisticsBuilder = domainStatisticsBuilder;
+  }
+
+  @Autowired
+  public void setfChartBuilder(FChartBuilder fChartBuilder) {
+    this.fChartBuilder = fChartBuilder;
+  }
+
   @RequestMapping(value = "/fchartdata", method = RequestMethod.POST)
   public
   @ResponseBody
-  List<FChartModel> getFChartData(@RequestBody FusionChartRequest fcRequest,
-                                  HttpServletRequest request) {
-    SecureUserDetails sUser = getUserDetails(request.getSession());
+  List<FChartModel> getFChartData(@RequestBody FusionChartRequest fcRequest) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     String userId = sUser.getUsername();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     String timezone = sUser.getTimezone();
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), userId);
+    Long domainId = sUser.getCurrentDomainId();
     Map<String, Object> filters = getFilters(fcRequest, domainId);
     DomainConfig dc = DomainConfig.getInstance(domainId);
     ReportsService rs;
     try {
-      rs = Services.getService("reports",locale);
+      rs = StaticApplicationContext.getBean(ConfigUtil.get("reports"), ReportsService.class);
       SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
       if (fcRequest.daily) {
         // The fcRequest.stDate is set to the the first day of the month for which the report is being drilled down.
@@ -139,15 +159,15 @@ public class ReportController {
       }
       switch (fcRequest.rty) {
         case ReportsConstants.TYPE_CONSUMPTION:
-          return new FChartBuilder().buildConsumptionChartModel(r, repGenTime);
+          return fChartBuilder.buildConsumptionChartModel(r, repGenTime);
         case ReportsConstants.TYPE_ORDERRESPONSETIMES:
-          return new FChartBuilder().buildORTChartModel(r, repGenTime);
+          return fChartBuilder.buildORTChartModel(r, repGenTime);
         case ReportsConstants.TYPE_STOCKEVENTRESPONSETIME:
-          return new FChartBuilder().buildRRTChartModel(r, repGenTime);
+          return fChartBuilder.buildRRTChartModel(r, repGenTime);
         case ReportsConstants.TYPE_TRANSACTION:
-          return new FChartBuilder().buildTCChartModel(r, repGenTime);
+          return fChartBuilder.buildTCChartModel(r, repGenTime);
         case ReportsConstants.TYPE_USERACTIVITY:
-          return new FChartBuilder().buildUAChartModel(r, repGenTime);
+          return fChartBuilder.buildUAChartModel(r, repGenTime);
         default:
           xLogger.warn("invalid report type found while fetching report data: " + fcRequest.rty);
           throw new BadRequestException(backendMessages.getString("chart.data.fetch.error"));
@@ -160,7 +180,7 @@ public class ReportController {
 
 
   private Map<String, Object> getFilters(FusionChartRequest fcRequest, Long domainId) {
-    Map<String, Object> filters = new HashMap<String, Object>();
+    Map<String, Object> filters = new HashMap<>();
     filters.put(ReportsConstants.FILTER_DOMAIN, domainId);
     if (fcRequest.eid != null) {
       filters.put(ReportsConstants.FILTER_KIOSK, fcRequest.eid);
@@ -198,24 +218,21 @@ public class ReportController {
   @RequestMapping(value = "/domainstats", method = RequestMethod.GET)
   public
   @ResponseBody
-  DomainStatisticsModel getDomainStatistics(HttpServletRequest request, Long domainId) {
-    SecureUserDetails sUser = getUserDetails(request.getSession());
+  DomainStatisticsModel getDomainStatistics(Long domainId) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     String userId = sUser.getUsername();
     DomainStatisticsModel domainStatisticsModel = null;
     try {
-      if (!GenericAuthoriser.authoriseUser(request, userId)) {
+      if (!GenericAuthoriser.authoriseUser(userId)) {
         throw new UnauthorizedException("Permission denied of the user to access this domain");
       }
-      domainId =
-          (domainId != null ? domainId : SessionMgr.getCurrentDomain(request.getSession(), userId));
-
-      ReportsService rs = Services.getService("reports");
+      domainId = (domainId != null ? domainId : sUser.getCurrentDomainId());
+      ReportsService rs = StaticApplicationContext
+          .getBean(ConfigUtil.get("reports"), ReportsService.class);
       List<IDomainLink> linkedDomains;
       Set<Long> domains;
       List<? extends IDomainStats> parentData;
       List<IDomainStats> childrenData = new ArrayList<>();
-      DomainBuilder domainBuilder = new DomainBuilder();
-      DomainStatisticsBuilder domainStatisticsBuilder = new DomainStatisticsBuilder();
       String domainStatsApp = ConfigUtil.get(ReportsConstants.MASTER_DATA_APP_NAME);
       parentData = rs.getDomainStatistics(domainId);
       if (parentData != null && parentData.size() > 0) {
@@ -225,8 +242,7 @@ public class ReportController {
         domainStatisticsModel.lrt = LocalDateUtil.format(date, sUser.getLocale(),
             sUser.getTimezone());
       }
-      DomainsService ds = Services.getService(DomainsServiceImpl.class);
-      linkedDomains = ds.getDomainLinks(domainId, 0, 0);
+      linkedDomains = domainsService.getDomainLinks(domainId, 0, 0);
       domains = domainBuilder.buildChildDomainsList(linkedDomains);
       if (domains != null) {
         for (Long d : domains) {
@@ -238,8 +254,8 @@ public class ReportController {
         if (childrenData.size() > 0) {
           domainStatisticsModel =
               domainStatisticsBuilder
-                  .buildChildModel(childrenData, domainStatisticsModel, sUser.getLocale(),
-                      sUser.getTimezone());
+                  .buildChildModel(childrenData, domainStatisticsModel
+                  );
         }
       }
     } catch (ServiceException | ParseException e) {
@@ -257,22 +273,22 @@ public class ReportController {
   @RequestMapping(value = "/domainstats/tag", method = RequestMethod.GET)
   public
   @ResponseBody
-  Map<String, String> getDomainStatisticsByTag(HttpServletRequest request, Long domainId,
+  Map<String, String> getDomainStatisticsByTag(Long domainId,
                                                String tag, String c) {
-    SecureUserDetails sUser = getUserDetails(request.getSession());
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     String userId = sUser.getUsername();
     Map<String, String> results;
     try {
-      if (!GenericAuthoriser.authoriseUser(request, userId)) {
+      if (!GenericAuthoriser.authoriseUser(userId)) {
         throw new UnauthorizedException("Permission denied of the user to access this domain");
       }
-      domainId =
-          (domainId != null ? domainId : SessionMgr.getCurrentDomain(request.getSession(), userId));
+      domainId = (domainId != null ? domainId : sUser.getCurrentDomainId());
       if (StringUtils.isBlank(tag)) {
         return null;
       }
 
-      ReportsService rs = Services.getService("reports");
+      ReportsService rs = StaticApplicationContext.getBean(ConfigUtil.get("reports"),
+          ReportsService.class);
       results = rs.getDomainStatisticsByTag(domainId, tag, c);
     } catch (ServiceException e) {
       xLogger

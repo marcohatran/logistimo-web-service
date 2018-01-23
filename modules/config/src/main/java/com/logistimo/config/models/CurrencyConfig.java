@@ -29,13 +29,13 @@ package com.logistimo.config.models;
 import com.logistimo.config.entity.IConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
 import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.JDOUtils;
+import com.logistimo.services.ObjectNotFoundException;
+import com.logistimo.services.ServiceException;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import com.logistimo.services.ObjectNotFoundException;
-import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -53,17 +53,17 @@ public class CurrencyConfig {
   private static final String DEFAULT = "{\"INR\":\"Indian Rupees\", \"USD\":\"US Dollars\"}";
 
   private static ConfigurationMgmtService cms = null;
-  private Map<String, String> cmap = new HashMap<String, String>();
-  private Map<String, String> reversemap = new HashMap<String, String>();
+  private Map<String, String> cmap = new HashMap<>();
+  private Map<String, String> reversemap = new HashMap<>();
 
   public CurrencyConfig(String currencySpec) throws ConfigurationException {
     parse(currencySpec);
   }
 
   public static CurrencyConfig getInstance() throws ConfigurationException {
-    String curSpec = null;
+    String curSpec;
     try {
-      cms = Services.getService(ConfigurationMgmtServiceImpl.class);
+      cms = StaticApplicationContext.getBean(ConfigurationMgmtServiceImpl.class);
       IConfig c = cms.getConfiguration(IConfig.CURRENCIES);
       curSpec = c.getConfig();
     } catch (ObjectNotFoundException e) {
@@ -115,15 +115,13 @@ public class CurrencyConfig {
   }
 
   public String toJsonString() throws ConfigurationException {
-    String str = null;
+    String str;
     if (cmap == null || cmap.isEmpty()) {
       return null;
     }
     try {
       JSONObject json = new JSONObject();
-      Iterator<String> it = cmap.keySet().iterator();
-      while (it.hasNext()) {
-        String code = it.next();
+      for (String code : cmap.keySet()) {
         json.put(code, cmap.get(code));
       }
       str = json.toString();

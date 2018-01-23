@@ -25,9 +25,8 @@ package com.logistimo.config.utils;
 
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.InventoryConfig;
-
-import com.logistimo.services.Resources;
 import com.logistimo.constants.CharacterConstants;
+import com.logistimo.services.Resources;
 
 import java.util.ResourceBundle;
 

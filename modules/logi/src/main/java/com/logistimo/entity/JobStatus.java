@@ -26,8 +26,6 @@ package com.logistimo.entity;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-import com.logistimo.entity.IJobStatus;
-
 import java.lang.reflect.Type;
 import java.util.Date;
 import java.util.Map;

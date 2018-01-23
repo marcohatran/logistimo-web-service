@@ -31,30 +31,39 @@ import com.logistimo.dao.JDOUtils;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.entity.IKioskLink;
 import com.logistimo.entities.service.EntitiesService;
-import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.CommonUtils;
 import com.logistimo.utils.LocalDateUtil;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Created by mohan raja on 03/12/14
  */
+
+@Component
 public class AccountBuilder {
+
+  private EntitiesService entitiesService;
+
+  @Autowired
+  public void setEntitiesService(EntitiesService entitiesService) {
+    this.entitiesService = entitiesService;
+  }
+
   // Get the accounting years
   public static int[] getAccountingYears() {
     // Get currenty year
     int curYear = LocalDateUtil.getCurrentYear();
     int numYears = curYear - IAccount.START_YEAR;
-    int[] years = null;
+    int[] years;
     if (numYears == 0) {
       years = new int[1];
       years[0] = curYear;
@@ -76,22 +85,21 @@ public class AccountBuilder {
   }
 
   public List<AccountModel> buildAccountModelList(List<IAccount> accounts, String type,
-                                                  Locale locale, Long kioskId, Long domainId)
+                                                  Long kioskId, Long domainId)
       throws ServiceException {
-    List<AccountModel> models = new ArrayList<AccountModel>(accounts.size());
+    List<AccountModel> models = new ArrayList<>(accounts.size());
     int sno = 1;
-    EntitiesService as = Services.getService(EntitiesServiceImpl.class, locale);
     DomainConfig dc = DomainConfig.getInstance(domainId);
     for (IAccount account : accounts) {
-      AccountModel model = buildAccountModel(account, type, locale, as, kioskId, dc);
+      AccountModel model = buildAccountModel(account, type, kioskId, dc);
       model.sno = sno++;
       models.add(model);
     }
     return models;
   }
 
-  public AccountModel buildAccountModel(IAccount account, String type, Locale locale,
-                                        EntitiesService as, Long kioskId, DomainConfig dc)
+  public AccountModel buildAccountModel(IAccount account, String type,
+                                        Long kioskId, DomainConfig dc)
       throws ServiceException {
     AccountModel model = new AccountModel();
     String linkId = null;
@@ -108,22 +116,17 @@ public class AccountBuilder {
             JDOUtils.createKioskLinkId(account.getVendorId(), IKioskLink.TYPE_CUSTOMER, kioskId);
       }
     }
-    if (as != null) {
-      IKiosk k = as.getKiosk(kioskId, false);
-      model.cur = k.getCurrency();
-      model.add = CommonUtils.getAddress(k.getCity(), k.getTaluk(), k.getDistrict(), k.getState());
-      if (StringUtils.isBlank(model.cur)) {
-        model.cur = dc.getCurrency();
-      }
+    IKiosk k = entitiesService.getKiosk(kioskId, false);
+    model.cur = k.getCurrency();
+    model.add = CommonUtils.getAddress(k.getCity(), k.getTaluk(), k.getDistrict(), k.getState());
+    if (StringUtils.isBlank(model.cur)) {
+      model.cur = dc.getCurrency();
     }
     model.npay = CommonUtils.getFormattedPrice(account.getPayable());
     IKioskLink kl = null;
     try {
       if (linkId != null) {
-        if (as == null) {
-          as = Services.getService(EntitiesServiceImpl.class, locale);
-        }
-        kl = as.getKioskLink(linkId);
+        kl = entitiesService.getKioskLink(linkId);
       }
     } catch (Exception e) {
       System.out.println("accounts.jsp: " + e.getClass().getName() + ": " + e.getMessage());

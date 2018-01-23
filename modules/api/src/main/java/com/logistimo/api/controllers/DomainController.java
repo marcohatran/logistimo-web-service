@@ -29,16 +29,13 @@ import com.logistimo.api.models.superdomains.DomainDBModel;
 import com.logistimo.api.models.superdomains.DomainModel;
 import com.logistimo.auth.GenericAuthoriser;
 import com.logistimo.auth.SecurityConstants;
-import com.logistimo.auth.SecurityMgr;
 import com.logistimo.auth.utils.SecurityUtils;
-import com.logistimo.auth.utils.SessionMgr;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.domains.entity.IDomain;
 import com.logistimo.domains.entity.IDomainLink;
 import com.logistimo.domains.entity.IDomainPermission;
 import com.logistimo.domains.service.DomainsService;
-import com.logistimo.domains.service.impl.DomainsServiceImpl;
 import com.logistimo.domains.utils.DomainDeleter;
 import com.logistimo.exception.BadRequestException;
 import com.logistimo.exception.InvalidDataException;
@@ -51,15 +48,14 @@ import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.MsgUtil;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -84,7 +80,25 @@ import javax.servlet.http.HttpServletRequest;
 public class DomainController {
   private static final XLog xLogger = XLog.getLog(DomainController.class);
   private static final String REMOVE_DOMAIN_TASK_URL = "/s2/api/domain/delete";
-  private DomainBuilder builder = new DomainBuilder();
+
+  private DomainBuilder domainBuilder;
+  private DomainsService domainsService;
+  private UsersService usersService;
+
+  @Autowired
+  public void setDomainBuilder(DomainBuilder domainBuilder) {
+    this.domainBuilder = domainBuilder;
+  }
+
+  @Autowired
+  public void setDomainsService(DomainsService domainsService) {
+    this.domainsService = domainsService;
+  }
+
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
+  }
 
   @RequestMapping(value = "/delete", method = RequestMethod.POST)
   public
@@ -130,8 +144,7 @@ public class DomainController {
       throw new InvalidDataException("Invalid domain id");
     }
     try {
-      DomainsService ds = Services.getService(DomainsServiceImpl.class);
-      return builder.buildDomainModel(ds.getDomain(domainId));
+      return domainBuilder.buildDomainModel(domainsService.getDomain(domainId));
     } catch (ServiceException | ObjectNotFoundException e) {
       xLogger.severe("Unable to fetch the details of the switching domain", e);
       throw new InvalidServiceException("Unable to fetch the details of the switching domain");
@@ -141,34 +154,31 @@ public class DomainController {
   @RequestMapping(value = "/domain", method = RequestMethod.GET)
   public
   @ResponseBody
-  DomainModel fetchDomainById(@RequestParam Long domainId, HttpServletRequest request) {
+  DomainModel fetchDomainById(@RequestParam Long domainId) {
     try {
       if (domainId == null) {
         throw new ServiceException("Domain is not available");
       }
-      SecureUserDetails user = SecurityUtils.getUserDetails(request);
-      Locale locale = user.getLocale();
-      DomainsService ds = Services.getService(DomainsServiceImpl.class);
-      IDomain domain = ds.getDomain(domainId);
+      SecureUserDetails sUser = SecurityUtils.getUserDetails();
+      IDomain domain = domainsService.getDomain(domainId);
       DomainModel dm = new DomainModel();
-      UsersService as = Services.getService(UsersServiceImpl.class, locale);
       IUserAccount ub;
       IUserAccount cb;
       if (domain.getCreatedOn() != null) {
         dm.createdOn =
-            LocalDateUtil.format(domain.getCreatedOn(), user.getLocale(), user.getTimezone());
+            LocalDateUtil.format(domain.getCreatedOn(), sUser.getLocale(), sUser.getTimezone());
       }
       if (domain.getLastUpdatedOn() != null) {
         dm.lastUpdatedOn =
-            LocalDateUtil.format(domain.getLastUpdatedOn(), user.getLocale(), user.getTimezone());
+            LocalDateUtil.format(domain.getLastUpdatedOn(), sUser.getLocale(), sUser.getTimezone());
       }
-      boolean iMan = SecurityConstants.ROLE_SERVICEMANAGER.equals(user.getRole());
+      boolean iMan = SecurityConstants.ROLE_SERVICEMANAGER.equals(sUser.getRole());
       dm.name = domain.getName();
       dm.description = domain.getDescription();
       dm.isActive = domain.isActive();
       if (domain.getLastUpdatedBy() != null) {
         try {
-          ub = as.getUserAccount(domain.getLastUpdatedBy());
+          ub = usersService.getUserAccount(domain.getLastUpdatedBy());
           dm.lastUpdatedByn = ub.getFullName();
           dm.lastUpdatedBy = domain.getLastUpdatedBy();
         } catch (Exception e) {
@@ -177,20 +187,20 @@ public class DomainController {
       }
       if (domain.getOwnerId() != null) {
         try {
-          cb = as.getUserAccount(domain.getOwnerId());
+          cb = usersService.getUserAccount(domain.getOwnerId());
           dm.ownerName = cb.getFullName();
           dm.ownerId = domain.getOwnerId();
         } catch (Exception e) {
-          xLogger.warn("Exception while getting domain created by user details", e);
+          xLogger.warn("Exception while getting domain created by sUser details", e);
         }
       }
       dm.dId = domain.getId();
-      IDomainPermission permission = ds.getLinkedDomainPermission(domainId);
+      IDomainPermission permission = domainsService.getLinkedDomainPermission(domainId);
       DomainConfig dc = DomainConfig.getInstance(domainId);
       if (permission != null) {
         DomainModel
             pdm =
-            builder.buildDomain(domain, null, permission, dc, false, false, false, iMan);
+            domainBuilder.buildDomain(domain, null, permission, dc, false, false, false, iMan);
         dm.dp = pdm.dp;
       }
       return dm;
@@ -206,13 +216,11 @@ public class DomainController {
   List<IDomain> getDomainSuggestions(@RequestParam(required = false) String q,
                                      HttpServletRequest request) {
     try {
-      DomainsService ds = Services.getService(DomainsServiceImpl.class);
-      Navigator
-          navigator =
+      Navigator navigator =
           new Navigator(request.getSession(), "DomainController.getDomainSuggestions", 0, 10,
               "dummy", 0);
       PageParams pageParams = new PageParams(navigator.getCursor(0), 0, 10);
-      List<IDomain> domains = ds.getDomains(q == null ? "" : q, pageParams);
+      List<IDomain> domains = domainsService.getDomains(q == null ? "" : q, pageParams);
       Long domainId = SecurityUtils.getDomainId();
       for (int i = 0; i < domains.size(); i++) {
         if (domains.get(i).getId().equals(domainId)) {
@@ -230,15 +238,13 @@ public class DomainController {
   @RequestMapping(value = "/create", method = RequestMethod.POST)
   public
   @ResponseBody
-  String createDomain(@RequestParam String domainName, @RequestParam(required = false) String desc,
-                      HttpServletRequest request) {
+  String createDomain(@RequestParam String domainName, @RequestParam(required = false) String desc) {
     if (StringUtils.isEmpty(domainName)) {
       throw new InvalidDataException("Domain name can't be empty.");
     }
     try {
-      SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
+      SecureUserDetails sUser = SecurityUtils.getUserDetails();
       String userId = sUser.getUsername();
-      DomainsService ds = Services.getService(DomainsServiceImpl.class);
       IDomain domain = JDOUtils.createInstance(IDomain.class);
       domain.setName(domainName);
       domain.setOwnerId(userId);
@@ -246,8 +252,8 @@ public class DomainController {
       if (desc != null && !desc.isEmpty()) {
         domain.setDescription(desc);
       }
-      Long domainId = ds.addDomain(domain);
-      ds.createDefaultDomainPermissions(domainId);
+      Long domainId = domainsService.addDomain(domain);
+      domainsService.createDefaultDomainPermissions(domainId);
       return "Domain " + MsgUtil.bold(domainName) + " created successfully.";
     } catch (ServiceException e) {
       xLogger.severe("Unable to create domain", e);
@@ -258,40 +264,35 @@ public class DomainController {
   @RequestMapping(value = "/current", method = RequestMethod.GET)
   public
   @ResponseBody
-  DomainDBModel getCurrentDomain(HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
-    return getDomainById(domainId);
+  DomainDBModel getCurrentDomain() {
+    return getDomainById(SecurityUtils.getCurrentDomainId());
   }
 
   @RequestMapping(value = "/currentUser", method = RequestMethod.GET)
   public
   @ResponseBody
-  DomainDBModel getCurrentUserDomain(HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
-    return getDomainById(sUser.getDomainId());
+  DomainDBModel getCurrentUserDomain() {
+    return getDomainById(SecurityUtils.getDomainId());
   }
 
   @RequestMapping(value = "/updateDomain/{domainId}", method = RequestMethod.GET)
   public
   @ResponseBody
   void updateDomain(@PathVariable Long domainId, @RequestParam String name,
-                    @RequestParam String desc, HttpServletRequest request) throws ServiceException {
+                    @RequestParam String desc) throws ServiceException {
     xLogger.fine("updating the domain information");
     if (domainId == null) {
       throw new ServiceException("Invalid domain");
     }
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     String userId = sUser.getUsername();
     try {
       if (StringUtils.isNotEmpty(name) || StringUtils.isNotEmpty(desc)) {
-        //     IDomain domain = JDOUtils.getObjectById(IDomain.class, domainId);
-        DomainsService ds = Services.getService(DomainsServiceImpl.class);
-        IDomain domain = ds.getDomain(domainId);
+        IDomain domain = domainsService.getDomain(domainId);
         domain.setName(name);
         domain.setDescription(desc);
         domain.setLastUpdatedBy(userId);
-        ds.updateDomain(domain);
+        domainsService.updateDomain(domain);
       }
     } catch (ServiceException | ObjectNotFoundException e) {
       xLogger.severe("Unable to update domain", e);
@@ -304,12 +305,12 @@ public class DomainController {
   @RequestMapping(value = "/switch", method = RequestMethod.POST)
   public
   @ResponseBody
-  void switchDomain(@RequestBody String domainIdStr, HttpServletRequest request) {
+  void switchDomain(@RequestBody String domainIdStr) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     boolean authorisedUser = false;
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    if (!GenericAuthoriser.authoriseAdmin(request)) {
+    if (!GenericAuthoriser.authoriseAdmin()) {
       throw new UnauthorizedException(backendMessages.getString("permission.denied"));
     }
     if (StringUtils.isBlank(domainIdStr)) {
@@ -318,13 +319,11 @@ public class DomainController {
     }
     Long domainId = Long.parseLong(domainIdStr);
     try {
-      UsersService as = Services.getService(UsersServiceImpl.class);
-      List<Long> accDids = as.getUserAccount(sUser.getUsername()).getAccessibleDomainIds();
+      List<Long> accDids = usersService.getUserAccount(sUser.getUsername()).getAccessibleDomainIds();
       if (sUser.getRole().equals(SecurityConstants.ROLE_SUPERUSER) || accDids.contains(domainId)) {
         authorisedUser = true;
       } else if (sUser.getRole().equals(SecurityConstants.ROLE_DOMAINOWNER)) {
-        DomainsService ds = Services.getService(DomainsServiceImpl.class);
-        List<IDomainLink> domains = ds.getDomainLinks(domainId, IDomainLink.TYPE_PARENT, -1);
+        List<IDomainLink> domains = domainsService.getDomainLinks(domainId, IDomainLink.TYPE_PARENT, -1);
         for (IDomainLink i : domains) {
           if (i.getLinkedDomainId() != null && accDids.contains(i.getLinkedDomainId())) {
             authorisedUser = true;

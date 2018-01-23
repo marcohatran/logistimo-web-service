@@ -33,7 +33,6 @@ import com.logistimo.api.servlets.mobile.builders.MobileOrderBuilder;
 import com.logistimo.api.util.GsonUtil;
 import com.logistimo.api.util.RESTUtil;
 import com.logistimo.auth.SecurityConstants;
-import com.logistimo.auth.SecurityMgr;
 import com.logistimo.auth.SecurityUtil;
 import com.logistimo.config.models.ApprovalsConfig;
 import com.logistimo.config.models.DomainConfig;
@@ -83,7 +82,6 @@ import com.logistimo.proto.UpdateOrderRequest;
 import com.logistimo.proto.UpdateOrderStatusRequest;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.cache.MemcacheService;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.services.utils.ConfigUtil;
@@ -138,7 +136,7 @@ public class OrderServlet extends JsonRestServlet {
           .getParameter(RestConstantsZ.MINIMUM_RESPONSE))) {
         getOrdersMinimumResponse(req, resp, backendMessages);
       } else {
-        getOrders(req, resp, backendMessages, messages);
+        getOrders(req, resp, backendMessages);
       }
     } else if (RestConstantsZ.ACTION_GETORDER.equals(action)) {
       getOrCancelOrder(req, resp, false, backendMessages, messages);
@@ -146,13 +144,13 @@ public class OrderServlet extends JsonRestServlet {
       getOrCancelOrder(req, resp, true, backendMessages,
           messages); // TODO: NOTE: CancelOrder is retrained here for backward compatibility
     } else if (RestConstantsZ.ACTION_UPDATEORDER_OLD.equals(action)) {
-      createOrUpdateOrder(req, resp, backendMessages, messages, true);
+      createOrUpdateOrder(req, resp, backendMessages, true);
     } else if (RestConstantsZ.ACTION_UPDATEORDERSTATUS_OLD.equals(action)) {
       updateOrderStatusOld(req, resp, backendMessages, messages);
     } else if (RestConstantsZ.ACTION_EXPORT.equals(action)) {
       scheduleExport(req, resp, messages);
     } else if (RestConstantsZ.ACTION_UPDATEORDER.equals(action)) {
-      createOrUpdateOrder(req, resp, backendMessages, messages, false);
+      createOrUpdateOrder(req, resp, backendMessages, false);
     } else {
       throw new ServiceException("Invalid action: " + action);
     }
@@ -284,7 +282,7 @@ public class OrderServlet extends JsonRestServlet {
   // Get orders for a given kiosk
   @SuppressWarnings({"rawtypes", "unchecked"})
   private void getOrders(HttpServletRequest req, HttpServletResponse resp,
-                         ResourceBundle backendMessages, ResourceBundle messages)
+                         ResourceBundle backendMessages)
       throws IOException {
     xLogger.fine("Entered getOrders");
     // Get request parameters
@@ -330,7 +328,6 @@ public class OrderServlet extends JsonRestServlet {
     String currency = null;
     Locale locale = null;
     String timezone = null;
-    String appVersion = null;
     boolean isUserAdminOrGreater = false;
     int statusCode = HttpServletResponse.SC_OK;
     // Get domain Id
@@ -348,7 +345,6 @@ public class OrderServlet extends JsonRestServlet {
       domainId = u.getDomainId();
       locale = u.getLocale();
       timezone = u.getTimezone();
-      appVersion = u.getAppVersion();
       isUserAdminOrGreater =
           (SecurityUtil.compareRoles(u.getRole(), SecurityConstants.ROLE_DOMAINOWNER) >= 0);
       if (kioskId == null
@@ -376,9 +372,8 @@ public class OrderServlet extends JsonRestServlet {
     if (status) {
       try {
         // Init. service
-        OrderManagementService
-            oms =
-            Services.getService(OrderManagementServiceImpl.class, locale);
+        OrderManagementService oms =
+            StaticApplicationContext.getBean(OrderManagementServiceImpl.class);
         // Get max. orders, if any
         int maxResults = PageParams.DEFAULT_SIZE;
         if (maxOrders != null && !maxOrders.isEmpty()) {
@@ -430,7 +425,7 @@ public class OrderServlet extends JsonRestServlet {
         PageParams pageParams = new PageParams(offset, maxResults);
         // Get the currency of the kiosk
         if (kioskId != null) {
-          EntitiesService as = Services.getService(EntitiesServiceImpl.class, locale);
+          EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
           IKiosk k = as.getKiosk(kioskId, false);
           currency = k.getCurrency();
           includeBatchDetails = k.isBatchMgmtEnabled();
@@ -585,9 +580,8 @@ public class OrderServlet extends JsonRestServlet {
           message = "Order ID not specified";
         } else {
           // Init. service
-          OrderManagementService
-              oms =
-              Services.getService(OrderManagementServiceImpl.class, locale);
+          OrderManagementService oms =
+              StaticApplicationContext.getBean(OrderManagementServiceImpl.class);
           // Get the orders
           order = oms.getOrder(orderId, true);
           // Check if order has to be cancelled
@@ -656,7 +650,8 @@ public class OrderServlet extends JsonRestServlet {
         MobileOrderBuilder mob = new MobileOrderBuilder();
 
         boolean isBatchEnabled;
-        EntitiesService entitiesService = Services.getService(EntitiesServiceImpl.class);
+        EntitiesService entitiesService = StaticApplicationContext.getBean(
+            EntitiesServiceImpl.class);
         if(kioskId != null){
           IKiosk k = entitiesService.getKiosk(kioskId, false);
           isBatchEnabled=k.isBatchMgmtEnabled();
@@ -694,7 +689,7 @@ public class OrderServlet extends JsonRestServlet {
   // Create or update a given order
   @SuppressWarnings({"rawtypes", "unchecked"})
   private void createOrUpdateOrder(HttpServletRequest req, HttpServletResponse resp,
-                                   ResourceBundle backendMessages, ResourceBundle messages,
+                                   ResourceBundle backendMessages,
                                    boolean isOldRequest)
       throws IOException {
     xLogger.fine("Entered createOrUpdateOrder");
@@ -712,7 +707,6 @@ public class OrderServlet extends JsonRestServlet {
     boolean status = true;
     Locale locale = null;
     String timezone = null;
-    String appVersion = null;
     UpdateOrderRequest uoReq = null;
     Date now = new Date();
     int statusCode = HttpServletResponse.SC_OK;
@@ -748,7 +742,6 @@ public class OrderServlet extends JsonRestServlet {
             domainId = u.getDomainId();
             locale = u.getLocale();
             timezone = u.getTimezone();
-            appVersion = u.getAppVersion();
           }
         } catch (ServiceException e) {
           status = false;
@@ -788,7 +781,7 @@ public class OrderServlet extends JsonRestServlet {
           // Get the transaction list from the input
           List<ITransaction> list = null;
           try {
-            list = RESTUtil.getInventoryTransactions(uoReq, type, now, locale);
+            list = RESTUtil.getInventoryTransactions(uoReq, type, now);
             if (!allowEmptyOrders && list == null && ITransaction.TYPE_ORDER
                 .equals(type)) {
               xLogger.severe("New order attempted without items in domain {0}",
@@ -803,19 +796,16 @@ public class OrderServlet extends JsonRestServlet {
           }
 
           String signature = null;
-          MemcacheService
-              cache = null;
+          MemcacheService cache = null;
           boolean isAlreadyProcessed = false;
-          OrderManagementService
-              oms =
-              Services.getService(OrderManagementServiceImpl.class,
-                  locale);
+          OrderManagementService oms =
+              StaticApplicationContext.getBean(OrderManagementServiceImpl.class);
           if (RestConstantsZ.TYPE_REORDER.equalsIgnoreCase(type)) {
             o = oms.getOrder(uoReq.tid);
             if (!OrderUtils.validateOrderUpdatedTime(uoReq.tm, o.getUpdatedOn())) {
               errorCode = "O004";
               status = false;
-              mom = buildOrderModel(timezone, o, locale, includeBatchDetails, uoReq, u);
+              mom = buildOrderModel(timezone, o, locale, includeBatchDetails, uoReq);
             }
 
           }
@@ -841,17 +831,11 @@ public class OrderServlet extends JsonRestServlet {
             }
             if (!isAlreadyProcessed) {
               // Get the IMS service
-              InventoryManagementService
-                  ims =
-                  Services.getService(InventoryManagementServiceImpl.class,
-                      locale);
-              MaterialCatalogService
-                  mcs =
-                  Services
-                      .getService(MaterialCatalogServiceImpl.class, locale);
-              EntitiesService
-                  as =
-                  Services.getService(EntitiesServiceImpl.class, locale);
+              InventoryManagementService ims =
+                  StaticApplicationContext.getBean(InventoryManagementServiceImpl.class);
+              MaterialCatalogService mcs =
+                  StaticApplicationContext.getBean(MaterialCatalogServiceImpl.class);
+              EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
 
               PersistenceManager pm = null;
 
@@ -999,7 +983,7 @@ public class OrderServlet extends JsonRestServlet {
 
     if (status) {
       try {
-        mom = buildOrderModel(timezone, o, locale, includeBatchDetails, uoReq, u);
+        mom = buildOrderModel(timezone, o, locale, includeBatchDetails, uoReq);
       } catch (ServiceException e) {
         xLogger.severe("Exception: {0} : {1}", e.getClass().getName(), e);
         message = backendMessages.getString("error.systemerror") + " [2]";
@@ -1058,12 +1042,10 @@ public class OrderServlet extends JsonRestServlet {
    * @param order    Order
    * @param locale   user's locale
    * @param uoReq
-   * @param u
    * @return MobileOrderModel order model
    */
   private MobileOrderModel buildOrderModel(String timezone, IOrder order, Locale locale,
-                                           boolean includeBatch, UpdateOrderRequest uoReq,
-                                           IUserAccount u)
+                                           boolean includeBatch, UpdateOrderRequest uoReq)
       throws ServiceException {
     if (order == null) {
       return null;
@@ -1071,7 +1053,7 @@ public class OrderServlet extends JsonRestServlet {
     DomainConfig dc = DomainConfig.getInstance(order.getDomainId());
     boolean isAccounting = dc.isAccountingEnabled();
     boolean embedInventoryDetails = "inventory".equals(uoReq.embed) && uoReq.ukid != null;
-    EntityAuthoriser.authoriseEntity(SecurityMgr.getSecureUserDetails(u), uoReq.ukid);
+    EntityAuthoriser.authoriseEntity(uoReq.ukid);
     return new MobileOrderBuilder()
         .build(order, locale, timezone, true, isAccounting, true, includeBatch,
             embedInventoryDetails, uoReq.ukid);
@@ -1099,7 +1081,6 @@ public class OrderServlet extends JsonRestServlet {
     String message = null;
     Locale locale = null;
     String timezone = null;
-    String appVersion = null;
     DomainConfig dc = null;
     Long kioskId = null;
     int statusCode = HttpServletResponse.SC_OK;
@@ -1124,7 +1105,6 @@ public class OrderServlet extends JsonRestServlet {
         }
         timezone = u.getTimezone();
         locale = u.getLocale();
-        appVersion = u.getAppVersion();
         // Get domain config
         dc =
             DomainConfig.getInstance(
@@ -1176,7 +1156,7 @@ public class OrderServlet extends JsonRestServlet {
             } else {
               // Update order status
               UpdatedOrder uo = OrderUtils.updateOrderStatus(
-                  orderId, newStatus, userId, null, dc,
+                  orderId, newStatus, userId, null,
                   SourceConstants.MOBILE, backendMessages);
               order = uo.order;
               // Send inventory error message, if any
@@ -1229,7 +1209,7 @@ public class OrderServlet extends JsonRestServlet {
         dc = DomainConfig.getInstance(order.getDomainId());
         boolean isAccounting = dc.isAccountingEnabled();
         MobileOrderBuilder mob = new MobileOrderBuilder();
-        EntitiesService as = Services.getService(EntitiesServiceImpl.class);
+        EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
         IKiosk k = as.getKiosk(order.getKioskId(), false);
         mom = mob.build(order, locale, timezone, true, isAccounting, true, k.isBatchMgmtEnabled());
       }
@@ -1454,7 +1434,7 @@ public class OrderServlet extends JsonRestServlet {
       if (order != null) {
         dc = DomainConfig.getInstance(order.getDomainId());
         boolean isAccounting = dc.isAccountingEnabled();
-        EntitiesService as = Services.getService(EntitiesServiceImpl.class);
+        EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
         if (uosReq.oty.equals(IOrder.TYPE_PURCHASE)) {
           IKiosk k = as.getKiosk(uosReq.kid, false);
           includeBatchDetails = k.isBatchMgmtEnabled();
@@ -1465,7 +1445,7 @@ public class OrderServlet extends JsonRestServlet {
 
         boolean embedInventoryDetails = "inventory".equals(uosReq.embed) && uosReq.ukid != null;
 
-        EntityAuthoriser.authoriseEntity(SecurityMgr.getSecureUserDetails(u), uosReq.ukid);
+        EntityAuthoriser.authoriseEntity(uosReq.ukid);
 
         MobileOrderBuilder mob = new MobileOrderBuilder();
         mom =
@@ -1497,7 +1477,8 @@ public class OrderServlet extends JsonRestServlet {
 
   private IOrder getOrder(Long tid) throws ServiceException {
     try {
-      OrderManagementService oms = Services.getService(OrderManagementServiceImpl.class);
+      OrderManagementService oms = StaticApplicationContext.getBean(
+          OrderManagementServiceImpl.class);
       return oms.getOrder(tid, true);
     } catch (ServiceException | ObjectNotFoundException e) {
       xLogger.warn("Could not find the order {0}", tid);

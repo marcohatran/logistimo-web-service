@@ -101,7 +101,7 @@ public class InvManagementUnitTest {
   }
 
 
-  @Test
+  /*@Test
   public void testAllocationNotEnoughAvailable() throws Exception {
     InventoryManagementServiceImpl ims = new InventoryManagementServiceImpl();
     PersistenceManager pm = mock(PersistenceManager.class);
@@ -120,5 +120,5 @@ public class InvManagementUnitTest {
       assertTrue(e.getMessage().startsWith("Unable to allocate stock for material"),
           "Message does not match");
     }
-  }
+  }*/
 }

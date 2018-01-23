@@ -28,18 +28,16 @@ import com.logistimo.api.models.WidgetConfigModel;
 import com.logistimo.api.models.WidgetModel;
 import com.logistimo.api.request.DBWUpdateRequest;
 import com.logistimo.auth.utils.SecurityUtils;
-import com.logistimo.auth.utils.SessionMgr;
 import com.logistimo.dashboards.entity.IWidget;
 import com.logistimo.dashboards.service.IDashboardService;
-import com.logistimo.dashboards.service.impl.DashboardService;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.logger.XLog;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.utils.MsgUtil;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -52,8 +50,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
-import javax.servlet.http.HttpServletRequest;
-
 /**
  * @author Mohan Raja
  */
@@ -62,23 +58,33 @@ import javax.servlet.http.HttpServletRequest;
 public class WidgetController {
   private static final XLog xLogger = XLog.getLog(WidgetController.class);
 
-  WidgetBuilder builder = new WidgetBuilder();
+  private WidgetBuilder builder;
+  private IDashboardService dashboardService;
+
+  @Autowired
+  public void setBuilder(WidgetBuilder builder) {
+    this.builder = builder;
+  }
+
+  @Autowired
+  public void setDashboardService(IDashboardService dashboardService) {
+    this.dashboardService = dashboardService;
+  }
 
   @RequestMapping(value = "/", method = RequestMethod.POST)
   public
   @ResponseBody
-  String create(@RequestBody WidgetModel model, HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+  String create(@RequestBody WidgetModel model) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
+    long domainId = sUser.getCurrentDomainId();
     try {
       IWidget wid = builder.buildWidget(model, domainId, sUser.getUsername());
-      IDashboardService ds = Services.getService(DashboardService.class);
-      ds.createWidget(wid);
+      dashboardService.createWidget(wid);
       model.config.wId = wid.getwId();
-      IWidget widConfig = builder.updateWidgetConfig(ds, model.config);
-      ds.updateWidgetConfig(widConfig);
+      IWidget widConfig = builder.updateWidgetConfig(model.config);
+      dashboardService.updateWidgetConfig(widConfig);
     } catch (ServiceException e) {
       xLogger.severe("Error creating Widget for " + domainId);
       throw new InvalidServiceException("Error creating Widget for " + domainId);
@@ -89,11 +95,8 @@ public class WidgetController {
   @RequestMapping(value = "/", method = RequestMethod.GET)
   public
   @ResponseBody
-  List<WidgetModel> getAll(HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
-    long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
-    IDashboardService ds = Services.getService(DashboardService.class);
-    List<IWidget> dbList = ds.getWidgets(domainId);
+  List<WidgetModel> getAll() {
+    List<IWidget> dbList = dashboardService.getWidgets(SecurityUtils.getCurrentDomainId());
     return builder.buildWidgetModelList(dbList);
   }
 
@@ -102,8 +105,7 @@ public class WidgetController {
   @ResponseBody
   WidgetModel get(@PathVariable Long wId) {
     try {
-      IDashboardService ds = Services.getService(DashboardService.class);
-      IWidget wid = ds.getWidget(wId);
+      IWidget wid = dashboardService.getWidget(wId);
       return builder.buildWidgetModel(wid, true);
     } catch (ServiceException e) {
       xLogger.warn("Error in getting Widget: " + wId);
@@ -117,8 +119,7 @@ public class WidgetController {
   String delete(@RequestParam Long id) {
     String name;
     try {
-      IDashboardService ds = Services.getService(DashboardService.class);
-      name = ds.deleteWidget(id);
+      name = dashboardService.deleteWidget(id);
     } catch (ServiceException e) {
       xLogger.severe("Error deleting Widget: " + id);
       throw new InvalidServiceException("Error deleting Widget: " + id);
@@ -132,8 +133,7 @@ public class WidgetController {
   String update(@RequestBody DBWUpdateRequest rObj) {
     String name;
     try {
-      IDashboardService ds = Services.getService(DashboardService.class);
-      name = ds.updateWidget(rObj.id, rObj.ty, rObj.val);
+      name = dashboardService.updateWidget(rObj.id, rObj.ty, rObj.val);
     } catch (ServiceException e) {
       xLogger.severe("Error updating Widget: " + rObj.id);
       throw new InvalidServiceException("Error updating widget: " + rObj.id);
@@ -147,9 +147,8 @@ public class WidgetController {
   String saveConfig(@RequestBody WidgetConfigModel model) {
     String name;
     try {
-      IDashboardService ds = Services.getService(DashboardService.class);
-      IWidget wid = builder.updateWidgetConfig(ds, model);
-      ds.updateWidgetConfig(wid);
+      IWidget wid = builder.updateWidgetConfig(model);
+      dashboardService.updateWidgetConfig(wid);
       name = wid.getName();
     } catch (ServiceException e) {
       xLogger.severe("Error in saving configuration for widget" + model.wId);
@@ -163,8 +162,7 @@ public class WidgetController {
   @ResponseBody
   WidgetConfigModel getConfig(@RequestParam Long wId) {
     try {
-      IDashboardService ds = Services.getService(DashboardService.class);
-      IWidget wid = ds.getWidget(wId);
+      IWidget wid = dashboardService.getWidget(wId);
       return builder.getWidgetConfig(wid, false);
     } catch (ServiceException e) {
       xLogger.severe("Error in getting widget configuration for " + wId);
@@ -177,8 +175,7 @@ public class WidgetController {
   @ResponseBody
   WidgetConfigModel getWidgetData(@RequestParam Long wId) {
     try {
-      IDashboardService ds = Services.getService(DashboardService.class);
-      IWidget wid = ds.getWidget(wId);
+      IWidget wid = dashboardService.getWidget(wId);
       return builder.getWidgetConfig(wid, true);
     } catch (ServiceException e) {
       xLogger.severe("Error in getting widget configuration for " + wId);

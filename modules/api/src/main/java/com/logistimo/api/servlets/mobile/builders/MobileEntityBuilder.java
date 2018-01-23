@@ -26,9 +26,6 @@ package com.logistimo.api.servlets.mobile.builders;
 import com.logistimo.entities.entity.IApprover;
 import com.logistimo.proto.MobileApproversModel;
 import com.logistimo.proto.MobileEntityApproversModel;
-import com.logistimo.services.Services;
-import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,24 +63,23 @@ public class MobileEntityBuilder {
     }
     MobileEntityApproversModel mobileEntityApproversModel = new MobileEntityApproversModel();
     MobileUserBuilder mobileUserBuilder = new MobileUserBuilder();
-    UsersService us = Services.getService(UsersServiceImpl.class);
     if (!pap.isEmpty() || !sap.isEmpty()) {
       MobileApproversModel mobileApproversModel = new MobileApproversModel();
       mobileApproversModel.prm =
           mobileUserBuilder.buildMobileUserModels(mobileUserBuilder.constructUserAccount(
-              us, pap));
+              pap));
       mobileApproversModel.scn =
           mobileUserBuilder.buildMobileUserModels(mobileUserBuilder.constructUserAccount(
-              us, sap));
+              sap));
       mobileEntityApproversModel.prc = mobileApproversModel;
     }
     if (!pas.isEmpty() || !sas.isEmpty()) {
       MobileApproversModel mobileApproversModel = new MobileApproversModel();
       mobileApproversModel.prm =
           mobileUserBuilder.buildMobileUserModels(mobileUserBuilder.constructUserAccount(
-              us, pas));
+              pas));
       mobileApproversModel.scn =
-          mobileUserBuilder.buildMobileUserModels(mobileUserBuilder.constructUserAccount(us, sas));
+          mobileUserBuilder.buildMobileUserModels(mobileUserBuilder.constructUserAccount(sas));
       mobileEntityApproversModel.sle = mobileApproversModel;
     }
     return mobileEntityApproversModel;
@@ -109,7 +105,7 @@ public class MobileEntityBuilder {
 
   private void processApprover(IApprover approver, List<String> primaryApprovers,
                                List<String> secondaryApprovers) {
-    if (approver.getType().intValue() == IApprover.PRIMARY_APPROVER) {
+    if (approver.getType() == IApprover.PRIMARY_APPROVER) {
       primaryApprovers.add(approver.getUserId());
     } else {
       secondaryApprovers.add(approver.getUserId());

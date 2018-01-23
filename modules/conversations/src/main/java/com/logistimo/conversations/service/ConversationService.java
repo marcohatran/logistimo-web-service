@@ -27,7 +27,6 @@ import com.logistimo.conversations.entity.IConversation;
 import com.logistimo.conversations.entity.IMessage;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
-import com.logistimo.services.Service;
 import com.logistimo.services.ServiceException;
 
 import java.util.Date;
@@ -38,7 +37,7 @@ import javax.jdo.PersistenceManager;
 /**
  * Created by kumargaurav on 04/10/16.
  */
-public interface ConversationService extends Service {
+public interface ConversationService {
 
   /**
    * creates a converstation with given object

@@ -31,23 +31,21 @@ import com.logistimo.api.models.SessionDashboardModel;
 import com.logistimo.api.request.DBWUpdateRequest;
 import com.logistimo.api.util.SearchUtil;
 import com.logistimo.auth.utils.SecurityUtils;
-import com.logistimo.auth.utils.SessionMgr;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.Constants;
 import com.logistimo.dashboards.entity.IDashboard;
 import com.logistimo.dashboards.service.IDashboardService;
-import com.logistimo.dashboards.service.impl.DashboardService;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.logger.XLog;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.cache.MemcacheService;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.MsgUtil;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -68,8 +66,6 @@ import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.TimeZone;
 
-import javax.servlet.http.HttpServletRequest;
-
 /**
  * @author Mohan Raja
  */
@@ -78,22 +74,33 @@ import javax.servlet.http.HttpServletRequest;
 public class DashboardController {
   private static final XLog xLogger = XLog.getLog(DashboardController.class);
 
-  DashboardBuilder builder = new DashboardBuilder();
+  private DashboardBuilder dashboardBuilder;
   private static final String ENT_INV_DASHBOARD = "en_inv";
   private static final String ENT_TEMP_DASHBOARD = "en_temp";
+
+  private IDashboardService dashboardService;
+
+  @Autowired
+  public void setDashboardBuilder(DashboardBuilder dashboardBuilder) {
+    this.dashboardBuilder = dashboardBuilder;
+  }
+
+  @Autowired
+  public void setDashboardService(IDashboardService dashboardService) {
+    this.dashboardService = dashboardService;
+  }
 
   @RequestMapping(value = "/", method = RequestMethod.POST)
   public
   @ResponseBody
-  String create(@RequestBody DashboardModel model, HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+  String create(@RequestBody DashboardModel model) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
+    long domainId = sUser.getCurrentDomainId();
     try {
-      IDashboard db = builder.buildDashboard(model, sUser.getUsername());
-      IDashboardService ds = Services.getService(DashboardService.class);
-      ds.createDashboard(db);
+      IDashboard db = dashboardBuilder.buildDashboard(model, sUser.getUsername());
+      dashboardService.createDashboard(db);
     } catch (ServiceException e) {
       xLogger.severe("Error creating Dashboard for domain ", domainId);
       throw new InvalidServiceException("Error creating Dashboard for " + domainId);
@@ -105,26 +112,18 @@ public class DashboardController {
   @RequestMapping(value = "/all", method = RequestMethod.GET)
   public
   @ResponseBody
-  List<DashboardModel> getAll(HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
-    long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
-    IDashboardService ds = Services.getService(DashboardService.class);
-    List<IDashboard> dbList = ds.getDashBoards(domainId);
-    return builder.buildDashboardModelList(dbList);
+  List<DashboardModel> getAll() {
+    List<IDashboard> dbList = dashboardService.getDashBoards(SecurityUtils.getCurrentDomainId());
+    return dashboardBuilder.buildDashboardModelList(dbList);
   }
 
   @RequestMapping(value = "/{dbId}", method = RequestMethod.GET)
   public
   @ResponseBody
-  DashboardModel get(@PathVariable Long dbId, @RequestParam(required = false) String wc) {
+  DashboardModel get(@PathVariable Long dbId) {
     try {
-      IDashboardService ds = Services.getService(DashboardService.class);
-      IDashboard db = ds.getDashBoard(dbId);
-      DashboardModel model = builder.buildDashboardModel(db, true);
-      if ("y".equals(wc)) {
-        //model.conf = db.getConf();
-      }
-      return model;
+      IDashboard db = dashboardService.getDashBoard(dbId);
+      return dashboardBuilder.buildDashboardModel(db, true);
     } catch (ServiceException e) {
       xLogger.warn("Error in getting Dashboard {0}", dbId, e);
       throw new InvalidServiceException("Error in getting Dashboard " + dbId);
@@ -144,9 +143,9 @@ public class DashboardController {
                              @RequestParam(required = false) String aType,
                              @RequestParam(required = false) String date,
                              @RequestParam(required = false) String excludeETag,
-                             @RequestParam(required = false) Boolean skipCache,
-                             HttpServletRequest request) {
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), null);
+                             @RequestParam(required = false) Boolean skipCache) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
+    Long domainId = sUser.getCurrentDomainId();
     MainDashboardModel model;
     try {
       MemcacheService cache = AppFactory.get().getMemcacheService();
@@ -202,7 +201,6 @@ public class DashboardController {
           return model;
         }
       }
-      IDashboardService ds = Services.getService(DashboardService.class);
       Map<String, String> filters = new HashMap<>(1);
       if (StringUtils.isBlank(filter) && districtFilter != null) {
         filters.put("district", districtFilter);
@@ -268,14 +266,14 @@ public class DashboardController {
         }
       }
 
-      ResultSet eventRes = ds.getMainDashboardResults(domainId, filters, "inv");
-      ResultSet invRes = ds.getMainDashboardResults(domainId, filters, "all_inv");
-      ResultSet actRes = ds.getMainDashboardResults(domainId, filters, "activity");
-      ResultSet entRes = ds.getMainDashboardResults(domainId, filters, "all_activity");
-      ResultSet tempRes = ds.getMainDashboardResults(domainId, filters, "temperature");
+      ResultSet eventRes = dashboardService.getMainDashboardResults(domainId, filters, "inv");
+      ResultSet invRes = dashboardService.getMainDashboardResults(domainId, filters, "all_inv");
+      ResultSet actRes = dashboardService.getMainDashboardResults(domainId, filters, "activity");
+      ResultSet entRes = dashboardService.getMainDashboardResults(domainId, filters, "all_activity");
+      ResultSet tempRes = dashboardService.getMainDashboardResults(domainId, filters, "temperature");
       ResultSet predRes = null;
       if (dc.getInventoryConfig() != null && dc.getInventoryConfig().showPredictions()) {
-        predRes = ds.getMainDashboardResults(domainId, filters, "all_predictive");
+        predRes = dashboardService.getMainDashboardResults(domainId, filters, "all_predictive");
       }
       String colFilter;
       if ("district".equals(level) || districtFilter != null) {
@@ -286,7 +284,7 @@ public class DashboardController {
         colFilter = "STATE";
       }
       model =
-          builder
+          dashboardBuilder
               .getMainDashBoardData(eventRes, invRes, actRes, entRes, tempRes, predRes, colFilter);
       if (StringUtils.isBlank(filter) && stateFilter == null) {
         model.mTy = dc.getCountry();
@@ -302,7 +300,6 @@ public class DashboardController {
         model.mPTy = dc.getCountry(); // Required only for state level, rest ignored
         model.mLev = level != null ? level : "district";
       }
-      SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
       model.ut = LocalDateUtil.format(new Date(), sUser.getLocale(), sUser.getTimezone());
       try {
         if (cache != null) {
@@ -327,9 +324,9 @@ public class DashboardController {
                                        @RequestParam(required = false) String exType,
                                        @RequestParam(required = false) String eTag,
                                        @RequestParam(required = false) String excludeETag,
-                                       @RequestParam(required = false) Boolean skipCache,
-                                       HttpServletRequest request) {
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), null);
+                                       @RequestParam(required = false) Boolean skipCache) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
+    Long domainId = sUser.getCurrentDomainId();
     MainDashboardModel model;
     try {
       MemcacheService cache = AppFactory.get().getMemcacheService();
@@ -372,7 +369,6 @@ public class DashboardController {
           return model;
         }
       }
-      IDashboardService ds = Services.getService(DashboardService.class);
       Map<String, String> filters = new HashMap<>(1);
       if (StringUtils.isBlank(filter) && districtFilter != null) {
         filters.put("district", districtFilter);
@@ -408,8 +404,8 @@ public class DashboardController {
         filters.put("eeTag", excludeETag);
       }
 
-      ResultSet soRes = ds.getMainDashboardResults(domainId, filters, "pdb_stock_out");
-      ResultSet invRes = ds.getMainDashboardResults(domainId, filters, "all_inv");
+      ResultSet soRes = dashboardService.getMainDashboardResults(domainId, filters, "pdb_stock_out");
+      ResultSet invRes = dashboardService.getMainDashboardResults(domainId, filters, "all_inv");
 
       String colFilter;
       if ("district".equals(level) || districtFilter != null) {
@@ -419,7 +415,7 @@ public class DashboardController {
       } else {
         colFilter = "STATE";
       }
-      model = builder.getPredictiveDashBoardData(soRes, invRes, colFilter);
+      model = dashboardBuilder.getPredictiveDashBoardData(soRes, invRes, colFilter);
       if (StringUtils.isBlank(filter) && stateFilter == null) {
         model.mTy = dc.getCountry();
         model.mLev = "country";
@@ -434,7 +430,6 @@ public class DashboardController {
         model.mPTy = dc.getCountry(); // Required only for state level, rest ignored
         model.mLev = level != null ? level : "district";
       }
-      SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
       model.ut = LocalDateUtil.format(new Date(), sUser.getLocale(), sUser.getTimezone());
       try {
         if (cache != null) {
@@ -461,9 +456,9 @@ public class DashboardController {
                                        @RequestParam(required = false) String date,
                                        @RequestParam(required = false) String type,
                                        @RequestParam(required = false) String eTag,
-                                       @RequestParam(required = false) Boolean skipCache,
-                                       HttpServletRequest request) {
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), null);
+                                       @RequestParam(required = false) Boolean skipCache) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
+    Long domainId = sUser.getCurrentDomainId();
     SessionDashboardModel model;
     try {
       MemcacheService cache = AppFactory.get().getMemcacheService();
@@ -512,7 +507,6 @@ public class DashboardController {
           return model;
         }
       }
-      IDashboardService ds = Services.getService(DashboardService.class);
       Map<String, String> filters = new HashMap<>(1);
       if (StringUtils.isBlank(filter) && districtFilter != null) {
         filters.put("district", districtFilter);
@@ -584,10 +578,10 @@ public class DashboardController {
       domainCal.add(Calendar.SECOND, -1);
       filters.put("eDate", df.format(domainCal.getTime()));
 
-      ResultSet sessionRes = ds.getMainDashboardResults(domainId, filters, "sdb_session");
-      ResultSet allSessionRes = ds.getMainDashboardResults(domainId, filters, "sdb_all_session");
+      ResultSet sessionRes = dashboardService.getMainDashboardResults(domainId, filters, "sdb_session");
+      ResultSet allSessionRes = dashboardService.getMainDashboardResults(domainId, filters, "sdb_all_session");
 
-      model = builder.getSessionData(allSessionRes, sessionRes, pdf.parse(date));
+      model = dashboardBuilder.getSessionData(allSessionRes, sessionRes, pdf.parse(date));
       if (StringUtils.isBlank(filter) && stateFilter == null) {
         model.mTy = dc.getCountry();
         model.mLev = "country";
@@ -600,7 +594,6 @@ public class DashboardController {
         model.mTy = model.mTyNm.replace(" ", "");
         model.mLev = level != null ? level : "district";
       }
-      SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
       model.ut = LocalDateUtil.format(new Date(), sUser.getLocale(), sUser.getTimezone());
       try {
         if (cache != null) {
@@ -620,9 +613,10 @@ public class DashboardController {
   @RequestMapping(value = "/ent/", method = RequestMethod.GET)
   public
   @ResponseBody
-  MainDashboardModel getEntityInvData(@RequestParam Long eid, @RequestParam(required = false) String mTag, HttpServletRequest request) {
+  MainDashboardModel getEntityInvData(@RequestParam Long eid,
+                                      @RequestParam(required = false) String mTag) {
     MainDashboardModel model;
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), null);
+    Long domainId = SecurityUtils.getCurrentDomainId();
     Map<String, String> filter = new HashMap<>(1);
     try {
       filter.put(Constants.ENTITY, String.valueOf(eid));
@@ -630,11 +624,10 @@ public class DashboardController {
       if(mTag != null) {
         filter.put(Constants.MATERIAL_TAG, mTag);
       }
-      IDashboardService ids = Services.getService(DashboardService.class);
-      ResultSet rs = ids.getMainDashboardResults(domainId, filter, ENT_INV_DASHBOARD);
-      ResultSet tempRs = ids.getMainDashboardResults(domainId, filter, ENT_TEMP_DASHBOARD);
-      Integer total = ids.getInvTotalCount(filter);
-      model = builder.getEntityInvTempDashboard(rs, tempRs, total);
+      ResultSet rs = dashboardService.getMainDashboardResults(domainId, filter, ENT_INV_DASHBOARD);
+      ResultSet tempRs = dashboardService.getMainDashboardResults(domainId, filter, ENT_TEMP_DASHBOARD);
+      Integer total = dashboardService.getInvTotalCount(filter);
+      model = dashboardBuilder.getEntityInvTempDashboard(rs, tempRs, total);
       return model;
     } catch (Exception e) {
       xLogger.warn("Error while getting dashboard for entity:{0} ",eid,e);
@@ -649,10 +642,9 @@ public class DashboardController {
                                 @RequestParam(required = false) String district,
                                 @RequestParam(required = false) String period,
                                 @RequestParam(required = false) String eTag,
-                                @RequestParam(required = false) Boolean skipCache,
-                                HttpServletRequest request) {
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), null);
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+                                @RequestParam(required = false) Boolean skipCache) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
+    Long domainId = sUser.getCurrentDomainId();
     MainDashboardModel model;
     try {
       if (skipCache == null) {
@@ -682,7 +674,6 @@ public class DashboardController {
           return model;
         }
       }
-      IDashboardService ds = Services.getService(DashboardService.class);
       Map<String, String> filters = new HashMap<>(1);
       if (StringUtils.isNotBlank(countryFilter)) {
         filters.put("country", countryFilter);
@@ -700,14 +691,14 @@ public class DashboardController {
       if (StringUtils.isNotEmpty(eTag)) {
         filters.put("eTag", eTag);
       }
-      ResultSet eventRes = ds.getMainDashboardResults(domainId, filters, "idb_events");
-      ResultSet invRes = ds.getMainDashboardResults(domainId, filters, "idb_inv");
+      ResultSet eventRes = dashboardService.getMainDashboardResults(domainId, filters, "idb_events");
+      ResultSet invRes = dashboardService.getMainDashboardResults(domainId, filters, "idb_inv");
       if (filters.containsKey("eTag")) {
         filters.put("eTag", "'" + filters.get("eTag") + "'");
       }
-      ResultSet tempRes = ds.getMainDashboardResults(domainId, filters, "temperature");
+      ResultSet tempRes = dashboardService.getMainDashboardResults(domainId, filters, "temperature");
       model =
-          builder.getInvDashBoardData(eventRes, invRes, tempRes,
+          dashboardBuilder.getInvDashBoardData(eventRes, invRes, tempRes,
               StringUtils.isEmpty(state) ? "STATE"
                   : StringUtils.isEmpty(district) ? "DISTRICT" : "ENTITY", sUser.getLocale(),
               sUser.getTimezone());
@@ -736,59 +727,51 @@ public class DashboardController {
   public
   @ResponseBody
   String delete(@RequestParam Long id) {
-    String name;
     try {
-      IDashboardService ds = Services.getService(DashboardService.class);
-      name = ds.deleteDashboard(id);
+      String name = dashboardService.deleteDashboard(id);
+      return "Dashboard " + MsgUtil.bold(name) + " deleted successfully.";
     } catch (ServiceException e) {
       xLogger.severe("Error deleting Dashboard: {0}", id);
       throw new InvalidServiceException("Error deleting Dashboard: " + id);
     }
-    return "Dashboard " + MsgUtil.bold(name) + " deleted successfully.";
   }
 
   @RequestMapping(value = "/update", method = RequestMethod.POST)
   public
   @ResponseBody
   String update(@RequestBody DBWUpdateRequest rObj) {
-    String name;
     try {
-      IDashboardService ds = Services.getService(DashboardService.class);
-      name = ds.updateDashboard(rObj.id, rObj.ty, rObj.val);
+      String name = dashboardService.updateDashboard(rObj.id, rObj.ty, rObj.val);
+      return "Dashboard " + MsgUtil.bold(name) + " updated successfully.";
     } catch (ServiceException e) {
       xLogger.severe("Error deleting dashboard: {0}", rObj.id);
       throw new InvalidServiceException("Error deleting dashboard: " + rObj.id);
     }
-    return "Dashboard " + MsgUtil.bold(name) + " updated successfully.";
   }
 
   @RequestMapping(value = "/setdefault", method = RequestMethod.GET)
   public
   @ResponseBody
   String setDefault(@RequestParam Long oid, @RequestParam Long id) {
-    String name;
     try {
-      IDashboardService ds = Services.getService(DashboardService.class);
-      name = ds.setDefault(oid, id);
+      String name = dashboardService.setDefault(oid, id);
+      return "Dashboard " + MsgUtil.bold(name) + " is marked as default dashboard.";
     } catch (ServiceException e) {
       xLogger.severe("Error in setting dashboard {0} as default", id);
       throw new InvalidServiceException("Error in setting dashboard " + id + " as default");
     }
-    return "Dashboard " + MsgUtil.bold(name) + " is marked as default dashboard.";
   }
 
   @RequestMapping(value = "/saveconfig", method = RequestMethod.POST)
   public
   @ResponseBody
   String saveConfig(@RequestBody DBWUpdateRequest rObj) {
-    String name;
     try {
-      IDashboardService ds = Services.getService(DashboardService.class);
-      name = ds.updateDashboard(rObj.id, rObj.ty, rObj.val);
+      String name = dashboardService.updateDashboard(rObj.id, rObj.ty, rObj.val);
+      return "Dashboard configuration for " + MsgUtil.bold(name) + " is updated successfully.";
     } catch (ServiceException e) {
       xLogger.severe("Error in updating dashboard configuration for {0}", rObj.id);
       throw new InvalidServiceException("Error in updating dashboard configuration for " + rObj.id);
     }
-    return "Dashboard configuration for " + MsgUtil.bold(name) + " is updated successfully.";
   }
 }

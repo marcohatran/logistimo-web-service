@@ -53,6 +53,7 @@ import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.SourceConstants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.domains.entity.IDomainPermission;
 import com.logistimo.domains.service.DomainsService;
@@ -73,7 +74,6 @@ import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.UploadService;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.services.impl.UploadServiceImpl;
@@ -100,7 +100,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -188,7 +187,7 @@ public class BulkUploadMgr {
   }
 
   // Get the operation display name
-  public static String getOpDisplayName(String op, Locale locale) {
+  public static String getOpDisplayName(String op) {
     if (OP_ADD.equals(op)) {
       return "add";
     } else if (OP_EDIT.equals(op)) {
@@ -205,7 +204,7 @@ public class BulkUploadMgr {
     // Get the user's role
     String role = null;
     try {
-      UsersService as = Services.getService(UsersServiceImpl.class);
+      UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
       role = as.getUserAccount(userId).getRole();
     } catch (Exception e) {
       xLogger.warn(
@@ -229,7 +228,7 @@ public class BulkUploadMgr {
     IUploaded uploaded = null;
     String key = getUploadedKey(domainId, type, userId);
     try {
-      UploadService us = Services.getService(UploadServiceImpl.class);
+      UploadService us = StaticApplicationContext.getBean(UploadServiceImpl.class);
       uploaded = us.getUploaded(key);
     } catch (ObjectNotFoundException e) {
       xLogger.info("No Uploaded yet for key {0}...", key);
@@ -262,10 +261,9 @@ public class BulkUploadMgr {
     if (allMsgs == null || allMsgs.isEmpty()) {
       return null;
     }
-    List<ErrMessage> errors = new ArrayList<ErrMessage>();
-    Iterator<String> it = allMsgs.iterator();
-    while (it.hasNext()) {
-      String[] array = it.next().split(INTRALINE_DELIMITER);
+    List<ErrMessage> errors = new ArrayList<>();
+    for (String allMsg : allMsgs) {
+      String[] array = allMsg.split(INTRALINE_DELIMITER);
       if (array.length < 4) {
         return null;
       }
@@ -276,10 +274,8 @@ public class BulkUploadMgr {
         err.operation = array[2];
         if (array[3] != null) {
           String[] msgs = array[3].split(MESSAGE_DELIMITER);
-          err.messages = new ArrayList<String>();
-          for (int j = 0; j < msgs.length; j++) {
-            err.messages.add(msgs[j]);
-          }
+          err.messages = new ArrayList<>();
+          Collections.addAll(err.messages, msgs);
         }
         errors.add(err);
       } catch (Exception e) {
@@ -291,7 +287,7 @@ public class BulkUploadMgr {
   }
 
   // Get the CSV header format for a given type
-  public static String getCSVFormat(String type, Locale locale, DomainConfig dc) {
+  public static String getCSVFormat(String type, Locale locale) {
     if (type == null) {
       return null;
     }
@@ -312,7 +308,7 @@ public class BulkUploadMgr {
     } else if (TYPE_TRANSACTIONS_CUM_INVENTORY_METADATA.equals(type)) {
       header = new MnlTransactionHeader();
     } else if (TYPE_TIMEZONES.equals(type)) {
-      return getTimezonesCSV(locale);
+      return getTimezonesCSV();
     } else if (TYPE_ASSETS.equals(type)) {
       header = new AssetsHeader();
     }
@@ -363,8 +359,9 @@ public class BulkUploadMgr {
         throw new ServiceException("No fields specified");
       }
 
-      UsersService as = Services.getService(UsersServiceImpl.class);
-      AssetManagementService ams = Services.getService(AssetManagementServiceImpl.class);
+      UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
+      AssetManagementService ams = StaticApplicationContext.getBean(
+          AssetManagementServiceImpl.class);
       IUserAccount su = as.getUserAccount(sourceUserId);
       backendMessages = Resources.get().getBundle("BackendMessages", su.getLocale());
       //Entity Name
@@ -387,7 +384,8 @@ public class BulkUploadMgr {
         List<Long> list = (List<Long>) q.execute(domainId, eName.toLowerCase());
         if (list != null && !list.isEmpty()) {
           kioskId = list.get(0);
-            EntitiesService entitiesService = Services.getService(EntitiesServiceImpl.class);
+            EntitiesService entitiesService = StaticApplicationContext.getBean(
+                EntitiesServiceImpl.class);
             tags = entitiesService.getAssetTagsToRegister(kioskId);
         }
         xLogger.fine(
@@ -656,15 +654,15 @@ public class BulkUploadMgr {
   private static EntityContainer processInventoryEntity(String[] tokens, Long domainId,
                                                         String sourceUserId) {
     xLogger.fine("Entered processInventoryEntity");
-    ResourceBundle backendMessages = null;
+    ResourceBundle backendMessages;
     EntityContainer ec = new EntityContainer();
     if (tokens == null || tokens.length == 0) {
       ec.messages.add("No fields specified");
       return ec;
     }
     try {
-      UsersService as = Services.getService(UsersServiceImpl.class);
-      DomainsService ds = Services.getService(DomainsServiceImpl.class);
+      UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
+      DomainsService ds = StaticApplicationContext.getBean(DomainsServiceImpl.class);
       IUserAccount su = as.getUserAccount(sourceUserId);
       backendMessages = Resources.get().getBundle("BackendMessages", su.getLocale());
       IDomainPermission
@@ -742,9 +740,8 @@ public class BulkUploadMgr {
         }
       }
 
-      InventoryManagementService
-          ims =
-          Services.getService(InventoryManagementServiceImpl.class);
+      InventoryManagementService ims =
+          StaticApplicationContext.getBean(InventoryManagementServiceImpl.class);
       IInvntry invntry = ims.getInventory(kioskId, materialId);
 
       boolean isAdd = (OP_ADD.equals(ec.operation));
@@ -1029,27 +1026,25 @@ public class BulkUploadMgr {
   private static EntityContainer processUserEntity(String[] tokens, Long domainId,
                                                    String sourceUserId) {
     xLogger.fine("Entered processUserEntity");
-    ResourceBundle backendMessages = null;
+    ResourceBundle backendMessages;
     EntityContainer ec = new EntityContainer();
     if (tokens == null || tokens.length == 0) {
       ec.messages.add("No fields specified");
       return ec;
     }
     try {
-      UsersService as = Services.getService(UsersServiceImpl.class);
+      UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
       IUserAccount u = null;
       IUserAccount su = as.getUserAccount(sourceUserId);
-      DomainsService ds = Services.getService(DomainsServiceImpl.class);
+      DomainsService ds = StaticApplicationContext.getBean(DomainsServiceImpl.class);
       backendMessages = Resources.get().getBundle("BackendMessages", su.getLocale());
       IDomainPermission userDomainPermission = ds.getLinkedDomainPermission(su.getDomainId());
       IDomainPermission currentDomainPermission = ds.getLinkedDomainPermission(domainId);
-      ConfigurationMgmtService
-          cms =
-          Services.getService(ConfigurationMgmtServiceImpl.class, null);
+      ConfigurationMgmtService cms =
+          StaticApplicationContext.getBean(ConfigurationMgmtServiceImpl.class);
       IConfig c = cms.getConfiguration(IConfig.LOCATIONS);
       IConfig ln = cms.getConfiguration(IConfig.LANGUAGES);
-      JSONObject jsonLocationObject, jsonLanguageObject, intermediateJsonObject;
-      jsonLanguageObject = jsonLocationObject = intermediateJsonObject = null;
+      JSONObject jsonLocationObject, jsonLanguageObject, intermediateJsonObject = null;
       Set<String> countryKey, languageKey;
       countryKey = languageKey = null;
       // for auditlog
@@ -1328,11 +1323,9 @@ public class BulkUploadMgr {
         }
       }
       if (!done) {
-        // Language
-        String language = "";
-        language = tokens[i].trim();
+        String language = tokens[i].trim();
         if (!language.isEmpty()) {
-          String jsonLanguageString = null;
+          String jsonLanguageString;
           //validating language with system configuration
           if (ln != null && ln.getConfig() != null) {
             jsonLanguageString = ln.getConfig();
@@ -1363,14 +1356,14 @@ public class BulkUploadMgr {
         String
             TIMEZONE_ID_PREFIXES =
             "^(Africa|America|Asia|Atlantic|Australia|Europe|Indian|Pacific)/.*";
-        List timezoneCode = new ArrayList();
-        for (int tz = 0; tz < timezones.length; tz++) {
-          if (timezones[tz].matches(TIMEZONE_ID_PREFIXES)) {
-            timezoneCode.add(timezones[tz]);
+        List<String> timezoneCode = new ArrayList<>();
+        for (String timezone1 : timezones) {
+          if (timezone1.matches(TIMEZONE_ID_PREFIXES)) {
+            timezoneCode.add(timezone1);
           }
         }
         String timezone = tokens[i].trim();
-        if (timezone.isEmpty() || timezone.indexOf("/") == -1) {
+        if (timezone.isEmpty() || !timezone.contains("/")) {
           ec.messages.add(
               "Timezone: Timezone is not specified or is of incorrect format (i.e. missing a /). It should be an entry from the URL given in the header.");
         } else {
@@ -1480,7 +1473,7 @@ public class BulkUploadMgr {
         }
       }
       // Taluk
-      String taluk = "";
+      String taluk;
       if (++i < size && u.getDistrict() != null) {
         taluk = tokens[i].trim();
         if (!taluk.isEmpty()) {
@@ -1491,7 +1484,7 @@ public class BulkUploadMgr {
           } else {
             JSONArray taluks = intermediateJsonObject.getJSONArray("taluks");
             if (taluks.length() > 0) {
-              ArrayList<String> talukCode = new ArrayList<String>();
+              ArrayList<String> talukCode = new ArrayList<>();
               for (int j = 0; j < taluks.length(); j++) {
                 String tk = taluks.getString(j);
                 talukCode.add(tk);
@@ -1636,7 +1629,7 @@ public class BulkUploadMgr {
         processTags(tokens[i], domainId, ec, TagUtil.TYPE_USER, u);
       } else if (u.getTags()
           != null) { // The user being updated had tags earlier but now being edited to remove tags
-        u.setTags(new ArrayList<String>());
+        u.setTags(new ArrayList<>());
       }
       // If there are errors, return; do not add/update
       if (ec.hasErrors()) {
@@ -1671,22 +1664,22 @@ public class BulkUploadMgr {
     }
     // Process material fields
     try {
-      UsersService as = Services.getService(UsersServiceImpl.class);
-      DomainsService ds = Services.getService(DomainsServiceImpl.class);
+      UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
+      DomainsService ds = StaticApplicationContext.getBean(DomainsServiceImpl.class);
       IUserAccount su = as.getUserAccount(sourceUserId);
       IDomainPermission
           permission =
           ds.getLinkedDomainPermission(
               su.getRole().equalsIgnoreCase(SecurityConstants.ROLE_DOMAINOWNER) ? su.getDomainId()
                   : domainId);
-      MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
+      MaterialCatalogService mcs = StaticApplicationContext.getBean(
+          MaterialCatalogServiceImpl.class);
       IMaterial m;
-      ConfigurationMgmtService
-          cms =
-          Services.getService(ConfigurationMgmtServiceImpl.class, null);
+      ConfigurationMgmtService cms =
+          StaticApplicationContext.getBean(ConfigurationMgmtServiceImpl.class);
       ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", su.getLocale());
       IConfig cn = cms.getConfiguration(IConfig.CURRENCIES);
-      JSONObject jsonCurrencyObject = null;
+      JSONObject jsonCurrencyObject;
       Set<String> currencyKey = null;
 
       int i = 0;
@@ -1706,7 +1699,7 @@ public class BulkUploadMgr {
       }
       // Material Name
       String name = tokens[i].trim();
-      if (name == null || name.isEmpty()) {
+      if (name.isEmpty()) {
         ec.messages
             .add("Material name: Name is not specified. Please specify a valid material name.");
         return ec;
@@ -1865,10 +1858,8 @@ public class BulkUploadMgr {
           //validating currency with system configuration
           if (cn != null && cn.getConfig() != null) {
             String jsonCurrencyString = cn.getConfig();
-            if (jsonCurrencyString != null) {
-              jsonCurrencyObject = new JSONObject(jsonCurrencyString);
-              currencyKey = jsonCurrencyObject.keySet();
-            }
+            jsonCurrencyObject = new JSONObject(jsonCurrencyString);
+            currencyKey = jsonCurrencyObject.keySet();
             if (currencyKey.contains(currency)) {
               m.setCurrency(currency);
             } else {
@@ -1908,7 +1899,8 @@ public class BulkUploadMgr {
         batchEnabled = true;
       }
       if (isEdit && batchEnabled != m.isBatchEnabled()) {
-        InventoryManagementService ims = Services.getService(InventoryManagementServiceImpl.class);
+        InventoryManagementService ims = StaticApplicationContext.getBean(
+            InventoryManagementServiceImpl.class);
         if (!ims.validateMaterialBatchManagementUpdate(m.getMaterialId())) {
           if (batchEnabled) {
             ec.messages.add(backendMessages.getString("material.batch.management.enable.warning"));
@@ -2023,9 +2015,9 @@ public class BulkUploadMgr {
     }
     // Process material fields
     try {
-      UsersService as = Services.getService(UsersServiceImpl.class);
-      EntitiesService es = Services.getService(EntitiesServiceImpl.class);
-      DomainsService ds = Services.getService(DomainsServiceImpl.class);
+      UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
+      EntitiesService es = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
+      DomainsService ds = StaticApplicationContext.getBean(DomainsServiceImpl.class);
       IUserAccount su = as.getUserAccount(sourceUserId);
       backendMessages = Resources.get().getBundle("BackendMessages", su.getLocale());
       IDomainPermission
@@ -2033,19 +2025,17 @@ public class BulkUploadMgr {
           ds.getLinkedDomainPermission(
               su.getRole().equalsIgnoreCase(SecurityConstants.ROLE_DOMAINOWNER) ? su.getDomainId()
                   : domainId);
-      ConfigurationMgmtService
-          cms =
-          Services.getService(ConfigurationMgmtServiceImpl.class, null);
+      ConfigurationMgmtService cms =
+          StaticApplicationContext.getBean(ConfigurationMgmtServiceImpl.class);
       //Location Configuration
       IConfig c = cms.getConfiguration(IConfig.LOCATIONS);
       //Currency Configuration
       IConfig cn = cms.getConfiguration(IConfig.CURRENCIES);
-      JSONObject jsonLocationObject, jsonCurrencyObject, intermediateJsonObject;
-      jsonCurrencyObject = jsonLocationObject = intermediateJsonObject = null;
+      JSONObject jsonLocationObject, jsonCurrencyObject, intermediateJsonObject = null;
       Set<String> countryKey, currencyKey;
       countryKey = currencyKey = null;
 
-      IKiosk k = null;
+      IKiosk k;
 
       int i = 0;
       int size = tokens.length;
@@ -2352,7 +2342,7 @@ public class BulkUploadMgr {
           } else {
             JSONArray taluks = intermediateJsonObject.getJSONArray("taluks");
             if (taluks.length() > 0) {
-              ArrayList<String> talukCode = new ArrayList<String>();
+              ArrayList<String> talukCode = new ArrayList<>();
               for (int j = 0; j < taluks.length(); j++) {
                 String tk = taluks.getString(j);
                 talukCode.add(tk);
@@ -2564,7 +2554,7 @@ public class BulkUploadMgr {
         processTags(tokens[i], domainId, ec, TagUtil.TYPE_ENTITY, k);
         xLogger.info("Updated {0}.", name);
       } else if (k.getTags() != null) {
-        k.setTags(new ArrayList<String>());
+        k.setTags(new ArrayList<>());
       }
       // Add customId if present.
       // Custom ID
@@ -2591,7 +2581,8 @@ public class BulkUploadMgr {
               "Enable Batch Management '" + enableBatch + "' should be either true/false or empty");
         }
         if (isEdit && (enableBatchBoolean != k.isBatchMgmtEnabled())) {
-          InventoryManagementService ims = Services.getService(InventoryManagementServiceImpl.class);
+          InventoryManagementService ims = StaticApplicationContext.getBean(
+              InventoryManagementServiceImpl.class);
           if (!ims.validateEntityBatchManagementUpdate(k.getKioskId())) {
             if (enableBatchBoolean) {
               ec.messages.add(backendMessages.getString("entity.batch.management.enable.warning"));
@@ -2644,15 +2635,13 @@ public class BulkUploadMgr {
   }
 
   // Get the list of Java timezones
-  public static String getTimezonesCSV(Locale locale) {
+  public static String getTimezonesCSV() {
     xLogger.fine("Entered getTimezonesCSV");
     String csv = "Timezone Name, Timezone code";
     Map<String, String> timezoneMap = LocalDateUtil.getTimeZoneNames();
     Set<String> names = timezoneMap.keySet();
     TreeSet<String> sortedNames = new TreeSet<>(names); // sort the display names
-    Iterator<String> it = sortedNames.iterator();
-    while (it.hasNext()) {
-      String name = it.next();
+    for (String name : sortedNames) {
       csv += "\n" + name + "," + timezoneMap.get(name);
     }
     xLogger.fine("Exiting getTimezonesCSV");
@@ -2746,12 +2735,11 @@ public class BulkUploadMgr {
           if (materialIds == null || materialIds.isEmpty()) {
             throw new ServiceException("No materials found");
           }
-          Iterator<Long> it = materialIds.iterator();
-          while (it.hasNext()) {
+          for (Long materialId : materialIds) {
             if (!idsCSV.isEmpty()) {
               idsCSV += ",";
             }
-            idsCSV += it.next();
+            idsCSV += materialId;
           }
         } finally {
           q.closeAll();
@@ -2783,7 +2771,7 @@ public class BulkUploadMgr {
     }
     // Prepare task for adding materials
     String url = "/task/createentity";
-    Map<String, String> params = new HashMap<String, String>();
+    Map<String, String> params = new HashMap<>();
     params.put("action", "add");
     params.put("type", "materialtokiosk");
     params.put("materialid", idsCSV);
@@ -2816,10 +2804,10 @@ public class BulkUploadMgr {
             kioskNamesCSV, linkType);
     PersistenceManager pm = PMF.get().getPersistenceManager();
     String[] kioskNames = kioskNamesCSV.split(";");
-    List<IKioskLink> links = new ArrayList<IKioskLink>();
+    List<IKioskLink> links = new ArrayList<>();
     Date now = new Date();
     try {
-      for (int i = 0; i < kioskNames.length; i++) {
+      for (String kioskName : kioskNames) {
         // Get the corresponding kiosk Id (via a key-only query)
         Query
             q =
@@ -2827,9 +2815,9 @@ public class BulkUploadMgr {
                 + " where dId.contains(dIdParam) && nName == nameParam parameters Long dIdParam, String nameParam ");
         Long linkedKioskId = null;
         try {
-          List<Long> ids = (List<Long>) q.execute(domainId, kioskNames[i].trim().toLowerCase());
+          List<Long> ids = (List<Long>) q.execute(domainId, kioskName.trim().toLowerCase());
           if (ids == null || ids.isEmpty()) {
-            ec.messages.add(backendMessages.getString("kiosk") + " " + "'" + kioskNames[i]
+            ec.messages.add(backendMessages.getString("kiosk") + " " + "'" + kioskName
                 + "' not found, and will not be added as a related " + backendMessages
                 .getString("kiosk.lowercase"));
             continue;
@@ -2928,10 +2916,9 @@ public class BulkUploadMgr {
   private static boolean processTags(String tokens, Long domainId, EntityContainer ec,
                                      String tagType, Object uploadable) {
     String tags = tokens.trim();
-    boolean update = false;
     if (!tags.matches("[^,]*")) {
       ec.messages.add("Invalid value for " + tags + ". It should not contain commas");
-      return update;
+      return false;
     }
     String tagsFromUserCSV = tokens.trim().replaceAll(";", ","); // replace semi-colons with commas
     List<String> tagsFromUser = StringUtil.getList(tagsFromUserCSV);
@@ -2959,6 +2946,7 @@ public class BulkUploadMgr {
 
     List<String> confTags = StringUtil.getList(confTagsCSV);
     boolean hasConfTags = confTags != null && !confTags.isEmpty();
+    boolean update;
     if (!hasTagsFromUser) {
       setUploadableObjTags(tagType, uploadable, tagsFromUser);
       update = true;
@@ -2993,7 +2981,7 @@ public class BulkUploadMgr {
       return null;
     }
     String[] userIds = userIdsStr.split(separator);
-    if (userIds == null || userIds.length == 0) {
+    if (userIds.length == 0) {
       return null;
     }
     return (new HashSet<>(Arrays.asList(userIds)));
@@ -3012,7 +3000,7 @@ public class BulkUploadMgr {
   private static void setUploadableObjTags(String tagType, Object up, List<String> tags) {
     if (tags == null) {
       tags =
-          new ArrayList<String>(); // setTags(null) does not set the tags. Hence, empty tags list is required.
+          new ArrayList<>(); // setTags(null) does not set the tags. Hence, empty tags list is required.
     }
     switch (tagType) {
       case TagUtil.TYPE_MATERIAL:
@@ -3050,7 +3038,7 @@ public class BulkUploadMgr {
 
   public static class EntityContainer {
     public String operation = OP_ADD; // operation
-    public List<String> messages = new ArrayList<String>(); // error messages, if any
+    public List<String> messages = new ArrayList<>(); // error messages, if any
     public Object entityId = null;
 
     public boolean hasErrors() {

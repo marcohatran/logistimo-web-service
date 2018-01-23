@@ -27,17 +27,17 @@
 package com.logistimo.communications.service;
 
 import com.codahale.metrics.Timer;
+import com.logistimo.communications.MessageHandlingException;
+import com.logistimo.communications.ServiceResponse;
+import com.logistimo.constants.Constants;
 import com.logistimo.dao.JDOUtils;
+import com.logistimo.entity.IMessageLog;
+import com.logistimo.logger.XLog;
 import com.logistimo.users.entity.IUserAccount;
+import com.logistimo.utils.MessageUtil;
 import com.logistimo.utils.MetricsUtil;
 
 import org.apache.commons.lang.StringUtils;
-import com.logistimo.communications.MessageHandlingException;
-import com.logistimo.communications.ServiceResponse;
-import com.logistimo.entity.IMessageLog;
-import com.logistimo.constants.Constants;
-import com.logistimo.utils.MessageUtil;
-import com.logistimo.logger.XLog;
 
 import java.io.IOException;
 import java.nio.charset.Charset;

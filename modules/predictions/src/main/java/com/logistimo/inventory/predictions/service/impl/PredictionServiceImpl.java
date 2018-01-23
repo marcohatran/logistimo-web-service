@@ -24,13 +24,11 @@
 package com.logistimo.inventory.predictions.service.impl;
 
 import com.logistimo.inventory.predictions.service.PredictionService;
-import com.logistimo.services.impl.ServiceImpl;
 
 /**
  * Created by charan on 08/03/17.
  */
-public class PredictionServiceImpl extends ServiceImpl
-    implements PredictionService {
+public class PredictionServiceImpl implements PredictionService {
 
   @Override
   public void updateInventoryPredictions(String invId) {

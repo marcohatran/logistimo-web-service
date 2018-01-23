@@ -30,7 +30,6 @@ import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.materials.entity.IMaterialManufacturers;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
-import com.logistimo.services.Service;
 import com.logistimo.services.ServiceException;
 
 import java.util.List;
@@ -38,7 +37,7 @@ import java.util.List;
 /**
  * @author juhee
  */
-public interface MaterialCatalogService extends Service {
+public interface MaterialCatalogService {
 
   /**
    * Add a material to a given domain

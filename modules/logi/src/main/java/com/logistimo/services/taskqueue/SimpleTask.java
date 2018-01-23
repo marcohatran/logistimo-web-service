@@ -23,10 +23,9 @@
 
 package com.logistimo.services.taskqueue;
 
-import com.logistimo.services.taskqueue.util.TaskUtil;
-
-import com.logistimo.utils.HttpUtil;
 import com.logistimo.logger.XLog;
+import com.logistimo.services.taskqueue.util.TaskUtil;
+import com.logistimo.utils.HttpUtil;
 
 
 /**

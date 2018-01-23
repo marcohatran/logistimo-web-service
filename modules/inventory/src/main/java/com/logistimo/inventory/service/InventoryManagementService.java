@@ -37,7 +37,6 @@ import com.logistimo.models.shipments.ShipmentItemBatchModel;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
 import com.logistimo.services.DuplicationException;
-import com.logistimo.services.Service;
 import com.logistimo.services.ServiceException;
 
 import java.math.BigDecimal;
@@ -47,7 +46,7 @@ import java.util.Map;
 
 import javax.jdo.PersistenceManager;
 
-public interface InventoryManagementService extends Service {
+public interface InventoryManagementService {
 
   /**
    * Get the inventory, given a kiosk ID and material ID

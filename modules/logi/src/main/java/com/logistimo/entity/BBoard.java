@@ -27,7 +27,6 @@
 package com.logistimo.entity;
 
 import com.logistimo.domains.ISuperDomain;
-import com.logistimo.entity.IBBoard;
 
 import java.util.ArrayList;
 import java.util.Date;

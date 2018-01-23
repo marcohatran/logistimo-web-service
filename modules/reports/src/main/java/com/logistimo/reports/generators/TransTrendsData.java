@@ -35,20 +35,19 @@ import com.google.visualization.datasource.datatable.value.DateValue;
 import com.google.visualization.datasource.datatable.value.ValueType;
 
 import com.logistimo.config.models.DomainConfig;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.inventory.TransactionUtil;
 import com.logistimo.inventory.dao.IInvntryDao;
-import com.logistimo.inventory.dao.impl.InvntryDao;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.ITransaction;
+import com.logistimo.logger.XLog;
 import com.logistimo.reports.ReportsConstants;
 import com.logistimo.reports.entity.slices.Counts;
-import com.logistimo.reports.entity.slices.ISlice;
-
 import com.logistimo.reports.entity.slices.IReportsSlice;
+import com.logistimo.reports.entity.slices.ISlice;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.NumberUtil;
-import com.logistimo.logger.XLog;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -101,8 +100,6 @@ public class TransTrendsData extends ReportData {
   private String reportType = null;
   private DomainConfig dc = null;
 
-  private IInvntryDao invntryDao = new InvntryDao();
-
   public TransTrendsData(Date from, Date until, Map<String, Object> filters, Locale locale,
                          String timezone,
                          List<? extends ISlice> results, String cursor, String reportType,
@@ -125,7 +122,7 @@ public class TransTrendsData extends ReportData {
     // Instantiate the DataTable for Google Visualization data formatting
     DataTable data = new DataTable();
     // Add the column descriptions
-    ArrayList<ColumnDescription> cd = new ArrayList<ColumnDescription>();
+    ArrayList<ColumnDescription> cd = new ArrayList<>();
     cd.add(new ColumnDescription(DATE, ValueType.DATE, jsMessages.getString("date")));
     String ISSUES = messages.getString("issues");
     String RECEIPTS = messages.getString("receipts");
@@ -240,6 +237,7 @@ public class TransTrendsData extends ReportData {
             if (ReportsConstants.FILTER_KIOSK.equals(slice.getDimensionType())) {
               try {
                 Long kioskId = Long.valueOf(slice.getDimensionValue());
+                IInvntryDao invntryDao = StaticApplicationContext.getBean(IInvntryDao.class);
                 IInvntry inv = invntryDao.findId(kioskId, Long.valueOf(slice.getObjectId()));
                 min = inv.getReorderLevel();
                 max = inv.getMaxStock();

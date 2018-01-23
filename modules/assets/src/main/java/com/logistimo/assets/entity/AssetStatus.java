@@ -25,7 +25,6 @@ package com.logistimo.assets.entity;
 
 import com.logistimo.dao.JDOUtils;
 
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;

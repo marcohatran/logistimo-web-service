@@ -26,13 +26,12 @@ package com.logistimo.api.models.superdomains;
 import com.google.gson.annotations.Expose;
 
 import com.logistimo.dao.JDOUtils;
-
 import com.logistimo.domains.DomainLinkOptions;
 import com.logistimo.domains.entity.IDomain;
 import com.logistimo.domains.entity.IDomainLink;
+import com.logistimo.logger.XLog;
 import com.logistimo.pagination.Results;
 import com.logistimo.services.impl.PMF;
-import com.logistimo.logger.XLog;
 
 import java.util.ArrayList;
 import java.util.List;

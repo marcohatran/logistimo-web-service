@@ -28,7 +28,6 @@ import com.logistimo.exception.InvalidDataException;
 import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.exception.ValidationException;
 import com.logistimo.services.ObjectNotFoundException;
-import com.logistimo.services.Service;
 import com.logistimo.services.ServiceException;
 import com.logistimo.users.entity.IUserToken;
 
@@ -40,7 +39,7 @@ import java.util.Optional;
 /**
  * Created by naveensnair on 04/11/15.
  */
-public interface AuthenticationService extends Service {
+public interface AuthenticationService {
 
   String JWTKEY = "jwt.key";
 

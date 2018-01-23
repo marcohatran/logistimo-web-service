@@ -29,19 +29,19 @@ package com.logistimo.inventory.optimization.pagination.processor;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.InventoryConfig;
 import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.optimization.service.InventoryOptimizerService;
 import com.logistimo.logger.XLog;
 import com.logistimo.pagination.Results;
 import com.logistimo.pagination.processor.InstrumentedProcessor;
 import com.logistimo.pagination.processor.ProcessingException;
-import com.logistimo.services.Services;
 import com.logistimo.services.taskqueue.ITaskService;
+import com.logistimo.services.utils.ConfigUtil;
 
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 import javax.jdo.PersistenceManager;
 
@@ -54,16 +54,9 @@ public class InvOptimizationPSProcessor extends InstrumentedProcessor {
 
   // Filter inventory items to determine if processing is required or not
   private static List<IInvntry> getFilteredInventories(Long domainId, List<IInvntry> inventories) {
-    List<IInvntry> filteredInvs = new ArrayList<IInvntry>();
-    Iterator<IInvntry> it = inventories.iterator();
-    while (it.hasNext()) {
-      IInvntry inv = it.next();
-      // Check if this inv. item was created in this domain; if so, then process further; else, it will be processed in the domain of its creation (superdomains)
-      if (domainId.equals(inv.getDomainId())) {
-        filteredInvs.add(inv);
-      }
-    }
-    return filteredInvs;
+    // Check if this inv. item was created in this domain; if so, then process further; else, it will be processed in the domain of its creation (superdomains)
+    return inventories.stream().filter(inv -> domainId.equals(inv.getDomainId()))
+        .collect(Collectors.toList());
   }
 
   @SuppressWarnings("unchecked")
@@ -98,9 +91,8 @@ public class InvOptimizationPSProcessor extends InstrumentedProcessor {
     }
     try {
       // Get service
-      InventoryOptimizerService
-          ios =
-          Services.getService("optimizer", locale);
+      InventoryOptimizerService ios = StaticApplicationContext.getBean(ConfigUtil.get("optimizer"),
+              InventoryOptimizerService.class);
       xLogger.info("InvOptimizationPSProcessor: Computing PS for domain = {0}", domainId);
       // Optimize
       ios.optimize(domainId, inventories, dc, true, true, locale, pm);

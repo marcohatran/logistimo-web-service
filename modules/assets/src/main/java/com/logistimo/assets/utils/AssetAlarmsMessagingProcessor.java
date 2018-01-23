@@ -23,21 +23,21 @@
 
 package com.logistimo.assets.utils;
 
+import com.codahale.metrics.Meter;
+import com.logistimo.assets.entity.IAsset;
+import com.logistimo.assets.entity.IAssetAttribute;
+import com.logistimo.assets.entity.IAssetStatus;
 import com.logistimo.assets.models.AssetStatusModel;
 import com.logistimo.assets.models.AssetStatusRequest;
 import com.logistimo.assets.service.AssetManagementService;
 import com.logistimo.assets.service.impl.AssetManagementServiceImpl;
+import com.logistimo.context.StaticApplicationContext;
+import com.logistimo.dao.JDOUtils;
 import com.logistimo.logger.XLog;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
-import com.codahale.metrics.Meter;
-import com.logistimo.dao.JDOUtils;
 import com.logistimo.utils.MetricsUtil;
-import org.apache.camel.Handler;
-import com.logistimo.assets.entity.IAssetStatus;
-import com.logistimo.assets.entity.IAsset;
-import com.logistimo.assets.entity.IAssetAttribute;
 
+import org.apache.camel.Handler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,13 +61,11 @@ public class AssetAlarmsMessagingProcessor {
 
     List<AssetStatusModel> assetStatusModelList = assetStatusRequest.data;
     if (assetStatusModelList != null && !assetStatusModelList.isEmpty()) {
-      AssetManagementService assetManagementService = Services
-          .getService(AssetManagementServiceImpl.class);
+      AssetManagementService assetManagementService = StaticApplicationContext
+          .getBean(AssetManagementServiceImpl.class);
       assetManagementService
           .updateAssetStatus(build(assetStatusModelList, assetManagementService));
-
     }
-
   }
 
   private List<IAssetStatus> build(List<AssetStatusModel> assetStatusModelList,

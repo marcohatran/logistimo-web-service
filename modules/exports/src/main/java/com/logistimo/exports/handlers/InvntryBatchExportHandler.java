@@ -25,6 +25,7 @@ package com.logistimo.exports.handlers;
 
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
@@ -37,7 +38,6 @@ import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.materials.service.MaterialCatalogService;
 import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
 import com.logistimo.services.Resources;
-import com.logistimo.services.Services;
 import com.logistimo.tags.TagUtil;
 import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.LocalDateUtil;
@@ -87,11 +87,11 @@ public class InvntryBatchExportHandler implements IExportHandler {
     xLogger.fine("Entering toCSV. locale: {0}, timezone: {1}", locale, timezone);
     try {
       // Get Services
-      EntitiesService as = Services.getService(EntitiesServiceImpl.class);
-      MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
-      InventoryManagementService
-          ims =
-          Services.getService(InventoryManagementServiceImpl.class);
+      EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
+      MaterialCatalogService mcs = StaticApplicationContext.getBean(
+          MaterialCatalogServiceImpl.class);
+      InventoryManagementService ims =
+          StaticApplicationContext.getBean(InventoryManagementServiceImpl.class);
       String csv = null;
       List<String> ktgs = invntryBatch.getTags(TagUtil.TYPE_ENTITY);
       List<String> mtgs = invntryBatch.getTags(TagUtil.TYPE_MATERIAL);

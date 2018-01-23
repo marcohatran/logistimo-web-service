@@ -26,6 +26,7 @@ package com.logistimo.exports.pagination.processor;
 import com.logistimo.AppFactory;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.CharacterConstants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.domains.entity.IDomain;
 import com.logistimo.domains.service.DomainsService;
 import com.logistimo.domains.service.impl.DomainsServiceImpl;
@@ -42,7 +43,6 @@ import com.logistimo.reports.generators.ReportData;
 import com.logistimo.reports.models.DomainUsageStats;
 import com.logistimo.reports.models.UsageStats;
 import com.logistimo.services.Resources;
-import com.logistimo.services.Services;
 import com.logistimo.services.storage.StorageUtil;
 import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.services.utils.ConfigUtil;
@@ -51,7 +51,6 @@ import com.logistimo.utils.LocalDateUtil;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -80,9 +79,7 @@ public class ExportProcessor extends InstrumentedProcessor {
         UsageStats usageStats = new UsageStats(results);
         List<DomainUsageStats> domainUsageStatsList = usageStats.getDomainUsageStatsList();
         // Iterate through the list of DomainUsageStats objects and put each of them into the list of exportables.
-        Iterator<DomainUsageStats> domainUsageStatsListIter = domainUsageStatsList.iterator();
-        while (domainUsageStatsListIter.hasNext()) {
-          Object exp = domainUsageStatsListIter.next();
+        for (DomainUsageStats exp : domainUsageStatsList) {
           exportables.add(exp);
         }
       } else if (results.getResults().get(0) instanceof ISlice) {
@@ -113,11 +110,11 @@ public class ExportProcessor extends InstrumentedProcessor {
   // NOTE: We don't finalize the blob file here (defer it to the finalize operation)
   private static void storeExportedData(Long domainId, String data, ExportParams exportParams) {
     xLogger.fine("Entered storeExportedData");
-    ResourceBundle messages = null;
+    ResourceBundle messages;
     String domainName = "";
     DomainsService ds;
     try {
-      ds = Services.getService(DomainsServiceImpl.class, null);
+      ds = StaticApplicationContext.getBean(DomainsServiceImpl.class);
       IDomain d = ds.getDomain(domainId);
       domainName = d.getName();
     } catch (Exception e) {
@@ -161,8 +158,8 @@ public class ExportProcessor extends InstrumentedProcessor {
         exportParams.gcsFilename = gcsFilename;
       } else {
         xLogger.warn(
-            "Invalid GCSFilename (NULL) returned when trying to store exported data file {0} in domain {1}",
-            gcsFilename, domainId);
+            "Invalid GCSFilename (NULL) returned when trying to store exported data file in domain {0}",
+            domainId);
       }
     } else { // Just append to the existing file in Google Cloud Storage(referenced by gcsFilename)
       storeFileInGCS(data, exportParams.gcsFilename, true, exportParams);
@@ -221,13 +218,12 @@ public class ExportProcessor extends InstrumentedProcessor {
       }
 
       // Get exportables; if Slices, get the exportables (i.e. ReportData) from the slices
-      List exportables = null;
-      exportables = customizeExportables(exportParams, results);
+      List exportables = customizeExportables(exportParams, results);
       if (exportables == null) {
         return exportParamsJson;
       }
-      xLogger
-            .info("Exporting data in domain {0}...{1} done so far.", domainId, exportParams.size);
+      xLogger.info("Exporting data in domain {0}...{1} done so far.", domainId,
+          exportParams.size);
 
       long startTime = System.currentTimeMillis();
       // Get domain config.
@@ -239,9 +235,7 @@ public class ExportProcessor extends InstrumentedProcessor {
         csv.append(ExportHandlerUtil.getInstance(exportables.get(0))
             .getCSVHeader(exportParams.locale, dc, exportParams.subType));
       }
-      Iterator it = exportables.iterator();
-      while (it.hasNext()) {
-        Object exportable = it.next();
+      for (Object exportable : exportables) {
         String
             line =
             ExportHandlerUtil.getInstance(exportable).toCSV(exportParams.locale,

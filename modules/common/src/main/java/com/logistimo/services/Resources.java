@@ -64,6 +64,18 @@ public class Resources {
 
   }
 
+  public ResourceBundle getBundle(String baseName) throws MissingResourceException {
+    return getBundle(baseName, Locale.ENGLISH);
+  }
+
+  public ResourceBundle getMessageBundle(Locale locale) throws MissingResourceException {
+    return getBundle("Messages", locale);
+  }
+
+  public ResourceBundle getBackendMessageBundle(Locale locale) throws MissingResourceException {
+    return getBundle("BackendMessages", locale);
+  }
+
   public ResourceBundle getBundle(String baseName, Locale locale) throws MissingResourceException {
     if (baseName == null || locale == null) {
       return null;

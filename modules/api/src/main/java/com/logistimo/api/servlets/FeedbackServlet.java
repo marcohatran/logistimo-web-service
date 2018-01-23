@@ -41,7 +41,6 @@ import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
 import com.logistimo.proto.RestConstantsZ;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
@@ -115,8 +114,8 @@ public class FeedbackServlet extends HttpServlet {
       String state = null;
       String district = null;
 
-      UsersService as = Services.getService(UsersServiceImpl.class);
-      EntitiesService entitiesService = Services.getService(EntitiesServiceImpl.class);
+      UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
+      EntitiesService entitiesService = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
       account = as.getUserAccount(strUserId);
 
       GeneralConfig gc = GeneralConfig.getInstance();
@@ -139,7 +138,7 @@ public class FeedbackServlet extends HttpServlet {
         }
       }
 
-      DomainsService ds = Services.getService(DomainsServiceImpl.class);
+      DomainsService ds = StaticApplicationContext.getBean(DomainsServiceImpl.class);
       String domainName = ds.getDomain(domainId).getName();
       String subject = "[feedback]" + " From " + userName + " in " + domainName;
 

@@ -23,10 +23,10 @@
 
 package com.logistimo.shipments.entity;
 
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.logger.XLog;
-import com.logistimo.services.Services;
 import com.logistimo.shipments.ShipmentStatus;
 
 import java.util.ArrayList;
@@ -406,7 +406,7 @@ public class Shipment implements IShipment {
   public Long getLinkedDomainId() {
     try {
       if (skId != null) {
-        EntitiesService as = Services.getService(EntitiesServiceImpl.class);
+        EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
         return as.getKiosk(skId, false).getDomainId();
       }
     } catch (Exception e) {
@@ -420,7 +420,7 @@ public class Shipment implements IShipment {
   public Long getKioskDomainId() {
     try {
       if (kId != null) {
-        EntitiesService as = Services.getService(EntitiesServiceImpl.class);
+        EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
         return as.getKiosk(kId, false).getDomainId();
       }
     } catch (Exception e) {

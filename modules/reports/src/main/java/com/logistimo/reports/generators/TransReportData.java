@@ -37,10 +37,9 @@ import com.google.visualization.datasource.datatable.value.ValueType;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.inventory.TransactionUtil;
 import com.logistimo.inventory.entity.ITransaction;
-
+import com.logistimo.logger.XLog;
 import com.logistimo.reports.ReportsConstants;
 import com.logistimo.utils.LocalDateUtil;
-import com.logistimo.logger.XLog;
 
 import java.util.ArrayList;
 import java.util.Calendar;

@@ -26,18 +26,15 @@ package com.logistimo.dashboards.service.impl;
 import com.logistimo.assets.entity.IAsset;
 import com.logistimo.config.models.AssetSystemConfig;
 import com.logistimo.config.models.ConfigurationException;
-import com.logistimo.config.models.DashboardConfig;
-import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.Constants;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.dashboards.entity.IDashboard;
 import com.logistimo.dashboards.entity.IWidget;
+import com.logistimo.dashboards.querygenerators.EntityActivityQueryGenerator;
 import com.logistimo.dashboards.service.IDashboardService;
 import com.logistimo.exception.SystemException;
 import com.logistimo.logger.XLog;
-import com.logistimo.services.Service;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.services.utils.ConfigUtil;
 import com.logistimo.tags.entity.ITag;
@@ -53,7 +50,6 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import javax.jdo.PersistenceManager;
@@ -64,37 +60,10 @@ import javax.sql.rowset.CachedRowSet;
 /**
  * @author Mohan Raja
  */
+@org.springframework.stereotype.Service
 public class DashboardService implements IDashboardService {
   private static final XLog xLogger = XLog.getLog(DashboardService.class);
   private static final int PREDICTIVE_PERIOD = ConfigUtil.getInt("predictive.period", 7);
-
-  @Override
-  public void init(Services services) throws ServiceException {
-  }
-
-  @Override
-  public void destroy() throws ServiceException {
-  }
-
-  @Override
-  public Class<? extends Service> getInterface() {
-    return DashboardService.class;
-  }
-
-  @Override
-  public void loadResources(Locale locale) {
-
-  }
-
-  @Override
-  public Locale getLocale() {
-    return null;
-  }
-
-  @Override
-  public Service clone() throws CloneNotSupportedException {
-    throw new CloneNotSupportedException();
-  }
 
   @Override
   public void createDashboard(IDashboard ds) throws ServiceException {
@@ -253,10 +222,6 @@ public class DashboardService implements IDashboardService {
       String name = db.getName();
       if ("nm".equals(ty)) {
         db.setName(val);
-      } else if ("desc".equals(ty)) {
-        //db.setDesc(val);
-      } else if ("conf".equals(ty)) {
-        //db.setConf(val);
       }
       pm.makePersistent(db);
       return name;
@@ -939,111 +904,39 @@ public class DashboardService implements IDashboardService {
   }
 
   private String getMDEntQuery(Long domainId, Map<String, String> filters, boolean isCountOnly) {
-    StringBuilder query = new StringBuilder();
-    query.append("SELECT ");
-    StringBuilder groupBy = new StringBuilder();
-    if (!isCountOnly) {
-      groupBy.append(" GROUP BY ");
-    }
-    StringBuilder where = new StringBuilder();
-    where.append(" WHERE KID IN (SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID = ")
-        .append(domainId).append(")");
-    int period = 0;
-    String startTime = null;
-    Calendar cal = new GregorianCalendar();
+    EntityActivityQueryGenerator
+        queryGenerator =
+        EntityActivityQueryGenerator.getEntityActivityQueryGenerator()
+            .withDomainId(domainId)
+            .withIsCount(isCountOnly);
     if (filters != null) {
-      if (filters.get("district") != null) {
-        if (!isCountOnly) {
-          query.append("(SELECT NAME FROM KIOSK WHERE KIOSKID = KID) NAME,KID,");
-          groupBy.append("NAME,KID");
-        }
-        where.append(" AND KID IN(SELECT KIOSKID FROM KIOSK WHERE STATE = '")
-            .append(filters.get("state")).append("'")
-            .append(" AND COUNTRY = '").append(filters.get("country")).append("'");
-        if ("".equals(filters.get("district"))) {
-          where.append("AND (DISTRICT = '' OR DISTRICT IS NULL))");
-        } else {
-          where.append("AND DISTRICT = '").append(filters.get("district")).append("')");
-        }
-      } else if (filters.get("state") != null) {
-        if (!isCountOnly) {
-          query.append("(SELECT DISTRICT FROM KIOSK WHERE KIOSKID = KID) DISTRICT,");
-          query.append("(SELECT DISTRICT_ID FROM KIOSK WHERE KIOSKID = KID) DISTRICT_ID,");
-          groupBy.append("DISTRICT");
-          groupBy.append(",DISTRICT_ID");
-        }
-        where.append(" AND KID IN(SELECT KIOSKID FROM KIOSK WHERE STATE = '")
-            .append(filters.get("state")).append("'")
-            .append(" AND COUNTRY = '").append(filters.get("country")).append("')");
-      } else {
-        if (!isCountOnly) {
-          query.append("(SELECT STATE FROM KIOSK WHERE KIOSKID = KID) STATE,");
-          query.append("(SELECT STATE_ID FROM KIOSK WHERE KIOSKID = KID) STATE_ID,");
-          groupBy.append("STATE");
-          groupBy.append(",STATE_ID");
-        }
-        where.append(" AND KID IN (SELECT KIOSKID FROM KIOSK WHERE COUNTRY = '")
-            .append(filters.get("country")).append("')");
-      }
-      if (filters.get("mTag") != null) {
-        where.append(" AND MID IN(SELECT MATERIALID from MATERIAL_TAGS WHERE ID IN(")
-            .append("(SELECT ID FROM TAG WHERE NAME IN(").append(filters.get("mTag"))
-            .append(") AND TYPE=").append(ITag.MATERIAL_TAG).append("))")
-            .append(")");
-      } else if (filters.get("mId") != null) {
-        where.append(" AND MID = ").append(filters.get("mId"));
-      }
-      if (filters.get("eTag") != null) {
-        where.append(" AND KID IN(SELECT DISTINCT(KIOSKID) from KIOSK_TAGS WHERE ID IN(")
-            .append("(SELECT ID FROM TAG WHERE NAME IN(").append(filters.get("eTag"))
-            .append(") AND TYPE=").append(ITag.KIOSK_TAG).append("))")
-            .append(")");
-      } else if (filters.get("eeTag") != null) {
-        where.append(" AND KID NOT IN(SELECT DISTINCT(KIOSKID) from KIOSK_TAGS WHERE ID IN(")
-            .append("(SELECT ID FROM TAG WHERE NAME IN(").append(filters.get("eeTag"))
-            .append(") AND TYPE=").append(ITag.KIOSK_TAG).append("))")
-            .append(")");
-      }
-      DomainConfig dc = DomainConfig.getInstance(domainId);
-      DashboardConfig dbc = dc.getDashboardConfig();
-      if (dbc != null && dbc.getDbOverConfig() != null && StringUtils
-          .isNotEmpty(dbc.getDbOverConfig().aper)) {
-        period = Integer.parseInt(dbc.getDbOverConfig().aper);
-      } else {
-        period = 7;
-      }
-      if (filters.get("period") != null) {
-        int tPeriod = Integer.parseInt(filters.get("period"));
-        if (tPeriod != 0) {
-          period = tPeriod;
-        }
+      queryGenerator.withCountry(filters.get("country"))
+          .withState(filters.get("state"))
+          .withDistrict(filters.get("district"))
+          .withMaterialTags(filters.get("mTag"))
+          .withEntityTags(filters.get("eTag"))
+          .withExcludeEntityTags(filters.get("eeTag"))
+          .withPeriod(Integer.valueOf(filters.get("period")));
+
+      if (filters.get("mId") != null) {
+        queryGenerator.withMaterialId(Long.valueOf(filters.get("mId")));
       }
 
       if (filters.get("date") != null) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Calendar cal = new GregorianCalendar();
         try {
-          startTime = filters.get("date");
-          cal.setTime(sdf.parse(startTime));
+          cal.setTime(sdf.parse(filters.get("date")));
+          queryGenerator.withAsOf(cal.getTime());
         } catch (ParseException e) {
           xLogger
               .warn("This should never happen, unable to parse date {0}", filters.get("date"), e);
+          throw new IllegalArgumentException(
+              "Unable to parse Date string " + filters.get("date") + " " + e.getMessage());
         }
       }
     }
-    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    cal.add(Calendar.DAY_OF_MONTH, -period);
-    cal.add(Calendar.SECOND, 1);
-    if (startTime == null) {
-      where.append(" AND T >= '").append(sdf.format(cal.getTime())).append("'");
-    } else {
-      where.append(" AND T BETWEEN '").append(sdf.format(cal.getTime())).append("' AND '")
-          .append(startTime).append("'");
-    }
-
-    query.append(" COUNT(DISTINCT KID) COUNT FROM TRANSACTION");
-    query.append(where);
-    query.append(groupBy);
-    return query.toString();
+    return queryGenerator.generate();
   }
 
   private String getMDAllEntQuery(Long domainId, Map<String, String> filters) {
@@ -1051,8 +944,7 @@ public class DashboardService implements IDashboardService {
   }
 
   private String getMDAllEntQuery(Long domainId, Map<String, String> filters, boolean isCountOnly) {
-    StringBuilder query = new StringBuilder();
-    query.append("SELECT ");
+    StringBuilder query = new StringBuilder("SELECT ");
     StringBuilder groupBy = new StringBuilder();
     if (!isCountOnly) {
       groupBy.append(" GROUP BY ");
@@ -1302,7 +1194,6 @@ public class DashboardService implements IDashboardService {
     Query query = pm.newQuery("javax.jdo.query.SQL",sb.toString());
     query.setUnique(true);
     Object object = query.execute();
-    Integer count = ((Long) object).intValue();
-    return count;
+    return ((Long) object).intValue();
   }
 }

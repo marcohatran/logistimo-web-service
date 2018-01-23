@@ -34,7 +34,6 @@ import com.google.visualization.datasource.datatable.value.DateValue;
 import com.google.visualization.datasource.datatable.value.ValueType;
 
 import com.logistimo.inventory.entity.IInvntryLog;
-
 import com.logistimo.logger.XLog;
 
 import java.math.BigDecimal;

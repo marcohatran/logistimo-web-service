@@ -23,16 +23,17 @@
 
 package com.logistimo.api.builders;
 
-import org.apache.commons.lang.StringUtils;
-import com.logistimo.services.Services;
-import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.api.models.EntityGroupModel;
 import com.logistimo.api.models.EntityModel;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.entity.IPoolGroup;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
+import com.logistimo.utils.LocalDateUtil;
+
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,12 +42,25 @@ import java.util.Locale;
 /**
  * Created by naveensnair on 30/01/15.
  */
+@Component
 public class PoolGroupBuilder {
+
+  private UsersService usersService;
+  private EntityBuilder entityBuilder;
+
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
+  }
+
+  @Autowired
+  public void setEntityBuilder(EntityBuilder entityBuilder) {
+    this.entityBuilder = entityBuilder;
+  }
 
   public EntityGroupModel buildPoolGroupModel(IPoolGroup pg, Locale locale, String timeZone) {
     EntityGroupModel model = new EntityGroupModel();
-    EntityBuilder entityBuilder = new EntityBuilder();
-    List<EntityModel> entityModelList = new ArrayList<EntityModel>();
+    List<EntityModel> entityModelList = new ArrayList<>();
     if (pg != null) {
       if (StringUtils.isNotEmpty(pg.getName())) {
         model.nm = pg.getName();
@@ -87,8 +101,7 @@ public class PoolGroupBuilder {
       if (StringUtils.isNotEmpty(pg.getOwnerId())) {
         model.uid = pg.getOwnerId();
         try {
-          UsersService accountsService = Services.getService(UsersServiceImpl.class);
-          IUserAccount account = accountsService.getUserAccount(model.uid);
+          IUserAccount account = usersService.getUserAccount(model.uid);
           model.unm = account.getFullName();
         } catch (Exception e) {
           // ignore
@@ -97,8 +110,7 @@ public class PoolGroupBuilder {
 
       if (pg.getCreatedBy() != null) {
         try {
-          UsersService as = Services.getService(UsersServiceImpl.class);
-          IUserAccount cb = as.getUserAccount(pg.getCreatedBy());
+          IUserAccount cb = usersService.getUserAccount(pg.getCreatedBy());
           model.creByn = cb.getFullName();
           model.creBy = pg.getCreatedBy();
         } catch (Exception e) {
@@ -107,8 +119,7 @@ public class PoolGroupBuilder {
       }
       if (pg.getUpdatedBy() != null) {
         try {
-          UsersService as = Services.getService(UsersServiceImpl.class);
-          IUserAccount ub = as.getUserAccount(pg.getUpdatedBy());
+          IUserAccount ub = usersService.getUserAccount(pg.getUpdatedBy());
           model.updByn = ub.getFullName();
           model.updBy = pg.getUpdatedBy();
         } catch (Exception e) {
@@ -132,7 +143,7 @@ public class PoolGroupBuilder {
    */
   public List<EntityGroupModel> buildPoolGroupModels(List<? extends IPoolGroup> poolGroups) {
     if (poolGroups != null && !poolGroups.isEmpty()) {
-      List<EntityGroupModel> models = new ArrayList<EntityGroupModel>(poolGroups.size());
+      List<EntityGroupModel> models = new ArrayList<>(poolGroups.size());
       for (IPoolGroup poolGroup : poolGroups) {
         EntityGroupModel model = new EntityGroupModel();
         model.nm = poolGroup.getName();

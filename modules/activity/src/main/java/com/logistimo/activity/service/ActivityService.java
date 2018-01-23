@@ -24,10 +24,8 @@
 package com.logistimo.activity.service;
 
 import com.logistimo.activity.entity.IActivity;
-
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
-import com.logistimo.services.Service;
 import com.logistimo.services.ServiceException;
 
 import java.util.Date;
@@ -37,7 +35,7 @@ import javax.jdo.PersistenceManager;
 /**
  * Created by kumargaurav on 07/10/16.
  */
-public interface ActivityService extends Service {
+public interface ActivityService {
 
   IActivity createActivity(IActivity activity) throws ServiceException;
 

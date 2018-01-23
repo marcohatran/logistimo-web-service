@@ -28,7 +28,6 @@ package com.logistimo.config.service;
 
 import com.logistimo.config.entity.IConfig;
 import com.logistimo.services.ObjectNotFoundException;
-import com.logistimo.services.Service;
 import com.logistimo.services.ServiceException;
 
 /**
@@ -37,7 +36,7 @@ import com.logistimo.services.ServiceException;
  *         Provides methods for storage and retrieval of various configuration elements in the system
  *         (such as locations, languages, currencies, entity defaults, optimization configurations, and so on).
  */
-public interface ConfigurationMgmtService extends Service {
+public interface ConfigurationMgmtService {
 
   /**
    * Add a new configuration to the data store

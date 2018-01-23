@@ -30,6 +30,7 @@ import com.logistimo.api.util.GsonUtil;
 import com.logistimo.api.util.RESTUtil;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.inventory.entity.ITransaction;
@@ -44,7 +45,6 @@ import com.logistimo.proto.RestConstantsZ;
 import com.logistimo.reports.entity.slices.IDaySlice;
 import com.logistimo.reports.entity.slices.ISlice;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.utils.HttpUtil;
@@ -61,7 +61,6 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -89,9 +88,9 @@ public class TransDataServlet extends JsonRestServlet {
     // Get the request parameters
     String action = req.getParameter(RestConstantsZ.ACTION);
     if (RestConstantsZ.ACTION_GETTRANSACTIONAGGREGATE.equalsIgnoreCase(action)) {
-      getTransAggregate(req, res, backendMessages, messages, action);
+      getTransAggregate(req, res);
     } else if (RestConstantsZ.ACTION_GETTRANSACTIONS_OLD.equalsIgnoreCase(action)) {
-      getTransactionsOld(req, res, backendMessages, messages, action);
+      getTransactionsOld(req, res, backendMessages);
     } else if (RestConstantsZ.ACTION_GETTRANSACTIONS.equalsIgnoreCase(action)) {
       getTransactions(req, res, backendMessages);
     } else {
@@ -110,9 +109,7 @@ public class TransDataServlet extends JsonRestServlet {
   }
 
   @SuppressWarnings("rawtypes")
-  private void getTransAggregate(HttpServletRequest req, HttpServletResponse res,
-                                 ResourceBundle backendMessages, ResourceBundle messages,
-                                 String action) throws IOException, ServiceException {
+  private void getTransAggregate(HttpServletRequest req, HttpServletResponse res) throws IOException, ServiceException {
     xLogger.fine("Entering getTransAggregate");
     boolean status = true;
     String errMsg = null;
@@ -123,14 +120,13 @@ public class TransDataServlet extends JsonRestServlet {
     String userId = req.getParameter(RestConstantsZ.USER_ID);
     String password = req.getParameter(RestConstantsZ.PASSWORD);
     if (userId == null || userId.isEmpty() || password == null || password.isEmpty()) {
-      status = false;
       errMsg = "Invalid user name or password";
       sendError(res, localeStr, errMsg);
       return;
     }
     // Proceed only if status is true
     int period = PERIOD;
-    String endDateStr = null;
+    String endDateStr;
     int numResults = DEFAULT_MAX_RESULTS;
 
     // Read the optional request parameters
@@ -188,9 +184,8 @@ public class TransDataServlet extends JsonRestServlet {
     // Only if the caller is authenticated, proceed
     Results
         reportData =
-        getReportData(period, endDateStr, domainId, numResults, offset, locale, timezone);
+        getReportData(period, endDateStr, domainId, numResults, offset);
     if (reportData == null) {
-      status = false;
       errMsg = "Invalid report data";
       sendError(res, locale.toString(), errMsg);
       xLogger.severe("{0}", errMsg);
@@ -200,7 +195,6 @@ public class TransDataServlet extends JsonRestServlet {
     @SuppressWarnings("unchecked")
     List<? extends ISlice> results = reportData.getResults();
     if (results == null || results.isEmpty()) {
-      status = false;
       errMsg = "No Results obtained";
       sendError(res, locale.toString(), errMsg);
       xLogger.fine("{0}", errMsg);
@@ -210,11 +204,7 @@ public class TransDataServlet extends JsonRestServlet {
     // Create a vector of hashtables to hold the results.
     Vector<Hashtable> transDataVector = new Vector<>();
     int resultsSize = results.size();
-    Iterator<? extends ISlice>
-        resultsIter =
-        results.iterator(); // Iterate through the list of TransDaySlice objects
-    while (resultsIter.hasNext()) {
-      ISlice transDaySlice = resultsIter.next();
+    for (ISlice transDaySlice : results) {
       Hashtable
           transDaySliceMap =
           transDaySlice.toMap(locale, timezone); // Convert TransDaySlice object to Hashtable
@@ -224,7 +214,7 @@ public class TransDataServlet extends JsonRestServlet {
       // Create an AggTransDataOutput object
       String
           aggTransDataOutputString =
-          GsonUtil.aggTransDataOutputToJson(status, resultsSize, transDataVector, errMsg,
+          GsonUtil.aggTransDataOutputToJson(true, resultsSize, transDataVector, null,
               locale.toString(), RESTUtil.VERSION_01);
       sendJsonResponse(res, statusCode, aggTransDataOutputString);
     } catch (Exception e) {
@@ -237,7 +227,7 @@ public class TransDataServlet extends JsonRestServlet {
 
   @SuppressWarnings("unchecked")
   private Results getReportData(int period, String endDateStr, Long domainId, int numResults,
-                                int offset, Locale locale, String timezone) {
+                                int offset) {
     xLogger.fine("Entering getReportData");
     // Get the end-date parameter, if given
     Date endDate = null;
@@ -319,8 +309,7 @@ public class TransDataServlet extends JsonRestServlet {
   }
 
   private void getTransactionsOld(HttpServletRequest req, HttpServletResponse resp,
-                               ResourceBundle backendMessages, ResourceBundle messages,
-                               String action) throws IOException, ServiceException {
+                                  ResourceBundle backendMessages) throws IOException, ServiceException {
     String errMessage = null;
     Long kioskId = null;
     boolean status = true;
@@ -328,7 +317,7 @@ public class TransDataServlet extends JsonRestServlet {
     Locale locale = new Locale(Constants.LANG_DEFAULT, "");
     String timezone = null;
     Long domainId = null;
-    int size = PageParams.DEFAULT_SIZE;
+    int size;
     Date endDate = new Date();
     int statusCode = HttpServletResponse.SC_OK;
 
@@ -411,7 +400,7 @@ public class TransDataServlet extends JsonRestServlet {
           Results
               results =
               RESTUtil
-                  .getTransactions(domainId, kioskId, locale, timezone, dc, endDate, pageParams, tag);
+                  .getTransactions(kioskId, locale, timezone, endDate, pageParams, tag);
           transactionList = (Vector<Hashtable<String, String>>) results.getResults();
         }
       } catch (Exception e) {
@@ -510,9 +499,8 @@ public class TransDataServlet extends JsonRestServlet {
           modifiedSinceDate =
           modDateFromReq.orElse((Date) parsedRequest.parsedReqMap.get(RestConstantsZ.STARTDATE));
       lastModified = new Date();
-      InventoryManagementService
-          ims =
-          Services.getService(InventoryManagementServiceImpl.class);
+      InventoryManagementService ims =
+          StaticApplicationContext.getBean(InventoryManagementServiceImpl.class);
       // Get the transactions
       Results
           results =

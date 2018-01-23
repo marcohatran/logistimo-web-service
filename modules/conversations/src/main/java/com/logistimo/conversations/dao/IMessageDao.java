@@ -24,7 +24,6 @@
 package com.logistimo.conversations.dao;
 
 import com.logistimo.conversations.entity.IMessage;
-
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
 import com.logistimo.services.ServiceException;

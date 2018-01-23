@@ -24,14 +24,13 @@
 package com.logistimo;
 
 import com.logistimo.auth.service.AuthenticationService;
-import com.logistimo.auth.service.AuthorizationService;
 import com.logistimo.auth.service.impl.AuthenticationServiceImpl;
-import com.logistimo.auth.services.impl.AuthorizationServiceImpl;
 import com.logistimo.dao.DaoException;
 import com.logistimo.dao.IDaoUtil;
 import com.logistimo.dao.impl.DaoUtil;
 import com.logistimo.logger.ILogger;
 import com.logistimo.logger.LogiLogger;
+import com.logistimo.models.ICounter;
 import com.logistimo.reports.dao.IReportsDao;
 import com.logistimo.reports.dao.impl.ReportsDaoImpl;
 import com.logistimo.services.IBackendService;
@@ -48,8 +47,6 @@ import com.logistimo.services.storage.HDFSStorageUtil;
 import com.logistimo.services.storage.StorageUtil;
 import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.services.taskqueue.TaskService;
-
-import com.logistimo.models.ICounter;
 import com.logistimo.services.utils.LogiCounter;
 
 /**
@@ -124,11 +121,6 @@ public class LogiAppFactory extends AppFactory {
   @Override
   public ICounter getCounter() {
     return new LogiCounter();
-  }
-
-  @Override
-  public AuthorizationService getAuthorizationService() {
-    return new AuthorizationServiceImpl();
   }
 
   @Override

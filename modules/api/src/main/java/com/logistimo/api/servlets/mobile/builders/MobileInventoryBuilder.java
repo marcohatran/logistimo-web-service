@@ -33,25 +33,23 @@ import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.IInvntryBatch;
 import com.logistimo.inventory.service.InventoryManagementService;
-import com.logistimo.inventory.service.impl.InventoryManagementServiceImpl;
 import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.materials.service.MaterialCatalogService;
-import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
 import com.logistimo.proto.MobileConsRateModel;
 import com.logistimo.proto.MobileInvBatchModel;
 import com.logistimo.proto.MobileInvModel;
 import com.logistimo.proto.MobileUpdateInvTransResponse;
-import com.logistimo.services.Services;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
 import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.LocalDateUtil;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -61,20 +59,43 @@ import java.util.Locale;
 /**
  * Created by charan on 10/11/17.
  */
+
+@Component
 public class MobileInventoryBuilder {
 
   private static final XLog xLogger = XLog.getLog(MobileInventoryBuilder.class);
 
+  private UsersService usersService;
+  private InventoryManagementService inventoryManagementService;
+  private EntitiesService entitiesService;
+  private MaterialCatalogService materialCatalogService;
+
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
+  }
+
+  @Autowired
+  public void setInventoryManagementService(InventoryManagementService inventoryManagementService) {
+    this.inventoryManagementService = inventoryManagementService;
+  }
+
+  @Autowired
+  public void setEntitiesService(EntitiesService entitiesService) {
+    this.entitiesService = entitiesService;
+  }
+
+  @Autowired
+  public void setMaterialCatalogService(MaterialCatalogService materialCatalogService) {
+    this.materialCatalogService = materialCatalogService;
+  }
 
   public MobileInvModel buildMobileInvModel(IInvntry inventory,
-                                            Long domainId, String userId,
-                                            InventoryManagementService ims, EntitiesService es) {
+                                            Long domainId, String userId) {
     MobileInvModel inv = new MobileInvModel();
     try {
       DomainConfig dc = DomainConfig.getInstance(domainId);
-      UsersService us = Services.getService(UsersServiceImpl.class);
-      MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
-      IUserAccount user = us.getUserAccount(userId);
+      IUserAccount user = usersService.getUserAccount(userId);
       Locale locale = user.getLocale();
       String timezone = user.getTimezone();
       inv.mid = inventory.getMaterialId();
@@ -85,7 +106,7 @@ public class MobileInventoryBuilder {
         inv.itq = inventory.getInTransitStock();
         inv.avq = inventory.getAvailableStock();
       }
-      BigDecimal stockAvailPeriod = ims.getStockAvailabilityPeriod(inventory, dc);
+      BigDecimal stockAvailPeriod = inventoryManagementService.getStockAvailabilityPeriod(inventory, dc);
       if (stockAvailPeriod != null && BigUtil.notEqualsZero(stockAvailPeriod)) {
         inv.dsq = stockAvailPeriod;
       }
@@ -105,8 +126,8 @@ public class MobileInventoryBuilder {
           timezone);
       Long kid = inventory.getKioskId();
       Long mid = inventory.getMaterialId();
-      IKiosk k = es.getKiosk(kid, false);
-      IMaterial m = mcs.getMaterial(mid);
+      IKiosk k = entitiesService.getKiosk(kid, false);
+      IMaterial m = materialCatalogService.getMaterial(mid);
       if (k.isBatchMgmtEnabled() && m.isBatchEnabled()) {
         inv.bt = buildMobileInvBatchModelList(kid, mid, locale, timezone,
             dc.autoGI(), true);
@@ -126,8 +147,7 @@ public class MobileInventoryBuilder {
     InventoryConfig ic = dc.getInventoryConfig();
     String displayFreq = ic.getDisplayCRFreq();
     try {
-      InventoryManagementService ims = Services.getService(InventoryManagementServiceImpl.class);
-      BigDecimal cr = ims.getDailyConsumptionRate(inv);
+      BigDecimal cr = inventoryManagementService.getDailyConsumptionRate(inv);
       if (BigUtil.greaterThanZero(cr)) {
         MobileConsRateModel mobConRateModel = new MobileConsRateModel();
         mobConRateModel.val = BigUtil.getFormattedValue(cr);
@@ -178,11 +198,10 @@ public class MobileInventoryBuilder {
                                                                  boolean buildValidBatchModel) {
     List<MobileInvBatchModel> mobileInvBatchModelList = null;
     try {
-      InventoryManagementService ims = Services.getService(InventoryManagementServiceImpl.class);
       // NOTE: Get only up to the 50 last batches
       Results<IInvntryBatch>
           results =
-          ims.getBatches(mid, kid, new PageParams(null,
+          inventoryManagementService.getBatches(mid, kid, new PageParams(null,
               PageParams.DEFAULT_SIZE));
       if (results != null) {
         List<IInvntryBatch> batches = results.getResults();

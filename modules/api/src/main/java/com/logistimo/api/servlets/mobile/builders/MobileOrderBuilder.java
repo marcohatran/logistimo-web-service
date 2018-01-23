@@ -28,18 +28,16 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import com.logistimo.accounting.models.CreditData;
-import com.logistimo.accounting.service.impl.AccountingServiceImpl;
+import com.logistimo.accounting.service.IAccountingService;
 import com.logistimo.activity.entity.IActivity;
 import com.logistimo.activity.models.ActivityModel;
 import com.logistimo.activity.service.ActivityService;
-import com.logistimo.activity.service.impl.ActivityServiceImpl;
 import com.logistimo.api.models.OrderMinimumResponseModel;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.Constants;
 import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
-import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.models.InventoryFilters;
 import com.logistimo.inventory.service.InventoryManagementService;
@@ -59,14 +57,15 @@ import com.logistimo.proto.MobileOrdersModel;
 import com.logistimo.proto.MobileShipmentModel;
 import com.logistimo.proto.RestConstantsZ;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.tags.TagUtil;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
 import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.StringUtil;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -82,9 +81,41 @@ import java.util.stream.Collectors;
 /**
  * Created by vani on 03/11/16.
  */
+@Component
 public class MobileOrderBuilder {
 
   private static final XLog xLogger = XLog.getLog(MobileOrderBuilder.class);
+
+  private UsersService usersService;
+  private EntitiesService entitiesService;
+  private ActivityService activityService;
+  private InventoryManagementService inventoryManagementService;
+  private IAccountingService accountingService;
+
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
+  }
+
+  @Autowired
+  public void setEntitiesService(EntitiesService entitiesService) {
+    this.entitiesService = entitiesService;
+  }
+
+  @Autowired
+  public void setActivityService(ActivityService activityService) {
+    this.activityService = activityService;
+  }
+
+  @Autowired
+  public void setInventoryManagementService(InventoryManagementService inventoryManagementService) {
+    this.inventoryManagementService = inventoryManagementService;
+  }
+
+  @Autowired
+  public void setAccountingService(IAccountingService accountingService) {
+    this.accountingService = accountingService;
+  }
 
   public MobileOrderModel build(IOrder o, Locale locale, String timezone, boolean includeItems,
                                 boolean includeAccountingData, boolean includeShipmentItems,
@@ -100,15 +131,6 @@ public class MobileOrderBuilder {
     if (o == null) {
       return null;
     }
-    UsersService as;
-    EntitiesService entitiesService;
-    try {
-      as = Services.getService(UsersServiceImpl.class);
-      entitiesService = Services.getService(EntitiesServiceImpl.class);
-    } catch (Exception e) {
-      xLogger.warn("Error while fetching account service", e);
-      return null;
-    }
     MobileOrderModel mom = new MobileOrderModel();
     IUserAccount user;
     mom.tid = o.getOrderId();
@@ -120,7 +142,7 @@ public class MobileOrderBuilder {
     mom.vtc = o.isVisibleToCustomer();
     mom.tm = LocalDateUtil.formatCustom(o.getUpdatedOn(), Constants.DATETIME_FORMAT, null);
     try {
-      user = as.getUserAccount(o.getUserId());
+      user = usersService.getUserAccount(o.getUserId());
       mom.cbn = user.getFullName();
       String customUserId = user.getCustomId();
       if (customUserId != null && !customUserId.isEmpty()) {
@@ -133,7 +155,7 @@ public class MobileOrderBuilder {
     mom.ubid = o.getUpdatedBy();
     if (mom.ubid != null) {
       try {
-        user = as.getUserAccount(mom.ubid);
+        user = usersService.getUserAccount(mom.ubid);
         mom.ubn = user.getFullName();
       } catch (Exception e) {
         xLogger.warn("Exception while getting user account for user {0} for order with ID {1}",
@@ -145,10 +167,8 @@ public class MobileOrderBuilder {
       mom.ut = LocalDateUtil.format(o.getUpdatedOn(), locale, timezone);
     }
     try {
-      ActivityService acs = Services.getService(ActivityServiceImpl.class);
-      Results
-          res =
-          acs.getActivity(o.getOrderId().toString(), IActivity.TYPE.ORDER.toString(), null, null,
+      Results res =
+          activityService.getActivity(o.getOrderId().toString(), IActivity.TYPE.ORDER.toString(), null, null,
               null, null, null);
       if (res != null) {
         List<ActivityModel> amList = res.getResults();
@@ -234,9 +254,8 @@ public class MobileOrderBuilder {
     // Credit related data
     if (includeAccountingData) {
       try {
-        CreditData
-            cd =
-            Services.getService(AccountingServiceImpl.class).getCreditData(o.getKioskId(),
+        CreditData cd =
+            accountingService.getCreditData(o.getKioskId(),
                 o.getServicingKiosk(),
                 DomainConfig.getInstance(o.getDomainId()));
         if (BigUtil.notEqualsZero(cd.creditLimit)) {
@@ -310,19 +329,14 @@ public class MobileOrderBuilder {
         mobileOrderModel.mt.stream().map(mobileDemandItemModel -> mobileDemandItemModel.mid)
             .collect(
                 Collectors.toList());
-    InventoryManagementService
-        ims =
-        StaticApplicationContext.getBean(InventoryManagementService.class);
     try {
-      Results<IInvntry>
-          results =
-          ims.getInventory(new InventoryFilters().withKioskId(userKioskId).withMaterialIds(midList),
+      Results<IInvntry> results =
+          inventoryManagementService.getInventory(new InventoryFilters().withKioskId(userKioskId).withMaterialIds(midList),
               null);
       MobileInventoryBuilder mobileInventoryBuilder = new MobileInventoryBuilder();
       if (results != null) {
-        EntitiesService es = StaticApplicationContext.getBean(EntitiesService.class);
         mobileOrderModel.inv = results.getResults().stream().map(invntry -> mobileInventoryBuilder
-            .buildMobileInvModel(invntry, domainId, mobileOrderModel.ubid, ims, es))
+            .buildMobileInvModel(invntry, domainId, mobileOrderModel.ubid))
             .collect(Collectors.toList());
       }
     } catch (ServiceException e) {
@@ -514,7 +528,6 @@ public class MobileOrderBuilder {
       userIdList.add(order.getUserId());
       userIdList.add(order.getUpdatedBy());
     }
-    UsersService usersService = Services.getService(UsersServiceImpl.class);
     List<IUserAccount> userAccountList = usersService.getUsersByIds(new ArrayList<>(userIdList));
     Map<String, String> userDetailsMap = new HashMap<>(userAccountList.size());
     for (IUserAccount userAccount : userAccountList) {
@@ -531,7 +544,6 @@ public class MobileOrderBuilder {
    */
   private Map<Long, Kiosk> getKioskMap(List<IOrder> orderList) {
     Set<Long> kioskIdList = new HashSet<>();
-    EntitiesService entitiesService = Services.getService(EntitiesServiceImpl.class);
     Map<Long, Kiosk> kioskMap = new HashMap<>();
     for (IOrder order : orderList) {
       getKioskDetails(kioskIdList, entitiesService, kioskMap, order.getKioskId());

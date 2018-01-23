@@ -28,12 +28,10 @@ import com.logistimo.api.models.EntityGroupModel;
 import com.logistimo.auth.SecurityConstants;
 import com.logistimo.auth.SecurityUtil;
 import com.logistimo.auth.utils.SecurityUtils;
-import com.logistimo.auth.utils.SessionMgr;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.entity.IPoolGroup;
 import com.logistimo.entities.service.EntitiesService;
-import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.exception.BadRequestException;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.logger.XLog;
@@ -41,11 +39,11 @@ import com.logistimo.pagination.Results;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.MsgUtil;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -58,8 +56,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
-import javax.servlet.http.HttpServletRequest;
-
 /**
  * @author charan
  */
@@ -68,22 +64,31 @@ import javax.servlet.http.HttpServletRequest;
 public class EntityGroupsController {
 
   private static final XLog xLogger = XLog.getLog(EntityGroupsController.class);
-  PoolGroupBuilder builder = new PoolGroupBuilder();
+  private PoolGroupBuilder poolGroupBuilder;
+  private EntitiesService entitiesService;
+
+  @Autowired
+  public void setPoolGroupBuilder(PoolGroupBuilder poolGroupBuilder) {
+    this.poolGroupBuilder = poolGroupBuilder;
+  }
+
+  @Autowired
+  public void setEntitiesService(EntitiesService entitiesService) {
+    this.entitiesService = entitiesService;
+  }
 
   @RequestMapping("/")
   public
   @ResponseBody
-  Results getEntityGroups(HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+  Results getEntityGroups() {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
-
+    Long domainId = sUser.getCurrentDomainId();
     try {
-      EntitiesService as = Services.getService(EntitiesServiceImpl.class, sUser.getLocale());
-      List<IPoolGroup> poolGroups = as.findAllPoolGroups(domainId, 1, 0);
+      List<IPoolGroup> poolGroups = entitiesService.findAllPoolGroups(domainId, 1, 0);
       int count = 0;
-      List<EntityGroupModel> models = new ArrayList<EntityGroupModel>(1);
+      List<EntityGroupModel> models = new ArrayList<>(1);
       for (IPoolGroup pg : poolGroups) {
         if (SecurityUtil.compareRoles(sUser.getRole(), SecurityConstants.ROLE_DOMAINOWNER) < 0
             && !sUser.getUsername().equals(pg.getOwnerId())) {
@@ -103,7 +108,7 @@ public class EntityGroupsController {
         model.updOn = LocalDateUtil.format(pg.getTimeStamp(), locale, sUser.getTimezone());
         models.add(model);
       }
-      return new Results(models, null, count, 0);
+      return new Results<>(models, null, count, 0);
     } catch (ServiceException e) {
       xLogger.severe("Error in fetching entity groups", e);
       throw new InvalidServiceException(backendMessages.getString("poolgroup.fetch.error"));
@@ -113,21 +118,19 @@ public class EntityGroupsController {
   @RequestMapping(value = "/action/{action}", method = RequestMethod.POST)
   public
   @ResponseBody
-  String create(@RequestBody EntityGroupModel entityGroupModel, @PathVariable String action,
-                HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+  String create(@RequestBody EntityGroupModel entityGroupModel, @PathVariable String action) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     if (entityGroupModel == null) {
       throw new BadRequestException(backendMessages.getString("poolgroup.create.error"));
     }
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
+    Long domainId = sUser.getCurrentDomainId();
     if (domainId == null) {
       xLogger.severe("Error in creating entity group");
       throw new InvalidServiceException(backendMessages.getString("poolgroup.create.error"));
     }
     try {
-      EntitiesService as = Services.getService(EntitiesServiceImpl.class, sUser.getLocale());
       IPoolGroup poolGroup = JDOUtils.createInstance(IPoolGroup.class);
       if (StringUtils.isNotBlank(entityGroupModel.nm)) {
         poolGroup.setName(entityGroupModel.nm);
@@ -143,22 +146,22 @@ public class EntityGroupsController {
         for (int i = 0; i < entityGroupModel.ent.size(); i++) {
           kiosksArr[i] = String.valueOf(entityGroupModel.ent.get(i).id);
         }
-        List<IKiosk> Kiosks = new ArrayList<IKiosk>();
+        List<IKiosk> Kiosks = new ArrayList<>();
         for (String k : kiosksArr) {
-          Kiosks.add(as.getKiosk(Long.parseLong(k.trim()), false));
+          Kiosks.add(entitiesService.getKiosk(Long.parseLong(k.trim()), false));
         }
         poolGroup.setKiosks(Kiosks);
       }
       poolGroup.setUpdatedBy(sUser.getUsername());
       if (action.equalsIgnoreCase("add")) {
         poolGroup.setCreatedBy(sUser.getUsername());
-        as.addPoolGroup(domainId, poolGroup);
+        entitiesService.addPoolGroup(domainId, poolGroup);
       } else if (action.equalsIgnoreCase("update")) {
         if (StringUtils.isNotEmpty(entityGroupModel.id.toString())) {
           poolGroup.setGroupId(entityGroupModel.id);
         }
         poolGroup.setDomainId(domainId);
-        as.updatePoolGroup(poolGroup);
+        entitiesService.updatePoolGroup(poolGroup);
         return backendMessages.getString("poolgroup") + ' ' + MsgUtil.bold(entityGroupModel.nm)
             + ' ' + backendMessages.getString("update.success") + '.';
       }
@@ -178,22 +181,21 @@ public class EntityGroupsController {
   @RequestMapping(value = "/groupId/{groupId}", method = RequestMethod.GET)
   public
   @ResponseBody
-  EntityGroupModel getPoolGroup(@PathVariable Long groupId, HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+  EntityGroupModel getPoolGroup(@PathVariable Long groupId) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
+    Long domainId = sUser.getCurrentDomainId();
     if (domainId == null) {
       xLogger.severe("Error in fetching entity groups");
       throw new InvalidServiceException(backendMessages.getString("poolgroup.fetch.error"));
     }
     try {
-      EntitiesService as = Services.getService(EntitiesServiceImpl.class, sUser.getLocale());
       String timeZone = sUser.getTimezone();
       EntityGroupModel entityGroupModel = null;
-      IPoolGroup pg = as.getPoolGroup(groupId);
+      IPoolGroup pg = entitiesService.getPoolGroup(groupId);
       if (pg != null) {
-        entityGroupModel = builder.buildPoolGroupModel(pg, locale, timeZone);
+        entityGroupModel = poolGroupBuilder.buildPoolGroupModel(pg, locale, timeZone);
       }
       return entityGroupModel;
     } catch (ServiceException e) {
@@ -205,26 +207,25 @@ public class EntityGroupsController {
   @RequestMapping(value = "/delete", method = RequestMethod.POST)
   public
   @ResponseBody
-  String deletePoolGroups(@RequestBody String groupIds, HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+  String deletePoolGroups(@RequestBody String groupIds) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     if (groupIds == null) {
       throw new BadRequestException(backendMessages.getString("poolgroup.delete.error"));
     }
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
+    Long domainId = sUser.getCurrentDomainId();
     if (domainId == null) {
       xLogger.severe("Error in deleting entity group");
       throw new InvalidServiceException(backendMessages.getString("poolgroup.delete.error"));
     }
     try {
-      EntitiesService as = Services.getService(EntitiesServiceImpl.class, sUser.getLocale());
       String[] pgIds = groupIds.split(",");
-      ArrayList<Long> poolGroupIDs = new ArrayList<Long>();
+      ArrayList<Long> poolGroupIDs = new ArrayList<>();
       for (String pgID : pgIds) {
         poolGroupIDs.add(Long.parseLong(pgID.trim()));
       }
-      as.deletePoolGroups(domainId, poolGroupIDs);
+      entitiesService.deletePoolGroups(domainId, poolGroupIDs);
       return backendMessages.getString("poolgroup.delete.success");
     } catch (ServiceException e) {
       xLogger.severe("Error in deleting entity groups", e);

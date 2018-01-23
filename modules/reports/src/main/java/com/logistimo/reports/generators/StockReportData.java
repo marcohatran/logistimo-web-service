@@ -33,20 +33,18 @@ import com.google.visualization.datasource.datatable.TableCell;
 import com.google.visualization.datasource.datatable.TableRow;
 import com.google.visualization.datasource.datatable.value.ValueType;
 
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.inventory.entity.IInvntry;
+import com.logistimo.logger.XLog;
 import com.logistimo.materials.service.MaterialCatalogService;
 import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
-
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.LocalDateUtil;
-import com.logistimo.logger.XLog;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -106,15 +104,16 @@ public class StockReportData extends ReportData {
     }
 
     // Init. data table
-    DataTable data = null;
+    DataTable data;
     try {
       // Get the services
-      MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
+      MaterialCatalogService mcs = StaticApplicationContext
+          .getBean(MaterialCatalogServiceImpl.class);
 
       // Form the data table
       data = new DataTable();
       // Add the column descriptions
-      ArrayList<ColumnDescription> cd = new ArrayList<ColumnDescription>();
+      ArrayList<ColumnDescription> cd = new ArrayList<>();
       cd.add(new ColumnDescription(ID_MATERIAL, ValueType.TEXT, messages.getString("material")));
       cd.add(new ColumnDescription(ID_STOCK, ValueType.NUMBER, messages.getString("stock")));
       cd.add(new ColumnDescription(ID_REORDERLEVEL, ValueType.NUMBER,
@@ -136,10 +135,8 @@ public class StockReportData extends ReportData {
           new ColumnDescription(ID_LASTUPDATED, ValueType.TEXT, messages.getString("lastupdated")));
       data.addColumns(cd);
       // Add the rows
-      Iterator<IInvntry> it = this.results.iterator();
-      while (it.hasNext()) {
+      for (IInvntry inv : (Iterable<IInvntry>) this.results) {
         // Get next inventory
-        IInvntry inv = it.next();
         BigDecimal stockOnHand = inv.getStock();
         BigDecimal safetyStock = inv.getSafetyStock();
         BigDecimal reorderLevel = inv.getReorderLevel();

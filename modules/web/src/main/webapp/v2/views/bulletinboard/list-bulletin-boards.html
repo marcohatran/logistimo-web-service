@@ -26,11 +26,11 @@
 <!--
         <div class="row widget">
             <div class="col-sm-12">
-            <div class="col-sm-6">
-                <span class="bulletin-heading" style="position:relative;top:20px;font-family:Lato;text-transform:uppercase;">Bulletin boards</span>
+            <div class="col-sm-6 bulletin-heading-container">
+                <span class="bulletin-board-header">Bulletin boards</span>
             </div>
             <div class="col-sm-6">
-                <img class="imagewrapper pull-right" src="images/acquia_marina_logo.png">
+                <img class="bulletin-image-wrapper pull-right" src="images/acquia_marina_logo.png">
             </div>
             </div>
             </div>
@@ -48,12 +48,12 @@
                              ng-mouseenter="hovering=true" ng-mouseleave="hovering=false" ng-focus="hovering=true" ng-blur="hovering=false"
                              ng-repeat="(id, bulletinBoard) in bulletinBoards"  ng-click="viewBulletinBoard(bulletinBoard.bbId)" style="margin-right:20px;transition: all .5s ease-in-out;height:200px;">
                             <div class="panel-body widget">
-                                <div class="col-sm-12">
-                                    <h1 class="widget-title">{{bulletinBoard.name}}</h1>
+                                <div class="col-sm-12 bulletin-auth-info">
+                                    <h1 ng-class="{'widget-title': !isBulletinBoard,'widget-title bulletin-label': isBulletinBoard}">{{bulletinBoard.name}}</h1>
                                 </div>
                                 <hr style="border: 1px solid #d0dada">
                                 <div class="col-sm-12">
-                                    <div ng-class="{'col-sm-8 noleftpad pt10 widget-sub-title':!isBulletinBoard, 'col-sm-12 noleftpad pt10 widget-sub-title':isBulletinBoard}">{{bulletinBoard.desc}}</div>
+                                    <div ng-class="{'col-sm-8 noleftpad pt10 widget-sub-title':!isBulletinBoard, 'col-sm-12 noleftpad pt10 widget-sub-title large':isBulletinBoard}">{{bulletinBoard.desc}}</div>
                                     <div class="col-sm-4 pull-right" ng-if="!isBulletinBoard && (iSU || dp.ce)">
                                         <a ng-href="#configuration/bulletin/detail/{{bulletinBoard.bbId}}">
                                             <span class="glyphicon glyphicon-cog large" title="Configure" style="top:5px;"></span>&nbsp;&nbsp;
@@ -79,7 +79,7 @@
             <!--
                     <div class="row mt18">
                         <div class="col-sm-12">
-                            <button type="button" ng-click="logoutBulletinBoard()" class="btn btn-sm btn-primary">{{resourceBundle['signout']}}</button>
+                            <button type="button" ng-click="logoutBulletinBoard()" class="btn btn-lg btn-primary">{{resourceBundle['signout']}}</button>
                         </div>
                     </div>
                 -->

@@ -23,26 +23,23 @@
 
 package com.logistimo.orders.entity;
 
+import com.logistimo.context.StaticApplicationContext;
+import com.logistimo.logger.XLog;
+import com.logistimo.orders.service.IDemandService;
+import com.logistimo.orders.service.impl.DemandService;
 import com.logistimo.tags.TagUtil;
 import com.logistimo.tags.entity.ITag;
 import com.logistimo.tags.entity.Tag;
-
-import com.logistimo.orders.service.IDemandService;
-import com.logistimo.services.Services;
-import com.logistimo.orders.service.impl.DemandService;
 import com.logistimo.utils.BigUtil;
-import com.logistimo.logger.XLog;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -302,8 +299,7 @@ public class DemandItem implements IDemandItem {
     if (up == null) {
       return "0.00";
     }
-    String fp = Order.getFormattedPrice(up); //String.format( "%.2f", up );
-    return fp;
+    return Order.getFormattedPrice(up);
   }
 
   // Computes item price without any tax added to it
@@ -450,7 +446,7 @@ public class DemandItem implements IDemandItem {
   @Override
   public void addBatch(IDemandItemBatch batch) {
     if (btchs == null) {
-      btchs = new HashSet<DemandItemBatch>();
+      btchs = new HashSet<>();
     }
     btchs.add((DemandItemBatch) batch);
   }
@@ -472,26 +468,22 @@ public class DemandItem implements IDemandItem {
     if (btchs == null || btchs.isEmpty()) {
       return null;
     }
-    List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
-    Iterator<DemandItemBatch> it = btchs.iterator();
-    while (it.hasNext()) {
-      list.add(it.next().toMap());
+    List<Map<String, Object>> list = new ArrayList<>();
+    for (DemandItemBatch btch : btchs) {
+      list.add(btch.toMap());
     }
     // Sort by expiry date (asc)
-    Collections.sort(list, new Comparator<Map<String, Object>>() {
-      @Override
-      public int compare(Map<String, Object> o1, Map<String, Object> o2) {
-        Date d1 = (Date) o1.get(IDemandItemBatch.EXPIRY);
-        Date d2 = (Date) o2.get(IDemandItemBatch.EXPIRY);
-        if (d1 == null && d2 != null) {
-          return -1;
-        } else if (d1 != null && d2 == null) {
-          return 1;
-        } else if (d1 == null && d2 == null) {
-          return 0;
-        } else {
-          return d1.compareTo(d2);
-        }
+    Collections.sort(list, (o1, o2) -> {
+      Date d1 = (Date) o1.get(IDemandItemBatch.EXPIRY);
+      Date d2 = (Date) o2.get(IDemandItemBatch.EXPIRY);
+      if (d1 == null && d2 != null) {
+        return -1;
+      } else if (d1 != null && d2 == null) {
+        return 1;
+      } else if (d1 == null) {
+        return 0;
+      } else {
+        return d1.compareTo(d2);
       }
     });
     return list;
@@ -502,7 +494,7 @@ public class DemandItem implements IDemandItem {
                                    boolean forceIntegerQuantity) {
     Map<String, Object> map = new HashMap<>(1);
     try {
-      IDemandService ds = Services.getService(DemandService.class);
+      IDemandService ds = StaticApplicationContext.getBean(DemandService.class);
       map = ds.getDemandItemAsMap(this.id, currency, locale, timezone, forceIntegerQuantity);
     } catch (Exception e) {
       xLogger.severe("Exception while getting demand item as map for id: {0}", this.id, e);

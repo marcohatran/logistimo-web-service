@@ -28,21 +28,20 @@ package com.logistimo.reports.generators;
 
 import com.ibm.icu.util.Calendar;
 import com.logistimo.config.models.DomainConfig;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.IInvntryLog;
 import com.logistimo.inventory.service.InventoryManagementService;
 import com.logistimo.inventory.service.impl.InventoryManagementServiceImpl;
-
+import com.logistimo.logger.XLog;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.QueryParams;
 import com.logistimo.reports.ReportsConstants;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.QueryUtil;
-import com.logistimo.logger.XLog;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -99,7 +98,7 @@ public class StockLevelDataGenerator implements ReportDataGenerator {
       QueryUtil.setPageParams(q, pageParams);
     }
     // Get the param map
-    Map<String, Object> paramMap = new HashMap<String, Object>();
+    Map<String, Object> paramMap = new HashMap<>();
     paramMap.put("mIdParam", materialId);
     paramMap.put("kIdParam", kioskId);
     paramMap.put("fromParam", modFrom);
@@ -125,9 +124,8 @@ public class StockLevelDataGenerator implements ReportDataGenerator {
     // Get the re-order level
     BigDecimal reorderLevel = BigDecimal.ZERO;
     try {
-      InventoryManagementService
-          ims =
-          Services.getService(InventoryManagementServiceImpl.class);
+      InventoryManagementService ims =
+          StaticApplicationContext.getBean(InventoryManagementServiceImpl.class);
       IInvntry inv = ims.getInventory(kioskId, materialId);
       if (inv != null) {
         reorderLevel = inv.getReorderLevel();

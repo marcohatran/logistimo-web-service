@@ -28,6 +28,7 @@ import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.InventoryConfig;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.SourceConstants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.entity.IKioskLink;
@@ -37,7 +38,6 @@ import com.logistimo.entity.IUploaded;
 import com.logistimo.entity.IUploadedMsgLog;
 import com.logistimo.events.entity.IEvent;
 import com.logistimo.inventory.dao.ITransDao;
-import com.logistimo.inventory.dao.impl.TransDao;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.IInvntryEvntLog;
 import com.logistimo.inventory.entity.ITransaction;
@@ -56,14 +56,13 @@ import com.logistimo.orders.service.impl.OrderManagementServiceImpl;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.UploadService;
 import com.logistimo.services.blobstore.BlobstoreService;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.services.impl.UploadServiceImpl;
 import com.logistimo.shipments.service.IShipmentService;
 import com.logistimo.shipments.service.impl.ShipmentService;
-import com.logistimo.tags.dao.TagDao;
+import com.logistimo.tags.dao.ITagDao;
 import com.logistimo.tags.entity.ITag;
 import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.LocalDateUtil;
@@ -81,6 +80,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -100,7 +100,6 @@ public class MnlTransactionUtil {
 
   private static final XLog xLogger = XLog.getLog(MnlTransactionUtil.class);
 
-  private static ITransDao transDao = new TransDao();
   private static final int FULLYEAR_LENGTH = 4;
 
 
@@ -123,15 +122,17 @@ public class MnlTransactionUtil {
 
     BulkUploadMgr.EntityContainer ec = new BulkUploadMgr.EntityContainer();
     try {
-      OrderManagementService oms = Services.getService(OrderManagementServiceImpl.class);
-      IShipmentService shipmentService = Services.getService(ShipmentService.class);
+      OrderManagementService
+          oms =
+          StaticApplicationContext.getBean(OrderManagementServiceImpl.class);
+      IShipmentService shipmentService = StaticApplicationContext.getBean(ShipmentService.class);
       //Create order
       OrderResults
           or =
           oms.updateOrderTransactions(domainId, userId, ITransaction.TYPE_ORDER, transList, kioskId,
               null, null, true, linkedKioskId, null, null, null, null, null, null, BigDecimal.ZERO,
               null, null,
-              false, orderTags, 1, false, null, null, null,SourceConstants.UPLOAD);
+              false, orderTags, 1, false, null, null, null, SourceConstants.UPLOAD);
       IOrder order = or.getOrder();
       // Reset order quantities to fulfilled quantities
       transList.clear();
@@ -153,7 +154,7 @@ public class MnlTransactionUtil {
           // Reset order quantities
           oms.modifyOrder(order, userId, transList, null, domainId, ITransaction.TYPE_ORDER, null,
               null, null,
-              null, null, null, false, orderTags, null, null);
+              null, null, false, orderTags, null, null);
           UpdatedOrder
               updorder =
               oms.updateOrder(order, SourceConstants.UPLOAD,
@@ -164,7 +165,8 @@ public class MnlTransactionUtil {
           // Mark order as shipped
           String
               shipmentId =
-              oms.shipNow(order, null, null, null, null, userId, null, SourceConstants.UPLOAD, null, false);
+              oms.shipNow(order, null, null, null, null, userId, null, SourceConstants.UPLOAD, null,
+                  false);
           shipmentService.fulfillShipment(shipmentId, userId, SourceConstants.UPLOAD);
         }
       } else {
@@ -184,15 +186,15 @@ public class MnlTransactionUtil {
         // Send the rowNumber as jobId
         updateUploadedMsgLog(orderRow.offset, "Row " + orderRow.rowNumber + ": " + orderRow.line,
             ec, type,
-            userId, domainId, String.valueOf(orderRow.rowNumber));
+            userId, domainId);
       }
     }
     return null;
   }
 
-  private static void updateUploadedMsgLog(long offset, String csvLine, BulkUploadMgr.EntityContainer ec,
-                                           String type, String sourceUserId, Long domainId,
-                                           String jobIdStr) {
+  private static void updateUploadedMsgLog(long offset, String csvLine,
+                                           BulkUploadMgr.EntityContainer ec,
+                                           String type, String sourceUserId, Long domainId) {
     // Get the uploaded object
     String uploadedKey = BulkUploadMgr.getUploadedKey(domainId, type, sourceUserId);
 
@@ -200,7 +202,8 @@ public class MnlTransactionUtil {
     // Form the text to be appended
     String
         lineMsg =
-        BulkUploadMgr.getErrorMessageString(offset, csvLine, ec.operation, ec.getMessages(), ec.getMessagesCount());
+        BulkUploadMgr.getErrorMessageString(offset, csvLine, ec.operation, ec.getMessages(),
+            ec.getMessagesCount());
     // Create an UploadedMsgLog
     IUploadedMsgLog entity = JDOUtils.createInstance(IUploadedMsgLog.class);
 
@@ -223,7 +226,7 @@ public class MnlTransactionUtil {
 
   // Parse the uploaded file that contains Transactions
   public static void parseUploadedTransactions(ResourceBundle backendMessages,
-                                               ResourceBundle messages, Long domainId, Long kioskId,
+                                               Long domainId, Long kioskId,
                                                String userId, String blobKeyStr)
       throws IOException {
     // Read the csv line by line.
@@ -257,7 +260,7 @@ public class MnlTransactionUtil {
       // Skip the first line because it is the header
       if (rowNumber != 0) {
         xLogger.fine("Line being parsed: {0}", line);
-        String kName = getKioskNameFromCSVString(domainId, line);
+        String kName = getKioskNameFromCSVString(line);
         Long kid = getKioskIdFromKioskName(domainId, kName);
         if (kid == null) {
           ec.messages.add(
@@ -266,8 +269,8 @@ public class MnlTransactionUtil {
           hasError = true;
           // Send the rowNumber as jobId
           updateUploadedMsgLog(offset, "Row " + (rowNumber + 1) + ": " + line, ec,
-              BulkUploadMgr.TYPE_TRANSACTIONS_CUM_INVENTORY_METADATA, userId, domainId,
-              String.valueOf(rowNumber));
+              BulkUploadMgr.TYPE_TRANSACTIONS_CUM_INVENTORY_METADATA, userId, domainId
+          );
         }
         if (kioskId == null || (kid != null && kioskId.equals(kid))) {
           kidFound = true;
@@ -286,7 +289,7 @@ public class MnlTransactionUtil {
             hasError = true;
             // Send the rowNumber as jobId
             updateUploadedMsgLog(offset, "Row " + (rowNumber + 1) + ": " + line, ec,
-                BulkUploadMgr.TYPE_TRANSACTIONS, userId, domainId, String.valueOf(rowNumber));
+                BulkUploadMgr.TYPE_TRANSACTIONS, userId, domainId);
           }
 
           // If there are no errors during parsing of the line, and if the transaction is not null, then
@@ -354,15 +357,14 @@ public class MnlTransactionUtil {
    * @return true if save is succesful.
    */
   public static boolean saveInventoryEventRowList(List<InventoryEventRow> inventoryEventRowList,
-                                                     String type) {
+                                                  String type) {
     boolean hasSaveError = false;
     for (InventoryEventRow inventoryEventRow : inventoryEventRowList) {
       BulkUploadMgr.EntityContainer ec = new BulkUploadMgr.EntityContainer();
       IInvntryEvntLog invEvntLog = inventoryEventRow.invEventLog;
       try {
-        InventoryManagementService
-            ims =
-            Services.getService(InventoryManagementServiceImpl.class);
+        InventoryManagementService ims =
+            StaticApplicationContext.getBean(InventoryManagementServiceImpl.class);
         ims.adjustInventoryEvents(inventoryEventRow.invEventLog);
       } catch (Exception e) {
         xLogger.warn("{0} when updating inventory events.  domainId: {1}, kioskId: {2}," +
@@ -376,8 +378,8 @@ public class MnlTransactionUtil {
           updateUploadedMsgLog(inventoryEventRow.offset,
               "Row " + inventoryEventRow.rowNumber + ": " +
                   inventoryEventRow.line, ec, type, inventoryEventRow.userId,
-              inventoryEventRow.invEventLog.getDomainId(),
-              String.valueOf(inventoryEventRow.rowNumber));
+              inventoryEventRow.invEventLog.getDomainId()
+          );
           hasSaveError = true;
         }
       }
@@ -393,14 +395,12 @@ public class MnlTransactionUtil {
     boolean hasSaveError = false;
     for (TransactionRow aTransRowList : transRowList) {
       BulkUploadMgr.EntityContainer ec = new BulkUploadMgr.EntityContainer();
-      TransactionRow transRow = aTransRowList;
-      ITransaction transaction = transRow.transaction;
+      ITransaction transaction = aTransRowList.transaction;
       Long domainId = transaction.getDomainId();
       String userId = transaction.getSourceUserId();
       try {
-        InventoryManagementService
-            ims =
-            Services.getService(InventoryManagementServiceImpl.class);
+        InventoryManagementService ims =
+            StaticApplicationContext.getBean(InventoryManagementServiceImpl.class);
         ITransaction transactionInError = ims.updateInventoryTransaction(domainId, transaction);
         if (transactionInError != null) {
           xLogger.warn(
@@ -420,9 +420,10 @@ public class MnlTransactionUtil {
       } finally {
         if (ec.hasErrors()) {
           // Send the rowNumber as jobId
-          updateUploadedMsgLog(transRow.offset, "Row " + transRow.rowNumber + ": " + transRow.line,
+          updateUploadedMsgLog(
+              aTransRowList.offset, "Row " + aTransRowList.rowNumber + ": " + aTransRowList.line,
               ec, type,
-              userId, domainId, String.valueOf(transRow.rowNumber));
+              userId, domainId);
           hasSaveError = true;
         }
       }
@@ -432,7 +433,6 @@ public class MnlTransactionUtil {
     }
     return hasSaveError;
   }
-
 
 
   private static void saveMnlTransactionRowList(List<MnlTransactionRow> mnlTransRowList) {
@@ -481,6 +481,7 @@ public class MnlTransactionUtil {
     if (transRowList != null && !transRowList.isEmpty()) {
       for (TransactionRow transRow : transRowList) {
         ITransaction transaction = transRow.transaction;
+        ITransDao transDao = StaticApplicationContext.getBean(ITransDao.class);
         transDao.setKey(transaction);
       }
     }
@@ -491,7 +492,7 @@ public class MnlTransactionUtil {
   public static IKiosk getKioskFromKioskName(Long domainId, String kioskName) {
     if (domainId != null && kioskName != null && !kioskName.isEmpty()) {
       try {
-        EntitiesService as = Services.getService(EntitiesServiceImpl.class);
+        EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
         IKiosk kiosk = as.getKioskByName(domainId, kioskName);
         xLogger.fine("kiosk: {0}", kiosk);
         return kiosk;
@@ -513,19 +514,13 @@ public class MnlTransactionUtil {
       return false;
     }
     int index = dateStr.lastIndexOf('/');
-    if (index == -1) {
-      return false;
-    }
-    if (dateStr.substring(index + 1).length() != FULLYEAR_LENGTH) {
-      return false;
-    }
-    return true;
+    return index != -1 && dateStr.substring(index + 1).length() == FULLYEAR_LENGTH;
   }
 
   private static void finalizeUpload(String key) {
     try {
       // Get the Uploaded object
-      UploadService svc = Services.getService(UploadServiceImpl.class);
+      UploadService svc = StaticApplicationContext.getBean(UploadServiceImpl.class);
       IUploaded u = svc.getUploaded(key);
       if (u != null) {
         u.setJobStatus(IUploaded.STATUS_DONE);
@@ -588,12 +583,11 @@ public class MnlTransactionUtil {
     return BigDecimal.ZERO;
   }
 
-  private static String getKioskNameFromCSVString(Long domainId, String csvLine) {
+  private static String getKioskNameFromCSVString(String csvLine) {
     if (csvLine != null && !csvLine.isEmpty()) {
       String[] tokens = StringUtil.getCSVTokens(csvLine);
       if (tokens != null && tokens.length > 1) {
-        String kioskName = tokens[0];
-        return kioskName;
+        return tokens[0];
       }
     }
     return null;
@@ -602,7 +596,8 @@ public class MnlTransactionUtil {
   public static String getMaterialNameFromMaterialId(Long materialId) {
     if (materialId != null) {
       try {
-        MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
+        MaterialCatalogService mcs = StaticApplicationContext.getBean(
+            MaterialCatalogServiceImpl.class);
         IMaterial material = mcs.getMaterial(materialId);
         if (material != null) {
           return material.getName();
@@ -618,7 +613,7 @@ public class MnlTransactionUtil {
   public static String getKioskNameFromKioskId(Long kioskId) {
     if (kioskId != null) {
       try {
-        EntitiesService as = Services.getService(EntitiesServiceImpl.class);
+        EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
         IKiosk kiosk = as.getKiosk(kioskId, false);
         xLogger.fine("kiosk: {0}", kiosk);
         if (kiosk != null) {
@@ -635,7 +630,8 @@ public class MnlTransactionUtil {
   public static Long getMaterialIdFromMaterialName(Long domainId, String materialName) {
     if (domainId != null && materialName != null && !materialName.isEmpty()) {
       try {
-        MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
+        MaterialCatalogService mcs = StaticApplicationContext.getBean(
+            MaterialCatalogServiceImpl.class);
         IMaterial material = mcs.getMaterialByName(domainId, materialName);
         if (material != null) {
           return material.getMaterialId();
@@ -655,23 +651,23 @@ public class MnlTransactionUtil {
     xLogger.fine("Entering updateTransactionsList");
     boolean hasError = false;
     ITransaction scTrans = null;
-    BulkUploadMgr.EntityContainer ec = null;
+    BulkUploadMgr.EntityContainer ec;
     BigDecimal openingStock = getOpeningStockFromCSVString(line);
     ec = new BulkUploadMgr.EntityContainer();
     // Get the inventory for the Kiosk and Material to obtain current stock in inventory
     BigDecimal
         currentStock =
-          getCurrentStock(trans.getDomainId(), trans.getKioskId(), trans.getMaterialId(),
-              trans.getSourceUserId(), BulkUploadMgr.TYPE_TRANSACTIONS, line, offset, rowNumber,
-              ec);
+        getCurrentStock(trans.getDomainId(), trans.getKioskId(), trans.getMaterialId(),
+            trans.getSourceUserId(), BulkUploadMgr.TYPE_TRANSACTIONS, line, offset, rowNumber,
+            ec);
     if (BigUtil.equals(currentStock, -1)) {
       ec.messages.add(
           "Material " + getMaterialNameFromMaterialId(trans.getMaterialId())
               + " not found in entity " + getKioskNameFromKioskId(trans.getKioskId()));
       hasError = true;
       updateUploadedMsgLog(offset, "Row " + rowNumber + ": " + line, ec,
-          BulkUploadMgr.TYPE_TRANSACTIONS, trans.getSourceUserId(), trans.getDomainId(),
-          String.valueOf(rowNumber));
+          BulkUploadMgr.TYPE_TRANSACTIONS, trans.getSourceUserId(), trans.getDomainId()
+      );
     }
     // If there are no errors, then proceed to check if openingStock matches currentStock. If they do not match, create a stock count transaction and add it to the transaction list
     if (!hasError) {
@@ -690,8 +686,8 @@ public class MnlTransactionUtil {
         hasError = true;
         // Send the rowNumber as jobId
         updateUploadedMsgLog(offset, "Row " + rowNumber + ": " + line, ec,
-            BulkUploadMgr.TYPE_TRANSACTIONS, trans.getSourceUserId(), trans.getDomainId(),
-            String.valueOf(rowNumber));
+            BulkUploadMgr.TYPE_TRANSACTIONS, trans.getSourceUserId(), trans.getDomainId()
+        );
       }
 
       // If there is no error, proceed
@@ -710,8 +706,8 @@ public class MnlTransactionUtil {
                     + backendMessages.getString("bck.vendor.lower") + ") does not exist");
             hasError = true;
             updateUploadedMsgLog(offset, "Row " + rowNumber + ": " + line, ec,
-                BulkUploadMgr.TYPE_TRANSACTIONS, trans.getSourceUserId(), trans.getDomainId(),
-                String.valueOf(rowNumber));
+                BulkUploadMgr.TYPE_TRANSACTIONS, trans.getSourceUserId(), trans.getDomainId()
+            );
           }
         }
         if (!hasError) {
@@ -734,58 +730,26 @@ public class MnlTransactionUtil {
 
   private static boolean hasRelationship(Long domainId, Long kioskId, Long linkedKioskId,
                                          String linkType, String userId, String type, String line,
-                                         long offset, int rowNumber, BulkUploadMgr.EntityContainer ec) {
-    boolean hasKioskLink = false;
+                                         long offset, int rowNumber,
+                                         BulkUploadMgr.EntityContainer ec) {
     if (kioskId == null || linkedKioskId == null || linkType == null || domainId == null
         || userId == null) {
-      return hasKioskLink;
+      return false;
     }
-
     try {
-      EntitiesService as = Services.getService(EntitiesServiceImpl.class);
-      hasKioskLink = as.hasKioskLink(kioskId, linkType, linkedKioskId);
+      EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
+      return as.hasKioskLink(kioskId, linkType, linkedKioskId);
     } catch (Exception e) {
       xLogger.warn(
           "{0} while getting kiosk link for kioskId: {1}, linkedKioskId: {2} and linkType: {3}. Message: {4}",
           e.getClass().getName(), kioskId, linkedKioskId, linkType, e.getMessage());
       ec.messages.add("Error while getting relationship (Either customer or vendor) for entity");
-      updateUploadedMsgLog(offset, "Row " + rowNumber + ": " + line, ec, type, userId, domainId,
-          String.valueOf(rowNumber));
-      hasKioskLink = false;
-    }
-    return hasKioskLink;
-  }
-
-  private static boolean isMaterialInEntity(Long domainId, Long kioskId, Long materialId,
-                                            String userId, String type, String line, long offset,
-                                            int rowNumber, BulkUploadMgr.EntityContainer ec) {
-    if (kioskId == null || materialId == null || domainId == null || userId == null) {
-      return false;
-    }
-
-    try {
-      InventoryManagementService
-          ims =
-          Services.getService(InventoryManagementServiceImpl.class);
-      IInvntry inventory = ims.getInventory(kioskId, materialId);
-
-      if (inventory != null) {
-        return true;
-      }
-    } catch (Exception e) {
-      xLogger.warn("{0} while getting inventory for kioskId: {1} and materialId: {2}. Message: {3}",
-          e.getClass().getName(), kioskId, materialId, e.getMessage());
-      ec.messages
-          .add("Error while getting inventory of related entity (Either customer or vendor)");
-      updateUploadedMsgLog(offset, "Row " + rowNumber + ": " + line, ec, type, userId, domainId,
-          String.valueOf(rowNumber));
-      return false;
+      updateUploadedMsgLog(offset, "Row " + rowNumber + ": " + line, ec, type, userId, domainId
+      );
     }
     return false;
   }
 
-  // Private method that gets the current stock of a material in a kiosk.
-  // Returns -1 if there was any exception while getting the inventory.
   private static BigDecimal getCurrentStock(Long domainId, Long kioskId, Long materialId,
                                             String userId, String type, String line, long offset,
                                             int rowNumber, BulkUploadMgr.EntityContainer ec) {
@@ -797,7 +761,7 @@ public class MnlTransactionUtil {
     }
 
     try {
-      ims = Services.getService(InventoryManagementServiceImpl.class);
+      ims = StaticApplicationContext.getBean(InventoryManagementServiceImpl.class);
       inventory = ims.getInventory(kioskId, materialId);
       if (inventory != null) {
         currentStock = inventory.getStock();
@@ -806,8 +770,8 @@ public class MnlTransactionUtil {
       xLogger.warn("{0} while getting inventory for kioskId: {1} and materialId: {2}. Message: {3}",
           e.getClass().getName(), kioskId, materialId, e.getMessage());
       ec.messages.add("Error while validating opening stock against current stock.");
-      updateUploadedMsgLog(offset, "Row " + rowNumber + ": " + line, ec, type, userId, domainId,
-          String.valueOf(rowNumber));
+      updateUploadedMsgLog(offset, "Row " + rowNumber + ": " + line, ec, type, userId, domainId
+      );
       return new BigDecimal(-1);
     }
     return currentStock;
@@ -861,6 +825,7 @@ public class MnlTransactionUtil {
     } else if (ITransaction.TYPE_WASTAGE.equals(type)) {
       trans.setQuantity(mnlTrans.getDiscardQuantity());
     }
+    ITransDao transDao = StaticApplicationContext.getBean(ITransDao.class);
     transDao.setKey(trans);
     return trans;
   }
@@ -921,8 +886,8 @@ public class MnlTransactionUtil {
           "The sum of the number of issues and discards cannot be greater than the sum of opening stock and receipts.");
       // Send the rowNumber as jobId
       updateUploadedMsgLog(offset, "Row " + rowNumber + ": " + line, ec,
-          BulkUploadMgr.TYPE_TRANSACTIONS_CUM_INVENTORY_METADATA, userId, domainId,
-          String.valueOf(rowNumber));
+          BulkUploadMgr.TYPE_TRANSACTIONS_CUM_INVENTORY_METADATA, userId, domainId
+      );
       hasError = true;
     }
     if (!hasError) {
@@ -937,8 +902,8 @@ public class MnlTransactionUtil {
             + getKioskNameFromKioskId(kioskId));
         // Send the rowNumber as jobId
         updateUploadedMsgLog(offset, "Row " + rowNumber + ": " + line, ec,
-            BulkUploadMgr.TYPE_TRANSACTIONS_CUM_INVENTORY_METADATA, userId, domainId,
-            String.valueOf(rowNumber));
+            BulkUploadMgr.TYPE_TRANSACTIONS_CUM_INVENTORY_METADATA, userId, domainId
+        );
         hasError = true;
       }
       // If there are no errors, then proceed to check if openingStock matches currentStock. If the two do not match, create a stock count transaction and add it to the transaction list
@@ -995,8 +960,8 @@ public class MnlTransactionUtil {
    * @return return InvntoryEventRow object with log.
    */
   public static InventoryEventRow getInvEventRow(IMnlTransaction mnlTrans, String line,
-                                                    long offset,
-                                                    int rowNumber) {
+                                                 long offset,
+                                                 int rowNumber) {
     if (mnlTrans.getReportingPeriod() != null) {
       IInvntryEvntLog invntryEvntLog = JDOUtils.createInstance(IInvntryEvntLog.class);
       invntryEvntLog.setKioskId(mnlTrans.getKioskId());
@@ -1021,7 +986,7 @@ public class MnlTransactionUtil {
    * Private method that returns an OrderRow object from an MnlTransaction object
    */
   public static OrderRow getOrderRow(IMnlTransaction mnlTrans, String line, long offset,
-                                        int rowNumber) {
+                                     int rowNumber) {
     ITransaction transaction = JDOUtils.createInstance(ITransaction.class);
     transaction.setDomainId(mnlTrans.getDomainId());
     transaction.setSourceUserId(mnlTrans.getUserId());
@@ -1036,6 +1001,7 @@ public class MnlTransactionUtil {
     }
     List<String> orderTags = mnlTrans.getTags();
     transaction.setLinkedKioskId(mnlTrans.getVendorId());
+    ITransDao transDao = StaticApplicationContext.getBean(ITransDao.class);
     transDao.setKey(transaction);
 
     return new OrderRow(offset, rowNumber, line, transaction, orderTags, mnlTrans);
@@ -1126,8 +1092,9 @@ public class MnlTransactionUtil {
     // Check whether material is batch enabled
     boolean isBatchMaterial = false;
     try {
-      MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
-      EntitiesService acs = Services.getService(EntitiesServiceImpl.class);
+      MaterialCatalogService mcs = StaticApplicationContext.getBean(
+          MaterialCatalogServiceImpl.class);
+      EntitiesService acs = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
       if (materialId != null && kioskId != null) {
         IMaterial material = mcs.getMaterial(materialId);
         IKiosk kiosk = acs.getKiosk(kioskId);
@@ -1236,7 +1203,7 @@ public class MnlTransactionUtil {
         // Get the Kiosk Id from Kiosk Name
         Long
             linkedKioskId =
-              getKioskIdFromKioskName(trans.getDomainId(), relatedEntityName);
+            getKioskIdFromKioskName(trans.getDomainId(), relatedEntityName);
         if (linkedKioskId == null) {
           errors.add(
               "Related " + backendMessages.getString("kiosk.lowercase") + " (" + backendMessages
@@ -1433,7 +1400,6 @@ public class MnlTransactionUtil {
    * Parse the uploaded file that contains Transactions along with Inventory metadata.
    */
   public static void parseUploadedManualTransactions(ResourceBundle backendMessages,
-                                                     ResourceBundle messages,
                                                      Long domainId, Long kioskId, String userId,
                                                      String blobKeyStr)
       throws IOException {
@@ -1455,7 +1421,7 @@ public class MnlTransactionUtil {
     List<TransactionRow> transRowList = new ArrayList<>();
     List<InventoryEventRow> inventoryEventRowList = new ArrayList<>();
 
-    BulkUploadMgr.EntityContainer ec = null;
+    BulkUploadMgr.EntityContainer ec;
     boolean hasError = false;
     boolean hasTransactionProcessingError = false;
     Map<Long, List<OrderRow>> kidOrderRowListMap = new HashMap<>();
@@ -1465,7 +1431,7 @@ public class MnlTransactionUtil {
     while (line != null && !line.isEmpty()) {
       ec = new BulkUploadMgr.EntityContainer();
       List<String> errors;
-      IMnlTransaction mnlTrans = null;
+      IMnlTransaction mnlTrans;
       int lineLength = byteCountUTF8(line);
       // Skip the first line because it is the header
       if (rowNumber != 0) {
@@ -1477,10 +1443,10 @@ public class MnlTransactionUtil {
           hasError = true;
           // Send the rowNumber as jobId
           updateUploadedMsgLog(offset, "Row " + (rowNumber + 1) + ": " + line, ec,
-              BulkUploadMgr.TYPE_TRANSACTIONS_CUM_INVENTORY_METADATA, userId, domainId,
-              String.valueOf(rowNumber));
+              BulkUploadMgr.TYPE_TRANSACTIONS_CUM_INVENTORY_METADATA, userId, domainId
+          );
         }
-        String kName = getKioskNameFromCSVString(domainId, line);
+        String kName = getKioskNameFromCSVString(line);
         IKiosk kiosk = getKioskFromKioskName(domainId, kName);
         // If an invalid or null kiosk name was present in the csv line, alert the user with an error message.
         if (!hasError) {
@@ -1490,8 +1456,8 @@ public class MnlTransactionUtil {
             hasError = true;
             // Send the rowNumber as jobId
             updateUploadedMsgLog(offset, "Row " + (rowNumber + 1) + ": " + line, ec,
-                BulkUploadMgr.TYPE_TRANSACTIONS_CUM_INVENTORY_METADATA, userId, domainId,
-                String.valueOf(rowNumber));
+                BulkUploadMgr.TYPE_TRANSACTIONS_CUM_INVENTORY_METADATA, userId, domainId
+            );
           } else {
 
             mnlTrans = JDOUtils.createInstance(IMnlTransaction.class);
@@ -1501,8 +1467,7 @@ public class MnlTransactionUtil {
             mnlTrans.setTimestamp(transTimestamp);
             errors = fromCSVString(mnlTrans, line, backendMessages);
             xLogger.fine("Populated mnlTrans from csv line: {0}, errors: {1}, hasError: {2}", line,
-                errors,
-                hasError);
+                errors, false);
             // If there are any errors, then populate the Entity Container and set the hasError flag.
             // Also update the message log for this row.
             if (errors != null && !errors.isEmpty()) {
@@ -1510,8 +1475,8 @@ public class MnlTransactionUtil {
               hasError = true;
               // Send the rowNumber as jobId
               updateUploadedMsgLog(offset, "Row " + (rowNumber + 1) + ": " + line, ec,
-                  BulkUploadMgr.TYPE_TRANSACTIONS_CUM_INVENTORY_METADATA, userId, domainId,
-                  String.valueOf(rowNumber));
+                  BulkUploadMgr.TYPE_TRANSACTIONS_CUM_INVENTORY_METADATA, userId, domainId
+              );
             }
             xLogger.fine("ec.messages: {0}, hasError: {1}", ec.messages, hasError);
             // Only if there are no errors, accumulate the transactions
@@ -1566,7 +1531,7 @@ public class MnlTransactionUtil {
 
               MnlTransactionRow
                   mnlTransRow =
-                  new MnlTransactionRow(offset, rowNumber, line, mnlTrans);
+                  new MnlTransactionRow(mnlTrans);
               mnlTransRowList.add(mnlTransRow);
             }
           }
@@ -1587,7 +1552,7 @@ public class MnlTransactionUtil {
     xLogger.info("Number of manual transactions accumulated: {0}, Number of transactions: {1}",
         mnlTransRowList.size(), transRowList.size());
     // Save the transactionRowList
-    long timestampInMillis = 0;
+    long timestampInMillis;
     boolean hasSaveError = false;
 
     if (!hasError && !hasTransactionProcessingError && !inventoryEventRowList.isEmpty()) {
@@ -1736,16 +1701,9 @@ public class MnlTransactionUtil {
   }
 
   public static class MnlTransactionRow {
-    private long offset;
-    private int rowNumber;
-    private String line;
     private IMnlTransaction mnlTransaction;
 
-    private MnlTransactionRow(long offset, int rowNumber, String line,
-                              IMnlTransaction mnlTransaction) {
-      this.offset = offset;
-      this.rowNumber = rowNumber;
-      this.line = line;
+    private MnlTransactionRow(IMnlTransaction mnlTransaction) {
       this.mnlTransaction = mnlTransaction;
     }
   }
@@ -1785,7 +1743,7 @@ public class MnlTransactionUtil {
   public static List<String> fromCSVString(IMnlTransaction mnlTransaction, String csvLine,
                                            ResourceBundle backendMessages) {
     xLogger.fine("Entering fromCSVString");
-    List<String> errors = new ArrayList<String>();
+    List<String> errors = new ArrayList<>();
     if (csvLine == null || csvLine.isEmpty()) {
       errors.add("Invalid or null row ");
       return errors;
@@ -1806,9 +1764,8 @@ public class MnlTransactionUtil {
     }
 
     // Kiosk Name as it appears in Logi web - Mandatory
-    Long kioskId = null;
+    Long kioskId;
     if (!done) {
-      // Kiosk Name - mandatory
       String kioskName = tokens[i].trim();
       if (kioskName.isEmpty()) {
         if (backendMessages != null) {
@@ -1819,7 +1776,8 @@ public class MnlTransactionUtil {
 
       } else {
         // Get the Kiosk Id from Kiosk Name
-        kioskId = MnlTransactionUtil.getKioskIdFromKioskName(mnlTransaction.getDomainId(), kioskName);
+        kioskId =
+            MnlTransactionUtil.getKioskIdFromKioskName(mnlTransaction.getDomainId(), kioskName);
         if (kioskId == null) {
           if (backendMessages != null) {
             errors.add(backendMessages.getString("kiosk") + " is not found " + kioskName);
@@ -1838,14 +1796,16 @@ public class MnlTransactionUtil {
     }
 
     // Material Name as it appears in Logi Web - mandatory
-    Long materialId = null;
+    Long materialId;
     if (!done) {
       String materialName = tokens[i].trim();
       if (materialName.isEmpty()) {
         errors.add("Material name is required but not given");
       } else {
         // Material Id from Material Name
-        materialId = MnlTransactionUtil.getMaterialIdFromMaterialName(mnlTransaction.getDomainId(), materialName);
+        materialId =
+            MnlTransactionUtil
+                .getMaterialIdFromMaterialName(mnlTransaction.getDomainId(), materialName);
         if (materialId == null) {
           errors.add("Material name is not found " + materialName);
         } else {
@@ -1878,207 +1838,210 @@ public class MnlTransactionUtil {
           mnlTransaction.setOpeningStock(openingStock);
         }
       }
-    }
 
-    // Reporting period - will be in Constants.DATE_FORMAT_CSV format
-    if (++i < size) {
-      String reportingPeriodStr = tokens[i].trim();
-      Date reportingPeriod = null;
-      if (!reportingPeriodStr.isEmpty()) {
-        Calendar cal = GregorianCalendar.getInstance();
-        try {
-          reportingPeriod =
-              LocalDateUtil.parseCustom(reportingPeriodStr, Constants.DATE_FORMAT_CSV, null);
-          cal.setTime(reportingPeriod);
-          LocalDateUtil.resetTimeFields(cal);
-          mnlTransaction.setReportingPeriod(cal.getTime());
-        } catch (ParseException pe) {
-          xLogger.warn("{0} when parsing reporting period. Message: {1}", pe.getClass().getName(),
-              pe.getMessage());
-          errors.add("Invalid date format for reporting period " + reportingPeriodStr);
+      // Reporting period - will be in Constants.DATE_FORMAT_CSV format
+      if (++i < size) {
+        String reportingPeriodStr = tokens[i].trim();
+        Date reportingPeriod;
+        if (!reportingPeriodStr.isEmpty()) {
+          Calendar cal = GregorianCalendar.getInstance();
+          try {
+            reportingPeriod =
+                LocalDateUtil.parseCustom(reportingPeriodStr, Constants.DATE_FORMAT_CSV, null);
+            cal.setTime(reportingPeriod);
+            LocalDateUtil.resetTimeFields(cal);
+            mnlTransaction.setReportingPeriod(cal.getTime());
+          } catch (ParseException pe) {
+            xLogger.warn("{0} when parsing reporting period. Message: {1}", pe.getClass().getName(),
+                pe.getMessage());
+            errors.add("Invalid date format for reporting period " + reportingPeriodStr);
+          }
         }
       }
-    }
 
-    // Receipts
-    if (++i < size) {
-      String receiptsStr = tokens[i].trim();
-      BigDecimal receipts = null;
-      if (!receiptsStr.isEmpty()) {
-        try {
-          receipts = new BigDecimal(receiptsStr);
-        } catch (NumberFormatException e) {
-          xLogger.warn("{0} when parsing receipts in row: {1}", e.getClass().getName(),
-              e.getMessage());
-        }
-        if (BigUtil.isInvalidQ(receipts)) {
-          errors.add("Invalid receipts quantity " + receiptsStr);
-        } else {
-          mnlTransaction.setReceiptQuantity(receipts);
+      // Receipts
+      if (++i < size) {
+        String receiptsStr = tokens[i].trim();
+        BigDecimal receipts = null;
+        if (!receiptsStr.isEmpty()) {
+          try {
+            receipts = new BigDecimal(receiptsStr);
+          } catch (NumberFormatException e) {
+            xLogger.warn("{0} when parsing receipts in row: {1}", e.getClass().getName(),
+                e.getMessage());
+          }
+          if (BigUtil.isInvalidQ(receipts)) {
+            errors.add("Invalid receipts quantity " + receiptsStr);
+          } else {
+            mnlTransaction.setReceiptQuantity(receipts);
+          }
         }
       }
-    }
 
-    // Issues
-    if (++i < size) {
-      String issuesStr = tokens[i].trim();
-      BigDecimal issues = null;
-      if (!issuesStr.isEmpty()) {
-        try {
-          issues = new BigDecimal(issuesStr);
-        } catch (NumberFormatException e) {
-          xLogger
-              .warn("{0} when parsing issues in row: {1}", e.getClass().getName(), e.getMessage());
-        }
-        if (BigUtil.isInvalidQ(issues)) {
-          errors.add("Invalid issue quantity " + issuesStr);
-        } else {
-          mnlTransaction.setIssueQuantity(issues);
+      // Issues
+      if (++i < size) {
+        String issuesStr = tokens[i].trim();
+        BigDecimal issues = null;
+        if (!issuesStr.isEmpty()) {
+          try {
+            issues = new BigDecimal(issuesStr);
+          } catch (NumberFormatException e) {
+            xLogger
+                .warn("{0} when parsing issues in row: {1}", e.getClass().getName(),
+                    e.getMessage());
+          }
+          if (BigUtil.isInvalidQ(issues)) {
+            errors.add("Invalid issue quantity " + issuesStr);
+          } else {
+            mnlTransaction.setIssueQuantity(issues);
+          }
         }
       }
-    }
 
-    // Discards
-    if (++i < size) {
-      String discardsStr = tokens[i].trim();
-      BigDecimal discards = null;
-      if (!discardsStr.isEmpty()) {
-        try {
-          discards = new BigDecimal(discardsStr);
-        } catch (NumberFormatException e) {
-          xLogger.warn("{0} when parsing discards in row: {1}", e.getClass().getName(),
-              e.getMessage());
-        }
-        if (BigUtil.isInvalidQ(discards)) {
-          errors.add("Invalid discards quantity " + discardsStr);
-        } else {
-          mnlTransaction.setDiscardQuantity(discards);
+      // Discards
+      if (++i < size) {
+        String discardsStr = tokens[i].trim();
+        BigDecimal discards = null;
+        if (!discardsStr.isEmpty()) {
+          try {
+            discards = new BigDecimal(discardsStr);
+          } catch (NumberFormatException e) {
+            xLogger.warn("{0} when parsing discards in row: {1}", e.getClass().getName(),
+                e.getMessage());
+          }
+          if (BigUtil.isInvalidQ(discards)) {
+            errors.add("Invalid discards quantity " + discardsStr);
+          } else {
+            mnlTransaction.setDiscardQuantity(discards);
+          }
         }
       }
-    }
 
-    // Stock out duration
-    if (++i < size) {
-      String stockoutDurStr = tokens[i].trim();
-      Integer stockoutDur = null;
-      if (!stockoutDurStr.isEmpty()) {
-        try {
-          stockoutDur = Integer.valueOf(stockoutDurStr);
-        } catch (NumberFormatException e) {
-          xLogger.warn("{0} when parsing stockout duration in row: {1}", e.getClass().getName(),
-              e.getMessage());
-        }
-        if (stockoutDur == null || stockoutDur < 0) {
-          errors.add("Invalid stock out duration " + stockoutDurStr);
-        } else {
-          mnlTransaction.setStockoutDuration(NumberUtil.getIntegerValue(stockoutDur));
+      // Stock out duration
+      if (++i < size) {
+        String stockoutDurStr = tokens[i].trim();
+        Integer stockoutDur = null;
+        if (!stockoutDurStr.isEmpty()) {
+          try {
+            stockoutDur = Integer.valueOf(stockoutDurStr);
+          } catch (NumberFormatException e) {
+            xLogger.warn("{0} when parsing stockout duration in row: {1}", e.getClass().getName(),
+                e.getMessage());
+          }
+          if (stockoutDur == null || stockoutDur < 0) {
+            errors.add("Invalid stock out duration " + stockoutDurStr);
+          } else {
+            mnlTransaction.setStockoutDuration(NumberUtil.getIntegerValue(stockoutDur));
+          }
         }
       }
-    }
-    // Manual Consumption Rate
-    if (++i < size) {
-      String manConsRateStr = tokens[i].trim();
-      BigDecimal manConsRate = null;
-      if (!manConsRateStr.isEmpty()) {
-        try {
-          manConsRate = new BigDecimal(manConsRateStr);
-        } catch (NumberFormatException e) {
-          xLogger
-              .warn("{0} when parsing manual consumption rate in row: {1}", e.getClass().getName(),
-                  e.getMessage());
-        }
-        if (BigUtil.isInvalidQ(manConsRate)) {
-          errors.add("Invalid manual consumption rate " + manConsRateStr);
-        } else {
-          mnlTransaction.setManualConsumptionRate(manConsRate);
-        }
-      }
-    }
-
-    // Computed Consumption rate
-    if (++i < size) {
-      String compConsRateStr = tokens[i].trim();
-      BigDecimal compConsRate = null;
-      if (!compConsRateStr.isEmpty()) {
-        try {
-          compConsRate = new BigDecimal(compConsRateStr);
-        } catch (NumberFormatException e) {
-          xLogger.warn("{0} when parsing computed consumption rate in row: {1}",
-              e.getClass().getName(), e.getMessage());
-        }
-        if (BigUtil.isInvalidQ(compConsRate)) {
-          errors.add("Invalid computed consumption rate " + compConsRateStr);
-        } else {
-          mnlTransaction.setComputedConsumptionRate(compConsRate);
+      // Manual Consumption Rate
+      if (++i < size) {
+        String manConsRateStr = tokens[i].trim();
+        BigDecimal manConsRate = null;
+        if (!manConsRateStr.isEmpty()) {
+          try {
+            manConsRate = new BigDecimal(manConsRateStr);
+          } catch (NumberFormatException e) {
+            xLogger
+                .warn("{0} when parsing manual consumption rate in row: {1}",
+                    e.getClass().getName(),
+                    e.getMessage());
+          }
+          if (BigUtil.isInvalidQ(manConsRate)) {
+            errors.add("Invalid manual consumption rate " + manConsRateStr);
+          } else {
+            mnlTransaction.setManualConsumptionRate(manConsRate);
+          }
         }
       }
-    }
 
-    // Manual Order Quantity
-    if (++i < size) {
-      String manOrderQtyStr = tokens[i].trim();
-      BigDecimal manOrderQty = null;
-      if (!manOrderQtyStr.isEmpty()) {
-        try {
-          manOrderQty = new BigDecimal(manOrderQtyStr);
-        } catch (NumberFormatException e) {
-          xLogger.warn("{0} when parsing manual order quantity in row: {1}", e.getClass().getName(),
-              e.getMessage());
-        }
-        if (BigUtil.isInvalidQ(manOrderQty)) {
-          errors.add("Invalid manual order quantity " + manOrderQtyStr);
-        } else {
-          mnlTransaction.setOrderedQuantity(manOrderQty);
+      // Computed Consumption rate
+      if (++i < size) {
+        String compConsRateStr = tokens[i].trim();
+        BigDecimal compConsRate = null;
+        if (!compConsRateStr.isEmpty()) {
+          try {
+            compConsRate = new BigDecimal(compConsRateStr);
+          } catch (NumberFormatException e) {
+            xLogger.warn("{0} when parsing computed consumption rate in row: {1}",
+                e.getClass().getName(), e.getMessage());
+          }
+          if (BigUtil.isInvalidQ(compConsRate)) {
+            errors.add("Invalid computed consumption rate " + compConsRateStr);
+          } else {
+            mnlTransaction.setComputedConsumptionRate(compConsRate);
+          }
         }
       }
-    }
 
-    // Computed Order Quantity
-    if (++i < size) {
-      String compOrderQtyStr = tokens[i].trim();
-      BigDecimal compOrderQty = null;
-      if (!compOrderQtyStr.isEmpty()) {
-        try {
-          compOrderQty = new BigDecimal(compOrderQtyStr);
-        } catch (NumberFormatException e) {
-          xLogger
-              .warn("{0} when parsing computed order quantity in row: {1}", e.getClass().getName(),
-                  e.getMessage());
-        }
-        if (BigUtil.isInvalidQ(compOrderQty)) {
-          errors.add("Invalid computed order quantity " + compOrderQtyStr);
-        } else {
-          mnlTransaction.setFulfilledQuantity(compOrderQty);
+      // Manual Order Quantity
+      if (++i < size) {
+        String manOrderQtyStr = tokens[i].trim();
+        BigDecimal manOrderQty = null;
+        if (!manOrderQtyStr.isEmpty()) {
+          try {
+            manOrderQty = new BigDecimal(manOrderQtyStr);
+          } catch (NumberFormatException e) {
+            xLogger
+                .warn("{0} when parsing manual order quantity in row: {1}", e.getClass().getName(),
+                    e.getMessage());
+          }
+          if (BigUtil.isInvalidQ(manOrderQty)) {
+            errors.add("Invalid manual order quantity " + manOrderQtyStr);
+          } else {
+            mnlTransaction.setOrderedQuantity(manOrderQty);
+          }
         }
       }
-    }
 
-    // Tags
-    if (++i < size) {
-      List<String> tagList = new ArrayList<String>();
-      String tagsStr = tokens[i].trim();
-      if (tagsStr != null && !tagsStr.isEmpty()) {
-        String[] tags = tagsStr.split(";");
-        for (int j = 0; j < tags.length; j++) {
-          tagList.add(tags[j]);
+      // Computed Order Quantity
+      if (++i < size) {
+        String compOrderQtyStr = tokens[i].trim();
+        BigDecimal compOrderQty = null;
+        if (!compOrderQtyStr.isEmpty()) {
+          try {
+            compOrderQty = new BigDecimal(compOrderQtyStr);
+          } catch (NumberFormatException e) {
+            xLogger
+                .warn("{0} when parsing computed order quantity in row: {1}",
+                    e.getClass().getName(),
+                    e.getMessage());
+          }
+          if (BigUtil.isInvalidQ(compOrderQty)) {
+            errors.add("Invalid computed order quantity " + compOrderQtyStr);
+          } else {
+            mnlTransaction.setFulfilledQuantity(compOrderQty);
+          }
         }
-        mnlTransaction.setTgs(new TagDao().getTagsByNames(tagList, ITag.ORDER_TAG));
       }
-    }
 
-    // Related entity
-    if (++i < size) {
-      String relatedEntityName = tokens[i].trim();
-      if (relatedEntityName != null && !relatedEntityName.isEmpty()) {
-        // Get the Kiosk Id from Kiosk Name
-        Long
-            linkedKioskId =
-            MnlTransactionUtil.getKioskIdFromKioskName(mnlTransaction.getDomainId(), relatedEntityName);
-        if (linkedKioskId == null) {
-          errors.add("Invalid " + backendMessages.getString("bck.vendor.lower") + " name "
-              + relatedEntityName);
-        } else {
-          mnlTransaction.setVendorId(linkedKioskId);
+      // Tags
+      if (++i < size) {
+        List<String> tagList = new ArrayList<>();
+        String tagsStr = tokens[i].trim();
+        if (!tagsStr.isEmpty()) {
+          Collections.addAll(tagList, tagsStr.split(";"));
+          ITagDao tagDao = StaticApplicationContext.getBean(ITagDao.class);
+          mnlTransaction.setTgs(tagDao.getTagsByNames(tagList, ITag.ORDER_TAG));
+        }
+      }
+
+      // Related entity
+      if (++i < size) {
+        String relatedEntityName = tokens[i].trim();
+        if (!relatedEntityName.isEmpty()) {
+          Long
+              linkedKioskId =
+              MnlTransactionUtil
+                  .getKioskIdFromKioskName(mnlTransaction.getDomainId(), relatedEntityName);
+          if (linkedKioskId == null) {
+            errors.add("Invalid " + (backendMessages != null ?
+                backendMessages.getString("bck.vendor.lower") : "Vendor") + " name "
+                  + relatedEntityName);
+          } else {
+            mnlTransaction.setVendorId(linkedKioskId);
+          }
         }
       }
     }

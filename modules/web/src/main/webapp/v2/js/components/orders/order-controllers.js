@@ -3275,9 +3275,9 @@ ordControllers.controller('FulfilShipmentController', ['$scope','ordService','tr
         ind = 0;
         var isStatusEmpty = 0;
         shipmentIts.forEach(function(data) {
-           if(!data.isBa) {
+            var status = data.tm ? $scope.tempmatstatus : $scope.matstatus;
+            if(!data.isBa) {
                if(data.fq > 0 && checkNullEmpty(data.fmst)) {
-                   var status = data.tm ? $scope.tempmatstatus : $scope.matstatus;
                    data.isVisitedStatus = true;
                    if (checkNotNullEmpty(status) && $scope.transConfig.rsm && !$scope.validate(data, ind, data.tm ? "cmt" : "cm")) {
                        isStatusEmpty += 1;
@@ -3288,7 +3288,7 @@ ordControllers.controller('FulfilShipmentController', ['$scope','ordService','tr
                var source = data.tm ? "smt" : "sm";
                if(data.bts.length > 0) {
                    data.bts.forEach(function (det) {
-                       if (det.q > 0 && checkNullEmpty(det.fmst) && $scope.transConfig.rsm) {
+                       if (checkNotNullEmpty(status) && det.q > 0 && checkNullEmpty(det.fmst) && $scope.transConfig.rsm) {
                            $scope.showWarning($scope.resourceBundle['material.status.required']);
                            showPopup($scope, det, source + data.mId, $scope.resourceBundle['status.required'], index, $timeout, false, true);
                            isStatusEmpty += 1;

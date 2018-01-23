@@ -25,6 +25,7 @@ package com.logistimo.domains.processor;
 
 import com.google.gson.Gson;
 
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.domains.ObjectsToDomainModel;
 import com.logistimo.domains.service.DomainsService;
 import com.logistimo.domains.service.impl.DomainsServiceImpl;
@@ -32,7 +33,6 @@ import com.logistimo.logger.XLog;
 import com.logistimo.pagination.Results;
 import com.logistimo.pagination.processor.InstrumentedProcessor;
 import com.logistimo.pagination.processor.ProcessingException;
-import com.logistimo.services.Services;
 import com.logistimo.services.taskqueue.ITaskService;
 
 import java.util.List;
@@ -61,12 +61,11 @@ public class ObjectsToDomainProcessor extends InstrumentedProcessor {
     }
     if (jsonAddObjectsToDomainModel == null) {
       xLogger.severe("AddObjectsToDomainModel input is null; domain: {0}", domainId);
-      return jsonAddObjectsToDomainModel;
+      return null;
     }
     try {
       // Get the input object model
-      ObjectsToDomainModel
-          aotdm =
+      ObjectsToDomainModel aotdm =
           new Gson().fromJson(jsonAddObjectsToDomainModel, ObjectsToDomainModel.class);
       List<Long> domainIds = aotdm.getDomainIds();
       // Check parameters
@@ -75,13 +74,12 @@ public class ObjectsToDomainProcessor extends InstrumentedProcessor {
         return jsonAddObjectsToDomainModel;
       }
       // Get the domains service
-      DomainsService ds = Services.getService(DomainsServiceImpl.class);
+      DomainsService ds = StaticApplicationContext.getBean(DomainsServiceImpl.class);
       Class<?> clazz = Class.forName(aotdm.getClassName());
       boolean add = aotdm.getAction() == ObjectsToDomainModel.ACTION_ADD;
       if (add) {
         ds.addObjectsToDomains(objectIds, clazz, domainIds);
-      } else // remove
-      {
+      } else {
         ds.removeObjectsFromDomains(objectIds, clazz, domainIds);
       }
 

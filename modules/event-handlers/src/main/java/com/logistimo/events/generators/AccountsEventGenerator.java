@@ -30,12 +30,10 @@ package com.logistimo.events.generators;
 import com.logistimo.AppFactory;
 import com.logistimo.accounting.entity.IAccount;
 import com.logistimo.accounting.service.impl.AccountingServiceImpl;
-import com.logistimo.dao.JDOUtils;
-
 import com.logistimo.config.models.DomainConfig;
+import com.logistimo.context.StaticApplicationContext;
+import com.logistimo.dao.JDOUtils;
 import com.logistimo.events.entity.IEvent;
-
-import com.logistimo.services.Services;
 import com.logistimo.utils.BigUtil;
 
 import javax.jdo.JDOObjectNotFoundException;
@@ -64,8 +62,8 @@ public class AccountsEventGenerator extends EventGenerator {
                 a =
                 JDOUtils.getObjectById(IAccount.class,
                     AppFactory.get().getDaoUtil().createKeyFromString(event.getObjectId()), pm);
-            return BigUtil.lesserThanEqualsZero(Services
-                .getService(AccountingServiceImpl.class)
+            return BigUtil.lesserThanEqualsZero(
+                StaticApplicationContext.getBean(AccountingServiceImpl.class)
                 .getCreditData(a.getCustomerId(), a.getVendorId(), dc).availabeCredit);
           } catch (JDOObjectNotFoundException e1) {
             return false;

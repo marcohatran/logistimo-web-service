@@ -30,9 +30,9 @@ import com.logistimo.AppFactory;
 import com.logistimo.auth.service.AuthenticationService;
 import com.logistimo.auth.service.impl.AuthenticationServiceImpl;
 import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.logger.XLog;
 import com.logistimo.security.SecureUserDetails;
-import com.logistimo.services.Services;
 import com.logistimo.services.cache.MemcacheService;
 import com.logistimo.users.entity.IUserAccount;
 
@@ -41,7 +41,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 
@@ -89,17 +88,14 @@ public class SessionMgr {
     Long domainId = user.getDomainId();
     session.setAttribute(Constants.PARAM_DOMAINID, domainId); // set the current domain
     //Clear existing sessions
-    AuthenticationService
-        as =
-        Services.getService(AuthenticationServiceImpl.class, user.getLocale());
+    AuthenticationService as = StaticApplicationContext.getBean(AuthenticationServiceImpl.class);
     as.updateUserSession(user.getUsername(), session.getId());
   }
 
   /**
    * Recreating the session
    */
-  public static void recreateSession(HttpServletRequest request, HttpServletResponse response,
-                                     SecureUserDetails user) {
+  public static void recreateSession(HttpServletRequest request, SecureUserDetails user) {
     HttpSession session = request.getSession(false);
     Map<String, Object> sessionAttirbutes = new HashMap<>();
     MemcacheService cacheService = AppFactory.get().getMemcacheService();
@@ -152,9 +148,8 @@ public class SessionMgr {
     session.invalidate();
   }
 
-  // NOTE: userId can be removed later; it is there for backward compatibility
   @Deprecated
-  public static Long getCurrentDomain(HttpSession session, String userId) {
+  public static Long getCurrentDomain() {
     return SecurityUtils.getCurrentDomainId();
   }
 
@@ -172,14 +167,14 @@ public class SessionMgr {
     // Get the cursors map for pagination
     Map<Integer, String> cursorMap = (Map<Integer, String>) session.getAttribute(cursorType);
     if (cursorMap == null) {
-      cursorMap = new HashMap<Integer, String>();
+      cursorMap = new HashMap<>();
     } else if (offset == 1) {
       // Remove the older cursor map for the first page
       session.removeAttribute(cursorType);
       // Reset cursorMap
-      cursorMap = new HashMap<Integer, String>();
+      cursorMap = new HashMap<>();
     }
-    cursorMap.put(new Integer(offset), cursor);
+    cursorMap.put(offset, cursor);
     session.setAttribute(cursorType, cursorMap);
   }
 
@@ -190,7 +185,7 @@ public class SessionMgr {
     if (cursorMap == null) {
       return null;
     }
-    return cursorMap.get(new Integer(offset));
+    return cursorMap.get(offset);
   }
 
   // Delete all expired sessions, up to the specified limit per call

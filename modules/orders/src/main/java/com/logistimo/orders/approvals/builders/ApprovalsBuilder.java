@@ -32,13 +32,12 @@ import com.logistimo.approvals.client.models.CreateApprovalRequest;
 import com.logistimo.approvals.client.models.CreateApprovalResponse;
 import com.logistimo.approvals.client.models.RestResponsePage;
 import com.logistimo.approvals.client.models.UpdateApprovalRequest;
-import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.constants.EmbedConstants;
 import com.logistimo.logger.XLog;
 import com.logistimo.models.StatusModel;
 import com.logistimo.orders.approvals.ApprovalType;
 import com.logistimo.orders.approvals.constants.ApprovalConstants;
-import com.logistimo.orders.approvals.dao.impl.ApprovalsDao;
+import com.logistimo.orders.approvals.dao.IApprovalsDao;
 import com.logistimo.orders.approvals.models.ApprovalModel;
 import com.logistimo.orders.approvals.models.ApproverModel;
 import com.logistimo.orders.approvals.models.CreateApprovalResponseModel;
@@ -48,7 +47,7 @@ import com.logistimo.orders.entity.approvals.IOrderApprovalMapping;
 import com.logistimo.orders.entity.approvals.OrderApprovalMapping;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
-import com.logistimo.users.builders.UserBuilder;
+import com.logistimo.users.builders.UserContactBuilder;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.models.UserContactModel;
 import com.logistimo.users.service.UsersService;
@@ -75,17 +74,34 @@ public class ApprovalsBuilder {
       ORDER_0_NOT_FOUND_BUILDING_APPROVAL_1 =
       "Order {0} not found, building approval {1}";
   private static final XLog LOGGER = XLog.getLog(ApprovalsBuilder.class);
-  @Autowired
-  private UserBuilder userBuilder;
 
-  @Autowired
+  private UserContactBuilder userContactBuilder;
+
   private OrderBuilder orderBuilder;
 
-  @Autowired
   private UsersService usersService;
 
+  private IApprovalsDao approvalsDao;
+
   @Autowired
-  private ApprovalsDao approvalsDao;
+  public void setUserContactBuilder(UserContactBuilder userContactBuilder) {
+    this.userContactBuilder = userContactBuilder;
+  }
+
+  @Autowired
+  public void setOrderBuilder(OrderBuilder orderBuilder) {
+    this.orderBuilder = orderBuilder;
+  }
+
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
+  }
+
+  @Autowired
+  public void setApprovalsDao(IApprovalsDao approvalsDao) {
+    this.approvalsDao = approvalsDao;
+  }
 
   public IOrderApprovalMapping buildOrderApprovalMapping(CreateApprovalResponse approvalResponse,
                                                          Integer approvalType, Long kioskId) {
@@ -265,7 +281,7 @@ public class ApprovalsBuilder {
     UserContactModel contactModel = new UserContactModel();
     try {
       contactModel.setUserId(requesterId);
-      userBuilder.buildUserContactModel(requesterId, contactModel);
+      userContactBuilder.buildUserContactModel(requesterId, contactModel);
     } catch (ObjectNotFoundException e) {
       LOGGER.info("Requester {0} not found , for approval {1}", requesterId,
           approvalId);
@@ -283,7 +299,7 @@ public class ApprovalsBuilder {
       model.setExpiresAt(queue.getEndTime());
       model.setStartsAt(queue.getStartTime());
       try {
-        userBuilder.buildUserContactModel(queue.getUserId(), model);
+        userContactBuilder.buildUserContactModel(queue.getUserId(), model);
       } catch (ObjectNotFoundException e) {
         LOGGER.info("Unable to find approver {0} defined for approval {1}", queue.getUserId(),
             queue.getApprovalId());

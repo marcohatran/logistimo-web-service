@@ -23,42 +23,40 @@
 
 package com.logistimo.api.builders;
 
-import com.logistimo.reports.entity.slices.IDomainStats;
-import com.logistimo.services.ObjectNotFoundException;
-import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
-import com.logistimo.logger.XLog;
-import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.api.models.DomainStatisticsModel;
 import com.logistimo.domains.entity.IDomain;
 import com.logistimo.domains.service.DomainsService;
-import com.logistimo.domains.service.impl.DomainsServiceImpl;
-import com.logistimo.tags.dao.ITagDao;
-import com.logistimo.tags.dao.TagDao;
+import com.logistimo.exception.InvalidServiceException;
+import com.logistimo.logger.XLog;
+import com.logistimo.reports.entity.slices.IDomainStats;
+import com.logistimo.services.ObjectNotFoundException;
+import com.logistimo.services.ServiceException;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Created by mohansrinivas on 10/20/16.
  */
+@Component
 public class DomainStatisticsBuilder {
   private static final XLog xLogger = XLog.getLog(DomainStatisticsBuilder.class);
-  private ITagDao tagDao = new TagDao();
 
-  /**
-   *
-   * @param masterData
-   * @return
-   */
+  private DomainsService domainsService;
+
+  @Autowired
+  public void setDomainsService(DomainsService domainsService) {
+    this.domainsService = domainsService;
+  }
 
   public DomainStatisticsModel buildParentModel(IDomainStats masterData) {
     DomainStatisticsModel parentDataModel = new DomainStatisticsModel();
     try {
       Long domainId = masterData.getDomainId();
       if (domainId != 0) {
-        DomainsService ds = Services.getService(DomainsServiceImpl.class);
-        IDomain domain = ds.getDomain(domainId);
+        IDomain domain = domainsService.getDomain(domainId);
         parentDataModel.hc = domain.getHasChild();
         parentDataModel.did = domainId;
         parentDataModel.dnm = domain.getName();
@@ -79,16 +77,8 @@ public class DomainStatisticsBuilder {
     return parentDataModel;
   }
 
-  /**
-   *
-   * @param childrenData
-   * @param domainStatisticsModel
-   * @return
-   */
-
   public DomainStatisticsModel buildChildModel(List<? extends IDomainStats> childrenData,
-                                               DomainStatisticsModel domainStatisticsModel,
-                                               Locale locale, String timezone) {
+                                               DomainStatisticsModel domainStatisticsModel) {
     try {
       for (IDomainStats childData : childrenData) {
         DomainStatisticsModel childDataModel = new DomainStatisticsModel();
@@ -96,8 +86,7 @@ public class DomainStatisticsBuilder {
         // if domainID is null, we are assigning it to zero while fetching
         // this will check whether domainId is 0 or not
         if (domainId != 0) {
-          DomainsService ds = Services.getService(DomainsServiceImpl.class);
-          IDomain domain = ds.getDomain(domainId);
+          IDomain domain = domainsService.getDomain(domainId);
           childDataModel.hc = domain.getHasChild();
           childDataModel.dnm = domain.getName();
           childDataModel.did = childData.getDomainId();

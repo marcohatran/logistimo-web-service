@@ -43,12 +43,13 @@ import com.logistimo.pagination.Results;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.tags.dao.ITagDao;
-import com.logistimo.tags.dao.TagDao;
 import com.logistimo.tags.entity.ITag;
 import com.logistimo.utils.LocalDateUtil;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -65,11 +66,16 @@ import javax.jdo.Query;
 /**
  * Created by charan on 03/03/15.
  */
-@Component
+@Repository
 public class InvntryDao implements IInvntryDao {
 
   private static XLog xLogger = XLog.getLog(InvntryDao.class);
-  private ITagDao tagDao = new TagDao();
+  private ITagDao tagDao;
+
+  @Autowired
+  public void setTagDao(ITagDao tagDao) {
+    this.tagDao = tagDao;
+  }
 
   public IInvntry getById(String id) {
     PersistenceManager pm = PMF.get().getPersistenceManager();
@@ -85,12 +91,12 @@ public class InvntryDao implements IInvntryDao {
   }
 
   public String getInvKeyAsString(IInvntry invntry) {
-    return String.valueOf(((Invntry) invntry).getKey());
+    return String.valueOf(invntry.getKey());
   }
 
   public String getKeyString(Long kioskId, Long materialId) {
     IInvntry invntry = findId(kioskId, materialId);
-    return invntry != null ? String.valueOf(((Invntry) invntry).getKey()) : null;
+    return invntry != null ? String.valueOf(invntry.getKey()) : null;
   }
 
   public IInvntry findId(Long kioskId, Long materialId) {
@@ -152,7 +158,7 @@ public class InvntryDao implements IInvntryDao {
   public IInvntry getInvntry(IInvntryEvntLog invEventLog) {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     try {
-      IInvntry invntry = pm.getObjectById(Invntry.class, ((InvntryEvntLog) invEventLog).getInvId());
+      IInvntry invntry = pm.getObjectById(Invntry.class, invEventLog.getInvId());
       invntry = pm.detachCopy(invntry);
       return invntry;
     } finally {
@@ -161,7 +167,7 @@ public class InvntryDao implements IInvntryDao {
   }
 
   public Invntry getDBInvntry(IInvntry invntry, PersistenceManager pm) {
-    return pm.getObjectById(Invntry.class, ((Invntry) invntry).getKey());
+    return pm.getObjectById(Invntry.class, invntry.getKey());
   }
 
   public IInvntry getDBInvntry(IInvntry invntry) {
@@ -269,7 +275,7 @@ public class InvntryDao implements IInvntryDao {
   }
 
   public IInvntryEvntLog getLastStockEvent(IInvntry inv, PersistenceManager pm) {
-    Long key = ((Invntry) inv).getLastStockEvent();
+    Long key = inv.getLastStockEvent();
     if (key == null) {
       return null;
     }
@@ -538,8 +544,7 @@ public class InvntryDao implements IInvntryDao {
       }
       query = pm.newQuery("javax.jdo.query.SQL", executeQuery);
       query.setClass(Invntry.class);
-      inventoryList = (List<IInvntry>) query.executeWithArray(
-          sqlQueryModel.listParams.toArray());
+      inventoryList = (List<IInvntry>) query.executeWithArray(sqlQueryModel.listParams.toArray());
       inventoryFilters.withUpdatedSince(null);
 
       inventoryList = (List<IInvntry>) pm.detachCopyAll(inventoryList);
@@ -566,7 +571,7 @@ public class InvntryDao implements IInvntryDao {
   @Override
   public boolean validateEntityBatchManagementUpdate(Long kioskId, PersistenceManager pm) throws ServiceException {
     if (kioskId == null) {
-      throw new ServiceException("Invalid or null kioskId {0} while changing batch management on entity", kioskId);
+      throw new ServiceException("Invalid or null kioskId while changing batch management on entity");
     }
     boolean useLocalPm = false;
     if (pm == null) {

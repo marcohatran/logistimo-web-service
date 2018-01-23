@@ -25,7 +25,8 @@ package com.logistimo.api.controllers;
 
 import com.logistimo.api.builders.FChartBuilder;
 import com.logistimo.api.models.FChartModel;
-import com.logistimo.auth.utils.SessionMgr;
+import com.logistimo.auth.utils.SecurityUtils;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.logger.XLog;
 import com.logistimo.reports.models.DomainCounts;
@@ -33,8 +34,9 @@ import com.logistimo.reports.service.ReportsService;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
+import com.logistimo.services.utils.ConfigUtil;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -49,10 +51,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
-import javax.servlet.http.HttpServletRequest;
-
-import static com.logistimo.auth.SecurityMgr.getUserDetails;
-
 /**
  * Created by naveensnair on 27/02/15.
  */
@@ -62,18 +60,23 @@ import static com.logistimo.auth.SecurityMgr.getUserDetails;
 public class HomeController {
   private static final XLog xLogger = XLog.getLog(HomeController.class);
 
+  private FChartBuilder fChartBuilder;
+
+  @Autowired
+  public void setfChartBuilder(FChartBuilder fChartBuilder) {
+    this.fChartBuilder = fChartBuilder;
+  }
+
   @RequestMapping(value = "/reports/stats/", method = RequestMethod.GET)
   public
   @ResponseBody
   List<FChartModel> getStatsReport(@RequestParam String month, @RequestParam String prd,
                                    @RequestParam String mTag, @RequestParam String matId,
-                                   @RequestParam(required = false) String reportType,
-                                   HttpServletRequest request) {
-    SecureUserDetails sUser = getUserDetails(request.getSession());
+                                   @RequestParam(required = false) String reportType) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    String userId = sUser.getUsername();
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), userId);
+    Long domainId = sUser.getCurrentDomainId();
     if (domainId == null) {
       xLogger.severe("Error in fetching Monthly/Daily Status");
       throw new InvalidServiceException(backendMessages.getString("monthly.daily.status.fetch"));
@@ -95,7 +98,8 @@ public class HomeController {
       }
       String repGenTime;
       DomainCounts domainCounts;
-      ReportsService rs = Services.getService("reports",locale);
+      ReportsService rs = StaticApplicationContext
+          .getBean(ConfigUtil.get("reports"), ReportsService.class);
       repGenTime = rs.getRepGenTime(domainId, locale, sUser.getTimezone());
       domainCounts = rs.getDomainCounts(domainId, cal.getTime(), period, periodType, mTag, matId,
           reportType);
@@ -103,8 +107,8 @@ public class HomeController {
           isCurrentMonth =
           (cal.get(Calendar.MONTH) == Calendar.getInstance().get(Calendar.MONTH) + 1);
 
-      return new FChartBuilder()
-          .buildHDashboardChartModel(domainCounts, periodType, isCurrentMonth, repGenTime);
+      return fChartBuilder.buildHDashboardChartModel(domainCounts, periodType,
+          isCurrentMonth, repGenTime);
     } catch (ServiceException | ParseException e) {
       xLogger.severe("Error in fetching Monthly/Daily Status", e);
       throw new InvalidServiceException(backendMessages.getString("monthly.daily.status.fetch"));

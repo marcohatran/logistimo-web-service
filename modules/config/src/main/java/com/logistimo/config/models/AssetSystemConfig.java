@@ -29,10 +29,10 @@ import com.google.gson.reflect.TypeToken;
 import com.logistimo.config.entity.IConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
 import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.logger.XLog;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONArray;
@@ -147,7 +147,8 @@ public class AssetSystemConfig {
   public static AssetSystemConfig getInstance() throws ConfigurationException {
     xLogger.fine("Entering TemperatureSystemConfig.getInstance");
     try {
-      ConfigurationMgmtService cms = Services.getService(ConfigurationMgmtServiceImpl.class);
+      ConfigurationMgmtService cms = StaticApplicationContext
+          .getBean(ConfigurationMgmtServiceImpl.class);
       IConfig c = cms.getConfiguration(IConfig.ASSETSYSTEMCONFIG);
       return new AssetSystemConfig(c.getConfig());
     } catch (ObjectNotFoundException | ServiceException e) {

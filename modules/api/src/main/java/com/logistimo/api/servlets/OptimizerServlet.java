@@ -26,7 +26,7 @@ package com.logistimo.api.servlets;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.InventoryConfig;
 import com.logistimo.context.StaticApplicationContext;
-import com.logistimo.inventory.dao.impl.InvntryDao;
+import com.logistimo.inventory.dao.IInvntryDao;
 import com.logistimo.inventory.models.InventoryFilters;
 import com.logistimo.inventory.optimization.pagination.processor.InvOptimizationDQProcessor;
 import com.logistimo.inventory.optimization.pagination.processor.InvOptimizationPSProcessor;
@@ -96,8 +96,8 @@ public class OptimizerServlet extends JsonRestServlet {
         xLogger.info("No optimization required for domain {0}", domainId);
         return;
       }
-      InvntryDao invntryDao =
-          StaticApplicationContext.getApplicationContext().getBean(InvntryDao.class);
+      IInvntryDao invntryDao =
+          StaticApplicationContext.getApplicationContext().getBean(IInvntryDao.class);
       InventoryFilters filters = new InventoryFilters();
       // Form query and query params
       if (kioskId != null) {

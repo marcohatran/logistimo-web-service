@@ -2530,6 +2530,7 @@ domainControllers.controller('SessionDashboardCtrl', ['$scope', '$timeout', '$sc
                             $scope.links.splice(index + 1, $scope.links.length - index);
                         }
                     }
+                    $scope.dashboardView.sData = sortObject($scope.dashboardView.sData)
                 }).catch(function error(msg) {
                     $scope.showErrorMsg(msg);
                 }).finally(function () {

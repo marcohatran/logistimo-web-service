@@ -44,32 +44,28 @@ import com.logistimo.assets.models.DeviceTempsModel;
 import com.logistimo.assets.models.Temperature;
 import com.logistimo.assets.models.TemperatureResponse;
 import com.logistimo.assets.service.AssetManagementService;
-import com.logistimo.assets.service.impl.AssetManagementServiceImpl;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.Constants;
-import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.domains.entity.IDomain;
 import com.logistimo.domains.service.DomainsService;
-import com.logistimo.domains.service.impl.DomainsServiceImpl;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
-import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.logger.XLog;
 import com.logistimo.pagination.Results;
 import com.logistimo.reports.plugins.internal.ExportModel;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.MsgUtil;
+
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONObject;
-
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Type;
 import java.text.ParseException;
@@ -86,6 +82,8 @@ import java.util.TimeZone;
 /**
  * Created by kaniyarasu on 03/11/15.
  */
+
+@Component
 public class AssetBuilder {
 
   private static final XLog xLogger = XLog.getLog(AssetBuilder.class);
@@ -95,7 +93,37 @@ public class AssetBuilder {
 
   GsonBuilder gsonBuilder = new GsonBuilder();
   Gson gson = gsonBuilder.create();
-  UserBuilder userBuilder = new UserBuilder();
+
+  private UserBuilder userBuilder;
+  private UsersService usersService;
+  private AssetManagementService assetManagementService;
+  private EntitiesService entitiesService;
+  private DomainsService domainsService;
+
+  @Autowired
+  public void setUserBuilder(UserBuilder userBuilder) {
+    this.userBuilder = userBuilder;
+  }
+
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
+  }
+
+  @Autowired
+  public void setAssetManagementService(AssetManagementService assetManagementService) {
+    this.assetManagementService = assetManagementService;
+  }
+
+  @Autowired
+  public void setEntitiesService(EntitiesService entitiesService) {
+    this.entitiesService = entitiesService;
+  }
+
+  @Autowired
+  public void setDomainsService(DomainsService domainsService) {
+    this.domainsService = domainsService;
+  }
 
   public IAsset buildAsset(AssetModel assetModel, String userId, Boolean isCreate) {
     return buildAsset(JDOUtils.createInstance(IAsset.class), assetModel, userId, isCreate);
@@ -145,24 +173,20 @@ public class AssetBuilder {
     Map<Long, IKiosk> kioskMap = new HashMap<>(1);
 
     int sno = results.getOffset() + 1;
-    UsersService as = null;
-    as = Services.getService(UsersServiceImpl.class);
     for (Object asset : results.getResults()) {
       AssetDetailsModel
           assetDetailsModel =
           buildAssetDetailsModel((IAsset) asset, domainNames, kioskMap, locale, timezone);
       assetDetailsModel.sno = sno++;
-      if (as != null) {
-        try {
-          IUserAccount ua = as.getUserAccount(assetDetailsModel.lub);
-          assetDetailsModel.lubn = ua.getFullName();
-        } catch (Exception e) {
-          xLogger.warn("Error in fetching user details", e.getMessage());
-        }
+      try {
+        IUserAccount ua = usersService.getUserAccount(assetDetailsModel.lub);
+        assetDetailsModel.lubn = ua.getFullName();
+      } catch (Exception e) {
+        xLogger.warn("Error in fetching user details", e.getMessage());
       }
       assetDetailsModelList.add(assetDetailsModel);
     }
-    return new Results(assetDetailsModelList, results.getCursor(), results.getNumFound(),
+    return new Results<>(assetDetailsModelList, results.getCursor(), results.getNumFound(),
         results.getOffset());
   }
 
@@ -186,13 +210,11 @@ public class AssetBuilder {
     assetDetailsModel.lub = asset.getUpdatedBy();
 
     try {
-      EntitiesService accountsService = Services.getService(EntitiesServiceImpl.class,locale);
-      UsersService usersService = Services.getService(UsersServiceImpl.class,locale);
       EntityModel entityModel = new EntityModel();
       if (asset.getKioskId() != null) {
         IKiosk ki = kioskMap != null ? kioskMap.get(asset.getKioskId()) : null;
         if (ki == null) {
-          ki = accountsService.getKiosk(asset.getKioskId(), false);
+          ki = entitiesService.getKiosk(asset.getKioskId(), false);
           if (kioskMap != null) {
             kioskMap.put(asset.getKioskId(), ki);
           }
@@ -233,11 +255,10 @@ public class AssetBuilder {
       //do nothing
     }
 
-    DomainsService ds = Services.getService(DomainsServiceImpl.class);
     if (domainName == null) {
       IDomain domain = null;
       try {
-        domain = ds.getDomain(asset.getDomainId());
+        domain = domainsService.getDomain(asset.getDomainId());
       } catch (Exception e) {
         //ignore
       }
@@ -291,16 +312,14 @@ public class AssetBuilder {
   public AssetBaseModel buildAssetModel(String vendorId, String deviceId)
       throws ServiceException {
     AssetBaseModel model = new AssetBaseModel();
-    AssetManagementService ams = Services.getService(AssetManagementServiceImpl.class);
-    IAsset asset = ams.getAsset(vendorId, deviceId);
+    IAsset asset = assetManagementService.getAsset(vendorId, deviceId);
     if (asset != null) {
       model.setId(asset.getId());
       model.setSdid(asset.getDomainId());
       model.setdId(asset.getSerialId());
       model.setvId(vendorId);
       if (asset.getKioskId() != null) {
-        EntitiesService es = Services.getService(EntitiesServiceImpl.class);
-        IKiosk k = es.getKiosk(asset.getKioskId());
+        IKiosk k = entitiesService.getKiosk(asset.getKioskId());
         if (k != null) {
           EntityModel entityModel = new EntityModel();
           entityModel.id = k.getKioskId();
@@ -338,7 +357,7 @@ public class AssetBuilder {
       }
     }
 
-    return new Results(assetDetailsModelList, null, assetDetailsModelList.size(), size);
+    return new Results<>(assetDetailsModelList, null, assetDetailsModelList.size(), size);
   }
 
   public AssetDetailsModel buildAssetModelFromJson(String results, Locale locale, String timezone) {
@@ -419,8 +438,7 @@ public class AssetBuilder {
     }
     if (assetDetailsModel.cfg != null && assetDetailsModel.cfg.stub != null) {
       try {
-        UsersService service = Services.getService(UsersServiceImpl.class);
-        IUserAccount ua = service.getUserAccount(assetDetailsModel.cfg.stub);
+        IUserAccount ua = usersService.getUserAccount(assetDetailsModel.cfg.stub);
         assetDetailsModel.cfg.stubn = ua.getFullName();
       } catch (Exception e) {
         xLogger.warn("Error while fetching the user details for {0} and with asset: {1}",
@@ -445,9 +463,6 @@ public class AssetBuilder {
       assetDetailsModel.mdl = "";
     }
     try {
-      AssetManagementService
-          assetManagementService =
-          Services.getService(AssetManagementServiceImpl.class);
       asset = assetManagementService.getAsset(assetModel.vId, assetModel.dId);
       if (asset != null) {
         assetDetailsModel.setSdid(asset.getDomainId());
@@ -459,10 +474,9 @@ public class AssetBuilder {
         assetDetailsModel.rus = asset.getCreatedBy();
         assetDetailsModel.lub = asset.getUpdatedBy();
         try {
-          UsersService as = Services.getService(UsersServiceImpl.class);
-          IUserAccount ua = as.getUserAccount(assetDetailsModel.lub);
+          IUserAccount ua = usersService.getUserAccount(assetDetailsModel.lub);
           assetDetailsModel.lubn = ua.getFullName();
-          ua = as.getUserAccount(assetDetailsModel.rus);
+          ua = usersService.getUserAccount(assetDetailsModel.rus);
           assetDetailsModel.rusn = ua.getFullName();
         } catch (Exception e) {
           xLogger.warn("Error in fetching user details for assets", e);
@@ -479,13 +493,11 @@ public class AssetBuilder {
     }
 
     try {
-      EntitiesService accountsService = Services.getService(EntitiesServiceImpl.class);
-      UsersService usersService = Services.getService(UsersServiceImpl.class);
       EntityModel entityModel = new EntityModel();
       if (asset.getKioskId() != null) {
         IKiosk ki = kioskMap != null ? kioskMap.get(asset.getKioskId()) : null;
         if (ki == null) {
-          ki = accountsService.getKiosk(asset.getKioskId(), false);
+          ki = entitiesService.getKiosk(asset.getKioskId(), false);
           if (kioskMap != null) {
             kioskMap.put(asset.getKioskId(), ki);
           }
@@ -527,11 +539,10 @@ public class AssetBuilder {
       //do nothing
     }
 
-    DomainsService ds = Services.getService(DomainsServiceImpl.class);
     if (domainName == null) {
       IDomain domain = null;
       try {
-        domain = ds.getDomain(asset.getDomainId());
+        domain = domainsService.getDomain(asset.getDomainId());
       } catch (Exception e) {
         //xLogger.warn("Error while fetching Domain {0}", item.getDomainId());
       }
@@ -754,9 +765,6 @@ public class AssetBuilder {
       AssetRelationModel.Relation relation = assetRelations.ras.get(0);
 
       try {
-        AssetManagementService
-            assetManagementService =
-            Services.getService(AssetManagementServiceImpl.class);
         IAsset asset, relationAsset = null;
         try {
           asset = assetManagementService.getAsset(assetRelations.vId, assetRelations.dId);
@@ -783,10 +791,7 @@ public class AssetBuilder {
             variableMap.put(AssetUtil.ASSET_TYPE, IAsset.TEMP_DEVICE);
             metaDataMap.put(AssetUtil.DEV_MODEL, AssetUtil.SENSOR_DEVICE_MODEL);
             if(asset.getKioskId() != null) {
-              EntitiesService
-                  es =
-                  Services.getService(EntitiesServiceImpl.class);
-              variableMap.put(AssetUtil.TAGS, es.getAssetTagsToRegister(asset.getKioskId()));
+              variableMap.put(AssetUtil.TAGS, entitiesService.getAssetTagsToRegister(asset.getKioskId()));
             }
             relationAsset =
                 AssetUtil.verifyAndRegisterAsset(asset.getDomainId(), userId, asset.getKioskId(),
@@ -821,8 +826,7 @@ public class AssetBuilder {
     if(assetModel.kId != null) {
       try {
         // Knowing the kioskId, get the state
-        EntitiesService as = Services.getService(EntitiesServiceImpl.class);
-        assetModel.tags = as.getAssetTagsToRegister(assetModel.kId);
+        assetModel.tags = entitiesService.getAssetTagsToRegister(assetModel.kId);
       } catch (Exception e) {
         xLogger
             .severe("{0} when trying to get tags for devices. Message: {1}", e.getClass().getName(),
@@ -837,7 +841,7 @@ public class AssetBuilder {
     Long domainId = SecurityUtils.getCurrentDomainId();
     ExportModel eModel = new ExportModel();
     final SecureUserDetails userDetails = SecurityUtils.getUserDetails();
-    IDomain domain= StaticApplicationContext.getBean(DomainsService.class).getDomain(domainId);
+    IDomain domain= domainsService.getDomain(domainId);
     eModel.userId = userDetails.getUsername();
     eModel.timezone = userDetails.getTimezone();
     eModel.locale = userDetails.getLocale().getLanguage();

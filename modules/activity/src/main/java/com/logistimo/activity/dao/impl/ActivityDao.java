@@ -37,6 +37,9 @@ import com.logistimo.pagination.Results;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.impl.PMF;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -48,12 +51,18 @@ import javax.jdo.Query;
 /**
  * Created by kumargaurav on 11/10/16.
  */
+@Repository
 public class ActivityDao implements IActivityDao {
 
   private static final XLog xLogger = XLog.getLog(ActivityDao.class);
   private static final String AND_OBJECT_TYPE = " AND objectType = ";
 
-  private ActivityBuilder activityBuilder = new ActivityBuilder();
+  private ActivityBuilder activityBuilder;
+
+  @Autowired
+  public void setActivityBuilder(ActivityBuilder activityBuilder) {
+    this.activityBuilder = activityBuilder;
+  }
 
   public IActivity createActivity(IActivity activity) throws ServiceException {
     PersistenceManager pm = null;

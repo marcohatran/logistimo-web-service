@@ -25,11 +25,11 @@ package com.logistimo.config;
 
 import com.google.gson.Gson;
 
-import org.junit.Test;
-
 import com.logistimo.config.models.LocationConfig;
 import com.logistimo.config.models.LocationModel;
 import com.logistimo.config.models.StateModel;
+
+import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 

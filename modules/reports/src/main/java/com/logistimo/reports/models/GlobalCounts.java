@@ -25,9 +25,8 @@ package com.logistimo.reports.models;
 
 import com.google.gson.annotations.Expose;
 
-import com.logistimo.reports.entity.slices.ISlice;
-
 import com.logistimo.pagination.Results;
+import com.logistimo.reports.entity.slices.ISlice;
 
 import java.util.ArrayList;
 import java.util.List;

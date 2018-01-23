@@ -25,7 +25,6 @@ package com.logistimo.conversations.service.impl;
 
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.conversations.dao.IMessageDao;
-import com.logistimo.conversations.dao.impl.MessageDao;
 import com.logistimo.conversations.entity.IConversation;
 import com.logistimo.conversations.entity.IConversationTag;
 import com.logistimo.conversations.entity.IMessage;
@@ -34,13 +33,12 @@ import com.logistimo.dao.JDOUtils;
 import com.logistimo.logger.XLog;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
-import com.logistimo.services.Service;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.impl.PMF;
-import com.logistimo.services.impl.ServiceImpl;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.Date;
@@ -56,25 +54,16 @@ import javax.jdo.Transaction;
 /**
  * Created by kumargaurav on 04/10/16.
  */
-public class ConversationServiceImpl extends ServiceImpl implements ConversationService {
+@Service
+public class ConversationServiceImpl implements ConversationService {
 
   private static final XLog xLogger = XLog.getLog(ConversationServiceImpl.class);
   public static String ObjectTypeShipment = "SHIPMENT";
-  private IMessageDao messageDao = new MessageDao();
+  private IMessageDao messageDao;
 
-  @Override
-  public void init(Services services) throws ServiceException {
-
-  }
-
-  @Override
-  public void destroy() throws ServiceException {
-
-  }
-
-  @Override
-  public Class<? extends Service> getInterface() {
-    return ConversationService.class;
+  @Autowired
+  public void setMessageDao(IMessageDao messageDao) {
+    this.messageDao = messageDao;
   }
 
   @Override
@@ -95,7 +84,7 @@ public class ConversationServiceImpl extends ServiceImpl implements Conversation
   public IConversation addEditConversation(IConversation conversation, boolean isCreate,
                                            PersistenceManager pm) throws ServiceException {
 
-    Set<IConversationTag> ctags = null;
+    Set<IConversationTag> ctags;
     try {
 
       if (null != conversation.getTags() && !conversation.getTags().isEmpty()) {
@@ -114,7 +103,7 @@ public class ConversationServiceImpl extends ServiceImpl implements Conversation
   private Set<IConversationTag> constructConversationTags(Set<String> tags,
                                                           IConversation conversation) {
     Set<IConversationTag> tagSet = new HashSet<>();
-    IConversationTag conversationTag = null;
+    IConversationTag conversationTag;
     for (String tag : tags) {
       conversationTag = JDOUtils.createInstance(IConversationTag.class);
       conversationTag.setConversation(conversation);
@@ -283,7 +272,6 @@ public class ConversationServiceImpl extends ServiceImpl implements Conversation
                                             Long domainId, Date date,
                                             PersistenceManager pm, String userId)
       throws ServiceException {
-    Date cdate = date;
     if (date == null) {
       date = new Date();
     }

@@ -33,7 +33,10 @@
         <tbody>
             <tr ng-repeat="data in dtableData">
                 <td>{{data[0]}}</td>
-                <td class="text-center" uib-tooltip="{{d.tooltip}}" tooltip-append-to-body="true" ng-repeat="d in data.slice(1) track by $index"><span ng-bind-html="d.value"></span></td>
+                <td class="text-center" uib-tooltip="{{d.tooltip}}" tooltip-append-to-body="true" ng-repeat="d in data.slice(1) track by $index">
+                    <span ng-if="reportType != 'ood'" ng-bind-html="d.value | number"></span>
+                    <span ng-if="reportType == 'ood'" ng-bind-html="d.value"></span>
+                </td>
             </tr>
         </tbody>
     </table>

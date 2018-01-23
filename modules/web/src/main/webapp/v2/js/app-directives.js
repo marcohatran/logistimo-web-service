@@ -1518,6 +1518,16 @@ logistimoApp.directive('datePicker', function ($compile) {
             $scope.dateOptions = {};
             $scope.dateOptions.minDate = constructDate($scope.minDate);
             $scope.dateOptions.maxDate = constructDate($scope.maxDate);
+            $scope.$watch('minDate', function (newValue, oldValue) {
+                if (newValue != oldValue) {
+                    $scope.dateOptions.minDate = checkNotNullEmpty(newValue) ? constructDate(newValue) : undefined;
+                }
+            });
+            $scope.$watch('maxDate', function (newValue, oldValue) {
+                if (newValue != oldValue) {
+                    $scope.dateOptions.maxDate = checkNotNullEmpty(newValue) ? constructDate(newValue) : undefined;
+                }
+            });
             $scope.opened = false;
             $scope.IE = false;
             $scope.prevDate = $scope.dateModel;

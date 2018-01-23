@@ -23,10 +23,9 @@
 
 package com.logistimo.orders.models;
 
-import com.logistimo.orders.entity.IDemandItem;
-
-import com.logistimo.models.orders.DiscrepancyModel;
 import com.logistimo.logger.XLog;
+import com.logistimo.models.orders.DiscrepancyModel;
+import com.logistimo.orders.entity.IDemandItem;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;

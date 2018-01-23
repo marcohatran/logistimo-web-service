@@ -23,6 +23,8 @@
 
 package com.logistimo.services;
 
+import com.logistimo.constants.Constants;
+import com.logistimo.logger.XLog;
 import com.logistimo.services.cron.CronLeaderElection;
 import com.logistimo.services.taskqueue.QueueFactory;
 import com.logistimo.services.taskqueue.TaskServer;
@@ -33,8 +35,6 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
-import com.logistimo.constants.Constants;
-import com.logistimo.logger.XLog;
 
 import java.io.IOException;
 

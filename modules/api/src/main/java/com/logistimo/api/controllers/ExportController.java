@@ -26,18 +26,14 @@ package com.logistimo.api.controllers;
 import com.logistimo.AppFactory;
 import com.logistimo.api.builders.JobStatusBuilder;
 import com.logistimo.api.request.ExportReportRequestObj;
-import com.logistimo.auth.SecurityMgr;
 import com.logistimo.auth.utils.SecurityUtils;
-import com.logistimo.auth.utils.SessionMgr;
 import com.logistimo.bulkuploads.BulkUploadMgr;
-import com.logistimo.config.models.DomainConfig;
 import com.logistimo.entity.IJobStatus;
 import com.logistimo.entity.IUploaded;
 import com.logistimo.exception.BadRequestException;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exception.TaskSchedulingException;
 import com.logistimo.exports.BulkExportMgr;
-import com.logistimo.exports.ExportService;
 import com.logistimo.logger.XLog;
 import com.logistimo.pagination.Navigator;
 import com.logistimo.pagination.PageParams;
@@ -48,9 +44,7 @@ import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.UploadService;
-import com.logistimo.services.impl.UploadServiceImpl;
 import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.utils.JobUtil;
 
@@ -84,16 +78,28 @@ public class ExportController {
   private static final XLog xLogger = XLog.getLog(ExportController.class);
 
   private static final String EXPORT_TASK_URL = "/task/export";
-  JobStatusBuilder builder = new JobStatusBuilder();
   private ITaskService taskService = AppFactory.get().getTaskService();
+
+  private JobStatusBuilder jobStatusBuilder;
+  private UploadService uploadService;
+
+  @Autowired
+  public void setJobStatusBuilder(JobStatusBuilder jobStatusBuilder) {
+    this.jobStatusBuilder = jobStatusBuilder;
+  }
+
+  @Autowired
+  public void setUploadService(UploadService uploadService) {
+    this.uploadService = uploadService;
+  }
 
   @RequestMapping(value = "/download", method = RequestMethod.GET)
   public
   @ResponseBody
   void downloadFile(@RequestParam String key, @RequestParam(required = false) boolean isBlobKey,
-                    @RequestParam(required = false) String fileName, HttpServletRequest request,
+                    @RequestParam(required = false) String fileName,
                     HttpServletResponse response) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     if (key == null || key.isEmpty()) {
@@ -103,8 +109,7 @@ public class ExportController {
       String blobKeyStr;
       String downloadFileName;
       if (!isBlobKey) {
-        UploadService us = Services.getService(UploadServiceImpl.class);
-        IUploaded uploaded = us.getUploaded(key);
+        IUploaded uploaded = uploadService.getUploaded(key);
         blobKeyStr = uploaded.getBlobKey();
         downloadFileName = uploaded.getFileName();
       } else {
@@ -126,13 +131,12 @@ public class ExportController {
   @RequestMapping(value = "/uploadformat", method = RequestMethod.GET)
   public
   @ResponseBody
-  void bulkUploadFormat(@RequestParam String type, HttpServletRequest request,
+  void bulkUploadFormat(@RequestParam String type,
                         HttpServletResponse response) {
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
-    String csv = BulkUploadMgr.getCSVFormat(type, locale, DomainConfig.getInstance(domainId));
+    String csv = BulkUploadMgr.getCSVFormat(type, locale);
     if (csv == null) {
       throw new BadRequestException(backendMessages.getString("file.uploadformat.fetch.error"));
     }
@@ -168,17 +172,17 @@ public class ExportController {
   public
   @ResponseBody
   String scheduleBatch(HttpServletRequest request) throws IOException {
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Long jobId;
-    Locale locale = user.getLocale();
+    Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     Map<String, String> params = taskService.getParamsFromQueryString(request.getQueryString());
     params.put("action", "be");
-    params.put("sourceuserid", user.getUsername());
-    params.put("userids", user.getUsername());
-    params.put("domainid",
-        String.valueOf(SessionMgr.getCurrentDomain(request.getSession(), user.getUsername())));
-    params.put("tz", user.getTimezone());
+    params.put("sourceuserid", sUser.getUsername());
+    params.put("userids", sUser.getUsername());
+    Long domainId = sUser.getCurrentDomainId();
+    params.put("domainid", String.valueOf(domainId));
+    params.put("tz", sUser.getTimezone());
     Map<String, String> headers = BulkExportMgr.getExportBackendHeader();
     if ("transactions".equalsIgnoreCase(params.get("type")) || "orders"
         .equalsIgnoreCase(params.get("type"))) {
@@ -262,11 +266,9 @@ public class ExportController {
     }
     // Create a entry in the JobStatus table using JobUtil.createJob method.
     jobId =
-        JobUtil.createJob(SessionMgr.getCurrentDomain(request.getSession(), user.getUsername()),
-            user.getUsername(), null, IJobStatus.TYPE_EXPORT, params.get("type"), params);
-    if (jobId != null) {
-      params.put("jobid", jobId.toString());
-    }
+        JobUtil.createJob(domainId,
+            sUser.getUsername(), null, IJobStatus.TYPE_EXPORT, params.get("type"), params);
+    params.put("jobid", jobId.toString());
     try {
       taskService.schedule(ITaskService.QUEUE_EXPORTER, EXPORT_TASK_URL, params, headers,
           ITaskService.METHOD_POST);
@@ -277,27 +279,20 @@ public class ExportController {
           backendMessages.getString("error.in") + " " + e.getClass().getName() + " "
               + backendMessages.getString("schedule.export.task"));
     }
-    if (jobId != null) {
-      return String.valueOf(jobId);
-    }
-    return backendMessages.getString("export.submit.success");
+    return String.valueOf(jobId);
   }
 
   @RequestMapping(value = "/schedule/report", method = RequestMethod.POST)
   public
   @ResponseBody
-  String scheduleReport(@RequestBody ExportReportRequestObj model,
-                        HttpServletRequest request) throws IOException {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
-    Locale locale = sUser.getLocale();
-    Long jobId = null;
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+  String scheduleReport(@RequestBody ExportReportRequestObj model) throws IOException {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     String userIds = sUser.getUsername();
     String sourceUserId = sUser.getUsername();
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), userIds);
+    Long domainId = sUser.getCurrentDomainId();
     if (model.filterMap == null || model.filterMap.isEmpty()) {
       if (model.filterMap == null) {
-        model.filterMap = new HashMap<String, String[]>();
+        model.filterMap = new HashMap<>();
       }
       String[] domains = new String[1];
       domains[0] = domainId.toString();
@@ -326,12 +321,9 @@ public class ExportController {
       return null;
     }
     // Create a entry in the JobStatus table using JobUtil.createJob method.
-    jobId =
-        JobUtil.createJob(SessionMgr.getCurrentDomain(request.getSession(), sourceUserId),
+    Long jobId = JobUtil.createJob(domainId,
             sourceUserId, null, IJobStatus.TYPE_EXPORT, params.get("type"), params);
-    if (jobId != null) {
-      params.put("jobid", jobId.toString());
-    }
+    params.put("jobid", jobId.toString());
 
     xLogger.fine("params: {0}", params);
     String url = EXPORT_TASK_URL;
@@ -344,10 +336,7 @@ public class ExportController {
           e.getClass().getName(), domainId, e.getMessage(), e);
     }
     xLogger.fine("Exiting scheduleReport");
-    if (jobId != null) {
-      return String.valueOf(jobId);
-    }
-    return backendMessages.getString("export.submit.success");
+    return String.valueOf(jobId);
   }
 
 
@@ -361,30 +350,28 @@ public class ExportController {
       @RequestParam boolean allExports,
       HttpServletRequest request) {
 
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
-
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), user.getUsername());
-    Results results;
-    Navigator
-        navigator =
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
+    Long domainId = sUser.getCurrentDomainId();
+    Navigator navigator =
         new Navigator(request.getSession(), "ExportController.getExportList", offset, size, "dummy",
             0);
     PageParams pageParams = new PageParams(navigator.getCursor(offset), offset, size);
+    Results results;
     try {
       if (allExports) {
         results = JobUtil.getRecentJobs(type, null, domainId, pageParams);
       } else {
-        results = JobUtil.getRecentJobs(type, user.getUsername(), domainId, pageParams);
+        results = JobUtil.getRecentJobs(type, sUser.getUsername(), domainId, pageParams);
       }
 
       navigator.setResultParams(results);
       if (results != null) {
         results.setOffset(offset);
       }
-      return builder.buildJobs(results, user);
+      return jobStatusBuilder.buildJobs(results, sUser);
     } catch (Exception e) {
-      xLogger.warn("{0} when trying to get recent jobs for user {1} in domain {2}. Message: {3}",
-          e.getClass().getName(), user.getUsername(), domainId, e.getMessage(), e);
+      xLogger.warn("{0} when trying to get recent jobs for sUser {1} in domain {2}. Message: {3}",
+          e.getClass().getName(), sUser.getUsername(), domainId, e.getMessage(), e);
       throw new InvalidServiceException("When trying to get recent jobs", e);
     }
   }

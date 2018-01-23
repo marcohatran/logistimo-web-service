@@ -24,9 +24,8 @@
 package com.logistimo.services.taskqueue;
 
 import com.logistimo.AppFactory;
-import com.logistimo.services.utils.ConfigUtil;
-
 import com.logistimo.logger.XLog;
+import com.logistimo.services.utils.ConfigUtil;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -39,8 +39,6 @@ import com.logistimo.api.servlets.mobile.models.ParsedRequest;
 import com.logistimo.auth.SecurityConstants;
 import com.logistimo.auth.SecurityMgr;
 import com.logistimo.auth.SecurityUtil;
-import com.logistimo.auth.service.AuthenticationService;
-import com.logistimo.auth.service.impl.AuthenticationServiceImpl;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.communications.service.SMSService;
 import com.logistimo.config.entity.IConfig;
@@ -63,6 +61,7 @@ import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.SourceConstants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.entities.auth.EntityAuthoriser;
 import com.logistimo.entities.entity.IApprover;
@@ -80,7 +79,6 @@ import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.exports.BulkExportMgr;
 import com.logistimo.inventory.TransactionUtil;
 import com.logistimo.inventory.dao.ITransDao;
-import com.logistimo.inventory.dao.impl.TransDao;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.IInvntryBatch;
 import com.logistimo.inventory.entity.ITransaction;
@@ -111,7 +109,6 @@ import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.tags.TagUtil;
@@ -138,7 +135,6 @@ import java.util.Enumeration;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -152,7 +148,6 @@ import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.PersistenceManager;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 
 /**
@@ -174,7 +169,6 @@ public class RESTUtil {
   private static final short GUI_THEME_FROM_DOMAIN_CONFIGURATION = -1;
 
   private static ITaskService taskService = AppFactory.get().getTaskService();
-  private static ITransDao transDao = new TransDao();
 
   @SuppressWarnings("unchecked")
   public static Results getInventoryData(Long kioskId, Locale locale,
@@ -184,10 +178,9 @@ public class RESTUtil {
                                          PageParams pageParams) throws ServiceException {
     xLogger.fine("Entered getInventoryData");
     // Get the services
-    InventoryManagementService
-        ims =
-        Services.getService(InventoryManagementServiceImpl.class);
-    MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
+    InventoryManagementService ims =
+        StaticApplicationContext.getBean(InventoryManagementServiceImpl.class);
+    MaterialCatalogService mcs = StaticApplicationContext.getBean(MaterialCatalogServiceImpl.class);
     // Get optimization config
     OptimizerConfig oc = dc.getOptimizerConfig();
     InventoryConfig ic = dc.getInventoryConfig();
@@ -200,16 +193,14 @@ public class RESTUtil {
         .withUpdatedSince(modifiedSince.orElse(null));
 
     Results results = ims.getInventory(filters, pageParams);
-    IKiosk kiosk = Services.getService(EntitiesServiceImpl.class).getKiosk(kioskId);
+    IKiosk kiosk = StaticApplicationContext.getBean(EntitiesServiceImpl.class).getKiosk(kioskId);
     List<IInvntry> inventories = (List<IInvntry>) results.getResults();
     String cursor = results.getCursor();
     boolean isBatchMgmtEnabled = kiosk.isBatchMgmtEnabled();
     Vector<Hashtable<String, Object>> invData = new Vector<>();
-    Iterator<IInvntry> it = inventories.iterator();
-    while (it.hasNext()) {
-      IInvntry inv = it.next();
+    for (IInvntry inv : inventories) {
       // Get the material data
-      IMaterial m = null;
+      IMaterial m;
       List<IMaterialManufacturers> manufacturers;
       try {
         m = mcs.getMaterial(inv.getMaterialId());
@@ -223,7 +214,7 @@ public class RESTUtil {
       // Create a material data hashtable
       Hashtable<String, Object> material = new Hashtable<>();
       material.put(JsonTagsZ.MATERIAL_ID, m.getMaterialId().toString());
-      String stockStr = null;
+      String stockStr;
       if (forceIntegerForStock) {
         stockStr = BigUtil.getFormattedValue(inv.getStock());
       } else {
@@ -392,9 +383,8 @@ public class RESTUtil {
     boolean displayConsumptionRateWeekly = Constants.FREQ_WEEKLY.equals(ic.getDisplayCRFreq());
     boolean displayConsumptionRateMonthly = Constants.FREQ_MONTHLY.equals(ic.getDisplayCRFreq());
     if (InventoryConfig.CR_MANUAL == ic.getConsumptionRate()) { // If consumption rate is manual
-      InventoryManagementService
-          ims =
-          Services.getService(InventoryManagementServiceImpl.class);
+      InventoryManagementService ims =
+          StaticApplicationContext.getBean(InventoryManagementServiceImpl.class);
       BigDecimal cr = ims.getDailyConsumptionRate(inv);
       if (displayConsumptionRateDaily && BigUtil.greaterThanZero(cr)) {
         material.put(JsonTagsZ.CR_DAILY, BigUtil.getFormattedValue(cr));
@@ -424,7 +414,7 @@ public class RESTUtil {
 
   private static Vector<Hashtable<String, String>> getHandlingUnits(Long materialId) {
     Vector<Hashtable<String, String>> hu = new Vector<>(1);
-    IHandlingUnitService hus = Services.getService(HandlingUnitServiceImpl.class);
+    IHandlingUnitService hus = StaticApplicationContext.getBean(HandlingUnitServiceImpl.class);
     Map<String, String> huMap = hus.getHandlingUnitDataByMaterialId(materialId);
     if (huMap != null) {
       Hashtable<String, String> h = new Hashtable<>();
@@ -442,8 +432,7 @@ public class RESTUtil {
    * Create transactions from order request
    */
   public static List<ITransaction> getInventoryTransactions(UpdateOrderRequest uoReq,
-                                                            String transType, Date time,
-                                                            Locale locale) throws ServiceException {
+                                                            String transType, Date time) throws ServiceException {
     List<ITransaction> list = new ArrayList<>();
     // Parameter checks
     if (uoReq == null) {
@@ -465,12 +454,12 @@ public class RESTUtil {
     IKiosk linkedKiosk = null;
     try {
       if (checkBatchMgmt) {
-        as = Services.getService(EntitiesServiceImpl.class);
+        as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
         kiosk = as.getKiosk(uoReq.kid);
         linkedKiosk = as.getKiosk(uoReq.lkid);
         checkBatchMgmt =
             !kiosk.isBatchMgmtEnabled() && linkedKiosk != null && linkedKiosk.isBatchMgmtEnabled();
-        mcs = Services.getService(MaterialCatalogServiceImpl.class, locale);
+        mcs = StaticApplicationContext.getBean(MaterialCatalogServiceImpl.class);
       }
 
     } catch (ServiceException se) {
@@ -537,9 +526,8 @@ public class RESTUtil {
 
   @SuppressWarnings({"rawtypes", "unchecked"})
   public static List<ITransaction> getInventoryTransactions(UpdateInventoryInput updInventoryJson,
-                                                            String transType, Date time,
-                                                            Locale locale) throws ServiceException {
-    List<ITransaction> list = new ArrayList<ITransaction>();
+                                                            String transType, Date time) throws ServiceException {
+    List<ITransaction> list = new ArrayList<>();
 
     // Parameter checks
     if (updInventoryJson == null) {
@@ -564,19 +552,19 @@ public class RESTUtil {
     }
 
     boolean checkBatchMgmt = ITransaction.TYPE_TRANSFER.equals(transType);
-    List<String> bErrorMaterials = new ArrayList<String>(1);
+    List<String> bErrorMaterials = new ArrayList<>(1);
     MaterialCatalogService mcs = null;
-    EntitiesService as = null;
+    EntitiesService as;
     IKiosk kiosk = null;
     IKiosk linkedKiosk = null;
     try {
       if (checkBatchMgmt) {
-        as = Services.getService(EntitiesServiceImpl.class);
+        as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
         kiosk = as.getKiosk(Long.valueOf(kioskIdStr));
         linkedKiosk = as.getKiosk(linkedKioskId);
         checkBatchMgmt =
             !kiosk.isBatchMgmtEnabled() && linkedKiosk != null && linkedKiosk.isBatchMgmtEnabled();
-        mcs = Services.getService(MaterialCatalogServiceImpl.class, locale);
+        mcs = StaticApplicationContext.getBean(MaterialCatalogServiceImpl.class);
       }
 
     } catch (ServiceException se) {
@@ -636,18 +624,13 @@ public class RESTUtil {
 
     // Transaction saved timestamp (in milliseconds), if any
     String transSavedTimestampStr = updInventoryJson.getTimestampSaveMillis();
-    Long svdTimeInMillis = null;
     if (transSavedTimestampStr != null && !transSavedTimestampStr.isEmpty()) {
       try {
-        svdTimeInMillis = Long.valueOf(transSavedTimestampStr);
+        Long.valueOf(transSavedTimestampStr);
       } catch (NumberFormatException e) {
         xLogger.warn("NumberFormatException when getting transaction saved time {0}: {1}",
             transSavedTimestampStr, e.getMessage());
       }
-    }
-    Date transSavedTimestamp = null;
-    if (svdTimeInMillis != null) {
-      transSavedTimestamp = new Date(svdTimeInMillis);
     }
 
     Enumeration<Hashtable> en = transObjs.elements();
@@ -664,9 +647,6 @@ public class RESTUtil {
         }
       }
       String quantityStr = map.get(JsonTagsZ.QUANTITY);
-      String
-          openingStockStr =
-          map.get(JsonTagsZ.OPENING_STOCK); // Opening stock if present. Just reading it.
       String reason = map.get(JsonTagsZ.REASON);
       // FOR BACKWARD COMPATIBILITY (28/4/2012)
       if (reason == null || reason.isEmpty()) {
@@ -693,11 +673,7 @@ public class RESTUtil {
           xLogger.warn("Error while setting actual date of transaction", e);
         }
       }
-      // Edit order quantity reason if any.
       String eoqrsn = map.get(JsonTagsZ.REASON_FOR_EDITING_ORDER_QUANTITY);
-      // Allocated quantity if any.
-      String alqStr = map.get(JsonTagsZ.ALLOCATED_QUANTITY);
-      // Form the inventory transaction object
       try {
         ITransaction trans = JDOUtils.createInstance(ITransaction.class);
         Long kioskId = Long.valueOf(kioskIdStr);
@@ -725,17 +701,17 @@ public class RESTUtil {
           trans.setLinkedKioskId(linkedKioskId);
         }
         if (latitude != null) {
-          trans.setLatitude(latitude.doubleValue());
+          trans.setLatitude(latitude);
         }
         if (longitude != null) {
-          trans.setLongitude(longitude.doubleValue());
+          trans.setLongitude(longitude);
         }
         if (altitude != null) // Altitude is optional. Set it only if it is present
         {
-          trans.setAltitude(altitude.doubleValue());
+          trans.setAltitude(altitude);
         }
         if (geoAccuracy != null) {
-          trans.setGeoAccuracy(geoAccuracy.doubleValue());
+          trans.setGeoAccuracy(geoAccuracy);
         }
         if (geoErrorCode != null) {
           trans.setGeoErrorCode(geoErrorCode);
@@ -765,6 +741,7 @@ public class RESTUtil {
         if (eoqrsn != null && !eoqrsn.isEmpty()) {
           trans.setEditOrderQtyRsn(eoqrsn);
         }
+        ITransDao transDao = StaticApplicationContext.getBean(ITransDao.class);
         transDao.setKey(trans);
         // Add to transaction list
         list.add(trans);
@@ -790,9 +767,8 @@ public class RESTUtil {
                                           HttpServletRequest req, HttpServletResponse resp)
       throws ServiceException, UnauthorizedException {
     // Get service
-    UsersService as = Services.getService(UsersServiceImpl.class);
-    EntitiesService entitiesService = Services.getService(EntitiesServiceImpl.class);
-    AuthenticationService aus = Services.getService(AuthenticationServiceImpl.class);
+    UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
+    EntitiesService entitiesService = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
     String errMsg = null;
     IUserAccount u = null;
     ResourceBundle backendMessages;
@@ -804,7 +780,7 @@ public class RESTUtil {
     if (sourceInitiatorStr != null) {
       try {
         actionInitiator = Integer.parseInt(sourceInitiatorStr);
-      } catch (NumberFormatException e) {
+      } catch (NumberFormatException ignored) {
 
       }
     }
@@ -864,7 +840,7 @@ public class RESTUtil {
           String role = u.getRole();
           if (SecurityUtil.compareRoles(role, SecurityConstants.ROLE_DOMAINOWNER)
               < 0) { // user has a role less than domain owner (say, entity operator or manager)
-            if (!EntityAuthoriser.authoriseEntity(kioskId, u.getRole(), u.getLocale(), u.getUserId(),
+            if (!EntityAuthoriser.authoriseEntity(kioskId, u.getRole(), u.getUserId(),
                 u.getDomainId())) {
               try {
                 errMsg =
@@ -916,7 +892,7 @@ public class RESTUtil {
     return u;
   }
 
-  public static Long getDomainId(HttpSession session, String userId) {
+  public static Long getDomainId() {
     return SecurityUtils.getCurrentDomainId();
   }
 
@@ -935,11 +911,8 @@ public class RESTUtil {
     if (status && !onlyAuthenticate) {
       List kioskList = new ArrayList();
       // Get the kiosks
-      EntitiesService as = Services.getService(EntitiesServiceImpl.class);
-      // Get paginated kiosks for a given user
-      Results
-          results =
-          as.getKiosksForUser(user, null, kioskPageParams);
+      EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
+      Results results = as.getKiosksForUser(user, null, kioskPageParams);
       List<IKiosk> kiosks = results.getResults();
       boolean isSingleKiosk = (kiosks != null && kiosks.size() == 1);
       // Get the kiosk maps
@@ -952,9 +925,7 @@ public class RESTUtil {
         boolean
             getLinkedKiosks =
             (isSingleKiosk || !getUsersForKiosk);
-        Iterator<IKiosk> it = kiosks.iterator();
-        while (it.hasNext()) {
-          IKiosk k = it.next(); // NOTE: kiosk will have NOT its users set
+        for (IKiosk k : kiosks) {
           // set users if minResponseCode is 2 (local editing of kiosks/users is now possible)
           if (getUsersForKiosk) {
             k.setUsers(as.getUsersForKiosk(k.getKioskId(), null).getResults());
@@ -983,17 +954,14 @@ public class RESTUtil {
           }
         }
         // Get the expiry time
-        expiryTime = String.valueOf(getLoginExpiry(user));
+        expiryTime = String.valueOf(getLoginExpiry());
       }
       // Get config. for transaction inclusion and naming
       config = getConfig(dc, user, modifiedSinceDate);
       fullUser = new UserEntitiesModel(user, kioskList);
     }
-    String
-        jsonString =
-        GsonUtil.authenticateOutputToJson(status, message, expiryTime, fullUser, config,
-            RESTUtil.VERSION_01);
-    return jsonString;
+    return GsonUtil.authenticateOutputToJson(status, message, expiryTime, fullUser, config,
+        RESTUtil.VERSION_01);
   }
 
   public static List<Map<String, Object>> getManufacturerList(
@@ -1097,7 +1065,7 @@ public class RESTUtil {
         }
       }
       if (dc.isPurchaseApprovalEnabled() || dc.isSalesApprovalEnabled()) {
-        EntitiesService es = Services.getService(EntitiesServiceImpl.class, locale);
+        EntitiesService es = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
         MobileEntityBuilder mobileEntityBuilder = new MobileEntityBuilder();
 
         List<IApprover> approversList = es.getApprovers(k.getKioskId());
@@ -1131,7 +1099,7 @@ public class RESTUtil {
     Results results = null;
     String cursor = null;
     try {
-      EntitiesService as = Services.getService(EntitiesServiceImpl.class);
+      EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
       KioskLinkFilters filters = new KioskLinkFilters()
           .withKioskId(kioskId)
           .withLinkType(linkType)
@@ -1150,9 +1118,7 @@ public class RESTUtil {
           (isAccounting && dc.getAccountingConfig() != null ? dc.getAccountingConfig()
               .getCreditLimit() : BigDecimal.ZERO);
       try {
-        Iterator<IKioskLink> it = vlinks.iterator();
-        while (it.hasNext()) {
-          IKioskLink link = it.next();
+        for (IKioskLink link : vlinks) {
           try {
             Long linkedKioskId = link.getLinkedKioskId();
             IKiosk k = JDOUtils.getObjectById(IKiosk.class, linkedKioskId);
@@ -1186,9 +1152,8 @@ public class RESTUtil {
                 // Get the account payable/receiveable as the case may be
                 int year = GregorianCalendar.getInstance().get(Calendar.YEAR);
                 try {
-                  IAccountingService
-                      oms =
-                      Services.getService(AccountingServiceImpl.class);
+                  IAccountingService oms =
+                      StaticApplicationContext.getBean(AccountingServiceImpl.class);
                   IAccount account = oms.getAccount(vId, cId, year);
                   linkedKiosk
                       .put(JsonTagsZ.PAYABLE, BigUtil.getFormattedValue(account.getPayable()));
@@ -1233,7 +1198,7 @@ public class RESTUtil {
     Locale locale = null;
     String timezone;
     String message;
-    boolean isValid = true;
+    boolean isValid;
     Long domainId;
     Map<String, String> reqParamsMap = new HashMap<>(1);
     String userId = req.getParameter(RestConstantsZ.USER_ID);
@@ -1264,21 +1229,18 @@ public class RESTUtil {
       locale = u.getLocale();
       timezone = u.getTimezone();
     } catch (UnauthorizedException e) {
-      isValid = false;
       message = e.getMessage();
       resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-      return getKioskDataExportJsonOutput(locale, isValid, message);
+      return getKioskDataExportJsonOutput(locale, false, message);
     } catch (Exception e) {
-      isValid = false;
       message = e.getMessage();
-      return getKioskDataExportJsonOutput(locale, isValid, message);
+      return getKioskDataExportJsonOutput(locale, false, message);
     }
     // Order filters
     ParsedRequest parsedOrderExportFilters = parseOrdersExportFilters(reqParamsMap);
     if (StringUtils.isNotEmpty(parsedOrderExportFilters.errMessage)) {
-      isValid = false;
       message = parsedOrderExportFilters.errMessage;
-      return getKioskDataExportJsonOutput(locale, isValid, message);
+      return getKioskDataExportJsonOutput(locale, false, message);
     }
     parsedRequest.parsedReqMap.putAll(parsedOrderExportFilters.parsedReqMap);
     // Transaction filters
@@ -1290,9 +1252,8 @@ public class RESTUtil {
     ParsedRequest parsedTransExportFilters =
         parseTransactionsExportFilters(reqParamsMap, backendMessages, timezone);
     if (StringUtils.isNotEmpty(parsedTransExportFilters.errMessage)) {
-      isValid = false;
       message = parsedTransExportFilters.errMessage;
-      return getKioskDataExportJsonOutput(locale, isValid, message);
+      return getKioskDataExportJsonOutput(locale, false, message);
     }
     parsedRequest.parsedReqMap.putAll(parsedTransExportFilters.parsedReqMap);
     // Export, if still valid
@@ -1344,17 +1305,14 @@ public class RESTUtil {
     // Get headers to target backend
     Map<String, String> headers = BulkExportMgr.getExportBackendHeader();
     // Create a entry in the JobStatus table using JobUtil.createJob method.
-    Long
-        jobId =
+    Long jobId =
         JobUtil.createJob(domainId, userId, null, IJobStatus.TYPE_EXPORT, params.get("type"),
             params);
-    if (jobId != null) {
-      params.put("jobid", jobId.toString());
-    }
+    params.put("jobid", jobId.toString());
     // Schedule task
     try {
-      taskService.schedule(taskService.QUEUE_EXPORTER, EXPORT_URL, params, headers,
-          taskService.METHOD_POST, domainId, userId, "EXPORT_KIOSK");
+      taskService.schedule(ITaskService.QUEUE_EXPORTER, EXPORT_URL, params, headers,
+          ITaskService.METHOD_POST, domainId, userId, "EXPORT_KIOSK");
       message =
           "Successfully scheduled export, data will be sent to email address \""
               + parsedRequest.parsedReqMap.get(RestConstantsZ.EMAIL)
@@ -1365,12 +1323,11 @@ public class RESTUtil {
           e.getClass().getName(), parsedRequest.parsedReqMap.get(RestConstantsZ.TYPE),
           parsedRequest.parsedReqMap.get(RestConstantsZ.KIOSK_ID), domainId, userId, e
       );
-      isValid = false;
       message =
           "A system error occurred. Please retry your export once again, or contact your Administrator.";
-      return getKioskDataExportJsonOutput(locale, isValid, message);
+      return getKioskDataExportJsonOutput(locale, false, message);
     }
-    return getKioskDataExportJsonOutput(locale, isValid, message);
+    return getKioskDataExportJsonOutput(locale, true, message);
   }
 
   private static String getKioskDataExportJsonOutput(Locale locale, boolean status, String message)
@@ -1386,7 +1343,7 @@ public class RESTUtil {
   }
 
   // Get the login expiry time (in milliseconds)
-  private static long getLoginExpiry(IUserAccount user) {
+  private static long getLoginExpiry() {
     Calendar cal = GregorianCalendar.getInstance();
     cal.setTime(new Date());
     // Add expiry time to this date
@@ -1425,13 +1382,11 @@ public class RESTUtil {
     config.put(JsonTagsZ.UPDATESTOCK_ON_FULFILLED, String.valueOf(dc.autoGR()));
     // Role-specific configs.
     CapabilityConfig cconf = dc.getCapabilityByRole(user.getRole());
-    String transMenu = null, tagsInventory = null, tagsOrders = null, geoCodingStrategy = null,
-        creatableEntityTypes =
-            null;
+    String transMenu, tagsInventory, tagsOrders, geoCodingStrategy, creatableEntityTypes;
     boolean allowRouteTagEditing, loginAsReconnect;
     boolean sendVendors, sendCustomers, disableShippingOnMobile, enableBarcoding, enableRFID;
     // Inventory tags to hide by operation, if any
-    Hashtable<String, String> invTgsToHide = null;
+    Hashtable<String, String> invTgsToHide;
     if (cconf != null) { // send role-specific configuration
       transMenu = StringUtil.getCSV(cconf.getCapabilities());
       tagsInventory = cconf.getTagsInventory();
@@ -1592,7 +1547,7 @@ public class RESTUtil {
       config.put(JsonTagsZ.VENDORID, defaultVendorId.toString());
       // Get the default vendor name
       try {
-        EntitiesService as = Services.getService(EntitiesServiceImpl.class);
+        EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
         IKiosk k = as.getKiosk(defaultVendorId, false);
         if (k != null) {
           config.put(JsonTagsZ.VENDOR, k.getName());
@@ -1630,7 +1585,7 @@ public class RESTUtil {
       if (supportUserId != null && !supportUserId.isEmpty()) {
         // If userId is configured in SupportConfig, get the phone number, email and contact name from the UserAccount object
         try {
-          UsersService as = Services.getService(UsersServiceImpl.class);
+          UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
           IUserAccount ua = as.getUserAccount(supportUserId);
           supportEmail = ua.getEmail();
           supportPhone = ua.getMobilePhoneNumber();
@@ -1837,7 +1792,7 @@ public class RESTUtil {
       throws ServiceException {
     // Get the configuration. Check if switch to new host is enabled. If yes, get the new host name and return 409 response.
 
-    return checkAppVersion(u,resp,req) || checkDomainSwith(u,resp,req);
+    return checkAppVersion(u,resp,req) || checkDomainSwith(u,resp);
   }
 
   private static boolean checkAppVersion(IUserAccount u, HttpServletResponse resp,
@@ -1868,8 +1823,7 @@ public class RESTUtil {
     return false;
   }
 
-  private static boolean checkDomainSwith(IUserAccount u, HttpServletResponse resp,
-                                          HttpServletRequest req) {
+  private static boolean checkDomainSwith(IUserAccount u, HttpServletResponse resp) {
     Long domainId = u.getDomainId();
     DomainConfig dc = DomainConfig.getInstance(domainId);
     if (dc.isEnableSwitchToNewHost() && dc.getNewHostName() != null && !dc.getNewHostName()
@@ -1894,16 +1848,16 @@ public class RESTUtil {
 
   // Method to get transaction history
   @SuppressWarnings("unchecked")
-  public static Results getTransactions(Long domainId, Long kioskId, Locale locale, String timezone,
-                                        DomainConfig dc, Date untilDate, PageParams pageParams, String materialTag)
+  public static Results getTransactions(Long kioskId, Locale locale, String timezone,
+                                        Date untilDate, PageParams pageParams,
+                                        String materialTag)
       throws ServiceException {
     // Get the services
-    InventoryManagementService
-        ims =
-        Services.getService(InventoryManagementServiceImpl.class);
-    UsersService as = Services.getService(UsersServiceImpl.class);
-    EntitiesService entitiesService = Services.getService(EntitiesServiceImpl.class);
-    MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
+    InventoryManagementService ims =
+        StaticApplicationContext.getBean(InventoryManagementServiceImpl.class);
+    UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
+    EntitiesService entitiesService = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
+    MaterialCatalogService mcs = StaticApplicationContext.getBean(MaterialCatalogServiceImpl.class);
     // Get the transactions
     Results
         results =
@@ -1911,12 +1865,10 @@ public class RESTUtil {
             false, null);
     List<ITransaction> transactions = (List<ITransaction>) results.getResults();
     String cursor = results.getCursor();
-    Vector<Hashtable<String, String>> transData = new Vector<Hashtable<String, String>>();
-    Iterator<ITransaction> it = transactions.iterator();
-    while (it.hasNext()) {
-      ITransaction trans = it.next();
+    Vector<Hashtable<String, String>> transData = new Vector<>();
+    for (ITransaction trans : transactions) {
       // Create a transaction data Hashtable
-      Hashtable<String, String> transaction = new Hashtable<String, String>();
+      Hashtable<String, String> transaction = new Hashtable<>();
       transaction.put(JsonTagsZ.MATERIAL_ID, trans.getMaterialId().toString());
 
       IMaterial m;
@@ -1928,7 +1880,7 @@ public class RESTUtil {
         continue;
       }
       if (!materialExistsInKiosk(trans.getKioskId(), trans.getMaterialId())) {
-          transaction.put(JsonTagsZ.MATERIAL_NAME, m.getName());
+        transaction.put(JsonTagsZ.MATERIAL_NAME, m.getName());
       }
       transaction.put(JsonTagsZ.TRANSACTION_TYPE, trans.getType());
       transaction.put(JsonTagsZ.QUANTITY, String.valueOf(trans.getQuantity()));
@@ -2213,10 +2165,8 @@ public class RESTUtil {
 
     if (tagsByInvOp != null && !tagsByInvOp.isEmpty()) {
       Set<String> transTypes = tagsByInvOp.keySet();
-      if (transTypes != null && !transTypes.isEmpty()) {
-        Iterator<String> transTypesIter = transTypes.iterator();
-        while (transTypesIter.hasNext()) {
-          String transType = transTypesIter.next();
+      if (!transTypes.isEmpty()) {
+        for (String transType : transTypes) {
           String tagsToHide = tagsByInvOp.get(transType);
           if (tagsToHide != null && !tagsToHide.isEmpty()) {
             invTgsToHide.put(transType, tagsToHide);
@@ -2267,7 +2217,7 @@ public class RESTUtil {
 
 
   private static Hashtable<String, Object> getOrdersConfiguration(DomainConfig dc) {
-    Hashtable<String, Object> ordCfg = new Hashtable();
+    Hashtable<String, Object> ordCfg = new Hashtable<>();
     if (dc.autoGI()) {
       ordCfg.put(JsonTagsZ.AUTOMATICALLY_POST_ISSUES_ON_SHIPPING_ORDER, dc.autoGI());
     }
@@ -2299,11 +2249,10 @@ public class RESTUtil {
     return salesOrderConfig;
   }
 
-  public static final boolean materialExistsInKiosk(Long kioskId, Long materialId) {
+  public static boolean materialExistsInKiosk(Long kioskId, Long materialId) {
     try {
-      InventoryManagementService
-          ims =
-          Services.getService(InventoryManagementServiceImpl.class);
+      InventoryManagementService ims =
+          StaticApplicationContext.getBean(InventoryManagementServiceImpl.class);
       IInvntry inv = ims.getInventory(kioskId, materialId);
       if (inv == null) {
         return false;
@@ -2455,11 +2404,10 @@ public class RESTUtil {
 
   private static boolean isConfigModified(Optional<Date> modifiedSinceDate, Long domainId)
       throws ServiceException {
-    ConfigurationMgmtService cms = Services.getService(ConfigurationMgmtServiceImpl.class);
+    ConfigurationMgmtService cms = StaticApplicationContext.getBean(
+        ConfigurationMgmtServiceImpl.class);
     IConfig config = cms.getConfiguration(IConfig.CONFIG_PREFIX + domainId);
-    if (modifiedSinceDate.isPresent()) {
-      return !modifiedSinceDate.get().after(config.getLastUpdated());
-    }
-    return true;
+    return !modifiedSinceDate.isPresent() || !modifiedSinceDate.get()
+        .after(config.getLastUpdated());
   }
 }

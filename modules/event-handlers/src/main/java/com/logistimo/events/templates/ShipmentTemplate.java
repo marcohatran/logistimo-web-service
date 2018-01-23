@@ -24,6 +24,7 @@
 package com.logistimo.events.templates;
 
 import com.logistimo.config.models.EventsConfig;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.conversations.entity.IMessage;
 import com.logistimo.conversations.service.ConversationService;
 import com.logistimo.conversations.service.impl.ConversationServiceImpl;
@@ -33,7 +34,6 @@ import com.logistimo.logger.XLog;
 import com.logistimo.materials.service.MaterialCatalogService;
 import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
 import com.logistimo.orders.OrderUtils;
-import com.logistimo.services.Services;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.shipments.entity.IShipment;
 import com.logistimo.shipments.entity.IShipmentItem;
@@ -69,7 +69,7 @@ public class ShipmentTemplate implements ITemplate {
                                                List<String> excludeVars, Date updateTime) {
     // Get the variable map for SMS message formation
     // NOTE: Order status is deliberately OMITTED so that it can be replaced by the Javascript function
-    HashMap<String, String> varMap = new HashMap<String, String>();
+    HashMap<String, String> varMap = new HashMap<>();
     PersistenceManager pm = PMF.get().getPersistenceManager();
     try {
       if (excludeVars == null || !excludeVars.contains(EventsConfig.VAR_CREATIONTIME)) {
@@ -104,14 +104,11 @@ public class ShipmentTemplate implements ITemplate {
           || !excludeVars.contains(EventsConfig.VAR_MATERIALSWITHQUANTITIES) || !excludeVars.contains(EventsConfig.VAR_MATERIALSWITHALLOCATED)
           || !excludeVars.contains(EventsConfig.VAR_MATERIALSWITHFULFILED))) {
         try {
-          MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
-          //IDemandService ds = Services.getService(DemandService.class);
-          //List<IDemandItem> items = ds.getDemandItems(id);
-          ShipmentService sS = Services.getService(ShipmentService.class);
+          MaterialCatalogService mcs = StaticApplicationContext.getBean(MaterialCatalogServiceImpl.class);
+          ShipmentService ss = StaticApplicationContext.getBean(ShipmentService.class);
           String materialsStr = "", materialsWithQuantityStr = "", materialsWithAllocatedQuantityStr = "", materialsWithFulfiledQuantityStr="";
-          sS.includeShipmentItems(shipment);
+          ss.includeShipmentItems(shipment);
           BigDecimal allocated;
-          //List<IShipmentItem> items = (List<IShipmentItem>) getShipmentItems();
           if (shipment.getShipmentItems() != null && !shipment.getShipmentItems().isEmpty()) {
             IShipmentItem item;
             boolean skipItems = false; // to avoid large materials list message
@@ -137,7 +134,7 @@ public class ShipmentTemplate implements ITemplate {
                 materialsWithQuantityStr += BigUtil.getFormattedValue(item.getQuantity()) + "-" + name;
                 materialsWithFulfiledQuantityStr += BigUtil.getFormattedValue(item.getFulfilledQuantity()) + "-" + name;
 
-                allocated = sS.getAllocatedQuantityForShipmentItem(item.getShipmentId(), shipment.getServicingKiosk(), item.getMaterialId());
+                allocated = ss.getAllocatedQuantityForShipmentItem(item.getShipmentId(), shipment.getServicingKiosk(), item.getMaterialId());
                 String allc = (allocated == null) ? "0" : BigUtil.getFormattedValue(allocated);
                 materialsWithAllocatedQuantityStr += allc + "-" + name;
               } else if (!skipItemsQuantities) {
@@ -168,7 +165,7 @@ public class ShipmentTemplate implements ITemplate {
         varMap.put(EventsConfig.VAR_ORDERID, shipment.getOrderId().toString());
       }
       if (excludeVars == null || !excludeVars.contains(EventsConfig.VAR_SHIPMENTID)) {
-        varMap.put(EventsConfig.VAR_SHIPMENTID, shipment.getShipmentId().toString());
+        varMap.put(EventsConfig.VAR_SHIPMENTID, shipment.getShipmentId());
       }
       if (shipment.getTransporter() != null && (excludeVars == null || !excludeVars.contains(EventsConfig.VAR_TRANSPORTER))) {
         varMap.put(EventsConfig.VAR_TRANSPORTER, shipment.getTransporter());
@@ -199,7 +196,7 @@ public class ShipmentTemplate implements ITemplate {
           varMap.put(EventsConfig.VAR_UPDATIONTIME, LocalDateUtil.format(d, locale, timezone));
         }
       }
-      ConversationService cs = Services.getService(ConversationServiceImpl.class, locale);
+      ConversationService cs = StaticApplicationContext.getBean(ConversationServiceImpl.class);
       IMessage msg = cs.getLastMessage(null, "SHIPMENT", shipment.getShipmentId()); //conversationId is optional
       if (msg != null && msg.getMessage() != null && (excludeVars == null || !excludeVars.contains(EventsConfig.VAR_COMMENT))) {
         if(msg.getMessage().length()>20){

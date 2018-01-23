@@ -27,6 +27,7 @@ import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.SourceConstants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
@@ -36,7 +37,6 @@ import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.materials.service.MaterialCatalogService;
 import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
 import com.logistimo.services.Resources;
-import com.logistimo.services.Services;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.users.service.impl.UsersServiceImpl;
@@ -151,14 +151,15 @@ public class TransactionExportHandler implements IExportHandler {
     ResourceBundle messages = Resources.get().getBundle("Messages", locale);
     try {
       // Get services
-      EntitiesService as = Services.getService(EntitiesServiceImpl.class);
-      UsersService usersService = Services.getService(UsersServiceImpl.class);
-      MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
+      EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
+      UsersService usersService = StaticApplicationContext.getBean(UsersServiceImpl.class);
+      MaterialCatalogService mcs = StaticApplicationContext.getBean(
+          MaterialCatalogServiceImpl.class);
       IKiosk k = as.getKiosk(transaction.getKioskId(), false);
       List<String> ktgs = k.getTags();
       IMaterial m = mcs.getMaterial(transaction.getMaterialId());
       List<String> mtgs = m.getTags();
-      IUserAccount u = null;
+      IUserAccount u;
       String cbFullName = null, cbCustomId = null;
       if (transaction.getSourceUserId() != null) {
         try {
@@ -187,7 +188,7 @@ public class TransactionExportHandler implements IExportHandler {
         }
       }
       // Related entity
-      IKiosk lk = null;
+      IKiosk lk;
       String lkName = null, lkCustomId = null;
       if (transaction.getLinkedKioskId() != null) {
         try {

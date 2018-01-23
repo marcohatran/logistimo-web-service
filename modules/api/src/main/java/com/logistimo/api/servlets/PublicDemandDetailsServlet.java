@@ -27,9 +27,8 @@
 package com.logistimo.api.servlets;
 
 import com.logistimo.config.models.DomainConfig;
-import com.logistimo.reports.ReportsConstants;
-import com.logistimo.reports.generators.ReportData;
 import com.logistimo.logger.XLog;
+import com.logistimo.reports.ReportsConstants;
 
 import java.io.IOException;
 import java.io.PrintWriter;

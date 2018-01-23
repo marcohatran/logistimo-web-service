@@ -25,7 +25,6 @@ package com.logistimo;
 
 
 import com.logistimo.auth.service.AuthenticationService;
-import com.logistimo.auth.service.AuthorizationService;
 import com.logistimo.dao.DaoException;
 import com.logistimo.dao.IDaoUtil;
 import com.logistimo.logger.ILogger;
@@ -92,8 +91,6 @@ public abstract class AppFactory {
   public abstract IBackendService getBackendService();
 
   public abstract ICounter getCounter();
-
-  public abstract AuthorizationService getAuthorizationService();
 
   public abstract AuthenticationService getAuthenticationService();
 

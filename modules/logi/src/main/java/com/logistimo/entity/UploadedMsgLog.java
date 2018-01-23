@@ -23,8 +23,6 @@
 
 package com.logistimo.entity;
 
-import com.logistimo.entity.IUploadedMsgLog;
-
 import java.util.Date;
 
 import javax.jdo.annotations.Column;

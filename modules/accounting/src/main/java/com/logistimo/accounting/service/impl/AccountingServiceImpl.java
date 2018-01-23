@@ -26,29 +26,28 @@ package com.logistimo.accounting.service.impl;
 import com.logistimo.accounting.entity.IAccount;
 import com.logistimo.accounting.models.CreditData;
 import com.logistimo.accounting.service.IAccountingService;
+import com.logistimo.config.models.AccountingConfig;
+import com.logistimo.config.models.DomainConfig;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.entity.IKioskLink;
 import com.logistimo.entities.service.EntitiesService;
-import com.logistimo.entities.service.EntitiesServiceImpl;
+import com.logistimo.events.entity.IEvent;
 import com.logistimo.events.exceptions.EventGenerationException;
 import com.logistimo.events.processor.EventPublisher;
-
-import com.logistimo.config.models.AccountingConfig;
-import com.logistimo.config.models.DomainConfig;
-import com.logistimo.events.entity.IEvent;
+import com.logistimo.logger.XLog;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.impl.PMF;
-import com.logistimo.services.impl.ServiceImpl;
 import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.QueryUtil;
-import com.logistimo.logger.XLog;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -65,10 +64,17 @@ import javax.jdo.Query;
 /**
  * Created by charan on 05/03/17.
  */
-public class AccountingServiceImpl extends ServiceImpl implements IAccountingService {
+@Service
+public class AccountingServiceImpl implements IAccountingService {
 
   private static final XLog xLogger = XLog.getLog(AccountingServiceImpl.class);
 
+  private EntitiesService entitiesService;
+
+  @Autowired
+  public void setEntitiesService(EntitiesService entitiesService) {
+    this.entitiesService = entitiesService;
+  }
 
   @Override
   public CreditData getCreditData(Long customerId, Long vendorId, DomainConfig dc)
@@ -82,13 +88,8 @@ public class AccountingServiceImpl extends ServiceImpl implements IAccountingSer
     BigDecimal creditLimit = BigDecimal.ZERO;
     BigDecimal receivable = BigDecimal.ZERO;
     AccountingConfig ac = dc.getAccountingConfig();
-    // Get the credit limit and check against receivables
-    EntitiesService as = Services.getService(EntitiesServiceImpl.class);
-    // Get the credit limit
     try {
-      IKioskLink
-          link =
-          as.getKioskLink(
+      IKioskLink link = entitiesService.getKioskLink(
               JDOUtils.createKioskLinkId(vendorId, IKioskLink.TYPE_CUSTOMER, customerId));
       creditLimit = link.getCreditLimit();
       if (BigUtil.equalsZero(creditLimit) && ac != null) // get default credit limit for the domain
@@ -190,7 +191,7 @@ public class AccountingServiceImpl extends ServiceImpl implements IAccountingSer
     Query q = pm.newQuery(JDOUtils.getImplClass(IAccount.class));
     String filter = "", declaration = "";
     String ordering = "py desc"; // default order by payables
-    Map<String, Object> params = new HashMap<String, Object>();
+    Map<String, Object> params = new HashMap<>();
     if (vendorId != null) {
       filter = "vId == vIdParam";
       declaration = "Long vIdParam";
@@ -213,15 +214,13 @@ public class AccountingServiceImpl extends ServiceImpl implements IAccountingSer
       }
       filter += "y == yParam";
       declaration += "Integer yParam";
-      params.put("yParam", new Integer(year));
+      params.put("yParam", year);
     }
     // Update query
     q.setFilter(filter);
     q.declareParameters(declaration);
     // Set ordering
-    if (ordering != null) {
-      q.setOrdering(ordering);
-    }
+    q.setOrdering(ordering);
     // Update page params in query, if needed
     if (pageParams != null) {
       QueryUtil.setPageParams(q, pageParams);
@@ -254,10 +253,9 @@ public class AccountingServiceImpl extends ServiceImpl implements IAccountingSer
       // Update account parameters
       account.setTimestamp(new Date());
       // Get kiosk accounts service
-      EntitiesService as = Services.getService(EntitiesServiceImpl.class);
-      IKiosk k = as.getKiosk(account.getCustomerId(), false);
+      IKiosk k = entitiesService.getKiosk(account.getCustomerId(), false);
       account.setCustomerName(k.getName());
-      k = as.getKiosk(account.getVendorId(), false);
+      k = entitiesService.getKiosk(account.getVendorId(), false);
       account.setVendorName(k.getName());
       // Persist
       pm.makePersistent(account);
@@ -273,7 +271,7 @@ public class AccountingServiceImpl extends ServiceImpl implements IAccountingSer
     xLogger.fine(
         "Entered updateAccount - vendor = {0}, customer = {1}, year = {2}, payable = {3}, paid = {4}",
         vendorId, customerId, year, payable, paid);
-    IAccount a = null;
+    IAccount a;
     try {
       // See if an account already exists
       a = getAccount(vendorId, customerId, year);
@@ -282,15 +280,14 @@ public class AccountingServiceImpl extends ServiceImpl implements IAccountingSer
       a = getRolledOverAccount(vendorId, customerId, year);
       if (a == null) {
         // Get kiosk names
-        EntitiesService as = Services.getService(EntitiesServiceImpl.class);
         // Create an account
         a = JDOUtils.createInstance(IAccount.class);
         a.setCustomerId(customerId);
-        a.setCustomerName(as.getKiosk(customerId, false).getName());
+        a.setCustomerName(entitiesService.getKiosk(customerId, false).getName());
         a.setDomainId(domainId);
         a.setKey(JDOUtils.createAccountKey(vendorId, customerId, year));
         a.setVendorId(vendorId);
-        a.setVendorName(as.getKiosk(vendorId, false).getName());
+        a.setVendorName(entitiesService.getKiosk(vendorId, false).getName());
         a.setYear(year);
       }
     }

@@ -34,6 +34,7 @@ import com.logistimo.config.service.ConfigurationMgmtService;
 import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.QueryConstants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.domains.IMultiDomain;
 import com.logistimo.domains.entity.IDomain;
@@ -62,7 +63,6 @@ import com.logistimo.pagination.PagedExec;
 import com.logistimo.pagination.QueryParams;
 import com.logistimo.reports.entity.slices.IDaySlice;
 import com.logistimo.reports.entity.slices.IMonthSlice;
-import com.logistimo.services.Services;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.users.entity.IUserAccount;
@@ -140,7 +140,7 @@ public class AdminServlet extends HttpServlet {
     boolean execute = req.getParameter("execute") != null;
     if (!execute) { // schedule...
       // Schedule task to delete
-      Map<String, String> params = new HashMap<String, String>();
+      Map<String, String> params = new HashMap<>();
       params.put("action", ACTION_RESETTRANSACTIONS);
       params.put(DOMAIN_PARAM, domainIdStr);
       params.put("execute", "true");
@@ -257,19 +257,19 @@ public class AdminServlet extends HttpServlet {
     if (paramsCSV != null && !paramsCSV.isEmpty()) {
       params = new HashMap<>();
       String[] paramsArray = paramsCSV.split(",");
-      for (int i = 0; i < paramsArray.length; i++) {
-        String[] paramValue = paramsArray[i].split(":");
+      for (String aParamsArray : paramsArray) {
+        String[] paramValue = aParamsArray.split(":");
         if (paramValue.length < 3) {
           xLogger.severe("Parameter value is of invalid format (should be name|type|value): {0}",
-              paramsArray[i]);
+              aParamsArray);
           return;
         }
         String name = paramValue[0];
         String type = paramValue[1];
         String value = paramValue[2];
-        xLogger.info("params {0}: name = {1}, type = {2}, value = {3}", paramsArray[i], name, type,
+        xLogger.info("params {0}: name = {1}, type = {2}, value = {3}", aParamsArray, name, type,
             value);
-        Object o = null;
+        Object o;
         if ("String".equals(type)) {
           o = value;
         } else if ("Long".equals(type)) {
@@ -283,7 +283,7 @@ public class AdminServlet extends HttpServlet {
         } else if ("Double".equals(type)) {
           o = Double.valueOf(value);
         } else {
-          xLogger.severe("Unknown type {0} in param-value {1}", type, paramsArray[i]);
+          xLogger.severe("Unknown type {0} in param-value {1}", type, aParamsArray);
           return;
         }
         params.put(name, o);
@@ -333,7 +333,7 @@ public class AdminServlet extends HttpServlet {
     }
 
     String paramsStr = " PARAMETERS Long dIdParam";
-    Map<String, Object> params = new HashMap<String, Object>();
+    Map<String, Object> params = new HashMap<>();
     params.put("dIdParam", domainId);
     if (startDateStr != null && !startDateStr.isEmpty()) {
       if (startDateField == null || startDateField.isEmpty()) {
@@ -386,7 +386,7 @@ public class AdminServlet extends HttpServlet {
   }
 
   // Delete expired sessions from data store
-  public static void deleteSessions(HttpServletRequest req, HttpServletResponse resp) {
+  public static void deleteSessions() {
     xLogger.fine("Entered deleteSessions");
     SessionMgr.deleteSessions();
     xLogger.fine("Exiting deleteSessions");
@@ -402,7 +402,7 @@ public class AdminServlet extends HttpServlet {
     } else if (ACTION_DELETEENTITIES.equals(action)) {
       deleteEntitiesByDate(req);
     } else if (ACTION_DELETESESSIONS.equals(action)) {
-      deleteSessions(req, resp);
+      deleteSessions();
     } else if (ACTION_UPDATESYSCONFIG.equals(action)) {
       updateSysConfig(req, resp);
     } else if (ACTION_DELETEENTITIESBYQUERY.equals(action)) {
@@ -422,7 +422,7 @@ public class AdminServlet extends HttpServlet {
   // Update the system configuration, given a key, or with our standard set of config keys
   private void updateSysConfig(HttpServletRequest req, HttpServletResponse resp) {
     xLogger.fine("Entered updateSysConfig");
-    List<String> keys = new ArrayList<String>();
+    List<String> keys = new ArrayList<>();
     String key = req.getParameter("key");
     boolean hasKey = key != null && !key.isEmpty();
     String host = req.getParameter("host");
@@ -478,14 +478,16 @@ public class AdminServlet extends HttpServlet {
           url =
           host + "/api/cfg?a=" + ACTION_GETSYSCONFIG + "&userid=" + userId + "&password=" + password
               + "&key=";
-      ConfigurationMgmtService cms = Services.getService(ConfigurationMgmtServiceImpl.class);
+      ConfigurationMgmtService cms = StaticApplicationContext
+          .getBean(ConfigurationMgmtServiceImpl.class);
       PrintWriter pw = resp.getWriter();
       for (String k : keys) {
         try {
           // Fetch config. string from the server
           String configStr = HttpUtil.get(url + k, null);
           xLogger.info("Got config. string for key {0}: {1}", k, configStr);
-          pw.append("Got config string for key " + k + ": " + configStr + "...\n\n\n");
+          pw.append("Got config string for key ").append(k).append(": ").append(configStr)
+              .append("...\n\n\n");
           // Update config. locally
           if (configStr != null && !configStr.isEmpty()) {
             IConfig c = JDOUtils.createInstance(IConfig.class);
@@ -495,7 +497,7 @@ public class AdminServlet extends HttpServlet {
             cms.addConfiguration(k, c);
           } else {
             xLogger.warn("Empty config. string returned for key {0}", k);
-            pw.append("Empty config string returned for key: " + k);
+            pw.append("Empty config string returned for key: ").append(k);
           }
         } catch (Exception e) {
           xLogger.warn("{0} when getting config. for key {1}: {2}", e.getClass().getName(), key,
@@ -506,8 +508,8 @@ public class AdminServlet extends HttpServlet {
       UsersService as = null;
       DomainsService ds = null;
       try {
-        as = Services.getService(UsersServiceImpl.class);
-        ds = Services.getService(DomainsServiceImpl.class);
+        as = StaticApplicationContext.getBean(UsersServiceImpl.class);
+        ds = StaticApplicationContext.getBean(DomainsServiceImpl.class);
         JDOUtils.getObjectById(IUserAccount.class, userId);
       } catch (JDOObjectNotFoundException e) {
         // Check if the default domain exists
@@ -524,7 +526,7 @@ public class AdminServlet extends HttpServlet {
           d.setReportEnabled(true);
           dId = ds.addDomain(d);
           ds.createDefaultDomainPermissions(dId);
-          pw.append("Create a Default domain with ID " + dId + "\n\n\n");
+          pw.append("Create a Default domain with ID ").append(String.valueOf(dId)).append("\n\n\n");
         }
         // Create user
         IUserAccount u = JDOUtils.createInstance(IUserAccount.class);
@@ -539,8 +541,8 @@ public class AdminServlet extends HttpServlet {
         u.setTimezone("Asia/Kolkata");
         u.setEmail(email);
         as.addAccount(dId, u);
-        pw.append("Created user account " + userId
-            + ".\n\nYOU MAY NOW LOGIN LOCALLY USING THIS ACCOUNT.");
+        pw.append("Created user account ").append(userId)
+            .append(".\n\nYOU MAY NOW LOGIN LOCALLY USING THIS ACCOUNT.");
       } finally {
         pw.close();
       }

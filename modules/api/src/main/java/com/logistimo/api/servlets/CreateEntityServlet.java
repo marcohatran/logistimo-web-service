@@ -42,6 +42,7 @@ import com.logistimo.config.service.ConfigurationMgmtService;
 import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.SourceConstants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.domains.entity.IDomain;
 import com.logistimo.domains.service.DomainsService;
@@ -55,7 +56,6 @@ import com.logistimo.exception.InvalidDataException;
 import com.logistimo.exception.LogiException;
 import com.logistimo.inventory.TransactionUtil;
 import com.logistimo.inventory.dao.ITransDao;
-import com.logistimo.inventory.dao.impl.TransDao;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.inventory.service.InventoryManagementService;
@@ -74,7 +74,6 @@ import com.logistimo.pagination.Results;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.tags.TagUtil;
@@ -90,9 +89,9 @@ import org.apache.commons.lang.StringUtils;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
-import java.net.MalformedURLException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -139,7 +138,6 @@ public class CreateEntityServlet extends SgServlet {
   private static final String LANDLINE_NUMBER = "landlinenumber";
 
   private static ITaskService taskService = AppFactory.get().getTaskService();
-  private static ITransDao transDao = new TransDao();
 
   // Set batch parameters from form into a transaction object
   private static void setBatchParameters(String batchId, ITransaction trans,
@@ -185,6 +183,7 @@ public class CreateEntityServlet extends SgServlet {
     trans.setTimestamp(t);
     trans.setType(ITransaction.TYPE_PHYSICALCOUNT);
     trans.setSrc(source);
+    ITransDao transDao = StaticApplicationContext.getBean(ITransDao.class);
     transDao.setKey(trans);
     return trans;
   }
@@ -213,34 +212,14 @@ public class CreateEntityServlet extends SgServlet {
               + ", type = " + entityType, Constants.VIEW_HOME);
       return;
     }
-    SecureUserDetails sUser = SecurityMgr.getUserDetailsIfPresent();
-    // Get the user's locale
-    Locale locale;
-    if (sUser != null) {
-      locale = sUser.getLocale();
-    } else {
-      String country = req.getParameter(COUNTRY_LOWERCASE);
-      if (country == null) {
-        country = Constants.COUNTRY_DEFAULT;
-      }
-      String language = req.getParameter(LANGUAGE_LOWERCASE);
-      if (language == null) {
-        language = Constants.LANG_DEFAULT;
-      }
-      locale = new Locale(language, country);
-    }
-    UsersService as = null;
-    EntitiesService es = null;
-    ConfigurationMgmtService cms = null;
-    InventoryManagementService ims = null;
-    OrderManagementService oms = null;
-    MaterialCatalogService mcs = null;
-    as = Services.getService(UsersServiceImpl.class, locale);
-    es = Services.getService(EntitiesServiceImpl.class, locale);
-    cms = Services.getService(ConfigurationMgmtServiceImpl.class, locale);
-    ims = Services.getService(InventoryManagementServiceImpl.class, locale);
-    oms = Services.getService(OrderManagementServiceImpl.class, locale);
-    mcs = Services.getService(MaterialCatalogServiceImpl.class, locale);
+    UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
+    EntitiesService es = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
+    ConfigurationMgmtService cms = StaticApplicationContext.getBean(
+        ConfigurationMgmtServiceImpl.class);
+    InventoryManagementService ims = StaticApplicationContext.getBean(
+        InventoryManagementServiceImpl.class);
+    OrderManagementService oms = StaticApplicationContext.getBean(OrderManagementServiceImpl.class);
+    MaterialCatalogService mcs = StaticApplicationContext.getBean(MaterialCatalogServiceImpl.class);
     try {
       // Process operation
       if (entityAction.equalsIgnoreCase(CREATE)
@@ -251,28 +230,28 @@ public class CreateEntityServlet extends SgServlet {
         removeKiosk(req, resp, es, backendMessages, messages);
       } else if (entityAction.equalsIgnoreCase(CREATE)
           && entityType.equalsIgnoreCase(POOLGROUP)) {
-        createPoolgroup(req, resp, es, backendMessages, messages);
+        createPoolgroup(req, resp, es, backendMessages);
       } else if (entityAction.equalsIgnoreCase(REMOVE)
           && entityType.equalsIgnoreCase(POOLGROUP)) {
-        removePoolgroups(req, resp, es, backendMessages, messages);
+        removePoolgroups(req, resp, es, backendMessages);
       } else if (entityAction.equalsIgnoreCase(MODIFY)
           && entityType.equalsIgnoreCase(KIOSK)) {
-        modifyKiosk(req, resp, es, as, backendMessages, messages);
+        modifyKiosk(req, resp, es, as, backendMessages);
       } else if (entityAction.equalsIgnoreCase(MODIFY)
           && entityType.equalsIgnoreCase(POOLGROUP)) {
-        modifyPoolgroup(req, resp, es, backendMessages, messages);
+        modifyPoolgroup(req, resp, es, backendMessages);
       } else if (entityAction.equalsIgnoreCase(CREATE)
           && entityType.equalsIgnoreCase(KIOSK_OWNER)) {
         createKioskOwner(req, resp, as, backendMessages, messages);
       } else if (entityAction.equalsIgnoreCase(MODIFY)
           && entityType.equalsIgnoreCase(KIOSK_OWNER)) {
-        modifyKioskOwner(req, resp, as, backendMessages, messages);
+        modifyKioskOwner(req, resp, as, backendMessages);
       } else if ((entityAction.equalsIgnoreCase(MODIFY) || entityAction.equalsIgnoreCase("reset"))
           && entityType.equalsIgnoreCase(PASSWORD)) {
-        modifyKioskOwnerPassword(req, resp, as, backendMessages, messages);
+        modifyKioskOwnerPassword(req, resp, as, backendMessages);
       } else if (entityAction.equalsIgnoreCase(REMOVE)
           && entityType.equalsIgnoreCase(KIOSK_OWNER)) {
-        removeKioskOwner(req, resp, as, backendMessages, messages);
+        removeKioskOwner(req, resp, as, backendMessages);
       } else if (entityAction.equalsIgnoreCase("disable")
           && entityType.equalsIgnoreCase(KIOSK_OWNER)) {
         disableOrEnableKioskOwner(req, resp, as, false, backendMessages, messages);
@@ -284,7 +263,7 @@ public class CreateEntityServlet extends SgServlet {
         addMaterial(req, resp, mcs, backendMessages, messages);
       } else if (entityAction.equalsIgnoreCase(MODIFY)
           && entityType.equalsIgnoreCase(MATERIAL)) {
-        modifyMaterial(req, resp, mcs, backendMessages, messages);
+        modifyMaterial(req, resp, mcs, backendMessages);
       } else if (entityAction.equalsIgnoreCase(REMOVE)
           && entityType.equalsIgnoreCase(MATERIALS)) {
         removeMaterials(req, resp, mcs, backendMessages, messages);
@@ -293,7 +272,7 @@ public class CreateEntityServlet extends SgServlet {
         addMaterialsToKiosk(req, resp, es, ims, backendMessages, messages);
       } else if (entityAction.equalsIgnoreCase(MODIFY)
           && entityType.equalsIgnoreCase(MATERIALTOKIOSK)) {
-        editMaterialsToKiosk(req, resp, es, ims, backendMessages, messages);
+        editMaterialsToKiosk(req, resp, ims, backendMessages);
       } else if (entityAction.equalsIgnoreCase(REMOVE)
           && entityType.equalsIgnoreCase(MATERIALTOKIOSK)) {
         removeMaterialsFromKiosk(req, resp, es, ims, backendMessages, messages);
@@ -305,7 +284,7 @@ public class CreateEntityServlet extends SgServlet {
         removeDomains(req, resp);
       } else if (entityAction.equalsIgnoreCase("switch")
           && entityType.equalsIgnoreCase("domain")) {
-        switchDomain(req, resp, as);
+        switchDomain(req, resp);
       } else if ((entityAction.equalsIgnoreCase(CREATE) || entityAction.equals(MODIFY))
           && entityType.equalsIgnoreCase("kiosklink")) {
         createOrModifyKioskLink(req, resp, es, backendMessages, messages);
@@ -314,7 +293,7 @@ public class CreateEntityServlet extends SgServlet {
         setKioskPermissions(req, resp, es, backendMessages, messages);
       } else if (entityAction.equalsIgnoreCase(REMOVE)
           && entityType.equalsIgnoreCase("kiosklink")) {
-        removeKioskLinks(req, resp, es, backendMessages, messages);
+        removeKioskLinks(req, resp, es, backendMessages);
       } else if (entityAction.equalsIgnoreCase(CREATE)
           && entityType.equalsIgnoreCase("system_configuration")) {
         createSystemConfiguration(req, resp, cms);
@@ -326,20 +305,20 @@ public class CreateEntityServlet extends SgServlet {
         createTransactions(req, resp, ims, backendMessages, messages);
       } else if (entityAction.equals(REMOVE)
           && entityType.equals("transaction")) {
-        undoTransactions(req, resp, ims, backendMessages, messages);
+        undoTransactions(req, resp, ims, backendMessages);
       } else if (entityAction.equals(CREATE)
           && entityType.equals("order")) {
         createOrders(req, resp, oms, ims, mcs, backendMessages, messages);
       } else if (entityAction.equals("check") && entityType.equals(KIOSK_OWNER)) {
-        checkIfUserExists(req, resp, as, backendMessages, messages);
+        checkIfUserExists(req, resp, as, backendMessages);
       } else if (entityType.equals("materialstokiosks")) {
         addOrRemoveMaterialsForMultipleKiosks(req, resp, es, backendMessages, messages);
       } else if (entityAction.equals("saveordering")) {
-        saveOrdering(req, resp, es, backendMessages, messages, entityType);
+        saveOrdering(req, resp, es, backendMessages, entityType);
       } else if (entityAction.equals("resetordering")) {
-        resetOrdering(req, resp, es, backendMessages, messages, entityType);
+        resetOrdering(req, resp, es, backendMessages, entityType);
       } else if (entityType.equals(KIOSK_OWNER) && entityAction.equals("setuipref")) {
-        setUiPreference(req, resp, as, backendMessages, messages);
+        setUiPreference(req, resp, as);
       } else {
         xLogger.severe("Unsupported action or type: {0}, {1}", entityAction, entityType);
       }
@@ -355,7 +334,7 @@ public class CreateEntityServlet extends SgServlet {
                                    ResourceBundle messages)
       throws ServiceException, IOException {
     xLogger.fine("Entered addMaterialsToKiosk");
-    String message = null;
+    String message;
     // Get the materials IDs
     String[] materialIds = req.getParameterValues("materialid");
     if (materialIds == null || materialIds.length == 0) {
@@ -374,7 +353,7 @@ public class CreateEntityServlet extends SgServlet {
         overwrite =
         req.getParameter("overwrite") != null && Boolean
             .parseBoolean(req.getParameter("overwrite"));
-    Long kioskId = null;
+    Long kioskId;
     // Get initial stock level, if any, and kioskId
     BigDecimal stock = BigDecimal.ZERO;
     int source = SourceConstants.UPLOAD;
@@ -582,13 +561,12 @@ public class CreateEntityServlet extends SgServlet {
 
   @SuppressWarnings("unchecked")
   private void editMaterialsToKiosk(HttpServletRequest req,
-                                    HttpServletResponse resp, EntitiesService as,
-                                    InventoryManagementService ims, ResourceBundle backendMessages,
-                                    ResourceBundle messages)
+                                    HttpServletResponse resp,
+                                    InventoryManagementService ims, ResourceBundle backendMessages)
       throws ServiceException, IOException {
     xLogger.fine("Entered editMaterialsToKiosk");
-    String message = null;
-    String user = SecurityUtils.getUserDetails(req).getUsername();
+    String message;
+    String user = SecurityUtils.getUserDetails().getUsername();
     // Get the materials IDs
     String[] materialIds = req.getParameterValues("materialid");
     if (materialIds == null || materialIds.length == 0) {
@@ -597,7 +575,7 @@ public class CreateEntityServlet extends SgServlet {
     }
     // Get kiosk Id
     String kioskIdStr = req.getParameter(KIOSKID);
-    Long kioskId = null;
+    Long kioskId;
     try {
       kioskId = Long.valueOf(kioskIdStr);
     } catch (NumberFormatException e) {
@@ -605,47 +583,37 @@ public class CreateEntityServlet extends SgServlet {
       return;
     }
 
-    // Get the tag, if present
     String tag = req.getParameter("tag");
     boolean hasTag = tag != null && !tag.isEmpty();
 
-    // Read the rest of the data and form Inventory List
-    List<IInvntry> updItems = new ArrayList<IInvntry>();
+    List<IInvntry> updItems = new ArrayList<>();
     try {
-      // Get inventory associated with kiosk
-      List<IInvntry>
-          inventories =
-          ims.getInventoryByKiosk(kioskId, null).getResults(); // TODO: pagination?
-      // Get a hash-map based on material Ids
-      Map<String, IInvntry> invMap = new HashMap<String, IInvntry>();
-      // Go through inventory and update
-      Iterator<IInvntry> it = inventories.iterator();
-      while (it.hasNext()) {
-        IInvntry inv = it.next();
+      List<IInvntry> inventories =
+          ims.getInventoryByKiosk(kioskId, null).getResults();
+      Map<String, IInvntry> invMap = new HashMap<>();
+      for (IInvntry inv : inventories) {
         invMap.put(inv.getMaterialId().toString(), inv);
       }
-      // Update selected inventory with newer parameters
-      for (int i = 0; i < materialIds.length; i++) {
+      for (String materialId : materialIds) {
         try {
-          String materialIdStr = materialIds[i];
           BigDecimal reorderLevel = BigDecimal.ZERO;
           BigDecimal maxStock = BigDecimal.ZERO;
-          String reorderLevelStr = req.getParameter("reorderlevel" + materialIdStr);
+          String reorderLevelStr = req.getParameter("reorderlevel" + materialId);
           if (reorderLevelStr != null && !reorderLevelStr.isEmpty()) {
             reorderLevel = new BigDecimal(reorderLevelStr);
           }
-          String maxStr = req.getParameter("max" + materialIdStr);
+          String maxStr = req.getParameter("max" + materialId);
           if (maxStr != null && !maxStr.isEmpty()) {
             maxStock = new BigDecimal(maxStr);
           }
           // Min./Max. duration of stock
           BigDecimal minStockDur = BigDecimal.ZERO;
           BigDecimal maxStockDur = BigDecimal.ZERO;
-          String minStockDurStr = req.getParameter("minDur" + materialIdStr);
+          String minStockDurStr = req.getParameter("minDur" + materialId);
           if (minStockDurStr != null && !minStockDurStr.isEmpty()) {
             minStockDur = new BigDecimal(minStockDurStr.trim());
           }
-          String maxStockDurStr = req.getParameter("maxDur" + materialIdStr);
+          String maxStockDurStr = req.getParameter("maxDur" + materialId);
           if (maxStockDurStr != null && !maxStockDurStr.isEmpty()) {
             maxStockDur = new BigDecimal(maxStockDurStr);
           }
@@ -653,28 +621,28 @@ public class CreateEntityServlet extends SgServlet {
           BigDecimal crManual = BigDecimal.ZERO;
           String
               crManualStr =
-              req.getParameter("cr" + materialIdStr); // manual consumption rate, if specified
+              req.getParameter("cr" + materialId); // manual consumption rate, if specified
           if (crManualStr != null && !crManualStr.isEmpty()) {
             crManual = new BigDecimal(crManualStr);
           }
           // Price/tax
           BigDecimal price = BigDecimal.ZERO, tax = BigDecimal.ZERO;
-          String priceStr = req.getParameter("price" + materialIdStr);
+          String priceStr = req.getParameter("price" + materialId);
           if (priceStr != null && !priceStr.isEmpty()) {
             price = new BigDecimal(priceStr);
           }
-          String taxStr = req.getParameter("tax" + materialIdStr);
+          String taxStr = req.getParameter("tax" + materialId);
           if (taxStr != null && !taxStr.isEmpty()) {
             tax = new BigDecimal(taxStr);
           }
           float serviceLevel = 85F;
-          String serviceLevelStr = req.getParameter("servicelevel" + materialIdStr);
+          String serviceLevelStr = req.getParameter("servicelevel" + materialId);
           if (serviceLevelStr != null && !serviceLevelStr.isEmpty()) {
             serviceLevel = Float.parseFloat(serviceLevelStr);
           }
-          String invModel = req.getParameter("invmodel" + materialIdStr);
+          String invModel = req.getParameter("invmodel" + materialId);
           // Update inventory object
-          IInvntry inv = invMap.get(materialIdStr);
+          IInvntry inv = invMap.get(materialId);
           if (inv != null) {
             inv.setReorderLevel(reorderLevel);
             inv.setMaxStock(maxStock);
@@ -723,8 +691,7 @@ public class CreateEntityServlet extends SgServlet {
   @SuppressWarnings("unchecked")
   private void modifyMaterial(HttpServletRequest req,
                               HttpServletResponse resp,
-                              MaterialCatalogService mc, ResourceBundle backendMessages,
-                              ResourceBundle messages)
+                              MaterialCatalogService mc, ResourceBundle backendMessages)
       throws ServiceException, IOException {
     Map<String, String[]> materialDetails = req.getParameterMap();
     materialDetails = cleanMap(materialDetails);
@@ -845,21 +812,11 @@ public class CreateEntityServlet extends SgServlet {
       m.setType(null);
     }
 
-    if (materialDetails.containsKey("seasonal")) {
-      boolean seasonal = true;
-      m.setSeasonal(seasonal);
-    } else {
-      m.setSeasonal(false);
-    }
-
+    m.setSeasonal(materialDetails.containsKey("seasonal"));
     if (materialDetails.containsKey("additionalinfo")) {
       m.setInfo(materialDetails.get("additionalinfo")[0]);
     }
-    if (materialDetails.containsKey("additionalinfocheck")) {
-      m.setInfoDisplay(true);
-    } else {
-      m.setInfoDisplay(false);
-    }
+    m.setInfoDisplay(materialDetails.containsKey("additionalinfocheck"));
     if (materialDetails.containsKey("customid")) {
       String customId = materialDetails.get("customid")[0];
       m.setCustomId(customId);
@@ -1018,12 +975,7 @@ public class CreateEntityServlet extends SgServlet {
     } else {
       m.setType(null);
     }
-    if (materialDetails.containsKey("seasonal")) {
-      boolean seasonal = true;
-      m.setSeasonal(seasonal);
-    } else {
-      m.setSeasonal(false);
-    }
+    m.setSeasonal(materialDetails.containsKey("seasonal"));
     if (materialDetails.containsKey("additionalinfo")) {
       m.setInfo(materialDetails.get("additionalinfo")[0]);
     }
@@ -1118,14 +1070,14 @@ public class CreateEntityServlet extends SgServlet {
         params.put(DOMAINID, domainIdStr);
         params.put("execute", "true"); // now add the "execute" indicator here
         SecureUserDetails sUser = SecurityUtils.getUserDetails();
-        for (int i = 0; i < matIDArr.length; i++) {
-          params.put("materialids", matIDArr[i]);
+        for (String aMatIDArr : matIDArr) {
+          params.put("materialids", aMatIDArr);
           try {
             taskService.schedule(ITaskService.QUEUE_DEFAULT, CREATEENTITY_TASK_URL, params, null,
                 ITaskService.METHOD_POST, domainId, sUser.getUsername(), "REMOVE_MATERIALS");
           } catch (Exception e) {
             xLogger.warn("{0} when scheduling task to delete material {1} in domain {2}: {3}",
-                e.getClass().getName(), matIDArr[i], domainId, e.getMessage());
+                e.getClass().getName(), aMatIDArr, domainId, e.getMessage());
           }
         }
         // Get the return message
@@ -1173,14 +1125,16 @@ public class CreateEntityServlet extends SgServlet {
     boolean hasTag = tag != null && !tag.isEmpty();
     boolean isTask = req.getRequestURI().contains("/task/");
     int numMaterials = 0;
-    List<Long> materialIds = new ArrayList<Long>();
+    List<Long> materialIds = new ArrayList<>();
     String[] matIDArr = req.getParameterValues("materialid");
     if (matIDArr != null) {
       numMaterials = matIDArr.length;
     }
-    for (String materialIDStr : matIDArr) {
-      Long materialId = Long.parseLong(materialIDStr);
-      materialIds.add(materialId);
+    if (matIDArr != null) {
+      for (String materialIDStr : matIDArr) {
+        Long materialId = Long.parseLong(materialIDStr);
+        materialIds.add(materialId);
+      }
     }
     String message = "";
     // Remove the materials
@@ -1227,7 +1181,7 @@ public class CreateEntityServlet extends SgServlet {
   @SuppressWarnings("unchecked")
   private void removeKioskOwner(HttpServletRequest req,
                                 HttpServletResponse resp, UsersService as,
-                                ResourceBundle backendMessages, ResourceBundle messages)
+                                ResourceBundle backendMessages)
       throws ServiceException, IOException {
     Map<String, String[]> userDetails = req.getParameterMap();
     userDetails = cleanMap(userDetails);
@@ -1238,23 +1192,21 @@ public class CreateEntityServlet extends SgServlet {
       domainId = Long.valueOf(domainIdStr);
     }
     if (userDetails.containsKey(USERID)) {
-      String[]
-          userIDArr =
-          req.getParameterValues(USERID); // userDetails.get("userids")[0].split(",");
-      List<String> ids = new ArrayList<String>();
+      String[] userIDArr = req.getParameterValues(USERID);
+      List<String> ids = new ArrayList<>();
       if (userIDArr != null) {
-        for (int i = 0; i < userIDArr.length; i++) {
+        for (String anUserIDArr : userIDArr) {
           try {
-            IUserAccount u = as.getUserAccount(userIDArr[i]);
-            EntitiesService es = Services.getService(EntitiesServiceImpl.class);
+            IUserAccount u = as.getUserAccount(anUserIDArr);
+            EntitiesService es = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
             List results = es.getKioskIdsForUser(u.getUserId(), null, null).getResults();
-            if (results !=null && !results.isEmpty()) {
+            if (results != null && !results.isEmpty()) {
               message +=
                   " - " + u.getFullName() + " " + backendMessages.getString("user.cannotdelete")
                       + " " + results.size() + " " + backendMessages
                       .getString("kiosks.lowercase") + MsgUtil.newLine();
             } else {
-              ids.add(userIDArr[i]);
+              ids.add(anUserIDArr);
             }
           } catch (ObjectNotFoundException e) {
             xLogger.warn("User not found: {0}", e.getMessage());
@@ -1322,13 +1274,13 @@ public class CreateEntityServlet extends SgServlet {
   @SuppressWarnings("unchecked")
   private void modifyKioskOwner(HttpServletRequest req,
                                 HttpServletResponse resp, UsersService as,
-                                ResourceBundle backendMessages, ResourceBundle messages)
+                                ResourceBundle backendMessages)
       throws ServiceException, IOException {
     Map<String, String[]> userDetails = req.getParameterMap();
     userDetails = cleanMap(userDetails);
-    String userIDStr = "";
+    String userIDStr;
     String message = "";
-    IUserAccount u = null;
+    IUserAccount u;
     if (userDetails.containsKey("id")) {
       userIDStr = userDetails.get("id")[0];
       try {
@@ -1498,7 +1450,7 @@ public class CreateEntityServlet extends SgServlet {
   @SuppressWarnings("unchecked")
   private void modifyKioskOwnerPassword(HttpServletRequest req,
                                         HttpServletResponse resp, UsersService as,
-                                        ResourceBundle backendMessages, ResourceBundle messages)
+                                        ResourceBundle backendMessages)
       throws ServiceException, IOException {
     xLogger.fine("Entered modifyKioskOwnerPassword");
     Map<String, String[]> userDetails = req.getParameterMap();
@@ -1521,9 +1473,9 @@ public class CreateEntityServlet extends SgServlet {
       throw new ServiceException("UserId is mandatory");
     }
     // Get the action - change or reset password
-    String action = null;
+    String action;
     boolean resetPassword = false;
-    String message = "";
+    String message;
     if (userDetails.containsKey(SecurityFilter.ACTION)) {
       action = userDetails.get(SecurityFilter.ACTION)[0];
       resetPassword = "reset".equals(action);
@@ -1546,7 +1498,8 @@ public class CreateEntityServlet extends SgServlet {
 				}
 			}
 			*/
-      AuthenticationService authenticationService = Services.getService(AuthenticationServiceImpl.class);
+      AuthenticationService authenticationService = StaticApplicationContext.getBean(
+          AuthenticationServiceImpl.class);
       String newPassword = authenticationService.generatePassword(u.getUserId());
       String msg = "Your password has been reset. Your new password is: " + newPassword;
       String logMsg = backendMessages.getString("password.reset.success.log");
@@ -1625,19 +1578,23 @@ public class CreateEntityServlet extends SgServlet {
       }
 
       // Check if the new password and its confirmation match
-      if (!newpassword.equals(confirmpassword)) {
-        writeToScreen(req, resp,
-            "Sorry, your new password did not match the confirmed password. Please check this once again.",
-            Constants.VIEW_USERS);
-        return;
+      if (newpassword != null) {
+        if (!newpassword.equals(confirmpassword)) {
+          writeToScreen(req, resp,
+              "Sorry, your new password did not match the confirmed password. Please check this once again.",
+              Constants.VIEW_USERS);
+          return;
+        }
       }
 
       // Check if new password is the same as old password
-      if (newpassword.equals(oldpassword)) {
-        writeToScreen(req, resp,
-            "Sorry, your new password is the same as the old password. Please change this and try again.",
-            Constants.VIEW_USERS);
-        return;
+      if (newpassword != null) {
+        if (newpassword.equals(oldpassword)) {
+          writeToScreen(req, resp,
+              "Sorry, your new password is the same as the old password. Please change this and try again.",
+              Constants.VIEW_USERS);
+          return;
+        }
       }
 
       // Change the password
@@ -1853,7 +1810,7 @@ public class CreateEntityServlet extends SgServlet {
   @SuppressWarnings("unchecked")
   private void modifyPoolgroup(HttpServletRequest req,
                                HttpServletResponse resp, EntitiesService as,
-                               ResourceBundle backendMessages, ResourceBundle messages)
+                               ResourceBundle backendMessages)
       throws ServiceException, IOException {
     Map<String, String[]> pgDetails = req.getParameterMap();
     pgDetails = cleanMap(pgDetails);
@@ -1896,7 +1853,7 @@ public class CreateEntityServlet extends SgServlet {
       if (kiosks != null && !kiosks.isEmpty()) {
         kiosksArr = kiosks.split(",");
       }
-      List<IKiosk> Kiosks = new ArrayList<IKiosk>();
+      List<IKiosk> Kiosks = new ArrayList<>();
       for (String k : kiosksArr) {
         long l = Long.parseLong(k.trim());
         IKiosk eachKiosk = as.getKiosk(l);
@@ -1923,8 +1880,8 @@ public class CreateEntityServlet extends SgServlet {
 
   @SuppressWarnings("unchecked")
   private void modifyKiosk(HttpServletRequest req, HttpServletResponse resp,
-                           EntitiesService as, UsersService usersService, ResourceBundle backendMessages,
-                           ResourceBundle messages) throws ServiceException, IOException {
+                           EntitiesService as, UsersService usersService,
+                           ResourceBundle backendMessages) throws ServiceException, IOException {
     Map<String, String[]> kioskDetails = req.getParameterMap();
     kioskDetails = cleanMap(kioskDetails);
     Long domainId = SecurityUtils.getCurrentDomainId();
@@ -2048,9 +2005,7 @@ public class CreateEntityServlet extends SgServlet {
       String userIdCSV = kioskDetails.get("userids")[0];
       List<String> userIdList = StringUtil.getList(userIdCSV, true); // get unique user IDs
       List<IUserAccount> assocUserAccounts = new ArrayList<IUserAccount>();
-      Iterator<String> userIds = userIdList.iterator();
-      while (userIds.hasNext()) {
-        String uId = userIds.next();
+      for (String uId : userIdList) {
         try {
           IUserAccount us = usersService.getUserAccount(uId);
           if (!us.isEnabled()) {
@@ -2084,7 +2039,7 @@ public class CreateEntityServlet extends SgServlet {
   @SuppressWarnings("unchecked")
   private void createPoolgroup(HttpServletRequest req,
                                HttpServletResponse resp, EntitiesService as,
-                               ResourceBundle backendMessages, ResourceBundle messages)
+                               ResourceBundle backendMessages)
       throws ServiceException, IOException {
     Map<String, String[]> pgDetails = req.getParameterMap();
     pgDetails = cleanMap(pgDetails);
@@ -2120,7 +2075,7 @@ public class CreateEntityServlet extends SgServlet {
       if (kioskids != null && !kioskids.isEmpty()) {
         kiosksArr = kioskids.split(",");
       }
-      List<IKiosk> Kiosks = new ArrayList<IKiosk>();
+      List<IKiosk> Kiosks = new ArrayList<>();
       for (String k : kiosksArr) {
         long l = Long.parseLong(k.trim());
         IKiosk eachKiosk = as.getKiosk(l, false);
@@ -2130,7 +2085,6 @@ public class CreateEntityServlet extends SgServlet {
     }
 
     // Get the domain Id
-    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Long domainId = SecurityUtils.getCurrentDomainId();
     if (message.isEmpty()) {
       Long pgID = as.addPoolGroup(domainId, pg);
@@ -2259,7 +2213,7 @@ public class CreateEntityServlet extends SgServlet {
       String userIdCSV = kioskDetails.get("userids")[0];
       List<String> userIdList = StringUtil.getList(userIdCSV, true); // get unique user ID list
       Iterator<String> userIds = userIdList.iterator();
-      List<IUserAccount> assocUserAccounts = new ArrayList<IUserAccount>();
+      List<IUserAccount> assocUserAccounts = new ArrayList<>();
       while (userIds.hasNext()) {
         String uId = userIds.next();
         try {
@@ -2325,13 +2279,13 @@ public class CreateEntityServlet extends SgServlet {
     if (kidsStr != null && !kidsStr.isEmpty()) {
       kids = kidsStr.split(",");
     }
-    String message = null;
+    String message;
     boolean hasMaterials = mids != null && mids.length > 0;
     boolean hasKiosks = kids != null && kids.length > 0;
     if (!hasMaterials) {
       message = "No materials specified.";
     } else {
-      Map<String, String> params = new HashMap<String, String>();
+      Map<String, String> params = new HashMap<>();
       // Add action param
       params.put(SecurityFilter.ACTION, action);
       params.put("type", MATERIALTOKIOSK);
@@ -2345,8 +2299,7 @@ public class CreateEntityServlet extends SgServlet {
       params.put(DOMAINID, domainId.toString()); // needed for both add and remove
       // Form and add the materials parameters
       String midsStr = "";
-      for (int i = 0; i < mids.length; i++) {
-        String midStr = mids[i];
+      for (String midStr : mids) {
         if (add) {
           String param = "reorderlevel" + midStr;
           params.put(param, req.getParameter(param));
@@ -2378,21 +2331,21 @@ public class CreateEntityServlet extends SgServlet {
       }
       params.put("materialid", midsStr);
       // Indicate multi-valued param.
-      List<String> multiValuedParams = new ArrayList<String>();
+      List<String> multiValuedParams = new ArrayList<>();
       multiValuedParams.add("materialid");
       // Get all the kiosk IDs
-      List<IKiosk> kiosks = null;
+      List<IKiosk> kiosks;
       if (!hasKiosks) {
         // Get all the kiosks
         Results results = as.getAllKiosks(domainId, null, null, null); // TODO: pagination?
         kiosks = results.getResults();
       } else {
-        kiosks = new ArrayList<IKiosk>();
-        for (int i = 0; i < kids.length; i++) {
+        kiosks = new ArrayList<>();
+        for (String kid : kids) {
           try {
-            kiosks.add(as.getKiosk(Long.valueOf(kids[i]), false));
+            kiosks.add(as.getKiosk(Long.valueOf(kid), false));
           } catch (Exception e) {
-            xLogger.warn("Unable to get kiosk with ID {0} : {1}", kids[i], e.getMessage());
+            xLogger.warn("Unable to get kiosk with ID {0} : {1}", kid, e.getMessage());
           }
         }
       }
@@ -2409,8 +2362,8 @@ public class CreateEntityServlet extends SgServlet {
           xLogger.fine("Scheduling " + action + " task for kiosk {0}, params = {1}", k.getKioskId(),
               params.toString());
           taskService
-              .schedule(taskService.QUEUE_DEFAULT, CREATEENTITY_TASK_URL, params, multiValuedParams,
-                  null, taskService.METHOD_POST, -1, domainId, sUser.getUsername(),
+              .schedule(ITaskService.QUEUE_DEFAULT, CREATEENTITY_TASK_URL, params, multiValuedParams,
+                  null, ITaskService.METHOD_POST, -1, domainId, sUser.getUsername(),
                   "ADDREMOVE_KIOSKS");
           numTasks++;
         } catch (Exception e) {
@@ -2460,19 +2413,19 @@ public class CreateEntityServlet extends SgServlet {
       if (kioskIDs != null) {
         if (!execute) { // schedule
           // Schedule a separate task for deletion of each kiosk
-          Map<String, String> params = new HashMap<String, String>();
+          Map<String, String> params = new HashMap<>();
           params.put(SecurityFilter.ACTION, REMOVE);
           params.put("type", KIOSK);
           params.put(DOMAINID, domainIdStr);
           params.put("execute", "true"); // now add the "execute" indicator here
-          for (int i = 0; i < kioskIDs.length; i++) {
-            params.put(KIOSKID, kioskIDs[i]);
+          for (String kioskID : kioskIDs) {
+            params.put(KIOSKID, kioskID);
             try {
-              taskService.schedule(taskService.QUEUE_DEFAULT, CREATEENTITY_TASK_URL, params, null,
-                  taskService.METHOD_POST, domainId, sUser.getUsername(), "REMOVE_KIOSK");
+              taskService.schedule(ITaskService.QUEUE_DEFAULT, CREATEENTITY_TASK_URL, params, null,
+                  ITaskService.METHOD_POST, domainId, sUser.getUsername(), "REMOVE_KIOSK");
             } catch (Exception e) {
               xLogger.warn("{0} when scheduling task to delete kiosk {1} in domain {2}: {3}",
-                  e.getClass().getName(), kioskIDs[i], domainId, e.getMessage());
+                  e.getClass().getName(), kioskID, domainId, e.getMessage());
             }
           }
           String
@@ -2487,7 +2440,7 @@ public class CreateEntityServlet extends SgServlet {
           return;
         }
         // Execute the deletion for the given kiosk(s)
-        ArrayList<Long> kiosks = new ArrayList<Long>();
+        ArrayList<Long> kiosks = new ArrayList<>();
         for (String kioskID : kioskIDs) {
           long l = Long.parseLong(kioskID.trim());
           kiosks.add(l);
@@ -2505,7 +2458,7 @@ public class CreateEntityServlet extends SgServlet {
   @SuppressWarnings("unchecked")
   private void removePoolgroups(HttpServletRequest req,
                                 HttpServletResponse resp, EntitiesService as,
-                                ResourceBundle backendMessages, ResourceBundle messages)
+                                ResourceBundle backendMessages)
       throws ServiceException, IOException {
     Map<String, String[]> pgDetails = req.getParameterMap();
     pgDetails = cleanMap(pgDetails);
@@ -2516,7 +2469,7 @@ public class CreateEntityServlet extends SgServlet {
     }
     if (pgDetails.containsKey("poolgroupids")) {
       String[] pgIDs = pgDetails.get("poolgroupids")[0].split(",");
-      ArrayList<Long> poolgroupIDs = new ArrayList<Long>();
+      ArrayList<Long> poolgroupIDs = new ArrayList<>();
       for (String pgID : pgIDs) {
         long l = Long.parseLong(pgID.trim());
         poolgroupIDs.add(l);
@@ -2579,9 +2532,9 @@ public class CreateEntityServlet extends SgServlet {
     }
     // Add new domain
     if (message.isEmpty()) {
-      DomainsService ds = Services.getService(DomainsServiceImpl.class);
+      DomainsService ds = StaticApplicationContext.getBean(DomainsServiceImpl.class);
       Long domainId = ds.addDomain(domain);
-      setUiPreferenceForDomain(req, resp, domainId, userId, true, true);
+      setUiPreferenceForDomain(domainId, userId, true, true);
       message =
           "Created domain <b>" + name
               + "</b> successfully [<a href=\"/s/admin/domains.jsp?subview=domains&userid=" + userId
@@ -2607,19 +2560,19 @@ public class CreateEntityServlet extends SgServlet {
       String[] domainIDsArr = domainDetails.get("domainids")[0].split(",");
       if (!execute) { // schedule
         // Schedule a separate task for deletion of each material (given its associated entities also have to be removed)
-        Map<String, String> params = new HashMap<String, String>();
+        Map<String, String> params = new HashMap<>();
         params.put(SecurityFilter.ACTION, REMOVE);
         params.put("type", "domain");
         params.put("execute", "true"); // now add the "execute" indicator here
-        for (int i = 0; i < domainIDsArr.length; i++) {
-          params.put("domainids", domainIDsArr[i]);
+        for (String aDomainIDsArr : domainIDsArr) {
+          params.put("domainids", aDomainIDsArr);
           try {
-            taskService.schedule(taskService.QUEUE_DEFAULT, CREATEENTITY_TASK_URL, params,
-                taskService.METHOD_POST);
+            taskService.schedule(ITaskService.QUEUE_DEFAULT, CREATEENTITY_TASK_URL, params,
+                ITaskService.METHOD_POST);
           } catch (Exception e) {
             xLogger
                 .warn("{0} when scheduling task to delete domain {1}: {2}", e.getClass().getName(),
-                    domainIDsArr[i], e.getMessage());
+                    aDomainIDsArr, e.getMessage());
           }
         }
         // Get the return message
@@ -2629,13 +2582,13 @@ public class CreateEntityServlet extends SgServlet {
         return;
       }
       // Execute removal of domains
-      ArrayList<Long> domainIDs = new ArrayList<Long>();
+      ArrayList<Long> domainIDs = new ArrayList<>();
       for (String domainID : domainIDsArr) {
         Long l = Long.valueOf(domainID.trim());
         domainIDs.add(l);
       }
       try {
-        DomainsService ds = Services.getService(DomainsServiceImpl.class);
+        DomainsService ds = StaticApplicationContext.getBean(DomainsServiceImpl.class);
         ds.deleteDomains(domainIDs);
       } catch (Exception e) {
         xLogger.severe("{0} when deleting domains {1}: {2}", e.getClass().getName(), domainIDs,
@@ -2650,7 +2603,7 @@ public class CreateEntityServlet extends SgServlet {
   }
 
   @SuppressWarnings("unchecked")
-  private void switchDomain(HttpServletRequest req, HttpServletResponse resp, UsersService as)
+  private void switchDomain(HttpServletRequest req, HttpServletResponse resp)
       throws ServiceException, ObjectNotFoundException, IOException {
     xLogger.fine("Entered switchDomain");
 
@@ -2659,7 +2612,7 @@ public class CreateEntityServlet extends SgServlet {
     Map<String, String[]> domainDetails = req.getParameterMap();
 
     // Get the user Id and new domain ID to switch to
-    String userId = null;
+    String userId;
     Long domainId = null;
     if (domainDetails.containsKey(USERID)) {
       userId = domainDetails.get(USERID)[0];
@@ -2751,7 +2704,7 @@ public class CreateEntityServlet extends SgServlet {
       }
     }
     xLogger.fine("creditlimit: {0}, hasCreditLimit: {1}", creditLimit, hasCreditLimit);
-    List<IKioskLink> links = new ArrayList<IKioskLink>();
+    List<IKioskLink> links = new ArrayList<>();
     if (linkDetails.containsKey("linkedKioskId")) {
       String[] linkedKioskIds = linkDetails.get("linkedKioskId");
       xLogger.fine("linkedKioskIds: {0}", linkedKioskIds.length);
@@ -2762,7 +2715,7 @@ public class CreateEntityServlet extends SgServlet {
         return;
       }
       Date now = new Date();
-      for (int i = 0; i < linkedKioskIds.length; i++) {
+      for (String linkedKioskId : linkedKioskIds) {
         // Create kiosk link object
         kioskLink = JDOUtils.createInstance(IKioskLink.class);
         kioskLink.setDomainId(domainId);
@@ -2771,7 +2724,7 @@ public class CreateEntityServlet extends SgServlet {
         kioskLink.setDescription(desc);
         kioskLink.setKioskId(kioskId);
         kioskLink.setLinkType(linkType);
-        kioskLink.setLinkedKioskId(Long.valueOf(linkedKioskIds[i]));
+        kioskLink.setLinkedKioskId(Long.valueOf(linkedKioskId));
         if (hasCreditLimit) {
           kioskLink.setCreditLimit(creditLimit);
         }
@@ -2792,7 +2745,7 @@ public class CreateEntityServlet extends SgServlet {
 		*/
     // TODO Check if this link already exists before adding (possibly via a method in AccountsService)
     // Add/modify kiosk relationship/link
-    String msg = null;
+    String msg;
     if (modify) {
       kioskLink.setDescription(desc);
       if (hasCreditLimit) {
@@ -2884,8 +2837,7 @@ public class CreateEntityServlet extends SgServlet {
 
   @SuppressWarnings("unchecked")
   private void removeKioskLinks(HttpServletRequest req, HttpServletResponse resp,
-                                EntitiesService as, ResourceBundle backendMessages,
-                                ResourceBundle messages)
+                                EntitiesService as, ResourceBundle backendMessages)
       throws ServiceException, IOException {
     Map<String, String[]> linkDetails = req.getParameterMap();
     linkDetails = cleanMap(linkDetails);
@@ -2924,14 +2876,12 @@ public class CreateEntityServlet extends SgServlet {
       String[]
           linkIDArr =
           req.getParameterValues("kiosklinkid"); // linkDetails.get("kiosklinkids")[0].split(",");
-      ArrayList<String> linkIds = new ArrayList<String>();
-      for (String s : linkIDArr) {
-        linkIds.add(s);
-      }
+      ArrayList<String> linkIds = new ArrayList<>();
+      Collections.addAll(linkIds, linkIDArr);
       numLinks = linkIds.size();
       as.deleteKioskLinks(domainId, linkIds, sUser.getUsername());
     }
-    String message = "";
+    String message;
     if (numLinks == 0) {
       message =
           "No links to delete!"; // NOTE: This is unlikely to be used, given front-end JS validation
@@ -3144,8 +3094,8 @@ public class CreateEntityServlet extends SgServlet {
           "No materials associated with this kiosk [kioskId: " + kioskId + "]");
     }
     // Get the quantities, and update transactions
-    List<ITransaction> transList = new ArrayList<ITransaction>();
-    List<ITransaction> errors = null;
+    List<ITransaction> transList = new ArrayList<>();
+    List<ITransaction> errors;
     Iterator<IInvntry> iterator = inList.iterator();
     String message = "";
     Date now = new Date();
@@ -3160,9 +3110,7 @@ public class CreateEntityServlet extends SgServlet {
       }
 //			String materialIdStr = materialId.toString();
 //			if ( transDetails.containsKey( materialIdStr ) || hasBatches ) {
-      Iterator<String> batchIds = quantityByBatch.keySet().iterator();
-      while (batchIds.hasNext()) {
-        String batchId = batchIds.next();
+      for (String batchId : quantityByBatch.keySet()) {
         // Get quantity by batch if necessary
         BigDecimal quantity = quantityByBatch.get(batchId);
         // Check for transaction errors
@@ -3186,6 +3134,7 @@ public class CreateEntityServlet extends SgServlet {
           if (!batchId.isEmpty()) {
             setBatchParameters(batchId, trans, transDetails);
           }
+          ITransDao transDao = StaticApplicationContext.getBean(ITransDao.class);
           transDao.setKey(trans);
           // Add to list
           transList.add(trans);
@@ -3210,9 +3159,7 @@ public class CreateEntityServlet extends SgServlet {
           // Check for any update errors
           if (errors != null && errors.size() > 0) {
             updateErrors = true;
-            Iterator<ITransaction> it = errors.iterator();
-            while (it.hasNext()) {
-              ITransaction trans = it.next();
+            for (ITransaction trans : errors) {
               message += " - " + trans.getMessage() + "<br/>";
             }
             xLogger.warn(
@@ -3261,8 +3208,7 @@ public class CreateEntityServlet extends SgServlet {
 
   // Undo transactions
   private void undoTransactions(HttpServletRequest req, HttpServletResponse resp,
-                                InventoryManagementService ims, ResourceBundle backendMessages,
-                                ResourceBundle messages) throws ServiceException, IOException {
+                                InventoryManagementService ims, ResourceBundle backendMessages) throws ServiceException, IOException {
     xLogger.fine("Entered undoTransactions");
     // Get the relevant parameters
     String kioskIdStr = req.getParameter(KIOSKID);
@@ -3363,10 +3309,8 @@ public class CreateEntityServlet extends SgServlet {
     // Check if inventory is enabled, esp. for deciding on auto issues/receipts on order status change
     //boolean isInventoryEnabled =  ( dc == null || !dc.isCapabilityDisabled( DomainConfig.CAPABILITY_INVENTORY ) );
     // Iterate through the materials to get the order quantities and form inventory list
-    List<ITransaction> transactions = new ArrayList<ITransaction>();
-    Iterator<IInvntry> it = inList.iterator();
-    while (it.hasNext()) {
-      IInvntry inv = it.next();
+    List<ITransaction> transactions = new ArrayList<>();
+    for (IInvntry inv : inList) {
       Long materialId = inv.getMaterialId();
       String quantityStr = req.getParameter(materialId.toString()); // get quantity from the form
       BigDecimal quantity = BigDecimal.ZERO;
@@ -3409,7 +3353,7 @@ public class CreateEntityServlet extends SgServlet {
         order.setUpdatedOn(order.getCreatedOn());
         // Update order's initial status
         //oms.updateOrder( order, isInventoryEnabled );
-        OrderUtils.updateOrder(order, dc);
+        OrderUtils.updateOrder(order);
       }
       String strPrice = null; // get price statement
       if (order != null && BigUtil.greaterThanZero(order.getTotalPrice())) {
@@ -3447,12 +3391,11 @@ public class CreateEntityServlet extends SgServlet {
 
   // Check existence of a user
   private void checkIfUserExists(HttpServletRequest req, HttpServletResponse resp,
-                                 UsersService as, ResourceBundle backendMessages,
-                                 ResourceBundle messages) throws IOException {
+                                 UsersService as, ResourceBundle backendMessages) throws IOException {
     xLogger.fine("Entered checkIfUserExists");
 
     String userId = req.getParameter(USERID);
-    String message = "";
+    String message;
     try {
       if (as.userExists(userId)) {
         message = "'" + userId + "' " + backendMessages.getString("user.exists") + ".";
@@ -3470,17 +3413,20 @@ public class CreateEntityServlet extends SgServlet {
   }
 
   private void saveOrdering(HttpServletRequest req, HttpServletResponse resp, EntitiesService as,
-                            ResourceBundle backendMessages, ResourceBundle messages,
+                            ResourceBundle backendMessages,
                             String entityType) throws IOException {
     xLogger.fine("Entering saveOrdering");
-    if (entityType.equals("me")) {
-      // save the route for managed entity
-      saveManagedEntitiesOrdering(req, resp, as, backendMessages, messages);
-    } else if (entityType.equals("re")) {
-      // save the route for relationships
-      saveRelatedEntitiesOrdering(req, resp, as, backendMessages, messages);
-    } else {
-      xLogger.severe("Unsupported type: {0}", entityType);
+    switch (entityType) {
+      case "me":
+        saveManagedEntitiesOrdering(req, resp, as, backendMessages);
+        break;
+      case "re":
+        // save the route for relationships
+        saveRelatedEntitiesOrdering(req, resp, as, backendMessages);
+        break;
+      default:
+        xLogger.severe("Unsupported type: {0}", entityType);
+        break;
     }
 
     xLogger.fine("Exiting saveOrdering");
@@ -3542,8 +3488,7 @@ public class CreateEntityServlet extends SgServlet {
   }
 
   private void saveManagedEntitiesOrdering(HttpServletRequest req, HttpServletResponse resp,
-                                           EntitiesService as, ResourceBundle backendMessages,
-                                           ResourceBundle messages) throws IOException {
+                                           EntitiesService as, ResourceBundle backendMessages) throws IOException {
     xLogger.fine("Entering saveManagedEntitiesOrdering");
     String userId = req.getParameter(USERID);
     if (userId == null || userId.isEmpty()) {
@@ -3568,7 +3513,7 @@ public class CreateEntityServlet extends SgServlet {
       xLogger.severe("Exception when saving managed entities route for userID {0}", userId);
       message = backendMessages.getString("error") + ": " + e.getMessage();
     }
-    String jsonString = null;
+    String jsonString;
     if (message != null && !message.isEmpty()) {
       // There was an error
       jsonString = "{ \"st\" : \"1\", \"msg\" : \"" + message + "\" } ";
@@ -3586,8 +3531,7 @@ public class CreateEntityServlet extends SgServlet {
   }
 
   private void saveRelatedEntitiesOrdering(HttpServletRequest req, HttpServletResponse resp,
-                                           EntitiesService as, ResourceBundle backendMessages,
-                                           ResourceBundle messages) throws IOException {
+                                           EntitiesService as, ResourceBundle backendMessages) throws IOException {
     xLogger.fine("Entering saveRelatedEntitiesOrdering");
     String kioskIdStr = req.getParameter(KIOSKID);
     if (kioskIdStr == null || kioskIdStr.isEmpty()) {
@@ -3618,7 +3562,7 @@ public class CreateEntityServlet extends SgServlet {
       xLogger.severe("Exception when saving linked kiosk route for userID {0}", kioskId);
       message = backendMessages.getString("error") + ": " + e.getMessage();
     }
-    String jsonString = null;
+    String jsonString;
     if (message != null && !message.isEmpty()) {
       // There was an error
       jsonString = "{ \"st\" : \"1\", \"msg\" : \"" + message + "\" } ";
@@ -3637,25 +3581,28 @@ public class CreateEntityServlet extends SgServlet {
   }
 
   private void resetOrdering(HttpServletRequest req, HttpServletResponse resp, EntitiesService as,
-                             ResourceBundle backendMessages, ResourceBundle messages,
+                             ResourceBundle backendMessages,
                              String entityType) throws IOException {
     xLogger.fine("Entering resetOrdering");
-    if (entityType.equals("me")) {
-      // save the route for managed entity
-      resetManagedEntitiesOrdering(req, resp, as, backendMessages, messages);
-    } else if (entityType.equals("re")) {
-      // save the route for relationships
-      resetRelatedEntitiesOrdering(req, resp, as, backendMessages, messages);
-    } else {
-      xLogger.severe("Unsupported type: {0}", entityType);
+    switch (entityType) {
+      case "me":
+        // save the route for managed entity
+        resetManagedEntitiesOrdering(req, resp, as, backendMessages);
+        break;
+      case "re":
+        // save the route for relationships
+        resetRelatedEntitiesOrdering(req, resp, as, backendMessages);
+        break;
+      default:
+        xLogger.severe("Unsupported type: {0}", entityType);
+        break;
     }
 
     xLogger.fine("Exiting resetOrdering");
   }
 
   private void resetManagedEntitiesOrdering(HttpServletRequest req, HttpServletResponse resp,
-                                            EntitiesService as, ResourceBundle backendMessages,
-                                            ResourceBundle messages) throws IOException {
+                                            EntitiesService as, ResourceBundle backendMessages) throws IOException {
     xLogger.fine("Entering resetManagedEntitiesOrdering");
     String userId = req.getParameter(USERID);
     if (userId == null || userId.isEmpty()) {
@@ -3664,11 +3611,8 @@ public class CreateEntityServlet extends SgServlet {
     }
     // Get the map parameter
     String map = req.getParameter("map");
-    boolean
-        mapView =
-        (map != null) ? true
-            : false; // If map parameter is present, it means the reset was clicked in the map view
-    String message = null;
+    boolean mapView = (map != null); // If map parameter is present, it means the reset was clicked in the map view
+    String message;
     xLogger.fine("userId = {0}", userId);
 
     try {
@@ -3693,8 +3637,7 @@ public class CreateEntityServlet extends SgServlet {
   }
 
   private void resetRelatedEntitiesOrdering(HttpServletRequest req, HttpServletResponse resp,
-                                            EntitiesService as, ResourceBundle backendMessages,
-                                            ResourceBundle messages) throws IOException {
+                                            EntitiesService as, ResourceBundle backendMessages) throws IOException {
     xLogger.fine("Entering resetRelatedEntitiesOrdering");
     String kioskId = req.getParameter(KIOSKID);
     String linkType = req.getParameter("linktype");
@@ -3708,12 +3651,9 @@ public class CreateEntityServlet extends SgServlet {
     }
     // Get the map parameter
     String map = req.getParameter("map");
-    boolean
-        mapView =
-        (map != null) ? true
-            : false; // If map parameter is present, it means the reset was clicked in the map view
+    boolean mapView = (map != null); // If map parameter is present, it means the reset was clicked in the map view
 
-    String message = null;
+    String message;
     xLogger.fine("kioskId = {0}", kioskId);
 
     try {
@@ -3808,6 +3748,7 @@ public class CreateEntityServlet extends SgServlet {
     t.setTimestamp(now);
     t.setBatchId(batchId);
     t.setBatchExpiry(batchExpiry);
+    ITransDao transDao = StaticApplicationContext.getBean(ITransDao.class);
     transDao.setKey(t);
     return t;
   }
@@ -3846,7 +3787,7 @@ public class CreateEntityServlet extends SgServlet {
 
   // Trim all strings that are values in a hashmap and return the map
   private Map<String, String[]> cleanMap(Map<String, String[]> input) {
-    Map<String, String[]> cleanedMap = new HashMap<String, String[]>();
+    Map<String, String[]> cleanedMap = new HashMap<>();
     if (input == null || input.size() == 0) {
       return null;
     }
@@ -3863,8 +3804,7 @@ public class CreateEntityServlet extends SgServlet {
   }
 
   // Private method that sets the ui preference for the user.
-  private void setUiPreference(HttpServletRequest req, HttpServletResponse resp, UsersService as,
-                               ResourceBundle backendMessages, ResourceBundle messages)
+  private void setUiPreference(HttpServletRequest req, HttpServletResponse resp, UsersService as)
       throws ServiceException, IOException {
     String userIdStr = req.getParameter(USERID);
     String uiPrefStr = req.getParameter("uipref");
@@ -3886,13 +3826,12 @@ public class CreateEntityServlet extends SgServlet {
 
   // Private utility method that sets updates the general configuration to set ui preference for the entire domain to new UI. It also sets the flag onlyNewUI. This internally calls the ConfigurationServlet inside of a task and updates the general configuration
   // userid needs to be sent as a parameter, otherwise, sUser is null inside the updateGeneralConfiguration method of Configuration which can result in NullPointerException.
-  private void setUiPreferenceForDomain(HttpServletRequest req, HttpServletResponse resp,
-                                        Long domainId, String userId, boolean uiPref,
+  private void setUiPreferenceForDomain(Long domainId, String userId, boolean uiPref,
                                         boolean onlyNewUI)
-      throws MalformedURLException, IOException {
+      throws IOException {
     xLogger.fine("Entering setUiPreferenceForDomain");
     // Call the ConfigurationServlet's updateGeneralConfiguration method through HttpUtil so that the uiPref is set for the domain.
-    Map<String, String> params = new HashMap<String, String>();
+    Map<String, String> params = new HashMap<>();
     params.put("type", "general");
     params.put(DOMAINID, domainId.toString());
     params.put(USERID, userId);

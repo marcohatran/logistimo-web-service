@@ -33,10 +33,10 @@ import com.logistimo.assets.service.AssetManagementService;
 import com.logistimo.assets.service.impl.AssetManagementServiceImpl;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.EventSpec;
-import com.logistimo.config.models.EventSpec.ParamComparator;
 import com.logistimo.config.models.EventSpec.ParamSpec;
 import com.logistimo.config.models.EventSpec.Subscriber;
 import com.logistimo.config.models.EventsConfig;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.entity.IPoolGroup;
@@ -44,7 +44,6 @@ import com.logistimo.events.entity.IEvent;
 import com.logistimo.events.handlers.EventHandler;
 import com.logistimo.events.models.ObjectData;
 import com.logistimo.logger.XLog;
-import com.logistimo.services.Services;
 import com.logistimo.users.entity.IUserAccount;
 
 import org.springframework.util.CollectionUtils;
@@ -77,25 +76,22 @@ public class SetupEventGenerator extends EventGenerator {
       case IEvent.IP_ADDRESS_MATCHED: {
         DomainConfig dc = DomainConfig.getInstance(domainId);
         EventsConfig ec = dc.getEventsConfig();
-        return ec.matchEvent(objectType, eventId, params, new ParamComparator() {
-          @Override
-          public boolean compare(Map<String, Object> params1, Map<String, Object> params2) {
-            String
-                t1 =
-                (String) params1.get(PARAM_IPADDRESS); // from generate call of event-generator
-            String t2 = (String) params2.get(PARAM_IPADDRESS); // from spec.
-            if (t1 != null && t2 != null && !t2.isEmpty()) {
-              // t2 is a CSV of IP-address patterns; tokenize it
-              String[] ipPatterns = t2.split(",");
-              for (int i = 0; i < ipPatterns.length; i++) {
-                if (t1.startsWith(ipPatterns[i])) {
-                  return true;
-                }
+        return ec.matchEvent(objectType, eventId, params, (params1, params2) -> {
+          String
+              t1 =
+              (String) params1.get(PARAM_IPADDRESS); // from generate call of event-generator
+          String t2 = (String) params2.get(PARAM_IPADDRESS); // from spec.
+          if (t1 != null && t2 != null && !t2.isEmpty()) {
+            // t2 is a CSV of IP-address patterns; tokenize it
+            String[] ipPatterns = t2.split(",");
+            for (String ipPattern : ipPatterns) {
+              if (t1.startsWith(ipPattern)) {
+                return true;
               }
-              return false; // no match
-            } else {
-              return false;
             }
+            return false; // no match
+          } else {
+            return false;
           }
         });
       }
@@ -112,7 +108,7 @@ public class SetupEventGenerator extends EventGenerator {
     }
     if (EventSpec.Subscriber.CUSTOMERS.equals(subscriber.type) && o != null) {
       if (o instanceof IUserAccount && ((IUserAccount) o).isEnabled()) {
-        List<String> userIds = new ArrayList<String>();
+        List<String> userIds = new ArrayList<>();
         userIds.add(((IUserAccount) o).getUserId());
         return userIds;
       } else if (o instanceof IKiosk) {
@@ -120,7 +116,8 @@ public class SetupEventGenerator extends EventGenerator {
       } else if (o instanceof IAssetRelation) {
         try {
           IAssetRelation assetRelation = (IAssetRelation) o;
-          AssetManagementService ams = Services.getService(AssetManagementServiceImpl.class);
+          AssetManagementService ams = StaticApplicationContext.getBean(
+              AssetManagementServiceImpl.class);
           IAsset asset = ams.getAsset(assetRelation.getAssetId());
           if(asset.getKioskId() != null) {
             return EventHandler.getSubsribers(subscriber.type, asset.getKioskId());
@@ -170,7 +167,8 @@ public class SetupEventGenerator extends EventGenerator {
       } else if(o instanceof IAssetRelation){
         try {
           assetRelation = (IAssetRelation) o;
-          AssetManagementService ams = Services.getService(AssetManagementServiceImpl.class);
+          AssetManagementService ams = StaticApplicationContext.getBean(
+              AssetManagementServiceImpl.class);
           asset = ams.getAsset(assetRelation.getRelatedAssetId());
           addOwnersAndMaintainers(asset, assetUsers);
           asset = ams.getAsset(assetRelation.getAssetId());

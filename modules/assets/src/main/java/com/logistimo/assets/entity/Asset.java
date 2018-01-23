@@ -23,26 +23,12 @@
 
 package com.logistimo.assets.entity;
 
-import com.logistimo.config.models.EventsConfig;
-import com.logistimo.users.entity.IUserAccount;
-
-import com.logistimo.config.models.DomainConfig;
-import com.logistimo.services.Resources;
-import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
-import com.logistimo.services.impl.PMF;
-import com.logistimo.utils.StringUtil;
 import com.logistimo.logger.XLog;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.ResourceBundle;
 
-import javax.jdo.PersistenceManager;
 import javax.jdo.annotations.Element;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.IdentityType;

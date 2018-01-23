@@ -28,6 +28,7 @@ package com.logistimo.reports.generators;
 
 import com.logistimo.auth.SecurityConstants;
 import com.logistimo.config.models.DomainConfig;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.orders.service.OrderManagementService;
@@ -36,7 +37,6 @@ import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.QueryParams;
 import com.logistimo.pagination.Results;
 import com.logistimo.reports.ReportsConstants;
-import com.logistimo.services.Services;
 import com.logistimo.tags.TagUtil;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
@@ -61,9 +61,10 @@ public class OrdersDataGenerator implements ReportDataGenerator {
                                   Map<String, Object> filters, Locale locale, String timezone,
                                   PageParams pageParams, DomainConfig dc, String sourceUserId)
       throws ReportingDataException {
-    OrdersData od = null;
+    OrdersData od;
     try {
-      OrderManagementService oms = Services.getService(OrderManagementServiceImpl.class);
+      OrderManagementService oms = StaticApplicationContext
+          .getBean(OrderManagementServiceImpl.class);
       // Get the parameters
       Long domainId = (Long) filters.get(ReportsConstants.FILTER_DOMAIN);
       Long kioskId = (Long) filters.get(ReportsConstants.FILTER_KIOSK);
@@ -85,8 +86,8 @@ public class OrdersDataGenerator implements ReportDataGenerator {
       List<Long> kioskIds = null;
       if (sourceUserId != null) {
         // Get user
-        UsersService as = Services.getService(UsersServiceImpl.class, locale);
-        EntitiesService es = Services.getService(EntitiesServiceImpl.class, locale);
+        UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
+        EntitiesService es = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
         IUserAccount u = as.getUserAccount(sourceUserId);
         if (SecurityConstants.ROLE_SERVICEMANAGER.equals(u.getRole())) {
           kioskIds =

@@ -41,27 +41,30 @@ import com.logistimo.logger.XLog;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
 import com.logistimo.services.ObjectNotFoundException;
-import com.logistimo.services.Service;
+import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.impl.PMF;
-import com.logistimo.services.impl.ServiceImpl;
 import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.utils.QueryUtil;
+import com.logistimo.utils.ThreadLocalUtil;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.ResourceBundle;
 
 import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 
 @org.springframework.stereotype.Service
-public class DomainsServiceImpl extends ServiceImpl implements DomainsService {
+public class DomainsServiceImpl implements DomainsService {
 
   private static final XLog xLogger = XLog.getLog(DomainsServiceImpl.class);
   // Domains task url
@@ -161,15 +164,13 @@ public class DomainsServiceImpl extends ServiceImpl implements DomainsService {
     if (links == null || links.isEmpty()) {
       return null;
     }
-    List<IDomainLink> allLinks = new ArrayList<IDomainLink>(links.size());
+    List<IDomainLink> allLinks = new ArrayList<>(links.size());
     allLinks.addAll(links);
     if (depth == 0) {
       return allLinks;
     }
     // Get the next level of links
-    Iterator<IDomainLink> it = links.iterator();
-    while (it.hasNext()) {
-      IDomainLink dl = it.next();
+    for (IDomainLink dl : links) {
       List<IDomainLink> nextLinks = getDomainLinks(dl.getLinkedDomainId(), linkType, depth--);
       if (nextLinks != null && !nextLinks.isEmpty()) {
         allLinks.addAll(nextLinks);
@@ -183,6 +184,54 @@ public class DomainsServiceImpl extends ServiceImpl implements DomainsService {
     return getDomainLinks(domainId, linkType, -1);
   }
 
+  @Override
+  public boolean hasAncestor(Long childDomainId, Collection<Long> ancestorDomainIds) {
+    if (childDomainId == null) {
+      throw new IllegalArgumentException("Invalid domain Id");
+    }
+    Long currentDomainId = childDomainId;
+    String
+        queryStr =
+        "SELECT FROM " + JDOUtils.getImplClass(IDomainLink.class).getName()
+            + " WHERE dId == dIdParam && ty == tyParam PARAMETERS Long dIdParam, Integer tyParam"; // sorted by linked domain name
+    PersistenceManager pm = PMF.get().getPersistenceManager();
+    try {
+      IDomainLink parentLink;
+      int count = 1;
+      do {
+        Query q = null;
+        try {
+          parentLink = null;
+          q = pm.newQuery(queryStr);
+          QueryUtil.setPageParams(q, new PageParams(1));
+          q.setClass(JDOUtils.getImplClass(IDomainLink.class));
+          List<IDomainLink> parentLinks =
+              (List<IDomainLink>) q.execute(currentDomainId, IDomainLink.TYPE_PARENT);
+          if (parentLinks != null && !parentLinks.isEmpty()) {
+            parentLink = parentLinks.get(0);
+            if (ancestorDomainIds.contains(parentLink.getLinkedDomainId())) {
+              return true;
+            }
+            currentDomainId = parentLink.getLinkedDomainId();
+          }
+        } finally {
+          if (q != null) {
+            q.closeAll();
+          }
+        }
+        if (count > 10) {
+          xLogger.warn(
+              "Ancestor check looped for {0} times, current domain Id {1} while checking for "
+                  + "childDomain {2} in ancestor Domains {3} ", count, currentDomainId,
+              childDomainId, Arrays.toString(ancestorDomainIds.toArray()));
+        }
+      } while (parentLink != null && count++ < 100);
+    } finally {
+      pm.close();
+    }
+    return false;
+  }
+
   /**
    * Get the domain links for a given
    */
@@ -193,7 +242,6 @@ public class DomainsServiceImpl extends ServiceImpl implements DomainsService {
     if (domainId == null) {
       throw new IllegalArgumentException("Invalid domain Id");
     }
-    int type = linkType;
     String cursor = null;
     List<IDomainLink> links = null;
     PersistenceManager pm = PMF.get().getPersistenceManager();
@@ -206,7 +254,7 @@ public class DomainsServiceImpl extends ServiceImpl implements DomainsService {
       QueryUtil.setPageParams(q, pageParams);
     }
     try {
-      links = (List<IDomainLink>) q.execute(domainId, new Integer(type));
+      links = (List<IDomainLink>) q.execute(domainId, linkType);
       links = (List<IDomainLink>) pm.detachCopyAll(links);
       if (links != null && !links.isEmpty()) {
         links.size(); // ensure retrieval
@@ -244,7 +292,7 @@ public class DomainsServiceImpl extends ServiceImpl implements DomainsService {
     Query q = pm.newQuery(queryStr);
     QueryUtil.setPageParams(q, new PageParams(null, 1));
     try {
-      List<String> keys = (List<String>) q.execute(domainId, new Integer(linkType));
+      List<String> keys = (List<String>) q.execute(domainId, linkType);
       xLogger.fine("Got keys: {0}", keys);
       has = keys != null && !keys.isEmpty();
     } finally {
@@ -268,7 +316,7 @@ public class DomainsServiceImpl extends ServiceImpl implements DomainsService {
     if (domainLinks == null || domainLinks.isEmpty()) {
       throw new IllegalArgumentException("Invalid domain links list");
     }
-    List<IDomainLink> allLinks = new ArrayList<IDomainLink>();
+    List<IDomainLink> allLinks = new ArrayList<>();
     // Check if key and date are set, if not set those
     Date now = new Date();
     Iterator<IDomainLink> it = domainLinks.iterator();
@@ -370,7 +418,7 @@ public class DomainsServiceImpl extends ServiceImpl implements DomainsService {
 
     PersistenceManager pm = PMF.get().getPersistenceManager();
     Iterator<String> it = keys.iterator();
-    List<IDomainLink> links = new ArrayList<IDomainLink>(keys.size());
+    List<IDomainLink> links = new ArrayList<>(keys.size());
     String key = null;
     try {
       while (it.hasNext()) {
@@ -412,7 +460,7 @@ public class DomainsServiceImpl extends ServiceImpl implements DomainsService {
       String reverseKey = domainLink.getLinkedDomainId() + ".0." + domainLink.getDomainId();
       IDomainLink link = JDOUtils.getObjectById(IDomainLink.class, domainLink.getKey(), pm);
       IDomainLink rLink = JDOUtils.getObjectById(IDomainLink.class, reverseKey, pm);
-      List<IDomainLink> links = new ArrayList<IDomainLink>(2);
+      List<IDomainLink> links = new ArrayList<>(2);
       links.add(rLink);
       links.add(link);
       pm.deletePersistentAll(links);
@@ -585,21 +633,15 @@ public class DomainsServiceImpl extends ServiceImpl implements DomainsService {
 
     PersistenceManager pm = PMF.get().getPersistenceManager();
     try {
-      // Iterate over the domains and delete them
-      Iterator<Long> it = domainIds.iterator();
-      while (it.hasNext()) {
-        Long dId = it.next();
+      for (Long dId : domainIds) {
         IDomain d = JDOUtils.getObjectById(IDomain.class, dId);
-        // Delete all related entities of the domain
         EntityRemover
             .removeRelatedEntities(dId, JDOUtils.getImplClass(IDomain.class).getName(), dId, true);
-        // Remove the domain
         pm.deletePersistent(d);
       }
     } catch (Exception e) {
       throw new ServiceException(e.getMessage());
     } finally {
-      // Close PM
       pm.close();
     }
 
@@ -678,7 +720,7 @@ public class DomainsServiceImpl extends ServiceImpl implements DomainsService {
         "SELECT ldId FROM " + JDOUtils.getImplClass(IDomainLink.class).getName()
             + " WHERE ty == tyParam PARAMETERS Integer tyParam";
     Query q = pm.newQuery(queryStr);
-    List<Long> dIds = new ArrayList<Long>();
+    List<Long> dIds = new ArrayList<>();
     try {
       List<Long> results = (List<Long>) q.execute(new Integer(IDomainLink.TYPE_CHILD));
       dIds.addAll(results);
@@ -694,33 +736,18 @@ public class DomainsServiceImpl extends ServiceImpl implements DomainsService {
     return dIds;
   }
 
-  @Override
-  public void init(Services services) throws ServiceException {
-  }
-
-  @Override
-  public void destroy() throws ServiceException {
-  }
-
-  @Override
-  public Class<? extends Service> getInterface() {
-    return DomainsServiceImpl.class;
-  }
-
   // Post-commit tasks, after a domain link is added
   private void domainLinksPostCommitTasks(List<IDomainLink> links, IDomainPermission permission)
       throws ServiceException, TaskSchedulingException {
     xLogger.fine("Entered postCommitTasks");
 
     if (permission == null || links == null || links.isEmpty()) {
-      return; // do nothing
+      return;
     }
-    // Get the list of linked domain Ids
     Long domainId = links.get(0).getDomainId();
-    List<Long> linkedDomainIds = new ArrayList<Long>(links.size());
-    Iterator<IDomainLink> it = links.iterator();
-    while (it.hasNext()) {
-      linkedDomainIds.add(it.next().getLinkedDomainId());
+    List<Long> linkedDomainIds = new ArrayList<>(links.size());
+    for (IDomainLink link : links) {
+      linkedDomainIds.add(link.getLinkedDomainId());
     }
     // Inherit materials, if needed
     if (permission.isCopyMaterials()) {
@@ -736,9 +763,7 @@ public class DomainsServiceImpl extends ServiceImpl implements DomainsService {
     }
     // Copy configuration, if needed
     if (permission.isCopyConfiguration()) {
-      it = links.iterator();
-      while (it.hasNext()) {
-        IDomainLink dl = it.next();
+      for (IDomainLink dl : links) {
         try {
           copyConfiguration(domainId, dl.getLinkedDomainId());
         } catch (Exception e) {
@@ -781,7 +806,7 @@ public class DomainsServiceImpl extends ServiceImpl implements DomainsService {
   public void copyConfiguration(Long domainId, Long linkedDomainId) throws TaskSchedulingException {
     xLogger.fine("Entered copyConfiguration");
     CopyConfigModel ccm = new CopyConfigModel(domainId, linkedDomainId);
-    Map<String, String> params = new HashMap<String, String>();
+    Map<String, String> params = new HashMap<>();
     params.put("action", "copydomainconfig");
     params.put("data", new Gson().toJson(ccm));
     // Schedule task
@@ -906,6 +931,8 @@ public class DomainsServiceImpl extends ServiceImpl implements DomainsService {
       }
     } catch (Exception e) {
       xLogger.severe("Error in fetching list of domains", e);
+      final Locale locale = ThreadLocalUtil.get().getSecureUserDetails().getLocale();
+      ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
       throw new InvalidServiceException(backendMessages.getString("domains.fetch.error"));
     } finally {
       try {
@@ -929,6 +956,8 @@ public class DomainsServiceImpl extends ServiceImpl implements DomainsService {
       domains = (List<IDomain>) query.execute();
       domains = (List<IDomain>) pm.detachCopyAll(domains);
     } catch (Exception e) {
+      final Locale locale = ThreadLocalUtil.get().getSecureUserDetails().getLocale();
+      ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
       xLogger.severe("Error while fetching root domains", e);
       throw new InvalidServiceException(backendMessages.getString("domains.fetch.error"));
     } finally {

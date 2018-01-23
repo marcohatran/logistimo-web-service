@@ -31,6 +31,7 @@ import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.OptimizerConfig;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.entity.IKioskLink;
@@ -40,8 +41,6 @@ import com.logistimo.events.entity.IEvent;
 import com.logistimo.exception.LogiException;
 import com.logistimo.inventory.dao.IInvntryDao;
 import com.logistimo.inventory.dao.ITransDao;
-import com.logistimo.inventory.dao.impl.InvntryDao;
-import com.logistimo.inventory.dao.impl.TransDao;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.IInvntryBatch;
 import com.logistimo.inventory.entity.IInvntryEvntLog;
@@ -56,7 +55,6 @@ import com.logistimo.pagination.Results;
 import com.logistimo.services.DuplicationException;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.cache.MemcacheService;
 import com.logistimo.services.utils.ConfigUtil;
 import com.logistimo.utils.BigUtil;
@@ -109,8 +107,6 @@ public class TransactionUtil {
   // Cache-key Prefix
   private static final String TRANSACTION_CHECKSUM_KEY_PREFIX = "trnschk.";
   private static final int FULLYEAR_LENGTH = 4;
-  private static IInvntryDao invntryDao = new InvntryDao();
-  private static ITransDao transDao = new TransDao();
 
   public static boolean deduplicateBySaveTimePartial(String saveTime, String userId,
                                                      String kioskId, String partialId) {
@@ -212,10 +208,11 @@ public class TransactionUtil {
   }
 
   // Get the warning text for stock events
-  public static String getStockEventWarning(IInvntry inv, Locale locale, String timezone) {
+  public static String getStockEventWarning(IInvntry inv, Locale locale) {
     String txt = "";
     int eventType = inv.getStockEvent();
     if (eventType != -1) {
+      IInvntryDao invntryDao = StaticApplicationContext.getBean(IInvntryDao.class);
       IInvntryEvntLog invEventLog = invntryDao.getInvntryEvntLog(inv);
       if (invEventLog != null && eventType == invEventLog.getType()) {
         txt =
@@ -339,6 +336,7 @@ public class TransactionUtil {
     transaction.setType(ITransaction.TYPE_PHYSICALCOUNT);
     transaction.setQuantity(quantity);
     transaction.setTimestamp(trnsTimestamp);
+    ITransDao transDao = StaticApplicationContext.getBean(ITransDao.class);
     transDao.setKey(transaction);
     ims.updateInventoryTransaction(domainId, transaction);
   }
@@ -349,7 +347,7 @@ public class TransactionUtil {
     xLogger.fine("Entering getDefaultVendor, domainId: {0}, kioskId: {1}, vendorId: {2}", domainId,
         kioskId, vendorId);
     // Get the service
-    EntitiesService as = Services.getService(EntitiesServiceImpl.class);
+    EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
     if (kioskId == null) {
       return null;
     }
@@ -382,13 +380,7 @@ public class TransactionUtil {
       return false;
     }
     int index = dateStr.lastIndexOf('/');
-    if (index == -1) {
-      return false;
-    }
-    if (dateStr.substring(index + 1).length() != FULLYEAR_LENGTH) {
-      return false;
-    }
-    return true;
+    return index != -1 && dateStr.substring(index + 1).length() == FULLYEAR_LENGTH;
   }
 
   public static String getDisplayName(String transType, Locale locale) {
@@ -490,9 +482,11 @@ public class TransactionUtil {
       return 0;
     }
     try {
-      EntitiesService es = Services.getService(EntitiesServiceImpl.class);
-      MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
-      InventoryManagementService ims = Services.getService(InventoryManagementServiceImpl.class);
+      EntitiesService es = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
+      MaterialCatalogService mcs = StaticApplicationContext.getBean(
+          MaterialCatalogServiceImpl.class);
+      InventoryManagementService ims = StaticApplicationContext.getBean(
+          InventoryManagementServiceImpl.class);
       Long kid = transactions.get(0).getKioskId();
       Long mid = transactions.get(0).getMaterialId();
       IKiosk k = es.getKiosk(kid, false);

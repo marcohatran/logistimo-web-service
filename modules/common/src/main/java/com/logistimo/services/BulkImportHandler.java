@@ -23,10 +23,10 @@
 
 package com.logistimo.services;
 
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entity.IUploaded;
-
-import com.logistimo.services.impl.UploadServiceImpl;
 import com.logistimo.logger.XLog;
+import com.logistimo.services.impl.UploadServiceImpl;
 
 /**
  * Created by charan on 25/09/14.
@@ -39,7 +39,7 @@ public class BulkImportHandler {
     xLogger.info("Finalizing bulk-import MR job {0}...", jobId);
     try {
       // Get the Uploaded object
-      UploadService svc = Services.getService(UploadServiceImpl.class);
+      UploadService svc = StaticApplicationContext.getBean(UploadServiceImpl.class);
       IUploaded u = svc.getUploadedByJobId(jobId);
       if (u != null) {
         u.setJobStatus(IUploaded.STATUS_DONE);

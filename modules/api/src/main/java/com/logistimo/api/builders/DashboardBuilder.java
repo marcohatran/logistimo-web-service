@@ -34,12 +34,12 @@ import com.logistimo.dao.JDOUtils;
 import com.logistimo.dashboards.entity.IDashboard;
 import com.logistimo.events.entity.IEvent;
 import com.logistimo.exception.SystemException;
-import com.logistimo.services.Services;
 import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
 import com.logistimo.utils.LocalDateUtil;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -56,13 +56,23 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author Mohan Raja
  */
+
+@Component
 public class DashboardBuilder {
 
   public static final String MATERIAL_BD = "MAT_BD";
+
+  private UsersService usersService;
+
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
+  }
 
   public IDashboard buildDashboard(DashboardModel model, String userName) {
     IDashboard db = JDOUtils.createInstance(IDashboard.class);
@@ -74,9 +84,8 @@ public class DashboardBuilder {
 
   public List<DashboardModel> buildDashboardModelList(Collection<IDashboard> dbList) {
     List<DashboardModel> models = new ArrayList<>(dbList.size());
-    for (IDashboard iDashboard : dbList) {
-      models.add(buildDashboardModel(iDashboard, false));
-    }
+    models.addAll(dbList.stream().map(iDashboard -> buildDashboardModel(iDashboard, false))
+        .collect(Collectors.toList()));
     return models;
   }
 
@@ -85,8 +94,7 @@ public class DashboardBuilder {
     model.nm = db.getName();
     if (deep) {
       try {
-        UsersService as = Services.getService(UsersServiceImpl.class);
-        model.cByNm = as.getUserAccount(db.getCreatedBy()).getFullName();
+        model.cByNm = usersService.getUserAccount(db.getCreatedBy()).getFullName();
         model.cBy = db.getCreatedBy();
         model.cOn = db.getCreatedOn();
       } catch (SystemException ignored) {
@@ -416,7 +424,7 @@ public class DashboardBuilder {
               : ("t".equals(resType) ? res.getString("STAT") : "a");
       if (!keys.contains(type)) {
         keys.add(type);
-        inv.put(type, new HashMap<String, DashboardChartModel>());
+        inv.put(type, new HashMap<>());
       }
       final Map<String, DashboardChartModel> invByType = inv.get(type);
       final String filterColValue = res.getString(filterCol);
@@ -500,9 +508,9 @@ public class DashboardBuilder {
         List<DashboardChartModel> v = value.get(date);
         if (domData.get(date) == null) {
           List<DashboardChartModel> def = new ArrayList<>(3);
-          for (DashboardChartModel model : v) {
-            def.add(new DashboardChartModel(model.value, 0D, model.num, model.den));
-          }
+          def.addAll(v.stream()
+              .map(model -> new DashboardChartModel(model.value, 0D, model.num, model.den))
+              .collect(Collectors.toList()));
           domData.put(date, def);
         } else {
           List<DashboardChartModel> def = domData.get(date);
@@ -515,11 +523,8 @@ public class DashboardBuilder {
       }
     }
     for (List<DashboardChartModel> d : domData.values()) {
-      for (DashboardChartModel model : d) {
-        if (model.den > 0) {
-          model.per = (double) model.num / model.den * 100;
-        }
-      }
+      d.stream().filter(model -> model.den > 0).forEach(model ->
+          model.per = (double) model.num / model.den * 100);
     }
     return domData;
   }

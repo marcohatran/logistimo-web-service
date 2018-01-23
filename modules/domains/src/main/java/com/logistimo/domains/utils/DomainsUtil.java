@@ -25,6 +25,7 @@ package com.logistimo.domains.utils;
 
 import com.logistimo.AppFactory;
 import com.logistimo.constants.MethodNameConstants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.domains.ICrossDomain;
 import com.logistimo.domains.IMultiDomain;
 import com.logistimo.domains.IOverlappedDomain;
@@ -35,15 +36,14 @@ import com.logistimo.domains.service.DomainsService;
 import com.logistimo.domains.service.impl.DomainsServiceImpl;
 import com.logistimo.logger.XLog;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.jdo.PersistenceManager;
 
@@ -70,11 +70,9 @@ public class DomainsUtil {
     }
     List<Long> curDomainIds = object.getDomainIds();
     if (curDomainIds == null) {
-      curDomainIds = new ArrayList<Long>();
+      curDomainIds = new ArrayList<>();
     }
-    Iterator<Long> it = domainIds.iterator();
-    while (it.hasNext()) {
-      Long dId = it.next();
+    for (Long dId : domainIds) {
       if (!curDomainIds.contains(dId)) {
         curDomainIds.add(dId);
       }
@@ -131,7 +129,7 @@ public class DomainsUtil {
    * Remove an object from a given domain; if persistence manager is given, then it is removed permanently
    * Returns the list of domains from which this object was removed
    */
-  public static List<Long> removeFromDomain(IMultiDomain object, Long domainId,
+  public static List<Long> removeFromDomain(IMultiDomain object,
                                             PersistenceManager pm) throws Exception {
     xLogger.fine("Entered removeFromDomain");
     List<Long> domainIds = getMultiDomainIds(object);
@@ -139,10 +137,7 @@ public class DomainsUtil {
     if (domainIds == null || domainIds.isEmpty()) {
       return null;
     }
-    Iterator<Long> it = domainIds.iterator();
-    while (it.hasNext()) {
-      object.removeDomainId(it.next());
-    }
+    domainIds.forEach(object::removeDomainId);
     // Delete the object, if not part of any domain
     if ((object.getDomainIds() == null || object.getDomainIds().isEmpty())
         && pm != null) // i.e. object is part of no domain
@@ -156,17 +151,15 @@ public class DomainsUtil {
   // Add an object to all linked domains
   private static List<Long> getLinkedDomains(Long domainId, int linkType) throws ServiceException {
     xLogger.fine("Entered addOrRemoveFromLinkedDomains: domainId: {0}", domainId);
-    List<Long> domainIds = new ArrayList<Long>();
-    DomainsService ds = Services.getService(DomainsServiceImpl.class);
+    List<Long> domainIds = new ArrayList<>();
+    DomainsService ds = StaticApplicationContext.getBean(DomainsServiceImpl.class);
     List<IDomainLink>
         domainLinks =
         ds.getAllDomainLinks(domainId, linkType); // entire sub-tree (upwards or downwards)
     // Add/remove the object to/from all parent domains
     if (domainLinks != null && !domainLinks.isEmpty()) {
-      Iterator<IDomainLink> it = domainLinks.iterator();
-      while (it.hasNext()) {
-        domainIds.add(it.next().getLinkedDomainId());
-      }
+      domainIds.addAll(
+          domainLinks.stream().map(IDomainLink::getLinkedDomainId).collect(Collectors.toList()));
     }
     xLogger.fine("Exiting addOrRemoveFromLinkedDomains");
     return domainIds;
@@ -182,7 +175,7 @@ public class DomainsUtil {
 
   // Get domains to add to or remove from for a given type of multidomain object
   private static List<Long> getMultiDomainIds(IMultiDomain object) throws ServiceException {
-    Set<Long> domainIds = new LinkedHashSet<Long>();
+    Set<Long> domainIds = new LinkedHashSet<>();
     Long sourceDomainId = object.getDomainId();
     domainIds.add(sourceDomainId);
     if (object instanceof ICrossDomain) { // it is a cross-domain object (like KioskLink); add it both the domains
@@ -227,13 +220,13 @@ public class DomainsUtil {
    */
   public static Set<Long> getDomainLinks(Long domainId, int type, boolean includeSource)
       throws ServiceException {
-    DomainsService as = Services.getService(DomainsServiceImpl.class);
+    DomainsService as = StaticApplicationContext.getBean(DomainsServiceImpl.class);
     List<IDomainLink> domainLinks = as.getAllDomainLinks(domainId, type);
     Set<Long> parents;
     if (domainLinks == null) {
       parents = new HashSet<>(0);
     } else {
-      parents = new HashSet<Long>(domainLinks.size());
+      parents = new HashSet<>(domainLinks.size());
     }
     if (includeSource) {
       parents.add(domainId);
@@ -265,7 +258,7 @@ public class DomainsUtil {
    * @param includeSource whether {@code domainId} need to be added with parents or not.
    * @return all parents/ancestors of {@code domainId}.
    */
-  public static Set<Long> getDomainChildren(Long domainId, boolean includeSource)
+  public static Set<Long>  getDomainChildren(Long domainId, boolean includeSource)
       throws ServiceException {
     return getDomainLinks(domainId, IDomainLink.TYPE_CHILD, includeSource);
   }
@@ -278,7 +271,7 @@ public class DomainsUtil {
    * @return available status of domain link.
    */
   public static boolean isLinkAvailable(Long domainId, int linkType) throws ServiceException {
-    DomainsService as = Services.getService(DomainsServiceImpl.class);
+    DomainsService as = StaticApplicationContext.getBean(DomainsServiceImpl.class);
     List<IDomainLink> domainLinks = as.getDomainLinks(domainId, linkType, 1);
     return domainLinks != null;
   }
@@ -292,11 +285,11 @@ public class DomainsUtil {
    */
   public static Set<Long> extractLeafDomains(List<Long> domainIds, Long ignoreDomainId)
       throws ServiceException {
-    Set<Long> nonParentDomains = new HashSet<Long>(domainIds);
+    Set<Long> nonParentDomains = new HashSet<>(domainIds);
     if (ignoreDomainId != null) {
       nonParentDomains.removeAll(getDomainParents(ignoreDomainId, true));
     }
-    Set<Long> leafDomains = new HashSet<Long>(nonParentDomains);
+    Set<Long> leafDomains = new HashSet<>(nonParentDomains);
     for (Long nonParentDomain : nonParentDomains) {
       if (leafDomains.contains(nonParentDomain)) {
         leafDomains.removeAll(getDomainParents(nonParentDomain, false));
@@ -326,13 +319,13 @@ public class DomainsUtil {
         (List<Long>) o.getClass().getMethod(MethodNameConstants.GET_DOMAIN_IDS).invoke(o);
     Set<Long> niDomains = getDomainParents(domainId, true);
     domainIds.removeAll(niDomains);
-    Set<Long> allDomains = new HashSet<Long>();
+    Set<Long> allDomains = new HashSet<>();
     for (Long id : domainIds) {
       if (!allDomains.contains(id)) {
         allDomains.addAll(getDomainParents(id, true));
       }
     }
     niDomains.removeAll(allDomains);
-    return new ArrayList<Long>(niDomains);
+    return new ArrayList<>(niDomains);
   }
 }

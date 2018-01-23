@@ -34,24 +34,23 @@ import com.logistimo.assets.service.impl.AssetManagementServiceImpl;
 import com.logistimo.config.models.AssetSystemConfig;
 import com.logistimo.config.models.ConfigurationException;
 import com.logistimo.config.models.DomainConfig;
+import com.logistimo.constants.CharacterConstants;
+import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.entity.UserToKiosk;
-import com.logistimo.tags.TagUtil;
+import com.logistimo.logger.XLog;
+import com.logistimo.services.Resources;
+import com.logistimo.services.ServiceException;
+import com.logistimo.services.impl.PMF;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.users.service.impl.UsersServiceImpl;
-
-import org.apache.commons.lang.StringEscapeUtils;
-import com.logistimo.services.Resources;
-import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
-import com.logistimo.services.impl.PMF;
 import com.logistimo.utils.BigUtil;
-import com.logistimo.constants.CharacterConstants;
-import com.logistimo.constants.Constants;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.StringUtil;
-import com.logistimo.logger.XLog;
+
+import org.apache.commons.lang.StringEscapeUtils;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -181,9 +180,8 @@ public class KioskExportHandler implements IExportHandler {
           throw new ConfigurationException();
         }
 
-        AssetManagementService
-            ams =
-            Services.getService(AssetManagementServiceImpl.class, locale);
+        AssetManagementService ams =
+            StaticApplicationContext.getBean(AssetManagementServiceImpl.class);
         StringBuilder ksb = constructKioskDetails(kiosk);
         List<Integer> monitoredAssets = AssetUtil.getAssetsByType(IAsset.MONITORED_ASSET);
 
@@ -224,7 +222,7 @@ public class KioskExportHandler implements IExportHandler {
       String cbFullName = null, ubFullName = null, cbCustomID = null, ubCustomID = null;
       try {
         // Get services
-        UsersService as = Services.getService(UsersServiceImpl.class);
+        UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
         if (kiosk.getRegisteredBy() != null) {
           try {
             IUserAccount cbUser = as.getUserAccount(kiosk.getRegisteredBy());

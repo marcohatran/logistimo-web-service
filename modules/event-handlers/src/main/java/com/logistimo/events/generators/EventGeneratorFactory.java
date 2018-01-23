@@ -28,9 +28,8 @@ package com.logistimo.events.generators;
 
 import com.logistimo.assets.entity.IAsset;
 import com.logistimo.assets.entity.IAssetRelation;
-import com.logistimo.dao.JDOUtils;
-
 import com.logistimo.assets.entity.IAssetStatus;
+import com.logistimo.dao.JDOUtils;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.entity.IPoolGroup;
 import com.logistimo.inventory.entity.IInvntry;

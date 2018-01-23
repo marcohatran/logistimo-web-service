@@ -32,125 +32,127 @@
     <!-- Output to jar format -->
     <packaging>jar</packaging>
 
-    <version>2.6.2</version>
+    <version>${build.version}</version>
 
     <name>api</name>
-
+    <properties>
+        <build.version>2.7.0</build.version>
+    </properties>
     <dependencies>
         <dependency>
             <groupId>com.logistimo</groupId>
             <artifactId>logistimo-common</artifactId>
-            <version>2.6.2</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.logistimo</groupId>
             <artifactId>logistimo-media</artifactId>
-            <version>2.6.2</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.logistimo</groupId>
             <artifactId>logistimo-customreports</artifactId>
-            <version>2.6.2</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.logistimo</groupId>
             <artifactId>logistimo-core</artifactId>
-            <version>2.6.2</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.logistimo</groupId>
             <artifactId>logistimo-exports</artifactId>
-            <version>2.6.2</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.logistimo</groupId>
             <artifactId>logistimo-auth</artifactId>
-            <version>2.6.2</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.logistimo</groupId>
             <artifactId>logistimo-optimization</artifactId>
-            <version>2.6.2</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.logistimo</groupId>
             <artifactId>logistimo-approvals-client</artifactId>
-            <version>2.6.2</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.logistimo</groupId>
             <artifactId>logistimo-predictions</artifactId>
-            <version>2.6.2</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.logistimo</groupId>
             <artifactId>logistimo-reports</artifactId>
-            <version>2.6.2</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.logistimo</groupId>
             <artifactId>logistimo-inventory</artifactId>
-            <version>2.6.2</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.logistimo</groupId>
             <artifactId>logistimo-config</artifactId>
-            <version>2.6.2</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.logistimo</groupId>
             <artifactId>logistimo-materials</artifactId>
-            <version>2.6.2</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.logistimo</groupId>
             <artifactId>logistimo-orders</artifactId>
-            <version>2.6.2</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.logistimo</groupId>
             <artifactId>logistimo-entities</artifactId>
-            <version>2.6.2</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.logistimo</groupId>
             <artifactId>logistimo-accounting</artifactId>
-            <version>2.6.2</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.logistimo</groupId>
             <artifactId>logistimo-activity</artifactId>
-            <version>2.6.2</version>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.logistimo</groupId>
+            <artifactId>logistimo-mnltransactions</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.logistimo</groupId>
+            <artifactId>logistimo-bulkuploads</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.logistimo</groupId>
+            <artifactId>logistimo-dashboards</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.logistimo</groupId>
+            <artifactId>logistimo-bulletinboard</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.logistimo</groupId>
+            <artifactId>logistimo-collaboration</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.velocity</groupId>
             <artifactId>velocity</artifactId>
             <version>1.7</version>
-        </dependency>
-        <dependency>
-            <groupId>com.logistimo</groupId>
-            <artifactId>logistimo-mnltransactions</artifactId>
-            <version>2.6.2</version>
-        </dependency>
-        <dependency>
-            <groupId>com.logistimo</groupId>
-            <artifactId>logistimo-bulkuploads</artifactId>
-            <version>2.6.2</version>
-        </dependency>
-        <dependency>
-            <groupId>com.logistimo</groupId>
-            <artifactId>logistimo-dashboards</artifactId>
-            <version>2.6.2</version>
-        </dependency>
-        <dependency>
-            <groupId>com.logistimo</groupId>
-            <artifactId>logistimo-bulletinboard</artifactId>
-            <version>2.6.2</version>
-        </dependency>
-        <dependency>
-            <groupId>com.logistimo</groupId>
-            <artifactId>logistimo-collaboration</artifactId>
-            <version>2.6.2</version>
         </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>

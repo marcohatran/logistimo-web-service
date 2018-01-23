@@ -28,13 +28,12 @@ import com.logistimo.api.models.HUModel;
 import com.logistimo.api.util.SearchUtil;
 import com.logistimo.auth.GenericAuthoriser;
 import com.logistimo.auth.utils.SecurityUtils;
-import com.logistimo.auth.utils.SessionMgr;
 import com.logistimo.exception.InvalidDataException;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IHandlingUnit;
-import com.logistimo.materials.service.impl.HandlingUnitServiceImpl;
+import com.logistimo.materials.service.IHandlingUnitService;
 import com.logistimo.models.ICounter;
 import com.logistimo.pagination.Navigator;
 import com.logistimo.pagination.PageParams;
@@ -42,14 +41,13 @@ import com.logistimo.pagination.Results;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
 import com.logistimo.utils.Counter;
 import com.logistimo.utils.MsgUtil;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -72,29 +70,44 @@ public class HandlingUnitController {
 
   private static final XLog xLogger = XLog.getLog(HandlingUnitController.class);
 
-  HUBuilder builder = new HUBuilder();
+  private HUBuilder huBuilder;
+  private IHandlingUnitService handlingUnitService;
+  private UsersService usersService;
+
+  @Autowired
+  public void setHuBuilder(HUBuilder huBuilder) {
+    this.huBuilder = huBuilder;
+  }
+
+  @Autowired
+  public void setHandlingUnitService(IHandlingUnitService handlingUnitService) {
+    this.handlingUnitService = handlingUnitService;
+  }
+
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
+  }
 
   @RequestMapping(value = "/create", method = RequestMethod.POST)
   public
   @ResponseBody
-  String createHandlingUnit(@RequestBody HUModel huModel, HttpServletRequest request) {
+  String createHandlingUnit(@RequestBody HUModel huModel) {
     if (huModel == null) {
       throw new InvalidDataException("Error while creating handing unit.");
     }
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
-    Locale locale = user.getLocale();
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
+    Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    if (!GenericAuthoriser.authoriseAdmin(request)) {
+    if (!GenericAuthoriser.authoriseAdmin()) {
       throw new UnauthorizedException(backendMessages.getString("permission.denied"));
     }
-    HandlingUnitServiceImpl handlingUnitService;
-    IHandlingUnit hu = builder.buildHandlingUnit(huModel);
-    hu.setCreatedBy(user.getUsername());
-    hu.setUpdatedBy(user.getUsername());
+    IHandlingUnit hu = huBuilder.buildHandlingUnit(huModel);
+    hu.setCreatedBy(sUser.getUsername());
+    hu.setUpdatedBy(sUser.getUsername());
     try {
-      handlingUnitService = Services.getService(HandlingUnitServiceImpl.class, locale);
       if (hu.getName() != null) {
-        long domainId = SessionMgr.getCurrentDomain(request.getSession(), user.getUsername());
+        long domainId = sUser.getCurrentDomainId();
         IHandlingUnit temp = handlingUnitService.getHandlingUnitByName(domainId, hu.getName());
         if (temp != null) {
           throw new InvalidDataException("Handling unit " + hu.getName() + " " + backendMessages
@@ -102,7 +115,7 @@ public class HandlingUnitController {
         } else {
           handlingUnitService.addHandlingUnit(domainId, hu);
           xLogger.info("AUDITLOG\t {0}\t {1}\t HANDLING UNIT\t CREATE \t {2} \t {3}", domainId,
-              user.getUsername(), hu.getId(), hu.getName());
+              sUser.getUsername(), hu.getId(), hu.getName());
         }
       } else {
         throw new InvalidDataException("No handling unit name");
@@ -124,12 +137,9 @@ public class HandlingUnitController {
                            @RequestParam(defaultValue = PageParams.DEFAULT_SIZE_STR) int size,
                            @RequestParam(required = false) String q,
                            HttpServletRequest request) {
-    SecureUserDetails user = SecurityUtils.getUserDetails(request);
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), user.getUsername());
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
+    Long domainId = sUser.getCurrentDomainId();
     try {
-      HandlingUnitServiceImpl
-          handlingUnitService =
-          Services.getService(HandlingUnitServiceImpl.class, user.getLocale());
       Navigator
           navigator =
           new Navigator(request.getSession(), "HandlingUnitController.getHandlingUnits", offset,
@@ -151,7 +161,7 @@ public class HandlingUnitController {
       }
       results.setOffset(offset);
       navigator.setResultParams(results);
-      return builder.buildHandlingUnitModelList(results, user);
+      return huBuilder.buildHandlingUnitModelList(results);
     } catch (ServiceException e) {
       xLogger.warn("Error fetching handling unit details for domain {0}", domainId, e);
       throw new InvalidServiceException(
@@ -162,32 +172,26 @@ public class HandlingUnitController {
   @RequestMapping(value = "/hu/{huId}", method = RequestMethod.GET)
   public
   @ResponseBody
-  HUModel getHandlingUnitById(@PathVariable Long huId, HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
-    Locale locale = sUser.getLocale();
+  HUModel getHandlingUnitById(@PathVariable Long huId) {
     try {
-      HandlingUnitServiceImpl
-          handlingUnitService =
-          Services.getService(HandlingUnitServiceImpl.class, locale);
       IHandlingUnit hu = handlingUnitService.getHandlingUnit(huId);
 
       IUserAccount cb = null, ub = null;
-      UsersService as = Services.getService(UsersServiceImpl.class, locale);
       if (hu.getCreatedBy() != null) {
         try {
-          cb = as.getUserAccount(hu.getCreatedBy());
+          cb = usersService.getUserAccount(hu.getCreatedBy());
         } catch (Exception ignored) {
           // do nothing
         }
       }
       if (hu.getUpdatedBy() != null) {
         try {
-          ub = as.getUserAccount(hu.getUpdatedBy());
+          ub = usersService.getUserAccount(hu.getUpdatedBy());
         } catch (Exception ignored) {
           // do nothing
         }
       }
-      return builder.buildHUModel(hu, cb, ub, sUser);
+      return huBuilder.buildHUModel(hu, cb, ub);
     } catch (ServiceException e) {
       xLogger.warn("Error fetching handling unit details for {0}", huId, e);
       throw new InvalidServiceException("Error fetching handling unit details for " + huId);
@@ -197,20 +201,17 @@ public class HandlingUnitController {
   @RequestMapping(value = "/update", method = RequestMethod.POST)
   public
   @ResponseBody
-  String updateHandlingUnit(@RequestBody HUModel huModel, HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityUtils.getUserDetails(request);
+  String updateHandlingUnit(@RequestBody HUModel huModel) {
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    if (!GenericAuthoriser.authoriseAdmin(request)) {
+    if (!GenericAuthoriser.authoriseAdmin()) {
       throw new UnauthorizedException(backendMessages.getString("permission.denied"));
     }
-    IHandlingUnit hu = builder.buildHandlingUnit(huModel);
+    IHandlingUnit hu = huBuilder.buildHandlingUnit(huModel);
     hu.setUpdatedBy(sUser.getUsername());
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
+    Long domainId = sUser.getCurrentDomainId();
     try {
-      HandlingUnitServiceImpl
-          handlingUnitService =
-          Services.getService(HandlingUnitServiceImpl.class, locale);
       if (hu.getName() != null) {
         handlingUnitService.updateHandlingUnit(hu, domainId);
         xLogger.info("AUDITLOG\t{0}\t{1}\tHANDLING UNIT\t UPDATE\t{2}\t{3}", domainId,

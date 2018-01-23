@@ -27,7 +27,6 @@ import com.logistimo.api.models.UserDeviceModel;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
 import com.logistimo.services.ObjectNotFoundException;
-import com.logistimo.services.Service;
 import com.logistimo.services.ServiceException;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.entity.IUserDevice;
@@ -40,7 +39,7 @@ import java.util.Set;
 /**
  * Created by charan on 04/03/17.
  */
-public interface UsersService extends Service {
+public interface UsersService {
 
   /**
    * Check to see if a user id exists in the system or not.

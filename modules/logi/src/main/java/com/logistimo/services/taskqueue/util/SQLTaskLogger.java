@@ -23,14 +23,13 @@
 
 package com.logistimo.services.taskqueue.util;
 
+import com.logistimo.entity.ITask;
 import com.logistimo.entity.Task;
+import com.logistimo.logger.XLog;
+import com.logistimo.services.impl.PMF;
 import com.logistimo.services.taskqueue.Queue;
 import com.logistimo.services.taskqueue.QueueFactory;
 import com.logistimo.services.taskqueue.TaskOptions;
-
-import com.logistimo.entity.ITask;
-import com.logistimo.services.impl.PMF;
-import com.logistimo.logger.XLog;
 
 import java.util.Date;
 

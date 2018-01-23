@@ -33,6 +33,7 @@ import com.logistimo.config.entity.IConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
 import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
 import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.domains.entity.IDomain;
 import com.logistimo.entities.entity.IKiosk;
@@ -45,7 +46,6 @@ import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.utils.QueryUtil;
@@ -123,7 +123,7 @@ public class SearchUtil {
     if (results != null && user != null
         && SecurityUtil.compareRoles(user.getRole(), SecurityConstants.ROLE_DOMAINOWNER) < 0) {
       List<IKiosk> kiosks = results.getResults();
-      EntitiesService entitiesService = Services.getService(EntitiesServiceImpl.class);
+      EntitiesService entitiesService = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
       Results entityResults = entitiesService.getKiosksForUser(user, null, null);
       if(entityResults.getNumFound() <= 0) {
         return null;
@@ -190,7 +190,7 @@ public class SearchUtil {
     List<IKioskLink> links = null;
     String cursor = null;
     try {
-      Map<String, Object> params = new HashMap<String, Object>();
+      Map<String, Object> params = new HashMap<>();
       params.put("kioskIdParam", kioskId);
       params.put("linkTypeParam", linkType);
       params.put("lknmParam1", nName);
@@ -257,7 +257,7 @@ public class SearchUtil {
     }
     // Execute query
     try {
-      List list = null;
+      List list;
       if (domainId != null) {
         list =
             (List) q.execute(queryString, (queryString + Constants.UNICODE_REPLACEANY), domainId);
@@ -283,9 +283,8 @@ public class SearchUtil {
 
   public static boolean isDistrictAvailable(String country, String state) {
     try {
-      ConfigurationMgmtService
-          cms =
-          Services.getService(ConfigurationMgmtServiceImpl.class, null);
+      ConfigurationMgmtService cms =
+          StaticApplicationContext.getBean(ConfigurationMgmtServiceImpl.class);
       IConfig c = cms.getConfiguration(IConfig.LOCATIONS);
       if (c != null && c.getConfig() != null) {
         String jsonString = c.getConfig();

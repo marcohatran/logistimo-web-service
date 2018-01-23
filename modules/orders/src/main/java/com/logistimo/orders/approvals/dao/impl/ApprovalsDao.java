@@ -34,13 +34,12 @@ import com.logistimo.orders.entity.IOrder;
 import com.logistimo.orders.entity.approvals.IOrderApprovalMapping;
 import com.logistimo.orders.entity.approvals.OrderApprovalMapping;
 import com.logistimo.orders.service.OrderManagementService;
-import com.logistimo.orders.service.impl.OrderManagementServiceImpl;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.impl.PMF;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
@@ -69,14 +68,20 @@ public class ApprovalsDao implements IApprovalsDao {
   private static final String APRROVAL_TYPE_PARAM = "approvalTypeParam";
   private ApprovalsBuilder builder = new ApprovalsBuilder();
 
+  private OrderManagementService orderManagementService;
+
+  @Autowired
+  public void setOrderManagementService(OrderManagementService orderManagementService) {
+    this.orderManagementService = orderManagementService;
+  }
+
   public IOrderApprovalMapping updateOrderApprovalMapping(CreateApprovalResponse approvalResponse,
                                                           Integer approvalType)
       throws ServiceException, ObjectNotFoundException {
     IOrderApprovalMapping orderApprovalMapping = null;
     if (approvalResponse != null) {
-      Long kioskId = null;
-      OrderManagementService oms = Services.getService(OrderManagementServiceImpl.class);
-      IOrder order = oms.getOrder(Long.parseLong(approvalResponse.getTypeId()));
+      Long kioskId;
+      IOrder order = orderManagementService.getOrder(Long.parseLong(approvalResponse.getTypeId()));
       if (approvalType.equals(IOrder.PURCHASE_ORDER)) {
         kioskId = order.getKioskId();
       } else {
@@ -179,7 +184,7 @@ public class ApprovalsDao implements IApprovalsDao {
 
   public IOrderApprovalMapping getOrderApprovalMapping(Long orderId, Integer approvalType) {
     IOrderApprovalMapping orderApprovalMapping = null;
-    List<IOrderApprovalMapping> results = null;
+    List<IOrderApprovalMapping> results;
     if (orderId != null) {
       PersistenceManager pm = null;
       Query query = null;
@@ -219,6 +224,7 @@ public class ApprovalsDao implements IApprovalsDao {
   /**
    * returns the total approvals against that order
    */
+  @Override
   public List<IOrderApprovalMapping> getTotalOrderApprovalMapping(Long orderId) {
     List<IOrderApprovalMapping> results = null;
     if (orderId != null) {
@@ -256,7 +262,7 @@ public class ApprovalsDao implements IApprovalsDao {
 
   public IOrderApprovalMapping getOrderApprovalMapping(Long orderId) {
     IOrderApprovalMapping orderApprovalMapping = null;
-    List<IOrderApprovalMapping> results = null;
+    List<IOrderApprovalMapping> results;
     if (orderId != null) {
       PersistenceManager pm = null;
       Query query = null;

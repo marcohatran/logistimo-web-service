@@ -23,30 +23,41 @@
 
 package com.logistimo.api.builders;
 
+import com.logistimo.api.models.UserMessageModel;
 import com.logistimo.communications.MessageHandlingException;
 import com.logistimo.communications.service.MessageService;
 import com.logistimo.entity.IMessageLog;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
-import com.logistimo.utils.LocalDateUtil;
-import com.logistimo.api.models.UserMessageModel;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
+import com.logistimo.utils.LocalDateUtil;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.Locale;
 
 /**
  * Created by mohan raja.
  */
+@Component
 public class UserMessageBuilder {
 
   final static int MAX_MESSAGE_SIZE = 160;
 
-  public UserMessageModel buildUserMessageModel(IMessageLog messageLog, UsersService as,
+  private UsersService usersService;
+
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
+  }
+
+  public UserMessageModel buildUserMessageModel(IMessageLog messageLog,
                                                 Locale locale, String userId, int offset,
                                                 String timezone)
       throws ServiceException, ObjectNotFoundException, MessageHandlingException {
-    IUserAccount u = as.getUserAccount(userId);
+    IUserAccount u = usersService.getUserAccount(userId);
     MessageService smsService = MessageService.getInstance(MessageService.SMS, u.getCountry());
     MessageService emailService = MessageService.getInstance(MessageService.EMAIL, u.getCountry());
 
@@ -54,13 +65,13 @@ public class UserMessageBuilder {
     IUserAccount user = null;
 
     try {
-      sender = as.getUserAccount(messageLog.getSenderId());
+      sender = usersService.getUserAccount(messageLog.getSenderId());
     } catch (Exception ignored) {
       // ignore
     }
 
     try {
-      user = as.getUserAccount(messageLog.getUserId());
+      user = usersService.getUserAccount(messageLog.getUserId());
     } catch (Exception ignored) {
       // ignore
     }

@@ -26,11 +26,10 @@ package com.logistimo.services.taskqueue;
 import com.google.gson.Gson;
 
 import com.logistimo.AppFactory;
-import com.logistimo.services.cache.RedisMemcacheService;
-import com.logistimo.services.utils.ConfigUtil;
-
 import com.logistimo.constants.Constants;
 import com.logistimo.logger.XLog;
+import com.logistimo.services.cache.RedisMemcacheService;
+import com.logistimo.services.utils.ConfigUtil;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -86,26 +85,5 @@ public class DelayScheduler {
   public void moveScheduledTasksToDefault(String domain) {
     redisMemcacheService.moveZRange(getQueuename(domain), getQueuename(Constants.DEFAULT));
   }
-
-    /*public static void main(String[] args) {
-        DelayScheduler scheduler = new DelayScheduler();
-        int i = 0;
-        do {
-            System.out.println("***************Iteration "+ i);
-            TaskOptions taskOptions = new TaskOptions("/testing"+i);
-            taskOptions.setEtaMillis(5000);
-            scheduler.schedule(taskOptions);
-            Set<String> data = scheduler.redisMemcacheService.getAndRemZRange(scheduler.queueName, System.currentTimeMillis());
-            for (String s : data) {
-                System.out.println("Task: " + s);
-            }
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        } while (i++ < 10);
-
-    }*/
 
 }

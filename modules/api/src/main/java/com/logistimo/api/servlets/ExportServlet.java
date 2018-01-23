@@ -45,6 +45,7 @@ import com.logistimo.config.service.ConfigurationMgmtService;
 import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.domains.service.DomainsService;
 import com.logistimo.domains.service.impl.DomainsServiceImpl;
@@ -77,7 +78,6 @@ import com.logistimo.reports.utils.ReportsUtil;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.UploadService;
 import com.logistimo.services.blobstore.BlobstoreService;
 import com.logistimo.services.impl.PMF;
@@ -104,6 +104,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -196,13 +197,13 @@ public class ExportServlet extends SgServlet {
     } else if (ACTION_SCHEDULEBATCHEXPORT.equals(action)) {
       scheduleBatchExport(request, response, backendMessages, messages);
     } else if (ACTION_BATCHEXPORT.equals(action)) {
-      batchExport(request, response, backendMessages, messages);
+      batchExport(request);
     } else if (ACTION_BULKUPLOADFORMATEXPORT.equals(action)) {
       exportBulkUploadFormat(request, response, messages);
     } else if (ACTION_SCHEDULEREPORTEXPORT.equals(action)) {
-      scheduleReportExport(request, response, backendMessages, messages);
+      scheduleReportExport(request, response, backendMessages);
     } else if (ACTION_FINALIZEEXPORT.equals(action)) {
-      finalizeExport(request, response, backendMessages, messages);
+      finalizeExport(request, backendMessages, messages);
     } else {
       xLogger.severe("Unknown action: " + action);
     }
@@ -243,7 +244,7 @@ public class ExportServlet extends SgServlet {
     // Get the fields config., if any
     DomainConfig dc = DomainConfig.getInstance(domainId);
     // Init. services
-    OrderManagementService oms = Services.getService(OrderManagementServiceImpl.class);
+    OrderManagementService oms = StaticApplicationContext.getBean(OrderManagementServiceImpl.class);
     // Get the order IDs
     String[] oids = valuesCSV.split(",");
     String csv = "";
@@ -294,7 +295,7 @@ public class ExportServlet extends SgServlet {
       taskService.schedule(ITaskService.QUEUE_EXPORTER, EXPORT_TASK_URL, params, headers,
           ITaskService.METHOD_POST, sUser.getDomainId(), sourceUserId, "BATCH_EXPORT");
       // Get the user for his email
-      UsersService as = Services.getService(UsersServiceImpl.class);
+      UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
       IUserAccount sourceUser = as.getUserAccount(sourceUserId);
       // Write message to screen
       message =
@@ -319,8 +320,7 @@ public class ExportServlet extends SgServlet {
   }
 
   // Do a batch export of items using the paginator
-  private void batchExport(HttpServletRequest req, HttpServletResponse resp,
-                           ResourceBundle backendMessages, ResourceBundle messages)
+  private void batchExport(HttpServletRequest req)
       throws ServiceException {
     xLogger.fine("Entered batchExport");
     // Get request parameters
@@ -360,9 +360,8 @@ public class ExportServlet extends SgServlet {
     if ("powerdata".equals(exportType)) {
       int size = 500;
       try {
-        ConfigurationMgmtService
-            cms =
-            Services.getService(ConfigurationMgmtServiceImpl.class);
+        ConfigurationMgmtService cms =
+            StaticApplicationContext.getBean(ConfigurationMgmtServiceImpl.class);
         IConfig c = cms.getConfiguration(IConfig.GENERALCONFIG);
         String sz = c.getString("pdexportsize");
         if (StringUtils.isNotBlank(sz)) {
@@ -474,7 +473,7 @@ public class ExportServlet extends SgServlet {
             if (tempData.size() > 0) {
               end = (long) tempData.get(tempData.size() - 1).time;
               exportParamsJson =
-                  processor.process(domainId, new Results(tempData, null), exportParamsJson, pm);
+                  processor.process(domainId, new Results<>(tempData, null), exportParamsJson, pm);
             }
           }
           if (respData == null || respData.data.size() < size) {
@@ -578,9 +577,9 @@ public class ExportServlet extends SgServlet {
       Locale locale = dc.getLocale();
       String timezone = dc.getTimezone();
       if (sourceUserIdStr != null && !sourceUserIdStr.isEmpty()) {
-        IUserAccount sourceUser = null;
+        IUserAccount sourceUser;
         try {
-          UsersService as = Services.getService(UsersServiceImpl.class);
+          UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
           sourceUser = as.getUserAccount(sourceUserIdStr);
           locale = sourceUser.getLocale();
         } catch (Exception e) {
@@ -670,7 +669,7 @@ public class ExportServlet extends SgServlet {
   }
 
   private void scheduleReportExport(HttpServletRequest req, HttpServletResponse resp,
-                                    ResourceBundle backendMessages, ResourceBundle messages) {
+                                    ResourceBundle backendMessages) {
     xLogger.fine("Entering scheduleExport");
     // Get request parameters
     String
@@ -691,7 +690,7 @@ public class ExportServlet extends SgServlet {
     Long domainId = Long.valueOf(domainIdStr);
     IUserAccount sourceUser = null;
     try {
-      UsersService as = Services.getService(UsersServiceImpl.class);
+      UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
       sourceUser = as.getUserAccount(sourceUserId);
     } catch (Exception e) {
       xLogger.severe("{0} while getting account details for user {1} in domain {2}. Message: {3}",
@@ -713,7 +712,7 @@ public class ExportServlet extends SgServlet {
     Map<String, String[]> filterMap = ReportsUtil.getFilterMap(filters);
     if (filterMap == null || filterMap.isEmpty()) {
       if (filterMap == null) {
-        filterMap = new HashMap<String, String[]>();
+        filterMap = new HashMap<>();
       }
       // Add a domain filter
       String[] domains = new String[1];
@@ -742,7 +741,7 @@ public class ExportServlet extends SgServlet {
     xLogger.fine("queryString: {0}", queryString);
     Map<String, String> params = taskService.getParamsFromQueryString(queryString);
     if (params == null) {
-      xLogger.severe("Invalid params {0} while scheduling report export task in domain {1}", params,
+      xLogger.severe("Invalid params while scheduling report export task in domain {0}",
           domainIdStr);
       return;
     }
@@ -752,11 +751,10 @@ public class ExportServlet extends SgServlet {
     Map<String, String> headers = BulkExportMgr.getExportBackendHeader();
     try {
       taskService
-          .schedule(taskService.QUEUE_EXPORTER, url, params, headers, taskService.METHOD_POST,
+          .schedule(ITaskService.QUEUE_EXPORTER, url, params, headers, ITaskService.METHOD_POST,
               domainId, sourceUserId, "EXPORT_REPORT");
       // Get back to user, if this came from the browser (i.e. not the task)
-      String
-          message =
+      String message =
           backendMessages.getString("export.success1") + " <b>" + sourceUser.getEmail() + "</b> "
               + backendMessages.getString("export.success2");
       // message += " [<a href=\"javascript:history.go(-1)\">" + messages.getString( "back" ) + "</a>]";
@@ -776,12 +774,12 @@ public class ExportServlet extends SgServlet {
   }
 
   // Finalize an export and send the email notification
-  private void finalizeExport(HttpServletRequest req, HttpServletResponse resp,
+  private void finalizeExport(HttpServletRequest req,
                               ResourceBundle backendMessages, ResourceBundle messages) {
     xLogger.fine("Entered finalizeExport");
     // Get the export parms. posted by the page-exed'ed export task
     String exportParamsJson = req.getParameter("output");
-    ExportParams exportParams = null;
+    ExportParams exportParams;
     try {
       exportParams = new BulkExportMgr.ExportParams(exportParamsJson);
     } catch (Exception e) {
@@ -790,12 +788,12 @@ public class ExportServlet extends SgServlet {
       return;
     }
     // Get the source user
-    IUserAccount u = null;
-    UsersService as = null;
-    EntitiesService es = null;
+    IUserAccount u;
+    UsersService as;
+    EntitiesService es;
     try {
-      as = Services.getService(UsersServiceImpl.class);
-      es = Services.getService(EntitiesServiceImpl.class);
+      as = StaticApplicationContext.getBean(UsersServiceImpl.class);
+      es = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
       u = as.getUserAccount(exportParams.sourceUserId);
     } catch (Exception e) {
       xLogger.warn("{0} when getting user {1} in domain {2}. Aborting export...: {3}",
@@ -885,8 +883,8 @@ public class ExportServlet extends SgServlet {
       // Reset blobKey in Uploaded so that a dangling reference to Google Cloud Storage does not exisit.
       uploaded.setBlobKey(null);
       // Reset the blob-key
-      UploadService us = Services.getService(UploadServiceImpl.class);
-      List<IUploaded> uploads = new ArrayList<IUploaded>();
+      UploadService us = StaticApplicationContext.getBean(UploadServiceImpl.class);
+      List<IUploaded> uploads = new ArrayList<>();
       uploads.add(uploaded);
       us.addNewUpload(uploads);
       JobUtil.setJobCompleted(exportParams.jobId, IJobStatus.TYPE_EXPORT, exportParams.size,
@@ -938,8 +936,8 @@ public class ExportServlet extends SgServlet {
                 + uploadedKey;
         content += ":\n\n" + url;
         String[] addresses = addressCSV.split(",");
-        for (int i = 0; i < addresses.length; i++) {
-          ms.send(addresses[i], content, MessageService.NORMAL, subject, null);
+        for (String address : addresses) {
+          ms.send(address, content, MessageService.NORMAL, subject, null);
         }
       }
     } catch (Exception e) {
@@ -973,8 +971,8 @@ public class ExportServlet extends SgServlet {
       }
 
       List<String> userIds = StringUtil.getList(addressCSV);
-      for (int i = 0; i < userIds.size(); i++) {
-        ms.send(userIds.get(i), content, MessageService.NORMAL, subject, null);
+      for (String userId : userIds) {
+        ms.send(userId, content, MessageService.NORMAL, subject, null);
       }
     } catch (Exception e) {
       xLogger.severe("{0} during email notification for address {1} for export of {2}: {3}",
@@ -1011,7 +1009,8 @@ public class ExportServlet extends SgServlet {
       }
       if (materialId != null) {
         try {
-          MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
+          MaterialCatalogService mcs = StaticApplicationContext.getBean(
+              MaterialCatalogServiceImpl.class);
           subject +=
               " " + (kioskId != null ? "&" : messages.getString("for")) + " " + mcs
                   .getMaterial(materialId).getName();
@@ -1023,7 +1022,7 @@ public class ExportServlet extends SgServlet {
       if (kioskId == null && materialId == null && domainId != null && as != null
           && !BulkExportMgr.TYPE_USAGESTATISTICS.equals(type)) {
         try {
-          DomainsService ds = Services.getService(DomainsServiceImpl.class);
+          DomainsService ds = StaticApplicationContext.getBean(DomainsServiceImpl.class);
           subject += " " + messages.getString("for") + " " + ds.getDomain(domainId).getName();
         } catch (Exception e) {
           // ignore
@@ -1047,7 +1046,7 @@ public class ExportServlet extends SgServlet {
     // Get the uploaded object
     boolean notFound = false;
     try {
-      UploadService us = Services.getService(UploadServiceImpl.class);
+      UploadService us = StaticApplicationContext.getBean(UploadServiceImpl.class);
       IUploaded uploaded = us.getUploaded(key);
       resp.setCharacterEncoding("UTF-8");
       resp.addHeader("Content-Disposition", "inline; filename=" + uploaded.getFileName());
@@ -1086,9 +1085,8 @@ public class ExportServlet extends SgServlet {
     String filename = (typeName != null ? typeName : type) + ".csv";
     // Get locale
     Locale locale = SecurityUtils.getLocale();
-    Long domainId = SecurityUtils.getCurrentDomainId();
     // Send the CSV format
-    sendCSVFile(BulkUploadMgr.getCSVFormat(type, locale, DomainConfig.getInstance(domainId)),
+    sendCSVFile(BulkUploadMgr.getCSVFormat(type, locale),
         filename, resp);
     xLogger.fine("Exiting exportBulkUploadFormat");
   }
@@ -1127,12 +1125,10 @@ public class ExportServlet extends SgServlet {
       StorageUtil storageUtil = AppFactory.get().getStorageUtil();
       // xLogger.info( "Got attachment data: {0}", ( attachmentData == null ? "NULL" : attachmentData.length ) );
       // Address
-      List<String> addresses = new ArrayList<String>();
+      List<String> addresses = new ArrayList<>();
       // Check if the address is a CSV of addresses
       String[] addressArray = addressCSV.toArray(new String[addressCSV.size()]);
-      for (int i = 0; i < addressArray.length; i++) {
-        addresses.add(addressArray[i]); // addresses.add( address );
-      }
+      Collections.addAll(addresses, addressArray);
       // Content messages
       String message;
       if (ConfigUtil.isLogi()) {
@@ -1287,7 +1283,7 @@ public class ExportServlet extends SgServlet {
     }
 
     try {
-      UsersService as = Services.getService(UsersServiceImpl.class);
+      UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
       IUserAccount sourceUser = as.getUserAccount(sourceUserId);
       exportParams.locale = sourceUser.getLocale();
       exportParams.timezone = sourceUser.getTimezone();

@@ -36,6 +36,7 @@ import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.auth.utils.SessionMgr;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.logger.XLog;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.reports.ReportsConstants;
@@ -45,7 +46,7 @@ import com.logistimo.reports.service.ReportsService;
 import com.logistimo.reports.utils.ReportsUtil;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
+import com.logistimo.services.utils.ConfigUtil;
 
 import java.io.IOException;
 import java.text.ParseException;
@@ -155,7 +156,7 @@ public class ReportsServlet extends SgServlet {
         }
       }
       // Get the user's locale
-      SecureUserDetails sUser = null;
+      SecureUserDetails sUser;
       String userId = null;
       Locale locale = null;
       String timezone = null;
@@ -212,7 +213,8 @@ public class ReportsServlet extends SgServlet {
       // Get the pagination parameters, if present
       PageParams pageParams = getPageParams(cursor, size);
       // Get the report data
-      ReportsService rs = Services.getService("reports", locale);
+      ReportsService rs = StaticApplicationContext
+          .getBean(ConfigUtil.get("reports"), ReportsService.class);
       ReportData
           r =
           rs.getReportData(reportType, startDate, endDate, frequency, filters, locale, timezone,

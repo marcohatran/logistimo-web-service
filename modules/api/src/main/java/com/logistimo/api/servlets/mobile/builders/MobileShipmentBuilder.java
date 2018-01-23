@@ -23,20 +23,17 @@
 
 package com.logistimo.api.servlets.mobile.builders;
 
-import com.logistimo.pagination.Results;
-import com.logistimo.services.Services;
-
 import com.logistimo.activity.entity.IActivity;
 import com.logistimo.activity.models.ActivityModel;
 import com.logistimo.activity.service.ActivityService;
-import com.logistimo.activity.service.impl.ActivityServiceImpl;
+import com.logistimo.constants.Constants;
 import com.logistimo.inventory.entity.IInvAllocation;
 import com.logistimo.inventory.entity.IInvntryBatch;
 import com.logistimo.inventory.service.InventoryManagementService;
-import com.logistimo.inventory.service.impl.InventoryManagementServiceImpl;
+import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.materials.service.MaterialCatalogService;
-import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
+import com.logistimo.pagination.Results;
 import com.logistimo.proto.MobileConversationModel;
 import com.logistimo.proto.MobileShipmentItemBatchModel;
 import com.logistimo.proto.MobileShipmentItemModel;
@@ -46,14 +43,12 @@ import com.logistimo.shipments.entity.IShipment;
 import com.logistimo.shipments.entity.IShipmentItem;
 import com.logistimo.shipments.entity.IShipmentItemBatch;
 import com.logistimo.shipments.service.IShipmentService;
-import com.logistimo.shipments.service.impl.ShipmentService;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
-
-import com.logistimo.constants.Constants;
 import com.logistimo.utils.LocalDateUtil;
-import com.logistimo.logger.XLog;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
@@ -65,8 +60,40 @@ import java.util.Locale;
 /**
  * Created by vani on 04/11/16.
  */
+@Component
 public class MobileShipmentBuilder {
   private static final XLog xLogger = XLog.getLog(MobileShipmentBuilder.class);
+
+  private InventoryManagementService inventoryManagementService;
+  private IShipmentService shipmentService;
+  private MaterialCatalogService materialCatalogService;
+  private ActivityService activityService;
+  private UsersService usersService;
+
+  @Autowired
+  public void setInventoryManagementService(InventoryManagementService inventoryManagementService) {
+    this.inventoryManagementService = inventoryManagementService;
+  }
+
+  @Autowired
+  public void setShipmentService(IShipmentService shipmentService) {
+    this.shipmentService = shipmentService;
+  }
+
+  @Autowired
+  public void setMaterialCatalogService(MaterialCatalogService materialCatalogService) {
+    this.materialCatalogService = materialCatalogService;
+  }
+
+  @Autowired
+  public void setActivityService(ActivityService activityService) {
+    this.activityService = activityService;
+  }
+
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
+  }
 
   List<MobileShipmentModel> buildMobileShipmentModels(Long orderId, Locale locale, String timezone,
                                                       boolean includeShipmentItems,
@@ -76,12 +103,11 @@ public class MobileShipmentBuilder {
     }
     List<MobileShipmentModel> msmList = null;
     try {
-      IShipmentService ss = Services.getService(ShipmentService.class);
-      List<IShipment> shipments = ss.getShipmentsByOrderId(orderId);
+      List<IShipment> shipments = shipmentService.getShipmentsByOrderId(orderId);
       if (shipments != null && !shipments.isEmpty()) {
         msmList = new ArrayList<>(1);
         for (IShipment s : shipments) {
-          ss.includeShipmentItems(s);
+          shipmentService.includeShipmentItems(s);
           MobileShipmentModel
               msm =
               buildMobileShipmentModel(s, locale, timezone, includeShipmentItems,
@@ -113,10 +139,8 @@ public class MobileShipmentBuilder {
         msm.t = LocalDateUtil.format(s.getCreatedOn(), locale, timezone);
       }
       try {
-        ActivityService acs = Services.getService(ActivityServiceImpl.class);
-        Results
-            res =
-            acs.getActivity(s.getShipmentId(), IActivity.TYPE.SHIPMENT.toString(), null, null, null,
+        Results res =
+            activityService.getActivity(s.getShipmentId(), IActivity.TYPE.SHIPMENT.toString(), null, null, null,
                 null, null);
         if (res != null) {
           List<ActivityModel> amList = res.getResults();
@@ -136,14 +160,13 @@ public class MobileShipmentBuilder {
             s.getShipmentId(), e);
       }
       try {
-        UsersService as = Services.getService(UsersServiceImpl.class);
         if (s.getUpdatedBy() != null && !s.getUpdatedBy().isEmpty()) {
           msm.uid = s.getUpdatedBy();
-          IUserAccount u = as.getUserAccount(s.getUpdatedBy());
+          IUserAccount u = usersService.getUserAccount(s.getUpdatedBy());
           msm.n = u.getFullName();
         } else if (s.getCreatedBy() != null && !s.getCreatedBy().isEmpty()) {
           msm.uid = s.getCreatedBy();
-          IUserAccount u = as.getUserAccount(s.getCreatedBy());
+          IUserAccount u = usersService.getUserAccount(s.getCreatedBy());
           msm.n = u.getFullName();
         }
       } catch (Exception e) {
@@ -218,10 +241,8 @@ public class MobileShipmentBuilder {
     MobileShipmentItemModel msim = new MobileShipmentItemModel();
     msim.mid = si.getMaterialId();
     try {
-      IShipmentService ss = Services.getService(ShipmentService.class);
-      BigDecimal
-          alq =
-          ss.getAllocatedQuantityForShipmentItem(si.getShipmentId(), skid, si.getMaterialId());
+      BigDecimal alq =
+          shipmentService.getAllocatedQuantityForShipmentItem(si.getShipmentId(), skid, si.getMaterialId());
       if (alq != null) {
         msim.alq = alq;
       }
@@ -240,8 +261,7 @@ public class MobileShipmentBuilder {
     msim.mst = si.getShippedMaterialStatus();
     msim.fmst = si.getFulfilledMaterialStatus();
     try {
-      MaterialCatalogService mcs = Services.getService(MaterialCatalogServiceImpl.class);
-      IMaterial m = mcs.getMaterial(si.getMaterialId());
+      IMaterial m = materialCatalogService.getMaterial(si.getMaterialId());
       msim.mnm = m.getName();
       String customMaterialId = m.getCustomId();
       if (customMaterialId != null && !customMaterialId.isEmpty()) {
@@ -290,13 +310,10 @@ public class MobileShipmentBuilder {
     MobileShipmentItemBatchModel msibm = new MobileShipmentItemBatchModel();
     msibm.bid = sib.getBatchId();
     try {
-      InventoryManagementService
-          ims =
-          Services.getService(InventoryManagementServiceImpl.class);
       // Get batch details from InvntryBatch since they will not be present in ShipmentItemBatch until the shipment is fulfilled.
       IInvntryBatch
           batch =
-          ims.getInventoryBatch(skid, sib.getMaterialId(), sib.getBatchId(), null);
+          inventoryManagementService.getInventoryBatch(skid, sib.getMaterialId(), sib.getBatchId(), null);
       if (batch != null) {
         if (batch.getBatchExpiry() != null) {
           msibm.bexp =
@@ -336,12 +353,9 @@ public class MobileShipmentBuilder {
     }
     // Get inventoryAllocation for batch
     try {
-      InventoryManagementService
-          ims =
-          Services.getService(InventoryManagementServiceImpl.class);
       List<IInvAllocation>
           iAllocs =
-          ims.getAllocationsByTypeId(skid, sib.getMaterialId(), IInvAllocation.Type.SHIPMENT, sid);
+          inventoryManagementService.getAllocationsByTypeId(skid, sib.getMaterialId(), IInvAllocation.Type.SHIPMENT, sid);
 
       if (iAllocs != null && !iAllocs.isEmpty()) {
         for (IInvAllocation iAlloc : iAllocs) {

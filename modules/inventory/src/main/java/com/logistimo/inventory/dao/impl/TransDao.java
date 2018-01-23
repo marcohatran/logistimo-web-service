@@ -25,6 +25,7 @@ package com.logistimo.inventory.dao.impl;
 
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.QueryConstants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.inventory.dao.ITransDao;
 import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.inventory.entity.Transaction;
@@ -34,9 +35,10 @@ import com.logistimo.pagination.QueryParams;
 import com.logistimo.pagination.Results;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.tags.dao.ITagDao;
-import com.logistimo.tags.dao.TagDao;
 import com.logistimo.tags.entity.ITag;
 import com.logistimo.utils.LocalDateUtil;
+
+import org.springframework.stereotype.Repository;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -50,10 +52,10 @@ import javax.jdo.Query;
 /**
  * Created by charan on 03/03/15.
  */
+@Repository
 public class TransDao implements ITransDao {
 
   private static final XLog xLogger = XLog.getLog(ITransDao.class);
-  private ITagDao tagDao = new TagDao();
 
   @Override
   public String getKeyAsString(ITransaction transaction) {
@@ -182,6 +184,7 @@ public class TransDao implements ITransDao {
           .append(CharacterConstants.QUESTION);
       parameters.add(String.valueOf(domainId));
     }
+    ITagDao tagDao = StaticApplicationContext.getBean(ITagDao.class);
     if (kioskId == null && kioskTag != null && !kioskTag.isEmpty()) {
       sqlQuery.append(" AND KIOSKID_OID IN (SELECT KIOSKID from KIOSK_TAGS where ID = ")
           .append(CharacterConstants.QUESTION)
@@ -250,7 +253,6 @@ public class TransDao implements ITransDao {
             .append(" AND (RS IS NULL OR RS <> ")
             .append(CharacterConstants.QUESTION)
             .append(CharacterConstants.C_BRACKET);
-        ;
         parameters.add(excludeReasons.get(0));
       } else {
         sqlQuery.append(" AND ( RS IS NULL OR RS NOT IN (");

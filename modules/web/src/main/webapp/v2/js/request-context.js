@@ -47,6 +47,9 @@
                 }
                 return params[name] || defaultValue;
             }
+            function hasParam() {
+                return Object.keys(params).length > 0;
+            }
             function getParamAsInt(name, defaultValue) {
                 var valueAsInt = ( this.getParam(name, defaultValue || 0) * 1 );
                 if (isNaN(valueAsInt)) {
@@ -106,6 +109,7 @@
             return ({
                 getNextSection: getNextSection,
                 getParam: getParam,
+                hasParam: hasParam,
                 getParamAsInt: getParamAsInt,
                 getRenderContext: getRenderContext,
                 hasActionChanged: hasActionChanged,

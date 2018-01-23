@@ -27,7 +27,7 @@
 package com.logistimo.materials.service.impl;
 
 import com.logistimo.AppFactory;
-import com.logistimo.config.models.DomainConfig;
+import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.domains.utils.DomainsUtil;
 import com.logistimo.domains.utils.EntityRemover;
@@ -36,7 +36,6 @@ import com.logistimo.events.exceptions.EventGenerationException;
 import com.logistimo.events.processor.EventPublisher;
 import com.logistimo.logger.XLog;
 import com.logistimo.materials.dao.IMaterialDao;
-import com.logistimo.materials.dao.impl.MaterialDao;
 import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.materials.entity.IMaterialManufacturers;
 import com.logistimo.materials.entity.Material;
@@ -44,22 +43,22 @@ import com.logistimo.materials.service.MaterialCatalogService;
 import com.logistimo.models.ICounter;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
-import com.logistimo.services.Service;
+import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.impl.PMF;
-import com.logistimo.services.impl.ServiceImpl;
 import com.logistimo.tags.TagUtil;
 import com.logistimo.tags.dao.ITagDao;
-import com.logistimo.tags.dao.TagDao;
 import com.logistimo.tags.entity.ITag;
 import com.logistimo.utils.Counter;
 import com.logistimo.utils.StringUtil;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
+import java.util.ResourceBundle;
 
 import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.PersistenceManager;
@@ -71,14 +70,24 @@ import javax.jdo.Transaction;
  * @author juhee
  */
 @org.springframework.stereotype.Service
-public class MaterialCatalogServiceImpl extends ServiceImpl implements MaterialCatalogService {
+public class MaterialCatalogServiceImpl implements MaterialCatalogService {
 
   private static final XLog xLogger = XLog.getLog(MaterialCatalogServiceImpl.class);
 
-  private IMaterialDao materialDao = new MaterialDao();
-  private ITagDao tagDao = new TagDao();
+  private IMaterialDao materialDao;
+  private ITagDao tagDao;
 
-	/* (non-Javadoc)
+  @Autowired
+  public void setMaterialDao(IMaterialDao materialDao) {
+    this.materialDao = materialDao;
+  }
+
+  @Autowired
+  public void setTagDao(ITagDao tagDao) {
+    this.tagDao = tagDao;
+  }
+
+  /* (non-Javadoc)
          * @see org.lggi.samaanguru.service.MaterialCatalogService#addMaterial(org.lggi.samaanguru.entity.Material)
 	 */
 
@@ -94,6 +103,8 @@ public class MaterialCatalogServiceImpl extends ServiceImpl implements MaterialC
     material.setName(StringUtil.getTrimmedName(material.getName()));
     if (materialDao.checkMaterialExists(domainId, material.getUniqueName())) {
       xLogger.warn("addMaterial: Material with name {0} already exists", material.getName());
+      final Locale locale = SecurityUtils.getLocale();
+      ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
       throw new ServiceException(
           backendMessages.getString("error.cannotadd") + ". '" + material.getName() + "' "
               + backendMessages.getString("error.alreadyexists") + ".");
@@ -113,6 +124,8 @@ public class MaterialCatalogServiceImpl extends ServiceImpl implements MaterialC
         if (results != null && results.size() > 0) {
           // Material with this name already exists in the database!
           xLogger.warn("addMaterial: Material with name {0} already exists", material.getName());
+          final Locale locale = SecurityUtils.getLocale();
+          ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
           throw new ServiceException(
               backendMessages.getString("error.cannotadd") + ". '" + material.getName() + "' "
                   + backendMessages.getString("error.alreadyexists") + ".");
@@ -130,6 +143,9 @@ public class MaterialCatalogServiceImpl extends ServiceImpl implements MaterialC
         // The specified custom ID already exists in the database!
         xLogger.warn("addMaterial: FAILED!! Cannot add material {0}. Custom ID {1} already exists.",
             material.getName(), material.getCustomId());
+        final Locale locale = SecurityUtils.getLocale();
+        ResourceBundle messages = Resources.get().getBundle("Messages", locale);
+        ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
         throw new ServiceException(
             backendMessages.getString("error.cannotadd") + ". " + messages.getString("customid")
                 + " " + material.getCustomId() + " " + backendMessages
@@ -190,6 +206,8 @@ public class MaterialCatalogServiceImpl extends ServiceImpl implements MaterialC
         //First check if the material already exists in the database
         IMaterial mat = JDOUtils.getObjectById(IMaterial.class, material.getMaterialId(), pm);
         if (!domainId.equals(mat.getDomainId())) {
+          final Locale locale = SecurityUtils.getLocale();
+          ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
           throw new ServiceException(
               backendMessages.getString("material.updation.permission.denied") + " : " + material
                   .getName());
@@ -238,6 +256,9 @@ public class MaterialCatalogServiceImpl extends ServiceImpl implements MaterialC
           xLogger.warn(
               "updateMaterial: FAILED!! Cannot update material {0}. Custom ID {1} already exists.",
               material.getName(), material.getCustomId());
+          final Locale locale = SecurityUtils.getLocale();
+          ResourceBundle messages = Resources.get().getBundle("Messages", locale);
+          ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
           throw new ServiceException(
               backendMessages.getString("error.cannotupdate") + " '" + material.getName() + "'. "
                   + messages.getString("customid") + " " + material.getCustomId() + " "
@@ -304,6 +325,10 @@ public class MaterialCatalogServiceImpl extends ServiceImpl implements MaterialC
     } catch (JDOObjectNotFoundException e) {
       xLogger.warn("getMaterial: FAILED!!! Material {0} does not exist in the database", materialId,
           e);
+      final Locale locale = SecurityUtils.getLocale();
+      ResourceBundle messages = Resources.get().getBundle("Messages", locale);
+      ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+
       throw new ServiceException(
           messages.getString("material") + " " + materialId + " " + backendMessages
               .getString("error.notfound"));
@@ -388,7 +413,6 @@ public class MaterialCatalogServiceImpl extends ServiceImpl implements MaterialC
 
     PersistenceManager pm = PMF.get().getPersistenceManager();
     PersistenceManager tagsPm = PMF.get().getPersistenceManager();
-    DomainConfig dc = DomainConfig.getInstance(domainId);
     try {
       List<IMaterial> materials = new ArrayList<>(materialIds.size());
       List<String> sdFailedMaterials = new ArrayList<>(1);
@@ -406,6 +430,9 @@ public class MaterialCatalogServiceImpl extends ServiceImpl implements MaterialC
         }
       }
       if (!sdFailedMaterials.isEmpty()) {
+        final Locale locale = SecurityUtils.getLocale();
+        ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+
         throw new ServiceException(
             backendMessages.getString("material.deletion.permission.denied") + " : " + StringUtil
                 .getCSV(sdFailedMaterials));
@@ -461,33 +488,6 @@ public class MaterialCatalogServiceImpl extends ServiceImpl implements MaterialC
   public Results searchMaterialsNoHU(Long domainId, String q) {
     return materialDao.searchMaterialsNoHU(domainId, q);
   }
-	
-	/* (non-Javadoc)
-	 * @see org.lggi.samaanguru.service.Service#destroy()
-	 */
-
-  public void destroy() throws ServiceException {
-    // TODO Auto-generated method stub
-
-  }
-
-	/* (non-Javadoc)
-	 * @see org.lggi.samaanguru.service.Service#getInterface()
-	 */
-
-  public Class<? extends Service> getInterface() {
-    xLogger.fine("Entering getInterface");
-    xLogger.fine("Exiting getInterface");
-    return MaterialCatalogServiceImpl.class;
-  }
-
-	/* (non-Javadoc)
-	 * @see org.lggi.samaanguru.service.Service#init(org.lggi.samaanguru.service.Services)
-	 */
-
-  public void init(Services services) throws ServiceException {
-    // TODO Auto-generated method stub
-  }
 
   // Get the short-code for a newer material
   private String getMaterialShortCode(Long domainId) throws ServiceException {
@@ -502,38 +502,13 @@ public class MaterialCatalogServiceImpl extends ServiceImpl implements MaterialC
     if (domainIds == null || domainIds.isEmpty()) {
       return;
     }
-    Iterator<Long> it = domainIds.iterator();
-    while (it.hasNext()) {
-      Counter.getMaterialCounter(it.next(), null).increment(amount, pm);
+    for (Long domainId : domainIds) {
+      Counter.getMaterialCounter(domainId, null).increment(amount, pm);
     }
   }
 
-  // Decrement inventory counters
-	/*
-	@SuppressWarnings("unchecked")
-	private void incrementKioskMaterialCounters( Long domainId, Long materialId, int amount, PersistenceManager pm ) {
-		xLogger.fine( "Entered incrementKioskMaterialCounters" );
-		try {
-			InventoryManagementService ims = Services.getService( InventoryManagementServiceImpl.class );
-			List<Invntry> list = (List<Invntry>) ims.getInventoryByMaterial( materialId, null ).getResults(); // TODO: pagination?
-			if ( list == null )
-				return;
-			Iterator<Invntry> it = list.iterator();
-			while ( it.hasNext() ) {
-				Invntry inv = it.next();
-				Long kioskId = inv.getKioskId();
-				TagUtil.incrementTagMaterialCounters( domainId, kioskId, null, amount, true, pm );
-			}
-		} catch ( Exception e ) {
-			xLogger.warn( "{0} when decrementing inventory counters for material {1} by amount {2}: {3}", e.getClass().getName(), materialId, amount, e.getMessage() );
-		}
-		xLogger.fine( "Exiting incrementKioskMaterialCounters" );
-	}
-	*/
-
   public List<Long> getAllMaterialIds(Long domainId) {
-    List<Long> materialIds = materialDao.getAllMaterialsIds(domainId);
-    return materialIds;
+    return materialDao.getAllMaterialsIds(domainId);
   }
 
   public List<IMaterialManufacturers> getMaterialManufacturers(Long materialId)

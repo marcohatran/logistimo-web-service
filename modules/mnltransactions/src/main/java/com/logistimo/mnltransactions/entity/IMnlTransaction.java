@@ -23,14 +23,12 @@
 
 package com.logistimo.mnltransactions.entity;
 
-import com.logistimo.tags.entity.ITag;
-
 import com.logistimo.domains.IOverlappedDomain;
+import com.logistimo.tags.entity.ITag;
 
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
-import java.util.ResourceBundle;
 
 /**
  * Created by charan on 20/05/15.

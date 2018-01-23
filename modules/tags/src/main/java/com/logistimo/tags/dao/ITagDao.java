@@ -33,7 +33,6 @@ import java.util.List;
  */
 public interface ITagDao {
 
-
   ITag getTagByName(String name, int type);
 
   List<ITag> getTagsByNames(List<String> tagNames, int type);

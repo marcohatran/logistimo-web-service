@@ -23,11 +23,13 @@
 
 package com.logistimo.api.builders;
 
-import org.apache.commons.lang.StringUtils;
+import com.logistimo.api.models.StockBoardModel;
+import com.logistimo.config.entity.IConfig;
 import com.logistimo.config.models.KioskConfig;
 import com.logistimo.config.models.StockboardConfig;
-import com.logistimo.config.entity.IConfig;
-import com.logistimo.api.models.StockBoardModel;
+
+import org.apache.commons.lang.StringUtils;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +37,7 @@ import java.util.List;
 /**
  * Created by naveensnair on 15/04/15.
  */
+@Component
 public class StockBoardBuilder {
 
   public String getKey(Long kioskId) {

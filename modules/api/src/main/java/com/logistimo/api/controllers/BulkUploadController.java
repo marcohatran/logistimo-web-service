@@ -27,8 +27,7 @@ import com.logistimo.AppFactory;
 import com.logistimo.api.builders.UploadDataViewBuilder;
 import com.logistimo.api.models.UploadModel;
 import com.logistimo.api.servlets.TransUploadServlet;
-import com.logistimo.auth.SecurityMgr;
-import com.logistimo.auth.utils.SessionMgr;
+import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.bulkuploads.BulkImportMapperContants;
 import com.logistimo.bulkuploads.BulkUploadMgr;
 import com.logistimo.bulkuploads.MnlTransactionUtil;
@@ -48,19 +47,17 @@ import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.UploadService;
 import com.logistimo.services.blobstore.BlobInfo;
 import com.logistimo.services.blobstore.BlobstoreService;
-import com.logistimo.services.impl.UploadServiceImpl;
 import com.logistimo.services.mapred.IMapredService;
 import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.users.service.UsersService;
-import com.logistimo.users.service.impl.UsersServiceImpl;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.NumberUtil;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -80,7 +77,6 @@ import javax.servlet.http.HttpServletRequest;
 /**
  * Created by mohan raja on 08/01/15
  */
-
 @Controller
 @RequestMapping("/bulk")
 public class BulkUploadController {
@@ -89,18 +85,34 @@ public class BulkUploadController {
   private static final String DONE_CALLBACK_URL = "/task/upload";
   private static final String CONFIGNAME_BULKIMPORTER = "BulkImporter";
 
-  UploadDataViewBuilder builder = new UploadDataViewBuilder();
   private IMapredService mapredService = AppFactory.get().getMapredService();
   private ITaskService taskService = AppFactory.get().getTaskService();
   private BlobstoreService blobstoreService = AppFactory.get().getBlobstoreService();
 
+  private UploadDataViewBuilder uploadDataViewBuilder;
+  private UploadService uploadService;
+  private UsersService usersService;
+
+  @Autowired
+  public void setUploadDataViewBuilder(UploadDataViewBuilder uploadDataViewBuilder) {
+    this.uploadDataViewBuilder = uploadDataViewBuilder;
+  }
+
+  @Autowired
+  public void setUploadService(UploadService uploadService) {
+    this.uploadService = uploadService;
+  }
+
+  @Autowired
+  public void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
+  }
+
   @RequestMapping(value = "/checkMUStatus", method = RequestMethod.GET)
   public
   @ResponseBody
-  boolean checkManualUploadStatus(HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
-    String userId = sUser.getUsername();
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), userId);
+  boolean checkManualUploadStatus() {
+    Long domainId = SecurityUtils.getCurrentDomainId();
     DomainConfig dc = DomainConfig.getInstance(domainId);
     InventoryConfig ic = dc.getInventoryConfig();
     return ic.getManualTransConfig() != null && ic
@@ -110,16 +122,15 @@ public class BulkUploadController {
   @RequestMapping(value = "/uploadstatus", method = RequestMethod.GET)
   public
   @ResponseBody
-  UploadModel getUploadStatus(@RequestParam String type, HttpServletRequest request) {
+  UploadModel getUploadStatus(@RequestParam String type) {
     UploadModel model = new UploadModel();
 
     final int UPLOAD_ELAPSE_TIME_MIN = 15;
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     String userId = sUser.getUsername();
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), userId);
+    Long domainId = sUser.getCurrentDomainId();
     Locale locale = sUser.getLocale();
     String timezone = sUser.getTimezone();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
 
     if (type.equals(BulkUploadMgr.TYPE_TRANSACTIONS)) {
       DomainConfig dc = DomainConfig.getInstance(domainId);
@@ -149,26 +160,21 @@ public class BulkUploadController {
             >= UPLOAD_ELAPSE_TIME_MIN) {
           prevJobComplete = true;
           jobStatus = IUploaded.STATUS_DONE;
-
-          UploadService svc;
           try {
-            svc = Services.getService(UploadServiceImpl.class);
-            IUploaded u = svc.getUploadedByJobId(model.id);
+            IUploaded u = uploadService.getUploadedByJobId(model.id);
             if (u != null) {
               u.setJobStatus(IUploaded.STATUS_DONE);
-              svc.updateUploaded(u);
+              uploadService.updateUploaded(u);
             }
           } catch (Exception e) {
-            xLogger
-                .warn("{0} when getting uploaded object by job ID {1}: {2}", e.getClass().getName(),
-                    model.id, e.getMessage(), e);
+            xLogger.warn("Error getting uploaded object by job ID {0}", model.id, e);
           }
 
         }
       }
       if (errors != null) {
         for (BulkUploadMgr.ErrMessage error : errors) {
-          model.addError(error.offset, BulkUploadMgr.getOpDisplayName(error.operation, locale),
+          model.addError(error.offset, BulkUploadMgr.getOpDisplayName(error.operation),
               error.messages, error.csvLine);
         }
       }
@@ -177,8 +183,7 @@ public class BulkUploadController {
       // Add user details
       model.uid = uploaded.getUserId();
       try {
-        UsersService as = Services.getService(UsersServiceImpl.class);
-        model.unm = as.getUserAccount(model.uid).getFullName();
+        model.unm = usersService.getUserAccount(model.uid).getFullName();
       } catch (Exception e) {
         xLogger.warn("{0} when getting uploaded user details {1}: {2}", e.getClass().getName(),
             model.uid, e.getMessage(), e);
@@ -216,7 +221,7 @@ public class BulkUploadController {
   String uploadCallback(@RequestParam String type, HttpServletRequest request)
       throws ServiceException {
     Map<String, List<String>> blobMap = blobstoreService.getUploads(request);
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     String blobKeyStr = null;
@@ -230,7 +235,7 @@ public class BulkUploadController {
       xLogger.severe("Error in uploading file");
       throw new BadRequestException(backendMessages.getString("fileupload.error"));
     }
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), sUser.getUsername());
+    Long domainId = sUser.getCurrentDomainId();
     String userId = sUser.getUsername();
     String localeStr = sUser.getLocale().toString();
     String version = "0";
@@ -240,12 +245,10 @@ public class BulkUploadController {
       filename = binfo.getFilename();
     }
     IUploaded uploaded;
-    UploadService svc = null;
     String uploadedKey = BulkUploadMgr.getUploadedKey(domainId, type, userId);
     boolean isUploadedNew = false;
     try {
-      svc = Services.getService(UploadServiceImpl.class);
-      uploaded = svc.getUploaded(uploadedKey);
+      uploaded = uploadService.getUploaded(uploadedKey);
       blobstoreService.remove(uploaded.getBlobKey());
       BulkUploadMgr.deleteUploadedMessage(uploadedKey);
     } catch (ObjectNotFoundException e) {
@@ -275,9 +278,9 @@ public class BulkUploadController {
         uploaded.setJobStatus(IUploaded.STATUS_PENDING);
       }
       if (isUploadedNew) {
-        svc.addNewUpload(uploaded);
+        uploadService.addNewUpload(uploaded);
       } else {
-        svc.updateUploaded(uploaded);
+        uploadService.updateUploaded(uploaded);
       }
     } catch (Exception e) {
       xLogger.severe("{0} when scheduling upload task for type {1} by user {2}: {3}",
@@ -299,7 +302,7 @@ public class BulkUploadController {
             type, blobKeyStr, userId, domainId);
     if (BulkUploadMgr.TYPE_TRANSACTIONS.equals(type)
         || BulkUploadMgr.TYPE_TRANSACTIONS_CUM_INVENTORY_METADATA.equals(type)) {
-      Map<String, String> params = new HashMap<String, String>();
+      Map<String, String> params = new HashMap<>();
       params.put("action", TransUploadServlet.ACTION_TRANSACTIONIMPORT);
       params.put("userid", userId);
       params.put("domainid", domainId.toString());
@@ -309,7 +312,7 @@ public class BulkUploadController {
           ITaskService.METHOD_POST, -1);
       return String.valueOf(NumberUtil.generateFiveDigitRandomNumber());
     }
-    Map<String, String> params = new HashMap<String, String>();
+    Map<String, String> params = new HashMap<>();
     params.put(IMapredService.PARAM_BLOBKEY, blobKeyStr);
     params.put(BulkImportMapperContants.TYPE, type);
     params.put(BulkImportMapperContants.USERID, userId);
@@ -332,36 +335,28 @@ public class BulkUploadController {
                           @RequestParam(required = false) String from,
                           @RequestParam(required = false) String to,
                           HttpServletRequest request) {
-    SecureUserDetails sUser = SecurityMgr.getUserDetails(request.getSession());
-    String userId = sUser.getUsername();
+    SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     String timezone = sUser.getTimezone();
-    Long domainId = SessionMgr.getCurrentDomain(request.getSession(), userId);
+    Long domainId = sUser.getCurrentDomainId();
     DomainConfig dc = DomainConfig.getInstance(domainId);
     try {
-      Navigator
-          navigator =
+      Navigator navigator =
           new Navigator(request.getSession(), "BulkUploadController.getUploadedData", offset, size,
               "", 0);
       PageParams pageParams = new PageParams(navigator.getCursor(offset), offset, size);
-      Date
-          fromDate =
-          StringUtils.isBlank(from) ? null
+      Date fromDate = StringUtils.isBlank(from) ? null
               : LocalDateUtil.parseCustom(from, Constants.DATE_FORMAT, dc.getTimezone());
-      Date
-          toDate =
-          StringUtils.isBlank(to) ? null
+      Date toDate = StringUtils.isBlank(to) ? null
               : LocalDateUtil.parseCustom(to, Constants.DATE_FORMAT, dc.getTimezone());
-      Results
-          results =
-          MnlTransactionUtil
+      Results results = MnlTransactionUtil
               .getManuallyUploadedTransactions(domainId, eid, fromDate, toDate, pageParams);
       if (results == null) {
         return null;
       }
       navigator.setResultParams(results);
-      return new Results(builder.build(results, locale, eid, timezone), "viewbulk", -1, offset);
+      return new Results<>(uploadDataViewBuilder.build(results, locale, eid, timezone), "viewbulk", -1, offset);
     } catch (Exception e) {
       xLogger.warn("Exception: " + e.getClass().getName() + ": " + e.getMessage(), e);
       throw new InvalidServiceException(backendMessages.getString("fileupload.fetch.error"));

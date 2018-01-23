@@ -24,9 +24,9 @@
 package com.logistimo.orders;
 
 import com.logistimo.config.models.DomainConfig;
-import com.logistimo.config.models.FieldsConfig;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.SourceConstants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exception.LogiException;
 import com.logistimo.exception.ValidationException;
@@ -45,7 +45,6 @@ import com.logistimo.proto.UpdateOrderStatusRequest;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.shipments.ShipmentStatus;
 import com.logistimo.shipments.entity.IShipment;
 import com.logistimo.shipments.service.IShipmentService;
@@ -55,19 +54,14 @@ import com.logistimo.utils.LocalDateUtil;
 
 import org.apache.commons.lang.StringUtils;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
-
-import javax.servlet.http.HttpServletRequest;
 
 import static com.logistimo.orders.entity.IOrder.NONTRANSFER;
 
@@ -80,26 +74,24 @@ public class OrderUtils {
   private static final XLog xLogger = XLog.getLog(OrderUtils.class);
 
   // Update an order
-  public static UpdatedOrder updateOrder(IOrder o, DomainConfig dc) throws LogiException {
+  public static UpdatedOrder updateOrder(IOrder o) throws LogiException {
     if (o == null) {
       throw new ServiceException("Order not specified");
     }
     // Get the OMS
-    OrderManagementService
-        oms =
-        Services.getService(OrderManagementServiceImpl.class, dc.getLocale());
+    OrderManagementService oms =
+        StaticApplicationContext.getBean(OrderManagementServiceImpl.class);
     return oms.updateOrder(o, SourceConstants.WEB);
   }
 
   // Update an order's status - used only in viewOrder.jsp
   public static UpdatedOrder updateOrderStatus(Long orderId, String newStatus,
                                                String updatingUserId, String message,
-                                               List<String> recevingUserIds, DomainConfig dc,
+                                               List<String> recevingUserIds,
                                                int source)
       throws ObjectNotFoundException, ServiceException {
-    OrderManagementService
-        oms =
-        Services.getService(OrderManagementServiceImpl.class, dc.getLocale());
+    OrderManagementService oms =
+        StaticApplicationContext.getBean(OrderManagementServiceImpl.class);
     IOrder o = oms.getOrder(orderId);
     o.setStatus(
         newStatus); // required, given isPostingInventoryTransRequired() requires an order with the current status
@@ -110,19 +102,18 @@ public class OrderUtils {
   // Update an order's status - to support old apk
   public static UpdatedOrder updateOrderStatus(Long orderId, String newStatus,
                                                String updatingUserId, String message,
-                                               DomainConfig dc, int source,
+                                               int source,
                                                ResourceBundle backendMessages)
       throws ObjectNotFoundException, ServiceException, ValidationException {
-    OrderManagementService
-        oms =
-        Services.getService(OrderManagementServiceImpl.class, dc.getLocale());
+    OrderManagementService oms =
+        StaticApplicationContext.getBean(OrderManagementServiceImpl.class);
     IOrder o = oms.getOrder(orderId, true);
     UpdatedOrder uo = new UpdatedOrder();
     if (IOrder.FULFILLED.equals(newStatus)) {
       IShipmentService ss;
       boolean updated = false;
       try {
-        ss = Services.getService(ShipmentService.class);
+        ss = StaticApplicationContext.getBean(ShipmentService.class);
         List<IShipment> shipments = ss.getShipmentsByOrderId(orderId);
         if (shipments != null && !shipments.isEmpty()) {
           IShipment s = shipments.get(0);
@@ -157,12 +148,10 @@ public class OrderUtils {
   public static UpdatedOrder updateOrderStatus(Long orderId, String newStatus,
                                                String updatingUserId,
                                                String message, List<String> recevingUserIds,
-                                               DomainConfig dc,
                                                int source, String reason)
       throws ObjectNotFoundException, ServiceException {
-    OrderManagementService
-        oms =
-        Services.getService(OrderManagementServiceImpl.class, dc.getLocale());
+    OrderManagementService oms =
+        StaticApplicationContext.getBean(OrderManagementServiceImpl.class);
     IOrder o = oms.getOrder(orderId);
     o.setStatus(
         newStatus); // required, given isPostingInventoryTransRequired() requires an order with the current status
@@ -174,16 +163,15 @@ public class OrderUtils {
   public static UpdatedOrder updateOrdStatus(UpdateOrderStatusRequest uosReq, DomainConfig dc,
                                              int source, ResourceBundle backendMessages)
       throws ObjectNotFoundException, LogiException {
-    OrderManagementService
-        oms =
-        Services.getService(OrderManagementServiceImpl.class, dc.getLocale());
+    OrderManagementService oms =
+        StaticApplicationContext.getBean(OrderManagementServiceImpl.class);
     IOrder o = oms.getOrder(uosReq.tid, true);
     if (!OrderUtils.validateOrderUpdatedTime(uosReq.tm, o.getUpdatedOn())) {
       throw new LogiException("O004", uosReq.uid,uosReq.tm);
     }
     UpdatedOrder uo = new UpdatedOrder();
     if (IOrder.FULFILLED.equals(uosReq.ost)) {
-      if (fulfillOrder(uosReq, dc, source, backendMessages, oms, uo)) {
+      if (fulfillOrder(uosReq, source, backendMessages, oms, uo)) {
         return uo;
       }
     } else if (IOrder.COMPLETED.equals(uosReq.ost)) {
@@ -227,7 +215,7 @@ public class OrderUtils {
     return false;
   }
 
-  private static boolean fulfillOrder(UpdateOrderStatusRequest uosReq, DomainConfig dc, int source,
+  private static boolean fulfillOrder(UpdateOrderStatusRequest uosReq, int source,
                                       ResourceBundle backendMessages, OrderManagementService oms,
                                       UpdatedOrder uo) throws ServiceException {
     IShipmentService ss;
@@ -239,7 +227,7 @@ public class OrderUtils {
         uo.message = backendMessages.getString("error.unabletofulfilorder");
         return true;
       }
-      ss = Services.getService(ShipmentService.class, dc.getLocale());
+      ss = StaticApplicationContext.getBean(ShipmentService.class);
       updated = ss.fulfillShipment(smm, uosReq.uid, source).status;
     } catch (Exception e) {
       uo.inventoryError = true;
@@ -318,10 +306,8 @@ public class OrderUtils {
                                              int source, ResourceBundle backendMessages,
                                              String previousUpdatedTime)
       throws LogiException {
-    IShipmentService ss = Services.getService(ShipmentService.class, dc.getLocale());
-    OrderManagementService
-        oms =
-        Services.getService(OrderManagementServiceImpl.class, dc.getLocale());
+    IShipmentService ss = StaticApplicationContext.getBean(ShipmentService.class);
+    OrderManagementService oms = StaticApplicationContext.getBean(OrderManagementServiceImpl.class);
     IShipment s = ss.getShipment(uosReq.sid);
     ShipmentStatus shipmentStatus;
     if (ShipmentStatus.SHIPPED.toString().equals(uosReq.ost)) {
@@ -345,7 +331,7 @@ public class OrderUtils {
           uo.message = backendMessages.getString("error.unabletofulfilorder");
           return uo;
         }
-        ss = Services.getService(ShipmentService.class, dc.getLocale());
+        ss = StaticApplicationContext.getBean(ShipmentService.class);
         updated = ss.fulfillShipment(smm, uosReq.uid, source).status;
       } catch (Exception e) {
         uo.inventoryError = true;
@@ -404,131 +390,6 @@ public class OrderUtils {
     return uo;
   }
 
-  // Render a custom field view (in HTML) - return a <div>
-  public static String renderOrderFieldsInHTML(FieldsConfig fc, Map<String, String> fieldMap,
-                                               boolean readOnly, String statusCode, Locale locale) {
-    String str = "";
-    // Viewable block
-    if (readOnly) {
-      if (fieldMap == null || fieldMap.isEmpty()) {
-        return str;
-      }
-      str = "<div style=\"margin-top:5px;\"><table>";
-      for (String key : fieldMap.keySet()) {
-        FieldsConfig.Field f = null;
-        if (fc != null) {
-          f = fc.getField(key);
-        }
-        String name;
-        if (f == null) {
-          name = key;
-        } else {
-          name = f.name;
-        }
-        str += "<tr><td>" + name + ":</td><td>" + fieldMap.get(key) + "</td></tr>";
-      }
-      str += "</table></div>";
-      return str;
-    }
-    // Writable form
-    if (fc == null || fc.isEmpty()) {
-      return "";
-    }
-    // Get the HTML blocks for each order status
-    for (int i = 0; i < IOrder.STATUSES.length; i++) {
-      // Get the fields relevant to this status
-      List<FieldsConfig.Field> list = fc.getByStatus(IOrder.STATUSES[i]);
-      if (list == null || list.isEmpty()) {
-        continue;
-      }
-      if (statusCode != null && !statusCode
-          .equals(IOrder.STATUSES[i])) // in case a status code is passed, only process that code
-      {
-        continue;
-      }
-      String id = "fields_" + IOrder.STATUSES[i];
-      str += "<div id=\"" + id + "\"" + "style=\"margin-top:5px;display:none;\"><table>";
-      Iterator<FieldsConfig.Field> fields = list.iterator();
-      boolean hasMandatory = false;
-      while (fields.hasNext()) {
-        FieldsConfig.Field f = fields.next();
-        if (f != null) {
-          if (!hasMandatory) {
-            hasMandatory = f.mandatory;
-          }
-          String key = f.getId();
-          String name;
-          String value = null;
-          if (fieldMap != null) {
-            value = fieldMap.get(f.getId());
-          }
-          name = f.name;
-          str +=
-              "<tr><td>" + (f.mandatory ? "<b>" : "") + name + (f.mandatory ? "</b>" : "")
-                  + ":</td><td>";
-          if (readOnly) {
-            str += (value == null ? "" : value);
-          } else {
-            if ("text".equals(f.type)) {
-              String idStr = key + "_" + IOrder.STATUSES[i];
-              str +=
-                  "<input type=\"text\" id=\"" + idStr + "\" name=\"" + key + "\" value=\"" + (
-                      value == null ? "" : value) + "\"" + (f.maxSize > 0 ? " maxlength=\""
-                      + f.maxSize + "\"" : "");
-              if (f.useInTemplates) { // add javascript to ensure message is updated
-                String replaceKey = "%" + key + "%";
-                str +=
-                    " onblur=\"if ( this.value != '' ) updateOrderSendMessage('" + replaceKey
-                        + "',this.value,document.getElementById('message1').value,null)\"";
-              }
-              str += "/>";
-            } // else do nothing for now; TODO: later handle checkbox and radio buttons
-          }
-          str += "</td></tr>";
-        }
-      }
-      str += "</table>";
-      if (hasMandatory) {
-        try {
-          if (locale != null) {
-            ResourceBundle r = Resources.get().getBundle("Messages", locale);
-            str += "<i>(" + r.getString("itemsmandatorymsg") + ")</i>";
-          }
-        } catch (Exception e) {
-          // do nothing
-        }
-      }
-      str += "</div>";
-    }
-    return str;
-  }
-
-  // Get custom field map from request
-  public static Map<String, String> getOrderFields(HttpServletRequest req, String statusCode,
-                                                   FieldsConfig fc) {
-    if (req == null || statusCode == null || statusCode.isEmpty() || fc == null || fc.isEmpty()) {
-      return null;
-    }
-    Map<String, String> map = new HashMap<>();
-    List<FieldsConfig.Field> fields = fc.getByStatus(statusCode);
-    for (FieldsConfig.Field f : fields) {
-      String key = f.getId();
-      String val = req.getParameter(key);
-      if (val != null) {
-        try {
-          val = URLDecoder.decode(val, "UTF-8").trim();
-        } catch (UnsupportedEncodingException e) {
-          xLogger.warn("Unsupported encoding exception: {0}", e.getMessage());
-        }
-        if (val.isEmpty()) {
-          val = null;
-        }
-        map.put(key, val);
-      }
-    } // end while
-    return map;
-  }
-
 
   // Check if setting re-order level is allowed
   public static boolean isReorderAllowed(String invModel) {
@@ -541,7 +402,7 @@ public class OrderUtils {
     if (messages == null) {
       return "unknown";
     }
-    String name = "";
+    String name;
     if (IOrder.CANCELLED.equals(status)) {
       name = messages.getString("order.cancelled");
     } else if (IOrder.CHANGED.equals(status)) {
@@ -568,7 +429,7 @@ public class OrderUtils {
     if (messages == null) {
       return "unknown";
     }
-    String name = "";
+    String name;
     if (ShipmentStatus.CANCELLED.equals(status)) {
       name = messages.getString("order.cancelled");
     } else if (ShipmentStatus.FULFILLED.equals(status)) {

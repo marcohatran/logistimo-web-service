@@ -23,8 +23,6 @@
 
 package com.logistimo.reports.plugins;
 
-import com.logistimo.reports.plugins.internal.QueryRequestModel;
-
 import javax.ws.rs.core.Response;
 
 /**

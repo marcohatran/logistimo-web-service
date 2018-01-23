@@ -26,9 +26,10 @@
  */
 package com.logistimo.config.models;
 
+import com.logistimo.utils.StringUtil;
+
 import org.json.JSONException;
 import org.json.JSONObject;
-import com.logistimo.utils.StringUtil;
 
 import java.io.Serializable;
 

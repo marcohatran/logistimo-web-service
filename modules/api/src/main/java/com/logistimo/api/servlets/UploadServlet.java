@@ -31,6 +31,7 @@ import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.bulkuploads.BulkImportMapperContants;
 import com.logistimo.bulkuploads.BulkUploadMgr;
 import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.entity.IUploaded;
 import com.logistimo.exception.TaskSchedulingException;
@@ -39,14 +40,12 @@ import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.BulkImportHandler;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.UploadService;
 import com.logistimo.services.blobstore.BlobInfo;
 import com.logistimo.services.blobstore.BlobstoreService;
 import com.logistimo.services.impl.UploadServiceImpl;
 import com.logistimo.services.mapred.IMapredService;
 import com.logistimo.services.taskqueue.ITaskService;
-import com.logistimo.utils.HttpUtil;
 import com.logistimo.utils.NumberUtil;
 
 import java.io.IOException;
@@ -107,7 +106,7 @@ public class UploadServlet extends SgServlet {
     }
     // Process our actions (NOTE: NONE of our actions should have a parameter called 'job_id' - this is reserved for MR callback on bulk import only
     if (ACTION_SCHEDULEBULKUPLOAD.equals(action)) {
-      scheduleBulkUpload(request, response, backendMessages, messages);
+      scheduleBulkUpload(request, response, backendMessages);
     } else {
       xLogger.severe("Invalid action: {0}", action);
     }
@@ -116,7 +115,7 @@ public class UploadServlet extends SgServlet {
 
   // Handle a bulk upload of a given type
   private void scheduleBulkUpload(HttpServletRequest request, HttpServletResponse response,
-                                  ResourceBundle backendMessages, ResourceBundle messages)
+                                  ResourceBundle backendMessages)
       throws IOException, ServiceException {
     xLogger.fine("Entered scheduleBulkUpload");
     // Get the type
@@ -159,12 +158,12 @@ public class UploadServlet extends SgServlet {
       filename = binfo.getFilename();
     }
     // Store an uploaded object; first check if an older one exists from previous upload of same file
-    IUploaded uploaded = null;
+    IUploaded uploaded;
     UploadService svc = null;
     String uploadedKey = BulkUploadMgr.getUploadedKey(domainId, type, userId);
     boolean isUploadedNew = false;
     try {
-      svc = Services.getService(UploadServiceImpl.class);
+      svc = StaticApplicationContext.getBean(UploadServiceImpl.class);
       uploaded = svc.getUploaded(uploadedKey);
       // Found an older upload, remove the older blob
       try {
@@ -198,13 +197,13 @@ public class UploadServlet extends SgServlet {
     // Important to delete any error messages accumulated due to previous upload
     BulkUploadMgr.deleteUploadedMessage(uploadedKey);
     // Start bulk import task
-    String message = "";
+    String message;
     try {
       // Start importing
       String
           jobId =
-          startBulkImport(type, blobKeyStr, userId, domainId, kioskId,
-              HttpUtil.getUrlBase(request));
+          startBulkImport(type, blobKeyStr, userId, domainId, kioskId
+          );
       // Update Uploaded with Job Id
       if (jobId != null) {
         uploaded.setJobId(jobId);
@@ -216,7 +215,7 @@ public class UploadServlet extends SgServlet {
       } else {
         svc.updateUploaded(uploaded);
       }
-      String redirectUrlBase = null;
+      String redirectUrlBase;
       if (BulkUploadMgr.TYPE_TRANSACTIONS.equals(type)
           || BulkUploadMgr.TYPE_TRANSACTIONS_CUM_INVENTORY_METADATA.equals(type)) {
         redirectUrlBase = "/s/inventory/inventory.jsp?subview=" + "Inventory Transactions";
@@ -249,7 +248,7 @@ public class UploadServlet extends SgServlet {
 
   // Start a bulk import map-reduce process for a given type
   private String startBulkImport(String type, String blobKeyStr, String userId, Long domainId,
-                                 Long kioskId, String urlBase) throws IOException {
+                                 Long kioskId) throws IOException {
     xLogger
         .fine("Entered startBulkImport: type = {0}, blobKeyStr = {1}, userId = {2}, domainId = {3}",
             type, blobKeyStr, userId, domainId);
@@ -257,7 +256,7 @@ public class UploadServlet extends SgServlet {
     // Instead, schedule a task for importing transactions and return a five digit random number as jobId
     if (BulkUploadMgr.TYPE_TRANSACTIONS.equals(type)
         || BulkUploadMgr.TYPE_TRANSACTIONS_CUM_INVENTORY_METADATA.equals(type)) {
-      Map<String, String> params = new HashMap<String, String>();
+      Map<String, String> params = new HashMap<>();
       try {
         params.put("action", TransUploadServlet.ACTION_TRANSACTIONIMPORT);
         params.put("userid", userId);
@@ -273,11 +272,10 @@ public class UploadServlet extends SgServlet {
         xLogger
             .severe("{0} when trying to schedule task to bulk import transactions into Logistimo");
       }
-      String jobId = String.valueOf(NumberUtil.generateFiveDigitRandomNumber());
-      return jobId;
+      return String.valueOf(NumberUtil.generateFiveDigitRandomNumber());
     }
     // Form the URL parameters
-    Map<String, String> params = new HashMap<String, String>();
+    Map<String, String> params = new HashMap<>();
     params.put(IMapredService.PARAM_BLOBKEY, blobKeyStr);
     params.put(BulkImportMapperContants.TYPE, type);
     params.put(BulkImportMapperContants.USERID, userId);

@@ -32,19 +32,17 @@ import com.logistimo.config.models.ConfigurationException;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.LocationConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
-import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.entity.comparator.LocationComparator;
 import com.logistimo.locations.client.LocationClient;
 import com.logistimo.locations.model.LocationResponseModel;
 import com.logistimo.logger.XLog;
 import com.logistimo.services.ObjectNotFoundException;
-import com.logistimo.services.Service;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.services.cache.MemcacheService;
 import com.logistimo.services.impl.PMF;
-import com.logistimo.services.impl.ServiceImpl;
+
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
 
@@ -55,9 +53,17 @@ import javax.jdo.Transaction;
 /**
  * @author arun
  */
-public class ConfigurationMgmtServiceImpl extends ServiceImpl implements ConfigurationMgmtService {
+@org.springframework.stereotype.Service
+public class ConfigurationMgmtServiceImpl implements ConfigurationMgmtService {
 
   private static final XLog xLogger = XLog.getLog(ConfigurationMgmtServiceImpl.class);
+
+  private LocationClient locationClient;
+
+  @Autowired
+  public void setLocationClient(LocationClient locationClient) {
+    this.locationClient = locationClient;
+  }
 
   /**
    * Add a new configuration to the data store
@@ -248,25 +254,6 @@ public class ConfigurationMgmtServiceImpl extends ServiceImpl implements Configu
     return IConfig.CONFIG_PREFIX + domainId;
   }
 
-
-  public void destroy() throws ServiceException {
-    xLogger.fine("Entering destroy");
-    // TODO Auto-generated method stub
-    xLogger.fine("Exiting destroy");
-  }
-
-  public Class<? extends Service> getInterface() {
-    xLogger.fine("Entering getInterface");
-    xLogger.fine("Exiting getInterface");
-    return ConfigurationMgmtService.class;
-  }
-
-  public void init(Services services) throws ServiceException {
-    xLogger.fine("Entering init");
-    // TODO Auto-generated method stub
-    xLogger.fine("Exiting init");
-  }
-
   // Private method to remove new line characters
   private String getCleanString(String inputString) {
     xLogger.fine("Entering getCleanString");
@@ -290,8 +277,7 @@ public class ConfigurationMgmtServiceImpl extends ServiceImpl implements Configu
   private void updateDomainConfigLocIds(IConfig dc) throws ConfigurationException {
     DomainConfig config = new DomainConfig(dc.getConfig());
     config.setUser(dc.getUserId());
-    LocationClient client = StaticApplicationContext.getBean(LocationClient.class);
-    LocationResponseModel response = client.getLocationIds(config);
+    LocationResponseModel response = locationClient.getLocationIds(config);
     config.setCountryId(response.getCountryId());
     config.setStateId(response.getStateId());
     config.setDistrictId(response.getDistrictId());

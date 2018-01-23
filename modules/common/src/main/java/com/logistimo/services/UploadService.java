@@ -29,7 +29,7 @@ import com.logistimo.entity.IUploaded;
 import java.util.List;
 
 
-public interface UploadService extends Service {
+public interface UploadService {
   IUploaded getUploaded(String filename, String version, String locale)
       throws ServiceException, ObjectNotFoundException;
 

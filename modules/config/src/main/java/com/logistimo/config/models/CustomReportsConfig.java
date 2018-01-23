@@ -23,14 +23,14 @@
 
 package com.logistimo.config.models;
 
+import com.logistimo.constants.Constants;
 import com.logistimo.customreports.CustomReportConstants;
+import com.logistimo.logger.XLog;
+import com.logistimo.utils.LocalDateUtil;
+import com.logistimo.utils.StringUtil;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import com.logistimo.constants.Constants;
-import com.logistimo.utils.LocalDateUtil;
-import com.logistimo.utils.StringUtil;
-import com.logistimo.logger.XLog;
 
 import java.io.Serializable;
 import java.text.ParseException;

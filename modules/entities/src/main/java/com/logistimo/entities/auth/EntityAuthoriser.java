@@ -26,6 +26,8 @@ package com.logistimo.entities.auth;
 import com.logistimo.auth.GenericAuthoriser;
 import com.logistimo.auth.SecurityConstants;
 import com.logistimo.auth.SecurityUtil;
+import com.logistimo.auth.utils.SecurityUtils;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.entity.IKioskLink;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
@@ -33,13 +35,11 @@ import com.logistimo.pagination.Results;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.users.service.impl.UsersServiceImpl;
 
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Created by Mohan Raja on 10/03/15
@@ -50,36 +50,26 @@ public class EntityAuthoriser {
   private EntityAuthoriser() {
   }
 
-  public static boolean authoriseEntity(SecureUserDetails secureUserDetails, Long entityId)
+  public static boolean authoriseEntity(Long entityId)
       throws ServiceException {
-    return authoriseEntityPerm(secureUserDetails, entityId) > 0;
+    return authoriseEntityPerm(entityId) > 0;
   }
 
-  public static Integer authoriseEntityPerm(SecureUserDetails secureUserDetails, Long entityId)
+  public static Integer authoriseEntityPerm(Long entityId)
       throws ServiceException {
-    return authoriseEntityPerm(secureUserDetails, entityId, false);
-  }
-
-  public static boolean authoriseEntity(SecureUserDetails secureUserDetails, Long entityId,
-                                        boolean isManagable) throws ServiceException {
-    return authoriseEntityPerm(secureUserDetails, entityId, isManagable) > 0;
-  }
-
-  public static Integer authoriseEntityPerm(SecureUserDetails secureUserDetails, Long entityId,
-                                            boolean isManagable) throws ServiceException {
+    SecureUserDetails secureUserDetails = SecurityUtils.getUserDetails();
     String role = secureUserDetails.getRole();
     if (SecurityConstants.ROLE_SUPERUSER.equals(role)) {
       return GenericAuthoriser.MANAGE_MASTER_DATA;
     }
-    Locale locale = secureUserDetails.getLocale();
     String userId = secureUserDetails.getUsername();
-    UsersService as = Services.getService(UsersServiceImpl.class, locale);
+    UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
     try {
       IUserAccount account = as.getUserAccount(userId);
       List<Long> domainIds = account.getAccessibleDomainIds();
       if (domainIds != null && domainIds.size() > 0) {
         for (Long dId : domainIds) {
-          Integer permission = authoriseEntityPerm(entityId, role, locale, userId, dId);
+          Integer permission = authoriseEntityPerm(entityId, role, userId, dId);
           if (permission > GenericAuthoriser.NO_ACCESS) {
             return permission;
           }
@@ -92,18 +82,18 @@ public class EntityAuthoriser {
     return GenericAuthoriser.NO_ACCESS;
   }
 
-  public static boolean authoriseEntity(Long entityId, String role, Locale locale, String userId,
+  public static boolean authoriseEntity(Long entityId, String role, String userId,
                                         Long domainId) throws ServiceException {
-    return authoriseEntityPerm(entityId, role, locale, userId, domainId) > 0;
+    return authoriseEntityPerm(entityId, role, userId, domainId) > 0;
   }
 
-  public static Integer authoriseEntityPerm(Long entityId, String role, Locale locale,
+  public static Integer authoriseEntityPerm(Long entityId, String role,
                                             String userId, Long domainId) throws ServiceException {
     Integer permission = GenericAuthoriser.NO_ACCESS;
     if (SecurityConstants.ROLE_SUPERUSER.equals(role)) {
       return GenericAuthoriser.MANAGE_MASTER_DATA;
     }
-    EntitiesService as = Services.getService(EntitiesServiceImpl.class, locale);
+    EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
     boolean hasPermission = as.hasAccessToKiosk(userId, entityId, domainId, role);
     if (hasPermission) {
       permission = GenericAuthoriser.MANAGE_MASTER_DATA;
@@ -123,9 +113,8 @@ public class EntityAuthoriser {
 
   public static boolean authoriseEntityDomain(SecureUserDetails secureUserDetails, Long entityId, Long domainId)
       throws ServiceException {
-    Locale locale = secureUserDetails.getLocale();
     String role = secureUserDetails.getRole();
-    EntitiesService as = Services.getService(EntitiesServiceImpl.class, locale);
+    EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
     return role.equals(SecurityConstants.ROLE_SUPERUSER) || as.getKiosk(entityId).getDomainIds()
         .contains(domainId);
   }
@@ -133,7 +122,7 @@ public class EntityAuthoriser {
 
   public static boolean authoriseInventoryAccess(SecureUserDetails secureUserDetails, Long entityId)
       throws ServiceException {
-    EntitiesService as = Services.getService(EntitiesServiceImpl.class);
+    EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
     if (SecurityUtil.compareRoles(secureUserDetails.getRole(), SecurityConstants.ROLE_DOMAINOWNER) < 0 && !as
         .hasKiosk(secureUserDetails.getUsername(), entityId)) {
       Results results = as.getKioskIdsForUser(secureUserDetails.getUsername(), null, null);

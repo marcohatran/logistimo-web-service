@@ -39,11 +39,9 @@ import com.logistimo.config.models.AssetSystemConfig;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.GeneralConfig;
 import com.logistimo.constants.Constants;
-import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.domains.entity.IDomain;
 import com.logistimo.domains.service.DomainsService;
-import com.logistimo.domains.service.impl.DomainsServiceImpl;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.logger.XLog;
@@ -55,22 +53,48 @@ import com.logistimo.pagination.Results;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.users.UserUtils;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.StringUtil;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
-
+@Component
 public class UserBuilder {
   private static final XLog xLogger = XLog.getLog(UserBuilder.class);
+
+  private DomainsService domainsService;
+  private IOrderApprovalsService orderApprovalsService;
+  private EntityBuilder entityBuilder;
+  private ConfigurationModelBuilder configurationModelBuilder;
+
+  @Autowired
+  public void setDomainsService(DomainsService domainsService) {
+    this.domainsService = domainsService;
+  }
+
+  @Autowired
+  public void setOrderApprovalsService(IOrderApprovalsService orderApprovalsService) {
+    this.orderApprovalsService = orderApprovalsService;
+  }
+
+  @Autowired
+  public void setEntityBuilder(EntityBuilder entityBuilder) {
+    this.entityBuilder = entityBuilder;
+  }
+
+  @Autowired
+  public void setConfigurationModelBuilder(ConfigurationModelBuilder configurationModelBuilder) {
+    this.configurationModelBuilder = configurationModelBuilder;
+  }
 
   public List<UserModel> buildUserModels(List users, Locale locale, String timeZone,
                                          boolean isPartial) {
@@ -113,8 +137,7 @@ public class UserBuilder {
     model.sdid = user.getDomainId();
     IDomain domain;
     try {
-      DomainsService ds = Services.getService(DomainsServiceImpl.class);
-      domain = ds.getDomain(user.getDomainId());
+      domain = domainsService.getDomain(user.getDomainId());
       if (domain != null) {
         model.sdname = domain.getName();
         model.dmn = new UserDomainDetail();
@@ -222,10 +245,8 @@ public class UserBuilder {
       if (StringUtils.isNotEmpty(dc.getKioskTags())) {
         model.config.etags = StringUtil.getArray(dc.getKioskTags());
       }
-      model.config.isApprover = StaticApplicationContext.getBean(
-          IOrderApprovalsService.class).isApprover(user.getUserId());
-      ConfigurationModelsBuilder builder = new ConfigurationModelsBuilder();
-      model.config.adminContact = builder.buildAllAdminContactConfigModel(dc.getAdminContactConfig());
+      model.config.isApprover = orderApprovalsService.isApprover(user.getUserId());
+      model.config.adminContact = configurationModelBuilder.buildAllAdminContactConfigModel(dc.getAdminContactConfig());
       if(model.config.adminContact != null) {
         if (StringUtils.isEmpty(
             model.config.adminContact.get(AdminContactConfig.PRIMARY_ADMIN_CONTACT).userId)) {
@@ -243,8 +264,7 @@ public class UserBuilder {
     return model;
   }
 
-  public List<IUserAccount> buildUserAccounts(List<UserModel> users, Locale locale, String timezone,
-                                              boolean isPartial) {
+  public List<IUserAccount> buildUserAccounts(List<UserModel> users, boolean isPartial) {
     List<IUserAccount> accounts = null;
     if (!users.isEmpty()) {
       accounts = new ArrayList<>(users.size());
@@ -348,9 +368,9 @@ public class UserBuilder {
         model.pk = account.getPrimaryKiosk().toString();
       }
       if (kiosks != null) {
-        model.entities = new EntityBuilder().buildUserEntities(kiosks);
+        model.entities = entityBuilder.buildUserEntities(kiosks);
       }
-      model.isAdm = (SecurityConstants.ROLE_DOMAINOWNER.equals(account.getRole()) ? true : false);
+      model.isAdm = SecurityConstants.ROLE_DOMAINOWNER.equals(account.getRole());
       model.accDsm = buildAccDmnSuggestionModelList(account.getAccessibleDomainIds());
       model.per = account.getPermission();
       model.lgr = account.getLoginReconnect();
@@ -361,8 +381,7 @@ public class UserBuilder {
     IDomain domain;
     String domainName = Constants.EMPTY;
     try {
-      DomainsService ds = Services.getService(DomainsServiceImpl.class);
-      domain = ds.getDomain(account.getDomainId());
+      domain = domainsService.getDomain(account.getDomainId());
       if (domain != null) {
         domainName = domain.getName();
       } else {
@@ -424,13 +443,11 @@ public class UserBuilder {
   }
 
   public Results buildUsers(Results results, SecureUserDetails user, boolean isPartial) {
-    List<UserModel> models = null;
     if (results != null && results.getSize() > 0) {
-      models =
-          buildUserModels(results.getResults(), user.getLocale(), user.getTimezone(), isPartial
-          );
+      List<UserModel> models = buildUserModels(results.getResults(), user.getLocale(), user.getTimezone(), isPartial);
+      return new Results<>(models, results.getCursor(), results.getNumFound(), results.getOffset());
     }
-    return new Results(models, results.getCursor(), results.getNumFound(), results.getOffset());
+    return new Results();
   }
 
   public List<DomainSuggestionModel> buildAccDmnSuggestionModelList(List<Long> accDids) {
@@ -438,13 +455,9 @@ public class UserBuilder {
       return null;
     } else {
       try {
-        List<DomainSuggestionModel>
-            accDmnSuggestionModelList =
-            new ArrayList<>();
-        DomainsService ds = Services.getService(DomainsServiceImpl.class);
-
+        List<DomainSuggestionModel> accDmnSuggestionModelList = new ArrayList<>();
         for (Long accDid : accDids) {
-          IDomain accDomain = ds.getDomain(accDid);
+          IDomain accDomain = domainsService.getDomain(accDid);
           DomainSuggestionModel dsm = new DomainSuggestionModel();
           dsm.id = accDomain.getId();
           dsm.text = accDomain.getName();

@@ -31,6 +31,7 @@ import com.logistimo.config.models.AssetSystemConfig;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
@@ -47,7 +48,6 @@ import com.logistimo.reports.plugins.internal.QueryRequestModel;
 import com.logistimo.reports.plugins.models.ReportChartModel;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.Services;
 import com.logistimo.tags.TagUtil;
 import com.logistimo.tags.entity.ITag;
 import com.logistimo.users.entity.IUserAccount;
@@ -233,14 +233,15 @@ public class ReportServiceUtil {
       throws ServiceException {
     switch (compareField) {
       case MATERIAL:
-        MaterialCatalogService ms = Services.getService(MaterialCatalogServiceImpl.class);
+        MaterialCatalogService ms = StaticApplicationContext
+            .getBean(MaterialCatalogServiceImpl.class);
         values.add(addData(ms.getMaterial(report.getMaterialId()).getName()));
         break;
       case MATERIAL_TAG:
         values.add(addData(TagUtil.getTagById(report.getMaterialTag(), ITag.MATERIAL_TAG)));
         break;
       case ENTITY:
-        EntitiesService es = Services.getService(EntitiesServiceImpl.class);
+        EntitiesService es = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
         values.add(addData(es.getKiosk(report.getKioskId(), false).getName()));
         break;
       case ENTITY_TAG:
@@ -416,7 +417,7 @@ public class ReportServiceUtil {
       }
       boolean newRow = false;
       if (treeBasedTable.rowKeySet().size() == 0 && rowHeadings != null && rowHeadings.length() > 0) {
-        treeBasedTable.put(rowHeadings.getString(0), ZERO, new ArrayList<String>(0));
+        treeBasedTable.put(rowHeadings.getString(0), ZERO, new ArrayList<>(0));
         newRow = true;
       }
       while (to.compareTo(from) >= 0) {
@@ -486,14 +487,15 @@ public class ReportServiceUtil {
 
   private String getTableByMaterialKey(String materialId)
       throws ServiceException {
-    String key;MaterialCatalogService ms = Services.getService(MaterialCatalogServiceImpl.class);
+    String key;MaterialCatalogService ms = StaticApplicationContext.getBean(
+        MaterialCatalogServiceImpl.class);
     key = ms.getMaterial(Long.valueOf(materialId)).getName();
     key += CharacterConstants.PIPE + materialId;
     return key;
   }
 
   private String getTableByEntityKey(String string) throws ServiceException {
-    String key;EntitiesService es = Services.getService(EntitiesServiceImpl.class);
+    String key;EntitiesService es = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
     IKiosk k = es.getKiosk(Long.valueOf(string), false);
     key = k.getName() + CharacterConstants.PIPE + string +
         CharacterConstants.PIPE + (StringUtils.isEmpty(k.getCity())? CharacterConstants.EMPTY : k.getCity()) +
@@ -508,13 +510,13 @@ public class ReportServiceUtil {
    */
   private String getUserDetailsById(String userId)
       throws ServiceException, ObjectNotFoundException {
-    UsersService us = Services.getService(UsersServiceImpl.class);
+    UsersService us = StaticApplicationContext.getBean(UsersServiceImpl.class);
     IUserAccount userAccount = us.getUserAccount(userId);
     return userAccount.getFullName() + CharacterConstants.PIPE + userId;
   }
 
   private String getTableByCustomerKey(String string) throws ServiceException {
-    String key;EntitiesService es = Services.getService(EntitiesServiceImpl.class);
+    String key;EntitiesService es = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
     IKiosk k = es.getKiosk(Long.valueOf(string), false);
     key = k.getName() + CharacterConstants.PIPE + string +
         CharacterConstants.PIPE + (StringUtils.isEmpty(k.getCity())? CharacterConstants.EMPTY : k.getCity()) +

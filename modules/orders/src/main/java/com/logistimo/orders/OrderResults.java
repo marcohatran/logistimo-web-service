@@ -27,7 +27,6 @@
 package com.logistimo.orders;
 
 import com.logistimo.orders.entity.IOrder;
-
 import com.logistimo.pagination.Results;
 
 import java.util.List;

@@ -23,9 +23,8 @@
 
 package com.logistimo.services.taskqueue.util;
 
-import com.logistimo.services.taskqueue.TaskOptions;
-
 import com.logistimo.entity.ITask;
+import com.logistimo.services.taskqueue.TaskOptions;
 
 /**
  * Created by charan on 15/09/16.
