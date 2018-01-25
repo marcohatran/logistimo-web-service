@@ -748,7 +748,6 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
             };
 
         function displayShipForm() {
-            $scope.order.ead = parseUrlDate($scope.order.ead);
             $scope.modalInstance = $uibModal.open({
                 templateUrl: 'views/orders/order-status.html',
                 scope: $scope,
@@ -779,19 +778,6 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
             $scope.cancel();
             displayShipForm();
         };
-            $scope.cancelShipNow = function () {
-                $scope.enableScroll();
-                $scope.modalInstance.dismiss('cancel');
-            };
-            $scope.shipNow = function () {
-                $scope.modalInstance = $uibModal.open({
-                    templateUrl: 'views/shipment/ship-now.html',
-                    scope: $scope,
-                    keyboard: false,
-                    backdrop: 'static'
-                });
-                $scope.disableScroll();
-            };
             $scope.toggleMap = function () {
                 $scope.dispMap = !$scope.dispMap;
             };
@@ -830,6 +816,9 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                     data.sno = $scope.order.sno;
                 }
                 $scope.order = data;
+                if(checkNotNullEmpty($scope.dates.efd)) {
+                    $scope.order.isEfdValid = isNotPastDate($scope.dates.efd);
+                }
                 $scope.sicrsn = $scope.order.crsn;
                 $scope.order.its.forEach(function (data) {
                     data.nrsn = '';
@@ -938,7 +927,6 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                     $scope.statusLoading = true;
                     $scope.showLoading();
                     ordService.updateOrderStatus($scope.order.id, $scope.newStatus).then(function (data) {
-                        updateOrderObj(data.data.order);
                         $scope.fetchOrder();
                         var upMsg = {};
                         upMsg.objId = $scope.order.id;
