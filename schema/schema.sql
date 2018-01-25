@@ -607,6 +607,7 @@ CREATE TABLE `INVNTRY` (
   `ATPSTK` decimal(16,4) DEFAULT NULL,
   `ASTK` decimal(16,4) DEFAULT NULL,
   `UON` datetime DEFAULT NULL,
+  `IAT` datetime DEFAULT NULL,
   PRIMARY KEY (`KEY`),
   KEY `INVNTRY#4` (`KID`,`MID`,`KNM`),
   KEY `INVNTRY#3` (`MID`,`KNM`),

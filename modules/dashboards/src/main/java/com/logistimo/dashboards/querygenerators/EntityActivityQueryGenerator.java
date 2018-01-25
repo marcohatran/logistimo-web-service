@@ -120,7 +120,7 @@ public class EntityActivityQueryGenerator {
   public String generate() {
     StringBuilder query = new StringBuilder("SELECT ");
     StringBuilder fromClause = new StringBuilder(" FROM ")
-        .append(getDistinctEntityMaterialsWithTransactionsInPeriodQuery())
+        .append(getDistinctEntityMaterialsWithPeriodQuery())
         .append(",KIOSK K, KIOSK_DOMAINS KD WHERE A.KID = K.KIOSKID AND K.KIOSKID = KD.KIOSKID_OID "
             + "AND KD.DOMAIN_ID = ").append(domainId).append(" ");
     StringBuilder groupByClause = new StringBuilder();
@@ -222,8 +222,8 @@ public class EntityActivityQueryGenerator {
    *
    * @return query
    */
-  private String getDistinctEntityMaterialsWithTransactionsInPeriodQuery() {
-    StringBuilder query = new StringBuilder("(SELECT KID,MID,COUNT(1) from TRANSACTION WHERE ");
+  private String getDistinctEntityMaterialsWithPeriodQuery() {
+    StringBuilder query = new StringBuilder("(SELECT KID,MID,COUNT(1) FROM INVNTRY WHERE IAT IS NOT NULL AND");
     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     Calendar cal = new GregorianCalendar();
     if (asOf != null) {

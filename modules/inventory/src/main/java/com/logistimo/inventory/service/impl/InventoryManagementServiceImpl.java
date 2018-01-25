@@ -845,6 +845,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
           in.setTax(item.getTax());
           in.setConsumptionRateManual(item.getConsumptionRateManual());
           in.setUpdatedBy(user);
+          in.setUpdatedOn(new Date());
           // Add to valid list
           validItems.add(in);
         } else if (in != null) {
@@ -1799,6 +1800,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
             }
             isUpdated = true;
           }
+          inv.setUpdatedOn(now);
           // If updated, create a new inventory log
           if (isUpdated) {
             logList.add(createInventoryLevelLog(inv, invBatch, now));
@@ -2171,6 +2173,9 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
       trans.setStockDifference(stockDifference);
     }
     in.setTimestamp(time);
+    if(in.getInventoryActiveTime() == null) {
+      in.setInventoryActiveTime(time);
+    }
     checkAndResetInventoryLevels(in, invBatch);
     // Update closing stock in transactions
     trans.setClosingStock(in.getStock());
@@ -3579,6 +3584,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
         }
         pm.makePersistent(invBatch);
       }
+      inv.setUpdatedOn(new Date());
       pm.makePersistent(inv);
     } finally {
       if (closePM) {
@@ -3886,6 +3892,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     if (user != null) {
       in.setUpdatedBy(user);
     }
+    in.setUpdatedOn(new Date());
   }
 
 }
