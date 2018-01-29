@@ -257,4 +257,8 @@ public interface IInvntry extends IOverlappedDomain {
   void setUpdatedOn(Date updatedOn);
 
   BigDecimal getExpiredStock() throws ServiceException;
+
+  Date getInventoryActiveTime();
+
+  void setInventoryActiveTime(Date inventoryActiveTime);
 }

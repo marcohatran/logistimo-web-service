@@ -199,6 +199,12 @@ public class Invntry implements IInvntry {
   @Persistent
   private Date uOn;
 
+  /**
+   * Inventory active time
+   */
+  @Persistent
+  private Date iat;
+
   public static String getModelDisplay(String modelType) {
     String display = "User specified replenishment - s,X";
     if (MODEL_SQ.equals(modelType)) {
@@ -529,7 +535,6 @@ public class Invntry implements IInvntry {
     if ((this.reord == null && BigUtil.notEqualsZero(reordLevel)) || (this.reord != null && BigUtil
         .notEquals(reordLevel, this.reord))) {
       this.reordT = new Date();
-      this.uOn = reordT;
     }
     if (reordLevel == null) {
       this.reord = null;
@@ -548,7 +553,6 @@ public class Invntry implements IInvntry {
     if ((this.max == null && BigUtil.notEqualsZero(maxStock)) || (this.max != null && BigUtil
         .notEquals(maxStock, this.max))) {
       this.maxT = new Date();
-      this.uOn = maxT;
     }
     if (maxStock == null) {
       this.max = null;
@@ -896,5 +900,15 @@ public class Invntry implements IInvntry {
           .map(IInvntryBatch::getQuantity).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
     }
     return BigDecimal.ZERO;
+  }
+
+  @Override
+  public Date getInventoryActiveTime() {
+    return iat;
+  }
+
+  @Override
+  public void setInventoryActiveTime(Date iat) {
+    this.iat = iat;
   }
 }

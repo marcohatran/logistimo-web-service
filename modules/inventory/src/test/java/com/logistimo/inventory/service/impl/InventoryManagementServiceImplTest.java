@@ -23,22 +23,47 @@
 
 package com.logistimo.inventory.service.impl;
 
+import com.logistimo.dao.JDOUtils;
+import com.logistimo.inventory.entity.IInvntry;
+import com.logistimo.inventory.entity.IInvntryBatch;
+import com.logistimo.inventory.entity.ITransaction;
+import com.logistimo.inventory.entity.Invntry;
+import com.logistimo.tags.dao.TagDao;
+
+import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 
+import javax.jdo.PersistenceManager;
+
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 
 /**
  * Created by charan on 15/12/17.
  */
 public class InventoryManagementServiceImplTest {
+  static InventoryManagementServiceImpl ims = new InventoryManagementServiceImpl();
+  PersistenceManager pm = mock(PersistenceManager.class);
+
+  @BeforeClass
+  public static void setup() {
+    TagDao tagDao = new TagDao();
+    ims.setTagDao(tagDao);
+  }
 
   @Test
   public void testIsATDValid() throws ParseException {
-    InventoryManagementServiceImpl ims = new InventoryManagementServiceImpl();
     SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
     assertFalse("ATD should be considered valid, but not",
         ims.isAtdNotValid("Asia/Kolkata", df.parse("2017-12-16T01:30:00.000+0000"),
@@ -47,11 +72,208 @@ public class InventoryManagementServiceImplTest {
 
   @Test
   public void testIsATDNotValid() throws ParseException {
-    InventoryManagementServiceImpl ims = new InventoryManagementServiceImpl();
     SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
     assertTrue("ATD should be considered in future, but not",
         ims.isAtdNotValid("Asia/Kolkata", df.parse("2017-12-16T01:30:00.000+0000"),
             df.parse("2017-12-15T17:30:00.000+0000")));
+  }
+
+  @Test
+  public void testSetInventoryFieldsTax()
+      throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    IInvntry
+        invntry =
+        getInvntry(1l, 10l, 100l, BigDecimal.ZERO, new BigDecimal(30), BigDecimal.ZERO,
+            BigDecimal.ZERO, BigDecimal.ZERO, null, null, null);
+    IInvntry inventory = new Invntry();
+    Method
+        method =
+        InventoryManagementServiceImpl.class
+            .getDeclaredMethod("setInventoryFields", IInvntry.class, IInvntry.class, String.class);
+    method.setAccessible(true);
+    method.invoke(ims, inventory, invntry, "smriti");
+
+    assertEquals(inventory.getTax(), new BigDecimal(30));
+    assertNotNull(inventory.getUpdatedOn());
+    assertNull(inventory.getTimestamp());
+  }
+
+  @Test
+  public void testSetInventoryFieldsConsumptionRateManual()
+      throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    IInvntry
+        invntry =
+        getInvntry(1l, 10l, 100l, BigDecimal.ZERO, BigDecimal.ZERO, new BigDecimal(20),
+            BigDecimal.ZERO, BigDecimal.ZERO, null, null, null);
+    IInvntry inventory = new Invntry();
+    Method
+        method =
+        InventoryManagementServiceImpl.class
+            .getDeclaredMethod("setInventoryFields", IInvntry.class, IInvntry.class, String.class);
+    method.setAccessible(true);
+    method.invoke(ims, inventory, invntry, "smriti");
+
+    assertEquals(inventory.getConsumptionRateManual(), new BigDecimal(20));
+    assertNotNull(inventory.getMnlConsumptionRateUpdatedTime());
+    assertTrue("Updated on should be equal to manual consumption rate updated timestamp",
+        inventory.getUpdatedOn().equals(inventory.getMnlConsumptionRateUpdatedTime()));
+    assertNull(inventory.getTimestamp());
+  }
+
+  @Test
+  public void testSetInventoryFieldsRetailerPrice()
+      throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    IInvntry
+        invntry =
+        getInvntry(1l, 10l, 100l, new BigDecimal(100), BigDecimal.ZERO, BigDecimal.ZERO,
+            BigDecimal.ZERO, BigDecimal.ZERO, null, null, null);
+    IInvntry inventory = new Invntry();
+    Method
+        method =
+        InventoryManagementServiceImpl.class
+            .getDeclaredMethod("setInventoryFields", IInvntry.class, IInvntry.class, String.class);
+    method.setAccessible(true);
+    method.invoke(ims, inventory, invntry, "smriti");
+
+    assertEquals(inventory.getRetailerPrice(), new BigDecimal(100));
+    assertNotNull(inventory.getRetailerPriceUpdatedTime());
+    assertTrue("Updated on should be equal to retailer price updated timestamp",
+        inventory.getUpdatedOn().equals(inventory.getRetailerPriceUpdatedTime()));
+    assertNull(inventory.getTimestamp());
+  }
+
+  @Test
+  public void testSetInventoryFieldsMinMax()
+      throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    IInvntry
+        invntry =
+        getInvntry(1l, 10l, 100l, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ONE,
+            BigDecimal.TEN, null, null, null);
+    IInvntry inventory = new Invntry();
+    Method
+        method =
+        InventoryManagementServiceImpl.class
+            .getDeclaredMethod("setInventoryFields", IInvntry.class, IInvntry.class, String.class);
+    method.setAccessible(true);
+    method.invoke(ims, inventory, invntry, "smriti");
+
+    assertEquals(invntry.getReorderLevel(), BigDecimal.ONE);
+    assertEquals(invntry.getMaxStock(), BigDecimal.TEN);
+    assertNotNull(invntry.getReorderLevelUpdatedTime());
+    assertNotNull(invntry.getMaxUpdatedTime());
+    assertTrue("Updated on should be equal to max updated time",
+        inventory.getUpdatedOn().equals(inventory.getMaxUpdatedTime()));
+    assertNull(inventory.getTimestamp());
+  }
+
+  @Test
+  public void testSetInventoryFieldsPSTimestamp()
+      throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    Date psTimeStamp = new Date();
+    IInvntry
+        invntry =
+        getInvntry(1l, 10l, 100l, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO,
+            BigDecimal.ZERO, BigDecimal.ZERO, null, psTimeStamp, null);
+    IInvntry inventory = new Invntry();
+    Method
+        method =
+        InventoryManagementServiceImpl.class
+            .getDeclaredMethod("setInventoryFields", IInvntry.class, IInvntry.class, String.class);
+    method.setAccessible(true);
+    method.invoke(ims, inventory, invntry, "smriti");
+    assertEquals(psTimeStamp, inventory.getPSTimestamp());
+    assertTrue("Updated on should be equal to PSTimeStamp",
+        inventory.getPSTimestamp().equals(inventory.getUpdatedOn()));
+    assertTrue("Last stock updated timestamp should be equal to PSTimeStamp",
+        inventory.getPSTimestamp().equals(inventory.getUpdatedOn()));
+  }
+
+  @Test
+  public void testSetInventoryFieldsDQTimeStamp()
+      throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    Date dqTimeStamp = new Date();
+    IInvntry
+        invntry =
+        getInvntry(1l, 10l, 100l, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO,
+            BigDecimal.ZERO, BigDecimal.ZERO, null, null, dqTimeStamp);
+    IInvntry inventory = new Invntry();
+    Method
+        method =
+        InventoryManagementServiceImpl.class
+            .getDeclaredMethod("setInventoryFields", IInvntry.class, IInvntry.class, String.class);
+    method.setAccessible(true);
+    method.invoke(ims, inventory, invntry, "smriti");
+    assertEquals(dqTimeStamp, inventory.getDQTimestamp());
+    assertTrue("Updated on should be equal to PSTimeStamp",
+        inventory.getDQTimestamp().equals(inventory.getUpdatedOn()));
+    assertTrue("Last stock updated timestamp should be equal to PSTimeStamp",
+        inventory.getDQTimestamp().equals(inventory.getUpdatedOn()));
+  }
+
+  @Test
+  public void testUpdateStock()
+      throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    IInvntry
+        invntry =
+        getInvntry(1l, 10l, 100l, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO,
+            BigDecimal.ZERO, BigDecimal.ZERO, null, null, null);
+    Date timestamp = new Date();
+    invntry.setStock(new BigDecimal(30));
+    invntry.setAvailableStock(new BigDecimal(20));
+    invntry.setAllocatedStock(BigDecimal.TEN);
+
+    ITransaction transaction = JDOUtils.createInstance(ITransaction.class);
+    transaction.setKioskId(1l);
+    transaction.setMaterialId(10l);
+    transaction.setDomainId(100l);
+    transaction.setQuantity(BigDecimal.TEN);
+    transaction.setType(ITransaction.TYPE_ISSUE);
+
+    Method
+        method =
+        InventoryManagementServiceImpl.class
+            .getDeclaredMethod("updateStock", IInvntry.class, IInvntryBatch.class,
+                ITransaction.class, Date.class, PersistenceManager.class);
+    method.setAccessible(true);
+    method.invoke(ims, invntry, null, transaction, timestamp, null);
+
+    assertEquals(transaction.getOpeningStock(), new BigDecimal(30));
+    assertEquals(invntry.getStock(), new BigDecimal(20));
+    assertEquals(invntry.getAvailableStock(), BigDecimal.TEN);
+    assertEquals(invntry.getTimestamp(), timestamp);
+    assertEquals(invntry.getUpdatedOn(), timestamp);
+  }
+
+  @Test
+  public void testIncrementInventoryAvailableQuantity()
+      throws Exception {
+    IInvntry inv = getInvntry(1l, 2l, 1343724l, null, null, null, null, null, new Date(), null, null);
+    inv.setAvailableStock(BigDecimal.TEN);
+    inv.setStock(BigDecimal.TEN);
+    inv.setAllocatedStock(BigDecimal.ZERO);
+    ims.incrementInventoryAvailableQuantity(1l, 2l, null, new BigDecimal(-10), pm, inv, null, true);
+    assertEquals(inv.getAvailableStock(), BigDecimal.ZERO);
+    assertEquals(inv.getAllocatedStock(), BigDecimal.TEN);
+  }
+
+  private IInvntry getInvntry(Long kId, Long mId, Long sdId, BigDecimal price, BigDecimal tax,
+                              BigDecimal crMnl, BigDecimal min, BigDecimal max, Date timeStamp,
+                              Date psTimeStamp, Date dqTimeStamp) {
+    IInvntry invntry = new Invntry();
+    invntry.setKioskId(kId);
+    invntry.setDomainId(sdId);
+    invntry.setMaterialId(mId);
+    invntry.setRetailerPrice(price);
+    invntry.setTax(tax);
+    invntry.setConsumptionRateManual(crMnl);
+    invntry.setReorderLevel(min);
+    invntry.setMaxStock(max);
+    if (timeStamp != null) {
+      invntry.setTimestamp(timeStamp);
+    }
+    invntry.setPSTimestamp(psTimeStamp);
+    invntry.setDQTimestamp(dqTimeStamp);
+    return invntry;
   }
 
 }

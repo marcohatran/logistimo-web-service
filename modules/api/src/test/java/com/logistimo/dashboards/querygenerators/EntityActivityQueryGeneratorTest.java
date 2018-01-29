@@ -60,6 +60,7 @@ public class EntityActivityQueryGeneratorTest {
     assertTrue("Query should contain material tag RI Vaccines", query.contains("RI Vaccines"));
     assertTrue("Query should NOT contain material id 12345", !query.contains("12345"));
     assertTrue("Query should NOT contain exclude entity tags CCP", !query.contains("CCP"));
+    assertTrue("Query should fetch data from INVNTRY table", query.contains("INVNTRY WHERE IAT IS NOT NULL"));
   }
 
   @Test
