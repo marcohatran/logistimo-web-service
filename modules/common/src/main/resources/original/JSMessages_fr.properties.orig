@@ -264,6 +264,7 @@ already.exists=existe déjà.
 route.road=Itinéraire routier
 initial=initiale
 month.barselect=Cliquez sur une barre de mois / ligne pour voir les tendances quotidiennes dans ce mois
+week.barselect=Cliquez sur une barre / ligne de la semaine pour voir les tendances quotidiennes de ce mois
 total.counts=total des comtes
 add.batches=Ajouter à lots
 password.mismatch=Désolé , votre nouveau mot de passe est le même que l' ancien mot de passe . S'il vous plaît changer cela et essayer à nouveau.
