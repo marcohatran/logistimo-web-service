@@ -47,7 +47,7 @@ public class SecureUserDetails implements Serializable {
   private Long currentDomainId;
 
   public Long getCurrentDomainId() {
-    return currentDomainId;
+    return currentDomainId !=null? currentDomainId :domainId;
   }
 
   public void setCurrentDomainId(Long currentDomainId) {
