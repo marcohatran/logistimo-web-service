@@ -785,6 +785,7 @@ assetControllers.controller('AssetsDetailsListingController', ['$scope', '$locat
             $scope.tempAwr = relType;
             $scope.tempAwrDisplay = $scope.assetRelationFilters[relType].data;
         };
+        $scope.initLocalFilters = [];
         $scope.init = function (firstTimeInit) {
             $scope.loading = true;
             $scope.showLoading();
@@ -794,6 +795,7 @@ assetControllers.controller('AssetsDetailsListingController', ['$scope', '$locat
             }else if (checkNotNullEmpty(requestContext.getParam("eid"))) {
                 if (checkNullEmpty($scope.entity) || $scope.entity.id != requestContext.getParam("eid")) {
                     $scope.entity = {id: parseInt(requestContext.getParam("eid")), nm: ""};
+                    $scope.initLocalFilters.push("entity");
                 }
                 $scope.entityId = parseInt(requestContext.getParam("eid"));
             }else if(firstTimeInit && checkNotNullEmpty($scope.defaultEntityId)){
@@ -801,6 +803,7 @@ assetControllers.controller('AssetsDetailsListingController', ['$scope', '$locat
                 $location.$$compose();
                 $scope.entityId = $scope.defaultEntityId;
                 $scope.entity = {id: $scope.entityId, nm: ""};
+                $scope.initLocalFilters.push("entity");
             }else{
                 $scope.entityId = 0;
             }

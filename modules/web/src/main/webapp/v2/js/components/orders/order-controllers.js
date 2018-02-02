@@ -317,7 +317,7 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
             $scope.to = undefined;
             $scope.otag = null;
             $scope.etag = null;
-            $scope.otype = null;
+            $scope.otype = 'sle';
             $scope.oid = undefined;
             $scope.showOrderDetail = false;
             $scope.orderId = undefined;
