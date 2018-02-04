@@ -665,6 +665,18 @@ cmnControllers.controller('ResetController', ['$scope', function ($scope) {
         $scope[filter] = angular.copy($scope[filter]);
         callParentWatches(filter);
     });
+    if ($scope.initLocalFilters) {
+        $scope.initLocalFilters.forEach(function (filter) {
+            $scope.$watch(filter, function (newValue, oldValue) {
+                if (newValue != oldValue) {
+                    if ($scope.initLocalFilters.indexOf(filter) != -1) {
+                        $scope.$parent[filter] = angular.copy($scope[filter]);
+                        $scope.initLocalFilters.splice($scope.initLocalFilters.indexOf(filter), 1)
+                    }
+                }
+            });
+        });
+    }
     function addwatch(filter) {
         $scope.$parent.$watch(filter, function (newValue, oldValue) {
             if (newValue != oldValue) {
@@ -702,9 +714,6 @@ cmnControllers.controller('ResetController', ['$scope', function ($scope) {
     $scope.resetLocalFilters = function(){
         $scope.localFilters.forEach(function (filter) {
             $scope[filter] = undefined;
-            if(filter == 'otype'){
-                $scope[filter] = 'sle';
-            }
         });
         $scope.resetFilters();
     }
