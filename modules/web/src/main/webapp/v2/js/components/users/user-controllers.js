@@ -234,6 +234,62 @@ userControllers.controller('UsersListController', ['$scope', 'userService', 'req
             $scope.utag = "";
 
         };
+
+        $scope.exportData=function() {
+            exportService.exportData({
+                first_name: $scope.search.key,
+                mobile_no: $scope.uphn,
+                role: $scope.urole,
+                user_active: $scope.uactive,
+                app_version: $scope.uversion,
+                from_date: formatDate2Url($scope.from),
+                end_date: formatDate2Url($scope.to),
+                user_no_log: $scope.nvrlogged,
+                utag: $scope.utag,
+                titles: {
+                    filters: getCaption()
+                },
+                module: "Users",
+                templateId: "s_users"
+            })
+        };
+
+        function getCaption() {
+            var caption = getFilterTitle($scope.search.key, $scope.resourceBundle['user.firstname']);
+            caption += getFilterTitle($scope.uphn, $scope.resourceBundle['user.mobile.phone.number']);
+            caption += getFilterTitle(getDisplayText('r', $scope.urole), $scope.resourceBundle['role']);
+            caption += getFilterTitle(getDisplayText('a', $scope.uactive), $scope.resourceBundle['user.active']);
+            caption += getFilterTitle($scope.uversion, $scope.resourceBundle['user.mobile.app.version']);
+            caption += getFilterTitle(formatDate2Url($scope.from), $scope.resourceBundle['from']);
+            caption += getFilterTitle(formatDate2Url($scope.to), $scope.resourceBundle['to']);
+            caption += getFilterTitle(getDisplayText('l', $scope.nvrlogged), $scope.resourceBundle['user.never.logged.in']);
+            caption += getFilterTitle($scope.utag, $scope.resourceBundle['user'] + " " + $scope.resourceBundle['tag.lower']);
+            return caption;
+        }
+
+        function getDisplayText(type,text) {
+            switch (type) {
+                case 'r':
+                    switch (text) {
+                        case 'ROLE_ko': return $scope.resourceBundle['role.kioskowner'];
+                        case 'ROLE_sm': return $scope.resourceBundle['role.servicemanager'];
+                        case 'ROLE_do': return $scope.resourceBundle['role.domainowner'];
+                        case 'ROLE_su': return $scope.resourceBundle['role.superuser'];
+                        default: return $scope.resourceBundle['all'];
+                    }
+                    break;
+                case 'a':
+                    switch (text) {
+                        case 'true': return $scope.resourceBundle['user.active'];
+                        case 'false': return $scope.resourceBundle['user.disabled'];
+                        default: return $scope.resourceBundle['all'];
+                    }
+                    break;
+                case 'l':
+                    return text ? "Yes" : undefined;
+                    break;
+            }
+        }
     }
 ]);
 

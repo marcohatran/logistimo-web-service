@@ -576,6 +576,25 @@ entityControllers.controller('EntityListController', ['$scope', 'entityService',
             $scope.etag = "";
             $scope.search = {};
         };
+
+        $scope.exportData=function() {
+            exportService.exportData({
+                ent_name: $scope.search.key,
+                mtag: $scope.mtag,
+                titles: {
+                    filters: getCaption()
+                },
+                module: "Entity",
+                templateId: "s_entities"
+            })
+        };
+
+        function getCaption() {
+            var caption = getFilterTitle($scope.search.key, $scope.resourceBundle['kiosks']);
+            caption += getFilterTitle($scope.etag, $scope.resourceBundle['kiosk'] + " " + $scope.resourceBundle['tag.lower']);
+            return caption;
+        }
+
     }
 ]);
 

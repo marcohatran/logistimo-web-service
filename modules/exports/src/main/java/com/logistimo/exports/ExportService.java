@@ -24,20 +24,21 @@
 package com.logistimo.exports;
 
 import com.google.gson.Gson;
-
 import com.logistimo.AppFactory;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.entity.IJobStatus;
+import com.logistimo.exports.builders.ExportBuilder;
 import com.logistimo.exports.model.ExportConfigModel;
 import com.logistimo.exports.model.ExportRequestModel;
+import com.logistimo.exports.model.RequestModel;
 import com.logistimo.reports.constants.ReportViewType;
 import com.logistimo.reports.plugins.internal.ExportModel;
 import com.logistimo.reports.plugins.internal.QueryHelper;
+import com.logistimo.services.ServiceException;
 import com.logistimo.utils.JobUtil;
-
 import org.apache.camel.ExchangePattern;
 import org.apache.camel.ProducerTemplate;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -48,6 +49,14 @@ import java.util.Map;
 public class ExportService {
 
   public static final String REPORT_VIEW_TYPE = "reportViewType";
+
+
+  private ExportBuilder exportBuilder;
+
+  @Autowired
+  public void setExportBuilder(ExportBuilder exportBuilder) {
+    this.exportBuilder = exportBuilder;
+  }
 
   public long scheduleExport(ExportModel model, String jobSubType) {
     Map<String, String>
@@ -88,4 +97,11 @@ public class ExportService {
             .getBean("camel-client", ProducerTemplate.class);
     camelTemplate.sendBody("direct:export-tasks", ExchangePattern.InOnly, model);
   }
+
+  public long scheduleExportJob(RequestModel model) throws ServiceException {
+    String moduleName = model.getModule();
+    ExportModel exportModel = exportBuilder.buildExportModel(model);
+    return scheduleExport(exportModel, moduleName);
+  }
+
 }

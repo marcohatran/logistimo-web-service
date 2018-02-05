@@ -2361,7 +2361,7 @@ logistimoApp.directive('export', function () {
             callback: '&'
         },
         controller: ExportController,
-        template: '<div><button class="btn btn-sm btn-primary" ng-click="exportData()">Export</button></div>'
+        template: '<button class="btn btn-sm btn-primary" ng-click="exportData()">Export</button>'
     };
 });
 
