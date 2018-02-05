@@ -120,6 +120,7 @@ import com.logistimo.utils.JobUtil;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.StringUtil;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
@@ -1095,7 +1096,7 @@ public class RESTUtil {
   public static Results getLinkedKiosks(Long kioskId, String linkType, String userId,
                                         boolean getUsersForKiosk, DomainConfig dc,
                                         PageParams pageParams, Optional<Date> modifiedSinceDate) {
-    Vector<Hashtable<String, String>> linkedKiosks = new Vector<>();
+    Vector<Hashtable> linkedKiosks = new Vector<>();
     Results results = null;
     String cursor = null;
     try {
@@ -1129,7 +1130,7 @@ public class RESTUtil {
             // Set the route index / tag, if present
             k.setRouteIndex(link.getRouteIndex());
             k.setRouteTag(link.getRouteTag());
-            Hashtable<String, String>
+            Hashtable
                 linkedKiosk =
                 k.getMapZ(true,
                     userId); // allow only users created by userId to be editable; others are not editable by this user
@@ -1169,6 +1170,11 @@ public class RESTUtil {
             // Add the disabled batch management flag, if applicable
             if (!k.isBatchMgmtEnabled()) {
               linkedKiosk.put(JsonTagsZ.DISABLE_BATCH_MGMT, "true");
+            }
+
+            List<String> tags = k.getTags();
+            if (CollectionUtils.isNotEmpty(tags)) {
+              linkedKiosk.put(JsonTagsZ.ENTITY_TAG,tags);
             }
             // Add to vector
             linkedKiosks.add(linkedKiosk);
