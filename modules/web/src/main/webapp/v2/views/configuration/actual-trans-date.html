@@ -41,6 +41,8 @@
                     <li ng-class="{active : actualTransDate.s}"><a href="" ng-click="ActualTransContent('s')">{{resourceBundle['transactions.stockcount.upper']}}</a></li>
                     <li ng-class="{active : actualTransDate.d}"><a href="" ng-click="ActualTransContent('d')">{{resourceBundle['transactions.wastage.upper']}}</a></li>
                     <li ng-class="{active : actualTransDate.t}"><a href="" ng-click="ActualTransContent('t')">{{resourceBundle['transactions.transfer.upper']}}</a></li>
+                    <li ng-class="{active : actualTransDate.ri}"><a href="" ng-click="ActualTransContent('ri')">{{resourceBundle['transactions.returns.incoming.upper']}}</a></li>
+                    <li ng-class="{active : actualTransDate.ro}"><a href="" ng-click="ActualTransContent('ro')">{{resourceBundle['transactions.returns.outgoing.upper']}}</a></li>
                 </ul>
             </div>
             <div class="col-sm-10">
@@ -124,6 +126,38 @@
                                                     <input type="radio" name="actualtransdt" ng-model="inv.catdt" value="0" > {{resourceBundle['none']}}<br/>
                                                     <input type="radio" name="actualtransdt" ng-model="inv.catdt" value="1"> {{resourceBundle['invntry.config.trans.date.options.optional']}}<br/>
                                                     <input type="radio" name="actualtransdt" ng-model="inv.catdt" value="2"> {{resourceBundle['invntry.config.trans.date.options.mandatory']}}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div ng-show="actualTransDate.ri" style="border:none;">
+                                <div class="row"> <!--capture the actual date of transaction-->
+                                    <div class="col-sm-11">
+                                        <div class="form-group">
+                                            <label class="col-sm-3 control-label">{{resourceBundle['date.actual.transaction']}}</label>
+                                            <div class="col-sm-8 cbx">
+                                                <div class="col-sm-8" >
+                                                    <input type="radio" name="actualtransri" ng-model="inv.catdri" value="0" > {{resourceBundle['none']}}<br/>
+                                                    <input type="radio" name="actualtransri" ng-model="inv.catdri" value="1"> {{resourceBundle['invntry.config.trans.date.options.optional']}}<br/>
+                                                    <input type="radio" name="actualtransri" ng-model="inv.catdri" value="2"> {{resourceBundle['invntry.config.trans.date.options.mandatory']}}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div ng-show="actualTransDate.ro" style="border:none;">
+                                <div class="row"> <!--capture the actual date of transaction-->
+                                    <div class="col-sm-11">
+                                        <div class="form-group">
+                                            <label class="col-sm-3 control-label">{{resourceBundle['date.actual.transaction']}}</label>
+                                            <div class="col-sm-8 cbx">
+                                                <div class="col-sm-8" >
+                                                    <input type="radio" name="actualtransro" ng-model="inv.catdro" value="0" > {{resourceBundle['none']}}<br/>
+                                                    <input type="radio" name="actualtransro" ng-model="inv.catdro" value="1"> {{resourceBundle['invntry.config.trans.date.options.optional']}}<br/>
+                                                    <input type="radio" name="actualtransro" ng-model="inv.catdro" value="2"> {{resourceBundle['invntry.config.trans.date.options.mandatory']}}
                                                 </div>
                                             </div>
                                         </div>

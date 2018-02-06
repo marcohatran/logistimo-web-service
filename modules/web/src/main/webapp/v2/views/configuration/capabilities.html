@@ -113,6 +113,10 @@
                                                 <input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[14]"ng-change="setFormUpdated();toggleTransfers('c')"> {{resourceBundle['config.create.transfer.order']}}
                                             </td>
                                         </tr>
+                                        <tr>
+                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[15]" ng-change="setFormUpdated()"> {{resourceBundle['config.enter.returns.incoming']}}</td>
+                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[16]" ng-change="setFormUpdated()"> {{resourceBundle['config.enter.returns.outgoing']}}</td>
+                                        </tr>
                                     </table>
                                 </div>
                             </div>
@@ -176,6 +180,10 @@
                                     <tag-select  tags-model="uiCnf.iwTags" type="'material'" force-no-udf="'true'"></tag-select>
                                     {{resourceBundle['capabilities.material.tag.transfer']}}:<br/>
                                     <tag-select  tags-model="uiCnf.itTags" type="'material'" force-no-udf="'true'"></tag-select>
+                                    {{resourceBundle['capabilities.material.tag.returns.incoming']}}:<br/>
+                                    <tag-select  tags-model="uiCnf.iriTags" type="'material'" force-no-udf="'true'"></tag-select>
+                                    {{resourceBundle['capabilities.material.tag.returns.outgoing']}}:<br/>
+                                    <tag-select  tags-model="uiCnf.iroTags" type="'material'" force-no-udf="'true'"></tag-select>
                                 </div>
                             </div>
                         </div>

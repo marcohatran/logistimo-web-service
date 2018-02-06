@@ -628,37 +628,40 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                 $scope.showLoading();
                 var entId = $scope.transaction.ent.id;
                 invService.getInventory(entId, null, $scope.offset, $scope.size).then(function (data) {
-                    if($scope.stopInvFetch || checkNullEmpty($scope.transaction.ent) || entId != $scope.transaction.ent.id) {
+                    if ($scope.stopInvFetch || checkNullEmpty($scope.transaction.ent) || entId != $scope.transaction.ent.id) {
                         return;
                     }
                     var inventory = data.data.results;
-                    if(checkNotNullEmpty(inventory) && inventory.length > 0){
+                    if (checkNotNullEmpty(inventory) && inventory.length > 0) {
                         $scope.availableInventory = $scope.availableInventory.concat(inventory);
                     }
-                    if(!$scope.stopInvFetch && checkNotNullEmpty(inventory) && inventory.length == $scope.size){
+                    if (!$scope.stopInvFetch && checkNotNullEmpty(inventory) && inventory.length == $scope.size) {
                         $scope.offset += $scope.size;
                         $scope.getInventory();
-                    }else{
+                    } else {
                         $scope.loadMaterials = false;
                     }
-                    inventory.forEach(function (inv) {
-                        inv.tgs.forEach(function (tag) {
-                            if (checkNullEmpty($scope.tagMaterials[tag])) {
-                                $scope.tagMaterials[tag] = [];
-                            }
-                            $scope.tagMaterials[tag].push(inv.mId);
+                    if (checkNotNullEmpty(inventory)) {
+                        inventory.forEach(function (inv) {
+                            inv.tgs.forEach(function (tag) {
+                                if (checkNullEmpty($scope.tagMaterials[tag])) {
+                                    $scope.tagMaterials[tag] = [];
+                                }
+                                $scope.tagMaterials[tag].push(inv.mId);
+                            });
+
+                            $scope.avMap[inv.mId] = inv;
+
                         });
 
-                        $scope.avMap[inv.mId] = inv;
-
-                    });
-                    for (var i in $scope.transaction.materials) {
-                        var mat = $scope.transaction.materials[i];
-                        if(checkNotNullEmpty(mat.name) && checkNotNullEmpty($scope.avMap[mat.name.mId])){
-                            $scope.avMap[mat.name.mId].hide = true;
+                        for (var i in $scope.transaction.materials) {
+                            var mat = $scope.transaction.materials[i];
+                            if (checkNotNullEmpty(mat.name) && checkNotNullEmpty($scope.avMap[mat.name.mId])) {
+                                $scope.avMap[mat.name.mId].hide = true;
+                            }
                         }
+                        $scope.loadDInventory(inventory);
                     }
-                    $scope.loadDInventory(inventory);
                     $scope.invLoading = false;
 
                 }).catch(function error(msg) {

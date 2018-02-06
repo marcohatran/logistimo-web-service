@@ -57,9 +57,10 @@ public class CapabilitiesConfigModel {
   public List<String> hip; // hide inventory material tags on stock count
   public List<String> hiw; // hide inventory material tags on discards
   public List<String> hit; // hide inventory material tags on transfers
+  public List<String> hiri; // hide inventory material tags on returns-incoming
+  public List<String> hiro; // hide inventory material tags on returns-outgoing
 
   public int mdri = 0; // Master data refresh interval
-  public int iri = 0; // Inventory refresh interval
   public int aplui = 0; // Application log upload interval
   public int stwd = 0; // SMS transmission wait duration
 

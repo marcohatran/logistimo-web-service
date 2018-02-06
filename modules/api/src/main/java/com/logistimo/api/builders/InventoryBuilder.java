@@ -69,7 +69,6 @@ import com.logistimo.users.service.UsersService;
 import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.CommonUtils;
 import com.logistimo.utils.LocalDateUtil;
-import com.logistimo.utils.StringUtil;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -553,23 +552,6 @@ public class InventoryBuilder {
       model = null;
     }
     return model;
-  }
-
-  public String trimReasons(String reasonsCSV) {
-    String csv = reasonsCSV;
-    if (csv != null) {
-      csv = csv.trim();
-      if (csv.isEmpty()) {
-        csv = null;
-      } else {
-        // Compact spaces between reasons
-        csv = StringUtil.getCSV(StringUtil.trim(StringUtil.getArray(csv)));
-      }
-    }
-    if (csv == null) {
-      csv = "";
-    }
-    return csv;
   }
 
   public InventoryDomainModel buildInventoryDomainModel(IKiosk kiosk) {

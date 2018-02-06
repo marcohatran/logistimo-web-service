@@ -1230,3 +1230,15 @@ purchases.sales.approvals=Achats et ventes
 transfer.approvals=Transferts / Sorties
 order.shipmentCommande d'expédition
 transfer.shipment=Transfert d'expédition
+transactions.returns.incoming.upper=Retours-entrant
+transactions.returns.outgoing.upper=Retours-sortants
+config.reasons.returns.incoming=Raisons pour les retours
+config.reasons.returns.outgoing=Raisons pour les retours-sortants
+config.enter.returns.incoming=Entrer renvoie les entrées
+config.enter.returns.outgoing=Entrer les retours sortants
+config.returns.policy=Politique de retour
+config.returns.policy.overview=Spécifiez la politique autour des retours entrants et sortants
+config.returns.policy.returns.incoming.duration=Durée de retour entrante
+config.returns.incoming.include.reasons=Ne considérez que les retours entrants avec les codes de raison suivants pour réduire la consommation.
+config.exclude.returns.incoming=Exclure les quantités de retours entrants
+config.returns.policy.returns.outgoing.duration=Durée du retour sortant

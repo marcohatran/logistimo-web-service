@@ -1203,4 +1203,9 @@ bulletinboard.old=Tableau d'affichage (ancien)
 authorized.success=Autorisé avec succès
 enter.key=Veuillez entrer la clé
 bulletin.system.error=Une erreur système s'est produite lors de l'extraction du tableau d'affichage
+config.returns.incoming.status=Statut pour les retours-entrants
+config.returns.outgoing.status=Statut pour les retours-sortants
+capabilities.material.tag.returns.incoming=Spécifiez les balises des matériaux à masquer dans la vue Inventaire pour les retours entrants
+capabilities.material.tag.returns.outgoing=Specify tags of materials to be hidden from Inventory view for returns-outgoing
+config.returns.policy.entity.tags.configure=Veuillez configurer les tags d'entité pour la politique de retour.
 
