@@ -4321,3 +4321,42 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
 .bulletin-access-key {
     font-size: 500%;
 }
+
+.network-overlay {
+    position: fixed;
+    display: block;
+    width: 50%;
+    height: 50px;
+    top: 0;
+    left: 25%;
+    right: 0;
+    bottom: 0;
+    background-color: #f2dede;
+    border-color: #ebccd1;
+    z-index: 2;
+    cursor: pointer;
+    -webkit-animation: fadeinout 10s linear forwards;
+    animation: fadeinout 10s linear forwards;
+    opacity: 0;
+}
+
+.network-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    font-size: 15px;
+    font-family: lato;
+    font-weight: bold;
+    color: #a94442;
+    letter-spacing: 1.5px;
+    transform: translate(-50%,-50%);
+    -ms-transform: translate(-50%,-50%);
+}
+
+@-webkit-keyframes fadeinout {
+    50% { opacity: 1; }
+}
+
+@keyframes fadeinout {
+    50% { opacity: 1; }
+}

@@ -1202,4 +1202,5 @@ before.shipping.an.order=Avant d'expédier une commande
 bulletinboard.old=Tableau d'affichage (ancien)
 authorized.success=Autorisé avec succès
 enter.key=Veuillez entrer la clé
+bulletin.system.error=Une erreur système s'est produite lors de l'extraction du tableau d'affichage
 

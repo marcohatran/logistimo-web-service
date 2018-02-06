@@ -1205,3 +1205,4 @@ before.shipping.an.order=Before shipping an order
 bulletinboard.old=Bulletin board (old)
 authorized.success=Authorized successfully
 enter.key=Please enter the key
+bulletin.system.error=System error occurred while fetching bulletin board

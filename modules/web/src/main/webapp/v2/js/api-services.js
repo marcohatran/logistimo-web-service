@@ -51,7 +51,7 @@ logistimoApp.factory('APIService', function ($http, $q, $rootScope) {
                 }
             });
         } else {
-            localStorage.removeItem(urlStr);
+            $rootScope.systemError = false;
             var promise = $http({method: 'GET', url: urlStr});
             return $q(function (resolve, reject) {
                 promise.then(function (data) {
@@ -61,6 +61,7 @@ logistimoApp.factory('APIService', function ($http, $q, $rootScope) {
                     }));
                     resolve(data);
                 }).catch(function (error) {
+                    $rootScope.systemError = true;
                     reject(error);
                 });
             });
