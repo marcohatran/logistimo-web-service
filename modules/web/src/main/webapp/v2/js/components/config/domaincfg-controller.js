@@ -1270,15 +1270,17 @@ domainCfgControllers.controller('InventoryConfigurationController', ['$scope', '
                 $scope.hideLoading();
             }
         };
+
         function isReturnsConfigurationValid() {
-            $scope.inv.rcm.some(function(data) {
-                if(checkNullEmpty(data.enTgs)) {
-                    $scope.showWarning('Please configure the entity tags and return policy');
-                    return false;
+            return !($scope.inv.rcm.some(function(data){
+                    if(checkNullEmpty(data.enTgs)) {
+                        $scope.showWarning($scope.resourceBundle['config.returns.policy.entity.tags.configure']);
+                        return true;
+                    }
                 }
-            });
-            return true;
+            ));
         }
+
         $scope.setMtg = function (newVal) {
             if(checkNotNullEmpty(newVal)){
                 $scope.addRows('i');
