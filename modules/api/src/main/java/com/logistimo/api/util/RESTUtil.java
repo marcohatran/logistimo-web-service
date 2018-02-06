@@ -57,7 +57,6 @@ import com.logistimo.config.models.SMSConfig;
 import com.logistimo.config.models.SupportConfig;
 import com.logistimo.config.models.SyncConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
-import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.SourceConstants;
@@ -1371,6 +1370,7 @@ public class RESTUtil {
     Hashtable<String, Object>
         config =
         new Hashtable<>();
+
     if (!isConfigModified(modifiedSinceDate, user.getDomainId())) {
       return config;
     }
@@ -2408,10 +2408,10 @@ public class RESTUtil {
     return parsedRequest;
   }
 
-  private static boolean isConfigModified(Optional<Date> modifiedSinceDate, Long domainId)
+  protected static boolean isConfigModified(Optional<Date> modifiedSinceDate, Long domainId)
       throws ServiceException {
     ConfigurationMgmtService cms = StaticApplicationContext.getBean(
-        ConfigurationMgmtServiceImpl.class);
+        ConfigurationMgmtService.class);
     IConfig config = cms.getConfiguration(IConfig.CONFIG_PREFIX + domainId);
     return !modifiedSinceDate.isPresent() || !modifiedSinceDate.get()
         .after(config.getLastUpdated());

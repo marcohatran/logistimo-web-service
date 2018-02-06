@@ -27,7 +27,6 @@ import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.QueryParams;
 import com.logistimo.pagination.Results;
-import com.logistimo.services.ServiceException;
 
 import java.util.Date;
 import java.util.List;

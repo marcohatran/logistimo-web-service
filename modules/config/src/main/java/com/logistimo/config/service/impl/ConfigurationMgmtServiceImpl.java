@@ -142,7 +142,7 @@ public class ConfigurationMgmtServiceImpl implements ConfigurationMgmtService {
       throw new ServiceException("Invalid key: " + key);
     }
     IConfig config = null;
-    PersistenceManager pm = PMF.get().getPersistenceManager();
+    PersistenceManager pm = getPM();
     try {
       String realKey = getRealKey(key, domainId);
       config = JDOUtils.getObjectById(IConfig.class, realKey, pm);
@@ -155,6 +155,10 @@ public class ConfigurationMgmtServiceImpl implements ConfigurationMgmtService {
     }
 
     return config;
+  }
+
+  protected PersistenceManager getPM() {
+    return PMF.get().getPersistenceManager();
   }
 
   /**

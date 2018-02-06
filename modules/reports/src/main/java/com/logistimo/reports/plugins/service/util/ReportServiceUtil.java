@@ -461,7 +461,9 @@ public class ReportServiceUtil {
         key = getTableByMaterialKey(id);
         break;
       case BY_ENTITY:
-        key = getTableByEntityKey(id);
+      case BY_CUSTOMER:
+        EntitiesService es = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
+        key = getEntityMetaInfo(es.getKiosk(Long.valueOf(id), false));
         break;
       case BY_ENTITY_TAGS:
         key = TagUtil.getTagById(Long.valueOf(id), ITag.KIOSK_TAG);
@@ -475,9 +477,6 @@ public class ReportServiceUtil {
       case BY_ASSET_TYPE:
         AssetSystemConfig assets = AssetSystemConfig.getInstance();
         key = assets.getAssetsNameByType(2).get(Integer.parseInt(id));
-        break;
-      case BY_CUSTOMER:
-        key = getTableByCustomerKey(id);
         break;
       default:
         key = id;
@@ -494,17 +493,6 @@ public class ReportServiceUtil {
     return key;
   }
 
-  private String getTableByEntityKey(String string) throws ServiceException {
-    String key;EntitiesService es = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
-    IKiosk k = es.getKiosk(Long.valueOf(string), false);
-    key = k.getName() + CharacterConstants.PIPE + string +
-        CharacterConstants.PIPE + (StringUtils.isEmpty(k.getCity())? CharacterConstants.EMPTY : k.getCity()) +
-        CharacterConstants.PIPE + (StringUtils.isEmpty(k.getTaluk())? CharacterConstants.EMPTY : k.getTaluk()) +
-        CharacterConstants.PIPE + (StringUtils.isEmpty(k.getDistrict())? CharacterConstants.EMPTY : k.getDistrict()) +
-        CharacterConstants.PIPE + (StringUtils.isEmpty(k.getState())? CharacterConstants.EMPTY : k.getState());
-    return key;
-  }
-
   /**
    * Method to get user details based on ID and form the report table data
    */
@@ -515,15 +503,12 @@ public class ReportServiceUtil {
     return userAccount.getFullName() + CharacterConstants.PIPE + userId;
   }
 
-  private String getTableByCustomerKey(String string) throws ServiceException {
-    String key;EntitiesService es = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
-    IKiosk k = es.getKiosk(Long.valueOf(string), false);
-    key = k.getName() + CharacterConstants.PIPE + string +
-        CharacterConstants.PIPE + (StringUtils.isEmpty(k.getCity())? CharacterConstants.EMPTY : k.getCity()) +
-        CharacterConstants.PIPE + (StringUtils.isEmpty(k.getTaluk())? CharacterConstants.EMPTY : k.getTaluk()) +
-        CharacterConstants.PIPE + (StringUtils.isEmpty(k.getDistrict())? CharacterConstants.EMPTY : k.getDistrict()) +
-        CharacterConstants.PIPE + (StringUtils.isEmpty(k.getState())? CharacterConstants.EMPTY : k.getState());
-    return key;
+  protected String getEntityMetaInfo(IKiosk kiosk) throws ServiceException {
+    return (kiosk.getName() + CharacterConstants.PIPE + kiosk.getKioskId().toString() +
+        CharacterConstants.PIPE + (StringUtils.isEmpty(kiosk.getCity())? CharacterConstants.EMPTY : kiosk.getCity()) +
+        CharacterConstants.PIPE + (StringUtils.isEmpty(kiosk.getTaluk())? CharacterConstants.EMPTY : kiosk.getTaluk()) +
+        CharacterConstants.PIPE + (StringUtils.isEmpty(kiosk.getDistrict())? CharacterConstants.EMPTY : kiosk.getDistrict()) +
+        CharacterConstants.PIPE + (StringUtils.isEmpty(kiosk.getState())? CharacterConstants.EMPTY : kiosk.getState()));
   }
 
   protected Long getMillisInPeriod(String time, String periodicity) {
@@ -577,14 +562,26 @@ public class ReportServiceUtil {
     return totalMillis;
   }
 
-  protected float getAverageTime(float timeInDays, Long count) {
+  public ReportDataModel getAverageTimeDataModel(Long timeInMillis, Long count) {
+    if (count == 0) {
+      return addData(ZERO);
+    } else {
+      float
+          timeInDays =
+          getTimeInDays(timeInMillis);
+      return addData(getAverageTime(timeInDays, count), timeInDays,
+          count);
+    }
+  }
+
+  private float getAverageTime(float timeInDays, Long count) {
     if (count == 0) {
       return 0;
     }
     return timeInDays/count;
   }
 
-  protected float getTimeInDays(Long timeInMillis) {
+  private float getTimeInDays(Long timeInMillis) {
     return (float) timeInMillis/ ReportsConstants.MILLISECONDS_PER_DAY;
   }
 }
