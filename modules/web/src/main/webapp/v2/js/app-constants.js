@@ -314,7 +314,13 @@ logistimoApp.constant('NOTIFICATIONS', {
 			"params" : [ { "id" : "reason", "type" : "list", "prefix" : "stockDiscarded", "placeholder" : "-- Select Reason --", "name" : "Reason"}],
 			"extraParams": { "id" : "status","type" : "list", prefix : "stockDiscarded", "placeholder": "-- Select Status --", name: "Status"}},
 			{ "id" : "com.logistimo.inventory.entity.Invntry:201", "name" : "< Min." },
-			{ "id" : "com.logistimo.inventory.entity.Invntry:202", "name" : "> Max." }]
+			{ "id" : "com.logistimo.inventory.entity.Invntry:202", "name" : "> Max." },
+			{ "id" : "com.logistimo.inventory.entity.Transaction:210", "name" : "Incoming return entered",
+				"params" : [ { "id" : "reason", "type" : "list", "prefix" : "incomingReturnEntered", "placeholder" : "-- Select Reason --", "name" : "Reason"}],
+				"extraParams": { "id" : "status","type" : "list", prefix : "incomingReturnEntered", "placeholder": "-- Select Status --", name: "Status"}},
+			{ "id" : "com.logistimo.inventory.entity.Transaction:211", "name" : "Outgoing return entered",
+				"params" : [ { "id" : "reason", "type" : "list", "prefix" : "outgoingReturnEntered", "placeholder" : "-- Select Reason --", "name" : "Reason"}],
+				"extraParams": { "id" : "status","type" : "list", prefix : "outgoingReturnEntered", "placeholder": "-- Select Status --", name: "Status"}}]
 	},
 	accountLabel : {
 		'events' : [{"id" : "com.logistimo.accounting.entity.Account:300", "name" : "Credit limit exceeded"}]

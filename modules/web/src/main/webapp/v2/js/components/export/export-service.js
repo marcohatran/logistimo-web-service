@@ -61,6 +61,9 @@ exportServices.factory('exportService', ['APIService', function (apiService) {
         },
         exportAssets : function(type) {
             return apiService.get('/s2/api/export/schedule/batch?type=' + type);
+        },
+        exportData : function(data) {
+            return apiService.post(data,'/s2/api/export/')
         }
     }
 }]);

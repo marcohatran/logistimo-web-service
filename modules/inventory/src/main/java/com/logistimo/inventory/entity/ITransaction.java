@@ -45,6 +45,8 @@ public interface ITransaction
   String TYPE_RETURN = "rt";
   String TYPE_ORDER_SHIPMENT = "os";
   String TYPE_TRANSFER_SHIPMENT = "ts";
+  String TYPE_RETURNS_INCOMING = "ri";
+  String TYPE_RETURNS_OUTGOING = "ro";
 
   String getKeyString();
 

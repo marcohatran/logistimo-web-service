@@ -150,9 +150,7 @@
                 <button ng-hide="dp.vp" type="button" class="btn btn-sm btn-primary" ng-click="sendMessage()">
                     {{resourceBundle['users.sendmessage']}}
                 </button>
-                <export-data ng-show="iAdm" mail-id="mailId" export-type="users"
-                             role="urole" n-name="search.key" mobile-phone-number="uphn" is-enabled="uactive"
-                        never-logged="nvrlogged" from="from" to="to" utag="utag" v="uversion" rows="numFound"></export-data>
+                <export ng-show="iAdm" callback="exportData()"></export>
                 <button ng-show="iSU || dp.ur" type="button" class="btn btn-sm btn-default" ng-click="deleteUsers()">
                     {{resourceBundle['remove']}}
                 </button>

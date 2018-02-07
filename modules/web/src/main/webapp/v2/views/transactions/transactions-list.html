@@ -137,16 +137,12 @@
         </div>
         <div ng-show="resSize > 0">
             <div class="row action-bar">
-                <span ng-if="mailId != undefined && mailId != null">
-                    <export-data mail-id="mailId" export-type="transactions" transaction-type="type" linked-id="cust.id || vend.id"
-                                     entity-id="entity.id"
-                                     mat-id="material.mId" from="from" to="to"
-                                     entity-name="entity.nm" material-name="material.mnm" trns-batch="batchId"
-                                 ebf="ebf" atd="atd" from="from" to="to" reason="reason" e-tag="etag" m-tag="tag" rows="numFound"></export-data>
+                <span class="col-sm-12 noLRpad" >
+                    <export callback="exportData()"></export>
+                    <button ng-show="iSU" type="button" class="btn btn-sm btn-default" ng-click="undoTransactions()">
+                        {{resourceBundle['undo']}}
+                    </button>
                 </span>
-                <button ng-show="iSU" type="button" class="btn btn-sm btn-default" ng-click="undoTransactions()">
-                    {{resourceBundle['undo']}}
-                </button>
             </div>
 
 
@@ -267,19 +263,16 @@
             </div>
         </div>
 
-        <div class="row action-bar">
-            <span ng-if="mailId != undefined && mailId != null">
-                <export-data mail-id="mailId" export-type="transactions" transaction-type="type" linked-id="cust.id || vend.id"
-                             entity-id="entity.id" mat-id="material.mId"
-                             entity-name="entity.nm" m-name="material.mnm" trns-batch="batchId" ebf="ebf" atd="atd" from="from" to="to" reason="reason" ></export-data>
-            </span>
-            <button ng-show="iSU" type="button" class="btn btn-sm btn-default" ng-click="undoTransactions()">
-                {{resourceBundle['undo']}}
-            </button>
-            <div class="pull-right">
-                <div ng-include="'views/paginator.html'"></div>
+        <div ng-show="resSize > 0">
+            <div class="row action-bar">
+                <span class="col-sm-12 noLRpad" >
+                    <export callback="exportData()"></export>
+                <button ng-show="iSU" type="button" class="btn btn-sm btn-default" ng-click="undoTransactions()">
+                    {{resourceBundle['undo']}}
+                </button>
+                    </span>
             </div>
-        </div>
+
 
         <div class="row mt18" ng-show="resSize == 0">
             <div class="col-sm-12">

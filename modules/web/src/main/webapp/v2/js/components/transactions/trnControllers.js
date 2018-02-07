@@ -126,6 +126,65 @@ trnControllers.controller('TransactionsCtrl', ['$scope', 'trnService', 'domainCf
             fixTable();
 
         };
+        function getCaption() {
+            var caption = getFilterTitle($scope.entity, $scope.resourceBundle['kiosk'], 'nm');
+            caption += getFilterTitle($scope.material, $scope.resourceBundle['material'], 'mnm');
+            caption += getFilterTitle(getTransactionTypeLabel($scope.type), $scope.resourceBundle['type']);
+            caption += getFilterTitle(formatDate2Url($scope.from), $scope.resourceBundle['from']);
+            caption += getFilterTitle($scope.atd ? "Yes" : "No", $scope.resourceBundle.filterby + " " + $scope.resourceBundle['date.actual.transaction.small']);
+            caption += getFilterTitle(formatDate2Url($scope.to), $scope.resourceBundle['to']);
+            caption += getFilterTitle($scope.cust, $scope.resourceBundle['customer'], 'nm');
+            caption += getFilterTitle($scope.vend, $scope.resourceBundle['vendor'], 'nm');
+            caption += getFilterTitle(checkNullEmpty($scope.entity) ? $scope.etag : "", $scope.resourceBundle['kiosk'] + " " + $scope.resourceBundle['tag.lower']);
+            caption += getFilterTitle(checkNullEmpty($scope.material) ? $scope.tag : "", $scope.resourceBundle['material'] + " " + $scope.resourceBundle['tag.lower']);
+            caption += getFilterTitle($scope.reason, $scope.resourceBundle['transaction'] + " " + $scope.resourceBundle['reason.lowercase']);
+            caption += getFilterTitle($scope.bid, $scope.resourceBundle['batch']);
+
+            return caption;
+        }
+
+        function getTransactionTypeLabel(type) {
+            switch (type) {
+                case 'i': return $scope.resourceBundle['issues'];
+                case 'r': return $scope.resourceBundle['receipts'];
+                case 'p': return $scope.resourceBundle['transactions.stockcount.upper'];
+                case 'w': return $scope.resourceBundle['transactions.wastage.upper'];
+                case 't': return $scope.resourceBundle['transfers'];
+                default: return $scope.resourceBundle['all'] + " " + $scope.resourceBundle['transactions.lowercase'];
+            }
+        }
+        $scope.exportData=function(){
+            var eid,mid,ktag,mtag=undefined;
+            if (checkNotNullEmpty($scope.entity)) {
+                eid = $scope.entity.id;
+            }else{
+                ktag=checkNotNullEmpty($scope.etag)?$scope.etag:undefined;
+            }
+            if(checkNotNullEmpty($scope.material)){
+                mid = $scope.material.mId;
+            }else{
+                mtag=checkNotNullEmpty($scope.tag)?$scope.tag:undefined;
+            }
+
+            exportService.exportData({
+                from_date: checkNotNullEmpty($scope.from)?formatDate2Url($scope.from):undefined,
+                end_date: checkNotNullEmpty($scope.to)?formatDate2Url($scope.to):undefined,
+                entity_id: eid,
+                material_id: mid,
+                ktag: ktag,
+                mtag: mtag,
+                batch_id: $scope.bid,
+                linked_kid: $scope.lEntityId,
+                reason: $scope.reason,
+                atd: $scope.atd,
+                transaction_type: $scope.type,
+                titles: {
+                    filters: getCaption()
+                },
+                module: "Transactions",
+                templateId: "transactions"
+            })
+        };
         $scope.fetch = function () {
             $scope.transactions = {results:[]};
             $scope.exRow = [];
@@ -569,37 +628,40 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                 $scope.showLoading();
                 var entId = $scope.transaction.ent.id;
                 invService.getInventory(entId, null, $scope.offset, $scope.size).then(function (data) {
-                    if($scope.stopInvFetch || checkNullEmpty($scope.transaction.ent) || entId != $scope.transaction.ent.id) {
+                    if ($scope.stopInvFetch || checkNullEmpty($scope.transaction.ent) || entId != $scope.transaction.ent.id) {
                         return;
                     }
                     var inventory = data.data.results;
-                    if(checkNotNullEmpty(inventory) && inventory.length > 0){
+                    if (checkNotNullEmpty(inventory) && inventory.length > 0) {
                         $scope.availableInventory = $scope.availableInventory.concat(inventory);
                     }
-                    if(!$scope.stopInvFetch && checkNotNullEmpty(inventory) && inventory.length == $scope.size){
+                    if (!$scope.stopInvFetch && checkNotNullEmpty(inventory) && inventory.length == $scope.size) {
                         $scope.offset += $scope.size;
                         $scope.getInventory();
-                    }else{
+                    } else {
                         $scope.loadMaterials = false;
                     }
-                    inventory.forEach(function (inv) {
-                        inv.tgs.forEach(function (tag) {
-                            if (checkNullEmpty($scope.tagMaterials[tag])) {
-                                $scope.tagMaterials[tag] = [];
-                            }
-                            $scope.tagMaterials[tag].push(inv.mId);
+                    if (checkNotNullEmpty(inventory)) {
+                        inventory.forEach(function (inv) {
+                            inv.tgs.forEach(function (tag) {
+                                if (checkNullEmpty($scope.tagMaterials[tag])) {
+                                    $scope.tagMaterials[tag] = [];
+                                }
+                                $scope.tagMaterials[tag].push(inv.mId);
+                            });
+
+                            $scope.avMap[inv.mId] = inv;
+
                         });
 
-                        $scope.avMap[inv.mId] = inv;
-
-                    });
-                    for (var i in $scope.transaction.materials) {
-                        var mat = $scope.transaction.materials[i];
-                        if(checkNotNullEmpty(mat.name) && checkNotNullEmpty($scope.avMap[mat.name.mId])){
-                            $scope.avMap[mat.name.mId].hide = true;
+                        for (var i in $scope.transaction.materials) {
+                            var mat = $scope.transaction.materials[i];
+                            if (checkNotNullEmpty(mat.name) && checkNotNullEmpty($scope.avMap[mat.name.mId])) {
+                                $scope.avMap[mat.name.mId].hide = true;
+                            }
                         }
+                        $scope.loadDInventory(inventory);
                     }
-                    $scope.loadDInventory(inventory);
                     $scope.invLoading = false;
 
                 }).catch(function error(msg) {

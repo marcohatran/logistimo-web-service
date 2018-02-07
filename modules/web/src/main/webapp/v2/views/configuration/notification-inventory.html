@@ -60,6 +60,12 @@
                         <option ng-show="prSelect == 'stockDiscarded'" ng-repeat="discard in stockDiscarded"
                                 value="{{discard}}">{{discard}}
                         </option>
+                        <option ng-show="prSelect == 'incomingReturnEntered'" ng-repeat="incomingReturn in incomingReturnEntered"
+                                value="{{incomingReturn}}">{{incomingReturn}}
+                        </option>
+                        <option ng-show="prSelect == 'outgoingReturnEntered'" ng-repeat="outgoingReturn in outgoingReturnEntered"
+                                value="{{outgoingReturn}}">{{outgoingReturn}}
+                        </option>
                     </select>
                 </span>
                  <span class="col-sm-3" ng-show="showStatusSelection">
@@ -79,6 +85,12 @@
                         </option>
                         <option ng-show="prExtraSelect == 'stockDiscarded'" ng-repeat="discard in stockDiscardedStatus"
                                 value="{{discard}}">{{discard}}
+                        </option>
+                        <option ng-show="prExtraSelect == 'incomingReturnEntered'" ng-repeat="incomingReturn in incomingReturnEnteredStatus"
+                                value="{{incomingReturn}}">{{incomingReturn}}
+                        </option>
+                        <option ng-show="prExtraSelect == 'outgoingReturnEntered'" ng-repeat="outgoingReturn in outgoingReturnEnteredStatus"
+                                value="{{outgoingReturn}}">{{outgoingReturn}}
                         </option>
                     </select>
                 </span>

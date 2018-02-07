@@ -36,6 +36,7 @@ import com.logistimo.api.models.configuration.DashboardConfigModel;
 import com.logistimo.api.models.configuration.GeneralConfigModel;
 import com.logistimo.api.models.configuration.InventoryConfigModel;
 import com.logistimo.api.models.configuration.OrdersConfigModel;
+import com.logistimo.api.models.configuration.ReturnsConfigModel;
 import com.logistimo.api.models.configuration.SupportConfigModel;
 import com.logistimo.api.models.configuration.TagsConfigModel;
 import com.logistimo.assets.entity.IAsset;
@@ -60,9 +61,11 @@ import com.logistimo.config.models.LeadTimeAvgConfig;
 import com.logistimo.config.models.MatStatusConfig;
 import com.logistimo.config.models.OptimizerConfig;
 import com.logistimo.config.models.OrdersConfig;
+import com.logistimo.config.models.ReturnsConfig;
 import com.logistimo.config.models.SupportConfig;
 import com.logistimo.config.models.SyncConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
+import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.domains.entity.IDomain;
@@ -91,6 +94,8 @@ import com.logistimo.users.service.UsersService;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.StringUtil;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -102,6 +107,7 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -110,6 +116,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -242,7 +249,7 @@ public class ConfigurationModelBuilder {
         config.getInventoryConfig() == null ? Constants.FREQ_DAILY
             : config.getInventoryConfig().getMinMaxDur();
     model.tr = config.getOrdersConfig() != null && config.getOrdersConfig().isTransferRelease();
-    //model.acs = config.getOrdersConfig() != null && config.getOrdersConfig().isAllowCreatingShipments();
+
     if (model.iSU) {
       model.accd = true;
     } else if (model.iAdm) {
@@ -282,10 +289,10 @@ public class ConfigurationModelBuilder {
     try {
       if(config.getApprovalsConfig() != null) {
         model.apc = buildApprovalsConfigModel(config.getApprovalsConfig(), domainId, locale, timezone);
-        if(model.apc.pa != null && model.apc.pa.size() > 0) {
+        if(CollectionUtils.isNotEmpty(model.apc.pa)) {
           model.toae = true;
         }
-        if(model.apc.psoa != null && model.apc.psoa.size() > 0) {
+        if(CollectionUtils.isNotEmpty(model.apc.psoa)) {
           List<ApprovalsConfigModel.PurchaseSalesOrderApproval> psoa = model.apc.psoa;
           for(ApprovalsConfigModel.PurchaseSalesOrderApproval ps : psoa) {
             if(!model.poae && ps.poa) {
@@ -330,7 +337,7 @@ public class ConfigurationModelBuilder {
       List<ApprovalsConfig.PurchaseSalesOrderConfig>
           purchaseSalesOrderConfigList =
           new ArrayList<>();
-      if (model.psoa != null && model.psoa.size() > 0) {
+      if (CollectionUtils.isNotEmpty(model.psoa)) {
         for (ApprovalsConfigModel.PurchaseSalesOrderApproval psa : model.psoa) {
           ApprovalsConfig.PurchaseSalesOrderConfig
               psConfig =
@@ -352,14 +359,14 @@ public class ConfigurationModelBuilder {
           orderConfig.setSalesOrderApprovalExpiry(model.sx);
         }
       }
-      if (model.pa != null && model.pa.size() > 0) {
+      if (CollectionUtils.isNotEmpty(model.pa)) {
         List<String> puIds = new ArrayList<>();
         for (int i = 0; i < model.pa.size(); i++) {
           puIds.add(model.pa.get(i).id);
         }
         orderConfig.setPrimaryApprovers(puIds);
       }
-      if (model.sa != null && model.sa.size() > 0) {
+      if (CollectionUtils.isNotEmpty(model.sa)) {
         List<String> suIds = new ArrayList<>();
         for (int i = 0; i < model.sa.size(); i++) {
           suIds.add(model.sa.get(i).id);
@@ -378,7 +385,7 @@ public class ConfigurationModelBuilder {
   }
 
   public GeneralConfigModel buildDomainLocationModels(Long domainId, Locale locale, String timezone)
-      throws ServiceException, ObjectNotFoundException, ConfigurationException {
+      throws ObjectNotFoundException{
     DomainConfig dc = DomainConfig.getInstance(domainId);
     GeneralConfigModel model = new GeneralConfigModel();
 
@@ -509,7 +516,7 @@ public class ConfigurationModelBuilder {
 
   public AccountingConfigModel buildAccountingConfigModel(Long domainId, Locale locale,
                                                           String timezone)
-      throws ServiceException, ObjectNotFoundException, JSONException {
+      throws ObjectNotFoundException, JSONException {
     DomainConfig dc = DomainConfig.getInstance(domainId);
     AccountingConfig ac = dc.getAccountingConfig();
     AccountingConfigModel model = new AccountingConfigModel();
@@ -542,7 +549,7 @@ public class ConfigurationModelBuilder {
   }
 
   public TagsConfigModel buildTagsConfigModel(DomainConfig dc, Locale locale, String timezone)
-      throws ServiceException, ObjectNotFoundException {
+      throws ObjectNotFoundException {
     TagsConfigModel model = new TagsConfigModel();
     List<String> val = dc.getDomainData(ConfigConstants.TAGS);
     if (val != null) {
@@ -574,7 +581,7 @@ public class ConfigurationModelBuilder {
   }
 
   public AssetConfigModel buildAssetConfigModel(DomainConfig dc, Locale locale, String timezone)
-      throws ConfigurationException, ServiceException, ObjectNotFoundException {
+      throws ConfigurationException, ObjectNotFoundException {
     AssetSystemConfig asc = AssetSystemConfig.getInstance();
     if (asc == null) {
       throw new ConfigurationException();
@@ -709,7 +716,7 @@ public class ConfigurationModelBuilder {
 
   public CapabilitiesConfigModel buildCapabilitiesConfigModel(Locale locale,
                                                               DomainConfig dc, String timezone)
-      throws ServiceException, ObjectNotFoundException {
+      throws ObjectNotFoundException {
     Map<String, CapabilityConfig> map = dc.getCapabilityMapByRole();
     CapabilitiesConfigModel model = new CapabilitiesConfigModel();
 
@@ -740,33 +747,16 @@ public class ConfigurationModelBuilder {
     model.llr = dc.isLocalLoginRequired();
 
     Map<String, String> tagInvByOperation = dc.gettagsInvByOperation();
-    if (!tagInvByOperation.isEmpty()) {
-      if (tagInvByOperation.get(ITransaction.TYPE_ISSUE) != null) {
-        model.hii =
-            new ArrayList<>(
-                Arrays.asList(tagInvByOperation.get(ITransaction.TYPE_ISSUE).split(",")));
-      }
-      if (tagInvByOperation.get(ITransaction.TYPE_RECEIPT) != null) {
-        model.hir =
-            new ArrayList<>(
-                Arrays.asList(tagInvByOperation.get(ITransaction.TYPE_RECEIPT).split(",")));
-      }
-      if (tagInvByOperation.get(ITransaction.TYPE_PHYSICALCOUNT) != null) {
-        model.hip =
-            new ArrayList<>(
-                Arrays.asList(tagInvByOperation.get(ITransaction.TYPE_PHYSICALCOUNT).split(",")));
-      }
-      if (tagInvByOperation.get(ITransaction.TYPE_WASTAGE) != null) {
-        model.hiw =
-            new ArrayList<>(
-                Arrays.asList(tagInvByOperation.get(ITransaction.TYPE_WASTAGE).split(",")));
-      }
-      if (tagInvByOperation.get(ITransaction.TYPE_TRANSFER) != null) {
-        model.hit =
-            new ArrayList<>(
-                Arrays.asList(tagInvByOperation.get(ITransaction.TYPE_TRANSFER).split(",")));
-      }
-    }
+    model.hii = getTagsByInvOperationAsList(tagInvByOperation, ITransaction.TYPE_ISSUE);
+    model.hir = getTagsByInvOperationAsList(tagInvByOperation, ITransaction.TYPE_RECEIPT);
+    model.hip = getTagsByInvOperationAsList(tagInvByOperation, ITransaction.TYPE_PHYSICALCOUNT);
+    model.hiw = getTagsByInvOperationAsList(tagInvByOperation, ITransaction.TYPE_WASTAGE);
+    model.hit = getTagsByInvOperationAsList(tagInvByOperation, ITransaction.TYPE_TRANSFER);
+    model.hiri =
+        getTagsByInvOperationAsList(tagInvByOperation, ITransaction.TYPE_RETURNS_INCOMING);
+    model.hiro =
+        getTagsByInvOperationAsList(tagInvByOperation, ITransaction.TYPE_RETURNS_OUTGOING);
+
 
     if (dc.getTagsInventory() != null) {
       model.hi = new ArrayList<>(Arrays.asList(dc.getTagsInventory().split(",")));
@@ -803,7 +793,7 @@ public class ConfigurationModelBuilder {
   public CapabilitiesConfigModel buildRoleCapabilitiesConfigModel(String sRole,
                                                                   Locale locale, DomainConfig dc,
                                                                   String timezone)
-      throws ServiceException, ObjectNotFoundException {
+      throws ObjectNotFoundException {
     Map<String, CapabilityConfig> map = dc.getCapabilityMapByRole();
     CapabilitiesConfigModel model;
     CapabilityConfig roleCapabConfig = map.get(sRole);
@@ -834,37 +824,27 @@ public class ConfigurationModelBuilder {
       model.sc = config.sendCustomers();
       model.gcs = config.getGeoCodingStrategy();
       if (config.getTagsInventory() != null) {
-        model.hi = new ArrayList<>(Arrays.asList(config.getTagsInventory().split(",")));
-      }
-      if (config.gettagByOperation(ITransaction.TYPE_ISSUE) != null) {
-        model.hii =
-            new ArrayList<>(
-                Arrays.asList(config.gettagByOperation(ITransaction.TYPE_ISSUE).split(",")));
-      }
-      if (config.gettagByOperation(ITransaction.TYPE_RECEIPT) != null) {
-        model.hir =
-            new ArrayList<>(
-                Arrays.asList(config.gettagByOperation(ITransaction.TYPE_RECEIPT).split(",")));
-      }
-      if (config.gettagByOperation(ITransaction.TYPE_PHYSICALCOUNT) != null) {
-        model.hip =
-            new ArrayList<>(Arrays
-                .asList(
-                    config.gettagByOperation(ITransaction.TYPE_PHYSICALCOUNT).split(",")));
-      }
-      if (config.gettagByOperation(ITransaction.TYPE_WASTAGE) != null) {
-        model.hiw =
-            new ArrayList<>(
-                Arrays.asList(config.gettagByOperation(ITransaction.TYPE_WASTAGE).split(",")));
-      }
-      if (config.gettagByOperation(ITransaction.TYPE_TRANSFER) != null) {
-        model.hit =
-            new ArrayList<>(
-                Arrays.asList(config.gettagByOperation(ITransaction.TYPE_TRANSFER).split(",")));
+        model.hi = new ArrayList<>(Arrays.asList(config.getTagsInventory().split(CharacterConstants.COMMA)));
       }
       if (config.getTagsOrders() != null) {
-        model.ho = new ArrayList<>(Arrays.asList(config.getTagsOrders().split(",")));
+        model.ho = new ArrayList<>(Arrays.asList(config.getTagsOrders().split(CharacterConstants.COMMA)));
       }
+      Map<String,String> tagInvByOperation = config.gettagsInvByOperation();
+      model.hii =
+          getTagsByInvOperationAsList(tagInvByOperation, ITransaction.TYPE_ISSUE);
+      model.hir =
+          getTagsByInvOperationAsList(tagInvByOperation, ITransaction.TYPE_RECEIPT);
+      model.hip =
+          getTagsByInvOperationAsList(tagInvByOperation, ITransaction.TYPE_PHYSICALCOUNT);
+      model.hiw =
+          getTagsByInvOperationAsList(tagInvByOperation, ITransaction.TYPE_WASTAGE);
+      model.hit =
+          getTagsByInvOperationAsList(tagInvByOperation, ITransaction.TYPE_TRANSFER);
+      model.hiri =
+          getTagsByInvOperationAsList(tagInvByOperation, ITransaction.TYPE_RETURNS_INCOMING);
+      model.hiro =
+          getTagsByInvOperationAsList(tagInvByOperation, ITransaction.TYPE_RETURNS_OUTGOING);
+
       model.dshp = config.isDisableShippingOnMobile();
       model.bcs = config.isBarcodingEnabled();
       model.rfids = config.isRFIDEnabled();
@@ -884,7 +864,7 @@ public class ConfigurationModelBuilder {
 
   public InventoryConfigModel buildInventoryConfigModel(DomainConfig dc, Locale locale,
                                                         String timezone)
-      throws ConfigurationException, ServiceException, ObjectNotFoundException {
+      throws ConfigurationException, ObjectNotFoundException {
     InventoryConfigModel model = new InventoryConfigModel();
     InventoryConfig ic = dc.getInventoryConfig();
     if (ic == null) {
@@ -898,6 +878,8 @@ public class ConfigurationModelBuilder {
       model.rs = transReasons.get(ITransaction.TYPE_PHYSICALCOUNT);
       model.rd = transReasons.get(ITransaction.TYPE_WASTAGE);
       model.rt = transReasons.get(ITransaction.TYPE_TRANSFER);
+      model.rri = transReasons.get(ITransaction.TYPE_RETURNS_INCOMING);
+      model.rro = transReasons.get(ITransaction.TYPE_RETURNS_OUTGOING);
     }
     List<String> val = dc.getDomainData(ConfigConstants.INVENTORY);
     if (val != null) {
@@ -907,56 +889,33 @@ public class ConfigurationModelBuilder {
       model.fn = getFullName(model.createdBy);
     }
     if (ic.isCimt()) {
-      model.cimt = ic.isCimt();
-      Map<String, String> imTransReasons = ic.getImTransReasons();
-      for (Map.Entry<String, String> entry : imTransReasons.entrySet()) {
-        InventoryConfigModel.MTagReason im = new InventoryConfigModel.MTagReason();
-        im.mtg = entry.getKey();
-        im.rsn = entry.getValue();
-        model.imt.add(im);
-      }
+      model.cimt = true;
+      model.imt = buildMTagReasonModelList(ic.getImTransReasons());
     }
     if (ic.isCrmt()) {
-      model.crmt = ic.isCrmt();
-      Map<String, String> rmTransReasons = ic.getRmTransReasons();
-      for (Map.Entry<String, String> entry : rmTransReasons.entrySet()) {
-        InventoryConfigModel.MTagReason rm = new InventoryConfigModel.MTagReason();
-        rm.mtg = entry.getKey();
-        rm.rsn = entry.getValue();
-        model.rmt.add(rm);
-      }
+      model.crmt = true;
+      model.rmt = buildMTagReasonModelList(ic.getRmTransReasons());
     }
     if (ic.isCsmt()) {
-      model.csmt = ic.isCsmt();
-      Map<String, String> smTransReasons = ic.getSmTransReasons();
-      for (Map.Entry<String, String> entry : smTransReasons.entrySet()) {
-        InventoryConfigModel.MTagReason sm = new InventoryConfigModel.MTagReason();
-        sm.mtg = entry.getKey();
-        sm.rsn = entry.getValue();
-        model.smt.add(sm);
-      }
+      model.csmt = true;
+      model.smt = buildMTagReasonModelList(ic.getSmTransReasons());
     }
     if (ic.isCtmt()) {
-      model.ctmt = ic.isCtmt();
-      Map<String, String> tmTransReasons = ic.getTmTransReasons();
-      for (Map.Entry<String, String> entry : tmTransReasons.entrySet()) {
-        InventoryConfigModel.MTagReason tm = new InventoryConfigModel.MTagReason();
-        tm.mtg = entry.getKey();
-        tm.rsn = entry.getValue();
-        model.tmt.add(tm);
-      }
+      model.ctmt = true;
+      model.tmt = buildMTagReasonModelList(ic.getTmTransReasons());
     }
     if (ic.isCdmt()) {
-      model.cdmt = ic.isCdmt();
-      Map<String, String> dmTransReasons = ic.getDmTransReasons();
-      for (Map.Entry<String, String> entry : dmTransReasons.entrySet()) {
-        InventoryConfigModel.MTagReason dm = new InventoryConfigModel.MTagReason();
-        dm.mtg = entry.getKey();
-        dm.rsn = entry.getValue();
-        model.dmt.add(dm);
-      }
+      model.cdmt = true;
+      model.dmt = buildMTagReasonModelList(ic.getDmTransReasons());
     }
-
+    if (ic.isCrimt()) {
+      model.crimt = true;
+      model.rimt = buildMTagReasonModelList(ic.getMtagRetIncRsns());
+    }
+    if (ic.isCromt()) {
+      model.cromt = true;
+      model.romt = buildMTagReasonModelList(ic.getMtagRetOutRsns());
+    }
     //Get transaction export schedules
     model.etdx = ic.isEnabled();
     if (model.etdx) {
@@ -995,6 +954,7 @@ public class ConfigurationModelBuilder {
     model.crfreq = oc.getComputeFrequency();
     model.edis = oc.isExcludeDiscards();
     model.ersns = StringUtil.getList(oc.getExcludeReasons());
+    model.erirsns = StringUtil.getList(oc.getExcludeReturnIncomingReasons());
     model.aopfd = String.valueOf(oc.getMinAvgOrderPeriodicity());
     model.nopfd = String.valueOf(oc.getNumPeriods());
 
@@ -1003,62 +963,57 @@ public class ConfigurationModelBuilder {
     model.nopeoq = String.valueOf(oc.getNumPeriods());
     model.lt = String.valueOf(oc.getLeadTimeDefault());
 
-    MatStatusConfig msi = ic.getMatStatusConfigByType("i");
+    MatStatusConfig msi = ic.getMatStatusConfigByType(ITransaction.TYPE_ISSUE);
     if (msi != null) {
       model.idf = msi.getDf();
       model.iestm = msi.getEtsm();
       model.ism = msi.isStatusMandatory();
     }
-    MatStatusConfig msr = ic.getMatStatusConfigByType("r");
+    MatStatusConfig msr = ic.getMatStatusConfigByType(ITransaction.TYPE_RECEIPT);
     if (msr != null) {
       model.rdf = msr.getDf();
       model.restm = msr.getEtsm();
       model.rsm = msr.isStatusMandatory();
     }
-    MatStatusConfig mst = ic.getMatStatusConfigByType("t");
+    MatStatusConfig mst = ic.getMatStatusConfigByType(ITransaction.TYPE_TRANSFER);
     if (mst != null) {
       model.tdf = mst.getDf();
       model.testm = mst.getEtsm();
       model.tsm = mst.isStatusMandatory();
     }
-    MatStatusConfig msp = ic.getMatStatusConfigByType("p");
+    MatStatusConfig msp = ic.getMatStatusConfigByType(ITransaction.TYPE_PHYSICALCOUNT);
     if (msp != null) {
       model.pdf = msp.getDf();
       model.pestm = msp.getEtsm();
       model.psm = msp.isStatusMandatory();
     }
-    MatStatusConfig msw = ic.getMatStatusConfigByType("w");
+    MatStatusConfig msw = ic.getMatStatusConfigByType(ITransaction.TYPE_WASTAGE);
     if (msw != null) {
       model.wdf = msw.getDf();
       model.westm = msw.getEtsm();
       model.wsm = msw.isStatusMandatory();
     }
+    MatStatusConfig msri = ic.getMatStatusConfigByType(ITransaction.TYPE_RETURNS_INCOMING);
+    if (msri != null) {
+      model.ridf = msri.getDf();
+      model.riestm = msri.getEtsm();
+      model.rism = msri.isStatusMandatory();
+    }
+    MatStatusConfig msro = ic.getMatStatusConfigByType(ITransaction.TYPE_RETURNS_OUTGOING);
+    if (msro != null) {
+      model.rodf = msro.getDf();
+      model.roestm = msro.getEtsm();
+      model.rosm = msro.isStatusMandatory();
+    }
 
-    ActualTransConfig atci = ic.getActualTransConfigByType(ITransaction.TYPE_ISSUE);
-    model.catdi = "0";
-    if (atci != null) {
-      model.catdi = atci.getTy();
-    }
-    model.catdr = "0";
-    ActualTransConfig atcr = ic.getActualTransConfigByType(ITransaction.TYPE_RECEIPT);
-    if (atcr != null) {
-      model.catdr = atcr.getTy();
-    }
-    model.catdp = "0";
-    ActualTransConfig atcp = ic.getActualTransConfigByType(ITransaction.TYPE_PHYSICALCOUNT);
-    if (atcp != null) {
-      model.catdp = atcp.getTy();
-    }
-    model.catdw = "0";
-    ActualTransConfig atcw = ic.getActualTransConfigByType(ITransaction.TYPE_WASTAGE);
-    if (atcw != null) {
-      model.catdw = atcw.getTy();
-    }
-    model.catdt = "0";
-    ActualTransConfig atct = ic.getActualTransConfigByType(ITransaction.TYPE_TRANSFER);
-    if (atct != null) {
-      model.catdt = atct.getTy();
-    }
+    model.catdi = getActualTransConfigType(ITransaction.TYPE_ISSUE, ic);
+    model.catdr = getActualTransConfigType(ITransaction.TYPE_RECEIPT, ic);
+    model.catdp = getActualTransConfigType(ITransaction.TYPE_PHYSICALCOUNT, ic);
+    model.catdw = getActualTransConfigType(ITransaction.TYPE_WASTAGE, ic);
+    model.catdt = getActualTransConfigType(ITransaction.TYPE_TRANSFER, ic);
+    model.catdri = getActualTransConfigType(ITransaction.TYPE_RETURNS_INCOMING, ic);
+    model.catdro = getActualTransConfigType(ITransaction.TYPE_RETURNS_OUTGOING, ic);
+
     model.crc = String.valueOf(ic.getConsumptionRate());
     if (ic.getConsumptionRate() == InventoryConfig.CR_MANUAL) {
       model.mcrfreq = ic.getManualCRFreq();
@@ -1084,6 +1039,7 @@ public class ConfigurationModelBuilder {
       model.ltacm.maxop = leadTimeAvgConfig.getMaxOrderPeriods();
       model.ltacm.exopt = leadTimeAvgConfig.getExcludeOrderProcTime();
     }
+    model.rcm = buildReturnsConfigModels(ic.getReturnsConfig());
     return model;
   }
 
@@ -1103,12 +1059,12 @@ public class ConfigurationModelBuilder {
     }
     ApprovalsConfig.OrderConfig orderConfig = config.getOrderConfig();
     if(orderConfig != null) {
-      if(orderConfig.getPrimaryApprovers() != null && orderConfig.getPrimaryApprovers().size() > 0) {
+      if(CollectionUtils.isNotEmpty(orderConfig.getPrimaryApprovers())) {
         model.pa =
             userBuilder.buildUserModels(constructUserAccount(orderConfig.getPrimaryApprovers()), locale,
                 timezone, true);
       }
-      if(orderConfig.getSecondaryApprovers() != null && orderConfig.getSecondaryApprovers().size() > 0) {
+      if(CollectionUtils.isNotEmpty(orderConfig.getSecondaryApprovers())) {
         model.sa =
             userBuilder.buildUserModels(constructUserAccount(orderConfig.getSecondaryApprovers()), locale,
                 timezone, true);
@@ -1116,7 +1072,7 @@ public class ConfigurationModelBuilder {
       model.px = orderConfig.getPurchaseOrderApprovalExpiry();
       model.sx = orderConfig.getSalesOrderApprovalExpiry();
       model.tx = orderConfig.getTransferOrderApprovalExpiry();
-      if(orderConfig.getPurchaseSalesOrderApproval() != null && orderConfig.getPurchaseSalesOrderApproval().size() > 0) {
+      if(CollectionUtils.isNotEmpty(orderConfig.getPurchaseSalesOrderApproval())) {
         List<ApprovalsConfig.PurchaseSalesOrderConfig> psocs = orderConfig.getPurchaseSalesOrderApproval();
         List<ApprovalsConfigModel.PurchaseSalesOrderApproval> psoas = new ArrayList<>();
         for(ApprovalsConfig.PurchaseSalesOrderConfig psos : psocs) {
@@ -1143,7 +1099,7 @@ public class ConfigurationModelBuilder {
 
   public DashboardConfigModel buildDashboardConfigModel(DashboardConfig config, Long domainId,
                                                         Locale locale, String timezone)
-      throws ServiceException, ObjectNotFoundException {
+      throws ObjectNotFoundException {
     DashboardConfigModel model = new DashboardConfigModel();
     if (config == null) {
       config = new DashboardConfig();
@@ -1182,7 +1138,7 @@ public class ConfigurationModelBuilder {
 
   public OrdersConfigModel buildOrderConfigModel(HttpServletRequest request, Long domainId,
                                                  Locale locale, String timezone)
-      throws ConfigurationException, ServiceException, ObjectNotFoundException,
+      throws ConfigurationException, ObjectNotFoundException,
       UnsupportedEncodingException {
     DomainConfig dc = DomainConfig.getInstance(domainId);
     OrdersConfigModel model = new OrdersConfigModel();
@@ -1227,7 +1183,6 @@ public class ConfigurationModelBuilder {
         if (dsTimes != null && !dsTimes.isEmpty()) {
           model.et = StringUtil.getCSV(dsTimes);
         }
-        //model.an = StringUtil.getCSV(oc.getExportUserIds());
         if (oc.getExportUserIds() != null) {
           model.an = oc.getExportUserIds();
         }
@@ -1261,10 +1216,6 @@ public class ConfigurationModelBuilder {
           StringUtils.isNotBlank(oc.getCancellingOrderReasons()) ? oc.getCancellingOrderReasons()
               : null;
       model.corm = oc.getCancellingOrderReasonsMandatory();
-      //model.acs = oc.isAllowCreatingShipments();
-           /* if (oc.getExportUserIds() != null) {
-                model.an = oc.getExportUserIds();
-            }*/
       model.aafmsc = oc.autoAssignFirstMatStatus();
       model.autoCreate = oc.isCreationAutomated();
       model.autoCreateOnMin = oc.isAutoCreateOnMin();
@@ -1344,6 +1295,12 @@ public class ConfigurationModelBuilder {
     if (ic.isCdmt()) {
       addAllReasons(reasons, ic.getDmTransReasons());
     }
+    if (ic.isCrimt()) {
+      addAllReasons(reasons, ic.getMtagRetIncRsns());
+    }
+    if (ic.isCromt()) {
+      addAllReasons(reasons, ic.getMtagRetOutRsns());
+    }
     reasons.remove(Constants.EMPTY);
     return reasons;
   }
@@ -1360,7 +1317,7 @@ public class ConfigurationModelBuilder {
   }
 
   public SupportConfigModel buildSCModelForWebDisplay()
-      throws ServiceException, ObjectNotFoundException, ConfigurationException {
+      throws ObjectNotFoundException{
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
@@ -1386,7 +1343,7 @@ public class ConfigurationModelBuilder {
       }
 
       return getAlternateSupportConfig();
-    } catch (ServiceException | ObjectNotFoundException | ConfigurationException e) {
+    } catch (ObjectNotFoundException e) {
       xLogger.severe("Error in fetching support configuration for the domain", e);
       throw new InvalidServiceException(
           backendMessages.getString("general.support.config.fetch.error"));
@@ -1474,7 +1431,7 @@ public class ConfigurationModelBuilder {
   public List<GeneralConfigModel> buildDomainLocationModels(List<String> domainIds,
                                                             UsersService userService,
                                                             String userName)
-      throws ServiceException, ConfigurationException {
+      throws ServiceException{
     List<GeneralConfigModel> configModel = new ArrayList<>();
     for(String dId: domainIds) {
       if (!userService.hasAccessToDomain(userName, Long.valueOf(dId))) {
@@ -1484,5 +1441,151 @@ public class ConfigurationModelBuilder {
       configModel.add(buildDomainLocationModel(Long.valueOf(dId)));
     }
     return configModel;
+  }
+
+  protected String getActualTransConfigType(String transType, InventoryConfig ic) {
+    ActualTransConfig atc = ic.getActualTransConfigByType(transType);
+    return (atc != null ? atc.getTy() : ActualTransConfig.ACTUAL_NONE);
+    }
+
+  protected List<InventoryConfigModel.MTagReason> buildMTagReasonModelList(Map<String,String> mtagRsnsMap) {
+    if (mtagRsnsMap == null) {
+    return Collections.emptyList();
+    }
+    List<InventoryConfigModel.MTagReason> tagRsnsList = new ArrayList<>(1);
+    mtagRsnsMap.entrySet().forEach(entry ->
+    tagRsnsList.add(buildMtagReasonModel(entry.getKey(),entry.getValue()))
+    );
+    return tagRsnsList;
+    }
+
+  protected InventoryConfigModel.MTagReason buildMtagReasonModel(String mtag, String reason) {
+    InventoryConfigModel.MTagReason mtagReason = new InventoryConfigModel.MTagReason();
+      mtagReason.mtg = mtag;
+      mtagReason.rsn = reason;
+      return mtagReason;
+  }
+
+  protected List<String> getTagsByInvOperationAsList(Map<String,String> invOpTypeTags, String invOperation) {
+    if (MapUtils.isNotEmpty(invOpTypeTags) &&
+      StringUtils.isNotEmpty(invOpTypeTags.get(invOperation))) {
+      return Arrays.asList(invOpTypeTags.get(invOperation).split(CharacterConstants.COMMA));
+    }
+    return Collections.emptyList();
+  }
+
+  public Map<String,String> getTagsByInventoryOperation(CapabilitiesConfigModel capConfigModel) {
+    Map<String, String> tagsByInvOper = new HashMap<>(7);
+    String issueTags = TagUtil.getCleanTags(StringUtils.join(capConfigModel.hii, ','),true);
+    String receiptsTags = TagUtil.getCleanTags(StringUtils.join(capConfigModel.hir, ','), true);
+    String stockTags = TagUtil.getCleanTags(StringUtils.join(capConfigModel.hip, ','), true);
+    String discardTags = TagUtil.getCleanTags(StringUtils.join(capConfigModel.hiw, ','), true);
+    String transferTags = TagUtil.getCleanTags(StringUtils.join(capConfigModel.hit, ','), true);
+    String retIncTags = TagUtil.getCleanTags(StringUtils.join(capConfigModel.hiri, ','), true);
+    String retOutTags = TagUtil.getCleanTags(StringUtils.join(capConfigModel.hiro, ','), true);
+
+    tagsByInvOper.put(ITransaction.TYPE_ISSUE, issueTags);
+    tagsByInvOper.put(ITransaction.TYPE_RECEIPT, receiptsTags);
+    tagsByInvOper.put(ITransaction.TYPE_PHYSICALCOUNT, stockTags);
+    tagsByInvOper.put(ITransaction.TYPE_WASTAGE, discardTags);
+    tagsByInvOper.put(ITransaction.TYPE_TRANSFER, transferTags);
+    tagsByInvOper.put(ITransaction.TYPE_RETURNS_INCOMING, retIncTags);
+    tagsByInvOper.put(ITransaction.TYPE_RETURNS_OUTGOING, retOutTags);
+    return tagsByInvOper;
+  }
+
+  public Map<String,String> getReasonsByTransType(InventoryConfigModel invConfigModel) {
+    // Set reasons
+    Map<String, String> reasonsByTransType = new HashMap<>(7,1);
+    reasonsByTransType.put(ITransaction.TYPE_ISSUE, trimReasons(invConfigModel.ri));
+    reasonsByTransType.put(ITransaction.TYPE_RECEIPT, trimReasons(invConfigModel.rr));
+    reasonsByTransType.put(ITransaction.TYPE_PHYSICALCOUNT, trimReasons(invConfigModel.rs));
+    reasonsByTransType.put(ITransaction.TYPE_WASTAGE, trimReasons(invConfigModel.rd));
+    reasonsByTransType.put(ITransaction.TYPE_TRANSFER, trimReasons(invConfigModel.rt));
+    reasonsByTransType.put(ITransaction.TYPE_RETURNS_INCOMING, trimReasons(invConfigModel.rri));
+    reasonsByTransType.put(ITransaction.TYPE_RETURNS_OUTGOING, trimReasons(invConfigModel.rro));
+    return reasonsByTransType;
+
+  }
+
+  public Map<String,String> getMapWithTrimmedReasons(List<InventoryConfigModel.MTagReason> mTagRsnList) {
+    if (CollectionUtils.isEmpty(mTagRsnList)) {
+      return Collections.emptyMap();
+    }
+    Map<String,String> mTagTrimmedRsnsMap = new HashMap<>(1);
+    for (InventoryConfigModel.MTagReason mTagReason : mTagRsnList) {
+      mTagTrimmedRsnsMap.put(mTagReason.mtg, trimReasons(mTagReason.rsn));
+    }
+    return mTagTrimmedRsnsMap;
+  }
+
+  public String trimReasons(String reasonsCSV) {
+    if(StringUtils.isEmpty(reasonsCSV)) {
+      return "";
+    }
+    String csv = reasonsCSV;
+    csv = csv.trim();
+    if (StringUtils.isEmpty(csv)) {
+      return "";
+    }
+    csv = StringUtil.getCSV(StringUtil.trim(StringUtil.getArray(csv)));
+    if (StringUtils.isEmpty(csv)) {
+      return "";
+    }
+    return csv;
+  }
+
+  public ActualTransConfig buildActualTransConfig(String actTransConfig) {
+    ActualTransConfig actualTransConfig = new ActualTransConfig();
+    actualTransConfig.setTy(actTransConfig != null ? actTransConfig : ActualTransConfig.ACTUAL_NONE);
+    return actualTransConfig;
+  }
+
+  public MatStatusConfig buildMatStatusConfig(String defaultStatus, String mstTempSensMat, boolean mandatory) {
+    MatStatusConfig matStConfig = new MatStatusConfig();
+    matStConfig.setDf(StringUtil.trimCommas(defaultStatus));
+    matStConfig.setEtsm(StringUtil.trimCommas(mstTempSensMat));
+    matStConfig.setStatusMandatory(mandatory);
+    return matStConfig;
+  }
+
+  public List<ReturnsConfig> buildReturnsConfigs(List<ReturnsConfigModel> returnsConfigModels) {
+    if (CollectionUtils.isEmpty(returnsConfigModels)) {
+      return Collections.emptyList();
+    }
+    return returnsConfigModels.stream()
+        .map(this::buildReturnsConfig)
+        .collect(Collectors.toList());
+  }
+
+  public ReturnsConfig buildReturnsConfig(ReturnsConfigModel returnsConfigModel) {
+    ReturnsConfig returnsConfig = new ReturnsConfig();
+    if (returnsConfigModel == null) {
+      return returnsConfig;
+    }
+    returnsConfig.setEntityTags(returnsConfigModel.etags);
+    returnsConfig.setIncomingReturnDuration(returnsConfigModel.incretdur);
+    returnsConfig.setOutgoingReturnDuration(returnsConfigModel.outretdur);
+    return returnsConfig;
+  }
+
+  public List<ReturnsConfigModel> buildReturnsConfigModels(List<ReturnsConfig> returnsConfigList) {
+    if (CollectionUtils.isEmpty(returnsConfigList)) {
+      return Collections.emptyList();
+    }
+    return returnsConfigList.stream()
+        .map(this::buildReturnsConfigModel)
+        .collect(Collectors.toList());
+  }
+
+  public ReturnsConfigModel buildReturnsConfigModel(ReturnsConfig returnsConfig) {
+    ReturnsConfigModel returnsConfigModel = new ReturnsConfigModel();
+    if (returnsConfig == null) {
+      return returnsConfigModel;
+    }
+    returnsConfigModel.etags = returnsConfig.getEntityTags();
+    returnsConfigModel.incretdur = returnsConfig.getIncomingReturnDuration();
+    returnsConfigModel.outretdur = returnsConfig.getOutgoingReturnDuration();
+    return returnsConfigModel;
   }
 }

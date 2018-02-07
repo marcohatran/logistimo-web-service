@@ -102,6 +102,22 @@ public class InventoryConfigModel {
   public boolean wsm; //Discard status mandatory
   public boolean tsm; //Transfer status mandatory
   public LeadTimeAvgConfigModel ltacm; // Lead time average config model
+  public boolean crimt; // Flag that indicates if Returns-incoming by material tags is configured or not
+  public boolean cromt; // Flag that indicates if Returns-outgoing by material tags is configured or not
+  public String rri; // Reasons for Returns-incoming
+  public String rro; // Reasons for Returns-incoming
+  public List<MTagReason> rimt = new ArrayList<>(1); // material tag reasons for Returns-incoming
+  public List<MTagReason> romt = new ArrayList<>(1); // material tag reasons for Returns-outgoing
+  public boolean rism; // Flag indicating if Returns-incoming material status is mandatory
+  public boolean rosm; // Flag indicating if Returns-outgoing material status is mandatory
+  public String ridf; //material status for Returns-incoming
+  public String riestm; // material status for Returns-incoming of temperature sensitive materials
+  public String rodf; //material status for Returns-outgoing
+  public String roestm; // material status for Returns-outgoing of temperature sensitive materials
+  public String catdri;
+  public String catdro;
+  public List<ReturnsConfigModel> rcm; // Returns configuration models
+  public List<String> erirsns; // Exclude return incoming reasons
 
   public static class MTagReason {
     public String mtg;
@@ -114,4 +130,5 @@ public class InventoryConfigModel {
     public Float maxop; // Maximum order periods to consider for computing leadtime average
     public boolean exopt; // Exclude order processing time while computing leadtime average
   }
+
 }

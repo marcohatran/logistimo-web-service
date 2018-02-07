@@ -59,7 +59,7 @@ public class ActualTransConfig implements Serializable {
 
   @SuppressWarnings("rawtypes")
   public static Map<String, ActualTransConfig> getActualTranstMap(JSONObject json) {
-    Map<String, ActualTransConfig> map = new HashMap<String, ActualTransConfig>();
+    Map<String, ActualTransConfig> map = new HashMap<>();
     // Get the types
     Iterator keys = json.keys();
     while (keys.hasNext()) {

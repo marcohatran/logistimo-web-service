@@ -371,7 +371,7 @@ domainCfgControllers.controller('CapabilitiesConfigurationController', ['$scope'
         $scope.cnf = {};
         $scope.uiCnf = {};
         $scope.cap = ["inventory", "orders"];
-        $scope.tm = ["vs", "es", "er", "sc", "wa", "ts", "ns","vo","vp","ep","pi","xi","vh","vt","ct"];
+        $scope.tm = ["vs", "es", "er", "sc", "wa", "ts", "ns","vo","vp","ep","pi","xi","vh","vt","ct","eri","ero"];
         $scope.et = ["ents", "csts", "vnds"];
         $scope.loading = false;
         $scope.getCapabilitiesConfiguration = function () {
@@ -470,6 +470,28 @@ domainCfgControllers.controller('CapabilitiesConfigurationController', ['$scope'
                     $scope.uiCnf.itTags.push({"id": $scope.uiCnf.hit[i], "text": $scope.uiCnf.hit[i]});
                 }
             }
+            if (checkNotNullEmpty($scope.uiCnf.iriTags)) {
+                $scope.uiCnf.hiri = [];
+                for (i = 0; i < $scope.uiCnf.iriTags.length; i++) {
+                    $scope.uiCnf.hiri.push($scope.uiCnf.iriTags[i].text);
+                }
+            } else if (checkNotNullEmpty($scope.uiCnf.hiri)) {
+                $scope.uiCnf.iriTags = [];
+                for (i = 0; i < $scope.uiCnf.hiri.length; i++) {
+                    $scope.uiCnf.iriTags.push({"id": $scope.uiCnf.hiri[i], "text": $scope.uiCnf.hiri[i]});
+                }
+            }
+            if (checkNotNullEmpty($scope.uiCnf.iroTags)) {
+                $scope.uiCnf.hiro = [];
+                for (i = 0; i < $scope.uiCnf.iroTags.length; i++) {
+                    $scope.uiCnf.hiro.push($scope.uiCnf.iroTags[i].text);
+                }
+            } else if (checkNotNullEmpty($scope.uiCnf.hiro)) {
+                $scope.uiCnf.iroTags = [];
+                for (i = 0; i < $scope.uiCnf.hiro.length; i++) {
+                    $scope.uiCnf.iroTags.push({"id": $scope.uiCnf.hiro[i], "text": $scope.uiCnf.hiro[i]});
+                }
+            }
         };
         $scope.getCapabilitiesConfiguration();
         $scope.setCapabilitiesConfiguration = function () {
@@ -480,6 +502,8 @@ domainCfgControllers.controller('CapabilitiesConfigurationController', ['$scope'
             $scope.uiCnf.hip = [];
             $scope.uiCnf.hiw = [];
             $scope.uiCnf.hit = [];
+            $scope.uiCnf.hiri = [];
+            $scope.uiCnf.hiro = [];
             if (checkNullEmpty($scope.uiCnf.mdri))
                 $scope.uiCnf.mdri = 0;
             if (checkNullEmpty($scope.uiCnf.iri))
@@ -792,9 +816,9 @@ domainCfgControllers.controller('InventoryConfigurationController', ['$scope', '
         $scope.fr = ["daily", "weekly", "monthly"];
         $scope.forecast = [{key:$scope.resourceBundle['none'], value:-1}, {key:$scope.resourceBundle['demandforecast'], value:100}, {key:$scope.resourceBundle['order.optimalorderquantity'],value:200}];
         $scope.loading = false;
-        var ty = {i:true,r:false,s:false,d:false,t:false};
-        var ms = {i:true,r:false,s:false,d:false,t:false};
-        var atdc = {i:true,r:false,s:false,d:false,t:false};
+        var ty = {i:true,r:false,s:false,d:false,t:false,ri:false,ro:false};
+        var ms = {i:true,r:false,s:false,d:false,t:false,ri:false,ro:false};
+        var atdc = {i:true,r:false,s:false,d:false,t:false,ri:false,ro:false};
         $scope.inv.support =[];
         $scope.inv.support.push({"type":"","df":"","etsm":""});
         $scope.transType = ty;
@@ -805,13 +829,19 @@ domainCfgControllers.controller('InventoryConfigurationController', ['$scope', '
         $scope.inv.csmt=false;
         $scope.inv.ctmt=false;
         $scope.inv.cdmt=false;
+        $scope.inv.crimt=false;
+        $scope.inv.cromt=false;
         $scope.inv.irc=false;
+        $scope.inv.rirc=false;
         $scope.exRow = [];
         $scope.rxRow = [];
         $scope.sxRow = [];
         $scope.txRow = [];
         $scope.dxRow = [];
+        $scope.rixRow = [];
+        $scope.roxRow = [];
         $scope.dmntz = 'UTC';
+        $scope.preSelectedTags = [];
 
         TimezonesControllerKVReversed.call(this, $scope, configService);
 
@@ -823,7 +853,7 @@ domainCfgControllers.controller('InventoryConfigurationController', ['$scope', '
                     if(checkNotNullEmpty(inv.imt)){
                         for(var i=0;i<inv.imt.length;i++){
                             var idx = $scope.iMatTags.indexOf(inv.imt[i].mtg);
-                            if(checkNotNullEmpty(idx) && checkNotNullEmpty($scope.iMatTags[idx])){
+                            if(idx != -1 && checkNotNullEmpty($scope.iMatTags[idx])){
                                 $scope.iMatTags[idx].hide = false;
                                 $scope.iMatTags.splice(idx,1);
                             }
@@ -833,18 +863,17 @@ domainCfgControllers.controller('InventoryConfigurationController', ['$scope', '
                     if(checkNotNullEmpty(inv.rmt)){
                         for(var i=0;i<inv.rmt.length;i++){
                             var idx = $scope.rMatTags.indexOf(inv.rmt[i].mtg);
-                            if(checkNotNullEmpty(idx) && checkNotNullEmpty($scope.rMatTags[idx])){
+                            if(idx != -1 && checkNotNullEmpty($scope.rMatTags[idx])){
                                 $scope.rMatTags[idx].hide = false;
                                 $scope.rMatTags.splice(idx,1);
                             }
                         }
                     }
-
                     $scope.tMatTags = angular.copy($scope.MatTags);
                     if(checkNotNullEmpty(inv.tmt)){
                         for(var i=0;i<inv.tmt.length;i++){
                             var idx = $scope.tMatTags.indexOf(inv.tmt[i].mtg);
-                            if(checkNotNullEmpty(idx) && checkNotNullEmpty($scope.tMatTags[idx])){
+                            if(idx != -1 && checkNotNullEmpty($scope.tMatTags[idx])){
                                 $scope.tMatTags[idx].hide = false;
                                 $scope.tMatTags.splice(idx,1);
                             }
@@ -854,7 +883,7 @@ domainCfgControllers.controller('InventoryConfigurationController', ['$scope', '
                     if(checkNotNullEmpty(inv.smt)){
                         for(var i=0;i<inv.smt.length;i++){
                             var idx = $scope.sMatTags.indexOf(inv.smt[i].mtg);
-                            if(checkNotNullEmpty(idx)&& checkNotNullEmpty($scope.sMatTags[idx])){
+                            if(idx != -1 && checkNotNullEmpty($scope.sMatTags[idx])){
                                 $scope.sMatTags[idx].hide = false;
                                 $scope.sMatTags.splice(idx,1);
                             }
@@ -864,9 +893,29 @@ domainCfgControllers.controller('InventoryConfigurationController', ['$scope', '
                     if(checkNotNullEmpty(inv.dmt)){
                         for(var i=0;i<inv.dmt.length;i++){
                             var idx = $scope.dMatTags.indexOf(inv.dmt[i].mtg);
-                            if(checkNotNullEmpty(idx) && checkNotNullEmpty($scope.dMatTags[idx])){
+                            if(idx != -1 && checkNotNullEmpty($scope.dMatTags[idx])){
                                 $scope.dMatTags[idx].hide = false;
                                 $scope.dMatTags.splice(idx,1);
+                            }
+                        }
+                    }
+                    $scope.riMatTags = angular.copy($scope.MatTags);
+                    if(checkNotNullEmpty(inv.rimt)){
+                        for(var i=0;i<inv.rimt.length;i++){
+                            var idx = $scope.riMatTags.indexOf(inv.rimt[i].mtg);
+                            if(idx != -1 && checkNotNullEmpty($scope.riMatTags[idx])){
+                                $scope.riMatTags[idx].hide = false;
+                                $scope.riMatTags.splice(idx,1);
+                            }
+                        }
+                    }
+                    $scope.roMatTags = angular.copy($scope.MatTags);
+                    if(checkNotNullEmpty(inv.romt)){
+                        for(var i=0;i<inv.romt.length;i++){
+                            var idx = $scope.roMatTags.indexOf(inv.romt[i].mtg);
+                            if(idx != -1 && checkNotNullEmpty($scope.roMatTags[idx])){
+                                $scope.roMatTags[idx].hide = false;
+                                $scope.roMatTags.splice(idx,1);
                             }
                         }
                     }
@@ -876,7 +925,6 @@ domainCfgControllers.controller('InventoryConfigurationController', ['$scope', '
             }).finally(function(){
                 $scope.addRows('a');
             });
-
         };
 
         $scope.getGeneralConfiguration = function() {
@@ -923,6 +971,8 @@ domainCfgControllers.controller('InventoryConfigurationController', ['$scope', '
                         $scope.inv.irc = false;
                         $scope.inv.ersnsObj = [];
                         $scope.inv.edis = true;
+                        $scope.inv.rirc = false;
+                        $scope.inv.erirsnsObj = [];
                     }
                 } else if(newVal == 0 && newVal != oldVal) {
                     if($scope.inv.co != -1) {
@@ -934,6 +984,8 @@ domainCfgControllers.controller('InventoryConfigurationController', ['$scope', '
                         $scope.inv.irc = false;
                         $scope.inv.ersnsObj = [];
                         $scope.inv.edis = true;
+                        $scope.inv.rirc = false;
+                        $scope.inv.erirsnsObj = [];
                     }
                 } else if(newVal == 1) {
                     $scope.inv.mcrfreq = "";
@@ -1027,6 +1079,28 @@ domainCfgControllers.controller('InventoryConfigurationController', ['$scope', '
                 }
                 $scope.inv.irc = true;
             }
+            if(checkNotNullEmpty($scope.inv.erirsns)) {
+                $scope.inv.erirsnsObj = [];
+                for (var i = 0; i < $scope.inv.erirsns.length; i++) {
+                    $scope.inv.erirsnsObj.push({"id":$scope.inv.erirsns[i],"text" : $scope.inv.erirsns[i]});
+                }
+                $scope.inv.rirc = true;
+            }
+            if(checkNotNullEmpty($scope.inv.rcm) && $scope.inv.rcm.length > 0) {
+                $scope.inv.rcm.some(function(data) {
+                    if(checkNotNullEmpty(data.enTgs)) {
+                        data.etags = [];
+                        for(var i=0; i<data.enTgs.length; i++) {
+                            data.etags.push(data.enTgs[i].text);
+                        }
+                    } else if(checkNotNullEmpty(data.etags)) {
+                        data.enTgs = [];
+                        for(var i=0 ; i<data.etags.length; i++) {
+                            data.enTgs.push({"id" : data.etags[i], "text" : data.etags[i]});
+                        }
+                    }
+                });
+            }
         };
 
         $scope.validateStatus = function(defStatus,tempStatus,type) {
@@ -1047,6 +1121,12 @@ domainCfgControllers.controller('InventoryConfigurationController', ['$scope', '
                     case 't':
                         $scope.inv.tsm = false;
                         break;
+                    case 'ri':
+                        $scope.inv.rism = false;
+                        break;
+                    case 'ro':
+                        $scope.inv.rosm = false;
+                        break;
                 }
             }
         }
@@ -1054,101 +1134,153 @@ domainCfgControllers.controller('InventoryConfigurationController', ['$scope', '
         $scope.setInventoryConfiguration = function () {
             $scope.inv.enTgs = [];
             $scope.inv.usrTgs = [];
-            if(!$scope.inv.eidb) {
+            if (!$scope.inv.eidb) {
                 $scope.inv.eTgs = [];
             }
-            if($scope.inv.irc) {
-                if(checkNullEmpty($scope.inv.ersnsObj)) {
+            if ($scope.inv.irc) {
+                if (checkNullEmpty($scope.inv.ersnsObj)) {
                     $scope.showWarning($scope.resourceBundle['config.select.reason.codes']);
                     return;
                 }
             }
-            if($scope.inv.etdx){
-                if(checkNullEmpty($scope.inv.aname) && checkNullEmpty($scope.inv.uTgs)){
+            if ($scope.inv.rirc) {
+                if (checkNullEmpty($scope.inv.erirsnsObj)) {
+                    $scope.showWarning($scope.resourceBundle['config.select.reason.codes']);
+                    return;
+                }
+            }
+            if ($scope.inv.etdx) {
+                if (checkNullEmpty($scope.inv.aname) && checkNullEmpty($scope.inv.uTgs)) {
                     $scope.showWarning($scope.resourceBundle['config.select.user.tags']);
                     return;
                 }
             }
-            if($scope.inv.crc == 1 && (checkNullEmpty($scope.inv.minhpccr) || checkNullEmpty($scope.inv.maxhpccr))) {
+            if ($scope.inv.crc == 1 && (checkNullEmpty($scope.inv.minhpccr) || checkNullEmpty($scope.inv.maxhpccr))) {
                 $scope.showWarning($scope.resourceBundle['enter.histperiod']);
                 return;
             }
             $scope.loading = true;
             $scope.showLoading();
             $scope.getFiltered();
-            if(checkNotNullEmpty($scope.inv.imt)){
+            if (checkNotNullEmpty($scope.inv.imt)) {
                 var temp = [];
-                for(var i=0;i<$scope.inv.imt.length;i++){
-                    if(checkNotNullEmpty($scope.inv.imt[i].mtg)){
+                for (var i = 0; i < $scope.inv.imt.length; i++) {
+                    if (checkNotNullEmpty($scope.inv.imt[i].mtg)) {
                         temp.push($scope.inv.imt[i]);
                     }
                 }
-                $scope.inv.imt=temp;
-                if(temp.length == 0)
-                    $scope.inv.cimt=false;
+                $scope.inv.imt = temp;
+                if (temp.length == 0)
+                    $scope.inv.cimt = false;
             }
-            if(checkNotNullEmpty($scope.inv.rmt)){
+            if (checkNotNullEmpty($scope.inv.rmt)) {
                 var temp = [];
-                for(var i=0;i<$scope.inv.rmt.length;i++){
-                    if(checkNotNullEmpty($scope.inv.rmt[i].mtg)){
+                for (var i = 0; i < $scope.inv.rmt.length; i++) {
+                    if (checkNotNullEmpty($scope.inv.rmt[i].mtg)) {
                         temp.push($scope.inv.rmt[i]);
                     }
                 }
-                $scope.inv.rmt=temp;
-                if(temp.length == 0)
-                    $scope.inv.crmt=false;
+                $scope.inv.rmt = temp;
+                if (temp.length == 0)
+                    $scope.inv.crmt = false;
             }
-            if(checkNotNullEmpty($scope.inv.smt)){
+            if (checkNotNullEmpty($scope.inv.smt)) {
                 var temp = [];
-                for(var i=0;i<$scope.inv.smt.length;i++){
-                    if(checkNotNullEmpty($scope.inv.smt[i].mtg)){
+                for (var i = 0; i < $scope.inv.smt.length; i++) {
+                    if (checkNotNullEmpty($scope.inv.smt[i].mtg)) {
                         temp.push($scope.inv.smt[i]);
                     }
                 }
-                $scope.inv.smt=temp;
-                if(temp.length == 0)
-                    $scope.inv.csmt=false;
+                $scope.inv.smt = temp;
+                if (temp.length == 0)
+                    $scope.inv.csmt = false;
             }
-            if(checkNotNullEmpty($scope.inv.tmt)){
+            if (checkNotNullEmpty($scope.inv.tmt)) {
                 var temp = [];
-                for(var i=0;i<$scope.inv.tmt.length;i++){
-                    if(checkNotNullEmpty($scope.inv.tmt[i].mtg)){
+                for (var i = 0; i < $scope.inv.tmt.length; i++) {
+                    if (checkNotNullEmpty($scope.inv.tmt[i].mtg)) {
                         temp.push($scope.inv.tmt[i]);
                     }
                 }
-                $scope.inv.tmt=temp;
-                if(temp.length == 0)
-                    $scope.inv.ctmt=false;
+                $scope.inv.tmt = temp;
+                if (temp.length == 0)
+                    $scope.inv.ctmt = false;
             }
-            if(checkNotNullEmpty($scope.inv.dmt)){
+            if (checkNotNullEmpty($scope.inv.dmt)) {
                 var temp = [];
-                for(var i=0;i<$scope.inv.dmt.length;i++){
-                    if(checkNotNullEmpty($scope.inv.dmt[i].mtg)){
+                for (var i = 0; i < $scope.inv.dmt.length; i++) {
+                    if (checkNotNullEmpty($scope.inv.dmt[i].mtg)) {
                         temp.push($scope.inv.dmt[i]);
                     }
                 }
-                $scope.inv.dmt=temp;
-                if(temp.length == 0)
-                    $scope.inv.cdmt=false;
+                $scope.inv.dmt = temp;
+                if (temp.length == 0)
+                    $scope.inv.cdmt = false;
             }
+            if (checkNotNullEmpty($scope.inv.rimt)) {
+                var temp = [];
+                for (var i = 0; i < $scope.inv.rimt.length; i++) {
+                    if (checkNotNullEmpty($scope.inv.rimt[i].mtg)) {
+                        temp.push($scope.inv.rimt[i]);
+                    }
+                }
+                $scope.inv.rimt = temp;
+                if (temp.length == 0)
+                    $scope.inv.crimt = false;
+            }
+            if (checkNotNullEmpty($scope.inv.romt)) {
+                var temp = [];
+                for (var i = 0; i < $scope.inv.romt.length; i++) {
+                    if (checkNotNullEmpty($scope.inv.romt[i].mtg)) {
+                        temp.push($scope.inv.romt[i]);
+                    }
+                }
+                $scope.inv.romt = temp;
+                if (temp.length == 0)
+                    $scope.inv.cromt = false;
+            }
+
             $scope.inv.ersns = [];
-            if($scope.inv.irc && checkNotNullEmpty($scope.inv.ersnsObj)){
+            if ($scope.inv.irc && checkNotNullEmpty($scope.inv.ersnsObj)) {
                 for (var i = 0; i < $scope.inv.ersnsObj.length; i++) {
                     $scope.inv.ersns.push($scope.inv.ersnsObj[i].text);
                 }
             }
-            $scope.updateTags();
-            domainCfgService.setInventoryCfg($scope.inv).then(function (data) {
-                $scope.showSuccess(data.data);
-            }).catch(function error(msg) {
-                $scope.showErrorMsg(msg, true);
-            }).finally(function (){
+            $scope.inv.erirsns = [];
+            if ($scope.inv.rirc && checkNotNullEmpty($scope.inv.erirsnsObj)) {
+                for (var i = 0; i < $scope.inv.erirsnsObj.length; i++) {
+                    $scope.inv.erirsns.push($scope.inv.erirsnsObj[i].text);
+                }
+            }
+
+            if (isReturnsConfigurationValid()) {
+                $scope.updateTags();
+                domainCfgService.setInventoryCfg($scope.inv).then(function (data) {
+                    $scope.showSuccess(data.data);
+                }).catch(function error(msg) {
+                    $scope.showErrorMsg(msg, true);
+                }).finally(function () {
+                    $scope.loading = false;
+                    $scope.getInventoryConfiguration();
+                    $scope.refreshDomainConfig();
+                    $scope.hideLoading();
+                });
+            } else {
                 $scope.loading = false;
-                $scope.getInventoryConfiguration();
-                $scope.refreshDomainConfig();
                 $scope.hideLoading();
-            });
+            }
         };
+
+        function isReturnsConfigurationValid() {
+            return !($scope.inv.rcm.some(function(data){
+                    if(checkNullEmpty(data.enTgs)) {
+                        $scope.showWarning($scope.resourceBundle['config.returns.policy.entity.tags.configure']);
+                        return true;
+                    }
+                }
+            ));
+        }
+
         $scope.setMtg = function (newVal) {
             if(checkNotNullEmpty(newVal)){
                 $scope.addRows('i');
@@ -1197,6 +1329,26 @@ domainCfgControllers.controller('InventoryConfigurationController', ['$scope', '
                     $scope.dMatTags[idx].hide = false;
                 }
                 $scope.dMatTags.splice(idx,1);
+            }
+        };
+        $scope.setRIMtg = function (newVal) {
+            if(checkNotNullEmpty(newVal)){
+                $scope.addRows('ri');
+                var idx = $scope.riMatTags.indexOf(newVal);
+                if(checkNotNullEmpty(idx)){
+                    $scope.riMatTags[idx].hide = false;
+                }
+                $scope.riMatTags.splice(idx,1);
+            }
+        };
+        $scope.setROMtg = function (newVal) {
+            if(checkNotNullEmpty(newVal)){
+                $scope.addRows('ro');
+                var idx = $scope.roMatTags.indexOf(newVal);
+                if(checkNotNullEmpty(idx)){
+                    $scope.roMatTags[idx].hide = false;
+                }
+                $scope.roMatTags.splice(idx,1);
             }
         };
         $scope.getFiltered = function () {
@@ -1299,8 +1451,29 @@ domainCfgControllers.controller('InventoryConfigurationController', ['$scope', '
                 if(checkNullEmpty($scope.inv.dmt))
                     $scope.addRows('d');
             }
-
-
+            if(type === 'retInc'){
+                var mIndex = $scope.inv.rimt[id];
+                if (checkNotNullEmpty(mIndex) && checkNotNullEmpty($scope.inv.rimt[mIndex])) {
+                    $scope.inv.rimt[mIndex].hide = false;
+                }
+                $scope.inv.rimt.splice(id, 1);
+                $scope.rixRow[id] = '';
+                if(checkNullEmpty($scope.inv.rimt))
+                    $scope.addRows('ri');
+            }
+            if(type === 'retOut'){
+                var mIndex = $scope.inv.romt[id];
+                if (checkNotNullEmpty(mIndex) && checkNotNullEmpty($scope.inv.romt[mIndex])) {
+                    $scope.inv.romt[mIndex].hide = false;
+                }
+                $scope.inv.romt.splice(id, 1);
+                $scope.roxRow[id] = '';
+                if(checkNullEmpty($scope.inv.romt))
+                    $scope.addRows('ro');
+            }
+            if (type === 'returnsconfig') {
+                $scope.inv.rcm.splice(id, 1);
+            }
         };
         $scope.addRows = function(type){
             if(checkNotNullEmpty($scope.MatTags)){
@@ -1323,6 +1496,14 @@ domainCfgControllers.controller('InventoryConfigurationController', ['$scope', '
                 if(type == 'd' || type =='a'){
                     if($scope.MatTags.length>=$scope.inv.dmt.length)
                         $scope.inv.dmt.push({mtg:"",rsn:""});
+                }
+                if(type == 'ri' || type =='a'){
+                    if($scope.MatTags.length>=$scope.inv.rimt.length)
+                        $scope.inv.rimt.push({mtg:"",rsn:""});
+                }
+                if(type == 'ro' || type =='a'){
+                    if($scope.MatTags.length>=$scope.inv.romt.length)
+                        $scope.inv.romt.push({mtg:"",rsn:""});
                 }
             }
         };
@@ -1350,51 +1531,74 @@ domainCfgControllers.controller('InventoryConfigurationController', ['$scope', '
                 }
             }
         };
-        $scope.isSelected = function (i) {
-            for (t in $scope.inv.ersnsObj) {
-                if (i == $scope.inv.ersnsObj[t]) {
+        $scope.isSelected = function (i,type) {
+            var excludeRsnsObj = checkNotNullEmpty(type) && type == 'ri' ? $scope.inv.erirsnsObj : $scope.inv.ersnsObj;
+            for (t in excludeRsnsObj) {
+                if (i == excludeRsnsObj[t]) {
                     return true;
                 }
             }
             return false;
         };
-        $scope.query = function (query) {
+
+        $scope.query = function (query,type) {
             var data = {results: []};
             var term = query.term.toLowerCase();
-            var rsns = getExcludeReasons();
+            var rsns = checkNotNullEmpty(type) && type == 'ri' ? getExcludeReasons($scope.inv.rri,$scope.inv.rimt) : getExcludeReasons($scope.inv.ri,$scope.inv.imt);
             for (var i in rsns) {
                 var tag = rsns[i].toLowerCase();
-                if (!$scope.isSelected(tag) && tag.indexOf(term) >= 0) {
+                if (!$scope.isSelected(tag,type) && tag.indexOf(term) >= 0) {
                     data.results.push({'text': rsns[i], 'id': rsns[i]});
                 }
             }
-            /*if (!$scope.forceNoUdf && $scope.udf && !$scope.isSelected(term)) {
-                term = term.replace(/,/g,"");
-                data.results.push({'text': term, 'id': term})
-            }*/
             query.callback(data);
         };
 
-        function getExcludeReasons() {
+        function getExcludeReasons(reasons,reasonsByTag) {
             var rsns = [];
             var ind = 0;
-            var r = $scope.inv.ri.split(",");
-            for (var i in r) {
-                if(checkNotNullEmpty(r[i])) {
-                    rsns[ind++] = r[i];
-                }
-            }
-            for (i in $scope.inv.imt) {
-                r = $scope.inv.imt[i].rsn.split(",");
-                for(var t in r) {
-                    if(rsns.hasOwnProperty(r[t]) || checkNullEmpty(r[t])) {
-                        continue;
+            if (checkNotNullEmpty(reasons)) {
+                var r = reasons.split(",");
+                for (var i in r) {
+                    if(checkNotNullEmpty(r[i])) {
+                        rsns[ind++] = r[i];
                     }
-                    rsns[ind++] = r[t];
                 }
             }
-            return rsns
+            for (i in reasonsByTag) {
+                if (checkNotNullEmpty(reasonsByTag[i].rsn)) {
+                    r = reasonsByTag[i].rsn.split(",");
+                    for (var t in r) {
+                        if (rsns.indexOf(r[t]) != -1 || checkNullEmpty(r[t])) {
+                            continue;
+                        }
+                        rsns[ind++] = r[t];
+                    }
+                }
+            }
+            return rsns;
         }
+
+        $scope.addRow = function(){
+            if(checkNullEmpty($scope.inv.rcm)) {
+                $scope.inv.rcm = [];
+            }
+            $scope.inv.rcm.push({enTgs : [], incretdur: 30, outretdur: 30});
+        };
+
+        $scope.populatePreSelected = function() {
+            $scope.preSelectedTags = [];
+            if(checkNotNullEmpty($scope.inv.rcm) && $scope.inv.rcm.length > 0) {
+                $scope.inv.rcm.some(function(data){
+                    if(checkNotNullEmpty(data.enTgs) && data.enTgs.length > 0) {
+                        for(var i in data.enTgs) {
+                            $scope.preSelectedTags.push(data.enTgs[i]);
+                        }
+                    }
+                })
+            }
+        };
+
     }
 ]);
 domainCfgControllers.controller('AccountingConfigurationController', ['$scope', 'domainCfgService',
@@ -2412,12 +2616,17 @@ domainCfgControllers.controller('NotificationsConfigurationController', ['$scope
             $scope.stockTransferred = getFilteredCombined($scope.inv.rt,getList($scope.inv.tmt));
             $scope.stockReceived = getFilteredCombined($scope.inv.rr,getList($scope.inv.rmt));
             $scope.stockDiscarded = getFilteredCombined($scope.inv.rd,getList($scope.inv.dmt));
+            $scope.incomingReturnEntered = getFilteredCombined($scope.inv.rri,getList($scope.inv.rimt));
+            $scope.outgoingReturnEntered = getFilteredCombined($scope.inv.rro,getList($scope.inv.romt));
+
 
             $scope.stockCountedStatus = getFilteredCombined($scope.inv.pdf,$scope.inv.pestm);
             $scope.stockIssuedStatus = getFilteredCombined($scope.inv.idf,$scope.inv.iestm);
             $scope.stockTransferredStatus = getFilteredCombined($scope.inv.tdf,$scope.inv.testm);
             $scope.stockReceivedStatus = getFilteredCombined($scope.inv.rdf,$scope.inv.restm);
             $scope.stockDiscardedStatus = getFilteredCombined($scope.inv.wdf,$scope.inv.westm);
+            $scope.incomingReturnEnteredStatus = getFilteredCombined($scope.inv.ridf,$scope.inv.riestm);
+            $scope.outgoingReturnEnteredStatus = getFilteredCombined($scope.inv.rodf,$scope.inv.roestm);
         };
 
         $scope.resetParams = function(){
@@ -2576,6 +2785,26 @@ domainCfgControllers.controller('NotificationsConfigurationController', ['$scope
                                     $scope.showSelection = true;
                                 }
                                 if(checkNotNullEmpty($scope.inv.wdf) || checkNotNullEmpty($scope.inv.westm)){
+                                    $scope.showStatusSelection = true;
+                                }
+                                $scope.prSelect = $scope.prefixName;
+                                $scope.prExtraSelect = $scope.extraParamsName;
+                                break;
+                            } else if ($scope.prefixName == 'incomingReturnEntered' || $scope.extraParamsName == 'incomingReturnEntered') {
+                                if(checkNotNullEmpty($scope.inv.rri) || checkNotNullEmpty($scope.inv.rimt)){
+                                    $scope.showSelection = true;
+                                }
+                                if(checkNotNullEmpty($scope.inv.ridf) || checkNotNullEmpty($scope.inv.riestm)){
+                                    $scope.showStatusSelection = true;
+                                }
+                                $scope.prSelect = $scope.prefixName;
+                                $scope.prExtraSelect = $scope.extraParamsName;
+                                break;
+                            } else if ($scope.prefixName == 'outgoingReturnEntered' || $scope.extraParamsName == 'outgoingReturnEntered') {
+                                if(checkNotNullEmpty($scope.inv.rro) || checkNotNullEmpty($scope.inv.romt)){
+                                    $scope.showSelection = true;
+                                }
+                                if(checkNotNullEmpty($scope.inv.rodf) || checkNotNullEmpty($scope.inv.roestm)){
                                     $scope.showStatusSelection = true;
                                 }
                                 $scope.prSelect = $scope.prefixName;

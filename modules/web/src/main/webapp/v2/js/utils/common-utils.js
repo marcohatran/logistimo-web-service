@@ -523,3 +523,7 @@ trimGeo = function(geo) {
 isNotPastDate = function(date) {
     return (date.getTime() - new Date().setHours(0,0,0,0)) >= 0;
 };
+
+function getFilterTitle(field,title,fieldDisplay){
+    return checkNotNullEmpty(field)?title + ": " + (fieldDisplay?field[fieldDisplay]:field) + "   ":"";
+}
