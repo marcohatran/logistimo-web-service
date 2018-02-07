@@ -66,43 +66,44 @@ public class ExportBuilder {
 
   public ExportModel buildExportModel(RequestModel model)
       throws ServiceException {
-    ExportModel exportModel = new ExportModel();
-    final SecureUserDetails userDetails = SecurityUtils.getUserDetails();
-    Long domainId = userDetails.getCurrentDomainId();
+    final SecureUserDetails sUser = SecurityUtils.getUserDetails();
+    Long domainId = sUser.getCurrentDomainId();
     IDomain domain = domainsService.getDomain(domainId);
+    model.setDomainId(String.valueOf(domainId));
+
+    Type type = new TypeToken<Map<String, String>>() {}.getType();
+    String timezone = DomainConfig.getInstance(domainId).getTimezone();
+    model.setFromDate(getDomainTime(model.getFromDate(), timezone));
+    model.setEndDate(getDomainTime(model.getEndDate(), timezone));
+
     GsonBuilder builder = new GsonBuilder();
     builder.excludeFieldsWithoutExposeAnnotation();
     Gson gson = builder.create();
-    model.setDomainId(String.valueOf(domainId));
-    Type type = new TypeToken<Map<String, String>>() {
-    }.getType();
-    DomainConfig dc = DomainConfig.getInstance(domainId);
     Map<String, String> filters = gson.fromJson(gson.toJson(model), type);
-    exportModel.userId = userDetails.getUsername();
-    exportModel.locale = userDetails.getLocale().getLanguage();
-    exportModel.timezone = userDetails.getTimezone();
+
+    ExportModel exportModel = new ExportModel();
+    exportModel.userId = sUser.getUsername();
+    exportModel.locale = sUser.getLocale().getLanguage();
+    exportModel.timezone = sUser.getTimezone();
     exportModel.templateId = model.getTemplateId();
     exportModel.filters = filters;
-    model.setFromDate(getDomainTime(model.getFromDate(),dc.getTimezone()));
-    model.setEndDate(getDomainTime(model.getEndDate(),dc.getTimezone()));
-    exportModel.additionalData = new HashMap<>();
+    exportModel.additionalData = new HashMap<>(5,1);
     exportModel.additionalData.put("typeId", "DEFAULT");
     exportModel.additionalData.put("domainName", domain.getName());
-    exportModel.additionalData.put("domainTimezone", dc.getTimezone());
+    exportModel.additionalData.put("domainTimezone", timezone);
+    exportModel.additionalData.put("userRole", sUser.getRole());
     exportModel.additionalData.put("exportTime", LocalDateUtil
-        .formatCustom(new Date(), Constants.DATETIME_CSV_FORMAT, userDetails.getTimezone()));
+        .formatCustom(new Date(), Constants.DATETIME_CSV_FORMAT, sUser.getTimezone()));
     exportModel.titles = model.getTitles();
     return exportModel;
   }
 
   private String getDomainTime(String date, String timezone) {
-    if(StringUtils.isNotEmpty(date)) {
-
-      SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATETIME_CSV_MILLIS_FORMAT);
-      Date startDate;
+    if (StringUtils.isNotEmpty(date)) {
       try {
-        startDate=LocalDateUtil.parseCustom(date, Constants.DATE_FORMAT_CSV,timezone);
-        return sdf.format(startDate);
+        date = LocalDateUtil.formatCustom(
+            LocalDateUtil.parseCustom(date, Constants.DATE_FORMAT_CSV, timezone),
+            Constants.DATETIME_CSV_MILLIS_FORMAT, null);
       } catch (ParseException e) {
         xLogger.warn("Exception parsing date", e);
       }
