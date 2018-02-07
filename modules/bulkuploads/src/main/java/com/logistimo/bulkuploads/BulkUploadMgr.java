@@ -1422,6 +1422,8 @@ public class BulkUploadMgr {
             ec.messages.add("Land line number: Number (" + landPhone
                 + ") format is invalid. It should be +[country-code][space][phone-number-without-spacesORdashes]; ensure space between country code and number.");
           }
+        } else {
+          u.setLandPhoneNumber(landPhone);
         }
       }
       // State (made mandatory since gae 1.2.9 - April 29, 2013)
@@ -1470,6 +1472,8 @@ public class BulkUploadMgr {
                   + " is not available in the configuration. Please enter the proper district name");
             }
           }
+        } else {
+          u.setDistrict(district);
         }
       }
       // Taluk
@@ -1500,6 +1504,8 @@ public class BulkUploadMgr {
                   + " are not available in the configuration");
             }
           }
+        } else {
+          u.setTaluk(taluk);
         }
       }
       // Village/city
@@ -1533,6 +1539,8 @@ public class BulkUploadMgr {
             ec.messages.add("Invalid format: Zip/PIN code '" + pinCode
                 + CharacterConstants.S_QUOTE + TEXT_FIELD_MAX_LENGTH_MSG + " and can contain only uppercase, lowercase, digits, hypen and spaces.");
           }
+        } else {
+          u.setPinCode(pinCode);
         }
       }
       // Old password, in case of edit (and password has to be edited)
