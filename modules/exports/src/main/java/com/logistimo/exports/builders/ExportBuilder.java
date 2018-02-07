@@ -38,12 +38,13 @@ import com.logistimo.reports.plugins.internal.ExportModel;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ServiceException;
 import com.logistimo.utils.LocalDateUtil;
+
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
 import java.lang.reflect.Type;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -101,7 +102,7 @@ public class ExportBuilder {
   private String getDomainTime(String date, String timezone) {
     if (StringUtils.isNotEmpty(date)) {
       try {
-        date = LocalDateUtil.formatCustom(
+        return LocalDateUtil.formatCustom(
             LocalDateUtil.parseCustom(date, Constants.DATE_FORMAT_CSV, timezone),
             Constants.DATETIME_CSV_MILLIS_FORMAT, null);
       } catch (ParseException e) {

@@ -888,7 +888,7 @@ public class RESTUtil {
     if (errMsg != null) {
       throw new ServiceException(errMsg);
     }
-
+    SecurityMgr.setSessionDetails(u);
     return u;
   }
 
