@@ -25,6 +25,7 @@ package com.logistimo.api.servlets.mobile.builders;
 
 import com.logistimo.config.models.AccountingConfig;
 import com.logistimo.config.models.ApprovalsConfig;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.proto.MobileAccountingConfigModel;
 import com.logistimo.proto.MobileApprovalsConfigModel;
 import com.logistimo.proto.MobileApproversModel;
@@ -138,7 +139,7 @@ public class MobileConfigBuilder {
         || secApprovers.isEmpty())) {
       return null;
     }
-    MobileUserBuilder mobileUserBuilder = new MobileUserBuilder();
+    MobileUserBuilder mobileUserBuilder = StaticApplicationContext.getBean(MobileUserBuilder.class);
     MobileApproversModel approversModel = new MobileApproversModel();
     if (primaryApprovers != null && !primaryApprovers.isEmpty()) {
       approversModel.prm =
