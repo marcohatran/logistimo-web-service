@@ -48,6 +48,7 @@ exportControllers.controller('ExportListController', ['$scope', '$location', 'ex
                 $scope.setResults($scope.exportJobs);
                 $scope.hideLoading();
                 $scope.noExportJobs = checkNullEmpty($scope.exportJobs.results);
+                addJobTypeNames($scope.exportJobs.results);
                 fixTable();
             }).catch(function error(msg) {
                 $scope.showErrorMsg(msg);
@@ -70,5 +71,12 @@ exportControllers.controller('ExportListController', ['$scope', '$location', 'ex
         $scope.showAllExportsInDomain = function() {
             $scope.fetch($scope.sae);
         };
+
+        function addJobTypeNames(rows) {
+            angular.forEach(rows, function (row) {
+                var dispName = $scope.resourceBundle['export.' + row.sbty];
+                row['dispType'] = checkNotNullEmpty(dispName) ? dispName : row.sbty;
+            });
+        }
     }
 ]);
