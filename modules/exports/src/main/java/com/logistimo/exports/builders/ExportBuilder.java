@@ -81,18 +81,17 @@ public class ExportBuilder {
     builder.excludeFieldsWithoutExposeAnnotation();
     Gson gson = builder.create();
     Map<String, String> filters = gson.fromJson(gson.toJson(model), type);
-
+    filters.put("USER_ROLE", sUser.getRole());
     ExportModel exportModel = new ExportModel();
     exportModel.userId = sUser.getUsername();
     exportModel.locale = sUser.getLocale().getLanguage();
     exportModel.timezone = sUser.getTimezone();
     exportModel.templateId = model.getTemplateId();
     exportModel.filters = filters;
-    exportModel.additionalData = new HashMap<>(5,1);
+    exportModel.additionalData = new HashMap<>(4,1);
     exportModel.additionalData.put("typeId", "DEFAULT");
     exportModel.additionalData.put("domainName", domain.getName());
     exportModel.additionalData.put("domainTimezone", timezone);
-    exportModel.additionalData.put("userRole", sUser.getRole());
     exportModel.additionalData.put("exportTime", LocalDateUtil
         .formatCustom(new Date(), Constants.DATETIME_CSV_FORMAT, sUser.getTimezone()));
     exportModel.titles = model.getTitles();
