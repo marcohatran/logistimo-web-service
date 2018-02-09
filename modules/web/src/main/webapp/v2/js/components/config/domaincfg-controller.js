@@ -371,7 +371,7 @@ domainCfgControllers.controller('CapabilitiesConfigurationController', ['$scope'
         $scope.cnf = {};
         $scope.uiCnf = {};
         $scope.cap = ["inventory", "orders"];
-        $scope.tm = ["vs", "es", "er", "sc", "wa", "ts", "ns","vo","vp","ep","pi","xi","vh","vt","ct","eri","ero"];
+        $scope.tm = ["vs", "es", "er", "sc", "wa", "ts", ,"eri","ero", "ns","vo","vp","ep","pi","xi","vh","vt","ct"];
         $scope.et = ["ents", "csts", "vnds"];
         $scope.loading = false;
         $scope.getCapabilitiesConfiguration = function () {
@@ -535,9 +535,9 @@ domainCfgControllers.controller('CapabilitiesConfigurationController', ['$scope'
         $scope.setTransactionMenu = function (item) {
             var items = angular.copy($scope.tm);
             if (item === 'inventory') {
-                items = items.splice(0, 6);
+                items = items.splice(0, 8);
             } else if (item === 'orders') {
-                items = items.splice(6, 2);
+                items = items.splice(8, 2);
             }
             if ($scope.uiCnf.cap != undefined && $scope.uiCnf.cap.indexOf(item) > -1) {
                 angular.forEach(items, function (it) {
@@ -1273,8 +1273,8 @@ domainCfgControllers.controller('InventoryConfigurationController', ['$scope', '
 
         function isReturnsConfigurationValid() {
             return !($scope.inv.rcm.some(function(data){
-                    if(checkNullEmpty(data.enTgs)) {
-                        $scope.showWarning($scope.resourceBundle['config.returns.policy.entity.tags.configure']);
+                    if(checkNullEmpty(data.enTgs) || checkNullEmpty(data.incretdur) || checkNullEmpty(data.outretdur)) {
+                        $scope.showWarning($scope.resourceBundle['config.returns.policy.configure']);
                         return true;
                     }
                 }
