@@ -244,8 +244,8 @@ matControllers.controller('MaterialListController', ['$scope', 'matService', 'do
 
         $scope.exportData=function() {
             exportService.exportData({
-                mat_name: $scope.search.key,
-                mtag: $scope.mtag,
+                mat_name: $scope.search.key || undefined,
+                mtag: $scope.mtag || undefined,
                 titles: {
                     filters: getCaption()
                 },
