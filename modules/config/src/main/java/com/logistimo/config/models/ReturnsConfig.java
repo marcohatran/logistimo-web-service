@@ -33,15 +33,17 @@ import java.util.List;
  * Created by vani on 30/01/18.
  */
 public class ReturnsConfig implements Serializable {
+  public static final int DEFAULT_INCOMING_DURATION = 30;
+  public static final int DEFAULT_OUTGOING_DURATION = 30;
+
   private static final long serialVersionUID = 1L;
-  public static final int DEFAULT_RETURN_INCOMING_DURATION = 30;
-  public static final int DEFAULT_RETURN_OUTGOING_DURATION = 30;
-  @SerializedName(value = "entity-tags")
+
+  @SerializedName(value = "entity_tags")
   private List<String> entityTags = new ArrayList<>(1);
-  @SerializedName(value = "inc-ret-duration")
-  private int incReturnDuration = DEFAULT_RETURN_INCOMING_DURATION;
-  @SerializedName(value = "out-ret-duration")
-  private int outReturnDuration = DEFAULT_RETURN_OUTGOING_DURATION;
+  @SerializedName(value = "incoming_duration")
+  private int incDuration = DEFAULT_INCOMING_DURATION;
+  @SerializedName(value = "outgoing_duration")
+  private int outDuration = DEFAULT_OUTGOING_DURATION;
 
   public List<String> getEntityTags() { return entityTags; }
 
@@ -49,19 +51,19 @@ public class ReturnsConfig implements Serializable {
     this.entityTags = entityTags;
   }
 
-  public int getIncomingReturnDuration() {
-    return incReturnDuration;
+  public int getIncomingDuration() {
+    return incDuration;
   }
 
-  public void setIncomingReturnDuration(int incReturnDuration) {
-    this.incReturnDuration = incReturnDuration;
+  public void setIncomingDuration(int incDuration) {
+    this.incDuration = incDuration;
   }
 
-  public int getOutgoingReturnDuration() {
-    return outReturnDuration;
+  public int getOutgoingDuration() {
+    return outDuration;
   }
 
-  public void setOutgoingReturnDuration(int outReturnDuration) {
-    this.outReturnDuration = outReturnDuration;
+  public void setOutgoingDuration(int outDuration) {
+    this.outDuration = outDuration;
   }
 }

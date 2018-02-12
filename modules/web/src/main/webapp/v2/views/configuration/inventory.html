@@ -800,7 +800,6 @@
                             </p>
                         </div>
                     </div>
-
                     <div class="row"> <!-- Return duration-->
                         <div class="col-sm-11">
                             <div class="form-group">
@@ -826,16 +825,16 @@
                                                             <div class="form-group">
                                                                 <label class="control-label col-sm-5">{{resourceBundle['config.returns.policy.returns.incoming.duration']}}</label>
                                                                 <div class="col-sm-6">
-                                                                    <input type="text" only-digits class="form-control w20 dh30"
-                                                                           maxlength="3" ng-model="rcm.incretdur"
+                                                                    <input type="text" only-digits min-value="1" class="form-control w20 dh30"
+                                                                           maxlength="3" ng-model="rcm.incDur"
                                                                            placeholder="30"> {{resourceBundle['days']}}
                                                                 </div>
                                                             </div>
                                                             <div class="form-group">
                                                                 <label class="control-label col-sm-5">{{resourceBundle['config.returns.policy.returns.outgoing.duration']}}</label>
                                                                 <div class="col-sm-6">
-                                                                    <input type="text" only-digits class="form-control w20 dh30"
-                                                                           maxlength="3" ng-model="rcm.outretdur"
+                                                                    <input type="text" only-digits min-value="1" class="form-control w20 dh30"
+                                                                           maxlength="3" ng-model="rcm.outDur"
                                                                            placeholder="30"> {{resourceBundle['days']}}
                                                                 </div>
                                                             </div>
@@ -863,6 +862,7 @@
                             </div>
                         </div>
                     </div>
+                </div>
                 </div>
                 <div class="bgr">
                     <div class="row">
@@ -1041,8 +1041,8 @@
                                                     <div class="row" ng-show="inv.rirc">
                                                         <div class="col-sm-12">
                                                             <div class="row col-sm-12 noMargin">
-                                                                <span>{{resourceBundle['config.returns.incoming.include.reasons']}}</span>
                                                                 <lg-uib-select multiple="multiple" ng-disabled="disabled" query="query(q,'ri')" ui-model="inv.erirsnsObj" place-holder="Enter the reason codes"> </lg-uib-select>
+                                                                <span class="litetext">{{resourceBundle['config.returns.incoming.include.reasons']}}</span>
                                                             </div>
                                                         </div>
                                                     </div>

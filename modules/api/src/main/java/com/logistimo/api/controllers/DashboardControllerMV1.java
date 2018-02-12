@@ -38,6 +38,7 @@ import com.logistimo.constants.Constants;
 import com.logistimo.dashboards.service.IDashboardService;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.logger.XLog;
+import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.cache.MemcacheService;
 import com.logistimo.utils.LocalDateUtil;
 
@@ -145,6 +146,7 @@ public class DashboardControllerMV1 {
     //preparing the model
     dashboardModel =
         MobileInvDashboardBuilder.buildInvDashboard(invTyRes, invAlRes, acstRes, alstRes);
+    dashboardModel.setUpdatedTime(getFormattedCurrentTime());
     if (cache != null) {
       cache.put(cachekey, dashboardModel, 1800); // 30 min expiry
     }
@@ -214,6 +216,7 @@ public class DashboardControllerMV1 {
     } else {
       details.level = paramModel.locty != null ? paramModel.locty : DISTRICT_LOWER;
     }
+    details.setUpdatedTime(getFormattedCurrentTime());
     if (cache != null) {
       cache.put(cachekey, details, 1800); // 30 min expiry
     }
@@ -277,7 +280,7 @@ public class DashboardControllerMV1 {
     } else {
       model.mLev = level != null ? level : DISTRICT_LOWER;
     }
-
+    model.setUpdatedTime(getFormattedCurrentTime());
     if (cache != null) {
       cache.put(cacheKey, model, 1800); // 30 min expiry
     }
@@ -358,7 +361,10 @@ public class DashboardControllerMV1 {
     } else {
       model.mLev = activityQueryModel.locty;
     }
-    cache.put(cacheKey, model, 1800);
+    model.setUpdatedTime(getFormattedCurrentTime());
+    if (cache != null) {
+      cache.put(cacheKey, model, 1800);
+    }
     return model;
   }
 
@@ -490,6 +496,12 @@ public class DashboardControllerMV1 {
       }
     }
     return filters;
+  }
+
+  private String getFormattedCurrentTime() {
+    SecureUserDetails secureUserDetails = SecurityUtils.getUserDetails();
+    return LocalDateUtil.format(new Date(), secureUserDetails.getLocale(),
+        secureUserDetails.getTimezone());
   }
 
 }

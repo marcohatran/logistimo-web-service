@@ -217,8 +217,8 @@ public class ConfigurationModelBuilderTest {
     assertTrue(!returnsConfigs.isEmpty());
     assertTrue(returnsConfigs.size() == 1);
     assertEquals(getEntityTags(), returnsConfigs.get(0).getEntityTags());
-    assertEquals(10, returnsConfigs.get(0).getIncomingReturnDuration());
-    assertEquals(1, returnsConfigs.get(0).getOutgoingReturnDuration());
+    assertEquals(10, returnsConfigs.get(0).getIncomingDuration());
+    assertEquals(1, returnsConfigs.get(0).getOutgoingDuration());
 
     returnsConfigs = configModelBuilder.buildReturnsConfigs(null);
     assertNotNull(returnsConfigs);
@@ -230,12 +230,12 @@ public class ConfigurationModelBuilderTest {
     ReturnsConfigModel returnsConfigModel = getReturnsConfigModel();
     ReturnsConfig returnsConfig = configModelBuilder.buildReturnsConfig(returnsConfigModel);
     assertNotNull(returnsConfig);
-    assertEquals(10, returnsConfig.getIncomingReturnDuration());
-    assertEquals(1, returnsConfig.getOutgoingReturnDuration());
+    assertEquals(10, returnsConfig.getIncomingDuration());
+    assertEquals(1, returnsConfig.getOutgoingDuration());
     returnsConfig = configModelBuilder.buildReturnsConfig(null);
     assertNotNull(returnsConfig);
-    assertEquals(ReturnsConfig.DEFAULT_RETURN_INCOMING_DURATION, returnsConfig.getIncomingReturnDuration());
-    assertEquals(ReturnsConfig.DEFAULT_RETURN_OUTGOING_DURATION, returnsConfig.getOutgoingReturnDuration());
+    assertEquals(ReturnsConfig.DEFAULT_INCOMING_DURATION, returnsConfig.getIncomingDuration());
+    assertEquals(ReturnsConfig.DEFAULT_OUTGOING_DURATION, returnsConfig.getOutgoingDuration());
   }
 
   @Test
@@ -243,9 +243,9 @@ public class ConfigurationModelBuilderTest {
     List<ReturnsConfigModel> returnsConfigModels = configModelBuilder.buildReturnsConfigModels(
         getReturnsConfigs());
     assertNotNull(returnsConfigModels);
-    assertEquals(getEntityTags(), returnsConfigModels.get(0).etags);
-    assertEquals(60, returnsConfigModels.get(0).incretdur);
-    assertEquals(10, returnsConfigModels.get(0).outretdur);
+    assertEquals(getEntityTags(), returnsConfigModels.get(0).eTags);
+    assertEquals(60, returnsConfigModels.get(0).incDur);
+    assertEquals(10, returnsConfigModels.get(0).outDur);
 
     returnsConfigModels = configModelBuilder.buildReturnsConfigModels(Collections.emptyList());
     assertNotNull(returnsConfigModels);
@@ -262,21 +262,21 @@ public class ConfigurationModelBuilderTest {
     ReturnsConfigModel
         returnsConfigModel = configModelBuilder.buildReturnsConfigModel(returnsConfig);
     assertNotNull(returnsConfigModel);
-    assertEquals(getEntityTags(), returnsConfigModel.etags);
-    assertEquals(60, returnsConfigModel.incretdur);
-    assertEquals(10, returnsConfigModel.outretdur);
+    assertEquals(getEntityTags(), returnsConfigModel.eTags);
+    assertEquals(60, returnsConfigModel.incDur);
+    assertEquals(10, returnsConfigModel.outDur);
     returnsConfigModel = configModelBuilder.buildReturnsConfigModel(new ReturnsConfig());
     assertNotNull(returnsConfigModel);
-    assertNotNull(returnsConfigModel.etags);
-    assertTrue(returnsConfigModel.etags.isEmpty());
-    assertEquals(ReturnsConfig.DEFAULT_RETURN_INCOMING_DURATION, returnsConfigModel.incretdur);
-    assertEquals(ReturnsConfig.DEFAULT_RETURN_OUTGOING_DURATION, returnsConfigModel.outretdur);
+    assertNotNull(returnsConfigModel.eTags);
+    assertTrue(returnsConfigModel.eTags.isEmpty());
+    assertEquals(ReturnsConfig.DEFAULT_INCOMING_DURATION, returnsConfigModel.incDur);
+    assertEquals(ReturnsConfig.DEFAULT_OUTGOING_DURATION, returnsConfigModel.outDur);
     returnsConfigModel = configModelBuilder.buildReturnsConfigModel(null);
     assertNotNull(returnsConfigModel);
-    assertNotNull(returnsConfigModel.etags);
-    assertTrue(returnsConfigModel.etags.isEmpty());
-    assertEquals(ReturnsConfig.DEFAULT_RETURN_INCOMING_DURATION, returnsConfigModel.incretdur);
-    assertEquals(ReturnsConfig.DEFAULT_RETURN_OUTGOING_DURATION, returnsConfigModel.outretdur);
+    assertNotNull(returnsConfigModel.eTags);
+    assertTrue(returnsConfigModel.eTags.isEmpty());
+    assertEquals(ReturnsConfig.DEFAULT_INCOMING_DURATION, returnsConfigModel.incDur);
+    assertEquals(ReturnsConfig.DEFAULT_OUTGOING_DURATION, returnsConfigModel.outDur);
   }
 
   @Test
@@ -340,9 +340,9 @@ public class ConfigurationModelBuilderTest {
 
   private ReturnsConfigModel getReturnsConfigModel() {
     ReturnsConfigModel returnsConfigModel = new ReturnsConfigModel();
-    returnsConfigModel.etags = Arrays.asList("CCP","DVS");
-    returnsConfigModel.incretdur = 10;
-    returnsConfigModel.outretdur = 1;
+    returnsConfigModel.eTags = Arrays.asList("CCP","DVS");
+    returnsConfigModel.incDur = 10;
+    returnsConfigModel.outDur = 1;
     return returnsConfigModel;
   }
 
@@ -355,8 +355,8 @@ public class ConfigurationModelBuilderTest {
   private ReturnsConfig getReturnsConfig() {
     ReturnsConfig returnsConfig = new ReturnsConfig();
     returnsConfig.setEntityTags(getEntityTags());
-    returnsConfig.setIncomingReturnDuration(60);
-    returnsConfig.setOutgoingReturnDuration(10);
+    returnsConfig.setIncomingDuration(60);
+    returnsConfig.setOutgoingDuration(10);
     return returnsConfig;
   }
 
