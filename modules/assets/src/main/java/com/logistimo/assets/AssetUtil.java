@@ -44,6 +44,7 @@ import com.logistimo.config.models.AssetSystemConfig;
 import com.logistimo.config.models.ConfigurationException;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.EventSpec;
+import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.JDOUtils;
@@ -526,6 +527,17 @@ public class AssetUtil {
     assetModel.mdl = asset.getModel();
     assetModel.kId = asset.getKioskId();
     return assetModel;
+  }
+
+  public static void updateDeviceWorkingStatus(AssetModels.AssetStatus assetStatusModel,
+                                               IAsset asset)
+      throws ServiceException {
+    String
+        path =
+        "v3/devices/status".concat(CharacterConstants.F_SLASH).concat(asset.getVendorId()).concat(
+            CharacterConstants.F_SLASH).concat(
+            asset.getSerialId());
+    post(path, gson.toJson(assetStatusModel));
   }
 
   public static void registerOrUpdateDevice(AssetModel assetModel, Long domainId)
