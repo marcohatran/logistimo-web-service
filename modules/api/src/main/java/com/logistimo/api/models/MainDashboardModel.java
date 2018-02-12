@@ -23,13 +23,15 @@
 
 package com.logistimo.api.models;
 
+import com.logistimo.models.BaseResponseModel;
+
 import java.io.Serializable;
 import java.util.Map;
 
 /**
  * @author Mohan Raja
  */
-public class MainDashboardModel implements Serializable {
+public class MainDashboardModel extends BaseResponseModel implements Serializable {
   public Map<String, Long> invDomain;
   public Map<String, Long> entDomain;
   public Map<String, Long> tempDomain;
