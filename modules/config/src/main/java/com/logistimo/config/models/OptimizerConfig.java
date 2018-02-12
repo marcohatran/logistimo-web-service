@@ -75,7 +75,7 @@ public class OptimizerConfig implements Serializable {
   private static final String EXCLUDE_TR_ORD = "etord";
   private static final String EXCLUDE_DISCARDS = "edis";
   private static final String EXCLUDE_REASONS = "ersns";
-  private static final String EXCLUDE_RETURN_INCOMING_REASONS = "erirsns";
+  private static final String EXCLUDE_RETURN_INCOMING_REASONS = "exclude_returns_incoming_reasons";
 
   private static final String LEAD_TIME_AVERAGE_CONFIG = "ltac";
   // economic order quantity; also compute consumption and demand forecast
@@ -92,7 +92,7 @@ public class OptimizerConfig implements Serializable {
   private boolean dooq = false; // Display optimal order quantity
   private boolean edis = true; // Exclude discards
   private String ersns = null; // Exclude reasons
-  private String erirsns = null; // Exclude return incoming reasons
+  private String excludeRetIncReasons = null; // Exclude return incoming reasons
 
   private LeadTimeAvgConfig leadTimeAvgCfg = new LeadTimeAvgConfig(); // Configuration for computing lead time average.
 
@@ -118,7 +118,7 @@ public class OptimizerConfig implements Serializable {
       this.computeFrequency = json.optString(COMPUTE_FREQ, Constants.FREQ_DAILY);
       this.edis = json.optBoolean(EXCLUDE_DISCARDS, this.edis);
       this.ersns = json.optString(EXCLUDE_REASONS, this.ersns);
-      this.erirsns = json.optString(EXCLUDE_RETURN_INCOMING_REASONS, this.erirsns);
+      this.excludeRetIncReasons = json.optString(EXCLUDE_RETURN_INCOMING_REASONS, this.excludeRetIncReasons);
 
       try {
         this.leadTimeAvgCfg = new LeadTimeAvgConfig(json.getJSONObject(LEAD_TIME_AVERAGE_CONFIG));
@@ -259,12 +259,12 @@ public class OptimizerConfig implements Serializable {
     return this.leadTimeAvgCfg;
   }
 
-  public void setExcludeReturnIncomingReasons(String erirsns) {
-    this.erirsns = erirsns;
+  public void setExcludeReturnIncomingReasons(String excludeRetIncReasons) {
+    this.excludeRetIncReasons = excludeRetIncReasons;
   }
 
   public String getExcludeReturnIncomingReasons() {
-    return erirsns;
+    return excludeRetIncReasons;
   }
 
   public JSONObject toJSONObject() throws ConfigurationException {
@@ -286,7 +286,7 @@ public class OptimizerConfig implements Serializable {
       json.put(COMPUTE_FREQ, computeFrequency);
       json.put(EXCLUDE_DISCARDS, edis);
       json.put(EXCLUDE_REASONS, ersns);
-      json.put(EXCLUDE_RETURN_INCOMING_REASONS, erirsns);
+      json.put(EXCLUDE_RETURN_INCOMING_REASONS, excludeRetIncReasons);
 
       json.put(LEAD_TIME_AVERAGE_CONFIG, leadTimeAvgCfg.toJSONObject());
     } catch (JSONException e) {

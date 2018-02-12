@@ -36,11 +36,11 @@ public class ReturnsConfig implements Serializable {
   private static final long serialVersionUID = 1L;
   public static final int DEFAULT_RETURN_INCOMING_DURATION = 30;
   public static final int DEFAULT_RETURN_OUTGOING_DURATION = 30;
-  @SerializedName(value = "entity-tags")
+  @SerializedName(value = "entity_tags")
   private List<String> entityTags = new ArrayList<>(1);
-  @SerializedName(value = "inc-ret-duration")
+  @SerializedName(value = "inc_ret_duration")
   private int incReturnDuration = DEFAULT_RETURN_INCOMING_DURATION;
-  @SerializedName(value = "out-ret-duration")
+  @SerializedName(value = "out_ret_duration")
   private int outReturnDuration = DEFAULT_RETURN_OUTGOING_DURATION;
 
   public List<String> getEntityTags() { return entityTags; }
