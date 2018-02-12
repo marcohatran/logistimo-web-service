@@ -91,9 +91,9 @@ public class InventoryManagementServiceImplTest {
         InventoryManagementServiceImpl.class
             .getDeclaredMethod("setInventoryFields", IInvntry.class, IInvntry.class, String.class);
     method.setAccessible(true);
-    method.invoke(ims, inventory, invntry, "smriti");
+    method.invoke(ims, inventory, invntry, "testuser");
 
-    assertEquals(inventory.getTax(), new BigDecimal(30));
+    assertEquals(new BigDecimal(30), inventory.getTax());
     assertNotNull(inventory.getUpdatedOn());
     assertNull(inventory.getTimestamp());
   }
@@ -111,12 +111,10 @@ public class InventoryManagementServiceImplTest {
         InventoryManagementServiceImpl.class
             .getDeclaredMethod("setInventoryFields", IInvntry.class, IInvntry.class, String.class);
     method.setAccessible(true);
-    method.invoke(ims, inventory, invntry, "smriti");
+    method.invoke(ims, inventory, invntry, "testuser");
 
-    assertEquals(inventory.getConsumptionRateManual(), new BigDecimal(20));
+    assertEquals(new BigDecimal(20), inventory.getConsumptionRateManual());
     assertNotNull(inventory.getMnlConsumptionRateUpdatedTime());
-    assertTrue("Updated on should be equal to manual consumption rate updated timestamp",
-        inventory.getUpdatedOn().equals(inventory.getMnlConsumptionRateUpdatedTime()));
     assertNull(inventory.getTimestamp());
   }
 
@@ -133,12 +131,10 @@ public class InventoryManagementServiceImplTest {
         InventoryManagementServiceImpl.class
             .getDeclaredMethod("setInventoryFields", IInvntry.class, IInvntry.class, String.class);
     method.setAccessible(true);
-    method.invoke(ims, inventory, invntry, "smriti");
+    method.invoke(ims, inventory, invntry, "testuser");
 
-    assertEquals(inventory.getRetailerPrice(), new BigDecimal(100));
+    assertEquals(new BigDecimal(100), inventory.getRetailerPrice());
     assertNotNull(inventory.getRetailerPriceUpdatedTime());
-    assertTrue("Updated on should be equal to retailer price updated timestamp",
-        inventory.getUpdatedOn().equals(inventory.getRetailerPriceUpdatedTime()));
     assertNull(inventory.getTimestamp());
   }
 
@@ -155,14 +151,12 @@ public class InventoryManagementServiceImplTest {
         InventoryManagementServiceImpl.class
             .getDeclaredMethod("setInventoryFields", IInvntry.class, IInvntry.class, String.class);
     method.setAccessible(true);
-    method.invoke(ims, inventory, invntry, "smriti");
+    method.invoke(ims, inventory, invntry, "testuser");
 
-    assertEquals(invntry.getReorderLevel(), BigDecimal.ONE);
-    assertEquals(invntry.getMaxStock(), BigDecimal.TEN);
-    assertNotNull(invntry.getReorderLevelUpdatedTime());
-    assertNotNull(invntry.getMaxUpdatedTime());
-    assertTrue("Updated on should be equal to max updated time",
-        inventory.getUpdatedOn().equals(inventory.getMaxUpdatedTime()));
+    assertEquals(BigDecimal.ONE, inventory.getReorderLevel());
+    assertEquals(BigDecimal.TEN, inventory.getMaxStock());
+    assertNotNull(inventory.getReorderLevelUpdatedTime());
+    assertNotNull(inventory.getMaxUpdatedTime());
     assertNull(inventory.getTimestamp());
   }
 
@@ -180,12 +174,9 @@ public class InventoryManagementServiceImplTest {
         InventoryManagementServiceImpl.class
             .getDeclaredMethod("setInventoryFields", IInvntry.class, IInvntry.class, String.class);
     method.setAccessible(true);
-    method.invoke(ims, inventory, invntry, "smriti");
+    method.invoke(ims, inventory, invntry, "testuser");
     assertEquals(psTimeStamp, inventory.getPSTimestamp());
-    assertTrue("Updated on should be equal to PSTimeStamp",
-        inventory.getPSTimestamp().equals(inventory.getUpdatedOn()));
-    assertTrue("Last stock updated timestamp should be equal to PSTimeStamp",
-        inventory.getPSTimestamp().equals(inventory.getUpdatedOn()));
+    assertNull(inventory.getTimestamp());
   }
 
   @Test
@@ -202,12 +193,9 @@ public class InventoryManagementServiceImplTest {
         InventoryManagementServiceImpl.class
             .getDeclaredMethod("setInventoryFields", IInvntry.class, IInvntry.class, String.class);
     method.setAccessible(true);
-    method.invoke(ims, inventory, invntry, "smriti");
+    method.invoke(ims, inventory, invntry, "testuser");
     assertEquals(dqTimeStamp, inventory.getDQTimestamp());
-    assertTrue("Updated on should be equal to PSTimeStamp",
-        inventory.getDQTimestamp().equals(inventory.getUpdatedOn()));
-    assertTrue("Last stock updated timestamp should be equal to PSTimeStamp",
-        inventory.getDQTimestamp().equals(inventory.getUpdatedOn()));
+    assertNull(inventory.getTimestamp());
   }
 
   @Test
@@ -237,11 +225,10 @@ public class InventoryManagementServiceImplTest {
     method.setAccessible(true);
     method.invoke(ims, invntry, null, transaction, timestamp, null);
 
-    assertEquals(transaction.getOpeningStock(), new BigDecimal(30));
-    assertEquals(invntry.getStock(), new BigDecimal(20));
-    assertEquals(invntry.getAvailableStock(), BigDecimal.TEN);
-    assertEquals(invntry.getTimestamp(), timestamp);
-    assertEquals(invntry.getUpdatedOn(), timestamp);
+    assertEquals( new BigDecimal(30), transaction.getOpeningStock());
+    assertEquals(new BigDecimal(20), invntry.getStock());
+    assertEquals(BigDecimal.TEN, invntry.getAvailableStock());
+    assertEquals(timestamp, invntry.getTimestamp());
   }
 
   @Test
@@ -252,8 +239,8 @@ public class InventoryManagementServiceImplTest {
     inv.setStock(BigDecimal.TEN);
     inv.setAllocatedStock(BigDecimal.ZERO);
     ims.incrementInventoryAvailableQuantity(1l, 2l, null, new BigDecimal(-10), pm, inv, null, true);
-    assertEquals(inv.getAvailableStock(), BigDecimal.ZERO);
-    assertEquals(inv.getAllocatedStock(), BigDecimal.TEN);
+    assertEquals(BigDecimal.ZERO, inv.getAvailableStock());
+    assertEquals(BigDecimal.TEN, inv.getAllocatedStock());
   }
 
   private IInvntry getInvntry(Long kId, Long mId, Long sdId, BigDecimal price, BigDecimal tax,
