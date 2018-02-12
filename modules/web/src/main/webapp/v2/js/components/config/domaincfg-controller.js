@@ -1089,14 +1089,14 @@ domainCfgControllers.controller('InventoryConfigurationController', ['$scope', '
             if(checkNotNullEmpty($scope.inv.rcm) && $scope.inv.rcm.length > 0) {
                 $scope.inv.rcm.some(function(data) {
                     if(checkNotNullEmpty(data.enTgs)) {
-                        data.etags = [];
+                        data.eTags = [];
                         for(var i=0; i<data.enTgs.length; i++) {
-                            data.etags.push(data.enTgs[i].text);
+                            data.eTags.push(data.enTgs[i].text);
                         }
-                    } else if(checkNotNullEmpty(data.etags)) {
+                    } else if(checkNotNullEmpty(data.eTags)) {
                         data.enTgs = [];
-                        for(var i=0 ; i<data.etags.length; i++) {
-                            data.enTgs.push({"id" : data.etags[i], "text" : data.etags[i]});
+                        for(var i=0 ; i<data.eTags.length; i++) {
+                            data.enTgs.push({"id" : data.eTags[i], "text" : data.eTags[i]});
                         }
                     }
                 });
@@ -1273,7 +1273,7 @@ domainCfgControllers.controller('InventoryConfigurationController', ['$scope', '
 
         function isReturnsConfigurationValid() {
             return !($scope.inv.rcm.some(function(data){
-                    if(checkNullEmpty(data.enTgs) || checkNullEmpty(data.incretdur) || checkNullEmpty(data.outretdur)) {
+                    if(checkNullEmpty(data.enTgs) || checkNullEmpty(data.incDur) || checkNullEmpty(data.outDur)) {
                         $scope.showWarning($scope.resourceBundle['config.returns.policy.configure']);
                         return true;
                     }
@@ -1583,7 +1583,7 @@ domainCfgControllers.controller('InventoryConfigurationController', ['$scope', '
             if(checkNullEmpty($scope.inv.rcm)) {
                 $scope.inv.rcm = [];
             }
-            $scope.inv.rcm.push({enTgs : [], incretdur: 30, outretdur: 30});
+            $scope.inv.rcm.push({enTgs : [], incDur: 30, outDur: 30});
         };
 
         $scope.populatePreSelected = function() {

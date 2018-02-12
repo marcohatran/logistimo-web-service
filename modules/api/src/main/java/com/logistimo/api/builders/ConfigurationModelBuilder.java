@@ -1563,9 +1563,9 @@ public class ConfigurationModelBuilder {
     if (returnsConfigModel == null) {
       return returnsConfig;
     }
-    returnsConfig.setEntityTags(returnsConfigModel.etags);
-    returnsConfig.setIncomingReturnDuration(returnsConfigModel.incretdur);
-    returnsConfig.setOutgoingReturnDuration(returnsConfigModel.outretdur);
+    returnsConfig.setEntityTags(returnsConfigModel.eTags);
+    returnsConfig.setIncomingDuration(returnsConfigModel.incDur);
+    returnsConfig.setOutgoingDuration(returnsConfigModel.outDur);
     return returnsConfig;
   }
 
@@ -1583,9 +1583,9 @@ public class ConfigurationModelBuilder {
     if (returnsConfig == null) {
       return returnsConfigModel;
     }
-    returnsConfigModel.etags = returnsConfig.getEntityTags();
-    returnsConfigModel.incretdur = returnsConfig.getIncomingReturnDuration();
-    returnsConfigModel.outretdur = returnsConfig.getOutgoingReturnDuration();
+    returnsConfigModel.eTags = returnsConfig.getEntityTags();
+    returnsConfigModel.incDur = returnsConfig.getIncomingDuration();
+    returnsConfigModel.outDur = returnsConfig.getOutgoingDuration();
     return returnsConfigModel;
   }
 }
