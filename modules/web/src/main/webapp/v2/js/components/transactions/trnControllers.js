@@ -167,8 +167,8 @@ trnControllers.controller('TransactionsCtrl', ['$scope', 'trnService', 'domainCf
             }
 
             exportService.exportData({
-                from_date: checkNotNullEmpty($scope.from)?formatDate2Url($scope.from):undefined,
-                end_date: checkNotNullEmpty($scope.to)?formatDate2Url($scope.to):undefined,
+                from_date: formatDate2Url($scope.from) || undefined,
+                end_date: formatDate2Url($scope.to) || undefined,
                 entity_id: eid,
                 material_id: mid,
                 ktag: ktag,
