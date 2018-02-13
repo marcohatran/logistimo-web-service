@@ -27,7 +27,6 @@
 package com.logistimo.api.util;
 
 
-
 import com.logistimo.AppFactory;
 import com.logistimo.accounting.entity.IAccount;
 import com.logistimo.accounting.service.IAccountingService;
@@ -35,6 +34,7 @@ import com.logistimo.accounting.service.impl.AccountingServiceImpl;
 import com.logistimo.api.auth.AuthenticationUtil;
 import com.logistimo.api.servlets.mobile.builders.MobileConfigBuilder;
 import com.logistimo.api.servlets.mobile.builders.MobileEntityBuilder;
+import com.logistimo.api.servlets.mobile.builders.MobileReturnsConfigModel;
 import com.logistimo.api.servlets.mobile.models.ParsedRequest;
 import com.logistimo.auth.SecurityConstants;
 import com.logistimo.auth.SecurityMgr;
@@ -53,6 +53,7 @@ import com.logistimo.config.models.InventoryConfig;
 import com.logistimo.config.models.MatStatusConfig;
 import com.logistimo.config.models.OptimizerConfig;
 import com.logistimo.config.models.OrdersConfig;
+import com.logistimo.config.models.ReturnsConfig;
 import com.logistimo.config.models.SMSConfig;
 import com.logistimo.config.models.SupportConfig;
 import com.logistimo.config.models.SyncConfig;
@@ -1719,6 +1720,16 @@ public class RESTUtil {
       String[] kioskTags = TagUtil.getTagsArray(dc.getKioskTags());
       if (kioskTags != null) {
         config.put(JsonTagsZ.ENTITY_TAG, Arrays.asList(kioskTags));
+      }
+      // Returns policy configuration
+      List<ReturnsConfig> returnsConfigList = dc.getInventoryConfig().getReturnsConfig();
+      if (CollectionUtils.isNotEmpty(returnsConfigList)) {
+        List<MobileReturnsConfigModel>
+            mobileReturnsConfigModels =
+            mobileConfigBuilder.buildMobileReturnsConfigModels(returnsConfigList);
+        if (CollectionUtils.isNotEmpty(mobileReturnsConfigModels)) {
+          config.put(JsonTagsZ.RETURNS, mobileReturnsConfigModels);
+        }
       }
     } catch (Exception e) {
       xLogger.warn("Error in getting system configuration: {0}", e);

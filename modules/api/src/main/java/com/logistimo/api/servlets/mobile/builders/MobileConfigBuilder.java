@@ -25,15 +25,20 @@ package com.logistimo.api.servlets.mobile.builders;
 
 import com.logistimo.config.models.AccountingConfig;
 import com.logistimo.config.models.ApprovalsConfig;
+import com.logistimo.config.models.ReturnsConfig;
 import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.proto.MobileAccountingConfigModel;
 import com.logistimo.proto.MobileApprovalsConfigModel;
 import com.logistimo.proto.MobileApproversModel;
 import com.logistimo.proto.MobilePurchaseSalesOrdersApprovalModel;
 
+import org.apache.commons.collections.CollectionUtils;
+
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Created by vani on 28/06/17.
@@ -152,5 +157,25 @@ public class MobileConfigBuilder {
               .buildMobileUserModels(mobileUserBuilder.constructUserAccount(secApprovers));
     }
     return approversModel;
+  }
+
+  public List<MobileReturnsConfigModel> buildMobileReturnsConfigModels(List<ReturnsConfig> returnsConfigList) {
+    if (CollectionUtils.isEmpty(returnsConfigList)) {
+      return Collections.emptyList();
+    }
+    return returnsConfigList.stream()
+        .map(this::buildReturnsConfigModel)
+        .collect(Collectors.toList());
+  }
+
+  public MobileReturnsConfigModel buildReturnsConfigModel(ReturnsConfig returnsConfig) {
+    MobileReturnsConfigModel mobileReturnsConfigModel = new MobileReturnsConfigModel();
+    if (returnsConfig == null) {
+      return mobileReturnsConfigModel;
+    }
+    mobileReturnsConfigModel.setEntityTags(returnsConfig.getEntityTags());
+    mobileReturnsConfigModel.setIncomingDuration(returnsConfig.getIncomingDuration());
+    mobileReturnsConfigModel.setOutgoingDuration(returnsConfig.getOutgoingDuration());
+    return mobileReturnsConfigModel;
   }
 }

@@ -323,4 +323,7 @@ public class JsonTagsZ {
   public static final String SALES_ORDERS = "salesords";
   public static final String SHIPPING = "shipping";
   public static final String REFERENCE_ID = "refid";
+
+  // Returns policy configuration
+  public static final String RETURNS = "returns";
 }
