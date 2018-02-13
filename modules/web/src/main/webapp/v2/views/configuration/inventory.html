@@ -55,6 +55,8 @@
                                     <li ng-class="{active : transType.s}"><a href="" ng-click="tabContent('s')">{{resourceBundle['transactions.stockcount.lower']}}</a></li>
                                     <li ng-class="{active : transType.d}"><a href="" ng-click="tabContent('d')">{{resourceBundle['transactions.wastage.upper']}}</a></li>
                                     <li ng-class="{active : transType.t}"><a href="" ng-click="tabContent('t')">{{resourceBundle['transactions.transfer.upper']}}</a></li>
+                                    <li ng-class="{active : transType.ri}"><a href="" ng-click="tabContent('ri')">{{resourceBundle['transactions.returns.incoming.upper']}}</a></li>
+                                    <li ng-class="{active : transType.ro}"><a href="" ng-click="tabContent('ro')">{{resourceBundle['transactions.returns.outgoing.upper']}}</a></li>
                                 </ul>
                             </div>
                             <div class="col-sm-10">
@@ -377,6 +379,130 @@
                                                     </div>
                                                 </div>
                                             </div>
+                                            <div ng-show="transType.ri" style="border:none;">
+                                                <div class="row"> <!--Reasons for Returns-incoming -->
+                                                    <div class="col-sm-11 mt10">
+                                                        <div class="form-group">
+                                                            <label  class="col-sm-3 control-label">{{resourceBundle['config.reasons.returns.incoming']}}</label>
+                                                            <div class="col-sm-8">
+                                                                <input type="text" class="form-control" id="cnfRetInc" ng-model="inv.rri"
+                                                                       autocomplete="off" maxlength="500">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row " ng-show="MatTags.length>0">
+                                                    <div class="col-sm-11">
+                                                        <div class="form-group">
+                                                            <label class="col-sm-3 control-label">{{resourceBundle['inventory.config.by.material.tags']}}</label>
+                                                            <div class="col-sm-8 cbx">
+                                                                <input type="checkbox" ng-model="inv.crimt"> {{resourceBundle['inventory.config.specify.tags.reasons']}}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div ng-show="inv.crimt" class="row">
+                                                    <div class="col-sm-10 ml32">
+                                                        <table class="table table-bordered table-condensed table-hover table-logistimo">
+                                                            <tbody>
+                                                            <tr><th class="col-sm-1 text-center">{{resourceBundle['serialnum']}}</th>
+                                                                <th class="col-sm-3 text-center">{{resourceBundle['config.tagsinfotitle']}}</th>
+                                                                <th class="col-sm-4 text-center">{{resourceBundle['reason']}}</th>
+                                                                <th class="col-sm-0-2 text-center"></th>
+                                                            </tr>
+                                                            </tbody>
+                                                            <tbody ng-repeat="ritag in inv.rimt" data-ng-switch on="exRow[$index]">
+                                                            <tr ng-class="{'alert alert-info' : exRow[$index]}">
+                                                                <td><p class="text-center temp">{{$index + 1}}</p></td>
+                                                                <td>
+                                                                    <input ng-hide="inv.rimt.length>$index+1" ng-model="ritag.mtg" type="text"
+                                                                           autocomplete="off"
+                                                                           typeahead-on-select="setRIMtg($item)"
+                                                                           class="form-control" id="rimtg"
+                                                                           placeholder="Enter the material tag"
+                                                                           typeahead-editable="false"
+                                                                           uib-typeahead="item for item in riMatTags| filter:$viewValue |limitTo:8"
+                                                                           class="form-control"  typeahead-min-length=1 maxlength="50"
+                                                                           typeahead-append-to-body="true" />
+                                                                    <p ng-show="inv.rimt.length>$index+1" class="temp">{{ritag.mtg}}</p>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="text" class="form-control" id="rimtrsn" ng-model="ritag.rsn"
+                                                                           autocomplete="off" maxlength="500">
+                                                                </td>
+                                                                <td class="text-center">
+                                                                    <a ng-show="(ritag.length -1 !== $index)" href="" ng-click="deleteRow($index,'retInc')">
+                                                                        <span class="glyphicons glyphicons-bin temp"></span>
+                                                                    </a>
+                                                                </td>
+                                                            </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div ng-show="transType.ro" style="border:none;">
+                                                <div class="row"> <!--Reasons for Returns-outgoing -->
+                                                    <div class="col-sm-11 mt10">
+                                                        <div class="form-group">
+                                                            <label  class="col-sm-3 control-label">{{resourceBundle['config.reasons.returns.outgoing']}}</label>
+                                                            <div class="col-sm-8">
+                                                                <input type="text" class="form-control" id="cnfRetOut" ng-model="inv.rro"
+                                                                       autocomplete="off" maxlength="500">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row " ng-show="MatTags.length>0">
+                                                    <div class="col-sm-11">
+                                                        <div class="form-group">
+                                                            <label class="col-sm-3 control-label">{{resourceBundle['inventory.config.by.material.tags']}}</label>
+                                                            <div class="col-sm-8 cbx">
+                                                                <input type="checkbox" ng-model="inv.cromt"> {{resourceBundle['inventory.config.specify.tags.reasons']}}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div ng-show="inv.cromt" class="row">
+                                                    <div class="col-sm-10 ml32">
+                                                        <table class="table table-bordered table-condensed table-hover table-logistimo">
+                                                            <tbody>
+                                                            <tr><th class="col-sm-1 text-center">{{resourceBundle['serialnum']}}</th>
+                                                                <th class="col-sm-3 text-center">{{resourceBundle['config.tagsinfotitle']}}</th>
+                                                                <th class="col-sm-4 text-center">{{resourceBundle['reason']}}</th>
+                                                                <th class="col-sm-0-2 text-center"></th>
+                                                            </tr>
+                                                            </tbody>
+                                                            <tbody ng-repeat="rotag in inv.romt" data-ng-switch on="exRow[$index]">
+                                                            <tr ng-class="{'alert alert-info' : exRow[$index]}">
+                                                                <td><p class="text-center temp">{{$index + 1}}</p></td>
+                                                                <td>
+                                                                    <input ng-hide="inv.romt.length>$index+1" ng-model="rotag.mtg" type="text"
+                                                                           autocomplete="off"
+                                                                           typeahead-on-select="setROMtg($item)"
+                                                                           class="form-control" id="romtg"
+                                                                           placeholder="Enter the material tag"
+                                                                           typeahead-editable="false"
+                                                                           uib-typeahead="item for item in roMatTags| filter:$viewValue |limitTo:8"
+                                                                           class="form-control"  typeahead-min-length=1 maxlength="50"
+                                                                           typeahead-append-to-body="true" />
+                                                                    <p ng-show="inv.romt.length>$index+1" class="temp">{{rotag.mtg}}</p>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="text" class="form-control" id="romtrsn" ng-model="rotag.rsn"
+                                                                           autocomplete="off" maxlength="500">
+                                                                </td>
+                                                                <td class="text-center">
+                                                                    <a ng-show="(rotag.length -1 !== $index)" href="" ng-click="deleteRow($index,'retOut')">
+                                                                        <span class="glyphicons glyphicons-bin temp"></span>
+                                                                    </a>
+                                                                </td>
+                                                            </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -404,6 +530,8 @@
                                     <li ng-class="{active : matStatus.s}"><a href="" ng-click="StatusContent('s')">{{resourceBundle['transactions.stockcount.lower']}}</a></li>
                                     <li ng-class="{active : matStatus.d}"><a href="" ng-click="StatusContent('d')">{{resourceBundle['transactions.wastage.upper']}}</a></li>
                                     <li ng-class="{active : matStatus.t}"><a href="" ng-click="StatusContent('t')">{{resourceBundle['transactions.transfer.upper']}}</a></li>
+                                    <li ng-class="{active : matStatus.ri}"><a href="" ng-click="StatusContent('ri')">{{resourceBundle['transactions.returns.incoming.upper']}}</a></li>
+                                    <li ng-class="{active : matStatus.ro}"><a href="" ng-click="StatusContent('ro')">{{resourceBundle['transactions.returns.outgoing.upper']}}</a></li>
                                 </ul>
                             </div>
                             <div class="col-sm-10">
@@ -586,12 +714,155 @@
                                                     </div>
                                                 </div>
                                             </div>
+                                            <div ng-show="matStatus.ri" style="border:none;">
+                                                <div class="row"> <!--Status for Returns-incoming-->
+                                                    <div class="col-sm-11 mt10">
+                                                        <div class="form-group">
+                                                            <label  class="col-sm-3 control-label">{{resourceBundle['config.returns.incoming.status']}}</label>
+                                                            <div class="col-sm-8">
+                                                                <input type="text" class="form-control" id="rnfri" ng-model="inv.ridf"
+                                                                       autocomplete="off" maxlength="500" ng-change="validateStatus(inv.ridf,inv.riestm,'ri')">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row"> <!--Status for Returns-incoming for temperature sensitive material-->
+                                                    <div class="col-sm-11 mt10">
+                                                        <div class="form-group">
+                                                            <label  class="col-sm-3 control-label">{{resourceBundle['config.issue.etst.status']}}</label>
+                                                            <div class="col-sm-8">
+                                                                <input type="text" class="form-control" id="tsmri" ng-model="inv.riestm"
+                                                                       autocomplete="off" maxlength="500" ng-change="validateStatus(inv.ridf,inv.riestm,'ri')">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row"> <!--Status for Returns-incoming is mandatory or not-->
+                                                    <div class="col-sm-11">
+                                                        <div class="form-group">
+                                                            <div class="col-sm-3"></div>
+                                                            <div class="col-sm-8">
+                                                                <input type="checkbox" ng-disabled="isUndef(inv.ridf) && isUndef(inv.riestm)" ng-model="inv.rism"> {{resourceBundle['markmandatory']}}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div ng-show="matStatus.ro" style="border:none;">
+                                                <div class="row"> <!--Status for Returns-outgoing-->
+                                                    <div class="col-sm-11 mt10">
+                                                        <div class="form-group">
+                                                            <label  class="col-sm-3 control-label">{{resourceBundle['config.returns.outgoing.status']}}</label>
+                                                            <div class="col-sm-8">
+                                                                <input type="text" class="form-control" id="rnfro" ng-model="inv.rodf"
+                                                                       autocomplete="off" maxlength="500" ng-change="validateStatus(inv.rodf,inv.roestm,'ro')">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row"> <!--Status for Returns-outgoing for temperature sensitive material-->
+                                                    <div class="col-sm-11 mt10">
+                                                        <div class="form-group">
+                                                            <label  class="col-sm-3 control-label">{{resourceBundle['config.issue.etst.status']}}</label>
+                                                            <div class="col-sm-8">
+                                                                <input type="text" class="form-control" id="tsmro" ng-model="inv.roestm"
+                                                                       autocomplete="off" maxlength="500" ng-change="validateStatus(inv.rodf,inv.roestm,'ro')">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row"> <!--Status for Returns-outgoing is mandatory or not-->
+                                                    <div class="col-sm-11">
+                                                        <div class="form-group">
+                                                            <div class="col-sm-3"></div>
+                                                            <div class="col-sm-8">
+                                                                <input type="checkbox" ng-disabled="isUndef(inv.rodf) && isUndef(inv.roestm)" ng-model="inv.rosm"> {{resourceBundle['markmandatory']}}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
+                </div>
+                <div class="bgr">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="title-heading">
+                                {{resourceBundle['config.returns.policy']}}
+                            </div>
+                            <p class="litetext">
+                                {{resourceBundle['config.returns.policy.overview']}}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="row"> <!-- Return duration-->
+                        <div class="col-sm-11">
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-sm-12 ml32">
+                                        <table class="table table-bordered table-condensed table-hover table-logistimo">
+                                            <tbody>
+                                            <tr><th class="col-sm-1 text-center">{{resourceBundle['serialnum']}}</th>
+                                                <th class="col-sm-3 text-center">{{resourceBundle['kiosk.tags']}}</th>
+                                                <th class="col-sm-4 text-center">Return policy</th>
+                                                <th class="col-sm-0-2 text-center"></th>
+                                            </tr>
+                                            </tbody>
+                                            <tbody ng-repeat="rcm in inv.rcm">
+                                            <tr ng-class="{'alert alert-info' : exRow[$index]}">
+                                                <td><p class="text-center temp">{{$index + 1}}</p></td>
+                                                <td>
+                                                    <domain-tag-select  tags-model="rcm.enTgs" on-select="populatePreSelected()" pre-selected="preSelectedTags" type="'entity'" force-no-udf="'true'"></domain-tag-select>
+                                                </td>
+                                                <td>
+                                                    <div class="row">
+                                                        <div class="col-sm-11">
+                                                            <div class="form-group">
+                                                                <label class="control-label col-sm-5">{{resourceBundle['config.returns.policy.returns.incoming.duration']}}</label>
+                                                                <div class="col-sm-6">
+                                                                    <input type="text" only-digits min-value="1" class="form-control w20 dh30"
+                                                                           maxlength="3" ng-model="rcm.incDur"
+                                                                           placeholder="30"> {{resourceBundle['days']}}
+                                                                </div>
+                                                            </div>
+                                                            <div class="form-group">
+                                                                <label class="control-label col-sm-5">{{resourceBundle['config.returns.policy.returns.outgoing.duration']}}</label>
+                                                                <div class="col-sm-6">
+                                                                    <input type="text" only-digits min-value="1" class="form-control w20 dh30"
+                                                                           maxlength="3" ng-model="rcm.outDur"
+                                                                           placeholder="30"> {{resourceBundle['days']}}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="text-center">
+                                                                    <span>
+                                                                        <span class="glyphicons glyphicons-bin"
+                                                                              uib-tooltip="Delete"
+                                                                              ng-click="deleteRow($index,'returnsconfig')"></span>
+                                                                    </span>
+                                                </td>
+                                            </tr>
+                                            </tbody>
+                                            <tbody>
+                                            <tr>
+                                                <td class="col-sm-1" colspan="100%">
+                                                    <button type="button" ng-click="addRow()" class="btn btn-sm btn-primary"> + </button>
+                                                </td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 </div>
                 <div class="bgr">
                     <div class="row">
@@ -759,6 +1030,19 @@
                                                         <div class="col-sm-12">
                                                             <div class="row col-sm-12 noMargin">
                                                                 <lg-uib-select multiple="multiple" ng-disabled="disabled" query="query(q)" ui-model="inv.ersnsObj" place-holder="Enter the reason codes"> </lg-uib-select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-sm-12">
+                                                            <input type="checkbox" ng-model="inv.rirc"> {{resourceBundle['config.exclude.returns.incoming']}}
+                                                        </div>
+                                                    </div>
+                                                    <div class="row" ng-show="inv.rirc">
+                                                        <div class="col-sm-12">
+                                                            <div class="row col-sm-12 noMargin">
+                                                                <lg-uib-select multiple="multiple" ng-disabled="disabled" query="query(q,'ri')" ui-model="inv.erirsnsObj" place-holder="Enter the reason codes"> </lg-uib-select>
+                                                                <span class="litetext">{{resourceBundle['config.returns.incoming.include.reasons']}}</span>
                                                             </div>
                                                         </div>
                                                     </div>

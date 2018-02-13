@@ -830,7 +830,7 @@ public class EntitiesServiceImpl implements EntitiesService {
     xLogger.fine("Entering getKiosk");
     IKiosk kiosk = null;
     IKiosk cacheKiosk = (IKiosk) getMemcacheService()
-              .get(Constants.KIOSK_KEY + CharacterConstants.HASH + kioskId.toString());
+        .get(Constants.KIOSK_KEY + CharacterConstants.HASH + kioskId.toString());
 
     if (null != cacheKiosk) {
       kiosk = cacheKiosk;

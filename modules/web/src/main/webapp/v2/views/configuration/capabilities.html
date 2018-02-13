@@ -95,22 +95,26 @@
                                             <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[5]" ng-change="setFormUpdated()"> {{resourceBundle['config.transferstock']}}</td>
                                         </tr>
                                         <tr>
-                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[6]" ng-change="setFormUpdated()"> {{resourceBundle['config.ordernewstock']}}</td>
-                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[7]" ng-change="setFormUpdated()"> {{resourceBundle['config.vieworders']}}</td>
-                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[8]" ng-change="setFormUpdated()"> {{resourceBundle['config.entityviewprofile']}}</td>
+                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[6]" ng-change="setFormUpdated()"> {{resourceBundle['config.enter.returns.incoming']}}</td>
+                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[7]" ng-change="setFormUpdated()"> {{resourceBundle['config.enter.returns.outgoing']}}</td>
+                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[8]" ng-change="setFormUpdated()"> {{resourceBundle['config.ordernewstock']}}</td>
                                         </tr>
                                         <tr>
-                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[9]" ng-change="setFormUpdated()"> {{resourceBundle['config.entityeditprofile']}} </td>
-                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[10]" ng-change="setFormUpdated()"> {{resourceBundle['config.printinventory']}}</td>
-                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[11]" ng-change="setFormUpdated()"> {{resourceBundle['config.exportinventory']}}</td>
+                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[9]" ng-change="setFormUpdated()"> {{resourceBundle['config.vieworders']}}</td>
+                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[10]" ng-change="setFormUpdated()"> {{resourceBundle['config.entityviewprofile']}}</td>
+                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[11]" ng-change="setFormUpdated()"> {{resourceBundle['config.entityeditprofile']}} </td>
                                         </tr>
                                         <tr>
-                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[12]"ng-change="setFormUpdated()"> {{resourceBundle['config.transactionhistory']}}</td>
+                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[12]" ng-change="setFormUpdated()"> {{resourceBundle['config.printinventory']}}</td>
+                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[13]" ng-change="setFormUpdated()"> {{resourceBundle['config.exportinventory']}}</td>
+                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[14]"ng-change="setFormUpdated()"> {{resourceBundle['config.transactionhistory']}}</td>
+                                        </tr>
+                                        <tr>
                                             <td ng-show="uiCnf.ro == 'ROLE_sm' || uiCnf.ro == 'ROLE_ko'">
-                                                <input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[13]"ng-change="setFormUpdated();toggleTransfers('v')"> {{resourceBundle['config.view.transfer.order']}}
+                                                <input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[15]"ng-change="setFormUpdated();toggleTransfers('v')"> {{resourceBundle['config.view.transfer.order']}}
                                             </td>
                                             <td ng-show="uiCnf.ro == 'ROLE_sm' || uiCnf.ro == 'ROLE_ko'">
-                                                <input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[14]"ng-change="setFormUpdated();toggleTransfers('c')"> {{resourceBundle['config.create.transfer.order']}}
+                                                <input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[16]"ng-change="setFormUpdated();toggleTransfers('c')"> {{resourceBundle['config.create.transfer.order']}}
                                             </td>
                                         </tr>
                                     </table>
@@ -176,6 +180,10 @@
                                     <tag-select  tags-model="uiCnf.iwTags" type="'material'" force-no-udf="'true'"></tag-select>
                                     {{resourceBundle['capabilities.material.tag.transfer']}}:<br/>
                                     <tag-select  tags-model="uiCnf.itTags" type="'material'" force-no-udf="'true'"></tag-select>
+                                    {{resourceBundle['capabilities.material.tag.returns.incoming']}}:<br/>
+                                    <tag-select  tags-model="uiCnf.iriTags" type="'material'" force-no-udf="'true'"></tag-select>
+                                    {{resourceBundle['capabilities.material.tag.returns.outgoing']}}:<br/>
+                                    <tag-select  tags-model="uiCnf.iroTags" type="'material'" force-no-udf="'true'"></tag-select>
                                 </div>
                             </div>
                         </div>

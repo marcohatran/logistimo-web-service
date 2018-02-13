@@ -23,6 +23,7 @@
 
 package com.logistimo.api.servlets.mobile.builders;
 
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.entity.IApprover;
 import com.logistimo.proto.MobileApproversModel;
 import com.logistimo.proto.MobileEntityApproversModel;
@@ -62,7 +63,7 @@ public class MobileEntityBuilder {
       return null;
     }
     MobileEntityApproversModel mobileEntityApproversModel = new MobileEntityApproversModel();
-    MobileUserBuilder mobileUserBuilder = new MobileUserBuilder();
+    MobileUserBuilder mobileUserBuilder = StaticApplicationContext.getBean(MobileUserBuilder.class);
     if (!pap.isEmpty() || !sap.isEmpty()) {
       MobileApproversModel mobileApproversModel = new MobileApproversModel();
       mobileApproversModel.prm =

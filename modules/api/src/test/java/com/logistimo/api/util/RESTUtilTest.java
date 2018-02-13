@@ -30,14 +30,16 @@ import com.logistimo.config.models.InventoryConfig;
 import com.logistimo.config.models.MatStatusConfig;
 import com.logistimo.config.models.OrdersConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
-import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.materials.entity.IMaterialManufacturers;
 import com.logistimo.materials.entity.MaterialManufacturers;
 import com.logistimo.proto.JsonTagsZ;
+import com.logistimo.services.ServiceException;
 
+import org.junit.Before;
 import org.junit.Test;
+import org.springframework.context.ApplicationContext;
 
-import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -51,6 +53,7 @@ import java.util.Optional;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -60,8 +63,16 @@ import static org.mockito.Mockito.when;
 public class RESTUtilTest {
 
   private static final String CONFIG_KEY = "config.2";
-  private static final String IS_CONFIG_MODIFIED = "isConfigModified";
-
+  ConfigurationMgmtService configurationMgmtService;
+  @Before
+  public void setup() throws ServiceException {
+    ApplicationContext mockApplicationContext = mock(ApplicationContext.class);
+    configurationMgmtService = mock(ConfigurationMgmtService.class);
+    when(mockApplicationContext.getBean(ConfigurationMgmtService.class)).thenReturn(
+        configurationMgmtService);
+    StaticApplicationContext applicationContext = new StaticApplicationContext();
+    applicationContext.setApplicationContext(mockApplicationContext);
+  }
   @Test
   public void testGetMaterialStatus() throws Exception {
 
@@ -81,62 +92,51 @@ public class RESTUtilTest {
 
   @Test
   public void testIsConfigModifiedModifiedSinceDateGreaterThanLastUpdatedTime() throws Exception {
-    ConfigurationMgmtService configManagementService = mock(ConfigurationMgmtService.class);
-    IConfig mockConfig = new Config();
-    mockConfig.setLastUpdated(getDate(-1));
-    when(configManagementService.getConfiguration(CONFIG_KEY))
-        .thenReturn(mockConfig);
-    Method
-        isConfigModified =
-        RESTUtil.class.getDeclaredMethod(IS_CONFIG_MODIFIED, Optional.class, Long.class);
-    isConfigModified.setAccessible(true);
-    Object o = isConfigModified.invoke(null, Optional.of(getDate(0)), 2l);
-    assertEquals(o, false);
+    Config config = new Config();
+    config.setLastUpdated(getDate(-1));
+    try {
+      doReturn(config).when(configurationMgmtService).getConfiguration(CONFIG_KEY);
+    } catch (ServiceException e) {
+      //exception
+    }
+    assertEquals(false, RESTUtil.isConfigModified(Optional.of(getDate(0)), 2l));
   }
 
   @Test
   public void testIsConfigModifiedModifiedSinceDateLesserThanLastUpdatedTime() throws Exception {
-    ConfigurationMgmtServiceImpl configManagementService = mock(ConfigurationMgmtServiceImpl.class);
-    IConfig mockConfig = new Config();
-    mockConfig.setLastUpdated(getDate(0));
-    when(configManagementService.getConfiguration(CONFIG_KEY))
-        .thenReturn(mockConfig);
-    Method
-        isConfigModified =
-        RESTUtil.class.getDeclaredMethod(IS_CONFIG_MODIFIED, Optional.class, Long.class);
-    isConfigModified.setAccessible(true);
-    Object o = isConfigModified.invoke(null, Optional.of(getDate(-1)), 2l);
-    assertEquals(o, true);
+    IConfig config = new Config();
+    config.setLastUpdated(getDate(0));
+    try {
+      doReturn(config).when(configurationMgmtService).getConfiguration(CONFIG_KEY);
+    } catch (ServiceException e) {
+      //exception
+    }
+    assertEquals(true, RESTUtil.isConfigModified(Optional.of(getDate(-1)), 2l));
   }
 
   @Test
   public void testIsConfigModifiedModifiedSinceDateSameAsLastUpdatedTime() throws Exception {
-    ConfigurationMgmtService configManagementService = mock(ConfigurationMgmtService.class);
-    IConfig mockConfig = new Config();
-    mockConfig.setLastUpdated(getDate(0));
-    when(configManagementService.getConfiguration(CONFIG_KEY))
-        .thenReturn(mockConfig);
-    Method
-        isConfigModified =
-        RESTUtil.class.getDeclaredMethod(IS_CONFIG_MODIFIED, Optional.class, Long.class);
-    isConfigModified.setAccessible(true);
-    Object o = isConfigModified.invoke(null, Optional.of(getDate(0)), 2l);
-    assertEquals(o, false);
+    IConfig config = new Config();
+    Date date = getDate(0);
+    config.setLastUpdated(date);
+    try {
+      doReturn(config).when(configurationMgmtService).getConfiguration(CONFIG_KEY);
+    } catch (ServiceException e) {
+      //exception
+    }
+    assertEquals(true, RESTUtil.isConfigModified(Optional.of(date), 2l));
   }
 
   @Test
   public void testIsConfigModifiedWithoutModifiedSinceDate() throws Exception {
-    ConfigurationMgmtService configManagementService = mock(ConfigurationMgmtService.class);
-    IConfig mockConfig = new Config();
-    mockConfig.setLastUpdated(getDate(0));
-    when(configManagementService.getConfiguration(CONFIG_KEY))
-        .thenReturn(mockConfig);
-    Method
-        isConfigModified =
-        RESTUtil.class.getDeclaredMethod(IS_CONFIG_MODIFIED, Optional.class, Long.class);
-    isConfigModified.setAccessible(true);
-    Object o = isConfigModified.invoke(null, Optional.empty(), 2l);
-    assertEquals(o, true);
+    IConfig config = new Config();
+    config.setLastUpdated(getDate(0));
+    try {
+      doReturn(config).when(configurationMgmtService).getConfiguration(CONFIG_KEY);
+    } catch (ServiceException e) {
+      //exception
+    }
+    assertEquals(true, RESTUtil.isConfigModified(Optional.empty(), 2l));
   }
 
   private Date getDate(int daysOffset) {

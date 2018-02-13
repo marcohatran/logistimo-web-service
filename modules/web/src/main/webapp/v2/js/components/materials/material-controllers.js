@@ -241,6 +241,24 @@ matControllers.controller('MaterialListController', ['$scope', 'matService', 'do
             $scope.search.key = $scope.search.mnm = "";
             $scope.mtag = "";
         };
+
+        $scope.exportData=function() {
+            exportService.exportData({
+                mat_name: $scope.search.key || undefined,
+                mtag: $scope.mtag || undefined,
+                titles: {
+                    filters: getCaption()
+                },
+                module: "Materials",
+                templateId: "s_materials"
+            })
+        };
+
+        function getCaption() {
+            var caption = getFilterTitle($scope.search.key, $scope.resourceBundle['material']);
+            caption += getFilterTitle($scope.mtag, $scope.resourceBundle['material'] + " " + $scope.resourceBundle['tag.lower']);
+            return caption;
+        }
     }
 ]);
 matControllers.controller('AddMatController', ['$scope', '$route', 'matService', 'domainCfgService', 'configService', 'requestContext','$uibModal', 'PATTERNS',

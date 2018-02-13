@@ -287,8 +287,7 @@ public class GsonUtil {
         jsonObject.addProperty(JsonTagsZ.NUMBER_OF_VENDORS, numLinkedKiosks);
       }
       if (linkedKiosks != null && !linkedKiosks.isEmpty()) {
-        String linkedKiosksString = gson.toJson(linkedKiosks);
-        JsonElement mElement = gson.fromJson(linkedKiosksString, JsonElement.class);
+        JsonElement mElement = gson.fromJson(gson.toJsonTree(linkedKiosks), JsonElement.class);
         jsonObject.add(JsonTagsZ.KIOSKS, mElement);
       }
     } else {

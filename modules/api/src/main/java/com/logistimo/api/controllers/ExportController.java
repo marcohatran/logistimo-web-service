@@ -34,6 +34,8 @@ import com.logistimo.exception.BadRequestException;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exception.TaskSchedulingException;
 import com.logistimo.exports.BulkExportMgr;
+import com.logistimo.exports.ExportService;
+import com.logistimo.exports.model.RequestModel;
 import com.logistimo.logger.XLog;
 import com.logistimo.pagination.Navigator;
 import com.logistimo.pagination.PageParams;
@@ -46,8 +48,9 @@ import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.UploadService;
 import com.logistimo.services.taskqueue.ITaskService;
+import com.logistimo.users.entity.IUserAccount;
+import com.logistimo.users.service.UsersService;
 import com.logistimo.utils.JobUtil;
-
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -56,7 +59,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URLDecoder;
@@ -64,7 +66,6 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -82,10 +83,24 @@ public class ExportController {
 
   private JobStatusBuilder jobStatusBuilder;
   private UploadService uploadService;
+  private ExportService exportService;
+  private UsersService usersService;
+
+  private static final String BACKEND_MESSAGES="BackendMessages";
+
+  @Autowired
+  private void setExportService(ExportService exportService) {
+    this.exportService = exportService;
+  }
 
   @Autowired
   public void setJobStatusBuilder(JobStatusBuilder jobStatusBuilder) {
     this.jobStatusBuilder = jobStatusBuilder;
+  }
+
+  @Autowired
+  private void setUsersService(UsersService usersService) {
+    this.usersService = usersService;
   }
 
   @Autowired
@@ -101,7 +116,7 @@ public class ExportController {
                     HttpServletResponse response) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (key == null || key.isEmpty()) {
       throw new BadRequestException(backendMessages.getString("file.download.error"));
     }
@@ -135,7 +150,7 @@ public class ExportController {
                         HttpServletResponse response) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     String csv = BulkUploadMgr.getCSVFormat(type, locale);
     if (csv == null) {
       throw new BadRequestException(backendMessages.getString("file.uploadformat.fetch.error"));
@@ -143,7 +158,7 @@ public class ExportController {
     String typeName = null;
     try {
       ResourceBundle messages = Resources.get().getBundle("Messages", locale);
-      ResourceBundle bckMessages = Resources.get().getBundle("BackendMessages", locale);
+      ResourceBundle bckMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
       if ("kiosks".equalsIgnoreCase(type)) {
         typeName = bckMessages.getString(type);
       } else {
@@ -175,7 +190,6 @@ public class ExportController {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Long jobId;
     Locale locale = sUser.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     Map<String, String> params = taskService.getParamsFromQueryString(request.getQueryString());
     params.put("action", "be");
     params.put("sourceuserid", sUser.getUsername());
@@ -275,6 +289,7 @@ public class ExportController {
     } catch (TaskSchedulingException e) {
       xLogger.severe("{0} when scheduling export task with params {1}: {2}", e.getClass().getName(),
           params, e.getMessage());
+      ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
       throw new InvalidServiceException(
           backendMessages.getString("error.in") + " " + e.getClass().getName() + " "
               + backendMessages.getString("schedule.export.task"));
@@ -322,7 +337,7 @@ public class ExportController {
     }
     // Create a entry in the JobStatus table using JobUtil.createJob method.
     Long jobId = JobUtil.createJob(domainId,
-            sourceUserId, null, IJobStatus.TYPE_EXPORT, params.get("type"), params);
+        sourceUserId, null, IJobStatus.TYPE_EXPORT, params.get("type"), params);
     params.put("jobid", jobId.toString());
 
     xLogger.fine("params: {0}", params);
@@ -375,4 +390,22 @@ public class ExportController {
       throw new InvalidServiceException("When trying to get recent jobs", e);
     }
   }
+
+
+  @RequestMapping(value = "/", method = RequestMethod.POST)
+  public
+  @ResponseBody
+  String exportData(@RequestBody RequestModel model) throws ServiceException {
+    long jobId = exportService.scheduleExportJob(model);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, Locale.ENGLISH);
+    IUserAccount u = usersService.getUserAccount(SecurityUtils.getUsername());
+    return backendMessages.getString("export.success1") + " " + u.getEmail() + " "
+        + backendMessages.getString("export.success2") + " "
+        + backendMessages.getString("exportstatusinfo2") + " "
+        + jobId + ". "
+        + backendMessages.getString("exportstatusinfo1");
+  }
+
+
+
 }

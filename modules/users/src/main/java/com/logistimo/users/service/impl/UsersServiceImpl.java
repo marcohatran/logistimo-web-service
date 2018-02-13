@@ -394,7 +394,7 @@ public class UsersServiceImpl implements UsersService {
     boolean isDomainOwner = SecurityConstants.ROLE_DOMAINOWNER.equals(role);
     if (SecurityConstants.ROLE_SUPERUSER.equals(role) || isDomainOwner) {
       results = findAllAccountsByDomain(domainId, nameStartsWith, pageParams,
-              includeChildDomainUsers, user);
+          includeChildDomainUsers, user);
       users = (List<IUserAccount>) results.getResults();
       if (includeSuperusers && SecurityConstants.ROLE_SUPERUSER.equals(role)) {
         List<IUserAccount> superusers = getSuperusers();
@@ -1061,7 +1061,7 @@ public class UsersServiceImpl implements UsersService {
       List<IUserAccount> users;
       if (hasNameStartsWith) {
         users = (List<IUserAccount>) query.execute(domainId, lNameStartsWith,
-                (lNameStartsWith + Constants.UNICODE_REPLACEANY));
+            (lNameStartsWith + Constants.UNICODE_REPLACEANY));
       } else {
         users = (List<IUserAccount>) query.execute(domainId);
       }
@@ -1436,7 +1436,7 @@ public class UsersServiceImpl implements UsersService {
       ResourceBundle messages = Resources.get().getBundle("Messages", locale);
       ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
       errMsg = messages.getString("user") + " '" + userId + "' " + backendMessages
-              .getString("error.notfound");
+          .getString("error.notfound");
     }
     if (errMsg != null) {
       throw new ServiceException(errMsg, exception);

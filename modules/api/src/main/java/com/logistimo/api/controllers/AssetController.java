@@ -48,6 +48,7 @@ import com.logistimo.config.models.AssetSystemConfig;
 import com.logistimo.config.models.ConfigurationException;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
+import com.logistimo.constants.CharacterConstants;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exports.ExportService;
 import com.logistimo.logger.XLog;
@@ -677,5 +678,20 @@ public class AssetController {
         + backendMessages.getString("exportstatusinfo1");
   }
 
-
+  @RequestMapping(value = "/{vendorId}/{deviceId}/status", method = RequestMethod.POST)
+  public
+  @ResponseBody
+  String updateWorkingStatus(@PathVariable String vendorId,
+                             @PathVariable String deviceId,
+                             @RequestBody final AssetModels.AssetStatus assetStatusModel) throws ServiceException {
+    try {
+      deviceId = AssetUtil.decodeURLParameters(deviceId);
+      assetStatusModel.stub = SecurityUtils.getUsername();
+      IAsset asset = assetManagementService.getAsset(vendorId, deviceId);
+      assetManagementService.updateWorkingStatus(asset, assetStatusModel);
+    } catch (Exception e) {
+      xLogger.warn("Error while updating status for an asset {0} {1}", vendorId, deviceId, e);
+    }
+    return CharacterConstants.EMPTY;
+  }
 }

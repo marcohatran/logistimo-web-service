@@ -28,7 +28,6 @@ import com.logistimo.api.builders.BulletinBoardBuilder;
 import com.logistimo.api.builders.ConfigurationModelBuilder;
 import com.logistimo.api.builders.CurrentUserBuilder;
 import com.logistimo.api.builders.CustomReportsBuilder;
-import com.logistimo.api.builders.InventoryBuilder;
 import com.logistimo.api.builders.NotificationBuilder;
 import com.logistimo.api.builders.UserBuilder;
 import com.logistimo.api.builders.UserMessageBuilder;
@@ -61,7 +60,6 @@ import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.communications.MessageHandlingException;
 import com.logistimo.config.entity.IConfig;
 import com.logistimo.config.models.AccountingConfig;
-import com.logistimo.config.models.ActualTransConfig;
 import com.logistimo.config.models.AdminContactConfig;
 import com.logistimo.config.models.ApprovalsConfig;
 import com.logistimo.config.models.AssetConfig;
@@ -77,7 +75,6 @@ import com.logistimo.config.models.EventSummaryConfigModel;
 import com.logistimo.config.models.EventsConfig;
 import com.logistimo.config.models.InventoryConfig;
 import com.logistimo.config.models.LeadTimeAvgConfig;
-import com.logistimo.config.models.MatStatusConfig;
 import com.logistimo.config.models.OptimizerConfig;
 import com.logistimo.config.models.OrdersConfig;
 import com.logistimo.config.models.ReportsConfig;
@@ -126,6 +123,7 @@ import com.logistimo.utils.MessageUtil;
 import com.logistimo.utils.QueryUtil;
 import com.logistimo.utils.StringUtil;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -167,6 +165,10 @@ public class DomainConfigController {
   private static final int USER = 5;
   private static final String BACKEND_MESSAGES = "BackendMessages";
   private static final String PERMISSION_DENIED = "permission.denied";
+  private static final String INVENTORY_CONFIG_FETCH_ERROR = "inventory.config.fetch.error";
+  private static final String INVENTORY_CONFIG_UPDATE_ERROR = "inventory.config.update.error";
+  private static final String CAPABILITIES_CONFIG_FETCH_ERROR = "capabilities.config.fetch.error";
+
 
   private UserMessageBuilder userMessageBuilder;
   private ConfigurationModelBuilder configurationModelBuilder;
@@ -174,7 +176,6 @@ public class DomainConfigController {
   private UserBuilder userBuilder;
   private BulletinBoardBuilder bulletinBoardBuilder;
   private CurrentUserBuilder currentUserBuilder;
-  private InventoryBuilder inventoryBuilder;
   private NotificationBuilder notificationBuilder;
   private ConfigurationMgmtService configurationMgmtService;
   private UsersService usersService;
@@ -207,11 +208,6 @@ public class DomainConfigController {
   @Autowired
   public void setCurrentUserBuilder(CurrentUserBuilder currentUserBuilder) {
     this.currentUserBuilder = currentUserBuilder;
-  }
-
-  @Autowired
-  public void setInventoryBuilder(InventoryBuilder inventoryBuilder) {
-    this.inventoryBuilder = inventoryBuilder;
   }
 
   @Autowired
@@ -414,7 +410,7 @@ public class DomainConfigController {
     }
     try {
       return configurationModelBuilder.buildDomainLocationModels(dId, locale, sUser.getTimezone());
-    } catch (ServiceException | ConfigurationException e) {
+    } catch (Exception e) {
       xLogger.severe("Error in fetching general configuration", e);
       throw new InvalidServiceException(backendMessages.getString("general.config.fetch.error"));
     }
@@ -429,7 +425,7 @@ public class DomainConfigController {
     ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     try {
       return configurationModelBuilder.buildSCModelForWebDisplay();
-    } catch (ServiceException | ObjectNotFoundException | ConfigurationException e) {
+    } catch (ObjectNotFoundException e) {
       xLogger.severe("Error in fetching support configuration for the domain", e);
       throw new InvalidServiceException(
           backendMessages.getString("general.support.config.fetch.error"));
@@ -462,7 +458,7 @@ public class DomainConfigController {
     ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     try {
       return configurationModelBuilder.buildAccountingConfigModel(domainId, locale, sUser.getTimezone());
-    } catch (ServiceException | ObjectNotFoundException | JSONException e) {
+    } catch (ObjectNotFoundException | JSONException e) {
       xLogger.severe("Error in fetching account configuration", e);
       throw new InvalidServiceException(backendMessages.getString("account.config.fetch.error"));
     }
@@ -482,7 +478,7 @@ public class DomainConfigController {
       }
       DomainConfig dc = DomainConfig.getInstance(domainId);
       return configurationModelBuilder.buildTagsConfigModel(dc, locale, sUser.getTimezone());
-    } catch (ServiceException | ObjectNotFoundException | ConfigurationServiceException e) {
+    } catch (ObjectNotFoundException | ConfigurationServiceException e) {
       xLogger.severe("Error in fetching tags", e);
       throw new InvalidServiceException(backendMessages.getString("tags.config.fetch.error"));
     }
@@ -612,7 +608,7 @@ public class DomainConfigController {
     DomainConfig dc = DomainConfig.getInstance(domainId);
     try {
       return configurationModelBuilder.buildAssetConfigModel(dc, locale, sUser.getTimezone());
-    } catch (ConfigurationException | ServiceException | ObjectNotFoundException e) {
+    } catch (ConfigurationException | ObjectNotFoundException e) {
       xLogger.severe("Error in fetching vendor names");
     }
 
@@ -868,14 +864,14 @@ public class DomainConfigController {
       if (domainId == null) {
         xLogger.severe("Error in fetching capabilities configuration");
         throw new InvalidServiceException(
-            backendMessages.getString("capabilities.config.fetch.error"));
+            backendMessages.getString(CAPABILITIES_CONFIG_FETCH_ERROR));
       }
       DomainConfig dc = DomainConfig.getInstance(domainId);
       return configurationModelBuilder.buildCapabilitiesConfigModel(locale, dc, sUser.getTimezone());
-    } catch (ServiceException | ObjectNotFoundException e) {
+    } catch (ObjectNotFoundException e) {
       xLogger.warn("Error in fetching capabilities configuration for {0}: {1}", locale, e);
       throw new InvalidServiceException(
-          backendMessages.getString("capabilities.config.fetch.error"));
+          backendMessages.getString(CAPABILITIES_CONFIG_FETCH_ERROR));
     }
   }
 
@@ -891,15 +887,15 @@ public class DomainConfigController {
       if (domainId == null) {
         xLogger.severe("Error in fetching role capabilities configuration");
         throw new InvalidServiceException(
-            backendMessages.getString("capabilities.config.fetch.error"));
+            backendMessages.getString(CAPABILITIES_CONFIG_FETCH_ERROR));
       }
       DomainConfig dc = DomainConfig.getInstance(domainId);
       return configurationModelBuilder.buildRoleCapabilitiesConfigModel(sUser.getRole(), locale, dc,
           sUser.getTimezone());
-    } catch (ServiceException | ObjectNotFoundException e) {
+    } catch (ObjectNotFoundException e) {
       xLogger.warn("Error in fetching role capabilities configuration for {0}: {1}", locale, e);
       throw new InvalidServiceException(
-          backendMessages.getString("capabilities.config.fetch.error"));
+          backendMessages.getString(CAPABILITIES_CONFIG_FETCH_ERROR));
     }
   }
 
@@ -951,21 +947,7 @@ public class DomainConfigController {
         cconf.setBarcodingEnabled(model.bcs);
         cconf.setRFIDEnabled(model.rfids);
         cc.dc.setCapabilityByRole(model.ro, cconf);
-
-        String issueTags = StringUtils.join(model.hii, ',');
-        String receiptsTags = StringUtils.join(model.hir, ',');
-        String stockTags = StringUtils.join(model.hip, ',');
-        String discardTags = StringUtils.join(model.hiw, ',');
-        String transferTags = StringUtils.join(model.hit, ',');
-
-        Map<String, String> tagInvByOperation = new HashMap<>();
-        tagInvByOperation.put(ITransaction.TYPE_ISSUE, issueTags);
-        tagInvByOperation.put(ITransaction.TYPE_RECEIPT, receiptsTags);
-        tagInvByOperation.put(ITransaction.TYPE_PHYSICALCOUNT, stockTags);
-        tagInvByOperation.put(ITransaction.TYPE_WASTAGE, discardTags);
-        tagInvByOperation.put(ITransaction.TYPE_TRANSFER, transferTags);
-        cconf.settagInvByOperation(tagInvByOperation);
-
+        cconf.settagInvByOperation(configurationModelBuilder.getTagsByInventoryOperation(model));
       } else {
         cc.dc.setCapabilities(model.cap);
         cc.dc.setTransactionMenus(model.tm);
@@ -991,20 +973,7 @@ public class DomainConfigController {
         cc.dc.setBarcodingEnabled(model.bcs);
         cc.dc.setRFIDEnabled(model.rfids);
         cc.dc.setStoreAppTheme(model.getTheme());
-
-        String issueTags = TagUtil.getCleanTags(StringUtils.join(model.hii, ','), true);
-        String receiptsTags = TagUtil.getCleanTags(StringUtils.join(model.hir, ','), true);
-        String stockTags = TagUtil.getCleanTags(StringUtils.join(model.hip, ','), true);
-        String discardTags = TagUtil.getCleanTags(StringUtils.join(model.hiw, ','), true);
-        String transferTags = TagUtil.getCleanTags(StringUtils.join(model.hit, ','), true);
-
-        Map<String, String> tagInvByOperation = new HashMap<>();
-        tagInvByOperation.put(ITransaction.TYPE_ISSUE, issueTags);
-        tagInvByOperation.put(ITransaction.TYPE_RECEIPT, receiptsTags);
-        tagInvByOperation.put(ITransaction.TYPE_PHYSICALCOUNT, stockTags);
-        tagInvByOperation.put(ITransaction.TYPE_WASTAGE, discardTags);
-        tagInvByOperation.put(ITransaction.TYPE_TRANSFER, transferTags);
-        cc.dc.settagInvByOperation(tagInvByOperation);
+        cc.dc.settagInvByOperation(configurationModelBuilder.getTagsByInventoryOperation(model));
       }
       saveDomainConfig(domainId, cc, backendMessages);
       xLogger.info("AUDITLOG \t {0} \t {1} \t CONFIGURATION \t " +
@@ -1034,12 +1003,12 @@ public class DomainConfigController {
       if (domainId == null) {
         xLogger.severe("Error in fetching Inventory configuration");
         throw new InvalidServiceException(
-            backendMessages.getString("inventory.config.fetch.error"));
+            backendMessages.getString(INVENTORY_CONFIG_FETCH_ERROR));
       }
       return configurationModelBuilder.buildInventoryConfigModel(dc, locale, sUser.getTimezone());
-    } catch (ConfigurationException | ServiceException | ObjectNotFoundException e) {
+    } catch (ConfigurationException | ObjectNotFoundException e) {
       xLogger.severe("Error in fetching Inventory configuration", e);
-      throw new InvalidServiceException(backendMessages.getString("inventory.config.fetch.error"));
+      throw new InvalidServiceException(backendMessages.getString(INVENTORY_CONFIG_FETCH_ERROR));
     }
   }
 
@@ -1056,12 +1025,12 @@ public class DomainConfigController {
       if (domainId == null) {
         xLogger.severe("Error in fetching Inventory configuration");
         throw new InvalidServiceException(
-            backendMessages.getString("inventory.config.fetch.error"));
+            backendMessages.getString(INVENTORY_CONFIG_FETCH_ERROR));
       }
       return configurationModelBuilder.buildUniqueTransactionReasons(dc.getInventoryConfig());
     } catch (Exception e) {
       xLogger.warn("Error in fetching reasons for transactions", e);
-      return null;
+      return Collections.emptyList();
     }
   }
 
@@ -1076,7 +1045,7 @@ public class DomainConfigController {
     ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (domainId == null) {
       xLogger.severe("Error in fetching Inventory configuration");
-      throw new InvalidServiceException(backendMessages.getString("inventory.config.fetch.error"));
+      throw new InvalidServiceException(backendMessages.getString(INVENTORY_CONFIG_FETCH_ERROR));
     }
     DomainConfig dc = DomainConfig.getInstance(domainId);
     InventoryConfig ic = dc.getInventoryConfig();
@@ -1122,7 +1091,7 @@ public class DomainConfigController {
       if (domainId == null) {
         xLogger.severe("Error in updating Inventory configuration");
         throw new InvalidServiceException(
-            backendMessages.getString("inventory.config.update.error"));
+            backendMessages.getString(INVENTORY_CONFIG_UPDATE_ERROR));
       }
       ConfigContainer cc = getDomainConfig(domainId, userId);
 
@@ -1130,146 +1099,82 @@ public class DomainConfigController {
       //Get transaction export schedules
       String et = model.et;
 
-      //Get transaction reasons
-      String issueReasons = inventoryBuilder.trimReasons(model.ri);
-      String receiptReasons = inventoryBuilder.trimReasons(model.rr);
-      String stockCountReasons = inventoryBuilder.trimReasons(model.rs);
-      String wastageReasons = inventoryBuilder.trimReasons(model.rd);
-      String transferReasons = inventoryBuilder.trimReasons(model.rt);
       // Form object
       InventoryConfig inventoryConfig = new InventoryConfig();
-      // Set reasons
-      Map<String, String> transReasons = new HashMap<>();
-      transReasons.put(ITransaction.TYPE_ISSUE, issueReasons);
-      transReasons.put(ITransaction.TYPE_RECEIPT, receiptReasons);
-      transReasons.put(ITransaction.TYPE_PHYSICALCOUNT, stockCountReasons);
-      transReasons.put(ITransaction.TYPE_WASTAGE, wastageReasons);
-      transReasons.put(ITransaction.TYPE_TRANSFER, transferReasons);
-      inventoryConfig.setTransReasons(transReasons);
+      inventoryConfig.setTransReasons(configurationModelBuilder.getReasonsByTransType(model));
 
       //reset the wastage reasons
       cc.dc.setWastageReasons(null);
-      boolean icmt = model.cimt;
-      if (icmt) {
+      boolean cimt = model.cimt;
+      if (cimt) {
         inventoryConfig.setCimt(true);
-        Map<String, String> imTransResons = new HashMap<>();
-        if (model.imt != null) {
-          for (InventoryConfigModel.MTagReason mTagReason : model.imt) {
-            imTransResons.put(mTagReason.mtg, inventoryBuilder.trimReasons(mTagReason.rsn));
-          }
-        }
-        inventoryConfig.setImtransreasons(imTransResons);
+        inventoryConfig.setImtransreasons(configurationModelBuilder.getMapWithTrimmedReasons(
+            model.imt));
       }
       boolean crmt = model.crmt;
       if (crmt) {
         inventoryConfig.setCrmt(true);
-        Map<String, String> rmTransReasons = new HashMap<>();
-        if (model.rmt != null) {
-          for (InventoryConfigModel.MTagReason mTagReason : model.rmt) {
-            rmTransReasons.put(mTagReason.mtg, inventoryBuilder.trimReasons(mTagReason.rsn));
-          }
-        }
-        inventoryConfig.setRmtransreasons(rmTransReasons);
+        inventoryConfig.setRmtransreasons(configurationModelBuilder.getMapWithTrimmedReasons(
+            model.rmt));
       }
       boolean csmt = model.csmt;
       if (csmt) {
         inventoryConfig.setCsmt(true);
-        Map<String, String> smTransReasons = new HashMap<>();
-        if (model.smt != null) {
-          for (InventoryConfigModel.MTagReason mTagReason : model.smt) {
-            smTransReasons.put(mTagReason.mtg, inventoryBuilder.trimReasons(mTagReason.rsn));
-          }
-        }
-        inventoryConfig.setSmtransreasons(smTransReasons);
+        inventoryConfig.setSmtransreasons(configurationModelBuilder.getMapWithTrimmedReasons(
+            model.smt));
       }
       boolean ctmt = model.ctmt;
       if (ctmt) {
         inventoryConfig.setCtmt(true);
-        Map<String, String> tmTransReasons = new HashMap<>();
-        if (model.tmt != null) {
-          for (InventoryConfigModel.MTagReason mTagReason : model.tmt) {
-            tmTransReasons.put(mTagReason.mtg, inventoryBuilder.trimReasons(mTagReason.rsn));
-          }
-        }
-        inventoryConfig.setTmtransreasons(tmTransReasons);
+        inventoryConfig.setTmtransreasons(configurationModelBuilder.getMapWithTrimmedReasons(
+            model.tmt));
       }
       boolean cdmt = model.cdmt;
       if (cdmt) {
         inventoryConfig.setCdmt(true);
-        Map<String, String> dmTransReasons = new HashMap<>();
-        if (model.dmt != null) {
-          for (InventoryConfigModel.MTagReason mTagReason : model.dmt) {
-            dmTransReasons.put(mTagReason.mtg, inventoryBuilder.trimReasons(mTagReason.rsn));
+        inventoryConfig.setDmtransreasons(configurationModelBuilder.getMapWithTrimmedReasons(
+            model.dmt));
           }
+      boolean crimt = model.crimt;
+      if (crimt) {
+        inventoryConfig.setCrimt(true);
+        inventoryConfig.setMtagRetIncRsns(configurationModelBuilder.getMapWithTrimmedReasons(
+            model.rimt));
         }
-        inventoryConfig.setDmtransreasons(dmTransReasons);
+      boolean cromt = model.cromt;
+      if (cromt) {
+        inventoryConfig.setCromt(true);
+        inventoryConfig.setMtagRetOutRsns(configurationModelBuilder.getMapWithTrimmedReasons(model.romt));
       }
-
-      String issueDefaultStatus = StringUtil.trimCommas(model.idf);
-      String issueTempSenStatus = StringUtil.trimCommas(model.iestm);
-      MatStatusConfig msi = new MatStatusConfig();
-      msi.setDf(issueDefaultStatus);
-      msi.setEtsm(issueTempSenStatus);
-      msi.setStatusMandatory(model.ism);
-      inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_ISSUE, msi);
-
-      String receiptDefaultStatus = StringUtil.trimCommas(model.rdf);
-      String receiptTempSenStatus = StringUtil.trimCommas(model.restm);
-      MatStatusConfig msr = new MatStatusConfig();
-      msr.setDf(receiptDefaultStatus);
-      msr.setEtsm(receiptTempSenStatus);
-      msr.setStatusMandatory(model.rsm);
-      inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_RECEIPT, msr);
-
-      String transferDefaultStatus = StringUtil.trimCommas(model.tdf);
-      String transferTempSenStatus = StringUtil.trimCommas(model.testm);
-      MatStatusConfig mst = new MatStatusConfig();
-      mst.setDf(transferDefaultStatus);
-      mst.setEtsm(transferTempSenStatus);
-      mst.setStatusMandatory(model.tsm);
-      inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_TRANSFER, mst);
-
-      String stockCountsDefaultStatus = StringUtil.trimCommas(model.pdf);
-      String stockCountsTempSenStatus = StringUtil.trimCommas(model.pestm);
-      MatStatusConfig msp = new MatStatusConfig();
-      msp.setDf(stockCountsDefaultStatus);
-      msp.setEtsm(stockCountsTempSenStatus);
-      msp.setStatusMandatory(model.psm);
-      inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_PHYSICALCOUNT, msp);
-
-      String discardsDefaultStatus = StringUtil.trimCommas(model.wdf);
-      String discardsTempSenStatus = StringUtil.trimCommas(model.westm);
-      MatStatusConfig msw = new MatStatusConfig();
-      msw.setDf(discardsDefaultStatus);
-      msw.setEtsm(discardsTempSenStatus);
-      msw.setStatusMandatory(model.wsm);
-      inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_WASTAGE, msw);
+      inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_ISSUE, configurationModelBuilder.buildMatStatusConfig(
+          model.idf, model.iestm, model.ism));
+      inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_RECEIPT, configurationModelBuilder.buildMatStatusConfig(
+          model.rdf, model.restm, model.rsm));
+      inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_TRANSFER, configurationModelBuilder.buildMatStatusConfig(
+          model.tdf, model.testm, model.tsm));
+      inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_PHYSICALCOUNT, configurationModelBuilder.buildMatStatusConfig(
+          model.pdf, model.pestm, model.psm));
+      inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_WASTAGE, configurationModelBuilder.buildMatStatusConfig(
+          model.wdf, model.westm, model.wsm));
+      inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_RETURNS_INCOMING, configurationModelBuilder.buildMatStatusConfig(
+          model.ridf, model.riestm, model.rism));
+      inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_RETURNS_OUTGOING, configurationModelBuilder.buildMatStatusConfig(
+          model.rodf, model.roestm, model.rosm));
 
       //Actual date of transaction configuration
-      ActualTransConfig atci = new ActualTransConfig();
-      model.catdi = model.catdi != null ? model.catdi : ActualTransConfig.ACTUAL_NONE;
-      atci.setTy(model.catdi);
-      inventoryConfig.setActualTransDateByType(ITransaction.TYPE_ISSUE, atci);
-
-      ActualTransConfig atcr = new ActualTransConfig();
-      model.catdr = model.catdr != null ? model.catdr : ActualTransConfig.ACTUAL_NONE;
-      atcr.setTy(model.catdr);
-      inventoryConfig.setActualTransDateByType(ITransaction.TYPE_RECEIPT, atcr);
-
-      ActualTransConfig atcp = new ActualTransConfig();
-      model.catdp = model.catdp != null ? model.catdp : ActualTransConfig.ACTUAL_NONE;
-      atcp.setTy(model.catdp);
-      inventoryConfig.setActualTransDateByType(ITransaction.TYPE_PHYSICALCOUNT, atcp);
-
-      ActualTransConfig atcw = new ActualTransConfig();
-      model.catdw = model.catdw != null ? model.catdw : ActualTransConfig.ACTUAL_NONE;
-      atcw.setTy(model.catdw);
-      inventoryConfig.setActualTransDateByType(ITransaction.TYPE_WASTAGE, atcw);
-
-      ActualTransConfig atct = new ActualTransConfig();
-      model.catdt = model.catdt != null ? model.catdt : ActualTransConfig.ACTUAL_NONE;
-      atct.setTy(model.catdt);
-      inventoryConfig.setActualTransDateByType(ITransaction.TYPE_TRANSFER, atct);
+      inventoryConfig.setActualTransDateByType(ITransaction.TYPE_ISSUE, configurationModelBuilder.buildActualTransConfig(model.catdi));
+      inventoryConfig.setActualTransDateByType(ITransaction.TYPE_RECEIPT, configurationModelBuilder.buildActualTransConfig(
+          model.catdr));
+      inventoryConfig.setActualTransDateByType(ITransaction.TYPE_PHYSICALCOUNT, configurationModelBuilder.buildActualTransConfig(
+          model.catdp));
+      inventoryConfig.setActualTransDateByType(ITransaction.TYPE_WASTAGE, configurationModelBuilder.buildActualTransConfig(
+          model.catdw));
+      inventoryConfig.setActualTransDateByType(ITransaction.TYPE_TRANSFER, configurationModelBuilder.buildActualTransConfig(
+          model.catdt));
+      inventoryConfig.setActualTransDateByType(ITransaction.TYPE_RETURNS_INCOMING, configurationModelBuilder.buildActualTransConfig(
+          model.catdri));
+      inventoryConfig.setActualTransDateByType(ITransaction.TYPE_RETURNS_OUTGOING, configurationModelBuilder
+          .buildActualTransConfig(model.catdro));
 
       if (et != null && !et.trim().isEmpty()) {
         List<String> times = StringUtil.getList(et.trim());
@@ -1307,7 +1212,7 @@ public class DomainConfigController {
         if (StringUtils.isNotEmpty(model.an)) {
           inventoryConfig.setExportUsers(model.an);
         }
-        if (model.usrTgs != null && model.usrTgs.size() > 0) {
+        if (CollectionUtils.isNotEmpty(model.usrTgs)) {
           inventoryConfig.setUserTags(model.usrTgs);
         }
       }
@@ -1335,6 +1240,8 @@ public class DomainConfigController {
       oc.setComputeFrequency(model.crfreq);
       oc.setExcludeDiscards(model.edis);
       oc.setExcludeReasons(StringUtil.getCSV(model.ersns));
+      oc.setExcludeReturnIncomingReasons(StringUtil.getCSV(model.erirsns));
+
       if (String.valueOf(InventoryConfig.CR_AUTOMATIC).equals(model.crc)) {
         if (StringUtils.isNotEmpty(model.minhpccr)) {
           oc.setMinHistoricalPeriod(Float.parseFloat(model.minhpccr));
@@ -1401,6 +1308,7 @@ public class DomainConfigController {
       oc.setDisplayDF(model.ddf);
       oc.setDisplayOOQ(model.dooq);
       cc.dc.setOptimizerConfig(oc);
+      inventoryConfig.setReturnsConfig(configurationModelBuilder.buildReturnsConfigs(model.rcm));
       cc.dc.setInventoryConfig(inventoryConfig);
       saveDomainConfig(domainId, cc, backendMessages);
       xLogger.info("AUDITLOG \t {0} \t {1} \t CONFIGURATION \t " +
@@ -1408,7 +1316,7 @@ public class DomainConfigController {
       xLogger.info(cc.dc.toJSONSring());
     } catch (ServiceException | ObjectNotFoundException e) {
       xLogger.severe("Error in updating Inventory configuration");
-      throw new InvalidServiceException(backendMessages.getString("inventory.config.update.error"));
+      throw new InvalidServiceException(backendMessages.getString(INVENTORY_CONFIG_UPDATE_ERROR));
     } catch (ConfigurationException e) {
       xLogger.severe("Error in updating Inventory configuration");
     }
@@ -1430,7 +1338,7 @@ public class DomainConfigController {
             backendMessages.getString("inventory.config.fetch.error"));
       }
       return configurationModelBuilder.buildOrderConfigModel(request, domainId, locale, sUser.getTimezone());
-    } catch (ConfigurationException | ServiceException | ObjectNotFoundException | UnsupportedEncodingException e) {
+    } catch (ConfigurationException | ObjectNotFoundException | UnsupportedEncodingException e) {
       xLogger.severe("Error in fetching Inventory configuration", e);
       throw new InvalidServiceException(backendMessages.getString("inventory.config.fetch.error"));
     }
@@ -1559,7 +1467,7 @@ public class DomainConfigController {
         oc.setExportTimes(null);
       }
       oc.setExportUserIds(model.an);
-      if (model.usrTgs != null && model.usrTgs.size() > 0) {
+      if (CollectionUtils.isNotEmpty(model.usrTgs)) {
         oc.setUserTags(model.usrTgs);
       } else {
         oc.setUserTags(null);
@@ -1779,31 +1687,32 @@ public class DomainConfigController {
     ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (!GenericAuthoriser.authoriseAdmin()) {
       throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
-        }
+    }
+    try {
+      Date startDate = null;
+      Date endDate = null;
+      if (StringUtils.isNotEmpty(start)) {
         try {
-          Date startDate = null, endDate = null;
-          if (StringUtils.isNotEmpty(start)) {
-            try {
-              startDate = LocalDateUtil.parseCustom(start, Constants.DATE_FORMAT, dc.getTimezone());
-            } catch (Exception e) {
-              xLogger.warn("Exception when parsing start date " + start, e);
-            }
-          }
-          if (StringUtils.isNotEmpty(end)) {
-            try {
-              endDate = LocalDateUtil.parseCustom(end, Constants.DATE_FORMAT, dc.getTimezone());
-            } catch (Exception e) {
-              xLogger.warn("Exception when parsing start date " + end, e);
-            }
-          }
-
-          results = MessageUtil.getNotifactionLogs(domainId, startDate, endDate, pageParams);
-          navigator.setResultParams(results);
-        } catch (MessageHandlingException e) {
-          xLogger.warn("Error in building message status", e);
-          throw new InvalidServiceException(
-              backendMessages.getString("message.status.build.error"));
+          startDate = LocalDateUtil.parseCustom(start, Constants.DATE_FORMAT, dc.getTimezone());
+        } catch (Exception e) {
+          xLogger.warn("Exception when parsing start date " + start, e);
         }
+      }
+      if (StringUtils.isNotEmpty(end)) {
+        try {
+          endDate = LocalDateUtil.parseCustom(end, Constants.DATE_FORMAT, dc.getTimezone());
+        } catch (Exception e) {
+          xLogger.warn("Exception when parsing start date " + end, e);
+        }
+      }
+
+      results = MessageUtil.getNotifactionLogs(domainId, startDate, endDate, pageParams);
+      navigator.setResultParams(results);
+    } catch (MessageHandlingException e) {
+      xLogger.warn("Error in building message status", e);
+      throw new InvalidServiceException(
+          backendMessages.getString("message.status.build.error"));
+    }
     String timezone = sUser.getTimezone();
     int no = offset;
     List<UserMessageModel> userMessageStatus = new ArrayList<>();
@@ -2219,7 +2128,7 @@ public class DomainConfigController {
   }
 
   private List<IUserAccount> constructUserAccount(List<String> userIds) {
-    if (userIds != null && userIds.size() > 0) {
+    if (CollectionUtils.isNotEmpty(userIds)) {
       List<IUserAccount> list = new ArrayList<>(userIds.size());
       for (String userId : userIds) {
         try {
@@ -2359,7 +2268,7 @@ public class DomainConfigController {
       int off = Integer.parseInt(o);
       int sz = Integer.parseInt(s);
       Navigator navigator = new Navigator(request.getSession(), "DomainConfigController.getDomains", off, sz, "dummy",
-              0);
+          0);
       PageParams pageParams = new PageParams(navigator.getCursor(off), off, sz);
       QueryUtil.setPageParams(query, pageParams);
     }
@@ -2436,7 +2345,7 @@ public class DomainConfigController {
     DashboardConfig dbc = dc.getDashboardConfig();
     try {
       return configurationModelBuilder.buildDashboardConfigModel(dbc, domainId, locale, sUser.getTimezone());
-    } catch (ServiceException | ObjectNotFoundException e) {
+    } catch (ObjectNotFoundException e) {
       xLogger.severe("Error in fetching Dashboard configuration", e);
       throw new InvalidServiceException("Error in fetching Dashboard configuration");
     }
@@ -2758,7 +2667,7 @@ public class DomainConfigController {
   @ResponseBody
   List<GeneralConfigModel> getGeneralConfigForDomains(
       @RequestParam(name = "domain_ids") List<String> domainIds)
-      throws ServiceException, ConfigurationException {
+      throws ServiceException{
     SecureUserDetails sUser = getUserDetails();
     return configurationModelBuilder.buildDomainLocationModels(domainIds, usersService,
         sUser.getUsername());
@@ -2779,6 +2688,4 @@ public class DomainConfigController {
     public SupportConfig sc = null;
     public boolean add = false;
   }
-
-
 }

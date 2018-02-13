@@ -55,4 +55,33 @@ public class ReportDataModel {
   public String secValue;
   public String secNum;
   public String secDen;
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
+    if (!(o instanceof ReportDataModel)) {
+      return false;
+    }
+    ReportDataModel reportDataModel = (ReportDataModel) o;
+    return (value == null ? reportDataModel.value == null : value.equals(reportDataModel.value)) &&
+        (num == null ? reportDataModel.num == null : num.equals(reportDataModel.num)) &&
+        (den == null ? reportDataModel.den == null : den.equals(reportDataModel.den)) &&
+        (secValue == null ? reportDataModel.secValue == null : secValue.equals(reportDataModel.secValue)) &&
+        (secNum == null ? reportDataModel.secNum == null : secNum.equals(reportDataModel.secNum)) &&
+        (secDen == null ? reportDataModel.secDen == null : secDen.equals(reportDataModel.secDen));
+  }
+
+  @Override public int hashCode() {
+    int result = 17;
+    int prime = 31;
+    result = prime * result + (value == null ? 0 : value.hashCode());
+    result = prime * result + (num == null ? 0 : num.hashCode());
+    result = prime * result + (den == null ? 0 : den.hashCode());
+    result = prime * result + (secValue == null ? 0 : secValue.hashCode());
+    result = prime * result + (secNum == null ? 0 : secNum.hashCode());
+    result = prime * result + (secDen == null ? 0 : secDen.hashCode());
+    return result;
+  }
 }

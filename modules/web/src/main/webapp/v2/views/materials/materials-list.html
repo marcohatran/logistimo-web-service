@@ -55,9 +55,7 @@
         </div>
         <div ng-hide="noMaterialsFound">
             <div class="row action-bar">
-                    <export-data mail-id="mailId" export-type="materials"
-                                       entity-id="entityId" mat-id="mid" entity-name="entity.nm" mat-name="material.mnm"
-                                       ebf="ebf" rows="numFound"></export-data>
+                <export callback="exportData()"></export>
                 <button ng-show="iSU || dp.mr" type="button" class="btn btn-sm btn-default" ng-click="deleteMaterials()">
                     {{resourceBundle['remove']}}
                 </button>
@@ -89,9 +87,7 @@
                 </div>
             </div>
             <div class="row action-bar" ng-show="filtered.length > 10">
-                    <export-data mail-id="mailId" export-type="materials"
-                                 entity-id="entityId" mat-id="mid" entity-name="entity.nm" mat-name="material.mnm"
-                                 ebf="ebf" rows="numFound"></export-data>
+                <export callback="exportData()"></export>
                 <button ng-show="iSU || dp.mr" type="button" class="btn btn-sm btn-default" ng-click="deleteMaterials()">
                     {{resourceBundle['remove']}}
                 </button>

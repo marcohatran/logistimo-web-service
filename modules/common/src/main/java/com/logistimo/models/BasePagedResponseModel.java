@@ -28,7 +28,7 @@ import java.io.Serializable;
 /**
  * Created by kumargaurav on 13/04/17.
  */
-public class BasePagedResponseModel implements Serializable {
+public class BasePagedResponseModel extends BaseResponseModel implements Serializable {
 
   protected static final long serialVersionUID = 1L;
   public Integer total;

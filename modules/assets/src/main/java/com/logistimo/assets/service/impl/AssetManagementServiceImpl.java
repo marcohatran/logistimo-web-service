@@ -30,6 +30,7 @@ import com.logistimo.assets.entity.IAsset;
 import com.logistimo.assets.entity.IAssetRelation;
 import com.logistimo.assets.entity.IAssetStatus;
 import com.logistimo.assets.models.AssetModel;
+import com.logistimo.assets.models.AssetModels;
 import com.logistimo.assets.service.AssetManagementService;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.config.models.AssetSystemConfig;
@@ -1091,5 +1092,19 @@ public class AssetManagementServiceImpl implements AssetManagementService {
       pm.close();
     }
     return null;
+  }
+
+  @Override
+  public void updateWorkingStatus(IAsset asset, AssetModels.AssetStatus assetStatusModel)
+      throws ServiceException {
+    PersistenceManager pm = PMF.get().getPersistenceManager();
+    try {
+      AssetUtil.updateDeviceWorkingStatus(assetStatusModel, asset);
+      asset.setUpdatedOn(new Date());
+      asset.setUpdatedBy(assetStatusModel.stub);
+      pm.makePersistent(asset);
+    } finally{
+      pm.close();
+    }
   }
 }

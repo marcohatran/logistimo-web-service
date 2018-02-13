@@ -57,7 +57,6 @@ import com.logistimo.config.models.SMSConfig;
 import com.logistimo.config.models.SupportConfig;
 import com.logistimo.config.models.SyncConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
-import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.SourceConstants;
@@ -120,6 +119,7 @@ import com.logistimo.utils.JobUtil;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.StringUtil;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
@@ -888,7 +888,7 @@ public class RESTUtil {
     if (errMsg != null) {
       throw new ServiceException(errMsg);
     }
-
+    SecurityMgr.setSessionDetails(u);
     return u;
   }
 
@@ -1095,7 +1095,7 @@ public class RESTUtil {
   public static Results getLinkedKiosks(Long kioskId, String linkType, String userId,
                                         boolean getUsersForKiosk, DomainConfig dc,
                                         PageParams pageParams, Optional<Date> modifiedSinceDate) {
-    Vector<Hashtable<String, String>> linkedKiosks = new Vector<>();
+    Vector<Hashtable> linkedKiosks = new Vector<>();
     Results results = null;
     String cursor = null;
     try {
@@ -1129,7 +1129,7 @@ public class RESTUtil {
             // Set the route index / tag, if present
             k.setRouteIndex(link.getRouteIndex());
             k.setRouteTag(link.getRouteTag());
-            Hashtable<String, String>
+            Hashtable
                 linkedKiosk =
                 k.getMapZ(true,
                     userId); // allow only users created by userId to be editable; others are not editable by this user
@@ -1169,6 +1169,11 @@ public class RESTUtil {
             // Add the disabled batch management flag, if applicable
             if (!k.isBatchMgmtEnabled()) {
               linkedKiosk.put(JsonTagsZ.DISABLE_BATCH_MGMT, "true");
+            }
+
+            List<String> tags = k.getTags();
+            if (CollectionUtils.isNotEmpty(tags)) {
+              linkedKiosk.put(JsonTagsZ.ENTITY_TAG,tags);
             }
             // Add to vector
             linkedKiosks.add(linkedKiosk);
@@ -1365,6 +1370,7 @@ public class RESTUtil {
     Hashtable<String, Object>
         config =
         new Hashtable<>();
+
     if (!isConfigModified(modifiedSinceDate, user.getDomainId())) {
       return config;
     }
@@ -2402,10 +2408,10 @@ public class RESTUtil {
     return parsedRequest;
   }
 
-  private static boolean isConfigModified(Optional<Date> modifiedSinceDate, Long domainId)
+  protected static boolean isConfigModified(Optional<Date> modifiedSinceDate, Long domainId)
       throws ServiceException {
     ConfigurationMgmtService cms = StaticApplicationContext.getBean(
-        ConfigurationMgmtServiceImpl.class);
+        ConfigurationMgmtService.class);
     IConfig config = cms.getConfiguration(IConfig.CONFIG_PREFIX + domainId);
     return !modifiedSinceDate.isPresent() || !modifiedSinceDate.get()
         .after(config.getLastUpdated());

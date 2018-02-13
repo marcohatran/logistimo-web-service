@@ -47,7 +47,9 @@ public class NotificationConstants {
           "com.logistimo.inventory.entity.Transaction:209",
           "com.logistimo.inventory.entity.Transaction:206", "com.logistimo.inventory.entity.Invntry:208",
           "com.logistimo.inventory.entity.Transaction:207",
-          "com.logistimo.inventory.entity.Invntry:201", "com.logistimo.inventory.entity.Invntry:202"};
+          "com.logistimo.inventory.entity.Invntry:201", "com.logistimo.inventory.entity.Invntry:202",
+          "com.logistimo.inventory.entity.Transaction:210","com.logistimo.inventory.entity.Transaction:211"
+      };
   public static String[]
       setupKeys =
       {"com.logistimo.entities.entity.Kiosk:1", "com.logistimo.entities.entity.Kiosk:2",
