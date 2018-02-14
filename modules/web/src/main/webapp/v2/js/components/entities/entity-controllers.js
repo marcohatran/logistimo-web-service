@@ -1355,7 +1355,7 @@ entityControllers.controller('AddMaterialsController', ['$scope', 'matService', 
                         $scope.materials.results = finalMaterials;
                     }
                 } else {
-                    entMaterials.forEach(function (material) {
+                    angular.forEach(entMaterials,function (material) {
                         material.isAdded = true;
                     });
                     $scope.materials = data.data;

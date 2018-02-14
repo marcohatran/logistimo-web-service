@@ -371,7 +371,7 @@ domainCfgControllers.controller('CapabilitiesConfigurationController', ['$scope'
         $scope.cnf = {};
         $scope.uiCnf = {};
         $scope.cap = ["inventory", "orders"];
-        $scope.tm = ["vs", "es", "er", "sc", "wa", "ts", ,"eri","ero", "ns","vo","vp","ep","pi","xi","vh","vt","ct"];
+        $scope.tm = ["vs", "es", "er", "sc", "wa", "ts", "eri", "ero", "ns","vo","vp","ep","pi","xi","vh","vt","ct"];
         $scope.et = ["ents", "csts", "vnds"];
         $scope.loading = false;
         $scope.getCapabilitiesConfiguration = function () {
