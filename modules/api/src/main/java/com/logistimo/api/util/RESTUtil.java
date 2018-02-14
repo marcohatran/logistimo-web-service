@@ -121,6 +121,7 @@ import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.StringUtil;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
@@ -131,6 +132,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.GregorianCalendar;
@@ -1511,17 +1513,28 @@ public class RESTUtil {
       config.put(JsonTagsZ.REASONS_TRANSFER, StringUtil.getCSV(new ArrayList<>(
           new LinkedHashSet<>(Arrays.asList(transferReasons.split(CharacterConstants.COMMA))))));
     }
-
+    // Returns-incoming reasons, if any
+    String retIncReasons = ic.getTransReason(ITransaction.TYPE_RETURNS_INCOMING);
+    if (StringUtils.isNotEmpty(retIncReasons)) {
+      config.put(JsonTagsZ.RETURNS_INCOMING, StringUtil.getCSV(new ArrayList<>(
+          new LinkedHashSet<>(Arrays.asList(retIncReasons.split(CharacterConstants.COMMA))))));
+    }
+    // Returns-outgoing reasons, if any
+    String retOutReasons = ic.getTransReason(ITransaction.TYPE_RETURNS_OUTGOING);
+    if (StringUtils.isNotEmpty(retOutReasons)) {
+      config.put(JsonTagsZ.RETURNS_OUTGOING, StringUtil.getCSV(new ArrayList<>(
+          new LinkedHashSet<>(Arrays.asList(retOutReasons.split(CharacterConstants.COMMA))))));
+    }
     // Reasons by material tag, if any
-    Hashtable<String, Hashtable<String, String>> rsnsByMtag = getReasonsByTag(ic);
-    if (rsnsByMtag != null && !rsnsByMtag.isEmpty()) {
+    Map<String,Map<String,String>> rsnsByMtag = getReasonsByTag(ic);
+    if (MapUtils.isNotEmpty(rsnsByMtag)) {
       config.put(JsonTagsZ.REASONS_BY_TAG, rsnsByMtag);
     }
 
     // Material Status, if any
-    Hashtable<String, Hashtable<String, String>> mStHt = getMaterialStatus(ic);
-    if (mStHt != null && !mStHt.isEmpty()) {
-      config.put(JsonTagsZ.MATERIAL_STATUS_OPERATION, mStHt);
+    Map<String,Map<String,String>> matStatusByType = getMaterialStatusByType(ic);
+    if (MapUtils.isNotEmpty(matStatusByType)) {
+      config.put(JsonTagsZ.MATERIAL_STATUS_OPERATION, matStatusByType);
     }
 
     //Min Max Frequency
@@ -1645,9 +1658,10 @@ public class RESTUtil {
     config.put(JsonTagsZ.NO_LOCAL_LOGIN_WITH_VALID_TOKEN,
         String.valueOf(!dc.isLocalLoginRequired()));
     // Add the config. to capture actual date of trans, if enabled
-    Hashtable<String, Hashtable<String, String>> aTdHt = getActualTransDate(ic);
-    if (aTdHt != null && !aTdHt.isEmpty()) {
-      config.put(JsonTagsZ.CAPTURE_ACTUAL_TRANSACTION_DATE, aTdHt);
+    // Hashtable<String, Hashtable<String, String>> atdByType = getActualTransDate(ic);
+    Map<String,Map<String,String>> atdByType = getActualTransDateConfigByType(ic);
+    if (MapUtils.isNotEmpty(atdByType)) {
+      config.put(JsonTagsZ.CAPTURE_ACTUAL_TRANSACTION_DATE, atdByType);
     }
     if (dc.isDisableOrdersPricing()) {
       config.put(JsonTagsZ.DISABLE_ORDER_PRICING, String.valueOf(dc.isDisableOrdersPricing()));
@@ -2048,127 +2062,95 @@ public class RESTUtil {
     return expiredBatches;
   }
 
-  private static Hashtable<String, Hashtable<String, String>> getReasonsByTag(InventoryConfig ic) {
-    Hashtable<String, Hashtable<String, String>> rsnsByMtag = new Hashtable<>(1);
-    // For Issue
-    Map<String, String> iMtagReasons = ic.getImTransReasons();
-    if (iMtagReasons != null && !iMtagReasons.isEmpty()) {
-      Hashtable<String, String> iMtagReasonsHt = getHashtableFromMap(iMtagReasons);
-      if (iMtagReasonsHt != null && !iMtagReasonsHt.isEmpty()) {
-        rsnsByMtag.put(JsonTagsZ.ISSUES, iMtagReasonsHt);
-      }
+  protected static Map<String, Map<String, String>> getReasonsByTag(InventoryConfig ic) {
+    Map<String, Map<String, String>> rsnsByMtag = new HashMap<>(1,1);
+    if (MapUtils.isNotEmpty(ic.getImTransReasons())) {
+      rsnsByMtag.put(JsonTagsZ.ISSUES, ic.getImTransReasons());
     }
-    // For Receipt
-    Map<String, String> rMtagReasons = ic.getRmTransReasons();
-    if (rMtagReasons != null && !rMtagReasons.isEmpty()) {
-      Hashtable<String, String> rMTagReasonsHt = getHashtableFromMap(rMtagReasons);
-      if (rMTagReasonsHt != null && !rMTagReasonsHt.isEmpty()) {
-        rsnsByMtag.put(JsonTagsZ.RECEIPTS, rMTagReasonsHt);
-      }
+    if (MapUtils.isNotEmpty(ic.getRmTransReasons())) {
+      rsnsByMtag.put(JsonTagsZ.RECEIPTS, ic.getRmTransReasons());
     }
-    // For Physical stock count
-    Map<String, String> scMtagReasons = ic.getSmTransReasons();
-    if (scMtagReasons != null && !scMtagReasons.isEmpty()) {
-      Hashtable<String, String> scMTagReasonsHt = getHashtableFromMap(scMtagReasons);
-      if (scMTagReasonsHt != null && !scMTagReasonsHt.isEmpty()) {
-        rsnsByMtag.put(JsonTagsZ.PHYSICAL_STOCK, scMTagReasonsHt);
-      }
+    if (MapUtils.isNotEmpty(ic.getSmTransReasons())) {
+      rsnsByMtag.put(JsonTagsZ.PHYSICAL_STOCK, ic.getSmTransReasons());
     }
-    // For Wastage/Discards
-    Map<String, String> wMtagReasons = ic.getDmTransReasons();
-    if (wMtagReasons != null && !wMtagReasons.isEmpty()) {
-      Hashtable<String, String> wMTagReasonsHt = getHashtableFromMap(wMtagReasons);
-      if (wMTagReasonsHt != null && !wMTagReasonsHt.isEmpty()) {
-        rsnsByMtag.put(JsonTagsZ.DISCARDS, wMTagReasonsHt);
-      }
+    if (MapUtils.isNotEmpty(ic.getDmTransReasons())) {
+      rsnsByMtag.put(JsonTagsZ.DISCARDS, ic.getDmTransReasons());
     }
-    // For Transfer
-    Map<String, String> tMtagReasons = ic.getTmTransReasons();
-    if (tMtagReasons != null && !tMtagReasons.isEmpty()) {
-      Hashtable<String, String> tMTagReasonsHt = getHashtableFromMap(tMtagReasons);
-      if (tMTagReasonsHt != null && !tMTagReasonsHt.isEmpty()) {
-        rsnsByMtag.put(JsonTagsZ.TRANSFER, tMTagReasonsHt);
-      }
+    if (MapUtils.isNotEmpty(ic.getTmTransReasons())) {
+      rsnsByMtag.put(JsonTagsZ.TRANSFER, ic.getDmTransReasons());
     }
-
+    if (MapUtils.isNotEmpty(ic.getMtagRetIncRsns())) {
+      rsnsByMtag.put(JsonTagsZ.RETURNS_INCOMING, ic.getMtagRetIncRsns());
+    }
+    if (MapUtils.isNotEmpty(ic.getMtagRetOutRsns())) {
+      rsnsByMtag.put(JsonTagsZ.RETURNS_OUTGOING, ic.getMtagRetOutRsns());
+    }
     return rsnsByMtag;
   }
 
-  private static Hashtable<String, String> getHashtableFromMap(Map<String, String> map) {
-    Hashtable<String, String> ht = null;
-    if (map != null && !map.isEmpty()) {
-      ht = new Hashtable<>();
-      Set<String> keys = map.keySet();
-      if (!keys.isEmpty()) {
-        for (String key : keys) {
-          String
-              value =
-              StringUtil.getCSV(new ArrayList<>(new LinkedHashSet<>(
-                  Arrays.asList(map.get(key).split(CharacterConstants.COMMA)))));
-          ht.put(key, value);
-        }
-      }
+  protected static Map<String, Map<String, String>> getMaterialStatusByType(
+      InventoryConfig ic) {
+    Map<String, Map<String, String>> matStatusByType = new HashMap<>(1,1);
+    Map<String, MatStatusConfig> matStatusConfigByType = ic.getMatStatusConfigMapByType();
+    if (MapUtils.isNotEmpty(matStatusConfigByType)) {
+      matStatusConfigByType.entrySet().forEach(entry -> {
+            if (MapUtils.isNotEmpty(getMaterialStatusConfigAsMap(entry.getValue()))) {
+              matStatusByType.put(entry.getKey(), getMaterialStatusConfigAsMap(entry.getValue()));
+            }
+          }
+      );
     }
-    return ht;
+    return matStatusByType;
   }
 
-  protected static Hashtable<String, Hashtable<String, String>> getMaterialStatus(
-      InventoryConfig ic) {
-    Hashtable<String, Hashtable<String, String>> mStHt = new Hashtable<>(1);
-    Map<String, MatStatusConfig> mStMap = ic.getMatStatusConfigMapByType();
-    if (mStMap != null && !mStMap.isEmpty()) {
-      Set<String> transTypes = mStMap.keySet();
-      if (!transTypes.isEmpty()) {
-        for (String transType : transTypes) {
-          MatStatusConfig mStConfig = mStMap.get(transType);
-          Hashtable<String, String> mTyStHt = new Hashtable<>();
-          if (mStConfig != null) {
-            if(mStConfig.getDf() !=null) {
-              String df = StringUtil.getUniqueValueCSV(mStConfig.getDf());
-              if (StringUtils.isNotEmpty(df)) {
-                mTyStHt.put(JsonTagsZ.ALL, df);
-              }
-            }
-            if(mStConfig.getEtsm() != null) {
-              String etsm = StringUtil.getUniqueValueCSV(mStConfig.getEtsm());
-              if (StringUtils.isNotEmpty(etsm)) {
-                mTyStHt.put(JsonTagsZ.TEMP_SENSITVE_MATERIALS, etsm);
-              }
-            }
-            if (!mTyStHt.isEmpty()) {
-              mTyStHt.put(JsonTagsZ.MANDATORY, String.valueOf(mStConfig.isStatusMandatory()));
-              mStHt.put(transType, mTyStHt);
-            }
-          }
-        }
+  protected static Map<String,String> getMaterialStatusConfigAsMap(MatStatusConfig matStatusConfig) {
+    if (matStatusConfig == null) {
+      return Collections.emptyMap();
+    }
+    Map<String,String> matStatusMap = new HashMap<>(1,1);
+    if(StringUtils.isNotEmpty(matStatusConfig.getDf())) {
+      String df = StringUtil.getUniqueValueCSV(matStatusConfig.getDf());
+      if (StringUtils.isNotEmpty(df)) {
+        matStatusMap.put(JsonTagsZ.ALL, df);
       }
     }
-    return mStHt;
+    if(StringUtils.isNotEmpty(matStatusConfig.getEtsm())) {
+      String etsm = StringUtil.getUniqueValueCSV(matStatusConfig.getEtsm());
+      if (StringUtils.isNotEmpty(etsm)) {
+        matStatusMap.put(JsonTagsZ.TEMP_SENSITVE_MATERIALS, etsm);
+      }
+    }
+    if (MapUtils.isNotEmpty(matStatusMap)) {
+      matStatusMap.put(JsonTagsZ.MANDATORY, String.valueOf(matStatusConfig.isStatusMandatory()));
+    }
+    return matStatusMap;
   }
 
-  private static Hashtable<String, Hashtable<String, String>> getActualTransDate(
+  protected static Map<String, Map<String, String>> getActualTransDateConfigByType(
       InventoryConfig ic) {
-    Hashtable<String, Hashtable<String, String>> aTdHt = new Hashtable<>();
-    Map<String, ActualTransConfig> aTdMap = ic.getActualTransConfigMapByType();
-    if (aTdMap != null && !aTdMap.isEmpty()) {
-      Set<String> transTypes = aTdMap.keySet();
-      if (!transTypes.isEmpty()) {
-        for (String transType : transTypes) {
-          ActualTransConfig aTdConf = aTdMap.get(transType);
-          Hashtable<String, String> aTyTdHt = new Hashtable<>();
-          if (aTdConf != null) {
-            String ty = aTdConf.getTy();
-            if (ty != null && !ty.isEmpty()) {
-              aTyTdHt.put(JsonTagsZ.TYPE, ty);
+    Map<String, Map<String, String>> actualTransDateConfigByType = new HashMap<>(1, 1);
+    Map<String, ActualTransConfig> actualTransConfigByType = ic.getActualTransConfigMapByType();
+    if (MapUtils.isNotEmpty(actualTransConfigByType)) {
+      actualTransConfigByType.entrySet().forEach(entry -> {
+            if (MapUtils.isNotEmpty(getActualTransConfigByType(entry.getValue()))) {
+              actualTransDateConfigByType
+                  .put(entry.getKey(), getActualTransConfigByType(entry.getValue()));
             }
           }
-          if (!aTyTdHt.isEmpty()) {
-            aTdHt.put(transType, aTyTdHt);
-          }
-        }
-      }
+      );
     }
-    return aTdHt;
+    return actualTransDateConfigByType;
+  }
+
+  protected static Map<String,String> getActualTransConfigByType(ActualTransConfig actualTransConfig) {
+    if (actualTransConfig == null) {
+      return Collections.emptyMap();
+    }
+    Map<String,String> actualTransConfigMap = new HashMap<>(1,1);
+    if (StringUtils.isNotEmpty(actualTransConfig.getTy())) {
+      actualTransConfigMap.put(JsonTagsZ.TYPE, actualTransConfig.getTy());
+    }
+    return actualTransConfigMap;
   }
 
   private static Hashtable<String, String> getInventoryTagsToHide(Serializable config) {

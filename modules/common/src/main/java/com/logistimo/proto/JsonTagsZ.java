@@ -232,6 +232,9 @@ public class JsonTagsZ {
   public static final String TRANSACTION_TYPE = "ty";
   public static final String TRANSFER = "t";
   public static final String TRANSFER_RELEASE = "tr";
+  public static final String RETURNS_INCOMING = "ri";
+  public static final String RETURNS_OUTGOING = "ro";
+
   //transporter for orders
   public static final String TRANSPORTER = "trsp";
   public static final String

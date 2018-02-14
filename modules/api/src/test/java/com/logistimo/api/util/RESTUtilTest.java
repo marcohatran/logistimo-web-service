@@ -25,12 +25,14 @@ package com.logistimo.api.util;
 
 import com.logistimo.config.entity.Config;
 import com.logistimo.config.entity.IConfig;
+import com.logistimo.config.models.ActualTransConfig;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.InventoryConfig;
 import com.logistimo.config.models.MatStatusConfig;
 import com.logistimo.config.models.OrdersConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
 import com.logistimo.context.StaticApplicationContext;
+import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.materials.entity.IMaterialManufacturers;
 import com.logistimo.materials.entity.MaterialManufacturers;
 import com.logistimo.proto.JsonTagsZ;
@@ -40,12 +42,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.context.ApplicationContext;
 
+import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -53,6 +55,7 @@ import java.util.Optional;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -72,22 +75,6 @@ public class RESTUtilTest {
         configurationMgmtService);
     StaticApplicationContext applicationContext = new StaticApplicationContext();
     applicationContext.setApplicationContext(mockApplicationContext);
-  }
-  @Test
-  public void testGetMaterialStatus() throws Exception {
-
-    InventoryConfig ic = new InventoryConfig();
-    MatStatusConfig mc = new MatStatusConfig();
-    mc.setDf("hello,hello,,");
-    ic.setMatStatusConfigByType("i",mc);
-    Hashtable<String, Hashtable<String, String>>
-        nestedHashTable =
-        RESTUtil.getMaterialStatus(ic);
-    Hashtable<String, String> values = nestedHashTable.get("i");
-    String uniqueMStatVal = values.get(JsonTagsZ.ALL);
-    assertNotNull(uniqueMStatVal);
-    assertEquals("Status does not match", "hello",uniqueMStatVal);
-
   }
 
   @Test
@@ -197,5 +184,176 @@ public class RESTUtilTest {
     mfrs.setQuantity(qty);
     manufacturers.add(mfrs);
     return manufacturers;
+  }
+
+  @Test
+  public void testGetReasonsByTag() {
+    InventoryConfig inventoryConfig = new InventoryConfig();
+    inventoryConfig.setImtransreasons(getMaterialTagsReasonsMap());
+    inventoryConfig.setRmtransreasons(getMaterialTagsReasonsMap());
+    inventoryConfig.setSmtransreasons(getMaterialTagsReasonsMap());
+    inventoryConfig.setTmtransreasons(getMaterialTagsReasonsMap());
+    inventoryConfig.setDmtransreasons(getMaterialTagsReasonsMap());
+    inventoryConfig.setMtagRetIncRsns(getMaterialTagsReasonsMap());
+    inventoryConfig.setMtagRetOutRsns(getMaterialTagsReasonsMap());
+    Map<String,Map<String,String>> matTagRsnsMap = RESTUtil.getReasonsByTag(inventoryConfig);
+    assertNotNull(matTagRsnsMap);
+    assertTrue(!matTagRsnsMap.isEmpty());
+    assertTrue(matTagRsnsMap.size() == 7);
+    assertEquals(getMaterialTagsReasonsMap(), matTagRsnsMap.get(JsonTagsZ.ISSUES));
+    assertEquals(getMaterialTagsReasonsMap(), matTagRsnsMap.get(JsonTagsZ.RECEIPTS));
+    assertEquals(getMaterialTagsReasonsMap(), matTagRsnsMap.get(JsonTagsZ.PHYSICAL_STOCK));
+    assertEquals(getMaterialTagsReasonsMap(), matTagRsnsMap.get(JsonTagsZ.TRANSFER));
+    assertEquals(getMaterialTagsReasonsMap(), matTagRsnsMap.get(JsonTagsZ.DISCARDS));
+    assertEquals(getMaterialTagsReasonsMap(), matTagRsnsMap.get(JsonTagsZ.RETURNS_INCOMING));
+    assertEquals(getMaterialTagsReasonsMap(), matTagRsnsMap.get(JsonTagsZ.RETURNS_OUTGOING));
+  }
+
+  private Map<String,String> getMaterialTagsReasonsMap() {
+    Map<String,String> matTagReasonsMap = new HashMap<>(3,1);
+    matTagReasonsMap.put("mtag1", "reason1");
+    matTagReasonsMap.put("mtag2","reason2,reason3,reason4");
+    matTagReasonsMap.put("mtag3","reason5");
+    return matTagReasonsMap;
+  }
+
+  @Test
+  public void testGetReasonsByTagWithNullValues() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    InventoryConfig inventoryConfig = new InventoryConfig();
+    inventoryConfig.setImtransreasons(null);
+    inventoryConfig.setRmtransreasons(null);
+    inventoryConfig.setSmtransreasons(null);
+    inventoryConfig.setTmtransreasons(null);
+    inventoryConfig.setDmtransreasons(null);
+    inventoryConfig.setMtagRetIncRsns(null);
+    inventoryConfig.setMtagRetOutRsns(null);
+
+    Map<String,Map<String,String>> matTagRsnsMap = RESTUtil.getReasonsByTag(inventoryConfig);
+    assertNotNull(matTagRsnsMap);
+    assertTrue(matTagRsnsMap.isEmpty());
+  }
+
+  @Test
+  public void testGetMaterialStatusByType() {
+    InventoryConfig inventoryConfig = new InventoryConfig();
+    inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_ISSUE, getMaterialStatusConfig());
+    inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_RECEIPT, getMaterialStatusConfig());
+    inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_PHYSICALCOUNT, getMaterialStatusConfig());
+    inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_TRANSFER, getMaterialStatusConfig());
+    inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_WASTAGE, getMaterialStatusConfig());
+    inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_RETURNS_INCOMING, getMaterialStatusConfig());
+    inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_RETURNS_OUTGOING, getMaterialStatusConfig());
+
+    Map<String,Map<String,String>> matStatusByType = RESTUtil.getMaterialStatusByType(
+        inventoryConfig);
+    assertNotNull(matStatusByType);
+    assertTrue(!matStatusByType.isEmpty());
+    assertTrue(matStatusByType.size() == 7);
+    assertEquals(getExpectedMatStatusMap(), matStatusByType.get(JsonTagsZ.ISSUES));
+    assertEquals(getExpectedMatStatusMap(), matStatusByType.get(JsonTagsZ.RECEIPTS));
+    assertEquals(getExpectedMatStatusMap(), matStatusByType.get(JsonTagsZ.PHYSICAL_STOCK));
+    assertEquals(getExpectedMatStatusMap(), matStatusByType.get(JsonTagsZ.TRANSFER));
+    assertEquals(getExpectedMatStatusMap(), matStatusByType.get(JsonTagsZ.DISCARDS));
+    assertEquals(getExpectedMatStatusMap(), matStatusByType.get(JsonTagsZ.RETURNS_INCOMING));
+    assertEquals(getExpectedMatStatusMap(), matStatusByType.get(JsonTagsZ.RETURNS_OUTGOING));
+  }
+
+  private MatStatusConfig getMaterialStatusConfig() {
+    MatStatusConfig matStatusConfig = new MatStatusConfig();
+    matStatusConfig.setDf("status1,status2");
+    matStatusConfig.setEtsm("tempstatus1,tempstatus2");
+    matStatusConfig.setStatusMandatory(true);
+    return matStatusConfig;
+  }
+
+  private Map<String,String> getExpectedMatStatusMap() {
+    Map<String,String> expectedMatStatusMap = new HashMap<>(3,1);
+    expectedMatStatusMap.put(JsonTagsZ.ALL, "status1,status2");
+    expectedMatStatusMap.put(JsonTagsZ.TEMP_SENSITVE_MATERIALS, "tempstatus1,tempstatus2");
+    expectedMatStatusMap.put(JsonTagsZ.MANDATORY, String.valueOf(true));
+    return expectedMatStatusMap;
+  }
+
+  @Test
+  public void testGetMaterialStatusByTypeWithNullValues() {
+    InventoryConfig inventoryConfig = new InventoryConfig();
+    inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_ISSUE, null);
+    inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_RECEIPT, null);
+    inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_PHYSICALCOUNT, null);
+    inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_TRANSFER, null);
+    inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_WASTAGE, null);
+    inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_RETURNS_INCOMING, null);
+    inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_RETURNS_OUTGOING, null);
+
+    Map<String,Map<String,String>> matStatusByType = RESTUtil.getMaterialStatusByType(
+        inventoryConfig);
+    assertNotNull(matStatusByType);
+    assertTrue(matStatusByType.isEmpty());
+  }
+
+  @Test
+  public void testGetActualTransDateConfigByType() {
+    InventoryConfig inventoryConfig = new InventoryConfig();
+    inventoryConfig.setActualTransDateByType(ITransaction.TYPE_ISSUE, getActualTransactionConfig());
+    inventoryConfig.setActualTransDateByType(ITransaction.TYPE_RECEIPT,
+        getActualTransactionConfig());
+    inventoryConfig.setActualTransDateByType(ITransaction.TYPE_PHYSICALCOUNT,
+        getActualTransactionConfig());
+    inventoryConfig.setActualTransDateByType(ITransaction.TYPE_TRANSFER,
+        getActualTransactionConfig());
+    inventoryConfig.setActualTransDateByType(ITransaction.TYPE_WASTAGE,
+        getActualTransactionConfig());
+    inventoryConfig.setActualTransDateByType(ITransaction.TYPE_RETURNS_INCOMING,
+        getActualTransactionConfig());
+    inventoryConfig.setActualTransDateByType(ITransaction.TYPE_RETURNS_OUTGOING,
+        getActualTransactionConfig());
+
+    Map<String,Map<String,String>> actualTransDateByType = RESTUtil.getActualTransDateConfigByType(
+        inventoryConfig);
+    assertNotNull(actualTransDateByType);
+    assertTrue(!actualTransDateByType.isEmpty());
+    assertTrue(actualTransDateByType.size() == 7);
+    assertEquals(getExpectedActualTransMap(), actualTransDateByType.get(JsonTagsZ.ISSUES));
+    assertEquals(getExpectedActualTransMap(), actualTransDateByType.get(JsonTagsZ.RECEIPTS));
+    assertEquals(getExpectedActualTransMap(), actualTransDateByType.get(JsonTagsZ.PHYSICAL_STOCK));
+    assertEquals(getExpectedActualTransMap(), actualTransDateByType.get(JsonTagsZ.TRANSFER));
+    assertEquals(getExpectedActualTransMap(), actualTransDateByType.get(JsonTagsZ.DISCARDS));
+    assertEquals(getExpectedActualTransMap(), actualTransDateByType.get(JsonTagsZ.RETURNS_INCOMING));
+    assertEquals(getExpectedActualTransMap(), actualTransDateByType.get(JsonTagsZ.RETURNS_OUTGOING));
+  }
+
+  private ActualTransConfig getActualTransactionConfig() {
+    ActualTransConfig actualTransConfig = new ActualTransConfig();
+    actualTransConfig.setTy("1");
+    return actualTransConfig;
+  }
+
+  private Map<String,String> getExpectedActualTransMap() {
+    Map<String,String> expectedActualTransDateMap = new HashMap<>(1,1);
+    expectedActualTransDateMap.put(JsonTagsZ.TYPE,"1");
+    return expectedActualTransDateMap;
+  }
+
+  @Test
+  public void testGetActualTransDateConfigByTypeWithNullValues() {
+    InventoryConfig inventoryConfig = new InventoryConfig();
+    inventoryConfig.setActualTransDateByType(ITransaction.TYPE_ISSUE, null);
+    inventoryConfig.setActualTransDateByType(ITransaction.TYPE_RECEIPT,
+        null);
+    inventoryConfig.setActualTransDateByType(ITransaction.TYPE_PHYSICALCOUNT,
+        null);
+    inventoryConfig.setActualTransDateByType(ITransaction.TYPE_TRANSFER,
+        null);
+    inventoryConfig.setActualTransDateByType(ITransaction.TYPE_WASTAGE,
+        null);
+    inventoryConfig.setActualTransDateByType(ITransaction.TYPE_RETURNS_INCOMING,
+        null);
+    inventoryConfig.setActualTransDateByType(ITransaction.TYPE_RETURNS_OUTGOING,
+        null);
+
+    Map<String,Map<String,String>> actualTransDateByType = RESTUtil.getActualTransDateConfigByType(
+        inventoryConfig);
+    assertNotNull(actualTransDateByType);
+    assertTrue(actualTransDateByType.isEmpty());
   }
 }
