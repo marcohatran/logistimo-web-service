@@ -1658,7 +1658,6 @@ public class RESTUtil {
     config.put(JsonTagsZ.NO_LOCAL_LOGIN_WITH_VALID_TOKEN,
         String.valueOf(!dc.isLocalLoginRequired()));
     // Add the config. to capture actual date of trans, if enabled
-    // Hashtable<String, Hashtable<String, String>> atdByType = getActualTransDate(ic);
     Map<String,Map<String,String>> atdByType = getActualTransDateConfigByType(ic);
     if (MapUtils.isNotEmpty(atdByType)) {
       config.put(JsonTagsZ.CAPTURE_ACTUAL_TRANSACTION_DATE, atdByType);
