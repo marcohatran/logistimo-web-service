@@ -74,7 +74,7 @@ exportControllers.controller('ExportListController', ['$scope', '$location', 'ex
 
         function addJobTypeNames(rows) {
             angular.forEach(rows, function (row) {
-                var dispName = $scope.resourceBundle['export.' + row.sbty.toLowerCase()];
+                var dispName = $scope.resourceBundle['exports.' + row.sbty.toLowerCase()];
                 row['dispType'] = checkNotNullEmpty(dispName) ? dispName : row.sbty;
             });
         }
