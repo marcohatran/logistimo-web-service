@@ -249,7 +249,7 @@ userControllers.controller('UsersListController', ['$scope', 'userService', 'req
                 titles: {
                     filters: getCaption()
                 },
-                module: "Users",
+                module: "users",
                 templateId: "s_users"
             })
         };

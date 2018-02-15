@@ -584,7 +584,7 @@ entityControllers.controller('EntityListController', ['$scope', 'entityService',
                 titles: {
                     filters: getCaption()
                 },
-                module: "Entity",
+                module: "kiosks",
                 templateId: "s_entities"
             })
         };

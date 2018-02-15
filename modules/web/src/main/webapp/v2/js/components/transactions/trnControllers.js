@@ -181,7 +181,7 @@ trnControllers.controller('TransactionsCtrl', ['$scope', 'trnService', 'domainCf
                 titles: {
                     filters: getCaption()
                 },
-                module: "Transactions",
+                module: "transactions",
                 templateId: "transactions"
             })
         };
