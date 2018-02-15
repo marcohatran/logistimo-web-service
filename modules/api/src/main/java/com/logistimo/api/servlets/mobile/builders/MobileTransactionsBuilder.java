@@ -86,6 +86,7 @@ public class MobileTransactionsBuilder {
   private UsersService usersService;
   private MaterialCatalogService materialCatalogService;
   private InventoryManagementService inventoryManagementService;
+  private MobileInventoryBuilder mobileInventoryBuilder;
 
   @Autowired
   public void setEntitiesService(EntitiesService entitiesService) {
@@ -105,6 +106,11 @@ public class MobileTransactionsBuilder {
   @Autowired
   public void setInventoryManagementService(InventoryManagementService inventoryManagementService) {
     this.inventoryManagementService = inventoryManagementService;
+  }
+
+  @Autowired
+  public void setMobileInventoryBuilder(MobileInventoryBuilder mobileInventoryBuilder) {
+    this.mobileInventoryBuilder = mobileInventoryBuilder;
   }
 
   /**
@@ -287,7 +293,7 @@ public class MobileTransactionsBuilder {
      }
      MobileInvModel
          inv =
-         new MobileInventoryBuilder().buildMobileInvModel(inventory, domainId, userId);
+         mobileInventoryBuilder.buildMobileInvModel(inventory, domainId, userId);
      if (inv != null) {
        mobInvList.add(inv);
      }

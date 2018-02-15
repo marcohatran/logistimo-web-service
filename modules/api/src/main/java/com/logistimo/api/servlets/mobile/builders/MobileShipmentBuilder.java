@@ -69,6 +69,7 @@ public class MobileShipmentBuilder {
   private MaterialCatalogService materialCatalogService;
   private ActivityService activityService;
   private UsersService usersService;
+  private MobileConversationBuilder mobileConversationBuilder;
 
   @Autowired
   public void setInventoryManagementService(InventoryManagementService inventoryManagementService) {
@@ -93,6 +94,11 @@ public class MobileShipmentBuilder {
   @Autowired
   public void setUsersService(UsersService usersService) {
     this.usersService = usersService;
+  }
+
+  @Autowired
+  public void setMobileConversationBuilder(MobileConversationBuilder mobileConversationBuilder) {
+    this.mobileConversationBuilder = mobileConversationBuilder;
   }
 
   List<MobileShipmentModel> buildMobileShipmentModels(Long orderId, Locale locale, String timezone,
@@ -198,10 +204,9 @@ public class MobileShipmentBuilder {
         }
       }
       // Conversations
-      MobileConversationBuilder mcb = new MobileConversationBuilder();
       MobileConversationModel
           mcm =
-          mcb.build(MobileConversationBuilder.CONVERSATION_OBJECT_TYPE_SHIPMENT, s.getShipmentId(),
+          mobileConversationBuilder.build(MobileConversationBuilder.CONVERSATION_OBJECT_TYPE_SHIPMENT, s.getShipmentId(),
               locale, timezone);
       if (mcm != null && mcm.cnt > 0) {
         msm.cmnts = mcm;
