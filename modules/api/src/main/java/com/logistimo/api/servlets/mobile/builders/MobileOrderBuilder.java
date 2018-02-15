@@ -91,6 +91,7 @@ public class MobileOrderBuilder {
   private ActivityService activityService;
   private InventoryManagementService inventoryManagementService;
   private IAccountingService accountingService;
+  private MobileDemandBuilder mobileDemandBuilder;
 
   @Autowired
   public void setUsersService(UsersService usersService) {
@@ -115,6 +116,11 @@ public class MobileOrderBuilder {
   @Autowired
   public void setAccountingService(IAccountingService accountingService) {
     this.accountingService = accountingService;
+  }
+
+  @Autowired
+  public void setMobileDemandBuilder(MobileDemandBuilder mobileDemandBuilder) {
+    this.mobileDemandBuilder = mobileDemandBuilder;
   }
 
   public MobileOrderModel build(IOrder o, Locale locale, String timezone, boolean includeItems,
@@ -242,11 +248,10 @@ public class MobileOrderBuilder {
     mom.popt = o.getPaymentOption();
 
     if (includeItems) {
-      MobileDemandBuilder mdb = new MobileDemandBuilder();
       List<IDemandItem> diList = (List<IDemandItem>) o.getItems();
       List<MobileDemandItemModel>
           mdimList =
-          mdb.buildMobileDemandItemModels(diList, locale, timezone, includeBatchDetails);
+          mobileDemandBuilder.buildMobileDemandItemModels(diList, locale, timezone, includeBatchDetails);
       if (mdimList != null && !mdimList.isEmpty()) {
         mom.mt = mdimList;
       }
