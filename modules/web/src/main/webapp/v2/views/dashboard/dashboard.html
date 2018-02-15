@@ -33,6 +33,9 @@
             <li ng-hide="hbUTag" ng-class="{enable: subview == 'activity'}"><a
                     href="#/dashboard/activity/" ng-show="hasDashbaccess && !tempOnlyAU && (dashboardConfig.ape || dashboardConfig.ipe)">Activity</a>
             </li>
+            <li ng-class="{enable: subview == 'customdashboard'}"><a
+                    href="#/dashboard/customdashboard/" ng-show="hasDashbaccess && dashboardConfig.edm && !tempOnlyAU">{{resourceBundle['custom.dashboards']}}</a>
+            </li>
             <!--<li ng-class="{enable: subview == 'hierarchy'}"><a
                     href="#/dashboard/hierarchy/" ng-show="iAdm && !tempOnlyAU && (dashboardConfig.ope || dashboardConfig.rpe)">Hierarchy chart</a>
             </li>-->
@@ -50,6 +53,9 @@
         </div>
         <div ng-switch-when="activity">
             <div ng-include="'views/dashboard/dashboard-activity.html'"></div>
+        </div>
+        <div ng-switch-when="customdashboard">
+            <div ng-include="'views/dashboards/list-dashboards.html'"></div>
         </div>
         <!--<div ng-switch-when="hierarchy">
             <div ng-include="'views/home/hierarchy.html'"></div>

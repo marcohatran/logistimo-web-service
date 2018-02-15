@@ -122,7 +122,7 @@
                             <a href="#/dashboard/activity">Activity</a></li>
                         <li ng-if="hasDashbaccess && !tempOnlyAU && (dashboardConfig.ope || dashboardConfig.rpe)"><a
                                 href="#/dashboard/orders">Orders</a></li>
-                        <li ng-if="hasDashbaccess && !tempOnlyAU && (dashboardConfig.ope || dashboardConfig.rpe)"><a
+                        <li ng-if="hasDashbaccess && dashboardConfig.edm && !tempOnlyAU"><a
                                 href="#/dashboard/customdashboard">{{resourceBundle['custom.dashboards']}}</a></li>
                         <li ng-repeat="item in dashboards" ng-show="item.isConfd"><a
                                 href="#/dashboard/view/{{item.dbId}}">{{item.nm}}</a></li>
