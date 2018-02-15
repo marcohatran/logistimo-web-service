@@ -92,6 +92,10 @@ public class MobileOrderBuilder {
   private InventoryManagementService inventoryManagementService;
   private IAccountingService accountingService;
   private MobileDemandBuilder mobileDemandBuilder;
+  private MobileConversationBuilder mobileConversationBuilder;
+  private MobileApprovalResponseBuilder mobileApprovalResponseBuilder;
+  private MobileInventoryBuilder mobileInventoryBuilder;
+  private MobileShipmentBuilder mobileShipmentBuilder;
 
   @Autowired
   public void setUsersService(UsersService usersService) {
@@ -121,6 +125,26 @@ public class MobileOrderBuilder {
   @Autowired
   public void setMobileDemandBuilder(MobileDemandBuilder mobileDemandBuilder) {
     this.mobileDemandBuilder = mobileDemandBuilder;
+  }
+
+  @Autowired
+  public void setMobileConversationBuilder(MobileConversationBuilder mobileConversationBuilder) {
+    this.mobileConversationBuilder = mobileConversationBuilder;
+  }
+
+  @Autowired
+  public void setMobileApprovalResponseBuilder(MobileApprovalResponseBuilder mobileApprovalResponseBuilder) {
+    this.mobileApprovalResponseBuilder = mobileApprovalResponseBuilder;
+  }
+
+  @Autowired
+  public void setMobileInventoryBuilder(MobileInventoryBuilder mobileInventoryBuilder) {
+    this.mobileInventoryBuilder = mobileInventoryBuilder;
+  }
+
+  @Autowired
+  public void setMobileShipmentBuilder(MobileShipmentBuilder mobileShipmentBuilder) {
+    this.mobileShipmentBuilder = mobileShipmentBuilder;
   }
 
   public MobileOrderModel build(IOrder o, Locale locale, String timezone, boolean includeItems,
@@ -273,19 +297,17 @@ public class MobileOrderBuilder {
     }
 
     // Shipment data
-    MobileShipmentBuilder msb = new MobileShipmentBuilder();
     List<MobileShipmentModel>
         msList =
-        msb.buildMobileShipmentModels(o.getOrderId(), locale, timezone, includeShipmentItems,
+        mobileShipmentBuilder.buildMobileShipmentModels(o.getOrderId(), locale, timezone, includeShipmentItems,
             includeBatchDetails);
     if (msList != null && !msList.isEmpty()) {
       mom.shps = msList;
     }
     // Conversations
-    MobileConversationBuilder mcb = new MobileConversationBuilder();
     MobileConversationModel
         mcm =
-        mcb.build(MobileConversationBuilder.CONVERSATION_OBJECT_TYPE_ORDER,
+        mobileConversationBuilder.build(MobileConversationBuilder.CONVERSATION_OBJECT_TYPE_ORDER,
             o.getOrderId().toString(), locale, timezone);
     if (mcm != null && mcm.cnt > 0) {
       mom.cmnts = mcm;
@@ -304,13 +326,13 @@ public class MobileOrderBuilder {
       mom.apprvl = new MobileApprovalResponse();
       ApprovalResponse
           purchaseApproval =
-          new MobileApprovalResponseBuilder().buildApprovalResponse(o, IOrder.PURCHASE_ORDER);
+          mobileApprovalResponseBuilder.buildApprovalResponse(o, IOrder.PURCHASE_ORDER);
       if (purchaseApproval != null) {
         mom.apprvl.prc = purchaseApproval;
       }
       ApprovalResponse
           salesApproval =
-          new MobileApprovalResponseBuilder().buildApprovalResponse(o, IOrder.SALES_ORDER);
+          mobileApprovalResponseBuilder.buildApprovalResponse(o, IOrder.SALES_ORDER);
       if (salesApproval != null) {
         mom.apprvl.sle = salesApproval;
       }
@@ -338,7 +360,6 @@ public class MobileOrderBuilder {
       Results<IInvntry> results =
           inventoryManagementService.getInventory(new InventoryFilters().withKioskId(userKioskId).withMaterialIds(midList),
               null);
-      MobileInventoryBuilder mobileInventoryBuilder = new MobileInventoryBuilder();
       if (results != null) {
         mobileOrderModel.inv = results.getResults().stream().map(invntry -> mobileInventoryBuilder
             .buildMobileInvModel(invntry, domainId, mobileOrderModel.ubid))

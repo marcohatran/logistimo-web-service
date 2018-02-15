@@ -512,7 +512,7 @@ public class TransDataServlet extends JsonRestServlet {
               null,
               false, null);
       List<ITransaction> transactions = (List<ITransaction>) results.getResults();
-      MobileTransactionsBuilder mobileTransactionsBuilder = new MobileTransactionsBuilder();
+      MobileTransactionsBuilder mobileTransactionsBuilder = StaticApplicationContext.getBean(MobileTransactionsBuilder.class);
       mobileTransactionsModel =
           mobileTransactionsBuilder.build(transactions, kioskId, locale, timezone);
     } finally {
