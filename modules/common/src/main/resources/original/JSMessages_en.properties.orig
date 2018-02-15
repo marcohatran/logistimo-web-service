@@ -1231,3 +1231,5 @@ dashboard.overview=Overview dashboard
 activity.default.period=Default period for activity
 dashboard.lower=dashboard
 default.asset.type=Default asset types
+config.view.assets=View assets
+config.change.status.assets=Change asset status

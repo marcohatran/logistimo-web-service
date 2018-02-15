@@ -372,7 +372,7 @@ domainCfgControllers.controller('CapabilitiesConfigurationController', ['$scope'
         $scope.cnf = {};
         $scope.uiCnf = {};
         $scope.cap = ["inventory", "orders"];
-        $scope.tm = ["vs", "es", "er", "sc", "wa", "ts", "eri", "ero", "ns", "vo", "vp", "ep", "pi", "xi", "vh", "vt", "ct"];
+        $scope.tm = ["vs", "es", "er", "sc", "wa", "ts", "eri", "ero", "ns", "vo", "vp", "ep", "pi", "xi", "vh", "vt", "ct", "va", "cas"];
         $scope.et = ["ents", "csts", "vnds"];
         $scope.loading = false;
         $scope.getCapabilitiesConfiguration = function () {
@@ -588,6 +588,20 @@ domainCfgControllers.controller('CapabilitiesConfigurationController', ['$scope'
                 if ($scope.uiCnf.tm.indexOf('ct') == -1 && $scope.uiCnf.tm.indexOf('vt') == -1) {
                     $scope.uiCnf.tm.push("vt");
                     $scope.uiCnf.tm.push("ct");
+                }
+            }
+        };
+
+        $scope.toggleAssets = function (type) {
+            if(type == 'v') {
+                if($scope.uiCnf.tm.indexOf('va') != -1 && $scope.uiCnf.tm.indexOf('cas') != -1) {
+                    $scope.uiCnf.tm.splice($scope.uiCnf.tm.indexOf('cas'), 1);
+                    $scope.uiCnf.tm.splice($scope.uiCnf.tm.indexOf('va'), 1);
+                }
+            } else {
+                if($scope.uiCnf.tm.indexOf('va') == -1 && $scope.uiCnf.tm.indexOf('cas') == -1) {
+                    $scope.uiCnf.tm.push("va");
+                    $scope.uiCnf.tm.push("cas");
                 }
             }
         };
