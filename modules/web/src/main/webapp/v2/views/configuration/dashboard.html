@@ -39,7 +39,7 @@
                     <div class="row">
                         <div class="col-sm-12">
                             <div class="title-heading">
-                                General
+                                {{resourceBundle['general']}}
                             </div>
                         </div>
                     </div>
@@ -56,7 +56,7 @@
                     <div class="row mt10">
                         <div class="col-sm-12">
                             <div class="form-group">
-                                <label class="col-sm-3 control-label">Exclude tags</label>
+                                <label class="col-sm-3 control-label">{{resourceBundle['exclude']}} {{resourceBundle['tags.lower']}}</label>
                                 <div class="col-sm-4">
                                     <tag-select tags-model="db.exetgo" place-holder="Select tag" type="'entity'" force-no-udf="'true'"></tag-select>
                                 </div>
@@ -78,14 +78,14 @@
                     <div class="row">
                         <div class="col-sm-12">
                             <div class="title-heading">
-                                Temperature
+                                {{resourceBundle['temperature']}}
                             </div>
                         </div>
                     </div>
                     <div class="row mt10">
                         <div class="col-sm-12">
                             <div class="form-group">
-                                <label class="col-sm-3 control-label">Temperature states to exclude by default</label>
+                                <label class="col-sm-3 control-label">{{resourceBundle['temperature.states.default.exclude']}}</label>
                                 <div class="col-sm-4">
                                     <lg-uib-select multiple="multiple" query="filterStatus(q)" ui-model="db.exetsta" place-holder="None"> </lg-uib-select>
                                 </div>
@@ -97,14 +97,14 @@
                     <div class="row">
                         <div class="col-sm-12">
                             <div class="title-heading">
-                                Overview dashboard
+                                {{resourceBundle['dashboard.overview']}}
                             </div>
                         </div>
                     </div>
                     <div class="row mt10">
                         <div class="col-sm-12">
                             <div class="form-group">
-                                <label class="col-sm-3 control-label">Default period for activity</label>
+                                <label class="col-sm-3 control-label">{{resourceBundle['activity.default.period']}}</label>
                                 <div class="col-sm-4">
                                     <select ng-model="db.aper" class="form-control">
                                         <option value="1">1 day</option>
@@ -122,7 +122,7 @@
                     <div class="row">
                         <div class="col-sm-12">
                             <div class="title-heading">
-                                {{resourceBundle['home.activity']}} dashboard
+                                {{resourceBundle['home.activity']}} {{resourceBundle['dashboard.lower']}}
                             </div>
                         </div>
                     </div>
@@ -248,6 +248,25 @@
                                 <label class="col-sm-3 control-label">{{resourceBundle['conf.db.mat.fil']}}</label>
                                 <div class="col-sm-4">
                                     <tag-select tags-model="db.dimtgo" place-holder="Select tag" type="'material'" multiple="'false'" force-no-udf="'true'"></tag-select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bgr">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="title-heading">
+                                {{resourceBundle['asset']}} {{resourceBundle['dashboard.lower']}}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt10">
+                        <div class="col-sm-12">
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">{{resourceBundle['default.asset.type']}}</label>
+                                <div class="col-sm-4">
+                                    <lg-uib-select multiple="multiple" query="filterAssets(q)" ui-model="db.asset" place-holder="All"> </lg-uib-select>
                                 </div>
                             </div>
                         </div>

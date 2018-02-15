@@ -270,6 +270,7 @@ public class DashboardConfig implements Serializable {
     private static final String EXCLUDE_TEMP_STATUS_TAG = "exts";
     private static final String ACTIVITY_PERIOD = "aper";
     private static final String DISABLE_BY_USER_TAG = "dutg";
+    private static final String DEFAULT_ASSET_TYPES = "dats";
 
     public String dmtg;
     public String dimtg;
@@ -281,6 +282,7 @@ public class DashboardConfig implements Serializable {
     public String exet;
     public String exts;
     public String dutg;
+    public String dats;
 
     public DBOverviewConfig() {
     }
@@ -297,6 +299,7 @@ public class DashboardConfig implements Serializable {
         exts = json.optString(EXCLUDE_TEMP_STATUS_TAG);
         aper = json.optString(ACTIVITY_PERIOD);
         dutg = json.optString(DISABLE_BY_USER_TAG);
+        dats = json.optString(DEFAULT_ASSET_TYPES);
       } catch (Exception ignored) {
       }
     }
@@ -313,6 +316,7 @@ public class DashboardConfig implements Serializable {
       json.put(EXCLUDE_TEMP_STATUS_TAG, exts);
       json.put(ACTIVITY_PERIOD, aper);
       json.put(DISABLE_BY_USER_TAG, dutg);
+      json.put(DEFAULT_ASSET_TYPES, dats);
       return json;
     }
   }
