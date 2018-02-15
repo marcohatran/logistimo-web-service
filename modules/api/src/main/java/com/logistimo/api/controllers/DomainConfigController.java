@@ -2595,6 +2595,9 @@ public class DomainConfigController {
       if (model.exts != null) {
         dbOverviewConfig.exts = StringUtil.getCSV(model.exts);
       }
+      if (model.dats != null) {
+        dbOverviewConfig.dats = StringUtil.getCSV(model.dats);
+      }
       dashboardConfig.setActivityPanelConfig(actPanelConfig);
       dashboardConfig.setRevenuePanelConfig(rvnPanelConfig);
       dashboardConfig.setOrderPanelConfig(ordPanelConfig);

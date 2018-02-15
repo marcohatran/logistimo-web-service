@@ -72,6 +72,7 @@ public class SMSController {
   private SMSBuilder smsBuilder;
   private UsersService usersService;
   private InventoryManagementService inventoryManagementService;
+  private MobileTransactionsBuilder mobileTransactionsBuilder;
 
   @Autowired
   public void setSmsBuilder(SMSBuilder smsBuilder) {
@@ -86,6 +87,11 @@ public class SMSController {
   @Autowired
   public void setInventoryManagementService(InventoryManagementService inventoryManagementService) {
     this.inventoryManagementService = inventoryManagementService;
+  }
+
+  @Autowired
+  public void setMobileTransactionsBuilder(MobileTransactionsBuilder mobileTransactionsBuilder) {
+    this.mobileTransactionsBuilder = mobileTransactionsBuilder;
   }
 
   /**
@@ -210,7 +216,7 @@ public class SMSController {
                                                       Map<Long, List<ErrorDetailModel>> midErrorDetailModelsMap,
                                                       Long domainId, boolean isDuplicate) {
     MobileUpdateInvTransResponse mobUpdateInvTransResp =
-        new MobileTransactionsBuilder()
+        mobileTransactionsBuilder
             .buildMobileUpdateInvTransResponse(domainId, model.getUserId(), model.getKioskId(),
                 model.getPartialId(),
                 null, midErrorDetailModelsMap, populateMaterialList(model));
