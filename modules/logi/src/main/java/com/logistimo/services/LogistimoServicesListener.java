@@ -25,12 +25,17 @@ package com.logistimo.services;
 
 import com.logistimo.AppFactory;
 import com.logistimo.accounting.entity.Account;
+import com.logistimo.activity.entity.Activity;
 import com.logistimo.assets.entity.Asset;
 import com.logistimo.assets.entity.AssetAttribute;
 import com.logistimo.assets.entity.AssetRelation;
 import com.logistimo.assets.entity.AssetStatus;
+import com.logistimo.bulletinboard.entity.BulletinBoard;
 import com.logistimo.config.entity.Config;
 import com.logistimo.constants.Constants;
+import com.logistimo.conversations.entity.Conversation;
+import com.logistimo.conversations.entity.Message;
+import com.logistimo.dashboards.entity.Dashboard;
 import com.logistimo.domains.entity.Domain;
 import com.logistimo.domains.entity.DomainLink;
 import com.logistimo.entities.entity.Kiosk;
@@ -119,7 +124,8 @@ public class LogistimoServicesListener implements ServletContextListener {
               UserAccount.class, UserToKiosk.class, Asset.class, AssetAttribute.class,
               AssetStatus.class,
               AssetRelation.class, HandlingUnit.class, HandlingUnitContent.class,
-              MaterialManufacturers.class};
+              MaterialManufacturers.class, Conversation.class, Message.class, Activity.class,
+              Dashboard.class, BulletinBoard.class};
 
       PersistenceManager pm = null;
       try {

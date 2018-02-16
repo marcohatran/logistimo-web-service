@@ -23,7 +23,6 @@
 
 package com.logistimo.api.models;
 
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -46,7 +45,7 @@ public class OrderStatusModel {
   /**
    * Expected fulfilment date
    */
-  public Date efd;
+  public String efd;
   /**
    * Package size
    */

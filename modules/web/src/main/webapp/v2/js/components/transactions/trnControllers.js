@@ -165,7 +165,7 @@ trnControllers.controller('TransactionsCtrl', ['$scope', 'trnService', 'domainCf
             }else{
                 mtag=checkNotNullEmpty($scope.tag)?$scope.tag:undefined;
             }
-
+            $scope.showLoading();
             exportService.exportData({
                 from_date: formatDate2Url($scope.from) || undefined,
                 end_date: formatDate2Url($scope.to) || undefined,
@@ -181,9 +181,15 @@ trnControllers.controller('TransactionsCtrl', ['$scope', 'trnService', 'domainCf
                 titles: {
                     filters: getCaption()
                 },
-                module: "Transactions",
+                module: "transactions",
                 templateId: "transactions"
-            })
+            }).then(function (data) {
+                $scope.showSuccess(data.data);
+            }).catch(function error(msg) {
+                $scope.showErrorMsg(msg);
+            }).finally(function(){
+                $scope.hideLoading();
+            });
         };
         $scope.fetch = function () {
             $scope.transactions = {results:[]};

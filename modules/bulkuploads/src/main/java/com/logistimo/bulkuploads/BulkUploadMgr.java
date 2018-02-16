@@ -2640,6 +2640,7 @@ public class BulkUploadMgr {
 
     } catch (Exception e) {
       ec.messages.add("Error: " + e.getMessage());
+      xLogger.warn("Error while processing entity uploaded data:" , e);
     }
     xLogger.fine("Exiting processKioskEntity");
     return ec;
