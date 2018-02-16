@@ -24,7 +24,7 @@
 var ordControllers = angular.module('ordControllers', []);
 ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgService', 'entityService', 'requestContext', '$location', 'exportService',
     function ($scope, ordService, domainCfgService, entityService, requestContext, $location, exportService) {
-        $scope.wparams = [["etag", "etag"], ["otag", "otag"], ["status", "status"], ["o", "offset"], ["s", "size"], ["eid", "entity.id"], ["otype", "otype", "sle"], ["from", "from", "", formatDate2Url], ["to", "to", "", formatDate2Url], ["oid", "orderId"], ["rid", "referenceId"], ["approval_status","approval_status"]];
+        $scope.wparams = [["etag", "etag"], ["otag", "otag"], ["status", "status"], ["o", "offset"], ["s", "size"], ["eid", "entity.id"], ["otype", "otype", "sle"], ["from", "from", "", formatDate2Url], ["to", "to", "", formatDate2Url], ["oid", "orderId"], ["rid", "referenceId"], ["approval_status", "approval_status"]];
         $scope.orders;
         $scope.otype;
         $scope.localFilters = ['entity', 'status', 'dateModel', 'from', 'to', 'ordId', 'refId', 'etag', 'tpdos', 'etag', 'otag', 'approval_status'];
@@ -47,17 +47,17 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
         }).catch(function error(msg) {
             $scope.showErrorMsg(msg);
         });
-        $scope.openOrder = function(di, isMap){
-            if(typeof di === 'object') {
+        $scope.openOrder = function (di, isMap) {
+            if (typeof di === 'object') {
                 if (di.oty == 0) {
                     $location.path('/orders/transfers/detail/' + di.id);
-                } else if(checkNotNullEmpty(isMap)) {
+                } else if (checkNotNullEmpty(isMap)) {
                     $location.path('/orders/detail/' + di.id).search({map: 'true'});
                 } else {
                     $location.path('/orders/detail/' + di.id);
                 }
             } else {
-                if($scope.ordType == 'trn') {
+                if ($scope.ordType == 'trn') {
                     $location.path('/orders/transfers/detail/' + di);
                 } else {
                     $location.path('/orders/detail/' + di);
@@ -66,7 +66,7 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
         };
         $scope.selectAll = function (newval) {
             $scope.selectedOrderIds.splice(0, $scope.selectedOrderIds.length);
-            if(newval) {
+            if (newval) {
                 var index = 0;
                 for (var item in $scope.filtered) {
                     $scope.selectedOrderIds[index++] = $scope.filtered[item].id;
@@ -94,7 +94,7 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
             $scope.otype = requestContext.getParam("otype");
             $scope.orderId = $scope.ordId = requestContext.getParam("oid");
             $scope.hideOrder = false;
-            if(firstTimeInit) {
+            if (firstTimeInit) {
                 delete $location.$$search.rid;
                 $scope.referenceId = null;
                 $location.$$compose();
@@ -107,7 +107,7 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
             if (typeof  $scope.showEntityFilter === 'undefined') {
                 $scope.showEntityFilter = true;
             }
-            if($scope.ordType == "trn") {
+            if ($scope.ordType == "trn") {
                 $scope.type = "2";
             }
             var defaultFetchOrder = true;
@@ -118,14 +118,14 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
                     }
 
                 } else {
-                    if(firstTimeInit && checkNotNullEmpty($scope.defaultEntityId)){
+                    if (firstTimeInit && checkNotNullEmpty($scope.defaultEntityId)) {
                         $location.$$search.eid = $scope.defaultEntityId;
                         $location.$$compose();
                         $scope.entity = {id: $scope.defaultEntityId, nm: ""};
                         defaultFetchOrder = false;
-                    }else{
+                    } else {
                         $scope.entity = null;
-                        if(checkNotNullEmpty($scope.otype) && $scope.otype != "sle" && !$scope.iMan){
+                        if (checkNotNullEmpty($scope.otype) && $scope.otype != "sle" && !$scope.iMan) {
                             $scope.otype = "sle";
                             triggerFetch = false;
                         }
@@ -133,18 +133,101 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
                 }
             }
             $scope.exRow = [];
-            if(firstTimeInit && defaultFetchOrder) {
+            if (firstTimeInit && defaultFetchOrder) {
                 $scope.fetch();
             }
             return triggerFetch;
         };
+
+        function getCaption() {
+            var caption = getFilterTitle($scope.entity, $scope.resourceBundle['kiosk'], 'nm');
+            caption += getFilterTitle(getStatusLabel($scope.status), $scope.resourceBundle['status']);
+            caption += getFilterTitle(formatDate2Url($scope.from), $scope.resourceBundle['from']);
+            caption += getFilterTitle(formatDate2Url($scope.to), $scope.resourceBundle['to']);
+            caption += getFilterTitle($scope.referenceId, $scope.resourceBundle['referenceid']);
+            caption += getFilterTitle(getApprovalStatusLabel($scope.approval_status), $scope.resourceBundle['approval.status']);
+            caption += getFilterTitle(checkNullEmpty($scope.entity) ? $scope.etag : "", $scope.resourceBundle['kiosk'] + " " + $scope.resourceBundle['tag.lower']);
+            caption += getFilterTitle($scope.otag, $scope.resourceBundle['order'] + " " + $scope.resourceBundle['tag.lower']);
+
+
+            return caption;
+        }
+
+        function getApprovalStatusLabel(status) {
+            switch (status) {
+                case 'pn':
+                    return $scope.resourceBundle['order.pending'];
+                case 'cn':
+                    return $scope.resourceBundle['approvals.cancelled'];
+                case 'rj':
+                    return $scope.resourceBundle['approvals.rejected'];
+                case 'ap':
+                    return $scope.resourceBundle['approvals.approved'];
+                case 'ex':
+                    return $scope.resourceBundle['approvals.expired'];
+                default:
+                    return $scope.resourceBundle['all'];
+            }
+        }
+
+        function getStatusLabel(status) {
+            switch (status) {
+                case 'pn':
+                    return $scope.resourceBundle['order.pending'];
+                case 'cf':
+                    return $scope.resourceBundle['order.confirmed'];
+                case 'bo':
+                    return $scope.resourceBundle['order.backordered'];
+                case 'cm':
+                    return $scope.resourceBundle['order.shipped'];
+                case 'fl':
+                    return $scope.resourceBundle['order.fulfilled'];
+                case 'cn':
+                    return $scope.resourceBundle['order.cancelled'];
+                default:
+                    return $scope.resourceBundle['all'];
+            }
+        }
+
+
+        $scope.exportData = function () {
+            var eid, ktag = undefined;
+            if (checkNotNullEmpty($scope.entity)) {
+                eid = $scope.entity.id;
+            } else {
+                ktag = checkNotNullEmpty($scope.etag) ? $scope.etag : undefined;
+            }
+            var oty = $scope.type == '2' ? '0' : '1';
+            var module = oty == 0 ? 'transfers' : 'orders';
+            var templateId = oty == 0 ? 'transfers' : 'orders'
+
+            exportService.exportData({
+                from_date: checkNotNullEmpty($scope.from) ? formatDate2Url($scope.from) : undefined,
+                end_date: checkNotNullEmpty($scope.to) ? formatDate2Url($scope.to) : undefined,
+                entity_id: eid,
+                ktag: ktag,
+                reference_id: $scope.referenceId,
+                linked_kid: $scope.lEntityId,
+                order_subtype: $scope.otype,
+                status: $scope.status,
+                approval_status: $scope.approval_status,
+                otag: $scope.otag,
+                tag_type: $scope.tType,
+                order_type: oty,
+                titles: {
+                    filters: getCaption()
+                },
+                module: module,
+                templateId: templateId
+            })
+        };
         $scope.setData = function (data) {
-            if (data != null && checkNotNullEmpty(data.results) && data.results.length > 0 ) {
+            if (data != null && checkNotNullEmpty(data.results) && data.results.length > 0) {
                 $scope.orders = data;
                 $scope.setResults($scope.orders);
                 $scope.initLoad = false;
                 var orderData = $scope.orders.results;
-                if(checkNotNullEmpty($scope.referenceId) && orderData.length == 1) {
+                if (checkNotNullEmpty($scope.referenceId) && orderData.length == 1) {
                     $scope.orderId = orderData[0].id;
                 }
             } else {
@@ -166,15 +249,15 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
             $scope.orders = {};
             $scope.loading = true;
             $scope.showLoading();
-            if($scope.mxE && checkNullEmpty($scope.entity) ){
+            if ($scope.mxE && checkNullEmpty($scope.entity)) {
                 $scope.setData(null);
                 return;
             }
-            if(checkNotNullEmpty($scope.entity)) {
+            if (checkNotNullEmpty($scope.entity)) {
                 $scope.otag = null;
                 $scope.etag = null;
             }
-            if(checkNotNullEmpty($scope.otag)){
+            if (checkNotNullEmpty($scope.otag)) {
                 $scope.tType = "or";
                 $scope.ft = $scope.otag;
             } else {
@@ -184,10 +267,10 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
             var oty = $scope.type == '2' ? '0' : '1';
             if (checkNotNullEmpty($scope.entity)) {
                 $scope.ft = undefined;
-                ordService.getEntityOrders($scope.entity.id, $scope.otype, $scope.status,$scope.tType, $scope.ft, formatDate($scope.from), formatDate($scope.to), $scope.offset, $scope.size, oty, $scope.referenceId, $scope.approval_status).then(function (data) {
-                    if(checkNotNullEmpty(data.data)) {
+                ordService.getEntityOrders($scope.entity.id, $scope.otype, $scope.status, $scope.tType, $scope.ft, formatDate($scope.from), formatDate($scope.to), $scope.offset, $scope.size, oty, $scope.referenceId, $scope.approval_status).then(function (data) {
+                    if (checkNotNullEmpty(data.data)) {
                         $scope.setData(data.data);
-                        if(checkNotNullEmpty(data.data.results) && data.data.results.length == 1 && checkNotNullEmpty($scope.referenceId)) {
+                        if (checkNotNullEmpty(data.data.results) && data.data.results.length == 1 && checkNotNullEmpty($scope.referenceId)) {
                             $scope.openOrder($scope.orderId);
                         }
                     }
@@ -202,9 +285,9 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
                 });
             } else {
                 ordService.getOrders($scope.otype, $scope.status, $scope.tType, $scope.ft, formatDate($scope.from), formatDate($scope.to), $scope.offset, $scope.size, oty, $scope.referenceId, $scope.approval_status).then(function (data) {
-                    if(checkNotNullEmpty(data.data)){
+                    if (checkNotNullEmpty(data.data)) {
                         $scope.setData(data.data);
-                        if(checkNotNullEmpty(data.data.results) && data.data.results.length == 1 && checkNotNullEmpty($scope.referenceId)) {
+                        if (checkNotNullEmpty(data.data.results) && data.data.results.length == 1 && checkNotNullEmpty($scope.referenceId)) {
                             $scope.openOrder($scope.orderId);
                         }
                     }
@@ -232,7 +315,7 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
         };
         ListingController.call(this, $scope, requestContext, $location);
         $scope.init(true);
-        $scope.select = function (index,isMap) {
+        $scope.select = function (index, isMap) {
             if ($scope.exRow.length == 0) {
                 for (var i = 0; i < $scope.orders.results.length; i++) {
                     $scope.exRow.push(false);
@@ -246,7 +329,10 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
         $scope.toggle = function (index) {
             $scope.select(index);
         };
-        $scope.metadata = [{'title': 'Sl.No.', 'field': 'sno'}, {'title': 'Order', 'field': 'id'}, {'title': 'Items', 'field': 'size'},
+        $scope.metadata = [{'title': 'Sl.No.', 'field': 'sno'}, {'title': 'Order', 'field': 'id'}, {
+            'title': 'Items',
+            'field': 'size'
+        },
             {'title': 'Price', 'field': 'price'}, {'title': 'Status', 'field': 'status'},
             {'title': 'Entity', 'field': 'enm'}, {'title': 'Created on', 'field': 'cdt'},
             {'title': 'Vendor', 'field': 'vnm'}];
@@ -263,21 +349,21 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
                 localOrder.hva = order.hva;
             }
         };
-        $scope.exportOrders = function (type,extraParams) {
+        $scope.exportOrders = function (type, extraParams) {
             if (checkNotNullEmpty($scope.status)) {
                 extraParams += "&status=" + $scope.status;
             }
-            if(checkNotNullEmpty($scope.entity)){
-                if(checkNotNullEmpty($scope.entity.id)){
-                    if(checkNotNullEmpty($scope.otype)){
+            if (checkNotNullEmpty($scope.entity)) {
+                if (checkNotNullEmpty($scope.entity.id)) {
+                    if (checkNotNullEmpty($scope.otype)) {
                         extraParams += "&otype=" + $scope.otype;
                     }
                 }
             }
             var oty = $scope.type == '2' ? '0' : '1';
             extraParams += '&orderType=' + oty;
-            exportService.scheduleBatchExport(type,extraParams).then(function (data) {
-                if(data != "download complete") {
+            exportService.scheduleBatchExport(type, extraParams).then(function (data) {
+                if (data != "download complete") {
                     $scope.showSuccess($scope.resourceBundle['export.success1'] + ' ' + $scope.mailId + ' ' + $scope.resourceBundle['export.success2'] + ' ' + $scope.resourceBundle['exportstatusinfo2'] + ' ' + data.data + '. ' + $scope.resourceBundle['exportstatusinfo1']);
                     $scope.selAll = false;
                     $scope.selectAll($scope.selAll);
@@ -287,29 +373,29 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
                 $scope.showErrorMsg(msg);
             });
         };
-        $scope.$watch("etag",function(newVal){
-            if(checkNotNullEmpty(newVal)){
+        $scope.$watch("etag", function (newVal) {
+            if (checkNotNullEmpty(newVal)) {
                 $scope.otag = null;
             }
         });
-        $scope.$watch("otag",function(newVal){
-            if(checkNotNullEmpty(newVal)){
+        $scope.$watch("otag", function (newVal) {
+            if (checkNotNullEmpty(newVal)) {
                 $scope.etag = null;
             }
         });
-        $scope.$watch("refId", function(newVal) {
-           if(checkNullEmpty(newVal)) {
-               $scope.referenceId = null;
-           }
+        $scope.$watch("refId", function (newVal) {
+            if (checkNullEmpty(newVal)) {
+                $scope.referenceId = null;
+            }
         });
-        $scope.$watch("apStatus", function(newVal) {
-            if(checkNullEmpty(newVal)) {
+        $scope.$watch("apStatus", function (newVal) {
+            if (checkNullEmpty(newVal)) {
                 $scope.approvalStatus = null;
             }
         });
 
-        $scope.resetFilters = function(){
-            if($scope.showEntityFilter) {
+        $scope.resetFilters = function () {
+            if ($scope.showEntityFilter) {
                 $scope.entity = null;
             }
             $scope.status = "";
@@ -331,16 +417,16 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
             $scope.showMore = undefined;
         };
 
-        $scope.showOrder = function(orderId){
-            if(checkNotNullEmpty(orderId)){
+        $scope.showOrder = function (orderId) {
+            if (checkNotNullEmpty(orderId)) {
                 $scope.orderId = orderId;
                 $scope.hideOrder = true;
                 $scope.openOrder(orderId);
             }
         };
 
-        $scope.showOrderByReferenceId = function(referenceId) {
-            if(checkNotNullEmpty(referenceId)) {
+        $scope.showOrderByReferenceId = function (referenceId) {
+            if (checkNotNullEmpty(referenceId)) {
                 $scope.referenceId = referenceId;
             }
         }
@@ -350,249 +436,250 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
 ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', 'userService', 'domainCfgService',
     'invService', 'entityService', '$timeout', 'requestContext', '$uibModal', 'trnService', 'conversationService', '$window', 'ORDERSTATUSTEXT', 'approvalService',
     function ($scope, ordService, ORDER, userService, domainCfgService, invService, entityService, $timeout, requestContext, $uibModal, trnService, conversationService, $window, ORDERSTATUSTEXT, approvalService) {
-            $scope.ORDER = ORDER;
-            $scope.ORDERSTATUSTEXT = ORDERSTATUSTEXT;
-            $scope.edit = {mat: false};
-            $scope.payOpts = [];
-            $scope.packSizes = [];
-            $scope.masterIts = [];
+        $scope.ORDER = ORDER;
+        $scope.ORDERSTATUSTEXT = ORDERSTATUSTEXT;
+        $scope.edit = {mat: false};
+        $scope.payOpts = [];
+        $scope.packSizes = [];
+        $scope.masterIts = [];
+        $scope.newStatus = {};
+        $scope.vErrs = {};
+        $scope.dop = '';
+        $scope.saveDisable = false;
+        $scope.saveCounter = 0;
+        $scope.isShipment = false;
+        $scope.isExpand = false;
+        $scope.isreadMore = false;
+        $scope.limitText = 300;
+        $scope.message = "";
+        $scope.selection = "orderDetail";
+        $scope.selectedMaterialIds = [];
+        $scope.shipAvailable = false;
+        $scope.view = 'consignment';
+        $scope.rsn = '';
+        $scope.isBatchItemAvl = false;
+        $scope.today = new Date();
+        $scope.dates = {};
+        $scope.ps = '';
+        $scope.init = function () {
+            $scope.order = undefined;
+            $scope.statusList = [];
+            $scope.administrators = {};
+            $scope.vInventory = null;
+            $scope.inventory = null;
+            $scope.vendor = null;
+            $scope.material = undefined;
             $scope.newStatus = {};
-            $scope.vErrs = {};
-            $scope.dop = '';
-            $scope.saveDisable = false;
-            $scope.saveCounter = 0;
-            $scope.isShipment = false;
-            $scope.isExpand = false;
-            $scope.isreadMore = false;
-            $scope.limitText = 300;
-            $scope.message = "";
-            $scope.selection = "orderDetail";
-            $scope.selectedMaterialIds = [];
-            $scope.shipAvailable = false;
-            $scope.view = 'consignment';
-            $scope.rsn = '';
-            $scope.isBatchItemAvl = false;
-            $scope.today = new Date();
-            $scope.dates = {};
-            $scope.ps = '';
-            $scope.init = function () {
-                $scope.order = undefined;
-                $scope.statusList = [];
-                $scope.administrators = {};
-                $scope.vInventory = null;
-                $scope.inventory = null;
-                $scope.vendor = null;
-                $scope.material = undefined;
-                $scope.newStatus = {};
-                $scope.pmt = {};
-                $scope.statusJSON = undefined;
-                $scope.aCfg = undefined;
-                $scope.oCfg = undefined;
-                $scope.dispMap = false;
-                $scope.sMTShip = [];
-                $scope.oTags = {};
-                $scope.approval = {orderId: "", msg: ""};
-                $scope.cancelPermission = false;
-                $scope.shipPermission = false;
-                $scope.createShipmentPermission = false;
-                $scope.editPermission = false;
-                $scope.confirmPermission = false;
-                $scope.allocatePermission = false;
-                $scope.reOpenPermission = false;
-                if ($scope.lMap) {
-                    $timeout(function () {
-                        $scope.dispMap = true;
-                    }, 1000);
-                }
-                if (requestContext.getParam("oid")) {
-                    $scope.orderId = requestContext.getParam("oid");
-                }
-                if (requestContext.getParam("map")) {
-                    $timeout(function () {
-                        $scope.dispMap = true;
-                    }, 1000);
-                }
-            };
-            $scope.init();
-
-            function getMessageCount() {
-                $scope.showLoading();
-                conversationService.getMessagesByObj('ORDER', $scope.orderId, 0, 1, true).then(function (data) {
-                    if(checkNotNullEmpty(data.data)) {
-                        $scope.messageCnt = data.data.numFound;
-                    }
-                }).catch(function error(msg) {
-                    $scope.showErrorMsg(msg);
-                }).finally(function () {
-                    $scope.hideLoading();
-                });
+            $scope.pmt = {};
+            $scope.statusJSON = undefined;
+            $scope.aCfg = undefined;
+            $scope.oCfg = undefined;
+            $scope.dispMap = false;
+            $scope.sMTShip = [];
+            $scope.oTags = {};
+            $scope.approval = {orderId: "", msg: ""};
+            $scope.cancelPermission = false;
+            $scope.shipPermission = false;
+            $scope.createShipmentPermission = false;
+            $scope.editPermission = false;
+            $scope.confirmPermission = false;
+            $scope.allocatePermission = false;
+            $scope.reOpenPermission = false;
+            if ($scope.lMap) {
+                $timeout(function () {
+                    $scope.dispMap = true;
+                }, 1000);
             }
-            getMessageCount();
-            $scope.setMessageCount = function(count) {
-                $scope.messageCnt = count;
-            };
-            $scope.showLoading();
-            domainCfgService.getOrdersCfg().then(function (data) {
-                $scope.oCfg = data.data;
-                if (checkNotNullEmpty($scope.oCfg.po)) {
-                    $scope.payOpts = $scope.oCfg.po.split(',');
-                    $scope.pmt.po = $scope.payOpts[0];
-                }
-                $scope.dop = $scope.oCfg.dop;
-                if (checkNotNullEmpty($scope.oCfg.ps)) {
-                    $scope.packageSize = $scope.oCfg.ps.split(',');
-                    $scope.packageSize.unshift("");
-                }
-            }).catch(function error(msg) {
-                $scope.showErrorMsg(msg);
-            }).finally(function(){
-                $scope.hideLoading();
-            });
-            $scope.showLoading();
-            trnService.getStatusMandatory().then(function(data) {
-                $scope.transConfig = data.data;
-            }).catch(function error(msg) {
-                $scope.showErrorMsg(msg);
-            }).finally(function() {
-               $scope.hideLoading();
-            });
-            $scope.showLoading();
-            trnService.getMatStatus("i", false).then(function (data) {
-                $scope.matstatus = data.data;
-            }).catch(function error(msg) {
-                $scope.showErrorMsg(msg);
-            }).finally(function() {
-                $scope.hideLoading();
-            });
-            $scope.showLoading();
-            trnService.getMatStatus("i", true).then(function (data) {
-                $scope.tempmatstatus = data.data;
-            }).catch(function error(msg) {
-                $scope.showErrorMsg(msg);
-            }).finally(function() {
-                $scope.hideLoading();
-            });
-            $scope.showLoading();
-            domainCfgService.getAccountingCfg().then(function (data) {
-                $scope.aCfg = data.data;
-            }).catch(function error(msg) {
-                $scope.showErrorMsg(msg);
-            }).finally(function(){
-                $scope.hideLoading();
-            });
+            if (requestContext.getParam("oid")) {
+                $scope.orderId = requestContext.getParam("oid");
+            }
+            if (requestContext.getParam("map")) {
+                $timeout(function () {
+                    $scope.dispMap = true;
+                }, 1000);
+            }
+        };
+        $scope.init();
 
+        function getMessageCount() {
             $scope.showLoading();
-            ordService.getOrderReasons("cor").then(function (data) {
-                $scope.cancelReasons = data.data;
-                if (checkNotNullEmpty($scope.cancelReasons)) {
-                    var rsn = "others";
-                    var isMatched = $scope.cancelReasons.some(function (arval) {
-                        return rsn == arval.toLowerCase();
-                    });
-                    if (!isMatched) {
-                        $scope.cancelReasons = $scope.cancelReasons.concat("Others");
-                    }
-                    $scope.cancelReasons.unshift("");
+            conversationService.getMessagesByObj('ORDER', $scope.orderId, 0, 1, true).then(function (data) {
+                if (checkNotNullEmpty(data.data)) {
+                    $scope.messageCnt = data.data.numFound;
                 }
             }).catch(function error(msg) {
                 $scope.showErrorMsg(msg);
             }).finally(function () {
                 $scope.hideLoading();
             });
+        }
 
-            $scope.showLoading();
-            ordService.getOrderReasons("eqr").then(function (data) {
-                $scope.reasons = data.data;
-                if (checkNotNullEmpty($scope.reasons)) {
-                    var rsn = "others";
-                    var isMatched = $scope.reasons.some(function (arval) {
-                        return rsn == arval.toLowerCase();
-                    });
-                    if (!isMatched) {
-                        $scope.reasons = $scope.reasons.concat("Others");
-                    }
-                    $scope.reasons.unshift("");
+        getMessageCount();
+        $scope.setMessageCount = function (count) {
+            $scope.messageCnt = count;
+        };
+        $scope.showLoading();
+        domainCfgService.getOrdersCfg().then(function (data) {
+            $scope.oCfg = data.data;
+            if (checkNotNullEmpty($scope.oCfg.po)) {
+                $scope.payOpts = $scope.oCfg.po.split(',');
+                $scope.pmt.po = $scope.payOpts[0];
+            }
+            $scope.dop = $scope.oCfg.dop;
+            if (checkNotNullEmpty($scope.oCfg.ps)) {
+                $scope.packageSize = $scope.oCfg.ps.split(',');
+                $scope.packageSize.unshift("");
+            }
+        }).catch(function error(msg) {
+            $scope.showErrorMsg(msg);
+        }).finally(function () {
+            $scope.hideLoading();
+        });
+        $scope.showLoading();
+        trnService.getStatusMandatory().then(function (data) {
+            $scope.transConfig = data.data;
+        }).catch(function error(msg) {
+            $scope.showErrorMsg(msg);
+        }).finally(function () {
+            $scope.hideLoading();
+        });
+        $scope.showLoading();
+        trnService.getMatStatus("i", false).then(function (data) {
+            $scope.matstatus = data.data;
+        }).catch(function error(msg) {
+            $scope.showErrorMsg(msg);
+        }).finally(function () {
+            $scope.hideLoading();
+        });
+        $scope.showLoading();
+        trnService.getMatStatus("i", true).then(function (data) {
+            $scope.tempmatstatus = data.data;
+        }).catch(function error(msg) {
+            $scope.showErrorMsg(msg);
+        }).finally(function () {
+            $scope.hideLoading();
+        });
+        $scope.showLoading();
+        domainCfgService.getAccountingCfg().then(function (data) {
+            $scope.aCfg = data.data;
+        }).catch(function error(msg) {
+            $scope.showErrorMsg(msg);
+        }).finally(function () {
+            $scope.hideLoading();
+        });
+
+        $scope.showLoading();
+        ordService.getOrderReasons("cor").then(function (data) {
+            $scope.cancelReasons = data.data;
+            if (checkNotNullEmpty($scope.cancelReasons)) {
+                var rsn = "others";
+                var isMatched = $scope.cancelReasons.some(function (arval) {
+                    return rsn == arval.toLowerCase();
+                });
+                if (!isMatched) {
+                    $scope.cancelReasons = $scope.cancelReasons.concat("Others");
                 }
-            }).catch(function error(msg) {
-                $scope.showErrorMsg(msg);
-            }).finally(function () {
-                $scope.hideLoading();
-            });
+                $scope.cancelReasons.unshift("");
+            }
+        }).catch(function error(msg) {
+            $scope.showErrorMsg(msg);
+        }).finally(function () {
+            $scope.hideLoading();
+        });
 
-            $scope.showLoading();
-            ordService.getOrderReasons("orr").then(function (data) {
-                $scope.oReasons = data.data;
-                if (checkNotNullEmpty($scope.oReasons)) {
-                    var rsn = "others";
-                    var isMatched = $scope.oReasons.some(function (arval) {
-                        return rsn == arval.toLowerCase();
-                    });
-                    if (!isMatched) {
-                        $scope.oReasons = $scope.oReasons.concat("Others");
-                    }
-                    $scope.oReasons.unshift("");
+        $scope.showLoading();
+        ordService.getOrderReasons("eqr").then(function (data) {
+            $scope.reasons = data.data;
+            if (checkNotNullEmpty($scope.reasons)) {
+                var rsn = "others";
+                var isMatched = $scope.reasons.some(function (arval) {
+                    return rsn == arval.toLowerCase();
+                });
+                if (!isMatched) {
+                    $scope.reasons = $scope.reasons.concat("Others");
                 }
-            }).catch(function error(msg) {
-                $scope.showErrorMsg(msg);
-            }).finally(function () {
-                $scope.hideLoading();
-            });
-            $scope.$watch("edit.mat", function(newVal) {
-               if(newVal) {
-                   $scope.edit.vend = false;
-               }
-            });
+                $scope.reasons.unshift("");
+            }
+        }).catch(function error(msg) {
+            $scope.showErrorMsg(msg);
+        }).finally(function () {
+            $scope.hideLoading();
+        });
 
-            $scope.openView = function (view, selRows, sn) {
-                $scope.sMTShip = [];
-                if (!sn) {
-                    $scope.selection = view;
-                    if (selRows) {
-                        for (var i = 0; i < selRows.length; i++) {
-                            $scope.sMTShip.push($scope.order.its[selRows[i]]);
-                        }
-                    } else {
-                        for (i = 0; i < $scope.order.its.length; i++) {
-                            $scope.order.its[i].nq = "";
-                            $scope.order.its[i].ta = false;
-                        }
+        $scope.showLoading();
+        ordService.getOrderReasons("orr").then(function (data) {
+            $scope.oReasons = data.data;
+            if (checkNotNullEmpty($scope.oReasons)) {
+                var rsn = "others";
+                var isMatched = $scope.oReasons.some(function (arval) {
+                    return rsn == arval.toLowerCase();
+                });
+                if (!isMatched) {
+                    $scope.oReasons = $scope.oReasons.concat("Others");
+                }
+                $scope.oReasons.unshift("");
+            }
+        }).catch(function error(msg) {
+            $scope.showErrorMsg(msg);
+        }).finally(function () {
+            $scope.hideLoading();
+        });
+        $scope.$watch("edit.mat", function (newVal) {
+            if (newVal) {
+                $scope.edit.vend = false;
+            }
+        });
+
+        $scope.openView = function (view, selRows, sn) {
+            $scope.sMTShip = [];
+            if (!sn) {
+                $scope.selection = view;
+                if (selRows) {
+                    for (var i = 0; i < selRows.length; i++) {
+                        $scope.sMTShip.push($scope.order.its[selRows[i]]);
                     }
                 } else {
-                    var allocateComplete = true;
-                    $scope.sMTShip = angular.copy($scope.order.its);
-
-                    $scope.order.its.forEach(function (data) {
-                        if (data.isBa == true) {
-                            $scope.isBatchItemAvl = true;
-                        }
-                    });
-
-                    $scope.sMTShip.forEach(function (data) {
-                        if ($scope.isBatchItemAvl) {
-                            if (data.q != data.astk) {
-                                allocateComplete = false;
-                            }
-                        } else {
-                            data.astk = data.q
-                        }
-                    });
-                    if (allocateComplete) {
-                        $scope.selection = view;
-                    } else {
-                        $scope.showWarning("Please allocate to all materials before shipping the order.");
+                    for (i = 0; i < $scope.order.its.length; i++) {
+                        $scope.order.its[i].nq = "";
+                        $scope.order.its[i].ta = false;
                     }
                 }
-                $scope.sMatList = $scope.sMTShip;
-            };
+            } else {
+                var allocateComplete = true;
+                $scope.sMTShip = angular.copy($scope.order.its);
+
+                $scope.order.its.forEach(function (data) {
+                    if (data.isBa == true) {
+                        $scope.isBatchItemAvl = true;
+                    }
+                });
+
+                $scope.sMTShip.forEach(function (data) {
+                    if ($scope.isBatchItemAvl) {
+                        if (data.q != data.astk) {
+                            allocateComplete = false;
+                        }
+                    } else {
+                        data.astk = data.q
+                    }
+                });
+                if (allocateComplete) {
+                    $scope.selection = view;
+                } else {
+                    $scope.showWarning("Please allocate to all materials before shipping the order.");
+                }
+            }
+            $scope.sMatList = $scope.sMTShip;
+        };
 
         function isOrderPartiallyAllocated() {
-                 if(!$scope.allocate) {
-                     return true;
-                 }
+            if (!$scope.allocate) {
+                return true;
+            }
             var nonAllocatedItemCount = 0;
             var noOfValidItems = 0;
 
-                 $scope.sMTShip = angular.copy($scope.order.its);
+            $scope.sMTShip = angular.copy($scope.order.its);
             var dd = $scope.order.its.some(function (data) {
                 if (data.isBa && data.q != data.astk && data.q > 0) {
                     return true;
@@ -607,145 +694,146 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                 }
             });
             return dd || (nonAllocatedItemCount > 0 && nonAllocatedItemCount != noOfValidItems);
+        }
+
+        $scope.toggleEdit = function (field, open) {
+            if (field == 'etdate' && open) {
+                $scope.dates.edd = parseUrlDate($scope.order.edd);
+            } else if (field == 'efdate' && open) {
+                $scope.dates.efd = parseUrlDate($scope.order.efd);
+            }
+            $scope.edit[field] = !$scope.edit[field];
+        };
+        $scope.toggleBatch = function (type, index) {
+            $scope.order.its[index][type] = !$scope.order.its[index][type];
+        };
+        $scope.expand = function () { // Messagebox expand
+            $scope.isExpand = !$scope.isExpand;
+            if (!$scope.isExpand) {
+                $scope.isreadMore = !$scope.isreadMore;
+                $scope.limitText = 300;
+            }
+        };
+        $scope.readMore = function () { // Message body expand
+            $scope.isreadMore = !$scope.isreadMore;
+            $scope.limitText = $scope.message.length;
+        };
+        $scope.toggleDiscount = function (index) {
+            if (checkNullEmpty($scope.edit.ds)) {
+                $scope.edit.ds = {};
+            }
+            $scope.edit.ds[index] = 1;
+        };
+        $scope.updateStatusList = function () {
+            if (checkNotNullEmpty($scope.statusList)) {
+                for (var i = 0; i < $scope.statusList.length; i++) {
+                    if ($scope.statusList[i] == ORDER.CANCELLED && !$scope.cancelPermission) {
+                        $scope.statusList.splice(i, 1);
+                    }
+                    if ($scope.statusList[i] == ORDER.CONFIRMED && !$scope.confirmPermission) {
+                        $scope.statusList.splice(i, 1);
+                    }
+                    if ($scope.statusList[i] == ORDER.PENDING && !$scope.reOpenPermission) {
+                        $scope.statusList.splice(i, 1);
+                    }
+
+                }
+            }
+        };
+        $scope.checkStatusList = function () {
+            if ($scope.dp.vp) {
+                $scope.statusList = [];
+                return;
+            }
+            var shipmentSize = $scope.shipmentList.length;
+            switch ($scope.order.st) {
+                case ORDER.PENDING:
+                    $scope.statusList = $scope.order.atv ? [ORDER.CONFIRMED] : [];
+                    break;
+                case ORDER.CONFIRMED:
+                    $scope.statusList = $scope.order.atv ? [ORDER.PENDING] : [];
+                    break;
+                case ORDER.COMPLETED:
+                    $scope.statusList = $scope.order.atc && shipmentSize == 1 ? [ORDER.FULFILLED] : [];
+                    break;
+                default:
+                    $scope.statusList = [];
+
             }
 
-            $scope.toggleEdit = function (field,open) {
-                if(field == 'etdate' && open) {
-                    $scope.dates.edd = parseUrlDate($scope.order.edd);
-                } else if(field == 'efdate' && open) {
-                    $scope.dates.efd = parseUrlDate($scope.order.efd);
-                }
-                $scope.edit[field] = !$scope.edit[field];
-            };
-            $scope.toggleBatch = function (type,index) {
-                $scope.order.its[index][type] = !$scope.order.its[index][type];
-            };
-            $scope.expand = function () { // Messagebox expand
-                $scope.isExpand = !$scope.isExpand;
-                if (!$scope.isExpand) {
-                    $scope.isreadMore = !$scope.isreadMore;
-                    $scope.limitText = 300;
-                }
-            };
-            $scope.readMore = function () { // Message body expand
-                $scope.isreadMore = !$scope.isreadMore;
-                $scope.limitText = $scope.message.length;
-            };
-            $scope.toggleDiscount = function (index) {
-                if (checkNullEmpty($scope.edit.ds)) {
-                    $scope.edit.ds = {};
-                }
-                $scope.edit.ds[index] = 1;
-            };
-            $scope.updateStatusList = function() {
-                if(checkNotNullEmpty($scope.statusList)) {
-                    for(var i=0; i<$scope.statusList.length; i++) {
-                        if($scope.statusList[i] == ORDER.CANCELLED && !$scope.cancelPermission) {
-                            $scope.statusList.splice(i, 1);
-                        }
-                        if($scope.statusList[i] == ORDER.CONFIRMED && !$scope.confirmPermission) {
-                            $scope.statusList.splice(i, 1);
-                        }
-                        if($scope.statusList[i] == ORDER.PENDING && !$scope.reOpenPermission) {
-                            $scope.statusList.splice(i, 1);
-                        }
 
+            if (($scope.order.st == ORDER.PENDING || $scope.order.st == ORDER.CONFIRMED) && checkNotNullEmpty($scope.order.its) && $scope.order.its.length > 0) {
+                if (shipmentSize == 0 && checkNotNullEmpty($scope.order.vid) && $scope.order.atv) {
+                    $scope.statusList.push(ORDER.COMPLETED);
+                }
+                if (shipmentSize == 0 && checkNotNullEmpty($scope.order.vid) && checkNotNullEmpty($scope.oCfg) && $scope.oCfg.aof && $scope.order.atc) {
+                    $scope.statusList.push(ORDER.FULFILLED);
+                }
+            }
+            if ($scope.order.st != ORDER.CANCELLED && $scope.order.st != ORDER.FULFILLED && ($scope.order.atv || $scope.order.st == ORDER.PENDING) && $scope.order.alc) {
+                $scope.statusList.push(ORDER.CANCELLED);
+            }
+            $scope.showStock = $scope.order.st == $scope.ORDER.PENDING || $scope.order.st == $scope.ORDER.CONFIRMED || $scope.order.st == $scope.ORDER.BACKORDERED;
+            $scope.updateStatusList();
+
+        };
+        $scope.resetMsgUsers = function () {
+            $scope.newStatus.users = [];
+        };
+        $scope.toggleFulfil = function (update, incMsgCount) {
+            if ($scope.selection == 'orderDetail') {
+                $scope.selection = "fulfilShipment";
+            } else {
+                $scope.selection = 'orderDetail';
+                if (update) {
+                    $scope.fetchOrder();
+                    if (incMsgCount) {
+                        $scope.setMessageCount($scope.messageCnt + 1);
                     }
                 }
-            };
-            $scope.checkStatusList = function () {
-                if ($scope.dp.vp) {
-                    $scope.statusList = [];
-                    return;
-                }
-                var shipmentSize = $scope.shipmentList.length;
-                switch ($scope.order.st) {
-                    case ORDER.PENDING:
-                        $scope.statusList = $scope.order.atv ? [ORDER.CONFIRMED] : [];
-                        break;
-                    case ORDER.CONFIRMED:
-                        $scope.statusList = $scope.order.atv ? [ORDER.PENDING] : [];
-                        break;
-                    case ORDER.COMPLETED:
-                        $scope.statusList = $scope.order.atc && shipmentSize == 1 ? [ORDER.FULFILLED] : [];
-                        break;
-                    default:
-                        $scope.statusList = [];
-
-                }
-
-
-                if(($scope.order.st == ORDER.PENDING || $scope.order.st == ORDER.CONFIRMED) && checkNotNullEmpty($scope.order.its) && $scope.order.its.length > 0) {
-                    if (shipmentSize == 0 && checkNotNullEmpty($scope.order.vid) && $scope.order.atv) {
-                        $scope.statusList.push(ORDER.COMPLETED);
-                    }
-                    if(shipmentSize == 0 && checkNotNullEmpty($scope.order.vid) && checkNotNullEmpty($scope.oCfg) && $scope.oCfg.aof && $scope.order.atc) {
-                        $scope.statusList.push(ORDER.FULFILLED);
-                    }
-                }
-                if ($scope.order.st != ORDER.CANCELLED && $scope.order.st != ORDER.FULFILLED && ($scope.order.atv || $scope.order.st == ORDER.PENDING) && $scope.order.alc) {
-                    $scope.statusList.push(ORDER.CANCELLED);
-                }
-                $scope.showStock = $scope.order.st == $scope.ORDER.PENDING || $scope.order.st == $scope.ORDER.CONFIRMED || $scope.order.st == $scope.ORDER.BACKORDERED;
-                $scope.updateStatusList();
-
-            };
-            $scope.resetMsgUsers = function () {
-                $scope.newStatus.users = [];
-            };
-            $scope.toggleFulfil = function (update, incMsgCount) {
-                if($scope.selection == 'orderDetail') {
-                    $scope.selection = "fulfilShipment";
-                } else {
-                    $scope.selection = 'orderDetail';
-                    if(update) {
-                        $scope.fetchOrder();
-                        if(incMsgCount) {
-                            $scope.setMessageCount($scope.messageCnt + 1);
-                        }
-                    }
-                }
-            };
+            }
+        };
         function isBatchItemAvailable() {
             return $scope.order.its.some(function (data) {
                 return data.isBa;
             });
         }
-            $scope.changeStatus = function (value) {
-                $scope.nStatus = value;
-                $scope.newStatus= {};
-                $scope.newStatus.st = value;
-                $scope.newStatus.ncdrsn = '';
-                $scope.newStatus.cmrsn = '';
-                if($scope.nStatus == ORDER.FULFILLED && $scope.shipmentList.length>0) {
-                    ordService.getShipment($scope.shipmentList[0].sId).then(function (data) {
-                        $scope.shipment = data.data;
-                        $scope.shipment.items.forEach(function (d) {
-                            d.bts = angular.copy(d.bq);
-                            d.status = d.smst;
-                            if (checkNotNullEmpty($scope.matstatus) && checkNullEmpty(d.status)) {
-                                d.status = $scope.matstatus[0];
-                            }
-                        });
-                        $scope.toggleFulfil();
-                    }).catch(function error(msg) {
-                        $scope.showErrorMsg(msg);
-                    }).finally(function(){
-                        $scope.hideLoading();
-                    });
-                } else {
-                    if (($scope.newStatus.st == ORDER.COMPLETED || ($scope.order.st != $scope.ORDER.COMPLETED && $scope.newStatus.st == ORDER.FULFILLED)) && isOrderPartiallyAllocated()) {
-                        if (isBatchItemAvailable()) {
-                            $scope.showWarning($scope.resourceBundle['order.allocations.required.toship']);
-                            return false;
-                        } else {
-                            confirmPartialAllocatedOrder();
+
+        $scope.changeStatus = function (value) {
+            $scope.nStatus = value;
+            $scope.newStatus = {};
+            $scope.newStatus.st = value;
+            $scope.newStatus.ncdrsn = '';
+            $scope.newStatus.cmrsn = '';
+            if ($scope.nStatus == ORDER.FULFILLED && $scope.shipmentList.length > 0) {
+                ordService.getShipment($scope.shipmentList[0].sId).then(function (data) {
+                    $scope.shipment = data.data;
+                    $scope.shipment.items.forEach(function (d) {
+                        d.bts = angular.copy(d.bq);
+                        d.status = d.smst;
+                        if (checkNotNullEmpty($scope.matstatus) && checkNullEmpty(d.status)) {
+                            d.status = $scope.matstatus[0];
                         }
+                    });
+                    $scope.toggleFulfil();
+                }).catch(function error(msg) {
+                    $scope.showErrorMsg(msg);
+                }).finally(function () {
+                    $scope.hideLoading();
+                });
+            } else {
+                if (($scope.newStatus.st == ORDER.COMPLETED || ($scope.order.st != $scope.ORDER.COMPLETED && $scope.newStatus.st == ORDER.FULFILLED)) && isOrderPartiallyAllocated()) {
+                    if (isBatchItemAvailable()) {
+                        $scope.showWarning($scope.resourceBundle['order.allocations.required.toship']);
+                        return false;
                     } else {
-                        displayShipForm();
+                        confirmPartialAllocatedOrder();
                     }
+                } else {
+                    displayShipForm();
                 }
-            };
+            }
+        };
 
         function displayShipForm() {
             $scope.modalInstance = $uibModal.open({
@@ -778,531 +866,531 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
             $scope.cancel();
             displayShipForm();
         };
-            $scope.toggleMap = function () {
-                $scope.dispMap = !$scope.dispMap;
-            };
-            $scope.validateStatusChange = function () {
-                if (checkNull($scope.aCfg)) {
-                    $scope.showWarning($scope.resourceBundle['order.config.dontchange']);
-                    return false;
-                }
-                var enforceCreditCheck = false;
-                if (checkNullEmpty($scope.oCfg.dop) && checkNotNullEmpty($scope.aCfg.ea) && checkNotNullEmpty($scope.aCfg.en) &&
-                    ( ( $scope.aCfg.en == $scope.newStatus.st ) || ( $scope.aCfg.en == ORDER.CONFIRMED && $scope.newStatus.st == ORDER.COMPLETED ) ))
-                    enforceCreditCheck = true;
-                if (enforceCreditCheck && $scope.order.tp > $scope.order.avc) {
-                    $scope.showWarning($scope.resourceBundle.ordercannotbe + ' ' + ORDER.statusTxt[$scope.newStatus.st].toLowerCase() + '. ' + $scope.resourceBundle.ordercostexceedscredit + ' ' + $scope.order.cur + ' ' + $scope.order.avc);
-                    return false;
-                }
-                if($scope.oCfg.tm && checkNullEmpty($scope.newStatus.t) && ($scope.newStatus.st == $scope.ORDER.COMPLETED || $scope.newStatus.st == ORDER.FULFILLED) ) {
-                    $scope.showWarning($scope.resourceBundle['transportermandatory']);
-                    return false;
-                }
-                if($scope.newStatus.st == ORDER.COMPLETED) {
-                    var isInvalid = $scope.order.its.some(function (it) {
-                        if(it.q > (it.atpstk + it.astk) ) {
-                            $scope.showWarning($scope.resourceBundle['less.available.stock.toship']);
-                            return true;
-                        }
-                    });
-                    if(isInvalid) {
-                        return false;
+        $scope.toggleMap = function () {
+            $scope.dispMap = !$scope.dispMap;
+        };
+        $scope.validateStatusChange = function () {
+            if (checkNull($scope.aCfg)) {
+                $scope.showWarning($scope.resourceBundle['order.config.dontchange']);
+                return false;
+            }
+            var enforceCreditCheck = false;
+            if (checkNullEmpty($scope.oCfg.dop) && checkNotNullEmpty($scope.aCfg.ea) && checkNotNullEmpty($scope.aCfg.en) &&
+                ( ( $scope.aCfg.en == $scope.newStatus.st ) || ( $scope.aCfg.en == ORDER.CONFIRMED && $scope.newStatus.st == ORDER.COMPLETED ) ))
+                enforceCreditCheck = true;
+            if (enforceCreditCheck && $scope.order.tp > $scope.order.avc) {
+                $scope.showWarning($scope.resourceBundle.ordercannotbe + ' ' + ORDER.statusTxt[$scope.newStatus.st].toLowerCase() + '. ' + $scope.resourceBundle.ordercostexceedscredit + ' ' + $scope.order.cur + ' ' + $scope.order.avc);
+                return false;
+            }
+            if ($scope.oCfg.tm && checkNullEmpty($scope.newStatus.t) && ($scope.newStatus.st == $scope.ORDER.COMPLETED || $scope.newStatus.st == ORDER.FULFILLED)) {
+                $scope.showWarning($scope.resourceBundle['transportermandatory']);
+                return false;
+            }
+            if ($scope.newStatus.st == ORDER.COMPLETED) {
+                var isInvalid = $scope.order.its.some(function (it) {
+                    if (it.q > (it.atpstk + it.astk)) {
+                        $scope.showWarning($scope.resourceBundle['less.available.stock.toship']);
+                        return true;
                     }
+                });
+                if (isInvalid) {
+                    return false;
                 }
-                return true;
-            };
-            function updateOrderObj(data, skipSno) {
-                if (!skipSno) {
-                    data.sno = $scope.order.sno;
+            }
+            return true;
+        };
+        function updateOrderObj(data, skipSno) {
+            if (!skipSno) {
+                data.sno = $scope.order.sno;
+            }
+            $scope.order = data;
+            if (checkNotNullEmpty($scope.dates.efd)) {
+                $scope.order.isEfdValid = isNotPastDate($scope.dates.efd);
+            }
+            $scope.sicrsn = $scope.order.crsn;
+            $scope.order.its.forEach(function (data) {
+                data.nrsn = '';
+                data.drsn = '';
+                if (data.rq >= 0 && data.oq != data.rq) {
+                    var r = '<p align="left">';
+                    r += '<span class="codegray"> Recommended: </span>' + data.rq + '<br/>' + '<span class="codegray"> Originally ordered: </span>' + data.oq;
+                    if (checkNotNullEmpty(data.rsn)) {
+                        r += '<br/>' + '<span class="codegray"> Reason for ordering discrepancy: </span> <br/>' + data.rsn;
+                    }
+                    data.drsn += r + '</p>';
                 }
-                $scope.order = data;
-                if(checkNotNullEmpty($scope.dates.efd)) {
-                    $scope.order.isEfdValid = isNotPastDate($scope.dates.efd);
-                }
-                $scope.sicrsn = $scope.order.crsn;
-                $scope.order.its.forEach(function (data) {
-                    data.nrsn = '';
-                    data.drsn = '';
-                    if(data.rq >=0 && data.oq != data.rq) {
-                        var r = '<p align="left">';
-                        r += '<span class="codegray"> Recommended: </span>' + data.rq + '<br/>' + '<span class="codegray"> Originally ordered: </span>' + data.oq;
-                        if(checkNotNullEmpty(data.rsn)) {
-                            r += '<br/>' + '<span class="codegray"> Reason for ordering discrepancy: </span> <br/>' + data.rsn;
-                        }
+                if (data.oq > 0 && data.q != data.oq) {
+                    var isShipped = $scope.order.st == $scope.ORDER.COMPLETED ||
+                        $scope.order.st == $scope.ORDER.FULFILLED;
+                    if (!isShipped && checkNotNullEmpty(data.drsn)) {
+                        r = '<hr/><p align="left">';
+                    } else {
+                        r = '<p align="left"><span class="codegray"> Originally ordered: </span>' + data.oq + '<br/>';
+                    }
+                    r += '<span class="codegray">' + (isShipped ? 'Shipped: ' : 'Modified: ') + '</span>' + data.q;
+                    if (checkNotNullEmpty(data.sdrsn)) {
+                        r += '<br/> <span class="codegray">' + (isShipped ? 'Reason for shipping discrepancy: ' : 'Reason for modifying ordered quantity: ') + '</span> <br/>'
+                            + data.sdrsn;
+                    }
+                    if (isShipped) {
+                        data.osdrsn = r + '</p>';
+                    } else {
                         data.drsn += r + '</p>';
                     }
-                    if(data.oq > 0 && data.q != data.oq) {
-                        var isShipped = $scope.order.st == $scope.ORDER.COMPLETED ||
-                            $scope.order.st == $scope.ORDER.FULFILLED;
-                        if(!isShipped && checkNotNullEmpty(data.drsn)) {
-                            r ='<hr/><p align="left">';
-                        } else {
-                            r = '<p align="left"><span class="codegray"> Originally ordered: </span>' + data.oq + '<br/>';
-                        }
-                        r += '<span class="codegray">' + (isShipped ? 'Shipped: ': 'Modified: ') + '</span>' + data.q;
-                        if(checkNotNullEmpty(data.sdrsn)) {
-                            r += '<br/> <span class="codegray">' + (isShipped ? 'Reason for shipping discrepancy: ':'Reason for modifying ordered quantity: ') + '</span> <br/>'
-                                + data.sdrsn;
-                        }
-                        if(isShipped) {
-                            data.osdrsn = r + '</p>';
-                        } else {
-                            data.drsn += r + '</p>';
-                        }
-                    }
-                    if($scope.order.st == $scope.ORDER.FULFILLED) {
-                        if(data.isBa && $scope.oCfg.agi) {
-                            var highlight = false;
-                            if(checkNotNullEmpty(data.bts)) {
-                                data.bts.forEach(function(data) {
-                                    var showInfo = false;
-                                    data.fdrsn = 'Batch Id: ' + data.id + '<br/><table class="table table-condensed table-logistimo"><tr><th>Shipment</th><th>Shipped</th><th>Fulfilled</th><th>Reason</th></tr>';
-                                    data.bd.forEach(function (d) {
-                                        if(d.fq != d.q) {
-                                            data.fdrsn += '<tr><td>' + d.sid + '</td><td>' + d.q + '</td><td class="fc-color-red">' + d.fq + '</td><td>' + (d.frsn || '') + '</td></tr>';
-                                            showInfo = true;
-                                            highlight = true;
-                                        } else {
-                                            data.fdrsn += '<tr><td>' + d.sid + '</td><td>' + d.q + '</td><td>' + d.fq + '</td><td>' + (d.frsn || '') + '</td></tr>';
-                                        }
-                                    });
-                                    data.fdrsn += '</table>';
-                                    if(!showInfo) {
-                                        data.fdrsn = '';
-                                    }
-                                });
-                            }
-                            if(highlight) {
-                                data.isDisc = true;
-                            }
-                        } else {
-                            if (checkNotNullEmpty(data.bd)) {
+                }
+                if ($scope.order.st == $scope.ORDER.FULFILLED) {
+                    if (data.isBa && $scope.oCfg.agi) {
+                        var highlight = false;
+                        if (checkNotNullEmpty(data.bts)) {
+                            data.bts.forEach(function (data) {
                                 var showInfo = false;
-                                data.fdrsn = '<table class="table table-condensed table-logistimo"><tr><th>Shipment</th><th>Shipped</th><th>Fulfilled</th><th>Reason</th></tr>';
+                                data.fdrsn = 'Batch Id: ' + data.id + '<br/><table class="table table-condensed table-logistimo"><tr><th>Shipment</th><th>Shipped</th><th>Fulfilled</th><th>Reason</th></tr>';
                                 data.bd.forEach(function (d) {
-                                    if(d.q != d.fq) {
+                                    if (d.fq != d.q) {
                                         data.fdrsn += '<tr><td>' + d.sid + '</td><td>' + d.q + '</td><td class="fc-color-red">' + d.fq + '</td><td>' + (d.frsn || '') + '</td></tr>';
                                         showInfo = true;
+                                        highlight = true;
                                     } else {
                                         data.fdrsn += '<tr><td>' + d.sid + '</td><td>' + d.q + '</td><td>' + d.fq + '</td><td>' + (d.frsn || '') + '</td></tr>';
                                     }
                                 });
                                 data.fdrsn += '</table>';
-                                if(!showInfo) {
+                                if (!showInfo) {
                                     data.fdrsn = '';
                                 }
-                                data.isDisc = showInfo;
+                            });
+                        }
+                        if (highlight) {
+                            data.isDisc = true;
+                        }
+                    } else {
+                        if (checkNotNullEmpty(data.bd)) {
+                            var showInfo = false;
+                            data.fdrsn = '<table class="table table-condensed table-logistimo"><tr><th>Shipment</th><th>Shipped</th><th>Fulfilled</th><th>Reason</th></tr>';
+                            data.bd.forEach(function (d) {
+                                if (d.q != d.fq) {
+                                    data.fdrsn += '<tr><td>' + d.sid + '</td><td>' + d.q + '</td><td class="fc-color-red">' + d.fq + '</td><td>' + (d.frsn || '') + '</td></tr>';
+                                    showInfo = true;
+                                } else {
+                                    data.fdrsn += '<tr><td>' + d.sid + '</td><td>' + d.q + '</td><td>' + d.fq + '</td><td>' + (d.frsn || '') + '</td></tr>';
+                                }
+                            });
+                            data.fdrsn += '</table>';
+                            if (!showInfo) {
+                                data.fdrsn = '';
                             }
+                            data.isDisc = showInfo;
                         }
                     }
+                }
+            });
+        }
+
+        $scope.saveStatus = function () {
+            if ($scope.validateStatusChange()) {
+                if ($scope.newStatus.st == ORDER.CANCELLED) {
+                    if ($scope.oCfg.corm || $scope.newStatus.ncdrsn == 'Others') {
+                        if ((checkNullEmpty($scope.oCfg.cor) || checkNullEmpty($scope.newStatus.ncdrsn) || $scope.newStatus.ncdrsn == 'Others')
+                            && checkNullEmpty($scope.newStatus.cmrsn)) {
+                            $scope.showWarning($scope.resourceBundle["provide.reason"]);
+                            return;
+                        }
+                    }
+                    if (checkNullEmpty($scope.oCfg.cor) || $scope.newStatus.ncdrsn == 'Others') {
+                        $scope.newStatus.cdrsn = $scope.newStatus.cmrsn;
+                    } else {
+                        $scope.newStatus.cdrsn = $scope.newStatus.ncdrsn;
+                    }
+                } else if ($scope.newStatus.st == ORDER.COMPLETED) {
+                    if ($scope.oCfg.ridm && checkNullEmpty($scope.newStatus.rid)) {
+                        $scope.showWarning($scope.resourceBundle['reference.id.mandatory.error']);
+                        return;
+                    } else if ($scope.oCfg.eadm && checkNullEmpty($scope.newStatus.efd)) {
+                        $scope.showWarning($scope.resourceBundle['estimated.date.of.arrival.mandatory.error']);
+                        return;
+                    }
+                }
+                $scope.newStatus.efd = checkNotNullEmpty($scope.newStatus.efd) ? formatDate($scope.newStatus.efd) : undefined;
+                $scope.newStatus.orderUpdatedAt = $scope.order.orderUpdatedAt;
+                $scope.statusLoading = true;
+                $scope.showLoading();
+                ordService.updateOrderStatus($scope.order.id, $scope.newStatus).then(function (data) {
+                    $scope.fetchOrder();
+                    var upMsg = {};
+                    upMsg.objId = $scope.order.id;
+                    upMsg.objType = "ORDER";
+                    upMsg.offset = 0;
+                    getMessageCount();
+                    $scope.$broadcast("updateMessage", upMsg);
+                    var refreshMsg;
+                    $scope.cancel();
+                    $scope.newStatus = {};
+                    var accountUpdatedMsg;
+                    if (checkNullEmpty($scope.oCfg.dop) && $scope.aCfg && $scope.aCfg.ea && $scope.order.st == "cm" && $scope.order.tp > 0) {
+                        accountUpdatedMsg = $scope.resourceBundle["accountupdatedmsg"] + " <b>" + $scope.order.pst + "</b>";
+                        if (refreshMsg)
+                            accountUpdatedMsg += "<br/><br/><b>" + refreshMsg + "<b>";
+                    }
+                    $scope.displayStatus(data, accountUpdatedMsg);
+                }).catch(function error(msg) {
+                    $scope.showErrorMsg(msg);
+                }).finally(function () {
+                    $scope.statusLoading = false;
+                    $scope.hideLoading();
                 });
             }
-
-            $scope.saveStatus = function () {
-                if ($scope.validateStatusChange()) {
-                    if($scope.newStatus.st == ORDER.CANCELLED) {
-                        if ($scope.oCfg.corm || $scope.newStatus.ncdrsn == 'Others') {
-                            if ((checkNullEmpty($scope.oCfg.cor) || checkNullEmpty($scope.newStatus.ncdrsn) || $scope.newStatus.ncdrsn == 'Others')
-                                && checkNullEmpty($scope.newStatus.cmrsn)) {
-                                $scope.showWarning($scope.resourceBundle["provide.reason"]);
-                                return;
-                            }
-                        }
-                        if (checkNullEmpty($scope.oCfg.cor) || $scope.newStatus.ncdrsn == 'Others') {
-                            $scope.newStatus.cdrsn = $scope.newStatus.cmrsn;
-                        } else {
-                            $scope.newStatus.cdrsn = $scope.newStatus.ncdrsn;
-                        }
-                    } else if($scope.newStatus.st == ORDER.COMPLETED) {
-                        if ($scope.oCfg.ridm && checkNullEmpty($scope.newStatus.rid)) {
-                            $scope.showWarning($scope.resourceBundle['reference.id.mandatory.error']);
-                            return;
-                        } else if ($scope.oCfg.eadm && checkNullEmpty($scope.newStatus.efd)) {
-                            $scope.showWarning($scope.resourceBundle['estimated.date.of.arrival.mandatory.error']);
-                            return;
-                        }
-                    }
-                    $scope.newStatus.efd = checkNotNullEmpty($scope.newStatus.efd) ? formatDate($scope.newStatus.efd) : undefined;
-                    $scope.newStatus.orderUpdatedAt = $scope.order.orderUpdatedAt;
-                    $scope.statusLoading = true;
-                    $scope.showLoading();
-                    ordService.updateOrderStatus($scope.order.id, $scope.newStatus).then(function (data) {
-                        $scope.fetchOrder();
-                        var upMsg = {};
-                        upMsg.objId = $scope.order.id;
-                        upMsg.objType = "ORDER";
-                        upMsg.offset = 0;
-                        getMessageCount();
-                        $scope.$broadcast("updateMessage", upMsg);
-                        var refreshMsg;
-                        $scope.cancel();
-                        $scope.newStatus = {};
-                        var accountUpdatedMsg;
-                        if (checkNullEmpty($scope.oCfg.dop) && $scope.aCfg && $scope.aCfg.ea && $scope.order.st == "cm" && $scope.order.tp > 0) {
-                            accountUpdatedMsg = $scope.resourceBundle["accountupdatedmsg"] + " <b>" + $scope.order.pst + "</b>";
-                            if (refreshMsg)
-                                accountUpdatedMsg += "<br/><br/><b>" + refreshMsg + "<b>";
-                        }
-                        $scope.displayStatus(data, accountUpdatedMsg);
-                    }).catch(function error(msg) {
-                        $scope.showErrorMsg(msg);
-                    }).finally(function () {
-                        $scope.statusLoading = false;
-                        $scope.hideLoading();
-                    });
-                }
-            };
-            $scope.saveVendor = function (vend) {
-                if (checkNotNullEmpty(vend)) {
-                    $scope.vendor = vend;
-                }
-                if (checkNullEmpty($scope.vendor) || checkNullEmpty($scope.vendor.id)) {
-                    $scope.showWarning($scope.resourceBundle['order.specify.vendor']);
-                    return;
-                }
-                $scope.showLoading();
-                ordService.updateVendor($scope.order.id, $scope.vendor.id, $scope.order.orderUpdatedAt)
-                    .then(function (data) {
+        };
+        $scope.saveVendor = function (vend) {
+            if (checkNotNullEmpty(vend)) {
+                $scope.vendor = vend;
+            }
+            if (checkNullEmpty($scope.vendor) || checkNullEmpty($scope.vendor.id)) {
+                $scope.showWarning($scope.resourceBundle['order.specify.vendor']);
+                return;
+            }
+            $scope.showLoading();
+            ordService.updateVendor($scope.order.id, $scope.vendor.id, $scope.order.orderUpdatedAt)
+                .then(function (data) {
                     updateOrderObj(data.data.order);
                     $scope.toggleEdit('vend');
                     $scope.showSuccess($scope.resourceBundle['order.upd.vendor.success']);
                     $scope.updatePermissions();
                     $scope.checkStatusList();
                 }).catch(function error(msg) {
-                    $scope.showErrorMsg(msg);
-                }).finally(function () {
-                    $scope.hideLoading();
-                });
-            };
+                $scope.showErrorMsg(msg);
+            }).finally(function () {
+                $scope.hideLoading();
+            });
+        };
 
-            $scope.updateExpectedFulfillmentDate = function () {
-                if(checkNullEmpty($scope.dates.efd) && checkNullEmpty($scope.efdt)) {
-                    $scope.showWarning("Please select a date");
-                    return;
+        $scope.updateExpectedFulfillmentDate = function () {
+            if (checkNullEmpty($scope.dates.efd) && checkNullEmpty($scope.efdt)) {
+                $scope.showWarning("Please select a date");
+                return;
+            }
+            if (checkNullEmpty($scope.dates.efd)) {
+                $scope.efdt = '';
+            } else {
+                $scope.efdt = formatDate($scope.dates.efd);
+            }
+            $scope.showLoading();
+            ordService.updateExpectedFulfillmentDate($scope.order.id, $scope.efdt, $scope.order.orderUpdatedAt).then(function (data) {
+                $scope.order.efdLabel = data.data.respData;
+                $scope.order.orderUpdatedAt = data.data.order.orderUpdatedAt;
+                $scope.order.efd = $scope.dates.efd;
+                if (checkNotNullEmpty($scope.dates.efd)) {
+                    $scope.order.isEfdValid = isNotPastDate($scope.dates.efd);
                 }
-                if(checkNullEmpty($scope.dates.efd)) {
-                    $scope.efdt = '';
-                } else {
-                    $scope.efdt = formatDate($scope.dates.efd);
-                }
-                $scope.showLoading();
-                ordService.updateExpectedFulfillmentDate($scope.order.id, $scope.efdt, $scope.order.orderUpdatedAt).then(function (data) {
-                    $scope.order.efdLabel = data.data.respData;
+                $scope.toggleEdit('efdate');
+                $scope.showSuccess("<b>Estimated date of arrival</b> updated successfully");
+            }).catch(function error(msg) {
+                $scope.showErrorMsg(msg);
+            }).finally(function () {
+                $scope.hideLoading();
+            });
+        };
+
+        $scope.updateDueDate = function () {
+            if (checkNullEmpty($scope.dates.edd) && checkNullEmpty($scope.eddt)) {
+                $scope.showWarning("Please select a date");
+                return;
+            }
+            if (checkNullEmpty($scope.dates.edd)) {
+                $scope.eddt = '';
+            } else {
+                $scope.eddt = formatDate($scope.dates.edd);
+            }
+            $scope.showLoading();
+            ordService.updateDueDate($scope.order.id, $scope.eddt, $scope.order.orderUpdatedAt)
+                .then(function (data) {
+                    $scope.order.eddLabel = data.data.respData;
+                    $scope.order.edd = $scope.dates.edd;
                     $scope.order.orderUpdatedAt = data.data.order.orderUpdatedAt;
-                    $scope.order.efd = $scope.dates.efd;
-                    if(checkNotNullEmpty($scope.dates.efd)) {
-                        $scope.order.isEfdValid = isNotPastDate($scope.dates.efd);
+                    $scope.toggleEdit('etdate');
+                    $scope.showSuccess("<b>Required by date</b> updated successfully");
+                }).catch(function error(msg) {
+                $scope.showErrorMsg(msg);
+            }).finally(function () {
+                $scope.hideLoading();
+            });
+        };
+
+        $scope.updateRefId = function () {
+
+            $scope.showLoading();
+            ordService.updateReferenceID($scope.order.id, $scope.order.tempRID, $scope.order.orderUpdatedAt)
+                .then(function (data) {
+                    $scope.order.rid = data.data.order.rid;
+                    $scope.order.orderUpdatedAt = data.data.order.orderUpdatedAt;
+                    $scope.showSuccess("<b>Reference Id</b> updated successfully");
+                }).catch(function (errorMsg) {
+                $scope.showErrorMsg(errorMsg);
+            }).finally(function () {
+                $scope.toggleEdit("rid");
+                $scope.hideLoading();
+            });
+        };
+
+        $scope.editPayment = function () {
+            $scope.pmt.pay = $scope.order.tp - $scope.order.pd;
+            $scope.toggleEdit('pmt');
+        };
+        $scope.validatePayment = function () {
+            if (checkNullEmpty($scope.pmt.pay)) {
+                $scope.showWarning($scope.resourceBundle.nopayment);
+                return false;
+            }
+            if (( $scope.order.pd + $scope.pmt.pay ) > $scope.order.tp) {
+                if (!confirm($scope.resourceBundle.paymenthigher))
+                    return false;
+            }
+            return true;
+        };
+        $scope.savePayment = function () {
+            if ($scope.validatePayment()) {
+                $scope.showLoading();
+                $scope.pmt.orderUpdatedAt = $scope.order.orderUpdatedAt;
+                ordService.updatePayment($scope.order.id, $scope.pmt).then(function (data) {
+                    $scope.fetchOrder();
+                    $scope.toggleEdit('pmt');
+                    $scope.showSuccess($scope.resourceBundle['order.upd.pay.success']);
+                }).catch(function error(msg) {
+                    $scope.showErrorMsg(msg);
+                }).finally(function () {
+                    $scope.hideLoading();
+                });
+            }
+        };
+        $scope.editRID = function () {
+            $scope.order.tempRID = $scope.order.rid;
+            $scope.toggleEdit("rid");
+        };
+        $scope.editTags = function () {
+            $scope.oTags.tag = [];
+            $scope.order.tgs.forEach(function (data) {
+                $scope.oTags.tag.push({"id": data, "text": data});
+            });
+            $scope.toggleEdit("otags");
+        };
+        $scope.saveTags = function (oTags) {
+            if (oTags != $scope.order.tgs) {
+                var tags = "";
+                var ordTags = [];
+                var i = 0;
+                oTags.forEach(function (data) {
+                    if (checkNotNullEmpty(tags)) {
+                        tags = tags.concat(",");
                     }
-                    $scope.toggleEdit('efdate');
-                    $scope.showSuccess("<b>Estimated date of arrival</b> updated successfully");
-                }).catch(function error(msg) {
-                    $scope.showErrorMsg(msg);
-                }).finally(function () {
-                    $scope.hideLoading();
+                    tags = tags.concat(data.text);
+                    ordTags[i++] = data.text;
                 });
-            };
-
-            $scope.updateDueDate = function () {
-                if(checkNullEmpty($scope.dates.edd) && checkNullEmpty($scope.eddt)) {
-                    $scope.showWarning("Please select a date");
-                    return;
-                }
-                if(checkNullEmpty($scope.dates.edd)) {
-                    $scope.eddt = '';
-                } else {
-                    $scope.eddt = formatDate($scope.dates.edd);
-                }
                 $scope.showLoading();
-                ordService.updateDueDate($scope.order.id, $scope.eddt, $scope.order.orderUpdatedAt)
-                    .then(function (data) {
-                        $scope.order.eddLabel = data.data.respData;
-                        $scope.order.edd = $scope.dates.edd;
-                        $scope.order.orderUpdatedAt = data.data.order.orderUpdatedAt;
-                        $scope.toggleEdit('etdate');
-                        $scope.showSuccess("<b>Required by date</b> updated successfully");
-                }).catch(function error(msg) {
-                    $scope.showErrorMsg(msg);
-                }).finally(function () {
-                    $scope.hideLoading();
-                });
-            };
-
-            $scope.updateRefId = function () {
-
-                $scope.showLoading();
-                ordService.updateReferenceID($scope.order.id, $scope.order.tempRID, $scope.order.orderUpdatedAt)
-                    .then(function (data) {
-                        $scope.order.rid = data.data.order.rid;
-                        $scope.order.orderUpdatedAt = data.data.order.orderUpdatedAt;
-                        $scope.showSuccess("<b>Reference Id</b> updated successfully");
+                ordService.updateOrderTags($scope.order.id, tags, $scope.order.orderUpdatedAt).then(function (data) {
+                    $scope.order.orderUpdatedAt = data.data.order.orderUpdatedAt;
+                    $scope.order.tgs = ordTags;
+                    $scope.toggleEdit("otags");
+                    $scope.showSuccess("Order tags updated successfully");
                 }).catch(function (errorMsg) {
                     $scope.showErrorMsg(errorMsg);
                 }).finally(function () {
-                    $scope.toggleEdit("rid");
                     $scope.hideLoading();
                 });
-            };
+            }
+        };
+        $scope.editPackage = function () {
+            $scope.pkgs = $scope.order.pkgs || "";
+            $scope.toggleEdit("pkgs");
+        };
+        $scope.savePackage = function () {
+            $scope.showLoading();
+            ordService.updatePackage($scope.order.id, $scope.pkgs).then(function (data) {
+                $scope.order.pkgs = $scope.pkgs;
+                $scope.toggleEdit('pkgs');
+                $scope.showSuccess($scope.resourceBundle['order.pkg.success']);
+            }).catch(function error(msg) {
+                $scope.showErrorMsg(msg);
+            }).finally(function () {
+                $scope.hideLoading();
+            });
+        };
 
-            $scope.editPayment = function () {
-                $scope.pmt.pay = $scope.order.tp - $scope.order.pd;
-                $scope.toggleEdit('pmt');
-            };
-            $scope.validatePayment = function () {
-                if (checkNullEmpty($scope.pmt.pay)) {
-                    $scope.showWarning($scope.resourceBundle.nopayment);
-                    return false;
-                }
-                if (( $scope.order.pd + $scope.pmt.pay ) > $scope.order.tp) {
-                    if (!confirm($scope.resourceBundle.paymenthigher))
-                        return false;
-                }
-                return true;
-            };
-            $scope.savePayment = function () {
-                if ($scope.validatePayment()) {
-                    $scope.showLoading();
-                    $scope.pmt.orderUpdatedAt = $scope.order.orderUpdatedAt;
-                    ordService.updatePayment($scope.order.id, $scope.pmt).then(function (data) {
-                        $scope.fetchOrder();
-                        $scope.toggleEdit('pmt');
-                        $scope.showSuccess($scope.resourceBundle['order.upd.pay.success']);
-                    }).catch(function error(msg) {
-                        $scope.showErrorMsg(msg);
-                    }).finally(function () {
-                        $scope.hideLoading();
-                    });
-                }
-            };
-            $scope.editRID = function () {
-                $scope.order.tempRID = $scope.order.rid;
-                $scope.toggleEdit("rid");
-            };
-            $scope.editTags = function () {
-                $scope.oTags.tag = [];
-                $scope.order.tgs.forEach(function (data) {
-                    $scope.oTags.tag.push({"id": data, "text": data});
+        $scope.updatePermissions = function () {
+            $scope.cancelPermission = false;
+            $scope.shipPermission = false;
+            $scope.createShipmentPermission = false;
+            $scope.editPermission = false;
+            $scope.confirmPermission = false;
+            $scope.allocatePermission = false;
+            $scope.reOpenPermission = false;
+            $scope.editMetaDataPermission = false;
+            if (checkNotNullEmpty($scope.order.permissions) &&
+                checkNotNullEmpty($scope.order.permissions.permissions) && !$scope.dp.vp) {
+                $scope.order.permissions.permissions.forEach(function (data) {
+                    if (data == 'cancel') {
+                        $scope.cancelPermission = true;
+                    }
+                    if (data == 'confirm') {
+                        $scope.confirmPermission = true;
+                    }
+                    if (data == 'allocate') {
+                        $scope.allocatePermission = true;
+                    }
+                    if (data == 'ship') {
+                        $scope.shipPermission = true;
+                        $scope.createShipmentPermission = true;
+                    }
+                    if (data == 'edit') {
+                        $scope.editPermission = true;
+                    }
+                    if (data == 'reopen') {
+                        $scope.reOpenPermission = true;
+                    }
+                    if (data == 'edit_meta_data') {
+                        $scope.editMetaDataPermission = true;
+                    }
                 });
-                $scope.toggleEdit("otags");
-            };
-            $scope.saveTags = function (oTags) {
-                if (oTags != $scope.order.tgs) {
-                    var tags = "";
-                    var ordTags = [];
-                    var i = 0;
-                    oTags.forEach(function (data) {
-                        if (checkNotNullEmpty(tags)) {
-                            tags = tags.concat(",");
-                        }
-                        tags = tags.concat(data.text);
-                        ordTags[i++] = data.text;
-                    });
-                    $scope.showLoading();
-                    ordService.updateOrderTags($scope.order.id, tags, $scope.order.orderUpdatedAt).then(function (data) {
-                        $scope.order.orderUpdatedAt = data.data.order.orderUpdatedAt;
-                        $scope.order.tgs = ordTags;
-                        $scope.toggleEdit("otags");
-                        $scope.showSuccess("Order tags updated successfully");
-                    }).catch(function (errorMsg) {
-                        $scope.showErrorMsg(errorMsg);
-                    }).finally(function () {
-                        $scope.hideLoading();
-                    });
-                }
-            };
-            $scope.editPackage = function () {
-                $scope.pkgs = $scope.order.pkgs || "";
-                $scope.toggleEdit("pkgs");
-            };
-            $scope.savePackage = function () {
+            }
+        };
+
+        $scope.fetchOrder = function () {
+            $scope.loading = true;
+            $scope.admins = false;
+            $scope.aprMsg = false;
+            $scope.aprDetail = "";
+            if ($scope.orderId) {
+                var count = 0;
                 $scope.showLoading();
-                ordService.updatePackage($scope.order.id, $scope.pkgs).then(function (data) {
-                    $scope.order.pkgs = $scope.pkgs;
-                    $scope.toggleEdit('pkgs');
-                    $scope.showSuccess($scope.resourceBundle['order.pkg.success']);
+                ordService.getOrder($scope.orderId).then(function (data) {
+                    if (checkNotNullEmpty(data.data)) {
+                        if ($scope.showOrderFilter && $scope.entityId != data.data.eid && $scope.entityId != data.data.vid) {
+                            $scope.errMsg = $scope.resourceBundle['ord.invalid.entity'];
+                            return;
+                        }
+                        updateOrderObj(data.data, true);
+                        $scope.updatePermissions();
+                        count += 1;
+                        callCheckStatus(count);
+                        $scope.order.sno = $scope.sno;
+                        $scope.efdt = $scope.dates.efd = parseUrlDate($scope.order.efd);
+                        if (checkNotNullEmpty($scope.dates.efd)) {
+                            $scope.order.isEfdValid = isNotPastDate($scope.dates.efd);
+                        }
+                        $scope.eddt = $scope.dates.edd = parseUrlDate($scope.order.edd);
+                        if (checkNotNullEmpty($scope.order.vid) && $scope.order.vid > 0) {
+                            $scope.vendor = {id: $scope.order.vid, nm: $scope.order.vnm};
+                        }
+                        if ($scope.order.appr && checkNullEmpty($scope.order.pa)) {
+                            $scope.aprMsg = true;
+                        }
+                        userService.getUsersByRole('ROLE_do').then(function (data) {
+                            $scope.administrators = data.data.results;
+                            if (checkNotNullEmpty($scope.administrators) && $scope.administrators.length > 0) {
+                                $scope.admins = true;
+                            }
+                        }).catch(function error(msg) {
+                            $scope.showErrorMsg(msg);
+                        });
+                        $scope.getStatusHistory();
+
+                    }
+                }).catch(function error(msg) {
+                    if (checkNotNullEmpty(msg.data) && checkNotNullEmpty(msg.data.message) && msg.data.message.startsWith("w:")) {
+                        $scope.errMsg = msg.data.message.substr(2);
+                    } else {
+                        $scope.showErrorMsg(msg);
+                        $scope.errMsg = msg.data.message;
+                    }
+                    $scope.init();
+                }).finally(function () {
+                    $scope.loading = false;
+                    $scope.hideLoading();
+                });
+
+                $scope.showLoading();
+                ordService.getShipmentsByOrderId($scope.orderId).then(function (data) {
+                    $scope.shipmentList = data.data;
+                    if (data.data.length > 0) {
+                        $scope.setShipmentAvailable(data.data.length);
+                    }
+                    count += 1;
+                    callCheckStatus(count);
                 }).catch(function error(msg) {
                     $scope.showErrorMsg(msg);
                 }).finally(function () {
                     $scope.hideLoading();
                 });
-            };
 
-            $scope.updatePermissions = function() {
-                $scope.cancelPermission = false;
-                $scope.shipPermission = false;
-                $scope.createShipmentPermission = false;
-                $scope.editPermission = false;
-                $scope.confirmPermission = false;
-                $scope.allocatePermission = false;
-                $scope.reOpenPermission = false;
-                $scope.editMetaDataPermission = false;
-                if (checkNotNullEmpty($scope.order.permissions) &&
-                    checkNotNullEmpty($scope.order.permissions.permissions) && !$scope.dp.vp) {
-                    $scope.order.permissions.permissions.forEach(function(data) {
-                        if(data == 'cancel') {
-                            $scope.cancelPermission = true;
-                        }
-                        if(data == 'confirm') {
-                            $scope.confirmPermission = true;
-                        }
-                        if(data == 'allocate') {
-                            $scope.allocatePermission = true;
-                        }
-                        if(data == 'ship') {
-                            $scope.shipPermission = true;
-                            $scope.createShipmentPermission = true;
-                        }
-                        if(data == 'edit') {
-                            $scope.editPermission = true;
-                        }
-                        if(data == 'reopen') {
-                            $scope.reOpenPermission = true;
-                        }
-                        if(data == 'edit_meta_data') {
-                            $scope.editMetaDataPermission = true;
-                        }
-                    });
-                }
-            };
-
-            $scope.fetchOrder = function () {
-                $scope.loading = true;
-                $scope.admins = false;
-                $scope.aprMsg = false;
-                $scope.aprDetail = "";
-                if ($scope.orderId) {
-                    var count = 0;
-                    $scope.showLoading();
-                    ordService.getOrder($scope.orderId).then(function (data) {
-                        if (checkNotNullEmpty(data.data)) {
-                            if ($scope.showOrderFilter && $scope.entityId != data.data.eid && $scope.entityId != data.data.vid) {
-                                $scope.errMsg = $scope.resourceBundle['ord.invalid.entity'];
-                                return;
-                            }
-                            updateOrderObj(data.data, true);
-                            $scope.updatePermissions();
-                            count += 1;
-                            callCheckStatus(count);
-                            $scope.order.sno = $scope.sno;
-                            $scope.efdt = $scope.dates.efd = parseUrlDate($scope.order.efd);
-                            if(checkNotNullEmpty($scope.dates.efd)) {
-                                $scope.order.isEfdValid = isNotPastDate($scope.dates.efd);
-                            }
-                            $scope.eddt = $scope.dates.edd = parseUrlDate($scope.order.edd);
-                            if (checkNotNullEmpty($scope.order.vid) && $scope.order.vid > 0) {
-                                $scope.vendor = {id: $scope.order.vid, nm: $scope.order.vnm};
-                            }
-                            if($scope.order.appr && checkNullEmpty($scope.order.pa)) {
-                                $scope.aprMsg = true;
-                            }
-                            userService.getUsersByRole('ROLE_do').then(function (data) {
-                                $scope.administrators = data.data.results;
-                                if (checkNotNullEmpty($scope.administrators) && $scope.administrators.length > 0) {
-                                    $scope.admins = true;
-                                }
-                            }).catch(function error(msg) {
-                                $scope.showErrorMsg(msg);
-                            });
-                            $scope.getStatusHistory();
-
-                        }
-                    }).catch(function error(msg) {
-                        if (checkNotNullEmpty(msg.data) && checkNotNullEmpty(msg.data.message) && msg.data.message.startsWith("w:")) {
-                            $scope.errMsg = msg.data.message.substr(2);
-                        } else {
-                            $scope.showErrorMsg(msg);
-                            $scope.errMsg = msg.data.message;
-                        }
-                        $scope.init();
-                    }).finally(function () {
-                        $scope.loading = false;
-                        $scope.hideLoading();
-                    });
-
-                    $scope.showLoading();
-                    ordService.getShipmentsByOrderId($scope.orderId).then(function (data) {
-                        $scope.shipmentList = data.data;
-                        if (data.data.length > 0) {
-                            $scope.setShipmentAvailable(data.data.length);
-                        }
-                        count += 1;
-                        callCheckStatus(count);
-                    }).catch(function error(msg) {
-                        $scope.showErrorMsg(msg);
-                    }).finally(function () {
-                        $scope.hideLoading();
-                    });
-
-                    function callCheckStatus(count) {
-                        if(count == 2) {
-                            $scope.checkStatusList();
-                        }
+                function callCheckStatus(count) {
+                    if (count == 2) {
+                        $scope.checkStatusList();
                     }
                 }
-            };
-
-            $scope.getStatusHistory = function () {
-                $scope.showLoading();
-                ordService.getStatusHistory(null, null, 'ORDER:' + $scope.orderId).then(function (data) {
-                    if (checkNotNullEmpty(data.data) && checkNotNullEmpty(data.data.results)) {
-                        $scope.history = data.data.results;
-                        var hMap = {};
-                        var pVal;
-                        $scope.history.forEach(function (data) {
-                            if (data.objectType == 'ORDER' && checkNullEmpty(hMap[data.newValue])) {
-                                hMap[data.newValue] = {
-                                    "status": ORDER.statusTxt[data.newValue],
-                                    "updatedon": data.createDate,
-                                    "updatedby": data.userName,
-                                    "updatedId": data.userId
-                                };
-                                if (ORDER.CANCELLED == data.newValue) {
-                                    pVal = data.prevValue;
-                                }
-                            }
-                        });
-                        $scope.si = [];
-                        var end = false;
-                        var siInd = 0;
-
-                        function constructStatus(stCode, stText) {
-                            if ($scope.order.st != ORDER.CANCELLED || !end) {
-                                $scope.si[siInd] = (!end && hMap[stCode]) ? hMap[stCode] : {
-                                    "status": stText,
-                                    "updatedon": "",
-                                    "updatedby": ""
-                                };
-                                $scope.si[siInd].completed = $scope.order.st == stCode ? "end" : (end ? "false" : "true");
-                                siInd += 1;
-                            }
-                            if (!end) {
-                                end = $scope.order.st == stCode || ($scope.order.st == ORDER.CANCELLED && pVal == stCode);
-                            }
-                        }
-
-                        constructStatus(ORDER.PENDING, ORDER.statusTxt[ORDER.PENDING]);
-                        if ($scope.order.st == ORDER.PENDING || hMap[ORDER.CONFIRMED]) {
-                            constructStatus(ORDER.CONFIRMED, ORDER.statusTxt[ORDER.CONFIRMED]);
-                        }
-                        if (!end && hMap[ORDER.BACKORDERED]) {
-                            constructStatus(ORDER.BACKORDERED, ORDER.statusTxt[ORDER.BACKORDERED]);
-                        }
-                        constructStatus(ORDER.COMPLETED, ORDER.statusTxt[ORDER.COMPLETED]);
-                        constructStatus(ORDER.FULFILLED, ORDER.statusTxt[ORDER.FULFILLED]);
-                        if ($scope.order.st == ORDER.CANCELLED) {
-                            $scope.si[siInd] = hMap[ORDER.CANCELLED];
-                            $scope.si[siInd].completed = "cancel";
-                        }
-                        if($scope.order.st == ORDER.COMPLETED) {
-                            $scope.shipDate = string2Date(hMap[ORDER.COMPLETED].updatedon,"dd/mm/yyyy","/",true);
-                        }
-                    }
-                }).finally(function () {
-                    $scope.hideLoading();
-                });
-            };
-            if (checkNullEmpty($scope.order) || $scope.order.id != $scope.orderId) {
-                $scope.fetchOrder();
             }
+        };
+
+        $scope.getStatusHistory = function () {
+            $scope.showLoading();
+            ordService.getStatusHistory(null, null, 'ORDER:' + $scope.orderId).then(function (data) {
+                if (checkNotNullEmpty(data.data) && checkNotNullEmpty(data.data.results)) {
+                    $scope.history = data.data.results;
+                    var hMap = {};
+                    var pVal;
+                    $scope.history.forEach(function (data) {
+                        if (data.objectType == 'ORDER' && checkNullEmpty(hMap[data.newValue])) {
+                            hMap[data.newValue] = {
+                                "status": ORDER.statusTxt[data.newValue],
+                                "updatedon": data.createDate,
+                                "updatedby": data.userName,
+                                "updatedId": data.userId
+                            };
+                            if (ORDER.CANCELLED == data.newValue) {
+                                pVal = data.prevValue;
+                            }
+                        }
+                    });
+                    $scope.si = [];
+                    var end = false;
+                    var siInd = 0;
+
+                    function constructStatus(stCode, stText) {
+                        if ($scope.order.st != ORDER.CANCELLED || !end) {
+                            $scope.si[siInd] = (!end && hMap[stCode]) ? hMap[stCode] : {
+                                "status": stText,
+                                "updatedon": "",
+                                "updatedby": ""
+                            };
+                            $scope.si[siInd].completed = $scope.order.st == stCode ? "end" : (end ? "false" : "true");
+                            siInd += 1;
+                        }
+                        if (!end) {
+                            end = $scope.order.st == stCode || ($scope.order.st == ORDER.CANCELLED && pVal == stCode);
+                        }
+                    }
+
+                    constructStatus(ORDER.PENDING, ORDER.statusTxt[ORDER.PENDING]);
+                    if ($scope.order.st == ORDER.PENDING || hMap[ORDER.CONFIRMED]) {
+                        constructStatus(ORDER.CONFIRMED, ORDER.statusTxt[ORDER.CONFIRMED]);
+                    }
+                    if (!end && hMap[ORDER.BACKORDERED]) {
+                        constructStatus(ORDER.BACKORDERED, ORDER.statusTxt[ORDER.BACKORDERED]);
+                    }
+                    constructStatus(ORDER.COMPLETED, ORDER.statusTxt[ORDER.COMPLETED]);
+                    constructStatus(ORDER.FULFILLED, ORDER.statusTxt[ORDER.FULFILLED]);
+                    if ($scope.order.st == ORDER.CANCELLED) {
+                        $scope.si[siInd] = hMap[ORDER.CANCELLED];
+                        $scope.si[siInd].completed = "cancel";
+                    }
+                    if ($scope.order.st == ORDER.COMPLETED) {
+                        $scope.shipDate = string2Date(hMap[ORDER.COMPLETED].updatedon, "dd/mm/yyyy", "/", true);
+                    }
+                }
+            }).finally(function () {
+                $scope.hideLoading();
+            });
+        };
+        if (checkNullEmpty($scope.order) || $scope.order.id != $scope.orderId) {
+            $scope.fetchOrder();
+        }
 
         $scope.shouldShowStatusChange = function () {
             if (checkNotNullEmpty($scope.statusList)) {
@@ -1313,77 +1401,77 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
             return false;
         };
 
-            $scope.checkHideStatus = function (status) {
-                return (checkNotNullEmpty(status) && (status == 'cm' || status == 'fl'));
-            };
-            $scope.hasStatus = function (status) {
-                return (checkNotNullEmpty($scope.statusList) && $scope.statusList.indexOf(status) > -1);
-            };
+        $scope.checkHideStatus = function (status) {
+            return (checkNotNullEmpty(status) && (status == 'cm' || status == 'fl'));
+        };
+        $scope.hasStatus = function (status) {
+            return (checkNotNullEmpty($scope.statusList) && $scope.statusList.indexOf(status) > -1);
+        };
 
 
-            $scope.getInventory = function (mIds) {
-                if (checkNotNullEmpty($scope.order.eid) && checkNotNullEmpty(mIds)) {
-                    $scope.showLoading();
-                    return invService.getInventoryByMaterial($scope.order.eid, mIds).then(function (data) {
-                        var sugInvMaterial = angular.copy(data.data.results);
-                        var inventory = data.data.results;
-                        var diMap = [];
-                        inventory.forEach(function (di) {
-                            diMap[di.mId] = di;
-                        });
-                        $scope.order.its.forEach(function (it) {
-                            var item = diMap[it.id];
-                            if (checkNotNull(item)) {
-                                item.hide = true;
-                                it.inv = item;
-                            }
-                        });
-                        return sugInvMaterial;
-                    }).catch(function error(msg) {
-                        $scope.showErrorMsg(msg);
-                    }).finally(function () {
-                        $scope.hideLoading();
+        $scope.getInventory = function (mIds) {
+            if (checkNotNullEmpty($scope.order.eid) && checkNotNullEmpty(mIds)) {
+                $scope.showLoading();
+                return invService.getInventoryByMaterial($scope.order.eid, mIds).then(function (data) {
+                    var sugInvMaterial = angular.copy(data.data.results);
+                    var inventory = data.data.results;
+                    var diMap = [];
+                    inventory.forEach(function (di) {
+                        diMap[di.mId] = di;
                     });
-                }
-            };
-            $scope.addRow = function (material) {
-                if (checkNotNull(material)) {
-                    if($scope.order.atv) {
-                        $scope.getInventory([material.mId]).then(function(data) {
-                                if(data.length == 0) {
-                                    $scope.showWarning("Cannot add " + material.mnm +". It is not available to customer.");
-                                    return;
-                                }
-                                continueAddRow(data[0]);
-                                var nr = $scope.order.its[$scope.order.its.length-1];
-                                nr.vmin = material.reord;
-                                nr.vmax = material.max;
-                                nr.vevent = material.event;
-                                nr.isBa = material.be;
-                                nr.itstk = material.tstk;
+                    $scope.order.its.forEach(function (it) {
+                        var item = diMap[it.id];
+                        if (checkNotNull(item)) {
+                            item.hide = true;
+                            it.inv = item;
+                        }
+                    });
+                    return sugInvMaterial;
+                }).catch(function error(msg) {
+                    $scope.showErrorMsg(msg);
+                }).finally(function () {
+                    $scope.hideLoading();
+                });
+            }
+        };
+        $scope.addRow = function (material) {
+            if (checkNotNull(material)) {
+                if ($scope.order.atv) {
+                    $scope.getInventory([material.mId]).then(function (data) {
+                            if (data.length == 0) {
+                                $scope.showWarning("Cannot add " + material.mnm + ". It is not available to customer.");
+                                return;
                             }
-                        );
-                        material.dInv = {"stk":material.stk};
+                            continueAddRow(data[0]);
+                            var nr = $scope.order.its[$scope.order.its.length - 1];
+                            nr.vmin = material.reord;
+                            nr.vmax = material.max;
+                            nr.vevent = material.event;
+                            nr.isBa = material.be;
+                            nr.itstk = material.tstk;
+                        }
+                    );
+                    material.dInv = {"stk": material.stk};
 
-                    } else {
-                        continueAddRow(material);
-                    }
-                }
-            };
-            function continueAddRow(material) {
-                $scope.validBatchStock = undefined;
-                if(material.be) {
-                    setValidBatchQuantity($scope.order.eid, material);
                 } else {
-                    addMaterial(material);
+                    continueAddRow(material);
                 }
-            };
+            }
+        };
+        function continueAddRow(material) {
+            $scope.validBatchStock = undefined;
+            if (material.be) {
+                setValidBatchQuantity($scope.order.eid, material);
+            } else {
+                addMaterial(material);
+            }
+        };
 
         function addMaterial(material) {
             var vs = checkNotNull(material.dInv) ? material.dInv.stk : 0;
             var isBn = material.b == "yes";
             var status = undefined;
-            if(material.ts) {
+            if (material.ts) {
                 status = checkNotNullEmpty($scope.tempmatstatus) ? $scope.tempmatstatus[0] : undefined;
             } else {
                 status = checkNotNullEmpty($scope.matstatus) ? $scope.matstatus[0] : undefined;
@@ -1410,7 +1498,7 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                 dInv: {stk: "0", event: -1},
                 rq: getOptimalOrderQuantity(material),
                 stk: material.stk,
-                nrsn:'',
+                nrsn: '',
                 qq: Math.max(getOptimalOrderQuantity(material), 0),
                 tm: material.ts,
                 mst: status
@@ -1420,24 +1508,26 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                 $scope.getVendInventory([material.mId]);
             }
         }
-            function getOptimalOrderQuantity(material) {
-                var opoq = -1;
-                var stock = material.stk;
-                if(checkNotNull(material.validBatchStock)) {
-                    stock = material.validBatchStock;
-                }
-                if (material.im == 'sq') {
-                    opoq = material.eoq;
-                } else {
-                    if (material.max > 0 && (stock + material.tstk) >= material.max) {
-                        opoq = 0;
-                    } else if (material.max > 0) {
-                        opoq = material.max - stock - material.tstk;
-                        opoq.toFixed(1);
-                    }
-                }
-                return opoq.toFixed(0);
+
+        function getOptimalOrderQuantity(material) {
+            var opoq = -1;
+            var stock = material.stk;
+            if (checkNotNull(material.validBatchStock)) {
+                stock = material.validBatchStock;
             }
+            if (material.im == 'sq') {
+                opoq = material.eoq;
+            } else {
+                if (material.max > 0 && (stock + material.tstk) >= material.max) {
+                    opoq = 0;
+                } else if (material.max > 0) {
+                    opoq = material.max - stock - material.tstk;
+                    opoq.toFixed(1);
+                }
+            }
+            return opoq.toFixed(0);
+        }
+
         function setValidBatchQuantity(eid, material) {
             $scope.showLoading();
             invService.getBatchDetail(material.mId, eid, false).then(function (data) {
@@ -1459,213 +1549,213 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
             });
         }
 
-            $scope.removeRow = function (index) {
-                $scope.exRow.splice(index, 1);
-                $scope.order.its.splice(index, 1);
-            };
-            $scope.startEditMats = function (isAllocation) {
-                angular.copy($scope.order.its, $scope.masterIts);
-                if (checkNotNullEmpty($scope.order.its)) {
-                    $scope.order.its.forEach(function (its) {
-                        its.nastk = its.astk;
-                        its.mrsn = null;
-                        its.ts = its.tm;
-                        if($scope.order.atv) {
-                            if (checkNullEmpty($scope.reasons)) {
+        $scope.removeRow = function (index) {
+            $scope.exRow.splice(index, 1);
+            $scope.order.its.splice(index, 1);
+        };
+        $scope.startEditMats = function (isAllocation) {
+            angular.copy($scope.order.its, $scope.masterIts);
+            if (checkNotNullEmpty($scope.order.its)) {
+                $scope.order.its.forEach(function (its) {
+                    its.nastk = its.astk;
+                    its.mrsn = null;
+                    its.ts = its.tm;
+                    if ($scope.order.atv) {
+                        if (checkNullEmpty($scope.reasons)) {
+                            its.mrsn = its.sdrsn;
+                        } else {
+                            if (checkNotNullEmpty(its.sdrsn) && $scope.reasons.indexOf(its.sdrsn) == -1) {
+                                its.nrsn = "Others";
                                 its.mrsn = its.sdrsn;
                             } else {
-                                if (checkNotNullEmpty(its.sdrsn) && $scope.reasons.indexOf(its.sdrsn) == -1) {
-                                    its.nrsn = "Others";
-                                    its.mrsn = its.sdrsn;
-                                } else {
-                                    its.nrsn = its.sdrsn;
-                                }
+                                its.nrsn = its.sdrsn;
                             }
+                        }
+                    } else {
+                        if (checkNullEmpty($scope.oReasons)) {
+                            its.mrsn = its.rsn;
                         } else {
-                            if(checkNullEmpty($scope.oReasons)) {
+                            if (checkNotNullEmpty(its.rsn) && $scope.oReasons.indexOf(its.rsn) == -1) {
+                                its.nrsn = "Others";
                                 its.mrsn = its.rsn;
                             } else {
-                                if (checkNotNullEmpty(its.rsn) && $scope.oReasons.indexOf(its.rsn) == -1) {
-                                    its.nrsn = "Others";
-                                    its.mrsn = its.rsn;
-                                } else {
-                                    its.nrsn = its.rsn;
-                                }
+                                its.nrsn = its.rsn;
                             }
                         }
-                        if (checkNullEmpty(its.mst) && !its.isBa) {
-                            if(its.tm) {
-                                its.mst = checkNotNullEmpty($scope.tempmatstatus) ? $scope.tempmatstatus[0] : undefined;
-                            } else {
-                                its.mst = checkNotNullEmpty($scope.matstatus) ? $scope.matstatus[0] : undefined;
-                            }
-                        }
-                    });
-                }
-                $scope.toggleEdit('mat');
-                $scope.invalidPopup = 0;
-                $scope.isAllocating = isAllocation;
-            };
-            $scope.cancelEditMats = function () {
-                $scope.saveCounter = 0;
-                $scope.saveDisable = false;
-                angular.copy($scope.masterIts, $scope.order.its);
-                for (var i in $scope.exRow) {
-                    $scope.exRow[i] = false;
-                }
-                $scope.toggleEdit('mat');
-            };
-
-            $scope.saveMaterials = function () {
-                if ($scope.validateMaterials()) {
-                    $scope.showLoading(false, "Saving your materials..");
-                    $scope.newIts = angular.copy($scope.order.its);
-                    $scope.newIts.forEach(function (its) {
-                        if (checkNotNullEmpty(its.nrsn) && its.nrsn != "Others") {
-                            its.mrsn = undefined;
-                        }
-                        if(its.added || !$scope.order.atv) {
-                            if (its.rq >= 0 && its.rq != its.q) {
-                                its.rsn = its.mrsn || its.nrsn || null;
-                            } else {
-                                its.rsn = null;
-                            }
+                    }
+                    if (checkNullEmpty(its.mst) && !its.isBa) {
+                        if (its.tm) {
+                            its.mst = checkNotNullEmpty($scope.tempmatstatus) ? $scope.tempmatstatus[0] : undefined;
                         } else {
-                            if(its.oq > 0 && its.q != its.oq) {
-                                its.sdrsn = its.mrsn || its.nrsn || null;
-                            } else {
-                                its.sdrsn = null;
-                            }
+                            its.mst = checkNotNullEmpty($scope.matstatus) ? $scope.matstatus[0] : undefined;
                         }
-                        its.astk = its.nastk || 0;
-                        if(!$scope.order.atv || its.q == its.sq) {
-                            its.astk = undefined;
-                        }
-                        if(!$scope.order.atv) {
-                            its.oq = its.q;
-                        }
-                        if(checkNotNullEmpty(its.bts)) {
-                            its.bts.forEach(function (d) {
-                                d.q = d.q || 0;
-                                d.fq = d.fq || 0;
-                                d.mst = d.q > 0 ? d.mst : undefined;
-                            });
-                        }
-                    });
-                    ordService.updateMaterials($scope.order.id, {
-                        'items': $scope.newIts,
-                        'msg': $scope.msg,
-                        'orderUpdatedAt': $scope.order.orderUpdatedAt
-                    }).then(function (data) {
-                        $scope.order.its = angular.copy($scope.newIts);
-                        var prevStatus = $scope.order.st;
-                        updateOrderObj(data.data.order);
-                        if(prevStatus != $scope.order.st) {
-                            $scope.checkStatusList();
-                            $scope.getStatusHistory();
-                        }
-                        $scope.batchQ = {};
-                        $scope.edit.ds = {};
-                        $scope.toggleEdit('mat');
-                        $scope.showSuccess($scope.resourceBundle['order.mat.success']);
-                    }).catch(function error(msg) {
-                        $scope.showErrorMsg(msg);
-                    }).finally(function () {
-                        $scope.hideLoading();
-                    });
-                }
-            };
+                    }
+                });
+            }
+            $scope.toggleEdit('mat');
+            $scope.invalidPopup = 0;
+            $scope.isAllocating = isAllocation;
+        };
+        $scope.cancelEditMats = function () {
+            $scope.saveCounter = 0;
+            $scope.saveDisable = false;
+            angular.copy($scope.masterIts, $scope.order.its);
+            for (var i in $scope.exRow) {
+                $scope.exRow[i] = false;
+            }
+            $scope.toggleEdit('mat');
+        };
 
-            $scope.batchQ = {};
-
-            $scope.saveBatchQ = function (index) {
-                $scope.batchQ[index] = $scope.order.its[index].q;
-            };
-
-            $scope.validateBatchQ = function (index) {
-                var it = $scope.order.its[index];
-                var zeroq = false;
-                if (it.q == 0) {
-                    zeroq = true;
-                }
-                if (it.isBa && $scope.batchQ[index] != it.q && checkNotNullEmpty(it.bts)) {
-                    if ((zeroq && confirm($scope.resourceBundle['order.batchq.changed.tozero'])) || (!zeroq && confirm($scope.resourceBundle['order.batchq.changed']))) {
-                        it.bts = undefined;
-                        it.oastk = 0;
-                        it.nastk = 0;
-                        it.astk = 0;
-                        $scope.exRow[index] = true;
+        $scope.saveMaterials = function () {
+            if ($scope.validateMaterials()) {
+                $scope.showLoading(false, "Saving your materials..");
+                $scope.newIts = angular.copy($scope.order.its);
+                $scope.newIts.forEach(function (its) {
+                    if (checkNotNullEmpty(its.nrsn) && its.nrsn != "Others") {
+                        its.mrsn = undefined;
+                    }
+                    if (its.added || !$scope.order.atv) {
+                        if (its.rq >= 0 && its.rq != its.q) {
+                            its.rsn = its.mrsn || its.nrsn || null;
+                        } else {
+                            its.rsn = null;
+                        }
                     } else {
-                        it.q = $scope.batchQ[index];
+                        if (its.oq > 0 && its.q != its.oq) {
+                            its.sdrsn = its.mrsn || its.nrsn || null;
+                        } else {
+                            its.sdrsn = null;
+                        }
                     }
-                }
-                if (it.isBa && it.q < it.sq) {
-                    showPopup($scope, it, it.id, it.sq + " units of " + it.nm + " is already shipped", index, $timeout);
-                }
-                var maxQ =  it.oastk - it.astk + (it.nastk  * 1) + it.sq;
-                if (it.q < maxQ) {
-                    showPopup($scope, it, it.id, "Quantity cannot be less than the maximum of allocated for this order including shipments and In shipment quantity.", index, $timeout);
-                    return false;
-                }
-            };
+                    its.astk = its.nastk || 0;
+                    if (!$scope.order.atv || its.q == its.sq) {
+                        its.astk = undefined;
+                    }
+                    if (!$scope.order.atv) {
+                        its.oq = its.q;
+                    }
+                    if (checkNotNullEmpty(its.bts)) {
+                        its.bts.forEach(function (d) {
+                            d.q = d.q || 0;
+                            d.fq = d.fq || 0;
+                            d.mst = d.q > 0 ? d.mst : undefined;
+                        });
+                    }
+                });
+                ordService.updateMaterials($scope.order.id, {
+                    'items': $scope.newIts,
+                    'msg': $scope.msg,
+                    'orderUpdatedAt': $scope.order.orderUpdatedAt
+                }).then(function (data) {
+                    $scope.order.its = angular.copy($scope.newIts);
+                    var prevStatus = $scope.order.st;
+                    updateOrderObj(data.data.order);
+                    if (prevStatus != $scope.order.st) {
+                        $scope.checkStatusList();
+                        $scope.getStatusHistory();
+                    }
+                    $scope.batchQ = {};
+                    $scope.edit.ds = {};
+                    $scope.toggleEdit('mat');
+                    $scope.showSuccess($scope.resourceBundle['order.mat.success']);
+                }).catch(function error(msg) {
+                    $scope.showErrorMsg(msg);
+                }).finally(function () {
+                    $scope.hideLoading();
+                });
+            }
+        };
 
-            $scope.validateMaterials = function () {
-                var removeRows = [];
-                var allzero = true;
-                var ind = 0;
-                for (var i in $scope.order.its) {
-                    var it = $scope.order.its[i];
-                    if (checkNullEmpty(it.d)) {
-                        it.d = 0;
-                    }
-                    if (checkNullEmpty(it.q)) {
-                        it.q = 0;
-                    }
-                    if (it.added) {
-                        if (it.q == 0) {
-                            removeRows.push(i);
-                        }
-                    }
-                    if (allzero) {
-                        allzero = (it.q == 0);
-                    }
-                    if($scope.order.atv && it.oq != 0 && it.q != it.oq) {
-                        if ($scope.oCfg.eqrm || (checkNotNullEmpty(it.nrsn) && it.nrsn.toLowerCase() == "others")) {
-                            if((checkNullEmpty($scope.oCfg.eqr) || checkNullEmpty(it.nrsn) || it.nrsn.toLowerCase() == 'others')
-                                && checkNullEmpty(it.mrsn)) {
-                                $scope.showWarning($scope.resourceBundle['provide.ordrsn'] + " for " + it.nm);
-                                return;
-                            }
-                        }
-                    } else if((it.added || !$scope.order.atv) && (it.q != it.rq && it.rq != -1)) {
-                        if ($scope.oCfg.orrm || (checkNotNullEmpty(it.nrsn) && it.nrsn.toLowerCase() == "others")) {
-                            if ((checkNullEmpty($scope.oCfg.orr) || checkNullEmpty(it.nrsn) || it.nrsn.toLowerCase() == 'others')
-                                && checkNullEmpty(it.mrsn)) {
-                                $scope.showWarning($scope.resourceBundle['ordrsn.warning'] + " for " + it.nm);
-                                return;
-                            }
-                        }
-                    }
-                    if (!$scope.validate(it, i, 's', $scope.isAllocating)) {
-                        return false;
-                    }
-                    if(!it.isBa) {
-                        var status = it.tm ? $scope.tempmatstatus : $scope.matstatus;
-                        it.isVisitedStatus = true;
-                        if(checkNotNullEmpty(status) && $scope.transConfig.ism && !$scope.validateStatus(it,i, it.tm ? "cmt" : "cm")) {
-                            ind++ ;
-                        }
+        $scope.batchQ = {};
+
+        $scope.saveBatchQ = function (index) {
+            $scope.batchQ[index] = $scope.order.its[index].q;
+        };
+
+        $scope.validateBatchQ = function (index) {
+            var it = $scope.order.its[index];
+            var zeroq = false;
+            if (it.q == 0) {
+                zeroq = true;
+            }
+            if (it.isBa && $scope.batchQ[index] != it.q && checkNotNullEmpty(it.bts)) {
+                if ((zeroq && confirm($scope.resourceBundle['order.batchq.changed.tozero'])) || (!zeroq && confirm($scope.resourceBundle['order.batchq.changed']))) {
+                    it.bts = undefined;
+                    it.oastk = 0;
+                    it.nastk = 0;
+                    it.astk = 0;
+                    $scope.exRow[index] = true;
+                } else {
+                    it.q = $scope.batchQ[index];
+                }
+            }
+            if (it.isBa && it.q < it.sq) {
+                showPopup($scope, it, it.id, it.sq + " units of " + it.nm + " is already shipped", index, $timeout);
+            }
+            var maxQ = it.oastk - it.astk + (it.nastk * 1) + it.sq;
+            if (it.q < maxQ) {
+                showPopup($scope, it, it.id, "Quantity cannot be less than the maximum of allocated for this order including shipments and In shipment quantity.", index, $timeout);
+                return false;
+            }
+        };
+
+        $scope.validateMaterials = function () {
+            var removeRows = [];
+            var allzero = true;
+            var ind = 0;
+            for (var i in $scope.order.its) {
+                var it = $scope.order.its[i];
+                if (checkNullEmpty(it.d)) {
+                    it.d = 0;
+                }
+                if (checkNullEmpty(it.q)) {
+                    it.q = 0;
+                }
+                if (it.added) {
+                    if (it.q == 0) {
+                        removeRows.push(i);
                     }
                 }
                 if (allzero) {
-                    $scope.showWarning($scope.resourceBundle['allitemszeromsg']);
+                    allzero = (it.q == 0);
+                }
+                if ($scope.order.atv && it.oq != 0 && it.q != it.oq) {
+                    if ($scope.oCfg.eqrm || (checkNotNullEmpty(it.nrsn) && it.nrsn.toLowerCase() == "others")) {
+                        if ((checkNullEmpty($scope.oCfg.eqr) || checkNullEmpty(it.nrsn) || it.nrsn.toLowerCase() == 'others')
+                            && checkNullEmpty(it.mrsn)) {
+                            $scope.showWarning($scope.resourceBundle['provide.ordrsn'] + " for " + it.nm);
+                            return;
+                        }
+                    }
+                } else if ((it.added || !$scope.order.atv) && (it.q != it.rq && it.rq != -1)) {
+                    if ($scope.oCfg.orrm || (checkNotNullEmpty(it.nrsn) && it.nrsn.toLowerCase() == "others")) {
+                        if ((checkNullEmpty($scope.oCfg.orr) || checkNullEmpty(it.nrsn) || it.nrsn.toLowerCase() == 'others')
+                            && checkNullEmpty(it.mrsn)) {
+                            $scope.showWarning($scope.resourceBundle['ordrsn.warning'] + " for " + it.nm);
+                            return;
+                        }
+                    }
+                }
+                if (!$scope.validate(it, i, 's', $scope.isAllocating)) {
                     return false;
                 }
-                for (i in removeRows) {
-                    $scope.removeRow(removeRows[i]);
+                if (!it.isBa) {
+                    var status = it.tm ? $scope.tempmatstatus : $scope.matstatus;
+                    it.isVisitedStatus = true;
+                    if (checkNotNullEmpty(status) && $scope.transConfig.ism && !$scope.validateStatus(it, i, it.tm ? "cmt" : "cm")) {
+                        ind++;
+                    }
                 }
-                return(!(ind > 0));
-            };
+            }
+            if (allzero) {
+                $scope.showWarning($scope.resourceBundle['allitemszeromsg']);
+                return false;
+            }
+            for (i in removeRows) {
+                $scope.removeRow(removeRows[i]);
+            }
+            return (!(ind > 0));
+        };
 
         $scope.validate = function (material, index, source, allocate) {
             if (!material.isBn) {
@@ -1676,7 +1766,7 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                             showPopup($scope, material, material.id, $scope.resourceBundle['invalid.quantity'] + " " + $scope.resourceBundle['for'] + " " + (material.nm), index, $timeout);
                             return false;
                         }
-                        if(material.added && material.q == 0) {
+                        if (material.added && material.q == 0) {
                             showPopup($scope, material, material.id, $scope.resourceBundle['invalid.quantity'] + " " + $scope.resourceBundle['for'] + " " + (material.nm), index, $timeout);
                             return false;
                         }
@@ -1684,8 +1774,8 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                             showPopup($scope, material, material.id, material.q + " of " + material.nm + " does not match the multiples of units expected in " + material.huName + ". It should be in multiples of " + material.huQty + " " + material.nm + ".", index, $timeout);
                             return false;
                         }
-                        if(checkNotNullEmpty(material.q) && checkNotNullEmpty(material.sq)){
-                            if(material.q < material.sq){
+                        if (checkNotNullEmpty(material.q) && checkNotNullEmpty(material.sq)) {
+                            if (material.q < material.sq) {
                                 showPopup($scope, material, material.id, material.sq + " units of " + material.nm + " is already shipped", index, $timeout, allocate);
                                 return false;
                             }
@@ -1693,7 +1783,7 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                         var nastk = material.nastk ? material.nastk * 1 : 0;
                         var allocStk = material.oastk - material.astk + nastk;
                         var isq = material.isq * 1;
-                        material.q = material.q *1;
+                        material.q = material.q * 1;
                         if (allocStk + isq > material.q) {
                             showPopup($scope, material, material.id, "Ordered quantity cannot be less than allocated quantity, " +
                                 "including allocations in shipments.", index, $timeout, allocate);
@@ -1727,10 +1817,10 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
             }
             return true;
         };
-        $scope.validateStatus = function(material, index, source) {
-            if(material.nastk > 0 && material.isVisitedStatus) {
+        $scope.validateStatus = function (material, index, source) {
+            if (material.nastk > 0 && material.isVisitedStatus) {
                 var dispStatus = material.tm ? $scope.tempmatstatus : $scope.matstatus;
-                if(checkNotNullEmpty(dispStatus) && checkNullEmpty(material.mst) && $scope.transConfig.ism) {
+                if (checkNotNullEmpty(dispStatus) && checkNullEmpty(material.mst) && $scope.transConfig.ism) {
                     showPopup($scope, material, source + material.id, $scope.resourceBundle['status.required'], index, $timeout, false, true);
                     return false;
                 }
@@ -1738,147 +1828,147 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
             return true;
         };
 
-            $scope.hidePop = function (item, id, allocate, isTable, source) {
-                if (!allocate) {
-                    hidePopup($scope, item, item.id, id, $timeout);
-                } else if(checkNotNullEmpty(source)) {
-                    hidePopup($scope,item,source + item.id, id, $timeout, false, true);
-                } else {
-                    hidePopup($scope, item, (isTable?"at":"a") + item.id, id, $timeout, allocate);
+        $scope.hidePop = function (item, id, allocate, isTable, source) {
+            if (!allocate) {
+                hidePopup($scope, item, item.id, id, $timeout);
+            } else if (checkNotNullEmpty(source)) {
+                hidePopup($scope, item, source + item.id, id, $timeout, false, true);
+            } else {
+                hidePopup($scope, item, (isTable ? "at" : "a") + item.id, id, $timeout, allocate);
+            }
+        }
+
+        $scope.getVendInventory = function (mIds) {
+            if (checkNotNullEmpty($scope.order.vid) && checkNotNullEmpty(mIds)) {
+                $scope.showLoading();
+                invService.getInventoryByMaterial($scope.order.vid, mIds).then(function (data) {
+                    var vInventory = data.data.results;
+                    var diMap = [];
+                    vInventory.forEach(function (di) {
+                        diMap[di.mId] = di;
+                    });
+                    $scope.order.its.forEach(function (it) {
+                        var item = diMap[it.id];
+                        if (checkNotNull(item)) {
+                            it.dInv = item;
+                            it.vs = item.stk;
+                            it.atpstk = item.atpstk;
+                            it.huName = item.huName;
+                            it.huQty = item.huQty;
+                            it.astk = 0;
+                            it.oastk = 0;
+                            it.sq = 0;
+                            it.isq = 0;
+                        }
+                    });
+                }).catch(function error(msg) {
+                    $scope.showErrorMsg(msg);
+                }).finally(function () {
+                    $scope.hideLoading();
+                });
+            }
+        };
+        $scope.getFilteredInvntry = function (text) {
+            $scope.fetchingInvntry = true;
+            var eid = $scope.order.eid;
+            if ($scope.order.atv) {
+                eid = $scope.order.vid;
+            }
+            return invService.getInventoryStartsWith(eid, null, text.toLowerCase(), 0, 10).then(function (data) {
+                $scope.fetchingInvntry = false;
+                var list = [];
+                var map = {};
+                for (var i in $scope.order.its) {
+                    var mat = $scope.order.its[i];
+                    if (checkNotNullEmpty(mat.nm)) {
+                        map[mat.id] = true;
+                    }
+                }
+                if (checkNotNullEmpty(data.data.results)) {
+                    for (var j in data.data.results) {
+                        var mat = data.data.results[j];
+                        if (!map[mat.mId]) {
+                            list.push(mat);
+                        }
+                    }
+                }
+                return list;
+            }).finally(function () {
+                $scope.fetchingInvntry = false;
+            });
+        };
+        $scope.exRow = [];
+        $scope.select = function (index, type) {
+            var empty = '';
+            if ($scope.exRow.length == 0) {
+                for (var i = 0; i < $scope.order.its.length; i++) {
+                    $scope.exRow.push(empty);
                 }
             }
-
-            $scope.getVendInventory = function (mIds) {
-                if (checkNotNullEmpty($scope.order.vid) && checkNotNullEmpty(mIds)) {
-                    $scope.showLoading();
-                    invService.getInventoryByMaterial($scope.order.vid, mIds).then(function (data) {
-                        var vInventory = data.data.results;
-                        var diMap = [];
-                        vInventory.forEach(function (di) {
-                            diMap[di.mId] = di;
-                        });
-                        $scope.order.its.forEach(function (it) {
-                            var item = diMap[it.id];
-                            if (checkNotNull(item)) {
-                                it.dInv = item;
-                                it.vs = item.stk;
-                                it.atpstk = item.atpstk;
-                                it.huName = item.huName;
-                                it.huQty = item.huQty;
-                                it.astk = 0;
-                                it.oastk = 0;
-                                it.sq = 0;
-                                it.isq = 0;
-                            }
-                        });
-                    }).catch(function error(msg) {
-                        $scope.showErrorMsg(msg);
-                    }).finally(function () {
-                        $scope.hideLoading();
-                    });
+            if (type == 'show') {
+                $scope.saveDisable = true;
+                $scope.saveCounter++;
+            }
+            if (checkNullEmpty(type)) {
+                $scope.saveCounter--;
+                if ($scope.saveCounter == 0) {
+                    $scope.saveDisable = false;
                 }
-            };
-            $scope.getFilteredInvntry = function (text) {
-                $scope.fetchingInvntry = true;
-                var eid = $scope.order.eid;
-                if($scope.order.atv) {
-                    eid = $scope.order.vid;
-                }
-                return invService.getInventoryStartsWith(eid, null, text.toLowerCase(),0,10).then(function (data) {
-                    $scope.fetchingInvntry = false;
-                    var list = [];
-                    var map = {};
-                    for (var i in $scope.order.its) {
-                        var mat = $scope.order.its[i];
-                        if (checkNotNullEmpty(mat.nm)) {
-                            map[mat.id] = true;
-                        }
-                    }
-                    if (checkNotNullEmpty(data.data.results)) {
-                        for (var j in data.data.results) {
-                            var mat = data.data.results[j];
-                            if (!map[mat.mId]) {
-                                list.push(mat);
-                            }
-                        }
-                    }
-                    return list;
-                }).finally(function () {
-                    $scope.fetchingInvntry = false;
+            }
+            $scope.exRow[index] = $scope.exRow[index] === type ? empty : type;
+            redrawPopup($scope, $scope.order.its, 'hide', $timeout);
+        };
+        $scope.toggle = function (index) {
+            $scope.select(index);
+        };
+        $scope.displayStatus = function (data, addMsg) {
+            var msg = $scope.resourceBundle['order.upd.success'];
+            if (checkNotNullEmpty(data.data.msg)) {
+                msg = msg + "<br><br>" + data.data.msg;
+            }
+            if (checkNotNullEmpty(addMsg)) {
+                msg = msg + "<br>" + addMsg;
+            }
+            if (data.data.invErr) {
+                $scope.showWarning(msg);
+            } else {
+                $scope.showSuccess(msg);
+            }
+        };
+        $scope.setShipmentAvailable = function (value) {
+            $scope.shipAvailable = value;
+        };
+        $scope.toggleStatusHistory = function () {
+            $scope.dispStatusHistory = !$scope.dispStatusHistory;
+        };
+        $scope.showLoading();
+        ordService.getOrderReasons("eqr").then(function (data) {
+            $scope.reasons = data.data;
+            if (checkNotNullEmpty($scope.reasons)) {
+                var rsn = "others";
+                var isMatched = $scope.reasons.some(function (arval) {
+                    return rsn == arval.toLowerCase();
                 });
-            };
-            $scope.exRow = [];
-            $scope.select = function (index, type) {
-                var empty = '';
-                if ($scope.exRow.length == 0) {
-                    for (var i = 0; i < $scope.order.its.length; i++) {
-                        $scope.exRow.push(empty);
-                    }
+                if (!isMatched) {
+                    $scope.reasons = $scope.reasons.concat("Others");
                 }
-                if (type == 'show') {
-                    $scope.saveDisable = true;
-                    $scope.saveCounter++;
-                }
-                if (checkNullEmpty(type)) {
-                    $scope.saveCounter--;
-                    if ($scope.saveCounter == 0) {
-                        $scope.saveDisable = false;
-                    }
-                }
-                $scope.exRow[index] = $scope.exRow[index] === type ? empty : type;
-                redrawPopup($scope, $scope.order.its, 'hide', $timeout);
-            };
-            $scope.toggle = function (index) {
-                $scope.select(index);
-            };
-            $scope.displayStatus = function (data, addMsg) {
-                var msg = $scope.resourceBundle['order.upd.success'];
-                if (checkNotNullEmpty(data.data.msg)) {
-                    msg = msg + "<br><br>" + data.data.msg;
-                }
-                if (checkNotNullEmpty(addMsg)) {
-                    msg = msg + "<br>" + addMsg;
-                }
-                if (data.data.invErr) {
-                    $scope.showWarning(msg);
-                } else {
-                    $scope.showSuccess(msg);
-                }
-            };
-            $scope.setShipmentAvailable = function (value) {
-                $scope.shipAvailable = value;
-            };
-            $scope.toggleStatusHistory = function () {
-                $scope.dispStatusHistory = !$scope.dispStatusHistory;
-            };
-            $scope.showLoading();
-            ordService.getOrderReasons("eqr").then(function (data) {
-                $scope.reasons = data.data;
-                if (checkNotNullEmpty($scope.reasons)) {
-                    var rsn = "others";
-                    var isMatched = $scope.reasons.some(function (arval) {
-                        return rsn == arval.toLowerCase();
-                    });
-                    if (!isMatched) {
-                        $scope.reasons = $scope.reasons.concat("Others");
-                    }
-                    $scope.reasons.unshift("");
-                }
-            }).catch(function error(msg) {
-                $scope.showErrorMsg(msg);
-            }).finally(function () {
-                $scope.hideLoading();
-            });
+                $scope.reasons.unshift("");
+            }
+        }).catch(function error(msg) {
+            $scope.showErrorMsg(msg);
+        }).finally(function () {
+            $scope.hideLoading();
+        });
 
-            $scope.openShipment = function (sID) {
-                $window.open("#/orders/shipment/detail/" + sID, '_blank');
-            };
+        $scope.openShipment = function (sID) {
+            $window.open("#/orders/shipment/detail/" + sID, '_blank');
+        };
 
-            $scope.cancelNewShipment = function () {
-                $scope.openView("orderDetail");
-                $scope.enableScroll();
-            };
-        }
+        $scope.cancelNewShipment = function () {
+            $scope.openView("orderDetail");
+            $scope.enableScroll();
+        };
+    }
 ]);
 ordControllers.controller('orders.MaterialController', ['$scope',
     function ($scope) {
@@ -1913,7 +2003,7 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
         $scope.today = new Date();
         $scope.order = {};
         $scope.order.materials = [];
-        if($scope.ordType == 'trn') {
+        if ($scope.ordType == 'trn') {
             $scope.type = "2";
             $scope.entType = "all";
         } else {
@@ -1922,13 +2012,13 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
         $scope.validate = function (material, index, source) {
             if (!material.isBinary) {
                 material.isVisited = material.isVisited || checkNotNullEmpty(source);
-                if(material.isVisited) {
+                if (material.isVisited) {
                     if (checkNotNull(material.ind) && (checkNullEmpty(material.quantity) || material.quantity <= 0)) {
-                        showPopup($scope,material,material.name.mId, $scope.resourceBundle['invalid.quantity'] + " " + $scope.resourceBundle['for'] + " " + (material.mnm || material.name.mnm), index,$timeout);
+                        showPopup($scope, material, material.name.mId, $scope.resourceBundle['invalid.quantity'] + " " + $scope.resourceBundle['for'] + " " + (material.mnm || material.name.mnm), index, $timeout);
                         return false;
                     }
                     if (checkNotNullEmpty(material.name.huName) && checkNotNullEmpty(material.name.huQty) && checkNotNullEmpty(material.quantity) && material.quantity % material.name.huQty != 0) {
-                        showPopup($scope,material,material.name.mId, material.quantity + " of " + material.name.mnm + " does not match the multiples of units expected in " + material.name.huName + ". It should be in multiples of " + material.name.huQty + " " + material.name.mnm + ".", index,$timeout);
+                        showPopup($scope, material, material.name.mId, material.quantity + " of " + material.name.mnm + " does not match the multiples of units expected in " + material.name.huName + ". It should be in multiples of " + material.name.huQty + " " + material.name.mnm + ".", index, $timeout);
                         return false;
                     }
                 }
@@ -1936,8 +2026,8 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
             return true;
         };
 
-        $scope.hidePop = function(material,id){
-            hidePopup($scope,material,material.name.mId,id,$timeout);
+        $scope.hidePop = function (material, id) {
+            hidePopup($scope, material, material.name.mId, id, $timeout);
         };
 
         domainCfgService.getOrdersCfg().then(function (data) {
@@ -1958,25 +2048,25 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
         });
 
         $scope.showLoading();
-        ordService.getOrderReasons("orr").then(function(data) {
+        ordService.getOrderReasons("orr").then(function (data) {
             $scope.reasons = data.data;
-            if(checkNotNullEmpty($scope.reasons)) {
+            if (checkNotNullEmpty($scope.reasons)) {
                 var rsn = "others";
                 var isMatched = $scope.reasons.some(function (arval) {
                     return rsn == arval.toLowerCase();
                 });
-                if(!isMatched) {
+                if (!isMatched) {
                     $scope.reasons = $scope.reasons.concat("Others");
                 }
                 $scope.reasons.unshift("");
             }
         }).catch(function error(msg) {
             $scope.showErrorMsg(msg);
-        }).finally(function(){
+        }).finally(function () {
             $scope.hideLoading();
         });
 
-        if(checkNotNullEmpty(requestContext.getParam("eid"))) {
+        if (checkNotNullEmpty(requestContext.getParam("eid"))) {
             var eId = requestContext.getParam("eid");
             entityService.get(eId).then(function (data) {
                 $scope.order.ent = data.data;
@@ -1985,37 +2075,37 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
             });
         }
 
-        $scope.changeEntity = function(){
+        $scope.changeEntity = function () {
             var ent = $scope.order.ent;
             $scope.order.ent = ent;
             $scope.order.eent = true;
-            if (checkNotNullEmpty($scope.order.ent)){
+            if (checkNotNullEmpty($scope.order.ent)) {
                 $scope.loadMaterials = true;
                 $scope.showMaterials = true;
                 $scope.getInventory();
                 fetchOrderConfig();
             }
         };
-        $scope.$watch("order.cent", function(newVal, oldVal) {
-              if(checkNotNullEmpty(newVal) && (checkNullEmpty(oldVal) || (checkNotNullEmpty(oldVal) && newVal.id != oldVal.id))) {
-                  $scope.order.cent = newVal;
-                  $scope.dcu = true;
-                  $scope.loadCInventory = true;
-                  $scope.getCustInventory();
+        $scope.$watch("order.cent", function (newVal, oldVal) {
+            if (checkNotNullEmpty(newVal) && (checkNullEmpty(oldVal) || (checkNotNullEmpty(oldVal) && newVal.id != oldVal.id))) {
+                $scope.order.cent = newVal;
+                $scope.dcu = true;
+                $scope.loadCInventory = true;
+                $scope.getCustInventory();
 
-              }
+            }
         });
-        $scope.$watch("type", function(newVal, oldVal) {
-            if(checkNotNullEmpty(newVal) && newVal != oldVal) {
-                if($scope.skipCheck) {
+        $scope.$watch("type", function (newVal, oldVal) {
+            if (checkNotNullEmpty(newVal) && newVal != oldVal) {
+                if ($scope.skipCheck) {
                     $scope.skipCheck = false;
                     return;
                 }
-                if($scope.reset("ty")) {
-                    if($scope.type == "0") {
+                if ($scope.reset("ty")) {
+                    if ($scope.type == "0") {
                         $scope.coffset = 0;
                     }
-                    if($scope.type == "1") {
+                    if ($scope.type == "1") {
                         $scope.availableInventory.some(function (mat) {
                             mat.enable = true;
                             mat.hide = false;
@@ -2027,17 +2117,17 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
                 }
             }
         });
-        $scope.$watch("loadMaterials", function(newVal, oldVal) {
+        $scope.$watch("loadMaterials", function (newVal, oldVal) {
             if (!newVal && !$scope.loadCInventory) {
                 $scope.alterInventory();
             }
         });
-        $scope.$watch("loadCInventory", function(newVal, oldVal) {
-            if(!newVal && !$scope.loadMaterials) {
+        $scope.$watch("loadCInventory", function (newVal, oldVal) {
+            if (!newVal && !$scope.loadMaterials) {
                 $scope.alterInventory();
             }
         });
-        $scope.alterInventory = function() {
+        $scope.alterInventory = function () {
             $scope.custInventory.forEach(function (val) {
                 if ($scope.avMap[val.mId]) {
                     $scope.avMap[val.mId].enable = true;
@@ -2051,11 +2141,11 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
                 var custId = $scope.order.cent.id;
                 $scope.showLoading();
                 invService.getInventory(custId, null, $scope.coffset, $scope.size).then(function (data) {
-                  var custInv = data.data.results;
-                    if(checkNotNullEmpty(custInv) && custInv.length > 0) {
+                    var custInv = data.data.results;
+                    if (checkNotNullEmpty(custInv) && custInv.length > 0) {
                         $scope.custInventory = $scope.custInventory.concat(custInv);
                     }
-                    if(checkNotNullEmpty(custInv) && custInv.length == $scope.size) {
+                    if (checkNotNullEmpty(custInv) && custInv.length == $scope.size) {
                         $scope.coffset += $scope.size;
                         $scope.getCustInventory();
                     } else {
@@ -2064,7 +2154,7 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
 
                 }).catch(function error(msg) {
                     $scope.showErrorMsg(msg);
-                }).finally(function(){
+                }).finally(function () {
                     $scope.hideLoading();
                 });
             }
@@ -2089,21 +2179,21 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
             if (checkNotNullEmpty($scope.order.ent)) {
                 var entId = $scope.order.ent.id;
                 invService.getInventory(entId, null, $scope.offset, $scope.size).then(function (data) {
-                    if($scope.stopInvFetch || checkNullEmpty($scope.order.ent) || entId != $scope.order.ent.id) {
+                    if ($scope.stopInvFetch || checkNullEmpty($scope.order.ent) || entId != $scope.order.ent.id) {
                         return;
                     }
                     var inventory = data.data.results;
-                    if(checkNotNullEmpty(inventory) && inventory.length > 0){
+                    if (checkNotNullEmpty(inventory) && inventory.length > 0) {
                         $scope.availableInventory = $scope.availableInventory.concat(inventory);
                     }
-                    if(!$scope.stopInvFetch && checkNotNullEmpty(inventory) && inventory.length == $scope.size){
+                    if (!$scope.stopInvFetch && checkNotNullEmpty(inventory) && inventory.length == $scope.size) {
                         $scope.offset += $scope.size;
                         $scope.getInventory();
-                    }else{
+                    } else {
                         $scope.loadMaterials = false;
                         var mid = requestContext.getParam("mid");
-                        for(i=0; i< $scope.availableInventory.length; i++) {
-                            if($scope.availableInventory[i].mId == mid) {
+                        for (i = 0; i < $scope.availableInventory.length; i++) {
+                            if ($scope.availableInventory[i].mId == mid) {
                                 $scope.addMaterialToList(i);
                                 $scope.showMaterials = true;
                                 break;
@@ -2121,7 +2211,7 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
                     });
                     for (var i in $scope.order.materials) {
                         var mat = $scope.order.materials[i];
-                        if(checkNotNullEmpty(mat.name) && checkNotNullEmpty($scope.avMap[mat.name.mId])){
+                        if (checkNotNullEmpty(mat.name) && checkNotNullEmpty($scope.avMap[mat.name.mId])) {
                             $scope.avMap[mat.name.mId].hide = true;
                         }
                     }
@@ -2136,10 +2226,10 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
         $scope.update = function (skipCheck) {
             var invalidQMats = "";
             var count = 0;
-            if(!skipCheck) {
+            if (!skipCheck) {
                 for (var i in $scope.order.materials) {
                     var mat = $scope.order.materials[i];
-                    if(checkNullEmpty(mat.name)) {
+                    if (checkNullEmpty(mat.name)) {
                         continue;
                     }
                     if (mat.showRecommended) {
@@ -2154,7 +2244,7 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
                         }
                     }
                     if (mat.showRecommended && mat.recomQ != '-1' && ($scope.oCfg.orrm || (checkNotNullEmpty(mat.rsn) && mat.rsn.toLowerCase() == 'others'))) {
-                        if((checkNullEmpty($scope.oCfg.orr) || checkNullEmpty(mat.rsn) || mat.rsn.toLowerCase() == 'others')
+                        if ((checkNullEmpty($scope.oCfg.orr) || checkNullEmpty(mat.rsn) || mat.rsn.toLowerCase() == 'others')
                             && checkNullEmpty(mat.mrsn)) {
                             $scope.showWarning($scope.resourceBundle['provide.reason'] + " for " + mat.name.mnm);
                             return;
@@ -2179,20 +2269,20 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
                     }
                 }
             }
-            if(checkNotNullEmpty(invalidQMats)){
-                $scope.showWarning($scope.resourceBundle['quantity.invalid']+' '+invalidQMats.slice(0,-2));
+            if (checkNotNullEmpty(invalidQMats)) {
+                $scope.showWarning($scope.resourceBundle['quantity.invalid'] + ' ' + invalidQMats.slice(0, -2));
             } else {
                 $scope.showLoading();
                 if ($scope.timestamp == undefined) {
                     $scope.timestamp = new Date().getTime();
                 }
                 var fOrder = constructFinalOrder();
-                if($scope.type != "1") {
+                if ($scope.type != "1") {
                     skipCheck = true;
                 }
                 fOrder.skipCheck = skipCheck;
                 ordService.createOrder(fOrder).then(function (data) {
-                    if(data.data.msg) {
+                    if (data.data.msg) {
                         resetNoConfirm(true);
                         $scope.showSuccess(data.data.msg);
 
@@ -2219,7 +2309,7 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
                     } else {
                         $scope.showErrorMsg(msg);
                     }
-                }).finally(function(){
+                }).finally(function () {
                     $scope.hideLoading();
                 });
             }
@@ -2241,44 +2331,44 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
             });
         }
 
-        $scope.proceed = function() {
+        $scope.proceed = function () {
             $scope.update(true);
             $scope.cancel();
         };
-        $scope.cancel = function() {
+        $scope.cancel = function () {
             $scope.modalInstance.dismiss('cancel');
         };
         function constructFinalOrder() {
 
             var ft = {};
-            if($scope.type=="1") {
+            if ($scope.type == "1") {
                 ft['kioskid'] = '' + $scope.order.ent.id;
-                if(checkNotNullEmpty($scope.order.vent)) {
+                if (checkNotNullEmpty($scope.order.vent)) {
                     ft['vkioskid'] = '' + $scope.order.vent.id;
                 }
             } else {
-                if(checkNotNullEmpty($scope.order.cent)) {
+                if (checkNotNullEmpty($scope.order.cent)) {
                     ft['kioskid'] = '' + $scope.order.cent.id;
                     ft['vkioskid'] = '' + $scope.order.ent.id;
                 }
             }
             ft['ordMsg'] = $scope.order.msg;
             ft['oTag'] = [];
-            if(checkNotNullEmpty($scope.order.oTags)) {
+            if (checkNotNullEmpty($scope.order.oTags)) {
                 var i = 0;
                 $scope.order.oTags.forEach(function (data) {
                     ft['oTag'][i++] = data.id;
                 });
             }
-            if(checkNotNullEmpty($scope.order.edd)) {
+            if (checkNotNullEmpty($scope.order.edd)) {
                 ft['edd'] = formatDate($scope.order.edd);
             }
-            if(checkNotNullEmpty($scope.order.efd)){
+            if (checkNotNullEmpty($scope.order.efd)) {
                 ft['efd'] = formatDate($scope.order.efd);
             }
-            if($scope.type == "0") {
+            if ($scope.type == "0") {
                 ft['orderType'] = '2';
-            } else if($scope.type == "1") {
+            } else if ($scope.type == "1") {
                 ft['orderType'] = '1';
             } else {
                 ft['orderType'] = '0';
@@ -2296,6 +2386,7 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
             ft['signature'] = $scope.curUser + $scope.timestamp;
             return ft;
         }
+
         $scope.$watch('mtag', function (name, oldVal) {
             $scope.availableInventory.forEach(function (inv) {
                 inv.tHide = checkNotNullEmpty(name) && (checkNullEmpty($scope.tagMaterials[name]) || !($scope.tagMaterials[name].indexOf(inv.mId) >= 0));
@@ -2306,35 +2397,35 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
             if (checkNotNullEmpty(mIndex) && checkNotNullEmpty($scope.avMap[mIndex])) {
                 $scope.avMap[mIndex].hide = false;
             }
-            $scope.exRow.splice(id,1);
-            hidePopup($scope,$scope.order.materials[id],$scope.order.materials[id].name.mId,id,$timeout);
+            $scope.exRow.splice(id, 1);
+            hidePopup($scope, $scope.order.materials[id], $scope.order.materials[id].name.mId, id, $timeout);
             $scope.order.materials.splice(id, 1);
-            redrawPopup($scope,$scope.order.materials,'hide',$timeout);
+            redrawPopup($scope, $scope.order.materials, 'hide', $timeout);
         };
         $scope.addRows = function () {
             $scope.order.materials.push({"name": "", "stock": ""});
         };
         $scope.reset = function (type) {
             if (type === "en") {
-                if($scope.order.materials.length-1 > 0) {
+                if ($scope.order.materials.length - 1 > 0) {
                     if (window.confirm($scope.resourceBundle['entity.editconfirm'])) {
                         resetType(type);
                     }
                 } else {
-                   resetType(type);
+                    resetType(type);
                 }
             } else if (type === "ty") {
-                    if ($scope.order.materials.length - 1 > 0) {
-                        if (window.confirm($scope.resourceBundle['type.editconfirm'])) {
-                            resetNoConfirm(true);
-                            return true;
-                        }
-                    } else {
+                if ($scope.order.materials.length - 1 > 0) {
+                    if (window.confirm($scope.resourceBundle['type.editconfirm'])) {
                         resetNoConfirm(true);
                         return true;
                     }
-            } else if(type == "cu") {
-                if($scope.order.materials.length-1 > 0) {
+                } else {
+                    resetNoConfirm(true);
+                    return true;
+                }
+            } else if (type == "cu") {
+                if ($scope.order.materials.length - 1 > 0) {
                     if (window.confirm($scope.resourceBundle['customer.clear'])) {
                         resetType(type);
                     }
@@ -2349,8 +2440,8 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
             }
             return false;
         };
-        function resetType(type){
-            if(type == "en") {
+        function resetType(type) {
+            if (type == "en") {
                 $scope.order.ent = null;
                 $scope.order.eent = false;
                 $scope.order.vent = null;
@@ -2359,7 +2450,7 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
             }
             $scope.order.cent = null;
             $scope.order.materials = [];
-            if(type != "en") {
+            if (type != "en") {
                 $scope.availableInventory.forEach(function (inv) {
                     inv.hide = false;
                     inv.enable = false;
@@ -2377,6 +2468,7 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
             $scope.addRows();
             $scope.offset = 0;
         }
+
         function resetNoConfirm(isAdd) {
             $scope.offset = 0;
             $scope.coffset = 0;
@@ -2401,27 +2493,28 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
             $scope.invalidPopup = 0;
             $scope.order.oTags = undefined;
             $scope.addRows();
-            if($scope.isEnt) {
+            if ($scope.isEnt) {
                 $scope.order.ent = $scope.entity;
                 $scope.getInventory();
                 fetchOrderConfig();
                 $scope.showMaterials = true;
-            }else if (checkNotNullEmpty($scope.defaultEntityId) && isAdd) {
+            } else if (checkNotNullEmpty($scope.defaultEntityId) && isAdd) {
                 $scope.showLoading();
-                entityService.get($scope.defaultEntityId).then(function(data){
+                entityService.get($scope.defaultEntityId).then(function (data) {
                     $scope.order.ent = data.data;
-                    if (checkNotNullEmpty($scope.order.ent)){
+                    if (checkNotNullEmpty($scope.order.ent)) {
                         $scope.order.eent = true;
                         $scope.getInventory();
                         fetchOrderConfig();
                         $scope.showMaterials = true;
                     }
-                }).finally(function() {
+                }).finally(function () {
                     $scope.hideLoading();
                 });
             }
             $scope.timestamp = undefined;
         }
+
         resetNoConfirm(true);
         $scope.getFilteredEntity = function (text) {
             $scope.loadingEntityMaterials = true;
@@ -2434,33 +2527,33 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
         };
         $scope.getFilteredInvntry = function (text) {
             $scope.fetchingInvntry = true;
-            return invService.getInventoryStartsWith($scope.order.ent.id,null,text.toLowerCase(),0,10).then(function (data) {
+            return invService.getInventoryStartsWith($scope.order.ent.id, null, text.toLowerCase(), 0, 10).then(function (data) {
                 $scope.fetchingInvntry = false;
                 var list = [];
                 var map = {};
                 for (var i in $scope.order.materials) {
                     var mat = $scope.order.materials[i];
-                    if(checkNotNullEmpty(mat.name)){
+                    if (checkNotNullEmpty(mat.name)) {
                         map[mat.name.mId] = true;
                     }
                 }
-                if(checkNotNullEmpty(data.data.results)){
-                    for(var j in data.data.results) {
+                if (checkNotNullEmpty(data.data.results)) {
+                    for (var j in data.data.results) {
                         var mat = data.data.results[j];
                         var push = true;
-                        if($scope.type == "0" && $scope.order.cent) {
+                        if ($scope.type == "0" && $scope.order.cent) {
                             /*var enable = $scope.custInventory.some(function(data) {
-                                return mat.mnm == data.mnm;
-                            }) ;*/
+                             return mat.mnm == data.mnm;
+                             }) ;*/
                             push = checkNotNullEmpty($scope.cInvMap[mat.mId]);
                         }
-                        if(!map[mat.mId] && push){
+                        if (!map[mat.mId] && push) {
                             list.push(mat);
                         }
                     }
                 }
                 return list;
-            }).finally(function(){
+            }).finally(function () {
                 $scope.fetchingInvntry = false;
             });
         };
@@ -2492,9 +2585,9 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
 ordControllers.controller('order.MaterialController', ['$scope', 'invService',
     function ($scope, invService) {
         $scope.material.showRecommended = false;
-        $scope.showRecomQuantity = function(val){
+        $scope.showRecomQuantity = function (val) {
             $scope.material.showRecommended = false;
-            if($scope.material.recomQ >= 0 && val != $scope.material.recomQ){
+            if ($scope.material.recomQ >= 0 && val != $scope.material.recomQ) {
                 $scope.material.showRecommended = true;
             } else {
                 //reset reasons
@@ -2502,18 +2595,18 @@ ordControllers.controller('order.MaterialController', ['$scope', 'invService',
                 $scope.material.mrsn = null;
             }
         };
-        $scope.recommendedQuantity = function(name){
+        $scope.recommendedQuantity = function (name) {
             var opoq = -1;
             var stock = name.stk;
-            if(checkNotNull(name.validBatchStock)) {
+            if (checkNotNull(name.validBatchStock)) {
                 stock = name.validBatchStock;
             }
-            if(name.im == 'sq'){
+            if (name.im == 'sq') {
                 opoq = name.eoq;
-            }else if(name.max > 0){
+            } else if (name.max > 0) {
                 if ((stock + name.tstk) >= name.max) {
                     opoq = 0;
-                }else{
+                } else {
                     opoq = name.max - stock - name.tstk;
                     opoq.toFixed(1);
                 }
@@ -2596,13 +2689,13 @@ ordControllers.controller('order.MaterialController', ['$scope', 'invService',
     }
 ]);
 ordControllers.controller('DemandItemController', ['$scope', function ($scope) {
-    if(checkNotNullEmpty($scope.item.bts) || checkNotNullEmpty($scope.item.bq)) {
+    if (checkNotNullEmpty($scope.item.bts) || checkNotNullEmpty($scope.item.bq)) {
         $scope.item.obts = angular.copy($scope.item.bts || $scope.item.bq);
     }
     $scope.updateBatch = function (bdata) {
         $scope.saveCounter--;
         $scope.item.bdata = bdata;
-        if($scope.saveCounter == 0) {
+        if ($scope.saveCounter == 0) {
             $scope.saveDisable = false;
         }
         var newBatches = [];
@@ -2628,7 +2721,7 @@ ordControllers.controller('DemandItemController', ['$scope', function ($scope) {
             }
         });
         $scope.item.bts = newBatches;
-        $scope.item.nastk = $scope.item.naq= $scope.item.nfq = allocated;
+        $scope.item.nastk = $scope.item.naq = $scope.item.nfq = allocated;
     }
 }]);
 ordControllers.controller('NewShipmentController', ['$scope', 'ordService', '$location', 'trnService', '$timeout', 'domainCfgService', '$uibModal',
@@ -2640,13 +2733,13 @@ ordControllers.controller('NewShipmentController', ['$scope', 'ordService', '$lo
         $scope.showLoading();
         domainCfgService.getOrdersCfg().then(function (data) {
             $scope.oCfg = data.data;
-            if(checkNotNullEmpty($scope.oCfg.ps)) {
+            if (checkNotNullEmpty($scope.oCfg.ps)) {
                 $scope.packageSize = $scope.oCfg.ps.split(',');
                 $scope.packageSize.unshift("");
             }
         }).catch(function error(msg) {
             $scope.showErrorMsg(msg);
-        }).finally(function(){
+        }).finally(function () {
             getMandatoryConfigText();
             $scope.hideLoading();
         });
@@ -2671,7 +2764,7 @@ ordControllers.controller('NewShipmentController', ['$scope', 'ordService', '$lo
         if (checkNotNullEmpty($scope.sMTShip)) {
             $scope.sMTShip.forEach(function (item) {
                 if (item.astk > 0) {
-                    item.nq = Math.min(angular.copy(item.astk),angular.copy(item.ytcs));
+                    item.nq = Math.min(angular.copy(item.astk), angular.copy(item.ytcs));
                     item.ta = true;
                 } else {
                     item.nq = angular.copy(item.ytcs);
@@ -2680,32 +2773,33 @@ ordControllers.controller('NewShipmentController', ['$scope', 'ordService', '$lo
         }
         function getMandatoryConfigText() {
             $scope.text = "";
-            if($scope.oCfg.eadm && $scope.oCfg.ridm) {
+            if ($scope.oCfg.eadm && $scope.oCfg.ridm) {
                 $scope.text = $scope.resourceBundle['estimated.date.of.arrival.reference.id.mandatory'];
-            } else if($scope.oCfg.eadm) {
+            } else if ($scope.oCfg.eadm) {
                 $scope.text += $scope.resourceBundle['estimated.date.of.arrival.mandatory'];
-            } else if($scope.oCfg.ridm) {
+            } else if ($scope.oCfg.ridm) {
                 $scope.text += $scope.resourceBundle['reference.id.mandatory'];
             }
         }
+
         $scope.create = function (shipNow) {
             var ind = 0;
             var isInvalid = $scope.sMTShip.some(function (data) {
-                return !$scope.validate(data,ind++);
+                return !$scope.validate(data, ind++);
             });
-            if(isInvalid) {
+            if (isInvalid) {
                 return;
             }
             $scope.shipment = {};
 
             if ($scope.oCfg.psrm || (checkNotNullEmpty($scope.rsn) && $scope.rsn.toLowerCase() == 'others')) {
-                if((checkNullEmpty($scope.oCfg.psr) || checkNullEmpty($scope.rsn) || $scope.rsn.toLowerCase() == 'others')
+                if ((checkNullEmpty($scope.oCfg.psr) || checkNullEmpty($scope.rsn) || $scope.rsn.toLowerCase() == 'others')
                     && checkNullEmpty($scope.mrsn)) {
                     $scope.showWarning($scope.resourceBundle['provide.reason']);
                     return;
                 }
             }
-            if(checkNullEmpty($scope.oCfg.psr) || $scope.rsn.toLowerCase() == 'others') {
+            if (checkNullEmpty($scope.oCfg.psr) || $scope.rsn.toLowerCase() == 'others') {
                 $scope.shipment.reason = $scope.mrsn;
             } else {
                 $scope.shipment.reason = $scope.rsn;
@@ -2765,10 +2859,10 @@ ordControllers.controller('NewShipmentController', ['$scope', 'ordService', '$lo
 
         $scope.shipNewShipment = function () {
             if ($scope.shipment.ship == 0) {
-                if($scope.oCfg.eadm && checkNullEmpty($scope.shipment.ead)) {
+                if ($scope.oCfg.eadm && checkNullEmpty($scope.shipment.ead)) {
                     $scope.showWarning($scope.resourceBundle['estimated.date.of.arrival.mandatory.error']);
                     return;
-                } else if($scope.oCfg.ridm && checkNullEmpty($scope.shipment.rid)) {
+                } else if ($scope.oCfg.ridm && checkNullEmpty($scope.shipment.rid)) {
                     $scope.showWarning($scope.resourceBundle['reference.id.mandatory.error']);
                     return;
                 }
@@ -2804,7 +2898,7 @@ ordControllers.controller('NewShipmentController', ['$scope', 'ordService', '$lo
             if (checkNotNullEmpty(material.nq)) {
                 if (material.nq > material.ytcs) {
                     var extMsg = "";
-                    if(material.ytcs != material.q) {
+                    if (material.ytcs != material.q) {
                         extMsg = ". You already created shipments with quantity " + (material.q - material.ytcs);
                     }
                     showPopup($scope, material, material.id, "Quantity cannot be greater than " + material.ytcs + extMsg, index, $timeout);
@@ -2819,13 +2913,13 @@ ordControllers.controller('NewShipmentController', ['$scope', 'ordService', '$lo
         };
     }
 ]);
-ordControllers.controller('ShipmentListingController', ['$scope','ordService','requestContext','$location','$window', function ($scope,ordService,requestContext,$location,$window) {
-    $scope.wparams = [["o", "offset"], ["s", "size"],["status", "status"], ["cid", "custId.id"], ["vid", "vendId.id"], ["from", "from", "", formatDate2Url], ["to", "to", "", formatDate2Url],["eftf", "eftFrom", "", formatDate2Url], ["eftt", "eftTo", "", formatDate2Url], ["trans", "trans"], ["trackid", "trackId"]];
+ordControllers.controller('ShipmentListingController', ['$scope', 'ordService', 'requestContext', '$location', '$window', function ($scope, ordService, requestContext, $location, $window) {
+    $scope.wparams = [["o", "offset"], ["s", "size"], ["status", "status"], ["cid", "custId.id"], ["vid", "vendId.id"], ["from", "from", "", formatDate2Url], ["to", "to", "", formatDate2Url], ["eftf", "eftFrom", "", formatDate2Url], ["eftt", "eftTo", "", formatDate2Url], ["trans", "trans"], ["trackid", "trackId"]];
     $scope.today = new Date();
     $scope.localFilters = ['custId', 'vendId', 'status', 'sTrackId', 'from', 'to', 'eftFrom', 'eftTo', 'sTrans', 'trackId'];
-    $scope.filterMethods = ['searchTID','updateTransporter'];
+    $scope.filterMethods = ['searchTID', 'updateTransporter'];
     ListingController.call(this, $scope, requestContext, $location);
-    $scope.init = function() {
+    $scope.init = function () {
         $scope.status = requestContext.getParam("status") || "";
         $scope.from = parseUrlDate(requestContext.getParam("from"));
         $scope.to = parseUrlDate(requestContext.getParam("to"));
@@ -2850,7 +2944,7 @@ ordControllers.controller('ShipmentListingController', ['$scope','ordService','r
     };
     $scope.init();
     $scope.fetch = function () {
-        if($scope.iMan && !$scope.custId && !$scope.vendId) {
+        if ($scope.iMan && !$scope.custId && !$scope.vendId) {
             $scope.filtered = [];
         } else {
             $scope.loading = true;
@@ -2874,7 +2968,7 @@ ordControllers.controller('ShipmentListingController', ['$scope','ordService','r
             });
         }
     };
-    $scope.reset = function (){
+    $scope.reset = function () {
         $scope.custId = null;
         $scope.vendId = null;
         $scope.status = undefined;
@@ -2885,7 +2979,7 @@ ordControllers.controller('ShipmentListingController', ['$scope','ordService','r
         $scope.trans = undefined;
         $scope.trackId = undefined;
     };
-    $scope.getSuggestions = function(text) {
+    $scope.getSuggestions = function (text) {
         if (checkNotNullEmpty(text)) {
             return ordService.getTransSuggestions(text).then(function (data) {
                 return data.data;
@@ -2894,20 +2988,20 @@ ordControllers.controller('ShipmentListingController', ['$scope','ordService','r
             });
         }
     };
-    $scope.updateTransporter = function() {
+    $scope.updateTransporter = function () {
         $scope.trans = $scope.sTrans;
     };
-    $scope.$watch('sTrans',function(newValue){
-        if(checkNullEmpty(newValue) && checkNotNullEmpty($scope.trans)) {
+    $scope.$watch('sTrans', function (newValue) {
+        if (checkNullEmpty(newValue) && checkNotNullEmpty($scope.trans)) {
             $scope.trans = undefined;
         }
     });
-    $scope.openShipment = function(shipId) {
-        $window.open("#/orders/shipment/detail/" + shipId,'_blank');
+    $scope.openShipment = function (shipId) {
+        $window.open("#/orders/shipment/detail/" + shipId, '_blank');
     };
     $scope.fetch();
 
-    $scope.searchTID = function() {
+    $scope.searchTID = function () {
         $scope.trackId = $scope.sTrackId;
     };
 }]);
@@ -2927,8 +3021,8 @@ ordControllers.controller('FulfilBatchTransactionCtrl', ['$scope', '$timeout', f
         }
     });
 
-    $scope.addBatch = function() {
-        $scope.newBatchDet.push({"frsn":"", "fmst":""});
+    $scope.addBatch = function () {
+        $scope.newBatchDet.push({"frsn": "", "fmst": ""});
     };
 
     $scope.deleteRow = function (index) {
@@ -2948,7 +3042,7 @@ ordControllers.controller('FulfilBatchTransactionCtrl', ['$scope', '$timeout', f
 
             isBatchIdRepeated = $scope.validateBatchId(newBItem);
 
-            if (newBItem.uie != null && newBItem.q != null ) {
+            if (newBItem.uie != null && newBItem.q != null) {
                 newBItem.bmfdt = newBItem.uibmfdt ? formatDate(newBItem.uibmfdt) : "";
                 newBItem.e = formatDate(newBItem.uie);
                 newBItem.added = true;
@@ -2956,24 +3050,24 @@ ordControllers.controller('FulfilBatchTransactionCtrl', ['$scope', '$timeout', f
             }
         });
 
-        if(isInvalid || isBatchIdRepeated) {
+        if (isInvalid || isBatchIdRepeated) {
             return;
         }
 
-        if($scope.type !== 'p') {
+        if ($scope.type !== 'p') {
             var index = 0;
             var invalidQuantity = tempBatchDet.some(function (det) {
-                if(checkNotNullEmpty(det.q)) {
+                if (checkNotNullEmpty(det.q)) {
                     if ($scope.huQty && det.q % $scope.huQty != 0) {
                         return true;
                     }
                 }
 
-                if(checkNotNullEmpty(det.q) && checkNullEmpty(det.fmst)) {
+                if (checkNotNullEmpty(det.q) && checkNullEmpty(det.fmst)) {
                     det.isVisitedStatus = true;
-                    if(index < $scope.batchDet.length){
+                    if (index < $scope.batchDet.length) {
                         $scope.batchDet[index].isVisitedStatus = true;
-                        if(!$scope.validateBatch($scope.batchDet[index],index,$scope.tm ? "smt" : "sm")) {
+                        if (!$scope.validateBatch($scope.batchDet[index], index, $scope.tm ? "smt" : "sm")) {
                             return true;
                         }
                     } else {
@@ -2984,17 +3078,17 @@ ordControllers.controller('FulfilBatchTransactionCtrl', ['$scope', '$timeout', f
                         }
                     }
                 }
-                if(index < $scope.batchDet.length){
-                    if(!$scope.validateBatch($scope.batchDet[index],index,'r')) {
+                if (index < $scope.batchDet.length) {
+                    if (!$scope.validateBatch($scope.batchDet[index], index, 'r')) {
                         return true;
                     }
                 } else {
                     var newIndex = index - $scope.batchDet.length;
-                    if(!$scope.validateBatch($scope.newBatchDet[newIndex],newIndex,'n')) {
+                    if (!$scope.validateBatch($scope.newBatchDet[newIndex], newIndex, 'n')) {
                         return true;
                     }
                 }
-                index+=1;
+                index += 1;
             });
             if (invalidQuantity) {
                 return;
@@ -3010,7 +3104,7 @@ ordControllers.controller('FulfilBatchTransactionCtrl', ['$scope', '$timeout', f
             batchData.q = bItem.q;
             batchData.id = bItem.id;
             batchData.fq = bItem.q;
-            batchData.sq = bItem.sq?bItem.sq:0;
+            batchData.sq = bItem.sq ? bItem.sq : 0;
             batchData.huName = bItem.huName;
             batchData.huQty = bItem.huQty;
             batchData.fmst = bItem.fmst;
@@ -3019,7 +3113,7 @@ ordControllers.controller('FulfilBatchTransactionCtrl', ['$scope', '$timeout', f
             batchData.uie = bItem.uie;
             batchData.uibmfdt = bItem.uibmfdt;
             batchData.frsn = bItem.frsn || '';
-            if(checkNullEmpty(bItem.frsn) || bItem.frsn == "Others") {
+            if (checkNullEmpty(bItem.frsn) || bItem.frsn == "Others") {
                 batchData.mrsn = bItem.mrsn;
             }
             newBatches.push(batchData);
@@ -3028,7 +3122,7 @@ ordControllers.controller('FulfilBatchTransactionCtrl', ['$scope', '$timeout', f
             }
         });
         $scope.item.bts = newBatches;
-        $scope.item.nastk = $scope.item.naq= $scope.item.fq = allocated;
+        $scope.item.nastk = $scope.item.naq = $scope.item.fq = allocated;
         $scope.checkShowReason();
         $scope.toggle($scope.$index);
     };
@@ -3038,13 +3132,13 @@ ordControllers.controller('FulfilBatchTransactionCtrl', ['$scope', '$timeout', f
         var duplicateFound = false;
 
         $scope.batchDet.some(function (existingItem) {
-            if(existingItem.id == item.id) {
+            if (existingItem.id == item.id) {
                 duplicateFound = true;
                 $scope.showWarning($scope.resourceBundle['duplicate.batch']);
             }
         });
 
-        for(var j = 0; j < $scope.newBatchDet.length; j++) {
+        for (var j = 0; j < $scope.newBatchDet.length; j++) {
             for (var i = 0; i < $scope.newBatchDet.length; i++) {
                 if (i != j && $scope.newBatchDet[i].id == $scope.newBatchDet[j].id) {
                     duplicateFound = true;
@@ -3058,61 +3152,61 @@ ordControllers.controller('FulfilBatchTransactionCtrl', ['$scope', '$timeout', f
 
     $scope.validateQuantity = function (item, index) {
         $scope.quantityZero[index] = false;
-        if(item.q == 0) {
+        if (item.q == 0) {
             $scope.quantityZero[index] = true;
             showPopup($scope, item, 'newBatchq' + $scope.mid, 'Quantity cannot be zero for new batches.', index, $timeout);
         }
-        if(checkNotNullEmpty($scope.huName) && checkNotNullEmpty($scope.huQty) && checkNotNullEmpty(item.q) && item.q % $scope.huQty != 0) {
+        if (checkNotNullEmpty($scope.huName) && checkNotNullEmpty($scope.huQty) && checkNotNullEmpty(item.q) && item.q % $scope.huQty != 0) {
             $scope.quantityZero[index] = true;
             showPopup($scope, item, 'newBatchq' + $scope.mid, item.q + " of " + $scope.mnm + " does not match the multiples of units expected in " + $scope.huName + ". It should be in multiples of " + $scope.huQty + " " + $scope.mnm + ".", index, $timeout);
         }
     }
 
     $scope.validateBatch = function (data, index, source) {
-            if (source == 'r') {
-                if (data.sq != data.q && ($scope.oCfg.pfrm || (checkNotNullEmpty(data.frsn) && data.frsn.toLowerCase() == 'others'))) {
-                    if ((checkNullEmpty($scope.oCfg.pfr) || checkNullEmpty(data.frsn) || data.frsn.toLowerCase() == 'others')
-                        && checkNullEmpty(data.mrsn)) {
-                        showPopup($scope, data, 'fr' + (checkNotNullEmpty($scope.oCfg.pfr) ? 'r' : '') + $scope.mid, "Reason is required", index, $timeout, true);
-                        return false;
-                    } else {
-                        $scope.hidePop(data, index, source);
-                    }
+        if (source == 'r') {
+            if (data.sq != data.q && ($scope.oCfg.pfrm || (checkNotNullEmpty(data.frsn) && data.frsn.toLowerCase() == 'others'))) {
+                if ((checkNullEmpty($scope.oCfg.pfr) || checkNullEmpty(data.frsn) || data.frsn.toLowerCase() == 'others')
+                    && checkNullEmpty(data.mrsn)) {
+                    showPopup($scope, data, 'fr' + (checkNotNullEmpty($scope.oCfg.pfr) ? 'r' : '') + $scope.mid, "Reason is required", index, $timeout, true);
+                    return false;
+                } else {
+                    $scope.hidePop(data, index, source);
                 }
-            } else if (source == 'n') {
-                if (data.sq != data.q && ($scope.oCfg.pfrm || (checkNotNullEmpty(data.frsn) && data.frsn.toLowerCase() == 'others'))) {
-                    if ((checkNullEmpty($scope.oCfg.pfr) || checkNullEmpty(data.frsn) || data.frsn.toLowerCase() == 'others') && checkNullEmpty(data.mrsn)) {
-                        showPopup($scope, data, 'nr' + (checkNotNullEmpty($scope.oCfg.pfr) ? 'r' : '') + $scope.mid, "Reason is required", index, $timeout, true);
-                        return false;
-                    } else {
-                        $scope.hidePop(data, index, source);
-                    }
-                }
-            }  else if(checkNotNullEmpty(source)) {
-                if (data.q > 0 && checkNullEmpty(data.fmst) && data.isVisitedStatus) {
-                    var status = $scope.tm ? $scope.tempmatstatus : $scope.matstatus;
-                    if(checkNotNullEmpty(status) && $scope.msm) {
-                        showPopup($scope, data, source + $scope.mid, $scope.resourceBundle['status.required'], index, $timeout, false, true);
-                        return false;
-                    }
-                }
-            } else if (checkNotNullEmpty($scope.huName) && checkNotNullEmpty($scope.huQty) && checkNotNullEmpty(data.q) && data.q % $scope.huQty != 0) {
-                showPopup($scope, data, 'f' + $scope.mid, data.q + " of " + $scope.mnm + " does not match the multiples of units expected in " + $scope.huName + ". It should be in multiples of " + $scope.huQty + " " + $scope.mnm + ".", index, $timeout);
-                return false;
             }
+        } else if (source == 'n') {
+            if (data.sq != data.q && ($scope.oCfg.pfrm || (checkNotNullEmpty(data.frsn) && data.frsn.toLowerCase() == 'others'))) {
+                if ((checkNullEmpty($scope.oCfg.pfr) || checkNullEmpty(data.frsn) || data.frsn.toLowerCase() == 'others') && checkNullEmpty(data.mrsn)) {
+                    showPopup($scope, data, 'nr' + (checkNotNullEmpty($scope.oCfg.pfr) ? 'r' : '') + $scope.mid, "Reason is required", index, $timeout, true);
+                    return false;
+                } else {
+                    $scope.hidePop(data, index, source);
+                }
+            }
+        } else if (checkNotNullEmpty(source)) {
+            if (data.q > 0 && checkNullEmpty(data.fmst) && data.isVisitedStatus) {
+                var status = $scope.tm ? $scope.tempmatstatus : $scope.matstatus;
+                if (checkNotNullEmpty(status) && $scope.msm) {
+                    showPopup($scope, data, source + $scope.mid, $scope.resourceBundle['status.required'], index, $timeout, false, true);
+                    return false;
+                }
+            }
+        } else if (checkNotNullEmpty($scope.huName) && checkNotNullEmpty($scope.huQty) && checkNotNullEmpty(data.q) && data.q % $scope.huQty != 0) {
+            showPopup($scope, data, 'f' + $scope.mid, data.q + " of " + $scope.mnm + " does not match the multiples of units expected in " + $scope.huName + ". It should be in multiples of " + $scope.huQty + " " + $scope.mnm + ".", index, $timeout);
+            return false;
+        }
 
         return true;
     };
     $scope.hidePopBatch = function (material, index, source) {
-        if(source == 'r') {
-            hidePopup($scope, material, 'fr' + (checkNotNullEmpty($scope.oCfg.pfr)?'r':'') + $scope.mid, index, $timeout, true);
+        if (source == 'r') {
+            hidePopup($scope, material, 'fr' + (checkNotNullEmpty($scope.oCfg.pfr) ? 'r' : '') + $scope.mid, index, $timeout, true);
         } else if (source == 'n') {
-            hidePopup($scope, material, 'nr' + (checkNotNullEmpty($scope.oCfg.pfr)?'r':'') + $scope.mid, index, $timeout, true);
-        } else if(source == 'bid') {
+            hidePopup($scope, material, 'nr' + (checkNotNullEmpty($scope.oCfg.pfr) ? 'r' : '') + $scope.mid, index, $timeout, true);
+        } else if (source == 'bid') {
             hidePopup($scope, material, 'newBatch' + $scope.mid, index, $timeout, true);
         } else if (source == 'q') {
             hidePopup($scope, material, 'newBatchq' + $scope.mid, index, $timeout, true);
-        } else if(checkNotNullEmpty(source)) {
+        } else if (checkNotNullEmpty(source)) {
             hidePopup($scope, material, source + $scope.mid, index, $timeout, false, true);
         } else {
             hidePopup($scope, material, 'f' + $scope.mid, index, $timeout);
@@ -3120,17 +3214,17 @@ ordControllers.controller('FulfilBatchTransactionCtrl', ['$scope', '$timeout', f
     };
 }]);
 
-ordControllers.controller('FulfilShipmentController', ['$scope','ordService','trnService','$timeout','domainCfgService', function ($scope,ordService,trnService,$timeout,domainCfgService) {
+ordControllers.controller('FulfilShipmentController', ['$scope', 'ordService', 'trnService', '$timeout', 'domainCfgService', function ($scope, ordService, trnService, $timeout, domainCfgService) {
     $scope.today = new Date();
     $scope.masterIts = [];
     $scope.shipData = {};
     $scope.shipData.afd = $scope.today;
     $scope.batchOrder = true;
-    $scope.saveCounter =0;
+    $scope.saveCounter = 0;
     $scope.saveDisable = false;
     var counter = 0;
     $scope.showLoading();
-    ordService.getOrderReasons("pfr").then(function(data) {
+    ordService.getOrderReasons("pfr").then(function (data) {
         $scope.fulfilReasons = data.data;
         if (checkNotNullEmpty($scope.fulfilReasons)) {
             var rsn = "others";
@@ -3142,11 +3236,11 @@ ordControllers.controller('FulfilShipmentController', ['$scope','ordService','tr
             }
             $scope.fulfilReasons.unshift("");
         }
-        counter ++;
+        counter++;
         $scope.initShipmentItems();
     }).catch(function error(msg) {
         $scope.showErrorMsg(msg);
-    }).finally(function(){
+    }).finally(function () {
         $scope.hideLoading();
     });
 
@@ -3156,49 +3250,49 @@ ordControllers.controller('FulfilShipmentController', ['$scope','ordService','tr
         $scope.showErrorMsg(msg);
     });
     $scope.showLoading();
-    trnService.getStatusMandatory().then(function(data) {
+    trnService.getStatusMandatory().then(function (data) {
         $scope.transConfig = data.data;
     }).catch(function error(msg) {
         $scope.showErrorMsg(msg);
-    }).finally(function() {
-       $scope.hideLoading();
-    });
-    $scope.showLoading();
-    trnService.getMatStatus("r", false).then(function(data){
-        $scope.matstatus= data.data;
-        counter ++;
-        $scope.initShipmentItems();
-    }).catch(function error(msg){
-        $scope.showErrorMsg(msg);
-    }).finally(function(){
+    }).finally(function () {
         $scope.hideLoading();
     });
     $scope.showLoading();
-    trnService.getMatStatus("r", true).then(function(data) {
-        $scope.tempmatstatus = data.data;
-        counter ++;
+    trnService.getMatStatus("r", false).then(function (data) {
+        $scope.matstatus = data.data;
+        counter++;
         $scope.initShipmentItems();
-    }).catch(function error(msg){
+    }).catch(function error(msg) {
         $scope.showErrorMsg(msg);
-    }).finally(function(){
+    }).finally(function () {
+        $scope.hideLoading();
+    });
+    $scope.showLoading();
+    trnService.getMatStatus("r", true).then(function (data) {
+        $scope.tempmatstatus = data.data;
+        counter++;
+        $scope.initShipmentItems();
+    }).catch(function error(msg) {
+        $scope.showErrorMsg(msg);
+    }).finally(function () {
         $scope.hideLoading();
     });
 
-    $scope.initShipmentItems = function() {
-        if(counter > 2) {
+    $scope.initShipmentItems = function () {
+        if (counter > 2) {
             angular.copy($scope.shipment.items, $scope.masterIts);
             if (checkNotNullEmpty($scope.shipment.items)) {
                 $scope.shipment.items.forEach(function (its) {
                     its.naq = its.aq;
                     var status;
-                    if(its.tm) {
-                        status = checkNotNullEmpty($scope.tempmatstatus) ? $scope.tempmatstatus: undefined;
+                    if (its.tm) {
+                        status = checkNotNullEmpty($scope.tempmatstatus) ? $scope.tempmatstatus : undefined;
                     } else {
-                        status = checkNotNullEmpty($scope.matstatus) ? $scope.matstatus: undefined;
+                        status = checkNotNullEmpty($scope.matstatus) ? $scope.matstatus : undefined;
                     }
-                    if(!its.isBa) {
-                        if(checkNotNullEmpty(status)) {
-                            if(checkNotNullEmpty(its.smst) && status.indexOf(its.smst) != -1) {
+                    if (!its.isBa) {
+                        if (checkNotNullEmpty(status)) {
+                            if (checkNotNullEmpty(its.smst) && status.indexOf(its.smst) != -1) {
                                 its.fmst = its.smst;
                             } else {
                                 its.fmst = checkNotNullEmpty(status) ? status[0] : undefined;
@@ -3208,12 +3302,12 @@ ordControllers.controller('FulfilShipmentController', ['$scope','ordService','tr
                         its.qq = its.q;
                     }
                     its.fq = its.q;
-                    if(checkNotNullEmpty(its.bts)) {
+                    if (checkNotNullEmpty(its.bts)) {
                         its.bts.forEach(function (data) {
                             data.fq = data.q;
                             data.sq = data.q;
                             data.frsn = '';
-                            if(checkNotNullEmpty(status)) {
+                            if (checkNotNullEmpty(status)) {
                                 if (checkNotNullEmpty(data.smst) && status.indexOf(data.smst) != -1) {
                                     data.fmst = data.smst;
                                 } else {
@@ -3250,71 +3344,71 @@ ordControllers.controller('FulfilShipmentController', ['$scope','ordService','tr
             }
         }
         $scope.exRow[index] = $scope.exRow[index] === type ? empty : type;
-        redrawPopup($scope, $scope.shipment.items,'hide', $timeout);
+        redrawPopup($scope, $scope.shipment.items, 'hide', $timeout);
     };
 
-    $scope.fulfil = function(shipmentIts) {
+    $scope.fulfil = function (shipmentIts) {
         var ind = -1;
         var isInvalid = shipmentIts.some(function (data) {
-            if(!data.isBa) {
-                return !($scope.validate(data,++ind) && $scope.validate(data,ind,'r'));
+            if (!data.isBa) {
+                return !($scope.validate(data, ++ind) && $scope.validate(data, ind, 'r'));
             }
         });
         ind = 0;
         var isStatusEmpty = 0;
-        shipmentIts.forEach(function(data) {
+        shipmentIts.forEach(function (data) {
             var status = data.tm ? $scope.tempmatstatus : $scope.matstatus;
-            if(!data.isBa) {
-               if(data.fq > 0 && checkNullEmpty(data.fmst)) {
-                   data.isVisitedStatus = true;
-                   if (checkNotNullEmpty(status) && $scope.transConfig.rsm && !$scope.validate(data, ind, data.tm ? "cmt" : "cm")) {
-                       isStatusEmpty += 1;
-                   }
-               }
-           } else {
-               var index = 0;
-               var source = data.tm ? "smt" : "sm";
-               if(data.bts.length > 0) {
-                   data.bts.forEach(function (det) {
-                       if (checkNotNullEmpty(status) && det.q > 0 && checkNullEmpty(det.fmst) && $scope.transConfig.rsm) {
-                           $scope.showWarning($scope.resourceBundle['material.status.required']);
-                           showPopup($scope, det, source + data.mId, $scope.resourceBundle['status.required'], index, $timeout, false, true);
-                           isStatusEmpty += 1;
-                       }
-                       index += 1;
-                   });
-               }
-           }
+            if (!data.isBa) {
+                if (data.fq > 0 && checkNullEmpty(data.fmst)) {
+                    data.isVisitedStatus = true;
+                    if (checkNotNullEmpty(status) && $scope.transConfig.rsm && !$scope.validate(data, ind, data.tm ? "cmt" : "cm")) {
+                        isStatusEmpty += 1;
+                    }
+                }
+            } else {
+                var index = 0;
+                var source = data.tm ? "smt" : "sm";
+                if (data.bts.length > 0) {
+                    data.bts.forEach(function (det) {
+                        if (checkNotNullEmpty(status) && det.q > 0 && checkNullEmpty(det.fmst) && $scope.transConfig.rsm) {
+                            $scope.showWarning($scope.resourceBundle['material.status.required']);
+                            showPopup($scope, det, source + data.mId, $scope.resourceBundle['status.required'], index, $timeout, false, true);
+                            isStatusEmpty += 1;
+                        }
+                        index += 1;
+                    });
+                }
+            }
             ind += 1;
         });
-        if(isInvalid || isStatusEmpty > 0) {
+        if (isInvalid || isStatusEmpty > 0) {
             return;
         }
-        if(checkNullEmpty($scope.shipData.afd)) {
+        if (checkNullEmpty($scope.shipData.afd)) {
             $scope.showWarning("Please provide date of actual receipt");
             return;
         }
         shipmentIts.forEach(function (d) {
             d.bq = angular.copy(d.bts);
-            if(!$scope.allocate) {
+            if (!$scope.allocate) {
                 d.isBa = false;
             }
             d.fq = d.fq || 0;
-            if(checkNotNullEmpty(d.bq)) {
-                d.bq.forEach(function(dd){
+            if (checkNotNullEmpty(d.bq)) {
+                d.bq.forEach(function (dd) {
                     dd.fq = dd.fq || 0;
                     dd.q = dd.sq || 0;
-                    if(dd.sq == dd.fq) {
+                    if (dd.sq == dd.fq) {
                         dd.frsn = undefined;
                     } else {
-                        if(checkNotNullEmpty(dd.frsn) && dd.frsn != "Others") {
+                        if (checkNotNullEmpty(dd.frsn) && dd.frsn != "Others") {
                             dd.mrsn = undefined;
                         }
                         dd.frsn = dd.mrsn || dd.frsn || null;
                     }
                 });
             }
-            if(!d.isBa) {
+            if (!d.isBa) {
                 if (d.fq == d.qq) {
                     d.frsn = undefined;
                 } else {
@@ -3329,36 +3423,36 @@ ordControllers.controller('FulfilShipmentController', ['$scope','ordService','tr
         var msg = $scope.shipData.msg;
         var shipData = {
             items: shipmentIts,
-            sId : $scope.shipment.sId,
-            kid: $scope.shipment.customerId ,
-            afd: afd ,
-            msg : msg,
-            isFulfil : true,
+            sId: $scope.shipment.sId,
+            kid: $scope.shipment.customerId,
+            afd: afd,
+            msg: msg,
+            isFulfil: true,
             isOrderFulfil: $scope.isOrderFulfil,
             orderUpdatedAt: $scope.order ? $scope.order.orderUpdatedAt : $scope.shipment.orderUpdatedAt
         };
         $scope.showLoading(false, "Fulfilling your order...");
         ordService.updateShipment(shipData).then(function (data) {
-            $scope.$emit("updateFulifilmentdata",data);
+            $scope.$emit("updateFulifilmentdata", data);
             $scope.showPartialSuccessMsg(data);
             shipmentIts.forEach(function (d) {
                 d.bts = angular.copy(d.bq);
-                if(!$scope.isOrderFulfil) {
+                if (!$scope.isOrderFulfil) {
                     $scope.constructDiscrepancyData(d);
                 }
             });
-            $scope.toggleFulfil(true,checkNotNullEmpty(msg));
+            $scope.toggleFulfil(true, checkNotNullEmpty(msg));
         }).catch(function error(msg) {
             $scope.showErrorMsg(msg);
-        }).finally(function() {
+        }).finally(function () {
             $scope.hideLoading();
         });
     };
 
     $scope.hidePop = function (material, index, source) {
-        if(source == 'r') {
-            hidePopup($scope, material, 'fr' + (checkNotNullEmpty($scope.oCfg.pfr)?'r':'') + material.mId, index, $timeout, true);
-        } else if(checkNotNullEmpty(source)) {
+        if (source == 'r') {
+            hidePopup($scope, material, 'fr' + (checkNotNullEmpty($scope.oCfg.pfr) ? 'r' : '') + material.mId, index, $timeout, true);
+        } else if (checkNotNullEmpty(source)) {
             hidePopup($scope, material, source + material.mId, index, $timeout, false, true);
         } else {
             hidePopup($scope, material, 'f' + material.mId, index, $timeout);
@@ -3366,20 +3460,20 @@ ordControllers.controller('FulfilShipmentController', ['$scope','ordService','tr
     };
 
     $scope.validate = function (material, index, source) {
-        if(source == 'r') {
+        if (source == 'r') {
             if (material.fq != material.qq && ($scope.oCfg.pfrm || (checkNotNullEmpty(material.frsn) && material.frsn.toLowerCase() == 'others'))) {
-                if((checkNullEmpty($scope.oCfg.pfr) || checkNullEmpty(material.frsn) || material.frsn.toLowerCase() == 'others')
+                if ((checkNullEmpty($scope.oCfg.pfr) || checkNullEmpty(material.frsn) || material.frsn.toLowerCase() == 'others')
                     && checkNullEmpty(material.mrsn)) {
-                    showPopup($scope, material, 'fr'+ (checkNotNullEmpty($scope.oCfg.pfr)?'r':'') + material.mId, "Reason is required", index, $timeout, true);
+                    showPopup($scope, material, 'fr' + (checkNotNullEmpty($scope.oCfg.pfr) ? 'r' : '') + material.mId, "Reason is required", index, $timeout, true);
                     return false;
                 } else {
-                    $scope.hidePop(material,index,source);
+                    $scope.hidePop(material, index, source);
                 }
             }
-        } else if(checkNotNullEmpty(source)) {
+        } else if (checkNotNullEmpty(source)) {
             if (!material.isBa && material.fq > 0 && checkNullEmpty(material.fmst) && material.isVisitedStatus) {
                 var status = material.tm ? $scope.tempmatstatus : $scope.matstatus;
-                if(checkNotNullEmpty(status) && $scope.transConfig.rsm) {
+                if (checkNotNullEmpty(status) && $scope.transConfig.rsm) {
                     showPopup($scope, material, source + material.mId, $scope.resourceBundle['status.required'], index, $timeout, false, true);
                     return false;
                 }
@@ -3391,17 +3485,17 @@ ordControllers.controller('FulfilShipmentController', ['$scope','ordService','tr
         return true;
     };
 
-    $scope.checkShowReason = function() {
-        $scope.showReason = $scope.shipment.items.some(function(data){
-            if(data.fq != data.q){
+    $scope.checkShowReason = function () {
+        $scope.showReason = $scope.shipment.items.some(function (data) {
+            if (data.fq != data.q) {
                 return true;
             }
         });
     };
 }]);
 
-ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService','requestContext','ORDER','$uibModal','userService','$timeout','conversationService','trnService','domainCfgService','ORDERSTATUSTEXT',
-    function ($scope, ordService,requestContext,ORDER,$uibModal,userService,$timeout,conversationService,trnService,domainCfgService,ORDERSTATUSTEXT) {
+ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService', 'requestContext', 'ORDER', '$uibModal', 'userService', '$timeout', 'conversationService', 'trnService', 'domainCfgService', 'ORDERSTATUSTEXT',
+    function ($scope, ordService, requestContext, ORDER, $uibModal, userService, $timeout, conversationService, trnService, domainCfgService, ORDERSTATUSTEXT) {
         windowScrollTop();
         $scope.ORDER = ORDER;
         $scope.ORDERSTATUSTEXT = ORDERSTATUSTEXT;
@@ -3434,22 +3528,22 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService','request
             }
         }).catch(function error(msg) {
             $scope.showErrorMsg(msg);
-        }).finally(function(){
+        }).finally(function () {
             $scope.hideLoading();
         });
         $scope.checkStatusList = function () {
             switch ($scope.shipment.statusCode) {
                 case ORDER.OPEN:
-                    if($scope.shipment.atv) {
+                    if ($scope.shipment.atv) {
                         $scope.statusList = [ORDER.SHIPPED, ORDER.CANCELLED];
                     }
                     break;
                 case ORDER.SHIPPED:
                     $scope.statusList = [];
-                    if($scope.shipment.atv) {
+                    if ($scope.shipment.atv) {
                         $scope.statusList.push(ORDER.CANCELLED);
                     }
-                    if($scope.shipment.atc) {
+                    if ($scope.shipment.atc) {
                         $scope.statusList.push(ORDER.FULFILLED);
                     }
                     break;
@@ -3458,7 +3552,7 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService','request
             }
         };
         $scope.getShipmentItems = function () {
-            if(counter > 1) {
+            if (counter > 1) {
                 $scope.shipment.items.forEach(function (d) {
                     d.bts = angular.copy(d.bq);
                     d.ts = d.tm;
@@ -3473,7 +3567,7 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService','request
                 });
             }
         };
-        $scope.constructDiscrepancyData = function(material) {
+        $scope.constructDiscrepancyData = function (material) {
             if (material.isBa) {
                 material.bts.forEach(function (data) {
                     data.fdrsn = '';
@@ -3495,7 +3589,7 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService','request
                 }
             }
         };
-        $scope.getShipment = function() {
+        $scope.getShipment = function () {
             $scope.showLoading();
             ordService.getShipment($scope.sid).then(function (data) {
                 $scope.shipment = data.data;
@@ -3526,27 +3620,27 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService','request
                         $scope.matstatus = data.data;
                         counter++;
                         $scope.getShipmentItems();
-                        }).catch(function error(msg) {
-                            $scope.showErrorMsg(msg);
-                        }).finally(function () {
-                            $scope.hideLoading();
-                        });
+                    }).catch(function error(msg) {
+                        $scope.showErrorMsg(msg);
+                    }).finally(function () {
+                        $scope.hideLoading();
+                    });
                     $scope.showLoading();
                     trnService.getMatStatus("i", true).then(function (data) {
                         $scope.tempmatstatus = data.data;
                         counter++;
                         $scope.getShipmentItems();
-                        }).catch(function error(msg) {
-                            $scope.showErrorMsg(msg);
-                        }).finally(function () {
-                            $scope.hideLoading();
-                        });
+                    }).catch(function error(msg) {
+                        $scope.showErrorMsg(msg);
+                    }).finally(function () {
+                        $scope.hideLoading();
+                    });
                     $scope.showLoading();
-                    trnService.getStatusMandatory().then(function(data) {
+                    trnService.getStatusMandatory().then(function (data) {
                         $scope.transConfig = data.data;
                     }).catch(function error(msg) {
                         $scope.showErrorMsg(msg);
-                    }).finally(function() {
+                    }).finally(function () {
                         $scope.hideLoading();
                     });
                     /*userService.getUsers($scope.shipment.customerId).then(function (data) {
@@ -3570,7 +3664,7 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService','request
                         $scope.getStatusHistory();
                     }).catch(function error(msg) {
                         $scope.showErrorMsg(msg);
-                    }).finally(function() {
+                    }).finally(function () {
                         $scope.hideLoading();
                     });
                 }
@@ -3578,7 +3672,7 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService','request
             });
         };
         $scope.getShipment();
-        $scope.getStatusHistory = function() {
+        $scope.getStatusHistory = function () {
             $scope.showLoading();
             ordService.getStatusHistory($scope.sid, 'SHIPMENT', null).then(function (data) {
                 if (checkNotNullEmpty(data.data) && checkNotNullEmpty(data.data.results)) {
@@ -3614,7 +3708,7 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService','request
                         }
                         if (!end) {
                             end = $scope.shipment.statusCode == stCode || ($scope.shipment.statusCode == ORDER.CANCELLED && pVal == stCode);
-                    }
+                        }
                     }
 
                     constructStatus(ORDER.OPEN, ORDER.statusTxt[ORDER.OPEN]);
@@ -3624,8 +3718,8 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService','request
                         $scope.si[siInd] = hMap[ORDER.CANCELLED];
                         $scope.si[siInd].completed = "cancel";
                     }
-                    if($scope.shipment.statusCode == ORDER.SHIPPED) {
-                        $scope.shipDate = string2Date(hMap[ORDER.SHIPPED].updatedon,"dd/mm/yyyy","/",true);
+                    if ($scope.shipment.statusCode == ORDER.SHIPPED) {
+                        $scope.shipDate = string2Date(hMap[ORDER.SHIPPED].updatedon, "dd/mm/yyyy", "/", true);
                     }
                 }
             }).finally(function () {
@@ -3633,30 +3727,31 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService','request
             });
         };
 
-        function getMessageCount(){
-            conversationService.getMessagesByObj('SHIPMENT',$scope.sid,0,1,true).then(function (data){
-                if(checkNotNullEmpty(data.data)) {
+        function getMessageCount() {
+            conversationService.getMessagesByObj('SHIPMENT', $scope.sid, 0, 1, true).then(function (data) {
+                if (checkNotNullEmpty(data.data)) {
                     $scope.messageCnt = data.data.numFound;
                 }
-            }).catch(function error(msg){
+            }).catch(function error(msg) {
                 $scope.showErrorMsg(msg);
-            }).finally(function (){
+            }).finally(function () {
                 $scope.mLoading = false;
-                if(offset == 0) {
+                if (offset == 0) {
                     $scope.hideLoading();
                 }
             });
         }
+
         getMessageCount();
-        $scope.setMessageCount = function(count) {
+        $scope.setMessageCount = function (count) {
             $scope.messageCnt = count;
         };
         $scope.toggleFulfil = function (update, data) {
-            if($scope.selection == 'shipDetail') {
+            if ($scope.selection == 'shipDetail') {
                 $scope.selection = "fulfilShipment";
             } else {
                 $scope.selection = "shipDetail";
-                if(update) {
+                if (update) {
                     $scope.shipment.statusCode = $scope.ORDER.FULFILLED;
                     $scope.checkStatusList();
                     $scope.getStatusHistory();
@@ -3677,8 +3772,8 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService','request
                 $scope.toggleFulfil();
                 return;
             }
-            if(value == $scope.ORDER.SHIPPED) {
-                if($scope.allocate) {
+            if (value == $scope.ORDER.SHIPPED) {
+                if ($scope.allocate) {
                     var isInvalid = $scope.shipment.items.some(function (d) {
                         return d.aq != d.q;
                     });
@@ -3687,15 +3782,15 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService','request
                         return;
                     }
                 }
-                if($scope.oCfg.tm && checkNullEmpty($scope.shipment.transporter)) {
+                if ($scope.oCfg.tm && checkNullEmpty($scope.shipment.transporter)) {
                     $scope.showWarning($scope.resourceBundle['transportermandatory']);
                     return;
                 }
 
-                if($scope.oCfg.ridm && checkNullEmpty($scope.shipment.rid)) {
+                if ($scope.oCfg.ridm && checkNullEmpty($scope.shipment.rid)) {
                     $scope.showWarning($scope.resourceBundle['reference.id.mandatory.error']);
                     return;
-                } else if($scope.oCfg.eadm && checkNullEmpty($scope.shipment.ead)) {
+                } else if ($scope.oCfg.eadm && checkNullEmpty($scope.shipment.ead)) {
                     $scope.showWarning($scope.resourceBundle['estimated.date.of.arrival.mandatory.error']);
                     return;
                 }
@@ -3708,16 +3803,16 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService','request
             });
         };
 
-        $scope.$on("updateFulifilmentdata",function(evt,data){
+        $scope.$on("updateFulifilmentdata", function (evt, data) {
             $scope.shipment.afd = data.config.data.afd;
         });
 
-        $scope.cancel = function() {
+        $scope.cancel = function () {
             $scope.modalInstance.dismiss('cancel');
         };
 
         $scope.saveStatus = function () {
-            if($scope.newStatus.st == ORDER.CANCELLED) {
+            if ($scope.newStatus.st == ORDER.CANCELLED) {
                 if ($scope.oCfg.corm || $scope.newStatus.ncdrsn == 'Others') {
                     if ((checkNullEmpty($scope.oCfg.cor) || checkNullEmpty($scope.newStatus.ncdrsn) || $scope.newStatus.ncdrsn == 'Others')
                         && checkNullEmpty($scope.newStatus.cmrsn)) {
@@ -3780,11 +3875,11 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService','request
                     });
                     break;
                 case 'sefd':
-                    if(checkNullEmpty($scope.shipment.ead) && checkNullEmpty(content)) {
+                    if (checkNullEmpty($scope.shipment.ead) && checkNullEmpty(content)) {
                         $scope.showWarning("Please select a date");
                         return;
                     }
-                    if(checkNullEmpty($scope.shipment.ead) || checkNotNullEmpty($scope.shipment.ead)) {
+                    if (checkNullEmpty($scope.shipment.ead) || checkNotNullEmpty($scope.shipment.ead)) {
                         content = formatDate(content);
                     }
                     ordService.updateShipmentDate(content, $scope.sid, $scope.shipment.orderUpdatedAt).then(function (data) {
@@ -3799,7 +3894,7 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService','request
 
                     break;
                 case 'ps':
-                    ordService.updateShipmentPackageSize(content, $scope.sid, $scope.shipment.orderUpdatedAt).then(function(data) {
+                    ordService.updateShipmentPackageSize(content, $scope.sid, $scope.shipment.orderUpdatedAt).then(function (data) {
                         $scope.shipment.ps = $scope.shipment.tempPS;
                         $scope.showSuccess(data.data.respMsg);
                         $scope.shipment.orderUpdatedAt = data.data.orderUpdatedAt;
@@ -3809,7 +3904,7 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService','request
                     });
                     break;
                 case 'rid':
-                    ordService.updateShipmentReferenceId(content, $scope.sid, $scope.shipment.orderUpdatedAt).then(function(data) {
+                    ordService.updateShipmentReferenceId(content, $scope.sid, $scope.shipment.orderUpdatedAt).then(function (data) {
                         $scope.shipment.rid = $scope.shipment.tempReferenceId;
                         $scope.showSuccess(data.data.respMsg);
                         $scope.shipment.orderUpdatedAt = data.data.orderUpdatedAt;
@@ -3823,24 +3918,24 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService','request
         $scope.saveShipment = function () {
             var ind = 0;
             var isInvalid = $scope.shipment.items.some(function (data) {
-                return !$scope.validate(data,ind++,'s');
+                return !$scope.validate(data, ind++, 's');
             });
-            if(isInvalid) {
+            if (isInvalid) {
                 return;
             }
             ind = 0;
             var isStatusEmpty = 0;
-            $scope.shipment.items.forEach(function(data) {
-                if(!data.isBa && data.naq > 0 && checkNullEmpty(data.smst)) {
+            $scope.shipment.items.forEach(function (data) {
+                if (!data.isBa && data.naq > 0 && checkNullEmpty(data.smst)) {
                     var status = data.tm ? $scope.tempmatstatus : $scope.matstatus;
                     data.isVisitedStatus = true;
-                    if(checkNotNullEmpty(status) && $scope.transConfig.ism && !$scope.validateStatus(data,ind, data.tm ? "cmt" : "cm")) {
+                    if (checkNotNullEmpty(status) && $scope.transConfig.ism && !$scope.validateStatus(data, ind, data.tm ? "cmt" : "cm")) {
                         isStatusEmpty += 1;
                     }
                 }
                 ind += 1;
             });
-            if(isStatusEmpty > 0) {
+            if (isStatusEmpty > 0) {
                 return;
             }
             var shipment = {};
@@ -3849,14 +3944,14 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService','request
             shipment.orderUpdatedAt = $scope.shipment.orderUpdatedAt;
             shipment.items = angular.copy($scope.shipment.items);
             shipment.items.forEach(function (d) {
-                if(d.isBa) {
+                if (d.isBa) {
                     var oaq = {};
                     d.bq.forEach(function (dd) {
                         oaq[dd.id] = dd.q;
                     });
                     d.bq = [];
                     d.bts.forEach(function (dd) {
-                        if(checkNotNullEmpty(oaq[dd.id]) || checkNotNullEmpty(dd.q)) {
+                        if (checkNotNullEmpty(oaq[dd.id]) || checkNotNullEmpty(dd.q)) {
                             d.bq.push({id: dd.id, q: dd.q || 0, smst: dd.mst});
                         }
                     });
@@ -3879,7 +3974,7 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService','request
         $scope.cancelShipment = function () {
             var ind = 0;
             $scope.shipment.items.forEach(function (data) {
-                $scope.hidePop(data,ind++);
+                $scope.hidePop(data, ind++);
             });
             angular.copy($scope.masterIts, $scope.shipment.items);
             $scope.toggleEdit('ship');
@@ -3908,30 +4003,30 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService','request
                 }
             }
             $scope.exRow[index] = $scope.exRow[index] === type ? empty : type;
-            redrawPopup($scope, $scope.shipment.items,'hide', $timeout);
+            redrawPopup($scope, $scope.shipment.items, 'hide', $timeout);
         };
 
 
-        $scope.toggleEdit = function (field,close) {
-            if(field == 'sefd' && close) {
+        $scope.toggleEdit = function (field, close) {
+            if (field == 'sefd' && close) {
                 $scope.shipment.tead = parseUrlDate($scope.shipment.ead);
-            }else if(field == 'transp'){
+            } else if (field == 'transp') {
                 $scope.shipment.tempTransporter = $scope.shipment.transporter;
-            }else if(field == 'trackid'){
+            } else if (field == 'trackid') {
                 $scope.shipment.tempTrackingId = $scope.shipment.trackingId;
-            }else if(field == 'ps'){
+            } else if (field == 'ps') {
                 $scope.shipment.tempPS = $scope.shipment.ps;
-            }else if(field == 'rid') {
+            } else if (field == 'rid') {
                 $scope.shipment.tempReferenceId = $scope.shipment.rid;
             }
             $scope.edit[field] = !$scope.edit[field];
         };
 
-        $scope.toggleBatch = function (type,index) {
+        $scope.toggleBatch = function (type, index) {
             $scope.shipment.items[index][type] = !$scope.shipment.items[index][type];
         };
 
-        $scope.startEditShipment = function() {
+        $scope.startEditShipment = function () {
             angular.copy($scope.shipment.items, $scope.masterIts);
             if (checkNotNullEmpty($scope.shipment.items)) {
                 $scope.shipment.items.forEach(function (its) {
@@ -3945,8 +4040,8 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService','request
             $scope.dispStatusHistory = !$scope.dispStatusHistory;
         };
 
-        $scope.hidePop = function(material,index, source, isStatus){
-            if(checkNullEmpty(isStatus)) {
+        $scope.hidePop = function (material, index, source, isStatus) {
+            if (checkNullEmpty(isStatus)) {
                 var prefix = source == 's' ? 'at' : '';
                 hidePopup($scope, material, prefix + material.mId, index, $timeout);
             } else {
@@ -3967,13 +4062,13 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService','request
                     return false;
                 }
             }
-            if(material.isBa) {
+            if (material.isBa) {
                 var alStk = 0;
                 var oAlStk = {};
-                material.bq.forEach(function(d){
+                material.bq.forEach(function (d) {
                     oAlStk[d.id] = d.q;
                 });
-                if(checkNotNullEmpty(material.bdata)) {
+                if (checkNotNullEmpty(material.bdata)) {
                     material.bdata.forEach(function (d) {
                         var diff = (d.quantity || 0) - (oAlStk[d.bid] || 0);
                         if (diff < 0) {
@@ -4004,29 +4099,29 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService','request
         }
 
 
-        $scope.validateStatus = function(material, index, source) {
-            if(material.naq > 0 && checkNullEmpty(material.smst) && material.isVisitedStatus) {
+        $scope.validateStatus = function (material, index, source) {
+            if (material.naq > 0 && checkNullEmpty(material.smst) && material.isVisitedStatus) {
                 var status = material.tm ? $scope.tempmatstatus : $scope.matstatus;
-                if(checkNotNullEmpty(status) && $scope.transConfig.ism) {
+                if (checkNotNullEmpty(status) && $scope.transConfig.ism) {
                     showPopup($scope, material, source + material.mId, $scope.resourceBundle['status.required'], index, $timeout, false, true);
                     return false;
                 }
             }
             return true;
         };
-   }
+    }
 ]);
 
-ordControllers.controller('ConsignmentController', ['$scope','$uibModal',  function ($scope,$uibModal) {
+ordControllers.controller('ConsignmentController', ['$scope', '$uibModal', function ($scope, $uibModal) {
     $scope.batchOrder = true;
-    $scope.selectedMaterialIds =[];
+    $scope.selectedMaterialIds = [];
     $scope.sel = {};
     $scope.sel.selectedRows = [];
     $scope.selectAll = function (newval) {
         $scope.sel.selectedRows = [];
         if (newval) {
             for (var i = 0; i < $scope.order.its.length; i++) {
-                if($scope.order.its[i].q != $scope.order.its[i].isq) {
+                if ($scope.order.its[i].q != $scope.order.its[i].isq) {
                     $scope.sel.selectedRows.push(i);
                 }
             }

@@ -73,7 +73,8 @@ public class ExportBuilder {
     model.setDomainId(String.valueOf(domainId));
 
     Type type = new TypeToken<Map<String, String>>() {}.getType();
-    String timezone = DomainConfig.getInstance(domainId).getTimezone();
+    DomainConfig domainConfig = DomainConfig.getInstance(domainId);
+    String timezone = domainConfig.getTimezone();
     model.setFromDate(getDomainTime(model.getFromDate(), timezone));
     model.setEndDate(getDomainTime(model.getEndDate(), timezone));
 
@@ -89,12 +90,14 @@ public class ExportBuilder {
     exportModel.timezone = sUser.getTimezone();
     exportModel.templateId = model.getTemplateId();
     exportModel.filters = filters;
-    exportModel.additionalData = new HashMap<>(4,1);
+    exportModel.additionalData =new HashMap<>();
     exportModel.additionalData.put("typeId", "DEFAULT");
     exportModel.additionalData.put("domainName", domain.getName());
     exportModel.additionalData.put("domainTimezone", timezone);
+    exportModel.additionalData.put("userRole", sUser.getRole());
     exportModel.additionalData.put("exportTime", LocalDateUtil
         .formatCustom(new Date(), Constants.DATETIME_CSV_FORMAT, sUser.getTimezone()));
+    buildAdditionalFilters(model.getModule(),exportModel.additionalData, domainConfig);
     exportModel.titles = model.getTitles();
     return exportModel;
   }
@@ -104,11 +107,19 @@ public class ExportBuilder {
       try {
         return LocalDateUtil.formatCustom(
             LocalDateUtil.parseCustom(date, Constants.DATE_FORMAT_CSV, timezone),
-            Constants.DATETIME_CSV_MILLIS_FORMAT, null);
+            Constants.DATETIME_CSV_FORMAT, null);
       } catch (ParseException e) {
         xLogger.warn("Exception parsing date", e);
       }
     }
     return date;
+  }
+
+  private void buildAdditionalFilters(String moduleName, Map<String, String> filters,
+                                      DomainConfig domainConfig) {
+    if ("Orders".equalsIgnoreCase(moduleName) || "Transfers".equalsIgnoreCase(moduleName)) {
+      filters.put("isAccountingEnabled", String.valueOf(domainConfig.isAccountingEnabled()));
+      filters.put("isDisableOrdersPricing", String.valueOf(domainConfig.isDisableOrdersPricing()));
+    }
   }
 }

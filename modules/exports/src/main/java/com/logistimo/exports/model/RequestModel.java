@@ -23,10 +23,10 @@
 
 package com.logistimo.exports.model;
 
-import com.google.gson.annotations.Expose;
-import com.google.gson.annotations.SerializedName;
+    import com.google.gson.annotations.Expose;
+    import com.google.gson.annotations.SerializedName;
 
-import java.util.Map;
+    import java.util.Map;
 
 /**
  * Created by pratheeka on 29/01/18.
@@ -37,47 +37,47 @@ public class RequestModel {
   @Expose
   private String domainId;
 
-  @SerializedName(value = "TOKEN_KID",alternate = "entity_id")
+  @SerializedName(value = "TOKEN_KID", alternate = "entity_id")
   @Expose
   private String entityId;
 
-  @SerializedName(value = "TOKEN_START_TIME",alternate = "from_date")
+  @SerializedName(value = "TOKEN_START_TIME", alternate = "from_date")
   @Expose
   private String fromDate;
 
-  @SerializedName(value = "TOKEN_END_TIME",alternate = "end_date")
+  @SerializedName(value = "TOKEN_END_TIME", alternate = "end_date")
   @Expose
   private String endDate;
 
-  @SerializedName(value = "TOKEN_MTAG",alternate = "mtag")
+  @SerializedName(value = "TOKEN_MTAG", alternate = "mtag")
   @Expose
   private String mtag;
 
-  @SerializedName(value = "TOKEN_KTAG",alternate = "ktag")
+  @SerializedName(value = "TOKEN_KTAG", alternate = "ktag")
   @Expose
   private String ktag;
 
-  @SerializedName(value = "TOKEN_MID",alternate = "material_id")
+  @SerializedName(value = "TOKEN_MID", alternate = "material_id")
   @Expose
   private String materialId;
 
-  @SerializedName(value = "TOKEN_BID",alternate = "batch_id")
+  @SerializedName(value = "TOKEN_BID", alternate = "batch_id")
   @Expose
   private String batchId;
 
-  @SerializedName(value = "TOKEN_REASON",alternate = "reason")
+  @SerializedName(value = "TOKEN_REASON", alternate = "reason")
   @Expose
   private String reason;
 
-  @SerializedName(value = "TOKEN_LKID",alternate = "linked_kid")
+  @SerializedName(value = "TOKEN_LKID", alternate = "linked_kid")
   @Expose
   private String linkedKioskId;
 
-  @SerializedName(value = "TOKEN_TRANSACTION_TYPE",alternate = "transaction_type")
+  @SerializedName(value = "TOKEN_TRANSACTION_TYPE", alternate = "transaction_type")
   @Expose
   private String transactionType;
 
-  @SerializedName(value = "TOKEN_ATD",alternate = "atd")
+  @SerializedName(value = "TOKEN_ATD", alternate = "atd")
   @Expose
   private String atd;
 
@@ -85,40 +85,84 @@ public class RequestModel {
   @Expose
   private String firstName;
 
-  @SerializedName(value = "TOKEN_MOBILE",alternate = "mobile_no")
+  @SerializedName(value = "TOKEN_MOBILE", alternate = "mobile_no")
   @Expose
   private String mobileNumber;
 
-  @SerializedName(value = "TOKEN_ROLE",alternate = "role")
+  @SerializedName(value = "TOKEN_ROLE", alternate = "role")
   @Expose
   private String role;
 
-  @SerializedName(value = "TOKEN_USER_ACTIVE",alternate = "user_active")
+  @SerializedName(value = "TOKEN_USER_ACTIVE", alternate = "user_active")
   @Expose
   private String userActive;
 
-  @SerializedName(value = "TOKEN_APP_VERSION",alternate = "app_version")
+
+  @SerializedName(value = "TOKEN_APP_VERSION", alternate = "app_version")
   @Expose
   private String appVersion;
 
-  @SerializedName(value = "TOKEN_USER_NO_LOGIN",alternate = "user_no_log")
+  @SerializedName(value = "TOKEN_USER_NO_LOGIN", alternate = "user_no_log")
   @Expose
   private String showNeverLoggedInUsers;
 
-  @SerializedName(value = "TOKEN_UTAG",alternate = "utag")
+  @SerializedName(value = "TOKEN_UTAG", alternate = "utag")
   @Expose
   private String userTag;
 
-  @SerializedName(value = "TOKEN_MNAME",alternate = "mat_name")
+  @SerializedName(value = "TOKEN_MNAME", alternate = "mat_name")
   @Expose
   private String materialName;
 
-  @SerializedName(value = "TOKEN_KNAME",alternate = "ent_name")
+  @SerializedName(value = "TOKEN_KNAME", alternate = "ent_name")
   @Expose
   private String entityName;
 
-  @Expose(deserialize = false,serialize = false)
+  @Expose(deserialize = false, serialize = false)
   private String module;
+
+  @Expose(deserialize = false, serialize = false)
+  private String templateId;
+
+  @SerializedName(value = "TOKEN_STATUS", alternate = "status")
+  @Expose
+  private String status;
+
+  @SerializedName(value = "TOKEN_REF_ID", alternate = "reference_id")
+  @Expose
+  private String referenceId;
+
+  //For sales/purchase order
+  @SerializedName(value = "TOKEN_ORDER_SUBTYPE", alternate = "order_subtype")
+  @Expose
+  private String orderSubType;
+
+  @SerializedName(value = "TOKEN_OTAG", alternate = "otag")
+  @Expose
+  private String orderTag;
+
+  @SerializedName(value = "TOKEN_APPROVAL_STATUS", alternate = "approval_status")
+  @Expose
+  private String approvalStatus;
+
+  @SerializedName(value = "TOKEN_ORDER_TYPE", alternate = "order_type")
+  @Expose
+  private String orderType;
+
+  @SerializedName(value = "TOKEN_TAG_TYPE", alternate = "tag_type")
+  @Expose
+  private String tagType;
+
+  @Expose(deserialize = false, serialize = false)
+  private Map<String, String> titles;
+
+  public String getTagType() {
+    return tagType;
+  }
+
+  public void setTagType(String tagType) {
+    this.tagType = tagType;
+  }
 
   public String getTemplateId() {
     return templateId;
@@ -128,8 +172,37 @@ public class RequestModel {
     this.templateId = templateId;
   }
 
-  @Expose(deserialize = false,serialize = false)
-  private String templateId;
+  public String getReferenceId() {
+    return referenceId;
+  }
+
+  public void setReferenceId(String referenceId) {
+    this.referenceId = referenceId;
+  }
+
+  public String getApprovalStatus() {
+    return approvalStatus;
+  }
+
+  public void setApprovalStatus(String approvalStatus) {
+    this.approvalStatus = approvalStatus;
+  }
+
+  public String getOrderTag() {
+    return orderTag;
+  }
+
+  public void setOrderTag(String orderTag) {
+    this.orderTag = orderTag;
+  }
+
+  public String getStatus() {
+    return status;
+  }
+
+  public void setStatus(String status) {
+    this.status = status;
+  }
 
   public String getModule() {
     return module;
@@ -146,9 +219,6 @@ public class RequestModel {
   public void setTitles(Map<String, String> titles) {
     this.titles = titles;
   }
-
-  @Expose(deserialize = false,serialize = false)
-  private Map<String, String> titles;
 
   public String getDomainId() {
     return domainId;
@@ -321,4 +391,22 @@ public class RequestModel {
   public void setEntityName(String entityName) {
     this.entityName = entityName;
   }
+
+  public String getOrderSubType() {
+    return orderSubType;
+  }
+
+  public void setOrderSubType(String orderSubType) {
+    this.orderSubType = orderSubType;
+  }
+
+  public String getOrderType() {
+    return orderType;
+  }
+
+  public void setOrderType(String orderType) {
+    this.orderType = orderType;
+  }
+
+
 }
