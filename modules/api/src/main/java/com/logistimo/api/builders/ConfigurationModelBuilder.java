@@ -1130,7 +1130,9 @@ public class ConfigurationModelBuilder {
       model.exet = TagUtil.getTagsArray(config.getDbOverConfig().exet);
       model.exts = TagUtil.getTagsArray(config.getDbOverConfig().exts);
       model.dutg = TagUtil.getTagsArray(config.getDbOverConfig().dutg);
-      model.dats = TagUtil.getTagsArray(config.getDbOverConfig().dats);
+    }
+    if(config.getAssetsDbConfig().dats != null) {
+      model.dats = TagUtil.getTagsArray(config.getAssetsDbConfig().dats);
     }
     return model;
   }

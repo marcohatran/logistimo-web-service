@@ -2557,6 +2557,9 @@ public class DomainConfigController {
           new DashboardConfig.InventoryPanelConfig();
       invPanelConfig.showInvPanel = model.ipe;
 
+      DashboardConfig.AssetsDbConfig assetsDbConfig = new DashboardConfig.AssetsDbConfig();
+      assetsDbConfig.dats = StringUtil.getCSV(model.dats);
+
       DashboardConfig.DBOverviewConfig dbOverviewConfig = new DashboardConfig.DBOverviewConfig();
       if (model.dmtg != null) {
         dbOverviewConfig.dmtg = StringUtil.getCSV(model.dmtg);
@@ -2595,14 +2598,12 @@ public class DomainConfigController {
       if (model.exts != null) {
         dbOverviewConfig.exts = StringUtil.getCSV(model.exts);
       }
-      if (model.dats != null) {
-        dbOverviewConfig.dats = StringUtil.getCSV(model.dats);
-      }
       dashboardConfig.setActivityPanelConfig(actPanelConfig);
       dashboardConfig.setRevenuePanelConfig(rvnPanelConfig);
       dashboardConfig.setOrderPanelConfig(ordPanelConfig);
       dashboardConfig.setInventoryPanelConfig(invPanelConfig);
       dashboardConfig.setDbOverConfig(dbOverviewConfig);
+      dashboardConfig.setAssetsDbConfig(assetsDbConfig);
 
       ConfigContainer cc = getDomainConfig(domainId, userId);
       cc.dc.setDashboardConfig(dashboardConfig);

@@ -1228,3 +1228,5 @@ dashboard.overview=Tableau de bord de synthèse
 activity.default.period=Période par défaut pour l'activité
 dashboard.lower=tableau de bord
 default.asset.type=Types d'actif par défaut
+config.view.assets=Afficher les éléments
+config.change.status.assets=Modifier le statut de l'actif
