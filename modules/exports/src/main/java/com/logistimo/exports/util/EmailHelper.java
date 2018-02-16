@@ -31,6 +31,7 @@ import com.logistimo.domains.entity.IDomain;
 import com.logistimo.domains.service.DomainsService;
 import com.logistimo.entity.IJobStatus;
 import com.logistimo.reports.constants.ReportType;
+import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.utils.ConfigUtil;
 import com.logistimo.users.entity.IUserAccount;
@@ -45,7 +46,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.ResourceBundle;
 
 /**
  * @author Mohan Raja
@@ -145,7 +148,8 @@ public class EmailHelper {
       return ReportType.getReportName(jobStatus.getMetadataMap().get(
           ExportConstants.REPORT_TYPE));
     } else {
-      return jobStatus.getSubType();
+      ResourceBundle backendMessages = Resources.get().getBundle("JSMessages", Locale.ENGLISH);
+      return backendMessages.getString("exports." + jobStatus.getSubType());
     }
   }
 }
