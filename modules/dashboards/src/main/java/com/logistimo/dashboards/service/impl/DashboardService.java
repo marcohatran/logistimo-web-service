@@ -917,7 +917,6 @@ public class DashboardService implements IDashboardService {
           .withEntityTags(filters.get("eTag"))
           .withExcludeEntityTags(filters.get("eeTag"))
           .withPeriod(Integer.valueOf(filters.get("period")));
-
       if (filters.get("mId") != null) {
         queryGenerator.withMaterialId(Long.valueOf(filters.get("mId")));
       }

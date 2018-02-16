@@ -340,10 +340,16 @@ public class OrdersController {
             throw new BadRequestException(backendMessages.getString("error.unabletoshiporder"));
           }
         }
+        Date efd = null;
+        if(StringUtils.isNotEmpty(status.efd)) {
+          SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATE_FORMAT);
+          efd = sdf.parse(status.efd);
+        }
         if (!o.isStatus(IOrder.COMPLETED) && !o.isStatus(IOrder.CANCELLED) && !o
             .isStatus(IOrder.FULFILLED)) {
-          shipmentId = orderManagementService.shipNow(o, status.t, status.tid, status.cdrsn,
-              status.efd, user.getUsername(), status.ps, SourceConstants.WEB, status.rid, true);
+          shipmentId =
+              orderManagementService.shipNow(o, status.t, status.tid, status.cdrsn, efd, user.getUsername(),
+                  status.ps, SourceConstants.WEB, status.rid, true);
         } else if (o.isStatus(IOrder.COMPLETED)) {
           if (shipments == null || shipments.size() > 1) {
             xLogger.warn("Invalid order {0} ({1}) cannot fulfill, already has more shipments or " +

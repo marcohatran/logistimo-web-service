@@ -922,7 +922,7 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                             return;
                         }
                     }
-                    $scope.newStatus.efd = checkNotNullEmpty($scope.newStatus.efd) ? $scope.newStatus.efd : undefined;
+                    $scope.newStatus.efd = checkNotNullEmpty($scope.newStatus.efd) ? formatDate($scope.newStatus.efd) : undefined;
                     $scope.newStatus.orderUpdatedAt = $scope.order.orderUpdatedAt;
                     $scope.statusLoading = true;
                     $scope.showLoading();
