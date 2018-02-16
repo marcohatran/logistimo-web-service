@@ -578,15 +578,22 @@ entityControllers.controller('EntityListController', ['$scope', 'entityService',
         };
 
         $scope.exportData=function() {
+            $scope.showLoading();
             exportService.exportData({
-                ent_name: $scope.search.key,
-                mtag: $scope.mtag,
+                ent_name: $scope.search.key || undefined,
+                mtag: $scope.mtag || undefined,
                 titles: {
                     filters: getCaption()
                 },
-                module: "Entity",
+                module: "kiosks",
                 templateId: "s_entities"
-            })
+            }).then(function (data) {
+                $scope.showSuccess(data.data);
+            }).catch(function error(msg) {
+                $scope.showErrorMsg(msg);
+            }).finally(function(){
+                $scope.hideLoading();
+            });
         };
 
         function getCaption() {
@@ -1355,7 +1362,7 @@ entityControllers.controller('AddMaterialsController', ['$scope', 'matService', 
                         $scope.materials.results = finalMaterials;
                     }
                 } else {
-                    entMaterials.forEach(function (material) {
+                    angular.forEach(entMaterials,function (material) {
                         material.isAdded = true;
                     });
                     $scope.materials = data.data;

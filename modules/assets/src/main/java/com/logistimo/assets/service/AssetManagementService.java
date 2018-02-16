@@ -27,6 +27,7 @@ import com.logistimo.assets.entity.IAsset;
 import com.logistimo.assets.entity.IAssetRelation;
 import com.logistimo.assets.entity.IAssetStatus;
 import com.logistimo.assets.models.AssetModel;
+import com.logistimo.assets.models.AssetModels;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
 import com.logistimo.services.ServiceException;
@@ -96,5 +97,8 @@ public interface AssetManagementService {
   String getVendorIdsForReports(String did);
 
   String getAssetTypesForReports(String did,String exclude);
+
+  void updateWorkingStatus(IAsset asset, AssetModels.AssetStatus assetStatusModel)
+      throws ServiceException;
 
 }

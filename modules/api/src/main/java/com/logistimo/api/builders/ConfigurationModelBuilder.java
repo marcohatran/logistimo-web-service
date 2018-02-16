@@ -212,15 +212,13 @@ public class ConfigurationModelBuilder {
       }
       model.createdOn = domain.getCreatedOn();
       model.hasChild = domain.getHasChild();
-      if (model.eid == null) {
-        if (SecurityConstants.ROLE_SERVICEMANAGER.equals(user.getRole())) {
+      if (model.eid == null && SecurityConstants.ROLE_SERVICEMANAGER.equals(user.getRole())) {
           Results results = entitiesService.getKioskIdsForUser(user.getUsername(), null,
               new PageParams(null, 0, 2));
           List kiosks = results.getResults();
           if (kiosks!=null && kiosks.size() == 1) {
             model.eid = (Long) kiosks.get(0);
           }
-        }
       }
     } catch (Exception e) {
       throw new ServiceException("Severe exception while fetching domain details", e);
@@ -607,8 +605,9 @@ public class ConfigurationModelBuilder {
       defaultSnsList = tc.getDefaultSns();
       defaultMpsList = tc.getDefaultMps();
     }
-    for (Integer key : assets.keySet()) {
-      AssetSystemConfig.Asset asset = assets.get(key);
+    for (Map.Entry<Integer, AssetSystemConfig.Asset> entry: assets.entrySet()) {
+      Integer key = entry.getKey();
+      AssetSystemConfig.Asset asset = entry.getValue();
       if (asset.getManufacturers() == null) {
         throw new ConfigurationException();
       }
@@ -636,11 +635,10 @@ public class ConfigurationModelBuilder {
       for (String manuKey : asset.getManufacturers().keySet()) {
         AssetSystemConfig.Manufacturer manufacturer = asset.getManufacturers().get(manuKey);
         AssetConfigModel.Mancfacturer acmManc = new AssetConfigModel.Mancfacturer();
-        if (vendorIdsList != null) {
-          if (key.equals(IAsset.TEMP_DEVICE) && vendorIdsList.contains(manuKey)
+        if (vendorIdsList != null && key.equals(IAsset.TEMP_DEVICE) && vendorIdsList.contains(manuKey)
               || vendorIdsList.contains(key + Constants.KEY_SEPARATOR + manuKey)) {
             acmManc.iC = true;
-          }
+
         }
         acmManc.id = manuKey;
         acmManc.name = manufacturer.name;
@@ -1133,6 +1131,9 @@ public class ConfigurationModelBuilder {
       model.exts = TagUtil.getTagsArray(config.getDbOverConfig().exts);
       model.dutg = TagUtil.getTagsArray(config.getDbOverConfig().dutg);
     }
+    if(config.getAssetsDbConfig().dats != null) {
+      model.dats = TagUtil.getTagsArray(config.getAssetsDbConfig().dats);
+    }
     return model;
   }
 
@@ -1563,9 +1564,9 @@ public class ConfigurationModelBuilder {
     if (returnsConfigModel == null) {
       return returnsConfig;
     }
-    returnsConfig.setEntityTags(returnsConfigModel.etags);
-    returnsConfig.setIncomingReturnDuration(returnsConfigModel.incretdur);
-    returnsConfig.setOutgoingReturnDuration(returnsConfigModel.outretdur);
+    returnsConfig.setEntityTags(returnsConfigModel.eTags);
+    returnsConfig.setIncomingDuration(returnsConfigModel.incDur);
+    returnsConfig.setOutgoingDuration(returnsConfigModel.outDur);
     return returnsConfig;
   }
 
@@ -1583,9 +1584,9 @@ public class ConfigurationModelBuilder {
     if (returnsConfig == null) {
       return returnsConfigModel;
     }
-    returnsConfigModel.etags = returnsConfig.getEntityTags();
-    returnsConfigModel.incretdur = returnsConfig.getIncomingReturnDuration();
-    returnsConfigModel.outretdur = returnsConfig.getOutgoingReturnDuration();
+    returnsConfigModel.eTags = returnsConfig.getEntityTags();
+    returnsConfigModel.incDur = returnsConfig.getIncomingDuration();
+    returnsConfigModel.outDur = returnsConfig.getOutgoingDuration();
     return returnsConfigModel;
   }
 }

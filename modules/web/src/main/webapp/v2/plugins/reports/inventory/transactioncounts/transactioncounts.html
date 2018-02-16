@@ -72,7 +72,7 @@
                                             <fusion-chart type="cType" height="cHeight" width="cWidth" chart-label="cLabel"
                                                           chart-data="cData" chart-options="cOptions"
                                                           chart-id="c1"></fusion-chart>
-                                            <p class="litetext">({{(filter.periodicity == 'w') ? resourceBundle['week.barselect'] : resourceBundle['month.barselect']}})</p>
+                                            <p ng-if="filter.periodicity != 'd'" class="litetext">({{(filter.periodicity == 'w') ? resourceBundle['week.barselect'] : resourceBundle['month.barselect']}})</p>
                                         </div>
                                         <div ng-if="vw == 't'">
                                             <span ng-include="'plugins/reports/tables/chart-data-table.html'"></span>

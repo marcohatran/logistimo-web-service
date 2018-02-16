@@ -28,6 +28,8 @@ import com.logistimo.api.builders.JobStatusBuilder;
 import com.logistimo.api.request.ExportReportRequestObj;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.bulkuploads.BulkUploadMgr;
+import com.logistimo.config.models.DomainConfig;
+import com.logistimo.constants.Constants;
 import com.logistimo.entity.IJobStatus;
 import com.logistimo.entity.IUploaded;
 import com.logistimo.exception.BadRequestException;
@@ -51,6 +53,8 @@ import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.utils.JobUtil;
+import com.logistimo.utils.LocalDateUtil;
+
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -62,6 +66,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URLDecoder;
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -278,6 +283,25 @@ public class ExportController {
       }
 
     }
+
+    try {
+      if (StringUtils.isNotBlank(params.get("from")) || StringUtils.isNotBlank(params.get("to"))) {
+        DomainConfig dc = DomainConfig.getInstance(SecurityUtils.getCurrentDomainId());
+        if (StringUtils.isNotBlank(params.get("from"))) {
+          params.put("from", LocalDateUtil.formatCustom(
+              LocalDateUtil.parseCustom(URLDecoder.decode(params.get("from"), Constants.UTF8),
+                  Constants.DATETIME_FORMAT, dc.getTimezone()), Constants.DATETIME_FORMAT, null));
+        }
+        if (StringUtils.isNotBlank(params.get("to"))) {
+          params.put("to", LocalDateUtil.formatCustom(
+              LocalDateUtil.parseCustom(URLDecoder.decode(params.get("to"), Constants.UTF8),
+                  Constants.DATETIME_FORMAT, dc.getTimezone()), Constants.DATETIME_FORMAT, null));
+        }
+      }
+    } catch (ParseException e) {
+      xLogger.warn("Error while parsing date during export:", e);
+    }
+
     // Create a entry in the JobStatus table using JobUtil.createJob method.
     jobId =
         JobUtil.createJob(domainId,

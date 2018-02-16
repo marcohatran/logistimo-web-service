@@ -61,7 +61,7 @@ public class EventDao implements IEventDao {
       pm = PMF.get().getPersistenceManager();
       storedEvent = pm.makePersistent(event);
     } catch (Exception e) {
-      xLogger.warn("Failed to persist event {}", event);
+      xLogger.warn("Failed to persist event {0}", event);
       throw new RuntimeException(e);
     } finally {
       if (pm != null) {
@@ -86,7 +86,7 @@ public class EventDao implements IEventDao {
         pm.makePersistent(it.next());
       }
     } catch (Exception e) {
-      xLogger.warn("Failed to persist events {}", events);
+      xLogger.warn("Failed to persist events {0}", events);
       throw new RuntimeException(e);
     } finally {
       if (pm != null) {

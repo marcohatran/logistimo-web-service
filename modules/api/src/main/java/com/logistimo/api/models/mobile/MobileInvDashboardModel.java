@@ -23,12 +23,14 @@
 
 package com.logistimo.api.models.mobile;
 
+import com.logistimo.models.BaseResponseModel;
+
 import java.io.Serializable;
 
 /**
  * Created by kumargaurav on 13/04/17.
  */
-public class MobileInvDashboardModel implements Serializable {
+public class MobileInvDashboardModel extends BaseResponseModel implements Serializable {
 
 
   protected static final long serialVersionUID = 1L;

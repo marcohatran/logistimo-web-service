@@ -32,7 +32,7 @@ import java.util.List;
  * Created by vani on 06/02/18.
  */
 public class ReturnsConfigModel {
-  public List<String> etags = new ArrayList<>(1);
-  public int incretdur = ReturnsConfig.DEFAULT_RETURN_INCOMING_DURATION;
-  public int outretdur = ReturnsConfig.DEFAULT_RETURN_OUTGOING_DURATION;
+  public List<String> eTags = new ArrayList<>(1);
+  public int incDur = ReturnsConfig.DEFAULT_INCOMING_DURATION;
+  public int outDur = ReturnsConfig.DEFAULT_OUTGOING_DURATION;
 }

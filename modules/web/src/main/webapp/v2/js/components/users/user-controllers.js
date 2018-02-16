@@ -236,22 +236,29 @@ userControllers.controller('UsersListController', ['$scope', 'userService', 'req
         };
 
         $scope.exportData=function() {
+            $scope.showLoading();
             exportService.exportData({
-                first_name: $scope.search.key,
-                mobile_no: $scope.uphn,
-                role: $scope.urole,
-                user_active: $scope.uactive,
-                app_version: $scope.uversion,
-                from_date: formatDate2Url($scope.from),
-                end_date: formatDate2Url($scope.to),
-                user_no_log: $scope.nvrlogged,
-                utag: $scope.utag,
+                first_name: $scope.search.key || undefined,
+                mobile_no: $scope.uphn || undefined,
+                role: $scope.urole || undefined,
+                user_active: $scope.uactive || undefined,
+                app_version: $scope.uversion || undefined,
+                from_date: formatDate2Url($scope.from) || undefined,
+                end_date: formatDate2Url($scope.to) || undefined,
+                user_no_log: $scope.nvrlogged || undefined,
+                utag: $scope.utag || undefined,
                 titles: {
                     filters: getCaption()
                 },
-                module: "Users",
+                module: "users",
                 templateId: "s_users"
-            })
+            }).then(function (data) {
+                $scope.showSuccess(data.data);
+            }).catch(function error(msg) {
+                $scope.showErrorMsg(msg);
+            }).finally(function(){
+                $scope.hideLoading();
+            });
         };
 
         function getCaption() {
