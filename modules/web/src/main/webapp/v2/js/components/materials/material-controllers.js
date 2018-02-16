@@ -250,7 +250,7 @@ matControllers.controller('MaterialListController', ['$scope', 'matService', 'do
                 titles: {
                     filters: getCaption()
                 },
-                module: "Materials",
+                module: "materials",
                 templateId: "s_materials"
             }).then(function (data) {
                 $scope.showSuccess(data.data);
