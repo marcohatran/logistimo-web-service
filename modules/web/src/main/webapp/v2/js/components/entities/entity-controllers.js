@@ -578,6 +578,7 @@ entityControllers.controller('EntityListController', ['$scope', 'entityService',
         };
 
         $scope.exportData=function() {
+            $scope.showLoading();
             exportService.exportData({
                 ent_name: $scope.search.key || undefined,
                 mtag: $scope.mtag || undefined,
@@ -586,7 +587,13 @@ entityControllers.controller('EntityListController', ['$scope', 'entityService',
                 },
                 module: "kiosks",
                 templateId: "s_entities"
-            })
+            }).then(function (data) {
+                $scope.showSuccess(data.data);
+            }).catch(function error(msg) {
+                $scope.showErrorMsg(msg);
+            }).finally(function(){
+                $scope.hideLoading();
+            });
         };
 
         function getCaption() {

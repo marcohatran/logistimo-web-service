@@ -236,6 +236,7 @@ userControllers.controller('UsersListController', ['$scope', 'userService', 'req
         };
 
         $scope.exportData=function() {
+            $scope.showLoading();
             exportService.exportData({
                 first_name: $scope.search.key || undefined,
                 mobile_no: $scope.uphn || undefined,
@@ -251,7 +252,13 @@ userControllers.controller('UsersListController', ['$scope', 'userService', 'req
                 },
                 module: "users",
                 templateId: "s_users"
-            })
+            }).then(function (data) {
+                $scope.showSuccess(data.data);
+            }).catch(function error(msg) {
+                $scope.showErrorMsg(msg);
+            }).finally(function(){
+                $scope.hideLoading();
+            });
         };
 
         function getCaption() {
