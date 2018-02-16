@@ -1579,7 +1579,7 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
                                 bd.link = "JavaScript: angular.element(document.getElementById('cid')).scope().drillDownInventory('" + search + "')";
                             } else if(event == 'a' || event == 'i') {
                                 var fromDate = angular.copy($scope.date || $scope.today);
-                                fromDate.setDate(fromDate.getDate() - ($scope.period || $scope.aper) + ($scope.date ? 1 : 0));
+                                fromDate.setDate(fromDate.getDate() - (($scope.period == "0" ? 7 : $scope.period) || $scope.aper) + ($scope.date ? 1 : 0));
                                 bd.link = "N-#/inventory/transactions/?eid="+kid+"&from="+formatDate2Url(fromDate)+"&to="+formatDate2Url($scope.date || $scope.today);
                                 if(checkNotNullEmpty($scope.mtag) && $scope.mtag.length == 1) {
                                     bd.link += "&tag=" + $scope.mtag[0].text;
