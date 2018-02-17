@@ -33,6 +33,7 @@ import com.logistimo.assets.entity.IAssetRelation;
 import com.logistimo.assets.service.AssetManagementService;
 import com.logistimo.assets.service.impl.AssetManagementServiceImpl;
 import com.logistimo.auth.SecurityConstants;
+import com.logistimo.auth.SecurityMgr;
 import com.logistimo.auth.SecurityUtil;
 import com.logistimo.bulkuploads.headers.AssetsHeader;
 import com.logistimo.bulkuploads.headers.IHeader;
@@ -323,6 +324,8 @@ public class BulkUploadMgr {
     }
     EntityContainer entityContainer = null;
     String[] tokens = StringUtil.getCSVTokens(csvLine);
+    UsersService usersService = StaticApplicationContext.getBean(UsersService.class);
+    SecurityMgr.setSessionDetails(usersService.getUserAccount(sourceUserId));
     if (TYPE_USERS.equals(type)) {
       entityContainer = processUserEntity(tokens, domainId, sourceUserId);
     } else if (TYPE_MATERIALS.equals(type)) {
@@ -2637,6 +2640,7 @@ public class BulkUploadMgr {
 
     } catch (Exception e) {
       ec.messages.add("Error: " + e.getMessage());
+      xLogger.warn("Error while processing entity uploaded data:" , e);
     }
     xLogger.fine("Exiting processKioskEntity");
     return ec;

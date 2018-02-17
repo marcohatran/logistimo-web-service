@@ -50,4 +50,8 @@ public class DashboardConfigModel {
    * List of exclude temperature status
    */
   public String[] exts;
+  /**
+   * List of default asset types
+   */
+  public String[] dats;
 }

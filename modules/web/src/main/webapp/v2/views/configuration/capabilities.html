@@ -109,13 +109,13 @@
                                             <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[13]" ng-change="setFormUpdated()"> {{resourceBundle['config.exportinventory']}}</td>
                                             <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[14]"ng-change="setFormUpdated()"> {{resourceBundle['config.transactionhistory']}}</td>
                                         </tr>
+                                        <tr ng-show="uiCnf.ro == 'ROLE_sm' || uiCnf.ro == 'ROLE_ko'">
+                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[15]" ng-change="setFormUpdated();toggleTransfers('v')"> {{resourceBundle['config.view.transfer.order']}}</td>
+                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[16]" ng-change="setFormUpdated();toggleTransfers('c')"> {{resourceBundle['config.create.transfer.order']}}</td>
+                                        </tr>
                                         <tr>
-                                            <td ng-show="uiCnf.ro == 'ROLE_sm' || uiCnf.ro == 'ROLE_ko'">
-                                                <input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[15]"ng-change="setFormUpdated();toggleTransfers('v')"> {{resourceBundle['config.view.transfer.order']}}
-                                            </td>
-                                            <td ng-show="uiCnf.ro == 'ROLE_sm' || uiCnf.ro == 'ROLE_ko'">
-                                                <input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[16]"ng-change="setFormUpdated();toggleTransfers('c')"> {{resourceBundle['config.create.transfer.order']}}
-                                            </td>
+                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[17]" ng-change="setFormUpdated();toggleAssets('v')"> {{resourceBundle['config.view.assets']}}</td>
+                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[18]" ng-change="setFormUpdated();toggleAssets('c')"> {{resourceBundle['config.change.status.assets']}}</td>
                                         </tr>
                                     </table>
                                 </div>

@@ -37,6 +37,7 @@ public class DashboardConfig implements Serializable {
   private static final String ACTIVITY_PANEL_CONFIG = "actpanelcfg"; // Activity panel configuration
   private static final String REVENUE_PANEL_CONFIG = "rvnpanelcfg"; // Revenue panel configuration
   private static final String ORDER_PANEL_CONFIG = "ordpanelcfg"; // Order panel configuration
+  private static final String ASSETS_DB_CONFIG = "assetsdbconfig"; // Assets Configuration
   private static final String
       INVENTORY_PANEL_CONFIG =
       "invpanelcfg";
@@ -47,12 +48,14 @@ public class DashboardConfig implements Serializable {
   private OrderPanelConfig ordPanelConfig = null;
   private InventoryPanelConfig invPanelConfig = null;
   private DBOverviewConfig dbOverConfig = null;
+  private AssetsDbConfig assetsDbConfig = null;
 
   public DashboardConfig() {
     actPanelConfig = new ActivityPanelConfig();
     rvnPanelConfig = new RevenuePanelConfig();
     ordPanelConfig = new OrderPanelConfig();
     invPanelConfig = new InventoryPanelConfig();
+    assetsDbConfig = new AssetsDbConfig();
   }
 
   public DashboardConfig(JSONObject json, Locale locale, String timezone) {
@@ -80,6 +83,11 @@ public class DashboardConfig implements Serializable {
       dbOverConfig = new DBOverviewConfig(json.getJSONObject(DASHBOARD_CONFIG));
     } catch (JSONException e) {
       dbOverConfig = new DBOverviewConfig();
+    }
+    try {
+      assetsDbConfig = new AssetsDbConfig(json.getJSONObject(ASSETS_DB_CONFIG));
+    } catch (JSONException e) {
+      assetsDbConfig = new AssetsDbConfig();
     }
   }
 
@@ -123,6 +131,14 @@ public class DashboardConfig implements Serializable {
     this.dbOverConfig = dbOverConfig;
   }
 
+  public AssetsDbConfig getAssetsDbConfig() {
+    return assetsDbConfig != null ? assetsDbConfig : new AssetsDbConfig();
+  }
+
+  public void setAssetsDbConfig(AssetsDbConfig assetsDbConfig) {
+    this.assetsDbConfig = assetsDbConfig;
+  }
+
   public JSONObject toJSONObject() throws ConfigurationException {
     try {
       JSONObject json = new JSONObject();
@@ -141,9 +157,38 @@ public class DashboardConfig implements Serializable {
       if (dbOverConfig != null) {
         json.put(DASHBOARD_CONFIG, dbOverConfig.toJSONObject());
       }
+      if (assetsDbConfig != null) {
+        json.put(ASSETS_DB_CONFIG, assetsDbConfig.toJSONObject());
+      }
       return json;
     } catch (Exception e) {
       throw new ConfigurationException(e.getMessage());
+    }
+  }
+
+  public static class AssetsDbConfig implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    private static final String DEFAULT_ASSET_TYPES = "dats";
+
+    public String dats;
+
+    public AssetsDbConfig() {
+
+    }
+
+    public AssetsDbConfig(JSONObject json) {
+      try {
+        dats = json.optString(DEFAULT_ASSET_TYPES);
+      } catch (Exception e) {
+        //ignore
+      }
+    }
+
+    public JSONObject toJSONObject() throws JSONException {
+      JSONObject json = new JSONObject();
+      json.put(DEFAULT_ASSET_TYPES, dats);
+      return json;
     }
   }
 
@@ -270,6 +315,7 @@ public class DashboardConfig implements Serializable {
     private static final String EXCLUDE_TEMP_STATUS_TAG = "exts";
     private static final String ACTIVITY_PERIOD = "aper";
     private static final String DISABLE_BY_USER_TAG = "dutg";
+
 
     public String dmtg;
     public String dimtg;

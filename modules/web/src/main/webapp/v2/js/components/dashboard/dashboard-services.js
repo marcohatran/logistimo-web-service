@@ -51,9 +51,7 @@ dashboardServices.factory('dashboardService', ['APIService','$q', function (apiS
                     url += '&exType=' + exType;
                 }
             }
-            if (checkNotNullEmpty(period)) {
-                url += (url == '' ? '?' : '&') + 'period=' + period;
-            }
+            url += (url == '' ? '?' : '&') + 'period=' + (period || 0);
             if (checkNotNullEmpty(tPeriod)) {
                 url += (url == '' ? '?' : '&') + 'tPeriod=' + tPeriod;
             }

@@ -248,7 +248,7 @@ public class OrderServlet extends JsonRestServlet {
         int orderApprovalType = OrderUtils.getOrderApprovalType(otype, isTransfer);
         //Build json response
         jsonObject =
-            new MobileOrderBuilder()
+            StaticApplicationContext.getBean(MobileOrderBuilder.class)
                 .buildOrdersResponse(ordersList, u.getLocale(), u.getTimezone(), orderApprovalType);
       }
     } catch (NumberFormatException e) {
@@ -471,7 +471,7 @@ public class OrderServlet extends JsonRestServlet {
         status = false;
         message = backendMessages.getString(NO_ORDERS);
       } else {
-        MobileOrderBuilder mob = new MobileOrderBuilder();
+        MobileOrderBuilder mob = StaticApplicationContext.getBean(MobileOrderBuilder.class);
         mom = mob.buildOrders(orders, locale, timezone, loadAll, incShpItems, includeBatchDetails);
       }
     }
@@ -647,7 +647,7 @@ public class OrderServlet extends JsonRestServlet {
       if (order != null) {
         DomainConfig dc = DomainConfig.getInstance(order.getDomainId());
         boolean isAccounting = dc.isAccountingEnabled();
-        MobileOrderBuilder mob = new MobileOrderBuilder();
+        MobileOrderBuilder mob = StaticApplicationContext.getBean(MobileOrderBuilder.class);
 
         boolean isBatchEnabled;
         EntitiesService entitiesService = StaticApplicationContext.getBean(
@@ -1054,7 +1054,7 @@ public class OrderServlet extends JsonRestServlet {
     boolean isAccounting = dc.isAccountingEnabled();
     boolean embedInventoryDetails = "inventory".equals(uoReq.embed) && uoReq.ukid != null;
     EntityAuthoriser.authoriseEntity(uoReq.ukid);
-    return new MobileOrderBuilder()
+    return StaticApplicationContext.getBean(MobileOrderBuilder.class)
         .build(order, locale, timezone, true, isAccounting, true, includeBatch,
             embedInventoryDetails, uoReq.ukid);
   }
@@ -1208,7 +1208,7 @@ public class OrderServlet extends JsonRestServlet {
       if (order != null) {
         dc = DomainConfig.getInstance(order.getDomainId());
         boolean isAccounting = dc.isAccountingEnabled();
-        MobileOrderBuilder mob = new MobileOrderBuilder();
+        MobileOrderBuilder mob = StaticApplicationContext.getBean(MobileOrderBuilder.class);
         EntitiesService as = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
         IKiosk k = as.getKiosk(order.getKioskId(), false);
         mom = mob.build(order, locale, timezone, true, isAccounting, true, k.isBatchMgmtEnabled());
@@ -1447,7 +1447,7 @@ public class OrderServlet extends JsonRestServlet {
 
         EntityAuthoriser.authoriseEntity(uosReq.ukid);
 
-        MobileOrderBuilder mob = new MobileOrderBuilder();
+        MobileOrderBuilder mob = StaticApplicationContext.getBean(MobileOrderBuilder.class);
         mom =
             mob.build(order, locale, timezone, true, isAccounting, true, includeBatchDetails,
                 embedInventoryDetails, uosReq.ukid);
