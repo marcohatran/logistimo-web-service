@@ -55,6 +55,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.sql.ResultSet;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -198,6 +199,7 @@ public class DashboardController {
       if (cache != null && !skipCache) {
         model = (MainDashboardModel) cache.get(cacheKey);
         if (model != null) {
+          model.ut = getFormattedTimeStamp(model.ut, sUser.getLocale(), sUser.getTimezone());
           return model;
         }
       }
@@ -300,7 +302,7 @@ public class DashboardController {
         model.mPTy = dc.getCountry(); // Required only for state level, rest ignored
         model.mLev = level != null ? level : "district";
       }
-      model.ut = LocalDateUtil.format(new Date(), sUser.getLocale(), sUser.getTimezone());
+      model.ut = getGeneratedTimestamp();
       try {
         if (cache != null) {
           cache.put(cacheKey, model, 1800); // 30 min expiry
@@ -308,6 +310,7 @@ public class DashboardController {
       } catch (Exception e) {
         xLogger.warn("Error in caching dashboard data", e);
       }
+      model.ut = getFormattedTimeStamp(model.ut, sUser.getLocale(), sUser.getTimezone());
       return model;
     } catch (Exception e) {
       xLogger.warn("Error in getting main Dashboard for domain {0}", domainId, e);
@@ -366,6 +369,7 @@ public class DashboardController {
       if (cache != null && !skipCache) {
         model = (MainDashboardModel) cache.get(cacheKey);
         if (model != null) {
+          model.ut = getFormattedTimeStamp(model.ut, sUser.getLocale(), sUser.getTimezone());
           return model;
         }
       }
@@ -430,7 +434,7 @@ public class DashboardController {
         model.mPTy = dc.getCountry(); // Required only for state level, rest ignored
         model.mLev = level != null ? level : "district";
       }
-      model.ut = LocalDateUtil.format(new Date(), sUser.getLocale(), sUser.getTimezone());
+      model.ut = getGeneratedTimestamp();
       try {
         if (cache != null) {
           cache.put(cacheKey, model, 1800); // 30 min expiry
@@ -438,6 +442,7 @@ public class DashboardController {
       } catch (Exception e) {
         xLogger.warn("Error in caching predictive dashboard data", e);
       }
+      model.ut = getFormattedTimeStamp(model.ut, sUser.getLocale(), sUser.getTimezone());
       return model;
     } catch (Exception e) {
       xLogger.warn("Error in getting predictive Dashboard for domain {0}", domainId, e);
@@ -504,6 +509,7 @@ public class DashboardController {
       if (cache != null && !skipCache) {
         model = (SessionDashboardModel) cache.get(cacheKey);
         if (model != null) {
+          model.ut = getFormattedTimeStamp(model.ut, sUser.getLocale(), sUser.getTimezone());
           return model;
         }
       }
@@ -594,7 +600,7 @@ public class DashboardController {
         model.mTy = model.mTyNm.replace(" ", "");
         model.mLev = level != null ? level : "district";
       }
-      model.ut = LocalDateUtil.format(new Date(), sUser.getLocale(), sUser.getTimezone());
+      model.ut = getGeneratedTimestamp();
       try {
         if (cache != null) {
           cache.put(cacheKey, model, 1800); // 30 min expiry
@@ -602,6 +608,7 @@ public class DashboardController {
       } catch (Exception e) {
         xLogger.warn("Error in caching session dashboard data", e);
       }
+      model.ut = getFormattedTimeStamp(model.ut, sUser.getLocale(), sUser.getTimezone());
       return model;
     } catch (Exception e) {
       xLogger.warn("Error in getting session Dashboard for domain {0}", domainId, e);
@@ -671,6 +678,7 @@ public class DashboardController {
       if (cache != null && !skipCache) {
         model = (MainDashboardModel) cache.get(cacheKey);
         if (model != null) {
+          model.ut = getFormattedTimeStamp(model.ut, sUser.getLocale(), sUser.getTimezone());
           return model;
         }
       }
@@ -708,7 +716,7 @@ public class DashboardController {
       } else {
         model.mTy = state.replace(" ", "");
       }
-      model.ut = LocalDateUtil.format(new Date(), sUser.getLocale(), sUser.getTimezone());
+      model.ut = getGeneratedTimestamp();
       try {
         if (cache != null) {
           cache.put(cacheKey, model, 1800); // 30 min expiry
@@ -716,6 +724,7 @@ public class DashboardController {
       } catch (Exception e) {
         xLogger.warn("Error in caching dashboard data", e);
       }
+      model.ut = getFormattedTimeStamp(model.ut, sUser.getLocale(), sUser.getTimezone());
       return model;
     } catch (Exception e) {
       xLogger.warn("Error in getting main Dashboard {0}", domainId, e);
@@ -773,5 +782,16 @@ public class DashboardController {
       xLogger.severe("Error in updating dashboard configuration for {0}", rObj.id);
       throw new InvalidServiceException("Error in updating dashboard configuration for " + rObj.id);
     }
+  }
+
+  private String getGeneratedTimestamp() {
+    SimpleDateFormat sdf = new SimpleDateFormat(Constants.ANALYTICS_DATE_FORMAT);
+    return sdf.format(new Date());
+  }
+
+  private String getFormattedTimeStamp(String timestamp, Locale locale, String timezone)
+      throws ParseException {
+    Date date = LocalDateUtil.parseCustom(timestamp, Constants.ANALYTICS_DATE_FORMAT, null);
+    return LocalDateUtil.format(date, locale, timezone);
   }
 }
