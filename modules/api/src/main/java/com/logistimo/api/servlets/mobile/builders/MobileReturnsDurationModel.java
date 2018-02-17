@@ -26,21 +26,33 @@ package com.logistimo.api.servlets.mobile.builders;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-import java.util.List;
-
 /**
- * Created by vani on 13/02/18.
+ * Created by vani on 17/02/18.
  */
-public class MobileReturnsConfigModel {
-  @Expose
-  @SerializedName(value="policies")
-  private List<MobileReturnsPolicyModel> policies;
+public class MobileReturnsDurationModel {
+  public static final int DEFAULT_INCOMING_DURATION = 30;
+  public static final int DEFAULT_OUTGOING_DURATION = 30;
 
-  public List<MobileReturnsPolicyModel> getPolicies() {
-    return policies;
+  @Expose
+  @SerializedName(value = "incoming")
+  private int incoming = DEFAULT_INCOMING_DURATION;
+  @Expose
+  @SerializedName(value = "outgoing")
+  private int outgoing = DEFAULT_OUTGOING_DURATION;
+
+  public int getIncoming() {
+    return incoming;
   }
-  public void setPolicies(
-      List<MobileReturnsPolicyModel> policies) {
-    this.policies = policies;
+
+  public void setIncoming(int incoming) {
+    this.incoming = incoming;
   }
- }
+
+  public int getOutgoing() {
+    return outgoing;
+  }
+
+  public void setOutgoing(int outgoing) {
+    this.outgoing = outgoing;
+  }
+}

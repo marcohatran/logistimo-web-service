@@ -38,6 +38,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -159,23 +160,48 @@ public class MobileConfigBuilder {
     return approversModel;
   }
 
-  public List<MobileReturnsConfigModel> buildMobileReturnsConfigModels(List<ReturnsConfig> returnsConfigList) {
-    if (CollectionUtils.isEmpty(returnsConfigList)) {
+  /**
+   * Builds the returns configuration model as required by the mobile from returns configuration as obtained from the domain configuration
+   * @param returnsConfigs
+   * @return
+   */
+  public Optional<MobileReturnsConfigModel> buildMobileReturnsConfigModel(List<ReturnsConfig> returnsConfigs) {
+    if (CollectionUtils.isEmpty(returnsConfigs)) {
+      return Optional.empty();
+    }
+    MobileReturnsConfigModel mobileReturnsConfigModel = new MobileReturnsConfigModel();
+    mobileReturnsConfigModel.setPolicies(buildMobileReturnsPolicyModels(returnsConfigs));
+    return Optional.of(mobileReturnsConfigModel);
+  }
+
+  private List<MobileReturnsPolicyModel> buildMobileReturnsPolicyModels(List<ReturnsConfig> returnsConfigs) {
+    if (CollectionUtils.isEmpty(returnsConfigs)) {
       return Collections.emptyList();
     }
-    return returnsConfigList.stream()
-        .map(this::buildReturnsConfigModel)
+    return returnsConfigs.stream()
+        .map(this::buildMobileReturnsPolicyModel)
+        .filter(Optional::isPresent)
+        .map(Optional::get)
         .collect(Collectors.toList());
   }
 
-  public MobileReturnsConfigModel buildReturnsConfigModel(ReturnsConfig returnsConfig) {
-    MobileReturnsConfigModel mobileReturnsConfigModel = new MobileReturnsConfigModel();
+  private Optional<MobileReturnsPolicyModel> buildMobileReturnsPolicyModel(ReturnsConfig returnsConfig) {
     if (returnsConfig == null) {
-      return mobileReturnsConfigModel;
+      return Optional.empty();
     }
-    mobileReturnsConfigModel.setEntityTags(returnsConfig.getEntityTags());
-    mobileReturnsConfigModel.setIncomingDuration(returnsConfig.getIncomingDuration());
-    mobileReturnsConfigModel.setOutgoingDuration(returnsConfig.getOutgoingDuration());
-    return mobileReturnsConfigModel;
+    MobileReturnsPolicyModel mobileReturnsPolicyModel = new MobileReturnsPolicyModel();
+    mobileReturnsPolicyModel.setEntityTags(returnsConfig.getEntityTags());
+    mobileReturnsPolicyModel.setDurations(buildMobileReturnsDurationModel(returnsConfig));
+    return Optional.of(mobileReturnsPolicyModel);
+  }
+
+  private MobileReturnsDurationModel buildMobileReturnsDurationModel(ReturnsConfig returnsConfig) {
+    MobileReturnsDurationModel mobileReturnsDurationModel = new MobileReturnsDurationModel();
+    if (returnsConfig == null) {
+      return mobileReturnsDurationModel;
+    }
+    mobileReturnsDurationModel.setIncoming(returnsConfig.getIncomingDuration());
+    mobileReturnsDurationModel.setOutgoing(returnsConfig.getOutgoingDuration());
+    return mobileReturnsDurationModel;
   }
 }

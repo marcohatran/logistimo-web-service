@@ -1735,14 +1735,12 @@ public class RESTUtil {
         config.put(JsonTagsZ.ENTITY_TAG, Arrays.asList(kioskTags));
       }
       // Returns policy configuration
-      List<ReturnsConfig> returnsConfigList = dc.getInventoryConfig().getReturnsConfig();
-      if (CollectionUtils.isNotEmpty(returnsConfigList)) {
-        List<MobileReturnsConfigModel>
-            mobileReturnsConfigModels =
-            mobileConfigBuilder.buildMobileReturnsConfigModels(returnsConfigList);
-        if (CollectionUtils.isNotEmpty(mobileReturnsConfigModels)) {
-          config.put(JsonTagsZ.RETURNS, mobileReturnsConfigModels);
-        }
+      List<ReturnsConfig> returnsConfigs = dc.getInventoryConfig().getReturnsConfig();
+      if (CollectionUtils.isNotEmpty(returnsConfigs)) {
+        Optional<MobileReturnsConfigModel> mobileReturnsConfigModel = mobileConfigBuilder.buildMobileReturnsConfigModel(
+            returnsConfigs);
+        mobileReturnsConfigModel.ifPresent(returnsModel -> config.put(JsonTagsZ.RETURNS,
+            returnsModel));
       }
     } catch (Exception e) {
       xLogger.warn("Error in getting system configuration: {0}", e);

@@ -26,21 +26,26 @@ package com.logistimo.api.servlets.mobile.builders;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by vani on 13/02/18.
+ * Created by vani on 17/02/18.
  */
-public class MobileReturnsConfigModel {
+public class MobileReturnsPolicyModel {
   @Expose
-  @SerializedName(value="policies")
-  private List<MobileReturnsPolicyModel> policies;
+  @SerializedName(value = "entity_tags")
+  private List<String> entityTags = new ArrayList<>(1);
+  @Expose
+  @SerializedName(value = "durations")
+  private MobileReturnsDurationModel durations;
 
-  public List<MobileReturnsPolicyModel> getPolicies() {
-    return policies;
+  public void setEntityTags(List<String> entityTags) {
+    this.entityTags = entityTags;
   }
-  public void setPolicies(
-      List<MobileReturnsPolicyModel> policies) {
-    this.policies = policies;
+
+  public void setDurations(
+      MobileReturnsDurationModel durations) {
+    this.durations = durations;
   }
- }
+}
