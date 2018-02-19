@@ -1218,6 +1218,7 @@ exports.kiosks=Entités
 exports.materials=Matériaux
 exports.notificationstatus=Notifications envoyées
 exports.orders=Ordres
+exports.transfers=Transferts
 exports.powerdata=Données d'alimentation
 exports.report=rapport
 exports.stev=Stock anormal
