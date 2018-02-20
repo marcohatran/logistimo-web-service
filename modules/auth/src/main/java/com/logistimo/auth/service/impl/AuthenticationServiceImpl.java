@@ -207,6 +207,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     if (iUserToken != null) {
+      if(SourceConstants.BULLETIN_BOARD != accessInitiator.intValue() && iUserToken.hasAccessKey()) {
+        throw new UnauthorizedException("B001", new Object[]{});
+      }
       if (iUserToken.getExpires() == null) {
         checkWebTokenExpiry(token);
         updateWebAccessTime(token);
