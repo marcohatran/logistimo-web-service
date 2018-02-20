@@ -199,7 +199,7 @@ public class DashboardController {
       if (cache != null && !skipCache) {
         model = (MainDashboardModel) cache.get(cacheKey);
         if (model != null) {
-          model.ut = getFormattedTimeStamp(model.ut, sUser.getLocale(), sUser.getTimezone());
+          model.ut = getFormattedTimeStamp(model.ut, sUser.getLocale(), sUser.getTimezone(), domainId);
           return model;
         }
       }
@@ -310,7 +310,7 @@ public class DashboardController {
       } catch (Exception e) {
         xLogger.warn("Error in caching dashboard data", e);
       }
-      model.ut = getFormattedTimeStamp(model.ut, sUser.getLocale(), sUser.getTimezone());
+      model.ut = getFormattedTimeStamp(model.ut, sUser.getLocale(), sUser.getTimezone(), domainId);
       return model;
     } catch (Exception e) {
       xLogger.warn("Error in getting main Dashboard for domain {0}", domainId, e);
@@ -369,7 +369,7 @@ public class DashboardController {
       if (cache != null && !skipCache) {
         model = (MainDashboardModel) cache.get(cacheKey);
         if (model != null) {
-          model.ut = getFormattedTimeStamp(model.ut, sUser.getLocale(), sUser.getTimezone());
+          model.ut = getFormattedTimeStamp(model.ut, sUser.getLocale(), sUser.getTimezone(), domainId);
           return model;
         }
       }
@@ -442,7 +442,7 @@ public class DashboardController {
       } catch (Exception e) {
         xLogger.warn("Error in caching predictive dashboard data", e);
       }
-      model.ut = getFormattedTimeStamp(model.ut, sUser.getLocale(), sUser.getTimezone());
+      model.ut = getFormattedTimeStamp(model.ut, sUser.getLocale(), sUser.getTimezone(), domainId);
       return model;
     } catch (Exception e) {
       xLogger.warn("Error in getting predictive Dashboard for domain {0}", domainId, e);
@@ -509,7 +509,7 @@ public class DashboardController {
       if (cache != null && !skipCache) {
         model = (SessionDashboardModel) cache.get(cacheKey);
         if (model != null) {
-          model.ut = getFormattedTimeStamp(model.ut, sUser.getLocale(), sUser.getTimezone());
+          model.ut = getFormattedTimeStamp(model.ut, sUser.getLocale(), sUser.getTimezone(), domainId);
           return model;
         }
       }
@@ -608,7 +608,7 @@ public class DashboardController {
       } catch (Exception e) {
         xLogger.warn("Error in caching session dashboard data", e);
       }
-      model.ut = getFormattedTimeStamp(model.ut, sUser.getLocale(), sUser.getTimezone());
+      model.ut = getFormattedTimeStamp(model.ut, sUser.getLocale(), sUser.getTimezone(), domainId);
       return model;
     } catch (Exception e) {
       xLogger.warn("Error in getting session Dashboard for domain {0}", domainId, e);
@@ -678,7 +678,7 @@ public class DashboardController {
       if (cache != null && !skipCache) {
         model = (MainDashboardModel) cache.get(cacheKey);
         if (model != null) {
-          model.ut = getFormattedTimeStamp(model.ut, sUser.getLocale(), sUser.getTimezone());
+          model.ut = getFormattedTimeStamp(model.ut, sUser.getLocale(), sUser.getTimezone(), domainId);
           return model;
         }
       }
@@ -724,7 +724,7 @@ public class DashboardController {
       } catch (Exception e) {
         xLogger.warn("Error in caching dashboard data", e);
       }
-      model.ut = getFormattedTimeStamp(model.ut, sUser.getLocale(), sUser.getTimezone());
+      model.ut = getFormattedTimeStamp(model.ut, sUser.getLocale(), sUser.getTimezone(), domainId);
       return model;
     } catch (Exception e) {
       xLogger.warn("Error in getting main Dashboard {0}", domainId, e);
@@ -789,9 +789,15 @@ public class DashboardController {
     return sdf.format(new Date());
   }
 
-  private String getFormattedTimeStamp(String timestamp, Locale locale, String timezone)
-      throws ParseException {
-    Date date = LocalDateUtil.parseCustom(timestamp, Constants.ANALYTICS_DATE_FORMAT, null);
+  private String getFormattedTimeStamp(String timestamp, Locale locale, String timezone, Long domainId)
+      throws ServiceException {
+    Date date;
+    try {
+      date = LocalDateUtil.parseCustom(timestamp, Constants.ANALYTICS_DATE_FORMAT, null);
+    } catch (ParseException e) {
+      xLogger.warn("Error while parsing the dashboard generated timestamp for domain: {0}", domainId, e);
+      throw new ServiceException(e);
+    }
     return LocalDateUtil.format(date, locale, timezone);
   }
 }
