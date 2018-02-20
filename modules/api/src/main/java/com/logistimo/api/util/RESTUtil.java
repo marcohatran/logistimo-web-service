@@ -2104,7 +2104,7 @@ public class RESTUtil {
     if (matStatusConfig == null) {
       return Collections.emptyMap();
     }
-    Map<String,String> matStatusMap = new HashMap<>(1,1);
+    Map<String,String> matStatusMap = new HashMap<>(3,1);
     if(StringUtils.isNotEmpty(matStatusConfig.getDf())) {
       String df = StringUtil.getUniqueValueCSV(matStatusConfig.getDf());
       if (StringUtils.isNotEmpty(df)) {
@@ -2129,9 +2129,10 @@ public class RESTUtil {
     Map<String, ActualTransConfig> actualTransConfigByType = ic.getActualTransConfigMapByType();
     if (MapUtils.isNotEmpty(actualTransConfigByType)) {
       actualTransConfigByType.entrySet().forEach(entry -> {
-            if (MapUtils.isNotEmpty(getActualTransConfigByType(entry.getValue()))) {
+            Map<String,String> actualTransConfig = getActualTransConfigByType(entry.getValue());
+            if (MapUtils.isNotEmpty(actualTransConfig)) {
               actualTransDateConfigByType
-                  .put(entry.getKey(), getActualTransConfigByType(entry.getValue()));
+                  .put(entry.getKey(), actualTransConfig);
             }
           }
       );
@@ -2140,13 +2141,11 @@ public class RESTUtil {
   }
 
   protected static Map<String,String> getActualTransConfigByType(ActualTransConfig actualTransConfig) {
-    if (actualTransConfig == null) {
+    if (actualTransConfig == null || StringUtils.isEmpty(actualTransConfig.getTy())) {
       return Collections.emptyMap();
     }
     Map<String,String> actualTransConfigMap = new HashMap<>(1,1);
-    if (StringUtils.isNotEmpty(actualTransConfig.getTy())) {
-      actualTransConfigMap.put(JsonTagsZ.TYPE, actualTransConfig.getTy());
-    }
+    actualTransConfigMap.put(JsonTagsZ.TYPE, actualTransConfig.getTy());
     return actualTransConfigMap;
   }
 
