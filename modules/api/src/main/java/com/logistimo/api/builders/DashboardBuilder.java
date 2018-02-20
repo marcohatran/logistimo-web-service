@@ -23,6 +23,7 @@
 
 package com.logistimo.api.builders;
 
+import com.logistimo.api.models.AssetDashboardModel;
 import com.logistimo.api.models.DashboardChartModel;
 import com.logistimo.api.models.DashboardModel;
 import com.logistimo.api.models.EventDistribModel;
@@ -564,5 +565,56 @@ public class DashboardBuilder {
       return tempData;
     }
     return null;
+  }
+
+  public AssetDashboardModel getAssetDashboardData(ResultSet assetRes, String colFilter)
+      throws SQLException {
+    AssetDashboardModel model = new AssetDashboardModel();
+    model.setAsset(constructAssetData(assetRes, colFilter));
+    model.setAssetDomain(addAssetDetailData(model.getAsset()));
+    return model;
+  }
+
+  private Map<String, Long> addAssetDetailData(
+      Map<String, Map<String, DashboardChartModel>> assets) {
+    Map<String, Long> data = new HashMap<>();
+    Long denominator = 0l;
+    for (Map.Entry<String, Map<String, DashboardChartModel>> entry : assets.entrySet()) {
+      Long statusCount = 0l;
+      for (Map.Entry<String, DashboardChartModel> location : entry.getValue().entrySet()) {
+        statusCount = statusCount + location.getValue().value;
+      }
+      denominator = denominator + statusCount;
+      data.put(entry.getKey(), statusCount);
+    }
+
+    for (Map<String, DashboardChartModel> model : assets.values()) {
+      for (Map.Entry<String, DashboardChartModel> modelEntry : model.entrySet()) {
+        DashboardChartModel dashboardModel = modelEntry.getValue();
+        dashboardModel.den = denominator;
+        dashboardModel.per =
+            (dashboardModel.value.doubleValue() / dashboardModel.den.doubleValue()) * 100;
+      }
+    }
+    return data;
+  }
+
+  private Map<String, Map<String, DashboardChartModel>> constructAssetData(ResultSet assetRes,
+                                                                           String colFilter)
+      throws SQLException {
+    Map<String, Map<String, DashboardChartModel>> data = new HashMap<>();
+    if (assetRes == null) {
+      return data;
+    }
+    while (assetRes.next()) {
+      String status = assetRes.getString("STATUS");
+      if (!data.containsKey(status)) {
+        data.put(status, new HashMap<>());
+      }
+      Map<String, DashboardChartModel> model = data.get(status);
+      long count = Long.parseLong(assetRes.getString("COUNT"));
+      model.put(assetRes.getString(colFilter), new DashboardChartModel(count));
+    }
+    return data;
   }
 }

@@ -21,26 +21,39 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.models;
+package com.logistimo.api.models;
 
-import com.google.gson.annotations.SerializedName;
+import com.logistimo.models.BaseResponseModel;
 
 import java.io.Serializable;
+import java.util.Map;
 
 /**
- * Created by smriti on 08/02/18.
+ * Created by smriti on 15/02/18.
  */
-public class BaseResponseModel implements Serializable {
+public class AssetDashboardModel extends BaseResponseModel implements Serializable {
+  private Map<String, Long> assetDomain;
+  private Map<String, Map<String, DashboardChartModel>> asset;
+  private String level;
 
-  @SerializedName("generated_time")
-  private String generatedTime;
-
-
-  public String getGeneratedTime() {
-    return generatedTime;
+  public Map<String, Long> getAssetDomain() {
+    return assetDomain;
+  }
+  public void setAssetDomain(Map<String, Long> assetDomain) {
+    this.assetDomain = assetDomain;
   }
 
-  public void setGeneratedTime(String generatedTime) {
-    this.generatedTime = generatedTime;
+  public Map<String, Map<String, DashboardChartModel>> getAsset() {
+    return asset;
+  }
+  public void setAsset(Map<String, Map<String, DashboardChartModel>> asset) {
+    this.asset = asset;
+  }
+
+  public String getLevel() {
+    return level;
+  }
+  public void setlevel(String level) {
+    this.level = level;
   }
 }

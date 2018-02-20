@@ -44,6 +44,15 @@ public class DashQueryModel {
   public String aty; //asset type
   public String locty; //location type
   public String timezone; // timezone
+  /**
+   * Working status e.g., 0 - Working, 1- Under repair etc.
+   */
+  public String status;
+
+  /**
+   * Period
+   */
+  public String period;
 
   public DashQueryModel() {
   }
@@ -79,6 +88,23 @@ public class DashQueryModel {
     this.aty = assetType;
     this.locty = level;
     this.incetags = includeETag;
+  }
+
+  public DashQueryModel(String assetType, String eTag, String eeTag, String status,
+                        String period, String country, String state, String district,
+                        Long domainId, String level, String location) {
+
+    this.aty = assetType;
+    this.incetags = eTag;
+    this.exetags = eeTag;
+    this.status = status;
+    this.period = period;
+    this.country = country;
+    this.state = state;
+    this.district = district;
+    this.locty = level;
+    this.loc = location;
+    this.domainId = domainId;
   }
 
 }
