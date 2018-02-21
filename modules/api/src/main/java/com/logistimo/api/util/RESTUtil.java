@@ -1491,39 +1491,32 @@ public class RESTUtil {
     // Issue reasons, if any
     String issueReasons = ic.getTransReason(ITransaction.TYPE_ISSUE);
     if (issueReasons != null && !issueReasons.isEmpty()) {
-      config.put(JsonTagsZ.REASONS_ISSUE, StringUtil.getCSV(new ArrayList<>(
-          new LinkedHashSet<>(Arrays.asList(issueReasons.split(CharacterConstants.COMMA))))));
+      config.put(JsonTagsZ.REASONS_ISSUE, StringUtil.getCSV(issueReasons.split(CharacterConstants.COMMA)));
     }
     // Receipt reasons, if any
     String receiptReasons = ic.getTransReason(ITransaction.TYPE_RECEIPT);
     if (receiptReasons != null && !receiptReasons.isEmpty()) {
-      config.put(JsonTagsZ.REASONS_RECEIPT, StringUtil.getCSV(new ArrayList<>(
-          new LinkedHashSet<>(Arrays.asList(receiptReasons.split(CharacterConstants.COMMA))))));
+      config.put(JsonTagsZ.REASONS_RECEIPT, StringUtil.getCSV(receiptReasons.split(CharacterConstants.COMMA)));
     }
     // Stockcount reasons, if any
     String stockcountReasons = ic.getTransReason(ITransaction.TYPE_PHYSICALCOUNT);
     if (stockcountReasons != null && !stockcountReasons.isEmpty()) {
-      config.put(JsonTagsZ.REASONS_STOCKCOUNT, StringUtil.getCSV(new ArrayList<>(
-          new LinkedHashSet<>(
-              Arrays.asList(stockcountReasons.split(CharacterConstants.COMMA))))));
+      config.put(JsonTagsZ.REASONS_STOCKCOUNT, StringUtil.getCSV(stockcountReasons.split(CharacterConstants.COMMA)));
     }
     // Transfer reasons, if any
     String transferReasons = ic.getTransReason(ITransaction.TYPE_TRANSFER);
     if (transferReasons != null && !transferReasons.isEmpty()) {
-      config.put(JsonTagsZ.REASONS_TRANSFER, StringUtil.getCSV(new ArrayList<>(
-          new LinkedHashSet<>(Arrays.asList(transferReasons.split(CharacterConstants.COMMA))))));
+      config.put(JsonTagsZ.REASONS_TRANSFER, StringUtil.getCSV(transferReasons.split(CharacterConstants.COMMA)));
     }
     // Returns-incoming reasons, if any
     String retIncReasons = ic.getTransReason(ITransaction.TYPE_RETURNS_INCOMING);
     if (StringUtils.isNotEmpty(retIncReasons)) {
-      config.put(JsonTagsZ.RETURNS_INCOMING, StringUtil.getCSV(new ArrayList<>(
-          new LinkedHashSet<>(Arrays.asList(retIncReasons.split(CharacterConstants.COMMA))))));
+      config.put(JsonTagsZ.RETURNS_INCOMING, StringUtil.getCSV(retIncReasons.split(CharacterConstants.COMMA)));
     }
     // Returns-outgoing reasons, if any
     String retOutReasons = ic.getTransReason(ITransaction.TYPE_RETURNS_OUTGOING);
     if (StringUtils.isNotEmpty(retOutReasons)) {
-      config.put(JsonTagsZ.RETURNS_OUTGOING, StringUtil.getCSV(new ArrayList<>(
-          new LinkedHashSet<>(Arrays.asList(retOutReasons.split(CharacterConstants.COMMA))))));
+      config.put(JsonTagsZ.RETURNS_OUTGOING, StringUtil.getCSV(retOutReasons.split(CharacterConstants.COMMA)));
     }
     // Reasons by material tag, if any
     Map<String,Map<String,String>> rsnsByMtag = getReasonsByTag(ic);
