@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -21,26 +21,26 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.models;
+package com.logistimo.api.servlets.mobile.builders;
 
+import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-import java.io.Serializable;
+import java.util.List;
 
 /**
- * Created by smriti on 08/02/18.
+ * Created by vani on 13/02/18.
  */
-public class BaseResponseModel implements Serializable {
+public class MobileReturnsConfigModel {
+  @Expose
+  @SerializedName(value="policies")
+  private List<MobileReturnsPolicyModel> policies;
 
-  @SerializedName("generated_time")
-  private String generatedTime;
-
-
-  public String getGeneratedTime() {
-    return generatedTime;
+  public List<MobileReturnsPolicyModel> getPolicies() {
+    return policies;
   }
-
-  public void setGeneratedTime(String generatedTime) {
-    this.generatedTime = generatedTime;
+  public void setPolicies(
+      List<MobileReturnsPolicyModel> policies) {
+    this.policies = policies;
   }
-}
+ }

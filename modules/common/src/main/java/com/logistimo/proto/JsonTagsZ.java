@@ -232,6 +232,9 @@ public class JsonTagsZ {
   public static final String TRANSACTION_TYPE = "ty";
   public static final String TRANSFER = "t";
   public static final String TRANSFER_RELEASE = "tr";
+  public static final String RETURNS_INCOMING = "ri";
+  public static final String RETURNS_OUTGOING = "ro";
+
   //transporter for orders
   public static final String TRANSPORTER = "trsp";
   public static final String
@@ -323,4 +326,7 @@ public class JsonTagsZ {
   public static final String SALES_ORDERS = "salesords";
   public static final String SHIPPING = "shipping";
   public static final String REFERENCE_ID = "refid";
+
+  // Returns policy configuration
+  public static final String RETURNS = "returns";
 }

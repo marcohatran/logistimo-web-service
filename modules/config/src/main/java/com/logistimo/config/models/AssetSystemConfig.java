@@ -29,6 +29,7 @@ import com.google.gson.reflect.TypeToken;
 import com.logistimo.config.entity.IConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
 import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
+import com.logistimo.constants.CharacterConstants;
 import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.logger.XLog;
 import com.logistimo.services.ObjectNotFoundException;
@@ -41,6 +42,7 @@ import org.json.JSONObject;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 public class AssetSystemConfig {
   public static final Integer TYPE_TEMPERATURE_DEVICE = 1;
@@ -229,6 +231,19 @@ public class AssetSystemConfig {
     return ats;
   }
 
+  public String getAssetsByMonitoringType(Integer type) {
+    String assetType = "";
+    for(Entry<Integer, Asset> asset : assets.entrySet()) {
+      if(type.equals(asset.getValue().type)) {
+        if(StringUtils.isNotBlank(assetType)) {
+          assetType = assetType.concat(CharacterConstants.COMMA);
+        }
+        assetType = assetType.concat(String.valueOf(asset.getKey()));
+      }
+    }
+    return assetType;
+  }
+
   public Map<String, String> getManufacturersByType(Integer type) {
     Map<String, String> manufacturers = new HashMap<>();
     for (Integer integer : assets.keySet()) {
@@ -247,6 +262,7 @@ public class AssetSystemConfig {
     Map<Integer, String> allWorkingStatus = new HashMap<>();
     for (WorkingStatus workingStatus : workingStatuses) {
       allWorkingStatus.put(workingStatus.status, workingStatus.displayValue);
+      allWorkingStatus.put(workingStatus.status, workingStatus.color);
     }
     return allWorkingStatus;
   }
@@ -359,6 +375,7 @@ public class AssetSystemConfig {
   public static class WorkingStatus {
     public Integer status;
     public String displayValue;
+    public String color;
   }
 
   public static class Feature {

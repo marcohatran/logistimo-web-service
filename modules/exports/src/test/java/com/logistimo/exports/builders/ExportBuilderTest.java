@@ -134,7 +134,7 @@ public class ExportBuilderTest {
     model.setBatchId("");
     model.setReason("");
     model.setLinkedKioskId("");
-    model.setTransactionType("");
+    model.setType("");
     model.setAtd("");
     model.setFirstName("");
     model.setMobileNumber("");
