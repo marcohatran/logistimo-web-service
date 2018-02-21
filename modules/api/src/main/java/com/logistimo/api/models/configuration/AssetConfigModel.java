@@ -97,6 +97,7 @@ public class AssetConfigModel {
   public static class WorkingStatus {
     public Integer status;
     public String dV;
+    public String color;
   }
 
   public static class Feature {

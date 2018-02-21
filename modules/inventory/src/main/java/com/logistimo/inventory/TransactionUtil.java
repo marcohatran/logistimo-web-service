@@ -125,6 +125,7 @@ public class TransactionUtil {
                                                      boolean skipWrite) {
     try {
       MemcacheService cache = AppFactory.get().getMemcacheService();
+      
       String
           cacheKey =
           TRANSACTION_CHECKSUM_KEY_PREFIX + userId + CharacterConstants.DOT + kioskId
