@@ -500,7 +500,23 @@ assetControllers.controller("AssetListingController", ['$scope', '$route', 'asse
                 fixTable();
             });
         };
+        function getCaption() {
+            var caption = getFilterTitle($scope.search.key, $scope.resourceBundle['assets']);
+            caption += checkNotNullEmpty($scope.assetTypeFilter) ? getFilterTitle($scope.assetFilters[$scope.assetTypeFilter].dV, $scope.resourceBundle['type']) : "";
+            return caption;
+        }
 
+        $scope.exportData = function () {
+            exportService.exportData({
+                type: checkNotNullEmpty($scope.assetTypeFilter * 1) ? $scope.assetTypeFilter : undefined,
+                serial_number: checkNotNullEmpty($scope.search.key) ? $scope.search.key : undefined,
+                titles: {
+                    filters: getCaption()
+                },
+                module: 'setup.assets',
+                templateId: 's_assets'
+            })
+        };
         $scope.updateTypeFilter = function(value){
             $scope.assetTypeFilter = value;
             $scope.currentAsset = $scope.assetConfig.assets[value];

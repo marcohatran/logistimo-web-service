@@ -1363,6 +1363,39 @@ invControllers.controller('AbnormalStockCtrl', ['$scope', 'invService', 'domainC
             }
         }
 
+        function getCaption() {
+            var ktag = checkNotNullEmpty($scope.etag) ? $scope.etag : 'All';
+            var materialTag = checkNotNullEmpty($scope.mtag) ? $scope.mtag : 'All';
+            var caption = getFilterTitle(getEventsLabel($scope.aStock), $scope.resourceBundle['events']);
+            caption += getFilterTitle(ktag, $scope.resourceBundle['kiosk'] + " " + $scope.resourceBundle['tag.lower']);
+            caption += getFilterTitle(materialTag, $scope.resourceBundle['material'] + " " + $scope.resourceBundle['tag.lower']);
+            return caption;
+        }
+
+        function getEventsLabel(status) {
+            if ($scope.aStock.et == INVENTORY.stock.STOCKOUT) {
+                return $scope.resourceBundle['inventory.zerostock'];
+            } else if ($scope.aStock.et == INVENTORY.stock.UNDERSTOCK) {
+                return $scope.resourceBundle['inventory.lessthanmin'];
+            } else if ($scope.aStock.et == INVENTORY.stock.OVERSTOCK) {
+                return $scope.resourceBundle['inventory.morethanmax'];
+            }
+        }
+
+        $scope.exportData = function () {
+            var ktag = checkNotNullEmpty($scope.etag) ? $scope.etag : undefined;
+            var mtag = checkNotNullEmpty($scope.mtag) ? $scope.mtag : undefined;
+            exportService.exportData({
+                type: checkNotNullEmpty($scope.aStock) ? $scope.aStock.et : undefined,
+                ktag: ktag,
+                mtag: mtag,
+                titles: {
+                    filters: getCaption()
+                },
+                module: 'stev',
+                templateId: 'abnormal_stock'
+            })
+        };
         $scope.localFilterWatches = {etag: watchETag, mtag: watchMTag};
 
         $scope.$on('$destroy', function cleanup() {
