@@ -668,7 +668,7 @@ public class AssetController {
   @ResponseBody
   String exportData(@RequestBody String json) throws ParseException, ServiceException {
     ExportModel eModel = assetBuilder.buildExportModel(json);
-    long jobId = exportService.scheduleExport(eModel, "Assets");
+    long jobId = exportService.scheduleExport(eModel, "status.assets");
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", Locale.ENGLISH);
     IUserAccount u = usersService.getUserAccount(SecurityUtils.getUsername());
     return backendMessages.getString("export.success1") + " " + u.getEmail() + " "

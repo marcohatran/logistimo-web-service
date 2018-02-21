@@ -25,15 +25,21 @@ package com.logistimo.api.servlets.mobile.builders;
 
 import com.logistimo.config.models.AccountingConfig;
 import com.logistimo.config.models.ApprovalsConfig;
+import com.logistimo.config.models.ReturnsConfig;
 import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.proto.MobileAccountingConfigModel;
 import com.logistimo.proto.MobileApprovalsConfigModel;
 import com.logistimo.proto.MobileApproversModel;
 import com.logistimo.proto.MobilePurchaseSalesOrdersApprovalModel;
 
+import org.apache.commons.collections.CollectionUtils;
+
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Created by vani on 28/06/17.
@@ -152,5 +158,50 @@ public class MobileConfigBuilder {
               .buildMobileUserModels(mobileUserBuilder.constructUserAccount(secApprovers));
     }
     return approversModel;
+  }
+
+  /**
+   * Builds the returns configuration model as required by the mobile from returns configuration as obtained from the domain configuration
+   * @param returnsConfigs
+   * @return
+   */
+  public Optional<MobileReturnsConfigModel> buildMobileReturnsConfigModel(List<ReturnsConfig> returnsConfigs) {
+    if (CollectionUtils.isEmpty(returnsConfigs)) {
+      return Optional.empty();
+    }
+    MobileReturnsConfigModel mobileReturnsConfigModel = new MobileReturnsConfigModel();
+    mobileReturnsConfigModel.setPolicies(buildMobileReturnsPolicyModels(returnsConfigs));
+    return Optional.of(mobileReturnsConfigModel);
+  }
+
+  private List<MobileReturnsPolicyModel> buildMobileReturnsPolicyModels(List<ReturnsConfig> returnsConfigs) {
+    if (CollectionUtils.isEmpty(returnsConfigs)) {
+      return Collections.emptyList();
+    }
+    return returnsConfigs.stream()
+        .map(this::buildMobileReturnsPolicyModel)
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .collect(Collectors.toList());
+  }
+
+  private Optional<MobileReturnsPolicyModel> buildMobileReturnsPolicyModel(ReturnsConfig returnsConfig) {
+    if (returnsConfig == null) {
+      return Optional.empty();
+    }
+    MobileReturnsPolicyModel mobileReturnsPolicyModel = new MobileReturnsPolicyModel();
+    mobileReturnsPolicyModel.setEntityTags(returnsConfig.getEntityTags());
+    mobileReturnsPolicyModel.setDurations(buildMobileReturnsDurationModel(returnsConfig));
+    return Optional.of(mobileReturnsPolicyModel);
+  }
+
+  private MobileReturnsDurationModel buildMobileReturnsDurationModel(ReturnsConfig returnsConfig) {
+    MobileReturnsDurationModel mobileReturnsDurationModel = new MobileReturnsDurationModel();
+    if (returnsConfig == null) {
+      return mobileReturnsDurationModel;
+    }
+    mobileReturnsDurationModel.setIncoming(returnsConfig.getIncomingDuration());
+    mobileReturnsDurationModel.setOutgoing(returnsConfig.getOutgoingDuration());
+    return mobileReturnsDurationModel;
   }
 }

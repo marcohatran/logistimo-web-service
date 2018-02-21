@@ -698,6 +698,7 @@ public class ConfigurationModelBuilder {
         workingStatus = new AssetConfigModel.WorkingStatus();
         workingStatus.status = ws.status;
         workingStatus.dV = ws.displayValue;
+        workingStatus.color = ws.color;
         acm.wses.put(workingStatus.status, workingStatus);
       }
     }
