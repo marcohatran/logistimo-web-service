@@ -200,7 +200,7 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
             var oty = $scope.type == '2' ? '0' : '1';
             var module = oty == 0 ? 'transfers' : 'orders';
             var templateId = oty == 0 ? 'transfers' : 'orders'
-
+            $scope.showLoading();
             exportService.exportData({
                 from_date: checkNotNullEmpty($scope.from) ? formatDate2Url($scope.from) : undefined,
                 end_date: checkNotNullEmpty($scope.to) ? formatDate2Url($scope.to) : undefined,
@@ -219,7 +219,13 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
                 },
                 module: module,
                 templateId: templateId
-            })
+            }).then(function (data) {
+                $scope.showSuccess(data.data);
+            }).catch(function error(msg) {
+                $scope.showErrorMsg(msg);
+            }).finally(function(){
+                $scope.hideLoading();
+            });
         };
         $scope.setData = function (data) {
             if (data != null && checkNotNullEmpty(data.results) && data.results.length > 0) {

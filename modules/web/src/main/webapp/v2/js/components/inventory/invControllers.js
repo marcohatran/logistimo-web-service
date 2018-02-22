@@ -1385,6 +1385,7 @@ invControllers.controller('AbnormalStockCtrl', ['$scope', 'invService', 'domainC
         $scope.exportData = function () {
             var ktag = checkNotNullEmpty($scope.etag) ? $scope.etag : undefined;
             var mtag = checkNotNullEmpty($scope.mtag) ? $scope.mtag : undefined;
+            $scope.showLoading();
             exportService.exportData({
                 type: checkNotNullEmpty($scope.aStock) ? $scope.aStock.et : undefined,
                 ktag: ktag,
@@ -1394,7 +1395,13 @@ invControllers.controller('AbnormalStockCtrl', ['$scope', 'invService', 'domainC
                 },
                 module: 'stev',
                 templateId: 'abnormal_stock'
-            })
+            }).then(function (data) {
+                $scope.showSuccess(data.data);
+            }).catch(function error(msg) {
+                $scope.showErrorMsg(msg);
+            }).finally(function(){
+                $scope.hideLoading();
+            });
         };
         $scope.localFilterWatches = {etag: watchETag, mtag: watchMTag};
 
