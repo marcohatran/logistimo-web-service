@@ -628,7 +628,7 @@ public class TransactionsController {
         transList.add(trans);
       }
 
-      List<ITransaction> errors = inventoryManagementService.updateInventoryTransactions(domainId, transList, true);
+      List<ITransaction> errors = inventoryManagementService.updateInventoryTransactions(domainId, transList, true).getErrorTransactions();
       if (errors != null && errors.size() > 0) {
         StringBuilder errorMsg = new StringBuilder();
         for (ITransaction error : errors) {

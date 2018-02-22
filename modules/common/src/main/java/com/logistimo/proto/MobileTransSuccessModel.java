@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -23,77 +23,22 @@
 
 package com.logistimo.proto;
 
-import java.math.BigDecimal;
+import com.google.gson.annotations.SerializedName;
+
+import java.util.List;
 
 /**
- * Created by vani on 21/03/17.
+ * Created by vani on 16/02/18.
  */
-public class MobileTransModel {
+public class MobileTransSuccessModel {
   /**
-   * Transaction entry time in milliseconds (time at which the transaction is entered on the mobile)
+   * Material ID
    */
-  public Long entm;
+  @SerializedName("mid")
+  public Long mid;
   /**
-   * Transaction type
+   * Error details containing error code (reason why the transaction was rejected) and index of the first rejected transaction
    */
-  public String ty;
-  /**
-   * Quantity
-   */
-  public BigDecimal q;
-  /**
-   * Opening stock
-   */
-  public BigDecimal ostk;
-  /**
-   * Batch ID
-   */
-  public String bid;
-  /**
-   * Batch expiry date in dd/mm/yyyy format
-   */
-  public String bexp;
-  /**
-   * Batch manufacturer name
-   */
-  public String bmfnm;
-  /**
-   * Batch manufactured date in dd/mm/yyyy format
-   */
-  public String bmfdt;
-  /**
-   * Reason
-   */
-  public String rsn;
-  /**
-   * Material status
-   */
-  public String mst;
-  /**
-   * Actual date of transaction in dd/mm/yyyy format
-   */
-  public String atd;
-  /**
-   * Linked Kiosk ID
-   */
-  public Long lkid;
-  /**
-   * Geo model
-   */
-  public MobileGeoModel geo;
-
-  /**
-   * For sorting the entry time
-   */
-  public Long sortEtm;
-
-  /**
-   * Tracking object type
-   */
-  public String troty;
-
-  /**
-   * Tracking ID
-   */
-  public String tid;
+  @SerializedName("success_details")
+  public List<MobileTransSuccessDetailModel> successDetails;
 }

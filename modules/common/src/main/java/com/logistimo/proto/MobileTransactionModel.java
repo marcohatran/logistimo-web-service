@@ -125,4 +125,8 @@ public class MobileTransactionModel {
    * Entry time
    */
   public Long svtm;
+  /**
+   * Transaction key
+   */
+  public String key;
 }

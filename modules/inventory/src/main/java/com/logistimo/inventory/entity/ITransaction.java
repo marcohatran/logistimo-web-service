@@ -47,6 +47,8 @@ public interface ITransaction
   String TYPE_TRANSFER_SHIPMENT = "ts";
   String TYPE_RETURNS_INCOMING = "ri";
   String TYPE_RETURNS_OUTGOING = "ro";
+  String TYPE_ISSUE_TRANSACTION = "iss_trn";
+  String TYPE_RECEIPT_TRANSACTION = "rec_trn";
 
   String getKeyString();
 

@@ -34,6 +34,8 @@ import com.logistimo.inventory.TransactionUtil;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.inventory.models.ErrorDetailModel;
+import com.logistimo.inventory.models.ResponseDetailModel;
+import com.logistimo.inventory.models.SuccessDetailModel;
 import com.logistimo.inventory.service.InventoryManagementService;
 import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IMaterial;
@@ -44,6 +46,8 @@ import com.logistimo.proto.MobileMaterialTransModel;
 import com.logistimo.proto.MobileTransErrModel;
 import com.logistimo.proto.MobileTransErrorDetailModel;
 import com.logistimo.proto.MobileTransModel;
+import com.logistimo.proto.MobileTransSuccessDetailModel;
+import com.logistimo.proto.MobileTransSuccessModel;
 import com.logistimo.proto.MobileTransactionModel;
 import com.logistimo.proto.MobileTransactionsModel;
 import com.logistimo.proto.MobileUpdateInvTransRequest;
@@ -55,19 +59,23 @@ import com.logistimo.users.service.UsersService;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.StringUtil;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Created by vani on 18/01/17.
@@ -208,6 +216,8 @@ public class MobileTransactionsBuilder {
       mtm.svtm =
           transaction.getEntryTime() != null ? transaction.getEntryTime().getTime()
               : transaction.getTimestamp().getTime();
+      mtm.key = transaction.getKeyString();
+
       // Add mtm to mtmList
       mtmList.add(mtm);
     }
@@ -222,15 +232,15 @@ public class MobileTransactionsBuilder {
    * @param userId
    * @param kioskId
    * @param errorMessage
-   * @param midErrorDetailModels
+   * @param responseDetailModelByMaterial
    * @param mobMatTransList
    * @return
    */
   public MobileUpdateInvTransResponse buildMobileUpdateInvTransResponse(Long domainId,
-                                                                        String userId, Long kioskId, String partialId,
-                                                                        String errorMessage,
-                                                                        Map<Long,List<ErrorDetailModel>> midErrorDetailModels,
-                                                                        List<MobileMaterialTransModel> mobMatTransList) {
+                                                                           String userId, Long kioskId, String partialId,
+                                                                           String errorMessage,
+                                                                           Map<Long,ResponseDetailModel> responseDetailModelByMaterial,
+                                                                           List<MobileMaterialTransModel> mobMatTransList) {
     if (domainId == null) {
       return null;
     }
@@ -241,16 +251,23 @@ public class MobileTransactionsBuilder {
       if (StringUtils.isNotEmpty(errorMessage)) {
         mobUpdateInvTransResp.st = ERROR;
         mobUpdateInvTransResp.ms = errorMessage;
-      } else if (midErrorDetailModels == null
-          || midErrorDetailModels.isEmpty()) {
+      } else if (isSuccess(responseDetailModelByMaterial)) {
         mobUpdateInvTransResp.st = SUCCESS;
       } else {
         mobUpdateInvTransResp.st = PARTIAL_ERROR;
       }
       mobUpdateInvTransResp.kid = kioskId;
+      Map<Long,List<SuccessDetailModel>> successDetailModelsByMaterial = getSuccessDetailModelsByMaterial(
+          responseDetailModelByMaterial);
+      Map<Long,List<ErrorDetailModel>> errorDetailModelsByMaterial = getErrorDetailModelsByMaterial(
+          responseDetailModelByMaterial);
       if (mobUpdateInvTransResp.st == ERROR || mobUpdateInvTransResp.st == PARTIAL_ERROR) {
-        mobUpdateInvTransResp.errs = buildErrorModelList(midErrorDetailModels);
+        mobUpdateInvTransResp.errs = buildErrorModelList(errorDetailModelsByMaterial);
       }
+      List<MobileTransSuccessModel> successDetailModels = buildSuccessModels(
+          successDetailModelsByMaterial);
+      mobUpdateInvTransResp.success = CollectionUtils.isEmpty(successDetailModels) ? null : successDetailModels;
+
       mobUpdateInvTransResp.inv =
           buildMobileInvModelList(domainId, userId, kioskId, mobMatTransList);
       mobUpdateInvTransResp.pid = partialId;
@@ -274,10 +291,9 @@ public class MobileTransactionsBuilder {
    if (mobMatTransList == null || mobMatTransList.isEmpty()) {
      return null;
    }
-   Set<Long> mids = new HashSet<>();
-   for (MobileMaterialTransModel mobileMaterialTransModel : mobMatTransList) {
-     mids.add(mobileMaterialTransModel.mid);
-   }
+   Set<Long> mids = mobMatTransList.stream()
+            .map(mobileMaterialTransModel->mobileMaterialTransModel.mid)
+            .collect(Collectors.toSet());
    List<MobileInvModel> mobInvList = new ArrayList<>();
    for (Long mid : mids) {
      IInvntry inventory;
@@ -392,6 +408,8 @@ public class MobileTransactionsBuilder {
       }
       trans.setGeoErrorCode(mobileGeo.gerr);
     }
+    trans.setTrackingObjectType(mobTrans.troty);
+    trans.setTrackingId(mobTrans.tid);
     return trans;
   }
 
@@ -447,4 +465,76 @@ public class MobileTransactionsBuilder {
     }
   }
 
+  protected boolean isSuccess(Map<Long,ResponseDetailModel> responseDetailModelByMaterial) {
+    if (MapUtils.isEmpty(responseDetailModelByMaterial)) {
+      return false;
+    }
+    return !(responseDetailModelByMaterial.entrySet().stream().anyMatch(
+        entry -> !entry.getValue().errorDetailModels.isEmpty()));
+  }
+
+  protected Map<Long,List<ErrorDetailModel>> getErrorDetailModelsByMaterial(Map<Long,ResponseDetailModel> responseDetailModelByMaterial) {
+    if (MapUtils.isEmpty(responseDetailModelByMaterial)) {
+      return Collections.emptyMap();
+    }
+    return responseDetailModelByMaterial.entrySet()
+        .stream()
+        .filter(entry -> !CollectionUtils.isEmpty(entry.getValue().errorDetailModels))
+        .collect(Collectors.toMap(entry -> entry.getKey(), entry-> entry.getValue().errorDetailModels));
+  }
+
+  protected Map<Long,List<SuccessDetailModel>> getSuccessDetailModelsByMaterial(Map<Long,ResponseDetailModel> responseDetailModelByMaterial) {
+    if (MapUtils.isEmpty(responseDetailModelByMaterial)) {
+      return Collections.emptyMap();
+    }
+    return responseDetailModelByMaterial.entrySet()
+        .stream()
+        .filter(entry -> !CollectionUtils.isEmpty(entry.getValue().successDetailModels))
+        .collect(Collectors.toMap(entry -> entry.getKey(), entry-> entry.getValue().successDetailModels));
+  }
+
+  protected List<MobileTransSuccessModel> buildSuccessModels(Map<Long,List<SuccessDetailModel>> successDetailModelsByMaterial) {
+    if (MapUtils.isEmpty(successDetailModelsByMaterial)) {
+      return Collections.emptyList();
+    }
+    return (successDetailModelsByMaterial.entrySet().stream().map(
+              entry -> buildMobileTransSuccessModel(
+              entry.getKey(), entry.getValue()))
+              .filter(Optional::isPresent)
+              .map(Optional::get)
+              .collect(Collectors.toList()));
+  }
+
+  protected Optional<MobileTransSuccessModel> buildMobileTransSuccessModel(Long mid, List<SuccessDetailModel> successDetailModels) {
+    if (mid == null || CollectionUtils.isEmpty(successDetailModels)) {
+      return Optional.empty();
+    }
+    MobileTransSuccessModel mobileTransSuccessModel = new MobileTransSuccessModel();
+    mobileTransSuccessModel.mid = mid;
+    mobileTransSuccessModel.successDetails = buildMobileTransSuccessDetailModels(successDetailModels);
+    return Optional.of(mobileTransSuccessModel);
+
+  }
+
+  protected List<MobileTransSuccessDetailModel> buildMobileTransSuccessDetailModels(List<SuccessDetailModel> successDetailModels) {
+    if(CollectionUtils.isEmpty(successDetailModels)) {
+      return Collections.emptyList();
+    }
+    return successDetailModels.stream().map(
+        this::buildMobileTransSuccessDetailModel)
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .collect(Collectors.toList());
+  }
+
+  protected Optional<MobileTransSuccessDetailModel> buildMobileTransSuccessDetailModel(SuccessDetailModel successDetailModel) {
+    if (successDetailModel == null) {
+      return Optional.empty();
+    }
+    MobileTransSuccessDetailModel mobileTransSuccessDetailModel = new MobileTransSuccessDetailModel();
+    mobileTransSuccessDetailModel.successCode = successDetailModel.successCode;
+    mobileTransSuccessDetailModel.index = successDetailModel.index;
+    mobileTransSuccessDetailModel.keys = successDetailModel.keys;
+    return Optional.of(mobileTransSuccessDetailModel);
+  }
 }
