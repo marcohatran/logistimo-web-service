@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -21,26 +21,21 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.models;
+package com.logistimo.inventory.models;
 
-import com.google.gson.annotations.SerializedName;
-
-import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Created by smriti on 08/02/18.
+ * Created by vani on 15/02/18.
  */
-public class BaseResponseModel implements Serializable {
-
-  @SerializedName("generated_time")
-  private String generatedTime;
-
-
-  public String getGeneratedTime() {
-    return generatedTime;
+public class ResponseDetailModel {
+  public ResponseDetailModel() {
   }
-
-  public void setGeneratedTime(String generatedTime) {
-    this.generatedTime = generatedTime;
+  public ResponseDetailModel(List<SuccessDetailModel> successDetailModels, List<ErrorDetailModel> errorDetailModels) {
+    this.successDetailModels = successDetailModels;
+    this.errorDetailModels = errorDetailModels;
   }
+  public List<SuccessDetailModel> successDetailModels = new ArrayList<>(1);
+  public List<ErrorDetailModel> errorDetailModels = new ArrayList<>(1);
 }

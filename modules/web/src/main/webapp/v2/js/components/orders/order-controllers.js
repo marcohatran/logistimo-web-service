@@ -213,7 +213,7 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
                 approval_status: $scope.approval_status,
                 otag: $scope.otag,
                 tag_type: $scope.tType,
-                order_type: oty,
+                type: oty,
                 titles: {
                     filters: getCaption()
                 },

@@ -73,9 +73,9 @@ public class RequestModel {
   @Expose
   private String linkedKioskId;
 
-  @SerializedName(value = "TOKEN_TRANSACTION_TYPE", alternate = "transaction_type")
+  @SerializedName(value = "TOKEN_TYPE", alternate = "type")
   @Expose
-  private String transactionType;
+  private String type;
 
   @SerializedName(value = "TOKEN_ATD", alternate = "atd")
   @Expose
@@ -145,13 +145,21 @@ public class RequestModel {
   @Expose
   private String approvalStatus;
 
-  @SerializedName(value = "TOKEN_ORDER_TYPE", alternate = "order_type")
-  @Expose
-  private String orderType;
+  public String getSerialNumber() {
+    return serialNumber;
+  }
+
+  public void setSerialNumber(String serialNumber) {
+    this.serialNumber = serialNumber;
+  }
 
   @SerializedName(value = "TOKEN_TAG_TYPE", alternate = "tag_type")
   @Expose
   private String tagType;
+
+  @SerializedName(value = "TOKEN_SERIAL_NUMBER",alternate = "serial_number")
+  @Expose
+  private String serialNumber;
 
   @Expose(deserialize = false, serialize = false)
   private Map<String, String> titles;
@@ -360,12 +368,12 @@ public class RequestModel {
     this.linkedKioskId = linkedKioskId;
   }
 
-  public String getTransactionType() {
-    return transactionType;
+  public String getType() {
+    return type;
   }
 
-  public void setTransactionType(String transactionType) {
-    this.transactionType = transactionType;
+  public void setType(String type) {
+    this.type = type;
   }
 
   public String isAtd() {
@@ -398,14 +406,6 @@ public class RequestModel {
 
   public void setOrderSubType(String orderSubType) {
     this.orderSubType = orderSubType;
-  }
-
-  public String getOrderType() {
-    return orderType;
-  }
-
-  public void setOrderType(String orderType) {
-    this.orderType = orderType;
   }
 
 

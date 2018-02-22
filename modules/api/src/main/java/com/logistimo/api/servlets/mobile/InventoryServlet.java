@@ -51,7 +51,7 @@ import com.logistimo.inventory.TransactionUtil;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.IInvntryBatch;
 import com.logistimo.inventory.entity.ITransaction;
-import com.logistimo.inventory.models.ErrorDetailModel;
+import com.logistimo.inventory.models.ResponseDetailModel;
 import com.logistimo.inventory.service.InventoryManagementService;
 import com.logistimo.inventory.service.impl.InventoryManagementServiceImpl;
 import com.logistimo.logger.XLog;
@@ -109,7 +109,6 @@ public class InventoryServlet extends JsonRestServlet {
 
   // Get the material info. including material-id to stock-on-hand for the update-inventory return object
   @SuppressWarnings({"rawtypes", "unchecked"})
-  //private static Vector getStockOnHand( List<ITransaction> list, InventoryManagementService ims, boolean forceIntegerForStock, AccountsService as, Locale locale, String timezone ) throws ServiceException {
   private static List getStockOnHand(List<ITransaction> list, InventoryManagementService ims,
                                      boolean forceIntegerForStock, EntitiesService as,
                                      Locale locale, String timezone, Long domainId)
@@ -191,8 +190,6 @@ public class InventoryServlet extends JsonRestServlet {
         }
       }
     }
-
-    //return materials;
     return materialList;
   }
 
@@ -664,7 +661,7 @@ public class InventoryServlet extends JsonRestServlet {
             // Update stock transactions
             try {
               if (updInventoryJson.getTimestampSaveMillis() == null) {
-                errorTrans = ims.updateInventoryTransactions(domainId, list);
+                errorTrans = ims.updateInventoryTransactions(domainId, list).getErrorTransactions();
               } else {
                 if (TransactionUtil
                     .deduplicateBySaveTimePartial(updInventoryJson.getTimestampSaveMillis(),
@@ -673,7 +670,7 @@ public class InventoryServlet extends JsonRestServlet {
                   xLogger.warn("DuplicationException when updating inventory transactions");
                   isDuplicateUpdate = true;
                 } else {
-                  errorTrans = ims.updateInventoryTransactions(domainId, list, true);
+                  errorTrans = ims.updateInventoryTransactions(domainId, list, true).getErrorTransactions();
                 }
               }
             } catch (ServiceException e) {
@@ -813,7 +810,7 @@ public class InventoryServlet extends JsonRestServlet {
     int statusCode = HttpServletResponse.SC_OK;
     Long domainId = null;
     String errorMessage = null;
-    Map<Long,List<ErrorDetailModel>> midErrorDetailModelsMap = null;
+    Map<Long,ResponseDetailModel> midResponseDetailModelMap = null;
     boolean isDuplicate = false;
     try {
       if (StringUtils.isEmpty(reqJsonStr)) {
@@ -838,7 +835,7 @@ public class InventoryServlet extends JsonRestServlet {
         }
         InventoryManagementService ims =
             StaticApplicationContext.getBean(InventoryManagementServiceImpl.class);
-        midErrorDetailModelsMap = ims.updateMultipleInventoryTransactions(materialTransactionsMap, domainId,
+        midResponseDetailModelMap = ims.updateMultipleInventoryTransactions(materialTransactionsMap, domainId,
             mobUpdateInvTransReq.uid);
       } else {
         Integer status = TransactionUtil.getObjectFromCache(String.valueOf(mobUpdateInvTransReq.sntm),
@@ -866,7 +863,7 @@ public class InventoryServlet extends JsonRestServlet {
       String
           mobUpdateInvTransRespJsonStr = null;
       if (statusCode != HttpServletResponse.SC_BAD_REQUEST && statusCode != HttpServletResponse.SC_UNAUTHORIZED) {
-        mobUpdateInvTransRespJsonStr = createMobUpdateInvTransRespJsonStr(mobUpdateInvTransReq, errorMessage, midErrorDetailModelsMap, domainId, isDuplicate);
+        mobUpdateInvTransRespJsonStr = createMobUpdateInvTransRespJsonStr(mobUpdateInvTransReq, errorMessage, midResponseDetailModelMap, domainId, isDuplicate);
       }
       if (mobUpdateInvTransRespJsonStr != null) {
         sendJsonResponse(resp, statusCode, mobUpdateInvTransRespJsonStr);
@@ -886,20 +883,19 @@ public class InventoryServlet extends JsonRestServlet {
     }
   }
 
-  private String createMobUpdateInvTransRespJsonStr(MobileUpdateInvTransRequest mobUpdateInvTransReq, String errorMessage, Map<Long,List<ErrorDetailModel>> midErrorDetailModelsMap, Long domainId, boolean isDuplicate) {
+  private String createMobUpdateInvTransRespJsonStr(MobileUpdateInvTransRequest mobUpdateInvTransReq, String errorMessage, Map<Long,ResponseDetailModel> midResponseDetailModelMap, Long domainId, boolean isDuplicate) {
     MobileUpdateInvTransResponse
         mobUpdateInvTransResp =
         mobileTransactionsBuilder.buildMobileUpdateInvTransResponse(
             domainId, mobUpdateInvTransReq.uid, mobUpdateInvTransReq.kid,
-            mobUpdateInvTransReq.pid, errorMessage, midErrorDetailModelsMap,
+            mobUpdateInvTransReq.pid, errorMessage, midResponseDetailModelMap,
             mobUpdateInvTransReq.trns);
     String mobUpdateInvTransRespJsonStr = new Gson().toJson(mobUpdateInvTransResp);
     if (!isDuplicate && mobUpdateInvTransResp != null) {
-        TransactionUtil.setObjectInCache(String.valueOf(mobUpdateInvTransReq.sntm),
-            mobUpdateInvTransReq.uid, mobUpdateInvTransReq.kid,
-            mobUpdateInvTransReq.pid,TransactionUtil.COMPLETED);
+      TransactionUtil.setObjectInCache(String.valueOf(mobUpdateInvTransReq.sntm),
+          mobUpdateInvTransReq.uid, mobUpdateInvTransReq.kid,
+          mobUpdateInvTransReq.pid,TransactionUtil.COMPLETED);
     }
     return mobUpdateInvTransRespJsonStr;
   }
-
 }

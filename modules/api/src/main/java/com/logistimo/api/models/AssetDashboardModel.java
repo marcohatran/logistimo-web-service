@@ -21,79 +21,39 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.proto;
+package com.logistimo.api.models;
 
-import java.math.BigDecimal;
+import com.logistimo.models.BaseResponseModel;
+
+import java.io.Serializable;
+import java.util.Map;
 
 /**
- * Created by vani on 21/03/17.
+ * Created by smriti on 15/02/18.
  */
-public class MobileTransModel {
-  /**
-   * Transaction entry time in milliseconds (time at which the transaction is entered on the mobile)
-   */
-  public Long entm;
-  /**
-   * Transaction type
-   */
-  public String ty;
-  /**
-   * Quantity
-   */
-  public BigDecimal q;
-  /**
-   * Opening stock
-   */
-  public BigDecimal ostk;
-  /**
-   * Batch ID
-   */
-  public String bid;
-  /**
-   * Batch expiry date in dd/mm/yyyy format
-   */
-  public String bexp;
-  /**
-   * Batch manufacturer name
-   */
-  public String bmfnm;
-  /**
-   * Batch manufactured date in dd/mm/yyyy format
-   */
-  public String bmfdt;
-  /**
-   * Reason
-   */
-  public String rsn;
-  /**
-   * Material status
-   */
-  public String mst;
-  /**
-   * Actual date of transaction in dd/mm/yyyy format
-   */
-  public String atd;
-  /**
-   * Linked Kiosk ID
-   */
-  public Long lkid;
-  /**
-   * Geo model
-   */
-  public MobileGeoModel geo;
+public class AssetDashboardModel extends BaseResponseModel implements Serializable {
+  private Map<String, Long> assetDomain;
+  private Map<String, Map<String, DashboardChartModel>> asset;
+  private String level;
 
-  /**
-   * For sorting the entry time
-   */
-  public Long sortEtm;
+  public Map<String, Long> getAssetDomain() {
+    return assetDomain;
+  }
+  public void setAssetDomain(Map<String, Long> assetDomain) {
+    this.assetDomain = assetDomain;
+  }
 
-  /**
-   * Tracking object type
-   */
-  public String troty;
+  public Map<String, Map<String, DashboardChartModel>> getAsset() {
+    return asset;
+  }
+  public void setAsset(Map<String, Map<String, DashboardChartModel>> asset) {
+    this.asset = asset;
+  }
 
-  /**
-   * Tracking ID
-   */
-  public String tid;
+  public String getLevel() {
+    return level;
+  }
+  public void setlevel(String level) {
+    this.level = level;
+  }
 }

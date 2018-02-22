@@ -30,6 +30,7 @@ import com.logistimo.constants.Constants;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.dashboards.entity.IDashboard;
 import com.logistimo.dashboards.entity.IWidget;
+import com.logistimo.dashboards.querygenerators.AssetsDashboardQueryGenerator;
 import com.logistimo.dashboards.querygenerators.EntityActivityQueryGenerator;
 import com.logistimo.dashboards.service.IDashboardService;
 import com.logistimo.exception.SystemException;
@@ -355,6 +356,9 @@ public class DashboardService implements IDashboardService {
           break;
         case "en_temp":
           query = getEntityTempDataQuery(filters);
+          break;
+        case "asset":
+          query = getAssetStatusDashboardQuery(domainId, filters);
           break;
       }
       xLogger.info("Dashboard type: {0} query: {1}", type, query);
@@ -1194,5 +1198,25 @@ public class DashboardService implements IDashboardService {
     query.setUnique(true);
     Object object = query.execute();
     return ((Long) object).intValue();
+  }
+
+  public String getAssetStatusDashboardQuery(Long domainId, Map<String, String> filters) {
+    AssetsDashboardQueryGenerator dashboardQueryGenerator = new AssetsDashboardQueryGenerator();
+
+    if (filters != null) {
+      dashboardQueryGenerator.withDomainId(domainId)
+          .withIncludeEntityTags(filters.get("eTag"))
+          .withExcludeEntityTags(filters.get("eeTag"))
+          .withAssetTypes(filters.get("type"))
+          .withCountry(filters.get("country"))
+          .withState(filters.get("state"))
+          .withDistrict(filters.get("district"));
+      if (StringUtils.isNotEmpty(filters.get("status")) && StringUtils
+          .isNotEmpty(filters.get("period"))) {
+        dashboardQueryGenerator.withWorkingStatus(Integer.parseInt(filters.get("status")))
+            .withPeriod(Integer.parseInt(filters.get("period")));
+      }
+    }
+    return dashboardQueryGenerator.generate();
   }
 }

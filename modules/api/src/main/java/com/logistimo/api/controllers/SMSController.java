@@ -38,7 +38,7 @@ import com.logistimo.exception.LogiException;
 import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.inventory.TransactionUtil;
 import com.logistimo.inventory.entity.ITransaction;
-import com.logistimo.inventory.models.ErrorDetailModel;
+import com.logistimo.inventory.models.ResponseDetailModel;
 import com.logistimo.inventory.service.InventoryManagementService;
 import com.logistimo.logger.XLog;
 import com.logistimo.proto.MobileMaterialTransModel;
@@ -106,7 +106,6 @@ public class SMSController {
     SMSRequestModel smsMessage = null;
     SMSTransactionModel model = null;
     String responseMsg;
-    Map<Long, List<ErrorDetailModel>> midErrorDetailModelsMap = null;
     boolean isDuplicate;
     try {
       //process message
@@ -139,7 +138,7 @@ public class SMSController {
               model.getPartialId());
       //check if duplicate transaction
       Map<Long, List<ITransaction>> transactionMap = smsBuilder.buildTransaction(model);
-
+      Map<Long,ResponseDetailModel> midResponseDetailModelMap = null;
       if (isDuplicate) {
         Integer status = TransactionUtil.getObjectFromCache(String.valueOf(model.getSendTime()),
                 model.getUserId(), model.getKioskId(), model.getPartialId());
@@ -147,13 +146,13 @@ public class SMSController {
             throw new LogiException("Transaction is in progress");
         }
       } else {
-        midErrorDetailModelsMap =
+        midResponseDetailModelMap =
             inventoryManagementService.updateMultipleInventoryTransactions(transactionMap, ua.getDomainId(),
                 ua.getUserId());
       }
       MobileUpdateInvTransResponse
           mobileUpdateInvTransResponse =
-          createResponse(model, midErrorDetailModelsMap, ua.getDomainId(), isDuplicate);
+          createResponse(model, midResponseDetailModelMap, ua.getDomainId(), isDuplicate);
       if (mobileUpdateInvTransResponse != null) {
         //send SMS
         responseMsg = smsBuilder.buildResponse(model, mobileUpdateInvTransResponse, null);
@@ -207,19 +206,19 @@ public class SMSController {
    * Create mobile response based on the response from service
    *
    * @param model-                  Transaction model
-   * @param midErrorDetailModelsMap errors returned by service
+   * @param midResponseDetailModelMap response returned by service
    * @param domainId                domain id of the user
    * @param isDuplicate             flag to indicate if the request is duplicate
    * @return Response
    */
   private MobileUpdateInvTransResponse createResponse(SMSTransactionModel model,
-                                                      Map<Long, List<ErrorDetailModel>> midErrorDetailModelsMap,
+                                                      Map<Long, ResponseDetailModel> midResponseDetailModelMap,
                                                       Long domainId, boolean isDuplicate) {
     MobileUpdateInvTransResponse mobUpdateInvTransResp =
         mobileTransactionsBuilder
             .buildMobileUpdateInvTransResponse(domainId, model.getUserId(), model.getKioskId(),
                 model.getPartialId(),
-                null, midErrorDetailModelsMap, populateMaterialList(model));
+                null, midResponseDetailModelMap, populateMaterialList(model));
     if (!isDuplicate && mobUpdateInvTransResp != null) {
         TransactionUtil.setObjectInCache(String.valueOf(model.getSendTime()), model.getUserId(),
             model.getKioskId(), model.getPartialId(),

@@ -57,4 +57,8 @@ public class MobileUpdateInvTransResponse {
    * Part ID of a multi part request
    */
   public String pid;
+  /**
+   * Transactions that are successful and their keys
+   */
+  public List<MobileTransSuccessModel> success;
 }

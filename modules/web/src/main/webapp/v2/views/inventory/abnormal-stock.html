@@ -61,8 +61,7 @@
             <div class="row action-bar">
                 <div class="col-sm-12 noLRpad">
                     <span ng-if="mailId != undefined && mailId != null">
-                        <export-data mail-id="mailId" export-type="abnormalStock" e-tag="etag" abn-type="aStock.et"
-                                     m-tag="mtag" rows="numFound"></export-data>
+                        <export callback="exportData()"></export>
                     </span>
                     <div class="pull-right" ng-show="loading" >
                         <span><span class="glyphicons glyphicons-cogwheel spin large"></span></span>

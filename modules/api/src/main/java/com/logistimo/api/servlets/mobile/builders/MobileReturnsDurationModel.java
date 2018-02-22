@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -21,26 +21,38 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.models;
+package com.logistimo.api.servlets.mobile.builders;
 
+import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-import java.io.Serializable;
-
 /**
- * Created by smriti on 08/02/18.
+ * Created by vani on 17/02/18.
  */
-public class BaseResponseModel implements Serializable {
+public class MobileReturnsDurationModel {
+  public static final int DEFAULT_INCOMING_DURATION = 30;
+  public static final int DEFAULT_OUTGOING_DURATION = 30;
 
-  @SerializedName("generated_time")
-  private String generatedTime;
+  @Expose
+  @SerializedName(value = "incoming")
+  private int incoming = DEFAULT_INCOMING_DURATION;
+  @Expose
+  @SerializedName(value = "outgoing")
+  private int outgoing = DEFAULT_OUTGOING_DURATION;
 
-
-  public String getGeneratedTime() {
-    return generatedTime;
+  public int getIncoming() {
+    return incoming;
   }
 
-  public void setGeneratedTime(String generatedTime) {
-    this.generatedTime = generatedTime;
+  public void setIncoming(int incoming) {
+    this.incoming = incoming;
+  }
+
+  public int getOutgoing() {
+    return outgoing;
+  }
+
+  public void setOutgoing(int outgoing) {
+    this.outgoing = outgoing;
   }
 }

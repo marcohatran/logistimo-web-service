@@ -66,8 +66,8 @@
             </div>
         </div>
         <div class="row action-bar" ng-show="!loading && filtered.length > 0">
-            <export-data ng-hide="iAU" mail-id="mailId" export-type="assets">
-            </export-data>
+            <export ng-hide="iAU" callback="exportData()"></export>
+
             <button ng-show="iSU || dp.ar" type="button" class="btn btn-sm btn-default" ng-click="deleteAssets()">
                 {{resourceBundle['remove']}} {{resourceBundle['assets'] | lowercase}}
             </button>

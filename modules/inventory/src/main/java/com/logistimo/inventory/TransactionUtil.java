@@ -32,18 +32,13 @@ import com.logistimo.config.models.OptimizerConfig;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.context.StaticApplicationContext;
-import com.logistimo.dao.JDOUtils;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.entity.IKioskLink;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
-import com.logistimo.events.entity.IEvent;
 import com.logistimo.exception.LogiException;
-import com.logistimo.inventory.dao.IInvntryDao;
-import com.logistimo.inventory.dao.ITransDao;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.IInvntryBatch;
-import com.logistimo.inventory.entity.IInvntryEvntLog;
 import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.inventory.service.InventoryManagementService;
 import com.logistimo.inventory.service.impl.InventoryManagementServiceImpl;
@@ -52,7 +47,6 @@ import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.materials.service.MaterialCatalogService;
 import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
 import com.logistimo.pagination.Results;
-import com.logistimo.services.DuplicationException;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.cache.MemcacheService;
@@ -99,14 +93,16 @@ public class TransactionUtil {
       ConfigUtil.getInt("trans.dedup.duration.seconds.old", 1_800);
   public static final int COMPLETED = 0;
   public static final int IN_PROGRESS = 1;
-  public static final String SYSTEM = "system";
+
   // seconds
   // Logger
   private static final XLog xLogger = XLog.getLog(TransactionUtil.class);
   // seconds
   // Cache-key Prefix
   private static final String TRANSACTION_CHECKSUM_KEY_PREFIX = "trnschk.";
-  private static final int FULLYEAR_LENGTH = 4;
+
+  private TransactionUtil() {
+  }
 
   public static boolean deduplicateBySaveTimePartial(String saveTime, String userId,
                                                      String kioskId, String partialId) {
@@ -125,6 +121,7 @@ public class TransactionUtil {
                                                      boolean skipWrite) {
     try {
       MemcacheService cache = AppFactory.get().getMemcacheService();
+      
       String
           cacheKey =
           TRANSACTION_CHECKSUM_KEY_PREFIX + userId + CharacterConstants.DOT + kioskId
@@ -200,32 +197,12 @@ public class TransactionUtil {
   }
 
 
-  // Get the color code for stock value
-  public static String getStockColor(int eventType) {
-    return ((eventType == IEvent.STOCKOUT) ? "#FF0000"
-        : ((eventType == IEvent.UNDERSTOCK) ? "#FFA500"
-            : ((eventType == IEvent.OVERSTOCK) ? "#FF00FF" : "	#000000")));
-  }
-
-  // Get the warning text for stock events
-  public static String getStockEventWarning(IInvntry inv, Locale locale) {
-    String txt = "";
-    int eventType = inv.getStockEvent();
-    if (eventType != -1) {
-      IInvntryDao invntryDao = StaticApplicationContext.getBean(IInvntryDao.class);
-      IInvntryEvntLog invEventLog = invntryDao.getInvntryEvntLog(inv);
-      if (invEventLog != null && eventType == invEventLog.getType()) {
-        txt =
-            "<b>" + LocalDateUtil.getFormattedMillisInHoursDays(
-                (new Date().getTime() - invEventLog.getStartDate().getTime()), locale) + "</b>";
-      }
-    }
-    return txt;
-  }
-
   // Get transaction list checksum - a MD5 digest
   public static String checksum(Long domainId, List<ITransaction> list) {
     xLogger.fine("Entered checksum: {0}", (list == null ? "NULL" : list.size()));
+    if (list == null || list.isEmpty()) {
+      return null;
+    }
     Iterator<ITransaction> it = list.iterator();
     try {
       MessageDigest md = MessageDigest.getInstance("MD5");
@@ -321,26 +298,6 @@ public class TransactionUtil {
     }
   }
 
-  // Private method that updates the stock count after serial numbered items are added or removed to or from the inventory.
-  public static void performStockCountOperation(InventoryManagementService ims, Long domainId,
-                                                Long kioskId, Long materialId, BigDecimal quantity)
-      throws ServiceException, DuplicationException {
-    // Key, domainId, kioskid, materialId, transactionType, quantity, timestamp
-    ITransaction transaction = JDOUtils.createInstance(ITransaction.class);
-    Date trnsTimestamp = new Date();
-                /*Key key = Transaction.createKey( kioskId, materialId, Transaction.TYPE_PHYSICALCOUNT, trnsTimestamp, null );
-                transaction.setKey( key );*/
-    transaction.setDomainId(domainId);
-    transaction.setKioskId(kioskId);
-    transaction.setMaterialId(materialId);
-    transaction.setType(ITransaction.TYPE_PHYSICALCOUNT);
-    transaction.setQuantity(quantity);
-    transaction.setTimestamp(trnsTimestamp);
-    ITransDao transDao = StaticApplicationContext.getBean(ITransDao.class);
-    transDao.setKey(transaction);
-    ims.updateInventoryTransaction(domainId, transaction);
-  }
-
   // Method that returns a default vendor Id for an order.
   public static Long getDefaultVendor(Long domainId, Long kioskId, Long vendorId)
       throws ServiceException {
@@ -375,14 +332,6 @@ public class TransactionUtil {
     return vendorId;
   }
 
-  private static boolean isDateStrValid(String dateStr) {
-    if (dateStr == null || dateStr.isEmpty()) {
-      return false;
-    }
-    int index = dateStr.lastIndexOf('/');
-    return index != -1 && dateStr.substring(index + 1).length() == FULLYEAR_LENGTH;
-  }
-
   public static String getDisplayName(String transType, Locale locale) {
     return getDisplayName(transType, DomainConfig.TRANSNAMING_DEFAULT, locale);
   }
@@ -410,10 +359,12 @@ public class TransactionUtil {
       name = messages.getString("transactions.reorder");
     } else if (ITransaction.TYPE_WASTAGE.equals(transType)) {
       name = messages.getString("transactions.wastage");
-    } else if (ITransaction.TYPE_RETURN.equals(transType)) {
-      name = messages.getString("transactions.return");
     } else if (ITransaction.TYPE_TRANSFER.equals(transType)) {
       name = messages.getString("transactions.transfer");
+    } else if (ITransaction.TYPE_RETURNS_INCOMING.equals(transType)) {
+      name = messages.getString("transactions.returns.incoming.upper");
+    } else if (ITransaction.TYPE_RETURNS_OUTGOING.equals(transType)) {
+      name = messages.getString("transactions.returns.outgoing.upper");
     }
     return name;
   }
@@ -521,9 +472,11 @@ public class TransactionUtil {
             throw new LogiException("M010", (Object[]) null);
           }
           String ty = trans.getType();
+          boolean isTransTypeReturn = ITransaction.TYPE_RETURNS_INCOMING.equals(ty) || ITransaction.TYPE_RETURNS_OUTGOING.equals(ty);
           if (StringUtils.isEmpty(ty) || !(ITransaction.TYPE_ISSUE.equals(ty)
               || ITransaction.TYPE_RECEIPT.equals(ty) || ITransaction.TYPE_PHYSICALCOUNT.equals(ty)
-              || ITransaction.TYPE_WASTAGE.equals(ty) || ITransaction.TYPE_TRANSFER.equals(ty))) {
+              || ITransaction.TYPE_WASTAGE.equals(ty) || ITransaction.TYPE_TRANSFER.equals(ty)
+              || ITransaction.TYPE_RETURNS_INCOMING.equals(ty) || ITransaction.TYPE_RETURNS_OUTGOING.equals(ty)))  {
             xLogger.warn("Invalid or missing transaction type at index {0}", index);
             throw new LogiException("M010", (Object[]) null);
           }
@@ -547,14 +500,14 @@ public class TransactionUtil {
               throw new LogiException("M010", (Object[]) null);
             }
           }
-          if (ITransaction.TYPE_ISSUE.equals(ty) && trans.getLinkedKioskId() != null && !es
+          if ((ITransaction.TYPE_ISSUE.equals(ty) || ITransaction.TYPE_RETURNS_INCOMING.equals(ty)) && trans.getLinkedKioskId() != null && !es
               .hasKioskLink(kid, IKioskLink.TYPE_CUSTOMER, trans.getLinkedKioskId())) {
             xLogger.warn(
                 "Linked entity specified by lkid {0} is not a customer of entity id {1} at index {2}",
                 trans.getLinkedKioskId(), kid, index);
             throw new LogiException("M010", (Object[]) null);
           }
-          if (ITransaction.TYPE_RECEIPT.equals(ty) && trans.getLinkedKioskId() != null && !es
+          if ((ITransaction.TYPE_RECEIPT.equals(ty) || ITransaction.TYPE_RETURNS_OUTGOING.equals(ty)) && trans.getLinkedKioskId() != null && !es
               .hasKioskLink(kid, IKioskLink.TYPE_VENDOR, trans.getLinkedKioskId())) {
             xLogger.warn(
                 "Linked entity specified by lkid {0} is not a vendor of entity id {1} at index {2}",
@@ -567,6 +520,27 @@ public class TransactionUtil {
                 "Linked entity is specified even when it is not required for transaction type {0} at index {1}",
                 trans.getType(), index);
             throw new LogiException("M010", (Object[]) null);
+          }
+          if (isTransTypeReturn) {
+            if ((StringUtils.isEmpty(trans.getTrackingObjectType()) || StringUtils.isEmpty(trans.getTrackingId()))) {
+              xLogger.warn(
+                  "Tracking id and/or tracking object type is not specified for transaction type {0} at index {1}",
+                  trans.getType(), index);
+              throw new LogiException("M010", (Object[]) null);
+            }
+            if (StringUtils.isEmpty(trans.getReason())) {
+              xLogger.warn(
+                  "Reason is not specified for transaction type {0} at index {1}",
+                  trans.getType(), index);
+              throw new LogiException("M010", (Object[]) null);
+            }
+          }
+          if (!isTransTypeReturn && (StringUtils.isNotEmpty(trans.getTrackingObjectType()) || StringUtils.isNotEmpty(trans.getTrackingId()))) {
+            xLogger.warn(
+                "Tracking id and/or tracking object type is specified even when it is not required for transaction type {0} at index {1}",
+                trans.getType(), index);
+            trans.setTrackingId(null);
+            trans.setTrackingObjectType(null);
           }
           if (!ITransaction.TYPE_PHYSICALCOUNT.equals(trans.getType()) && BigUtil.equals(
               trans.getQuantity(), BigDecimal.ZERO)) {

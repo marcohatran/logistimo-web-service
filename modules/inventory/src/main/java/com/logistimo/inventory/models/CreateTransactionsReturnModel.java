@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -21,26 +21,32 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.models;
+package com.logistimo.inventory.models;
 
-import com.google.gson.annotations.SerializedName;
+import com.logistimo.inventory.entity.ITransaction;
 
-import java.io.Serializable;
+import java.util.List;
 
 /**
- * Created by smriti on 08/02/18.
+ * Created by vani on 15/02/18.
  */
-public class BaseResponseModel implements Serializable {
+public class CreateTransactionsReturnModel {
+  private List<ITransaction> successfulTransactions;
+  private List<ITransaction> errorTransactions;
 
-  @SerializedName("generated_time")
-  private String generatedTime;
-
-
-  public String getGeneratedTime() {
-    return generatedTime;
+  public CreateTransactionsReturnModel(
+      List<ITransaction> successfulTransactions,
+      List<ITransaction> errorTransactions) {
+    this.successfulTransactions = successfulTransactions;
+    this.errorTransactions = errorTransactions;
   }
 
-  public void setGeneratedTime(String generatedTime) {
-    this.generatedTime = generatedTime;
+  public List<ITransaction> getSuccessfulTransactions() {
+    return successfulTransactions;
   }
+
+  public List<ITransaction> getErrorTransactions() {
+    return errorTransactions;
+  }
+
 }

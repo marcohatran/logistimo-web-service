@@ -26,21 +26,24 @@ package com.logistimo.api.controllers;
 import com.logistimo.AppFactory;
 import com.logistimo.api.builders.DashboardBuilder;
 import com.logistimo.api.builders.mobile.MobileInvDashboardBuilder;
+import com.logistimo.api.models.AssetDashboardModel;
 import com.logistimo.api.models.MainDashboardModel;
 import com.logistimo.api.models.mobile.DashQueryModel;
 import com.logistimo.api.models.mobile.MobileInvDashboardDetails;
 import com.logistimo.api.models.mobile.MobileInvDashboardModel;
 import com.logistimo.api.util.SearchUtil;
 import com.logistimo.auth.utils.SecurityUtils;
+import com.logistimo.config.models.AssetSystemConfig;
+import com.logistimo.config.models.ConfigurationException;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.dashboards.service.IDashboardService;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.logger.XLog;
-import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.cache.MemcacheService;
 import com.logistimo.utils.LocalDateUtil;
+import com.logistimo.utils.StringUtil;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,6 +84,15 @@ public class DashboardControllerMV1 {
 
   private IDashboardService dashboardService;
   private DashboardBuilder dashboardBuilder;
+
+  private MemcacheService memcacheService;
+
+  private MemcacheService getMemcacheService() {
+    if (memcacheService == null) {
+      memcacheService = AppFactory.get().getMemcacheService();
+    }
+    return memcacheService;
+  }
 
   @Autowired
   public void setDashboardService(IDashboardService dashboardService) {
@@ -126,7 +138,7 @@ public class DashboardControllerMV1 {
     String
         cachekey =
         buildCacheKey(paramModel);
-    MemcacheService cache = AppFactory.get().getMemcacheService();
+    MemcacheService cache = getMemcacheService();
     //getting results for cache
     if (!refresh) {
       dashboardModel = (MobileInvDashboardModel) cache.get(cachekey);
@@ -146,7 +158,7 @@ public class DashboardControllerMV1 {
     //preparing the model
     dashboardModel =
         MobileInvDashboardBuilder.buildInvDashboard(invTyRes, invAlRes, acstRes, alstRes);
-    dashboardModel.setUpdatedTime(getFormattedCurrentTime());
+    dashboardModel.setGeneratedTime(getGeneratedTime());
     if (cache != null) {
       cache.put(cachekey, dashboardModel, 1800); // 30 min expiry
     }
@@ -187,7 +199,7 @@ public class DashboardControllerMV1 {
     String
         cachekey =
         buildCacheKey(paramModel);
-    MemcacheService cache = AppFactory.get().getMemcacheService();
+    MemcacheService cache = getMemcacheService();
     //getting results for cache
     if (!refresh) {
       details = (MobileInvDashboardDetails) cache.get(cachekey);
@@ -216,7 +228,7 @@ public class DashboardControllerMV1 {
     } else {
       details.level = paramModel.locty != null ? paramModel.locty : DISTRICT_LOWER;
     }
-    details.setUpdatedTime(getFormattedCurrentTime());
+    details.setGeneratedTime(getGeneratedTime());
     if (cache != null) {
       cache.put(cachekey, details, 1800); // 30 min expiry
     }
@@ -224,7 +236,7 @@ public class DashboardControllerMV1 {
     return details;
   }
 
-  @RequestMapping(value = "/assets", method = RequestMethod.GET)
+  @RequestMapping(value = "/assets/temperature", method = RequestMethod.GET)
   public
   @ResponseBody
   MainDashboardModel getAssetDashboard(@RequestParam(required = false) String filter,
@@ -237,7 +249,7 @@ public class DashboardControllerMV1 {
                                        Boolean refresh) throws SQLException {
     MainDashboardModel model;
     Long domainId = SecurityUtils.getCurrentDomainId();
-    MemcacheService cache = AppFactory.get().getMemcacheService();
+    MemcacheService cache = getMemcacheService();
     DomainConfig dc = DomainConfig.getInstance(domainId);
     String country = dc.getCountry();
     String state = null;
@@ -280,7 +292,7 @@ public class DashboardControllerMV1 {
     } else {
       model.mLev = level != null ? level : DISTRICT_LOWER;
     }
-    model.setUpdatedTime(getFormattedCurrentTime());
+    model.setGeneratedTime(getGeneratedTime());
     if (cache != null) {
       cache.put(cacheKey, model, 1800); // 30 min expiry
     }
@@ -332,7 +344,7 @@ public class DashboardControllerMV1 {
             mtags, mnm, loc, p, date, domainId, null, locty);
     String cacheKey = buildCacheKey(activityQueryModel);
     cacheKey += "_ACT";
-    MemcacheService cache = AppFactory.get().getMemcacheService();
+    MemcacheService cache = getMemcacheService();
     if (!refresh) {
       model = (MainDashboardModel) cache.get(cacheKey);
       if (model != null) {
@@ -353,7 +365,8 @@ public class DashboardControllerMV1 {
         activityDomain =
         dashboardService.getMainDashboardResults(domainId, filters, ALL_ACTIVITY);
     model =
-        dashboardBuilder.getMainDashBoardData(null, null, activity, activityDomain, null, null, colFilter);
+        dashboardBuilder.getMainDashBoardData(null, null, activity, activityDomain, null, null,
+            colFilter);
     if (StringUtils.isBlank(activityQueryModel.loc) && activityQueryModel.state == null) {
       model.mLev = COUNTRY_LOWER;
     } else if (StringUtils.isBlank(activityQueryModel.loc) && activityQueryModel.district == null) {
@@ -361,13 +374,95 @@ public class DashboardControllerMV1 {
     } else {
       model.mLev = activityQueryModel.locty;
     }
-    model.setUpdatedTime(getFormattedCurrentTime());
+    model.setGeneratedTime(getGeneratedTime());
     if (cache != null) {
       cache.put(cacheKey, model, 1800);
     }
     return model;
   }
 
+  /**
+   * Provides statistics related to asset's statuses example the number of assets that are working or condemned for a given location
+   */
+  @RequestMapping(value = "/assets/status", method = RequestMethod.GET)
+  public
+  @ResponseBody
+  AssetDashboardModel getAssetStatusDashboard(@RequestParam(required = false) String monitoringType,
+                                              @RequestParam(required = false) String assetType,
+                                              @RequestParam(required = false) String eTag,
+                                              @RequestParam(required = false) String eeTag,
+                                              @RequestParam(required = false) String status,
+                                              @RequestParam(required = false) String period,
+                                              @RequestParam(required = false) String level,
+                                              @RequestParam(required = false) String location,
+                                              @RequestParam(required = false, defaultValue = "false") Boolean skipCache)
+      throws SQLException {
+    AssetDashboardModel model;
+    Long domainId = SecurityUtils.getCurrentDomainId();
+    MemcacheService cache = getMemcacheService();
+    DomainConfig dc = DomainConfig.getInstance(domainId);
+    String country = dc.getCountry();
+    String state = null;
+    String district = null;
+    if (StringUtils.isNotEmpty(dc.getDistrict())) {
+      state = dc.getState();
+      district = dc.getDistrict();
+    } else if (StringUtils.isNotEmpty(dc.getState())) {
+      state = dc.getState();
+    }
+    if (assetType == null && monitoringType != null) {
+      try {
+        AssetSystemConfig assets = AssetSystemConfig.getInstance();
+        assetType = assets.getAssetsByMonitoringType(Integer.valueOf(monitoringType));
+      } catch (ConfigurationException e) {
+        xLogger.severe("Error in reading Asset System Configuration", e);
+        throw new InvalidServiceException("Error in reading asset meta data.");
+      }
+    }
+
+    if (StringUtils.isNotBlank(eTag)) {
+      eTag = StringUtil.getSingleQuotesCSV(StringUtil.getList(eTag));
+    } else if (StringUtils.isNotBlank(eeTag)) {
+      eeTag = StringUtil.getSingleQuotesCSV(StringUtil.getList(eeTag));
+    }
+
+    DashQueryModel
+        queryModel =
+        new DashQueryModel(assetType, eTag, eeTag, status, period, country, state, district,
+            domainId, level, location);
+    String cacheKey = buildCacheKey(queryModel);
+    if (!skipCache) {
+      model = (AssetDashboardModel) cache.get(cacheKey);
+      if (model != null) {
+        return model;
+      }
+    }
+    Map<String, String> filters = buildQueryFilters(queryModel);
+    level = queryModel.locty;
+    String colFilter;
+    if (DISTRICT_LOWER.equals(level) || queryModel.district != null) {
+      colFilter = "NAME";
+    } else if (STATE_LOWER.equals(level) || queryModel.state != null) {
+      colFilter = DISTRICT;
+    } else {
+      colFilter = STATE;
+    }
+    ResultSet assetRes = dashboardService.getMainDashboardResults(domainId, filters, "asset");
+    model = dashboardBuilder.getAssetDashboardData(assetRes, colFilter);
+    if (StringUtils.isBlank(location) && queryModel.state == null) {
+      model.setlevel(COUNTRY_LOWER);
+    } else if (StringUtils.isBlank(location) && queryModel.district == null) {
+      model.setlevel(STATE_LOWER);
+    } else {
+      level = level != null ? level : DISTRICT_LOWER;
+      model.setlevel(level);
+    }
+    model.setGeneratedTime(getGeneratedTime());
+    if (cache != null) {
+      cache.put(cacheKey, model, 1800); // 30 min expiry
+    }
+    return model;
+  }
 
   private String buildCacheKey(DashQueryModel model) {
 
@@ -411,6 +506,10 @@ public class DashboardControllerMV1 {
     }
     if (StringUtils.isNotBlank(model.tp)) {
       cacheKey += "_T" + model.tp;
+    }
+    if (StringUtils.isNotBlank(model.status) && StringUtils.isNotBlank(model.period)) {
+      cacheKey += CharacterConstants.UNDERSCORE.concat("S").concat(model.status).concat(
+          CharacterConstants.UNDERSCORE).concat(model.period);
     }
 
     return cacheKey;
@@ -495,13 +594,22 @@ public class DashboardControllerMV1 {
         throw new InvalidServiceException("Unable to parse date " + model.date);
       }
     }
+    if (model.domainId != null) {
+      filters.put("domainId", String.valueOf(model.domainId));
+    }
+    if (StringUtils.isNotBlank(model.status)) {
+      filters.put("status", model.status);
+    }
+    if (StringUtils.isNotEmpty(model.period)) {
+      filters.put("period", model.period);
+    }
+
     return filters;
   }
 
-  private String getFormattedCurrentTime() {
-    SecureUserDetails secureUserDetails = SecurityUtils.getUserDetails();
-    return LocalDateUtil.format(new Date(), secureUserDetails.getLocale(),
-        secureUserDetails.getTimezone());
+  private String getGeneratedTime() {
+    SimpleDateFormat sdf = new SimpleDateFormat(Constants.ANALYTICS_DATE_FORMAT);
+    return sdf.format(new Date());
   }
 
 }

@@ -177,7 +177,7 @@ trnControllers.controller('TransactionsCtrl', ['$scope', 'trnService', 'domainCf
                 linked_kid: $scope.lEntityId,
                 reason: $scope.reason,
                 atd: $scope.atd,
-                transaction_type: $scope.type,
+                type: $scope.type,
                 titles: {
                     filters: getCaption()
                 },
