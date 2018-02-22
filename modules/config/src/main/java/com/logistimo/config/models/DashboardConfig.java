@@ -170,8 +170,9 @@ public class DashboardConfig implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private static final String DEFAULT_ASSET_TYPES = "dats";
-
+    private static final String DEFAULT_MONITORING_TYPE = "dmt";
     public String dats;
+    public String dmt = "2";
 
     public AssetsDbConfig() {
 
@@ -183,11 +184,17 @@ public class DashboardConfig implements Serializable {
       } catch (Exception e) {
         //ignore
       }
+      try {
+        dmt = json.optString(DEFAULT_MONITORING_TYPE);
+      } catch (Exception e) {
+        //ignore
+      }
     }
 
     public JSONObject toJSONObject() throws JSONException {
       JSONObject json = new JSONObject();
       json.put(DEFAULT_ASSET_TYPES, dats);
+      json.put(DEFAULT_MONITORING_TYPE, dmt);
       return json;
     }
   }

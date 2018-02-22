@@ -2559,6 +2559,7 @@ public class DomainConfigController {
 
       DashboardConfig.AssetsDbConfig assetsDbConfig = new DashboardConfig.AssetsDbConfig();
       assetsDbConfig.dats = StringUtil.getCSV(model.dats);
+      assetsDbConfig.dmt = model.dmt;
 
       DashboardConfig.DBOverviewConfig dbOverviewConfig = new DashboardConfig.DBOverviewConfig();
       if (model.dmtg != null) {

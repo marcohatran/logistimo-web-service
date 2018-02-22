@@ -1233,3 +1233,5 @@ dashboard.lower=tableau de bord
 default.asset.type=Types d'actif par défaut
 config.view.assets=Afficher les éléments
 config.change.status.assets=Modifier le statut de l'actif
+default.monitoring.type=Type de surveillance par défaut
+default.monitoring.type.select=Sélectionnez un type de surveillance par défaut

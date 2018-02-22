@@ -4472,14 +4472,26 @@ domainCfgControllers.controller('DashboardConfigurationController', ['$scope', '
     function ($scope, domainCfgService) {
         $scope.db = {};
         $scope.loading = false;
-        domainCfgService.getAssetSysCfg('2').then(function (data) {
-            $scope.allAssets = data.data;
-        }).catch(function error(msg) {
-            $scope.showErrorMsg(msg);
-        }).finally(function () {
-            $scope.hideLoading();
-            $scope.getDashboardCfg();
-        });
+        var count = 0;
+        function getAssetTypes(type) {
+            $scope.showLoading();
+            domainCfgService.getAssetSysCfg(type).then(function (data) {
+                if(type == 1) {
+                    $scope.monitoringAssets = data.data;
+                } else {
+                    $scope.monitoredAssets = data.data;
+                }
+            }).catch(function error(msg) {
+                $scope.showErrorMsg(msg);
+            }).finally(function () {
+                if(++count == 2) {
+                    $scope.getDashboardCfg();
+                }
+                $scope.hideLoading();
+            });
+        }
+        getAssetTypes(1);
+        getAssetTypes(2);
         $scope.getDashboardCfg = function () {
             $scope.loading = true;
             $scope.showLoading();
@@ -4521,10 +4533,15 @@ domainCfgControllers.controller('DashboardConfigurationController', ['$scope', '
                         $scope.db.dutgo.push({'text': ut, 'id': ut});
                     });
                 }
-                $scope.db.asset = [];
-                angular.forEach($scope.db.dats, function(at) {
-                    $scope.db.asset.push({'id': at, 'text': $scope.allAssets[at]});
-                });
+                if(checkNotNullEmpty($scope.db.dmt)) {
+                    $scope.db.mna = [];
+                    $scope.db.mda = [];
+                    var assetTypes = $scope.db.dmt == 1 ? $scope.db.mna : $scope.db.mda;
+                    var allAssets = $scope.db.dmt == 1 ? $scope.monitoringAssets : $scope.monitoredAssets;
+                    angular.forEach($scope.db.dats, function(at) {
+                        assetTypes.push({'id': at, 'text': allAssets[at]});
+                    });
+                }
             }).catch(function error(msg) {
                 $scope.showErrorMsg(msg, true);
             }).finally(function () {
@@ -4582,9 +4599,12 @@ domainCfgControllers.controller('DashboardConfigurationController', ['$scope', '
                         $scope.db.exts = undefined;
                     }
                     $scope.db.dats = [];
-                    angular.forEach($scope.db.asset, function (at) {
-                        $scope.db.dats.push(at.id);
-                    });
+                    if(checkNotNullEmpty($scope.db.dmt)) {
+                        var assetTypes = $scope.db.dmt == 1 ? $scope.db.mna : $scope.db.mda;
+                        angular.forEach(assetTypes, function (at) {
+                            $scope.db.dats.push(at.id);
+                        });
+                    }
                     domainCfgService.setDashboardCfg($scope.db).then(function (data) {
                         $scope.refreshDomainConfig();
                         $scope.showSuccess(data.data);
@@ -4598,7 +4618,6 @@ domainCfgControllers.controller('DashboardConfigurationController', ['$scope', '
                 }
             }
         };
-
         domainCfgService.getMaterialTagsCfg().then(function (data) {
             $scope.tags = data.data.tags;
             $scope.udf = data.data.udf;
@@ -4630,11 +4649,12 @@ domainCfgControllers.controller('DashboardConfigurationController', ['$scope', '
             query.callback(data);
         };
 
-        $scope.filterAssets = function (query) {
+        $scope.filterAssets = function (query, type) {
             var rData = {results: []};
-            for (var key in $scope.allAssets) {
-                if ($scope.allAssets[key].toLowerCase().indexOf(query.term.toLowerCase()) != -1) {
-                    rData.results.push({'text': $scope.allAssets[key], 'id': key});
+            var allAssets = type == 1 ? $scope.monitoringAssets : $scope.monitoredAssets;
+            for (var key in allAssets) {
+                if (allAssets[key].toLowerCase().indexOf(query.term.toLowerCase()) != -1) {
+                    rData.results.push({'text': allAssets[key], 'id': key});
                 }
             }
             query.callback(rData);
