@@ -264,9 +264,33 @@
                     <div class="row mt10">
                         <div class="col-sm-12">
                             <div class="form-group">
+                                <label class="col-sm-3 control-label">{{resourceBundle['default.monitoring.type']}}</label>
+                                <div class="col-sm-4">
+                                    <select class="form-control input-sm" ng-model="db.dmt">
+                                        <option value="">-- {{resourceBundle['default.monitoring.type.select']}} --</option>
+                                        <option value="1">{{resourceBundle['da.monitoring.assets']}}</option>
+                                        <option value="2">{{resourceBundle['da.monitored.assets']}}</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt10" ng-if="isDef(db.dmt) && db.dmt == '1'">
+                        <div class="col-sm-12">
+                            <div class="form-group">
                                 <label class="col-sm-3 control-label">{{resourceBundle['default.asset.type']}}</label>
                                 <div class="col-sm-4">
-                                    <lg-uib-select multiple="multiple" query="filterAssets(q)" ui-model="db.asset" place-holder="All"> </lg-uib-select>
+                                    <lg-uib-select multiple="multiple" query="filterAssets(q, 1)" ui-model="db.mna" place-holder="All"> </lg-uib-select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt10" ng-if="isDef(db.dmt) && db.dmt == '2'">
+                        <div class="col-sm-12">
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">{{resourceBundle['default.asset.type']}}</label>
+                                <div class="col-sm-4">
+                                    <lg-uib-select multiple="multiple" query="filterAssets(q, 2)" ui-model="db.mda" place-holder="All"> </lg-uib-select>
                                 </div>
                             </div>
                         </div>
