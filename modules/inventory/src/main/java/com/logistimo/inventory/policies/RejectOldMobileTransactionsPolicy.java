@@ -70,7 +70,8 @@ public class RejectOldMobileTransactionsPolicy implements InventoryUpdatePolicy 
       } else {
         lastTransactionTime = lastWebTrans.getEntryTime().getTime();
       }
-      if (lastTransactionTime > transactionListIterator.next().getEntryTime().getTime()) {
+      ITransaction nextTransaction = transactionListIterator.next();
+      if (lastTransactionTime > nextTransaction.getEntryTime().getTime()) {
         transactionListIterator.remove();
         index++;
       }

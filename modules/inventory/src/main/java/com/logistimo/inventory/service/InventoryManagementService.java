@@ -31,8 +31,9 @@ import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.IInvntryBatch;
 import com.logistimo.inventory.entity.IInvntryEvntLog;
 import com.logistimo.inventory.entity.ITransaction;
-import com.logistimo.inventory.models.ErrorDetailModel;
+import com.logistimo.inventory.models.CreateTransactionsReturnModel;
 import com.logistimo.inventory.models.InventoryFilters;
+import com.logistimo.inventory.models.ResponseDetailModel;
 import com.logistimo.models.shipments.ShipmentItemBatchModel;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
@@ -267,31 +268,31 @@ public interface InventoryManagementService {
    *
    * @return Erroneous transactions with error message in the object
    */
-  List<ITransaction> updateInventoryTransactions(Long domainId,
+  CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
                                                  List<ITransaction> inventoryTransactions)
       throws ServiceException, DuplicationException;
 
-  List<ITransaction> updateInventoryTransactions(Long domainId,
+  CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
                                                  List<ITransaction> inventoryTransactions,
                                                  PersistenceManager pm)
       throws ServiceException, DuplicationException;
 
-  List<ITransaction> updateInventoryTransactions(Long domainId,
+  CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
                                                  List<ITransaction> inventoryTransactions,
                                                  boolean skipVal)
       throws ServiceException, DuplicationException;
 
-  List<ITransaction> updateInventoryTransactions(Long domainId,
+  CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
                                                  List<ITransaction> inventoryTransactions,
                                                  boolean skipVal, PersistenceManager pm)
       throws ServiceException, DuplicationException;
 
-  List<ITransaction> updateInventoryTransactions(Long domainId,
+  CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
                                                  List<ITransaction> inventoryTransactions,
                                                  boolean skipVal, boolean skipPred)
       throws ServiceException, DuplicationException;
 
-  List<ITransaction> updateInventoryTransactions(Long domainId,
+  CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
                                                  List<ITransaction> inventoryTransactions,
                                                  boolean skipVal, boolean skipPred,
                                                  PersistenceManager pm)
@@ -310,7 +311,7 @@ public interface InventoryManagementService {
    * @param pm - Persistence manager
    */
   @SuppressWarnings({"unchecked", "rawtypes"})
-  List<ITransaction> updateInventoryTransactions(Long domainId,
+  CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
                                                  List<ITransaction> inventoryTransactions,
                                                  List<IInvntry> invntryList, boolean skipVal,
                                                  boolean skipPred, PersistenceManager pm)
@@ -472,7 +473,7 @@ public interface InventoryManagementService {
    * @return - Map<Long,List<ErrorDetailModel>> - A map of material id and the details of the errors
    * that were encountered while persisting the transactions
    */
-  Map<Long, List<ErrorDetailModel>> updateMultipleInventoryTransactions(
+  Map<Long, ResponseDetailModel> updateMultipleInventoryTransactions(
       Map<Long, List<ITransaction>> materialTransactionsMap, Long domainId, String userId)
       throws ServiceException;
 

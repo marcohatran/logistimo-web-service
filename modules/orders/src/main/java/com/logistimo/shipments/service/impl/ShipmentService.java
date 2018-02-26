@@ -921,7 +921,7 @@ public class ShipmentService implements IShipmentService {
           inTransitList = null;
         }
         errors = inventoryManagementService.updateInventoryTransactions(shipment.getDomainId(),
-                transactionList, inTransitList, true, false, pm);
+                transactionList, inTransitList, true, false, pm).getErrorTransactions();
 
         if (dc.getInventoryConfig().isCREnabled() &&
             !(ShipmentStatus.FULFILLED.equals(shipment.getStatus()))) {

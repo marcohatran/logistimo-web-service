@@ -145,21 +145,10 @@ public class RequestModel {
   @Expose
   private String approvalStatus;
 
-  public String getSerialNumber() {
-    return serialNumber;
-  }
-
-  public void setSerialNumber(String serialNumber) {
-    this.serialNumber = serialNumber;
-  }
-
   @SerializedName(value = "TOKEN_TAG_TYPE", alternate = "tag_type")
   @Expose
   private String tagType;
 
-  @SerializedName(value = "TOKEN_SERIAL_NUMBER",alternate = "serial_number")
-  @Expose
-  private String serialNumber;
 
   @Expose(deserialize = false, serialize = false)
   private Map<String, String> titles;

@@ -3147,7 +3147,7 @@ public class CreateEntityServlet extends SgServlet {
       if (transList.size() > 0) {
         // Update transactions
         try {
-          errors = ims.updateInventoryTransactions(domainId, transList);
+          errors = ims.updateInventoryTransactions(domainId, transList).getErrorTransactions();
           // Schedule reverse transactions, if necessary
                                         /* 4/2/2013 - DISABLING THIS, given its semantics have to be ascertained, and there were concurrent modification exceptions (perhaps due to updates > 1 per sec. for an entity group)
                                         try {

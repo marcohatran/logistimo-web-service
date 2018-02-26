@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -23,33 +23,36 @@
 
 package com.logistimo.inventory.models;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * Created by vani on 09/06/17.
+ * Created by vani on 15/02/18.
  */
-public class ErrorDetailModel {
+public class SuccessDetailModel {
   /**
-   * Error code
+   * Success code
    */
-  public String errorCode;
+  public String successCode;
   /**
-   * Index or position from or until which the error specified by the error code occured
+   * Index or position from or until which the transactions are successful
    */
   public int index;
 
   /**
-   * error message
+   * List of successful transaction keys
    */
-  public String message;
+  public List keys = new ArrayList<>(1);
 
   /**
    * Constructor
-   * @param errorCode
+   * @param successCode
    * @param index
    */
-  public ErrorDetailModel(String errorCode, int index, String message) {
-    this.errorCode = errorCode;
+  public SuccessDetailModel(String successCode, int index, List<String> keys) {
+    this.successCode = successCode;
     this.index = index;
-    this.message = message;
+    this.keys.addAll(keys);
   }
 
   @Override
@@ -57,21 +60,21 @@ public class ErrorDetailModel {
     if (o == this) {
       return true;
     }
-    if (!(o instanceof ErrorDetailModel)) {
+    if (!(o instanceof SuccessDetailModel)) {
       return false;
     }
-    ErrorDetailModel errorDetailModel = (ErrorDetailModel) o;
-    return (errorCode == null ? errorDetailModel.errorCode == null : errorCode.equals(errorDetailModel.errorCode)) &&
-        (index == errorDetailModel.index) &&
-        (message == null ? errorDetailModel.message == null : message.equals(errorDetailModel.message));
+    SuccessDetailModel successDetailModel = (SuccessDetailModel) o;
+    return (successCode == null ? successDetailModel.successCode == null : successCode.equals(successDetailModel.successCode)) &&
+        (index == successDetailModel.index) &&
+        (keys == null ? successDetailModel.keys == null : keys.equals(successDetailModel.keys));
   }
 
   @Override public int hashCode() {
     int result = 17;
     int prime = 31;
-    result = prime * result + (errorCode == null ? 0 : errorCode.hashCode());
+    result = prime * result + (successCode == null ? 0 : successCode.hashCode());
     result = prime * result + index;
-    result = prime * result + (message == null ? 0 : message.hashCode());
+    result = prime * result + (keys == null ? 0 : keys.hashCode());
     return result;
   }
 }

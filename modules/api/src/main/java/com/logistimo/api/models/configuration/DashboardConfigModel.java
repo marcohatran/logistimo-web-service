@@ -54,4 +54,8 @@ public class DashboardConfigModel {
    * List of default asset types
    */
   public String[] dats;
+  /**
+   * Default monitoring type
+   */
+  public String dmt;
 }

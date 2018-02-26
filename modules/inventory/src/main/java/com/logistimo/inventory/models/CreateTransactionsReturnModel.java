@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -21,44 +21,32 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.proto;
+package com.logistimo.inventory.models;
+
+import com.logistimo.inventory.entity.ITransaction;
 
 import java.util.List;
 
 /**
- * Created by vani on 23/03/17.
+ * Created by vani on 15/02/18.
  */
-public class MobileUpdateInvTransResponse {
-  /**
-   * Version
-   */
-  public String v;
-  /**
-   * Status
-   */
-  public Integer st;
-  /**
-   * Message
-   */
-  public String ms;
-  /**
-   * Kiosk ID
-   */
-  public Long kid;
-  /**
-   * Inventory model
-   */
-  public List<MobileInvModel> inv;
-  /**
-   * Transactions that are rejected
-   */
-  public List<MobileTransErrModel> errs;
-  /**
-   * Part ID of a multi part request
-   */
-  public String pid;
-  /**
-   * Transactions that are successful and their keys
-   */
-  public List<MobileTransSuccessModel> success;
+public class CreateTransactionsReturnModel {
+  private List<ITransaction> successfulTransactions;
+  private List<ITransaction> errorTransactions;
+
+  public CreateTransactionsReturnModel(
+      List<ITransaction> successfulTransactions,
+      List<ITransaction> errorTransactions) {
+    this.successfulTransactions = successfulTransactions;
+    this.errorTransactions = errorTransactions;
+  }
+
+  public List<ITransaction> getSuccessfulTransactions() {
+    return successfulTransactions;
+  }
+
+  public List<ITransaction> getErrorTransactions() {
+    return errorTransactions;
+  }
+
 }

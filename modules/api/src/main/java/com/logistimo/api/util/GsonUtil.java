@@ -615,7 +615,6 @@ public class GsonUtil {
                                                          MobileTransactionsModel mtm,
                                                          String message, String version) {
     Gson gson = new Gson();
-    String jsonString = null;
     String statusCode = hasNoError ? "0" : "1";
     JsonObject jsonObject = new JsonObject();
     if (hasNoError) {
@@ -630,9 +629,7 @@ public class GsonUtil {
     jsonObject.addProperty(JsonTagsZ.VERSION, version);
     jsonObject.addProperty(JsonTagsZ.STATUS, statusCode);
 
-    jsonString = gson.toJson(jsonObject);
-
-    return jsonString;
+    return gson.toJson(jsonObject);
   }
 
 }
