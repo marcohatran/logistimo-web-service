@@ -30,8 +30,19 @@ trnControllers.controller('TransactionsCtrl', ['$scope', 'trnService', 'domainCf
             ["lceid","cust.id"],["lveid","vend.id"],["mid", "material.mId"],["atd","atd"],["rsn","reason"]];
         $scope.today = formatDate2Url(new Date());
         $scope.localFilters = ['entity', 'material', 'type', 'batchId', 'from', 'to', 'cust', 'vend', 'etag', 'tag','atd'];
+        $scope.localFilterWatches= { material: watchMaterial};
         $scope.filterMethods = ['updateFilters','searchBatch'];
         $scope.atd = false;
+
+        function watchMaterial(newValue, oldValue, callback) {
+            if ((checkNotNullEmpty(newValue) && oldValue==undefined) || (checkNotNullEmpty(oldValue) && newValue==undefined) || (newValue.mid!=oldValue.mid)) {
+                if (callback) {
+                    callback('batchId', null);
+                }
+            }
+        }
+
+
         $scope.init = function (firstTimeInit) {
         if (typeof  $scope.showEntityFilter === 'undefined') {
             $scope.showEntityFilter = true;
