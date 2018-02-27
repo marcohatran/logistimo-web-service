@@ -779,6 +779,46 @@ demandControllers.controller('DiscrepanciesListingCtrl', ['$scope', 'demandServi
         $scope.init(true);
         ListingController.call(this, $scope, requestContext, $location);
         $scope.fetch();
+
+        $scope.exportData=function() {
+            $scope.showLoading();
+            exportService.exportData({
+                entity_id: checkNotNullEmpty($scope.entity) ? $scope.entity.id : undefined,
+                material_id: checkNotNullEmpty($scope.material) ? $scope.material.mId : undefined,
+                order_id: $scope.ordId || undefined,
+                from_date: formatDate2Url($scope.from) || undefined,
+                end_date: formatDate2Url($scope.to) || undefined,
+                type: $scope.discType || undefined,
+                order_subtype: $scope.oType || undefined,
+                exclude_transfer: $scope.etrn || undefined,
+                ktag: $scope.eTag || undefined,
+                mtag: $scope.mTag || undefined,
+                titles: {
+                    filters: getCaption()
+                },
+                module: "discrepancy",
+                templateId: "o_discrepancy"
+            }).then(function (data) {
+                $scope.showSuccess(data.data);
+            }).catch(function error(msg) {
+                $scope.showErrorMsg(msg);
+            }).finally(function() {
+                $scope.hideLoading();
+            });
+        };
+
+        function getCaption() {
+            var caption = getFilterTitle($scope.entity, $scope.resourceBundle['kiosk'], 'nm');
+            caption += getFilterTitle($scope.material, $scope.resourceBundle['material'], 'mnm');
+            caption += getFilterTitle($scope.discType, $scope.resourceBundle['discrepancy']);
+            caption += getFilterTitle($scope.ordId, $scope.resourceBundle['order']);
+            caption += getFilterTitle($scope.etrn ? "YES" : undefined , $scope.transRelease ? $scope.resourceBundle['exclude.transferorders'] : $scope.resourceBundle['exclude.releaseorders']);
+            caption += getFilterTitle(formatDate2Url($scope.from), $scope.resourceBundle['from']);
+            caption += getFilterTitle(formatDate2Url($scope.to), $scope.resourceBundle['to']);
+            caption += getFilterTitle($scope.eTag, $scope.resourceBundle['kiosk'] + " " + $scope.resourceBundle['tag.lower']);
+            caption += getFilterTitle($scope.mTag, $scope.resourceBundle['material'] + " " + $scope.resourceBundle['tag.lower']);
+            return caption;
+        }
     }
 ]);
 

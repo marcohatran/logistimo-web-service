@@ -141,6 +141,14 @@ public class RequestModel {
   @Expose
   private String orderTag;
 
+  @SerializedName(value = "TOKEN_OID", alternate = "order_id")
+  @Expose
+  private String orderId;
+
+  @SerializedName(value = "TOKEN_EX_TRANSFER", alternate = "exclude_transfer")
+  @Expose
+  private String excludeTransfer;
+
   @SerializedName(value = "TOKEN_APPROVAL_STATUS", alternate = "approval_status")
   @Expose
   private String approvalStatus;
@@ -397,5 +405,19 @@ public class RequestModel {
     this.orderSubType = orderSubType;
   }
 
+  public String getOrderId() {
+    return orderId;
+  }
 
+  public void setOrderId(String orderId) {
+    this.orderId = orderId;
+  }
+
+  public String getExcludeTransfer() {
+    return excludeTransfer;
+  }
+
+  public void setExcludeTransfer(String excludeTransfer) {
+    this.excludeTransfer = excludeTransfer;
+  }
 }
