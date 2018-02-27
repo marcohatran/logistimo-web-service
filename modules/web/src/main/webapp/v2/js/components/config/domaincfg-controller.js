@@ -2526,11 +2526,6 @@ domainCfgControllers.controller('OrdersConfigurationController', ['$scope', 'dom
     }
 ]);
 
-domainCfgControllers.controller('NotificationsExportController', ['$scope', 'exportService',
-    function ($scope, exportService) {
-    }
-]);
-
 domainCfgControllers.controller('NotifController', ['$scope', function ($scope) {
     $scope.setuinfo = function (data) {
         $scope.uinfo = data;
