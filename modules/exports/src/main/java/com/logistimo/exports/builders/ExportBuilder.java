@@ -82,8 +82,8 @@ public class ExportBuilder {
     builder.excludeFieldsWithoutExposeAnnotation();
     Gson gson = builder.create();
     Map<String, String> filters = gson.fromJson(gson.toJson(model), type);
-    filters.put("USER_ROLE", sUser.getRole());
-    filters.put("USER_ID", sUser.getUsername());
+    filters.put("EXPORT_USER_ROLE", sUser.getRole());
+    filters.put("EXPORT_USER_ID", sUser.getUsername());
     ExportModel exportModel = new ExportModel();
     exportModel.userId = sUser.getUsername();
     exportModel.locale = sUser.getLocale().getLanguage();

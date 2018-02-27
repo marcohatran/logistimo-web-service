@@ -24,7 +24,7 @@
 <div ng-controller="SimpleMenuController" ng-init="init('orders.shipment')">
     <ul class="nav nav-tabs subnav-tabs">
         <li ng-class="{active: subview == 'list' || subview == 'shipmentdetail'}"><a href="#/orders/shipment/">
-            Shipment
+            {{resourceBundle['shipments']}}
         </a></li>
     </ul>
     <div ng-switch="subview">

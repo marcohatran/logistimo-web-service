@@ -50,8 +50,7 @@
         <div class="row action-bar">
             <div class="col-sm-12 noLRpad">
                 <div class="pull-right">
-                    <export-data mail-id="mailId" export-type="manualtransactions" entity-id="entity.id" from="from"
-                                 to="to" rows="numFound"></export-data>
+                    <export callback="exportData()"></export>
                 </div>
             </div>
         </div>

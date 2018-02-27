@@ -53,6 +53,7 @@ import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.StringUtil;
 import com.sun.rowset.CachedRowSetImpl;
 
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.math.BigDecimal;
@@ -456,30 +457,21 @@ public class DemandService implements IDemandService {
     StringBuilder
         sqlQuery =
         new StringBuilder(
-            "SELECT ID,KID,MID,OID,ROQ,OQ,RSN,SQ,SDRSN,FQ,SDID,ST, (SELECT IF(EXISTS(SELECT 1 FROM MATERIAL WHERE MATERIALID = D.MID AND BM=0),"
-                +
-                "(SELECT GROUP_CONCAT(CONCAT(SID, '||', FDRSN) SEPARATOR ';') FROM SHIPMENTITEM SI WHERE SID IN (SELECT ID FROM SHIPMENT WHERE ORDERID = OID) "
-                +
-                "AND SI.MID = D.MID), (SELECT GROUP_CONCAT(CONCAT(SI.SID, '||', SIB.BID, '||', SIB.FDRSN) SEPARATOR ';') "
-                +
-                "FROM SHIPMENTITEM SI, SHIPMENTITEMBATCH SIB WHERE SI.ID = SIB.SIID AND SI.SID IN (SELECT ID FROM SHIPMENT WHERE ORDERID = OID) AND SI.MID = D.MID))) FDREASONS, "
-                +
+            "SELECT ID,KID,MID,OID,ROQ,OQ,RSN,SQ,SDRSN,FQ,SDID,ST, (SELECT IF(EXISTS(SELECT 1 FROM MATERIAL WHERE MATERIALID = D.MID AND BM=0)," +
+                "(SELECT GROUP_CONCAT(CONCAT(SID, '||', FDRSN) SEPARATOR ';') FROM SHIPMENTITEM SI WHERE SID IN (SELECT ID FROM SHIPMENT WHERE ORDERID = OID) " +
+                "AND SI.MID = D.MID), (SELECT GROUP_CONCAT(CONCAT(SI.SID, '||', SIB.BID, '||', SIB.FDRSN) SEPARATOR ';') " +
+                "FROM SHIPMENTITEM SI, SHIPMENTITEMBATCH SIB WHERE SI.ID = SIB.SIID AND SI.SID IN (SELECT ID FROM SHIPMENT WHERE ORDERID = OID) AND SI.MID = D.MID))) FDREASONS, " +
                 "(SELECT OX.STON from `ORDER` OX where OX.ID = OID) OSCT FROM DEMANDITEM D ");
-    List<String> parameters = new ArrayList<>(1);
+    List<String> parameters = new ArrayList<>();
     if (orderId != null) {
       sqlQuery.append("WHERE OID = ").append(CharacterConstants.QUESTION);
       parameters.add(String.valueOf(orderId));
     } else {
-      StringBuilder
-          orderQuery =
+      StringBuilder orderQuery =
           buildQueryForOids(domainId, oType, excludeTransfer, kioskId, kioskIds, kioskTag,
               parameters);
-      // Append the order query to the sqlQuery
-      if (orderQuery != null) {
         sqlQuery.append("WHERE OID IN (").append(orderQuery).append(")");
-      }
     }
-    // Apply other filters on DEMANDITEM table
     if (materialId != null) {
       sqlQuery.append(" AND MID = ").append(CharacterConstants.QUESTION);
       parameters.add(String.valueOf(materialId));
@@ -499,62 +491,57 @@ public class DemandService implements IDemandService {
       sqlQuery.append(" AND T < TIMESTAMP(").append(CharacterConstants.QUESTION).append(")");
       parameters.add(sdf.format(to));
     }
-    if (discType != null) {
-      if (IDemandItem.ORDERING_DISCREPANCY.equals(discType)) {
-        sqlQuery.append(" AND ((ROQ != -1 AND OQ != ROQ) AND (ST != 'cn'))");
-      } else if (IDemandItem.SHIPPING_DISCREPANCY.equals(discType)) {
-        sqlQuery.append(" AND ((SQ != OQ AND (ST='cm' OR ST='fl')))");
-      } else if (IDemandItem.FULFILLMENT_DISCREPANCY.equals(discType)) {
+
+    switch (discType) {
+      case IDemandItem.ORDERING_DISCREPANCY:
+        sqlQuery.append(" AND (ROQ != -1 AND OQ != ROQ AND ST != 'cn')");
+        break;
+      case IDemandItem.SHIPPING_DISCREPANCY:
+        sqlQuery.append(" AND (SQ != OQ AND (ST='cm' OR ST='fl'))");
+        break;
+      case IDemandItem.FULFILLMENT_DISCREPANCY:
         sqlQuery.append(" AND (FQ != SQ AND ST = 'fl')");
-      }
-    } else {
-      // Get demand items with any/all discrepancies
-      sqlQuery.append(
-          " AND ((ROQ != -1 AND OQ != ROQ AND (ST != 'cn')) OR (SQ != OQ AND (ST ='cm' OR ST='fl')) OR (FQ != SQ AND ST = 'fl'))");
+        break;
+      default:
+        // All discrepancies
+        sqlQuery.append(
+            " AND ((ROQ != -1 AND OQ != ROQ AND ST != 'cn') OR (SQ != OQ AND (ST ='cm' OR ST='fl')) OR (FQ != SQ AND ST = 'fl'))");
     }
+
     final String orderBy = " ORDER BY OSCT DESC";
     sqlQuery.append(orderBy);
-    QueryParams
-        qp =
-        new QueryParams(sqlQuery.toString(), parameters, QueryParams.QTYPE.SQL,
-            IDemandItem.class);
-    return qp;
+    return new QueryParams(sqlQuery.toString(), parameters, QueryParams.QTYPE.SQL,
+        IDemandItem.class);
   }
 
   private StringBuilder buildQueryForOids(Long domainId, String oType, Boolean excludeTransfer,
                                           Long kioskId, List<Long> kioskIds, String kioskTag,
                                           List<String> parameters) {
-    String kidParam = "SKID"; // kidParam is used only when kioskId is specified.
-    if (IOrder.TYPE_PURCHASE.equals(oType)) {
-      kidParam = "KID";
-    } else if (IOrder.TYPE_SALE.equals(oType)) {
-      kidParam = "SKID";
-    }
     StringBuilder orderQuery = new StringBuilder("SELECT ID FROM `ORDER` WHERE ");
     if (excludeTransfer) {
       orderQuery.append("OTY != ").append(CharacterConstants.QUESTION);
       parameters.add(String.valueOf(IOrder.TRANSFER));
-      orderQuery.append(" AND (");
+      orderQuery.append(" AND ");
     }
     // kioskIds can be present with out without kioskId
     if (kioskIds != null && !kioskIds.isEmpty()) {
+      StringBuilder kioskIdQuery = new StringBuilder();
+      List<String> kids = new ArrayList<>(kioskIds.size());
+      for (Long id : kioskIds) {
+        kioskIdQuery.append(CharacterConstants.QUESTION).append(CharacterConstants.COMMA);
+        kids.add(String.valueOf(id));
+      }
+      kioskIdQuery.setLength(orderQuery.length() - 1);
+
       orderQuery.append("(KID IN (");
-      for (Long id : kioskIds) {
-        orderQuery.append(CharacterConstants.QUESTION).append(CharacterConstants.COMMA);
-        parameters.add(String.valueOf(id));
-      }
-      orderQuery.setLength(orderQuery.length() - 1);
+      orderQuery.append(kioskIdQuery);
+      parameters.addAll(kids);
+
       orderQuery.append(") OR SKID IN (");
-      for (Long id : kioskIds) {
-        orderQuery.append(CharacterConstants.QUESTION).append(CharacterConstants.COMMA);
-        parameters.add(String.valueOf(id));
-      }
-      orderQuery.setLength(orderQuery.length() - 1);
-      orderQuery.append(")) AND ");
-    }
-    if (kioskId != null) {
-      orderQuery.append(kidParam).append(" = ").append(CharacterConstants.QUESTION);
-      parameters.add(String.valueOf(kioskId));
+      orderQuery.append(kioskIdQuery);
+      parameters.addAll(kids);
+
+      orderQuery.append("))");
     } else {
       orderQuery.append("(KID IN (SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID = ")
           .append(CharacterConstants.QUESTION).append(")");
@@ -565,8 +552,12 @@ public class DemandService implements IDemandService {
       parameters.add(String.valueOf(domainId));
 
     }
-    if (kioskTag != null && !kioskTag.isEmpty()) {
-      // If only kioskTag is present, get orders whose kid or skid matches the tag
+
+    if (kioskId != null) {
+      String kidParam = IOrder.TYPE_PURCHASE.equals(oType) ? "KID" : "SKID";
+      orderQuery.append(" AND ").append(kidParam).append(" = ").append(CharacterConstants.QUESTION);
+      parameters.add(String.valueOf(kioskId));
+    } else if (StringUtils.isNotBlank(kioskTag)) {
       orderQuery.append(
           " AND (KID IN (SELECT KIOSKID FROM KIOSK_TAGS WHERE ID IN(SELECT ID FROM TAG WHERE NAME=")
           .append(CharacterConstants.QUESTION).append("))");
@@ -577,9 +568,7 @@ public class DemandService implements IDemandService {
           .append(CharacterConstants.QUESTION).append(")))");
       parameters.add(kioskTag);
     }
-    if (excludeTransfer) {
-      orderQuery.append(")");
-    }
+
     return orderQuery;
   }
 
@@ -653,12 +642,10 @@ public class DemandService implements IDemandService {
             && !IOrder.CANCELLED.equals(model.st)) {
           model.discTypes.add(IDemandItem.ORDERING_DISCREPANCY);
         }
-        if (BigUtil.notEquals(model.sq, model.oq) && (model.st != null && (
-            IOrder.COMPLETED.equals(model.st) || IOrder.FULFILLED.equals(model.st)))) {
+        if (BigUtil.notEquals(model.sq, model.oq) && (IOrder.COMPLETED.equals(model.st) || IOrder.FULFILLED.equals(model.st))) {
           model.discTypes.add(IDemandItem.SHIPPING_DISCREPANCY);
         }
-        if (BigUtil.notEquals(model.fq, model.sq) && (model.st != null && IOrder.FULFILLED
-            .equals(model.st))) {
+        if (BigUtil.notEquals(model.fq, model.sq) && (IOrder.FULFILLED.equals(model.st))) {
           model.discTypes.add(IDemandItem.FULFILLMENT_DISCREPANCY);
         }
 

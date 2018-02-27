@@ -415,7 +415,7 @@ public class MnlTransactionUtil {
             "{0} when updating inventory transaction.  type: {1}, domainId: {2}, kioskId: {3}, materialId: {4}, sourceUserId: {5} Message: {6}",
             e.getClass().getName(), transaction.getType(), transaction.getDomainId(),
             transaction.getKioskId(), transaction.getMaterialId(), transaction.getSourceUserId(),
-            e.getMessage());
+            e.getMessage(), e);
         ec.messages.add("System Error: " + e.getMessage());
       } finally {
         if (ec.hasErrors()) {

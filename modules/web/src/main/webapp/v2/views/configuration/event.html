@@ -33,15 +33,10 @@
                     <p class="litetext">
                         {{resourceBundle['notifications.overview']}}
                     </p>
-                    <div class="row" ng-controller="NotificationsExportController">
-                        <p class="col-sm-10">{{resourceBundle['note']}}: {{resourceBundle['event.bulletininfo']}} <a
+                    <div class="row">
+                        <p class="col-sm-12">{{resourceBundle['note']}}: {{resourceBundle['event.bulletininfo']}} <a
                                 href="#/configuration/notifications/bulletin/"> {{resourceBundle['bulletinboard']}}</a>
                             {{resourceBundle['isenabled']}}</p>
-                        <div class="col-sm-2">
-                            <span class="pull-right">
-                                <export-data mail-id="mailId" report-type="configuration" export-type="events" rows="numFound"></export-data>
-                            </span>
-                        </div>
                     </div>
                     <div class="bizinfo bizinfo-last">
                         <div class="row overflowYHide">
