@@ -1511,12 +1511,12 @@ public class RESTUtil {
     // Returns-incoming reasons, if any
     String retIncReasons = ic.getTransReason(ITransaction.TYPE_RETURNS_INCOMING);
     if (StringUtils.isNotEmpty(retIncReasons)) {
-      config.put(JsonTagsZ.RETURNS_INCOMING, StringUtil.getCSV(retIncReasons.split(CharacterConstants.COMMA)));
+      config.put(JsonTagsZ.REASONS_RETURNS_INCOMING, StringUtil.getCSV(retIncReasons.split(CharacterConstants.COMMA)));
     }
     // Returns-outgoing reasons, if any
     String retOutReasons = ic.getTransReason(ITransaction.TYPE_RETURNS_OUTGOING);
     if (StringUtils.isNotEmpty(retOutReasons)) {
-      config.put(JsonTagsZ.RETURNS_OUTGOING, StringUtil.getCSV(retOutReasons.split(CharacterConstants.COMMA)));
+      config.put(JsonTagsZ.REASONS_RETURNS_OUTGOING, StringUtil.getCSV(retOutReasons.split(CharacterConstants.COMMA)));
     }
     // Reasons by material tag, if any
     Map<String,Map<String,String>> rsnsByMtag = getReasonsByTag(ic);
