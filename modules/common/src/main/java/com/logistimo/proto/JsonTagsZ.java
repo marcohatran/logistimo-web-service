@@ -263,6 +263,9 @@ public class JsonTagsZ {
   public static final String REASONS_RECEIPT = "rrsns";
   public static final String REASONS_STOCKCOUNT = "prsns";
   public static final String REASONS_TRANSFER = "trsns";
+  public static final String REASONS_RETURNS_INCOMING = "rirsns";
+  public static final String REASONS_RETURNS_OUTGOING = "rorsns";
+
   public static final String RECEIPT_COUNT = "rc";
   public static final String RECEIPT_QUANTITY = "rq";
   public static final String RETURN_COUNT = "rtc";
