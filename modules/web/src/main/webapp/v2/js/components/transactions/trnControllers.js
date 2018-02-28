@@ -42,17 +42,18 @@ trnControllers.controller('TransactionsCtrl', ['$scope', 'trnService', 'domainCf
             }
         }
 
-
+        $scope.initLocalFilters = [];
         $scope.init = function (firstTimeInit) {
         if (typeof  $scope.showEntityFilter === 'undefined') {
             $scope.showEntityFilter = true;
                 if(firstTimeInit){
-            $scope.wparams.push(["eid", "entity.id"]);
-        }
+                    $scope.wparams.push(["eid", "entity.id"]);
+                }
             }
             if (checkNotNullEmpty(requestContext.getParam("mid"))) {
                 if(checkNullEmpty($scope.material) || $scope.material.mId != parseInt(requestContext.getParam("mid"))) {
                     $scope.material = {mId: parseInt(requestContext.getParam("mid")),mnm:""};
+                    $scope.initLocalFilters.push("material")
                 }
             } else {
                 $scope.material = null;
@@ -89,15 +90,18 @@ trnControllers.controller('TransactionsCtrl', ['$scope', 'trnService', 'domainCf
             if (checkNotNullEmpty(requestContext.getParam("eid"))) {
                 if(checkNullEmpty($scope.entity) || $scope.entity.id != parseInt(requestContext.getParam("eid"))) {
                     $scope.entity = {id: parseInt(requestContext.getParam("eid")), nm: ""};
+                    $scope.initLocalFilters.push("entity")
                 }
                 if(checkNotNullEmpty(requestContext.getParam("lceid"))) {
                     if (checkNullEmpty($scope.cust) || $scope.cust.id != parseInt(requestContext.getParam("lceid"))) {
                         $scope.cust = {id: parseInt(requestContext.getParam("lceid")), nm: ""};
+                        $scope.initLocalFilters.push("cust")
                     }
                 }
                 if (checkNotNullEmpty(requestContext.getParam("lveid"))) {
                     if (checkNullEmpty($scope.vend) || $scope.vend.id != parseInt(requestContext.getParam("lveid"))) {
                         $scope.vend = {id: parseInt(requestContext.getParam("lveid")), nm: ""};
+                        $scope.initLocalFilters.push("vend")
                     }
                 }
                 entityService.getLinksCount(requestContext.getParam("eid")).then(function (data) {
@@ -110,12 +114,14 @@ trnControllers.controller('TransactionsCtrl', ['$scope', 'trnService', 'domainCf
             } else if(checkNotNullEmpty(requestContext.getParam("mid"))){
                 if(checkNotNullEmpty($scope.material) || $scope.material.mId != parseInt(requestContext.getParam("mid"))) {
                     $scope.material = {mId: parseInt(requestContext.getParam("mid")), mnm: "",b:$scope.material.b}  ;
+                    $scope.initLocalFilters.push("material")
                 }
             } else if($scope.showEntityFilter){
                 if(firstTimeInit && checkNotNullEmpty($scope.defaultEntityId)){
                     $location.$$search.eid = $scope.defaultEntityId;
                     $location.$$compose();
                     $scope.entity = {id: $scope.defaultEntityId, nm: ""};
+                    $scope.initLocalFilters.push("entity")
                 }else{
                     $scope.entity = null;
                 }
