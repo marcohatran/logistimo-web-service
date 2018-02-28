@@ -671,7 +671,11 @@ cmnControllers.controller('ResetController', ['$scope', function ($scope) {
                 if (newValue != oldValue) {
                     if ($scope.initLocalFilters.indexOf(filter) != -1) {
                         $scope.$parent[filter] = angular.copy($scope[filter]);
-                        $scope.initLocalFilters.splice($scope.initLocalFilters.indexOf(filter), 1)
+                        $scope.initLocalFilters.splice($scope.initLocalFilters.indexOf(filter), 1);
+                        //Make initLocalFilters as local variable to avoid conflict on updating same in parent
+                        if($scope.initLocalFilters.length == 0) {
+                            $scope.initLocalFilters = []
+                        }
                     }
                 }
             });
