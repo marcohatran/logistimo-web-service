@@ -50,6 +50,7 @@ invControllers.controller('StockViewsController', ['$scope', '$timeout', 'matSer
             $location.$$compose();
             $scope.$broadcast("resetRequest");
         };
+        $scope.initLocalFilters = [];
         $scope.init = function (firstTimeInit) {
             $scope.loading=false;
             $scope.mtag = requestContext.getParam("mtag");
@@ -81,6 +82,7 @@ invControllers.controller('StockViewsController', ['$scope', '$timeout', 'matSer
             if (checkNotNullEmpty(requestContext.getParam("eid"))) {
                 if (checkNullEmpty($scope.entity) || $scope.entity.id != requestContext.getParam("eid")) {
                     $scope.entity = {id: parseInt(requestContext.getParam("eid")), nm: ""};
+                    $scope.initLocalFilters.push("entity")
                 }
                 $scope.vw = "t";
                 $scope.matType = requestContext.getParam("matType") ||  '0';
@@ -90,6 +92,7 @@ invControllers.controller('StockViewsController', ['$scope', '$timeout', 'matSer
                     $location.$$search.eid = $scope.defaultEntityId;
                     $location.$$compose();
                     $scope.entity = {id: $scope.defaultEntityId, nm: ""};
+                    $scope.initLocalFilters.push("entity")
                     $scope.matType = requestContext.getParam("matType") ||  '0';
                     $scope.onlyNZStk = requestContext.getParam("onlyNZStk") || false;
                 }else{
@@ -100,6 +103,7 @@ invControllers.controller('StockViewsController', ['$scope', '$timeout', 'matSer
             if (checkNotNullEmpty(requestContext.getParam("mid"))) {
                 if(checkNullEmpty($scope.material) || $scope.material.mId != parseInt(requestContext.getParam("mid"))){
                     $scope.material = {mId: parseInt(requestContext.getParam("mid")),mnm:""};
+                    $scope.initLocalFilters.push("material")
                 }
                 $scope.onlyNZStk = requestContext.getParam("onlyNZStk") || false;
                 $scope.pdos = requestContext.getParam("pdos");

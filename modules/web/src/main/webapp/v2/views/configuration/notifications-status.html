@@ -44,8 +44,7 @@
         </div>
         <div ng-hide="filtered.length == 0">
           <div class="row action-bar">
-              <export-data ng-show="iAdm" mail-id="mailId" export-type="notificationStatus"
-                           from="from" to="to" rows="numFound"></export-data>
+              <export ng-show="iAdm" callback="exportData()"></export>
           </div>
         </div>
         <div class="row">

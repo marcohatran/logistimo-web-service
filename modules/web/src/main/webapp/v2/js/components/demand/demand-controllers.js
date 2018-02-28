@@ -70,7 +70,7 @@ demandControllers.controller('DemandViewsCtrl', ['$scope', 'demandService', 'dom
         $scope.wparams = [["etag","etag"], ["tag","tag"], ["eid","entity.id"], ["mid","material.mId"],["vw","vw"], ["etrn","etrn"], ["otype","otype"]];
         $scope.localFilters = ['entity', 'material', 'etag', 'tag', 'otype', 'etrn'];
         ListingController.call(this, $scope, requestContext, $location);
-
+        $scope.initLocalFilters = [];
         $scope.init = function (firstTimeInit) {
             $scope.tag = requestContext.getParam("tag") || "";
             $scope.eftag = $scope.etag = requestContext.getParam("etag") || "";
@@ -81,6 +81,7 @@ demandControllers.controller('DemandViewsCtrl', ['$scope', 'demandService', 'dom
             if (checkNotNullEmpty(requestContext.getParam("eid"))) {
                 if (checkNullEmpty($scope.entity) || $scope.entity.id != requestContext.getParam("eid")) {
                     $scope.entity = {id: parseInt(requestContext.getParam("eid")), nm: ""};
+                    $scope.initLocalFilters.push("entity")
                 }
                 if(checkNotNullEmpty($scope.vw) && $scope.vw == 'm'){
                     $scope.vw = "";
@@ -93,6 +94,7 @@ demandControllers.controller('DemandViewsCtrl', ['$scope', 'demandService', 'dom
                     $location.$$search.eid = $scope.defaultEntityId;
                     $location.$$compose();
                     $scope.entity = {id: $scope.defaultEntityId, nm: ""};
+                    $scope.initLocalFilters.push("entity")
                 }else {
                     $scope.entity = null;
                 }
@@ -101,6 +103,7 @@ demandControllers.controller('DemandViewsCtrl', ['$scope', 'demandService', 'dom
             if (checkNotNullEmpty(requestContext.getParam("mid"))) {
                 if(checkNullEmpty($scope.material) || $scope.material.mId != parseInt(requestContext.getParam("mid"))){
                     $scope.material = {mId: parseInt(requestContext.getParam("mid")),mnm:""};
+                    $scope.initLocalFilters.push("material")
                 }
                 if(checkNotNullEmpty($scope.tag)){
                     $scope.tag = "";

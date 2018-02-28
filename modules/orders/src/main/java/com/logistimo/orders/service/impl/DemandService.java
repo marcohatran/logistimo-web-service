@@ -491,7 +491,9 @@ public class DemandService implements IDemandService {
       sqlQuery.append(" AND T < TIMESTAMP(").append(CharacterConstants.QUESTION).append(")");
       parameters.add(sdf.format(to));
     }
-
+    if(StringUtils.isBlank(discType)) {
+      discType = CharacterConstants.EMPTY;
+    }
     switch (discType) {
       case IDemandItem.ORDERING_DISCREPANCY:
         sqlQuery.append(" AND (ROQ != -1 AND OQ != ROQ AND ST != 'cn')");

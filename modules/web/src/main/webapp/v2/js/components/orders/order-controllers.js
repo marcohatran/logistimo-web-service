@@ -78,6 +78,7 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
         }).catch(function error(msg) {
             $scope.showErrorMsg(msg);
         });
+        $scope.initLocalFilters = [];
         $scope.init = function (firstTimeInit) {
             var triggerFetch = true;
             $scope.selAll = false;
@@ -115,6 +116,7 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
                 if (checkNotNullEmpty(requestContext.getParam("eid"))) {
                     if (checkNullEmpty($scope.entity) || $scope.entity.id != parseInt(requestContext.getParam("eid"))) {
                         $scope.entity = {id: parseInt(requestContext.getParam("eid")), nm: ""};
+                        $scope.initLocalFilters.push("entity")
                     }
 
                 } else {
@@ -122,6 +124,7 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
                         $location.$$search.eid = $scope.defaultEntityId;
                         $location.$$compose();
                         $scope.entity = {id: $scope.defaultEntityId, nm: ""};
+                        $scope.initLocalFilters.push("entity")
                         defaultFetchOrder = false;
                     } else {
                         $scope.entity = null;
@@ -148,8 +151,6 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
             caption += getFilterTitle(getApprovalStatusLabel($scope.approval_status), $scope.resourceBundle['approval.status']);
             caption += getFilterTitle(checkNullEmpty($scope.entity) ? $scope.etag : "", $scope.resourceBundle['kiosk'] + " " + $scope.resourceBundle['tag.lower']);
             caption += getFilterTitle($scope.otag, $scope.resourceBundle['order'] + " " + $scope.resourceBundle['tag.lower']);
-
-
             return caption;
         }
 
@@ -199,7 +200,7 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
             }
             var oty = $scope.type == '2' ? '0' : '1';
             var module = oty == 0 ? 'transfers' : 'orders';
-            var templateId = oty == 0 ? 'transfers' : 'orders'
+            var templateId = oty == 0 ? 'transfers' : 'orders';
             $scope.showLoading();
             exportService.exportData({
                 from_date: checkNotNullEmpty($scope.from) ? formatDate2Url($scope.from) : undefined,
@@ -2925,6 +2926,7 @@ ordControllers.controller('ShipmentListingController', ['$scope', 'ordService', 
     $scope.localFilters = ['custId', 'vendId', 'status', 'sTrackId', 'from', 'to', 'eftFrom', 'eftTo', 'sTrans', 'trackId'];
     $scope.filterMethods = ['searchTID', 'updateTransporter'];
     ListingController.call(this, $scope, requestContext, $location);
+    $scope.initLocalFilters = [];
     $scope.init = function () {
         $scope.status = requestContext.getParam("status") || "";
         $scope.from = parseUrlDate(requestContext.getParam("from"));
@@ -2936,6 +2938,7 @@ ordControllers.controller('ShipmentListingController', ['$scope', 'ordService', 
         if (checkNotNullEmpty(requestContext.getParam("cid"))) {
             if (checkNullEmpty($scope.custId) || $scope.custId.id != parseInt(requestContext.getParam("cid"))) {
                 $scope.custId = {id: parseInt(requestContext.getParam("cid")), nm: ""};
+                $scope.initLocalFilters.push("custId");
             }
         } else {
             $scope.custId = null;
@@ -2943,6 +2946,7 @@ ordControllers.controller('ShipmentListingController', ['$scope', 'ordService', 
         if (checkNotNullEmpty(requestContext.getParam("vid"))) {
             if (checkNullEmpty($scope.vendId) || $scope.vendId.id != parseInt(requestContext.getParam("vid"))) {
                 $scope.vendId = {id: parseInt(requestContext.getParam("vid")), nm: ""};
+                $scope.initLocalFilters.push("vendId")
             }
         } else {
             $scope.vendId = null;
