@@ -593,7 +593,7 @@ domainCfgControllers.controller('CapabilitiesConfigurationController', ['$scope'
         };
 
         $scope.toggleAssets = function (type) {
-            if(type == 'v') {
+            if(type == 'c') {
                 if($scope.uiCnf.tm.indexOf('va') != -1 && $scope.uiCnf.tm.indexOf('cas') != -1) {
                     $scope.uiCnf.tm.splice($scope.uiCnf.tm.indexOf('cas'), 1);
                     $scope.uiCnf.tm.splice($scope.uiCnf.tm.indexOf('va'), 1);
