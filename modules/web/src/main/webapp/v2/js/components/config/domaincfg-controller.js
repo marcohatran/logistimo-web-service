@@ -3933,6 +3933,31 @@ domainCfgControllers.controller('NotificationMessageController', ['$scope', 'dom
         $scope.reset = function () {
             $scope.from = '';
             $scope.to = '';
+        };
+
+        $scope.exportData=function() {
+            $scope.showLoading();
+            exportService.exportData({
+                from_date: formatDate2Url($scope.from) || undefined,
+                end_date: formatDate2Url($scope.to) || undefined,
+                titles: {
+                    filters: getCaption()
+                },
+                module: "sent.notification",
+                templateId: "c_sent_notification"
+            }).then(function (data) {
+                $scope.showSuccess(data.data);
+            }).catch(function error(msg) {
+                $scope.showErrorMsg(msg);
+            }).finally(function() {
+                $scope.hideLoading();
+            });
+        };
+
+        function getCaption() {
+            var caption = getFilterTitle(formatDate2Url($scope.from), $scope.resourceBundle['from']);
+            caption += getFilterTitle(formatDate2Url($scope.to), $scope.resourceBundle['to']);
+            return caption;
         }
     }
 ]);
