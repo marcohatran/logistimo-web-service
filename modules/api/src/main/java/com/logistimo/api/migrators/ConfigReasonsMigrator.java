@@ -78,7 +78,7 @@ public class ConfigReasonsMigrator {
         JSONObject config = new JSONObject(configuration.getValue());
         JSONObject inventory = (JSONObject) config.get("invntry");
         List<String> reasonKeys =
-            Arrays.asList("trsns","imtrsns","rmtrsns","pmtrsns","tmtrsns","wmtrsns","rimtrsns","romtrsns");
+            Arrays.asList("trsns","imtrsns","rmtrsns","smtrsns","tmtrsns","dmtrsns","rimtrsns","romtrsns");
         boolean alreadyUpdated = false;
         for (String reasonKey : reasonKeys) {
           if(!inventory.has(reasonKey)) {
