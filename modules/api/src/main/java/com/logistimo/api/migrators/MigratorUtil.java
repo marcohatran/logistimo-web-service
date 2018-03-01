@@ -47,6 +47,8 @@ public class MigratorUtil {
   private static final XLog xLog = XLog.getLog(MigratorUtil.class);
   private static Connection connection;
 
+  private MigratorUtil(){}
+
   /**
    * Get the connection; initialise and get, if not initialised already
    *
@@ -113,10 +115,11 @@ public class MigratorUtil {
     if(connection == null) {
       initConnection();
     }
-    PreparedStatement ps = connection.prepareStatement(sql);
-    ResultSet resultset = ps.executeQuery();
-    while (resultset.next()) {
-      conf.put(resultset.getString("key"), resultset.getString("conf"));
+    try (PreparedStatement ps = connection.prepareStatement(sql)) {
+      ResultSet resultset = ps.executeQuery();
+      while (resultset.next()) {
+        conf.put(resultset.getString("key"), resultset.getString("conf"));
+      }
     }
     return conf;
   }

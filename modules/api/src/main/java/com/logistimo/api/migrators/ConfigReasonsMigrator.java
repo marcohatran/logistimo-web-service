@@ -44,6 +44,8 @@ public class ConfigReasonsMigrator {
   public static final String CONFIG_UPDATE_QUERY = "UPDATE CONFIG SET CONF=? WHERE `KEY`=?";
   public static final XLog xLog = XLog.getLog(CRConfigMigrator.class);
 
+  private ConfigReasonsMigrator(){}
+
   /**
    * Update configuration for all keys
    */
@@ -119,10 +121,10 @@ public class ConfigReasonsMigrator {
       }
       //update
       ps = MigratorUtil.getConnection().prepareStatement(CONFIG_UPDATE_QUERY);
-      for (String confKeys : conf.keySet()) {
-        if (!updatedConfigKeys.contains(confKeys)) {
-          ps.setString(1, conf.get(confKeys));
-          ps.setString(2, confKeys);
+      for (Map.Entry<String, String> confEntry : conf.entrySet()) {
+        if (!updatedConfigKeys.contains(confEntry.getKey())) {
+          ps.setString(1, confEntry.getValue());
+          ps.setString(2, confEntry.getKey());
           ps.addBatch();
         }
       }
