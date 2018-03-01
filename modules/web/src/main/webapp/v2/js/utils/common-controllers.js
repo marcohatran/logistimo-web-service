@@ -681,6 +681,16 @@ cmnControllers.controller('ResetController', ['$scope', function ($scope) {
             });
         });
     }
+
+    if($scope.forceLocalFilterReset != undefined) {
+        $scope.$parent.$watchCollection('forceLocalFilterReset', function () {
+            angular.forEach($scope.forceLocalFilterReset,function(filter){
+                $scope[filter] = angular.copy($scope.$parent[filter]);
+            });
+            $scope.$parent.forceLocalFilterReset.splice(0);
+        });
+    }
+
     function addwatch(filter) {
         $scope.$parent.$watch(filter, function (newValue, oldValue) {
             if (newValue != oldValue) {

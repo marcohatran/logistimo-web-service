@@ -38,7 +38,11 @@ invControllers.controller('StockViewsController', ['$scope', '$timeout', 'matSer
         $scope.matType = "0";
         $scope.onlyNZStk = false;
         $scope.showMore = false;
+        $scope.forceLocalFilterReset = [];
         $scope.updateETags = function(etgs, eetgs){
+            if(checkNotNullEmpty(etgs) && checkNotNullEmpty($scope.etag)) {
+                $scope.forceLocalFilterReset.push('etag');
+            }
             $scope.etag = etgs;
             $scope.eetag = eetgs;
         };
@@ -46,10 +50,30 @@ invControllers.controller('StockViewsController', ['$scope', '$timeout', 'matSer
             $scope.mtag = mtgs;
         };
         $scope.resetFilters = function () {
-            $location.$$search = {};
-            $location.$$compose();
-            $scope.$broadcast("resetRequest");
+            // Check for inventory dashboard (full-inventory) page
+            if ($scope.dashBoardEnabled &&
+                (checkNullEmpty($scope.entity) || $scope.entity.id == null || $scope.entity.id == '') &&
+                (checkNullEmpty($scope.material) || $scope.material.mId == null || $scope.material.mId == '') &&
+                ($scope.ebf == null || $scope.ebf == '') &&
+                $scope.vw == 't' &&
+                checkNullEmpty($scope.abntype) && !$scope.locationSelected) {
+                $scope.$broadcast("resetRequest");
+            } else {
+                $location.$$search = {};
+                $location.$$compose();
+            }
         };
+
+        //Will be called back from broadcast "resetRequest"
+        $scope.resetFiltersFinal = function() {
+            angular.forEach($scope.localFilters,function(filter) {
+                if(filter == "etag") {
+                    return;
+                }
+                $scope[filter] = undefined;
+            });
+        };
+
         $scope.initLocalFilters = [];
         $scope.init = function (firstTimeInit) {
             $scope.loading=false;
@@ -876,11 +900,21 @@ invControllers.controller('FullInventoryCtrl', ['$scope', 'invService', 'matServ
         });
         $scope.$on("resetRequest", function () {
             resetDataForFetch();
-            $timeout(function(){
-                    if(checkNotNullEmpty($scope.inv) && checkNotNullEmpty($scope.inv.enTgs) && $scope.inv.enTgs instanceof Array){
-                        $scope.filters.changed = true;
-                        $scope.updateETags($scope.inv.enTgs.join(','), null);
-                }},500);
+            if(checkNotNullEmpty($scope.inv) && checkNotNullEmpty($scope.inv.enTgs) && $scope.inv.enTgs instanceof Array) {
+                $timeout(function () {
+                    $scope.filters.changed = true;
+                    var etgs = $scope.inv.enTgs.join(',');
+                    $scope.updateETags(etgs, null);
+                    $scope.resetFiltersFinal();
+                    // If parent etag is already equal to default tag, call fetch manually
+                    if($scope.etag == etgs) {
+                        $scope.fetch();
+                    }
+                }, 500);
+            } else {
+                $scope.updateETags(null, null);
+                $scope.resetFiltersFinal();
+            }
         });
         $scope.$watch("loading", function(){
             $scope.$parent.updateLoading($scope.loading);
