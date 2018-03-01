@@ -31,14 +31,21 @@ import com.logistimo.api.models.configuration.AdminContactConfigModel;
 import com.logistimo.api.models.configuration.ApprovalsConfigModel;
 import com.logistimo.api.models.configuration.ApprovalsEnabledConfigModel;
 import com.logistimo.api.models.configuration.AssetConfigModel;
+import com.logistimo.api.models.configuration.AssetSystemConfigModel;
+import com.logistimo.api.models.configuration.AssetType;
 import com.logistimo.api.models.configuration.CapabilitiesConfigModel;
 import com.logistimo.api.models.configuration.DashboardConfigModel;
 import com.logistimo.api.models.configuration.GeneralConfigModel;
 import com.logistimo.api.models.configuration.InventoryConfigModel;
+import com.logistimo.api.models.configuration.Manufacturer;
+import com.logistimo.api.models.configuration.Model;
+import com.logistimo.api.models.configuration.MonitoringPoint;
 import com.logistimo.api.models.configuration.OrdersConfigModel;
 import com.logistimo.api.models.configuration.ReturnsConfigModel;
+import com.logistimo.api.models.configuration.Sensor;
 import com.logistimo.api.models.configuration.SupportConfigModel;
 import com.logistimo.api.models.configuration.TagsConfigModel;
+import com.logistimo.api.models.configuration.WorkingStatus;
 import com.logistimo.assets.entity.IAsset;
 import com.logistimo.auth.SecurityConstants;
 import com.logistimo.auth.utils.SecurityUtils;
@@ -114,6 +121,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -576,6 +584,148 @@ public class ConfigurationModelBuilder {
       }
     }
     return model;
+  }
+
+  public AssetSystemConfigModel buildAssetSystemConfigModel(AssetSystemConfig asc,
+                                                            AssetConfigModel assetConfigModel)
+      throws ConfigurationException {
+
+    AssetSystemConfigModel model = new AssetSystemConfigModel();
+
+    // build working statuses
+    model.workingStatus = buildWorkingStatuses(asc);
+
+    // build asset types
+    model.assetTypes = buildAssetTypes(asc, assetConfigModel);
+
+    return model;
+  }
+
+  public List<WorkingStatus> buildWorkingStatuses(AssetSystemConfig asc) {
+    List<WorkingStatus> workingStatusList = new ArrayList<>(asc.workingStatuses.size());
+    for (AssetSystemConfig.WorkingStatus workingStatus : asc.workingStatuses) {
+      WorkingStatus ws = new WorkingStatus();
+      ws.status = workingStatus.status;
+      ws.displayName = workingStatus.displayValue;
+      workingStatusList.add(ws);
+    }
+    return workingStatusList;
+  }
+
+  public List<AssetType> buildAssetTypes(AssetSystemConfig asc,
+                                                                AssetConfigModel assetConfigModel) {
+
+    List<AssetType> assetTypeList = new ArrayList<>(asc.assets.size());
+    Map<Integer, AssetConfigModel.Asset> assetMap = assetConfigModel.assets;
+
+    for (Integer key : asc.assets.keySet()) {
+      AssetSystemConfig.Asset asset = asc.getAsset(key);
+      AssetType assetType = new AssetType();
+      assetType.id = asset.type;
+      assetType.manufacturers = buildManufacturers(asset.getManufacturers(), assetMap.get(key).mcs);
+      assetType.monitoringType = asset.type;
+      assetType.gsmEnabled = asset.isGSMEnabled();
+      assetType.name = asset.getName();
+      assetType.temperatureSensitive = asset.isTemperatureEnabled();
+      if (asset.monitoringPositions != null) {
+        assetType.monitoringPoints = buildAssetTypeMonitoringPoints(asset);
+      }
+      assetTypeList.add(assetType);
+    }
+    return assetTypeList;
+  }
+
+  public List<MonitoringPoint> buildAssetTypeMonitoringPoints(
+      AssetSystemConfig.Asset asset) {
+    List<MonitoringPoint> monitoringPointList = new ArrayList<>(asset.monitoringPositions.size());
+    for (AssetSystemConfig.MonitoringPosition position : asset.monitoringPositions) {
+      MonitoringPoint
+          monitoringPoint =
+          new MonitoringPoint();
+      monitoringPoint.point = position.mpId;
+      monitoringPoint.position = position.name;
+      monitoringPoint.sensor = position.sId;
+      monitoringPointList.add(monitoringPoint);
+    }
+    return monitoringPointList;
+  }
+
+  public List<Manufacturer> buildManufacturers(
+      Map<String, AssetSystemConfig.Manufacturer> systemManufacturerMap,
+      Map<String, AssetConfigModel.Mancfacturer> domainManufacturerMap) {
+    List<Manufacturer> manufacturerList = new ArrayList<>(1);
+    if (systemManufacturerMap != null) {
+      for (Map.Entry<String, AssetSystemConfig.Manufacturer> entry : systemManufacturerMap
+          .entrySet()) {
+        Manufacturer model = new Manufacturer();
+        boolean match = false;
+        AssetConfigModel.Mancfacturer domainManufacturer = null;
+        for (Map.Entry<String, AssetConfigModel.Mancfacturer> man : domainManufacturerMap
+            .entrySet()) {
+          if (Objects.equals(entry.getKey(), man.getKey())
+              && domainManufacturerMap.get(man.getKey()).iC != null && domainManufacturerMap
+              .get(man.getKey()).iC) {
+            domainManufacturer = domainManufacturerMap.get(man.getKey());
+            match = true;
+            break;
+          }
+        }
+        if (match) {
+          AssetSystemConfig.Manufacturer manufacturer = systemManufacturerMap.get(entry.getKey());
+          model.id = entry.getKey();
+          model.name = manufacturer.name;
+          model.serialNumberFormatDescription = manufacturer.serialFormatDescription;
+          model.serialNumberValidationRegex = manufacturer.serialFormat;
+          model.modelNumberFormatDescription = manufacturer.modelFormatDescription;
+          model.modelNumberValidationRegex = manufacturer.modelFormat;
+          if (manufacturer.model != null && !manufacturer.model.isEmpty()) {
+            model.models = buildManufacturerModels(manufacturer.model, domainManufacturer.model);
+          }
+          manufacturerList.add(model);
+        }
+
+      }
+    }
+    return manufacturerList;
+  }
+
+
+  public List<Model> buildManufacturerModels(
+      List<AssetSystemConfig.Model> systemConfigModels,
+      Map<String, AssetConfigModel.Model> domainConfigModels) {
+    List<Model> modelList = new ArrayList<>(1);
+    if (domainConfigModels != null && !domainConfigModels.isEmpty()) {
+      for (Map.Entry<String, AssetConfigModel.Model> acm : domainConfigModels.entrySet()) {
+        AssetConfigModel.Model assetConfigModel = domainConfigModels.get(acm.getKey());
+        systemConfigModels.forEach(scm -> {
+          if (Objects.equals(scm.name, acm.getKey()) && assetConfigModel.iC != null
+              && assetConfigModel.iC) {
+            Model model = new Model();
+            model.name = assetConfigModel.name;
+            if (assetConfigModel.sns != null && !assetConfigModel.sns.isEmpty()) {
+              model.sensors = buildModelSensors(assetConfigModel.sns);
+            }
+            modelList.add(model);
+          }
+        });
+      }
+    }
+    return modelList;
+  }
+
+  public List<Sensor> buildModelSensors(
+      Map<String, AssetConfigModel.Sensor> sensorMap) {
+    List<Sensor> sensorList = new ArrayList<>(sensorMap.size());
+    for (Map.Entry<String, AssetConfigModel.Sensor> sns : sensorMap.entrySet()) {
+      Sensor sensor = new Sensor();
+      AssetConfigModel.Sensor acs = sensorMap.get(sns.getKey());
+      sensor.name = acs.name;
+      sensor.color = acs.cd;
+      sensor.monitoringPosition = acs.mpId;
+      sensorList.add(sensor);
+    }
+
+    return sensorList;
   }
 
   public AssetConfigModel buildAssetConfigModel(DomainConfig dc, Locale locale, String timezone)
