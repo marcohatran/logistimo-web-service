@@ -581,7 +581,7 @@ entityControllers.controller('EntityListController', ['$scope', 'entityService',
             $scope.showLoading();
             exportService.exportData({
                 ent_name: $scope.search.key || undefined,
-                etag: $scope.etag || undefined,
+                ktag: $scope.etag || undefined,
                 titles: {
                     filters: getCaption()
                 },
