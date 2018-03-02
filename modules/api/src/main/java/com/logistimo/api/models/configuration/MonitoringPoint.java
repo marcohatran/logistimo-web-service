@@ -29,7 +29,7 @@ import com.google.gson.annotations.SerializedName;
  * Created by naveensnair on 01/03/18.
  */
 public class MonitoringPoint {
-  @SerializedName("point")
+  @SerializedName("monitoring_point")
   public Integer point;
   @SerializedName("sensor")
   public String sensor;
