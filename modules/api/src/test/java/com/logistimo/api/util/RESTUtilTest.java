@@ -186,6 +186,7 @@ public class RESTUtilTest {
     return manufacturers;
   }
 
+  /*
   @Test
   public void testGetReasonsByTag() {
     InventoryConfig inventoryConfig = new InventoryConfig();
@@ -207,7 +208,7 @@ public class RESTUtilTest {
     assertEquals(getMaterialTagsReasonsMap(), matTagRsnsMap.get(JsonTagsZ.DISCARDS));
     assertEquals(getMaterialTagsReasonsMap(), matTagRsnsMap.get(JsonTagsZ.RETURNS_INCOMING));
     assertEquals(getMaterialTagsReasonsMap(), matTagRsnsMap.get(JsonTagsZ.RETURNS_OUTGOING));
-  }
+  }*/
 
   private Map<String,String> getMaterialTagsReasonsMap() {
     Map<String,String> matTagReasonsMap = new HashMap<>(3,1);

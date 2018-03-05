@@ -350,12 +350,12 @@
                                     <option ng-repeat="reason in material.rsns track by $index" value="{{reason}}" ng-selected="material.reason == reason">{{reason || '--' + resourceBundle['select'] + ' ' + resourceBundle['reason'] + '--'}}</option>
                                 </select>
                             </div>
-                            <div ng-show="showMaterials && !material.rsns && reasons && reasons.length > 0 && showReason && transaction.materials.length - 1 !== $index" >
+                            <div ng-show="showMaterials && isUndef(material.rsns) && reasons && reasons.length > 0 && showReason && transaction.materials.length - 1 !== $index" >
                                 <select class="form-control " ng-model="material.reason" tabindex="{{$index+100}}">
                                     <option ng-repeat="reason in reasons track by $index" value="{{reason}}" ng-selected="material.reason == reason">{{reason || '--' + resourceBundle['select'] + ' ' + resourceBundle['reason'] + '--'}}</option>
                                 </select>
                             </div>
-                            <p ng-show="showMaterials && (!showReason || (!(material.rsns && material.rsns.length > 0) && !(!material.rsns && reasons && reasons.length > 0))) && transaction.materials.length - 1 !== $index" class="text-center cbx">NA</p>
+                            <p ng-show="showMaterials && (!showReason || (!(material.rsns && material.rsns.length > 0) && !(isUndef(material.rsns) && reasons && reasons.length > 0))) && transaction.materials.length - 1 !== $index" class="text-center cbx">NA</p>
                         </td>
                         <td class="text-center">
                             <a ng-show="showMaterials && transaction.materials.length - 1 !== $index" href="" ng-click="deleteRow($index)">

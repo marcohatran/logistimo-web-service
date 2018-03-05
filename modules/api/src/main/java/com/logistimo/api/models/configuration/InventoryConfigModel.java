@@ -30,11 +30,14 @@ import java.util.List;
  * Created by naveensnair on 19/11/14.
  */
 public class InventoryConfigModel {
-  public String ri; // Reasons for issue
-  public String rr; // Reasons for receipt
-  public String rs; // Reasons for stock count
-  public String rd; // Reasons for discard
-  public String rt; // Reasons for transfer
+  public ReasonConfigModel ri; // Reasons for issue
+  public ReasonConfigModel rr; // Reasons for receipt
+  public ReasonConfigModel rs; // Reasons for stock count
+  public ReasonConfigModel rd; // Reasons for discard
+  public ReasonConfigModel rt; // Reasons for transfer
+  public ReasonConfigModel rri; // Reasons for Returns-incoming
+  public ReasonConfigModel rro; // Reasons for Returns-incoming
+
   public boolean ivc; // inventory visibility customers
   public boolean etdx; // enable transaction data export
   public String et; //export times
@@ -104,8 +107,6 @@ public class InventoryConfigModel {
   public LeadTimeAvgConfigModel ltacm; // Lead time average config model
   public boolean crimt; // Flag that indicates if Returns-incoming by material tags is configured or not
   public boolean cromt; // Flag that indicates if Returns-outgoing by material tags is configured or not
-  public String rri; // Reasons for Returns-incoming
-  public String rro; // Reasons for Returns-incoming
   public List<MTagReason> rimt = new ArrayList<>(1); // material tag reasons for Returns-incoming
   public List<MTagReason> romt = new ArrayList<>(1); // material tag reasons for Returns-outgoing
   public boolean rism; // Flag indicating if Returns-incoming material status is mandatory
@@ -122,6 +123,7 @@ public class InventoryConfigModel {
   public static class MTagReason {
     public String mtg;
     public String rsn;
+    public ReasonConfigModel rsnCfgModel;
   }
 
   public static class LeadTimeAvgConfigModel {

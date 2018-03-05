@@ -867,6 +867,14 @@ domainCfgControllers.controller('InventoryConfigurationController', ['$scope', '
         $scope.roxRow = [];
         $scope.dmntz = 'UTC';
         $scope.preSelectedTags = [];
+        $scope.refreshIssueList = [];
+        $scope.refreshReceiptList = [];
+        $scope.refreshStockCountList = [];
+        $scope.refreshDiscardsList = [];
+        $scope.refreshTransferList = [];
+        $scope.refreshReturnsIncomingList = [];
+        $scope.refreshReturnsOutgoingList = [];
+
 
         TimezonesControllerKVReversed.call(this, $scope, configService);
 
@@ -1097,20 +1105,6 @@ domainCfgControllers.controller('InventoryConfigurationController', ['$scope', '
                     $scope.inv.uTgs.push({"id": $scope.inv.usrTgs[i], "text": $scope.inv.usrTgs[i]});
                 }
             }
-            if (checkNotNullEmpty($scope.inv.ersns)) {
-                $scope.inv.ersnsObj = [];
-                for (var i = 0; i < $scope.inv.ersns.length; i++) {
-                    $scope.inv.ersnsObj.push({"id": $scope.inv.ersns[i], "text": $scope.inv.ersns[i]});
-                }
-                $scope.inv.irc = true;
-            }
-            if (checkNotNullEmpty($scope.inv.erirsns)) {
-                $scope.inv.erirsnsObj = [];
-                for (var i = 0; i < $scope.inv.erirsns.length; i++) {
-                    $scope.inv.erirsnsObj.push({"id": $scope.inv.erirsns[i], "text": $scope.inv.erirsns[i]});
-                }
-                $scope.inv.rirc = true;
-            }
             if (checkNotNullEmpty($scope.inv.rcm) && $scope.inv.rcm.length > 0) {
                 $scope.inv.rcm.some(function (data) {
                     if (checkNotNullEmpty(data.enTgs)) {
@@ -1126,7 +1120,44 @@ domainCfgControllers.controller('InventoryConfigurationController', ['$scope', '
                     }
                 });
             }
+
+            constructReasonsFromModel();
         };
+
+        function constructReasonsFromModel() {
+            var reasonConfigs = ['ri','rr','rs','rd','rt','rri','rro'];
+            angular.forEach(reasonConfigs, function(reasonConfig){
+                if (checkNotNullEmpty($scope.inv[reasonConfig]) && checkNotNullEmpty($scope.inv[reasonConfig].defRsn)) {
+                    $scope.inv[reasonConfig].defRsnUI = {"id": $scope.inv[reasonConfig].defRsn, "text":$scope.inv[reasonConfig].defRsn};
+                }
+            });
+            reasonConfigs = ['imt','rmt','smt','dmt','tmt','rimt','romt'];
+            angular.forEach(reasonConfigs, function(reasonConfig) {
+                angular.forEach($scope.inv[reasonConfig], function (tagReasonModel) {
+                    if (checkNotNullEmpty(tagReasonModel.rsnCfgModel.defRsn)) {
+                        tagReasonModel.rsnCfgModel.defRsnUI = {
+                            "id": tagReasonModel.rsnCfgModel.defRsn,
+                            "text": tagReasonModel.rsnCfgModel.defRsn
+                        }
+                    };
+                });
+            });
+
+            if (checkNotNullEmpty($scope.inv.ersns)) {
+                $scope.inv.ersnsObj = [];
+                for (var i = 0; i < $scope.inv.ersns.length; i++) {
+                    $scope.inv.ersnsObj.push({"id": $scope.inv.ersns[i], "text": $scope.inv.ersns[i]});
+                }
+                $scope.inv.irc = true;
+            }
+            if (checkNotNullEmpty($scope.inv.erirsns)) {
+                $scope.inv.erirsnsObj = [];
+                for (var i = 0; i < $scope.inv.erirsns.length; i++) {
+                    $scope.inv.erirsnsObj.push({"id": $scope.inv.erirsns[i], "text": $scope.inv.erirsns[i]});
+                }
+                $scope.inv.rirc = true;
+            }
+        }
 
         $scope.validateStatus = function (defStatus, tempStatus, type) {
             if (checkNullEmpty(defStatus) && checkNullEmpty(tempStatus)) {
@@ -1264,21 +1295,8 @@ domainCfgControllers.controller('InventoryConfigurationController', ['$scope', '
                 if (temp.length == 0)
                     $scope.inv.cromt = false;
             }
-
-            $scope.inv.ersns = [];
-            if ($scope.inv.irc && checkNotNullEmpty($scope.inv.ersnsObj)) {
-                for (var i = 0; i < $scope.inv.ersnsObj.length; i++) {
-                    $scope.inv.ersns.push($scope.inv.ersnsObj[i].text);
-                }
-            }
-            $scope.inv.erirsns = [];
-            if ($scope.inv.rirc && checkNotNullEmpty($scope.inv.erirsnsObj)) {
-                for (var i = 0; i < $scope.inv.erirsnsObj.length; i++) {
-                    $scope.inv.erirsns.push($scope.inv.erirsnsObj[i].text);
-                }
-            }
-
-            if (isReturnsConfigurationValid()) {
+            if (isInventoryConfigurationValid()) {
+                updateReasonsFromModel();
                 $scope.updateTags();
                 domainCfgService.setInventoryCfg($scope.inv).then(function (data) {
                     $scope.showSuccess(data.data);
@@ -1296,15 +1314,130 @@ domainCfgControllers.controller('InventoryConfigurationController', ['$scope', '
             }
         };
 
+        function isInventoryConfigurationValid() {
+            return isReasonsConfigurationValid() && isReasonsConfigurationByTagValid() && isConsumptionRateReasonConfigurationValid() && isReturnsConfigurationValid();
+        }
+
+        function isReasonsConfigurationValid() {
+            var types = ['ri', 'rr', 'rs', 'rd', 'rt', 'rri', 'rro'];
+            var typeText = {
+                'ri': 'issue',
+                'rr': 'receipt',
+                'rs': 'stock count',
+                'rd': 'discard',
+                'rt': 'transfer',
+                'rri': 'returns incoming',
+                'rro': 'returns outgoing'
+            };
+
+            return (!types.some(function (type) {
+                var reasonConfig = $scope.inv[type];
+                if (reasonConfig && checkNotNullEmpty(reasonConfig.defRsnUI) && checkNotNullEmpty(reasonConfig.rsns) && reasonConfig.rsns.indexOf(reasonConfig.defRsnUI.text) == -1) {
+                    $scope.showWarning($scope.resourceBundle['config.inventory.reasons.config.warning.message'] + ' ' +typeText[type]);
+                    return true;
+                }
+            }));
+        }
+        function isReasonsConfigurationByTagValid() {
+            var tagTypes = ['imt','rmt','smt','dmt','tmt','rimt','romt'];
+            return (!tagTypes.some(function(tagType){
+                return !isTagReasonModelsValid($scope.inv[tagType],tagType);
+
+            }));
+        }
+
+        function isTagReasonModelsValid(tagReasonModels,tagType) {
+            var tagTypeText = {'imt':'issue','rmt':'receipt','smt':'stock count','dmt':'discard','tmt':'transfer','rimt':'returns incoming','romt':'returns outgoing'};
+            return (!tagReasonModels.some(function(tagReasonModel){
+                    if (tagReasonModel && checkNotNullEmpty(tagReasonModel.rsnCfgModel.rsns) && checkNotNullEmpty(tagReasonModel.rsnCfgModel.defRsnUI) && tagReasonModel.rsnCfgModel.rsns.indexOf(tagReasonModel.rsnCfgModel.defRsnUI.text) == -1) {
+                        $scope.showWarning($scope.resourceBundle['config.inventory.reasons.config.warning.message'] + ' ' + tagTypeText[tagType] + ' ' + $scope.resourceBundle['for.lowercase'] + ' ' + $scope.resourceBundle['tag.lower'] + ' ' + tagReasonModel.mtg);
+                        return true;
+                    }
+                })
+            );
+        }
+
+        function isConsumptionRateReasonConfigurationValid() {
+            var rsns = getExcludeReasons($scope.inv.ri, $scope.inv.imt);
+            var valid = true;
+            if (checkNotNullEmpty($scope.inv.ersnsObj)) {
+                valid = !($scope.inv.ersnsObj.some(function (ersn) {
+                    if (rsns && rsns.indexOf(ersn.text) == -1) {
+                        return true;
+                    }
+                }));
+            }
+            if (!valid) {
+                $scope.showWarning($scope.resourceBundle['config.inventory.exclude.issue.reasons.warning.message']);
+                return valid;
+            }
+
+            rsns = getExcludeReasons($scope.inv.rri, $scope.inv.rimt);
+            if (checkNotNullEmpty($scope.inv.erirsnsObj)) {
+                valid = !($scope.inv.erirsnsObj.some(function (ersn) {
+                    if (rsns && rsns.indexOf(ersn.text) == -1) {
+                        return true;
+                    }
+                }));
+            }
+            if (!valid) {
+                $scope.showWarning($scope.resourceBundle['config.inventory.exclude.returns.incoming.reasons.warning.message']);
+            }
+            return valid;
+        }
+
+        function updateReasonsFromModel() {
+            var types = ['ri','rr','rs','rd','rt','rri','rro'];
+            angular.forEach(types, function(type){
+                if ($scope.inv[type]) {
+                    if (checkNotNullEmpty($scope.inv[type].defRsnUI)) {
+                        $scope.inv[type].defRsn = $scope.inv[type].defRsnUI.text;
+                    } else {
+                        $scope.inv[type].defRsn = undefined;
+                    }
+
+                }
+            });
+            types = ['imt','rmt','smt','dmt','tmt','rimt','romt'];
+            angular.forEach(types, function(type){
+                angular.forEach($scope.inv[type], function(tagReasonModel) {
+                    if (checkNotNullEmpty(tagReasonModel.rsnCfgModel.defRsnUI)) {
+                        tagReasonModel.rsnCfgModel.defRsn = tagReasonModel.rsnCfgModel.defRsnUI.text;
+                    } else {
+                        tagReasonModel.rsnCfgModel.defRsn = undefined;
+                    }
+                });
+            });
+            $scope.inv.ersns = [];
+            if ($scope.inv.irc && checkNotNullEmpty($scope.inv.ersnsObj)) {
+                for (var i = 0; i < $scope.inv.ersnsObj.length; i++) {
+                    $scope.inv.ersns.push($scope.inv.ersnsObj[i].text);
+                }
+            }
+            $scope.inv.erirsns = [];
+            if ($scope.inv.rirc && checkNotNullEmpty($scope.inv.erirsnsObj)) {
+                for (var i = 0; i < $scope.inv.erirsnsObj.length; i++) {
+                    $scope.inv.erirsns.push($scope.inv.erirsnsObj[i].text);
+                }
+            }
+        }
+
         function isReturnsConfigurationValid() {
             return !($scope.inv.rcm.some(function (data) {
-                    if (checkNullEmpty(data.enTgs) || checkNullEmpty(data.incDur) || checkNullEmpty(data.outDur)) {
+                    if (checkNullEmpty(data.enTgs) || (checkNullEmpty(data.incDur) && checkNullEmpty(data.outDur))) {
                         $scope.showWarning($scope.resourceBundle['config.returns.policy.configure']);
                         return true;
                     }
                 }
             ));
         }
+
+        $scope.refreshDefaultReasons = function(reasonConfigModel) {
+            if (reasonConfigModel && checkNullEmpty(reasonConfigModel.rsns)) {
+                reasonConfigModel.defRsn = undefined;
+                reasonConfigModel.defRsnUI = undefined;
+            }
+        };
 
         $scope.setMtg = function (newVal) {
             if (checkNotNullEmpty(newVal)) {
@@ -1581,34 +1714,56 @@ domainCfgControllers.controller('InventoryConfigurationController', ['$scope', '
 
         function getExcludeReasons(reasons, reasonsByTag) {
             var rsns = [];
-            var ind = 0;
             if (checkNotNullEmpty(reasons)) {
-                var r = reasons.split(",");
-                for (var i in r) {
-                    if (checkNotNullEmpty(r[i])) {
-                        rsns[ind++] = r[i];
-                    }
-                }
+                rsns = angular.copy(reasons.rsns);
             }
-            for (i in reasonsByTag) {
-                if (checkNotNullEmpty(reasonsByTag[i].rsn)) {
-                    r = reasonsByTag[i].rsn.split(",");
-                    for (var t in r) {
-                        if (rsns.indexOf(r[t]) != -1 || checkNullEmpty(r[t])) {
-                            continue;
+            angular.forEach(reasonsByTag, function(reasonByTag){
+                if (checkNotNullEmpty(reasonByTag.rsnCfgModel)) {
+                    var rsnsByTag = reasonByTag.rsnCfgModel.rsns;
+                    angular.forEach(rsnsByTag, function(rsnByTag){
+                        if (checkNotNullEmpty(rsnByTag) && rsns.indexOf(rsnByTag) == -1) {
+                            rsns.push(rsnByTag);
                         }
-                        rsns[ind++] = r[t];
-                    }
+                    });
                 }
-            }
+            });
             return rsns;
         }
+
+        $scope.queryReasons = function (query,type,tagType,tag) {
+            var data = {results: []};
+            var term = query.term.toLowerCase();
+            var reasons = angular.copy(checkNullEmpty(tagType) && checkNullEmpty(tag) ? $scope.inv[type] : getReasonsByTag($scope.inv[tagType],tag));
+
+            var rsns = [];
+            if (checkNotNullEmpty(reasons)) {
+                rsns = reasons.rsns;
+            }
+            for (var i in rsns) {
+                var tag = rsns[i].toLowerCase();
+                if (tag.indexOf(term) >= 0) {
+                    data.results.push({'text': rsns[i], 'id': rsns[i]});
+                }
+            }
+            query.callback(data);
+        };
+
+        function getReasonsByTag (rsns,tag) {
+            var reasons = undefined;
+            rsns.some(function (it) {
+                if (checkNotNullEmpty(it) && it.mtg == tag) {
+                    reasons = it.rsnCfgModel;
+                    return true;
+                }
+            });
+            return reasons;
+        };
 
         $scope.addRow = function () {
             if (checkNullEmpty($scope.inv.rcm)) {
                 $scope.inv.rcm = [];
             }
-            $scope.inv.rcm.push({enTgs: [], incDur: 30, outDur: 30});
+            $scope.inv.rcm.push({enTgs: [], incDur: undefined, outDur: undefined});
         };
 
         $scope.populatePreSelected = function () {

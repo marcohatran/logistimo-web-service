@@ -30,29 +30,26 @@ import com.google.gson.annotations.SerializedName;
  * Created by vani on 17/02/18.
  */
 public class MobileReturnsDurationModel {
-  public static final int DEFAULT_INCOMING_DURATION = 30;
-  public static final int DEFAULT_OUTGOING_DURATION = 30;
-
   @Expose
   @SerializedName(value = "incoming")
-  private int incoming = DEFAULT_INCOMING_DURATION;
+  private Integer incoming;
   @Expose
   @SerializedName(value = "outgoing")
-  private int outgoing = DEFAULT_OUTGOING_DURATION;
+  private Integer outgoing;
 
-  public int getIncoming() {
+  public Integer getIncoming() {
     return incoming;
   }
 
-  public void setIncoming(int incoming) {
+  public void setIncoming(Integer incoming) {
     this.incoming = incoming;
   }
 
-  public int getOutgoing() {
+  public Integer getOutgoing() {
     return outgoing;
   }
 
-  public void setOutgoing(int outgoing) {
+  public void setOutgoing(Integer outgoing) {
     this.outgoing = outgoing;
   }
 }

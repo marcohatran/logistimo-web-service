@@ -849,11 +849,18 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
             $scope.entityType = "";
             $scope.validType = checkNotNullEmpty(newVal);
             $scope.reasons = [];
+            $scope.defaultReason = undefined;
             if (checkNotNullEmpty($scope.transaction.type)) {
                 if(checkNotNullEmpty($scope.tranDomainConfig.reasons)) {
-                    $scope.reasons = $scope.tranDomainConfig.reasons[$scope.transaction.type];
-                    if(checkNotNullEmpty($scope.reasons))
-                    {
+                    $scope.tranDomainConfig.reasons.some(function(reason){
+                        if (reason.type == $scope.transaction.type) {
+                            $scope.reasons = reason.reasonConfigModel.rsns;
+                            $scope.defaultReason = reason.reasonConfigModel.defRsn;
+                            return;
+                        }
+                    });
+
+                    if(checkNotNullEmpty($scope.reasons)) {
                         if($scope.reasons.length>0)
                             $scope.showReason=true;
                     }
@@ -1207,18 +1214,23 @@ trnControllers.controller('transactions.MaterialController', ['$scope','trnServi
                 if(checkNotNullEmpty($scope.transaction.type)){
                     if(checkNotNullEmpty(name.tgs)) {
                         trnService.getReasons($scope.transaction.type, name.tgs).then(function (data) {
-                            $scope.material.rsns = data.data;
+                            $scope.material.rsns = data.data.rsns;
+                            $scope.material.reason = data.data.defRsn;
                             if (checkNotNullEmpty($scope.material.rsns) && $scope.material.rsns.length > 0) {
-                                $scope.material.reason = $scope.material.rsns[0];
+                                $scope.material.rsns.splice(0,0,"");
                                 $scope.$parent.showReason = true;
                             } else if (checkNotNullEmpty($scope.reasons) && $scope.reasons.length > 0) {
-                                $scope.material.reason = $scope.reasons[0];
+                                $scope.reasons.splice(0,0,"");
+                                $scope.material.reason = $scope.defaultReason;
                             }
                         }).catch(function error(msg) {
                             $scope.showErrorMsg(msg);
                         });
                     } else if (checkNotNullEmpty($scope.reasons) &&  $scope.reasons.length > 0) {
-                        $scope.material.reason = $scope.reasons[0];
+                        if ($scope.reasons.indexOf("") == -1) {
+                            $scope.reasons.splice(0, 0, "");
+                        }
+                        $scope.material.reason = $scope.defaultReason;
                     }
                 }
 

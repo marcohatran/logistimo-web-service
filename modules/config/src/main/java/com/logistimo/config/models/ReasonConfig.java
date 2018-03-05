@@ -26,41 +26,30 @@ package com.logistimo.config.models;
 import com.google.gson.annotations.SerializedName;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by vani on 30/01/18.
+ * Created by vani on 23/02/18.
  */
-public class ReturnsConfig implements Serializable {
-  private static final long serialVersionUID = 1L;
+public class ReasonConfig implements Serializable {
+  @SerializedName(value = "reasons")
+  private List<String> reasons;
+  @SerializedName(value = "default_reason")
+  private String defaultReason;
 
-  @SerializedName(value = "entity_tags")
-  private List<String> entityTags = new ArrayList<>(1);
-  @SerializedName(value = "incoming_duration")
-  private Integer incDuration;
-  @SerializedName(value = "outgoing_duration")
-  private Integer outDuration;
-
-  public List<String> getEntityTags() { return entityTags; }
-
-  public void setEntityTags(List<String> entityTags) {
-    this.entityTags = entityTags;
+  public List<String> getReasons() {
+    return reasons;
   }
 
-  public Integer getIncomingDuration() {
-    return incDuration;
+  public void setReasons(List<String> reasons) {
+    this.reasons = reasons;
   }
 
-  public void setIncomingDuration(Integer incDuration) {
-    this.incDuration = incDuration;
+  public String getDefaultReason() {
+    return defaultReason;
   }
 
-  public Integer getOutgoingDuration() {
-    return outDuration;
-  }
-
-  public void setOutgoingDuration(Integer outDuration) {
-    this.outDuration = outDuration;
+  public void setDefaultReason(String defaultReason) {
+    this.defaultReason = defaultReason;
   }
 }

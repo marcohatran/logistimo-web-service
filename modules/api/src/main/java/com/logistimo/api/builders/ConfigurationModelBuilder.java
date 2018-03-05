@@ -41,6 +41,7 @@ import com.logistimo.api.models.configuration.Manufacturer;
 import com.logistimo.api.models.configuration.Model;
 import com.logistimo.api.models.configuration.MonitoringPoint;
 import com.logistimo.api.models.configuration.OrdersConfigModel;
+import com.logistimo.api.models.configuration.ReasonConfigModel;
 import com.logistimo.api.models.configuration.ReturnsConfigModel;
 import com.logistimo.api.models.configuration.Sensor;
 import com.logistimo.api.models.configuration.SupportConfigModel;
@@ -68,6 +69,7 @@ import com.logistimo.config.models.LeadTimeAvgConfig;
 import com.logistimo.config.models.MatStatusConfig;
 import com.logistimo.config.models.OptimizerConfig;
 import com.logistimo.config.models.OrdersConfig;
+import com.logistimo.config.models.ReasonConfig;
 import com.logistimo.config.models.ReturnsConfig;
 import com.logistimo.config.models.SupportConfig;
 import com.logistimo.config.models.SyncConfig;
@@ -1020,15 +1022,15 @@ public class ConfigurationModelBuilder {
       throw new ConfigurationException("");
     }
     //Get the transaction reasons
-    Map<String, String> transReasons = ic.getTransReasons();
-    if (transReasons != null) {
-      model.ri = transReasons.get(ITransaction.TYPE_ISSUE);
-      model.rr = transReasons.get(ITransaction.TYPE_RECEIPT);
-      model.rs = transReasons.get(ITransaction.TYPE_PHYSICALCOUNT);
-      model.rd = transReasons.get(ITransaction.TYPE_WASTAGE);
-      model.rt = transReasons.get(ITransaction.TYPE_TRANSFER);
-      model.rri = transReasons.get(ITransaction.TYPE_RETURNS_INCOMING);
-      model.rro = transReasons.get(ITransaction.TYPE_RETURNS_OUTGOING);
+    Map<String, ReasonConfig> transReasons = ic.getTransReasons();
+    if (MapUtils.isNotEmpty(transReasons)) {
+      model.ri = buildReasonConfigModel(transReasons.get(ITransaction.TYPE_ISSUE));
+      model.rr = buildReasonConfigModel(transReasons.get(ITransaction.TYPE_RECEIPT));
+      model.rs = buildReasonConfigModel(transReasons.get(ITransaction.TYPE_PHYSICALCOUNT));
+      model.rd = buildReasonConfigModel(transReasons.get(ITransaction.TYPE_WASTAGE));
+      model.rt = buildReasonConfigModel(transReasons.get(ITransaction.TYPE_TRANSFER));
+      model.rri = buildReasonConfigModel(transReasons.get(ITransaction.TYPE_RETURNS_INCOMING));
+      model.rro = buildReasonConfigModel(transReasons.get(ITransaction.TYPE_RETURNS_OUTGOING));
     }
     List<String> val = dc.getDomainData(ConfigConstants.INVENTORY);
     if (val != null) {
@@ -1419,7 +1421,8 @@ public class ConfigurationModelBuilder {
           "&key=" + URLEncoder.encode(key, "UTF-8");
     } else {
       StorageUtil storageUtil = AppFactory.get().getStorageUtil();
-      downloadLink = storageUtil.getExternalUrl(UPLOADS, fileName != null ? fileName : defaultFileName);
+      downloadLink = storageUtil.getExternalUrl(UPLOADS,
+          fileName != null ? fileName : defaultFileName);
     }
 
     return downloadLink;
@@ -1460,14 +1463,12 @@ public class ConfigurationModelBuilder {
     return reasons;
   }
 
-  private void addAllReasons(Set<String> reasons, Map<String, String> configuredReasons) {
-    if (configuredReasons != null) {
-      for (String reasonCSV : configuredReasons.values()) {
-        List<String> reasonsList = StringUtil.getList(reasonCSV);
-        if (reasonsList != null) {
-          reasons.addAll(reasonsList);
-        }
-      }
+  private void addAllReasons(Set<String> reasons, Map<String, ReasonConfig> configuredReasons) {
+    if (MapUtils.isNotEmpty(configuredReasons)) {
+      List<String> reasonsList = new ArrayList<>();
+      configuredReasons.entrySet().forEach(
+          entry -> reasonsList.addAll(configuredReasons.get(entry.getKey()).getReasons()));
+      reasons.addAll(reasonsList);
     }
   }
 
@@ -1603,22 +1604,21 @@ public class ConfigurationModelBuilder {
     return (atc != null ? atc.getTy() : ActualTransConfig.ACTUAL_NONE);
     }
 
-  protected List<InventoryConfigModel.MTagReason> buildMTagReasonModelList(Map<String,String> mtagRsnsMap) {
-    if (mtagRsnsMap == null) {
+  protected List<InventoryConfigModel.MTagReason> buildMTagReasonModelList(Map<String,ReasonConfig> mtagRsnsMap) {
+    if (MapUtils.isEmpty(mtagRsnsMap)) {
     return Collections.emptyList();
     }
-    List<InventoryConfigModel.MTagReason> tagRsnsList = new ArrayList<>(1);
-    mtagRsnsMap.entrySet().forEach(entry ->
-    tagRsnsList.add(buildMtagReasonModel(entry.getKey(),entry.getValue()))
-    );
-    return tagRsnsList;
+    return (mtagRsnsMap.entrySet()
+                .stream()
+                .map(entry->buildMtagReasonModel(entry.getKey(), entry.getValue()))
+                .collect(Collectors.toList()));
     }
 
-  protected InventoryConfigModel.MTagReason buildMtagReasonModel(String mtag, String reason) {
+  protected InventoryConfigModel.MTagReason buildMtagReasonModel(String mtag, ReasonConfig reasonConfig) {
     InventoryConfigModel.MTagReason mtagReason = new InventoryConfigModel.MTagReason();
-      mtagReason.mtg = mtag;
-      mtagReason.rsn = reason;
-      return mtagReason;
+    mtagReason.mtg = mtag;
+    mtagReason.rsnCfgModel = buildReasonConfigModel(reasonConfig);
+    return mtagReason;
   }
 
   protected List<String> getTagsByInvOperationAsList(Map<String,String> invOpTypeTags, String invOperation) {
@@ -1649,29 +1649,42 @@ public class ConfigurationModelBuilder {
     return tagsByInvOper;
   }
 
-  public Map<String,String> getReasonsByTransType(InventoryConfigModel invConfigModel) {
+  public Map<String,ReasonConfig> buildReasonConfigByTransType(InventoryConfigModel invConfigModel) {
     // Set reasons
-    Map<String, String> reasonsByTransType = new HashMap<>(7,1);
-    reasonsByTransType.put(ITransaction.TYPE_ISSUE, trimReasons(invConfigModel.ri));
-    reasonsByTransType.put(ITransaction.TYPE_RECEIPT, trimReasons(invConfigModel.rr));
-    reasonsByTransType.put(ITransaction.TYPE_PHYSICALCOUNT, trimReasons(invConfigModel.rs));
-    reasonsByTransType.put(ITransaction.TYPE_WASTAGE, trimReasons(invConfigModel.rd));
-    reasonsByTransType.put(ITransaction.TYPE_TRANSFER, trimReasons(invConfigModel.rt));
-    reasonsByTransType.put(ITransaction.TYPE_RETURNS_INCOMING, trimReasons(invConfigModel.rri));
-    reasonsByTransType.put(ITransaction.TYPE_RETURNS_OUTGOING, trimReasons(invConfigModel.rro));
-    return reasonsByTransType;
+    Map<String, ReasonConfig> reasonConfigByTransType = new HashMap<>(7,1);
+    reasonConfigByTransType.put(ITransaction.TYPE_ISSUE, buildReasonConfig(invConfigModel.ri));
+    reasonConfigByTransType.put(ITransaction.TYPE_RECEIPT, buildReasonConfig(invConfigModel.rr));
+    reasonConfigByTransType.put(ITransaction.TYPE_PHYSICALCOUNT, buildReasonConfig(
+        invConfigModel.rs));
+    reasonConfigByTransType.put(ITransaction.TYPE_WASTAGE, buildReasonConfig(invConfigModel.rd));
+    reasonConfigByTransType.put(ITransaction.TYPE_TRANSFER, buildReasonConfig(invConfigModel.rt));
+    reasonConfigByTransType.put(ITransaction.TYPE_RETURNS_INCOMING, buildReasonConfig(
+        invConfigModel.rri));
+    reasonConfigByTransType.put(ITransaction.TYPE_RETURNS_OUTGOING, buildReasonConfig(
+        invConfigModel.rro));
+    return reasonConfigByTransType;
 
   }
 
-  public Map<String,String> getMapWithTrimmedReasons(List<InventoryConfigModel.MTagReason> mTagRsnList) {
+  public ReasonConfig buildReasonConfig(ReasonConfigModel reasonConfigModel) {
+    ReasonConfig reasonConfig = new ReasonConfig();
+    if (reasonConfigModel == null) {
+      return reasonConfig;
+    }
+    reasonConfig.setDefaultReason(reasonConfigModel.defRsn);
+    reasonConfig.setReasons(reasonConfigModel.rsns);
+    return reasonConfig;
+  }
+
+  public Map<String,ReasonConfig> buildReasonConfigByTagMap(List<InventoryConfigModel.MTagReason> mTagRsnList) {
     if (CollectionUtils.isEmpty(mTagRsnList)) {
       return Collections.emptyMap();
     }
-    Map<String,String> mTagTrimmedRsnsMap = new HashMap<>(1);
+    Map<String,ReasonConfig> reasonConfigByTagMap = new HashMap<>(1);
     for (InventoryConfigModel.MTagReason mTagReason : mTagRsnList) {
-      mTagTrimmedRsnsMap.put(mTagReason.mtg, trimReasons(mTagReason.rsn));
+      reasonConfigByTagMap.put(mTagReason.mtg, buildReasonConfig(mTagReason.rsnCfgModel));
     }
-    return mTagTrimmedRsnsMap;
+    return reasonConfigByTagMap;
   }
 
   public String trimReasons(String reasonsCSV) {
@@ -1742,5 +1755,15 @@ public class ConfigurationModelBuilder {
     returnsConfigModel.incDur = returnsConfig.getIncomingDuration();
     returnsConfigModel.outDur = returnsConfig.getOutgoingDuration();
     return returnsConfigModel;
+  }
+
+  public ReasonConfigModel buildReasonConfigModel(ReasonConfig reasonConfig) {
+    ReasonConfigModel reasonConfigModel = new ReasonConfigModel();
+    if (reasonConfig == null) {
+      return reasonConfigModel;
+    }
+    reasonConfigModel.rsns = reasonConfig.getReasons();
+    reasonConfigModel.defRsn = reasonConfig.getDefaultReason();
+    return reasonConfigModel;
   }
 }

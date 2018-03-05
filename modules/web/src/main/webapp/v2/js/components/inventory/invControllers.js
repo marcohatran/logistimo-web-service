@@ -1096,14 +1096,17 @@ invControllers.controller('BatchDetailCtrl', ['$scope', 'invService','trnService
                 $scope.atd = $scope.tranDomainConfig.atdw;
             }
             $scope.reasons = [];
+            $scope.defaultReason = '';
             $scope.tagReasons = [];
             if(checkNotNullEmpty(tgs)){
                 trnService.getReasons(transType, tgs).then(function (data) {
-                    $scope.tagReasons = data.data;
+                    $scope.tagReasons = data.data.rsns;
+                    $scope.defaultReason = data.data.defRsn;
                     if(checkNotNullEmpty($scope.tagReasons)) {
                         $scope.reasons = $scope.tagReasons;
+                        $scope.reasons.splice(0,0,"");
                         $scope.expBatchDet[index].showReason = !$scope.expBatchDet[index].showReason;
-                        $scope.expBatchDet[index].reason = $scope.expBatchDet[index].showReason? $scope.tagReasons[0]: undefined;
+                        $scope.expBatchDet[index].reason = $scope.expBatchDet[index].showReason? $scope.defaultReason: undefined;
                     }else {
                         setCommonReasons(transType,index);
                     }
@@ -1117,11 +1120,23 @@ invControllers.controller('BatchDetailCtrl', ['$scope', 'invService','trnService
 
         function setCommonReasons(transType,index){
             if (checkNotNullEmpty(transType)) {
-                if (checkNotNullEmpty($scope.tranDomainConfig.reasons) && checkNotNullEmpty($scope.tranDomainConfig.reasons[transType])) {
-                    $scope.reasons = $scope.tranDomainConfig.reasons[transType];
+                if(checkNotNullEmpty($scope.tranDomainConfig.reasons)) {
+                    $scope.tranDomainConfig.reasons.some(function(reason){
+                        if (reason.type == transType) {
+                            $scope.reasons = reason.reasonConfigModel.rsns;
+                            $scope.defaultReason = reason.reasonConfigModel.defRsn;
+                            return;
+                        }
+                    });
+
+                    if(checkNotNullEmpty($scope.reasons) && $scope.reasons.length > 0) {
+                        if ($scope.reasons.indexOf("") == -1) {
+                            $scope.reasons.splice(0, 0, "");
+                        }
+                        $scope.expBatchDet[index].showReason=!$scope.expBatchDet[index].showReason;
+                        $scope.expBatchDet[index].reason = $scope.expBatchDet[index].showReason ? $scope.defaultReason: undefined;
+                    }
                 }
-                $scope.expBatchDet[index].showReason = !$scope.expBatchDet[index].showReason;
-                $scope.expBatchDet[index].reason = $scope.expBatchDet[index].showReason ? $scope.reasons[0]: undefined;
             }
         }
 
