@@ -33,6 +33,7 @@ import com.logistimo.accounting.service.IAccountingService;
 import com.logistimo.accounting.service.impl.AccountingServiceImpl;
 import com.logistimo.api.auth.AuthenticationUtil;
 import com.logistimo.api.servlets.mobile.builders.MobileConfigBuilder;
+import com.logistimo.api.servlets.mobile.builders.MobileDefaultReasonsConfigModel;
 import com.logistimo.api.servlets.mobile.builders.MobileEntityBuilder;
 import com.logistimo.api.servlets.mobile.builders.MobileReturnsConfigModel;
 import com.logistimo.api.servlets.mobile.models.ParsedRequest;
@@ -53,6 +54,7 @@ import com.logistimo.config.models.InventoryConfig;
 import com.logistimo.config.models.MatStatusConfig;
 import com.logistimo.config.models.OptimizerConfig;
 import com.logistimo.config.models.OrdersConfig;
+import com.logistimo.config.models.ReasonConfig;
 import com.logistimo.config.models.ReturnsConfig;
 import com.logistimo.config.models.SMSConfig;
 import com.logistimo.config.models.SupportConfig;
@@ -315,9 +317,6 @@ public class RESTUtil {
         if (maxDur != null && BigUtil.notEqualsZero(maxDur)) {
           material.put(JsonTagsZ.MAXDUR, BigUtil.getFormattedValue(maxDur));
         }
-        //if (ic.getMinMaxType() == InventoryConfig.MIN_MAX_DOS) {
-        //	material.put(JsonTagsZ.MMDUR, ic.getMinMaxDur());
-        //}
         BigDecimal stockAvailPeriod = ims.getStockAvailabilityPeriod(inv, dc);
         if (stockAvailPeriod != null && BigUtil.notEqualsZero(stockAvailPeriod)) {
           material.put(JsonTagsZ.STOCK_DURATION, BigUtil.getFormattedValue(stockAvailPeriod));
@@ -446,7 +445,7 @@ public class RESTUtil {
     }
     // Get the transactions in the input JSON
     List<MaterialRequest> transObjs = uoReq.mt;
-    if (transObjs == null || transObjs.size() == 0) {
+    if (transObjs == null || transObjs.isEmpty()) {
       return null;
     }
     boolean checkBatchMgmt = ITransaction.TYPE_TRANSFER.equals(transType);
@@ -541,8 +540,8 @@ public class RESTUtil {
     }
     // Get the transactions in the input JSON
     Vector transObjs = updInventoryJson.getMaterials();
-    if (transObjs == null || transObjs.size() == 0) {
-      return null; /// NOTE: no longer throwing exception; to be handled by caller; /// earlier: throw new ServiceException( "No transactions specified" );
+    if (transObjs == null || transObjs.isEmpty()) {
+      return null;
     }
     // Get the user and kiosk IDs
     String userId = updInventoryJson.getUserId();
@@ -1167,7 +1166,7 @@ public class RESTUtil {
                       "{0} when getting account for kiosk link vendor {1}, customer {2}, year {3}: {4}",
                       e.getClass().getName(), vId, cId, year, e.getMessage());
                 }
-              } // end if ( creditLimit != 0F )
+              }
             }
             // Add the disabled batch management flag, if applicable
             if (!k.isBatchMgmtEnabled()) {
@@ -1490,40 +1489,45 @@ public class RESTUtil {
     InventoryConfig ic = dc.getInventoryConfig();
     // Issue reasons, if any
     String issueReasons = ic.getTransReason(ITransaction.TYPE_ISSUE);
-    if (issueReasons != null && !issueReasons.isEmpty()) {
-      config.put(JsonTagsZ.REASONS_ISSUE, StringUtil.getCSV(issueReasons.split(CharacterConstants.COMMA)));
+    if (StringUtils.isNotEmpty(issueReasons)) {
+      config.put(JsonTagsZ.REASONS_ISSUE, issueReasons);
     }
     // Receipt reasons, if any
     String receiptReasons = ic.getTransReason(ITransaction.TYPE_RECEIPT);
-    if (receiptReasons != null && !receiptReasons.isEmpty()) {
-      config.put(JsonTagsZ.REASONS_RECEIPT, StringUtil.getCSV(receiptReasons.split(CharacterConstants.COMMA)));
+    if (StringUtils.isNotEmpty(receiptReasons)) {
+      config.put(JsonTagsZ.REASONS_RECEIPT, receiptReasons);
     }
     // Stockcount reasons, if any
     String stockcountReasons = ic.getTransReason(ITransaction.TYPE_PHYSICALCOUNT);
-    if (stockcountReasons != null && !stockcountReasons.isEmpty()) {
-      config.put(JsonTagsZ.REASONS_STOCKCOUNT, StringUtil.getCSV(stockcountReasons.split(CharacterConstants.COMMA)));
+    if (StringUtils.isNotEmpty(stockcountReasons)) {
+      config.put(JsonTagsZ.REASONS_STOCKCOUNT, stockcountReasons);
     }
     // Transfer reasons, if any
     String transferReasons = ic.getTransReason(ITransaction.TYPE_TRANSFER);
-    if (transferReasons != null && !transferReasons.isEmpty()) {
-      config.put(JsonTagsZ.REASONS_TRANSFER, StringUtil.getCSV(transferReasons.split(CharacterConstants.COMMA)));
+    if (StringUtils.isNotEmpty(transferReasons)) {
+      config.put(JsonTagsZ.REASONS_TRANSFER, transferReasons);
     }
     // Returns-incoming reasons, if any
     String retIncReasons = ic.getTransReason(ITransaction.TYPE_RETURNS_INCOMING);
     if (StringUtils.isNotEmpty(retIncReasons)) {
-      config.put(JsonTagsZ.RETURNS_INCOMING, StringUtil.getCSV(retIncReasons.split(CharacterConstants.COMMA)));
+      config.put(JsonTagsZ.REASONS_RETURNS_INCOMING, StringUtil.getCSV(retIncReasons.split(CharacterConstants.COMMA)));
     }
     // Returns-outgoing reasons, if any
     String retOutReasons = ic.getTransReason(ITransaction.TYPE_RETURNS_OUTGOING);
     if (StringUtils.isNotEmpty(retOutReasons)) {
-      config.put(JsonTagsZ.RETURNS_OUTGOING, StringUtil.getCSV(retOutReasons.split(CharacterConstants.COMMA)));
+      config.put(JsonTagsZ.REASONS_RETURNS_OUTGOING, retOutReasons);
     }
+    MobileConfigBuilder mobileConfigBuilder = StaticApplicationContext.getBean(MobileConfigBuilder.class);
     // Reasons by material tag, if any
-    Map<String,Map<String,String>> rsnsByMtag = getReasonsByTag(ic);
+    Map<String,Map<String,String>> rsnsByMtag = mobileConfigBuilder.buildReasonsByTag(ic);
     if (MapUtils.isNotEmpty(rsnsByMtag)) {
       config.put(JsonTagsZ.REASONS_BY_TAG, rsnsByMtag);
     }
-
+    Map<String,MobileDefaultReasonsConfigModel> defRsnsCfgByTransTypeMap = mobileConfigBuilder.buildMobileDefaultReasonsConfigModelByTransType(
+        ic);
+    if (MapUtils.isNotEmpty(defRsnsCfgByTransTypeMap)) {
+      config.put(JsonTagsZ.DEFAULT_REASONS, defRsnsCfgByTransTypeMap);
+    }
     // Material Status, if any
     Map<String,Map<String,String>> matStatusByType = getMaterialStatusByType(ic);
     if (MapUtils.isNotEmpty(matStatusByType)) {
@@ -1690,7 +1694,7 @@ public class RESTUtil {
         }
         config.put(JsonTagsZ.SMS, sms);
       }
-      MobileConfigBuilder mobileConfigBuilder = new MobileConfigBuilder();
+
       // Approval configuration
       ApprovalsConfig approvalsConfig = dc.getApprovalsConfig();
       if (approvalsConfig != null) {
@@ -2055,27 +2059,40 @@ public class RESTUtil {
   protected static Map<String, Map<String, String>> getReasonsByTag(InventoryConfig ic) {
     Map<String, Map<String, String>> rsnsByMtag = new HashMap<>(1,1);
     if (MapUtils.isNotEmpty(ic.getImTransReasons())) {
-      rsnsByMtag.put(JsonTagsZ.ISSUES, ic.getImTransReasons());
+      rsnsByMtag.put(JsonTagsZ.ISSUES, getReasonsAsCSVByTag(ic.getImTransReasons()));
     }
     if (MapUtils.isNotEmpty(ic.getRmTransReasons())) {
-      rsnsByMtag.put(JsonTagsZ.RECEIPTS, ic.getRmTransReasons());
+      rsnsByMtag.put(JsonTagsZ.RECEIPTS, getReasonsAsCSVByTag(ic.getRmTransReasons()));
     }
     if (MapUtils.isNotEmpty(ic.getSmTransReasons())) {
-      rsnsByMtag.put(JsonTagsZ.PHYSICAL_STOCK, ic.getSmTransReasons());
+      rsnsByMtag.put(JsonTagsZ.PHYSICAL_STOCK, getReasonsAsCSVByTag(ic.getSmTransReasons()));
     }
     if (MapUtils.isNotEmpty(ic.getDmTransReasons())) {
-      rsnsByMtag.put(JsonTagsZ.DISCARDS, ic.getDmTransReasons());
+      rsnsByMtag.put(JsonTagsZ.DISCARDS, getReasonsAsCSVByTag(ic.getDmTransReasons()));
     }
     if (MapUtils.isNotEmpty(ic.getTmTransReasons())) {
-      rsnsByMtag.put(JsonTagsZ.TRANSFER, ic.getDmTransReasons());
+      rsnsByMtag.put(JsonTagsZ.TRANSFER, getReasonsAsCSVByTag(ic.getTmTransReasons()));
     }
     if (MapUtils.isNotEmpty(ic.getMtagRetIncRsns())) {
-      rsnsByMtag.put(JsonTagsZ.RETURNS_INCOMING, ic.getMtagRetIncRsns());
+      rsnsByMtag.put(JsonTagsZ.RETURNS_INCOMING, getReasonsAsCSVByTag(ic.getMtagRetIncRsns()));
     }
     if (MapUtils.isNotEmpty(ic.getMtagRetOutRsns())) {
-      rsnsByMtag.put(JsonTagsZ.RETURNS_OUTGOING, ic.getMtagRetOutRsns());
+      rsnsByMtag.put(JsonTagsZ.RETURNS_OUTGOING, getReasonsAsCSVByTag(ic.getMtagRetOutRsns()));
     }
     return rsnsByMtag;
+  }
+
+  protected static Map<String,String> getReasonsAsCSVByTag(Map<String,ReasonConfig> reasonConfigByTagMap) {
+    if (MapUtils.isEmpty(reasonConfigByTagMap)) {
+      return Collections.emptyMap();
+    }
+    Map<String,String> reasonsByTag = new HashMap<>();
+    reasonConfigByTagMap.entrySet()
+                    .stream()
+                    .filter(entry->CollectionUtils.isNotEmpty(entry.getValue().getReasons()))
+                    .forEach(entry->reasonsByTag.put(entry.getKey(),StringUtils.join(
+                        entry.getValue().getReasons(), CharacterConstants.COMMA)));
+    return reasonsByTag;
   }
 
   protected static Map<String, Map<String, String>> getMaterialStatusByType(

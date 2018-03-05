@@ -570,6 +570,7 @@ entityControllers.controller('EntityListController', ['$scope', 'entityService',
         $scope.searchEntity = function () {
             if($scope.search.nm != $scope.search.key) {
                 $scope.search.nm = $scope.search.key;
+                $scope.eTag = "";
             }
         };
         $scope.reset = function() {
@@ -581,7 +582,7 @@ entityControllers.controller('EntityListController', ['$scope', 'entityService',
             $scope.showLoading();
             exportService.exportData({
                 ent_name: $scope.search.key || undefined,
-                mtag: $scope.mtag || undefined,
+                ktag: $scope.etag || undefined,
                 titles: {
                     filters: getCaption()
                 },

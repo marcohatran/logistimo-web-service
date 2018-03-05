@@ -23,14 +23,16 @@
 
 package com.logistimo.api.models;
 
+import com.logistimo.api.models.configuration.ReasonConfigModel;
+
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by mohan raja on 23/11/14
  */
 public class TransactionDomainConfigModel {
-  public Map<String, List<String>> reasons;
+  public List<ReasonWrapper> reasons;
   public int noc; // No of customers
   public int nov; // No of vendors
   public boolean isMan; // Is Manager
@@ -43,4 +45,21 @@ public class TransactionDomainConfigModel {
   public String atdp;
   public String atdw;
   public String atdt;
+
+  class ReasonWrapper {
+    String type;
+    ReasonConfigModel reasonConfigModel;
+    ReasonWrapper(String type, ReasonConfigModel reasonConfigModel) {
+      this.type = type;
+      this.reasonConfigModel = reasonConfigModel;
+    }
+  }
+
+  public void addReason(String type, ReasonConfigModel reasonConfigModel) {
+    ReasonWrapper reasonWrapper = new ReasonWrapper(type,reasonConfigModel);
+    if (reasons == null) {
+      reasons = new ArrayList<>();
+    }
+    reasons.add(reasonWrapper);
+  }
 }

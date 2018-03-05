@@ -234,6 +234,7 @@ matControllers.controller('MaterialListController', ['$scope', 'matService', 'do
         $scope.searchMaterial = function () {
             if($scope.search.mnm != $scope.search.key){
                 $scope.search.mnm = $scope.search.key;
+                $scope.mtag = "";
             }
         };
         $scope.reset = function() {

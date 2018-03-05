@@ -38,7 +38,11 @@ invControllers.controller('StockViewsController', ['$scope', '$timeout', 'matSer
         $scope.matType = "0";
         $scope.onlyNZStk = false;
         $scope.showMore = false;
+        $scope.forceLocalFilterReset = [];
         $scope.updateETags = function(etgs, eetgs){
+            if(checkNotNullEmpty(etgs) && checkNotNullEmpty($scope.etag)) {
+                $scope.forceLocalFilterReset.push('etag');
+            }
             $scope.etag = etgs;
             $scope.eetag = eetgs;
         };
@@ -46,10 +50,31 @@ invControllers.controller('StockViewsController', ['$scope', '$timeout', 'matSer
             $scope.mtag = mtgs;
         };
         $scope.resetFilters = function () {
-            $location.$$search = {};
-            $location.$$compose();
-            $scope.$broadcast("resetRequest");
+            // Check for inventory dashboard (full-inventory) page
+            if ($scope.dashBoardEnabled &&
+                (checkNullEmpty($scope.entity) || $scope.entity.id == null || $scope.entity.id == '') &&
+                (checkNullEmpty($scope.material) || $scope.material.mId == null || $scope.material.mId == '') &&
+                ($scope.ebf == null || $scope.ebf == '') &&
+                $scope.vw == 't' &&
+                checkNullEmpty($scope.abntype) && !$scope.locationSelected) {
+                $scope.$broadcast("resetRequest");
+            } else {
+                $location.$$search = {};
+                $location.$$compose();
+            }
         };
+
+        //Will be called back from broadcast "resetRequest"
+        $scope.resetFiltersFinal = function() {
+            angular.forEach($scope.localFilters,function(filter) {
+                if(filter == "etag") {
+                    return;
+                }
+                $scope[filter] = undefined;
+            });
+        };
+
+        $scope.initLocalFilters = [];
         $scope.init = function (firstTimeInit) {
             $scope.loading=false;
             $scope.mtag = requestContext.getParam("mtag");
@@ -81,6 +106,7 @@ invControllers.controller('StockViewsController', ['$scope', '$timeout', 'matSer
             if (checkNotNullEmpty(requestContext.getParam("eid"))) {
                 if (checkNullEmpty($scope.entity) || $scope.entity.id != requestContext.getParam("eid")) {
                     $scope.entity = {id: parseInt(requestContext.getParam("eid")), nm: ""};
+                    $scope.initLocalFilters.push("entity")
                 }
                 $scope.vw = "t";
                 $scope.matType = requestContext.getParam("matType") ||  '0';
@@ -90,6 +116,7 @@ invControllers.controller('StockViewsController', ['$scope', '$timeout', 'matSer
                     $location.$$search.eid = $scope.defaultEntityId;
                     $location.$$compose();
                     $scope.entity = {id: $scope.defaultEntityId, nm: ""};
+                    $scope.initLocalFilters.push("entity")
                     $scope.matType = requestContext.getParam("matType") ||  '0';
                     $scope.onlyNZStk = requestContext.getParam("onlyNZStk") || false;
                 }else{
@@ -100,6 +127,7 @@ invControllers.controller('StockViewsController', ['$scope', '$timeout', 'matSer
             if (checkNotNullEmpty(requestContext.getParam("mid"))) {
                 if(checkNullEmpty($scope.material) || $scope.material.mId != parseInt(requestContext.getParam("mid"))){
                     $scope.material = {mId: parseInt(requestContext.getParam("mid")),mnm:""};
+                    $scope.initLocalFilters.push("material")
                 }
                 $scope.onlyNZStk = requestContext.getParam("onlyNZStk") || false;
                 $scope.pdos = requestContext.getParam("pdos");
@@ -872,11 +900,21 @@ invControllers.controller('FullInventoryCtrl', ['$scope', 'invService', 'matServ
         });
         $scope.$on("resetRequest", function () {
             resetDataForFetch();
-            $timeout(function(){
-                    if(checkNotNullEmpty($scope.inv) && checkNotNullEmpty($scope.inv.enTgs) && $scope.inv.enTgs instanceof Array){
-                        $scope.filters.changed = true;
-                        $scope.updateETags($scope.inv.enTgs.join(','), null);
-                }},500);
+            if(checkNotNullEmpty($scope.inv) && checkNotNullEmpty($scope.inv.enTgs) && $scope.inv.enTgs instanceof Array) {
+                $timeout(function () {
+                    $scope.filters.changed = true;
+                    var etgs = $scope.inv.enTgs.join(',');
+                    $scope.updateETags(etgs, null);
+                    $scope.resetFiltersFinal();
+                    // If parent etag is already equal to default tag, call fetch manually
+                    if($scope.etag == etgs) {
+                        $scope.fetch();
+                    }
+                }, 500);
+            } else {
+                $scope.updateETags(null, null);
+                $scope.resetFiltersFinal();
+            }
         });
         $scope.$watch("loading", function(){
             $scope.$parent.updateLoading($scope.loading);
@@ -1058,14 +1096,17 @@ invControllers.controller('BatchDetailCtrl', ['$scope', 'invService','trnService
                 $scope.atd = $scope.tranDomainConfig.atdw;
             }
             $scope.reasons = [];
+            $scope.defaultReason = '';
             $scope.tagReasons = [];
             if(checkNotNullEmpty(tgs)){
                 trnService.getReasons(transType, tgs).then(function (data) {
-                    $scope.tagReasons = data.data;
+                    $scope.tagReasons = data.data.rsns;
+                    $scope.defaultReason = data.data.defRsn;
                     if(checkNotNullEmpty($scope.tagReasons)) {
                         $scope.reasons = $scope.tagReasons;
+                        $scope.reasons.splice(0,0,"");
                         $scope.expBatchDet[index].showReason = !$scope.expBatchDet[index].showReason;
-                        $scope.expBatchDet[index].reason = $scope.expBatchDet[index].showReason? $scope.tagReasons[0]: undefined;
+                        $scope.expBatchDet[index].reason = $scope.expBatchDet[index].showReason? $scope.defaultReason: undefined;
                     }else {
                         setCommonReasons(transType,index);
                     }
@@ -1079,11 +1120,23 @@ invControllers.controller('BatchDetailCtrl', ['$scope', 'invService','trnService
 
         function setCommonReasons(transType,index){
             if (checkNotNullEmpty(transType)) {
-                if (checkNotNullEmpty($scope.tranDomainConfig.reasons) && checkNotNullEmpty($scope.tranDomainConfig.reasons[transType])) {
-                    $scope.reasons = $scope.tranDomainConfig.reasons[transType];
+                if(checkNotNullEmpty($scope.tranDomainConfig.reasons)) {
+                    $scope.tranDomainConfig.reasons.some(function(reason){
+                        if (reason.type == transType) {
+                            $scope.reasons = reason.reasonConfigModel.rsns;
+                            $scope.defaultReason = reason.reasonConfigModel.defRsn;
+                            return;
+                        }
+                    });
+
+                    if(checkNotNullEmpty($scope.reasons) && $scope.reasons.length > 0) {
+                        if ($scope.reasons.indexOf("") == -1) {
+                            $scope.reasons.splice(0, 0, "");
+                        }
+                        $scope.expBatchDet[index].showReason=!$scope.expBatchDet[index].showReason;
+                        $scope.expBatchDet[index].reason = $scope.expBatchDet[index].showReason ? $scope.defaultReason: undefined;
+                    }
                 }
-                $scope.expBatchDet[index].showReason = !$scope.expBatchDet[index].showReason;
-                $scope.expBatchDet[index].reason = $scope.expBatchDet[index].showReason ? $scope.reasons[0]: undefined;
             }
         }
 

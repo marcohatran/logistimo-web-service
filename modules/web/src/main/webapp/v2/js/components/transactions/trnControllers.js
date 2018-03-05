@@ -30,18 +30,30 @@ trnControllers.controller('TransactionsCtrl', ['$scope', 'trnService', 'domainCf
             ["lceid","cust.id"],["lveid","vend.id"],["mid", "material.mId"],["atd","atd"],["rsn","reason"]];
         $scope.today = formatDate2Url(new Date());
         $scope.localFilters = ['entity', 'material', 'type', 'batchId', 'from', 'to', 'cust', 'vend', 'etag', 'tag','atd'];
+        $scope.localFilterWatches= { material: watchMaterial};
         $scope.filterMethods = ['updateFilters','searchBatch'];
         $scope.atd = false;
+
+        function watchMaterial(newValue, oldValue, callback) {
+            if ((checkNotNullEmpty(newValue) && oldValue==undefined) || (checkNotNullEmpty(oldValue) && newValue==undefined) || (newValue.mid!=oldValue.mid)) {
+                if (callback) {
+                    callback('batchId', null);
+                }
+            }
+        }
+
+        $scope.initLocalFilters = [];
         $scope.init = function (firstTimeInit) {
         if (typeof  $scope.showEntityFilter === 'undefined') {
             $scope.showEntityFilter = true;
                 if(firstTimeInit){
-            $scope.wparams.push(["eid", "entity.id"]);
-        }
+                    $scope.wparams.push(["eid", "entity.id"]);
+                }
             }
             if (checkNotNullEmpty(requestContext.getParam("mid"))) {
                 if(checkNullEmpty($scope.material) || $scope.material.mId != parseInt(requestContext.getParam("mid"))) {
                     $scope.material = {mId: parseInt(requestContext.getParam("mid")),mnm:""};
+                    $scope.initLocalFilters.push("material")
                 }
             } else {
                 $scope.material = null;
@@ -78,15 +90,18 @@ trnControllers.controller('TransactionsCtrl', ['$scope', 'trnService', 'domainCf
             if (checkNotNullEmpty(requestContext.getParam("eid"))) {
                 if(checkNullEmpty($scope.entity) || $scope.entity.id != parseInt(requestContext.getParam("eid"))) {
                     $scope.entity = {id: parseInt(requestContext.getParam("eid")), nm: ""};
+                    $scope.initLocalFilters.push("entity")
                 }
                 if(checkNotNullEmpty(requestContext.getParam("lceid"))) {
                     if (checkNullEmpty($scope.cust) || $scope.cust.id != parseInt(requestContext.getParam("lceid"))) {
                         $scope.cust = {id: parseInt(requestContext.getParam("lceid")), nm: ""};
+                        $scope.initLocalFilters.push("cust")
                     }
                 }
                 if (checkNotNullEmpty(requestContext.getParam("lveid"))) {
                     if (checkNullEmpty($scope.vend) || $scope.vend.id != parseInt(requestContext.getParam("lveid"))) {
                         $scope.vend = {id: parseInt(requestContext.getParam("lveid")), nm: ""};
+                        $scope.initLocalFilters.push("vend")
                     }
                 }
                 entityService.getLinksCount(requestContext.getParam("eid")).then(function (data) {
@@ -99,12 +114,14 @@ trnControllers.controller('TransactionsCtrl', ['$scope', 'trnService', 'domainCf
             } else if(checkNotNullEmpty(requestContext.getParam("mid"))){
                 if(checkNotNullEmpty($scope.material) || $scope.material.mId != parseInt(requestContext.getParam("mid"))) {
                     $scope.material = {mId: parseInt(requestContext.getParam("mid")), mnm: "",b:$scope.material.b}  ;
+                    $scope.initLocalFilters.push("material")
                 }
             } else if($scope.showEntityFilter){
                 if(firstTimeInit && checkNotNullEmpty($scope.defaultEntityId)){
                     $location.$$search.eid = $scope.defaultEntityId;
                     $location.$$compose();
                     $scope.entity = {id: $scope.defaultEntityId, nm: ""};
+                    $scope.initLocalFilters.push("entity")
                 }else{
                     $scope.entity = null;
                 }
@@ -832,11 +849,18 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
             $scope.entityType = "";
             $scope.validType = checkNotNullEmpty(newVal);
             $scope.reasons = [];
+            $scope.defaultReason = undefined;
             if (checkNotNullEmpty($scope.transaction.type)) {
                 if(checkNotNullEmpty($scope.tranDomainConfig.reasons)) {
-                    $scope.reasons = $scope.tranDomainConfig.reasons[$scope.transaction.type];
-                    if(checkNotNullEmpty($scope.reasons))
-                    {
+                    $scope.tranDomainConfig.reasons.some(function(reason){
+                        if (reason.type == $scope.transaction.type) {
+                            $scope.reasons = reason.reasonConfigModel.rsns;
+                            $scope.defaultReason = reason.reasonConfigModel.defRsn;
+                            return;
+                        }
+                    });
+
+                    if(checkNotNullEmpty($scope.reasons)) {
                         if($scope.reasons.length>0)
                             $scope.showReason=true;
                     }
@@ -1190,18 +1214,23 @@ trnControllers.controller('transactions.MaterialController', ['$scope','trnServi
                 if(checkNotNullEmpty($scope.transaction.type)){
                     if(checkNotNullEmpty(name.tgs)) {
                         trnService.getReasons($scope.transaction.type, name.tgs).then(function (data) {
-                            $scope.material.rsns = data.data;
+                            $scope.material.rsns = data.data.rsns;
+                            $scope.material.reason = data.data.defRsn;
                             if (checkNotNullEmpty($scope.material.rsns) && $scope.material.rsns.length > 0) {
-                                $scope.material.reason = $scope.material.rsns[0];
+                                $scope.material.rsns.splice(0,0,"");
                                 $scope.$parent.showReason = true;
                             } else if (checkNotNullEmpty($scope.reasons) && $scope.reasons.length > 0) {
-                                $scope.material.reason = $scope.reasons[0];
+                                $scope.reasons.splice(0,0,"");
+                                $scope.material.reason = $scope.defaultReason;
                             }
                         }).catch(function error(msg) {
                             $scope.showErrorMsg(msg);
                         });
                     } else if (checkNotNullEmpty($scope.reasons) &&  $scope.reasons.length > 0) {
-                        $scope.material.reason = $scope.reasons[0];
+                        if ($scope.reasons.indexOf("") == -1) {
+                            $scope.reasons.splice(0, 0, "");
+                        }
+                        $scope.material.reason = $scope.defaultReason;
                     }
                 }
 

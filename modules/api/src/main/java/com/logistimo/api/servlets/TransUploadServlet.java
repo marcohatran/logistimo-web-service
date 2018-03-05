@@ -24,10 +24,13 @@
 package com.logistimo.api.servlets;
 
 
+import com.logistimo.auth.SecurityMgr;
 import com.logistimo.bulkuploads.BulkUploadMgr;
 import com.logistimo.bulkuploads.MnlTransactionUtil;
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.logger.XLog;
 import com.logistimo.services.ServiceException;
+import com.logistimo.users.service.UsersService;
 
 import java.io.IOException;
 import java.util.ResourceBundle;
@@ -82,6 +85,8 @@ public class TransUploadServlet extends SgServlet {
       xLogger.severe("Invalid or null parameters while scheduling transaction import");
       return;
     }
+    UsersService usersService = StaticApplicationContext.getBean(UsersService.class);
+    SecurityMgr.setSessionDetails(usersService.getUserAccount(userIdStr));
     Long domainId = Long.valueOf(domainIdStr);
     Long kioskId = null;
     if (kioskIdStr != null && !kioskIdStr.isEmpty()) {

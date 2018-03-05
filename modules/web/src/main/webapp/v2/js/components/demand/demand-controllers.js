@@ -70,7 +70,7 @@ demandControllers.controller('DemandViewsCtrl', ['$scope', 'demandService', 'dom
         $scope.wparams = [["etag","etag"], ["tag","tag"], ["eid","entity.id"], ["mid","material.mId"],["vw","vw"], ["etrn","etrn"], ["otype","otype"]];
         $scope.localFilters = ['entity', 'material', 'etag', 'tag', 'otype', 'etrn'];
         ListingController.call(this, $scope, requestContext, $location);
-
+        $scope.initLocalFilters = [];
         $scope.init = function (firstTimeInit) {
             $scope.tag = requestContext.getParam("tag") || "";
             $scope.eftag = $scope.etag = requestContext.getParam("etag") || "";
@@ -81,6 +81,7 @@ demandControllers.controller('DemandViewsCtrl', ['$scope', 'demandService', 'dom
             if (checkNotNullEmpty(requestContext.getParam("eid"))) {
                 if (checkNullEmpty($scope.entity) || $scope.entity.id != requestContext.getParam("eid")) {
                     $scope.entity = {id: parseInt(requestContext.getParam("eid")), nm: ""};
+                    $scope.initLocalFilters.push("entity")
                 }
                 if(checkNotNullEmpty($scope.vw) && $scope.vw == 'm'){
                     $scope.vw = "";
@@ -93,6 +94,7 @@ demandControllers.controller('DemandViewsCtrl', ['$scope', 'demandService', 'dom
                     $location.$$search.eid = $scope.defaultEntityId;
                     $location.$$compose();
                     $scope.entity = {id: $scope.defaultEntityId, nm: ""};
+                    $scope.initLocalFilters.push("entity")
                 }else {
                     $scope.entity = null;
                 }
@@ -101,6 +103,7 @@ demandControllers.controller('DemandViewsCtrl', ['$scope', 'demandService', 'dom
             if (checkNotNullEmpty(requestContext.getParam("mid"))) {
                 if(checkNullEmpty($scope.material) || $scope.material.mId != parseInt(requestContext.getParam("mid"))){
                     $scope.material = {mId: parseInt(requestContext.getParam("mid")),mnm:""};
+                    $scope.initLocalFilters.push("material")
                 }
                 if(checkNotNullEmpty($scope.tag)){
                     $scope.tag = "";
@@ -779,6 +782,46 @@ demandControllers.controller('DiscrepanciesListingCtrl', ['$scope', 'demandServi
         $scope.init(true);
         ListingController.call(this, $scope, requestContext, $location);
         $scope.fetch();
+
+        $scope.exportData=function() {
+            $scope.showLoading();
+            exportService.exportData({
+                entity_id: checkNotNullEmpty($scope.entity) ? $scope.entity.id : undefined,
+                material_id: checkNotNullEmpty($scope.material) ? $scope.material.mId : undefined,
+                order_id: $scope.ordId || undefined,
+                from_date: formatDate2Url($scope.from) || undefined,
+                end_date: formatDate2Url($scope.to) || undefined,
+                type: $scope.discType || undefined,
+                order_subtype: $scope.oType || undefined,
+                exclude_transfer: $scope.etrn || undefined,
+                ktag: $scope.eTag || undefined,
+                mtag: $scope.mTag || undefined,
+                titles: {
+                    filters: getCaption()
+                },
+                module: "discrepancy",
+                templateId: "o_discrepancy"
+            }).then(function (data) {
+                $scope.showSuccess(data.data);
+            }).catch(function error(msg) {
+                $scope.showErrorMsg(msg);
+            }).finally(function() {
+                $scope.hideLoading();
+            });
+        };
+
+        function getCaption() {
+            var caption = getFilterTitle($scope.entity, $scope.resourceBundle['kiosk'], 'nm');
+            caption += getFilterTitle($scope.material, $scope.resourceBundle['material'], 'mnm');
+            caption += getFilterTitle($scope.discType, $scope.resourceBundle['discrepancy']);
+            caption += getFilterTitle($scope.ordId, $scope.resourceBundle['order']);
+            caption += getFilterTitle($scope.etrn ? "YES" : undefined , $scope.transRelease ? $scope.resourceBundle['exclude.transferorders'] : $scope.resourceBundle['exclude.releaseorders']);
+            caption += getFilterTitle(formatDate2Url($scope.from), $scope.resourceBundle['from']);
+            caption += getFilterTitle(formatDate2Url($scope.to), $scope.resourceBundle['to']);
+            caption += getFilterTitle($scope.eTag, $scope.resourceBundle['kiosk'] + " " + $scope.resourceBundle['tag.lower']);
+            caption += getFilterTitle($scope.mTag, $scope.resourceBundle['material'] + " " + $scope.resourceBundle['tag.lower']);
+            return caption;
+        }
     }
 ]);
 
