@@ -102,8 +102,7 @@
         </div>
         <div class="row action-bar">
             <div class="col-sm-9 noLRpad">
-                <export-data ng-show="resSize > 0" mail-id="mailId" export-type="discrepancies" export-callback="exportDiscrepancies(type,extraParams)"
-                             disc-type="discType" entity-id="entity.id" entity-name="entity.nm" e-tag="eTag" mat-id="material.mId" mat-name="material.nm" m-tag="mTag" order-id="orderId" export-order-type="oType" etrn="etrn" from="from" to="to" rows="numFound"></export-data>
+                <export ng-show="resSize > 0" callback="exportData()"></export>
             </div>
             <div class="btn-group pull-right" ng-show="(entity!= null && entity.id != null && entity.id != '') && isUndef(orderId)" ng-click="showColumns()">
                 <label class="btn btn-sm btn-default" ng-model="oType" uib-btn-radio="'sle'">{{resourceBundle.salesorders}}</label>
@@ -111,6 +110,5 @@
             </div>
         </div>
         <div ng-include="'views/orders/discrepancies-list.html'"></div>
-    </div>
     </div>
 </div>

@@ -33,17 +33,14 @@ import java.util.List;
  * Created by vani on 30/01/18.
  */
 public class ReturnsConfig implements Serializable {
-  public static final int DEFAULT_INCOMING_DURATION = 30;
-  public static final int DEFAULT_OUTGOING_DURATION = 30;
-
   private static final long serialVersionUID = 1L;
 
   @SerializedName(value = "entity_tags")
   private List<String> entityTags = new ArrayList<>(1);
   @SerializedName(value = "incoming_duration")
-  private int incDuration = DEFAULT_INCOMING_DURATION;
+  private Integer incDuration;
   @SerializedName(value = "outgoing_duration")
-  private int outDuration = DEFAULT_OUTGOING_DURATION;
+  private Integer outDuration;
 
   public List<String> getEntityTags() { return entityTags; }
 
@@ -51,19 +48,19 @@ public class ReturnsConfig implements Serializable {
     this.entityTags = entityTags;
   }
 
-  public int getIncomingDuration() {
+  public Integer getIncomingDuration() {
     return incDuration;
   }
 
-  public void setIncomingDuration(int incDuration) {
+  public void setIncomingDuration(Integer incDuration) {
     this.incDuration = incDuration;
   }
 
-  public int getOutgoingDuration() {
+  public Integer getOutgoingDuration() {
     return outDuration;
   }
 
-  public void setOutgoingDuration(int outDuration) {
+  public void setOutgoingDuration(Integer outDuration) {
     this.outDuration = outDuration;
   }
 }

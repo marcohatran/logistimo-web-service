@@ -177,5 +177,36 @@ blkUpControllers.controller('ViewBulkUploadController', ['$scope','requestContex
             $location.$$search = {};
             $location.$$compose();
         };
+
+        $scope.exportData=function() {
+            var eid;
+            if (checkNotNullEmpty($scope.entity)) {
+                eid = $scope.entity.id;
+            }
+            $scope.showLoading();
+            exportService.exportData({
+                entity_id: eid,
+                from_date: formatDate2Url($scope.from) || undefined,
+                end_date: formatDate2Url($scope.to) || undefined,
+                titles: {
+                    filters: getCaption()
+                },
+                module: "manual.transactions",
+                templateId: "i_manual_transaction"
+            }).then(function (data) {
+                $scope.showSuccess(data.data);
+            }).catch(function error(msg) {
+                $scope.showErrorMsg(msg);
+            }).finally(function() {
+                $scope.hideLoading();
+            });
+        };
+
+        function getCaption() {
+            var caption = getFilterTitle($scope.entity, $scope.resourceBundle['kiosk'], 'nm');
+            caption += getFilterTitle(formatDate2Url($scope.from), $scope.resourceBundle['from']);
+            caption += getFilterTitle(formatDate2Url($scope.to), $scope.resourceBundle['to']);
+            return caption;
+        }
     }
 ]);

@@ -232,6 +232,10 @@ public class JsonTagsZ {
   public static final String TRANSACTION_TYPE = "ty";
   public static final String TRANSFER = "t";
   public static final String TRANSFER_RELEASE = "tr";
+  public static final String RETURNS_INCOMING = "ri";
+  public static final String RETURNS_OUTGOING = "ro";
+  public static final String DEFAULT_REASONS = "default_reasons";
+
   //transporter for orders
   public static final String TRANSPORTER = "trsp";
   public static final String
@@ -260,6 +264,9 @@ public class JsonTagsZ {
   public static final String REASONS_RECEIPT = "rrsns";
   public static final String REASONS_STOCKCOUNT = "prsns";
   public static final String REASONS_TRANSFER = "trsns";
+  public static final String REASONS_RETURNS_INCOMING = "rirsns";
+  public static final String REASONS_RETURNS_OUTGOING = "rorsns";
+
   public static final String RECEIPT_COUNT = "rc";
   public static final String RECEIPT_QUANTITY = "rq";
   public static final String RETURN_COUNT = "rtc";
@@ -323,4 +330,7 @@ public class JsonTagsZ {
   public static final String SALES_ORDERS = "salesords";
   public static final String SHIPPING = "shipping";
   public static final String REFERENCE_ID = "refid";
+
+  // Returns policy configuration
+  public static final String RETURNS = "returns";
 }

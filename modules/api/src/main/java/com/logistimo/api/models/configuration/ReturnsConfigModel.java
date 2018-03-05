@@ -23,8 +23,6 @@
 
 package com.logistimo.api.models.configuration;
 
-import com.logistimo.config.models.ReturnsConfig;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,6 +31,6 @@ import java.util.List;
  */
 public class ReturnsConfigModel {
   public List<String> eTags = new ArrayList<>(1);
-  public int incDur = ReturnsConfig.DEFAULT_INCOMING_DURATION;
-  public int outDur = ReturnsConfig.DEFAULT_OUTGOING_DURATION;
+  public Integer incDur;
+  public Integer outDur;
 }

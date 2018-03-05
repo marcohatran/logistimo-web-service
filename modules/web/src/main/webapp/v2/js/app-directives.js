@@ -3213,7 +3213,8 @@ logistimoApp.directive('lgUibSelect', function () {
             allowClear: '@?',
             limit:'@',
             appendToBody:'@',
-            reset: '@?'
+            reset: '@?',
+            refreshList:'='
         },
         controller: [ '$scope', function($scope) {
             $scope.model = {selectModel:$scope.uiModel};
@@ -3239,6 +3240,10 @@ logistimoApp.directive('lgUibSelect', function () {
                         setModel = false;
                     }
                 }
+            });
+
+            $scope.$watch('refreshList', function(){
+                $scope.filter("")
             });
             $scope.$watch('model.selectModel',function(newValue,oldValue){
                 if(newValue != oldValue) {

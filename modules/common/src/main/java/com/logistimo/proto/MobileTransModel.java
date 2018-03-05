@@ -86,4 +86,14 @@ public class MobileTransModel {
    * For sorting the entry time
    */
   public Long sortEtm;
+
+  /**
+   * Tracking object type
+   */
+  public String troty;
+
+  /**
+   * Tracking ID
+   */
+  public String tid;
 }

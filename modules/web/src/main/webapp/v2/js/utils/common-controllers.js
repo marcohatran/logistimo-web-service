@@ -671,12 +671,26 @@ cmnControllers.controller('ResetController', ['$scope', function ($scope) {
                 if (newValue != oldValue) {
                     if ($scope.initLocalFilters.indexOf(filter) != -1) {
                         $scope.$parent[filter] = angular.copy($scope[filter]);
-                        $scope.initLocalFilters.splice($scope.initLocalFilters.indexOf(filter), 1)
+                        $scope.initLocalFilters.splice($scope.initLocalFilters.indexOf(filter), 1);
+                        //Make initLocalFilters as local variable to avoid conflict on updating same in parent
+                        if($scope.initLocalFilters.length == 0) {
+                            $scope.initLocalFilters = []
+                        }
                     }
                 }
             });
         });
     }
+
+    if($scope.forceLocalFilterReset != undefined) {
+        $scope.$parent.$watchCollection('forceLocalFilterReset', function () {
+            angular.forEach($scope.forceLocalFilterReset,function(filter){
+                $scope[filter] = angular.copy($scope.$parent[filter]);
+            });
+            $scope.$parent.forceLocalFilterReset.splice(0);
+        });
+    }
+
     function addwatch(filter) {
         $scope.$parent.$watch(filter, function (newValue, oldValue) {
             if (newValue != oldValue) {

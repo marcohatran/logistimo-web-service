@@ -501,6 +501,19 @@ assetControllers.controller("AssetListingController", ['$scope', '$route', 'asse
             });
         };
 
+        $scope.exportData = function () {
+            $scope.showLoading();
+            exportService.exportData({
+                module: 'setup.assets',
+                templateId: 's_assets'
+            }).then(function (data) {
+                $scope.showSuccess(data.data);
+            }).catch(function error(msg) {
+                $scope.showErrorMsg(msg);
+            }).finally(function(){
+                $scope.hideLoading();
+            });
+        };
         $scope.updateTypeFilter = function(value){
             $scope.assetTypeFilter = value;
             $scope.currentAsset = $scope.assetConfig.assets[value];

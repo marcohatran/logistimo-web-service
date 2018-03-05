@@ -1101,50 +1101,50 @@ public class DomainConfigController {
 
       // Form object
       InventoryConfig inventoryConfig = new InventoryConfig();
-      inventoryConfig.setTransReasons(configurationModelBuilder.getReasonsByTransType(model));
+      inventoryConfig.setTransReasons(configurationModelBuilder.buildReasonConfigByTransType(model));
 
       //reset the wastage reasons
       cc.dc.setWastageReasons(null);
       boolean cimt = model.cimt;
       if (cimt) {
         inventoryConfig.setCimt(true);
-        inventoryConfig.setImtransreasons(configurationModelBuilder.getMapWithTrimmedReasons(
+        inventoryConfig.setImtransreasons(configurationModelBuilder.buildReasonConfigByTagMap(
             model.imt));
       }
       boolean crmt = model.crmt;
       if (crmt) {
         inventoryConfig.setCrmt(true);
-        inventoryConfig.setRmtransreasons(configurationModelBuilder.getMapWithTrimmedReasons(
+        inventoryConfig.setRmtransreasons(configurationModelBuilder.buildReasonConfigByTagMap(
             model.rmt));
       }
       boolean csmt = model.csmt;
       if (csmt) {
         inventoryConfig.setCsmt(true);
-        inventoryConfig.setSmtransreasons(configurationModelBuilder.getMapWithTrimmedReasons(
+        inventoryConfig.setSmtransreasons(configurationModelBuilder.buildReasonConfigByTagMap(
             model.smt));
       }
       boolean ctmt = model.ctmt;
       if (ctmt) {
         inventoryConfig.setCtmt(true);
-        inventoryConfig.setTmtransreasons(configurationModelBuilder.getMapWithTrimmedReasons(
+        inventoryConfig.setTmtransreasons(configurationModelBuilder.buildReasonConfigByTagMap(
             model.tmt));
       }
       boolean cdmt = model.cdmt;
       if (cdmt) {
         inventoryConfig.setCdmt(true);
-        inventoryConfig.setDmtransreasons(configurationModelBuilder.getMapWithTrimmedReasons(
+        inventoryConfig.setDmtransreasons(configurationModelBuilder.buildReasonConfigByTagMap(
             model.dmt));
           }
       boolean crimt = model.crimt;
       if (crimt) {
         inventoryConfig.setCrimt(true);
-        inventoryConfig.setMtagRetIncRsns(configurationModelBuilder.getMapWithTrimmedReasons(
+        inventoryConfig.setMtagRetIncRsns(configurationModelBuilder.buildReasonConfigByTagMap(
             model.rimt));
         }
       boolean cromt = model.cromt;
       if (cromt) {
         inventoryConfig.setCromt(true);
-        inventoryConfig.setMtagRetOutRsns(configurationModelBuilder.getMapWithTrimmedReasons(model.romt));
+        inventoryConfig.setMtagRetOutRsns(configurationModelBuilder.buildReasonConfigByTagMap(model.romt));
       }
       inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_ISSUE, configurationModelBuilder.buildMatStatusConfig(
           model.idf, model.iestm, model.ism));
@@ -2559,6 +2559,7 @@ public class DomainConfigController {
 
       DashboardConfig.AssetsDbConfig assetsDbConfig = new DashboardConfig.AssetsDbConfig();
       assetsDbConfig.dats = StringUtil.getCSV(model.dats);
+      assetsDbConfig.dmt = model.dmt;
 
       DashboardConfig.DBOverviewConfig dbOverviewConfig = new DashboardConfig.DBOverviewConfig();
       if (model.dmtg != null) {

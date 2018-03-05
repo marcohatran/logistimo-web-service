@@ -31,6 +31,8 @@ import com.logistimo.exception.LogiException;
 import com.logistimo.inventory.TransactionUtil;
 import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.inventory.models.ErrorDetailModel;
+import com.logistimo.inventory.models.ResponseDetailModel;
+import com.logistimo.inventory.models.SuccessDetailModel;
 import com.logistimo.inventory.policies.InventoryUpdatePolicy;
 import com.logistimo.inventory.service.InventoryManagementService;
 import com.logistimo.logger.XLog;
@@ -46,6 +48,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -75,7 +78,7 @@ public class UpdateMultipleInventoryTransactionsAction {
   private static final int LOCK_RETRY_COUNT = 25;
   private static final int LOCK_RETRY_DELAY_IN_MILLISECONDS = 2400;
 
-  public Map<Long, List<ErrorDetailModel>> execute(
+  public Map<Long, ResponseDetailModel> execute(
       Map<Long, List<ITransaction>> materialTransactionsMap, Long domainId, String userId)
       throws ServiceException, ConfigurationException {
     if (materialTransactionsMap == null || materialTransactionsMap.isEmpty() || domainId == null
@@ -88,6 +91,7 @@ public class UpdateMultipleInventoryTransactionsAction {
     javax.jdo.Transaction tx = null;
     Map<Long, LockUtil.LockStatus> locks = new HashMap<>();
     Map<Long, List<ErrorDetailModel>> materialErrorDetailModelsMap = new HashMap<>(1);
+    Map<Long, List<SuccessDetailModel>> materialSuccessDetailModelsMap = new HashMap<>(1);
     try {
       pm = getPersistenceManager();
       tx = pm.currentTransaction();
@@ -107,13 +111,13 @@ public class UpdateMultipleInventoryTransactionsAction {
 
       // If no validTransactions, return
       if (validTransactions.isEmpty()) {
-        return materialErrorDetailModelsMap;
+        return getMaterialResponseDetailModel(materialSuccessDetailModelsMap,materialErrorDetailModelsMap);
       }
 
       // Shuffle and sort the transactions by entry time
       Collections.sort(validTransactions, new EntryTimeComparator());
 
-      executeTransactions(domainId, pm, materialErrorDetailModelsMap, midCountMap,
+      executeTransactions(domainId, pm, materialErrorDetailModelsMap, materialSuccessDetailModelsMap, midCountMap,
           validTransactions,
           midFailedFromPositionMap, inventoryUpdatePolicy);
 
@@ -127,7 +131,7 @@ public class UpdateMultipleInventoryTransactionsAction {
       }
       LockUtil.releaseLocks(locks, Constants.TX);
     }
-    return materialErrorDetailModelsMap;
+    return getMaterialResponseDetailModel(materialSuccessDetailModelsMap,materialErrorDetailModelsMap);
   }
 
   private PersistenceManager getPersistenceManager() {
@@ -308,12 +312,13 @@ public class UpdateMultipleInventoryTransactionsAction {
     transactions.stream()
         .filter(transaction -> !bidFirstTransactionMap.containsKey(transaction.getBatchId()))
         .forEach(transaction -> bidFirstTransactionMap.put(transaction.getBatchId(),
-            Collections.singletonList(transaction)));
+            new ArrayList<>(Arrays.asList(transaction))));
     return bidFirstTransactionMap;
   }
 
   protected void executeTransactions(Long domainId, PersistenceManager pm,
                                    Map<Long, List<ErrorDetailModel>> materialErrorDetailModelsMap,
+                                   Map<Long, List<SuccessDetailModel>> materialSuccessDetailModelsMap,
                                    Map<Long, Integer> midCountMap,
                                    List<ITransaction> validTransactions,
                                    Map<Long, Integer> midFailedFromPositionMap,
@@ -326,17 +331,19 @@ public class UpdateMultipleInventoryTransactionsAction {
         // Do not process for this material
         continue;
       }
+      ITransaction createdTransaction = null;
       try {
-        ITransaction
-            error =
+            createdTransaction =
             inventoryManagementService.updateInventoryTransaction(domainId, transaction, false,
                 !shouldDeduplicate, pm);
-        if (error != null) {
+        if (createdTransaction != null && createdTransaction.getKey() == null) {
+          // Error
           xLogger.warn("Error while updating inventory, errorCode: {0}, errorMessage: {1}",
-              error.getMsgCode(), error.getMessage());
+              createdTransaction.getMsgCode(), createdTransaction.getMessage());
           updateFailedFromPositionMap(midFailedFromPositionMap, midCountMap,
-              materialErrorDetailModelsMap, transaction.getMaterialId(), error.getMsgCode(),
-              error.getMessage());
+              materialErrorDetailModelsMap, transaction.getMaterialId(),
+              createdTransaction.getMsgCode(),
+              createdTransaction.getMessage());
           continue;
         }
       } catch (DuplicationException e) {
@@ -358,8 +365,83 @@ public class UpdateMultipleInventoryTransactionsAction {
         } else {
           midCountMap.put(transaction.getMaterialId(), 0);
         }
+        if (createdTransaction != null && createdTransaction.getKey() != null) {
+          updateSuccessPositionMap(materialSuccessDetailModelsMap,
+              midCountMap.get(transaction.getMaterialId()), transaction.getMaterialId(),
+              createdTransaction.getKeyString());
+        }
       }
     }
+
   }
 
+  private void updateSuccessPositionMap(
+                                           Map<Long, List<SuccessDetailModel>> materialSuccessDetailModelsMap, int position, Long mid,
+                                           String transactionKey) {
+    if (materialSuccessDetailModelsMap == null) {
+      materialSuccessDetailModelsMap = new HashMap<>();
+    }
+    List<SuccessDetailModel> successDetailModels;
+    if (materialSuccessDetailModelsMap.containsKey(mid)) {
+      successDetailModels = materialSuccessDetailModelsMap.get(mid);
+      successDetailModels.get(0).keys.add(transactionKey);
+      successDetailModels.get(0).index = position;
+    } else {
+      successDetailModels = new ArrayList<>(1);
+      List<String> transactionKeys = new ArrayList<>(1);
+      transactionKeys.add(transactionKey);
+      successDetailModels.add(new SuccessDetailModel("M016", position, transactionKeys));
+    }
+    materialSuccessDetailModelsMap.put(mid, successDetailModels);
+  }
+
+  protected Map<Long,ResponseDetailModel> getMaterialResponseDetailModel(Map<Long,List<SuccessDetailModel>> midSuccessDetailModelMap, Map<Long,List<ErrorDetailModel>> midErrorDetailModelMap) {
+    Map<Long,ResponseDetailModel> midResponseDetailModel = new HashMap<>();
+    midSuccessDetailModelMap.entrySet().forEach(entry -> {
+          ResponseDetailModel responseDetailModel = new ResponseDetailModel();
+          if (midResponseDetailModel.containsKey(entry.getKey())) {
+            responseDetailModel = midResponseDetailModel.get(entry.getKey());
+          } else {
+            responseDetailModel = new ResponseDetailModel();
+          }
+
+          if(isCompleteSuccess(entry.getKey(),midErrorDetailModelMap)) {
+            responseDetailModel.successDetailModels
+                .addAll(getModifiedSuccessDetailModels(entry.getValue()));
+          } else {
+            responseDetailModel.successDetailModels
+                .addAll(entry.getValue());
+          }
+          midResponseDetailModel.put(entry.getKey(), responseDetailModel);
+        }
+    );
+    midErrorDetailModelMap.entrySet().forEach(entry -> {
+          ResponseDetailModel responseDetailModel = new ResponseDetailModel();
+          if (midResponseDetailModel.containsKey(entry.getKey())) {
+            responseDetailModel = midResponseDetailModel.get(entry.getKey());
+          } else {
+            responseDetailModel = new ResponseDetailModel();
+          }
+          responseDetailModel.errorDetailModels.addAll(midErrorDetailModelMap.get(entry.getKey()));
+          midResponseDetailModel.put(entry.getKey(), responseDetailModel);
+        }
+    );
+    return midResponseDetailModel;
+  }
+
+  protected boolean isCompleteSuccess(Long mid, Map<Long,List<ErrorDetailModel>> midErrorDetailModelMap) {
+    if (mid == null || midErrorDetailModelMap == null) {
+      throw new IllegalArgumentException("Invalid arguments while checking whether transaction update was complete success or partial success, mid:" + mid + "midErrorDetailModelMap: " + midErrorDetailModelMap);
+    }
+    return !midErrorDetailModelMap.containsKey(mid);
+  }
+
+  protected List<SuccessDetailModel> getModifiedSuccessDetailModels(List<SuccessDetailModel> successDetailModels) {
+    if (successDetailModels == null || successDetailModels.isEmpty()) {
+      throw new IllegalArgumentException("Invalid argument while getting modified success detail model, successDetailModels: " + successDetailModels);
+    }
+    successDetailModels.get(0).index = 0;
+    successDetailModels.get(0).successCode = "M015";
+    return successDetailModels;
+  }
 }

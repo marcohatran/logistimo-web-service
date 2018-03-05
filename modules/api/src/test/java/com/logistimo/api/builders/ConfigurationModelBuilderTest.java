@@ -25,10 +25,12 @@ package com.logistimo.api.builders;
 
 import com.logistimo.api.models.configuration.CapabilitiesConfigModel;
 import com.logistimo.api.models.configuration.InventoryConfigModel;
+import com.logistimo.api.models.configuration.ReasonConfigModel;
 import com.logistimo.api.models.configuration.ReturnsConfigModel;
 import com.logistimo.config.models.ActualTransConfig;
 import com.logistimo.config.models.InventoryConfig;
 import com.logistimo.config.models.MatStatusConfig;
+import com.logistimo.config.models.ReasonConfig;
 import com.logistimo.config.models.ReturnsConfig;
 import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.services.ServiceException;
@@ -46,7 +48,9 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+
 
 /**
  * Created by vani on 25/01/18.
@@ -62,12 +66,16 @@ public class ConfigurationModelBuilderTest {
   private static final String OPEN_VIALS = "Open vials";
   private static final String TAGS_RETURNS_INCOMING = "Antibiotic,General,Emergency";
   private static final String TAGS_RETURNS_OUTGOING = "Vaccines,Syringes,Campaign,Open vials";
-  private static final String ANTIBIOTIC_REASONS_CSV = "Broken,Bad condition";
-  private static final String GENERAL_REASONS_CSV = "Damaged,Good condition";
   private static final String UNSORTED_TAGS = "General,Antibiotic,Emergency";
   private static final String SORTED_TAGS = "Antibiotic,Emergency,General";
   private static final String ANTIBIOTIC_REASONS_UNTRIMMED_CSV = "  Broken,  Bad condition";
   private static final String GENERAL_REASONS_UNTRIMMED_CSV = "  Damaged,  Good condition";
+  private static final String BROKEN = "Broken";
+  private static final String BAD_CONDITION = "Bad condition";
+  private static final String DAMAGED = "Damaged";
+  private static final String GOOD_CONDITION = "Good condition";
+
+
 
 
   @Before
@@ -105,20 +113,48 @@ public class ConfigurationModelBuilderTest {
 
   @Test
   public void testBuildMTagReasonModelList() throws Exception {
-    Map<String,String> tagReasons = getTagReasons();
-    List<InventoryConfigModel.MTagReason> mtagReasons = configModelBuilder.buildMTagReasonModelList(tagReasons);
+    Map<String,ReasonConfig> reasonConfigByTagMap = getReasonConfigByTagMap();
+    List<InventoryConfigModel.MTagReason> mtagReasons = configModelBuilder.buildMTagReasonModelList(reasonConfigByTagMap);
     assertNotNull(mtagReasons);
     assertEquals(2, mtagReasons.size());
     assertEquals(ANTIBIOTIC, mtagReasons.get(0).mtg);
-    assertEquals(ANTIBIOTIC_REASONS_CSV, mtagReasons.get(0).rsn);
+    assertEquals(getReasonConfigModelForAntibiotic().defRsn, mtagReasons.get(0).rsnCfgModel.defRsn);
+    assertEquals(getReasonConfigModelForAntibiotic().rsns, mtagReasons.get(0).rsnCfgModel.rsns);
     assertEquals(GENERAL, mtagReasons.get(1).mtg);
-    assertEquals(GENERAL_REASONS_CSV, mtagReasons.get(1).rsn);
+    assertEquals(getReasonConfigModelForGeneral().defRsn, mtagReasons.get(1).rsnCfgModel.defRsn);
+    assertEquals(getReasonConfigModelForGeneral().rsns, mtagReasons.get(1).rsnCfgModel.rsns);
     mtagReasons = configModelBuilder.buildMTagReasonModelList(null);
     assertNotNull(mtagReasons);
     assertTrue(mtagReasons.isEmpty());
     mtagReasons = configModelBuilder.buildMTagReasonModelList(new HashMap<>(1));
     assertNotNull(mtagReasons);
     assertTrue(mtagReasons.isEmpty());
+  }
+
+  @Test
+  public void testBuildReasonConfigByTransType() throws Exception {
+    InventoryConfigModel invConfigModel = new InventoryConfigModel();
+    invConfigModel.ri = invConfigModel.rr = invConfigModel.rs = invConfigModel.rd = invConfigModel.rt = invConfigModel.rri = invConfigModel.rro = getReasonConfigModelForAntibiotic();
+    Map<String,ReasonConfig> reasonConfigByTransType = configModelBuilder.buildReasonConfigByTransType(
+        invConfigModel);
+    assertNotNull(reasonConfigByTransType);
+    assertEquals(7, reasonConfigByTransType.size());
+    reasonConfigByTransType.entrySet().stream().forEach(e -> {
+      assertNotNull(e.getValue());
+      assertEquals(getReasonConfigForAntibiotic().getDefaultReason(),e.getValue().getDefaultReason());
+      assertEquals(getReasonConfigForAntibiotic().getReasons(),e.getValue().getReasons());
+    });
+  }
+
+  @Test
+  public void testBuildReasonConfig() throws Exception {
+    ReasonConfigModel reasonConfigModel = getReasonConfigModelForAntibiotic();
+    ReasonConfig reasonConfig = configModelBuilder.buildReasonConfig(reasonConfigModel);
+    assertNotNull(reasonConfig);
+    assertEquals(getReasonConfigForAntibiotic().getDefaultReason(),reasonConfig.getDefaultReason());
+    assertEquals(getReasonConfigForAntibiotic().getReasons(),reasonConfig.getReasons());
+    reasonConfig = configModelBuilder.buildReasonConfig(null);
+    assertNotNull(reasonConfig);
   }
 
   @Test
@@ -172,19 +208,6 @@ public class ConfigurationModelBuilderTest {
     assertTrue(tagsByInvOperation.get(ITransaction.TYPE_PHYSICALCOUNT).isEmpty());
   }
 
-  @Test
-  public void testGetMapWithTrimmedReasons() throws Exception {
-    List<InventoryConfigModel.MTagReason> reasons = getMTagReasons();
-    Map<String,String>
-        mapWithTrimmedRsns = configModelBuilder.getMapWithTrimmedReasons(reasons);
-    assertNotNull(mapWithTrimmedRsns);
-    assertEquals(mapWithTrimmedRsns.size(), 2);
-    assertEquals(ANTIBIOTIC_REASONS_CSV, mapWithTrimmedRsns.get(ANTIBIOTIC));
-    assertEquals(GENERAL_REASONS_CSV, mapWithTrimmedRsns.get(GENERAL));
-    mapWithTrimmedRsns = configModelBuilder.getMapWithTrimmedReasons(null);
-    assertNotNull(mapWithTrimmedRsns);
-    assertTrue(mapWithTrimmedRsns.isEmpty());
-  }
 
   @Test
   public void testBuildActualTransConfig() throws Exception {
@@ -217,8 +240,8 @@ public class ConfigurationModelBuilderTest {
     assertTrue(!returnsConfigs.isEmpty());
     assertTrue(returnsConfigs.size() == 1);
     assertEquals(getEntityTags(), returnsConfigs.get(0).getEntityTags());
-    assertEquals(10, returnsConfigs.get(0).getIncomingDuration());
-    assertEquals(1, returnsConfigs.get(0).getOutgoingDuration());
+    assertEquals(10, returnsConfigs.get(0).getIncomingDuration().intValue());
+    assertEquals(1, returnsConfigs.get(0).getOutgoingDuration().intValue());
 
     returnsConfigs = configModelBuilder.buildReturnsConfigs(null);
     assertNotNull(returnsConfigs);
@@ -230,12 +253,12 @@ public class ConfigurationModelBuilderTest {
     ReturnsConfigModel returnsConfigModel = getReturnsConfigModel();
     ReturnsConfig returnsConfig = configModelBuilder.buildReturnsConfig(returnsConfigModel);
     assertNotNull(returnsConfig);
-    assertEquals(10, returnsConfig.getIncomingDuration());
-    assertEquals(1, returnsConfig.getOutgoingDuration());
+    assertEquals(10, returnsConfig.getIncomingDuration().intValue());
+    assertEquals(1, returnsConfig.getOutgoingDuration().intValue());
     returnsConfig = configModelBuilder.buildReturnsConfig(null);
     assertNotNull(returnsConfig);
-    assertEquals(ReturnsConfig.DEFAULT_INCOMING_DURATION, returnsConfig.getIncomingDuration());
-    assertEquals(ReturnsConfig.DEFAULT_OUTGOING_DURATION, returnsConfig.getOutgoingDuration());
+    assertNull(returnsConfig.getIncomingDuration());
+    assertNull(returnsConfig.getOutgoingDuration());
   }
 
   @Test
@@ -244,8 +267,8 @@ public class ConfigurationModelBuilderTest {
         getReturnsConfigs());
     assertNotNull(returnsConfigModels);
     assertEquals(getEntityTags(), returnsConfigModels.get(0).eTags);
-    assertEquals(60, returnsConfigModels.get(0).incDur);
-    assertEquals(10, returnsConfigModels.get(0).outDur);
+    assertEquals(60, returnsConfigModels.get(0).incDur.intValue());
+    assertEquals(10, returnsConfigModels.get(0).outDur.intValue());
 
     returnsConfigModels = configModelBuilder.buildReturnsConfigModels(Collections.emptyList());
     assertNotNull(returnsConfigModels);
@@ -263,39 +286,20 @@ public class ConfigurationModelBuilderTest {
         returnsConfigModel = configModelBuilder.buildReturnsConfigModel(returnsConfig);
     assertNotNull(returnsConfigModel);
     assertEquals(getEntityTags(), returnsConfigModel.eTags);
-    assertEquals(60, returnsConfigModel.incDur);
-    assertEquals(10, returnsConfigModel.outDur);
+    assertEquals(60, returnsConfigModel.incDur.intValue());
+    assertEquals(10, returnsConfigModel.outDur.intValue());
     returnsConfigModel = configModelBuilder.buildReturnsConfigModel(new ReturnsConfig());
     assertNotNull(returnsConfigModel);
     assertNotNull(returnsConfigModel.eTags);
     assertTrue(returnsConfigModel.eTags.isEmpty());
-    assertEquals(ReturnsConfig.DEFAULT_INCOMING_DURATION, returnsConfigModel.incDur);
-    assertEquals(ReturnsConfig.DEFAULT_OUTGOING_DURATION, returnsConfigModel.outDur);
+    assertNull(returnsConfigModel.incDur);
+    assertNull(returnsConfigModel.outDur);
     returnsConfigModel = configModelBuilder.buildReturnsConfigModel(null);
     assertNotNull(returnsConfigModel);
     assertNotNull(returnsConfigModel.eTags);
     assertTrue(returnsConfigModel.eTags.isEmpty());
-    assertEquals(ReturnsConfig.DEFAULT_INCOMING_DURATION, returnsConfigModel.incDur);
-    assertEquals(ReturnsConfig.DEFAULT_OUTGOING_DURATION, returnsConfigModel.outDur);
-  }
-
-  @Test
-  public void testGetReasonsByTagType() throws Exception {
-    InventoryConfigModel invConfigModel = new InventoryConfigModel();
-    invConfigModel.ri = invConfigModel.rr = invConfigModel.rs = invConfigModel.rd = invConfigModel.rt = invConfigModel.rri = invConfigModel.rro = ANTIBIOTIC_REASONS_UNTRIMMED_CSV;
-    Map<String,String> reasonsByTransType = configModelBuilder.getReasonsByTransType(
-        invConfigModel);
-    assertNotNull(reasonsByTransType);
-    assertEquals(7, reasonsByTransType.size());
-    reasonsByTransType.entrySet().stream().forEach(e->assertEquals(ANTIBIOTIC_REASONS_CSV,e.getValue()));
-  }
-
-  @Test
-  public void testTrimReasons() throws Exception {
-    assertEquals("", configModelBuilder.trimReasons(""));
-    assertEquals("", configModelBuilder.trimReasons(null));
-    assertEquals(ANTIBIOTIC_REASONS_CSV,configModelBuilder.trimReasons(ANTIBIOTIC_REASONS_CSV));
-    assertEquals(ANTIBIOTIC_REASONS_CSV,configModelBuilder.trimReasons(ANTIBIOTIC_REASONS_UNTRIMMED_CSV));
+    assertNull(returnsConfigModel.incDur);
+    assertNull(returnsConfigModel.outDur);
   }
 
   private Map<String,String> getInvOperationTagsMap() {
@@ -305,11 +309,37 @@ public class ConfigurationModelBuilderTest {
     return invOperationTags;
   }
 
-  private Map<String,String> getTagReasons() {
-    Map<String,String> tagReasons = new LinkedHashMap<>(2);
-    tagReasons.put(ANTIBIOTIC,ANTIBIOTIC_REASONS_CSV);
-    tagReasons.put(GENERAL,GENERAL_REASONS_CSV);
-    return tagReasons;
+  private Map<String,ReasonConfig> getReasonConfigByTagMap() {
+    Map<String,ReasonConfig> reasonConfigByTagMap = new LinkedHashMap<>(2);
+    reasonConfigByTagMap.put(ANTIBIOTIC, getReasonConfigForAntibiotic());
+    reasonConfigByTagMap.put(GENERAL,getReasonConfigForGeneral());
+    return reasonConfigByTagMap;
+  }
+
+  private ReasonConfig getReasonConfigForAntibiotic() {
+    ReasonConfig reasonConfig = new ReasonConfig();
+    reasonConfig.setReasons(Arrays.asList(new String[]{BROKEN,BAD_CONDITION}));
+    reasonConfig.setDefaultReason(BROKEN);
+    return  reasonConfig;
+  }
+  private ReasonConfig getReasonConfigForGeneral() {
+    ReasonConfig reasonConfig = new ReasonConfig();
+    reasonConfig.setReasons(Arrays.asList(new String[]{DAMAGED,GOOD_CONDITION}));
+    reasonConfig.setDefaultReason(DAMAGED);
+    return  reasonConfig;
+  }
+  private ReasonConfigModel getReasonConfigModelForAntibiotic() {
+    ReasonConfigModel reasonConfigModel = new ReasonConfigModel();
+    reasonConfigModel.rsns = Arrays.asList(new String[]{BROKEN,BAD_CONDITION});
+    reasonConfigModel.defRsn = BROKEN;
+    return reasonConfigModel;
+  }
+
+  private ReasonConfigModel getReasonConfigModelForGeneral() {
+    ReasonConfigModel reasonConfigModel = new ReasonConfigModel();
+    reasonConfigModel.rsns = Arrays.asList(new String[]{DAMAGED,GOOD_CONDITION});
+    reasonConfigModel.defRsn = DAMAGED;
+    return reasonConfigModel;
   }
 
   private ActualTransConfig getActualTransactionConfig(String type) {

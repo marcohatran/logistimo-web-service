@@ -51,4 +51,27 @@ public class ErrorDetailModel {
     this.index = index;
     this.message = message;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
+    if (!(o instanceof ErrorDetailModel)) {
+      return false;
+    }
+    ErrorDetailModel errorDetailModel = (ErrorDetailModel) o;
+    return (errorCode == null ? errorDetailModel.errorCode == null : errorCode.equals(errorDetailModel.errorCode)) &&
+        (index == errorDetailModel.index) &&
+        (message == null ? errorDetailModel.message == null : message.equals(errorDetailModel.message));
+  }
+
+  @Override public int hashCode() {
+    int result = 17;
+    int prime = 31;
+    result = prime * result + (errorCode == null ? 0 : errorCode.hashCode());
+    result = prime * result + index;
+    result = prime * result + (message == null ? 0 : message.hashCode());
+    return result;
+  }
 }

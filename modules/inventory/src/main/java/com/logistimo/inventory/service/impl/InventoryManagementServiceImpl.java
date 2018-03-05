@@ -61,8 +61,9 @@ import com.logistimo.inventory.entity.IInvntryEvntLog;
 import com.logistimo.inventory.entity.IInvntryLog;
 import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.inventory.exceptions.InventoryAllocationException;
-import com.logistimo.inventory.models.ErrorDetailModel;
+import com.logistimo.inventory.models.CreateTransactionsReturnModel;
 import com.logistimo.inventory.models.InventoryFilters;
+import com.logistimo.inventory.models.ResponseDetailModel;
 import com.logistimo.inventory.service.InventoryManagementService;
 import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IHandlingUnit;
@@ -92,6 +93,7 @@ import com.logistimo.utils.StringUtil;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.text.ParseException;
@@ -134,7 +136,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
   private static final int LOCK_RETRY_DELAY_IN_MILLISECONDS = 2400;
   private static Set<String> vldTransTypes = new HashSet<>(Arrays.asList(ITransaction.TYPE_ISSUE,
       ITransaction.TYPE_RECEIPT, ITransaction.TYPE_PHYSICALCOUNT, ITransaction.TYPE_TRANSFER,
-      ITransaction.TYPE_WASTAGE, ITransaction.TYPE_RETURN));
+      ITransaction.TYPE_WASTAGE, ITransaction.TYPE_RETURNS_INCOMING, ITransaction.TYPE_RETURNS_OUTGOING));
 
   private ITagDao tagDao;
   private IInvntryDao invntryDao;
@@ -375,8 +377,6 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
                   .withKioskTags(kioskTag)
                   .withKioskIds(kioskIds)
                   .withDomainId(domainId), params, pm);
-      //null, materialId, kioskTag, null, null, kioskIds, params, pm,
-      //           domainId, null, IInvntry.ALL, false, null, null, null));
     } finally {
       pm.close();
     }
@@ -788,7 +788,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
   public void addInventory(Long domainId, List<IInvntry> items, boolean overwrite, String user)
       throws ServiceException {
     xLogger.fine("addInventory: Entering addInventory( List<Inventory> )");
-    if (domainId == null || items == null || items.size() == 0) {
+    if (domainId == null || items == null || items.isEmpty()) {
       throw new ServiceException("Invalid parameters");
     }
     Long kioskId = items.get(0).getKioskId();
@@ -888,7 +888,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
         }
       }
 
-      if (validItems.size() > 0) {
+      if (!validItems.isEmpty()) {
         // Persist
         pm.makePersistentAll(validItems);
 
@@ -927,7 +927,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
       }
     }
 
-    if (errorMaterialIds.size() > 0) {
+    if (!errorMaterialIds.isEmpty()) {
       throw new ServiceException(
           "Added " + validItems.size() + " material(s). " + errorMaterialIds.size()
               + " material(s) already exist, and were not added.", errorMaterialIds);
@@ -1050,10 +1050,6 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
               "Exception when generating event for inventory-deletion for material-kiosk {0}:{1} in domain {2}: {3}",
               inv.getMaterialId(), inv.getKioskId(), domainId, e.getMessage());
         }
-        // Decrement counter
-        ///TagUtil.incrementTagMaterialCounters( inv.getDomainId(), kioskId, inv.getTags(), -1, true, pm ); // NOTE: this decrementing is done within DeleteProcessor
-        // Remove temperature devices associated with this inventory
-        //TemperatureUtil.removeDevices(domainId, kioskId, materialId);
         // Remove the entities from Inventory table all related tables
         EntityRemover
             .removeRelatedEntities(domainId, JDOUtils.getImplClass(IInvntry.class).getName(),
@@ -1063,11 +1059,14 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
         xLogger.severe("Exception {0} when removing inventory for kiosk-material {1}-{2} : {3}",
             e.getClass().getName(), kioskId, materialId, e.getMessage(), e);
       } finally {
-        pm.close();
+        if (pm != null) {
+          pm.close();
+        }
       }
     }
     xLogger.fine("Exiting removeInventory");
   }
+
 
   /**
    * Get inventory transactions for a given kiosk.
@@ -1254,41 +1253,41 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
    * @return List of error transactions - i.e. those that could not be updated
    */
 
-  public List<ITransaction> updateInventoryTransactions(Long domainId,
+  public CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
                                                         List<ITransaction> inventoryTransactions)
       throws ServiceException, DuplicationException {
     return updateInventoryTransactions(domainId, inventoryTransactions, false);
   }
 
-  public List<ITransaction> updateInventoryTransactions(Long domainId,
+  public CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
                                                         List<ITransaction> inventoryTransactions,
                                                         PersistenceManager pm)
       throws ServiceException, DuplicationException {
     return updateInventoryTransactions(domainId, inventoryTransactions, false, pm);
   }
 
-  public List<ITransaction> updateInventoryTransactions(Long domainId,
+  public CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
                                                         List<ITransaction> inventoryTransactions,
                                                         boolean skipVal)
       throws ServiceException, DuplicationException {
     return updateInventoryTransactions(domainId, inventoryTransactions, skipVal, false);
   }
 
-  public List<ITransaction> updateInventoryTransactions(Long domainId,
+  public CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
                                                         List<ITransaction> inventoryTransactions,
                                                         boolean skipVal, PersistenceManager pm)
       throws ServiceException, DuplicationException {
     return updateInventoryTransactions(domainId, inventoryTransactions, skipVal, false, pm);
   }
 
-  public List<ITransaction> updateInventoryTransactions(Long domainId,
+  public CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
                                                         List<ITransaction> inventoryTransactions,
                                                         boolean skipVal, boolean skipPred)
       throws ServiceException, DuplicationException {
     return updateInventoryTransactions(domainId, inventoryTransactions, skipVal, skipPred, null);
   }
 
-  public List<ITransaction> updateInventoryTransactions(Long domainId,
+  public CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
                                                         List<ITransaction> inventoryTransactions,
                                                         boolean skipVal, boolean skipPred,
                                                         PersistenceManager pm)
@@ -1299,14 +1298,14 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
 
   @Override
   @SuppressWarnings({"unchecked", "rawtypes"})
-  public List<ITransaction> updateInventoryTransactions(Long domainId,
+  public CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
                                                         List<ITransaction> inventoryTransactions,
                                                         List<IInvntry> invntryList, boolean skipVal,
                                                         boolean skipPred, PersistenceManager pm)
       throws ServiceException, DuplicationException {
     xLogger.fine("Entering updateInventoryTransactions");
     boolean closePM = pm == null;
-    if (inventoryTransactions == null || inventoryTransactions.size() == 0) {
+    if (CollectionUtils.isEmpty(inventoryTransactions)) {
       throw new ServiceException("Transaction list cannot be empty");
     }
     if (domainId == null) {
@@ -1321,6 +1320,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
             .equals(trkType)
             || ITransaction.TYPE_ORDER_SHIPMENT.equals(trkType)
             || ITransaction.TYPE_TRANSFER_SHIPMENT.equals(trkType);
+    boolean isReturn = ITransaction.TYPE_RETURNS_INCOMING.equals(tType) || ITransaction.TYPE_RETURNS_OUTGOING.equals(tType);
     Locale locale = SecurityUtils.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     try {
@@ -1341,7 +1341,6 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     // Deduplicate the transactions, except for stock counts
     if (!skipVal && !ITransaction.TYPE_PHYSICALCOUNT.equals(tType) && TransactionUtil
         .deduplicate(domainId, inventoryTransactions)) {
-      ///generateDuplicationEvents( inventoryTransactions, egTrans );
       throw new DuplicationException(
           "The transaction updates appear to be a duplication of what was tried within the last "
               + (TransactionUtil.DEDUPLICATION_DURATION / 60)
@@ -1417,8 +1416,18 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
             errors.add(trans);
             continue;
           }
+          if (isReturn) {
+            try {
+              checkReturnsErrors(trans);
+            } catch (LogiException e) {
+              trans.setMessage(e.getMessage());
+              trans.setMsgCode(e.getCode());
+              errors.add(trans);
+              continue;
+            }
+          }
           // Get the current time
-          Date timestamp = new Date(); /// cal.getTime(); /// earlier: now;
+          Date timestamp = new Date();
           // Check if stock is being updated for the first time (used during event generation)
           boolean
               isStockUpdatedFirstTime =
@@ -1453,7 +1462,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
             continue;
           }
 
-          if (ITransaction.TYPE_TRANSFER.equals(tType)) {
+          if (ITransaction.TYPE_TRANSFER.equals(tType) || (isReturn && trans.getLinkedKioskId() != null)) {
             linkedKioskInv = getInventory(trans.getLinkedKioskId(), materialId, pm);
             if (linkedKioskInv == null) {
               IMaterial m = materialCatalogService.getMaterial(materialId);
@@ -1592,7 +1601,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
 
     xLogger.fine("Exiting updateInventoryTransactions");
 
-    return errors;
+    return new CreateTransactionsReturnModel(committedTransList, errors);
   }
 
   private boolean isAtdNotValid(Long domainId, Date actualTransactionDate) {
@@ -1610,8 +1619,6 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     }
     return atd.after(currentDate);
   }
-
-
 
   private void doPostTransactionPredictions(Long domainId, List<IInvntry> toBePredicted) {
     DomainConfig dc = DomainConfig.getInstance(domainId);
@@ -1642,6 +1649,19 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     }
   }
 
+  private void checkReturnsErrors(ITransaction trans) throws LogiException {
+    if (StringUtils.isEmpty(trans.getTrackingId()) || StringUtils.isEmpty(trans.getTrackingObjectType())) {
+      throw new LogiException("M017");
+    }
+    if (StringUtils.isEmpty(trans.getReason())) {
+      throw new LogiException("M018");
+    }
+    ITransaction linkedTransaction = transDao.getById(trans.getTrackingId());
+    if (BigUtil.greaterThan(trans.getQuantity(),linkedTransaction.getQuantity())) {
+        throw new LogiException("M019", trans.getQuantity(), linkedTransaction.getQuantity());
+    }
+  }
+
   /**
    * Update a single inventory transaction
    */
@@ -1665,7 +1685,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
 
     List<ITransaction> list = new ArrayList<>();
     list.add(inventoryTransaction);
-    List<ITransaction> errorList = updateInventoryTransactions(domainId, list, false, skipPred);
+    List<ITransaction> errorList = updateInventoryTransactions(domainId, list, false, skipPred).getErrorTransactions();
     if (errorList != null && !errorList.isEmpty()) {
       return errorList.get(
           0); // Since the list has only one Transaction, the errorList also cannot have more than one Transaction
@@ -1684,14 +1704,17 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
 
     List<ITransaction> list = new ArrayList<>(1);
     list.add(inventoryTransaction);
-    List<ITransaction> errorList = updateInventoryTransactions(domainId, list, skipVal, skipPred,
+    CreateTransactionsReturnModel createTransactionsReturnModel = updateInventoryTransactions(domainId, list, skipVal, skipPred,
         pm);
-    if (errorList != null && !errorList.isEmpty()) {
+    if (!CollectionUtils.isEmpty(createTransactionsReturnModel.getErrorTransactions())) {
       // Since the list has only one Transaction, the errorList also cannot have more than one Transaction
-      return errorList.get(
+      return createTransactionsReturnModel.getErrorTransactions().get(
+          0);
+    } else if (!CollectionUtils.isEmpty(createTransactionsReturnModel.getSuccessfulTransactions())) {
+      return createTransactionsReturnModel.getSuccessfulTransactions().get(
           0);
     } else {
-      return null;
+      throw new ServiceException("ServiceException while updating inventory transaction");
     }
   }
 
@@ -1704,12 +1727,15 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
 
     List<ITransaction> list = new ArrayList<>();
     list.add(inventoryTransaction);
-    List<ITransaction> errorList = updateInventoryTransactions(domainId, list, false, skipPred, pm);
-    if (errorList != null && !errorList.isEmpty()) {
-      return errorList.get(
+    CreateTransactionsReturnModel createTransactionsReturnModel = updateInventoryTransactions(domainId, list, false, skipPred, pm);
+    if (!CollectionUtils.isEmpty(createTransactionsReturnModel.getErrorTransactions())) {
+      return createTransactionsReturnModel.getErrorTransactions().get(
           0); // Since the list has only one Transaction, the errorList also cannot have more than one Transaction
+    } else if (!CollectionUtils.isEmpty(createTransactionsReturnModel.getSuccessfulTransactions())) {
+      return createTransactionsReturnModel.getSuccessfulTransactions().get(
+          0);
     } else {
-      return null;
+      throw new ServiceException("ServiceException while updating inventory transaction");
     }
   }
 
@@ -1928,7 +1954,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     }
     // Issue checks
     if (ITransaction.TYPE_ISSUE.equals(transType) || ITransaction.TYPE_WASTAGE.equals(transType)
-        || ITransaction.TYPE_TRANSFER.equals(transType)) {
+        || ITransaction.TYPE_TRANSFER.equals(transType) || ITransaction.TYPE_RETURNS_OUTGOING.equals(transType)) {
       if (BigUtil.equalsZero(quantity)) {
         throw new LogiException("M001", quantity);
       }
@@ -1941,7 +1967,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
         throw new LogiException("M003", (Object[]) null);
       }
     } else if (ITransaction.TYPE_RECEIPT.equals(transType) || ITransaction.TYPE_ORDER
-        .equals(transType) || ITransaction.TYPE_RETURN.equals(transType)) {
+        .equals(transType) || ITransaction.TYPE_RETURNS_INCOMING.equals(transType)) {
       if (BigUtil.equalsZero(quantity)) {
         throw new LogiException("M001", quantity);
       }
@@ -2108,7 +2134,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     // Get trans. params.
     BigDecimal quantity = trans.getQuantity();
     String transType = trans.getType();
-    if (ITransaction.TYPE_ISSUE.equals(transType) || ITransaction.TYPE_WASTAGE.equals(transType)) {
+    if (ITransaction.TYPE_ISSUE.equals(transType) || ITransaction.TYPE_WASTAGE.equals(transType) || ITransaction.TYPE_RETURNS_OUTGOING.equals(transType)) {
       // Reduce the stock-on-hand by issued amount
       in.setStock(in.getStock().subtract(quantity));
       in.setAvailableStock(in.getAvailableStock().subtract(quantity));
@@ -2116,7 +2142,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
         invBatch.setQuantity(invBatch.getQuantity().subtract(quantity));
         invBatch.setAvailableStock(invBatch.getAvailableStock().subtract(quantity));
       }
-    } else if (ITransaction.TYPE_RECEIPT.equals(transType) || ITransaction.TYPE_RETURN
+    } else if (ITransaction.TYPE_RECEIPT.equals(transType) || ITransaction.TYPE_RETURNS_INCOMING
         .equals(transType)) {
       // Increase the stock-on-hand by the received amount
       in.setStock(in.getStock().add(quantity));
@@ -2410,7 +2436,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     Map<String, Object> params = null;
 
     // Transaction creation event
-    if (eventId != -1) { // TODO: Put a constant here instead of -1
+    if (eventId != -1) {
       try {
         String reason = trans.getReason();
         if (reason != null && !reason.isEmpty()) {
@@ -2777,7 +2803,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
         logs.add(createMinMaxLog(inv, dc.getInventoryConfig().getMinMaxType(),
             dc.getInventoryConfig().getConsumptionRate()));
       }
-      if (logs.size() > 0) {
+      if (!logs.isEmpty()) {
         pm.makePersistentAll(logs);
       }
       return true;
@@ -3689,16 +3715,17 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     return allowUpdate;
   }
 
-  public Map<Long, List<ErrorDetailModel>> updateMultipleInventoryTransactions(
+  public Map<Long, ResponseDetailModel> updateMultipleInventoryTransactions(
       Map<Long, List<ITransaction>> materialTransactionsMap, Long domainId, String userId)
       throws ServiceException {
     try {
       return updateMultipleInventoryTransactionsAction.execute(materialTransactionsMap,
-          domainId, userId);
+        domainId, userId);
     } catch (ConfigurationException e) {
       throw new ServiceException(e);
     }
   }
+
 
   public boolean validateMaterialBatchManagementUpdate(Long materialId) throws ServiceException {
     if (materialId == null) {
@@ -3894,5 +3921,4 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     }
     in.setUpdatedOn(new Date());
   }
-
 }

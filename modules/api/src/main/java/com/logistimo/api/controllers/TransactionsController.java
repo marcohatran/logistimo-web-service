@@ -26,11 +26,13 @@ package com.logistimo.api.controllers;
 import com.google.gson.internal.LinkedTreeMap;
 
 import com.logistimo.AppFactory;
+import com.logistimo.api.builders.ConfigurationModelBuilder;
 import com.logistimo.api.builders.MarkerBuilder;
 import com.logistimo.api.builders.TransactionBuilder;
 import com.logistimo.api.models.MarkerModel;
 import com.logistimo.api.models.TransactionDomainConfigModel;
 import com.logistimo.api.models.TransactionModel;
+import com.logistimo.api.models.configuration.ReasonConfigModel;
 import com.logistimo.api.util.DedupUtil;
 import com.logistimo.auth.SecurityConstants;
 import com.logistimo.auth.utils.SecurityUtils;
@@ -38,6 +40,7 @@ import com.logistimo.config.models.ActualTransConfig;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.InventoryConfig;
 import com.logistimo.config.models.MatStatusConfig;
+import com.logistimo.config.models.ReasonConfig;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.SourceConstants;
@@ -70,6 +73,7 @@ import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.MsgUtil;
 import com.logistimo.utils.StringUtil;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -99,6 +103,7 @@ public class TransactionsController {
 
   private static final XLog xLogger = XLog.getLog(TransactionsController.class);
   private TransactionBuilder transactionBuilder;
+  private ConfigurationModelBuilder configurationModelBuilder;
   private MarkerBuilder markerBuilder;
   private ITransDao transDao;
   private InventoryManagementService inventoryManagementService;
@@ -109,6 +114,11 @@ public class TransactionsController {
   @Autowired
   public void setTransactionBuilder(TransactionBuilder transactionBuilder) {
     this.transactionBuilder = transactionBuilder;
+  }
+
+  @Autowired
+  public void setConfigurationModelBuilder(ConfigurationModelBuilder configurationModelBuilder) {
+    this.configurationModelBuilder = configurationModelBuilder;
   }
 
   @Autowired
@@ -305,33 +315,18 @@ public class TransactionsController {
     DomainConfig dc = DomainConfig.getInstance(domainId);
     InventoryConfig ic = dc.getInventoryConfig();
     TransactionDomainConfigModel model = new TransactionDomainConfigModel();
-    Map<String, String> reasons = ic.getTransReasons();
+    Map<String, ReasonConfig> reasons = ic.getTransReasons();
     model.showCInv = ic.getPermissions() != null && ic.getPermissions().invCustomersVisible;
-    Map<String, List<String>> fReasons = new HashMap<>(reasons.size());
-    for (String key : reasons.keySet()) {
-      String reasonCSV;
-      if (ITransaction.TYPE_WASTAGE.equals(key)) {
-        reasonCSV = dc.getWastageReasons();
-      } else {
-        reasonCSV = reasons.get(key);
-      }
-      if (reasonCSV != null) {
-        fReasons.put(key, new ArrayList<>(
-            new LinkedHashSet<>(Arrays.asList(reasonCSV.split(CharacterConstants.COMMA)))));
-      }
-    }
-    model.reasons = fReasons;
+    reasons.entrySet().forEach(entry -> model.addReason(entry.getKey(),configurationModelBuilder.buildReasonConfigModel(entry.getValue())));
     try {
       List cust = entitiesService.getKioskLinks(kioskId, IKioskLink.TYPE_CUSTOMER, null, null, null).getResults();
       model.customers = constructKioskMap(cust);
       List vend = entitiesService.getKioskLinks(kioskId, IKioskLink.TYPE_VENDOR, null, null, null).getResults();
       model.vendors = constructKioskMap(vend);
       model.isMan = SecurityConstants.ROLE_SERVICEMANAGER.equals(role);
-//            if (!model.isMan) {
       IUserAccount u = usersService.getUserAccount(userId);
       List dest = entitiesService.getKiosks(u, domainId, null, null, null).getResults();
       model.dest = constructKioskMap(dest);
-//            }
       ActualTransConfig atci = ic.getActualTransConfigByType(ITransaction.TYPE_ISSUE);
       model.atdi = atci != null ? atci.getTy() : ActualTransConfig.ACTUAL_NONE;
 
@@ -383,57 +378,68 @@ public class TransactionsController {
   @RequestMapping(value = "/reasons", method = RequestMethod.GET)
   public
   @ResponseBody
-  List<String> getReasons(@RequestParam String type, String[] tags) {
+  ReasonConfigModel getReasons(@RequestParam String type, String[] tags) {
     Long domainId = SecurityUtils.getCurrentDomainId();
     DomainConfig dc = DomainConfig.getInstance(domainId);
     InventoryConfig ic = dc.getInventoryConfig();
-    StringBuilder reasons = new StringBuilder();
-    List<String> reasonList = null;
+    List<ReasonConfigModel> reasonConfigModels = null;
     if (tags != null) {
+      reasonConfigModels = new ArrayList<>(tags.length);
       switch (type) {
         case ITransaction.TYPE_ISSUE:
           for (String mtag : tags) {
-            if (ic.getImTransReason(mtag) != null) {
-              reasons.append(ic.getImTransReason(mtag)).append(CharacterConstants.COMMA);
-            }
+            reasonConfigModels.add(
+                configurationModelBuilder.buildReasonConfigModel(ic.getImTransReasonConfig(mtag)));
           }
           break;
         case ITransaction.TYPE_RECEIPT:
           for (String mtag : tags) {
-            if (ic.getRmTransReason(mtag) != null) {
-              reasons.append(ic.getRmTransReason(mtag)).append(CharacterConstants.COMMA);
-            }
+            reasonConfigModels.add(configurationModelBuilder.buildReasonConfigModel(ic.getRmTransReasonConfig(
+                mtag)));
           }
           break;
         case ITransaction.TYPE_TRANSFER:
           for (String mtag : tags) {
-            if (ic.getTmTransReason(mtag) != null) {
-              reasons.append(ic.getTmTransReason(mtag)).append(CharacterConstants.COMMA);
-            }
+            reasonConfigModels.add(configurationModelBuilder.buildReasonConfigModel(ic.getTmTransReasonConfig(
+                mtag)));
           }
           break;
         case ITransaction.TYPE_PHYSICALCOUNT:
           for (String mtag : tags) {
-            if (ic.getSmTransReason(mtag) != null) {
-              reasons.append(ic.getSmTransReason(mtag)).append(CharacterConstants.COMMA);
-            }
+            reasonConfigModels.add(configurationModelBuilder.buildReasonConfigModel(ic.getSmTransReasonConfig(
+                mtag)));
           }
           break;
         case ITransaction.TYPE_WASTAGE:
           for (String mtag : tags) {
-            if (ic.getDmTransReason(mtag) != null) {
-              reasons.append(ic.getDmTransReason(mtag)).append(CharacterConstants.COMMA);
-            }
+            reasonConfigModels.add(configurationModelBuilder.buildReasonConfigModel(ic.getDmTransReasonConfig(
+                mtag)));
+          }
+          break;
+        case ITransaction.TYPE_RETURNS_INCOMING:
+          for (String mtag : tags) {
+            reasonConfigModels.add(configurationModelBuilder.buildReasonConfigModel(ic.getReturnIncomingReasonConfigByMtag(
+                mtag)));
+          }
+          break;
+        case ITransaction.TYPE_RETURNS_OUTGOING:
+          for (String mtag : tags) {
+            reasonConfigModels.add(configurationModelBuilder.buildReasonConfigModel(ic.getReturnOutgoingReasonConfigByMtag(
+                mtag)));
           }
           break;
       }
     }
-    if (reasons.length() > 0) {
-      reasonList =
-          new ArrayList<>(new LinkedHashSet<>(
-              Arrays.asList(reasons.toString().split(CharacterConstants.COMMA))));
+    ReasonConfigModel reasonConfigModel = new ReasonConfigModel();
+    if (CollectionUtils.isNotEmpty(reasonConfigModels)) {
+      reasonConfigModels.forEach(entry -> {
+        reasonConfigModel.rsns.addAll(new ArrayList<>(new LinkedHashSet<>(entry.rsns)));
+        if (reasonConfigModel.defRsn == null) {
+          reasonConfigModel.defRsn = entry.defRsn;
+        }
+      });
     }
-    return reasonList;
+    return reasonConfigModel;
   }
 
   @RequestMapping(value = "/matStatus", method = RequestMethod.GET)
@@ -529,7 +535,6 @@ public class TransactionsController {
       linkedKioskId = Long.parseLong(String.valueOf(transaction.get("lkioskid")));
     }
     boolean checkBatchMgmt = ITransaction.TYPE_TRANSFER.equals(transType);
-    //String reason = (String) transaction.get("reason");
     try {
       IKiosk kiosk = null;
       IKiosk destKiosk = null;
@@ -564,7 +569,6 @@ public class TransactionsController {
         if (status.equals("null")) {
           status = "";
         }
-        // float quantity = Long.parseLong(String.valueOf(materials.get(m)));
         if (checkBatchMgmt) {
           IMaterial material = materialCatalogService.getMaterial(materialId);
           if (material.isBatchEnabled()) {
@@ -628,7 +632,7 @@ public class TransactionsController {
         transList.add(trans);
       }
 
-      List<ITransaction> errors = inventoryManagementService.updateInventoryTransactions(domainId, transList, true);
+      List<ITransaction> errors = inventoryManagementService.updateInventoryTransactions(domainId, transList, true).getErrorTransactions();
       if (errors != null && errors.size() > 0) {
         StringBuilder errorMsg = new StringBuilder();
         for (ITransaction error : errors) {
