@@ -93,6 +93,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
   private static final String ACCESS_KEY_PREFIX = "ACCESSKEY_";
   private static final String DOMAIN_KEY_SEPARATOR = "_";
   private static final String TOKEN_ACCESS_PREFIX = "at_";
+  private static final String BACKEND_MESSAGES = "BackendMessages";
   private static ITaskService taskService = AppFactory.get().getTaskService();
   private static final int
       WEB_TOKEN_INACTIVITY_MILLIS =
@@ -374,7 +375,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
       throw new ObjectNotFoundException("USR001", userId);
     }
     Locale locale = account.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     MemcacheService cache = AppFactory.get().getMemcacheService();
     if (mode == 1) {
       String email = account.getEmail();
@@ -454,7 +455,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
       InputMismatchException, ValidationException {
     IUserAccount account = usersService.getUserAccount(userId);
     Locale locale = account.getLocale();
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     String sendType = null;
     String sendMode = null;
     if (mode == 0) {
@@ -626,7 +627,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             if (newPassword.equals(confirmPassword)) {
               usersService.changePassword(userId, null, newPassword);
               cache.delete("RESET_" + userId);
-              ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages",
+              ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES,
                   SecurityUtils.getLocale());
               return backendMessages.getString("pwd.forgot.success");
             } else {
