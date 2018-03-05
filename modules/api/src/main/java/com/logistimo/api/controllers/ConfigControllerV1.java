@@ -26,12 +26,11 @@ package com.logistimo.api.controllers;
 import com.logistimo.api.action.AssetConfigurationAction;
 import com.logistimo.api.models.configuration.AssetSystemConfigModel;
 import com.logistimo.auth.utils.SecurityUtils;
-import com.logistimo.exception.UnauthorizedException;
-import com.logistimo.logger.XLog;
+import com.logistimo.exception.BadRequestException;
 import com.logistimo.security.SecureUserDetails;
-import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
 
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -40,9 +39,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 
-import java.io.IOException;
 
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * Created by naveensnair on 23/02/18.
@@ -59,25 +56,20 @@ public class ConfigControllerV1 {
     this.assetConfigurationAction = assetConfigurationAction;
   }
 
-  private static final XLog xLogger = XLog.getLog(ConfigControllerV1.class);
-
   @RequestMapping(method = RequestMethod.GET)
   public
   @ResponseBody
   AssetSystemConfigModel
-  getAssetConfiguration(@RequestParam(required = true) String src, HttpServletResponse response)
-      throws ServiceException, IOException {
-    AssetSystemConfigModel model = new AssetSystemConfigModel();
-    try {
-      SecureUserDetails userDetails = SecurityUtils.getUserDetails();
-      model = assetConfigurationAction.invoke(src, userDetails.getDomainId(), userDetails.getLocale(), userDetails.getTimezone());
-    } catch (UnauthorizedException | ObjectNotFoundException e) {
-      response.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
-
-    } catch (Exception e) {
-      xLogger.severe("Issue with api client authentication", e);
-      response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+  getAssetConfiguration(@RequestParam(required = true) String src)
+      throws ServiceException {
+    AssetSystemConfigModel model;
+    if (StringUtils.isEmpty(src)) {
+      throw new BadRequestException("Source is required");
     }
+    SecureUserDetails userDetails = SecurityUtils.getUserDetails();
+    model =
+        assetConfigurationAction.invoke(src, userDetails.getDomainId(), userDetails.getLocale(),
+            userDetails.getTimezone());
     return model;
   }
 }
