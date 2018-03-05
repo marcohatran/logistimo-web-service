@@ -197,7 +197,7 @@ public class Order implements IOrder {
   @Persistent
   private String rid; // Reference ID
   /**
-   * Estimated date of arrival
+     * Estimated date of arrival
    */
   @Persistent
   private Date ead;
@@ -225,18 +225,33 @@ public class Order implements IOrder {
   @Persistent
   private Integer src;
 
+  /**
+   * Vendor Visibility Time
+   */
   @Persistent
   private Date vvt;
 
+  /**
+   * Customer Visibility Time
+   */
   @Persistent
   private Date cvt;
 
+  /**
+   * Purchase Approval Response Time
+   */
   @Persistent
   private Long part;
 
+  /**
+   * Sales Approval Response Time
+   */
   @Persistent
   private Long sart;
 
+  /**
+   * Transfer Approval Response Time
+   */
   @Persistent
   private Long tart;
 

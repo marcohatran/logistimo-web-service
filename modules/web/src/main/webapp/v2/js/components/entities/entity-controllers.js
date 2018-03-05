@@ -570,6 +570,7 @@ entityControllers.controller('EntityListController', ['$scope', 'entityService',
         $scope.searchEntity = function () {
             if($scope.search.nm != $scope.search.key) {
                 $scope.search.nm = $scope.search.key;
+                $scope.eTag = "";
             }
         };
         $scope.reset = function() {
