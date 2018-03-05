@@ -65,7 +65,7 @@ public class ConfigControllerV1 {
   public
   @ResponseBody
   AssetSystemConfigModel
-  getAssetConfiguration(@RequestParam(required = false) String src, HttpServletResponse response)
+  getAssetConfiguration(@RequestParam(required = true) String src, HttpServletResponse response)
       throws ServiceException, IOException {
     AssetSystemConfigModel model = new AssetSystemConfigModel();
     try {
