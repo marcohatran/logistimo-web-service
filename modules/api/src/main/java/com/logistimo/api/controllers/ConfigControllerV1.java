@@ -67,11 +67,10 @@ public class ConfigControllerV1 {
   public
   @ResponseBody
   AssetSystemConfigModel
-  getAssetConfiguration(@RequestParam(required = false) String src, HttpServletRequest request, HttpServletResponse response)
+  getAssetConfiguration(@RequestParam(required = false) String src, HttpServletResponse response)
       throws ServiceException, IOException {
     AssetSystemConfigModel model = new AssetSystemConfigModel();
     try {
-      AuthenticationUtil.authenticateTokenAndSetSession(request);
       SecureUserDetails userDetails = SecurityUtils.getUserDetails();
       model = assetConfigurationAction.invoke(src, userDetails.getDomainId(), userDetails.getLocale(), userDetails.getTimezone());
     } catch (UnauthorizedException | ObjectNotFoundException e) {
