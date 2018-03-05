@@ -24,7 +24,6 @@
 package com.logistimo.api.controllers;
 
 import com.logistimo.api.action.AssetConfigurationAction;
-import com.logistimo.api.auth.AuthenticationUtil;
 import com.logistimo.api.models.configuration.AssetSystemConfigModel;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.exception.UnauthorizedException;
