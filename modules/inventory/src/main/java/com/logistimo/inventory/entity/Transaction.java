@@ -270,6 +270,7 @@ public class Transaction implements ITransaction {
     return t;
   }
 
+  @Override
   public Long getKey() {
     return key;
   }
@@ -783,14 +784,14 @@ public class Transaction implements ITransaction {
     if (returnActualValue) {
       return os;
     }
-    return getQuantity();
+    return getOpeningStock();
   };
   @Override
   public BigDecimal getOpeningStockByBatch(boolean returnActualValue) {
     if (returnActualValue) {
-      return q;
+      return osb;
     }
-    return getQuantity();
+    return getOpeningStockByBatch();
   }
 
 }

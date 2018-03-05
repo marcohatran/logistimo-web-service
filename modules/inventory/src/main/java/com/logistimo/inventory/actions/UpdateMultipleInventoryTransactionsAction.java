@@ -336,7 +336,7 @@ public class UpdateMultipleInventoryTransactionsAction {
             createdTransaction =
             inventoryManagementService.updateInventoryTransaction(domainId, transaction, false,
                 !shouldDeduplicate, pm);
-        if (createdTransaction != null && createdTransaction.getKeyString() == null) {
+        if (createdTransaction != null && createdTransaction.getKey() == null) {
           // Error
           xLogger.warn("Error while updating inventory, errorCode: {0}, errorMessage: {1}",
               createdTransaction.getMsgCode(), createdTransaction.getMessage());
@@ -365,16 +365,17 @@ public class UpdateMultipleInventoryTransactionsAction {
         } else {
           midCountMap.put(transaction.getMaterialId(), 0);
         }
-        if (createdTransaction != null && createdTransaction.getKeyString() != null) {
-          updateSuccessFromPositionMap(materialSuccessDetailModelsMap,
+        if (createdTransaction != null && createdTransaction.getKey() != null) {
+          updateSuccessPositionMap(materialSuccessDetailModelsMap,
               midCountMap.get(transaction.getMaterialId()), transaction.getMaterialId(),
               createdTransaction.getKeyString());
         }
       }
     }
+
   }
 
-  private void updateSuccessFromPositionMap(
+  private void updateSuccessPositionMap(
                                            Map<Long, List<SuccessDetailModel>> materialSuccessDetailModelsMap, int position, Long mid,
                                            String transactionKey) {
     if (materialSuccessDetailModelsMap == null) {
@@ -384,11 +385,12 @@ public class UpdateMultipleInventoryTransactionsAction {
     if (materialSuccessDetailModelsMap.containsKey(mid)) {
       successDetailModels = materialSuccessDetailModelsMap.get(mid);
       successDetailModels.get(0).keys.add(transactionKey);
+      successDetailModels.get(0).index = position;
     } else {
       successDetailModels = new ArrayList<>(1);
       List<String> transactionKeys = new ArrayList<>(1);
       transactionKeys.add(transactionKey);
-      successDetailModels.add(new SuccessDetailModel("M015", position, transactionKeys));
+      successDetailModels.add(new SuccessDetailModel("M016", position, transactionKeys));
     }
     materialSuccessDetailModelsMap.put(mid, successDetailModels);
   }
@@ -402,8 +404,15 @@ public class UpdateMultipleInventoryTransactionsAction {
           } else {
             responseDetailModel = new ResponseDetailModel();
           }
-          responseDetailModel.successDetailModels.addAll(midSuccessDetailModelMap.get(entry.getKey()));
-          midResponseDetailModel.put(entry.getKey(),responseDetailModel);
+
+          if(isCompleteSuccess(entry.getKey(),midErrorDetailModelMap)) {
+            responseDetailModel.successDetailModels
+                .addAll(getModifiedSuccessDetailModels(entry.getValue()));
+          } else {
+            responseDetailModel.successDetailModels
+                .addAll(entry.getValue());
+          }
+          midResponseDetailModel.put(entry.getKey(), responseDetailModel);
         }
     );
     midErrorDetailModelMap.entrySet().forEach(entry -> {
@@ -418,5 +427,21 @@ public class UpdateMultipleInventoryTransactionsAction {
         }
     );
     return midResponseDetailModel;
+  }
+
+  protected boolean isCompleteSuccess(Long mid, Map<Long,List<ErrorDetailModel>> midErrorDetailModelMap) {
+    if (mid == null || midErrorDetailModelMap == null) {
+      throw new IllegalArgumentException("Invalid arguments while checking whether transaction update was complete success or partial success, mid:" + mid + "midErrorDetailModelMap: " + midErrorDetailModelMap);
+    }
+    return !midErrorDetailModelMap.containsKey(mid);
+  }
+
+  protected List<SuccessDetailModel> getModifiedSuccessDetailModels(List<SuccessDetailModel> successDetailModels) {
+    if (successDetailModels == null || successDetailModels.isEmpty()) {
+      throw new IllegalArgumentException("Invalid argument while getting modified success detail model, successDetailModels: " + successDetailModels);
+    }
+    successDetailModels.get(0).index = 0;
+    successDetailModels.get(0).successCode = "M015";
+    return successDetailModels;
   }
 }

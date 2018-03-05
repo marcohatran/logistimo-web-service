@@ -456,6 +456,12 @@ public class MobileTransactionsBuilder {
     switch(errorCode){
       case "M004" :
         return "M012";
+      case "M017":
+        return "M012";
+      case "M018":
+        return "M012";
+      case "M019":
+        return "M012";
       case "M011" :
         return "M011";
       case "M012" :
