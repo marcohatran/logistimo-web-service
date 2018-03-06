@@ -2247,11 +2247,13 @@ public class RESTUtil {
     HashMap<String, Object> salesOrderConfig = new HashMap<>();
     HashMap<String, Object> salesOrderFields = new HashMap<>();
     HashMap<String, Boolean> shippingFields = new HashMap<>();
+    HashMap<String, Boolean> referenceFields = new HashMap<>();
     shippingFields.put(JsonTagsZ.REFERENCE_ID, oc.isReferenceIdMandatory());
-    shippingFields.put(JsonTagsZ.PURCHASE_REFERENCE_ID, oc.isPurchaseReferenceIdMandatory());
-    shippingFields.put(JsonTagsZ.TRANSFER_REFERENCE_ID, oc.isTransferReferenceIdMandatory());
+    referenceFields.put(JsonTagsZ.PURCHASE_REFERENCE_ID, oc.isPurchaseReferenceIdMandatory());
+    referenceFields.put(JsonTagsZ.TRANSFER_REFERENCE_ID, oc.isTransferReferenceIdMandatory());
     shippingFields.put(JsonTagsZ.EXPECTED_TIME_OF_ARRIVAL, oc.isExpectedArrivalDateMandatory());
     salesOrderFields.put(JsonTagsZ.SHIPPING, shippingFields);
+    salesOrderFields.put(JsonTagsZ.MANDATE_REFERENCE_ID, referenceFields);
     salesOrderConfig.put(JsonTagsZ.SALES_ORDERS, salesOrderFields);
     return salesOrderConfig;
   }

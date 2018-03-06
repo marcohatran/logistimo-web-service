@@ -111,11 +111,11 @@ public class OrdersConfigModel {
   /**
    * Mark purchase reference id mandatory
    */
-  private boolean prm;
+  private boolean purchase;
   /**
    * Mark transfer/release reference id  mandatory
    */
-  private boolean trrm;
+  private boolean transfer;
 
 
   public String getLogo() {
@@ -197,18 +197,18 @@ public class OrdersConfigModel {
   public void setExpectedArrivalDateMandatory(boolean eadm) { this.eadm = eadm; }
 
   public boolean isPurchaseReferenceIdMandatory() {
-    return prm;
+    return purchase;
   }
 
-  public void setPurchaseReferenceIdMandatory(boolean prm) {
-    this.prm = prm;
+  public void setPurchaseReferenceIdMandatory(boolean purchase) {
+    this.purchase = purchase;
   }
 
   public boolean isTransferReferenceIdMandatory() {
-    return trrm;
+    return transfer;
   }
 
-  public void setTransferReferenceIdMandatory(boolean trrm) {
-    this.trrm = trrm;
+  public void setTransferReferenceIdMandatory(boolean transfer) {
+    this.transfer = transfer;
   }
 }
