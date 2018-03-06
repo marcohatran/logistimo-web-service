@@ -70,6 +70,10 @@ public class ConfigReasonsMigrator {
     return update(Collections.singletonList(key), false);
   }
 
+  public static boolean update(String key, boolean isJSONObject) {
+    return update(Collections.singletonList(key), isJSONObject);
+  }
+
   /**
    * Update configurations for a list of keys
    *

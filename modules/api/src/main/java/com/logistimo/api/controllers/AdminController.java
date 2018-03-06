@@ -231,9 +231,13 @@ public class AdminController {
   @RequestMapping(value = "/migrate270", method = RequestMethod.GET)
   public
   @ResponseBody
-  void migrate270(@RequestParam(required = false) Boolean json) {
+  void migrate270(@RequestParam(required = false) String domainId, @RequestParam(required = false) Boolean json) {
     try {
-      ConfigReasonsMigrator.update(null, json == null ? false : json);
+      if(domainId == null) {
+        ConfigReasonsMigrator.update((List<String>) null, json == null ? false : json);
+      } else {
+        ConfigReasonsMigrator.update(domainId, json == null ? false : json);
+      }
     } catch (Exception e) {
       xLogger.severe("Exception occurred during updating", e);
       throw new InvalidServiceException(e);
