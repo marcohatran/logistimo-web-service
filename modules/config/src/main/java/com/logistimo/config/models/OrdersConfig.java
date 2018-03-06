@@ -118,6 +118,8 @@ public class OrdersConfig implements Serializable {
   private String invoiceTemplateName;
   private String shipmentTemplateName;
   private boolean referenceIdMandatory = false;
+  private boolean purchaseReferenceIdMandatory = false;
+  private boolean transferReferenceIdMandatory = false;
   private boolean expectedArrivalDateMandatory = false;
 
 
@@ -686,6 +688,24 @@ public class OrdersConfig implements Serializable {
     return this;
   }
 
+  public boolean isPurchaseReferenceIdMandatory() {
+    return purchaseReferenceIdMandatory;
+  }
+
+  public OrdersConfig setPurchaseReferenceIdMandatory(boolean purchaseReferenceIdMandatory) {
+    this.purchaseReferenceIdMandatory = purchaseReferenceIdMandatory;
+    return this;
+  }
+
+  public boolean isTransferReferenceIdMandatory() {
+    return transferReferenceIdMandatory;
+  }
+
+  public OrdersConfig setTransferReferenceIdMandatory(boolean transferReferenceIdMandatory) {
+    this.transferReferenceIdMandatory = transferReferenceIdMandatory;
+    return this;
+  }
+
   public OrdersConfig setExpectedArrivalDateMandatory(boolean expectedArrivalDateMandatory) {
     this.expectedArrivalDateMandatory = expectedArrivalDateMandatory;
     return this;
@@ -694,5 +714,4 @@ public class OrdersConfig implements Serializable {
   public boolean isExpectedArrivalDateMandatory() {
     return expectedArrivalDateMandatory;
   }
-
 }

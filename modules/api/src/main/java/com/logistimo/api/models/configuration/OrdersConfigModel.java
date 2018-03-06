@@ -108,6 +108,15 @@ public class OrdersConfigModel {
    * Mark estimated arrival date mandatory
    */
   private boolean eadm;
+  /**
+   * Mark purchase reference id mandatory
+   */
+  private boolean prm;
+  /**
+   * Mark transfer/release reference id  mandatory
+   */
+  private boolean trrm;
+
 
   public String getLogo() {
     return logo;
@@ -186,4 +195,20 @@ public class OrdersConfigModel {
 
   public boolean isExpectedArrivalDateMandatory() { return eadm; }
   public void setExpectedArrivalDateMandatory(boolean eadm) { this.eadm = eadm; }
+
+  public boolean isPurchaseReferenceIdMandatory() {
+    return prm;
+  }
+
+  public void setPurchaseReferenceIdMandatory(boolean prm) {
+    this.prm = prm;
+  }
+
+  public boolean isTransferReferenceIdMandatory() {
+    return trrm;
+  }
+
+  public void setTransferReferenceIdMandatory(boolean trrm) {
+    this.trrm = trrm;
+  }
 }
