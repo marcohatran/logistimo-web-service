@@ -114,7 +114,7 @@ public class ConfigReasonsMigrator {
               if (value instanceof JSONObject) {
                 JSONObject reasonConfig = (JSONObject) value;
                 JSONArray array = reasonConfig.getJSONArray("reasons");
-                reasonByType.put(type, array.join(","));
+                reasonByType.put(type, array.join(",").replace("\"",""));
               } else {
                 xLog.info("New configuration already set for: {0}", configuration.getKey());
                 updatedConfigKeys.add(type);
