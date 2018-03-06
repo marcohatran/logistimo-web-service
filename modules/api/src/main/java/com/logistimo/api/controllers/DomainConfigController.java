@@ -1428,6 +1428,8 @@ public class DomainConfigController {
       oc.setAutoCreateEntityTags(model.autoCreateEntityTags);
       oc.setAutoAssignFirstMaterialStatus(model.aafmsc);
       oc.setReferenceIdMandatory(model.isReferenceIdMandatory());
+      oc.setPurchaseReferenceIdMandatory(model.isPurchaseReferenceIdMandatory());
+      oc.setTransferReferenceIdMandatory(model.isTransferReferenceIdMandatory());
       oc.setExpectedArrivalDateMandatory(model.isExpectedArrivalDateMandatory());
       if (model.getLogo() != null) {
         if (oc.getInvoiceLogo() != null && !oc.getInvoiceLogo().equals(model.getLogo())) {
