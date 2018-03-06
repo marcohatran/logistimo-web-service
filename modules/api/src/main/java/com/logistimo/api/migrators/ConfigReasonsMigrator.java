@@ -94,6 +94,14 @@ public class ConfigReasonsMigrator {
           if (!inventory.has(reasonKey)) {
             continue;
           }
+          Object object = inventory.get(reasonKey);
+          //Already new config
+          if(object instanceof String) {
+            xLog.info("New configuration already set for: {0}", configuration.getKey());
+            updatedConfigKeys.add(configuration.getKey());
+            alreadyUpdated = true;
+            break;
+          }
           JSONObject reasonByType = (JSONObject) inventory.get(reasonKey);
           if (isJSONObject) {
             for (Object key : reasonByType.keySet()) {
@@ -133,7 +141,7 @@ public class ConfigReasonsMigrator {
                 typeMap.put(type,reasonConfig1);
               } else {
                 xLog.info("New configuration already set for: {0}", configuration.getKey());
-                updatedConfigKeys.add(type);
+                updatedConfigKeys.add(configuration.getKey());
                 alreadyUpdated = true;
                 break;
               }
