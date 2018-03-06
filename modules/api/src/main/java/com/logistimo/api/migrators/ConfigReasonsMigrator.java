@@ -23,17 +23,24 @@
 
 package com.logistimo.api.migrators;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import com.logistimo.config.models.ReasonConfig;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.logger.XLog;
 
 import org.apache.commons.lang.StringUtils;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.lang.reflect.Type;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -44,13 +51,14 @@ public class ConfigReasonsMigrator {
   public static final String CONFIG_UPDATE_QUERY = "UPDATE CONFIG SET CONF=? WHERE `KEY`=?";
   public static final XLog xLog = XLog.getLog(CRConfigMigrator.class);
 
-  private ConfigReasonsMigrator(){}
+  private ConfigReasonsMigrator() {
+  }
 
   /**
    * Update configuration for all keys
    */
   public static boolean update() {
-    return update((List<String>) null);
+    return update((List<String>) null, false);
   }
 
   /**
@@ -59,7 +67,11 @@ public class ConfigReasonsMigrator {
    * @param key - Config key to migrate
    */
   public static boolean update(String key) {
-    return update(Collections.singletonList(key));
+    return update(Collections.singletonList(key), false);
+  }
+
+  public static boolean update(String key, boolean isJSONObject) {
+    return update(Collections.singletonList(key), isJSONObject);
   }
 
   /**
@@ -67,7 +79,7 @@ public class ConfigReasonsMigrator {
    *
    * @param keys - list of config key to migrate
    */
-  public static boolean update(List<String> keys) {
+  public static boolean update(List<String> keys, boolean isJSONObject) {
     PreparedStatement ps = null;
     try {
       Map<String, String> conf = MigratorUtil.readConfig(keys);
@@ -80,42 +92,72 @@ public class ConfigReasonsMigrator {
         JSONObject config = new JSONObject(configuration.getValue());
         JSONObject inventory = (JSONObject) config.get("invntry");
         List<String> reasonKeys =
-            Arrays.asList("trsns","imtrsns","rmtrsns","smtrsns","tmtrsns","dmtrsns","rimtrsns","romtrsns");
+            Arrays.asList("trsns", "imtrsns", "rmtrsns", "smtrsns", "tmtrsns", "dmtrsns", "rimtrsns", "romtrsns");
         boolean alreadyUpdated = false;
         for (String reasonKey : reasonKeys) {
-          if(!inventory.has(reasonKey)) {
+          if (!inventory.has(reasonKey)) {
             continue;
           }
-          JSONObject reasonByType = (JSONObject) inventory.get(reasonKey);
-          for (Object key : reasonByType.keySet()) {
-            String type = (String) key;
-            Object value = reasonByType.get(type);
-            if (value instanceof String) {
-              String oldReason = (String) value;
-              List<String> newReason;
-              if (StringUtils.isNotBlank(oldReason)) {
-                if(oldReason.startsWith(CharacterConstants.COMMA)) {
-                  oldReason = oldReason.substring(1);
-                }
-                newReason = Arrays.asList(oldReason.split(CharacterConstants.COMMA));
-              } else {
-                newReason = new ArrayList<>(0);
-              }
-              JSONObject reasonConfig = new JSONObject();
-              reasonConfig.put("reasons", newReason);
-              reasonByType.put(type, reasonConfig);
-            } else {
-              xLog.info("New configuration already set for: {0}", configuration.getKey());
-              updatedConfigKeys.add(type);
-              alreadyUpdated = true;
-              break;
-            }
+          Object object = inventory.get(reasonKey);
+          //Already new config
+          if(object instanceof String) {
+            xLog.info("New configuration already set for: {0}", configuration.getKey());
+            updatedConfigKeys.add(configuration.getKey());
+            alreadyUpdated = true;
+            break;
           }
-          if(alreadyUpdated) {
+          JSONObject reasonByType = (JSONObject) inventory.get(reasonKey);
+          if (isJSONObject) {
+            for (Object key : reasonByType.keySet()) {
+              String type = (String) key;
+              Object value = reasonByType.get(type);
+              if (value instanceof JSONObject) {
+                JSONObject reasonConfig = (JSONObject) value;
+                JSONArray array = reasonConfig.getJSONArray("reasons");
+                reasonByType.put(type, array.join(","));
+              } else {
+                xLog.info("New configuration already set for: {0}", configuration.getKey());
+                updatedConfigKeys.add(type);
+                alreadyUpdated = true;
+                break;
+              }
+            }
+          } else {
+            Map<String,ReasonConfig> typeMap=new HashMap<>();
+            for (Object key : reasonByType.keySet()) {
+              String type = (String) key;
+              Object value = reasonByType.get(type);
+              if (value instanceof String) {
+                String oldReason = (String) value;
+                List<String> newReason;
+                if (StringUtils.isNotBlank(oldReason)) {
+                  if (oldReason.startsWith(CharacterConstants.COMMA)) {
+                    oldReason = oldReason.substring(1);
+                  }
+                  newReason = Arrays.asList(oldReason.split(CharacterConstants.COMMA));
+                } else {
+                  newReason = new ArrayList<>(0);
+                }
+                JSONObject reasonConfig = new JSONObject();
+                reasonConfig.put("reasons", newReason);
+                ReasonConfig reasonConfig1=new ReasonConfig();
+                reasonConfig1.setReasons(newReason);
+                typeMap.put(type,reasonConfig1);
+              } else {
+                xLog.info("New configuration already set for: {0}", configuration.getKey());
+                updatedConfigKeys.add(configuration.getKey());
+                alreadyUpdated = true;
+                break;
+              }
+            }
+            Type type = new TypeToken<Map<String,ReasonConfig>>(){}.getType();
+            inventory.put(reasonKey,new Gson().toJson(typeMap,type));
+          }
+          if (alreadyUpdated) {
             break;
           }
         }
-        if(!alreadyUpdated) {
+        if (!alreadyUpdated) {
           conf.put(configuration.getKey(), String.valueOf(config));
         }
       }
