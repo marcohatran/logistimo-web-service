@@ -237,9 +237,13 @@ userControllers.controller('UsersListController', ['$scope', 'userService', 'req
 
         $scope.exportData=function() {
             $scope.showLoading();
+            var mobile = angular.copy($scope.uphn);
+            if(mobile && !mobile.startsWith("+")) {
+                mobile = "+" + mobile
+            }
             exportService.exportData({
                 first_name: $scope.search.key || undefined,
-                mobile_no: $scope.uphn || undefined,
+                mobile_no: mobile || undefined,
                 role: $scope.urole || undefined,
                 user_active: $scope.uactive || undefined,
                 app_version: $scope.uversion || undefined,

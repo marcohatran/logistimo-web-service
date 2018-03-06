@@ -24,6 +24,7 @@
 package com.logistimo.config.models;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
 import com.logistimo.constants.CharacterConstants;
@@ -39,7 +40,6 @@ import java.io.Serializable;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -124,15 +124,15 @@ public class InventoryConfig implements Serializable {
   private String email; // DEPRECATED: as of Dec. 18 2012
   private List<String> exportUserIds;
   private String sourceUserId;
-  private Map<String, String>
+  private Map<String, ReasonConfig>
       transTypeReasons =
       new HashMap<>();
   // transType --> Reason csv
-  private Map<String, String> mtagIssueRsns = new HashMap<>();
-  private Map<String, String> mtagReceiptRsns = new HashMap<>();
-  private Map<String, String> mtagStkCntRsns = new HashMap<>();
-  private Map<String, String> mtagDiscRsns = new HashMap<>();
-  private Map<String, String> mtagTransRsns = new HashMap<>();
+  private Map<String, ReasonConfig> mtagIssueRsns = new HashMap<>();
+  private Map<String, ReasonConfig> mtagReceiptRsns = new HashMap<>();
+  private Map<String, ReasonConfig> mtagStkCntRsns = new HashMap<>();
+  private Map<String, ReasonConfig> mtagDiscRsns = new HashMap<>();
+  private Map<String, ReasonConfig> mtagTransRsns = new HashMap<>();
   private Permissions permissions = null;
   private BatchMgmt batchMgmt = null;
   private ManualTransConfig manualTransConfig = null;
@@ -160,11 +160,11 @@ public class InventoryConfig implements Serializable {
   /**
    * Map of material tag to reasons for transaction type Returns-incoming
    */
-  private Map<String, String> mtagRetIncRsns = new HashMap<>();
+  private Map<String, ReasonConfig> mtagRetIncRsns = new HashMap<>();
   /**
    * Map of material tag to reasons for transaction type Returns-outgoing
    */
-  private Map<String, String> mtagRetOutRsns = new HashMap<>();
+  private Map<String, ReasonConfig> mtagRetOutRsns = new HashMap<>();
   /**
    * Flag that indicates if Returns-incoming by material tags is configured or not
    */
@@ -207,74 +207,46 @@ public class InventoryConfig implements Serializable {
     } catch (JSONException e) {
       // ignore
     }
+    Gson gson = new Gson();
+    Type type = new TypeToken<Map<String, ReasonConfig>>(){}.getType();
     try {
-      JSONObject reasons = json.getJSONObject(TRANSREASONS);
-      Iterator<String> en = reasons.keys();
-      while (en.hasNext()) {
-        String transType = en.next();
-        transTypeReasons.put(transType, reasons.getString(transType));
-      }
-    } catch (JSONException e) {
+      transTypeReasons = gson.fromJson(json.getString(TRANSREASONS), type);
+    } catch (JsonSyntaxException e) {
       // ignore
     }
     try {
-      JSONObject reasons = json.getJSONObject(IMTRANSREASONS);
-      if (reasons != null) {
-        Iterator<String> en = reasons.keys();
-        while (en.hasNext()) {
-          String mTag = en.next();
-          mtagIssueRsns.put(mTag, reasons.getString(mTag));
-        }
-      }
-    } catch (JSONException e) {
+      mtagIssueRsns = gson.fromJson(json.getString(IMTRANSREASONS), type);
+    } catch (JsonSyntaxException e) {
       // ignore
     }
     try {
-      JSONObject reasons = json.getJSONObject(RMTRANSREASONS);
-      if (reasons != null) {
-        Iterator<String> en = reasons.keys();
-        while (en.hasNext()) {
-          String mTag = en.next();
-          mtagReceiptRsns.put(mTag, reasons.getString(mTag));
-        }
-      }
-    } catch (JSONException e) {
+      mtagReceiptRsns = gson.fromJson(json.getString(RMTRANSREASONS), type);
+    } catch (JsonSyntaxException e) {
       // ignore
     }
     try {
-      JSONObject reasons = json.getJSONObject(DMTRANSREASONS);
-      if (reasons != null) {
-        Iterator<String> en = reasons.keys();
-        while (en.hasNext()) {
-          String mTag = en.next();
-          mtagDiscRsns.put(mTag, reasons.getString(mTag));
-        }
-      }
-    } catch (JSONException e) {
+      mtagDiscRsns = gson.fromJson(json.getString(DMTRANSREASONS), type);
+    } catch (JsonSyntaxException e) {
       // ignore
     }
     try {
-      JSONObject reasons = json.getJSONObject(SMTRANSREASONS);
-      if (reasons != null) {
-        Iterator<String> en = reasons.keys();
-        while (en.hasNext()) {
-          String mTag = en.next();
-          mtagStkCntRsns.put(mTag, reasons.getString(mTag));
-        }
-      }
-    } catch (JSONException e) {
+      mtagStkCntRsns = gson.fromJson(json.getString(SMTRANSREASONS), type);
+    } catch (JsonSyntaxException e) {
       // ignore
     }
     try {
-      JSONObject reasons = json.getJSONObject(TMTRANSREASONS);
-      if (reasons != null) {
-        Iterator<String> en = reasons.keys();
-        while (en.hasNext()) {
-          String mTag = en.next();
-          mtagTransRsns.put(mTag, reasons.getString(mTag));
-        }
-      }
-    } catch (JSONException e) {
+      mtagTransRsns = gson.fromJson(json.getString(TMTRANSREASONS), type);
+    } catch (JsonSyntaxException e) {
+      // ignore
+    }
+    try {
+      mtagRetIncRsns = gson.fromJson(json.getString(RETURN_INCOMING_MTAG_TRANS_REASONS), type);
+    } catch (JsonSyntaxException e) {
+      // ignore
+    }
+    try {
+      mtagRetOutRsns = gson.fromJson(json.getString(RETURN_OUTGOING_MTAG_TRANS_REASONS), type);
+    } catch (JsonSyntaxException e) {
       // ignore
     }
     try {
@@ -385,25 +357,14 @@ public class InventoryConfig implements Serializable {
     } catch (JSONException e) {
       //ignore
     }
-    Gson gson = new Gson();
+
 
     crimt = gson.fromJson(String.valueOf(
         json.optBoolean(CONFIGURE_RETURNS_INCOMING_BY_MATERIAL_TAGS)), Boolean.class);
     cromt = gson.fromJson(
         String.valueOf(json.optBoolean(CONFIGURE_RETURNS_OUTGOING_BY_MATERIAL_TAGS)), Boolean.class);
 
-    try {
-      JSONObject reasons = json.getJSONObject(RETURN_INCOMING_MTAG_TRANS_REASONS);
-      mtagRetIncRsns = gson.fromJson(reasons.toString(), Map.class);
-    } catch (JSONException e) {
-      // ignore
-    }
-    try {
-      JSONObject reasons = json.getJSONObject(RETURN_OUTGOING_MTAG_TRANS_REASONS);
-      mtagRetOutRsns = gson.fromJson(reasons.toString(), Map.class);
-    } catch (JSONException e) {
-      // ignore
-    }
+
     try {
       returnsConfig = gson.fromJson(json.getString(RETURNS), new TypeToken<List<ReturnsConfig>>() {
       }.getType());
@@ -456,79 +417,86 @@ public class InventoryConfig implements Serializable {
     this.sourceUserId = sourceUserId;
   }
 
-  public Map<String, String> getTransReasons() {
+  public Map<String, ReasonConfig> getTransReasons() {
     return transTypeReasons;
   }
 
-  public void setTransReasons(Map<String, String> transTypeReasons) {
+  public void setTransReasons(Map<String, ReasonConfig> transTypeReasons) {
     this.transTypeReasons = transTypeReasons;
   }
 
   public String getTransReason(String transType) {
-    return transTypeReasons.get(transType);
+    if (getTransactionReasonsConfigByType(transType) != null) {
+      return StringUtils.join(getTransactionReasonsConfigByType(transType).getReasons(),CharacterConstants.COMMA);
+    }
+    return null;
+  }
+
+  public ReasonConfig getTransactionReasonsConfigByType(String type) {
+    return transTypeReasons.get(type);
   }
 
   public void putTransReason(String transType, String reasonsCsv) {
-    transTypeReasons.put(transType, reasonsCsv);
+    transTypeReasons.put(transType, null);
   }
 
-  public Map<String, String> getImTransReasons() {
+  public Map<String, ReasonConfig> getImTransReasons() {
     return mtagIssueRsns;
   }
 
-  public String getImTransReason(String mtag) {
+  public ReasonConfig getImTransReasonConfig(String mtag) {
     return mtagIssueRsns != null ? mtagIssueRsns.get(mtag) : null;
   }
 
-  public void setImtransreasons(Map<String, String> imtransreasons) {
+  public void setImtransreasons(Map<String, ReasonConfig> imtransreasons) {
     this.mtagIssueRsns = imtransreasons;
   }
 
-  public Map<String, String> getRmTransReasons() {
+  public Map<String, ReasonConfig> getRmTransReasons() {
     return mtagReceiptRsns;
   }
 
-  public String getRmTransReason(String mtag) {
+  public ReasonConfig getRmTransReasonConfig(String mtag) {
     return mtagReceiptRsns != null ? mtagReceiptRsns.get(mtag) : null;
   }
 
-  public void setRmtransreasons(Map<String, String> rmtransreasons) {
+  public void setRmtransreasons(Map<String, ReasonConfig> rmtransreasons) {
     this.mtagReceiptRsns = rmtransreasons;
   }
 
-  public Map<String, String> getDmTransReasons() {
+  public Map<String, ReasonConfig> getDmTransReasons() {
     return mtagDiscRsns;
   }
 
-  public String getDmTransReason(String mtag) {
+  public ReasonConfig getDmTransReasonConfig(String mtag) {
     return mtagDiscRsns != null ? mtagDiscRsns.get(mtag) : null;
   }
 
-  public void setDmtransreasons(Map<String, String> dmtransreasons) {
+  public void setDmtransreasons(Map<String, ReasonConfig> dmtransreasons) {
     this.mtagDiscRsns = dmtransreasons;
   }
 
-  public Map<String, String> getSmTransReasons() {
+  public Map<String, ReasonConfig> getSmTransReasons() {
     return mtagStkCntRsns;
   }
 
-  public String getSmTransReason(String mtag) {
+  public ReasonConfig getSmTransReasonConfig(String mtag) {
     return mtagStkCntRsns != null ? mtagStkCntRsns.get(mtag) : null;
   }
 
-  public void setSmtransreasons(Map<String, String> smtransreasons) {
+  public void setSmtransreasons(Map<String, ReasonConfig> smtransreasons) {
     this.mtagStkCntRsns = smtransreasons;
   }
 
-  public Map<String, String> getTmTransReasons() {
+  public Map<String, ReasonConfig> getTmTransReasons() {
     return mtagTransRsns;
   }
 
-  public String getTmTransReason(String mtag) {
+  public ReasonConfig getTmTransReasonConfig(String mtag) {
     return mtagTransRsns != null ? mtagTransRsns.get(mtag) : null;
   }
 
-  public void setTmtransreasons(Map<String, String> tmtransreasons) {
+  public void setTmtransreasons(Map<String, ReasonConfig> tmtransreasons) {
     this.mtagTransRsns = tmtransreasons;
   }
 
@@ -726,20 +694,28 @@ public class InventoryConfig implements Serializable {
 
   public boolean isCromt() { return cromt; }
 
-  public Map<String, String> getMtagRetIncRsns() {
+  public Map<String, ReasonConfig> getMtagRetIncRsns() {
     return mtagRetIncRsns;
   }
 
-  public void setMtagRetIncRsns(Map<String, String> mtagRetIncRsns) {
+  public void setMtagRetIncRsns(Map<String, ReasonConfig> mtagRetIncRsns) {
     this.mtagRetIncRsns = mtagRetIncRsns;
   }
 
-  public Map<String, String> getMtagRetOutRsns() {
+  public Map<String, ReasonConfig> getMtagRetOutRsns() {
     return mtagRetOutRsns;
   }
 
-  public void setMtagRetOutRsns(Map<String, String> mtagRetOutRsns) {
+  public void setMtagRetOutRsns(Map<String, ReasonConfig> mtagRetOutRsns) {
     this.mtagRetOutRsns = mtagRetOutRsns;
+  }
+
+  public ReasonConfig getReturnIncomingReasonConfigByMtag(String mtag) {
+    return mtagRetIncRsns != null ? mtagRetIncRsns.get(mtag) : null;
+  }
+
+  public ReasonConfig getReturnOutgoingReasonConfigByMtag(String mtag) {
+    return mtagRetOutRsns != null ? mtagRetOutRsns.get(mtag) : null;
   }
 
   public JSONObject toJSONObject() throws ConfigurationException {
@@ -755,86 +731,38 @@ public class InventoryConfig implements Serializable {
       if (sourceUserId != null && !sourceUserId.isEmpty()) {
         json.put(SOURCE_USER_ID, sourceUserId);
       }
+      Gson gson = new Gson();
       if (!transTypeReasons.isEmpty()) {
-        JSONObject reasons = new JSONObject();
-        Iterator<String> it = transTypeReasons.keySet().iterator();
-        while (it.hasNext()) {
-          String transType = it.next();
-          String reasonCSV = transTypeReasons.get(transType);
-          if (reasonCSV != null && !reasonCSV.isEmpty()) {
-            reasons.put(transType, reasonCSV);
-          }
-        }
-        json.put(TRANSREASONS, reasons);
+        Type type = new TypeToken<Map<String,ReasonConfig>>(){}.getType();
+        json.put(TRANSREASONS, gson.toJson(transTypeReasons,type));
       }
       if (!mtagIssueRsns.isEmpty()) {
-        JSONObject reasons = new JSONObject();
-        Iterator<String> it = mtagIssueRsns.keySet().iterator();
-        while (it.hasNext()) {
-          String mTag = it.next();
-          String reasonCSV = mtagIssueRsns.get(mTag);
-          if (reasonCSV != null && !reasonCSV.isEmpty()) {
-            reasons.put(mTag, reasonCSV);
-          }
-        }
-        json.put(IMTRANSREASONS, reasons);
+        Type type = new TypeToken<Map<String,ReasonConfig>>(){}.getType();
+        json.put(IMTRANSREASONS, gson.toJson(mtagIssueRsns,type));
       }
       if (!mtagReceiptRsns.isEmpty()) {
-        JSONObject reasons = new JSONObject();
-        Iterator<String> it = mtagReceiptRsns.keySet().iterator();
-        while (it.hasNext()) {
-          String mTag = it.next();
-          String reasonCSV = mtagReceiptRsns.get(mTag);
-          if (reasonCSV != null && !reasonCSV.isEmpty()) {
-            reasons.put(mTag, reasonCSV);
-          }
-        }
-        json.put(RMTRANSREASONS, reasons);
+        Type type = new TypeToken<Map<String,ReasonConfig>>(){}.getType();
+        json.put(RMTRANSREASONS, gson.toJson(mtagReceiptRsns,type));
       }
       if (!mtagDiscRsns.isEmpty()) {
-        JSONObject reasons = new JSONObject();
-        Iterator<String> it = mtagDiscRsns.keySet().iterator();
-        while (it.hasNext()) {
-          String mTag = it.next();
-          String reasonCSV = mtagDiscRsns.get(mTag);
-          if (reasonCSV != null && !reasonCSV.isEmpty()) {
-            reasons.put(mTag, reasonCSV);
-          }
-        }
-        json.put(DMTRANSREASONS, reasons);
+        Type type = new TypeToken<Map<String,ReasonConfig>>(){}.getType();
+        json.put(DMTRANSREASONS, gson.toJson(mtagDiscRsns,type));
       }
       if (!mtagStkCntRsns.isEmpty()) {
-        JSONObject reasons = new JSONObject();
-        Iterator<String> it = mtagStkCntRsns.keySet().iterator();
-        while (it.hasNext()) {
-          String mTag = it.next();
-          String reasonCSV = mtagStkCntRsns.get(mTag);
-          if (reasonCSV != null && !reasonCSV.isEmpty()) {
-            reasons.put(mTag, reasonCSV);
-          }
-        }
-        json.put(SMTRANSREASONS, reasons);
+        Type type = new TypeToken<Map<String,ReasonConfig>>(){}.getType();
+        json.put(SMTRANSREASONS, gson.toJson(mtagStkCntRsns,type));
       }
       if (!mtagTransRsns.isEmpty()) {
-        JSONObject reasons = new JSONObject();
-        Iterator<String> it = mtagTransRsns.keySet().iterator();
-        while (it.hasNext()) {
-          String mTag = it.next();
-          String reasonCSV = mtagTransRsns.get(mTag);
-          if (reasonCSV != null && !reasonCSV.isEmpty()) {
-            reasons.put(mTag, reasonCSV);
-          }
-        }
-        json.put(TMTRANSREASONS, reasons);
+        Type type = new TypeToken<Map<String,ReasonConfig>>(){}.getType();
+        json.put(TMTRANSREASONS, gson.toJson(mtagTransRsns,type));
       }
-      Gson gson = new Gson();
-      String mTagRetIncReasonsJsonStr = gson.toJson(mtagRetIncRsns);
-      if (StringUtils.isNotEmpty(mTagRetIncReasonsJsonStr)) {
-        json.put(RETURN_INCOMING_MTAG_TRANS_REASONS, new JSONObject(mTagRetIncReasonsJsonStr));
+      if (!mtagRetIncRsns.isEmpty()) {
+        Type type = new TypeToken<Map<String,ReasonConfig>>(){}.getType();
+        json.put(RETURN_INCOMING_MTAG_TRANS_REASONS, gson.toJson(mtagRetIncRsns,type));
       }
-      String mTagRetOutReasonsJsonStr = gson.toJson(mtagRetOutRsns);
-      if (StringUtils.isNotEmpty(mTagRetOutReasonsJsonStr)) {
-        json.put(RETURN_OUTGOING_MTAG_TRANS_REASONS, new JSONObject(mTagRetOutReasonsJsonStr));
+      if (!mtagRetOutRsns.isEmpty()) {
+        Type type = new TypeToken<Map<String,ReasonConfig>>(){}.getType();
+        json.put(RETURN_OUTGOING_MTAG_TRANS_REASONS, gson.toJson(mtagRetOutRsns,type));
       }
       if (permissions != null) {
         json.put(PERMISSIONS, permissions.toJSONObject());

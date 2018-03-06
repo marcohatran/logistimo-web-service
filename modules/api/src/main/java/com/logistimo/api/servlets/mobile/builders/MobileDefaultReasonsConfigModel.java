@@ -21,46 +21,21 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.config.models;
+package com.logistimo.api.servlets.mobile.builders;
 
+import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
 
 /**
- * Created by vani on 30/01/18.
+ * Created by vani on 01/03/18.
  */
-public class ReturnsConfig implements Serializable {
-  private static final long serialVersionUID = 1L;
-
-  @SerializedName(value = "entity_tags")
-  private List<String> entityTags = new ArrayList<>(1);
-  @SerializedName(value = "incoming_duration")
-  private Integer incDuration;
-  @SerializedName(value = "outgoing_duration")
-  private Integer outDuration;
-
-  public List<String> getEntityTags() { return entityTags; }
-
-  public void setEntityTags(List<String> entityTags) {
-    this.entityTags = entityTags;
-  }
-
-  public Integer getIncomingDuration() {
-    return incDuration;
-  }
-
-  public void setIncomingDuration(Integer incDuration) {
-    this.incDuration = incDuration;
-  }
-
-  public Integer getOutgoingDuration() {
-    return outDuration;
-  }
-
-  public void setOutgoingDuration(Integer outDuration) {
-    this.outDuration = outDuration;
-  }
+public class MobileDefaultReasonsConfigModel {
+  @Expose
+  @SerializedName("general")
+  String general;
+  @Expose
+  @SerializedName("tags")
+  Map<String,String> tags;
 }

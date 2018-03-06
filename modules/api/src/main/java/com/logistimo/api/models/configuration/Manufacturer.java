@@ -21,46 +21,29 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.config.models;
+package com.logistimo.api.models.configuration;
 
 import com.google.gson.annotations.SerializedName;
 
-import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by vani on 30/01/18.
+ * Created by naveensnair on 01/03/18.
  */
-public class ReturnsConfig implements Serializable {
-  private static final long serialVersionUID = 1L;
+public class Manufacturer {
+  @SerializedName("id")
+  public String id;
+  @SerializedName("name")
+  public String name;
+  @SerializedName("serial_number_validation_regex")
+  public String serialNumberValidationRegex; // serial number validation regex
+  @SerializedName("model_number_validation_regex")
+  public String modelNumberValidationRegex; // model number validation regex
+  @SerializedName("serial_number_format_description")
+  public String serialNumberFormatDescription; // serial number format description
+  @SerializedName("model_number_format_description")
+  public String modelNumberFormatDescription; // model number format description
+  @SerializedName("models")
+  public List<Model> models;
 
-  @SerializedName(value = "entity_tags")
-  private List<String> entityTags = new ArrayList<>(1);
-  @SerializedName(value = "incoming_duration")
-  private Integer incDuration;
-  @SerializedName(value = "outgoing_duration")
-  private Integer outDuration;
-
-  public List<String> getEntityTags() { return entityTags; }
-
-  public void setEntityTags(List<String> entityTags) {
-    this.entityTags = entityTags;
-  }
-
-  public Integer getIncomingDuration() {
-    return incDuration;
-  }
-
-  public void setIncomingDuration(Integer incDuration) {
-    this.incDuration = incDuration;
-  }
-
-  public Integer getOutgoingDuration() {
-    return outDuration;
-  }
-
-  public void setOutgoingDuration(Integer outDuration) {
-    this.outDuration = outDuration;
-  }
 }

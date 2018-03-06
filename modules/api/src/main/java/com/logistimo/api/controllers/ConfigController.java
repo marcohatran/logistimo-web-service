@@ -64,7 +64,7 @@ import javax.servlet.http.HttpServletRequest;
 @Controller
 @RequestMapping("/config")
 public class ConfigController {
-  private static final XLog xLogger = XLog.getLog(AccountsController.class);
+  private static final XLog xLogger = XLog.getLog(ConfigController.class);
 
   private ConfigurationMgmtServiceImpl configurationMgmtService;
 

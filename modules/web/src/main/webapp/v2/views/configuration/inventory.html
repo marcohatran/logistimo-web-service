@@ -73,10 +73,21 @@
                                                 <div class="row"> <!--Reasons for issue-->
                                                     <div class="col-sm-11 mt10">
                                                         <div class="form-group">
+
                                                             <label  class="col-sm-3 control-label">{{resourceBundle['config.reasons.issue']}}</label>
                                                             <div class="col-sm-8">
-                                                                <input type="text" class="form-control" id="cnfIss" ng-model="inv.ri"
+                                                                <input ng-blur="refreshDefaultReasons(inv.ri);refreshCRIssueList = !refreshCRIssueList;refreshIssueList[0] = !refreshIssueList[0];" type="text" class="form-control" id="cnfIss" ng-model="inv.ri.rsns" ng-list
                                                                        autocomplete="off" maxlength="500">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-sm-11 mt10">
+                                                        <div class="form-group">
+                                                            <label  class="col-sm-3 control-label">{{resourceBundle['config.inventory.default.reason']}} {{resourceBundle['for.lowercase']}} {{resourceBundle['transactions.issue']}}</label>
+                                                            <div class="col-sm-8">
+                                                                <lg-uib-select allow-clear="true" query="queryReasons(q,'ri')" refresh-list="refreshIssueList[0]" ui-model="inv.ri.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.issue.reason']}}"> </lg-uib-select>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -98,6 +109,7 @@
                                                             <tr><th class="col-sm-1 text-center">{{resourceBundle['serialnum']}}</th>
                                                                 <th class="col-sm-3 text-center">{{resourceBundle['config.tagsinfotitle']}}</th>
                                                                 <th class="col-sm-4 text-center">{{resourceBundle['reason']}}</th>
+                                                                <th class="col-sm-4 text-center">{{resourceBundle['config.inventory.default.reason']}}</th>
                                                                 <th class="col-sm-0-2 text-center"></th>
                                                             </tr>
                                                             </tbody>
@@ -117,8 +129,11 @@
                                                                     <p ng-show="inv.imt.length>$index+1" class="temp">{{itag.mtg}}</p>
                                                                 </td>
                                                                 <td>
-                                                                    <input type="text" class="form-control" id="mtrsn" ng-model="itag.rsn"
+                                                                    <input type="text" ng-blur="refreshDefaultReasons(itag.rsnCfgModel);refreshCRIssueList = !refreshCRIssueList; refreshIssueList[$index + 1] = !refreshIssueList[$index + 1]" class="form-control" id="mtrsn" ng-model="itag.rsnCfgModel.rsns" ng-list
                                                                            autocomplete="off" maxlength="500">
+                                                                </td>
+                                                                <td>
+                                                                    <lg-uib-select allow-clear="true" refresh-list="refreshIssueList[$index + 1]" query="queryReasons(q,'ri','imt',itag.mtg)" ui-model="itag.rsnCfgModel.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.issue.reason']}}"> </lg-uib-select>
                                                                 </td>
                                                                 <td class="text-center">
                                                                     <a ng-show="(itag.length -1 !== $index)" href="" ng-click="deleteRow($index,'iss')">
@@ -137,8 +152,18 @@
                                                         <div class="form-group">
                                                             <label for="cnfRec" class="col-sm-3 control-label">{{resourceBundle['config.reasons.receipt']}}</label>
                                                             <div class="col-sm-8">
-                                                                <input type="text" class="form-control" id="cnfRec" ng-model="inv.rr"
+                                                                <input ng-blur="refreshDefaultReasons(inv.rr);refreshReceiptList[0] = !refreshReceiptList[0]" type="text" class="form-control" id="cnfRec" ng-model="inv.rr.rsns" ng-list
                                                                        autocomplete="off" maxlength="500">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-sm-11 mt10">
+                                                        <div class="form-group">
+                                                            <label  class="col-sm-3 control-label">{{resourceBundle['config.inventory.default.reason']}} {{resourceBundle['for.lowercase']}} {{resourceBundle['transactions.receipt']}}</label>
+                                                            <div class="col-sm-8">
+                                                                <lg-uib-select allow-clear="true" query="queryReasons(q,'rr')" refresh-list="refreshReceiptList[0]" ui-model="inv.rr.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.receipt.reason']}}"> </lg-uib-select>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -160,6 +185,7 @@
                                                             <tr><th class="col-sm-1 text-center">{{resourceBundle['serialnum']}}</th>
                                                                 <th class="col-sm-3 text-center">{{resourceBundle['config.tagsinfotitle']}}</th>
                                                                 <th class="col-sm-4 text-center">{{resourceBundle['reason']}}</th>
+                                                                <th class="col-sm-4 text-center">{{resourceBundle['config.inventory.default.reason']}}</th>
                                                                 <th class="col-sm-0-2 text-center"></th>
                                                             </tr>
                                                             </tbody>
@@ -179,8 +205,11 @@
                                                                     <p ng-show="inv.rmt.length>$index+1" class="temp">{{rtag.mtg}}</p>
                                                                 </td>
                                                                 <td>
-                                                                    <input type="text" class="form-control" id="rmtrsn" ng-model="rtag.rsn"
+                                                                    <input ng-blur="refreshDefaultReasons(rtag.rsnCfgModel); refreshReceiptList[$index + 1] = !refreshReceiptList[$index + 1]" type="text" class="form-control" id="rmtrsn" ng-model="rtag.rsnCfgModel.rsns" ng-list
                                                                            autocomplete="off" maxlength="500">
+                                                                </td>
+                                                                <td>
+                                                                    <lg-uib-select allow-clear="true" refresh-list="refreshReceiptList[$index + 1]" query="queryReasons(q,'rr','rmt',rtag.mtg)" ui-model="rtag.rsnCfgModel.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.receipt.reason']}}"> </lg-uib-select>
                                                                 </td>
                                                                 <td class="text-center">
                                                                     <a ng-show="(rtag.length -1 !== $index)" href="" ng-click="deleteRow($index,'rec')">
@@ -199,8 +228,18 @@
                                                         <div class="form-group">
                                                             <label for="cnfStc" class="col-sm-3 control-label">{{resourceBundle['config.reasons.stockcount']}}</label>
                                                             <div class="col-sm-8">
-                                                                <input type="text" class="form-control" id="cnfStc" ng-model="inv.rs"
+                                                                <input ng-blur="refreshDefaultReasons(inv.rs); refreshStockcountList[0] = !refreshStockcountList[0]" type="text" class="form-control" id="cnfStc" ng-model="inv.rs.rsns" ng-list
                                                                        autocomplete="off" maxlength="500">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-sm-11 mt10">
+                                                        <div class="form-group">
+                                                            <label  class="col-sm-3 control-label">{{resourceBundle['config.inventory.default.reason']}} {{resourceBundle['for.lowercase']}} {{resourceBundle['transactions.stockcount']}}</label>
+                                                            <div class="col-sm-8">
+                                                                <lg-uib-select allow-clear="true" query="queryReasons(q,'rs')" refresh-list="refreshStockcountList[0]" ui-model="inv.rs.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.stockcount.reason']}}"> </lg-uib-select>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -222,6 +261,7 @@
                                                             <tr><th class="col-sm-1 text-center">{{resourceBundle['serialnum']}}</th>
                                                                 <th class="col-sm-3 text-center">{{resourceBundle['config.tagsinfotitle']}}</th>
                                                                 <th class="col-sm-4 text-center">{{resourceBundle['reason']}}</th>
+                                                                <th class="col-sm-4 text-center">{{resourceBundle['config.inventory.default.reason']}}</th>
                                                                 <th class="col-sm-0-2 text-center"></th>
                                                             </tr>
                                                             </tbody>
@@ -241,8 +281,11 @@
                                                                     <p ng-show="inv.smt.length>$index+1" class="temp">{{stag.mtg}}</p>
                                                                 </td>
                                                                 <td>
-                                                                    <input type="text" class="form-control" id="smtrsn" ng-model="stag.rsn"
+                                                                    <input ng-blur="refreshDefaultReasons(stag.rsnCfgModel); refreshStockcountList[$index + 1] = !refreshStockcountList[$index + 1]" type="text" class="form-control" id="smtrsn" ng-model="stag.rsnCfgModel.rsns" ng-list
                                                                            autocomplete="off" maxlength="500">
+                                                                </td>
+                                                                <td>
+                                                                    <lg-uib-select allow-clear="true" refresh-list="refreshStockcountList[$index + 1]" query="queryReasons(q,'rs','smt',stag.mtg)" ui-model="stag.rsnCfgModel.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.stockcount.reason']}}"> </lg-uib-select>
                                                                 </td>
                                                                 <td class="text-center">
                                                                     <a ng-show="(stag.length -1 !== $index)" href="" ng-click="deleteRow($index,'st')">
@@ -261,8 +304,18 @@
                                                         <div class="form-group">
                                                             <label for="cnfDis" class="col-sm-3 control-label">{{resourceBundle['config.reasons.wastage']}}</label>
                                                             <div class="col-sm-8">
-                                                                <input type="text" class="form-control" id="cnfdis" ng-model="inv.rd"
+                                                                <input ng-blur="refreshDefaultReasons(inv.rd); refreshDiscardList[0] = !refreshDiscardList[0]" type="text" class="form-control" id="cnfdis" ng-model="inv.rd.rsns" ng-list
                                                                        autocomplete="off" maxlength="500">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-sm-11 mt10">
+                                                        <div class="form-group">
+                                                            <label  class="col-sm-3 control-label">{{resourceBundle['config.inventory.default.reason']}} {{resourceBundle['for.lowercase']}} {{resourceBundle['transactions.wastage']}}</label>
+                                                            <div class="col-sm-8">
+                                                                <lg-uib-select allow-clear="true" query="queryReasons(q,'rd')" refresh-list="refreshDiscardList[0]" ui-model="inv.rd.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.discards.reason']}}"> </lg-uib-select>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -284,6 +337,7 @@
                                                             <tr><th class="col-sm-1 text-center">{{resourceBundle['serialnum']}}</th>
                                                                 <th class="col-sm-3 text-center">{{resourceBundle['config.tagsinfotitle']}}</th>
                                                                 <th class="col-sm-4 text-center">{{resourceBundle['reason']}}</th>
+                                                                <th class="col-sm-4 text-center">{{resourceBundle['config.inventory.default.reason']}}</th>
                                                                 <th class="col-sm-0-2 text-center"></th>
                                                             </tr>
                                                             </tbody>
@@ -303,8 +357,11 @@
                                                                     <p ng-show="inv.dmt.length>$index+1" class="temp">{{dtag.mtg}}</p>
                                                                 </td>
                                                                 <td>
-                                                                    <input type="text" class="form-control" id="dmtrsn" ng-model="dtag.rsn"
+                                                                    <input ng-blur="refreshDefaultReasons(dtag.rsnCfgModel); refreshDiscardsList[$index + 1] = !refreshDiscardsList[$index + 1]" type="text" class="form-control" id="dmtrsn" ng-model="dtag.rsnCfgModel.rsns" ng-list
                                                                            autocomplete="off" maxlength="500">
+                                                                </td>
+                                                                <td>
+                                                                    <lg-uib-select allow-clear="true" refresh-list="refreshDiscardsList[$index + 1]" query="queryReasons(q,'rd','dmt',dtag.mtg)" ui-model="dtag.rsnCfgModel.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.discards.reason']}}"> </lg-uib-select>
                                                                 </td>
                                                                 <td class="text-center">
                                                                     <a ng-show="(dtag.length -1 !== $index)" href="" ng-click="deleteRow($index,'dc')">
@@ -323,8 +380,18 @@
                                                         <div class="form-group">
                                                             <label for="cnfTns" class="col-sm-3 control-label">{{resourceBundle['config.reasons.transfer']}}</label>
                                                             <div class="col-sm-8">
-                                                                <input type="text" class="form-control" id="cnfTns" ng-model="inv.rt"
+                                                                <input ng-blur="refreshDefaultReasons(inv.rt); refreshTransferList[0] = !refreshTransferList[0]" type="text" class="form-control" id="cnfTns" ng-model="inv.rt.rsns" ng-list
                                                                        autocomplete="off" maxlength="500">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-sm-11 mt10">
+                                                        <div class="form-group">
+                                                            <label  class="col-sm-3 control-label">{{resourceBundle['config.inventory.default.reason']}} {{resourceBundle['for.lowercase']}} {{resourceBundle['transactions.transfer']}}</label>
+                                                            <div class="col-sm-8">
+                                                                <lg-uib-select allow-clear="true" query="queryReasons(q,'rt')" refresh-list="refreshTransferList[0]" ui-model="inv.rt.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.transfer.reason']}}"> </lg-uib-select>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -346,6 +413,7 @@
                                                             <tr><th class="col-sm-1 text-center">{{resourceBundle['serialnum']}}</th>
                                                                 <th class="col-sm-3 text-center">{{resourceBundle['config.tagsinfotitle']}}</th>
                                                                 <th class="col-sm-4 text-center">{{resourceBundle['reason']}}</th>
+                                                                <th class="col-sm-4 text-center">{{resourceBundle['config.inventory.default.reason']}}</th>
                                                                 <th class="col-sm-0-2 text-center"></th>
                                                             </tr>
                                                             </tbody>
@@ -365,8 +433,11 @@
                                                                     <p ng-show="inv.tmt.length>$index+1" class="temp">{{ttag.mtg}}</p>
                                                                 </td>
                                                                 <td>
-                                                                    <input type="text" class="form-control" id="tmtrsn" ng-model="ttag.rsn"
+                                                                    <input ng-blur="refreshDefaultReasons(ttag.rsnCfgModel);refreshTransferList[$index + 1] = !refreshTransferList[$index + 1]" type="text" class="form-control" id="tmtrsn" ng-model="ttag.rsnCfgModel.rsns" ng-list
                                                                            autocomplete="off" maxlength="500">
+                                                                </td>
+                                                                <td>
+                                                                    <lg-uib-select allow-clear="true" refresh-list="refreshTransferList[$index + 1]" query="queryReasons(q,'rt','tmt',ttag.mtg)" ui-model="ttag.rsnCfgModel.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.transfer.reason']}}"> </lg-uib-select>
                                                                 </td>
                                                                 <td class="text-center">
                                                                     <a ng-show="(ttag.length -1 !== $index)" href="" ng-click="deleteRow($index,'tr')">
@@ -385,8 +456,18 @@
                                                         <div class="form-group">
                                                             <label  class="col-sm-3 control-label">{{resourceBundle['config.reasons.returns.incoming']}}</label>
                                                             <div class="col-sm-8">
-                                                                <input type="text" class="form-control" id="cnfRetInc" ng-model="inv.rri"
+                                                                <input type="text" ng-blur="refreshDefaultReasons(inv.rri); refreshCRReturnsIncomingList = !refreshCRReturnsIncomingList; refreshReturnsIncomingList[0] = !refreshReturnsIncomingList[0]" class="form-control" id="cnfRetInc" ng-model="inv.rri.rsns" ng-list
                                                                        autocomplete="off" maxlength="500">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-sm-11 mt10">
+                                                        <div class="form-group">
+                                                            <label  class="col-sm-3 control-label">{{resourceBundle['config.inventory.default.reason']}} {{resourceBundle['for.lowercase']}} {{resourceBundle['transactions.returns.incoming']}}</label>
+                                                            <div class="col-sm-8">
+                                                                <lg-uib-select allow-clear="true" query="queryReasons(q,'rri')" refresh-list="refreshReturnsIncomingList[0]" ui-model="inv.rri.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.returnsincoming.reason']}}"> </lg-uib-select>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -408,6 +489,7 @@
                                                             <tr><th class="col-sm-1 text-center">{{resourceBundle['serialnum']}}</th>
                                                                 <th class="col-sm-3 text-center">{{resourceBundle['config.tagsinfotitle']}}</th>
                                                                 <th class="col-sm-4 text-center">{{resourceBundle['reason']}}</th>
+                                                                <th class="col-sm-4 text-center">{{resourceBundle['config.inventory.default.reason']}}</th>
                                                                 <th class="col-sm-0-2 text-center"></th>
                                                             </tr>
                                                             </tbody>
@@ -427,8 +509,11 @@
                                                                     <p ng-show="inv.rimt.length>$index+1" class="temp">{{ritag.mtg}}</p>
                                                                 </td>
                                                                 <td>
-                                                                    <input type="text" class="form-control" id="rimtrsn" ng-model="ritag.rsn"
+                                                                    <input ng-blur="refreshDefaultReasons(ritag.rsnCfgModel); refreshCRReturnsIncomingList = !refreshCRReturnsIncomingList; refreshReturnsIncomingList[$index + 1] = !refreshReturnsIncomingList[$index + 1]" type="text" class="form-control" id="rimtrsn" ng-model="ritag.rsnCfgModel.rsns" ng-list
                                                                            autocomplete="off" maxlength="500">
+                                                                </td>
+                                                                <td>
+                                                                    <lg-uib-select allow-clear="true" refresh-list="refreshReturnsIncomingList[$index + 1]" query="queryReasons(q,'rri','rimt',ritag.mtg)" ui-model="ritag.rsnCfgModel.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.returnsincoming.reason']}}"> </lg-uib-select>
                                                                 </td>
                                                                 <td class="text-center">
                                                                     <a ng-show="(ritag.length -1 !== $index)" href="" ng-click="deleteRow($index,'retInc')">
@@ -447,8 +532,18 @@
                                                         <div class="form-group">
                                                             <label  class="col-sm-3 control-label">{{resourceBundle['config.reasons.returns.outgoing']}}</label>
                                                             <div class="col-sm-8">
-                                                                <input type="text" class="form-control" id="cnfRetOut" ng-model="inv.rro"
+                                                                <input ng-blur="refreshDefaultReasons(inv.rro); refreshReturnsOutgoingList[0] = !refreshReturnsOutgoingList[0]" type="text" class="form-control" id="cnfRetOut" ng-model="inv.rro.rsns" ng-list
                                                                        autocomplete="off" maxlength="500">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-sm-11 mt10">
+                                                        <div class="form-group">
+                                                            <label  class="col-sm-3 control-label">{{resourceBundle['config.inventory.default.reason']}} {{resourceBundle['for.lowercase']}} {{resourceBundle['transactions.returns.outgoing']}}</label>
+                                                            <div class="col-sm-8">
+                                                                <lg-uib-select allow-clear="true" query="queryReasons(q,'rro')" refresh-list="refreshReturnsOutgoingList[0]" ui-model="inv.rro.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.returnsoutgoing.reason']}}"> </lg-uib-select>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -470,6 +565,7 @@
                                                             <tr><th class="col-sm-1 text-center">{{resourceBundle['serialnum']}}</th>
                                                                 <th class="col-sm-3 text-center">{{resourceBundle['config.tagsinfotitle']}}</th>
                                                                 <th class="col-sm-4 text-center">{{resourceBundle['reason']}}</th>
+                                                                <th class="col-sm-4 text-center">{{resourceBundle['config.inventory.default.reason']}}</th>
                                                                 <th class="col-sm-0-2 text-center"></th>
                                                             </tr>
                                                             </tbody>
@@ -489,8 +585,11 @@
                                                                     <p ng-show="inv.romt.length>$index+1" class="temp">{{rotag.mtg}}</p>
                                                                 </td>
                                                                 <td>
-                                                                    <input type="text" class="form-control" id="romtrsn" ng-model="rotag.rsn"
+                                                                    <input ng-blur="refreshDefaultReasons(rotag.rsnCfgModel); refreshReturnsOutgoingList[$index + 1] = !refreshReturnsOutgoingList[$index + 1]" type="text" class="form-control" id="romtrsn" ng-model="rotag.rsnCfgModel.rsns" ng-list
                                                                            autocomplete="off" maxlength="500">
+                                                                </td>
+                                                                <td>
+                                                                    <lg-uib-select allow-clear="true" refresh-list="refreshReturnsOutgoingList[$index + 1]" query="queryReasons(q,'rro','romt',rotag.mtg)" ui-model="rotag.rsnCfgModel.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.returnsoutgoing.reason']}}"> </lg-uib-select>
                                                                 </td>
                                                                 <td class="text-center">
                                                                     <a ng-show="(rotag.length -1 !== $index)" href="" ng-click="deleteRow($index,'retOut')">
@@ -826,16 +925,14 @@
                                                                 <label class="control-label col-sm-5">{{resourceBundle['config.returns.policy.returns.incoming.duration']}}</label>
                                                                 <div class="col-sm-6">
                                                                     <input type="text" only-digits min-value="1" class="form-control w20 dh30"
-                                                                           maxlength="3" ng-model="rcm.incDur"
-                                                                           placeholder="30"> {{resourceBundle['days']}}
+                                                                           maxlength="3" ng-model="rcm.incDur"> {{resourceBundle['days']}}
                                                                 </div>
                                                             </div>
                                                             <div class="form-group">
                                                                 <label class="control-label col-sm-5">{{resourceBundle['config.returns.policy.returns.outgoing.duration']}}</label>
                                                                 <div class="col-sm-6">
                                                                     <input type="text" only-digits min-value="1" class="form-control w20 dh30"
-                                                                           maxlength="3" ng-model="rcm.outDur"
-                                                                           placeholder="30"> {{resourceBundle['days']}}
+                                                                           maxlength="3" ng-model="rcm.outDur"> {{resourceBundle['days']}}
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -1029,7 +1126,7 @@
                                                     <div class="row" ng-show="inv.irc">
                                                         <div class="col-sm-12">
                                                             <div class="row col-sm-12 noMargin">
-                                                                <lg-uib-select multiple="multiple" ng-disabled="disabled" query="query(q)" ui-model="inv.ersnsObj" place-holder="Enter the reason codes"> </lg-uib-select>
+                                                                <lg-uib-select multiple="multiple" ng-disabled="disabled" query="query(q)" ui-model="inv.ersnsObj" refresh-list = "refreshCRIssueList" place-holder="Enter the reason codes"> </lg-uib-select>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -1041,7 +1138,7 @@
                                                     <div class="row" ng-show="inv.rirc">
                                                         <div class="col-sm-12">
                                                             <div class="row col-sm-12 noMargin">
-                                                                <lg-uib-select multiple="multiple" ng-disabled="disabled" query="query(q,'ri')" ui-model="inv.erirsnsObj" place-holder="Enter the reason codes"> </lg-uib-select>
+                                                                <lg-uib-select multiple="multiple" ng-disabled="disabled" query="query(q,'ri')" refresh-list = "refreshCRReturnsIncomingList" ui-model="inv.erirsnsObj" place-holder="Enter the reason codes"> </lg-uib-select>
                                                                 <span class="litetext">{{resourceBundle['config.returns.incoming.include.reasons']}}</span>
                                                             </div>
                                                         </div>

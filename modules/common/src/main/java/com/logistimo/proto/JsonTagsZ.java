@@ -234,6 +234,7 @@ public class JsonTagsZ {
   public static final String TRANSFER_RELEASE = "tr";
   public static final String RETURNS_INCOMING = "ri";
   public static final String RETURNS_OUTGOING = "ro";
+  public static final String DEFAULT_REASONS = "default_reasons";
 
   //transporter for orders
   public static final String TRANSPORTER = "trsp";

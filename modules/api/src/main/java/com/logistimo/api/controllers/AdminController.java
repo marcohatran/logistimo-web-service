@@ -24,6 +24,7 @@
 package com.logistimo.api.controllers;
 
 import com.logistimo.AppFactory;
+import com.logistimo.api.migrators.ConfigReasonsMigrator;
 import com.logistimo.api.migrators.DomainLocIDConfigMigrator;
 import com.logistimo.api.migrators.EventsConfigMigrator;
 import com.logistimo.api.migrators.UserDomainIdsMigrator;
@@ -223,6 +224,18 @@ public class AdminController {
       migrator.migrateEventsConfig();
     } catch (Exception e) {
       xLogger.severe("Exception occurred during user domain ids migration", e);
+      throw new InvalidServiceException(e);
+    }
+  }
+
+  @RequestMapping(value = "/migrate270", method = RequestMethod.GET)
+  public
+  @ResponseBody
+  void migrate270() {
+    try {
+      ConfigReasonsMigrator.update();
+    } catch (Exception e) {
+      xLogger.severe("Exception occurred during updating", e);
       throw new InvalidServiceException(e);
     }
   }

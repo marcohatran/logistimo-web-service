@@ -1651,14 +1651,14 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
 
   private void checkReturnsErrors(ITransaction trans) throws LogiException {
     if (StringUtils.isEmpty(trans.getTrackingId()) || StringUtils.isEmpty(trans.getTrackingObjectType())) {
-      throw new LogiException("M015");
+      throw new LogiException("M017");
     }
     if (StringUtils.isEmpty(trans.getReason())) {
-      throw new LogiException("M017");
+      throw new LogiException("M018");
     }
     ITransaction linkedTransaction = transDao.getById(trans.getTrackingId());
     if (BigUtil.greaterThan(trans.getQuantity(),linkedTransaction.getQuantity())) {
-        throw new LogiException("M016", trans.getQuantity(), linkedTransaction.getQuantity());
+        throw new LogiException("M019", trans.getQuantity(), linkedTransaction.getQuantity());
     }
   }
 
