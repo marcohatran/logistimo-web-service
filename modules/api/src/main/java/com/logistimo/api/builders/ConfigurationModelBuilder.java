@@ -623,7 +623,7 @@ public class ConfigurationModelBuilder {
     for (Integer key : asc.assets.keySet()) {
       AssetSystemConfig.Asset asset = asc.getAsset(key);
       AssetType assetType = new AssetType();
-      assetType.id = asset.type;
+      assetType.id = key;
       assetType.manufacturers = buildManufacturers(asset.getManufacturers(), assetMap.get(key).mcs);
       assetType.monitoringType = asset.type;
       assetType.gsmEnabled = asset.isGSMEnabled();
