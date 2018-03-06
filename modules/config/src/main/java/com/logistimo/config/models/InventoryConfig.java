@@ -210,43 +210,42 @@ public class InventoryConfig implements Serializable {
     Gson gson = new Gson();
     Type type = new TypeToken<Map<String, ReasonConfig>>(){}.getType();
     try {
-      transTypeReasons = gson.fromJson(gson.toJson(json.getJSONObject(TRANSREASONS)), type);
+      transTypeReasons = gson.fromJson(json.getString(TRANSREASONS), type);
     } catch (JsonSyntaxException e) {
       // ignore
     }
     try {
-      mtagIssueRsns = gson.fromJson(gson.toJson(json.getJSONObject(IMTRANSREASONS)), type);
+      mtagIssueRsns = gson.fromJson(json.getString(IMTRANSREASONS), type);
     } catch (JsonSyntaxException e) {
       // ignore
     }
     try {
-      mtagReceiptRsns = gson.fromJson(gson.toJson(json.getJSONObject(RMTRANSREASONS)), type);
+      mtagReceiptRsns = gson.fromJson(json.getString(RMTRANSREASONS), type);
     } catch (JsonSyntaxException e) {
       // ignore
     }
     try {
-      mtagDiscRsns = gson.fromJson(gson.toJson(json.getJSONObject(DMTRANSREASONS)), type);
+      mtagDiscRsns = gson.fromJson(json.getString(DMTRANSREASONS), type);
     } catch (JsonSyntaxException e) {
       // ignore
     }
     try {
-      mtagStkCntRsns = gson.fromJson(gson.toJson(json.getJSONObject(SMTRANSREASONS)), type);
+      mtagStkCntRsns = gson.fromJson(json.getString(SMTRANSREASONS), type);
     } catch (JsonSyntaxException e) {
       // ignore
     }
     try {
-      mtagTransRsns = gson.fromJson(gson.toJson(json.getJSONObject(TMTRANSREASONS)), type);
+      mtagTransRsns = gson.fromJson(json.getString(TMTRANSREASONS), type);
     } catch (JsonSyntaxException e) {
       // ignore
     }
     try {
-      mtagRetIncRsns = gson.fromJson(gson.toJson(
-          json.getJSONObject(RETURN_INCOMING_MTAG_TRANS_REASONS)), type);
+      mtagRetIncRsns = gson.fromJson(json.getString(RETURN_INCOMING_MTAG_TRANS_REASONS), type);
     } catch (JsonSyntaxException e) {
       // ignore
     }
     try {
-      mtagRetOutRsns = gson.fromJson(gson.toJson(json.getJSONObject(RETURN_OUTGOING_MTAG_TRANS_REASONS)), type);
+      mtagRetOutRsns = gson.fromJson(json.getString(RETURN_OUTGOING_MTAG_TRANS_REASONS), type);
     } catch (JsonSyntaxException e) {
       // ignore
     }
@@ -734,28 +733,36 @@ public class InventoryConfig implements Serializable {
       }
       Gson gson = new Gson();
       if (!transTypeReasons.isEmpty()) {
-        json.put(TRANSREASONS, gson.toJsonTree(transTypeReasons));
+        Type type = new TypeToken<Map<String,ReasonConfig>>(){}.getType();
+        json.put(TRANSREASONS, gson.toJson(transTypeReasons,type));
       }
       if (!mtagIssueRsns.isEmpty()) {
-        json.put(IMTRANSREASONS, gson.toJsonTree(mtagIssueRsns));
+        Type type = new TypeToken<Map<String,ReasonConfig>>(){}.getType();
+        json.put(IMTRANSREASONS, gson.toJson(mtagIssueRsns,type));
       }
       if (!mtagReceiptRsns.isEmpty()) {
-        json.put(RMTRANSREASONS, gson.toJsonTree(mtagReceiptRsns));
+        Type type = new TypeToken<Map<String,ReasonConfig>>(){}.getType();
+        json.put(RMTRANSREASONS, gson.toJson(mtagReceiptRsns,type));
       }
       if (!mtagDiscRsns.isEmpty()) {
-        json.put(DMTRANSREASONS, gson.toJsonTree(mtagDiscRsns));
+        Type type = new TypeToken<Map<String,ReasonConfig>>(){}.getType();
+        json.put(DMTRANSREASONS, gson.toJson(mtagDiscRsns,type));
       }
       if (!mtagStkCntRsns.isEmpty()) {
-        json.put(SMTRANSREASONS, gson.toJsonTree(mtagStkCntRsns));
+        Type type = new TypeToken<Map<String,ReasonConfig>>(){}.getType();
+        json.put(SMTRANSREASONS, gson.toJson(mtagStkCntRsns,type));
       }
       if (!mtagTransRsns.isEmpty()) {
-        json.put(TMTRANSREASONS, gson.toJsonTree(mtagTransRsns));
+        Type type = new TypeToken<Map<String,ReasonConfig>>(){}.getType();
+        json.put(TMTRANSREASONS, gson.toJson(mtagTransRsns,type));
       }
       if (!mtagRetIncRsns.isEmpty()) {
-        json.put(RETURN_INCOMING_MTAG_TRANS_REASONS, gson.toJsonTree(mtagRetIncRsns));
+        Type type = new TypeToken<Map<String,ReasonConfig>>(){}.getType();
+        json.put(RETURN_INCOMING_MTAG_TRANS_REASONS, gson.toJson(mtagRetIncRsns,type));
       }
       if (!mtagRetOutRsns.isEmpty()) {
-        json.put(RETURN_OUTGOING_MTAG_TRANS_REASONS, gson.toJsonTree(mtagRetOutRsns));
+        Type type = new TypeToken<Map<String,ReasonConfig>>(){}.getType();
+        json.put(RETURN_OUTGOING_MTAG_TRANS_REASONS, gson.toJson(mtagRetOutRsns,type));
       }
       if (permissions != null) {
         json.put(PERMISSIONS, permissions.toJSONObject());

@@ -231,9 +231,9 @@ public class AdminController {
   @RequestMapping(value = "/migrate270", method = RequestMethod.GET)
   public
   @ResponseBody
-  void migrate270() {
+  void migrate270(@RequestParam(required = false) Boolean json) {
     try {
-      ConfigReasonsMigrator.update();
+      ConfigReasonsMigrator.update(null, json == null ? false : json);
     } catch (Exception e) {
       xLogger.severe("Exception occurred during updating", e);
       throw new InvalidServiceException(e);
