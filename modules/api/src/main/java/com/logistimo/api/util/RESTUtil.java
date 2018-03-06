@@ -2244,7 +2244,7 @@ public class RESTUtil {
   }
 
   protected static HashMap<String , Object> getMandatoryOrderFields(OrdersConfig oc) {
-    HashMap<String, Object> salesOrderConfig = new HashMap<>();
+    HashMap<String, Object> mandatoryFields = new HashMap<>();
     HashMap<String, Object> salesOrderFields = new HashMap<>();
     HashMap<String, Boolean> shippingFields = new HashMap<>();
     HashMap<String, Boolean> referenceFields = new HashMap<>();
@@ -2253,9 +2253,9 @@ public class RESTUtil {
     referenceFields.put(JsonTagsZ.TRANSFER_REFERENCE_ID, oc.isTransferReferenceIdMandatory());
     shippingFields.put(JsonTagsZ.EXPECTED_TIME_OF_ARRIVAL, oc.isExpectedArrivalDateMandatory());
     salesOrderFields.put(JsonTagsZ.SHIPPING, shippingFields);
-    salesOrderConfig.put(JsonTagsZ.MANDATE_REFERENCE_ID, referenceFields);
-    salesOrderConfig.put(JsonTagsZ.SALES_ORDERS, salesOrderFields);
-    return salesOrderConfig;
+    mandatoryFields.put(JsonTagsZ.MANDATE_REFERENCE_ID, referenceFields);
+    mandatoryFields.put(JsonTagsZ.SALES_ORDERS, salesOrderFields);
+    return mandatoryFields;
   }
 
   public static boolean materialExistsInKiosk(Long kioskId, Long materialId) {
