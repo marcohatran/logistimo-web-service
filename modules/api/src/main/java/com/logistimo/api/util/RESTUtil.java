@@ -2253,7 +2253,7 @@ public class RESTUtil {
     referenceFields.put(JsonTagsZ.TRANSFER_REFERENCE_ID, oc.isTransferReferenceIdMandatory());
     shippingFields.put(JsonTagsZ.EXPECTED_TIME_OF_ARRIVAL, oc.isExpectedArrivalDateMandatory());
     salesOrderFields.put(JsonTagsZ.SHIPPING, shippingFields);
-    salesOrderFields.put(JsonTagsZ.MANDATE_REFERENCE_ID, referenceFields);
+    salesOrderConfig.put(JsonTagsZ.MANDATE_REFERENCE_ID, referenceFields);
     salesOrderConfig.put(JsonTagsZ.SALES_ORDERS, salesOrderFields);
     return salesOrderConfig;
   }
