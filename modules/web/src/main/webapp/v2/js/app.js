@@ -388,6 +388,8 @@ logistimoApp.config(function ($routeProvider) {
         action: "dashboard.hierarchy"
     }).when("/dashboard/customdashboard", {
         action: "dashboard.customdashboard"
+    }).when("/dashboard/customdashboard/view/:dashboardId", {
+        action: "dashboard.viewcustomdashboard"
     }).when("/setup/handlingunits/", {
         action: "setup.handlingunits.all.list"
     }).when("/setup/handlingunits/all/list", {

@@ -40,7 +40,8 @@
                             <tbody>
                             <tr ng-repeat="(id, dashboard) in dashboards" class="font-small">
                                 <td class="text-center">{{$index + 1}}</td>
-                                <td><a href="#configuration/dashboards/view/{{dashboard.dbId}}" class="word-wrap">{{dashboard.name}}</a></td>
+                                <td ng-if="subview != 'customdashboard'"><a href="#configuration/dashboards/view/{{dashboard.dbId}}" class="word-wrap">{{dashboard.name}}</a></td>
+                                <td ng-if="subview == 'customdashboard'"><a href="#dashboard/customdashboard/view/{{dashboard.dbId}}" class="word-wrap">{{dashboard.name}}</a></td>
                                 <td><span class="word-wrap">{{dashboard.desc}}</span></td>
                                 <td align="center" ng-if="subview != 'customdashboard' && (iSU || dp.ce)">
                                     <a href="#configuration/dashboards/detail/{{dashboard.dbId}}"><span
