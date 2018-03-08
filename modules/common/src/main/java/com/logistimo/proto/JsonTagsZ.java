@@ -165,6 +165,8 @@ public class JsonTagsZ {
   public static final String MANAGE_MASTER_DATA = "mgmd";
   public static final String MATERIAL_STATUS = "mst";
   public static final String MATERIAL_STATUS_OPERATION = "mtst";
+  public static final String ASSET = "asset";
+  public static final String ENABLE_ASSET_MANAGEMENT = "enable_asset_mgmt";
   public static final String NAME = "n";
   public static final String NEW_NAME = "nn";
   public static final String NO_LOCAL_LOGIN_WITH_VALID_TOKEN = "nll";

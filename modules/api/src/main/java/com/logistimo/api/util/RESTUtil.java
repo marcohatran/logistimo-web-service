@@ -1533,6 +1533,10 @@ public class RESTUtil {
     if (MapUtils.isNotEmpty(matStatusByType)) {
       config.put(JsonTagsZ.MATERIAL_STATUS_OPERATION, matStatusByType);
     }
+    //asset configuration
+    Hashtable<String,Object> enableAssetMgmt = new Hashtable();
+    enableAssetMgmt.put(JsonTagsZ.ENABLE_ASSET_MANAGEMENT, dc.getAssetConfig().getEnable());
+    config.put(JsonTagsZ.ASSET,enableAssetMgmt);
 
     //Min Max Frequency
     String minMaxFreq = ic.getMinMaxDur();
