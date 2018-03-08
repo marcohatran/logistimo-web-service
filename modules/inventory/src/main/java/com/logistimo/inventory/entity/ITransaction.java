@@ -235,4 +235,9 @@ public interface ITransaction
   Date getSortEt();
 
   void setSortEt(Date sortEt);
+
+  String getLocalTrackingID();
+
+  void setLocalTrackingID(String localTrackingID);
+
 }

@@ -96,4 +96,8 @@ public class MobileTransModel {
    * Tracking ID
    */
   public String tid;
+  /**
+   * Local tracking ID
+   */
+  public String local_tid;
 }

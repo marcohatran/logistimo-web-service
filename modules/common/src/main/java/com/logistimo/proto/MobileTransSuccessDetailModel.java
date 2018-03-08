@@ -45,5 +45,5 @@ public class MobileTransSuccessDetailModel {
    * List of keys of transactions that are successfully created
    */
   @SerializedName("keys")
-  public List<Long> keys;
+  public List<String> keys;
 }

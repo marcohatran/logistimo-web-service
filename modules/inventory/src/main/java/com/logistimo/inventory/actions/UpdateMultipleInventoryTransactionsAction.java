@@ -43,6 +43,7 @@ import com.logistimo.services.ServiceException;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.utils.LockUtil;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -111,13 +112,15 @@ public class UpdateMultipleInventoryTransactionsAction {
 
       // If no validTransactions, return
       if (validTransactions.isEmpty()) {
-        return getMaterialResponseDetailModel(materialSuccessDetailModelsMap,materialErrorDetailModelsMap);
+        return getMaterialResponseDetailModel(materialSuccessDetailModelsMap,
+            materialErrorDetailModelsMap);
       }
 
       // Shuffle and sort the transactions by entry time
       Collections.sort(validTransactions, new EntryTimeComparator());
 
-      executeTransactions(domainId, pm, materialErrorDetailModelsMap, materialSuccessDetailModelsMap, midCountMap,
+      executeTransactions(domainId, pm, materialErrorDetailModelsMap,
+          materialSuccessDetailModelsMap, midCountMap,
           validTransactions,
           midFailedFromPositionMap, inventoryUpdatePolicy);
 
@@ -131,7 +134,8 @@ public class UpdateMultipleInventoryTransactionsAction {
       }
       LockUtil.releaseLocks(locks, Constants.TX);
     }
-    return getMaterialResponseDetailModel(materialSuccessDetailModelsMap,materialErrorDetailModelsMap);
+    return getMaterialResponseDetailModel(materialSuccessDetailModelsMap,
+        materialErrorDetailModelsMap);
   }
 
   private PersistenceManager getPersistenceManager() {
@@ -254,7 +258,8 @@ public class UpdateMultipleInventoryTransactionsAction {
       failedFromPosition = midCountMap.get(mid) + 1;
     }
     midFailedFromPositionMap.put(mid, failedFromPosition);
-    updateMaterialErrorDetailModelsMap(mid, materialErrorDetailModelsMap, errorCode != null?errorCode:"M012",
+    updateMaterialErrorDetailModelsMap(mid, materialErrorDetailModelsMap,
+        errorCode != null ? errorCode : "M012",
         failedFromPosition, message);
   }
 
@@ -317,23 +322,27 @@ public class UpdateMultipleInventoryTransactionsAction {
   }
 
   protected void executeTransactions(Long domainId, PersistenceManager pm,
-                                   Map<Long, List<ErrorDetailModel>> materialErrorDetailModelsMap,
-                                   Map<Long, List<SuccessDetailModel>> materialSuccessDetailModelsMap,
-                                   Map<Long, Integer> midCountMap,
-                                   List<ITransaction> validTransactions,
-                                   Map<Long, Integer> midFailedFromPositionMap,
-                                   InventoryUpdatePolicy inventoryUpdatePolicy) {
+                                     Map<Long, List<ErrorDetailModel>> materialErrorDetailModelsMap,
+                                     Map<Long, List<SuccessDetailModel>> materialSuccessDetailModelsMap,
+                                     Map<Long, Integer> midCountMap,
+                                     List<ITransaction> validTransactions,
+                                     Map<Long, Integer> midFailedFromPositionMap,
+                                     InventoryUpdatePolicy inventoryUpdatePolicy) {
 
     boolean shouldDeduplicate = inventoryUpdatePolicy.shouldDeduplicate();
+    Map<String, ITransaction>
+        returnTransactionByLocalTrackingID =
+        getReturnTransactionByLocalTrackingID(validTransactions);
     // Iterate through every valid transaction
     for (ITransaction transaction : validTransactions) {
       if (midFailedFromPositionMap.containsKey(transaction.getMaterialId())) {
         // Do not process for this material
         continue;
       }
+      String localTrackingID = transaction.getLocalTrackingID();
       ITransaction createdTransaction = null;
       try {
-            createdTransaction =
+        createdTransaction =
             inventoryManagementService.updateInventoryTransaction(domainId, transaction, false,
                 !shouldDeduplicate, pm);
         if (createdTransaction != null && createdTransaction.getKey() == null) {
@@ -369,15 +378,19 @@ public class UpdateMultipleInventoryTransactionsAction {
           updateSuccessPositionMap(materialSuccessDetailModelsMap,
               midCountMap.get(transaction.getMaterialId()), transaction.getMaterialId(),
               createdTransaction.getKeyString());
+          // Get the return transaction from map and set the local tracking ID there
+          if (!isReturnTransaction(createdTransaction) && StringUtils.isNotEmpty(localTrackingID) && returnTransactionByLocalTrackingID.containsKey(localTrackingID)) {
+            ITransaction returnTransaction = returnTransactionByLocalTrackingID.get(localTrackingID);
+            returnTransaction.setTrackingId(createdTransaction.getKeyString());
+          }
         }
       }
     }
-
   }
 
   private void updateSuccessPositionMap(
-                                           Map<Long, List<SuccessDetailModel>> materialSuccessDetailModelsMap, int position, Long mid,
-                                           String transactionKey) {
+      Map<Long, List<SuccessDetailModel>> materialSuccessDetailModelsMap, int position, Long mid,
+      String transactionKey) {
     if (materialSuccessDetailModelsMap == null) {
       materialSuccessDetailModelsMap = new HashMap<>();
     }
@@ -395,8 +408,10 @@ public class UpdateMultipleInventoryTransactionsAction {
     materialSuccessDetailModelsMap.put(mid, successDetailModels);
   }
 
-  protected Map<Long,ResponseDetailModel> getMaterialResponseDetailModel(Map<Long,List<SuccessDetailModel>> midSuccessDetailModelMap, Map<Long,List<ErrorDetailModel>> midErrorDetailModelMap) {
-    Map<Long,ResponseDetailModel> midResponseDetailModel = new HashMap<>();
+  protected Map<Long, ResponseDetailModel> getMaterialResponseDetailModel(
+      Map<Long, List<SuccessDetailModel>> midSuccessDetailModelMap,
+      Map<Long, List<ErrorDetailModel>> midErrorDetailModelMap) {
+    Map<Long, ResponseDetailModel> midResponseDetailModel = new HashMap<>();
     midSuccessDetailModelMap.entrySet().forEach(entry -> {
           ResponseDetailModel responseDetailModel = new ResponseDetailModel();
           if (midResponseDetailModel.containsKey(entry.getKey())) {
@@ -405,7 +420,7 @@ public class UpdateMultipleInventoryTransactionsAction {
             responseDetailModel = new ResponseDetailModel();
           }
 
-          if(isCompleteSuccess(entry.getKey(),midErrorDetailModelMap)) {
+          if (isCompleteSuccess(entry.getKey(), midErrorDetailModelMap)) {
             responseDetailModel.successDetailModels
                 .addAll(getModifiedSuccessDetailModels(entry.getValue()));
           } else {
@@ -429,19 +444,44 @@ public class UpdateMultipleInventoryTransactionsAction {
     return midResponseDetailModel;
   }
 
-  protected boolean isCompleteSuccess(Long mid, Map<Long,List<ErrorDetailModel>> midErrorDetailModelMap) {
+  protected boolean isCompleteSuccess(Long mid,
+                                      Map<Long, List<ErrorDetailModel>> midErrorDetailModelMap) {
     if (mid == null || midErrorDetailModelMap == null) {
-      throw new IllegalArgumentException("Invalid arguments while checking whether transaction update was complete success or partial success, mid:" + mid + "midErrorDetailModelMap: " + midErrorDetailModelMap);
+      throw new IllegalArgumentException(
+          "Invalid arguments while checking whether transaction update was complete success or partial success, mid:"
+              + mid + "midErrorDetailModelMap: " + midErrorDetailModelMap);
     }
     return !midErrorDetailModelMap.containsKey(mid);
   }
 
-  protected List<SuccessDetailModel> getModifiedSuccessDetailModels(List<SuccessDetailModel> successDetailModels) {
-    if (successDetailModels == null || successDetailModels.isEmpty()) {
-      throw new IllegalArgumentException("Invalid argument while getting modified success detail model, successDetailModels: " + successDetailModels);
+  protected List<SuccessDetailModel> getModifiedSuccessDetailModels(
+      List<SuccessDetailModel> successDetailModels) {
+    if (CollectionUtils.isEmpty(successDetailModels)) {
+      throw new IllegalArgumentException(
+          "Invalid argument while getting modified success detail model, successDetailModels: "
+              + successDetailModels);
     }
     successDetailModels.get(0).index = 0;
     successDetailModels.get(0).successCode = "M015";
     return successDetailModels;
+  }
+
+  protected Map<String, ITransaction> getReturnTransactionByLocalTrackingID(
+      List<ITransaction> transactions) {
+    if (CollectionUtils.isEmpty(transactions)) {
+      return Collections.emptyMap();
+    }
+    return (transactions.stream()
+        .filter(
+            transaction -> isReturnTransaction(transaction) && StringUtils
+                .isNotEmpty(transaction.getLocalTrackingID()))
+        .collect(Collectors
+            .toMap(ITransaction::getLocalTrackingID, transaction -> transaction)));
+
+  }
+
+  private boolean isReturnTransaction(ITransaction transaction) {
+    return (ITransaction.TYPE_RETURNS_INCOMING.equals(transaction.getType())
+        || ITransaction.TYPE_RETURNS_OUTGOING.equals(transaction.getType()));
   }
 }

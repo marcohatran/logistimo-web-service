@@ -24,10 +24,13 @@
 package com.logistimo.inventory.service.impl;
 
 import com.logistimo.dao.JDOUtils;
+import com.logistimo.exception.LogiException;
+import com.logistimo.inventory.dao.impl.TransDao;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.IInvntryBatch;
 import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.inventory.entity.Invntry;
+import com.logistimo.inventory.entity.Transaction;
 import com.logistimo.tags.dao.TagDao;
 
 import org.junit.BeforeClass;
@@ -48,6 +51,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Created by charan on 15/12/17.
@@ -261,6 +265,47 @@ public class InventoryManagementServiceImplTest {
     invntry.setPSTimestamp(psTimeStamp);
     invntry.setDQTimestamp(dqTimeStamp);
     return invntry;
+  }
+
+  @Test
+  public void testCheckReturnsErrors() {
+    TransDao mockTransDao = mock(TransDao.class);
+    PersistenceManager mockPm = mock(PersistenceManager.class);
+    ITransaction linkedTransaction = new Transaction();
+    linkedTransaction.setType(ITransaction.TYPE_ISSUE);
+    linkedTransaction.setQuantity(BigDecimal.ONE);
+    when(mockTransDao.getById("1",mockPm))
+        .thenReturn(linkedTransaction);
+    ITransaction transaction = new Transaction();
+    transaction.setQuantity(BigDecimal.TEN);
+    transaction.setTrackingId("1");
+    InventoryManagementServiceImpl inventoryManagementService =
+        new InventoryManagementServiceImpl();
+    inventoryManagementService.setTransDao(mockTransDao);
+    try {
+      inventoryManagementService.checkReturnsErrors(transaction, mockPm);
+    } catch(LogiException exception) {
+      assertTrue(exception.getCode().equals("M017"));
+    }
+    transaction.setTrackingObjectType("invalid");
+    try {
+      inventoryManagementService.checkReturnsErrors(transaction, mockPm);
+    } catch(LogiException exception) {
+      assertTrue(exception.getCode().equals("M017"));
+    }
+    transaction.setTrackingObjectType("iss_trn");
+    try {
+      inventoryManagementService.checkReturnsErrors(transaction, mockPm);
+    } catch(LogiException exception) {
+      assertTrue(exception.getCode().equals("M018"));
+    }
+    transaction.setReason("Customer did not like the product");
+
+    try {
+      inventoryManagementService.checkReturnsErrors(transaction, mockPm);
+    } catch(LogiException exception) {
+      assertTrue(exception.getCode().equals("M019"));
+    }
   }
 
 }

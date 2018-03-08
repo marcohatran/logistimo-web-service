@@ -1418,7 +1418,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
           }
           if (isReturn) {
             try {
-              checkReturnsErrors(trans);
+              checkReturnsErrors(trans, pm);
             } catch (LogiException e) {
               trans.setMessage(e.getMessage());
               trans.setMsgCode(e.getCode());
@@ -1649,16 +1649,19 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     }
   }
 
-  private void checkReturnsErrors(ITransaction trans) throws LogiException {
+  protected void checkReturnsErrors(ITransaction trans, PersistenceManager pm) throws LogiException {
     if (StringUtils.isEmpty(trans.getTrackingId()) || StringUtils.isEmpty(trans.getTrackingObjectType())) {
-      throw new LogiException("M017");
+      throw new LogiException("M017", (Object[]) null);
+    }
+    if (!(ITransaction.TYPE_ISSUE_TRANSACTION.equals(trans.getTrackingObjectType()) || ITransaction.TYPE_RECEIPT_TRANSACTION.equals(trans.getTrackingObjectType()))) {
+      throw new LogiException("M017", (Object[]) null);
     }
     if (StringUtils.isEmpty(trans.getReason())) {
-      throw new LogiException("M018");
+      throw new LogiException("M018", (Object[]) null);
     }
-    ITransaction linkedTransaction = transDao.getById(trans.getTrackingId());
-    if (BigUtil.greaterThan(trans.getQuantity(),linkedTransaction.getQuantity())) {
-        throw new LogiException("M019", trans.getQuantity(), linkedTransaction.getQuantity());
+    ITransaction linkedTransaction = transDao.getById(trans.getTrackingId(),pm);
+    if (BigUtil.greaterThan(trans.getQuantity(), linkedTransaction.getQuantity())) {
+      throw new LogiException("M019", trans.getQuantity(), linkedTransaction.getQuantity());
     }
   }
 

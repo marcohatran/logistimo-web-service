@@ -225,6 +225,12 @@ public class Transaction implements ITransaction {
   @NotPersistent
   private boolean systemCreated;
 
+  /**
+   * Only used by mobile API while posting a return against an issue that is not yet synced with the server.
+   */
+  @NotPersistent
+  private String localTrackingID;
+
   public static String getDisplayName(String transType, Locale locale) {
     return getDisplayName(transType, DomainConfig.TRANSNAMING_DEFAULT, locale);
   }
@@ -779,6 +785,17 @@ public class Transaction implements ITransaction {
     }
     return getQuantity();
   }
+
+  @Override
+  public String getLocalTrackingID() {
+    return localTrackingID;
+  }
+
+  @Override
+  public void setLocalTrackingID(String localTrackingID) {
+    this.localTrackingID = localTrackingID;
+  }
+
   @Override
   public BigDecimal getOpeningStock(boolean returnActualValue) {
     if (returnActualValue) {
