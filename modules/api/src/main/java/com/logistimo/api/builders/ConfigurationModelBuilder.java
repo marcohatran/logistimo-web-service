@@ -630,7 +630,7 @@ public class ConfigurationModelBuilder {
       assetType.name = asset.getName();
       assetType.temperatureSensitive = asset.isTemperatureEnabled();
       if (asset.monitoringPositions != null) {
-        assetType.monitoringPoints = buildAssetTypeMonitoringPoints(asset);
+        assetType.monitoringPoints = buildAssetTypeMonitoringPoints(asset,assetMap.get(key));
       }
       assetTypeList.add(assetType);
     }
@@ -638,7 +638,7 @@ public class ConfigurationModelBuilder {
   }
 
   public List<MonitoringPoint> buildAssetTypeMonitoringPoints(
-      AssetSystemConfig.Asset asset) {
+      AssetSystemConfig.Asset asset, AssetConfigModel.Asset ast) {
     List<MonitoringPoint> monitoringPointList = new ArrayList<>(asset.monitoringPositions.size());
     for (AssetSystemConfig.MonitoringPosition position : asset.monitoringPositions) {
       MonitoringPoint
@@ -647,6 +647,9 @@ public class ConfigurationModelBuilder {
       monitoringPoint.point = position.mpId;
       monitoringPoint.position = position.name;
       monitoringPoint.sensor = position.sId;
+      if (null != ast.dMp && (ast.dMp.intValue() == monitoringPoint.point.intValue())) {
+        monitoringPoint.defaultPoint = true;
+      }
       monitoringPointList.add(monitoringPoint);
     }
     return monitoringPointList;
