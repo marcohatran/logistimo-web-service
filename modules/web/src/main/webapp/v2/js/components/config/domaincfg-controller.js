@@ -2749,6 +2749,26 @@ domainCfgControllers.controller('NotificationsConfigurationController', ['$scope
             return list;
         }
 
+        function getFilteredReasons(allRsns, rsnsByTag) {
+            var reasons = [];
+            var tagRsns = [];
+            if ($scope.inv != null) {
+                if (checkNotNullEmpty(allRsns) && checkNotNullEmpty(allRsns.rsns)) {
+                    reasons = allRsns.rsns;
+                }
+                if (checkNotNullEmpty(rsnsByTag)) {
+                    angular.forEach(rsnsByTag, function(rsns){
+                        if (checkNotNullEmpty(rsns) && checkNotNullEmpty(rsns.rsnCfgModel)) {
+                            tagRsns = tagRsns.concat(rsns.rsnCfgModel.rsns);
+                        }
+                    });
+                }
+                reasons = reasons.concat(tagRsns);
+                reasons = getUnique(reasons);
+            }
+            return reasons;
+        }
+
         // to filter the unique values from the list
         function getUnique(origArr) {
             var newArr = [], found;
@@ -2765,20 +2785,6 @@ domainCfgControllers.controller('NotificationsConfigurationController', ['$scope
                 });
             }
             return newArr;
-        }
-
-        //get list of all reasons for material tags
-        function getList(mTagReasons) {
-            var mRsn = [];
-            if (checkNotNullEmpty(mTagReasons)) {
-                var x;
-                var temp = [];
-                for (x in mTagReasons) {
-                    temp = mTagReasons[x].rsn.split(",");
-                    mRsn = mRsn.concat(temp);
-                }
-            }
-            return mRsn.toString();
         }
 
         $scope.assetNotfType = "temperature";
@@ -2804,13 +2810,13 @@ domainCfgControllers.controller('NotificationsConfigurationController', ['$scope
         $scope.lazyLoad = function () {
             $scope.statusLabel = ORDER.notifStatusLabel;
             $scope.shipmentStatusLabel = ORDER.notifShipmentStatusLabel;
-            $scope.stockCounted = getFilteredCombined($scope.inv.rs, getList($scope.inv.smt));
-            $scope.stockIssued = getFilteredCombined($scope.inv.ri, getList($scope.inv.imt));
-            $scope.stockTransferred = getFilteredCombined($scope.inv.rt, getList($scope.inv.tmt));
-            $scope.stockReceived = getFilteredCombined($scope.inv.rr, getList($scope.inv.rmt));
-            $scope.stockDiscarded = getFilteredCombined($scope.inv.rd, getList($scope.inv.dmt));
-            $scope.incomingReturnEntered = getFilteredCombined($scope.inv.rri, getList($scope.inv.rimt));
-            $scope.outgoingReturnEntered = getFilteredCombined($scope.inv.rro, getList($scope.inv.romt));
+            $scope.stockCounted = getFilteredReasons($scope.inv.rs, $scope.inv.smt);
+            $scope.stockIssued = getFilteredReasons($scope.inv.ri, $scope.inv.imt);
+            $scope.stockTransferred = getFilteredReasons($scope.inv.rt, $scope.inv.tmt);
+            $scope.stockReceived = getFilteredReasons($scope.inv.rr, $scope.inv.rmt);
+            $scope.stockDiscarded = getFilteredReasons($scope.inv.rd, $scope.inv.dmt);
+            $scope.incomingReturnEntered = getFilteredReasons($scope.inv.rri, $scope.inv.rimt);
+            $scope.outgoingReturnEntered = getFilteredReasons($scope.inv.rro, $scope.inv.romt);
 
 
             $scope.stockCountedStatus = getFilteredCombined($scope.inv.pdf, $scope.inv.pestm);
@@ -2935,7 +2941,7 @@ domainCfgControllers.controller('NotificationsConfigurationController', ['$scope
                             $scope.showSelection = false;
                             $scope.showStatusSelection = false;
                             if ($scope.prefixName == 'stockCounted' || $scope.extraParamsName == 'stockCounted') {
-                                if (checkNotNullEmpty($scope.inv.rs) || checkNotNullEmpty($scope.inv.smt)) {
+                                if (getFilteredReasons($scope.inv.rs, $scope.inv.smt).length > 0) {
                                     $scope.showSelection = true;
                                 }
                                 if (checkNotNullEmpty($scope.inv.pdf) || checkNotNullEmpty($scope.inv.pestm)) {
@@ -2945,7 +2951,7 @@ domainCfgControllers.controller('NotificationsConfigurationController', ['$scope
                                 $scope.prExtraSelect = $scope.extraParamsName;
                                 break;
                             } else if ($scope.prefixName == 'stockIssued' || $scope.extraParamsName == 'stockIssued') {
-                                if (checkNotNullEmpty($scope.inv.ri) || checkNotNullEmpty($scope.inv.imt)) {
+                                if (getFilteredReasons($scope.inv.ri, $scope.inv.imt).length > 0) {
                                     $scope.showSelection = true;
                                 }
                                 if (checkNotNullEmpty($scope.inv.idf) || checkNotNullEmpty($scope.inv.iestm)) {
@@ -2955,7 +2961,7 @@ domainCfgControllers.controller('NotificationsConfigurationController', ['$scope
                                 $scope.prExtraSelect = $scope.extraParamsName;
                                 break;
                             } else if ($scope.prefixName == 'stockTransferred' || $scope.extraParamsName == 'stockTransferred') {
-                                if (checkNotNullEmpty($scope.inv.rt) || checkNotNullEmpty($scope.inv.tmt)) {
+                                if (getFilteredReasons($scope.inv.rt, $scope.inv.tmt).length > 0) {
                                     $scope.showSelection = true;
                                 }
                                 if (checkNotNullEmpty($scope.inv.tdf) || checkNotNullEmpty($scope.inv.testm)) {
@@ -2965,7 +2971,7 @@ domainCfgControllers.controller('NotificationsConfigurationController', ['$scope
                                 $scope.prExtraSelect = $scope.extraParamsName;
                                 break;
                             } else if ($scope.prefixName == 'stockReceived' || $scope.extraParamsName == 'stockReceived') {
-                                if (checkNotNullEmpty($scope.inv.rr) || checkNotNullEmpty($scope.inv.rmt)) {
+                                if (getFilteredReasons($scope.inv.rr, $scope.inv.rmt).length > 0) {
                                     $scope.showSelection = true;
                                 }
                                 if (checkNotNullEmpty($scope.inv.rdf) || checkNotNullEmpty($scope.inv.restm)) {
@@ -2975,7 +2981,7 @@ domainCfgControllers.controller('NotificationsConfigurationController', ['$scope
                                 $scope.prExtraSelect = $scope.extraParamsName;
                                 break;
                             } else if ($scope.prefixName == 'stockDiscarded' || $scope.extraParamsName == 'stockDiscarded') {
-                                if (checkNotNullEmpty($scope.inv.rd) || checkNotNullEmpty($scope.inv.dmt)) {
+                                if (getFilteredReasons($scope.inv.rd, $scope.inv.dmt).length > 0) {
                                     $scope.showSelection = true;
                                 }
                                 if (checkNotNullEmpty($scope.inv.wdf) || checkNotNullEmpty($scope.inv.westm)) {
@@ -2985,7 +2991,7 @@ domainCfgControllers.controller('NotificationsConfigurationController', ['$scope
                                 $scope.prExtraSelect = $scope.extraParamsName;
                                 break;
                             } else if ($scope.prefixName == 'incomingReturnEntered' || $scope.extraParamsName == 'incomingReturnEntered') {
-                                if (checkNotNullEmpty($scope.inv.rri) || checkNotNullEmpty($scope.inv.rimt)) {
+                                if (getFilteredReasons($scope.inv.rri, $scope.inv.rimt).length > 0) {
                                     $scope.showSelection = true;
                                 }
                                 if (checkNotNullEmpty($scope.inv.ridf) || checkNotNullEmpty($scope.inv.riestm)) {
@@ -2995,7 +3001,7 @@ domainCfgControllers.controller('NotificationsConfigurationController', ['$scope
                                 $scope.prExtraSelect = $scope.extraParamsName;
                                 break;
                             } else if ($scope.prefixName == 'outgoingReturnEntered' || $scope.extraParamsName == 'outgoingReturnEntered') {
-                                if (checkNotNullEmpty($scope.inv.rro) || checkNotNullEmpty($scope.inv.romt)) {
+                                if (getFilteredReasons($scope.inv.rro, $scope.inv.romt).length > 0) {
                                     $scope.showSelection = true;
                                 }
                                 if (checkNotNullEmpty($scope.inv.rodf) || checkNotNullEmpty($scope.inv.roestm)) {
@@ -3060,6 +3066,7 @@ domainCfgControllers.controller('NotificationsConfigurationController', ['$scope
                 }
             }
         };
+
         $scope.getTitle = function (nofObject) {
             var title = "";
             if (checkNotNullEmpty(nofObject.or)) {
