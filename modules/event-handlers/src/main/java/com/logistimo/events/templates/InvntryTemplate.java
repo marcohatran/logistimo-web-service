@@ -33,6 +33,7 @@ import com.logistimo.inventory.entity.InvntryEvntLog;
 import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.Material;
 import com.logistimo.services.impl.PMF;
+import com.logistimo.users.entity.UserAccount;
 import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.LocalDateUtil;
 
@@ -93,6 +94,17 @@ public class InvntryTemplate implements ITemplate {
       if (excludeVars == null || !excludeVars.contains(EventsConfig.VAR_MATERIAL)) {
         String name = pm.getObjectById(Material.class, invntry.getMaterialId()).getName();
         varMap.put(EventsConfig.VAR_MATERIAL, name);
+      }
+      // User
+      if (excludeVars == null || !excludeVars.contains(EventsConfig.VAR_USER)) {
+        try {
+          String
+              userName =
+              pm.getObjectById(UserAccount.class, invntry.getUpdatedBy()).getFullName();
+          varMap.put(EventsConfig.VAR_USER, userName);
+        }catch (Exception e) {
+          xLogger.warn("Unable to get user details for user {0}", invntry.getUpdatedBy(), e);
+        }
       }
       // Quantity
       if (excludeVars == null || !excludeVars.contains(EventsConfig.VAR_QUANTITY)) {
