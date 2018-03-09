@@ -1349,9 +1349,14 @@ domainCfgControllers.controller('InventoryConfigurationController', ['$scope', '
         function isTagReasonModelsValid(tagReasonModels,tagType) {
             var tagTypeText = {'imt':'issue','rmt':'receipt','smt':'stock count','dmt':'discard','tmt':'transfer','rimt':'returns incoming','romt':'returns outgoing'};
             return (!tagReasonModels.some(function(tagReasonModel){
-                    if (tagReasonModel && checkNotNullEmpty(tagReasonModel.rsnCfgModel.rsns) && checkNotNullEmpty(tagReasonModel.rsnCfgModel.defRsnUI) && tagReasonModel.rsnCfgModel.rsns.indexOf(tagReasonModel.rsnCfgModel.defRsnUI.text) == -1) {
-                        $scope.showWarning($scope.resourceBundle['config.inventory.reasons.config.warning.message'] + ' ' + tagTypeText[tagType] + ' ' + $scope.resourceBundle['for.lowercase'] + ' ' + $scope.resourceBundle['tag.lower'] + ' ' + tagReasonModel.mtg);
-                        return true;
+                    if (tagReasonModel) {
+                        if (checkNullEmpty(tagReasonModel.rsnCfgModel) || checkNullEmpty(tagReasonModel.rsnCfgModel.rsns)) {
+                            $scope.showWarning($scope.resourceBundle['config.inventory.specify.reasons.for'] + ' ' + tagTypeText[tagType] + ' ' + $scope.resourceBundle['for.lowercase'] + ' ' + $scope.resourceBundle['tag.lower'] + ' ' + tagReasonModel.mtg);
+                            return true;
+                        } else if (checkNotNullEmpty(tagReasonModel.rsnCfgModel.defRsnUI) && tagReasonModel.rsnCfgModel.rsns.indexOf(tagReasonModel.rsnCfgModel.defRsnUI.text) == -1) {
+                            $scope.showWarning($scope.resourceBundle['config.inventory.reasons.config.warning.message'] + ' ' + tagTypeText[tagType] + ' ' + $scope.resourceBundle['for.lowercase'] + ' ' + $scope.resourceBundle['tag.lower'] + ' ' + tagReasonModel.mtg);
+                            return true;
+                        }
                     }
                 })
             );
@@ -1637,31 +1642,31 @@ domainCfgControllers.controller('InventoryConfigurationController', ['$scope', '
             if (checkNotNullEmpty($scope.MatTags)) {
                 if (type == 'i' || type == 'a') {
                     if ($scope.MatTags.length >= $scope.inv.imt.length)
-                        $scope.inv.imt.push({mtg: "", rsn: ""});
+                        $scope.inv.imt.push({mtg: ""});
                 }
                 if (type == 'r' || type == 'a') {
                     if ($scope.MatTags.length >= $scope.inv.rmt.length)
-                        $scope.inv.rmt.push({mtg: "", rsn: ""});
+                        $scope.inv.rmt.push({mtg: ""});
                 }
                 if (type == 's' || type == 'a') {
                     if ($scope.MatTags.length >= $scope.inv.smt.length)
-                        $scope.inv.smt.push({mtg: "", rsn: ""});
+                        $scope.inv.smt.push({mtg: ""});
                 }
                 if (type == 't' || type == 'a') {
                     if ($scope.MatTags.length >= $scope.inv.tmt.length)
-                        $scope.inv.tmt.push({mtg: "", rsn: ""});
+                        $scope.inv.tmt.push({mtg: ""});
                 }
                 if (type == 'd' || type == 'a') {
                     if ($scope.MatTags.length >= $scope.inv.dmt.length)
-                        $scope.inv.dmt.push({mtg: "", rsn: ""});
+                        $scope.inv.dmt.push({mtg: ""});
                 }
                 if (type == 'ri' || type == 'a') {
                     if ($scope.MatTags.length >= $scope.inv.rimt.length)
-                        $scope.inv.rimt.push({mtg: "", rsn: ""});
+                        $scope.inv.rimt.push({mtg: ""});
                 }
                 if (type == 'ro' || type == 'a') {
                     if ($scope.MatTags.length >= $scope.inv.romt.length)
-                        $scope.inv.romt.push({mtg: "", rsn: ""});
+                        $scope.inv.romt.push({mtg: ""});
                 }
             }
         };
