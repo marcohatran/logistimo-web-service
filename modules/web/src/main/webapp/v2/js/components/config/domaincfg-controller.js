@@ -4110,7 +4110,7 @@ domainCfgControllers.controller('NotificationMessageController', ['$scope', 'dom
                 titles: {
                     filters: getCaption()
                 },
-                module: "sent.notification",
+                module: "notificationstatus",
                 templateId: "c_sent_notification"
             }).then(function (data) {
                 $scope.showSuccess(data.data);

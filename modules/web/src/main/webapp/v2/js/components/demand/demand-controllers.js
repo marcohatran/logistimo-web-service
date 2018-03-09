@@ -799,7 +799,7 @@ demandControllers.controller('DiscrepanciesListingCtrl', ['$scope', 'demandServi
                 titles: {
                     filters: getCaption()
                 },
-                module: "discrepancy",
+                module: "discrepancies",
                 templateId: "o_discrepancy"
             }).then(function (data) {
                 $scope.showSuccess(data.data);
