@@ -95,7 +95,11 @@ public class DemandItem implements IDemandItem {
   private BigDecimal isq = BigDecimal.ZERO;
   @Persistent
   private BigDecimal dq = BigDecimal.ZERO;
-
+  /**
+   * Returned quantity
+   */
+  @Persistent
+  private BigDecimal rq = BigDecimal.ZERO;
   @Persistent
   private String st = Order.PENDING; // status
   @Persistent
@@ -595,6 +599,16 @@ public class DemandItem implements IDemandItem {
   @Override
   public void setFulfilledQuantity(BigDecimal quantity) {
     fq = quantity;
+  }
+
+  @Override
+  public BigDecimal getReturnedQuantity() {
+    return rq;
+  }
+
+  @Override
+  public void setReturnedQuantity(BigDecimal rq) {
+    this.rq = rq;
   }
 
   @Override
