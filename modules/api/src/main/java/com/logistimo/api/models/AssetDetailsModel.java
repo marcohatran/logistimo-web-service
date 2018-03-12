@@ -58,6 +58,8 @@ public class AssetDetailsModel extends AssetBaseModel {
   public String lub;
   public String ts;
   public String lts;
+  public String uflts; //unformatted update time
+  public Integer mtyp; //device monitoring type
   public Map<Integer, AssetRelationModel.Relation> rel;
   public Boolean iDa = false;
   public Long iCon;
