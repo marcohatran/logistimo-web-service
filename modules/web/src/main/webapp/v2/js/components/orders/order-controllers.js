@@ -991,6 +991,7 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                     }
                 }
             });
+            $scope.checkReturn();
         }
 
         $scope.saveStatus = function () {
@@ -1975,6 +1976,14 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
             $scope.openView("orderDetail");
             $scope.enableScroll();
         };
+
+        $scope.checkReturn = function() {
+            if ($scope.order.st == ORDER.BACKORDERED || $scope.order.st == ORDER.COMPLETED || $scope.order.st == ORDER.FULFILLED) {
+                $scope.canReturn = $scope.order.its.some(function (item) {
+                    return item.fq > 0;
+                });
+            }
+        }
     }
 ]);
 ordControllers.controller('orders.MaterialController', ['$scope',
@@ -4122,7 +4131,7 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService', 'reques
     }
 ]);
 
-ordControllers.controller('ConsignmentController', ['$scope', '$uibModal', function ($scope, $uibModal) {
+ordControllers.controller('ConsignmentController', ['$scope', function ($scope) {
     $scope.batchOrder = true;
     $scope.selectedMaterialIds = [];
     $scope.sel = {};

@@ -1252,3 +1252,4 @@ config.reasons.config.warning.message=La raison par défaut doit être sélectio
 config.inventory.exclude.issue.reasons.warning.message=Les raisons d'exclusion doivent être sélectionnées dans la liste des motifs de délivrance
 config.inventory.exclude.returns.incoming.reasons.warning.message=Renvoie les raisons entrantes à exclure qui doivent être sélectionnées dans la liste des raisons des retours entrants
 config.inventory.specify.reasons.for=Veuillez préciser les raisons du type de transaction
+return=Revenir

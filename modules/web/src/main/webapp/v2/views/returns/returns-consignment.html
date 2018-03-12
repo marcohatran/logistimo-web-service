@@ -41,9 +41,6 @@
                         (order.st == ORDER.PENDING || order.st == ORDER.BACKORDERED || order.st == ORDER.CONFIRMED)"
                         ng-click="startEditMats(true)">{{resourceBundle['allocate']}}
                 </button>
-                <button type="button" class="btn btn-sm btn-primary ml10"
-                        ng-show="canReturn()" ng-click="doReturn()">{{resourceBundle['return']}}
-                </button>
             </div>
         </div>
         <div class="row">
@@ -152,7 +149,7 @@
                                                 <td class=" text-center">{{bi.id}}</td>
                                                 <td class=" text-center">{{bi.e}}</td>
                                                 <td class=" text-center">{{bi.q}}
-                                                   <span ng-show="isDef(bi.mst)" class="litetext small-font">{{bi.mst}}</span>
+                                                    <span ng-show="isDef(bi.mst)" class="litetext small-font">{{bi.mst}}</span>
                                                 </td>
                                             </tr>
                                             </tbody>
@@ -309,7 +306,7 @@
                         </td>
                         <td ng-if="edit.mat" class="text-center">
                             <a ng-show="item.added" ng-click="removeRow($index)" uib-tooltip="{{resourceBundle['remove']}}" tooltip-append-to-body="true"><span
-                                class="glyphicons glyphicons-bin"></span></a>
+                                    class="glyphicons glyphicons-bin"></span></a>
                         </td>
                     </tr>
                     <tr data-ng-switch-when="show">
@@ -327,14 +324,14 @@
                         <td colspan="2">
                             <div class="form-group has-feedback">
                                 <input type="text"
-                                    typeahead-template-url="views/materials/materialTemplate.html"
-                                    ng-model="mModel"
-                                    class="form-control"
-                                    placeholder="Type to Add Material"
+                                       typeahead-template-url="views/materials/materialTemplate.html"
+                                       ng-model="mModel"
+                                       class="form-control"
+                                       placeholder="Type to Add Material"
                                        uib-typeahead="item as item.mnm for item in getFilteredInvntry($viewValue)"
-                                    typeahead-editable="false"
-                                    typeahead-loading="loadingMat"
-                                    class="form-control" maxlength="50"/>
+                                       typeahead-editable="false"
+                                       typeahead-loading="loadingMat"
+                                       class="form-control" maxlength="50"/>
                                 <span ng-show="loadingMat" class="form-control-feedback typehead-loading" aria-hidden="true"> <span class="glyphicons glyphicons-cogwheel spin"></span> </span>
                             </div>
                         </td>

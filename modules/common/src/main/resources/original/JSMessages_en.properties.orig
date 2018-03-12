@@ -1255,3 +1255,4 @@ config.inventory.reasons.config.warning.message=Default reason should be selecte
 config.inventory.exclude.issue.reasons.warning.message=Issue reasons to exclude should be selected from the list of reasons for issue
 config.inventory.exclude.returns.incoming.reasons.warning.message=Returns incoming reasons to exclude should be selected from the list of reasons for returns incoming
 config.inventory.specify.reasons.for=Please specify reasons for transaction type
+return=Return

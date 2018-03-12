@@ -1,0 +1,186 @@
+<!--
+  ~ Copyright © 2018 Logistimo.
+  ~
+  ~ This file is part of Logistimo.
+  ~
+  ~ Logistimo software is a mobile & web platform for supply chain management and remote temperature monitoring in
+  ~ low-resource settings, made available under the terms of the GNU Affero General Public License (AGPL).
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General
+  ~ Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any
+  ~ later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+  ~ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+  ~ for more details.
+  ~
+  ~ You should have received a copy of the GNU Affero General Public License along with this program.  If not, see
+  ~ <http://www.gnu.org/licenses/>.
+  ~
+  ~ You can be released from the requirements of the license by purchasing a commercial license. To know more about
+  ~ the commercial license, please contact us at opensource@logistimo.com
+  -->
+
+<div ng-controller="ReturnsDetailController" class="overflowYonly paddinglr10">
+    <div class="animate-switch-container" ng-switch on="selection">
+        <div ng-switch-when="detail">
+            <div class="row">
+                <div class="col-sm-12 mt18">
+                    <div class="row">
+                    <div class="col-sm-8 mb10">
+                        <span class="h3">
+                            <span ng-if="order.oty!=0">{{resourceBundle['order']}}: {{orderId}}</span>
+                            <span ng-if="order.oty==0">
+                                <span ng-hide="transRelease">{{resourceBundle['transactions.transfer.upper']}}</span>
+                                <span ng-show="transRelease">{{resourceBundle['transactions.release.upper']}}</span>
+                                : {{orderId}}
+                            </span>
+                        </span>
+                        <span class="badge currentstatus" ng-class="{'cancelled':order.st == ORDER.CANCELLED}">{{order.status}}</span>
+                        <div>
+                            <span class="litetext lnk" ng-show="isUndef(order.rid) && !edit.rid && (order.st == ORDER.PENDING || order.st == ORDER.CONFIRMED || order.st == ORDER.BACKORDERED) && (order.oty != 2 || (order.oty == 2 && order.atv))">{{"Add " + resourceBundle['referenceid'] }} </span>
+                            <span class="litetext lnk" ng-show="isDef(order.rid) && !edit.rid">{{resourceBundle['referenceid'] + ": " + order.rid }} </span>
+                            <div class="lnk">
+                                <div ng-show="edit.rid" style="width: 30%">
+                                    <span class="litetext">{{resourceBundle['referenceid']}}:</span>
+                                    <editable-text edit-model="order.tempRID"
+                                                   on-ok="updateRefId()"
+                                                   max-length="100"
+                                                   on-cancel="toggleEdit('rid')"
+                                                   set-focus="">
+                                    </editable-text>
+                                </div>
+                                <a ng-show="!edit.rid && (dp.vp || order.st == ORDER.PENDING || order.st == ORDER.CONFIRMED || order.st == ORDER.BACKORDERED) && (order.oty != 2 || (order.oty == 2 && order.atv))"
+                                   uib-tooltip="{{resourceBundle['edit']}}" tooltip-append-to-body="true" ng-click="editRID()">
+                                    <span ng-hide="!editMetaDataPermission" class="glyphicons glyphicons-edit pt2 ml15"></span>
+                                </a>
+                            </div>
+                        </div>
+                        <span class="litetext pt10">
+                            {{resourceBundle['createdon']}} {{order.cdt}} {{resourceBundle['by']}}
+                            <a ng-href="#/setup/users/all/details?userId={{order.uid}}" target="_blank">{{order.unm}}</a>
+                            <span ng-show="isDef(order.udt)">
+                                , {{resourceBundle['lastupdated']}} {{resourceBundle['on']}} {{order.udt}} {{resourceBundle['by']}}
+                                <a ng-href="#/setup/users/all/details?userId={{order.ubid}}" target="_blank">{{order.uby}}</a>
+                            </span>
+                        </span>
+                    </div>
+                    <div class="col-sm-4 pull-right mt10">
+                        <a class="pull-right" ng-href="/s2/api/orders/order/{{orderId}}/invoice" target="_new"
+                           uib-tooltip="{{resourceBundle['invoice']}}" tooltip-append-to-body="true"><span
+                                class="glyphicons glyphicons-print tglyph"></span></a>
+                        <a class="pull-right" href=""
+                           onclick="javascript:window.open('/s/help/help.jsp?type=purchaseorder','purchaseorder','location=0,resizable=1,scrollbars=1,width=800,height=350');"
+                           uib-tooltip="{{resourceBundle['help']}}" tooltip-append-to-body="true"><span
+                                class="glyphicons glyphicons-info-sign tglyph"></span></a>
+                        <div class="col-sm-12 paddinglr5 mt5">
+
+                            <span class="pull-right" ng-hide="order.lt == undefined || order.ln == undefined || (order.lt == 0 && order.ln == 0)">
+                                <a ng-click="toggleMap()">
+                                    <span class="glyphicons glyphicons-globe lPad5" uib-tooltip="{{resourceBundle['map.view']}}" tooltip-append-to-body="true"></span>
+                                </a>
+                            </span>
+
+                            <div class="pull-right" >
+                            <span ng-if="order.src === 1"  class="glyphicons glyphicons-display" uib-tooltip="{{resourceBundle['web']}}" ></span>
+                            <span ng-if="order.src === 2" class="glyphicons glyphicons-iphone" uib-tooltip="{{resourceBundle['mob']}}" ></span>
+                            <span ng-if="order.src === 3" class="glyphicons glyphicons-cloud-upload" uib-tooltip="{{resourceBundle['upl']}}"></span>
+                            <span ng-if="order.src === 4" class="glyphicons glyphicons-sms" uib-tooltip="{{resourceBundle['sms']}}"></span>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+            </div>
+            <hr/>
+            <div class="row mt10" ng-if="dispMap">
+                <div class="col-sm-12">
+                    <div ng-init=" type = 'c'; dName = order.enm; lt = order.lt; ln = order.ln; lklt = order.elt; lkln = order.eln; mtype = 'o'; accuracy = order.ac;"
+                         ng-include="'views/transactions/view-map.html'"></div>
+                </div>
+            </div>
+            <div class="row mt10">
+                <div class="col-sm-12">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            Status
+                        </div>
+                        <div class="panel-body">
+                            <div class="col-sm-9 mt10 noLRpad">
+                                <div ng-if="isDef(order)" ng-include="'views/orders/status-indicator.html'"></div>
+                                <span ng-click="toggleStatusHistory()" class="glyphicons glyphicons-history codegray large"  uib-tooltip="Show status history" ng-if="!dispStatusHistory" tooltip-append-to-body="true"></span>
+                                <span ng-click="toggleStatusHistory()" class="glyphicons glyphicons-history codegray large" uib-tooltip="Hide status history" ng-if="dispStatusHistory" tooltip-append-to-body="true"></span>
+                            </div>
+                            <div class="col-sm-3 btn-group">
+                                <div class="pull-right">
+                                    <ul class="nav navbar-nav" ng-hide="dp.vp">
+                                        <li>
+                                            <button type="button" class="btn btn-sm btn-primary dropdown-toggle"
+                                                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+                                                    ng-show="shouldShowStatusChange()">
+                                                <span class="glyphicons glyphicons-show-lines medium pt2" uib-tooltip="Change status" tooltip-append-to-body="true"></span>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-right">
+                                                <li ng-repeat="status in statusList" ng-hide="dp.vp">
+                                                    <a ng-hide="checkHideStatus(status)" ng-click="changeStatus(status)"> {{RETURNS.statusLabel[status]}}</a>
+                                                </li>
+                                            </ul>
+                                        </li>
+                                    </ul>
+                                    <span class="lPad5">
+                                        <button type="button" ng-show="hasStatus('cm') && shipPermission" class="btn btn-sm btn-primary" ng-click="changeStatus('cm')">{{resourceBundle['ship']}}
+                                             </button>
+                                          <button type="button" ng-show="hasStatus('fl')" class="btn btn-sm btn-primary" ng-click="changeStatus('fl')">{{resourceBundle['fulfill']}}
+                                             </button>
+                                    </span>
+                                </div>
+                            </div>
+                            <div ng-if="dispStatusHistory">
+                                <div class="row">
+                                    <div class="col-sm-12 pt15">
+                                        <div ng-include="'views/orders/status-history.html'"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-12">
+                    <div ng-include="'views/returns/returns-entities.html'"></div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-12">
+                    <ul class="nav nav-tabs subnav-tabs">
+                        <li ng-class="{ active: view == 'consignment'}"><a
+                                ng-click="view='consignment'">{{resourceBundle['items']}} <span class="badge">{{order.its ? order.its.length : 0}}</span></a>
+                        </li>
+                        <li ng-class="{ active: view == 'message'}">
+                            <a ng-click="view='message'">{{resourceBundle['comments']}} <span class="badge">{{messageCnt ? messageCnt : 0}}</span></a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="tab-content">
+                        <div ng-switch="view">
+                            <div class="tab-pane" ng-switch-when="consignment">
+                                <div ng-include="'views/returns/returns-consignment.html'"></div>
+                            </div>
+                            <div class="tab-pane" ng-switch-when="message">
+                                <div ng-include="'views/conversation/messages.html'"
+                                     ng-init="objId = returnsId;objType = 'RETURNS'"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div ng-switch-when="receive">
+            <div ng-include="'views/returns/returns-receive.html'"></div>
+        </div>
+    </div>
+</div>
