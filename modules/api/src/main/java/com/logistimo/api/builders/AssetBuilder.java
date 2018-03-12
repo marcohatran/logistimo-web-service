@@ -45,6 +45,8 @@ import com.logistimo.assets.models.Temperature;
 import com.logistimo.assets.models.TemperatureResponse;
 import com.logistimo.assets.service.AssetManagementService;
 import com.logistimo.auth.utils.SecurityUtils;
+import com.logistimo.config.models.AssetSystemConfig;
+import com.logistimo.config.models.ConfigurationException;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.Constants;
 import com.logistimo.dao.JDOUtils;
@@ -454,6 +456,7 @@ public class AssetBuilder {
       assetDetailsModel.drdy.fTime = formatDate(assetDetailsModel.drdy.time, locale, timezone);
     }
     assetDetailsModel.typ = assetModel.typ;
+    assetDetailsModel.mtyp = (assetDetailsModel.typ != null)? getAssetMonitoringType(assetDetailsModel.typ): null;
     if (assetModel.meta != null && assetModel.meta.getAsJsonObject() != null
         && assetModel.meta.getAsJsonObject().getAsJsonObject("dev") != null
         && assetModel.meta.getAsJsonObject().getAsJsonObject("dev").get("mdl") != null) {
@@ -470,6 +473,7 @@ public class AssetBuilder {
         assetDetailsModel.ts = LocalDateUtil.format(asset.getCreatedOn(), locale, timezone);
         if (asset.getUpdatedOn() != null) {
           assetDetailsModel.lts = LocalDateUtil.format(asset.getUpdatedOn(), locale, timezone);
+          assetDetailsModel.uflts = LocalDateUtil.formatCustom(asset.getUpdatedOn(), Constants.ISO_PATTERN, timezone);
         }
         assetDetailsModel.rus = asset.getCreatedBy();
         assetDetailsModel.lub = asset.getUpdatedBy();
@@ -899,5 +903,18 @@ public class AssetBuilder {
       filters.put("TOKEN_ASSET_WITH_REL", String.valueOf(assetRel));
     }
     return filters;
+  }
+
+  private int getAssetMonitoringType (int assetType) {
+    AssetSystemConfig config;
+    try {
+      config = AssetSystemConfig.getInstance();
+      return config.assets.entrySet().stream()
+          .filter(entry -> entry.getKey() == assetType)
+          .findFirst().get().getValue().type;
+    } catch (ConfigurationException ce) {
+      xLogger.warn("Issue with mapping monitoring type for asset type {0}",assetType,ce);
+    }
+    return 3;
   }
 }
