@@ -562,8 +562,8 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
             {value: 'p', displayName: 'Stock Count', capabilityName: 'sc'},
             {value: 'w', displayName: 'Discards', capabilityName: 'wa'},
             {value: 't', displayName: 'Transfer', capabilityName: 'ts'},
-            {value: 't', displayName: 'Incoming returns', capabilityName: 'eri'},
-            {value: 't', displayName: 'Outgoing returns', capabilityName: 'ero'}
+            {value: 'ri', displayName: 'Incoming returns', capabilityName: 'eri'},
+            {value: 'ro', displayName: 'Outgoing returns', capabilityName: 'ero'}
         ];
 
         $scope.getAllCapabilities = function () {
@@ -869,9 +869,9 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                     }
                 }
             }
-            if (newVal == 'i' && $scope.tranDomainConfig.noc > 0) {
+            if (newVal == 'i' || newVal == 'ri' && $scope.tranDomainConfig.noc > 0) {
                 $scope.entityType = $scope.resourceBundle['customer'];
-            } else if (newVal == 'r' && $scope.tranDomainConfig.nov > 0) {
+            } else if (newVal == 'r' || newVal == 'ro' && $scope.tranDomainConfig.nov > 0) {
                 $scope.entityType = $scope.resourceBundle['vendor'];
             } else if (newVal == 't') {
                 $scope.entityType = "Transfer to";
@@ -891,6 +891,12 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
             }else if(newVal =='t'){
                 $scope.atd = $scope.tranDomainConfig.atdt;
                 $scope.msm = $scope.statusData.tsm;
+            } else if(newVal =='ri'){
+                $scope.atd = $scope.tranDomainConfig.atdri;
+                $scope.msm = $scope.statusData.rism;
+            } else if(newVal =='ro'){
+                $scope.atd = $scope.tranDomainConfig.atdro;
+                $scope.msm = $scope.statusData.rosm;
             }
             $scope.showMaterials = true;
             $scope.showLoading();

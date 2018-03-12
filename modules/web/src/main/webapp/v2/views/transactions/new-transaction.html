@@ -82,7 +82,7 @@
                             </a>
                         </script>
 
-                        <div ng-show="transaction.type == 'i'" class="col-sm-7">
+                        <div ng-show="transaction.type == 'i' || transaction.type == 'ri'" class="col-sm-7">
                             <div class="form-group has-feedback mgh0 mgb0">
                                 <input type="text" ng-model="transaction.dent"
                                        typeahead-template-url="destTemplate"
@@ -101,7 +101,7 @@
                             </div>
                         </div>
 
-                        <div ng-show="transaction.type == 'r'" class="col-sm-7">
+                        <div ng-show="transaction.type == 'r' || transaction.type == 'ro'" class="col-sm-7">
                             <div class="form-group has-feedback mgh0 mgb0">
                                 <input type="text" ng-model="transaction.dent" typeahead-template-url="destTemplate"
                                        autocomplete="off"
@@ -141,7 +141,7 @@
                             <div ng-show="transaction.ent.nm === transaction.dent.enm" class="has-error">
                                 <span class="help-block">{{resourceBundle['materials.transfer']}}</span>
                             </div>
-                            <div ng-show="tranDomainConfig.showCInv && (transaction.type == 't' || transaction.type == 'i') && transaction.dent.enm.length > 0 && transaction.ent.nm !== transaction.dent.enm && showDestInvPermission > 0" class="temp">
+                            <div ng-show="tranDomainConfig.showCInv && (transaction.type == 't' || transaction.type == 'i' || transaction.type == 'ri') && transaction.dent.enm.length > 0 && transaction.ent.nm !== transaction.dent.enm && showDestInvPermission > 0" class="temp">
                                 <span class="litetext"> <input type="checkbox" ng-model="showDestInv" ng-disabled="showDestInv"> {{resourceBundle['show.currentstock.at']}} {{transaction.dent.enm}}</span>
                             </div>
                         </div>
@@ -241,7 +241,6 @@
                                 <span ng-show="transaction.ent.nm.length > 17">...</span>
                             </span>
                         </th>
-                            <!--<span class="litetext-head"><input type="checkbox" ng-model="showMinMax"> {{resourceBundle['minmax.show']}} </span></th>-->
                         <th class="col-sm-1 text-center" ng-show="ordersTabEnabled">{{resourceBundle['available.stock']}}
                             <span class="litetext">{{transaction.ent.nm | limitTo:17}}
                                 <span ng-show="transaction.ent.nm.length > 17">...</span>
@@ -254,7 +253,6 @@
                             <span class="litetext">{{transaction.dent.enm | limitTo:17}}
                                 <span ng-show="transaction.dent.enm.length > 17">...</span>
                             </span>
-                            <!--<span class="litetext-head"><input type="checkbox" ng-model="showMinMax"> {{resourceBundle['minmax.show']}} </span>-->
                         </th>
                     </tr>
                     </tbody>

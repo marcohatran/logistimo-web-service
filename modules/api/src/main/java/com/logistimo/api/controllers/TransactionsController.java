@@ -750,6 +750,14 @@ public class TransactionsController {
     if(msc != null) {
       statusList.put("tsm", msc.isStatusMandatory());
     }
+    msc = ic.getMatStatusConfigByType(ITransaction.TYPE_RETURNS_INCOMING);
+    if(msc != null) {
+      statusList.put("rism", msc.isStatusMandatory());
+    }
+    msc = ic.getMatStatusConfigByType(ITransaction.TYPE_RETURNS_OUTGOING);
+    if(msc != null) {
+      statusList.put("rosm", msc.isStatusMandatory());
+    }
     return statusList;
   }
 }
