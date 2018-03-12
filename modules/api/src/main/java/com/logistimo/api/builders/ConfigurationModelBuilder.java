@@ -1771,4 +1771,24 @@ public class ConfigurationModelBuilder {
     reasonConfigModel.defRsn = reasonConfig.getDefaultReason();
     return reasonConfigModel;
   }
+
+  /**
+   * Builds a map of Actual Date Of Transaction Configuration (as a String) by transaction type
+   * @param inventoryConfig
+   * @return
+   */
+  public Map<String,String> buildActualTransConfigAsStringByTransType(InventoryConfig inventoryConfig) {
+    if (inventoryConfig == null) {
+      throw new IllegalArgumentException("Invalid input parameter while building actual date of transaction configuration as string by transaction type: " + inventoryConfig);
+    }
+    Map<String,String> actTransConfigStringByType = new HashMap<>(7,1);
+    actTransConfigStringByType.put(ITransaction.TYPE_ISSUE, inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_ISSUE) != null ? inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_ISSUE).getTy() : ActualTransConfig.ACTUAL_NONE);
+    actTransConfigStringByType.put(ITransaction.TYPE_RECEIPT, inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_RECEIPT) != null ? inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_RECEIPT).getTy() : ActualTransConfig.ACTUAL_NONE);
+    actTransConfigStringByType.put(ITransaction.TYPE_PHYSICALCOUNT, inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_PHYSICALCOUNT) != null ? inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_PHYSICALCOUNT).getTy() : ActualTransConfig.ACTUAL_NONE);
+    actTransConfigStringByType.put(ITransaction.TYPE_WASTAGE, inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_WASTAGE) != null ? inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_WASTAGE).getTy() : ActualTransConfig.ACTUAL_NONE);
+    actTransConfigStringByType.put(ITransaction.TYPE_TRANSFER, inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_TRANSFER) != null ? inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_TRANSFER).getTy() : ActualTransConfig.ACTUAL_NONE);
+    actTransConfigStringByType.put(ITransaction.TYPE_RETURNS_INCOMING, inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_RETURNS_INCOMING) != null ? inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_RETURNS_INCOMING).getTy() : ActualTransConfig.ACTUAL_NONE);
+    actTransConfigStringByType.put(ITransaction.TYPE_RETURNS_OUTGOING, inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_RETURNS_OUTGOING) != null ? inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_RETURNS_OUTGOING).getTy() : ActualTransConfig.ACTUAL_NONE);
+    return actTransConfigStringByType;
+  }
 }

@@ -327,6 +327,7 @@ public class TransactionsController {
       IUserAccount u = usersService.getUserAccount(userId);
       List dest = entitiesService.getKiosks(u, domainId, null, null, null).getResults();
       model.dest = constructKioskMap(dest);
+
       ActualTransConfig atci = ic.getActualTransConfigByType(ITransaction.TYPE_ISSUE);
       model.atdi = atci != null ? atci.getTy() : ActualTransConfig.ACTUAL_NONE;
 
@@ -342,6 +343,12 @@ public class TransactionsController {
       ActualTransConfig atct = ic.getActualTransConfigByType(ITransaction.TYPE_TRANSFER);
       model.atdt = atct != null ? atct.getTy() : ActualTransConfig.ACTUAL_NONE;
 
+      ActualTransConfig atcri = ic.getActualTransConfigByType(ITransaction.TYPE_RETURNS_INCOMING);
+      model.atdri = atcri != null ? atcri.getTy() : ActualTransConfig.ACTUAL_NONE;
+
+      ActualTransConfig atcro = ic.getActualTransConfigByType(ITransaction.TYPE_RETURNS_OUTGOING);
+      model.atdro = atcro != null ? atcro.getTy() : ActualTransConfig.ACTUAL_NONE;
+      model.atdc = configurationModelBuilder.buildActualTransConfigAsStringByTransType(ic);
       PageParams pageParams = new PageParams(1);
       model.noc =
           entitiesService.getKioskLinks(kioskId, IKioskLink.TYPE_CUSTOMER, null, null, pageParams).getNumFound();

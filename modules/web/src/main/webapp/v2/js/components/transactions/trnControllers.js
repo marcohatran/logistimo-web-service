@@ -561,7 +561,10 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
             {value: 'r', displayName: 'Receipt', capabilityName: 'er'},
             {value: 'p', displayName: 'Stock Count', capabilityName: 'sc'},
             {value: 'w', displayName: 'Discards', capabilityName: 'wa'},
-            {value: 't', displayName: 'Transfer', capabilityName: 'ts'}]
+            {value: 't', displayName: 'Transfer', capabilityName: 'ts'},
+            {value: 't', displayName: 'Incoming returns', capabilityName: 'eri'},
+            {value: 't', displayName: 'Outgoing returns', capabilityName: 'ero'}
+        ];
 
         $scope.getAllCapabilities = function () {
             var capabName;

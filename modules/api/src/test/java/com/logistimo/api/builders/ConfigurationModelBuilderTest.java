@@ -302,6 +302,45 @@ public class ConfigurationModelBuilderTest {
     assertNull(returnsConfigModel.outDur);
   }
 
+  @Test
+  public void testBuildActualTransConfigAsStringByTransType() {
+    InventoryConfig invConfig = new InventoryConfig();
+    ActualTransConfig actTransConfig = getActualTransactionConfig("0");
+    invConfig.setActualTransDateByType(ITransaction.TYPE_ISSUE, actTransConfig);
+    invConfig.setActualTransDateByType(ITransaction.TYPE_RECEIPT, actTransConfig);
+    invConfig.setActualTransDateByType(ITransaction.TYPE_PHYSICALCOUNT, actTransConfig);
+    invConfig.setActualTransDateByType(ITransaction.TYPE_WASTAGE, actTransConfig);
+    invConfig.setActualTransDateByType(ITransaction.TYPE_TRANSFER, actTransConfig);
+    invConfig.setActualTransDateByType(ITransaction.TYPE_RETURNS_INCOMING, actTransConfig);
+    invConfig.setActualTransDateByType(ITransaction.TYPE_RETURNS_OUTGOING, actTransConfig);
+    Map<String,String> actualTransConfigAsStringByTransType = configModelBuilder.buildActualTransConfigAsStringByTransType(invConfig);
+    assertNotNull(actualTransConfigAsStringByTransType);
+    assertEquals(7,actualTransConfigAsStringByTransType.size());
+    Map<String,String> expectedMap = Collections.unmodifiableMap(new HashMap<String, String>() {
+      {
+        put(ITransaction.TYPE_ISSUE, "0");
+        put(ITransaction.TYPE_RECEIPT, "0");
+        put(ITransaction.TYPE_PHYSICALCOUNT, "0");
+        put(ITransaction.TYPE_WASTAGE, "0");
+        put(ITransaction.TYPE_TRANSFER, "0");
+        put(ITransaction.TYPE_RETURNS_INCOMING, "0");
+        put(ITransaction.TYPE_RETURNS_OUTGOING, "0");
+      }
+    });
+    assertEquals(expectedMap,actualTransConfigAsStringByTransType);
+    invConfig.setActualTransDateByType(ITransaction.TYPE_ISSUE, null);
+    invConfig.setActualTransDateByType(ITransaction.TYPE_RECEIPT, null);
+    invConfig.setActualTransDateByType(ITransaction.TYPE_PHYSICALCOUNT, null);
+    invConfig.setActualTransDateByType(ITransaction.TYPE_WASTAGE, null);
+    invConfig.setActualTransDateByType(ITransaction.TYPE_TRANSFER, null);
+    invConfig.setActualTransDateByType(ITransaction.TYPE_RETURNS_INCOMING, null);
+    invConfig.setActualTransDateByType(ITransaction.TYPE_RETURNS_OUTGOING, null);
+    actualTransConfigAsStringByTransType = configModelBuilder.buildActualTransConfigAsStringByTransType(invConfig);
+    assertNotNull(actualTransConfigAsStringByTransType);
+    assertEquals(7,actualTransConfigAsStringByTransType.size());
+    assertEquals(expectedMap,actualTransConfigAsStringByTransType);
+  }
+
   private Map<String,String> getInvOperationTagsMap() {
     Map<String,String> invOperationTags = new HashMap<>(2);
     invOperationTags.put(ITransaction.TYPE_RETURNS_INCOMING,TAGS_RETURNS_INCOMING);
@@ -346,20 +385,6 @@ public class ConfigurationModelBuilderTest {
     ActualTransConfig actTransConfig = new ActualTransConfig();
     actTransConfig.setTy(type);
     return actTransConfig;
-  }
-
-  private List<InventoryConfigModel.MTagReason> getMTagReasons() {
-    List<InventoryConfigModel.MTagReason> reasons = new ArrayList<>(2);
-    reasons.add(getMTagReason(ANTIBIOTIC, ANTIBIOTIC_REASONS_UNTRIMMED_CSV));
-    reasons.add(getMTagReason(GENERAL,GENERAL_REASONS_UNTRIMMED_CSV));
-    return reasons;
-  }
-
-  private InventoryConfigModel.MTagReason getMTagReason(String mtag, String reason) {
-    InventoryConfigModel.MTagReason mtagReason = new InventoryConfigModel.MTagReason();
-    mtagReason.mtg = mtag;
-    mtagReason.rsn = reason;
-    return mtagReason;
   }
 
   private List<ReturnsConfigModel> getReturnsConfigModels() {
