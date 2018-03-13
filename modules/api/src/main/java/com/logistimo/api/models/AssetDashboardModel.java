@@ -35,6 +35,10 @@ public class AssetDashboardModel extends BaseResponseModel implements Serializab
   private Map<String, Long> assetDomain;
   private Map<String, Map<String, DashboardChartModel>> asset;
   private String level;
+  private String mTy;
+  private String mTyNm;
+  private String mPTy;
+  private String ut;
 
   public Map<String, Long> getAssetDomain() {
     return assetDomain;
@@ -55,5 +59,37 @@ public class AssetDashboardModel extends BaseResponseModel implements Serializab
   }
   public void setlevel(String level) {
     this.level = level;
+  }
+
+  public String getMapType() {
+    return mTy;
+  }
+
+  public void setMapType(String mTy) {
+    this.mTy = mTy;
+  }
+
+  public String getMapTypeName() {
+    return mTyNm;
+  }
+
+  public void setMapTypeName(String mTyNm) {
+    this.mTyNm = mTyNm;
+  }
+
+  public String getmPTy() {
+    return mPTy;
+  }
+
+  public void setmPTy(String mPTy) {
+    this.mPTy = mPTy;
+  }
+
+  public String getUpdatedTime() {
+    return ut;
+  }
+
+  public void setUpdatedTime(String ut) {
+    this.ut = ut;
   }
 }

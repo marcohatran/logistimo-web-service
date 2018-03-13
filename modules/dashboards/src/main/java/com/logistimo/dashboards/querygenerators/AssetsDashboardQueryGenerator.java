@@ -32,6 +32,7 @@ import org.apache.commons.lang.StringUtils;
  * Created by smriti on 12/02/18.
  */
 public class AssetsDashboardQueryGenerator {
+  public static final String K_COUNTRY = " K.COUNTRY = ";
   private Long domainId;
   private String includeEntityTags;
   private String excludeEntityTags;
@@ -163,7 +164,7 @@ public class AssetsDashboardQueryGenerator {
 
   private void applyDistrict(StringBuilder whereClause, StringBuilder query,
                              StringBuilder groupBy) {
-    whereClause.append(" K.COUNTRY = ").append(CharacterConstants.S_QUOTE).append(country)
+    whereClause.append(K_COUNTRY).append(CharacterConstants.S_QUOTE).append(country)
         .append(CharacterConstants.S_QUOTE).append(
         " AND K.STATE = ").append(CharacterConstants.S_QUOTE).append(state)
         .append(CharacterConstants.S_QUOTE);
@@ -173,12 +174,12 @@ public class AssetsDashboardQueryGenerator {
       whereClause.append(" AND K.DISTRICT = ").append(CharacterConstants.S_QUOTE).append(district)
           .append(CharacterConstants.S_QUOTE);
     }
-    query.append(", K.NAME NAME");
-    groupBy.append(", NAME");
+    query.append(", K.NAME NAME, K.KIOSKID AS KIOSKID");
+    groupBy.append(", KIOSKID");
   }
 
   private void applyState(StringBuilder whereClause, StringBuilder query, StringBuilder groupBy) {
-    whereClause.append(" K.COUNTRY = ").append(CharacterConstants.S_QUOTE).append(country)
+    whereClause.append(K_COUNTRY).append(CharacterConstants.S_QUOTE).append(country)
         .append(CharacterConstants.S_QUOTE).append(" AND K.STATE = ")
         .append(CharacterConstants.S_QUOTE).append(state).append(CharacterConstants.S_QUOTE);
 
@@ -187,7 +188,7 @@ public class AssetsDashboardQueryGenerator {
   }
 
   private void applyCountry(StringBuilder whereClause, StringBuilder query, StringBuilder groupBy) {
-    whereClause.append(" K.COUNTRY = ").append(CharacterConstants.S_QUOTE).append(country)
+    whereClause.append(K_COUNTRY).append(CharacterConstants.S_QUOTE).append(country)
         .append(CharacterConstants.S_QUOTE);
 
     query.append(",K.STATE STATE, K.STATE_ID STATE_ID");
