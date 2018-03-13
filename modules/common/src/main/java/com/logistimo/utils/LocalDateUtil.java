@@ -33,6 +33,7 @@ import com.logistimo.logger.XLog;
 import com.logistimo.proto.JsonTagsZ;
 import com.logistimo.reports.ReportsConstants;
 import com.logistimo.services.Resources;
+import com.logistimo.services.ServiceException;
 
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -169,6 +170,18 @@ public class LocalDateUtil {
       dateFormat.setTimeZone(TimeZone.getTimeZone(timezone));
     }
     return dateFormat.parse(timestampStr);
+  }
+
+  public static String getFormattedTimeStamp(String timestamp, Locale locale, String timezone, Long domainId)
+      throws ServiceException {
+    Date date;
+    try {
+      date = LocalDateUtil.parseCustom(timestamp, Constants.ANALYTICS_DATE_FORMAT, null);
+    } catch (ParseException e) {
+      xLogger.warn("Error while parsing the dashboard generated timestamp for domain: {0}", domainId, e);
+      throw new ServiceException(e);
+    }
+    return format(date, locale, timezone);
   }
 
   // Find the difference (in days) between two dates

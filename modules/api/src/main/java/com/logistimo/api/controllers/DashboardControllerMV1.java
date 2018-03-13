@@ -41,6 +41,7 @@ import com.logistimo.constants.Constants;
 import com.logistimo.dashboards.service.IDashboardService;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.logger.XLog;
+import com.logistimo.services.ServiceException;
 import com.logistimo.services.cache.MemcacheService;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.StringUtil;
@@ -215,7 +216,7 @@ public class DashboardControllerMV1 {
     ResultSet invTyRes = dashboardService.getMainDashboardResults(domainId, filters, INV, false, groupby);
     ResultSet invAlRes = dashboardService.getMainDashboardResults(domainId, filters, ALL_INV, false, groupby);
     ResultSet alstRes =
-        dashboardService.getMainDashboardResults(domainId, filters, "all_activity", false, null);
+        dashboardService.getMainDashboardResults(domainId, filters, ALL_ACTIVITY, false, null);
     //preparing the model
     details =
         MobileInvDashboardBuilder
@@ -274,6 +275,31 @@ public class DashboardControllerMV1 {
     }
     Map<String, String> filters = buildQueryFilters(queryModel);
     level = queryModel.locty;
+    String colFilter = getLocationFilter(level, queryModel);
+    ResultSet tempRes = dashboardService.getMainDashboardResults(domainId, filters, "temperature");
+    model = dashboardBuilder.getMainDashBoardData(null, null, null, null, tempRes, null,
+        colFilter);
+    model.mLev = getLevel(filter, level, queryModel);
+    model.setGeneratedTime(getGeneratedTime());
+    if (cache != null) {
+      cache.put(cacheKey, model, 1800); // 30 min expiry
+    }
+    return model;
+  }
+
+  private String getLevel(@RequestParam(required = false) String filter,
+                          @RequestParam(required = false) String level, DashQueryModel queryModel) {
+    if (StringUtils.isBlank(filter) && queryModel.state == null) {
+      return COUNTRY_LOWER;
+    } else if (StringUtils.isBlank(filter) && queryModel.district == null) {
+      return STATE_LOWER;
+    } else {
+      return level != null ? level : DISTRICT_LOWER;
+    }
+  }
+
+  private String getLocationFilter(@RequestParam(required = false) String level,
+                                   DashQueryModel queryModel) {
     String colFilter;
     if (DISTRICT_LOWER.equals(level) || queryModel.district != null) {
       colFilter = "NAME";
@@ -282,21 +308,7 @@ public class DashboardControllerMV1 {
     } else {
       colFilter = STATE;
     }
-    ResultSet tempRes = dashboardService.getMainDashboardResults(domainId, filters, "temperature");
-    model = dashboardBuilder.getMainDashBoardData(null, null, null, null, tempRes, null,
-        colFilter);
-    if (StringUtils.isBlank(filter) && queryModel.state == null) {
-      model.mLev = COUNTRY_LOWER;
-    } else if (StringUtils.isBlank(filter) && queryModel.district == null) {
-      model.mLev = STATE_LOWER;
-    } else {
-      model.mLev = level != null ? level : DISTRICT_LOWER;
-    }
-    model.setGeneratedTime(getGeneratedTime());
-    if (cache != null) {
-      cache.put(cacheKey, model, 1800); // 30 min expiry
-    }
-    return model;
+    return colFilter;
   }
 
   /**
@@ -353,13 +365,7 @@ public class DashboardControllerMV1 {
     }
     Map<String, String> filters = buildQueryFilters(activityQueryModel);
     String colFilter;
-    if (DISTRICT_LOWER.equals(activityQueryModel.locty) || activityQueryModel.district != null) {
-      colFilter = "NAME";
-    } else if (STATE_LOWER.equals(activityQueryModel.locty) || activityQueryModel.state != null) {
-      colFilter = DISTRICT;
-    } else {
-      colFilter = STATE;
-    }
+    colFilter = getLocationFilter(activityQueryModel.locty, activityQueryModel);
     ResultSet activity = dashboardService.getMainDashboardResults(domainId, filters, ACTIVITY);
     ResultSet
         activityDomain =
@@ -396,7 +402,7 @@ public class DashboardControllerMV1 {
                                               @RequestParam(required = false) String level,
                                               @RequestParam(required = false) String location,
                                               @RequestParam(required = false, defaultValue = "false") Boolean skipCache)
-      throws SQLException {
+      throws SQLException, ServiceException {
     AssetDashboardModel model;
     Long domainId = SecurityUtils.getCurrentDomainId();
     MemcacheService cache = getMemcacheService();
@@ -410,15 +416,7 @@ public class DashboardControllerMV1 {
     } else if (StringUtils.isNotEmpty(dc.getState())) {
       state = dc.getState();
     }
-    if (assetType == null && monitoringType != null) {
-      try {
-        AssetSystemConfig assets = AssetSystemConfig.getInstance();
-        assetType = assets.getAssetsByMonitoringType(Integer.valueOf(monitoringType));
-      } catch (ConfigurationException e) {
-        xLogger.severe("Error in reading Asset System Configuration", e);
-        throw new InvalidServiceException("Error in reading asset meta data.");
-      }
-    }
+    assetType = assetType != null ? assetType : getAssetType(monitoringType);
 
     if (StringUtils.isNotBlank(eTag)) {
       eTag = StringUtil.getSingleQuotesCSV(StringUtil.getList(eTag));
@@ -439,30 +437,54 @@ public class DashboardControllerMV1 {
     }
     Map<String, String> filters = buildQueryFilters(queryModel);
     level = queryModel.locty;
-    String colFilter;
-    if (DISTRICT_LOWER.equals(level) || queryModel.district != null) {
-      colFilter = "NAME";
-    } else if (STATE_LOWER.equals(level) || queryModel.state != null) {
-      colFilter = DISTRICT;
-    } else {
-      colFilter = STATE;
-    }
+    String colFilter = getLocationFilter(level, queryModel);
     ResultSet assetRes = dashboardService.getMainDashboardResults(domainId, filters, "asset");
     model = dashboardBuilder.getAssetDashboardData(assetRes, colFilter);
-    if (StringUtils.isBlank(location) && queryModel.state == null) {
-      model.setlevel(COUNTRY_LOWER);
-    } else if (StringUtils.isBlank(location) && queryModel.district == null) {
-      model.setlevel(STATE_LOWER);
-    } else {
-      level = level != null ? level : DISTRICT_LOWER;
-      model.setlevel(level);
-    }
+    setMapDrillDownLevel(level, location, model, dc, country, state, queryModel);
+    model.setUpdatedTime(LocalDateUtil.getFormattedTimeStamp(getGeneratedTime(),
+        SecurityUtils.getLocale(), SecurityUtils.getTimezone(), domainId));
     model.setGeneratedTime(getGeneratedTime());
     if (cache != null) {
       cache.put(cacheKey, model, 1800); // 30 min expiry
     }
     return model;
   }
+
+  private void setMapDrillDownLevel(@RequestParam(required = false) String level,
+                                    @RequestParam(required = false) String location,
+                                    AssetDashboardModel model, DomainConfig dc, String country,
+                                    String state, DashQueryModel queryModel) {
+    if (StringUtils.isBlank(location) && queryModel.state == null) {
+      model.setlevel(COUNTRY_LOWER);
+      model.setMapType(country);
+    } else if (StringUtils.isBlank(location) && queryModel.district == null) {
+      model.setlevel(STATE_LOWER);
+      model.setMapTypeName(state);
+      model.setMapType(dc.getState().replace(" ", ""));
+      model.setmPTy(country);
+    } else {
+      level = level != null ? level : DISTRICT_LOWER;
+      model.setlevel(level);
+      String mtn = location != null ? location : dc.getDistrict();
+      model.setMapTypeName(mtn);
+      model.setMapType(model.getMapTypeName().replace(" ", ""));
+      model.setmPTy(country);
+    }
+  }
+
+  private String getAssetType(@RequestParam(required = false) String monitoringType) {
+    if (monitoringType != null) {
+      try {
+        AssetSystemConfig assets = AssetSystemConfig.getInstance();
+        return assets.getAssetsByMonitoringType(Integer.valueOf(monitoringType));
+      } catch (ConfigurationException e) {
+        xLogger.severe("Error in reading Asset System Configuration", e);
+        throw new InvalidServiceException("Error in reading asset meta data.");
+      }
+    }
+    return null;
+  }
+
 
   private String buildCacheKey(DashQueryModel model) {
 
@@ -521,6 +543,68 @@ public class DashboardControllerMV1 {
       model.locty = "";
     }
     Map<String, String> filters = new HashMap<>(1);
+    buildLocationQueryFilters(model, filters);
+    if (StringUtils.isNotEmpty(model.mtags)) {
+      filters.put("mTag", model.mtags);
+    } else if (StringUtils.isNotEmpty(model.mnm)) {
+      filters.put("mId", model.mnm);
+    }
+    if (model.p != null) {
+      filters.put("period", String.valueOf(model.p));
+    }
+    if (StringUtils.isNotEmpty(model.incetags)) {
+      filters.put("eTag", model.incetags);
+    }
+    if (StringUtils.isNotEmpty(model.exetags)) {
+      filters.put("eeTag", model.exetags);
+    }
+    if (StringUtils.isNotEmpty(model.tp)) {
+      filters.put("tPeriod", model.tp);
+    }
+    if (StringUtils.isNotEmpty(model.aty)) {
+      filters.put("type", model.aty);
+    }
+    buildDateQueryFilter(model, filters);
+    if (model.domainId != null) {
+      filters.put("domainId", String.valueOf(model.domainId));
+    }
+    if (StringUtils.isNotBlank(model.status)) {
+      filters.put("status", model.status);
+    }
+    if (StringUtils.isNotEmpty(model.period)) {
+      filters.put("period", model.period);
+    }
+
+    return filters;
+  }
+
+  private void buildDateQueryFilter(DashQueryModel model, Map<String, String> filters) {
+    if (StringUtils.isNotBlank(model.date)) {
+      try {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date
+            startDate =
+            LocalDateUtil.parseCustom(model.date, Constants.DATE_FORMAT, model.timezone);
+        //Increment date to use less than queries
+        Calendar calendar;
+        if (model.timezone != null) {
+          calendar = GregorianCalendar.getInstance(TimeZone.getTimeZone(model.timezone));
+        } else {
+          calendar = GregorianCalendar.getInstance();
+        }
+        calendar.setTime(startDate);
+        calendar.add(Calendar.DAY_OF_MONTH, 1);
+        calendar.add(Calendar.MILLISECOND, -1);
+        filters.put("date", sdf.format(calendar.getTime()));
+      } catch (Exception e) {
+        xLogger.warn("M Dashboard: Exception when parsing start date {0} , domain: {1}", model.date,
+            model.domainId, e);
+        throw new InvalidServiceException("Unable to parse date " + model.date);
+      }
+    }
+  }
+
+  private void buildLocationQueryFilters(DashQueryModel model, Map<String, String> filters) {
     filters.put(COUNTRY_LOWER, model.country);
     if (StringUtils.isBlank(model.loc) && model.district != null) {
       filters.put(DISTRICT_LOWER, model.district);
@@ -551,60 +635,6 @@ public class DashboardControllerMV1 {
       filters.put(STATE_LOWER, model.state);
       filters.put(DISTRICT_LOWER, model.district);
     }
-    if (StringUtils.isNotEmpty(model.mtags)) {
-      filters.put("mTag", model.mtags);
-    } else if (StringUtils.isNotEmpty(model.mnm)) {
-      filters.put("mId", model.mnm);
-    }
-    if (model.p != null) {
-      filters.put("period", String.valueOf(model.p));
-    }
-    if (StringUtils.isNotEmpty(model.incetags)) {
-      filters.put("eTag", model.incetags);
-    }
-    if (StringUtils.isNotEmpty(model.exetags)) {
-      filters.put("eeTag", model.exetags);
-    }
-    if (StringUtils.isNotEmpty(model.tp)) {
-      filters.put("tPeriod", model.tp);
-    }
-    if (StringUtils.isNotEmpty(model.aty)) {
-      filters.put("type", model.aty);
-    }
-    if (StringUtils.isNotBlank(model.date)) {
-      try {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        Date
-            startDate =
-            LocalDateUtil.parseCustom(model.date, Constants.DATE_FORMAT, model.timezone);
-        //Increment date to use less than queries
-        Calendar calendar;
-        if (model.timezone != null) {
-          calendar = GregorianCalendar.getInstance(TimeZone.getTimeZone(model.timezone));
-        } else {
-          calendar = GregorianCalendar.getInstance();
-        }
-        calendar.setTime(startDate);
-        calendar.add(Calendar.DAY_OF_MONTH, 1);
-        calendar.add(Calendar.MILLISECOND, -1);
-        filters.put("date", sdf.format(calendar.getTime()));
-      } catch (Exception e) {
-        xLogger.warn("M Dashboard: Exception when parsing start date {0} , domain: {1}", model.date,
-            model.domainId, e);
-        throw new InvalidServiceException("Unable to parse date " + model.date);
-      }
-    }
-    if (model.domainId != null) {
-      filters.put("domainId", String.valueOf(model.domainId));
-    }
-    if (StringUtils.isNotBlank(model.status)) {
-      filters.put("status", model.status);
-    }
-    if (StringUtils.isNotEmpty(model.period)) {
-      filters.put("period", model.period);
-    }
-
-    return filters;
   }
 
   private String getGeneratedTime() {

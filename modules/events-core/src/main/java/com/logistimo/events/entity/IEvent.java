@@ -60,6 +60,8 @@ public interface IEvent extends ISuperDomain {
   int STOCK_ISSUED = 205;
   int STOCK_RECEIVED = 206;
   int STOCK_WASTED = 207;
+  int INCOMING_RETURN_ENTERED = 210;
+  int OUTGOING_RETURN_ENTERED = 211;
   int
       STOCK_REPLENISHED =
       208;

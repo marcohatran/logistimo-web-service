@@ -60,14 +60,17 @@ import com.logistimo.utils.CommonUtils;
 import com.logistimo.utils.LocalDateUtil;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.jdo.PersistenceManager;
 
@@ -81,8 +84,7 @@ public class EventGenerator {
   protected static final XLog xLogger = XLog.getLog(EventGenerator.class);
   protected Long domainId = null;
   protected String objectType = null; // class name of object on which the event occurs
-
-
+  private static Set<Integer> vldTransEventTypes = new HashSet<>(Arrays.asList(IEvent.STOCK_COUNTED, IEvent.STOCK_ISSUED, IEvent.STOCK_RECEIVED, IEvent.STOCK_TRANSFERRED, IEvent.STOCK_WASTED, IEvent.INCOMING_RETURN_ENTERED, IEvent.OUTGOING_RETURN_ENTERED));
 
   public EventGenerator(Long domainId, String objectType) {
     this.domainId = domainId;
@@ -312,9 +314,7 @@ public class EventGenerator {
             && tagParamsNotMatched(params1, params2, TagUtil.TYPE_MATERIAL);
       }
     } else if (JDOUtils.getImplClass(ITransaction.class).getName().equals(objectType)) {
-      if (eventId == IEvent.STOCK_COUNTED || eventId == IEvent.STOCK_ISSUED
-          || eventId == IEvent.STOCK_RECEIVED || eventId == IEvent.STOCK_TRANSFERRED
-          || eventId == IEvent.STOCK_WASTED) {
+      if (vldTransEventTypes.contains(eventId)) {
         paramComparator = (params1, params2) -> {
           boolean
               tagParamsNotMatched =
@@ -583,9 +583,4 @@ public class EventGenerator {
   public Map<String, Object> getTagParams(Object o) {
     return null;
   }
-
-
-
-
-
 }

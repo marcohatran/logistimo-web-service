@@ -613,7 +613,12 @@ public class DashboardBuilder {
       }
       Map<String, DashboardChartModel> model = data.get(status);
       long count = Long.parseLong(assetRes.getString("COUNT"));
-      model.put(assetRes.getString(colFilter), new DashboardChartModel(count));
+      if ("NAME".equals(colFilter)) {
+        model.put(assetRes.getString(colFilter), new DashboardChartModel(count, Long.parseLong(
+            assetRes.getString("KIOSKID"))));
+      } else {
+        model.put(assetRes.getString(colFilter), new DashboardChartModel(count));
+      }
     }
     return data;
   }

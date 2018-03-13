@@ -26,7 +26,7 @@
     logistimoApp.controller("AppController",
         function ($scope, $route, $routeParams, $location, $uibModal, requestContext, ngI18nResourceBundle, $timeout,
                   domainCfgService, exportService, userService, $window, $sce, iAuthService, $q, $rootScope,
-                  linkedDomainService, domainService, configService, dashboardService, isBulletinBoard,APIService) {
+                  linkedDomainService, domainService, configService, dashboardService, isBulletinBoard,APIService,AnalyticsService) {
             var renderContext = requestContext.getRenderContext();
 
             $rootScope.networkAvailable = true;
@@ -602,13 +602,18 @@
                     }
                 }
             );
-            $scope.$on("$routeChangeSuccess", function (event) {
+            $scope.$on("$routeChangeSuccess", function (event,current) {
+                AnalyticsService.logAnalytics(current.$$route.originalPath,$scope.curUserName,$scope.domainName);
                 if (isRouteRedirect($route)) {
                     return;
                 }
                 requestContext.setContext($route.current.action, $routeParams);
                 $scope.$broadcast("requestContextChanged", requestContext);
             });
+
+            $scope.initAnalytics = function (user,domain) {
+                AnalyticsService.logAnalytics(window.location.pathname,user,domain);
+            }
 
             function isRouteRedirect(route) {
                 return (typeof route.current == 'undefined' || typeof route.current.action == 'undefined');

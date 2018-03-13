@@ -368,6 +368,7 @@ asset.relation.fetch.domain.error=Error fetching asset relationship for domain
 asset.detail.fetch.domain.error=Error fetching asset details for domain
 asset.delete.error=Error deleting the asset for domain
 asset.relation.create.error=Error creating asset relation
+asset.status.update.success=Statut d'actif mis à jour avec succès
 kiosk.lowercase=entité
 kiosk.name=Nom entité
 kiosks.lower=entities

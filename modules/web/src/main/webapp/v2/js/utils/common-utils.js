@@ -464,7 +464,7 @@ function sortObject (object, caseSensitive) {
     return undefined;
 }
 
-function constructModel(data, noText) {
+function constructModel(data, noText, noEnclose) {
     var csv = '';
     var key = (noText) ? "id" : "text";
     if (data) {
@@ -473,10 +473,10 @@ function constructModel(data, noText) {
                 if (checkNotNullEmpty(csv)) {
                     csv += ",";
                 }
-                csv += "'" + d[key] + "'";
+                csv += noEnclose ? d[key] : "'" + d[key] + "'";
             });
         } else {
-            csv += "'" + data[key] + "'";
+            csv += noEnclose ? data[key] : "'" + data[key] + "'";
         }
     }
     return csv;

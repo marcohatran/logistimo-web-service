@@ -25,7 +25,7 @@
  * Created by naveensnair on 15/11/17.
  */
 var bulletinBoardControllers = angular.module('bulletinBoardControllers', []);
-bulletinBoardControllers.controller('BulletinBoardRenderController', ['bulletinBoardRepository', 'dashboardRepository', '$scope', 'requestContext', function (bulletinBoardRepository, dashboardRepository, $scope, requestContext) {
+bulletinBoardControllers.controller('BulletinBoardRenderController', ['bulletinBoardRepository', 'dashboardRepository', '$scope', 'requestContext','AnalyticsService', function (bulletinBoardRepository, dashboardRepository, $scope, requestContext, analyticsService) {
     function init() {
         $scope.title = "";
         $scope.subTitle = "";
@@ -33,6 +33,10 @@ bulletinBoardControllers.controller('BulletinBoardRenderController', ['bulletinB
         if(checkNotNullEmpty($scope.domainName)) {
             $scope.showDomain = true;
         }
+        var dimensionDomain = $scope.domainName;
+        var dimensionUser = $scope.curUserName;
+        var path = window.location.pathname;
+        analyticsService.logAnalytics(path,dimensionUser,dimensionDomain);
     }
 
     init();

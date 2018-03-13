@@ -130,19 +130,24 @@ public class ConfigReasonsMigrator {
               if (value instanceof String) {
                 String oldReason = (String) value;
                 List<String> newReason;
+                String defaultReason = null;
                 if (StringUtils.isNotBlank(oldReason)) {
+                  String[] reasons;
                   if (oldReason.startsWith(CharacterConstants.COMMA)) {
                     oldReason = oldReason.substring(1);
+                    reasons = oldReason.split(CharacterConstants.COMMA);
+                  } else {
+                    reasons = oldReason.split(CharacterConstants.COMMA);
+                    defaultReason = reasons[0];
                   }
-                  newReason = Arrays.asList(oldReason.split(CharacterConstants.COMMA));
+                  newReason = Arrays.asList(reasons);
                 } else {
                   newReason = new ArrayList<>(0);
                 }
-                JSONObject reasonConfig = new JSONObject();
-                reasonConfig.put("reasons", newReason);
-                ReasonConfig reasonConfig1=new ReasonConfig();
-                reasonConfig1.setReasons(newReason);
-                typeMap.put(type,reasonConfig1);
+                ReasonConfig reasonConfig = new ReasonConfig();
+                reasonConfig.setReasons(newReason);
+                reasonConfig.setDefaultReason(defaultReason);
+                typeMap.put(type,reasonConfig);
               } else {
                 xLog.info("New configuration already set for: {0}", configuration.getKey());
                 updatedConfigKeys.add(configuration.getKey());
