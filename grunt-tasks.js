@@ -274,7 +274,8 @@ module.exports = function(grunt, ref) {
                         'target/grunt/webapp/v2/plugins/reports/*.js',
                         'target/grunt/webapp/v2/plugins/reports/**/*.js',
                         'target/grunt/webapp/v2/plugins/storyboards/*.js',
-                        'target/grunt/webapp/v2/plugins/storyboards/**/*.js'
+                        'target/grunt/webapp/v2/plugins/storyboards/**/*.js',
+                        'target/grunt/webapp/v2/js/analytics-service.js'
                     ]
                 }
             },
