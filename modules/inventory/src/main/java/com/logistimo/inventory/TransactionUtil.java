@@ -522,9 +522,9 @@ public class TransactionUtil {
             throw new LogiException("M010", (Object[]) null);
           }
           if (isTransTypeReturn) {
-            if ((StringUtils.isEmpty(trans.getTrackingObjectType()) || StringUtils.isEmpty(trans.getTrackingId()))) {
+            if (!isTrackingDetailsPresent(trans)) {
               xLogger.warn(
-                  "Tracking id and/or tracking object type is not specified for transaction type {0} at index {1}",
+                  "Tracking ID, Local tracking ID or Tracking object type is not specified for transaction type {0} at index {1}",
                   trans.getType(), index);
               throw new LogiException("M010", (Object[]) null);
             }
@@ -591,6 +591,16 @@ public class TransactionUtil {
       return 0;
     }
     return -1;
+  }
+
+  /**
+   * Check if tracking object type and either tracking id or local tracking ID are present
+   * @param transaction
+   * @return - true or false
+   */
+  protected static boolean isTrackingDetailsPresent(ITransaction transaction) {
+    return StringUtils.isNotEmpty(transaction.getTrackingObjectType()) && (StringUtils.isNotEmpty(
+        transaction.getTrackingId()) || StringUtils.isNotEmpty(transaction.getLocalTrackingID()));
   }
 
   public static class Checksum implements Serializable {

@@ -1,3 +1,4 @@
+
 /*
  * Copyright © 2018 Logistimo.
  *
@@ -21,29 +22,23 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.proto;
-
-import com.google.gson.annotations.SerializedName;
-
-import java.util.List;
-
 /**
- * Created by vani on 16/02/18.
+ * Created by kumargaurav on 30/01/18.
  */
-public class MobileTransSuccessDetailModel {
-  /**
-   * Success code
-   */
-  @SerializedName("success_code")
-  public String successCode;
-  /**
-   * Starting position of the first successful transaction
-   */
-  @SerializedName("index")
-  public Integer index;
-  /**
-   * List of keys of transactions that are successfully created
-   */
-  @SerializedName("keys")
-  public List<String> keys;
-}
+logistimoApp.factory('AnalyticsService', function ($window) {
+    return {
+        logAnalytics : function (path,user,domain) {
+            if (typeof user != 'undefined') {
+                $window.ga('set', 'userId',user);;
+                $window.ga('set', 'dimension3', user);
+            }
+            if (typeof domain != 'undefined') {
+                $window.ga('set', 'dimension1', domain);
+            }
+            if (path != "" && path != "/") {
+                $window.ga('set', 'page',path);
+                $window.ga('send', 'pageview');
+            }
+       }
+    }
+});

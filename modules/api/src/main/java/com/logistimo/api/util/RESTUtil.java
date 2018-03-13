@@ -1533,6 +1533,10 @@ public class RESTUtil {
     if (MapUtils.isNotEmpty(matStatusByType)) {
       config.put(JsonTagsZ.MATERIAL_STATUS_OPERATION, matStatusByType);
     }
+    //asset configuration
+    Hashtable<String,Object> enableAssetMgmt = new Hashtable();
+    enableAssetMgmt.put(JsonTagsZ.ENABLE_ASSET_MANAGEMENT, dc.getAssetConfig().getEnable());
+    config.put(JsonTagsZ.ASSET,enableAssetMgmt);
 
     //Min Max Frequency
     String minMaxFreq = ic.getMinMaxDur();
@@ -2244,14 +2248,18 @@ public class RESTUtil {
   }
 
   protected static HashMap<String , Object> getMandatoryOrderFields(OrdersConfig oc) {
-    HashMap<String, Object> salesOrderConfig = new HashMap<>();
+    HashMap<String, Object> mandatoryFields = new HashMap<>();
     HashMap<String, Object> salesOrderFields = new HashMap<>();
     HashMap<String, Boolean> shippingFields = new HashMap<>();
+    HashMap<String, Boolean> referenceFields = new HashMap<>();
     shippingFields.put(JsonTagsZ.REFERENCE_ID, oc.isReferenceIdMandatory());
+    referenceFields.put(JsonTagsZ.PURCHASE_REFERENCE_ID, oc.isPurchaseReferenceIdMandatory());
+    referenceFields.put(JsonTagsZ.TRANSFER_REFERENCE_ID, oc.isTransferReferenceIdMandatory());
     shippingFields.put(JsonTagsZ.EXPECTED_TIME_OF_ARRIVAL, oc.isExpectedArrivalDateMandatory());
     salesOrderFields.put(JsonTagsZ.SHIPPING, shippingFields);
-    salesOrderConfig.put(JsonTagsZ.SALES_ORDERS, salesOrderFields);
-    return salesOrderConfig;
+    mandatoryFields.put(JsonTagsZ.MANDATE_REFERENCE_ID, referenceFields);
+    mandatoryFields.put(JsonTagsZ.SALES_ORDERS, salesOrderFields);
+    return mandatoryFields;
   }
 
   public static boolean materialExistsInKiosk(Long kioskId, Long materialId) {

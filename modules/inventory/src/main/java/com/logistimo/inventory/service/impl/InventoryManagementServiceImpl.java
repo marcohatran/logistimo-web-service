@@ -138,6 +138,18 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
       ITransaction.TYPE_RECEIPT, ITransaction.TYPE_PHYSICALCOUNT, ITransaction.TYPE_TRANSFER,
       ITransaction.TYPE_WASTAGE, ITransaction.TYPE_RETURNS_INCOMING, ITransaction.TYPE_RETURNS_OUTGOING));
 
+  private static final Map<String,Integer> eventIdByTransType = Collections.unmodifiableMap(new HashMap<String,Integer>() {
+    {
+      put(ITransaction.TYPE_ISSUE, IEvent.STOCK_ISSUED);
+      put(ITransaction.TYPE_RECEIPT, IEvent.STOCK_RECEIVED);
+      put(ITransaction.TYPE_PHYSICALCOUNT, IEvent.STOCK_COUNTED);
+      put(ITransaction.TYPE_WASTAGE, IEvent.STOCK_WASTED);
+      put(ITransaction.TYPE_TRANSFER, IEvent.STOCK_TRANSFERRED);
+      put(ITransaction.TYPE_RETURNS_INCOMING, IEvent.INCOMING_RETURN_ENTERED);
+      put(ITransaction.TYPE_RETURNS_OUTGOING, IEvent.OUTGOING_RETURN_ENTERED);
+      }
+  });
+
   private ITagDao tagDao;
   private IInvntryDao invntryDao;
   private ITransDao transDao;
@@ -1418,7 +1430,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
           }
           if (isReturn) {
             try {
-              checkReturnsErrors(trans);
+              checkReturnsErrors(trans, pm);
             } catch (LogiException e) {
               trans.setMessage(e.getMessage());
               trans.setMsgCode(e.getCode());
@@ -1649,16 +1661,27 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     }
   }
 
-  private void checkReturnsErrors(ITransaction trans) throws LogiException {
+  /**
+   * This method checks whether there are any errors in case the transaction is of type incoming returns or outgoing returns.
+   * It checks if tracking id, tracking object type and reason are present. The quantity returned cannot be greater than quantity of the corresponding issue or receipt transaction
+   * against which the return is being posted.
+   * @param trans
+   * @param pm
+   * @throws LogiException in case validation fails.
+   */
+  protected void checkReturnsErrors(ITransaction trans, PersistenceManager pm) throws LogiException {
     if (StringUtils.isEmpty(trans.getTrackingId()) || StringUtils.isEmpty(trans.getTrackingObjectType())) {
-      throw new LogiException("M017");
+      throw new LogiException("M017", (Object[]) null);
+    }
+    if (!(ITransaction.TYPE_ISSUE_TRANSACTION.equals(trans.getTrackingObjectType()) || ITransaction.TYPE_RECEIPT_TRANSACTION.equals(trans.getTrackingObjectType()))) {
+      throw new LogiException("M017", (Object[]) null);
     }
     if (StringUtils.isEmpty(trans.getReason())) {
-      throw new LogiException("M018");
+      throw new LogiException("M018", (Object[]) null);
     }
-    ITransaction linkedTransaction = transDao.getById(trans.getTrackingId());
-    if (BigUtil.greaterThan(trans.getQuantity(),linkedTransaction.getQuantity())) {
-        throw new LogiException("M019", trans.getQuantity(), linkedTransaction.getQuantity());
+    ITransaction linkedTransaction = transDao.getById(trans.getTrackingId(),pm);
+    if (BigUtil.greaterThan(trans.getQuantity(), linkedTransaction.getQuantity())) {
+      throw new LogiException("M019", trans.getQuantity(), linkedTransaction.getQuantity());
     }
   }
 
@@ -2415,52 +2438,44 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     xLogger.fine("Exiting updateStockEventLog");
   }
 
-  // Generate the necessary inventory events
+  /**
+   * Generate the necessary inventory events
+   * @param trans
+   * @param inv
+   * @param prevStock
+   * @param linkedKioskInv
+   * @param lkPrevStock
+   * @param isStockUpdatedFirstTime
+   * @param domainId
+   */
   private void generateEvents(ITransaction trans, IInvntry inv, BigDecimal prevStock,
                               IInvntry linkedKioskInv, BigDecimal lkPrevStock,
                               boolean isStockUpdatedFirstTime, Long domainId) {
-    int eventId = -1;
-    String transType = trans.getType();
-    if (ITransaction.TYPE_ISSUE.equals(transType)) {
-      eventId = IEvent.STOCK_ISSUED;
-    } else if (ITransaction.TYPE_RECEIPT.equals(transType)) {
-      eventId = IEvent.STOCK_RECEIVED;
-    } else if (ITransaction.TYPE_PHYSICALCOUNT.equals(transType)) {
-      eventId = IEvent.STOCK_COUNTED;
-    } else if (ITransaction.TYPE_WASTAGE.equals(transType)) {
-      eventId = IEvent.STOCK_WASTED;
-    } else if (ITransaction.TYPE_TRANSFER.equals(transType)) {
-      eventId = IEvent.STOCK_TRANSFERRED;
+    if (!isTransactionTypeValid(trans.getType())) {
+      throw new IllegalArgumentException("Invalid transaction type: " + trans.getType() + " while generating events");
     }
-
-    Map<String, Object> params = null;
-
+    int eventId = eventIdByTransType.containsKey(trans.getType()) ? eventIdByTransType.get(trans.getType()) : -1;
+    Map<String, Object> params = new HashMap<>();
     // Transaction creation event
     if (eventId != -1) {
       try {
-        String reason = trans.getReason();
-        if (reason != null && !reason.isEmpty()) {
-          params = new HashMap<>();
-          params.put(EventConstants.PARAM_REASON, reason);
+        if (StringUtils.isNotEmpty(trans.getReason())) {
+          params.put(EventConstants.PARAM_REASON, trans.getReason());
         }
-        String status = trans.getMaterialStatus();
-        if (status != null && !status.isEmpty()) {
-          if (params == null) {
-            params = new HashMap<>();
-          }
-          params.put(EventConstants.PARAM_STATUS, status);
+        if (StringUtils.isNotEmpty(trans.getMaterialStatus())) {
+          params.put(EventConstants.PARAM_STATUS, trans.getMaterialStatus());
         }
         EventPublisher.generate(domainId, eventId, params,
             JDOUtils.getImplClassName(ITransaction.class), transDao.getKeyAsString(trans), null);
       } catch (EventGenerationException e) {
         xLogger.warn(
-            "EventHandlingException when generating transaction event of type {0} for material-kiosk {1}:{2} in domain {3}: {4}",
-            transType, trans.getMaterialId(), trans.getKioskId(), trans.getDomainId(),
-            e.getMessage());
+            "Exception when generating transaction event of type {0} for material-kiosk {1}:{2} in domain {3}",
+            trans.getType(), trans.getMaterialId(), trans.getKioskId(), trans.getDomainId(),
+            e);
       }
     }
     // Stock count differs from current stock
-    if (transType.equals(ITransaction.TYPE_PHYSICALCOUNT)) {
+    if (trans.getType().equals(ITransaction.TYPE_PHYSICALCOUNT)) {
       BigDecimal stock = inv.getStock();
       if (BigUtil.notEqualsZero(stock) && BigUtil.greaterThanZero(prevStock)) {
         float
@@ -2468,12 +2483,8 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
             Math.abs((trans.getStockDifference().divide(stock, BigDecimal.ROUND_HALF_UP))
                 .multiply(BigUtil.HUNDRED).floatValue());
         if (stockCountThreshold > 0) {
-          if (params == null) {
-            params = new HashMap<>();
-          }
           params.put(EventConstants.PARAM_STOCKCOUNTTHRESHOLD,
               String.valueOf(stockCountThreshold));
-
           try {
             EventPublisher.generate(domainId, IEvent.STOCKCOUNT_EXCEEDS_THRESHOLD, params,
                 JDOUtils.getImplClassName(ITransaction.class), transDao.getKeyAsString(trans),
@@ -2481,14 +2492,14 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
           } catch (EventGenerationException e) {
             xLogger.warn(
                 "EventHandlingException when generating stockcount-exceeds-threshold event of type {0} for material-kiosk {1}:{2} in domain {3}: {4}",
-                transType, trans.getMaterialId(), trans.getKioskId(), trans.getDomainId(),
+                trans.getType(), trans.getMaterialId(), trans.getKioskId(), trans.getDomainId(),
                 e.getMessage());
           }
         }
       }
     }
     generateAbnormalStockEvent(trans, inv, prevStock, domainId, isStockUpdatedFirstTime);
-    if (ITransaction.TYPE_TRANSFER.equals(transType)) {
+    if (ITransaction.TYPE_TRANSFER.equals(trans.getType())) {
       generateAbnormalStockEvent(trans, linkedKioskInv, lkPrevStock, domainId,
           isStockUpdatedFirstTime);
     }

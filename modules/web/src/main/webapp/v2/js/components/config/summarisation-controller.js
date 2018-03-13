@@ -67,6 +67,13 @@ domainCfgControllers.controller('SummarisationMenuController', ['$scope', 'domai
                 angular.forEach(esConfig.events, function (c) {
                     updateConfigCategory(c);
                 });
+                if(!$scope.tempEnabled) {
+                    delete $scope.config.assets;
+                }
+                if($scope.isTempMonOnly){
+                    delete $scope.config.inventory;
+                    delete $scope.config.supply;
+                }
                 $scope.config = sortObject($scope.config);
             }
             $scope.subview = $scope.esId || Object.keys($scope.config)[0];

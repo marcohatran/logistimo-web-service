@@ -165,6 +165,8 @@ public class JsonTagsZ {
   public static final String MANAGE_MASTER_DATA = "mgmd";
   public static final String MATERIAL_STATUS = "mst";
   public static final String MATERIAL_STATUS_OPERATION = "mtst";
+  public static final String ASSET = "asset";
+  public static final String ENABLE_ASSET_MANAGEMENT = "enable_asset_mgmt";
   public static final String NAME = "n";
   public static final String NEW_NAME = "nn";
   public static final String NO_LOCAL_LOGIN_WITH_VALID_TOKEN = "nll";
@@ -330,6 +332,9 @@ public class JsonTagsZ {
   public static final String SALES_ORDERS = "salesords";
   public static final String SHIPPING = "shipping";
   public static final String REFERENCE_ID = "refid";
+  public static final String MANDATE_REFERENCE_ID = "reference_id";
+  public static final String PURCHASE_REFERENCE_ID = "purchase";
+  public static final String TRANSFER_REFERENCE_ID = "transfer";
 
   // Returns policy configuration
   public static final String RETURNS = "returns";

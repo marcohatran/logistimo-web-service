@@ -410,6 +410,7 @@ public class MobileTransactionsBuilder {
     }
     trans.setTrackingObjectType(mobTrans.troty);
     trans.setTrackingId(mobTrans.tid);
+    trans.setLocalTrackingID(mobTrans.local_tid);
     return trans;
   }
 
@@ -455,12 +456,6 @@ public class MobileTransactionsBuilder {
   private String getAppUnderstandableErrorCode(String errorCode) {
     switch(errorCode){
       case "M004" :
-        return "M012";
-      case "M017":
-        return "M012";
-      case "M018":
-        return "M012";
-      case "M019":
         return "M012";
       case "M011" :
         return "M011";

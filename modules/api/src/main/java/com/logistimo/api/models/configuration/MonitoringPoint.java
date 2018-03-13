@@ -35,4 +35,6 @@ public class MonitoringPoint {
   public String sensor;
   @SerializedName("position")
   public String position;
+  @SerializedName("default")
+  public boolean defaultPoint = false;
 }

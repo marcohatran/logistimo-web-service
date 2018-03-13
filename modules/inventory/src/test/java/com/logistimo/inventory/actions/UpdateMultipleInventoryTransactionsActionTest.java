@@ -30,7 +30,9 @@ import com.logistimo.inventory.models.ErrorDetailModel;
 import com.logistimo.inventory.models.ResponseDetailModel;
 import com.logistimo.inventory.models.SuccessDetailModel;
 import com.logistimo.inventory.policies.AllowAllTransactionsPolicy;
+import com.logistimo.inventory.policies.InventoryUpdatePolicy;
 import com.logistimo.inventory.service.InventoryManagementService;
+import com.logistimo.services.DuplicationException;
 import com.logistimo.services.ServiceException;
 import com.logistimo.utils.LockUtil;
 import com.logistimo.utils.ThreadLocalUtil;
@@ -47,6 +49,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.jdo.PersistenceManager;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -56,6 +60,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 /**
  * Created by charan on 14/11/17.
@@ -230,5 +235,217 @@ public class UpdateMultipleInventoryTransactionsActionTest {
     errorDetailModels2.add(new ErrorDetailModel("M015", 1, "message1"));
     midErrorDetailModelsMap.put(4l,errorDetailModels2);
     return midErrorDetailModelsMap;
+  }
+
+  @Test
+  public void testGetReturnTransactionByLocalTrackingID() {
+    UpdateMultipleInventoryTransactionsAction action = new UpdateMultipleInventoryTransactionsAction();
+    List<ITransaction> transactions = new ArrayList<>(4);
+    ITransaction transaction1 = new Transaction();
+    transaction1.setLocalTrackingID("ltid_1");
+    transaction1.setType(ITransaction.TYPE_ISSUE);
+    ITransaction transaction2 = new Transaction();
+    transaction2.setLocalTrackingID("ltid_1");
+    transaction2.setType(ITransaction.TYPE_RETURNS_INCOMING);
+    ITransaction transaction3 = new Transaction();
+    transaction3.setLocalTrackingID("ltid_2");
+    transaction3.setType(ITransaction.TYPE_RECEIPT_TRANSACTION);
+    ITransaction transaction4 = new Transaction();
+    transaction4.setLocalTrackingID("ltid_2");
+    transaction4.setType(ITransaction.TYPE_RETURNS_OUTGOING);
+    ITransaction transaction5 = new Transaction();
+    transaction4.setType(ITransaction.TYPE_RETURNS_OUTGOING);
+
+    transactions.add(transaction1);
+    transactions.add(transaction2);
+    transactions.add(transaction3);
+    transactions.add(transaction4);
+    transactions.add(transaction5);
+
+    Map<String,ITransaction> returnTransByLocalTrackingID = action.getReturnTransactionByLocalTrackingID(transactions);
+    assertNotNull(returnTransByLocalTrackingID);
+    assertTrue(returnTransByLocalTrackingID.size() == 2);
+    returnTransByLocalTrackingID = action.getReturnTransactionByLocalTrackingID(null);
+    assertNotNull(returnTransByLocalTrackingID);
+    assertTrue(returnTransByLocalTrackingID.isEmpty());
+  }
+
+  @Test
+  public void testExecuteTransactionsWithLocalTrackingID() throws DuplicationException, ServiceException {
+    UpdateMultipleInventoryTransactionsAction action = new UpdateMultipleInventoryTransactionsAction();
+    InventoryManagementService ims = mock(InventoryManagementService.class);
+    action.setInventoryManagementService(ims);
+    Long domainID = 1l;
+    PersistenceManager pm = mock(PersistenceManager.class);
+    Map<Long,List<ErrorDetailModel>> errorDetailModelByMaterialMap = new HashMap<>(1);
+    Map<Long,List<SuccessDetailModel>> successDetailModelByMaterialMap = new HashMap<>(1);
+    Map<Long,Integer> countByMaterialMap = new HashMap<>(1);
+    List<ITransaction> validTransactions = new ArrayList<>(4);
+    ITransaction transaction1 = new Transaction();
+    transaction1.setMaterialId(1l);
+    transaction1.setType(ITransaction.TYPE_ISSUE);
+    transaction1.setLocalTrackingID("ltid_1");
+    ITransaction transaction2 = new Transaction();
+    transaction2.setMaterialId(1l);
+    transaction2.setType(ITransaction.TYPE_RETURNS_INCOMING);
+    transaction2.setLocalTrackingID("ltid_1");
+    ITransaction transaction3 = new Transaction();
+    transaction3.setMaterialId(2l);
+    transaction3.setType(ITransaction.TYPE_ISSUE);
+    transaction3.setLocalTrackingID("ltid_2");
+    ITransaction transaction4 = new Transaction();
+    transaction4.setMaterialId(2l);
+    transaction4.setType(ITransaction.TYPE_RETURNS_OUTGOING);
+    transaction3.setLocalTrackingID("ltid_2");
+    validTransactions.add(transaction1);
+    validTransactions.add(transaction2);
+    validTransactions.add(transaction3);
+    validTransactions.add(transaction4);
+
+    Transaction createdTransaction1 = ((Transaction) (transaction1.clone()));
+    createdTransaction1.setKey(1l);
+    Transaction createdTransaction2 = ((Transaction) (transaction1.clone()));
+    createdTransaction2.setKey(2l);
+    Transaction createdTransaction3 = ((Transaction) (transaction2.clone()));
+    createdTransaction3.setKey(null);
+    createdTransaction3.setMsgCode("M018");
+    createdTransaction3.setMessage("Reason not specified for return");
+    Transaction createdTransaction4 = ((Transaction) (transaction3.clone()));
+    createdTransaction4.setKey(null);
+
+    Map<Long,Integer> failedFromPositionByMaterialMap = new HashMap<>(1);
+    InventoryUpdatePolicy inventoryUpdatePolicy = new AllowAllTransactionsPolicy();
+    when(ims.updateInventoryTransaction(1l, validTransactions.get(0), false,
+        !inventoryUpdatePolicy.shouldDeduplicate(), pm)).thenReturn(createdTransaction1);
+    when(ims.updateInventoryTransaction(1l, validTransactions.get(1),false,!inventoryUpdatePolicy.shouldDeduplicate(),pm)).thenReturn(createdTransaction2);
+    when(ims.updateInventoryTransaction(1l, validTransactions.get(2),false,!inventoryUpdatePolicy.shouldDeduplicate(),pm)).thenReturn(createdTransaction3);
+    when(ims.updateInventoryTransaction(1l, validTransactions.get(3),false,!inventoryUpdatePolicy.shouldDeduplicate(),pm)).thenReturn(createdTransaction4);
+    action.executeTransactions(domainID,pm,errorDetailModelByMaterialMap,successDetailModelByMaterialMap,countByMaterialMap,validTransactions,failedFromPositionByMaterialMap,inventoryUpdatePolicy);
+    assertTrue(errorDetailModelByMaterialMap.size() == 1);
+    assertNotNull(errorDetailModelByMaterialMap.get(2l));
+    assertTrue(errorDetailModelByMaterialMap.get(2l).size() == 1);
+    ErrorDetailModel expectedErrorDetailModel = new ErrorDetailModel("M018",0,"Reason not specified for return");
+    assertEquals(expectedErrorDetailModel, errorDetailModelByMaterialMap.get(2l).get(0));
+    assertTrue(successDetailModelByMaterialMap.size() == 1);
+    assertNotNull(successDetailModelByMaterialMap.get(1l));
+    assertTrue(successDetailModelByMaterialMap.get(1l).size() == 1);
+    SuccessDetailModel expectedSuccessDetailModel = new SuccessDetailModel("M016",1,Arrays.asList("1","2"));
+    assertEquals(expectedSuccessDetailModel, successDetailModelByMaterialMap.get(1l).get(0));
+  }
+
+  @Test
+  public void testExecuteTransactionsWithoutLocalTrackingID() throws DuplicationException, ServiceException {
+    UpdateMultipleInventoryTransactionsAction action = new UpdateMultipleInventoryTransactionsAction();
+    InventoryManagementService ims = mock(InventoryManagementService.class);
+    action.setInventoryManagementService(ims);
+    Long domainID = 1l;
+    PersistenceManager pm = mock(PersistenceManager.class);
+    Map<Long,List<ErrorDetailModel>> errorDetailModelByMaterialMap = new HashMap<>(1);
+    Map<Long,List<SuccessDetailModel>> successDetailModelByMaterialMap = new HashMap<>(1);
+    Map<Long,Integer> countByMaterialMap = new HashMap<>(1);
+    List<ITransaction> validTransactions = new ArrayList<>(4);
+    ITransaction transaction1 = new Transaction();
+    transaction1.setMaterialId(1l);
+    transaction1.setType(ITransaction.TYPE_ISSUE);
+    ITransaction transaction2 = new Transaction();
+    transaction2.setMaterialId(1l);
+    transaction2.setType(ITransaction.TYPE_RETURNS_INCOMING);
+    transaction2.setTrackingId("1");
+    ITransaction transaction3 = new Transaction();
+    transaction3.setMaterialId(2l);
+    transaction3.setType(ITransaction.TYPE_ISSUE);
+    ITransaction transaction4 = new Transaction();
+    transaction4.setMaterialId(2l);
+    transaction4.setType(ITransaction.TYPE_RETURNS_OUTGOING);
+    transaction3.setTrackingId("3");
+    validTransactions.add(transaction1);
+    validTransactions.add(transaction2);
+    validTransactions.add(transaction3);
+    validTransactions.add(transaction4);
+
+    Transaction createdTransaction1 = ((Transaction) (transaction1.clone()));
+    createdTransaction1.setKey(1l);
+    Transaction createdTransaction2 = ((Transaction) (transaction1.clone()));
+    createdTransaction2.setKey(2l);
+    Transaction createdTransaction3 = ((Transaction) (transaction2.clone()));
+    createdTransaction3.setKey(3l);
+    Transaction createdTransaction4 = ((Transaction) (transaction3.clone()));
+    createdTransaction4.setKey(4l);
+
+    Map<Long,Integer> failedFromPositionByMaterialMap = new HashMap<>(1);
+    InventoryUpdatePolicy inventoryUpdatePolicy = new AllowAllTransactionsPolicy();
+    when(ims.updateInventoryTransaction(1l, validTransactions.get(0), false,
+        !inventoryUpdatePolicy.shouldDeduplicate(), pm)).thenReturn(createdTransaction1);
+    when(ims.updateInventoryTransaction(1l, validTransactions.get(1),false,!inventoryUpdatePolicy.shouldDeduplicate(),pm)).thenReturn(createdTransaction2);
+    when(ims.updateInventoryTransaction(1l, validTransactions.get(2),false,!inventoryUpdatePolicy.shouldDeduplicate(),pm)).thenReturn(createdTransaction3);
+    when(ims.updateInventoryTransaction(1l, validTransactions.get(3),false,!inventoryUpdatePolicy.shouldDeduplicate(),pm)).thenReturn(createdTransaction4);
+    action.executeTransactions(domainID,pm,errorDetailModelByMaterialMap,successDetailModelByMaterialMap,countByMaterialMap,validTransactions,failedFromPositionByMaterialMap,inventoryUpdatePolicy);
+    assertTrue(errorDetailModelByMaterialMap.isEmpty());
+    assertTrue(successDetailModelByMaterialMap.size() == 2);
+    assertNotNull(successDetailModelByMaterialMap.get(1l));
+    assertTrue(successDetailModelByMaterialMap.get(1l).size() == 1);
+    SuccessDetailModel expectedSuccessDetailModel = new SuccessDetailModel("M016",1,Arrays.asList("1","2"));
+    assertEquals(expectedSuccessDetailModel, successDetailModelByMaterialMap.get(1l).get(0));
+
+    assertNotNull(successDetailModelByMaterialMap.get(2l));
+    assertTrue(successDetailModelByMaterialMap.get(2l).size() == 1);
+    expectedSuccessDetailModel = new SuccessDetailModel("M016",1,Arrays.asList("3","4"));
+    assertEquals(expectedSuccessDetailModel, successDetailModelByMaterialMap.get(2l).get(0));
+  }
+
+
+  @Test
+  public void testExecuteTransactionsWithServiceException() throws DuplicationException, ServiceException {
+    UpdateMultipleInventoryTransactionsAction action = new UpdateMultipleInventoryTransactionsAction();
+    InventoryManagementService ims = mock(InventoryManagementService.class);
+    action.setInventoryManagementService(ims);
+    Long domainID = 1l;
+    PersistenceManager pm = mock(PersistenceManager.class);
+    Map<Long,List<ErrorDetailModel>> errorDetailModelByMaterialMap = new HashMap<>(1);
+    Map<Long,List<SuccessDetailModel>> successDetailModelByMaterialMap = new HashMap<>(1);
+    Map<Long,Integer> countByMaterialMap = new HashMap<>(1);
+    List<ITransaction> validTransactions = new ArrayList<>(4);
+    ITransaction transaction1 = new Transaction();
+    transaction1.setMaterialId(1l);
+    transaction1.setType(ITransaction.TYPE_ISSUE);
+    ITransaction transaction2 = new Transaction();
+    transaction2.setMaterialId(1l);
+    transaction2.setType(ITransaction.TYPE_RETURNS_INCOMING);
+    ITransaction transaction3 = new Transaction();
+    transaction3.setMaterialId(2l);
+    transaction3.setType(ITransaction.TYPE_ISSUE);
+    ITransaction transaction4 = new Transaction();
+    transaction4.setMaterialId(2l);
+    transaction4.setType(ITransaction.TYPE_RETURNS_OUTGOING);
+    validTransactions.add(transaction1);
+    validTransactions.add(transaction2);
+    validTransactions.add(transaction3);
+    validTransactions.add(transaction4);
+
+    Transaction createdTransaction1 = ((Transaction) (transaction1.clone()));
+    createdTransaction1.setKey(1l);
+    Transaction createdTransaction2 = ((Transaction) (transaction1.clone()));
+    createdTransaction2.setKey(2l);
+
+    Map<Long,Integer> failedFromPositionByMaterialMap = new HashMap<>(1);
+    InventoryUpdatePolicy inventoryUpdatePolicy = new AllowAllTransactionsPolicy();
+    when(ims.updateInventoryTransaction(1l, validTransactions.get(0), false,
+        !inventoryUpdatePolicy.shouldDeduplicate(), pm)).thenReturn(createdTransaction1);
+    when(ims.updateInventoryTransaction(1l, validTransactions.get(1),false,!inventoryUpdatePolicy.shouldDeduplicate(),pm)).thenReturn(createdTransaction2);
+    when(ims.updateInventoryTransaction(1l, validTransactions.get(2),false,!inventoryUpdatePolicy.shouldDeduplicate(),pm)).thenThrow(ServiceException.class);
+
+    action.executeTransactions(domainID,pm,errorDetailModelByMaterialMap,successDetailModelByMaterialMap,countByMaterialMap,validTransactions,failedFromPositionByMaterialMap,inventoryUpdatePolicy);
+    assertTrue(errorDetailModelByMaterialMap.size() == 1);
+    assertNotNull(errorDetailModelByMaterialMap.get(2l));
+    assertTrue(errorDetailModelByMaterialMap.get(2l).size() == 1);
+    ErrorDetailModel expectedErrorDetailModel = new ErrorDetailModel("M012",0,null);
+    assertEquals(expectedErrorDetailModel, errorDetailModelByMaterialMap.get(2l).get(0));
+
+    assertTrue(successDetailModelByMaterialMap.size() == 1);
+    assertNotNull(successDetailModelByMaterialMap.get(1l));
+    assertTrue(successDetailModelByMaterialMap.get(1l).size() == 1);
+    SuccessDetailModel expectedSuccessDetailModel = new SuccessDetailModel("M016", 1, Arrays.asList("1","2"));
+    assertTrue(successDetailModelByMaterialMap.get(1l).get(0).index == 1);
+    assertEquals(expectedSuccessDetailModel, successDetailModelByMaterialMap.get(1l).get(0));
   }
 }

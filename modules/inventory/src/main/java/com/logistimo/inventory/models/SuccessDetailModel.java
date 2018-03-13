@@ -42,7 +42,7 @@ public class SuccessDetailModel {
   /**
    * List of successful transaction keys
    */
-  public List keys = new ArrayList<>(1);
+  public List<String> keys = new ArrayList<>(1);
 
   /**
    * Constructor

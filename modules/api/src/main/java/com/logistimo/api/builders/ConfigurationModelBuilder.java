@@ -623,14 +623,14 @@ public class ConfigurationModelBuilder {
     for (Integer key : asc.assets.keySet()) {
       AssetSystemConfig.Asset asset = asc.getAsset(key);
       AssetType assetType = new AssetType();
-      assetType.id = asset.type;
+      assetType.id = key;
       assetType.manufacturers = buildManufacturers(asset.getManufacturers(), assetMap.get(key).mcs);
       assetType.monitoringType = asset.type;
       assetType.gsmEnabled = asset.isGSMEnabled();
       assetType.name = asset.getName();
       assetType.temperatureSensitive = asset.isTemperatureEnabled();
       if (asset.monitoringPositions != null) {
-        assetType.monitoringPoints = buildAssetTypeMonitoringPoints(asset);
+        assetType.monitoringPoints = buildAssetTypeMonitoringPoints(asset,assetMap.get(key));
       }
       assetTypeList.add(assetType);
     }
@@ -638,7 +638,7 @@ public class ConfigurationModelBuilder {
   }
 
   public List<MonitoringPoint> buildAssetTypeMonitoringPoints(
-      AssetSystemConfig.Asset asset) {
+      AssetSystemConfig.Asset asset, AssetConfigModel.Asset ast) {
     List<MonitoringPoint> monitoringPointList = new ArrayList<>(asset.monitoringPositions.size());
     for (AssetSystemConfig.MonitoringPosition position : asset.monitoringPositions) {
       MonitoringPoint
@@ -647,6 +647,9 @@ public class ConfigurationModelBuilder {
       monitoringPoint.point = position.mpId;
       monitoringPoint.position = position.name;
       monitoringPoint.sensor = position.sId;
+      if (null != ast.dMp && (ast.dMp.intValue() == monitoringPoint.point.intValue())) {
+        monitoringPoint.defaultPoint = true;
+      }
       monitoringPointList.add(monitoringPoint);
     }
     return monitoringPointList;
@@ -1389,6 +1392,8 @@ public class ConfigurationModelBuilder {
       model.setShipmentTemplateName(oc.getShipmentTemplateName() != null ? oc.getShipmentTemplateName() : SHIPMENT_TEMPLATE);
       model.setShipmentTemplateDownloadLink(buildDownloadLink(oc.getShipmentTemplate(), oc.getShipmentTemplateName(), SHIPMENT_TEMPLATE));
       model.setReferenceIdMandatory(oc.isReferenceIdMandatory());
+      model.setPurchaseReferenceIdMandatory(oc.isPurchaseReferenceIdMandatory());
+      model.setTransferReferenceIdMandatory(oc.isTransferReferenceIdMandatory());
       model.setExpectedArrivalDateMandatory(oc.isExpectedArrivalDateMandatory());
     }
     if (dbc != null) {
