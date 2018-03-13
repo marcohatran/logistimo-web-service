@@ -79,6 +79,7 @@ import com.logistimo.constants.Constants;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.domains.entity.IDomain;
 import com.logistimo.domains.service.DomainsService;
+import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exception.SystemException;
@@ -124,6 +125,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -1790,5 +1792,26 @@ public class ConfigurationModelBuilder {
     actTransConfigStringByType.put(ITransaction.TYPE_RETURNS_INCOMING, inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_RETURNS_INCOMING) != null ? inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_RETURNS_INCOMING).getTy() : ActualTransConfig.ACTUAL_NONE);
     actTransConfigStringByType.put(ITransaction.TYPE_RETURNS_OUTGOING, inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_RETURNS_OUTGOING) != null ? inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_RETURNS_OUTGOING).getTy() : ActualTransConfig.ACTUAL_NONE);
     return actTransConfigStringByType;
+  }
+
+  /**
+   * This method returns the Returns configuration model for the specified entity. If the entity is associated with multiple tags, it returns the return
+   * configuration for the first entity tag found.
+   * @param entityId
+   * @return
+   */
+  public ReturnsConfigModel buildReturnsConfigModelForEntity(InventoryConfig inventoryConfig, Long entityId) {
+    if (entityId == null) {
+      throw new IllegalArgumentException("Invalid input parameter while building return configuration for entity with id: " + entityId);
+    }
+    try {
+      IKiosk kiosk = entitiesService.getKiosk(entityId, false);
+      List<String> kioskTags = kiosk.getTags();
+      Optional<ReturnsConfig> returnsConfig = inventoryConfig.getReturnsConfig(kioskTags);
+      return returnsConfig.isPresent() ? buildReturnsConfigModel(returnsConfig.get()) : null;
+    } catch (ServiceException e) {
+      xLogger.warn("Exception while getting entity with id: {0}", entityId, e);
+    }
+    return null;
   }
 }

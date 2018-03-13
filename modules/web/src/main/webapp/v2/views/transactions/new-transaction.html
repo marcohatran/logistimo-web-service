@@ -246,7 +246,8 @@
                                 <span ng-show="transaction.ent.nm.length > 17">...</span>
                             </span>
                         </th>
-                        <th class="col-sm-1 text-center">{{resourceBundle['quantity']}}</th>
+                        <th class="col-sm-1 text-center" ng-hide="transaction.type == 'ri' || transaction.type == 'ro'">{{resourceBundle['quantity']}}</th>
+                        <th class="col-sm-1 text-center" ng-show="transaction.type == 'ri' || transaction.type == 'ro'">Return quantity</th>
                         <th  class="col-sm-1 text-center">{{resourceBundle['reason']}}</th>
                         <th class="col-sm-0-5 text-center"></th>
                         <th ng-show="dInv" class="col-sm-2 text-center">{{resourceBundle['material.stockonhand']}}
@@ -292,13 +293,18 @@
                             </span>
                         </td>
                         <td>
-                            <input only-digits ng-show="!material.isBatch && !material.isBinary && showMaterials && transaction.materials.length - 1 !== $index"
+                            <div ng-hide="transaction.type == 'ri' || transaction.type == 'ro'">
+                                <input only-digits ng-show="!material.isBatch && !material.isBinary && showMaterials && transaction.materials.length - 1 !== $index"
                                    type="text" ng-model="material.quantity" class="form-control" maxlength="12"
                                    tabindex="{{$index+100}}"
                                    ng-class="{'red-border':material.invalidPopup}"
                                    uib-popover="{{material.popupMsg}}"
                                    ng-focus="hidePopup(material,$index)"
                                    ng-blur="validate(material,$index,'b')" id="{{material.name.mId}}{{$index}}" popover-trigger="showpopup"/>
+                            </div>
+                            <div class = "text-center" ng-show="showMaterials && transaction.materials.length - 1 !== $index && (transaction.type == 'ri' || transaction.type == 'ro')" ng-click="selectOnType($index)">
+                                <button type="button" ng-hide="exRow[$index] === 'add' || exRow[$index] === 'show'" class="btn btn-sm btn-primary">Enter returns</button>
+                            </div>
                             <div ng-show="showMaterials && transaction.materials.length - 1 !== $index && !transaction.material.isBatch && material.quantity > 0">
                                 <span class="litetext float-left" ng-class="{'required' : msm}" ng-show="(!material.ts && isDef(matstatus)) || (material.ts && isDef(tempmatstatus))">{{resourceBundle['inventory.material.status']}}</span>
                                 <select ng-hide="material.ts || isUndef(matstatus)"
@@ -322,7 +328,7 @@
                                     <option ng-repeat="stats in tempmatstatus track by $index" value="{{stats}}" ng-selected="material.mst == stats">{{stats || resourceBundle['select'] + " " + resourceBundle['status.lower']}}</option>
                                 </select>
                             </div>
-                            <div class="text-center clickable dummyLink" ng-show="material.isBatch && showMaterials" ng-click="selectOnType($index)">
+                            <div class="text-center clickable dummyLink" ng-show="material.isBatch && showMaterials && transaction.type != 'ri' && transaction.type != 'ro'" ng-click="selectOnType($index)">
                                 <table class="table table-striped table-nobot-mar table-condensed" ng-show="material.bquantity.length">
                                     <tbody>
                                     <tr ng-show="fBatMat.length > 0">
@@ -383,6 +389,12 @@
                     <tr data-ng-switch-when="stock">
                         <td colspan=100% class="partialview">
                             <div ng-init="view='views/transactions/stockBatch-transactions.html'; huName = material.name.huName; huQty = material.name.huQty; mnm = material.name.mnm ; mid = material.name.mId ; kid = material.name.kId ; bdata = material.oquantity; bndata = material.bnquantity; type = transaction.type; index = $index"
+                                 ng-include="'views/partial.html'"></div>
+                        </td>
+                    </tr>
+                    <tr data-ng-switch-when="return">
+                        <td colspan=100% class="partialview">
+                            <div ng-init="view='views/transactions/return-transaction.html'; huName = material.name.huName; huQty = material.name.huQty; mnm = material.name.mnm ; mid = material.name.mId ; kid = material.name.kId ; bdata = material.oquantity; bndata = material.bnquantity; type = transaction.type; index = $index"
                                  ng-include="'views/partial.html'"></div>
                         </td>
                     </tr>

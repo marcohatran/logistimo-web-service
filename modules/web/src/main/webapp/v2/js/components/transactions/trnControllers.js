@@ -141,7 +141,6 @@ trnControllers.controller('TransactionsCtrl', ['$scope', 'trnService', 'domainCf
             $scope.loading = false;
             $scope.hideLoading();
             fixTable();
-
         };
         function getCaption() {
             var caption = getFilterTitle($scope.entity, $scope.resourceBundle['kiosk'], 'nm');
@@ -1156,6 +1155,8 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                 type = 'add';
             }else if($scope.transaction.type === 'i' || $scope.transaction.type === 'w' || $scope.transaction.type === 't') {
                 type = 'show';
+            } else if ($scope.transaction.type === 'ri' || $scope.transaction.type === 'ro') {
+                type = 'return';
             }
             $scope.select(index,type);
         };
@@ -1912,3 +1913,66 @@ trnControllers.controller('StockBatchTransactionCtrl',['$scope','invService','$t
         $scope.today = formatDate2Url(new Date());
     }
 ]);
+
+trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','requestContext','$location', 'domainCfgService', 'trnService',
+    function ($scope,$timeout,requestContext,$location,domainCfgService,trnService) {
+        $scope.transactions = {results:[]};
+        $scope.getReturnConfig = function () {
+            domainCfgService.getReturnConfig().then(function (data) {
+                $scope.rc = data.data;
+            }).catch(function error(msg) {
+                $scope.showErrorMsg(msg, true);
+            })
+        };
+        $scope.getReturnConfig();
+        $scope.fetch = function () {
+            $scope.transactions = {results:[]};
+            $scope.exRow = [];
+            $scope.loading = true;
+            $scope.showLoading();
+            if(checkNullEmpty($scope.entity) ){
+                $scope.setData(null);
+                return;
+            }
+            var eid, mid;
+            if (checkNotNullEmpty($scope.entity)) {
+                eid = $scope.entity.id;
+            }
+            if(checkNotNullEmpty($scope.mid)){
+                mid = $scope.mid;
+            }
+            var toDate = parseUrlDate("03/13/2018");
+            var fromDate = parseUrlDate("03/10/2018");
+            var type = undefined;
+            if ($scope.type == 'ri') {
+                type = 'i';
+            } else if ($scope.type == 'ro') {
+                type = 'r';
+            }
+            ListingController.call(this, $scope, requestContext, $location);
+            trnService.getTransactions("", "", fromDate, toDate,
+                type, $scope.offset, $scope.size, null, null, eid, null,
+                mid,null).then(function (data) {
+                    $scope.setData(data.data);
+                }).catch(function error(msg) {
+                    $scope.setData(null);
+                    $scope.showErrorMsg(msg);
+                });
+        };
+        $scope.setData = function (data) {
+            if (data != null) {
+                $scope.transactions = data;
+                $scope.setResults($scope.transactions);
+            } else {
+                $scope.transactions = {results:[]};
+                $scope.setResults(null);
+            }
+            $scope.loading = false;
+            $scope.hideLoading();
+            fixTable();
+
+        };
+
+        $scope.fetch();
+    }]);
+

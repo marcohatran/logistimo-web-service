@@ -52,6 +52,7 @@ import com.logistimo.api.models.configuration.InventoryConfigModel;
 import com.logistimo.api.models.configuration.NotificationsConfigModel;
 import com.logistimo.api.models.configuration.NotificationsModel;
 import com.logistimo.api.models.configuration.OrdersConfigModel;
+import com.logistimo.api.models.configuration.ReturnsConfigModel;
 import com.logistimo.api.models.configuration.SupportConfigModel;
 import com.logistimo.api.models.configuration.TagsConfigModel;
 import com.logistimo.api.request.AddCustomReportRequestObj;
@@ -2679,6 +2680,28 @@ public class DomainConfigController {
     return configurationModelBuilder.buildDomainLocationModels(domainIds, usersService,
         sUser.getUsername());
 
+  }
+
+  @RequestMapping(value = "/inventory/return-config", method = RequestMethod.GET)
+  public
+  @ResponseBody
+  ReturnsConfigModel getReturnConfig(@RequestParam(required = true) Long entityId) {
+    SecureUserDetails sUser = getUserDetails();
+    Locale locale = sUser.getLocale();
+    Long domainId = SecurityUtils.getCurrentDomainId();
+    DomainConfig dc = DomainConfig.getInstance(domainId);
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
+    try {
+      if (domainId == null) {
+        xLogger.severe("Error while fetching Return configuration");
+        throw new InvalidServiceException(
+            backendMessages.getString("Error while fetching return configuration for entity: " + entityId));
+      }
+      return configurationModelBuilder.buildReturnsConfigModelForEntity(dc.getInventoryConfig(), entityId);
+    } catch (Exception e) {
+      xLogger.warn("Error in fetching reasons for transactions", e);
+      return null;
+    }
   }
 
   private SyncConfig generateSyncConfig(CapabilitiesConfigModel model) {

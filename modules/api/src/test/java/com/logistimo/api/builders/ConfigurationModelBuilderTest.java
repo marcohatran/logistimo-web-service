@@ -32,6 +32,8 @@ import com.logistimo.config.models.InventoryConfig;
 import com.logistimo.config.models.MatStatusConfig;
 import com.logistimo.config.models.ReasonConfig;
 import com.logistimo.config.models.ReturnsConfig;
+import com.logistimo.entities.entity.Kiosk;
+import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.services.ServiceException;
 
@@ -49,7 +51,10 @@ import java.util.Map;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 
 /**
@@ -339,6 +344,25 @@ public class ConfigurationModelBuilderTest {
     assertNotNull(actualTransConfigAsStringByTransType);
     assertEquals(7,actualTransConfigAsStringByTransType.size());
     assertEquals(expectedMap,actualTransConfigAsStringByTransType);
+  }
+
+  @Test
+  public void testBuildReturnsConfigModelForEntity() throws ServiceException{
+    InventoryConfig invConfig = new InventoryConfig();
+    invConfig.setReturnsConfig(getReturnsConfigs());
+    EntitiesService es = mock(EntitiesService.class);
+    configModelBuilder.setEntitiesService(es);
+    Kiosk kiosk = new Kiosk();
+    kiosk.setKioskId(1l);
+    kiosk.setTags(Arrays.asList("CCP"));
+    when(es.getKiosk(1l,false)).thenReturn(kiosk);
+    ReturnsConfigModel returnsConfigModel = configModelBuilder.buildReturnsConfigModelForEntity(invConfig, 1l);
+    assertNotNull(returnsConfigModel);
+    assertSame(60, returnsConfigModel.incDur);
+    assertSame(10, returnsConfigModel.outDur);
+    kiosk.setTags(Arrays.asList("GMSD"));
+    returnsConfigModel = configModelBuilder.buildReturnsConfigModelForEntity(invConfig, 1l);
+    assertNull(returnsConfigModel);
   }
 
   private Map<String,String> getInvOperationTagsMap() {

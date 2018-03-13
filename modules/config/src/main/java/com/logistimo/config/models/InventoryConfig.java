@@ -42,6 +42,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 /**
@@ -715,6 +716,13 @@ public class InventoryConfig implements Serializable {
 
   public ReasonConfig getReturnOutgoingReasonConfigByMtag(String mtag) {
     return mtagRetOutRsns != null ? mtagRetOutRsns.get(mtag) : null;
+  }
+
+  public Optional<ReturnsConfig> getReturnsConfig(List<String> entityTags) {
+    return returnsConfig.stream()
+        .filter(returnConfig -> entityTags.stream()
+            .anyMatch(tag -> returnConfig.getEntityTags().contains(tag)))
+            .findFirst();
   }
 
   public JSONObject toJSONObject() throws ConfigurationException {

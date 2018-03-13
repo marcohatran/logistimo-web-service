@@ -242,6 +242,9 @@ domainCfgServices.factory('domainCfgService', ['APIService','$http', function (a
         },
         getApprovalsEnabledConfig: function () {
             return apiService.get("/s2/api/config/domain/approvals-enabled");
+        },
+        getReturnConfig: function () {
+            return apiService.get("/s2/api/config/domain/return-config");
         }
     }
 }]);
