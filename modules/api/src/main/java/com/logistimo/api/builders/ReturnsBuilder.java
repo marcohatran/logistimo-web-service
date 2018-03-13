@@ -27,6 +27,7 @@ import com.logistimo.api.servlets.mobile.builders.MobileOrderBuilder;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.CharacterConstants;
+import com.logistimo.constants.SourceConstants;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.logger.XLog;
@@ -122,6 +123,7 @@ public class ReturnsBuilder {
     returns.setCreatedBy(username);
     returns.setUpdatedAt(now);
     returns.setUpdatedBy(username);
+    returns.setSource(SourceConstants.MOBILE);
     returns.setItems(getItems(mobileReturnRequestModel.getItems()));
     return returns;
   }

@@ -84,6 +84,9 @@ public class Returns {
   @Column(name="updated_by")
   private String updatedBy;
 
+  @Column(name = "source")
+  private Integer source;
+
   @Transient
   private List<ReturnsItem> items;
 
@@ -188,6 +191,14 @@ public class Returns {
 
   public void setUpdatedBy(String updatedBy) {
     this.updatedBy = updatedBy;
+  }
+
+  public Integer getSource() {
+    return source;
+  }
+
+  public void setSource(Integer source) {
+    this.source = source;
   }
 
   public List<ReturnsItem> getItems() {
