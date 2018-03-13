@@ -4155,6 +4155,10 @@ ordControllers.controller('ConsignmentController', ['$scope', function ($scope) 
         }
     };
 
+    $scope.doReturn = function() {
+
+    }
+
 }]);
 
 
