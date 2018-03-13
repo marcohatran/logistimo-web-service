@@ -25,6 +25,7 @@
 /**
  * Created by kumargaurav on 30/01/18.
  */
+var analyticsServices = angular.module('analyticsServices', []);
 logistimoApp.factory('AnalyticsService', function ($window) {
     return {
         logAnalytics : function (path,user,domain) {
