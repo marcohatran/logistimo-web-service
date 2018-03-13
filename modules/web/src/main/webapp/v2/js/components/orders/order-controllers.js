@@ -4131,7 +4131,7 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService', 'reques
     }
 ]);
 
-ordControllers.controller('ConsignmentController', ['$scope', function ($scope) {
+ordControllers.controller('ConsignmentController', ['$scope','returnsService', function ($scope,returnsService) {
     $scope.batchOrder = true;
     $scope.selectedMaterialIds = [];
     $scope.sel = {};
@@ -4156,7 +4156,28 @@ ordControllers.controller('ConsignmentController', ['$scope', function ($scope) 
     };
 
     $scope.doReturn = function() {
+        if ($scope.sel.selectedRows.length > 0) {
+            var selectedItems = (function(){
+                var items = [];
+                for (var i = 0; i < $scope.sel.selectedRows.length; i++) {
+                    items.push($scope.order.its[selRows[i]]);
+                }
+                return items;
+            })();
+            if (isReturnValid(selectedItems)) {
+                returnsService.
+            }
+        } else {
+            $scope.showWarning("Please select any material to create Returns");
+        }
+    };
 
+    function isReturnValid(selectedItems) {
+        if (selectedItems) {
+            return selectedItems.some(function (item) {
+                return item.fq != 0
+            })
+        }
     }
 
 }]);

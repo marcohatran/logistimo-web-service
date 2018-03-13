@@ -24,3 +24,15 @@
 /**
  * Created by mohan on 11/03/18.
  */
+
+logistimoApp.service('returnsService', function () {
+    var localItems = [];
+
+    this.setItems = function (items) {
+        localItems = items;
+    };
+
+    this.getItems = function() {
+        return localItems;
+    };
+});
