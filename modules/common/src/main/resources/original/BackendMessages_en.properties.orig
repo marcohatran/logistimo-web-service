@@ -369,6 +369,7 @@ asset.relation.fetch.domain.error=Error fetching asset relationship for domain
 asset.detail.fetch.domain.error=Error fetching asset details for domain
 asset.delete.error=Error deleting the asset for domain
 asset.relation.create.error=Error creating asset relation
+asset.status.update.success=Asset status updated successfully
 bck.vendor.lower=vendor
 kiosk.lowercase=entity
 kiosks.lower=entities

@@ -684,14 +684,11 @@ public class AssetController {
   String updateWorkingStatus(@PathVariable String vendorId,
                              @PathVariable String deviceId,
                              @RequestBody final AssetModels.AssetStatus assetStatusModel) throws ServiceException {
-    try {
-      deviceId = AssetUtil.decodeURLParameters(deviceId);
-      assetStatusModel.stub = SecurityUtils.getUsername();
-      IAsset asset = assetManagementService.getAsset(vendorId, deviceId);
-      assetManagementService.updateWorkingStatus(asset, assetStatusModel);
-    } catch (Exception e) {
-      xLogger.warn("Error while updating status for an asset {0} {1}", vendorId, deviceId, e);
-    }
-    return CharacterConstants.EMPTY;
+    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", SecurityUtils.getUserDetails().getLocale());
+    deviceId = AssetUtil.decodeURLParameters(deviceId);
+    assetStatusModel.stub = SecurityUtils.getUsername();
+    IAsset asset = assetManagementService.getAsset(vendorId, deviceId);
+    assetManagementService.updateWorkingStatus(asset, assetStatusModel);
+    return backendMessages.getString("asset.status.update.success");
   }
 }

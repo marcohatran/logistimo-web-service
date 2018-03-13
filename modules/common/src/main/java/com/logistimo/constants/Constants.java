@@ -119,6 +119,8 @@ public final class Constants {
   public static final String DATE_FORMAT_CUSTOMREPORT = "dd-MMM-yyyy";
   public static final String ANALYTICS_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
   public static final String IF_MODIFIED_SINCE_DATE_FORMAT = "EEE, dd MMM yyyy HH:mm:ss";
+  public static final String ISO_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+
   public static final String IF_MODIFIED_SINCE_HEADER = "If-Modified-Since";
   public static final String LAST_MODIFIED_HEADER = "Last-Modified";
   // Reporting types
