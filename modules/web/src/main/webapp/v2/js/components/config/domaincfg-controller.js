@@ -1321,13 +1321,13 @@ domainCfgControllers.controller('InventoryConfigurationController', ['$scope', '
         function isReasonsConfigurationValid() {
             var types = ['ri', 'rr', 'rs', 'rd', 'rt', 'rri', 'rro'];
             var typeText = {
-                'ri': 'issue',
-                'rr': 'receipt',
-                'rs': 'stock count',
-                'rd': 'discard',
-                'rt': 'transfer',
-                'rri': 'returns incoming',
-                'rro': 'returns outgoing'
+                'ri': $scope.resourceBundle['transactions.issue'],
+                'rr': $scope.resourceBundle['transactions.receipt'],
+                'rs': $scope.resourceBundle['transactions.stockcount'],
+                'rd': $scope.resourceBundle['transactions.wastage'],
+                'rt': $scope.resourceBundle['transactions.transfer'],
+                'rri': $scope.resourceBundle['transactions.returns.incoming'],
+                'rro': $scope.resourceBundle['transactions.returns.outgoing']
             };
 
             return (!types.some(function (type) {
@@ -1347,7 +1347,7 @@ domainCfgControllers.controller('InventoryConfigurationController', ['$scope', '
         }
 
         function isTagReasonModelsValid(tagReasonModels,tagType) {
-            var tagTypeText = {'imt':'issue','rmt':'receipt','smt':'stock count','dmt':'discard','tmt':'transfer','rimt':'returns incoming','romt':'returns outgoing'};
+            var tagTypeText = {'imt':$scope.resourceBundle['transactions.issue'],'rmt':$scope.resourceBundle['transactions.receipt'],'smt':$scope.resourceBundle['transactions.stockcount'],'dmt':$scope.resourceBundle['transactions.wastage'],'tmt':$scope.resourceBundle['transactions.transfer'],'rimt':$scope.resourceBundle['transactions.returns.incoming'],'romt':$scope.resourceBundle['transactions.returns.outgoing']};
             return (!tagReasonModels.some(function(tagReasonModel){
                     if (tagReasonModel) {
                         if (checkNullEmpty(tagReasonModel.rsnCfgModel) || checkNullEmpty(tagReasonModel.rsnCfgModel.rsns)) {

@@ -57,6 +57,8 @@ authControllers.controller('LoginController', ['$scope', 'iAuthService', 'authSe
                         $scope.invalid = false;
                         $scope.errorMsg = undefined;
                         iAuthService.setAccessToken(data.headers()['x-access-token'], data.headers()['expires']);
+                        //log analyitcs
+                        $scope.initAnalytics(data.data.fnm,data.data.dmn.nm);
 
                         if(checkNotNullEmpty($scope.curUser)){
                             if($scope.curUser != $scope.userId){
