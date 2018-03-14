@@ -1265,3 +1265,4 @@ config.returns.policy.returns.outgoing.duration=Durée du retour sortant
 monitoring.type=Type de surveillance
 by.location=Par emplacement
 default.country=Veuillez choisir le pays par défaut pour que le domaine active les tableaux de bord.
+asset.dashboard.help=% des actifs qui sont dans un état de fonctionnement ou autre dans une juridiction donnée. Seuls les actifs associés à une entité sont pris en compte.
