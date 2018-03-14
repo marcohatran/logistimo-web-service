@@ -172,7 +172,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="row pb10" ng-hide="isUndef(status) || status == 0">
+                            <div class="row pb10" ng-hide="isUndef(status) || status == ''">
                                 <div class="col-sm-12">
                                     <label class="col-sm-4 noLRpad control-label cbx">{{resourceBundle['period.since']}}</label>
 
@@ -210,8 +210,8 @@
         </div>
         <div ng-hide="!tempEnabled" class="box topbox">
             <div ng-if="!mloading" class="row" style="min-height: 700px">
-                <h4 class="text-center mb0">{{caption}}</h4>
-                <div class="litetext text-center" ng-if="subCaption != '&amp;nbsp;'  && status != '0'" ng-bind-html="subCaption"></div>
+                <h4 class="text-center mb0">{{pCaption}}</h4>
+                <div class="litetext text-center" ng-if="subCaption != '&amp;nbsp;'" ng-bind-html="subCaption"></div>
                 <div class="row pt20">
                     <div class="col-sm-offset-3 col-sm-6">
                         <div class="text-center text-bold">{{resourceBundle['by.location']}}
