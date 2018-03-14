@@ -27,8 +27,61 @@
         <div class="panel-heading">
             <b>Returns for {{mnm}}</b>
         </div>
-      <div class="panel-body">
-        <div class="row">
+        <div class="panel-body">
+          <div ng-show="material.returnitems.length > 0" class="row">
+            <div class="col-sm-12">
+            <table class="table table-striped table-codensed ">
+              <thead>
+              <tr>
+                <th class="col-sm-1">{{resourceBundle['serialnum']}}</th>
+                <th class="col-sm-2">Operation</th>
+                <th class="col-sm-2">{{resourceBundle['quantity']}}</th>
+                <th class="col-sm-2 required">Return quantity</th>
+                <th class="col-sm-5">Material status</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr ng-repeat="returnitem in material.returnitems">
+                <td><p class="text-center">{{$index}}</p></td>
+                <td><p class="text-center">{{returnitem.type}}</p></td>
+                <td><p class="text-center">{{returnitem.q}}</p></td>
+                <td><input type="text" class="form-control" maxlength="50" only-digits ng-model="returnitem.rq" ng-class="{'red-border': returnitem.rq > returnitem.q == true}"/></td>
+                <td>
+                  <div ng-show="returnitem.rq > 0" class="mt5">
+                    <select ng-hide="material.ts || isUndef(matstatus)" ng-model="item.mst" class="form-control"
+                            ng-class="{'red-border': item.ainvalidPopup}"
+                            uib-popover="{{item.aPopupMsg}}"
+                            ng-blur="item.isVisitedStatus = true; togglePopup(item,$index)"
+                            ng-focus="togglePopup(item,$index,'hidepopup', 'abtm')"
+                            tabindex="{{$index+100}}"
+                            popover-trigger="showpopup">
+                      <option ng-repeat="stats in matstatus track by $index" value="{{stats}}" ng-selected="item.mst == stats">{{stats || resourceBundle['select'] + " " + resourceBundle['status.lower']}}</option>
+                    </select>
+                    <select ng-show="material.ts && isDef(tempmatstatus)" ng-model="item.mst" class="form-control"
+                            ng-class="{'red-border': item.ainvalidPopup}"
+                            uib-popover="{{item.aPopupMsg}}"
+                            ng-blur="item.isVisitedStatus = true; togglePopup(item,$index)"
+                            ng-focus="togglePopup(item,$index,'hidepopup', 'abtmt')"
+                            tabindex="{{$index+100}}"
+                            popover-trigger="showpopup">
+                      <option ng-repeat="stats in tempmatstatus track by $index" value="{{stats}}" ng-selected="item.mst == stats">{{stats || resourceBundle['select'] + " " + resourceBundle['status.lower']}}</option>
+                    </select>
+                  </div>
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div ng-show="transactions.results.length > 0" class="row">
+          <div class="col-sm-12">
+            <div class="pull-right pt10">
+              <div ng-include="'views/paginator.html'"></div>
+            </div>
+          </div>
+        </div>
+        <div ng-show="transactions.results.length > 0" class="row">
           <div class="col-sm-12">
             <table class="table table-striped table-codensed ">
               <thead>
@@ -37,29 +90,55 @@
                 <th class="col-sm-2">Operation</th>
                 <th class="col-sm-2">{{resourceBundle['quantity']}}</th>
                 <th class="col-sm-2 required">Return quantity</th>
-                <th class="col-sm-2">Material status</th>
-                <th class="col-sm-1"></th>
+                <th class="col-sm-5">Material status</th>
               </tr>
               </thead>
-              <tbody ng-repeat="transaction in transactions">
-              <tr>
+              <tbody>
+              <tr ng-repeat="transaction in transactions.results">
                 <td><p class="text-center">{{transaction.sno}}</p></td>
                 <td><p class="text-center">{{transaction.type}}</p></td>
                 <td><p class="text-center">{{transaction.q}}</p></td>
-                <td><input type="text" class="form-control" maxlength="50" ng-class="{'red-border': exists[$index] == true}" upper-case no-double-quotes/></td>
+                <td><input type="text" class="form-control" maxlength="12" only-digits ng-model="transaction.rq" ng-class="{'red-border': transaction.rq > transaction.q == true}"/></td>
                 <td>
-                    <span class="litetext">Material Status</span>
-                </td>
-                <td class="text-center">
-                  <a href="" ng-click="deleteRow($index)">
-                    <span class="glyphicons glyphicons-bin temp"></span>
-                  </a>
+                  <div ng-show="transaction.rq > 0" class="mt5">
+                    <select ng-hide="material.ts || isUndef(matstatus)" ng-model="item.mst" class="form-control"
+                            ng-class="{'red-border': item.ainvalidPopup}"
+                            uib-popover="{{item.aPopupMsg}}"
+                            ng-blur="item.isVisitedStatus = true; togglePopup(item,$index)"
+                            ng-focus="togglePopup(item,$index,'hidepopup', 'abtm')"
+                            id="abtm{{mid}}{{$index}}"
+                            tabindex="{{$index+100}}"
+                            popover-trigger="showpopup">
+                      <option ng-repeat="stats in matstatus track by $index" value="{{stats}}" ng-selected="item.mst == stats">{{stats || resourceBundle['select'] + " " + resourceBundle['status.lower']}}</option>
+                    </select>
+                    <select ng-show="material.ts && isDef(tempmatstatus)" ng-model="item.mst" class="form-control"
+                            ng-class="{'red-border': item.ainvalidPopup}"
+                            uib-popover="{{item.aPopupMsg}}"
+                            ng-blur="item.isVisitedStatus = true; togglePopup(item,$index)"
+                            ng-focus="togglePopup(item,$index,'hidepopup', 'abtmt')"
+                            id="abtmt{{mid}}{{$index}}"
+                            tabindex="{{$index+100}}"
+                            popover-trigger="showpopup">
+                      <option ng-repeat="stats in tempmatstatus track by $index" value="{{stats}}" ng-selected="item.mst == stats">{{stats || resourceBundle['select'] + " " + resourceBundle['status.lower']}}</option>
+                    </select>
+                  </div>
                 </td>
               </tr>
               </tbody>
             </table>
+            <div class="pull-right">
+              <button ng-disabled="invalidPopup != 0" ng-click="saveReturnTransactions($index)" class="btn btn-sm btn-primary">{{resourceBundle['save']}}</button>
+              <button ng-click="toggle($index)" class="btn btn-sm btn-default">{{resourceBundle['cancel']}}</button>
+            </div>
           </div>
         </div>
+        <div ng-show="(transactions.results.length == 0 ) && !loading" class="row">
+            <div class="col-sm-12">
+              <div>
+                <p class=" alert alert-warning mt18">{{resourceBundle['transactions.none']}}</p>
+              </div>
+            </div>
+          </div>
       </div>
     </div>
 </div>

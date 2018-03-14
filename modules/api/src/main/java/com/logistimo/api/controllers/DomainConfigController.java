@@ -2682,7 +2682,7 @@ public class DomainConfigController {
 
   }
 
-  @RequestMapping(value = "/inventory/return-config", method = RequestMethod.GET)
+  @RequestMapping(value = "/return-config", method = RequestMethod.GET)
   public
   @ResponseBody
   ReturnsConfigModel getReturnConfig(@RequestParam(required = true) Long entityId) {

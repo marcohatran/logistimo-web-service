@@ -1916,53 +1916,71 @@ trnControllers.controller('StockBatchTransactionCtrl',['$scope','invService','$t
 
 trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','requestContext','$location', 'domainCfgService', 'trnService',
     function ($scope,$timeout,requestContext,$location,domainCfgService,trnService) {
+        $scope.noWatch = true;
+        ListingController.call(this, $scope, requestContext, $location);
+
+        $scope.size = 10;
+
         $scope.transactions = {results:[]};
-        $scope.getReturnConfig = function () {
-            domainCfgService.getReturnConfig().then(function (data) {
-                $scope.rc = data.data;
-            }).catch(function error(msg) {
-                $scope.showErrorMsg(msg, true);
-            })
-        };
-        $scope.getReturnConfig();
+        domainCfgService.getReturnConfig($scope.entity.id).then(function (data) {
+            $scope.rc = data.data;
+            $scope.fetch();
+        }).catch(function error(msg) {
+            $scope.showErrorMsg(msg, true);
+        });
         $scope.fetch = function () {
-            $scope.transactions = {results:[]};
-            $scope.exRow = [];
-            $scope.loading = true;
-            $scope.showLoading();
-            if(checkNullEmpty($scope.entity) ){
-                $scope.setData(null);
-                return;
-            }
-            var eid, mid;
-            if (checkNotNullEmpty($scope.entity)) {
-                eid = $scope.entity.id;
-            }
-            if(checkNotNullEmpty($scope.mid)){
-                mid = $scope.mid;
-            }
-            var toDate = parseUrlDate("03/13/2018");
-            var fromDate = parseUrlDate("03/10/2018");
-            var type = undefined;
-            if ($scope.type == 'ri') {
-                type = 'i';
-            } else if ($scope.type == 'ro') {
-                type = 'r';
-            }
-            ListingController.call(this, $scope, requestContext, $location);
-            trnService.getTransactions("", "", fromDate, toDate,
-                type, $scope.offset, $scope.size, null, null, eid, null,
-                mid,null).then(function (data) {
-                    $scope.setData(data.data);
-                }).catch(function error(msg) {
+                var fromDate = new Date();
+                if (checkNotNullEmpty($scope.rc)) {
+                    if ($scope.type == 'ri' && checkNotNullEmpty($scope.rc.incDur)) {
+                        fromDate.setDate(fromDate.getDate() - $scope.rc.incDur);
+                    } else if($scope.type == 'ro' && checkNotNullEmpty($scope.rc.outDur)) {
+                        fromDate.setDate(fromDate.getDate() - $scope.rc.outDur);
+                    } else {
+                        fromDate = undefined;
+                    }
+                }
+                $scope.transactions = {results: []};
+                $scope.exRow = [];
+                $scope.loading = true;
+                $scope.showLoading();
+                if (checkNullEmpty($scope.entity)) {
                     $scope.setData(null);
-                    $scope.showErrorMsg(msg);
-                });
+                    return;
+                }
+                var eid, mid;
+                if (checkNotNullEmpty($scope.entity)) {
+                    eid = $scope.entity.id;
+                }
+                if (checkNotNullEmpty($scope.mid)) {
+                    mid = $scope.mid;
+                }
+                var type = undefined;
+                var leid = undefined;
+                if ($scope.type == 'ri') {
+                    type = 'i';
+                    if (checkNotNullEmpty($scope.transaction.dent) && checkNotNullEmpty($scope.transaction.dent.eid)) {
+                        leid = $scope.transaction.dent.eid;
+                    }
+                } else if ($scope.type == 'ro') {
+                    type = 'r';
+                    if (checkNotNullEmpty($scope.transaction.dent) && checkNotNullEmpty($scope.transaction.dent.eid)) {
+                        leid = $scope.transaction.dent.eid;
+                    }
+                }
+                trnService.getTransactions(null, null, fromDate, null,
+                    type, $scope.offset, $scope.size, null, null, eid, leid,
+                    mid, null).then(function (data) {
+                        $scope.setData(data.data);
+                    }).catch(function error(msg) {
+                        $scope.setData(null);
+                        $scope.showErrorMsg(msg);
+                    });
         };
         $scope.setData = function (data) {
             if (data != null) {
                 $scope.transactions = data;
                 $scope.setResults($scope.transactions);
+                $scope.setFiltered($scope.transactions.results)
             } else {
                 $scope.transactions = {results:[]};
                 $scope.setResults(null);
@@ -1972,7 +1990,46 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
             fixTable();
 
         };
+        $scope.saveReturnTransactions = function(index) {
+            if (!$scope.isReturnTransactionsValid()) {
+                return;
+            }
 
-        $scope.fetch();
+            angular.forEach($scope.transactions.results,function(transaction) {
+                console.log(transaction);
+                if(transaction.rq > 0) {
+                    if (!$scope.material.returnitems) {
+                        $scope.material.returnitems = [];
+                    }
+                    $scope.material.returnitems.push(transaction);
+                }
+            });
+            $scope.toggle(index);
+        };
+
+        $scope.isReturnTransactionsValid = function() {
+            return ($scope.transactions.results.every($scope.isTransactionValid));
+        };
+
+        $scope.isTransactionValid = function(transaction) {
+            if (checkNotNullEmpty(transaction.rq) && transaction.rq > transaction.q) {
+                if ($scope.transaction.type == 'ri') {
+                    $scope.showWarning("Returned quantity cannot exceed the issued quantity for item " + $scope.mnm);
+                    return false;
+                } else if ($scope.transaction.type == 'ro') {
+                    $scope.showWarning("Returned quantity cannot exceed the received quantity for item " + $scope.mnm);
+                    return false;
+                }
+            }
+            if (checkNotNullEmpty($scope.material.name.huName) && checkNotNullEmpty($scope.material.name.huQty) && checkNotNullEmpty(transaction.rq) && transaction.rq % $scope.material.name.huQty != 0) {
+                $scope.showWarning(material, material.quantity + " of " + material.name.mnm + " does not match the multiples of units expected in " + material.name.huName + ". It should be in multiples of " + material.name.huQty + " " + material.name.mnm + ".", index);
+                return false;
+            }
+            return true;
+        }
+
+        $scope.$watch("offset", function(){
+            $scope.fetch();
+        });
     }]);
 
