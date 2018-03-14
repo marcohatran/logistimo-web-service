@@ -1456,12 +1456,10 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
 
 
         $scope.constructMapData = function (event, init) {
-            console.log(event);
             if ($scope.mapEvent == event && !init) {
                 return;
             }
             $scope.mloading = true;
-            //$scope.selectedWorkingStatus = undefined;
             $scope.subCaption = "<b>Monitoring type: </b>";
             $scope.subCaption += $scope.mtype == 1 ? "Monitoring assets" : "Monitored assets";
             var subData = $scope.dashboardView.asset[event];
