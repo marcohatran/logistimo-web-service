@@ -966,7 +966,7 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
             }
             if (checkNotNullEmpty($scope.status)) {
                 $location.$$search['ws'] = $scope.status;
-                if (checkNotNullEmpty($scope.period)) {
+                if (checkNotNullEmpty($scope.period) && $scope.status > 0) {
                     $location.$$search['p'] = $scope.period;
                 }
             }
