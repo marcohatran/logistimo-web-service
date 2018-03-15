@@ -36,7 +36,8 @@
                 <th class="col-sm-1 text-center">{{resourceBundle['serialnum']}}</th>
                 <th class="col-sm-2">{{transaction.type == 'ri' ? 'Issue' : 'Receipt'}}</th>
                 <th class="col-sm-2">{{resourceBundle['quantity']}}</th>
-                <th class="col-sm-2 required">Return quantity</th>
+                <th class="col-sm-2 required">{{resourceBundle['return.quantity']}}</th>
+                <th class="col-sm-0-5 text-center"></th>
               </tr>
               </thead>
               <tbody>
@@ -44,7 +45,7 @@
                 <td><p class="text-center">{{$index + 1}}</p></td>
                 <td><p>{{returnitem.lknm}} on {{returnitem.ts}}</p></td>
                 <td><p>{{returnitem.q}}</p>
-                    <span class="litetext float-left" ng-show="material.isBatch">Batch id: {{returnitem.bid}}, Expiry: {{returnitem.bexp}}</span>
+                    <span class="litetext float-left" ng-show="material.isBatch">{{resourceBundle['batch']}}: {{returnitem.bid}}, {{resourceBundle['expiry']}}: {{returnitem.bexp}}</span>
                 </td>
                 <td><input type="text" class="form-control" maxlength="50" only-digits ng-model="returnitem.rq" ng-class="{'red-border': returnitem.rq > returnitem.q == true}"/>
                   <div ng-show="returnitem.rq > 0" class="mt5">
@@ -70,6 +71,11 @@
                       </select>
                   </div>
                 </td>
+                  <td class="text-center">
+                      <a href="" ng-click="removeFromReturnItems(returnitem.sno);">
+                          <span class="glyphicons glyphicons-bin temp"></span>
+                      </a>
+                  </td>
               </tr>
               </tbody>
             </table>
@@ -95,7 +101,7 @@
                 <th class="col-sm-1 text-center">{{resourceBundle['serialnum']}}</th>
                 <th class="col-sm-2">{{transaction.type == 'ri' ? 'Issue' : 'Receipt'}}</th>
                 <th class="col-sm-2">{{resourceBundle['quantity']}}</th>
-                <th class="col-sm-2 required">Return quantity</th>
+                <th class="col-sm-2 required">{{resourceBundle['return.quantity']}}</th>
               </tr>
               </thead>
               <tbody>
@@ -103,7 +109,7 @@
                 <td><p class="text-center">{{$index+1}}</p></td>
                 <td><p>{{trans.lknm}} on {{trans.ts}}</p></td>
                 <td><p>{{trans.q | number}}</p>
-                    <span class="litetext float-left" ng-show="material.isBatch">Batch id: {{trans.bid}}, Expiry: {{trans.bexp}}</span>
+                    <span class="litetext float-left" ng-show="material.isBatch">{{resourceBundle['batch']}}: {{trans.bid}}, {{resourceBundle['expiry']}}: {{trans.bexp}}</span>
                 </td>
                 <td><input ng-disabled="isReturnEnteredForTransaction(trans.sno)" type="text" class="form-control" maxlength="12" only-digits ng-model="trans.rq"
                            ng-class="{'red-border': trans.rq > trans.q == true}" id="rq{{trans.id}}{{$index}}"

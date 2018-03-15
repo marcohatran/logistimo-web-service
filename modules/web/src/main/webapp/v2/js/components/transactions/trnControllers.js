@@ -2103,5 +2103,28 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
             }
             return false;
         };
+
+        $scope.deleteRow = function (id) {
+            var mIndex = $scope.transaction.materials[id].name.mId;
+            if (checkNotNullEmpty(mIndex) && checkNotNullEmpty($scope.avMap[mIndex])) {
+                $scope.avMap[mIndex].hide = false;
+            }
+            $scope.exRow.splice(id,1);
+            $scope.hidePopup($scope.transaction.materials[id],id);
+            $scope.transaction.materials.splice(id, 1);
+            redrawPopup('hide');
+        };
+
+        $scope.removeFromReturnItems = function(id) {
+            console.log($scope.material.returnitems,id);
+            if (checkNotNullEmpty($scope.material.returnitems)) {
+                for (var i = 0;  i < $scope.material.returnitems.length; i++) {
+                    if (id == $scope.material.returnitems[i].sno) {
+                        $scope.material.returnitems.splice(i,1);
+                    }
+                }
+            }
+            console.log($scope.material.returnitems,id);
+        }
     }]);
 
