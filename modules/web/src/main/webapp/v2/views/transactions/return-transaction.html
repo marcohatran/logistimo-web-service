@@ -76,8 +76,8 @@
           </div>
         </div>
             <div class="row" ng-show="material.returnitems.length > 0 && !showTransactionsList">
-                <div class="col-sm-12 ">
-                    <span  ng-click="showTransactionsList = true" >Choose transactions</span>
+                <div class="col-sm-12">
+                    <span  ng-click="showTransactionsList = true; fetch()" >Choose transactions</span>
                 </div>
             </div>
         <div ng-show="transactions.results.length > 0" class="row">
