@@ -1818,33 +1818,22 @@ entityControllers.controller('RelationAddController', ['$scope', 'entityService'
     }
 }]);
 entityControllers.controller('RelationListController', ['$rootScope','$scope', 'entityService', 'domainCfgService', 'requestContext', '$location','$window', function ($rootScope,$scope, entityService, domainCfgService, requestContext, $location,$window) {
+    $scope.noWatch = true;
     ListingController.call(this, $scope, requestContext, $location);
     $scope.linkType = 'c';
     $scope.rData = undefined;
     $scope.loading = false;
     $scope.searchkey = undefined;
-    $scope.mSize = requestContext.getParam("s") || 50;
-    var size = $scope.mSize;
-    var offset = 0;
     function setPageParams() {
-        if($scope.mSize != $scope.size){
-            $scope.mSize = $scope.size;
-            size = $scope.mSize;
-            $scope.mOffset = 0;
-            $scope.rData = undefined;
-        }
-        if(checkNotNullEmpty($scope.rData)){
-            offset = parseInt(offset) + parseInt(size);
-        }
         if(checkNotNullEmpty($scope.allRTags)){
-            size = undefined;
-            offset = undefined;
+            $scope.size = undefined;
+            $scope.offset = 0;
         }
     }
     $scope.getCustomers = function () {
         $scope.showLoading();
         setPageParams();
-        entityService.getCustomers($scope.entityId,size,offset, $scope.searchkey, $scope.linkedEntityId, $scope.entityTag).then(function (data) {
+        entityService.getCustomers($scope.entityId,$scope.size,$scope.offset, $scope.searchkey, $scope.linkedEntityId, $scope.entityTag).then(function (data) {
             setData(data.data);
         }).catch(function error(msg) {
             $scope.showErrorMsg(msg);
@@ -1857,7 +1846,7 @@ entityControllers.controller('RelationListController', ['$rootScope','$scope', '
     $scope.getVendors = function () {
         $scope.showLoading();
         setPageParams();
-        entityService.getVendors($scope.entityId,size,offset,$scope.searchkey, $scope.linkedEntityId, $scope.entityTag).then(function (data) {
+        entityService.getVendors($scope.entityId,$scope.size,$scope.offset,$scope.searchkey, $scope.linkedEntityId, $scope.entityTag).then(function (data) {
             setData(data.data);
         }).catch(function error(msg) {
             $scope.showErrorMsg(msg);
@@ -1898,6 +1887,7 @@ entityControllers.controller('RelationListController', ['$rootScope','$scope', '
             $scope.filtered = undefined;
             $scope.setResults(null);
         }
+        $scope.skipOffsetWatch = false;
     }
     function appendOriginalCopy(data) {
         $scope.orData = $scope.orData.concat(data);
@@ -1966,11 +1956,8 @@ entityControllers.controller('RelationListController', ['$rootScope','$scope', '
         domainCfgService.getRouteTagsCfg().then(function (data) {
             $scope.allRTags = data.data.tags;
             if(isFirstInit) {
-                if(requestContext.getParam("o") > 0){
-                    $scope.offset = 0;
-                } else {
-                    $scope.fetch();
-                }
+                $scope.offset = 0;
+                $scope.fetch();
             }
         }).catch(function error(msg) {
             $scope.showErrorMsg(msg);
@@ -2006,14 +1993,12 @@ entityControllers.controller('RelationListController', ['$rootScope','$scope', '
     $scope.init(true);
     $scope.resetFetch = function(){
         $scope.rData = undefined;
-        $scope.mOffset = 0;
         $scope.filtered = [];
         $scope.eTag = $scope.entityTag = $scope.searchkey = undefined;
         if ($scope.offset == 0) {
             $scope.fetch();
         }
         $scope.offset = 0;
-        offset = 0;
     };
     $scope.fetch = function() {
         searchCount++;
@@ -2078,8 +2063,8 @@ entityControllers.controller('RelationListController', ['$rootScope','$scope', '
            $scope.eTag = $scope.entityTag = undefined;
        } else {
            $scope.searchkey = undefined;
-           offset = 0;
        }
+        $scope.offset = 0;
         searchCount++;
         $scope.searchEntity();
     };
@@ -2087,11 +2072,11 @@ entityControllers.controller('RelationListController', ['$rootScope','$scope', '
         if(newVal != oldVal) {
             if(checkNullEmpty(newVal)) {
                 $scope.entityTag = undefined;
-                offset = 0;
             } else {
                 $scope.entityTag = newVal;
                 $scope.searchkey = undefined;
             }
+            $scope.offset = 0;
             searchCount++;
             $scope.searchEntity();
         }
@@ -2102,8 +2087,17 @@ entityControllers.controller('RelationListController', ['$rootScope','$scope', '
         }
     });
 
+    $scope.$watch("offset", function(newVal, oldVal) {
+        if(newVal != oldVal) {
+            if(!$scope.skipOffsetWatch) {
+                $scope.fetch();
+            }
+        }
+    });
+
     $scope.searchEntity = function() {
         $scope.rData = undefined;
+        $scope.skipOffsetWatch = true;
         if ( checkNullEmpty($scope.searchkey) ) {
             $scope.searchKey = undefined;
             $scope.hideReorder = false;
@@ -2132,7 +2126,6 @@ entityControllers.controller('RelationListController', ['$rootScope','$scope', '
             }
         });
         sortByKey($scope.filtered,'osno');
-        $scope.numFound = $scope.filtered.length;
     };
 }]);
 
