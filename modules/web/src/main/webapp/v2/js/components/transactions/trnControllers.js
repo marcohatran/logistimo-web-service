@@ -1157,6 +1157,7 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                 type = 'show';
             } else if ($scope.transaction.type === 'ri' || $scope.transaction.type === 'ro') {
                 type = 'return';
+                $scope.returnFormOpen = true;
             }
             $scope.select(index,type);
         };
@@ -2005,6 +2006,7 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
                 }
             });
             $scope.toggle(index);
+            $scope.returnFormOpen = false;
         };
 
         $scope.isReturnTransactionsValid = function() {
@@ -2031,5 +2033,59 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
         $scope.$watch("offset", function(){
             $scope.fetch();
         });
+
+        $scope.validate = function (transaction, index, material) {
+            if (checkNotNullEmpty(transaction.rq) && transaction.rq > transaction.q) {
+                if ($scope.transaction.type == 'ri') {
+                    showPopUP(transaction, "Returned quantity (" + transaction.rq + ") cannot exceed the issued quantity (" + transaction.q + ") for item " + $scope.mnm, index,"rq");
+                    return false;
+                } else if ($scope.transaction.type == 'ro') {
+                    showPopUP(transaction, "Returned quantity (" + transaction.rq + ") cannot exceed the received quantity (" + transaction.q + ") for item " + $scope.mnm, index,"rq");
+                    return false;
+                }
+            }
+            if (checkNotNullEmpty(material.name.huName) && checkNotNullEmpty(material.name.huQty) && checkNotNullEmpty(transaction.rq) && transaction.rq % material.name.huQty != 0) {
+                showPopUP(transaction, transaction.rq + " of " + material.name.mnm + " does not match the multiples of units expected in " + material.name.huName + ". It should be in multiples of " + material.name.huQty + " " + material.name.mnm + ".", index,"rq");
+                return false;
+            }
+            var status = material.ts ? $scope.tempmatstatus : $scope.matstatus;
+            if(checkNotNullEmpty(status) && checkNullEmpty(transaction.rmst) && $scope.msm) {
+                showPopUP(transaction, $scope.resourceBundle['status.required'], index,"rmst");
+                return false;
+            }
+
+            return true;
+        };
+
+        function showPopUP(transaction, msg, index, source) {
+            $timeout(function () {
+                if (source == 'rq') {
+                    transaction.popupMsg = msg;
+                    if (!transaction.invalidPopup) {
+                        transaction.invalidPopup = true;
+                        $scope.invalidPopup += 1;
+                    }
+                } else if (source == 'rmst') {
+                    transaction.aPopupMsg = msg;
+                    if (!transaction.ainvalidPopup) {
+                        transaction.ainvalidPopup = true;
+                        $scope.invalidPopup += 1;
+                    }
+                }
+                $timeout(function () {
+                    $("[id='"+ source + transaction.id + index + "']").trigger('showpopup');
+                }, 0);
+            }, 0);
+        }
+
+        $scope.hidePopup = function(transaction,index, source){
+            if (transaction.invalidPopup || transaction.ainvalidPopup) {
+                $scope.invalidPopup = $scope.invalidPopup <= 0 ? 0 : $scope.invalidPopup - 1;
+            }
+            transaction.invalidPopup = false;
+            $timeout(function () {
+                $("[id='"+ source + transaction.id + index + "']").trigger('hidepopup');
+            }, 0);
+        };
     }]);
 
