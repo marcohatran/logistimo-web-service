@@ -35,7 +35,7 @@
               <tr>
                 <th class="col-sm-1 text-center">{{resourceBundle['serialnum']}}</th>
                 <th class="col-sm-2">{{transaction.type == 'ri' ? 'Issue' : 'Receipt'}}</th>
-                <th class="col-sm-2">{{resourceBundle['quantity']}}</th>
+                <th class="col-sm-2 text-center">{{resourceBundle['quantity']}}</th>
                 <th class="col-sm-2 required">{{resourceBundle['return.quantity']}}</th>
                 <th class="col-sm-0-5 text-center"></th>
               </tr>
@@ -43,8 +43,8 @@
               <tbody>
               <tr ng-repeat="returnitem in material.returnitems">
                 <td><p class="text-center">{{$index + 1}}</p></td>
-                <td><p>{{returnitem.lknm}} on {{returnitem.ts}}</p></td>
-                <td><p>{{returnitem.q}}</p>
+                <td><p>{{returnitem.lknm}} On {{returnitem.ts}}</p></td>
+                <td><p class="text-center">{{returnitem.q}}</p>
                     <span class="litetext float-left" ng-show="material.isBatch">{{resourceBundle['batch']}}: {{returnitem.bid}}, {{resourceBundle['expiry']}}: {{returnitem.bexp}}</span>
                 </td>
                 <td><input type="text" class="form-control" maxlength="50" only-digits ng-model="returnitem.rq" ng-class="{'red-border': returnitem.rq > returnitem.q == true}"/>
@@ -100,15 +100,15 @@
               <tr>
                 <th class="col-sm-1 text-center">{{resourceBundle['serialnum']}}</th>
                 <th class="col-sm-2">{{transaction.type == 'ri' ? 'Issue' : 'Receipt'}}</th>
-                <th class="col-sm-2">{{resourceBundle['quantity']}}</th>
+                <th class="col-sm-2 text-center">{{resourceBundle['quantity']}}</th>
                 <th class="col-sm-2 required">{{resourceBundle['return.quantity']}}</th>
               </tr>
               </thead>
               <tbody>
               <tr ng-repeat="trans in transactions.results">
                 <td><p class="text-center">{{$index+1}}</p></td>
-                <td><p>{{trans.lknm}} on {{trans.ts}}</p></td>
-                <td><p>{{trans.q | number}}</p>
+                <td><p>{{trans.lknm}} On {{trans.ts}}</p></td>
+                <td><p class="text-center">{{trans.q | number}}</p>
                     <span class="litetext float-left" ng-show="material.isBatch">{{resourceBundle['batch']}}: {{trans.bid}}, {{resourceBundle['expiry']}}: {{trans.bexp}}</span>
                 </td>
                 <td><input ng-disabled="isReturnEnteredForTransaction(trans.sno)" type="text" class="form-control" maxlength="12" only-digits ng-model="trans.rq"
