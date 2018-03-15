@@ -1921,7 +1921,7 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
         ListingController.call(this, $scope, requestContext, $location);
 
         $scope.size = 10;
-
+        $scope.showTransactionsList = false;
         $scope.transactions = {results:[]};
         domainCfgService.getReturnConfig($scope.entity.id).then(function (data) {
             $scope.rc = data.data;
@@ -1982,6 +1982,7 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
                 $scope.transactions = data;
                 $scope.setResults($scope.transactions);
                 $scope.setFiltered($scope.transactions.results)
+                setDefaultReason();
             } else {
                 $scope.transactions = {results:[]};
                 $scope.setResults(null);
@@ -1991,11 +1992,15 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
             fixTable();
 
         };
+        function setDefaultReason() {
+            angular.forEach($scope.transactions.results, function(transaction){
+                transaction.rrsn = $scope.material.reason;
+            });
+        }
         $scope.saveReturnTransactions = function(index) {
             if (!$scope.isReturnTransactionsValid()) {
                 return;
             }
-
             angular.forEach($scope.transactions.results,function(transaction) {
                 console.log(transaction);
                 if(transaction.rq > 0) {
@@ -2086,6 +2091,15 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
             $timeout(function () {
                 $("[id='"+ source + transaction.id + index + "']").trigger('hidepopup');
             }, 0);
+        };
+
+        $scope.isReturnEnteredForTransaction = function(id) {
+            if (checkNotNullEmpty($scope.material.returnitems)) {
+                return $scope.material.returnitems.some(function(returnitem){
+                    return (returnitem.sno == id);
+                });
+            }
+            return false;
         };
     }]);
 
