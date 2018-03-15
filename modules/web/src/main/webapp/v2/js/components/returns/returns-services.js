@@ -22,17 +22,34 @@
  */
 
 /**
- * Created by mohan on 11/03/18.
+ * Created by Mohan Raja on 11/03/18.
  */
 
-logistimoApp.service('returnsService', function () {
-    var localItems = [];
+logistimoApp.service('returnsService', ['APIService', function (apiService) {
+    var _items = [];
+    var _order = {};
 
     this.setItems = function (items) {
-        localItems = items;
+        _items = items;
     };
 
     this.getItems = function() {
-        return localItems;
+        var tItems = _items;
+        _items = [];
+        return tItems;
     };
-});
+
+    this.setOrder = function (order) {
+        _order = order;
+    };
+
+    this.getOrder = function() {
+        var tOrder = _order;
+        _order = {};
+        return tOrder;
+    };
+
+    this.create = function (data) {
+        return apiService.post(data, '/s2/api/returns');
+    }
+}]);

@@ -656,6 +656,9 @@ public class OrdersAPIBuilder {
         showStocks =
         IOrder.PENDING.equals(order.getStatus()) || IOrder.CONFIRMED.equals(order.getStatus())
             || IOrder.BACKORDERED.equals(order.getStatus());
+    boolean isReturnsAllowed =
+        IOrder.BACKORDERED.equals(order.getStatus()) || IOrder.COMPLETED.equals(order.getStatus())
+            || IOrder.FULFILLED.equals(order.getStatus());
     boolean showVendorStock = dc.autoGI() && order.getServicingKiosk() != null;
 
     if (order.getServicingKiosk() != null) {
@@ -750,7 +753,7 @@ public class OrdersAPIBuilder {
     Map<Long, Map<String, BigDecimal>> quantityByBatches = null;
     Map<Long, Map<String, DemandBatchMeta>> fQuantityByBatches = null;
     Map<Long, List<ShipmentItemModel>> fReasons = null;
-    if (!showStocks) {
+    if (!showStocks || isReturnsAllowed) {
       quantityByBatches = new HashMap<>();
       for (IShipment shipment : shipments) {
         boolean isFulfilled = ShipmentStatus.FULFILLED.equals(shipment.getStatus());
@@ -900,7 +903,10 @@ public class OrdersAPIBuilder {
             }
             itemModel.oastk = itemModel.oastk.add(ia.getQuantity());
           }
-        } else {
+        }
+        Set<DemandItemBatchModel> batches = new HashSet<>();
+        BigDecimal allocatedStock = BigDecimal.ZERO;
+        if(!showStocks || isReturnsAllowed) {
           if (itemModel.isBa) {
             Map<String, BigDecimal> batchMap = quantityByBatches.get(item.getMaterialId());
             Map<String, DemandBatchMeta> fBatchMap = null;
@@ -936,11 +942,8 @@ public class OrdersAPIBuilder {
                 batchModel.m = b.getBatchManufacturer();
                 batchModel.mdt = b.getBatchManufacturedDate() != null ? LocalDateUtil
                     .formatCustom(b.getBatchManufacturedDate(), "dd/MM/yyyy", null) : "";
-                itemModel.astk = itemModel.astk.add(batchModel.q);
-                if (itemModel.bts == null) {
-                  itemModel.bts = new HashSet<>();
-                }
-                itemModel.bts.add(batchModel);
+                allocatedStock = allocatedStock.add(batchModel.q);
+                batches.add(batchModel);
               }
             }
           } else {
@@ -948,6 +951,11 @@ public class OrdersAPIBuilder {
               itemModel.bd = fReasons.get(item.getMaterialId());
             }
           }
+        }
+        itemModel.returnBatches = batches;
+        if(!showStocks) {
+          itemModel.bts = batches;
+          itemModel.astk = allocatedStock;
         }
         if (showVendorStock && showStocks) {
           try {

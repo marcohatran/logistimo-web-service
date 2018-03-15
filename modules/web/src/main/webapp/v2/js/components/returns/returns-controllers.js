@@ -22,5 +22,83 @@
  */
 
 /**
- * Created by mohan on 11/03/18.
+ * Created by Mohan Raja on 11/03/18.
  */
+
+logistimoApp.controller('CreateReturnsController', ['$scope', 'returnsService',
+    function ($scope, returnsService) {
+
+        $scope.returnItems = returnsService.getItems();
+        $scope.returnOrder = returnsService.getOrder();
+
+        $scope.toggleBatch = function (type, item) {
+            item[type] = !item[type];
+        };
+
+        $scope.cancel = function() {
+            $scope.setPageSelection('orderDetail');
+            $scope.enableScroll();
+        };
+
+        $scope.create = function() {
+            if(isReturnValid()) {
+                $scope.showLoading();
+                returnsService.create(getCreateRequest()).then(function (data) {
+                    $scope.showSuccess("Returns created successfully");
+                    $location.path('/orders/returns/detail/' + data.data.return_id);
+                }).catch(function error(msg) {
+                    $scope.showErrorMsg(msg);
+                }).finally(function () {
+                    $scope.hideLoading();
+                });
+            }
+        };
+
+        function isReturnValid() {
+            return $scope.returnItems.every(function (returnItem) {
+                if (returnItem.returnBatches) {
+                    return $scope.returnItems.returnBatches.some(function (returnBatch) {
+                        return returnBatch.returnQuantity > 0;
+                    });
+                } else {
+                    return returnItem.returnQuantity > 0;
+                }
+            });
+        }
+
+        function getCreateRequest() {
+            var items = [];
+            angular.forEach($scope.returnItems, function(returnItem) {
+                var item = {
+                    material_id : returnItem.id,
+                    return_quantity : returnItem.returnQuantity,
+                    material_status : returnItem.newStataus,
+                    reason : returnItem.reason
+                };
+                if(returnItem.returnBatches) {
+                    item.batches = [];
+                    var totalReturnQuantity = 0;
+                    angular.forEach(returnItem.returnBatches, function(returnBatch){
+                        item.batches.push({
+                            batch_id : returnBatch.id,
+                            return_quantity : returnBatch.returnQuantity,
+                            material_status : returnBatch.newStataus,
+                            reason : returnBatch.reason
+                        });
+                        totalReturnQuantity += returnBatch.returnQuantity;
+                    });
+                    item.return_quantity = totalReturnQuantity;
+                }
+                items.push(item);
+            });
+
+            return {
+                order_id : $scope.order.id,
+                comment : $scope.comment,
+                items : items,
+                source : "web"
+            }
+        }
+    }
+]);
+

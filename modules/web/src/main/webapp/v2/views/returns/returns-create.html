@@ -1,0 +1,204 @@
+<!--
+  ~ Copyright © 2017 Logistimo.
+  ~
+  ~ This file is part of Logistimo.
+  ~
+  ~ Logistimo software is a mobile & web platform for supply chain management and remote temperature monitoring in
+  ~ low-resource settings, made available under the terms of the GNU Affero General Public License (AGPL).
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General
+  ~ Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any
+  ~ later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+  ~ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+  ~ for more details.
+  ~
+  ~ You should have received a copy of the GNU Affero General Public License along with this program.  If not, see
+  ~ <http://www.gnu.org/licenses/>.
+  ~
+  ~ You can be released from the requirements of the license by purchasing a commercial license. To know more about
+  ~ the commercial license, please contact us at opensource@logistimo.com
+  -->
+
+<div class="box topbox" ng-controller="CreateReturnsController">
+    <h3>Create returns for order <a ng-href="#/orders/detail/{{order.id}}/">{{order.id}}</a></h3>
+    <hr/>
+    <div class="row mt10">
+        <div class="col-sm-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    {{resourceBundle['customer']}}
+                </div>
+                <div class="panel-body">
+                    <div class="row lPad5 mb5">
+                        <div class="col-sm-12">
+                            <p><a class="capitalize"
+                                  ng-href="#/setup/entities/detail/{{order.eid}}" target="_blank">{{order.enm}}</a></p>
+                            <p class="capitalize">{{order.eadd}}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    {{resourceBundle['vendor']}}
+                </div>
+                <div class="panel-body">
+                    <div class="row lPad5 mb5">
+                        <div class="col-sm-12">
+                            <p><a class="capitalize"
+                                  ng-href="#/setup/entities/detail/{{order.vid}}" target="_blank">{{order.vnm}}</a></p>
+                            <p class="capitalize">{{order.vadd}}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    Items
+                </div>
+                <div class="panel-body">
+                    <table class="table table-condensed table-hover table-logistimo">
+                        <tr>
+                            <th class="col-sm-1 text-center">SI.No.</th>
+                            <th class="col-sm-2 ">Material</th>
+                            <th class="col-sm-1 text-center">Ordered</th>
+                            <!--<th class="col-sm-1 text-center">Shipped</th>-->
+                            <!--<th class="col-sm-2 text-center">Fulfilled</th>-->
+                            <th class="col-sm-5 text-center">Return</th>
+                        </tr>
+                        <tr ng-repeat="item in returnItems">
+                            <td class="text-center"><p class="cbx">{{$index + 1}}</p></td>
+                            <td>
+                                <p class="cbx">
+                                    <a href="#/setup/materials/all/detail/{{item.id}}" target="_blank">{{item.nm}}</a>
+                                </p>
+                            </td>
+                            <td class="text-center"><p class="cbx">{{item.q}}</p></td>
+                            <!--<td class="text-center">
+                                <p class="cbx">{{item.sq}}
+                                    <span ng-show="item.isBa"
+                                          class="glyphicons glyphicons-list-alt"
+                                          style="vertical-align:middle;"
+                                          ng-click="toggleBatch('sBDetail',item)">
+                                    </span>
+                                </p>
+                                <div ng-show="item.sBDetail">
+                                    <table class="table table-bordered table-order-batch" ng-show="item.returnBatches"
+                                           style="margin-left: auto; margin-right: auto;">
+                                        <thead>
+                                        <tr style="font-size: x-small;">
+                                            <th class=" text-center">{{resourceBundle['batch']}}</th>
+                                            <th class=" text-center">{{resourceBundle['expiry']}}</th>
+                                            <th class=" text-center">{{resourceBundle['quantity']}}</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr style="font-size: xx-small;"
+                                            ng-repeat="bi in item.returnBatches" ng-hide="isUndef(bi.q) || bi.q == 0">
+                                            <td class=" text-center">{{bi.id}}</td>
+                                            <td class=" text-center">{{bi.e}}</td>
+                                            <td class=" text-center">{{bi.q}}</td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <p class="cbx">{{item.fq}}
+                                    <span ng-show="item.isBa"
+                                          class="glyphicons glyphicons-list-alt"
+                                          style="vertical-align:middle;"
+                                          ng-click="toggleBatch('fBDetail',item)">
+                                    </span>
+                                </p>
+                                <div ng-show="item.fBDetail">
+                                    <table class="table table-bordered table-order-batch"
+                                           ng-show="item.returnBatches" style="margin-left: auto; margin-right: auto;">
+                                        <thead>
+                                        <tr style="font-size: x-small;">
+                                            <th class=" text-center">{{resourceBundle['batch']}}</th>
+                                            <th class=" text-center">{{resourceBundle['expiry']}}</th>
+                                            <th class=" text-center">{{resourceBundle['quantity']}}</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr style="font-size: xx-small;"
+                                            ng-repeat="bi in item.returnBatches" ng-hide="isUndef(bi.fq) || bi.fq == 0">
+                                            <td class=" text-center">{{bi.id}}</td>
+                                            <td class=" text-center">{{bi.e}}</td>
+                                            <td class=" text-center">{{bi.fq}}</td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </td>-->
+                            <td>
+                                <table class="table table-striped table-nobot-mar table-condensed"
+                                       ng-show="item.returnBatches" style="margin-left: auto; margin-right: auto;">
+                                    <thead>
+                                    <tr>
+                                        <th class=" text-center">{{resourceBundle['batch']}}</th>
+                                        <th class=" text-center">{{resourceBundle['expiry']}}</th>
+                                        <th class=" text-center">{{resourceBundle['shipped']}}</th>
+                                        <th class=" text-center">{{resourceBundle['fulfilled']}}</th>
+                                        <th class=" text-center">{{resourceBundle['quantity']}}</th>
+                                        <th class=" text-center"></th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr ng-repeat="bi in item.returnBatches" ng-hide="isUndef(bi.fq) || bi.fq == 0">
+                                        <td class=" text-center">{{bi.id}}</td>
+                                        <td class=" text-center">{{bi.e}}</td>
+                                        <td class=" text-center">{{bi.q}}</td>
+                                        <td class=" text-center">{{bi.fq}}</td>
+                                        <td class=" text-center">
+                                            <input class="form-control" only-digits ng-model="item.returnQuantity"
+                                                   id="{{item.id}}{{$index}}"
+                                                   ng-class="{'red-border':item.invalidPopup}"
+                                                   uib-popover="{{item.popupMsg}}" popover-trigger="showpopup"
+                                                   ng-focus="hidePop(item,$index)"
+                                                   ng-blur="validate(item,$index)">
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <div class="row mt10">
+                        <label class="col-sm-2 control-label">Comment </label>
+                        <div class="col-sm-5">
+                            <textarea class="form-control" rows="4" ng-model="comment"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="form-group">
+            <div class="col-sm-12">
+                <div class="pull-right">
+                    <button type="button" class="btn btn-sm btn-primary" ng-click="create()">{{resourceBundle['submit']}}</button>
+                    <button type="button" class="btn btn-sm btn-default" ng-click="cancel()">{{resourceBundle['cancel']}}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

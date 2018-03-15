@@ -85,6 +85,11 @@ public class DemandModel implements Comparable<DemandModel> {
   public Set<DemandItemBatchModel> bts;
 
   /**
+   * Batches
+   */
+  public Set<DemandItemBatchModel> returnBatches;
+
+  /**
    * vendor stock
    */
   public BigDecimal vs = BigDecimal.ZERO;

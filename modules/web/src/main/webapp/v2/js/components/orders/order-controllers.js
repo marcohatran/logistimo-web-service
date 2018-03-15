@@ -637,6 +637,10 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
             }
         });
 
+        $scope.setPageSelection = function(page) {
+            $scope.selection = page;
+        };
+
         $scope.openView = function (view, selRows, sn) {
             $scope.sMTShip = [];
             if (!sn) {
@@ -4160,12 +4164,16 @@ ordControllers.controller('ConsignmentController', ['$scope','returnsService', f
             var selectedItems = (function(){
                 var items = [];
                 for (var i = 0; i < $scope.sel.selectedRows.length; i++) {
-                    items.push($scope.order.its[selRows[i]]);
+                    items.push($scope.order.its[$scope.sel.selectedRows[i]]);
                 }
                 return items;
             })();
             if (isReturnValid(selectedItems)) {
-                returnsService.
+                returnsService.setItems(selectedItems);
+                returnsService.setOrder($scope.order);
+                $scope.setPageSelection('createReturns');
+            } else {
+                $scope.showWarning("Please select the items which are partially/fully fulfilled to create Returns");
             }
         } else {
             $scope.showWarning("Please select any material to create Returns");
@@ -4173,11 +4181,9 @@ ordControllers.controller('ConsignmentController', ['$scope','returnsService', f
     };
 
     function isReturnValid(selectedItems) {
-        if (selectedItems) {
-            return selectedItems.some(function (item) {
-                return item.fq != 0
-            })
-        }
+        return !selectedItems.some(function (item) {
+            return item.fq == 0
+        })
     }
 
 }]);
