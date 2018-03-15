@@ -894,8 +894,8 @@ domainControllers.controller('ViewDashboardController', ['$scope', 'dashboardSer
     }
 ]);
 
-domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$timeout', '$sce', 'dashboardService', 'configService', 'domainCfgService', 'requestContext', '$location', '$window',
-    function ($scope, $timeout, $sce, dashboardService, configService, domainCfgService, requestContext, $location, $window) {
+domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$timeout', '$sce', 'dashboardService', 'configService', 'domainCfgService', 'requestContext', '$location', '$q',
+    function ($scope, $timeout, $sce, dashboardService, configService, domainCfgService, requestContext, $location, $q) {
 
         var mapColors, mapRange, workingPieColors = 0;
 
@@ -905,6 +905,8 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
         $scope.asset = [];
         $scope.at = {mda: [], mna: []};
         $scope.period = "0";
+        const MONITORED_ASSETS = 2;
+        const MONITORING_ASSETS = 1;
 
         function initWatches() {
             $scope.$watch('eTag', function (newVal, oldVal) {
@@ -1205,20 +1207,26 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
             });
         };
 
-        function getAssetTypes(type) {
+        function init(){
             $scope.showLoading();
-            domainCfgService.getAssetSysCfg(type).then(function (data) {
-                if (type == 1) {
+            $q.all([getAssetTypes(MONITORING_ASSETS),getAssetTypes(MONITORED_ASSETS)]).then(function(){
+                getLocationMapping();
+            }) .finally(function () {
+                $scope.hideLoading();
+            });
+        }
+
+        function getAssetTypes(type) {
+            return domainCfgService.getAssetSysCfg(type).then(function (data) {
+                if (type == MONITORING_ASSETS) {
                     $scope.monitoringAssets = data.data;
                 } else {
                     $scope.monitoredAssets = data.data;
                 }
             }).catch(function error(msg) {
                 $scope.showErrorMsg(msg);
-            }).finally(function () {
-                $scope.hideLoading();
-            });
-        };
+            })
+        }
 
         $scope.hardRefreshDashboard = function () {
             $scope.initDefaults(true);
@@ -1635,12 +1643,6 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
                     });
             }
         };
-
-        function init() {
-            getAssetTypes(1);
-            getAssetTypes(2);
-            getLocationMapping();
-        }
 
         init();
     }]);
