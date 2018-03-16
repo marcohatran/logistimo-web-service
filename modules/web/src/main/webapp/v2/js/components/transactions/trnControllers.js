@@ -801,12 +801,14 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                         copy.trkid = returnitem.id;
                         if (checkNotNullEmpty(returnitem.bid)) {
                             var batch = {};
+                            batch.mId = returnitem.mid;
                             batch.bid = returnitem.bid;
                             batch.quantity = returnitem.rq;
                             batch.bexp = returnitem.bexp;
                             batch.bmfdt = returnitem.bmfdt;
                             batch.bmfnm = returnitem.bmfnm;
                             batch.mst = returnitem.rmst;
+                            batch.trkid = returnitem.id;
                             copy.bquantity.push(batch);
                         }
                         transactionmaterials.push(copy);
@@ -854,8 +856,13 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
             ft['bmaterials'] = [];
             $scope.transaction.materials.forEach(function (mat) {
                 if (mat.isBatch) {
+                    var items = {};
                     mat.bquantity.forEach(function (m) {
                         if (checkNotNullEmpty(m.quantity)) {
+                            items[m.mId + "\t" + m.bid] = {q:''+ m.quantity,e: m.bexp,mr: m.bmfnm,md: m.bmfdt,
+                                r :mat.reason, mst: m.mst, trkid: mat.trkid};
+                            ft['bmaterials'].push(items);
+                            /*
                             ft['bmaterials'][m.mId + "\t" + m.bid] = {
                                 q: '' + m.quantity,
                                 e: m.bexp,
@@ -863,7 +870,7 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                                 md: m.bmfdt,
                                 r : mat.reason,
                                 mst : m.mst
-                            };
+                            };*/
                         }
                     });
                 } else if (mat.isBinary) {

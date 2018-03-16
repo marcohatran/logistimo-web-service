@@ -612,36 +612,40 @@ public class TransactionsController {
             .append(StringUtil.getCSV(berrorMaterials));
         throw new BadRequestException(builder.toString());
       }
-      LinkedTreeMap batchMaterials = (LinkedTreeMap) transaction.get("bmaterials");
-      for (Object m : batchMaterials.keySet()) {
-        String keys[] = String.valueOf(m).split("\t");
-        Long materialId = Long.parseLong(keys[0]);
-        String batch = keys[1];
-        LinkedTreeMap batchMaterial = (LinkedTreeMap) batchMaterials.get(m);
-        BigDecimal
-            quantity =
-            new BigDecimal(Long.parseLong(String.valueOf(batchMaterial.get("q"))));
-        String expiry = String.valueOf(batchMaterial.get("e"));
-        String manufacturer = String.valueOf(batchMaterial.get("mr"));
-        String manufactured = String.valueOf(batchMaterial.get("md"));
-        String reason = String.valueOf(batchMaterial.get("r"));
-        if (reason.equals("null")) {
-          reason = "";
+      List<LinkedTreeMap> batchItems = (List) transaction.get("bmaterials");
+      for (LinkedTreeMap batchMaterials: batchItems) {
+        for (Object m : batchMaterials.keySet()) {
+          String keys[] = String.valueOf(m).split("\t");
+          Long materialId = Long.parseLong(keys[0]);
+          String batch = keys[1];
+          LinkedTreeMap batchMaterial = (LinkedTreeMap) batchMaterials.get(m);
+          BigDecimal
+              quantity =
+              new BigDecimal(Long.parseLong(String.valueOf(batchMaterial.get("q"))));
+          String expiry = String.valueOf(batchMaterial.get("e"));
+          String manufacturer = String.valueOf(batchMaterial.get("mr"));
+          String manufactured = String.valueOf(batchMaterial.get("md"));
+          String reason = String.valueOf(batchMaterial.get("r"));
+          if (reason.equals("null")) {
+            reason = "";
+          }
+          String status = String.valueOf(batchMaterial.get("mst"));
+          if (status.equals("null")) {
+            status = "";
+          }
+          if (manufactured.equals("null")) {
+            manufactured = "";
+          }
+          String trkid = String.valueOf(batchMaterial.get("trkid"));
+          ITransaction
+              trans =
+              getTransaction(userId, domainId, transType, kioskId, linkedKioskId, reason, status,
+                  now,
+                  materialId, quantity, batch, actualTransDate, trkid);
+          TransactionUtil.setBatchData(trans, batch, expiry, manufacturer, manufactured);
+          transList.add(trans);
         }
-        String status = String.valueOf(batchMaterial.get("mst"));
-        if (status.equals("null")) {
-          status = "";
-        }
-        if (manufactured.equals("null")) {
-          manufactured = "";
-        }
-        ITransaction
-            trans =
-            getTransaction(userId, domainId, transType, kioskId, linkedKioskId, reason, status, now,
-                materialId, quantity, batch, actualTransDate, null);
-        TransactionUtil.setBatchData(trans, batch, expiry, manufacturer, manufactured);
-        transList.add(trans);
-      }
+    }
 
       List<ITransaction> errors = inventoryManagementService.updateInventoryTransactions(domainId, transList, true).getErrorTransactions();
       if (errors != null && errors.size() > 0) {
