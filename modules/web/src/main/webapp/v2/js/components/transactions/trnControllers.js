@@ -1919,9 +1919,9 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
     function ($scope,$timeout,requestContext,$location,domainCfgService,trnService) {
         $scope.noWatch = true;
         ListingController.call(this, $scope, requestContext, $location);
-
         $scope.size = 10;
-        $scope.showTransactionsList = checkNullEmpty($scope.material.returnitems) || $scope.material.returnitems.length == 0;
+        $scope.returnitems = angular.copy($scope.material.returnitems);
+        $scope.showTransactionsList = checkNullEmpty($scope.returnitems) || $scope.returnitems.length == 0;
         $scope.transactions = {results:[]};
         domainCfgService.getReturnConfig($scope.entity.id).then(function (data) {
             $scope.rc = data.data;
@@ -2016,6 +2016,10 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
             $scope.returnFormOpen = false;
         };
 
+        $scope.saveEditedReturnTransactions = function(index) {
+            $scope.material.returnitems = $scope.returnitems;
+            $scope.toggle(index);
+        }
         $scope.isReturnTransactionsValid = function() {
             return ($scope.transactions.results.every($scope.isTransactionValid));
         };
@@ -2103,8 +2107,8 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
         };
 
         $scope.isReturnEnteredForTransaction = function(id) {
-            if (checkNotNullEmpty($scope.material.returnitems)) {
-                return $scope.material.returnitems.some(function(returnitem){
+            if (checkNotNullEmpty($scope.returnitems)) {
+                return $scope.returnitems.some(function(returnitem){
                     return (returnitem.sno == id);
                 });
             }
@@ -2112,14 +2116,14 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
         };
 
         $scope.removeFromReturnItems = function(id) {
-            if (checkNotNullEmpty($scope.material.returnitems)) {
-                for (var i = 0;  i < $scope.material.returnitems.length; i++) {
-                    if (id == $scope.material.returnitems[i].sno) {
-                        $scope.material.returnitems.splice(i,1);
+            if (checkNotNullEmpty($scope.returnitems)) {
+                for (var i = 0;  i < $scope.returnitems.length; i++) {
+                    if (id == $scope.returnitems[i].sno) {
+                        $scope.returnitems.splice(i,1);
                     }
                 }
             }
-            if ($scope.material.returnitems.length == 0) {
+            if ($scope.returnitems.length == 0) {
                 $scope.showTransactionsList = true;
                 $scope.fetch();
             }
