@@ -1735,6 +1735,19 @@ public class RESTUtil {
       if (kioskTags != null) {
         config.put(JsonTagsZ.ENTITY_TAG, Arrays.asList(kioskTags));
       }
+      Hashtable<String, Object>
+          configDB =
+          new Hashtable<>();
+
+      // Add default material tags, if configured in the domain
+      String[] defaultMaterialTags = TagUtil.getTagsArray(dc.getDashboardConfig().getDbOverConfig().dmtg);
+      if (defaultMaterialTags != null) {
+        configDB.put(JsonTagsZ.DEFAULT_MATERIAL_TAGS, Arrays.asList(defaultMaterialTags));
+      }
+
+      if (configDB != null) {
+        config.put(JsonTagsZ.DASHBOARD, configDB);
+      }
       // Returns policy configuration
       List<ReturnsConfig> returnsConfigs = dc.getInventoryConfig().getReturnsConfig();
       if (CollectionUtils.isNotEmpty(returnsConfigs)) {
