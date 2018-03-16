@@ -372,7 +372,7 @@ domainCfgControllers.controller('CapabilitiesConfigurationController', ['$scope'
         $scope.cnf = {};
         $scope.uiCnf = {};
         $scope.cap = ["inventory", "orders"];
-        $scope.tm = ["vs", "es", "er", "sc", "wa", "ts", "eri", "ero", "ns", "vo", "vp", "ep", "pi", "xi", "vh", "vt", "ct", "va", "cas"];
+        $scope.tm = ["vs", "es", "er", "sc", "wa", "ts", "eri", "ero", "ns", "vo", "vp", "ep", "pi", "xi", "vh", "vt", "ct", "va", "cas","vl","etvs","erir"];
         $scope.et = ["ents", "csts", "vnds"];
         $scope.loading = false;
         $scope.getCapabilitiesConfiguration = function () {
@@ -606,6 +606,40 @@ domainCfgControllers.controller('CapabilitiesConfigurationController', ['$scope'
             }
         };
 
+        $scope.toggleViewStock = function (type) {
+            if(type == 'etvs'){
+                if($scope.uiCnf.tm.indexOf('vs') != -1 && $scope.uiCnf.tm.indexOf('etvs') != -1) {
+                    $scope.uiCnf.tm.splice($scope.uiCnf.tm.indexOf('vs'), 1);
+                    $scope.uiCnf.tm.splice($scope.uiCnf.tm.indexOf('etvs'), 1);
+                }
+            }else {
+                if($scope.uiCnf.tm.indexOf('etvs') == -1 && $scope.uiCnf.tm.indexOf('vs') == -1) {
+                    $scope.uiCnf.tm.push("vs");
+                    $scope.uiCnf.tm.push("etvs");
+                }
+            }
+        };
+
+        $scope.toggleReturns = function(type){
+            if(type == 'eri'){
+                if($scope.uiCnf.tm.indexOf('eri') == -1 && $scope.uiCnf.tm.indexOf('ero') != -1 && $scope.uiCnf.tm.indexOf('erir') == -1 ) {
+                    $scope.uiCnf.tm.push("erir");
+                    $scope.uiCnf.tm.push("eri");
+                }
+            }else if (type == 'ero'){
+              if($scope.uiCnf.tm.indexOf('eri') != -1 && $scope.uiCnf.tm.indexOf('ero') == -1 && $scope.uiCnf.tm.indexOf('erir') == -1 ) {
+                  $scope.uiCnf.tm.push("erir");
+                  $scope.uiCnf.tm.push("ero");
+              }
+            }else if(type == 'erir') {
+                if($scope.uiCnf.tm.indexOf('erir') != -1 && ($scope.uiCnf.tm.indexOf('ero') != -1) && $scope.uiCnf.tm.indexOf('eri') != -1) {
+                    $scope.uiCnf.tm.splice($scope.uiCnf.tm.indexOf('ero'), 1);
+                    $scope.uiCnf.tm.splice($scope.uiCnf.tm.indexOf('eri'), 1);
+                    $scope.uiCnf.tm.splice($scope.uiCnf.tm.indexOf('erir'), 1);
+                }
+            }
+        };
+
 
         $scope.getCapabilitiesByRole = function (role) {
             if (role === "ROLE_ko") {
@@ -626,7 +660,8 @@ domainCfgControllers.controller('CapabilitiesConfigurationController', ['$scope'
             $scope.oTags = [];
             $scope.updateTags();
             $scope.formUpdated = false;
-            // Copy the authentication token expiry and synchronization by mobile related configuration from $scope.cnf into $scope.uiCnf only if role is not "" (because for that case, the below steps are unnecessary)
+            // Copy the authentication token expiry and synchronization by mobile related configuration from $scope.cnf
+            // into $scope.uiCnf only if role is not "" (because for that case, the below steps are unnecessary)
             if (role === "ROLE_ko" || role === "ROLE_sm" || role === "ROLE_do" || role === "ROLE_su") {
                 $scope.uiCnf.atexp = $scope.cnf.atexp;
                 $scope.uiCnf.mdri = $scope.cnf.mdri;
@@ -651,7 +686,8 @@ domainCfgControllers.controller('CapabilitiesConfigurationController', ['$scope'
             }
             $scope.cnf.lastUpdated = lu;
             $scope.cnf.fn = angular.copy($scope.curUserName);
-            // Update $scope.cnf variables for the ROLE_ko, ROLE_sm, ROLE_do, ROLE_su. For role == "" it's already done above.
+            // Update $scope.cnf variables for the ROLE_ko, ROLE_sm, ROLE_do, ROLE_su. For role == "" it's already done
+            // above.
             if (role === "ROLE_ko" || role === "ROLE_sm" || role === "ROLE_do" || role === "ROLE_su") {
                 $scope.cnf.atexp = $scope.uiCnf.atexp;
                 $scope.cnf.mdri = $scope.uiCnf.mdri;
