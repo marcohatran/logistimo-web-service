@@ -1971,7 +1971,7 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
                     leid = $scope.transaction.dent.eid;
                 }
             }
-            trnService.getTransactions(null, null, fromDate, null,
+            trnService.getTransactions(null, null, checkNotNullEmpty(fromDate) ? formatDate(fromDate) : fromDate, null,
                 type, $scope.offset, $scope.size, null, null, eid, leid,
                 mid, null).then(function (data) {
                     $scope.setData(data.data);
