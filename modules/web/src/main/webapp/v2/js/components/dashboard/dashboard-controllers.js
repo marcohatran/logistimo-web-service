@@ -1431,7 +1431,7 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
                                     filter = $scope.dashboardView.mTyNm + "_" + bd.label;
                                 }
                                 bd.link = "JavaScript: angular.element(document.getElementById('cid')).scope().addFilter('" + filter + "','" + level + "')";
-                            } else if($scope.mrValues.indexOf(event) != -1) {
+                            } else if($scope.mrValues.indexOf(event) != -1 && !$scope.iMan) {
                                 var ws = (parseInt(eventType, 10) + 1).toString();
                                 bd.link = "N-#/assets/all?ws=" + ws;
                                 if(checkNotNullEmpty(kid)) {
