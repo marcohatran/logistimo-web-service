@@ -835,6 +835,7 @@ public class OrdersAPIBuilder {
         DemandModel itemModel = new DemandModel();
         itemModel.nm = m.getName();
         itemModel.id = mid;
+        itemModel.materialTags = m.getTags();
         itemModel.q = item.getQuantity();
         itemModel.p = item.getFormattedPrice();
         itemModel.t = item.getTax();

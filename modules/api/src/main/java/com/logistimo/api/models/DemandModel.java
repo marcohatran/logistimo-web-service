@@ -268,6 +268,9 @@ public class DemandModel implements Comparable<DemandModel> {
    */
   public List<ShipmentItemModel> bd = new ArrayList<>();
 
+
+  public List<String> materialTags;
+
   /* (non-Javadoc)
    * @see java.lang.Comparable#compareTo(java.lang.Object)
    */

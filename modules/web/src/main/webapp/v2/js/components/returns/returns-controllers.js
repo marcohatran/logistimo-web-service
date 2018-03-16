@@ -25,15 +25,43 @@
  * Created by Mohan Raja on 11/03/18.
  */
 
-logistimoApp.controller('CreateReturnsController', ['$scope', 'returnsService',
-    function ($scope, returnsService) {
+logistimoApp.controller('CreateReturnsController', ['$scope', 'returnsService','domainCfgService','trnService',
+    function ($scope, returnsService, domainCfgService, trnService) {
 
         $scope.returnItems = returnsService.getItems();
         $scope.returnOrder = returnsService.getOrder();
 
-        $scope.toggleBatch = function (type, item) {
-            item[type] = !item[type];
-        };
+        $scope.showLoading();
+        trnService.getReasons('ro')
+            .then(function (data) {
+                $scope.reasons = [""];
+                $scope.reasons = $scope.reasons.concat(data.data.rsns);
+                $scope.defaultReason = data.data.defRsn;
+            })
+            .then(function () {
+                angular.forEach($scope.returnItems, function (returnItem) {
+                    if (returnItem.materialTags) {
+                        trnService.getReasons('ro', returnItem.materialTags).then(function (data) {
+                            returnItem.reasons = [""];
+                            returnItem.reasons = returnItem.reasons.concat(data.data.rsns);
+                            returnItem.returnReason = data.data.defRsn;
+                            angular.forEach(returnItem.returnBatches, function (returnBatch) {
+                                returnBatch.returnReason = angular.copy(returnItem.returnReason);
+                            });
+                        });
+                    } else {
+                        returnItem.reasons = angular.copy($scope.reasons);
+                        returnItem.returnReason = angular.copy($scope.defaultReason);
+                        angular.forEach(returnItem.returnBatches, function (returnBatch) {
+                            returnBatch.returnReason = angular.copy(returnItem.returnReason);
+                        });
+                    }
+                })
+            }).catch(function error(msg) {
+                $scope.showErrorMsg(msg);
+            }).finally(function () {
+                $scope.hideLoading();
+            });
 
         $scope.cancel = function() {
             $scope.setPageSelection('orderDetail');
@@ -72,8 +100,8 @@ logistimoApp.controller('CreateReturnsController', ['$scope', 'returnsService',
                 var item = {
                     material_id : returnItem.id,
                     return_quantity : returnItem.returnQuantity,
-                    material_status : returnItem.newStataus,
-                    reason : returnItem.reason
+                    material_status : returnItem.returnMaterialStatus,
+                    reason : returnItem.returnReason
                 };
                 if(returnItem.returnBatches) {
                     item.batches = [];
@@ -82,8 +110,8 @@ logistimoApp.controller('CreateReturnsController', ['$scope', 'returnsService',
                         item.batches.push({
                             batch_id : returnBatch.id,
                             return_quantity : returnBatch.returnQuantity,
-                            material_status : returnBatch.newStataus,
-                            reason : returnBatch.reason
+                            material_status : returnBatch.returnMaterialStatus,
+                            reason : returnBatch.returnReason
                         });
                         totalReturnQuantity += returnBatch.returnQuantity;
                     });

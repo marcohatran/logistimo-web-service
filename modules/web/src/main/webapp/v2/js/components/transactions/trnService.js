@@ -129,7 +129,11 @@ trnServices.factory('trnService', ['APIService', function (apiService) {
             return apiService.get('/s2/api/transactions/actualroute?userId=' + userId + '&from=' + from + '&to=' + to);
         },
         getReasons : function(type,tags){
-            return apiService.get('/s2/api/transactions/reasons?type=' + type + '&tags=' + tags);
+            var urlStr = '/s2/api/transactions/reasons?type=' + type;
+            if (checkNotNullEmpty(tags)) {
+                urlStr = urlStr + "&tags=" + tags;
+            }
+            return apiService.get(urlStr);
         },
         getMatStatus : function(type,ts){
             return apiService.get('/s2/api/transactions/matStatus?type=' + type + '&ts=' + ts);

@@ -378,7 +378,7 @@ public class TransactionsController {
   @RequestMapping(value = "/reasons", method = RequestMethod.GET)
   public
   @ResponseBody
-  ReasonConfigModel getReasons(@RequestParam String type, String[] tags) {
+  ReasonConfigModel getReasons(@RequestParam String type, @RequestParam(required = false) String[] tags) {
     Long domainId = SecurityUtils.getCurrentDomainId();
     DomainConfig dc = DomainConfig.getInstance(domainId);
     InventoryConfig ic = dc.getInventoryConfig();
@@ -429,6 +429,10 @@ public class TransactionsController {
           }
           break;
       }
+    } else {
+      reasonConfigModels = new ArrayList<>(1);
+      reasonConfigModels.add(configurationModelBuilder
+          .buildReasonConfigModel(ic.getTransactionReasonsConfigByType(type)));
     }
     ReasonConfigModel reasonConfigModel = new ReasonConfigModel();
     if (CollectionUtils.isNotEmpty(reasonConfigModels)) {
