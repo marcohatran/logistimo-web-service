@@ -85,8 +85,49 @@
                                 <p class="cbx">{{item.fq}}</p>
                             </td>
                             <td>
+                                <div ng-if="isUndef(item.returnBatches)">
+                                    <input class="form-control" only-digits ng-model="item.returnQuantity"
+                                           id="{{item.id}}{{$index}}"
+                                           ng-class="{'red-border':item.invalidPopup}"
+                                           uib-popover="{{item.popupMsg}}" popover-trigger="showpopup"
+                                           ng-focus="hidePop(item,$index)"
+                                           ng-blur="validate(item,$index)">
+                                    <div ng-show="item.returnQuantity > 0">
+                                                <span class="litetext text-left" ng-class="{'required' : transConfig.rsm}"
+                                                      ng-show="(!item.tm && isDef(matstatus)) || (item.tm && isDef(tempmatstatus))">{{resourceBundle['inventory.material.status']}}</span>
+                                        <select ng-show="isDef(matstatus) && !item.tm" ng-model="item.returnMaterialStatus" class="form-control"
+                                                ng-class="{'red-border': item.sinvalidPopup}"
+                                                uib-popover="{{item.sPopupMsg}}"
+                                                ng-blur="item.isVisitedStatus = true; validate(item,$index,'cm')"
+                                                ng-focus="hidePop(item,$index,'cm')"
+                                                id="cm{{item.mId}}{{$index}}"
+                                                popover-trigger="showpopup">
+                                            <option ng-repeat="status in matstatus" value="{{status}}">{{status|| resourceBundle['pleaseselect']}}
+                                            </option>
+                                        </select>
+                                        <select ng-show="isDef(tempmatstatus) && item.tm" ng-model="item.returnMaterialStatus" class="form-control"
+                                                ng-class="{'red-border': item.sinvalidPopup}"
+                                                uib-popover="{{item.sPopupMsg}}"
+                                                ng-blur="item.isVisitedStatus = true; validate(item,$index,'cmt')"
+                                                ng-focus="hidePop(item,$index,'cmt')"
+                                                id="cmt{{item.mId}}{{$index}}"
+                                                popover-trigger="showpopup">
+                                            <option ng-repeat="status in tempmatstatus" value="{{status}}">{{status|| resourceBundle['pleaseselect']}}
+                                            </option>
+                                        </select>
+
+
+                                        <div ng-show="item.reasons && item.reasons.length > 0">
+                                            <span class="litetext text-left" >{{resourceBundle['reason']}}</span>
+                                            <select class="form-control" ng-model="item.returnReason">
+                                                <option ng-repeat="reason in item.reasons track by $index" value="{{reason}}" ng-selected="item.returnReason == reason">{{reason || '--' + resourceBundle['select'] + ' ' + resourceBundle['reason'] + '--'}}</option>
+                                            </select>
+                                        </div>
+                                        <p ng-show="showMaterials && (!showReason || (!(material.rsns && material.rsns.length > 0) && !(isUndef(material.rsns) && reasons && reasons.length > 0))) && transaction.materials.length - 1 !== $index" class="text-center cbx">NA</p>
+                                    </div>
+                                </div>
                                 <table class="table table-striped table-nobot-mar table-condensed"
-                                       ng-show="item.returnBatches" style="margin-left: auto; margin-right: auto;">
+                                       ng-if="item.returnBatches && item.returnBatches.length > 0" style="margin-left: auto; margin-right: auto;">
                                     <thead>
                                     <tr>
                                         <th class=" text-center">{{resourceBundle['batch']}}</th>
@@ -105,23 +146,22 @@
                                         <td class=" text-center">{{batch.fq}}</td>
                                         <td class=" text-center">
                                             <input class="form-control" only-digits ng-model="batch.returnQuantity"
-                                                   id="{{item.id}}{{$index}}"
+                                                   id="{{item.id}}{{batch.id}}{{$index}}"
                                                    ng-class="{'red-border':item.invalidPopup}"
-                                                   uib-popover="{{item.popupMsg}}" popover-trigger="showpopup"
-                                                   ng-focus="hidePop(item,$index)"
-                                                   ng-blur="validate(item,$index)">
+                                                   uib-popover="{{batch.popupMsg}}" popover-trigger="showpopup"
+                                                   ng-focus="hidePop(batch,$index)"
+                                                   ng-blur="validate(batch,$index)">
                                             <div ng-show="batch.returnQuantity > 0">
                                                 <span class="litetext text-left" ng-class="{'required' : transConfig.rsm}"
                                                       ng-show="(!item.tm && isDef(matstatus)) || (item.tm && isDef(tempmatstatus))">{{resourceBundle['inventory.material.status']}}</span>
                                                 <select ng-show="isDef(matstatus) && !item.tm" ng-model="batch.returnMaterialStatus" class="form-control"
                                                         ng-class="{'red-border': item.sinvalidPopup}"
-                                                        uib-popover="{{item.sPopupMsg}}"
-                                                        ng-blur="item.isVisitedStatus = true; validate(item,$index,'cm')"
-                                                        ng-focus="hidePop(item,$index,'cm')"
-                                                        id="cm{{item.mId}}{{$index}}"
+                                                        uib-popover="{{batch.sPopupMsg}}"
+                                                        ng-blur="batch.isVisitedStatus = true; validate(batch,$index,'cm')"
+                                                        ng-focus="hidePop(batch,$index,'cm')"
+                                                        id="cm{{item.mId}}{{batch.id}}{{$index}}"
                                                         popover-trigger="showpopup">
-                                                    <option ng-repeat="status in matstatus" value="{{status}}"
-                                                            ng-selected="item.fmst == status">{{status|| resourceBundle['pleaseselect']}}
+                                                    <option ng-repeat="status in matstatus" value="{{status}}">{{status|| resourceBundle['pleaseselect']}}
                                                     </option>
                                                 </select>
                                                 <select ng-show="isDef(tempmatstatus) && item.tm" ng-model="batch.returnMaterialStatus" class="form-control"
@@ -129,10 +169,9 @@
                                                         uib-popover="{{item.sPopupMsg}}"
                                                         ng-blur="item.isVisitedStatus = true; validate(item,$index,'cmt')"
                                                         ng-focus="hidePop(item,$index,'cmt')"
-                                                        id="cmt{{item.mId}}{{$index}}"
+                                                        id="cmt{{item.mId}}{{batch.id}}{{$index}}"
                                                         popover-trigger="showpopup">
-                                                    <option ng-repeat="status in tempmatstatus" value="{{status}}"
-                                                            ng-selected="item.fmst == status">{{status|| resourceBundle['pleaseselect']}}
+                                                    <option ng-repeat="status in tempmatstatus" value="{{status}}">{{status|| resourceBundle['pleaseselect']}}
                                                     </option>
                                                 </select>
 
