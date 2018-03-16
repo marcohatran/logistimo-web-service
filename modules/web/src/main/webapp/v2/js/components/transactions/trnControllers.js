@@ -2006,20 +2006,21 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
             }
             angular.forEach($scope.transactions.results,function(transaction) {
                 if(transaction.rq > 0) {
-                    if (!$scope.material.returnitems) {
-                        $scope.material.returnitems = [];
+                    if (!$scope.returnitems) {
+                        $scope.returnitems = [];
                     }
-                    $scope.material.returnitems.push(transaction);
+                    $scope.returnitems.push(angular.copy(transaction));
+                    transaction.rq=undefined;
                 }
             });
-            $scope.toggle(index);
-            $scope.returnFormOpen = false;
         };
 
         $scope.saveEditedReturnTransactions = function(index) {
             $scope.material.returnitems = $scope.returnitems;
             $scope.toggle(index);
-        }
+           $scope.returnFormOpen = false;
+
+        };
         $scope.isReturnTransactionsValid = function() {
             return ($scope.transactions.results.every($scope.isTransactionValid));
         };

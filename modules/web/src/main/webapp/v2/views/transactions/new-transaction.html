@@ -419,7 +419,7 @@
                 <div class="form-group">
                     <div class="col-sm-12">
                         <div class="pull-right">
-                            <button type="button" ng-disabled="invalidPopup != 0 || transaction.materials.length<=1 || !addTransaction.$valid || returnFormOpen == true" ng-click="submitted=true; addTransaction.$valid && update()" class="btn btn-sm btn-primary">{{resourceBundle['submit']}}</button>
+                            <button type="button" ng-disabled="invalidPopup != 0 || transaction.materials.length<=1 || !addTransaction.$valid" ng-click="submitted=true; addTransaction.$valid && update()" class="btn btn-sm btn-primary">{{resourceBundle['submit']}}</button>
                             <button type="button" class="btn btn-sm btn-default" ng-click="reset()">{{resourceBundle['reset']}}</button>
                         </div>
                     </div>
