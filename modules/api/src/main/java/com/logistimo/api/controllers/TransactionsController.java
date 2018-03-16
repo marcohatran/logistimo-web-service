@@ -562,32 +562,35 @@ public class TransactionsController {
                 .parseCustom(String.valueOf(transaction.get("transactual")), Constants.DATE_FORMAT,
                     null);
       }
-      LinkedTreeMap materials = (LinkedTreeMap) transaction.get("materials");
+      List<LinkedTreeMap> items = (List) transaction.get("materials");
       List<String> berrorMaterials = new ArrayList<>(1);
-      for (Object m : materials.keySet()) {
-        Long materialId = Long.parseLong(String.valueOf(m));
-        LinkedTreeMap mat = (LinkedTreeMap) materials.get(m);
-        BigDecimal quantity = new BigDecimal(Long.parseLong(String.valueOf(mat.get("q"))));
-        String reason = String.valueOf(mat.get("r"));
-        if (reason.equals("null")) {
-          reason = "";
-        }
-        String status = String.valueOf(mat.get("mst"));
-        if (status.equals("null")) {
-          status = "";
-        }
-        if (checkBatchMgmt) {
-          IMaterial material = materialCatalogService.getMaterial(materialId);
-          if (material.isBatchEnabled()) {
-            berrorMaterials.add(material.getName());
+      for (LinkedTreeMap materials : items) {
+        for (Object m : materials.keySet()) {
+          Long materialId = Long.parseLong(String.valueOf(m));
+          LinkedTreeMap mat = (LinkedTreeMap) materials.get(m);
+          BigDecimal quantity = new BigDecimal(Long.parseLong(String.valueOf(mat.get("q"))));
+          String reason = String.valueOf(mat.get("r"));
+          if (reason.equals("null")) {
+            reason = "";
           }
+          String status = String.valueOf(mat.get("mst"));
+          if (status.equals("null")) {
+            status = "";
+          }
+          if (checkBatchMgmt) {
+            IMaterial material = materialCatalogService.getMaterial(materialId);
+            if (material.isBatchEnabled()) {
+              berrorMaterials.add(material.getName());
+            }
+          }
+          String trkid = String.valueOf(mat.get("trkid"));
+          ITransaction
+              trans =
+              getTransaction(userId, domainId, transType, kioskId, linkedKioskId, reason, status,
+                  now,
+                  materialId, quantity, "", actualTransDate, trkid);
+          transList.add(trans);
         }
-        String trkid = String.valueOf(mat.get("trkid"));
-        ITransaction
-            trans =
-            getTransaction(userId, domainId, transType, kioskId, linkedKioskId, reason, status, now,
-                materialId, quantity, "", actualTransDate,trkid);
-        transList.add(trans);
       }
       if (!berrorMaterials.isEmpty()) {
         xLogger.info(

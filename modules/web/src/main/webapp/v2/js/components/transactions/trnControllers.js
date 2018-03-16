@@ -799,6 +799,16 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                         copy.mst = returnitem.rmst;
                         copy.rsn = returnitem.rrsn;
                         copy.trkid = returnitem.id;
+                        if (checkNotNullEmpty(returnitem.bid)) {
+                            var batch = {};
+                            batch.bid = returnitem.bid;
+                            batch.quantity = returnitem.rq;
+                            batch.bexp = returnitem.bexp;
+                            batch.bmfdt = returnitem.bmfdt;
+                            batch.bmfnm = returnitem.bmfnm;
+                            batch.mst = returnitem.rmst;
+                            copy.bquantity.push(batch);
+                        }
                         transactionmaterials.push(copy);
                     });
                 });
@@ -840,8 +850,8 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
             if(checkNotNullEmpty($scope.transaction.date)) {
                 ft['transactual'] = '' + formatDate($scope.transaction.date);
             }
-            ft['materials'] = {};
-            ft['bmaterials'] = {};
+            ft['materials'] = [];
+            ft['bmaterials'] = [];
             $scope.transaction.materials.forEach(function (mat) {
                 if (mat.isBatch) {
                     mat.bquantity.forEach(function (m) {
@@ -859,8 +869,10 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                 } else if (mat.isBinary) {
                     ft['materials'][mat.name.mId] = "1";
                 } else if (checkNotNull(mat.ind)) {
-                    ft['materials'][mat.name.mId] = {q:''+ mat.quantity,
+                    var items = {};
+                    items[mat.name.mId] = {q:''+ mat.quantity,
                         r :mat.reason, mst: mat.mst, trkid: mat.trkid};
+                    ft['materials'].push(items);
                 }
             });
             ft['signature'] = $scope.curUser + $scope.timestamp;
