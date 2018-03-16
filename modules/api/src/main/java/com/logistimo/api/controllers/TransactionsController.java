@@ -433,11 +433,12 @@ public class TransactionsController {
     ReasonConfigModel reasonConfigModel = new ReasonConfigModel();
     if (CollectionUtils.isNotEmpty(reasonConfigModels)) {
       reasonConfigModels.forEach(entry -> {
-        reasonConfigModel.rsns.addAll(new ArrayList<>(new LinkedHashSet<>(entry.rsns)));
+        reasonConfigModel.rsns.addAll(new ArrayList<>(entry.rsns));
         if (reasonConfigModel.defRsn == null) {
           reasonConfigModel.defRsn = entry.defRsn;
         }
       });
+      reasonConfigModel.rsns = new ArrayList<>(new LinkedHashSet<>(reasonConfigModel.rsns));
     }
     return reasonConfigModel;
   }
