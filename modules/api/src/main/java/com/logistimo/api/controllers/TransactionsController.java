@@ -582,10 +582,11 @@ public class TransactionsController {
             berrorMaterials.add(material.getName());
           }
         }
+        String trkid = String.valueOf(mat.get("trkid"));
         ITransaction
             trans =
             getTransaction(userId, domainId, transType, kioskId, linkedKioskId, reason, status, now,
-                materialId, quantity, "", actualTransDate);
+                materialId, quantity, "", actualTransDate,trkid);
         transList.add(trans);
       }
       if (!berrorMaterials.isEmpty()) {
@@ -634,7 +635,7 @@ public class TransactionsController {
         ITransaction
             trans =
             getTransaction(userId, domainId, transType, kioskId, linkedKioskId, reason, status, now,
-                materialId, quantity, batch, actualTransDate);
+                materialId, quantity, batch, actualTransDate, null);
         TransactionUtil.setBatchData(trans, batch, expiry, manufacturer, manufactured);
         transList.add(trans);
       }
@@ -667,7 +668,7 @@ public class TransactionsController {
   private ITransaction getTransaction(String userId, Long domainId, String transType, Long kioskId,
                                       Long linkedKioskId, String reason, String matStatus, Date now,
                                       Long materialId, BigDecimal quantity, String batch,
-                                      Date actualTransDate) {
+                                      Date actualTransDate, String trkid) {
     ITransaction trans = JDOUtils.createInstance(ITransaction.class);
     trans.setDomainId(domainId);
     trans.setKioskId(kioskId);
@@ -683,6 +684,12 @@ public class TransactionsController {
     trans.setAtd(actualTransDate);
     if (linkedKioskId != null) {
       trans.setLinkedKioskId(linkedKioskId);
+    }
+    trans.setTrackingId(trkid);
+    if (ITransaction.TYPE_RETURNS_INCOMING.equals(transType)) {
+      trans.setTrackingObjectType(ITransaction.TYPE_ISSUE_TRANSACTION);
+    } else if (ITransaction.TYPE_RETURNS_OUTGOING.equals(transType)) {
+      trans.setTrackingObjectType(ITransaction.TYPE_RECEIPT_TRANSACTION);
     }
     transDao.setKey(trans);
     return trans;

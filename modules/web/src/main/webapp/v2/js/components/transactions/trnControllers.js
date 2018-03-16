@@ -714,6 +714,7 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
         };
         $scope.entityType = "";
         $scope.update = function () {
+            createTransactionsForReturns();
             if ($scope.timestamp == undefined) {
                 $scope.timestamp = new Date().getTime();
             }
@@ -787,6 +788,25 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
             }
         };
 
+        function createTransactionsForReturns() {
+            if ($scope.transaction.type == 'ri' || $scope.transaction.type == 'ro') {
+                var transactionmaterials = [];
+                angular.forEach($scope.transaction.materials, function (material) {
+                    var returnitems = material.returnitems;
+                    angular.forEach(returnitems,function(returnitem){
+                        var copy = angular.copy(material);
+                        copy.quantity = returnitem.rq;
+                        copy.mst = returnitem.rmst;
+                        copy.rsn = returnitem.rrsn;
+                        copy.trkid = returnitem.id;
+                        transactionmaterials.push(copy);
+                    });
+                });
+                $scope.transaction.materials = transactionmaterials;
+            }
+            console.log($scope.transaction.materials);
+        }
+
         function handleTimeout() {
             $scope.modalInstance = $uibModal.open({
                 template: '<div class="modal-header ws">' +
@@ -840,7 +860,7 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                     ft['materials'][mat.name.mId] = "1";
                 } else if (checkNotNull(mat.ind)) {
                     ft['materials'][mat.name.mId] = {q:''+ mat.quantity,
-                        r :mat.reason, mst: mat.mst};
+                        r :mat.reason, mst: mat.mst, trkid: mat.trkid};
                 }
             });
             ft['signature'] = $scope.curUser + $scope.timestamp;
