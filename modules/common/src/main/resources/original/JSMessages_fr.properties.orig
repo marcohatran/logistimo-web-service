@@ -1266,3 +1266,6 @@ monitoring.type=Type de surveillance
 by.location=Par emplacement
 default.country=Veuillez choisir le pays par défaut pour que le domaine active les tableaux de bord.
 return.quantity=Quantité de retour
+cannot.exceed.issued.quantity=ne peut pas dépasser la quantité émise
+cannot.exceed.received.quantity=ne peut pas dépasser la quantité reçue
+choose.transactions=Choisissez les transactions

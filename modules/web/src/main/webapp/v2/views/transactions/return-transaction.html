@@ -83,7 +83,8 @@
         </div>
             <div class="row" ng-show="material.returnitems.length > 0 && !showTransactionsList">
                 <div class="col-sm-12">
-                    <span  ng-click="showTransactionsList = true; fetch()" >Choose transactions</span>
+                    <button ng-click="showTransactionsList=true;fetch()" class="btn btn-sm btn-primary">{{resourceBundle['choose.transactions']}}</button>
+                   <!-- <span  ng-click="showTransactionsList = true; fetch()" >Choose transactions</span>-->
                 </div>
             </div>
         <div ng-show="transactions.results.length > 0" class="row">
@@ -121,19 +122,17 @@
                     <div ng-show="trans.rq > 0" class="mt5">
                     <span class="litetext float-left" ng-class="{'required' : msm}" ng-show="(!material.ts && isDef(matstatus)) || (material.ts && isDef(tempmatstatus))">{{resourceBundle['inventory.material.status']}}</span>
                     <select ng-hide="material.ts || isUndef(matstatus)" ng-model="trans.rmst" class="form-control"
-                            ng-class="{'red-border': trans.ainvalidPopup}"
+                            ng-class="{'red-border': isUndef(trans.rmst) && msm}"
                             uib-popover="{{trans.aPopupMsg}}"
                             ng-blur="validate(trans,$index,material)" id="rmst{trans.id}}{{$index}}"
-                            tabindex="{{$index+100}}"
                             popover-trigger="showpopup">
                       <option ng-repeat="stats in matstatus track by $index" value="{{stats}}">{{stats || resourceBundle['select'] + " " + resourceBundle['status.lower']}}</option>
                     </select>
                     <select ng-show="material.ts && isDef(tempmatstatus)" ng-model="trans.rmst" class="form-control"
-                        ng-class="{'red-border': item.ainvalidPopup}"
-                        uib-popover="{{item.aPopupMsg}}"
+                        ng-class="{'red-border': trans.ainvalidPopup}"
+                        uib-popover="{{trans.aPopupMsg}}"
                         ng-blur="validate(trans,$index,material)"
                         id="rmst{{trans.id}}{{$index}}"
-                        tabindex="{{$index+100}}"
                         popover-trigger="showpopup">
                         <option ng-repeat="stats in tempmatstatus track by $index" value="{{stats}}">{{stats || resourceBundle['select'] + " " + resourceBundle['status.lower']}}</option>
                     </select>

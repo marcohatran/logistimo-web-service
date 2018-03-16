@@ -2044,12 +2044,19 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
         $scope.validate = function (transaction, index, material) {
             if (checkNotNullEmpty(transaction.rq) && transaction.rq > transaction.q) {
                 if ($scope.transaction.type == 'ri') {
-                    showPopUP(transaction, "Returned quantity (" + transaction.rq + ") cannot exceed the issued quantity (" + transaction.q + ") for item " + $scope.mnm, index,"rq");
+                    showPopUP(transaction, $scope.resourceBundle['return.quantity'] + " (" + transaction.rq + ") " + $scope.resourceBundle['cannot.exceed.issued.quantity'] + " (" + transaction.q + ") " + $scope.resourceBundle['for'] + " " + $scope.mnm, index,"rq");
                     return false;
                 } else if ($scope.transaction.type == 'ro') {
-                    showPopUP(transaction, "Returned quantity (" + transaction.rq + ") cannot exceed the received quantity (" + transaction.q + ") for item " + $scope.mnm, index,"rq");
+                    if ($scope.transaction.type == 'ro' && transaction.rq > material.atpstock) {
+                        showPopUP(transaction, $scope.resourceBundle['return.quantity'] + ' (' + transaction.rq + ') ' + $scope.resourceBundle['cannotexceedstock'] + ' (' + material.atpstock + ') ' + $scope.resourceBundle['for'] + " " + $scope.mnm ,  index, "rq");
+                        return false;
+                    } else {
+                        showPopUP(transaction, $scope.resourceBundle['return.quantity'] + " (" + transaction.rq + ") " + $scope.resourceBundle['cannot.exceed.received.quantity'] + " (" + transaction.q + ") " + $scope.resourceBundle['for'] + " " + $scope.mnm, index, "rq");
+                        return false;
+                    }
                     return false;
                 }
+
             }
             if (checkNotNullEmpty(material.name.huName) && checkNotNullEmpty(material.name.huQty) && checkNotNullEmpty(transaction.rq) && transaction.rq % material.name.huQty != 0) {
                 showPopUP(transaction, transaction.rq + " of " + material.name.mnm + " does not match the multiples of units expected in " + material.name.huName + ". It should be in multiples of " + material.name.huQty + " " + material.name.mnm + ".", index,"rq");
