@@ -608,30 +608,34 @@ domainCfgControllers.controller('CapabilitiesConfigurationController', ['$scope'
 
         $scope.toggleViewStock = function (type) {
             if(type == 'etvs'){
-                if($scope.uiCnf.tm.indexOf('etvs') == -1 && $scope.uiCnf.tm.indexOf('vs') == -1) {
-                    $scope.uiCnf.tm.push("vs");
-                    $scope.uiCnf.tm.push("etvs");
-                }
-            }else {
                 if($scope.uiCnf.tm.indexOf('vs') != -1 && $scope.uiCnf.tm.indexOf('etvs') != -1) {
                     $scope.uiCnf.tm.splice($scope.uiCnf.tm.indexOf('vs'), 1);
                     $scope.uiCnf.tm.splice($scope.uiCnf.tm.indexOf('etvs'), 1);
+                }
+            }else {
+                if($scope.uiCnf.tm.indexOf('etvs') == -1 && $scope.uiCnf.tm.indexOf('vs') == -1) {
+                    $scope.uiCnf.tm.push("vs");
+                    $scope.uiCnf.tm.push("etvs");
                 }
             }
         };
 
         $scope.toggleReturns = function(type){
-            if(type == 'eri' || type == 'ero') {
-                if(type == 'eri') {
-                    if($scope.uiCnf.tm.indexOf('eri') != -1 && $scope.uiCnf.tm.indexOf('ero') == -1) {
-                        $scope.uiCnf.tm.splice($scope.uiCnf.tm.indexOf('eri'), 1);
-                        $scope.uiCnf.tm.splice($scope.uiCnf.tm.indexOf('erir'), 1);
-                    }
-                } else {
-                    if($scope.uiCnf.tm.indexOf('ero') != -1 && $scope.uiCnf.tm.indexOf('eri') == -1) {
-                        $scope.uiCnf.tm.splice($scope.uiCnf.tm.indexOf('ero'), 1);
-                        $scope.uiCnf.tm.splice($scope.uiCnf.tm.indexOf('erir'), 1);
-                    }
+            if(type == 'eri'){
+                if($scope.uiCnf.tm.indexOf('eri') == -1 && $scope.uiCnf.tm.indexOf('ero') != -1 && $scope.uiCnf.tm.indexOf('erir') == -1 ) {
+                    $scope.uiCnf.tm.push("erir");
+                    $scope.uiCnf.tm.push("eri");
+                }
+            }else if (type == 'ero'){
+              if($scope.uiCnf.tm.indexOf('eri') != -1 && $scope.uiCnf.tm.indexOf('ero') == -1 && $scope.uiCnf.tm.indexOf('erir') == -1 ) {
+                  $scope.uiCnf.tm.push("erir");
+                  $scope.uiCnf.tm.push("ero");
+              }
+            }else if(type == 'erir') {
+                if($scope.uiCnf.tm.indexOf('erir') != -1 && ($scope.uiCnf.tm.indexOf('ero') != -1) && $scope.uiCnf.tm.indexOf('eri') != -1) {
+                    $scope.uiCnf.tm.splice($scope.uiCnf.tm.indexOf('ero'), 1);
+                    $scope.uiCnf.tm.splice($scope.uiCnf.tm.indexOf('eri'), 1);
+                    $scope.uiCnf.tm.splice($scope.uiCnf.tm.indexOf('erir'), 1);
                 }
             }
         };
