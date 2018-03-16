@@ -21,45 +21,28 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.returns.entity.values;
+package com.logistimo.returns.models;
 
 import com.logistimo.returns.Status;
 
-import java.util.Date;
+import java.sql.Timestamp;
 
-import javax.persistence.Column;
-import javax.persistence.Embeddable;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
-
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.Data;
 
 /**
- * @author Mohan Raja
+ * Created by pratheeka on 14/03/18.
  */
-@Embeddable
-@NoArgsConstructor
-@Getter
-@AllArgsConstructor
-public class ReturnsStatus {
-
-  @Enumerated(EnumType.STRING)
-  @Column(name="status")
+@Data
+public class ReturnFilters {
+  private Long customerId;
   private Status status;
-
-  @Column(name="cancel_reason")
-  private String cancelReason;
-
-  @Temporal(TemporalType.TIMESTAMP)
-  @Column(name="status_updated_at")
-  private Date updatedAt;
-
-  @Column(name="status_updated_by")
-  private String updatedBy;
-
-
+  private Timestamp startDate;
+  private Timestamp endDate;
+  private Long orderId;
+  private String referenceId;
+  private String storeTags;
+  private Long vendorId;
+  private Long domainId;
+  private boolean isManager;
+  private String userId;
 }

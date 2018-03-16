@@ -21,45 +21,59 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.returns.entity.values;
+package com.logistimo.materials.model;
 
-import com.logistimo.returns.Status;
-
-import java.util.Date;
-
-import javax.persistence.Column;
-import javax.persistence.Embeddable;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
-
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import java.math.BigDecimal;
 
 /**
- * @author Mohan Raja
+ * Created by pratheeka on 13/03/18.
  */
-@Embeddable
-@NoArgsConstructor
-@Getter
-@AllArgsConstructor
-public class ReturnsStatus {
+public class HandlingUnitModel {
 
-  @Enumerated(EnumType.STRING)
-  @Column(name="status")
-  private Status status;
-
-  @Column(name="cancel_reason")
-  private String cancelReason;
-
-  @Temporal(TemporalType.TIMESTAMP)
-  @Column(name="status_updated_at")
-  private Date updatedAt;
-
-  @Column(name="status_updated_by")
-  private String updatedBy;
+  private Long id;
+  private String name;
+  private BigDecimal quantity;
+  private String handlingUnitId;
+  private Long materialId;
 
 
+  public Long getId() {
+    return id;
+  }
+
+  public Long getMaterialId() {
+    return materialId;
+  }
+
+  public void setMaterialId(Long materialId) {
+    this.materialId = materialId;
+  }
+
+  public void setId(Long id) {
+    this.id = id;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  public BigDecimal getQuantity() {
+    return quantity;
+  }
+
+  public void setQuantity(BigDecimal quantity) {
+    this.quantity = quantity;
+  }
+
+  public String getHandlingUnitId() {
+    return handlingUnitId;
+  }
+
+  public void setHandlingUnitId(String handlingUnitId) {
+    this.handlingUnitId = handlingUnitId;
+  }
 }

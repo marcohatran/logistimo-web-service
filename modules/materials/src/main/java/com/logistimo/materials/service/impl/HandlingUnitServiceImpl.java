@@ -29,6 +29,7 @@ import com.logistimo.domains.utils.DomainsUtil;
 import com.logistimo.exception.InvalidDataException;
 import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IHandlingUnit;
+import com.logistimo.materials.model.HandlingUnitModel;
 import com.logistimo.materials.service.IHandlingUnitService;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
@@ -44,6 +45,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
@@ -283,6 +285,43 @@ public class HandlingUnitServiceImpl implements IHandlingUnitService {
           new BigDecimal(String.valueOf(o[2])).stripTrailingZeros().toPlainString());
       huMap.put(IHandlingUnit.HUID, String.valueOf(o[3]));
       return huMap;
+    } finally {
+      if (query != null) {
+        try {
+          query.closeAll();
+        } catch (Exception ignored) {
+          xLogger.warn("Exception while closing query", ignored);
+        }
+      }
+      pm.close();
+    }
+  }
+
+  @Override
+  public List<HandlingUnitModel> getHandlingUnitDataByMaterialIds(List<Long> materialIdList) {
+    PersistenceManager pm = PMF.get().getPersistenceManager();
+    Query query = null;
+    try {
+      query =
+          pm.newQuery("javax.jdo.query.SQL",
+              "SELECT ID,(SELECT NAME FROM HANDLINGUNIT WHERE ID=HU_ID_OID) NAME, QUANTITY, HU_ID_OID, HUC.CNTID  FROM HANDLINGUNITCONTENT HUC WHERE HUC.TY = '0' AND HUC.CNTID IN (?)");
+      List data = (List) query.execute(materialIdList);
+      if (data == null || data.isEmpty()) {
+        return null;
+      }
+      Iterator iterator=data.iterator();
+      List<HandlingUnitModel> handlingUnitModelList=new ArrayList<>(data.size());
+      while(iterator.hasNext()){
+        Object[] o = (Object[]) iterator.next();
+        HandlingUnitModel model=new HandlingUnitModel();
+        model.setId((Long)o[0]);
+        model.setName(String.valueOf(o[1]));
+        model.setQuantity(new BigDecimal(String.valueOf(o[2])));
+        model.setHandlingUnitId(String.valueOf(o[3]));
+        model.setMaterialId((Long)o[4]);
+        handlingUnitModelList.add(model);
+      }
+      return handlingUnitModelList;
     } finally {
       if (query != null) {
         try {

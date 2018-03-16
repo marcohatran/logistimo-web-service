@@ -27,7 +27,6 @@ import com.logistimo.returns.entity.values.ReturnsReceived;
 
 import java.math.BigDecimal;
 import java.util.Date;
-import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Embedded;
@@ -35,27 +34,33 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
-import javax.persistence.Transient;
+
+import lombok.Data;
 
 /**
  * @author Mohan Raja
  */
 @Entity
 @Table(name="RETURNS_ITEM")
+@Data
+@NamedQueries(value = {
+    @NamedQuery(name = "ReturnsItem.findAllByReturnId", query = "SELECT r FROM ReturnsItem r where r.returnsId=:returnsId")})
 public class ReturnsItem {
 
   @Id
-  @GeneratedValue(strategy= GenerationType.AUTO)
-  @Column(name = "id")
+  @GeneratedValue(strategy= GenerationType.IDENTITY)
+  @Column(name = "id",updatable = false)
   private Long id;
 
-  @Column(name = "returns_id")
+  @Column(name = "returns_id",updatable = false)
   private Long returnsId;
 
-  @Column(name = "material_id")
+  @Column(name = "material_id",updatable = false)
   private Long materialId;
 
   @Column(name = "quantity")
@@ -74,7 +79,7 @@ public class ReturnsItem {
   @Column(name="created_at")
   private Date createdAt;
 
-  @Column(name="created_by")
+  @Column(name="created_by",updatable = false)
   private String createdBy;
 
   @Temporal(TemporalType.TIMESTAMP)
@@ -84,114 +89,6 @@ public class ReturnsItem {
   @Column(name="updated_by")
   private String updatedBy;
 
-  @Transient
-  private List<ReturnsItemBatch> batches;
 
-  public Long getId() {
-    return id;
-  }
 
-  public void setId(Long id) {
-    if(this.id != null) {
-      throw new IllegalStateException("Id can't be modified");
-    }
-    this.id = id;
-  }
-
-  public Long getReturnsId() {
-    return returnsId;
-  }
-
-  public void setReturnsId(Long returnsId) {
-    this.returnsId = returnsId;
-  }
-
-  public Long getMaterialId() {
-    return materialId;
-  }
-
-  public void setMaterialId(Long materialId) {
-    if(this.materialId != null) {
-      throw new IllegalStateException("Material Id can't be modified");
-    }
-    this.materialId = materialId;
-  }
-
-  public BigDecimal getQuantity() {
-    return quantity;
-  }
-
-  public void setQuantity(BigDecimal quantity) {
-    this.quantity = quantity;
-  }
-
-  public String getMaterialStatus() {
-    return materialStatus;
-  }
-
-  public void setMaterialStatus(String materialStatus) {
-    this.materialStatus = materialStatus;
-  }
-
-  public String getReason() {
-    return reason;
-  }
-
-  public void setReason(String reason) {
-    this.reason = reason;
-  }
-
-  public ReturnsReceived getReceived() {
-    return received;
-  }
-
-  public void setReceived(ReturnsReceived received) {
-    this.received = received;
-  }
-
-  public Date getCreatedAt() {
-    return createdAt;
-  }
-
-  public void setCreatedAt(Date createdAt) {
-    if(this.createdAt != null) {
-      throw new IllegalStateException("Created date can't be modified");
-    }
-    this.createdAt = createdAt;
-  }
-
-  public String getCreatedBy() {
-    return createdBy;
-  }
-
-  public void setCreatedBy(String createdBy) {
-    if(this.createdBy != null) {
-      throw new IllegalStateException("Created by can't be modified");
-    }
-    this.createdBy = createdBy;
-  }
-
-  public Date getUpdatedAt() {
-    return updatedAt;
-  }
-
-  public void setUpdatedAt(Date updatedAt) {
-    this.updatedAt = updatedAt;
-  }
-
-  public String getUpdatedBy() {
-    return updatedBy;
-  }
-
-  public void setUpdatedBy(String updatedBy) {
-    this.updatedBy = updatedBy;
-  }
-
-  public List<ReturnsItemBatch> getBatches() {
-    return batches;
-  }
-
-  public void setBatches(List<ReturnsItemBatch> batches) {
-    this.batches = batches;
-  }
 }

@@ -34,19 +34,24 @@ import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
+import javax.validation.constraints.NotNull;
+
 /**
  * @author Mohan Raja
  */
 public class ReturnsItemModel {
 
   @SerializedName("material_id")
+  @NotNull
   private Long materialId;
 
+  @NotNull
   @SerializedName("return_quantity")
   private BigDecimal returnQuantity;
 
   @SerializedName("material_status")
   private String materialStatus;
+
 
   private String reason;
 

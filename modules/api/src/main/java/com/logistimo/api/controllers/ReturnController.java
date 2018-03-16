@@ -24,12 +24,13 @@
 package com.logistimo.api.controllers;
 
 import com.logistimo.api.builders.ReturnsBuilder;
-import com.logistimo.logger.XLog;
-import com.logistimo.returns.entity.Returns;
 import com.logistimo.returns.models.MobileReturnsModel;
-import com.logistimo.returns.models.MobileReturnsRequestModel;
+import com.logistimo.returns.models.ReturnsRequestModel;
 import com.logistimo.returns.models.MobileReturnsUpdateStatusModel;
 import com.logistimo.returns.models.MobileReturnsUpdateStatusRequestModel;
+import com.logistimo.returns.models.UpdateStatusModel;
+import com.logistimo.returns.service.ReturnsService;
+import com.logistimo.returns.vo.ReturnsVO;
 import com.logistimo.services.ServiceException;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +40,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
+
+import javax.validation.Valid;
 
 /**
  * @author Mohan Raja
@@ -50,33 +53,37 @@ public class ReturnController {
   @Autowired
   ReturnsBuilder returnsBuilder;
 
+  @Autowired
+  ReturnsService returnsService;
+
   @RequestMapping(method = RequestMethod.POST)
   public
   @ResponseBody
-  MobileReturnsModel create(@RequestBody MobileReturnsRequestModel mobileReturnsRequestModel)
+  MobileReturnsModel create(@Valid @RequestBody ReturnsRequestModel returnsRequestModel)
       throws ServiceException {
-    Returns returns = returnsBuilder.createNewReturns(mobileReturnsRequestModel);
-    //todo: Persist Returns using ReturnService and re-initialise the returns variable with updated one
-    return returnsBuilder.buildMobileReturnsModel(returns);
+    ReturnsVO returnsVO = returnsBuilder.createNewReturns(returnsRequestModel);
+    returnsVO=returnsService.createReturns(returnsVO);
+    return returnsBuilder.buildMobileReturnsModel(returnsVO);
   }
 
   @RequestMapping(value = "/{returnId}/{status}", method = RequestMethod.POST)
   public
   @ResponseBody
-  MobileReturnsUpdateStatusModel updateStatus(@PathVariable String returnId,
+  MobileReturnsUpdateStatusModel updateStatus(@PathVariable Long returnId,
                                               @PathVariable String status,
-                                              @RequestBody MobileReturnsUpdateStatusRequestModel updateStatusModel)
+                                              @RequestBody MobileReturnsUpdateStatusRequestModel mobileReturnsUpdateStatusRequestModel)
       throws ServiceException {
-    //todo: With ReturnService update the Returns with status by returnId and get the updated Returns
-    return returnsBuilder.buildMobileReturnsUpdateModel(new Returns(), updateStatusModel);
+    UpdateStatusModel updateStatusModel=returnsBuilder.buildUpdateStatusModel(returnId,status,mobileReturnsUpdateStatusRequestModel);
+    ReturnsVO returnsVO=returnsService.updateReturnsStatus(updateStatusModel);
+    return returnsBuilder.buildMobileReturnsUpdateModel(returnsVO, mobileReturnsUpdateStatusRequestModel);
   }
 
   @RequestMapping(value = "/{returnId}", method = RequestMethod.GET)
   public
   @ResponseBody
-  MobileReturnsModel get(@PathVariable String returnId) throws ServiceException {
-    //todo: With ReturnService get the Returns object by returnId
-    return returnsBuilder.buildMobileReturnsModel(new Returns());
+  MobileReturnsModel get(@PathVariable Long returnId) throws ServiceException {
+    ReturnsVO returnsVO=returnsService.getReturnsById(returnId);
+    return returnsBuilder.buildMobileReturnsModel(returnsVO);
   }
 
 }

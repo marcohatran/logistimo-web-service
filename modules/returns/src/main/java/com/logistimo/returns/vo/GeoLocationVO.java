@@ -21,45 +21,25 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.returns.entity.values;
-
-import com.logistimo.returns.Status;
-
-import java.util.Date;
-
-import javax.persistence.Column;
-import javax.persistence.Embeddable;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
+package com.logistimo.returns.vo;
 
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * @author Mohan Raja
+ * Created by pratheeka on 13/03/18.
  */
-@Embeddable
+@Data
 @NoArgsConstructor
-@Getter
 @AllArgsConstructor
-public class ReturnsStatus {
+public class GeoLocationVO {
+  private Double latitude;
 
-  @Enumerated(EnumType.STRING)
-  @Column(name="status")
-  private Status status;
+  private Double longitude;
 
-  @Column(name="cancel_reason")
-  private String cancelReason;
+  private Double geoAccuracy;
 
-  @Temporal(TemporalType.TIMESTAMP)
-  @Column(name="status_updated_at")
-  private Date updatedAt;
-
-  @Column(name="status_updated_by")
-  private String updatedBy;
-
+  private String geoError;
 
 }

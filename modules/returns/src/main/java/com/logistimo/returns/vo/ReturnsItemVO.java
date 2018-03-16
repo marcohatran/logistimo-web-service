@@ -21,70 +21,42 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.returns.models;
+package com.logistimo.returns.vo;
 
-import com.google.gson.annotations.SerializedName;
-
+import java.math.BigDecimal;
+import java.util.Date;
 import java.util.List;
+import lombok.Data;
 
 /**
- * @author Mohan Raja
+ * Created by pratheeka on 13/03/18.
  */
-public class MobileReturnsRequestModel {
+@Data
+public class ReturnsItemVO {
 
-  @SerializedName("order_id")
-  private Long orderId;
+  private Long id;
 
-  @SerializedName("geo_location")
-  private Location location;
+  private Long returnsId;
 
-  private String comment;
+  private Long materialId;
 
-  private List<ReturnsItemModel> items;
+  private BigDecimal quantity;
 
-  public Long getOrderId() {
-    return orderId;
-  }
+  private String materialStatus;
 
-  public Location getLocation() {
-    return location;
-  }
+  private String reason;
 
-  public String getComment() {
-    return comment;
-  }
+  private ReturnsReceivedVO received;
 
-  public List<ReturnsItemModel> getItems() {
-    return items;
-  }
+  private List<ReturnsItemBatchVO> returnItemBatches;
 
-  public class Location {
+  private String updatedBy;
 
-    private Double latitude;
+  private Date updatedAt;
 
-    private Double longitude;
+  private String createdBy;
 
-    @SerializedName("geo_accuracy")
-    private Double geoAccuracy;
+  private Date createdAt;
 
-    @SerializedName("geo_error")
-    private String geoError;
-
-    public Double getLatitude() {
-      return latitude;
-    }
-
-    public Double getLongitude() {
-      return longitude;
-    }
-
-    public Double getGeoAccuracy() {
-      return geoAccuracy;
-    }
-
-    public String getGeoError() {
-      return geoError;
-    }
-  }
 
 }
