@@ -515,7 +515,7 @@ public class DashboardControllerMV1 {
       cacheKey += CharacterConstants.UNDERSCORE + model.incetags;
     }
     if (StringUtils.isNotEmpty(model.exetags)) {
-      cacheKey += CharacterConstants.UNDERSCORE + model.exetags;
+      cacheKey += CharacterConstants.UNDERSCORE + "E" + model.exetags;
     }
     if (StringUtils.isNotBlank(model.date)) {
       cacheKey += CharacterConstants.UNDERSCORE + model.date;

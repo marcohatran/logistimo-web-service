@@ -87,7 +87,7 @@
                                                         <div class="form-group">
                                                             <label  class="col-sm-3 control-label">{{resourceBundle['config.inventory.default.reason']}} {{resourceBundle['for.lowercase']}} {{resourceBundle['transactions.issue']}}</label>
                                                             <div class="col-sm-8">
-                                                                <lg-uib-select allow-clear="true" query="queryReasons(q,'ri')" refresh-list="refreshIssueList[0]" ui-model="inv.ri.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.issue.reason']}}"> </lg-uib-select>
+                                                                <lg-uib-select allow-clear="true" append-to-body="true" query="queryReasons(q,'ri')" refresh-list="refreshIssueList[0]" ui-model="inv.ri.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.issue.reason']}}"> </lg-uib-select>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -104,7 +104,7 @@
                                                 </div>
                                                 <div ng-show="inv.cimt" class="row">
                                                     <div class="col-sm-10 ml32">
-                                                        <table class="table table-bordered table-condensed table-hover table-logistimo">
+                                                        <table class="table table-bordered table-condensed table-hover table-logistimo table-fixed">
                                                             <tbody>
                                                             <tr><th class="col-sm-1 text-center">{{resourceBundle['serialnum']}}</th>
                                                                 <th class="col-sm-3 text-center">{{resourceBundle['config.tagsinfotitle']}}</th>
@@ -133,7 +133,7 @@
                                                                            autocomplete="off" maxlength="500">
                                                                 </td>
                                                                 <td>
-                                                                    <lg-uib-select allow-clear="true" refresh-list="refreshIssueList[$index + 1]" query="queryReasons(q,'ri','imt',itag.mtg)" ui-model="itag.rsnCfgModel.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.issue.reason']}}"> </lg-uib-select>
+                                                                    <lg-uib-select allow-clear="true" append-to-body="true" refresh-list="refreshIssueList[$index + 1]" query="queryReasons(q,'ri','imt',itag.mtg)" ui-model="itag.rsnCfgModel.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.issue.reason']}}"> </lg-uib-select>
                                                                 </td>
                                                                 <td class="text-center">
                                                                     <a ng-show="(itag.length -1 !== $index)" href="" ng-click="deleteRow($index,'iss')">
@@ -163,7 +163,7 @@
                                                         <div class="form-group">
                                                             <label  class="col-sm-3 control-label">{{resourceBundle['config.inventory.default.reason']}} {{resourceBundle['for.lowercase']}} {{resourceBundle['transactions.receipt']}}</label>
                                                             <div class="col-sm-8">
-                                                                <lg-uib-select allow-clear="true" query="queryReasons(q,'rr')" refresh-list="refreshReceiptList[0]" ui-model="inv.rr.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.receipt.reason']}}"> </lg-uib-select>
+                                                                <lg-uib-select allow-clear="true" append-to-body="true" query="queryReasons(q,'rr')" refresh-list="refreshReceiptList[0]" ui-model="inv.rr.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.receipt.reason']}}"> </lg-uib-select>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -180,7 +180,7 @@
                                                 </div>
                                                 <div ng-show="inv.crmt" class="row">
                                                     <div class="col-sm-10 ml32">
-                                                        <table class="table table-bordered table-condensed table-hover table-logistimo">
+                                                        <table class="table table-bordered table-condensed table-hover table-logistimo table-fixed">
                                                             <tbody>
                                                             <tr><th class="col-sm-1 text-center">{{resourceBundle['serialnum']}}</th>
                                                                 <th class="col-sm-3 text-center">{{resourceBundle['config.tagsinfotitle']}}</th>
@@ -209,7 +209,7 @@
                                                                            autocomplete="off" maxlength="500">
                                                                 </td>
                                                                 <td>
-                                                                    <lg-uib-select allow-clear="true" refresh-list="refreshReceiptList[$index + 1]" query="queryReasons(q,'rr','rmt',rtag.mtg)" ui-model="rtag.rsnCfgModel.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.receipt.reason']}}"> </lg-uib-select>
+                                                                    <lg-uib-select allow-clear="true" append-to-body="true" refresh-list="refreshReceiptList[$index + 1]" query="queryReasons(q,'rr','rmt',rtag.mtg)" ui-model="rtag.rsnCfgModel.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.receipt.reason']}}"> </lg-uib-select>
                                                                 </td>
                                                                 <td class="text-center">
                                                                     <a ng-show="(rtag.length -1 !== $index)" href="" ng-click="deleteRow($index,'rec')">
@@ -239,7 +239,7 @@
                                                         <div class="form-group">
                                                             <label  class="col-sm-3 control-label">{{resourceBundle['config.inventory.default.reason']}} {{resourceBundle['for.lowercase']}} {{resourceBundle['transactions.stockcount']}}</label>
                                                             <div class="col-sm-8">
-                                                                <lg-uib-select allow-clear="true" query="queryReasons(q,'rs')" refresh-list="refreshStockcountList[0]" ui-model="inv.rs.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.stockcount.reason']}}"> </lg-uib-select>
+                                                                <lg-uib-select allow-clear="true" append-to-body="true" query="queryReasons(q,'rs')" refresh-list="refreshStockcountList[0]" ui-model="inv.rs.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.stockcount.reason']}}"> </lg-uib-select>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -256,7 +256,7 @@
                                                 </div>
                                                 <div ng-show="inv.csmt" class="row">
                                                     <div class="col-sm-10 ml32">
-                                                        <table class="table table-bordered table-condensed table-hover table-logistimo">
+                                                        <table class="table table-bordered table-condensed table-hover table-logistimo table-fixed">
                                                             <tbody>
                                                             <tr><th class="col-sm-1 text-center">{{resourceBundle['serialnum']}}</th>
                                                                 <th class="col-sm-3 text-center">{{resourceBundle['config.tagsinfotitle']}}</th>
@@ -285,7 +285,7 @@
                                                                            autocomplete="off" maxlength="500">
                                                                 </td>
                                                                 <td>
-                                                                    <lg-uib-select allow-clear="true" refresh-list="refreshStockcountList[$index + 1]" query="queryReasons(q,'rs','smt',stag.mtg)" ui-model="stag.rsnCfgModel.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.stockcount.reason']}}"> </lg-uib-select>
+                                                                    <lg-uib-select allow-clear="true" append-to-body="true" refresh-list="refreshStockcountList[$index + 1]" query="queryReasons(q,'rs','smt',stag.mtg)" ui-model="stag.rsnCfgModel.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.stockcount.reason']}}"> </lg-uib-select>
                                                                 </td>
                                                                 <td class="text-center">
                                                                     <a ng-show="(stag.length -1 !== $index)" href="" ng-click="deleteRow($index,'st')">
@@ -315,7 +315,7 @@
                                                         <div class="form-group">
                                                             <label  class="col-sm-3 control-label">{{resourceBundle['config.inventory.default.reason']}} {{resourceBundle['for.lowercase']}} {{resourceBundle['transactions.wastage']}}</label>
                                                             <div class="col-sm-8">
-                                                                <lg-uib-select allow-clear="true" query="queryReasons(q,'rd')" refresh-list="refreshDiscardList[0]" ui-model="inv.rd.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.discards.reason']}}"> </lg-uib-select>
+                                                                <lg-uib-select allow-clear="true" append-to-body="true" query="queryReasons(q,'rd')" refresh-list="refreshDiscardList[0]" ui-model="inv.rd.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.discards.reason']}}"> </lg-uib-select>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -332,7 +332,7 @@
                                                 </div>
                                                 <div ng-show="inv.cdmt" class="row">
                                                     <div class="col-sm-10 ml32">
-                                                        <table class="table table-bordered table-condensed table-hover table-logistimo">
+                                                        <table class="table table-bordered table-condensed table-hover table-logistimo table-fixed">
                                                             <tbody>
                                                             <tr><th class="col-sm-1 text-center">{{resourceBundle['serialnum']}}</th>
                                                                 <th class="col-sm-3 text-center">{{resourceBundle['config.tagsinfotitle']}}</th>
@@ -361,7 +361,7 @@
                                                                            autocomplete="off" maxlength="500">
                                                                 </td>
                                                                 <td>
-                                                                    <lg-uib-select allow-clear="true" refresh-list="refreshDiscardsList[$index + 1]" query="queryReasons(q,'rd','dmt',dtag.mtg)" ui-model="dtag.rsnCfgModel.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.discards.reason']}}"> </lg-uib-select>
+                                                                    <lg-uib-select allow-clear="true" append-to-body="true" refresh-list="refreshDiscardsList[$index + 1]" query="queryReasons(q,'rd','dmt',dtag.mtg)" ui-model="dtag.rsnCfgModel.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.discards.reason']}}"> </lg-uib-select>
                                                                 </td>
                                                                 <td class="text-center">
                                                                     <a ng-show="(dtag.length -1 !== $index)" href="" ng-click="deleteRow($index,'dc')">
@@ -391,7 +391,7 @@
                                                         <div class="form-group">
                                                             <label  class="col-sm-3 control-label">{{resourceBundle['config.inventory.default.reason']}} {{resourceBundle['for.lowercase']}} {{resourceBundle['transactions.transfer']}}</label>
                                                             <div class="col-sm-8">
-                                                                <lg-uib-select allow-clear="true" query="queryReasons(q,'rt')" refresh-list="refreshTransferList[0]" ui-model="inv.rt.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.transfer.reason']}}"> </lg-uib-select>
+                                                                <lg-uib-select allow-clear="true" append-to-body="true" query="queryReasons(q,'rt')" refresh-list="refreshTransferList[0]" ui-model="inv.rt.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.transfer.reason']}}"> </lg-uib-select>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -408,7 +408,7 @@
                                                 </div>
                                                 <div ng-show="inv.ctmt" class="row">
                                                     <div class="col-sm-10 ml32">
-                                                        <table class="table table-bordered table-condensed table-hover table-logistimo">
+                                                        <table class="table table-bordered table-condensed table-hover table-logistimo table-fixed">
                                                             <tbody>
                                                             <tr><th class="col-sm-1 text-center">{{resourceBundle['serialnum']}}</th>
                                                                 <th class="col-sm-3 text-center">{{resourceBundle['config.tagsinfotitle']}}</th>
@@ -437,7 +437,7 @@
                                                                            autocomplete="off" maxlength="500">
                                                                 </td>
                                                                 <td>
-                                                                    <lg-uib-select allow-clear="true" refresh-list="refreshTransferList[$index + 1]" query="queryReasons(q,'rt','tmt',ttag.mtg)" ui-model="ttag.rsnCfgModel.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.transfer.reason']}}"> </lg-uib-select>
+                                                                    <lg-uib-select allow-clear="true" append-to-body="true" refresh-list="refreshTransferList[$index + 1]" query="queryReasons(q,'rt','tmt',ttag.mtg)" ui-model="ttag.rsnCfgModel.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.transfer.reason']}}"> </lg-uib-select>
                                                                 </td>
                                                                 <td class="text-center">
                                                                     <a ng-show="(ttag.length -1 !== $index)" href="" ng-click="deleteRow($index,'tr')">
@@ -467,7 +467,7 @@
                                                         <div class="form-group">
                                                             <label  class="col-sm-3 control-label">{{resourceBundle['config.inventory.default.reason']}} {{resourceBundle['for.lowercase']}} {{resourceBundle['transactions.returns.incoming']}}</label>
                                                             <div class="col-sm-8">
-                                                                <lg-uib-select allow-clear="true" query="queryReasons(q,'rri')" refresh-list="refreshReturnsIncomingList[0]" ui-model="inv.rri.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.returnsincoming.reason']}}"> </lg-uib-select>
+                                                                <lg-uib-select allow-clear="true" append-to-body="true" query="queryReasons(q,'rri')" refresh-list="refreshReturnsIncomingList[0]" ui-model="inv.rri.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.returnsincoming.reason']}}"> </lg-uib-select>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -484,7 +484,7 @@
                                                 </div>
                                                 <div ng-show="inv.crimt" class="row">
                                                     <div class="col-sm-10 ml32">
-                                                        <table class="table table-bordered table-condensed table-hover table-logistimo">
+                                                        <table class="table table-bordered table-condensed table-hover table-logistimo table-fixed">
                                                             <tbody>
                                                             <tr><th class="col-sm-1 text-center">{{resourceBundle['serialnum']}}</th>
                                                                 <th class="col-sm-3 text-center">{{resourceBundle['config.tagsinfotitle']}}</th>
@@ -513,7 +513,7 @@
                                                                            autocomplete="off" maxlength="500">
                                                                 </td>
                                                                 <td>
-                                                                    <lg-uib-select allow-clear="true" refresh-list="refreshReturnsIncomingList[$index + 1]" query="queryReasons(q,'rri','rimt',ritag.mtg)" ui-model="ritag.rsnCfgModel.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.returnsincoming.reason']}}"> </lg-uib-select>
+                                                                    <lg-uib-select allow-clear="true" append-to-body="true" refresh-list="refreshReturnsIncomingList[$index + 1]" query="queryReasons(q,'rri','rimt',ritag.mtg)" ui-model="ritag.rsnCfgModel.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.returnsincoming.reason']}}"> </lg-uib-select>
                                                                 </td>
                                                                 <td class="text-center">
                                                                     <a ng-show="(ritag.length -1 !== $index)" href="" ng-click="deleteRow($index,'retInc')">
@@ -543,7 +543,7 @@
                                                         <div class="form-group">
                                                             <label  class="col-sm-3 control-label">{{resourceBundle['config.inventory.default.reason']}} {{resourceBundle['for.lowercase']}} {{resourceBundle['transactions.returns.outgoing']}}</label>
                                                             <div class="col-sm-8">
-                                                                <lg-uib-select allow-clear="true" query="queryReasons(q,'rro')" refresh-list="refreshReturnsOutgoingList[0]" ui-model="inv.rro.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.returnsoutgoing.reason']}}"> </lg-uib-select>
+                                                                <lg-uib-select allow-clear="true" append-to-body="true" query="queryReasons(q,'rro')" refresh-list="refreshReturnsOutgoingList[0]" ui-model="inv.rro.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.returnsoutgoing.reason']}}"> </lg-uib-select>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -560,7 +560,7 @@
                                                 </div>
                                                 <div ng-show="inv.cromt" class="row">
                                                     <div class="col-sm-10 ml32">
-                                                        <table class="table table-bordered table-condensed table-hover table-logistimo">
+                                                        <table class="table table-bordered table-condensed table-hover table-logistimo table-fixed">
                                                             <tbody>
                                                             <tr><th class="col-sm-1 text-center">{{resourceBundle['serialnum']}}</th>
                                                                 <th class="col-sm-3 text-center">{{resourceBundle['config.tagsinfotitle']}}</th>
@@ -589,7 +589,7 @@
                                                                            autocomplete="off" maxlength="500">
                                                                 </td>
                                                                 <td>
-                                                                    <lg-uib-select allow-clear="true" refresh-list="refreshReturnsOutgoingList[$index + 1]" query="queryReasons(q,'rro','romt',rotag.mtg)" ui-model="rotag.rsnCfgModel.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.returnsoutgoing.reason']}}"> </lg-uib-select>
+                                                                    <lg-uib-select allow-clear="true" append-to-body="true" refresh-list="refreshReturnsOutgoingList[$index + 1]" query="queryReasons(q,'rro','romt',rotag.mtg)" ui-model="rotag.rsnCfgModel.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.returnsoutgoing.reason']}}"> </lg-uib-select>
                                                                 </td>
                                                                 <td class="text-center">
                                                                     <a ng-show="(rotag.length -1 !== $index)" href="" ng-click="deleteRow($index,'retOut')">

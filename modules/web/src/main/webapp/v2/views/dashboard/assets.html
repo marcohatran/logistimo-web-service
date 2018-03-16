@@ -179,7 +179,7 @@
                                     <div class="col-sm-8 noLRpad lPad5">
                                         <select ng-model="period" class="form-control">
                                             <option value="0">Now</option>
-                                            <option value="7">7 day</option>
+                                            <option value="7">7 days</option>
                                             <option value="15">15 days</option>
                                             <option value="30">30 days</option>
                                             <option value="60">60 days</option>
@@ -235,9 +235,9 @@
                                   chart-id="bar1" simple="'true'">
                     </fusion-chart>
                     <div ng-if="!showMap" class="text-center">
-                    <span ng-repeat="value in mr[barEvent]" ng-if="!($first)">
-                        <span class="paddinglr5" style="background-color:{{mc[barEvent][$index-1]}}"></span>
-                        <span style="font-size: 80%">&nbsp; {{mr[barEvent][$index-1]}}-{{value}}%</span>
+                    <span ng-repeat="value in mr[mrValues[mapEvent]]" ng-if="!($first)">
+                        <span class="paddinglr5" style="background-color:{{mc[mrValues[mapEvent]][$index-1]}}"></span>
+                        <span style="font-size: 80%">&nbsp; {{mr[mrValues[mapEvent]][$index-1]}}-{{value}}%</span>
                     </span>
                     </div>
                 </div>

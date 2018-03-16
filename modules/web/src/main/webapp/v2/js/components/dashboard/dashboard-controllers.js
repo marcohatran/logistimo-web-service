@@ -1297,21 +1297,21 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
             var period = $scope.period;
 
             if (checkNotNullEmpty($scope.eTag)) {
-                subCaption = (checkNullEmpty(subCaption) ? '' : subCaption + ', ') + "<b>" + $scope.resourceBundle.kiosk + " tag(s): </b>" + $scope.eTagText;
+                subCaption = (checkNullEmpty(subCaption) ? '' : subCaption + ',  ') + "<b>" + $scope.resourceBundle.kiosk + " tag(s): </b>" + $scope.eTagText;
             }
             if (checkNotNullEmpty($scope.status) && $scope.status > 0 && checkNotNullEmpty(period)) {
-                subCaption = (checkNullEmpty(subCaption) ? '' : subCaption + ', ') + "<b>Period: </b>" + period + " day(s)";
+                subCaption = (checkNullEmpty(subCaption) ? '' : subCaption + ',  ') + "<b>Period: </b>" + period + " day(s)";
             }
 
             var assets = getAssetType();
-            subCaption = (checkNullEmpty(subCaption) ? '' : subCaption + ', ') + "<b>Asset type: </b>";
+            subCaption = (checkNullEmpty(subCaption) ? '' : subCaption + ',  ') + "<b>Asset type: </b>";
             if(checkNullEmpty(assets)) {
                 subCaption += "All";
             } else {
                 subCaption += constructModel(assets, false, true);
             }
 
-            subCaption = (checkNullEmpty(subCaption) ? '' : subCaption + ', ') + "<b>Status: </b>";
+            subCaption = (checkNullEmpty(subCaption) ? '' : subCaption + ',  ') + "<b>Status: </b>";
             subCaption += $scope.status * 1 == 0 ? "All" : $scope.captions[$scope.status * 1 - 1];
 
             if (pieId == "p1") {
@@ -1455,7 +1455,7 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
                 }
             }
             $scope.barHeight = bData.length * 20 + 80;
-            $scope.barData = bData;
+            $scope.barData = sortByKeyDesc(bData, 'value');
             $scope.barRange = "";
             if(checkNotNullEmpty(event)) {
                 $scope.barEvent= $scope.mrValues[event];
@@ -1474,18 +1474,18 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
 
             var allSubData = subData;
             var fPeriod = $scope.period == undefined ? "0" : $scope.period;
-            $scope.subCaption += ($scope.subCaption == '' ? '' : ', ') + "<b>Period:</b> " + fPeriod + " day(s)";
+            $scope.subCaption += ($scope.subCaption == '' ? '' : ',  ') + "<b>Period:</b> " + fPeriod + " day(s)";
 
             if (checkNotNullEmpty($scope.eTag)) {
-                $scope.subCaption += ($scope.subCaption == '' ? '' : ', ') + "<b>" + $scope.resourceBundle.kiosk + " tag(s): </b>" + $scope.eTagText;
+                $scope.subCaption += ($scope.subCaption == '' ? '' : ',  ') + "<b>" + $scope.resourceBundle.kiosk + " tag(s): </b>" + $scope.eTagText;
             }
-            $scope.subCaption += ($scope.subCaption == '' ? '' : ', ') + "<b>Asset Type: </b>";
+            $scope.subCaption += ($scope.subCaption == '' ? '' : ',  ') + "<b>Asset Type: </b>";
             if (checkNotNullEmpty($scope.asset)) {
                 $scope.subCaption += constructModel($scope.asset, false, true);
             } else {
                 $scope.subCaption += "All";
             }
-            $scope.subCaption = (checkNullEmpty($scope.subCaption ) ? '' : $scope.subCaption ) + ', ' + "<b>Status: </b>";
+            $scope.subCaption = (checkNullEmpty($scope.subCaption ) ? '' : $scope.subCaption ) + ',  ' + "<b>Status: </b>";
             $scope.subCaption += $scope.captions[event];
             $scope.subCaption = $sce.trustAsHtml($scope.subCaption);
             var addLink = false;
