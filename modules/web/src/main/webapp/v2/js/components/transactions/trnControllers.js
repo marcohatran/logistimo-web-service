@@ -35,7 +35,7 @@ trnControllers.controller('TransactionsCtrl', ['$scope', 'trnService', 'domainCf
         $scope.atd = false;
 
         function watchMaterial(newValue, oldValue, callback) {
-            if (newValue != oldValue && ((checkNotNullEmpty(newValue) && oldValue==undefined) || (checkNotNullEmpty(oldValue) && newValue==undefined) || (newValue.mid!=oldValue.mid))) {
+            if (newValue != oldValue && ((checkNotNullEmpty(newValue) && oldValue==undefined) || (checkNotNullEmpty(oldValue) && newValue==undefined) || (newValue.mId!=oldValue.mId))) {
                 if (callback) {
                     callback('batchId', null);
                 }
