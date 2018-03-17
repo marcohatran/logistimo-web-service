@@ -2046,33 +2046,43 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
             });
         }
         $scope.saveReturnTransactions = function(index) {
-            if (!$scope.isReturnTransactionsValid()) {
+            if (!isReturnTransactionsValid()) {
                 return;
             }
-            var uniquelkid = true;
+            if (!isReturnsAgainstSingleLinkedKiosk()) {
+                return;
+            }
             angular.forEach($scope.transactions.results,function(transaction) {
                 if(transaction.rq > 0) {
                     if (!$scope.returnitems) {
                         $scope.returnitems = [];
                     }
-                    if ($scope.returnitems.length > 0) {
-                        angular.forEach($scope.returnitems, function (returnitem) {
-                            if ((checkNotNullEmpty(transaction.lkId) || checkNotNullEmpty(returnitem.lkId)) && (transaction.lkId != returnitem.lkId)) {
-                                uniquelkid = false;
-                            }
+                    $scope.returnitems.push(angular.copy(transaction));
+                    transaction.rq = undefined;
+                }
+            });
+        };
+
+        function isReturnTransactionsValid() {
+            return ($scope.transactions.results.every(isTransactionValid));
+        }
+
+        function isReturnsAgainstSingleLinkedKiosk() {
+            var uniquelkid = true;
+            angular.forEach($scope.transactions.results,function(transaction) {
+                if(transaction.rq > 0) {
+                    if (checkNotNullEmpty($scope.returnitems)) {
+                        uniquelkid = !$scope.returnitems.some(function(returnitem){
+                            return (checkNotNullEmpty(transaction.lkId) || checkNotNullEmpty(returnitem.lkId) && (transaction.lkId != returnitem.lkId));
                         });
-                    }
-                    if (uniquelkid) {
-                        $scope.returnitems.push(angular.copy(transaction));
-                        transaction.rq = undefined;
                     }
                 }
             });
             if (!uniquelkid) {
-                $scope.showWarning("You can only post returns only against a unique related entity or no related entity");
-                return;
+                $scope.showWarning($scope.resourceBundle['return.against.unique.related.entity']);
             }
-        };
+            return uniquelkid;
+        }
 
         $scope.saveEditedReturnTransactions = function(index) {
             $scope.material.returnitems = $scope.returnitems;
@@ -2084,14 +2094,11 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
            $scope.returnFormOpen = false;
 
         };
-        $scope.isReturnTransactionsValid = function() {
-            return ($scope.transactions.results.every($scope.isTransactionValid));
-        };
 
-        $scope.isTransactionValid = function(transaction) {
+        function isTransactionValid(transaction) {
             if (checkNotNullEmpty(transaction.rq) && transaction.rq > transaction.q) {
                 if ($scope.transaction.type == 'ri') {
-                    $scope.showWarning("Returned quantity cannot exceed the issued quantity for item " + $scope.mnm);
+                    $scope.showWarning($scope.resourceBundle['return.quantity'] + " (" + transaction.rq + ") " + $scope.resourceBundle['cannot.exceed.issued.quantity'] + " (" + transaction.q + ") " + $scope.resourceBundle['for'] + " " + $scope.mnm);
                     return false;
                 } else if ($scope.transaction.type == 'ro') {
                     $scope.showWarning("Returned quantity cannot exceed the received quantity for item " + $scope.mnm);
@@ -2106,6 +2113,8 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
 
             return true;
         }
+
+
 
         $scope.$watch("offset", function(){
             $scope.fetch();

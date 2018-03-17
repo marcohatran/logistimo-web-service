@@ -1663,7 +1663,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
 
   /**
    * This method checks whether there are any errors in case the transaction is of type incoming returns or outgoing returns.
-   * It checks if tracking id, tracking object type and reason are present. The quantity returned cannot be greater than quantity of the corresponding issue or receipt transaction
+   * It checks if tracking id, tracking object type are present. The quantity returned cannot be greater than quantity of the corresponding issue or receipt transaction
    * against which the return is being posted.
    * @param trans
    * @param pm
@@ -1675,9 +1675,6 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     }
     if (!(ITransaction.TYPE_ISSUE_TRANSACTION.equals(trans.getTrackingObjectType()) || ITransaction.TYPE_RECEIPT_TRANSACTION.equals(trans.getTrackingObjectType()))) {
       throw new LogiException("M017", (Object[]) null);
-    }
-    if (StringUtils.isEmpty(trans.getReason())) {
-      throw new LogiException("M018", (Object[]) null);
     }
     ITransaction linkedTransaction = transDao.getById(trans.getTrackingId(),pm);
     if (BigUtil.greaterThan(trans.getQuantity(), linkedTransaction.getQuantity())) {

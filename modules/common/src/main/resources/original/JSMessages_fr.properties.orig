@@ -1269,3 +1269,4 @@ return.quantity=Quantité de retour
 cannot.exceed.issued.quantity=ne peut pas dépasser la quantité émise
 cannot.exceed.received.quantity=ne peut pas dépasser la quantité reçue
 choose.transactions=Choisissez les transactions
+return.against.unique.related.entity=Vous pouvez uniquement envoyer des déclarations uniquement à l'égard d'une entité apparentée unique ou d'une entité associée
