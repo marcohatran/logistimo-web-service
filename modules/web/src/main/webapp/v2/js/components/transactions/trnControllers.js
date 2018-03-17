@@ -859,10 +859,11 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                 if (mat.isBatch) {
                     mat.bquantity.forEach(function (m) {
                         var reason = ($scope.transaction.type == 'ri' || $scope.transaction.type == 'ro' ? m.rsn : mat.reason);
+                        var trackingid = checkNotNullEmpty(mat.trkid) ? mat.trkid : undefined;
                         var items = {};
                         if (checkNotNullEmpty(m.quantity)) {
                             items[m.mId + "\t" + m.bid] = {q:''+ m.quantity,e: m.bexp,mr: m.bmfnm,md: m.bmfdt,
-                                r : reason, mst: m.mst, trkid: mat.trkid};
+                                r : reason, mst: m.mst, trkid: trackingid};
                             ft['bmaterials'].push(items);
                             /*
                             ft['bmaterials'][m.mId + "\t" + m.bid] = {
@@ -879,8 +880,9 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                     ft['materials'][mat.name.mId] = "1";
                 } else if (checkNotNull(mat.ind)) {
                     var items = {};
+                    var trackingid = checkNotNullEmpty(mat.trkid) ? mat.trkid : undefined;
                     items[mat.name.mId] = {q:''+ mat.quantity,
-                        r :mat.reason, mst: mat.mst, trkid: mat.trkid};
+                        r :mat.reason, mst: mat.mst, trkid: trackingid};
                     ft['materials'].push(items);
                 }
             });
@@ -1960,7 +1962,7 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
     function ($scope,$timeout,requestContext,$location,domainCfgService,trnService) {
         $scope.noWatch = true;
         ListingController.call(this, $scope, requestContext, $location);
-        $scope.size = 10;
+        $scope.size = 5;
         $scope.returnitems = angular.copy($scope.material.returnitems);
         $scope.showTransactionsList = checkNullEmpty($scope.returnitems) || $scope.returnitems.length == 0;
         $scope.transactions = {results:[]};
@@ -1983,6 +1985,8 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
                 } else {
                     fromDate = undefined;
                 }
+            } else {
+                fromDate = undefined;
             }
             $scope.transactions = {results: []};
             $scope.exRow = [];
@@ -2045,19 +2049,37 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
             if (!$scope.isReturnTransactionsValid()) {
                 return;
             }
+            var uniquelkid = true;
             angular.forEach($scope.transactions.results,function(transaction) {
                 if(transaction.rq > 0) {
                     if (!$scope.returnitems) {
                         $scope.returnitems = [];
                     }
-                    $scope.returnitems.push(angular.copy(transaction));
-                    transaction.rq=undefined;
+                    if ($scope.returnitems.length > 0) {
+                        angular.forEach($scope.returnitems, function (returnitem) {
+                            if ((checkNotNullEmpty(transaction.lkId) || checkNotNullEmpty(returnitem.lkId)) && (transaction.lkId != returnitem.lkId)) {
+                                uniquelkid = false;
+                            }
+                        });
+                    }
+                    if (uniquelkid) {
+                        $scope.returnitems.push(angular.copy(transaction));
+                        transaction.rq = undefined;
+                    }
                 }
             });
+            if (!uniquelkid) {
+                $scope.showWarning("You can only post returns only against a unique related entity or no related entity");
+                return;
+            }
         };
 
         $scope.saveEditedReturnTransactions = function(index) {
             $scope.material.returnitems = $scope.returnitems;
+            if ($scope.returnitems.length > 0 && checkNotNullEmpty($scope.returnitems[0].lkId)) {
+                var dent = {eid: $scope.returnitems[0].lkId, enm:$scope.returnitems[0].lknm};
+                $scope.transaction.dent = dent;
+            }
             $scope.toggle(index);
            $scope.returnFormOpen = false;
 

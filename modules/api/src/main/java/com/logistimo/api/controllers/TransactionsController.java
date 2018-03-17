@@ -584,6 +584,9 @@ public class TransactionsController {
             }
           }
           String trkid = String.valueOf(mat.get("trkid"));
+          if (trkid == "null") {
+            trkid = null;
+          }
           ITransaction
               trans =
               getTransaction(userId, domainId, transType, kioskId, linkedKioskId, reason, status,
@@ -637,6 +640,10 @@ public class TransactionsController {
             manufactured = "";
           }
           String trkid = String.valueOf(batchMaterial.get("trkid"));
+          if (trkid == "null") {
+            trkid = null;
+          }
+
           ITransaction
               trans =
               getTransaction(userId, domainId, transType, kioskId, linkedKioskId, reason, status,
