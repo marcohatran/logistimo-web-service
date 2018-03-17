@@ -601,6 +601,23 @@ logistimoApp.constant('APPROVAL', {
     'APPROVED': 'ap',
     'REJECTED': 'rj'
 });
+logistimoApp.constant('RETURNS', {
+	'status' : {
+		'cn': 'Cancel',
+		'rd': 'Receive',
+		'sp': 'Ship',
+		'OPEN': 'op',
+		'SHIPPED': 'sp',
+		'RECEIVED': 'rd',
+		'CANCELLED': 'cn'
+	},
+	'statusLabel' : {
+		'cn': 'Cancelled',
+		'rd': 'Received',
+		'op': 'Pending',
+		'sp': 'Shipped'
+	}
+});
 logistimoApp.constant('PATTERNS', {
 	'LATITUDE':'^-?(([0-8])?((([0-9])(\\.\\d{1,8})?)|(90(\\.[0]{0,8})?)))$',
 	'LONGITUDE':'^-?(((1[0-7][0-9])|(\\d{1,2})|180)(\\.\\d{1,8})?)$',

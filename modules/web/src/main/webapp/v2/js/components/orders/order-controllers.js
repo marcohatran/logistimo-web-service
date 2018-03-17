@@ -637,6 +637,10 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
             }
         });
 
+        $scope.setPageSelection = function(page) {
+            $scope.selection = page;
+        };
+
         $scope.openView = function (view, selRows, sn) {
             $scope.sMTShip = [];
             if (!sn) {
@@ -991,6 +995,7 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                     }
                 }
             });
+            $scope.checkReturn();
         }
 
         $scope.saveStatus = function () {
@@ -1975,6 +1980,14 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
             $scope.openView("orderDetail");
             $scope.enableScroll();
         };
+
+        $scope.checkReturn = function() {
+            if ($scope.order.st == ORDER.BACKORDERED || $scope.order.st == ORDER.COMPLETED || $scope.order.st == ORDER.FULFILLED) {
+                $scope.canReturn = $scope.order.its.some(function (item) {
+                    return item.fq > 0;
+                });
+            }
+        }
     }
 ]);
 ordControllers.controller('orders.MaterialController', ['$scope',
@@ -4122,7 +4135,7 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService', 'reques
     }
 ]);
 
-ordControllers.controller('ConsignmentController', ['$scope', '$uibModal', function ($scope, $uibModal) {
+ordControllers.controller('ConsignmentController', ['$scope','returnsService', function ($scope,returnsService) {
     $scope.batchOrder = true;
     $scope.selectedMaterialIds = [];
     $scope.sel = {};
@@ -4145,6 +4158,33 @@ ordControllers.controller('ConsignmentController', ['$scope', '$uibModal', funct
             $scope.showWarning("Please select any material to create Shipment");
         }
     };
+
+    $scope.doReturn = function() {
+        if ($scope.sel.selectedRows.length > 0) {
+            var selectedItems = (function(){
+                var items = [];
+                for (var i = 0; i < $scope.sel.selectedRows.length; i++) {
+                    items.push($scope.order.its[$scope.sel.selectedRows[i]]);
+                }
+                return items;
+            })();
+            if (isReturnValid(selectedItems)) {
+                returnsService.setItems(selectedItems);
+                returnsService.setOrder($scope.order);
+                $scope.setPageSelection('createReturns');
+            } else {
+                $scope.showWarning("Please select the items which are partially/fully fulfilled to create Returns");
+            }
+        } else {
+            $scope.showWarning("Please select any material to create Returns");
+        }
+    };
+
+    function isReturnValid(selectedItems) {
+        return !selectedItems.some(function (item) {
+            return item.fq == 0
+        })
+    }
 
 }]);
 

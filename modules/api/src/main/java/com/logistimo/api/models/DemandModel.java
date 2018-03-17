@@ -85,6 +85,11 @@ public class DemandModel implements Comparable<DemandModel> {
   public Set<DemandItemBatchModel> bts;
 
   /**
+   * Batches
+   */
+  public Set<DemandItemBatchModel> returnBatches;
+
+  /**
    * vendor stock
    */
   public BigDecimal vs = BigDecimal.ZERO;
@@ -262,6 +267,9 @@ public class DemandModel implements Comparable<DemandModel> {
    * Used for displaying tooltip breakdown on Order detail page
    */
   public List<ShipmentItemModel> bd = new ArrayList<>();
+
+
+  public List<String> materialTags;
 
   /* (non-Javadoc)
    * @see java.lang.Comparable#compareTo(java.lang.Object)

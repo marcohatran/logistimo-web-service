@@ -1,0 +1,203 @@
+<!--
+  ~ Copyright © 2018 Logistimo.
+  ~
+  ~ This file is part of Logistimo.
+  ~
+  ~ Logistimo software is a mobile & web platform for supply chain management and remote temperature monitoring in
+  ~ low-resource settings, made available under the terms of the GNU Affero General Public License (AGPL).
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General
+  ~ Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any
+  ~ later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+  ~ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+  ~ for more details.
+  ~
+  ~ You should have received a copy of the GNU Affero General Public License along with this program.  If not, see
+  ~ <http://www.gnu.org/licenses/>.
+  ~
+  ~ You can be released from the requirements of the license by purchasing a commercial license. To know more about
+  ~ the commercial license, please contact us at opensource@logistimo.com
+  -->
+<div class="box topbox">
+    <!--<div ng-controller="ReturnsListingController">-->
+    <div ng-controller="NoController">
+        <div class="filter-box form-group">
+            <div ng-controller="ResetController">
+                <div class="row">
+                    <div class="col-sm-3" ng-show="showEntityFilter">
+                        <span class="filter-label" ng-class="{'required':isManager}">{{resourceBundle.kiosk}}</span>
+                        <entity-select ent-model="entity" classes="form-control"
+                                       place-holder="{{resourceBundle.filterby}} {{resourceBundle['kiosks.lower']}}">
+                        </entity-select>
+                    </div>
+                    <div class="col-sm-3 ">
+                        <span class="filter-label">{{resourceBundle.status}}</span>
+                        <select class="form-control" ng-model="status">
+                            <option value="">{{resourceBundle.all}}</option>
+                            <option value="op">{{resourceBundle['returns.pending']}}</option>
+                            <option value="sp">{{resourceBundle['returns.shipped']}}</option>
+                            <option value="rd">{{resourceBundle['returns.received']}}</option>
+                            <option value="cn">{{resourceBundle['returns.cancelled']}}</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-3">
+                        <span class="filter-label">{{resourceBundle.from}}</span>
+                        <date-picker date-model="from" place-holder="From" max-date="today"></date-picker>
+                    </div>
+                    <div class="col-sm-3">
+                        <span class="filter-label">{{resourceBundle.to}}</span>
+                        <date-picker date-model="to" place-holder="To" min-date="from" max-date="today"></date-picker>
+                    </div>
+                </div>
+                <div class="row" ng-show="showMore">
+                    <div class="col-sm-3">
+                        <span class="filter-label">{{resourceBundle['order']}}</span>
+                        <div class="has-feedback">
+                            <input type="text" class="form-control" ng-model="returnsId" autocomplete="off"
+                                   typeahead-wait-ms="300"
+                                   placeholder="{{resourceBundle['returns.number']}}"
+                                   uib-typeahead="val for val in getSuggestions($viewValue,'retId')"
+                                   typeahead-loading="loadingReturnId"
+                                   typeahead-on-select="showOrder(ordId)">
+                            <span ng-show="loadingReturnId" class="form-control-feedback typehead-loading"
+                                  aria-hidden="true"> <span class="glyphicons glyphicons-cogwheel spin"></span> </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="row" ng-show="showMore">
+                    <div ng-show="iAdm && isUndef(entity.id) && isUndef(orderId)" class="col-sm-3 cbx pt10 mh40">
+                        <span class="filter-label">{{resourceBundle['kiosk']}} {{resourceBundle['tag.lower']}}:</span>
+                        <tag-filter ng-model="etag" tag-type="entity"></tag-filter>
+                    </div>
+                </div>
+                <div ng-include="'views/common/reset-filters.html'"/>
+            </div>
+        </div>
+        <div class="row">
+            <div ng-hide="showMore">
+                <div class="col-sm-12">
+                    <span class="glyphicons glyphicons-chevron-down medium filter-expand" ng-click="showMore = true"></span>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div ng-show="showMore && isUndef(orderId)">
+                <div class="col-sm-12">
+                    <span class="glyphicons glyphicons-chevron-up medium filter-expand" ng-click="showMore = false"></span>
+                </div>
+            </div>
+        </div>
+        <div class="row action-bar">
+            <div class="col-sm-8 noLRpad" >
+                <export ng-show="resSize > 0" callback="exportData()"></export>
+            </div>
+
+            <div class="col-sm-4 noLRpad" ng-show="entity!= null && entity.id != null && entity.id != ''" >
+                <div class="pull-right">
+                    <div class="btn-group">
+                        <label class="btn btn-sm btn-default" ng-model="rtype" uib-btn-radio="'icr'">
+                            <span>{{resourceBundle.outgoing}}</span>
+                        </label>
+                        <label class="btn btn-sm btn-default" ng-model="rtype" uib-btn-radio="'ogr'">
+                            <span>{{resourceBundle.incoming}}</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="pull-right">
+                    <div ng-include="'views/paginator.html'"></div>
+                </div>
+            </div>
+        </div>
+        <div class="row" ng-show="resSize > 0">
+            <div class="col-sm-12">
+                <table class="table table-condensed table-hover table-logistimo"
+                       ng-hide="filtered.length<=0" id="fixTable">
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th><input type="checkbox" ng-change="selectAll(selAll)" ng-model='selAll'/>
+                        <th class="text-center">{{resourceBundle['serialnum']}}</th>
+                        <th class="text-center">{{resourceBundle['return']}}</th>
+                        <th class="text-center">{{resourceBundle['order']}}</th>
+                        <th class="text-center">{{resourceBundle['items']}}</th>
+                        <th>{{resourceBundle['status']}}</th>
+                        <th>{{resourceBundle['returning.store']}}</th>
+                        <th>{{resourceBundle['receiving.store']}}</th>
+                        <th>{{resourceBundle['created']}}</th>
+                        <th></th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody ng-repeat="item in filtered = orders.results" ng-controller="NoController">
+                    <tr class="clickable" ng-click="openOrder(item)">
+                        <td>
+                            <span class="glyphicons glyphicons-bring-to-front tglyph"
+                                  ng-if="currentDomain != item.sdid"
+                                  ng-click="switchDomain(item.sdid,item.sdname)"
+                                  uib-tooltip="{{item.sdname}}"
+                                  tooltip-append-to-body="true">
+                            </span>
+                        </td>
+                        <td><input type="checkbox" checklist-model="selectedOrderIds" checklist-value="item.id" ng-click="$event.stopPropagation();"/></td>
+                        <td class="text-center">{{item.sno}}</td>
+                        <td class="text-center">{{item.return.id}}</td>
+                        <td class="text-center">{{item.id}}</td>
+                        <td class="text-center">{{item.size}}</td>
+                        <td>{{item.status}}</td>
+                        <td><a href="#/setup/entities/detail/{{item.eid}}"
+                               ng-click="$event.stopPropagation();"
+                               target="_blank">{{item.enm}}</a>
+                            <span class="litetext">{{item.eadd}}</span>
+                        </td>
+                        <td><a href="#/setup/entities/detail/{{item.vid}}"
+                               ng-click="$event.stopPropagation();"
+                               target="_blank">{{item.vnm}}</a>
+                            <span class="litetext">{{item.vadd}}</span>
+                        </td>
+                        <td><a ng-href="#/setup/users/all/details?userId={{item.uid}}"
+                               ng-click="$event.stopPropagation();"
+                               target="_blank">{{item.unm}}</a>
+                            <span class="litetext">{{item.cdt}}</span>
+                        </td>
+                        <td>
+                            <span ng-if="item.src == 1" class="glyphicons glyphicons-display"
+                                  uib-tooltip="{{resourceBundle['web']}}" tooltip-placement="left"></span>
+                            <span ng-if="item.src == 2" class="glyphicons glyphicons-iphone"
+                                  uib-tooltip="{{resourceBundle['mob']}}" tooltip-placement="left"></span>
+                            <span ng-if="item.src == 3" class="glyphicons glyphicons-cloud-upload"
+                                  uib-tooltip="{{resourceBundle['upl']}}" tooltip-placement="left"></span>
+                            <span ng-if="item.src == 4" class="glyphicons glyphicons-sms"
+                                  uib-tooltip="{{resourceBundle['sms']}}" tooltip-placement="left"></span>
+                        </td>
+                        <td ng-click="openOrder(item, 'true');$event.stopPropagation();"><span ng-hide="item.lt == undefined || item.ln == undefined || (item.lt == 0 && item.ln == 0)"><span class="glyphicons glyphicons-globe"></span></span></td>
+
+
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="row mt5">
+            <div class="col-sm-12">
+                <p class=" alert alert-warning" ng-show="!loading && filtered.length == 0">
+                    {{resourceBundle['orders.none']}}</p>
+                <p ng-show="mxE && isUndef(entity)" class="alert alert-info">
+                    {{resourceBundle['selectkioskmsg']}}
+                </p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-3 col-sm-offset-9">
+                <div class="pull-right">
+                    <div ng-include="'views/paginator.html'"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -378,7 +378,7 @@ public class TransactionsController {
   @RequestMapping(value = "/reasons", method = RequestMethod.GET)
   public
   @ResponseBody
-  ReasonConfigModel getReasons(@RequestParam String type, String[] tags) {
+  ReasonConfigModel getReasons(@RequestParam String type, @RequestParam(required = false) String[] tags) {
     Long domainId = SecurityUtils.getCurrentDomainId();
     DomainConfig dc = DomainConfig.getInstance(domainId);
     InventoryConfig ic = dc.getInventoryConfig();
@@ -429,15 +429,20 @@ public class TransactionsController {
           }
           break;
       }
+    } else {
+      reasonConfigModels = new ArrayList<>(1);
+      reasonConfigModels.add(configurationModelBuilder
+          .buildReasonConfigModel(ic.getTransactionReasonsConfigByType(type)));
     }
     ReasonConfigModel reasonConfigModel = new ReasonConfigModel();
     if (CollectionUtils.isNotEmpty(reasonConfigModels)) {
       reasonConfigModels.forEach(entry -> {
-        reasonConfigModel.rsns.addAll(new ArrayList<>(new LinkedHashSet<>(entry.rsns)));
+        reasonConfigModel.rsns.addAll(new ArrayList<>(entry.rsns));
         if (reasonConfigModel.defRsn == null) {
           reasonConfigModel.defRsn = entry.defRsn;
         }
       });
+      reasonConfigModel.rsns = new ArrayList<>(new LinkedHashSet<>(reasonConfigModel.rsns));
     }
     return reasonConfigModel;
   }
@@ -720,7 +725,7 @@ public class TransactionsController {
   public
   @ResponseBody
   Map<String,Boolean> getStatusMandatory() {
-    Map<String,Boolean> statusList = new HashMap<>(5);
+    Map<String,Boolean> statusList = new HashMap<>(7);
     DomainConfig dc = DomainConfig.getInstance(SecurityUtils.getCurrentDomainId());
     InventoryConfig ic = dc.getInventoryConfig();
     MatStatusConfig msc = ic.getMatStatusConfigByType(ITransaction.TYPE_ISSUE);
@@ -742,6 +747,14 @@ public class TransactionsController {
     msc = ic.getMatStatusConfigByType(ITransaction.TYPE_TRANSFER);
     if(msc != null) {
       statusList.put("tsm", msc.isStatusMandatory());
+    }
+    msc = ic.getMatStatusConfigByType(ITransaction.TYPE_RETURNS_INCOMING);
+    if(msc != null) {
+      statusList.put("rism", msc.isStatusMandatory());
+    }
+    msc = ic.getMatStatusConfigByType(ITransaction.TYPE_RETURNS_OUTGOING);
+    if(msc != null) {
+      statusList.put("rosm", msc.isStatusMandatory());
     }
     return statusList;
   }

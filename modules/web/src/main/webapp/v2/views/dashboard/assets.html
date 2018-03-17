@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright © 2018 Logistimo.
+  ~
+  ~ This file is part of Logistimo.
+  ~
+  ~ Logistimo software is a mobile & web platform for supply chain management and remote temperature monitoring in
+  ~ low-resource settings, made available under the terms of the GNU Affero General Public License (AGPL).
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General
+  ~ Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any
+  ~ later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+  ~ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+  ~ for more details.
+  ~
+  ~ You should have received a copy of the GNU Affero General Public License along with this program.  If not, see
+  ~ <http://www.gnu.org/licenses/>.
+  ~
+  ~ You can be released from the requirements of the license by purchasing a commercial license. To know more about
+  ~ the commercial license, please contact us at opensource@logistimo.com
+  -->
+<div ng-if="isDef(dcntry)">
+    <div ng-controller="WorkingAssetDashboardController" id="cid">
+        <div class="box topbox filter-box" style="margin: 0;">
+            <div class="form-horizontal">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div ng-hide="iAU" class="col-sm-6">
+                            <label class="cbx filter-label ml10">{{resourceBundle['kiosk']}}
+                                {{resourceBundle['multiple.tags']}}:</label>
+                        <span ng-show="isDef(includeETag)"><span ng-repeat="tag in eTagObj track by $index"
+                                                                 class="label label-default mt5 dinline"
+                                                                 style="padding:.2em;">{{tag.text}}</span></span>
+                            <span ng-show="isUndef(includeETag)" class="cbx" style="margin-top: 20px">{{resourceBundle['all']}}</span>
+                        <span ng-show="isDef(excludeETag)" class="codegray">({{resourceBundle['exclude']}}: <span
+                                ng-repeat="tag in eeTagObj track by $index" class="label label-default mt5 dinline"
+                                style="padding:.2em;">{{tag.text}}</span>)</span>
+                        <span uib-tooltip="Filters" ng-click="toggleFilter('e')"
+                              class="glyphicons glyphicons-filter codegray pt10"></span>
+                        </div>
+                        <div class="pop_filter_box col-sm-4 ws " id="filter_e"
+                             style="margin-top:25px;">
+                            <div class="row pt10">
+                                <div class="col-sm-12">
+                                    <label class="col-sm-4 noLRpad filter-label cbx">{{resourceBundle['include']}}
+                                        {{resourceBundle['multiple.tags']}}
+                                        <span uib-tooltip="Select&nbsp;the&nbsp;{{resourceBundle['kiosk.lowercase']}}&nbsp;tags&nbsp;to&nbsp;be included in the data for the dashboard view. If selected, only {{resourceBundle['kiosks.lowercase']}} with these tags are included in the computation of metrics for this view. Only one of Include or Exclude tags can be selected at a given time."
+                                              style="display: inline" class="litetext glyphicons glyphicons-info-sign">
+                                    </span>
+                                    </label>
+                                    <span class="col-sm-8 noLRpad lPad5">
+                                    <tag-select tags-model="eTag" place-holder="All"
+                                                type="'entity'"
+                                                multiple="'true'"
+                                                force-no-udf="'true'">
+                                    </tag-select>
+                                </span>
+                                </div>
+                            </div>
+                            <div class="row pb10 pt10">
+                                <div class="col-sm-12">
+                                    <label class="col-sm-4 noLRpad filter-label cbx">{{resourceBundle['exclude']}}
+                                        {{resourceBundle['multiple.tags']}}
+                                        <span uib-tooltip="Select&nbsp;the&nbsp;{{resourceBundle['kiosk.lowercase']}}&nbsp;tags&nbsp;to&nbsp;be excluded in the data for the dashboard view. If selected, {{resourceBundle['kiosks.lowercase']}} with these tags are not included in the computation of metrics for this view. Only one of Include or Exclude tags can be selected at a given time."
+                                              style="display: inline" class="litetext glyphicons glyphicons-info-sign">
+                                    </span>
+                                    </label>
+                                    <span class="col-sm-8 noLRpad lPad5">
+                                    <tag-select tags-model="excludeTag" place-holder="All"
+                                                type="'entity'"
+                                                multiple="'true'"
+                                                force-no-udf="'true'">
+                                    </tag-select>
+                                </span>
+                                </div>
+                            </div>
+                            <div class="row pb10">
+                                <div class="col-sm-12">
+                                    <span class="pull-right">
+                                        <input type="button" class="btn btn-sm btn-primary" ng-click="applyFilters()"
+                                               value="Filter">
+                                        <input type="button" class="btn btn-sm btn-default" ng-click="toggleFilter('e')"
+                                               value="Cancel">
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pull-right">
+                            <button type="button" ng-click="hardRefreshDashboard()"
+                                    class="btn btn-sm btn-default pull-right" tooltip-placement="top"
+                                    uib-tooltip="{{resourceBundle['upgrade']}}">
+                                <span class="glyphicons pt2 glyphicons-refresh"></span>
+                            </button>
+                            <span ng-show="isDef(dashboardView)" class="litetext cbx pull-right rPad10">{{resourceBundle['asof']}} {{dashboardView.ut}}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="mt5">
+            <div class="box topbox mb5">
+                <div class="row">
+                    <div class="col-sm-12" ng-show="isDef(links)">
+                        <ul class="breadcrumb domain-bread-crumb" style="margin-bottom: 0px">
+                            <li ng-repeat="item in links">
+                            <span ng-if="$index != links.length-1" class="title domain-child"
+                                  ng-click="addFilter(item.filter, item.level, $index, 'true')"
+                                  uib-tooltip="Go to {{item.text}}" style="padding-left: 0px;">{{item.text}}</span>
+                                <span ng-if="$index == links.length-1" style="padding-left: 0px;"
+                                      class="title domain-child"><b>{{item.text}}</b></span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div ng-show="!loading" class="row pt5" style="min-height: 350px">
+                    <div ng-show="tempEnabled"
+                         class="col-sm-offset-3 col-sm-6">
+                        <h4 class="text-center mb0">{{pCaption}} <span
+                                uib-tooltip="{{resourceBundle['asset.dashboard.help']}}"
+                                style="display: inline" class="litetext glyphicons glyphicons-info-sign"></span>
+                <span uib-tooltip="Filters" ng-click="toggleFilter('a')"
+                      class="glyphicons glyphicons-filter codegray pull-right" style="cursor: pointer;"></span>
+                        </h4>
+
+                        <div class="litetext text-center pr30" ng-if="pSubCaption!= '&amp;nbsp;'"
+                             ng-bind-html="pSubCaption"></div>
+                        <div ng-show="fdate" class="litetext">&nbsp;&nbsp;</div>
+                        <div class="pop_filter_box col-sm-12 ws" id="filter_a" style="margin-left:3%">
+                            <div class="row pb10 pt10">
+                                <div class="col-sm-12">
+                                    <label class="col-sm-4 noLRpad control-label cbx">{{resourceBundle['monitoring.type']}}</label>
+
+                                    <div class="col-sm-8 noLRpad lPad5">
+                                        <select class="form-control input-sm" ng-model="mtype">
+                                            <option value="">-- {{resourceBundle['default.monitoring.type.select']}} --
+                                            </option>
+                                            <option value="1">{{resourceBundle['da.monitoring.assets']}}</option>
+                                            <option value="2">{{resourceBundle['da.monitored.assets']}}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row pb10" ng-if="isDef(mtype) && mtype == '1'">
+                                <div class="col-sm-12">
+                                    <label class="col-sm-4 noLRpad control-label cbx">{{resourceBundle['asset.type']}}</label>
+                                    <span class="col-sm-8 noLRpad lPad5">
+                                    <lg-uib-select multiple="'multiple" query="filterAssets(q)" ui-model="at.mna"
+                                                   place-holder="All"></lg-uib-select>
+                                </span>
+                                </div>
+                            </div>
+                            <div class="row pb10" ng-if="isDef(mtype) && mtype == '2'">
+                                <div class="col-sm-12">
+                                    <label class="col-sm-4 noLRpad control-label cbx">{{resourceBundle['asset.type']}}</label>
+                                    <span class="col-sm-8 noLRpad lPad5">
+                                    <lg-uib-select multiple="'multiple" query="filterAssets(q)" ui-model="at.mda"
+                                                   place-holder="All"></lg-uib-select>
+                                </span>
+                                </div>
+                            </div>
+                            <div class="row pb10">
+                                <div class="col-sm-12">
+                                    <label class="col-sm-4 noLRpad control-label cbx">{{resourceBundle['working.status']}}</label>
+
+                                    <div class="col-sm-8 noLRpad lPad5">
+                                        <select ng-model="status" class="form-control">
+                                            <option ng-repeat="ws in assetWSFilters" value="{{ws.status}}">{{ws.dV}}
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row pb10" ng-hide="isUndef(status) || status == '0'">
+                                <div class="col-sm-12">
+                                    <label class="col-sm-4 noLRpad control-label cbx">{{resourceBundle['period.since']}}</label>
+
+                                    <div class="col-sm-8 noLRpad lPad5">
+                                        <select ng-model="period" class="form-control">
+                                            <option value="0">Now</option>
+                                            <option value="7">7 days</option>
+                                            <option value="15">15 days</option>
+                                            <option value="30">30 days</option>
+                                            <option value="60">60 days</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row pb10">
+                                <div class="col-sm-12">
+                                <span class="pull-right">
+                                    <input type="button" class="btn btn-sm btn-primary" ng-click="applyFilters()"
+                                           value="Filter">
+                                    <input type="button" class="btn btn-sm btn-default" ng-click="toggleFilter('a')"
+                                           value="Cancel">
+                                </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div ng-if="!loading && tempEnabled" class="col-sm-12">
+                            <fusion-chart type="'doughnut2d'" height="'300'" width="'100%'"
+                                          chart-data="pieData[0]" chart-options="pieOpt[0]"
+                                          chart-id="pie1" simple="'true'">
+                            </fusion-chart>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div ng-hide="!tempEnabled" class="box topbox">
+            <div ng-if="!mloading" class="row" style="min-height: 700px">
+                <h4 class="text-center mb0">{{pCaption}}</h4>
+                <div class="litetext text-center" ng-if="subCaption != '&amp;nbsp;'" ng-bind-html="subCaption"></div>
+                <div class="row pt20">
+                    <div class="col-sm-offset-3 col-sm-6">
+                        <div class="text-center text-bold">{{resourceBundle['by.location']}}
+                            <div class="btn-group float-right" ng-show="showSwitch">
+                                <label class="btn btn-sm btn-default" ng-click="setShowMap(true)" ng-model="showMap" uib-btn-radio="true" uib-tooltip="{{resourceBundle['map.view']}}"><span style="padding-top: 3px" class="glyphicons glyphicons-globe"></span></label>
+                                <label class="btn btn-sm btn-default" ng-click="setShowMap(false)" ng-model="showMap" uib-btn-radio="false" uib-tooltip="Bar&nbsp;view"><span style="padding-top: 3px" class="glyphicons glyphicons-paragraph"></span></label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div ng-if="showMap" class="col-sm-offset-3 col-sm-6 norightpad">
+                    <fusion-chart type="mapType" height="'700'" width="'100%'"
+                                  chart-data="mapData" chart-options="mapOpt" color-range="mapRange"
+                                  markers="markers"
+                                  chart-id="map1" simple="'true'">
+                    </fusion-chart>
+                </div>
+                <div ng-if="!showMap" class="col-sm-offset-3 col-sm-6">
+                    <fusion-chart type="'bar2d'" height="barHeight" width="'100%'"
+                                  chart-data="barData" chart-options="barOpt"
+                                  chart-id="bar1" simple="'true'">
+                    </fusion-chart>
+                    <div ng-if="!showMap" class="text-center">
+                    <span ng-repeat="value in mr[mrValues[mapEvent]]" ng-if="!($first)">
+                        <span class="paddinglr5" style="background-color:{{mc[mrValues[mapEvent]][$index-1]}}"></span>
+                        <span style="font-size: 80%">&nbsp; {{mr[mrValues[mapEvent]][$index-1]}}-{{value}}%</span>
+                    </span>
+                    </div>
+                </div>
+            </div>
+            <div ng-if="mloading" class="row mt18" style="min-height: 700px;color: #aaaaaa">
+                <div class="text-center">
+                    {{resourceBundle['loading.uppercase']}}... <span class="glyphicons glyphicons-cogwheel spin"></span>
+                </div>
+            </div>
+        </div>
+        <div ng-if="isUndef(dcntry)">
+            <div class="mt5">
+                <div class="box topbox tabminheight">
+                    <div class="row">
+                        <div class="col-sm-12 mt10">
+                            <div class="alert alert-warning">{{resourceBundle['default.country']}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

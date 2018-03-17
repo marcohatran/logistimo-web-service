@@ -24,6 +24,15 @@
 package com.logistimo.api.controllers;
 
 import com.logistimo.api.builders.ReturnsBuilder;
+import com.logistimo.auth.utils.SecurityUtils;
+import com.logistimo.constants.SourceConstants;
+import com.logistimo.logger.XLog;
+import com.logistimo.returns.Status;
+import com.logistimo.returns.entity.Returns;
+import com.logistimo.returns.entity.ReturnsItem;
+import com.logistimo.returns.entity.ReturnsItemBatch;
+import com.logistimo.returns.entity.values.Batch;
+import com.logistimo.returns.entity.values.ReturnsStatus;
 import com.logistimo.returns.models.MobileReturnsModel;
 import com.logistimo.returns.models.ReturnsRequestModel;
 import com.logistimo.returns.models.MobileReturnsUpdateStatusModel;
@@ -84,6 +93,61 @@ public class ReturnController {
   MobileReturnsModel get(@PathVariable Long returnId) throws ServiceException {
     ReturnsVO returnsVO=returnsService.getReturnsById(returnId);
     return returnsBuilder.buildMobileReturnsModel(returnsVO);
+  }
+
+  private Returns getTestReturns() {
+    Returns returns = new Returns();
+    returns.setSourceDomain(SecurityUtils.getCurrentDomainId());
+    returns.setId(1l);
+    returns.setOrderId(28l);
+    returns.setCustomerId(1344728l);
+    returns.setVendorId(1344729l);
+    final Date now = new Date();
+    final String username = "mohan";
+    returns.setStatus(new ReturnsStatus(Status.OPEN, null, now, username));
+    returns.setCreatedAt(now);
+    returns.setCreatedBy(username);
+    returns.setUpdatedAt(now);
+    returns.setUpdatedBy(username);
+    returns.setSource(SourceConstants.MOBILE);
+
+    List<ReturnsItem> returnsItems = new ArrayList<>();
+    ReturnsItem returnsItem = new ReturnsItem();
+    returnsItem.setMaterialId(3345739l);
+    returnsItem.setQuantity(BigDecimal.ONE);
+    returnsItem.setMaterialStatus("test material status");
+    returnsItem.setReason("test reason");
+    returnsItem.setCreatedAt(now);
+    returnsItem.setCreatedBy(username);
+    returnsItem.setUpdatedAt(now);
+    returnsItem.setUpdatedBy(username);
+    returnsItems.add(returnsItem);
+
+    ReturnsItem returnsItemBatch = new ReturnsItem();
+    returnsItemBatch.setMaterialId(3345740l);
+    returnsItemBatch.setQuantity(BigDecimal.ONE);
+    returnsItemBatch.setMaterialStatus("should not display");
+    returnsItemBatch.setReason("should not display");
+    returnsItemBatch.setCreatedAt(now);
+    returnsItemBatch.setCreatedBy(username);
+    returnsItemBatch.setUpdatedAt(now);
+    returnsItemBatch.setUpdatedBy(username);
+    List<ReturnsItemBatch> itemBatches = new ArrayList<>();
+    ReturnsItemBatch itemBatch = new ReturnsItemBatch();
+    itemBatch.setBatch(new Batch("B1", now, "manufacturer", now));
+    itemBatch.setQuantity(BigDecimal.ONE);
+    itemBatch.setMaterialStatus("batch material status");
+    itemBatch.setReason("batch reason");
+    itemBatches.add(itemBatch);
+    returnsItemBatch.setBatches(itemBatches);
+
+    returnsItems.add(returnsItemBatch);
+
+    returns.setItems(returnsItems);
+
+    returns.setSource(SourceConstants.WEB);
+
+    return returns;
   }
 
 }
