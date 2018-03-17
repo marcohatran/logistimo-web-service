@@ -140,7 +140,7 @@ logistimoApp.config(function ($routeProvider) {
         action: "orders.demand.backorder"
     }).when("/orders/returns/", {
         action: "orders.returns.list"
-    }).when("/orders/returns/detail/:returnsId", {
+    }).when("/orders/returns/detail/:returnId", {
         action: "orders.returns.detail"
     }).when("/inventory/", {
         action: "inventory.stock"

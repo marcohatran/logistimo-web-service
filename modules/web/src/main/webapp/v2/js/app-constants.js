@@ -605,7 +605,11 @@ logistimoApp.constant('RETURNS', {
 	'status' : {
 		'cn': 'Cancel',
 		'rd': 'Receive',
-		'sp': 'Ship'
+		'sp': 'Ship',
+		'OPEN': 'op',
+		'SHIPPED': 'sp',
+		'RECEIVED': 'rd',
+		'CANCELLED': 'cn'
 	},
 	'statusLabel' : {
 		'cn': 'Cancelled',

@@ -724,7 +724,7 @@ public class TransactionsController {
   public
   @ResponseBody
   Map<String,Boolean> getStatusMandatory() {
-    Map<String,Boolean> statusList = new HashMap<>(5);
+    Map<String,Boolean> statusList = new HashMap<>(7);
     DomainConfig dc = DomainConfig.getInstance(SecurityUtils.getCurrentDomainId());
     InventoryConfig ic = dc.getInventoryConfig();
     MatStatusConfig msc = ic.getMatStatusConfigByType(ITransaction.TYPE_ISSUE);
@@ -746,6 +746,14 @@ public class TransactionsController {
     msc = ic.getMatStatusConfigByType(ITransaction.TYPE_TRANSFER);
     if(msc != null) {
       statusList.put("tsm", msc.isStatusMandatory());
+    }
+    msc = ic.getMatStatusConfigByType(ITransaction.TYPE_RETURNS_INCOMING);
+    if(msc != null) {
+      statusList.put("rism", msc.isStatusMandatory());
+    }
+    msc = ic.getMatStatusConfigByType(ITransaction.TYPE_RETURNS_OUTGOING);
+    if(msc != null) {
+      statusList.put("rosm", msc.isStatusMandatory());
     }
     return statusList;
   }

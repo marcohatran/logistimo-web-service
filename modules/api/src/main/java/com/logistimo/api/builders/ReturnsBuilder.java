@@ -99,7 +99,7 @@ public class ReturnsBuilder {
     mobileReturnsModel.setCreatedAt(returns.getCreatedAt());
     mobileReturnsModel.setCreatedBy(getUserModel(returns.getCreatedBy()));
     mobileReturnsModel.setUpdatedAt(returns.getUpdatedAt());
-    mobileReturnsModel.setCreatedBy(getUserModel(returns.getUpdatedBy()));
+    mobileReturnsModel.setUpdatedBy(getUserModel(returns.getUpdatedBy()));
     mobileReturnsModel.setItems(getItemModels(returns.getItems()));
     return mobileReturnsModel;
   }
@@ -117,7 +117,9 @@ public class ReturnsBuilder {
     IOrder order = orderManagementService.getOrder(mobileReturnRequestModel.getOrderId());
     returns.setCustomerId(order.getKioskId());
     returns.setVendorId(order.getServicingKiosk());
-    returns.setLocation(getGeoLocation(mobileReturnRequestModel.getLocation()));
+    if(mobileReturnRequestModel.getLocation() != null) {
+      returns.setLocation(getGeoLocation(mobileReturnRequestModel.getLocation()));
+    }
     returns.setStatus(getReturnsStatus(now, username));
     returns.setCreatedAt(now);
     returns.setCreatedBy(username);
@@ -154,12 +156,16 @@ public class ReturnsBuilder {
       returnsItem.setQuantity(itemModel.getReturnQuantity());
       returnsItem.setMaterialStatus(itemModel.getMaterialStatus());
       returnsItem.setReason(itemModel.getReason());
-      returnsItem.setReceived(getReturnsReceived(itemModel.getReceived()));
+      if(itemModel.getReceived() != null) {
+        returnsItem.setReceived(getReturnsReceived(itemModel.getReceived()));
+      }
       returnsItem.setCreatedAt(itemModel.getCreatedAt());
       returnsItem.setCreatedBy(itemModel.getCreatedBy().getUserId());
       returnsItem.setUpdatedAt(itemModel.getUpdatedAt());
       returnsItem.setUpdatedBy(itemModel.getUpdatedBy().getUserId());
-      returnsItem.setBatches(getItemBatches(itemModel.getBatches()));
+      if(itemModel.getBatches() != null) {
+        returnsItem.setBatches(getItemBatches(itemModel.getBatches()));
+      }
       returnsItems.add(returnsItem);
     }
     return returnsItems;
@@ -173,7 +179,9 @@ public class ReturnsBuilder {
       itemBatch.setQuantity(itemBatchModel.getReturnQuantity());
       itemBatch.setMaterialStatus(itemBatchModel.getMaterialStatus());
       itemBatch.setReason(itemBatchModel.getReason());
-      itemBatch.setReceived(getReturnsReceived(itemBatchModel.getReceived()));
+      if(itemBatchModel.getReceived() != null) {
+        itemBatch.setReceived(getReturnsReceived(itemBatchModel.getReceived()));
+      }
       itemBatches.add(itemBatch);
     }
     return itemBatches;
@@ -231,12 +239,16 @@ public class ReturnsBuilder {
     itemModel.setReturnQuantity(item.getQuantity());
     itemModel.setMaterialStatus(item.getMaterialStatus());
     itemModel.setReason(item.getReason());
-    itemModel.setReceived(getReceivedModel(item.getReceived()));
+    if(item.getReceived() != null) {
+      itemModel.setReceived(getReceivedModel(item.getReceived()));
+    }
     itemModel.setCreatedAt(item.getCreatedAt());
     itemModel.setCreatedBy(getUserModel(item.getCreatedBy()));
     itemModel.setUpdatedAt(item.getUpdatedAt());
     itemModel.setUpdatedBy(getUserModel(item.getUpdatedBy()));
-    itemModel.setBatches(getItemBatchModels(item.getBatches()));
+    if(item.getBatches() != null) {
+      itemModel.setBatches(getItemBatchModels(item.getBatches()));
+    }
     return itemModel;
   }
 
@@ -257,7 +269,9 @@ public class ReturnsBuilder {
     itemBatchModel.setReturnQuantity(itemBatch.getQuantity());
     itemBatchModel.setMaterialStatus(itemBatch.getMaterialStatus());
     itemBatchModel.setReason(itemBatch.getReason());
-    itemBatchModel.setReceived(getReceivedModel(itemBatch.getReceived()));
+    if(itemBatch.getReceived() != null) {
+      itemBatchModel.setReceived(getReceivedModel(itemBatch.getReceived()));
+    }
     return itemBatchModel;
   }
 

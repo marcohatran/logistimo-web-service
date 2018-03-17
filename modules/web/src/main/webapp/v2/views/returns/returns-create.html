@@ -93,7 +93,7 @@
                                            ng-focus="hidePop(item,$index)"
                                            ng-blur="validate(item,$index)">
                                     <div ng-show="item.returnQuantity > 0">
-                                                <span class="litetext text-left" ng-class="{'required' : transConfig.rsm}"
+                                                <span class="litetext text-left" ng-class="{'required' : transConfig.rosm}"
                                                       ng-show="(!item.tm && isDef(matstatus)) || (item.tm && isDef(tempmatstatus))">{{resourceBundle['inventory.material.status']}}</span>
                                         <select ng-show="isDef(matstatus) && !item.tm" ng-model="item.returnMaterialStatus" class="form-control"
                                                 ng-class="{'red-border': item.sinvalidPopup}"
@@ -116,14 +116,12 @@
                                             </option>
                                         </select>
 
-
                                         <div ng-show="item.reasons && item.reasons.length > 0">
-                                            <span class="litetext text-left" >{{resourceBundle['reason']}}</span>
+                                            <span class="litetext text-left required" >{{resourceBundle['reason']}}</span>
                                             <select class="form-control" ng-model="item.returnReason">
                                                 <option ng-repeat="reason in item.reasons track by $index" value="{{reason}}" ng-selected="item.returnReason == reason">{{reason || '--' + resourceBundle['select'] + ' ' + resourceBundle['reason'] + '--'}}</option>
                                             </select>
                                         </div>
-                                        <p ng-show="showMaterials && (!showReason || (!(material.rsns && material.rsns.length > 0) && !(isUndef(material.rsns) && reasons && reasons.length > 0))) && transaction.materials.length - 1 !== $index" class="text-center cbx">NA</p>
                                     </div>
                                 </div>
                                 <table class="table table-striped table-nobot-mar table-condensed"
@@ -152,7 +150,7 @@
                                                    ng-focus="hidePop(batch,$index)"
                                                    ng-blur="validate(batch,$index)">
                                             <div ng-show="batch.returnQuantity > 0">
-                                                <span class="litetext text-left" ng-class="{'required' : transConfig.rsm}"
+                                                <span class="litetext text-left" ng-class="{'required' : transConfig.rosm}"
                                                       ng-show="(!item.tm && isDef(matstatus)) || (item.tm && isDef(tempmatstatus))">{{resourceBundle['inventory.material.status']}}</span>
                                                 <select ng-show="isDef(matstatus) && !item.tm" ng-model="batch.returnMaterialStatus" class="form-control"
                                                         ng-class="{'red-border': item.sinvalidPopup}"
@@ -175,14 +173,12 @@
                                                     </option>
                                                 </select>
 
-
                                                 <div ng-show="item.reasons && item.reasons.length > 0">
-                                                    <span class="litetext text-left" >{{resourceBundle['reason']}}</span>
+                                                    <span class="litetext text-left required" >{{resourceBundle['reason']}}</span>
                                                     <select class="form-control" ng-model="batch.returnReason">
                                                         <option ng-repeat="reason in item.reasons track by $index" value="{{reason}}" ng-selected="batch.returnReason == reason">{{reason || '--' + resourceBundle['select'] + ' ' + resourceBundle['reason'] + '--'}}</option>
                                                     </select>
                                                 </div>
-                                                <p ng-show="showMaterials && (!showReason || (!(material.rsns && material.rsns.length > 0) && !(isUndef(material.rsns) && reasons && reasons.length > 0))) && transaction.materials.length - 1 !== $index" class="text-center cbx">NA</p>
                                             </div>
                                         </td>
                                     </tr>

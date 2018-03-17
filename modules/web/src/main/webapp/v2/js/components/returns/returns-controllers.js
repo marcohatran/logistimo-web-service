@@ -25,108 +25,133 @@
  * Created by Mohan Raja on 11/03/18.
  */
 
-logistimoApp.controller('CreateReturnsController', ['$scope', 'returnsService','domainCfgService','trnService',
-    function ($scope, returnsService, domainCfgService, trnService) {
 
-        $scope.returnItems = returnsService.getItems();
-        $scope.returnOrder = returnsService.getOrder();
+logistimoApp.controller('CreateReturnsController', CreateReturnsController);
+logistimoApp.controller('ReturnsDetailController', ReturnsDetailController);
 
-        $scope.showLoading();
-        trnService.getReasons('ro')
-            .then(function (data) {
-                $scope.reasons = [""];
-                $scope.reasons = $scope.reasons.concat(data.data.rsns);
-                $scope.defaultReason = data.data.defRsn;
-            })
-            .then(function () {
-                angular.forEach($scope.returnItems, function (returnItem) {
-                    if (returnItem.materialTags) {
-                        trnService.getReasons('ro', returnItem.materialTags).then(function (data) {
-                            returnItem.reasons = [""];
-                            returnItem.reasons = returnItem.reasons.concat(data.data.rsns);
-                            returnItem.returnReason = data.data.defRsn;
-                            angular.forEach(returnItem.returnBatches, function (returnBatch) {
-                                returnBatch.returnReason = angular.copy(returnItem.returnReason);
-                            });
-                        });
-                    } else {
-                        returnItem.reasons = angular.copy($scope.reasons);
-                        returnItem.returnReason = angular.copy($scope.defaultReason);
+CreateReturnsController.$inject = ['$scope','$location', 'returnsService','trnService'];
+ReturnsDetailController.$inject = ['$scope', 'returnsService'];
+
+function CreateReturnsController($scope, $location, returnsService, trnService) {
+
+    $scope.returnItems = returnsService.getItems();
+    $scope.returnOrder = returnsService.getOrder();
+
+    $scope.showLoading();
+    trnService.getReasons('ro')
+        .then(function (data) {
+            $scope.reasons = [""].concat(data.data.rsns);
+            $scope.defaultReason = data.data.defRsn;
+        })
+        .then(function () {
+            angular.forEach($scope.returnItems, function (returnItem) {
+                if (returnItem.materialTags) {
+                    trnService.getReasons('ro', returnItem.materialTags).then(function (data) {
+                        returnItem.reasons = [""].concat(data.data.rsns);
+                        returnItem.returnReason = data.data.defRsn;
                         angular.forEach(returnItem.returnBatches, function (returnBatch) {
                             returnBatch.returnReason = angular.copy(returnItem.returnReason);
                         });
-                    }
-                })
-            }).catch(function error(msg) {
-                $scope.showErrorMsg(msg);
-            }).finally(function () {
-                $scope.hideLoading();
-            });
-
-        $scope.cancel = function() {
-            $scope.setPageSelection('orderDetail');
-            $scope.enableScroll();
-        };
-
-        $scope.create = function() {
-            if(isReturnValid()) {
-                $scope.showLoading();
-                returnsService.create(getCreateRequest()).then(function (data) {
-                    $scope.showSuccess("Returns created successfully");
-                    $location.path('/orders/returns/detail/' + data.data.return_id);
-                }).catch(function error(msg) {
-                    $scope.showErrorMsg(msg);
-                }).finally(function () {
-                    $scope.hideLoading();
-                });
-            }
-        };
-
-        function isReturnValid() {
-            return $scope.returnItems.every(function (returnItem) {
-                if (returnItem.returnBatches) {
-                    return $scope.returnItems.returnBatches.some(function (returnBatch) {
-                        return returnBatch.returnQuantity > 0;
                     });
                 } else {
-                    return returnItem.returnQuantity > 0;
-                }
-            });
-        }
-
-        function getCreateRequest() {
-            var items = [];
-            angular.forEach($scope.returnItems, function(returnItem) {
-                var item = {
-                    material_id : returnItem.id,
-                    return_quantity : returnItem.returnQuantity,
-                    material_status : returnItem.returnMaterialStatus,
-                    reason : returnItem.returnReason
-                };
-                if(returnItem.returnBatches) {
-                    item.batches = [];
-                    var totalReturnQuantity = 0;
-                    angular.forEach(returnItem.returnBatches, function(returnBatch){
-                        item.batches.push({
-                            batch_id : returnBatch.id,
-                            return_quantity : returnBatch.returnQuantity,
-                            material_status : returnBatch.returnMaterialStatus,
-                            reason : returnBatch.returnReason
-                        });
-                        totalReturnQuantity += returnBatch.returnQuantity;
+                    returnItem.reasons = angular.copy($scope.reasons);
+                    returnItem.returnReason = angular.copy($scope.defaultReason);
+                    angular.forEach(returnItem.returnBatches, function (returnBatch) {
+                        returnBatch.returnReason = angular.copy(returnItem.returnReason);
                     });
-                    item.return_quantity = totalReturnQuantity;
                 }
-                items.push(item);
-            });
+            })
+        }).catch(function error(msg) {
+            $scope.showErrorMsg(msg);
+        }).finally(function () {
+            $scope.hideLoading();
+        });
 
-            return {
-                order_id : $scope.order.id,
-                comment : $scope.comment,
-                items : items,
-                source : "web"
+    $scope.cancel = function() {
+        $scope.setPageSelection('orderDetail');
+        $scope.enableScroll();
+    };
+
+    $scope.create = function() {
+        if(isReturnValid('returnQuantity')) {
+            if(isReturnValid('returnReason')) {
+                if(!$scope.transConfig.rosm || isReturnValid('returnMaterialStatus')) {
+                    $scope.showLoading();
+                    returnsService.create(getCreateRequest()).then(function (data) {
+                        $scope.showSuccess("Returns created successfully");
+                        $location.path('/orders/returns/detail/' + data.data.return_id);
+                    }).catch(function error(msg) {
+                        $scope.showErrorMsg(msg);
+                    }).finally(function () {
+                        $scope.hideLoading();
+                    });
+                }
+            } else {
+                $scope.showWarning("Reason is mandatory for all materials being returned")
             }
+        } else {
+            $scope.showWarning("Please specify return quantity for all materials")
+        }
+    };
+
+    function isReturnValid(field) {
+        return $scope.returnItems.every(function (returnItem) {
+            if (checkNotNullEmpty(returnItem.returnBatches)) {
+                return returnItem.returnBatches.some(function (returnBatch) {
+                    return checkNotNullEmpty(returnBatch[field]);
+                });
+            } else {
+                return checkNotNullEmpty(returnItem[field]);
+            }
+        });
+    }
+
+    function getCreateRequest() {
+        var items = [];
+        angular.forEach($scope.returnItems, function(returnItem) {
+            var item = {
+                material_id : returnItem.id,
+                return_quantity : returnItem.returnQuantity,
+                material_status : returnItem.returnMaterialStatus,
+                reason : returnItem.returnReason
+            };
+            if(returnItem.returnBatches) {
+                item.batches = [];
+                var totalReturnQuantity = 0;
+                angular.forEach(returnItem.returnBatches, function(returnBatch){
+                    item.batches.push({
+                        batch_id : returnBatch.id,
+                        return_quantity : returnBatch.returnQuantity,
+                        material_status : returnBatch.returnMaterialStatus,
+                        reason : returnBatch.returnReason
+                    });
+                    totalReturnQuantity += returnBatch.returnQuantity;
+                });
+                item.return_quantity = totalReturnQuantity;
+            }
+            items.push(item);
+        });
+
+        return {
+            order_id : $scope.order.id,
+            comment : $scope.comment,
+            items : items,
+            source : "web"
         }
     }
-]);
+}
+
+function ReturnsDetailController($scope, returnsService) {
+    $scope.page = 'detail';
+    $scope.subPage = 'consignment';
+
+    $scope.showLoading();
+    returnsService.get(1).then(function(data){
+        $scope.returns = data.data;
+    }).catch(function error(msg) {
+        $scope.showErrorMsg(msg);
+    }).finally(function () {
+        $scope.hideLoading();
+    });
+}
 

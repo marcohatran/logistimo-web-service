@@ -51,5 +51,10 @@ logistimoApp.service('returnsService', ['APIService', function (apiService) {
 
     this.create = function (data) {
         return apiService.post(data, '/s2/api/returns');
-    }
+    };
+
+    this.get = function (id) {
+        return apiService.get('/s2/api/returns/' + id);
+    };
+
 }]);
