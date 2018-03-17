@@ -809,6 +809,7 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                             batch.bmfnm = returnitem.bmfnm;
                             batch.mst = returnitem.rmst;
                             batch.trkid = returnitem.id;
+                            batch.rsn = returnitem.rrsn;
                             copy.bquantity.push(batch);
                         }
                         transactionmaterials.push(copy);
@@ -856,11 +857,12 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
             ft['bmaterials'] = [];
             $scope.transaction.materials.forEach(function (mat) {
                 if (mat.isBatch) {
-                    var items = {};
                     mat.bquantity.forEach(function (m) {
+                        var reason = ($scope.transaction.type == 'ri' || $scope.transaction.type == 'ro' ? m.rsn : mat.reason);
+                        var items = {};
                         if (checkNotNullEmpty(m.quantity)) {
                             items[m.mId + "\t" + m.bid] = {q:''+ m.quantity,e: m.bexp,mr: m.bmfnm,md: m.bmfdt,
-                                r :mat.reason, mst: m.mst, trkid: mat.trkid};
+                                r : reason, mst: m.mst, trkid: mat.trkid};
                             ft['bmaterials'].push(items);
                             /*
                             ft['bmaterials'][m.mId + "\t" + m.bid] = {
@@ -2075,9 +2077,11 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
                 }
             }
             if (checkNotNullEmpty($scope.material.name.huName) && checkNotNullEmpty($scope.material.name.huQty) && checkNotNullEmpty(transaction.rq) && transaction.rq % $scope.material.name.huQty != 0) {
-                $scope.showWarning(material, material.quantity + " of " + material.name.mnm + " does not match the multiples of units expected in " + material.name.huName + ". It should be in multiples of " + material.name.huQty + " " + material.name.mnm + ".", index);
+                $scope.showWarning(transaction.rq + " of " + $scope.material.name.mnm + " does not match the multiples of units expected in " + $scope.material.name.huName + ". It should be in multiples of " + $scope.material.name.huQty + " " + $scope.material.name.mnm + ".");
                 return false;
             }
+            // TODO: Material status and reason check
+
             return true;
         }
 
