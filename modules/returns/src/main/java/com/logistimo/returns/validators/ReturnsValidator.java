@@ -28,12 +28,12 @@ import com.logistimo.exception.InvalidDataException;
 import com.logistimo.materials.model.HandlingUnitModel;
 import com.logistimo.materials.service.IHandlingUnitService;
 import com.logistimo.orders.entity.IDemandItem;
-import com.logistimo.orders.entity.IDemandItemBatch;
 import com.logistimo.orders.service.impl.DemandService;
 import com.logistimo.returns.Status;
 import com.logistimo.returns.vo.ReturnsItemBatchVO;
 import com.logistimo.returns.vo.ReturnsItemVO;
 import com.logistimo.services.ServiceException;
+import com.logistimo.shipments.entity.IShipmentItemBatch;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
@@ -59,13 +59,9 @@ public class ReturnsValidator {
   @Autowired
   IHandlingUnitService handlingUnitService;
 
-
-
-
-
   public boolean isQuantityValid(List<ReturnsItemVO> returnItemList, Long orderId) {
 
-    List<IDemandItem> demandItemList = demandService.getDemandItems(orderId);
+    List<IDemandItem> demandItemList = demandService.getDemandItemsWithBatches(orderId);
 
     if (CollectionUtils.isEmpty(demandItemList)) {
       throw new InvalidDataException("No order present!");
@@ -102,8 +98,8 @@ public class ReturnsValidator {
     Map<String, BigDecimal>
         batchItemMap =
         demandItem.getItemBatches().stream()
-            .collect(Collectors.toMap(IDemandItemBatch::getBatchId,
-                IDemandItemBatch::getQuantity));
+            .collect(Collectors.toMap(IShipmentItemBatch::getBatchId,
+                IShipmentItemBatch::getQuantity));
 
     for (ReturnsItemBatchVO returnsItemBatch : returnsItemVO.getReturnItemBatches()) {
       BigDecimal quantity = batchItemMap.get(returnsItemBatch.getBatch().getBatchId());

@@ -25,15 +25,22 @@ package com.logistimo.returns.models;
 
 import com.google.gson.annotations.SerializedName;
 
+import com.logistimo.constants.SourceConstants;
+
 import java.util.List;
+
+import javax.validation.constraints.NotNull;
+
+import lombok.Getter;
 
 /**
  * @author Mohan Raja
  */
+@Getter
 public class ReturnsRequestModel {
 
   @SerializedName("order_id")
-  @javax.validation.constraints.NotNull(message = "Order Id cannot be null!!")
+  @NotNull(message = "Order Id cannot be null!!")
   private Long orderId;
 
   @SerializedName("geo_location")
@@ -41,26 +48,12 @@ public class ReturnsRequestModel {
 
   private String comment;
 
-  @javax.validation.constraints.NotNull(message = "Items cannot be null!!")
+  @NotNull(message = "Items cannot be null!!")
   private List<ReturnsItemModel> items;
 
+  private Integer source = SourceConstants.MOBILE;
 
-  public Long getOrderId() {
-    return orderId;
-  }
-
-  public Location getLocation() {
-    return location;
-  }
-
-  public String getComment() {
-    return comment;
-  }
-
-  public List<ReturnsItemModel> getItems() {
-    return items;
-  }
-
+  @Getter
   public class Location {
 
     private Double latitude;
@@ -73,21 +66,6 @@ public class ReturnsRequestModel {
     @SerializedName("geo_error")
     private String geoError;
 
-    public Double getLatitude() {
-      return latitude;
-    }
-
-    public Double getLongitude() {
-      return longitude;
-    }
-
-    public Double getGeoAccuracy() {
-      return geoAccuracy;
-    }
-
-    public String getGeoError() {
-      return geoError;
-    }
   }
 
 }

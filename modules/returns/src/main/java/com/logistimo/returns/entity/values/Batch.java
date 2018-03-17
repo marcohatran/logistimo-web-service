@@ -30,10 +30,18 @@ import javax.persistence.Embeddable;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Value;
+
 /**
  * @author Mohan Raja
  */
 @Embeddable
+@NoArgsConstructor
+@Getter
+@AllArgsConstructor
 public class Batch {
   @Column(name = "batch_id")
   private String batchId;
@@ -48,34 +56,5 @@ public class Batch {
   @Temporal(TemporalType.DATE)
   @Column(name = "manufactured")
   private Date manufacturedDate;
-
-
-  @SuppressWarnings("unused")
-  private Batch() {
-    //Added to support JPA
-  }
-
-  public Batch(String batchId, Date expiryDate, String manufacturer, Date manufacturedDate) {
-    this.batchId = batchId;
-    this.expiryDate = expiryDate;
-    this.manufacturer = manufacturer;
-    this.manufacturedDate = manufacturedDate;
-  }
-
-  public String getBatchId() {
-    return batchId;
-  }
-
-  public Date getExpiryDate() {
-    return expiryDate;
-  }
-
-  public String getManufacturer() {
-    return manufacturer;
-  }
-
-  public Date getManufacturedDate() {
-    return manufacturedDate;
-  }
 
 }

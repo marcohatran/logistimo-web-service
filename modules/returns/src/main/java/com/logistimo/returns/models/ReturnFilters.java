@@ -39,10 +39,11 @@ public class ReturnFilters {
   private Timestamp startDate;
   private Timestamp endDate;
   private Long orderId;
-  private String referenceId;
-  private String storeTags;
+//  private String referenceId;
+//  private String storeTags;
   private Long vendorId;
   private Long domainId;
+
   private boolean isManager;
   private String userId;
 }

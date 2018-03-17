@@ -27,6 +27,8 @@ import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.logger.XLog;
 import com.logistimo.orders.service.IDemandService;
 import com.logistimo.orders.service.impl.DemandService;
+import com.logistimo.shipments.entity.IShipmentItemBatch;
+import com.logistimo.shipments.entity.ShipmentItemBatch;
 import com.logistimo.tags.TagUtil;
 import com.logistimo.tags.entity.ITag;
 import com.logistimo.tags.entity.Tag;
@@ -36,7 +38,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -139,7 +140,7 @@ public class DemandItem implements IDemandItem {
   private List<String> oldktgs; // list of kiosk tgs (for queries)
   // Batch metadata
   @NotPersistent
-  private Set<DemandItemBatch> btchs; // a set of batches associated with this entity
+  private Set<ShipmentItemBatch> btchs; // a set of batches associated with this entity
 
   @NotPersistent
   private Long linkedKioskId; // used during data aggregation, as a dimension
@@ -438,21 +439,21 @@ public class DemandItem implements IDemandItem {
   }
 
   @Override
-  public Set<? extends IDemandItemBatch> getItemBatches() {
+  public Set<? extends IShipmentItemBatch> getItemBatches() {
     return btchs;
   }
 
   @Override
-  public void setItemBatches(Set<? extends IDemandItemBatch> itemBatches) {
-    btchs = (Set<DemandItemBatch>) itemBatches;
+  public void setItemBatches(Set<? extends IShipmentItemBatch> itemBatches) {
+    btchs = (Set<ShipmentItemBatch>) itemBatches;
   }
 
   @Override
-  public void addBatch(IDemandItemBatch batch) {
+  public void addBatch(IShipmentItemBatch batch) {
     if (btchs == null) {
       btchs = new HashSet<>();
     }
-    btchs.add((DemandItemBatch) batch);
+    btchs.add((ShipmentItemBatch) batch);
   }
 
   @Override
@@ -461,36 +462,10 @@ public class DemandItem implements IDemandItem {
     if (btchs == null || btchs.isEmpty()) {
       return q;
     }
-    for (DemandItemBatch btch : btchs) {
+    for (ShipmentItemBatch btch : btchs) {
       q = q.add(btch.getQuantity());
     }
     return q;
-  }
-
-  @Override
-  public List<Map<String, Object>> getBatchesAsMap() {
-    if (btchs == null || btchs.isEmpty()) {
-      return null;
-    }
-    List<Map<String, Object>> list = new ArrayList<>();
-    for (DemandItemBatch btch : btchs) {
-      list.add(btch.toMap());
-    }
-    // Sort by expiry date (asc)
-    Collections.sort(list, (o1, o2) -> {
-      Date d1 = (Date) o1.get(IDemandItemBatch.EXPIRY);
-      Date d2 = (Date) o2.get(IDemandItemBatch.EXPIRY);
-      if (d1 == null && d2 != null) {
-        return -1;
-      } else if (d1 != null && d2 == null) {
-        return 1;
-      } else if (d1 == null) {
-        return 0;
-      } else {
-        return d1.compareTo(d2);
-      }
-    });
-    return list;
   }
 
   @Override

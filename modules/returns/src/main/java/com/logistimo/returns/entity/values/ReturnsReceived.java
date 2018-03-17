@@ -28,10 +28,18 @@ import java.math.BigDecimal;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Value;
+
 /**
  * @author Mohan Raja
  */
 @Embeddable
+@NoArgsConstructor
+@Getter
+@AllArgsConstructor
 public class ReturnsReceived {
 
   @Column(name = "received_quantity")
@@ -42,28 +50,5 @@ public class ReturnsReceived {
 
   @Column(name = "discrepancy_reason")
   private String reason;
-
-  @SuppressWarnings("unused")
-  private ReturnsReceived() {
-    //Added to support JPA
-  }
-
-  public ReturnsReceived(BigDecimal quantity, String materialStatus, String reason) {
-    this.quantity = quantity == null ? BigDecimal.ZERO : quantity;
-    this.materialStatus = materialStatus;
-    this.reason = reason;
-  }
-
-  public BigDecimal getQuantity() {
-    return quantity;
-  }
-
-  public String getMaterialStatus() {
-    return materialStatus;
-  }
-
-  public String getReason() {
-    return reason;
-  }
 
 }

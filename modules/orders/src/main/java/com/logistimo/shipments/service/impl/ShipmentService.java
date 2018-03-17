@@ -1784,6 +1784,30 @@ public class ShipmentService implements IShipmentService {
     }
   }
 
+  @Override
+  public List<IShipmentItemBatch> getShipmentsBatchByOrderId(Long orderId) {
+    PersistenceManager  pm = PMF.get().getPersistenceManager();
+    Query q = null;
+    try {
+      q = pm.newQuery("javax.jdo.query.SQL",
+          "SELECT SIB.* FROM SHIPMENTITEMBATCH SIB, SHIPMENTITEM SI, SHIPMENT S WHERE SIB.SIID = SI.ID AND SI.SID = S.ID AND S.ORDERID=?");
+      q.setClass(JDOUtils.getImplClass(IShipmentItemBatch.class));
+      List<IShipmentItemBatch> items = (List<IShipmentItemBatch>) q.execute(orderId);
+      if (items != null) {
+        items = (List<IShipmentItemBatch>) pm.detachCopyAll(items);
+      }
+      return items;
+    } catch (Exception e) {
+      xLogger.severe("Error while fetching demand items for order {0}", orderId, e);
+    } finally {
+      if (q != null) {
+        q.closeAll();
+      }
+      pm.close();
+    }
+    return null;
+  }
+
   /**
    * Get all shipment for a specific order
    *

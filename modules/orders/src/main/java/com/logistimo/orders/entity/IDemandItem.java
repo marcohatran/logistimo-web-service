@@ -24,6 +24,7 @@
 package com.logistimo.orders.entity;
 
 import com.logistimo.domains.IOverlappedDomain;
+import com.logistimo.shipments.entity.IShipmentItemBatch;
 import com.logistimo.tags.entity.ITag;
 
 import java.math.BigDecimal;
@@ -107,15 +108,13 @@ public interface IDemandItem extends IOverlappedDomain {
 
   void setTgs(List<? extends ITag> tags, String tagType);
 
-  Set<? extends IDemandItemBatch> getItemBatches();
+  Set<? extends IShipmentItemBatch> getItemBatches();
 
-  void setItemBatches(Set<? extends IDemandItemBatch> itemBatches);
+  void setItemBatches(Set<? extends IShipmentItemBatch> itemBatches);
 
-  void addBatch(IDemandItemBatch batch);
+  void addBatch(IShipmentItemBatch batch);
 
   BigDecimal getQuantityByBatches();
-
-  List<Map<String, Object>> getBatchesAsMap();
 
   Map<String, Object> toMap(String currency, Locale locale, String timezone,
                             boolean forceIntegerQuantity);

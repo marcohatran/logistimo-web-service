@@ -143,7 +143,7 @@ public class ReturnsDao extends Dao {
       filters.put("fromDate", returnFilters.getStartDate());
     }
     if (returnFilters.getEndDate() != null) {
-      query.append(" and r.updated_at<=:endDate");
+      query.append(" and r.created_at<=:endDate");
       filters.put("endDate", returnFilters.getEndDate());
     }
     List<Returns>

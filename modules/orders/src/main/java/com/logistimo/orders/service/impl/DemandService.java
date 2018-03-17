@@ -46,6 +46,8 @@ import com.logistimo.pagination.Results;
 import com.logistimo.proto.JsonTagsZ;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.impl.PMF;
+import com.logistimo.shipments.entity.IShipmentItemBatch;
+import com.logistimo.shipments.service.impl.ShipmentService;
 import com.logistimo.tags.dao.ITagDao;
 import com.logistimo.tags.entity.ITag;
 import com.logistimo.utils.BigUtil;
@@ -86,6 +88,7 @@ public class DemandService implements IDemandService {
   private EntitiesService entitiesService;
   private MaterialCatalogService materialCatalogService;
   private OrderManagementService orderManagementService;
+  private ShipmentService shipmentService;
 
   @Autowired
   public void setTagDao(ITagDao tagDao) {
@@ -111,6 +114,11 @@ public class DemandService implements IDemandService {
   @Autowired
   public void setOrderManagementService(OrderManagementService orderManagementService) {
     this.orderManagementService = orderManagementService;
+  }
+
+  @Autowired
+  public void setShipmentService(ShipmentService shipmentService) {
+    this.shipmentService = shipmentService;
   }
 
   @Override
@@ -268,6 +276,22 @@ public class DemandService implements IDemandService {
       if (useLocalPM) {
         localPM.close();
       }
+    }
+    return null;
+  }
+
+  public List<IDemandItem> getDemandItemsWithBatches(Long orderId) {
+    try {
+      List<IDemandItem> demandItems = getDemandItems(orderId);
+      Map<Long, IDemandItem> demandItemMap = new HashMap<>(demandItems.size());
+      demandItems.stream().forEach(demandItem -> demandItemMap.put(demandItem.getMaterialId(), demandItem));
+      List<IShipmentItemBatch> shipmentItemBatches = shipmentService.getShipmentsBatchByOrderId(orderId);
+      shipmentItemBatches.stream().forEach(shipmentItemBatch ->
+        demandItemMap.get(shipmentItemBatch.getMaterialId()).addBatch(shipmentItemBatch)
+      );
+      return demandItems;
+    } catch (Exception e) {
+      xLogger.severe("Error while fetching demand items for order {0}", orderId, e);
     }
     return null;
   }

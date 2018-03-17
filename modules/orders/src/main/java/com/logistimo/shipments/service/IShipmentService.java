@@ -36,6 +36,7 @@ import com.logistimo.services.ServiceException;
 import com.logistimo.shipments.ShipmentStatus;
 import com.logistimo.shipments.entity.IShipment;
 import com.logistimo.shipments.entity.IShipmentItem;
+import com.logistimo.shipments.entity.IShipmentItemBatch;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -96,6 +97,8 @@ public interface IShipmentService {
   List<IShipment> getShipmentsByOrderId(Long orderId, PersistenceManager persistenceManager);
 
   List<IShipment> getShipmentsByOrderId(Long orderId);
+
+  List<IShipmentItemBatch> getShipmentsBatchByOrderId(Long orderId);
 
     /**
      * Get list of shipments according to permissions of user

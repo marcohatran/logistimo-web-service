@@ -108,27 +108,29 @@ public class ReturnsBuilder {
     return mobileReturnsModel;
   }
 
-  public ReturnsVO createNewReturns(ReturnsRequestModel mobileReturnRequestModel)
+  public ReturnsVO createNewReturns(ReturnsRequestModel returnRequestModel)
       throws ServiceException {
 
     Date now = new Date();
     String username = SecurityUtils.getUsername();
-    putItemsMeta(mobileReturnRequestModel.getItems(), now, username);
+    putItemsMeta(returnRequestModel.getItems(), now, username);
 
     ReturnsVO returns = new ReturnsVO();
     returns.setSourceDomain(SecurityUtils.getCurrentDomainId());
-    returns.setOrderId(mobileReturnRequestModel.getOrderId());
-    IOrder order = orderManagementService.getOrder(mobileReturnRequestModel.getOrderId());
+    returns.setOrderId(returnRequestModel.getOrderId());
+    IOrder order = orderManagementService.getOrder(returnRequestModel.getOrderId());
     returns.setCustomerId(order.getKioskId());
     returns.setVendorId(order.getServicingKiosk());
-    returns.setLocation(getGeoLocation(mobileReturnRequestModel.getLocation()));
+    if(returnRequestModel.getLocation() != null) {
+      returns.setLocation(getGeoLocation(returnRequestModel.getLocation()));
+    }
     returns.setStatus(getReturnsStatus(now, username));
     returns.setCreatedAt(now);
     returns.setCreatedBy(username);
     returns.setUpdatedAt(now);
     returns.setUpdatedBy(username);
-    returns.setSource(SourceConstants.MOBILE);
-    returns.setItems(getItems(mobileReturnRequestModel.getItems()));
+    returns.setSource(returnRequestModel.getSource());
+    returns.setItems(getItems(returnRequestModel.getItems()));
     return returns;
   }
 
