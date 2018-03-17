@@ -2049,16 +2049,16 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
             if (!isReturnTransactionsValid()) {
                 return;
             }
-            if (!isReturnsAgainstSingleLinkedKiosk()) {
-                return;
-            }
+
             angular.forEach($scope.transactions.results,function(transaction) {
                 if(transaction.rq > 0) {
                     if (!$scope.returnitems) {
                         $scope.returnitems = [];
                     }
-                    $scope.returnitems.push(angular.copy(transaction));
-                    transaction.rq = undefined;
+                    if (isReturnsAgainstSingleLinkedKiosk()) {
+                        $scope.returnitems.push(angular.copy(transaction));
+                        transaction.rq = undefined;
+                    }
                 }
             });
         };
