@@ -116,12 +116,13 @@
                         <span class="caret"></span>
                     </a>
                     <ul class="dropdown-menu" role="menu">
-                        <li><a href="#/dashboard/">Overview</a></li>
-                        <li ng-if="hasDashbaccess && !tempOnlyAU"><a href="#/dashboard/inventory">Inventory</a></li>
+                        <li><a href="#/dashboard/">{{resourceBundle['overview']}}</a></li>
+                        <li ng-if="hasDashbaccess && !tempOnlyAU"><a href="#/dashboard/inventory">{{resourceBundle['prm.inventory']}}</a></li>
+                        <li ng-if="hasDashbaccess && tempEnabled"><a href="#/dashboard/assets">{{resourceBundle['assets']}}</a></li>
                         <li ng-if="hasDashbaccess && !tempOnlyAU && !hbUTag && (dashboardConfig.ape || dashboardConfig.ipe)">
-                            <a href="#/dashboard/activity">Activity</a></li>
+                            <a href="#/dashboard/activity">{{resourceBundle['activity']}}</a></li>
                         <li ng-if="hasDashbaccess && !tempOnlyAU && (dashboardConfig.ope || dashboardConfig.rpe)"><a
-                                href="#/dashboard/orders">Orders</a></li>
+                                href="#/dashboard/orders">{{resourceBundle['home.Orders']}}</a></li>
                         <li ng-if="hasDashbaccess && dashboardConfig.edm && !tempOnlyAU"><a
                                 href="#/dashboard/customdashboard">{{resourceBundle['custom.dashboards']}}</a></li>
                         <li ng-repeat="item in dashboards" ng-show="item.isConfd"><a

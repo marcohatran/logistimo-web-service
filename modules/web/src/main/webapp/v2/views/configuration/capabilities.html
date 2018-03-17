@@ -85,7 +85,7 @@
                                             <td><input type="checkbox" checklist-model="uiCnf.cap" checklist-value="cap[1]" ng-change="setFormUpdated();setTransactionMenu(cap[1])"> <b>{{resourceBundle['disable']}} {{resourceBundle['orders.lowercase']}}</b></td>
                                         </tr>
                                         <tr>
-                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[0]" ng-change="setFormUpdated()"> {{resourceBundle['config.viewstock']}}</td>
+                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[0]" ng-change="setFormUpdated();toggleViewStock('vs')"> {{resourceBundle['config.viewstock']}}</td>
                                             <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[1]" ng-change="setFormUpdated()"> {{resourceBundle['config.enterissues']}}</td>
                                             <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[2]" ng-change="setFormUpdated()"> {{resourceBundle['config.enterreceipts']}}</td>
                                         </tr>
@@ -95,8 +95,8 @@
                                             <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[5]" ng-change="setFormUpdated()"> {{resourceBundle['config.transferstock']}}</td>
                                         </tr>
                                         <tr>
-                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[6]" ng-change="setFormUpdated()"> {{resourceBundle['config.enter.returns.incoming']}}</td>
-                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[7]" ng-change="setFormUpdated()"> {{resourceBundle['config.enter.returns.outgoing']}}</td>
+                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[6]" ng-change="setFormUpdated();toggleReturns('eri')"> {{resourceBundle['config.enter.returns.incoming']}}</td>
+                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[7]" ng-change="setFormUpdated();toggleReturns('ero')"> {{resourceBundle['config.enter.returns.outgoing']}}</td>
                                             <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[8]" ng-change="setFormUpdated()"> {{resourceBundle['config.ordernewstock']}}</td>
                                         </tr>
                                         <tr>
@@ -116,6 +116,11 @@
                                         <tr>
                                             <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[17]" ng-change="setFormUpdated();toggleAssets('v')"> {{resourceBundle['config.view.assets']}}</td>
                                             <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[18]" ng-change="setFormUpdated();toggleAssets('c')"> {{resourceBundle['config.change.status.assets']}}</td>
+                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[19]" ng-change="setFormUpdated();"> View likes</td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[20]" ng-change="setFormUpdated();toggleViewStock('etvs')"> Enter transactions from 'View stock' </td>
+                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[21]" ng-change="setFormUpdated();toggleReturns('erir')"> Enter returns with issues or receipts</td>
                                         </tr>
                                     </table>
                                 </div>

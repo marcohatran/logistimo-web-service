@@ -37,6 +37,34 @@ dashboardServices.factory('dashboardService', ['APIService','$q', function (apiS
         getAll: function () {
             return apiService.get('/s2/api/dashboard/all/');
         },
+        getAssetStatus: function(filter, monitoringType, assetType, entityTag, excludeEntityTag, period, level, skipCache) {
+          var url = '';
+            if (checkNotNullEmpty(filter)) {
+                url = '?location=' + filter;
+                if (checkNotNullEmpty(level)) {
+                    url += '&level=' + level;
+                }
+            }
+            if (checkNotNullEmpty(monitoringType)) {
+                url += (url == '' ? '?' : '&') + 'monitoringType=' + monitoringType;
+            }
+            if (checkNotNullEmpty(assetType)) {
+                url += (url == '' ? '?' : '&') + 'assetType=' + assetType;
+            }
+            if (checkNotNullEmpty(entityTag)) {
+                url += (url == '' ? '?' : '&') + 'eTag=' + entityTag;
+            }
+            if (checkNotNullEmpty(excludeEntityTag)) {
+                url += (url == '' ? '?' : '&') + 'eeTag=' + excludeEntityTag;
+            }
+            if (checkNotNullEmpty(period)) {
+                url += (url == '' ? '?' : '&') + 'period=' + period;
+            }
+            if (checkNotNullEmpty(skipCache)) {
+                url += (url == '' ? '?' : '&') + 'skipCache=' + skipCache;
+            }
+            return apiService.get('/s2/api/dashboards/assets/status' + url)
+        },
         get: function (filter, level, exFilter, exType, period, tPeriod,aType, eTag, date, excludeETag, skipCache) {
             var url = '';
             if (checkNotNullEmpty(filter)) {

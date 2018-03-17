@@ -288,6 +288,8 @@ public class JsonTagsZ {
   public static final String ROUTE_INDEX = "rti";
   public static final String ROUTE_TAG = "rtt";
   public static final String ENTITY_TAG = "ett";
+  public static final String DASHBOARD = "dashboard";
+  public static final String DEFAULT_MATERIAL_TAGS = "default_mat_tags";
   public static final String SIZE = "sz";
   public static final String STOCKCOUNT_DIFFERENCE = "sdf";
   public static final String STOCK_COUNT = "sc";
