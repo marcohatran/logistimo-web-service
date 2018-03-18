@@ -280,6 +280,13 @@ public class DemandService implements IDemandService {
     return null;
   }
 
+  /**
+   * Batches are grouped across all shipments by batch id, ignoring all meta. Only quantities and
+   * batch id can be read.
+   *
+   * @param orderId
+   * @return
+   */
   public List<IDemandItem> getDemandItemsWithBatches(Long orderId) {
     try {
       List<IDemandItem> demandItems = getDemandItems(orderId);
@@ -287,9 +294,26 @@ public class DemandService implements IDemandService {
       demandItems.stream().forEach(demandItem -> demandItemMap.put(demandItem.getMaterialId(), demandItem));
       List<IShipmentItemBatch> shipmentItemBatches = shipmentService.getShipmentsBatchByOrderId(orderId);
       if(shipmentItemBatches != null) {
-        shipmentItemBatches.stream().forEach(shipmentItemBatch ->
-                demandItemMap.get(shipmentItemBatch.getMaterialId()).addBatch(shipmentItemBatch)
+        Map<String, IShipmentItemBatch> shipmentItemBatchMap = new HashMap<>();
+        shipmentItemBatches.stream().forEach(shipmentItemBatch -> {
+              String key = shipmentItemBatch.getMaterialId() + "_" + shipmentItemBatch.getBatchId();
+              if(!shipmentItemBatchMap.containsKey(key)) {
+                shipmentItemBatchMap.put(key,shipmentItemBatch);
+              } else {
+                IShipmentItemBatch iShipmentItemBatch = shipmentItemBatchMap.get(key);
+                iShipmentItemBatch.setQuantity(iShipmentItemBatch.getQuantity().add(shipmentItemBatch.getQuantity()));
+                iShipmentItemBatch.setDiscrepancyQuantity(
+                    iShipmentItemBatch.getDiscrepancyQuantity().add(shipmentItemBatch.getDiscrepancyQuantity()));
+                iShipmentItemBatch.setFulfilledQuantity(
+                    iShipmentItemBatch.getFulfilledQuantity().add(shipmentItemBatch.getFulfilledQuantity()));
+              }
+            }
         );
+        for (Map.Entry<String, IShipmentItemBatch> shipmentItemBatchEntry : shipmentItemBatchMap
+            .entrySet()) {
+          Long materialId = Long.valueOf(shipmentItemBatchEntry.getKey().split("_")[0]);
+          demandItemMap.get(materialId).addBatch(shipmentItemBatchEntry.getValue());
+        }
       }
       return demandItems;
     } catch (Exception e) {

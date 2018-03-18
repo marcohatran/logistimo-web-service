@@ -164,7 +164,9 @@ public class ReturnsBuilder {
       returnsItem.setCreatedBy(itemModel.getCreatedBy().getUserId());
       returnsItem.setUpdatedAt(itemModel.getUpdatedAt());
       returnsItem.setUpdatedBy(itemModel.getUpdatedBy().getUserId());
-      returnsItem.setReturnItemBatches(getItemBatches(itemModel.getBatches()));
+      if(itemModel.getBatches()!= null) {
+        returnsItem.setReturnItemBatches(getItemBatches(itemModel.getBatches()));
+      }
       returnsItems.add(returnsItem);
     }
     return returnsItems;
@@ -245,7 +247,9 @@ public class ReturnsBuilder {
     itemModel.setCreatedBy(getUserModel(item.getCreatedBy()));
     itemModel.setUpdatedAt(item.getUpdatedAt());
     itemModel.setUpdatedBy(getUserModel(item.getUpdatedBy()));
-    itemModel.setBatches(getItemBatchModels(item.getReturnItemBatches()));
+    if(item.getReturnItemBatches() != null) {
+      itemModel.setBatches(getItemBatchModels(item.getReturnItemBatches()));
+    }
     return itemModel;
   }
 
@@ -266,7 +270,9 @@ public class ReturnsBuilder {
     itemBatchModel.setReturnQuantity(itemBatch.getQuantity());
     itemBatchModel.setMaterialStatus(itemBatch.getMaterialStatus());
     itemBatchModel.setReason(itemBatch.getReason());
-    itemBatchModel.setReceived(getReceivedModel(itemBatch.getReceived()));
+    if(itemBatch.getReceived() != null) {
+      itemBatchModel.setReceived(getReceivedModel(itemBatch.getReceived()));
+    }
     return itemBatchModel;
   }
 
