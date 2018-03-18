@@ -87,6 +87,8 @@ function CreateReturnsController($scope, $location, returnsService, trnService) 
                     }).finally(function () {
                         $scope.hideLoading();
                     });
+                } else {
+                    $scope.showWarning("Material status is mandatory for all materials being returned")
                 }
             } else {
                 $scope.showWarning("Reason is mandatory for all materials being returned")
@@ -150,6 +152,7 @@ function ReturnsDetailController($scope, requestContext, returnsService) {
     $scope.subPage = 'consignment';
 
     var returnId = requestContext.getParam("returnId");
+
     $scope.showLoading();
     returnsService.get(returnId).then(function(data){
         $scope.returns = data.data;

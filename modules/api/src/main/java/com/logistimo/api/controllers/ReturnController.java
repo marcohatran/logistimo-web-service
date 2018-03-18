@@ -24,7 +24,9 @@
 package com.logistimo.api.controllers;
 
 import com.logistimo.api.builders.ReturnsBuilder;
+import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.returns.models.MobileReturnsModel;
+import com.logistimo.returns.models.ReturnFilters;
 import com.logistimo.returns.models.ReturnsRequestModel;
 import com.logistimo.returns.models.MobileReturnsUpdateStatusModel;
 import com.logistimo.returns.models.MobileReturnsUpdateStatusRequestModel;
@@ -40,6 +42,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
+
+import java.util.List;
 
 import javax.validation.Valid;
 
@@ -84,6 +88,17 @@ public class ReturnController {
   MobileReturnsModel get(@PathVariable Long returnId) throws ServiceException {
     ReturnsVO returnsVO=returnsService.getReturnsById(returnId);
     return returnsBuilder.buildMobileReturnsModel(returnsVO);
+  }
+
+  @RequestMapping(method = RequestMethod.GET)
+  public
+  @ResponseBody
+  List<MobileReturnsModel> getAll(@RequestBody ReturnFilters filters) throws ServiceException {
+    filters.setDomainId(SecurityUtils.getCurrentDomainId());
+    filters.setManager(SecurityUtils.isManager());
+    filters.setUserId(SecurityUtils.getUsername());
+    List<ReturnsVO> returnsVOs=returnsService.getReturns(filters);
+    return returnsBuilder.buildMobileReturnsModels(returnsVOs);
   }
 
 }
