@@ -30,9 +30,11 @@ logistimoApp.controller('CreateReturnsController', CreateReturnsController);
 logistimoApp.controller('ReturnsDetailController', ReturnsDetailController);
 
 CreateReturnsController.$inject = ['$scope','$location', 'returnsService','trnService'];
-ReturnsDetailController.$inject = ['$scope', 'returnsService'];
+ReturnsDetailController.$inject = ['$scope', 'requestContext', 'returnsService'];
 
 function CreateReturnsController($scope, $location, returnsService, trnService) {
+
+    const SOURCE_WEB = 1;
 
     $scope.returnItems = returnsService.getItems();
     $scope.returnOrder = returnsService.getOrder();
@@ -136,17 +138,18 @@ function CreateReturnsController($scope, $location, returnsService, trnService) 
             order_id : $scope.order.id,
             comment : $scope.comment,
             items : items,
-            source : "web"
+            source : SOURCE_WEB
         }
     }
 }
 
-function ReturnsDetailController($scope, returnsService) {
+function ReturnsDetailController($scope, requestContext, returnsService) {
     $scope.page = 'detail';
     $scope.subPage = 'consignment';
 
+    var returnId = requestContext.getParam("returnId");
     $scope.showLoading();
-    returnsService.get(1).then(function(data){
+    returnsService.get(returnId).then(function(data){
         $scope.returns = data.data;
     }).catch(function error(msg) {
         $scope.showErrorMsg(msg);

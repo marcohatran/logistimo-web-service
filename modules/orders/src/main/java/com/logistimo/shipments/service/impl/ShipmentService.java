@@ -1790,7 +1790,7 @@ public class ShipmentService implements IShipmentService {
     Query q = null;
     try {
       q = pm.newQuery("javax.jdo.query.SQL",
-          "SELECT SIB.* FROM SHIPMENTITEMBATCH SIB, SHIPMENTITEM SI, SHIPMENT S WHERE SIB.SIID = SI.ID AND SI.SID = S.ID AND S.ORDERID=?");
+          "SELECT * FROM SHIPMENTITEMBATCH SIB, SHIPMENTITEM SI, SHIPMENT S WHERE SIB.SIID = SI.ID AND SI.SID = S.ID AND S.ORDERID=?");
       q.setClass(JDOUtils.getImplClass(IShipmentItemBatch.class));
       List<IShipmentItemBatch> items = (List<IShipmentItemBatch>) q.execute(orderId);
       if (items != null) {

@@ -286,9 +286,11 @@ public class DemandService implements IDemandService {
       Map<Long, IDemandItem> demandItemMap = new HashMap<>(demandItems.size());
       demandItems.stream().forEach(demandItem -> demandItemMap.put(demandItem.getMaterialId(), demandItem));
       List<IShipmentItemBatch> shipmentItemBatches = shipmentService.getShipmentsBatchByOrderId(orderId);
-      shipmentItemBatches.stream().forEach(shipmentItemBatch ->
-        demandItemMap.get(shipmentItemBatch.getMaterialId()).addBatch(shipmentItemBatch)
-      );
+      if(shipmentItemBatches != null) {
+        shipmentItemBatches.stream().forEach(shipmentItemBatch ->
+                demandItemMap.get(shipmentItemBatch.getMaterialId()).addBatch(shipmentItemBatch)
+        );
+      }
       return demandItems;
     } catch (Exception e) {
       xLogger.severe("Error while fetching demand items with batches for order {0}", orderId, e);
