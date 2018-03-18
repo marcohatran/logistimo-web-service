@@ -79,6 +79,6 @@ public interface IActivity {
   void setTag(String tag);
 
   enum TYPE {
-    ORDER, SHIPMENT
+    ORDER, SHIPMENT, RETURNS
   }
 }

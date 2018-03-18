@@ -160,7 +160,7 @@ public class ReturnsValidator {
     }
   }
 
-  public boolean hasAccessToEntity(Long entityId) throws ServiceException {
+  public boolean validateEntityAccess(Long entityId) throws ServiceException {
     return (EntityAuthoriser.authoriseEntity(entityId));
   }
 

@@ -26,6 +26,7 @@ package com.logistimo.returns.service;
 import com.logistimo.returns.entity.Returns;
 import com.logistimo.returns.entity.ReturnsItem;
 import com.logistimo.returns.entity.ReturnsItemBatch;
+import com.logistimo.returns.entity.values.ReturnsStatus;
 import com.logistimo.returns.models.ReturnFilters;
 import com.logistimo.returns.vo.ReturnsItemBatchVO;
 import com.logistimo.returns.vo.ReturnsItemVO;
@@ -146,6 +147,8 @@ public class ReturnsDao extends Dao {
       query.append(" and r.created_at<=:endDate");
       filters.put("endDate", returnFilters.getEndDate());
     }
+
+    query.append(" order by r.id desc");
     List<Returns>
         returnsList =
         super.findAllByNativeQuery(query.toString(), filters, Returns.class);

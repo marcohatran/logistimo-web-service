@@ -29,6 +29,7 @@ import javax.persistence.Column;
 import javax.persistence.Embeddable;
 
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Value;
@@ -38,7 +39,7 @@ import lombok.Value;
  */
 @Embeddable
 @NoArgsConstructor
-@Getter
+@Data
 @AllArgsConstructor
 public class ReturnsReceived {
 

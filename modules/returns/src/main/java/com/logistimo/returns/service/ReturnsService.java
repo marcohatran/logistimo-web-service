@@ -23,6 +23,9 @@
 
 package com.logistimo.returns.service;
 
+import com.logistimo.activity.entity.IActivity;
+import com.logistimo.activity.service.ActivityService;
+import com.logistimo.conversations.entity.IMessage;
 import com.logistimo.exception.InvalidDataException;
 import com.logistimo.orders.service.impl.DemandService;
 import com.logistimo.returns.Status;
@@ -34,6 +37,7 @@ import com.logistimo.returns.vo.ReturnsItemVO;
 import com.logistimo.returns.vo.ReturnsStatusVO;
 import com.logistimo.returns.vo.ReturnsVO;
 import com.logistimo.services.ServiceException;
+import com.logistimo.services.impl.PMF;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +51,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.jdo.PersistenceManager;
 
 /**
  * Created by pratheeka on 13/03/18.
@@ -66,6 +72,9 @@ public class ReturnsService {
   @Autowired
   private ReturnsDao returnsDao;
 
+  @Autowired
+  private ActivityService activityService;
+
   @Transactional(transactionManager = "transactionManager")
   public ReturnsVO createReturns(ReturnsVO returnsVO) throws ServiceException {
     returnsValidator.isQuantityValid(returnsVO.getItems(), returnsVO.getOrderId());
@@ -76,6 +85,7 @@ public class ReturnsService {
     returnsItemVOList.forEach(returnsItemVO -> {
       returnsItemVO.setReturnsId(returnId);
       final BigDecimal[] quantity = new BigDecimal[1];
+      quantity[0]=BigDecimal.ZERO;
       List<ReturnsItemBatchVO>
           returnsItemBatchVOList = returnsItemVO.getReturnItemBatches();
       returnsItemVO = returnsDao.saveReturnsItems(returnsItemVO);
@@ -112,9 +122,9 @@ public class ReturnsService {
     Status oldStatus = returnsVO.getStatus().getStatus();
     returnsValidator.validateStatusChange(newStatus, oldStatus);
     if ((statusModel.getStatus() == Status.SHIPPED && returnsValidator
-        .hasAccessToEntity(returnsVO.getCustomerId())) ||
+        .validateEntityAccess(returnsVO.getCustomerId())) ||
         statusModel.getStatus() == Status.RECEIVED && returnsValidator
-            .hasAccessToEntity(returnsVO.getVendorId())) {
+            .validateEntityAccess(returnsVO.getVendorId())) {
 
       ReturnsStatusVO statusVO = new ReturnsStatusVO();
       statusVO.setStatus(newStatus);
@@ -132,11 +142,24 @@ public class ReturnsService {
   }
 
   public ReturnsVO getReturnsById(Long returnId) {
-    return returnsDao.getReturnsById(returnId);
+    ReturnsVO returnsVO=returnsDao.getReturnsById(returnId);
+    returnsVO.setItems(getReturnsItem(returnId));
+    return returnsVO;
   }
 
   public List<ReturnsVO> getReturns(ReturnFilters filters) {
     return returnsDao.getReturns(filters);
+  }
+
+  private void addStatusHistory(Long returnId, String oldStatus, String newStatus, Long domainId,
+                                IMessage iMessage,
+                                String userId) {
+    PersistenceManager pm = PMF.get().getPersistenceManager();
+    activityService
+        .createActivity(IActivity.TYPE.RETURNS.name(), String.valueOf(returnId), "STATUS", oldStatus,
+            newStatus,
+            userId, domainId, iMessage != null ? iMessage.getMessageId() : null,
+            "RETURNS:" + returnId, pm);
   }
 
 }

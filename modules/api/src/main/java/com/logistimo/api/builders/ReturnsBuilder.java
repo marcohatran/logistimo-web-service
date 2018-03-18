@@ -104,6 +104,7 @@ public class ReturnsBuilder {
     mobileReturnsModel.setCreatedBy(getUserModel(returnsVO.getCreatedBy()));
     mobileReturnsModel.setUpdatedAt(returnsVO.getUpdatedAt());
     mobileReturnsModel.setCreatedBy(getUserModel(returnsVO.getUpdatedBy()));
+    if(returnsVO.getItems()!=null)
     mobileReturnsModel.setItems(getItemModels(returnsVO.getItems()));
     return mobileReturnsModel;
   }
