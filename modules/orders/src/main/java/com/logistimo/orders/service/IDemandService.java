@@ -79,6 +79,10 @@ public interface IDemandService {
 
   List<IDemandItem> getDemandItems(Long orderId, PersistenceManager pm);
 
+  List<IDemandItem> getDemandItemsWithBatches(Long orderId);
+
+  List<IDemandItem> updateDemandReturns(Long orderId, Map<Long, BigDecimal> returnQuantities);
+
   QueryParams getQueryParams(Long domainId, String oType, Boolean excludeTransfer,
                                        Long kioskId, List<Long> kioskIds, Long materialId,
                                        String kioskTag, String materialTag, Date from, Date to,

@@ -108,7 +108,7 @@ public class ReturnsBuilder {
     return mobileReturnsModel;
   }
 
-  public ReturnsVO createNewReturns(ReturnsRequestModel returnRequestModel)
+  public ReturnsVO buildReturns(ReturnsRequestModel returnRequestModel)
       throws ServiceException {
 
     Date now = new Date();

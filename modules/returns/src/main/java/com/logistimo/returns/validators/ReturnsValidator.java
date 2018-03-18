@@ -28,7 +28,7 @@ import com.logistimo.exception.InvalidDataException;
 import com.logistimo.materials.model.HandlingUnitModel;
 import com.logistimo.materials.service.IHandlingUnitService;
 import com.logistimo.orders.entity.IDemandItem;
-import com.logistimo.orders.service.impl.DemandService;
+import com.logistimo.orders.service.IDemandService;
 import com.logistimo.returns.Status;
 import com.logistimo.returns.vo.ReturnsItemBatchVO;
 import com.logistimo.returns.vo.ReturnsItemVO;
@@ -54,7 +54,7 @@ import java.util.stream.Collectors;
 public class ReturnsValidator {
 
   @Autowired
-  DemandService demandService;
+  IDemandService demandService;
 
   @Autowired
   IHandlingUnitService handlingUnitService;

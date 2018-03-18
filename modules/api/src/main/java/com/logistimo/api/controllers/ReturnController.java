@@ -61,7 +61,7 @@ public class ReturnController {
   @ResponseBody
   MobileReturnsModel create(@Valid @RequestBody ReturnsRequestModel returnsRequestModel)
       throws ServiceException {
-    ReturnsVO returnsVO = returnsBuilder.createNewReturns(returnsRequestModel);
+    ReturnsVO returnsVO = returnsBuilder.buildReturns(returnsRequestModel);
     returnsVO=returnsService.createReturns(returnsVO);
     return returnsBuilder.buildMobileReturnsModel(returnsVO);
   }

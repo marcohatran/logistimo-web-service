@@ -291,7 +291,30 @@ public class DemandService implements IDemandService {
       );
       return demandItems;
     } catch (Exception e) {
-      xLogger.severe("Error while fetching demand items for order {0}", orderId, e);
+      xLogger.severe("Error while fetching demand items with batches for order {0}", orderId, e);
+    }
+    return null;
+  }
+
+  /**
+   *
+   * @param orderId
+   * @param returnQuantities - Key: Material Id, value - Return quantity
+   * @return
+   */
+  public List<IDemandItem> updateDemandReturns(Long orderId, Map<Long, BigDecimal> returnQuantities) {
+    PersistenceManager pm = PMF.get().getPersistenceManager();
+    try {
+      List<IDemandItem> demandItems = getDemandItems(orderId,pm);
+      demandItems.stream().forEach(demandItem ->
+        demandItem.setReturnedQuantity(demandItem.getReturnedQuantity().add(returnQuantities.get(demandItem.getMaterialId())))
+      );
+      pm.makePersistentAll(demandItems);
+      return (List<IDemandItem>) pm.detachCopyAll(demandItems);
+    } catch (Exception e) {
+      xLogger.severe("Error while updating demand items with return quantity for order {0}", orderId, e);
+    } finally {
+      pm.close();
     }
     return null;
   }
