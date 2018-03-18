@@ -26,6 +26,7 @@ package com.logistimo.returns.service;
 import com.logistimo.activity.entity.IActivity;
 import com.logistimo.activity.service.ActivityService;
 import com.logistimo.conversations.entity.IMessage;
+import com.logistimo.conversations.service.ConversationService;
 import com.logistimo.exception.InvalidDataException;
 import com.logistimo.orders.service.impl.DemandService;
 import com.logistimo.returns.Status;
@@ -47,6 +48,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -74,6 +76,9 @@ public class ReturnsService {
 
   @Autowired
   private ActivityService activityService;
+
+  @Autowired
+  private ConversationService conversationService;
 
   @Transactional(transactionManager = "transactionManager")
   public ReturnsVO createReturns(ReturnsVO returnsVO) throws ServiceException {
@@ -152,14 +157,30 @@ public class ReturnsService {
   }
 
   private void addStatusHistory(Long returnId, String oldStatus, String newStatus, Long domainId,
-                                IMessage iMessage,
-                                String userId) {
+                                IMessage iMessage, String userId) {
     PersistenceManager pm = PMF.get().getPersistenceManager();
-    activityService
-        .createActivity(IActivity.TYPE.RETURNS.name(), String.valueOf(returnId), "STATUS", oldStatus,
-            newStatus,
-            userId, domainId, iMessage != null ? iMessage.getMessageId() : null,
-            "RETURNS:" + returnId, pm);
+    try {
+      activityService.createActivity(IActivity.TYPE.RETURNS.name(), String.valueOf(returnId),
+          "STATUS", oldStatus, newStatus, userId, domainId,
+          iMessage != null ? iMessage.getMessageId() : null, "RETURNS:" + returnId, pm);
+    } finally {
+      pm.close();
+    }
+  }
+
+  private IMessage addComment(Long returnId, String message, String userId, Long domainId)
+      throws ServiceException {
+    if (message != null) {
+      PersistenceManager pm = PMF.get().getPersistenceManager();
+      try {
+        return conversationService.addMsgToConversation(IActivity.TYPE.RETURNS.name(),
+            String.valueOf(returnId), message, userId, Collections.singleton("RETURNS:" + returnId)
+                , domainId, pm);
+      } finally {
+        pm.close();
+      }
+    }
+    return null;
   }
 
 }
