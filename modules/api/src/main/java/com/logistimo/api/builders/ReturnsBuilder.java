@@ -93,6 +93,13 @@ public class ReturnsBuilder {
   @Autowired
   UsersService usersService;
 
+  public List<MobileReturnsModel> buildMobileReturnsModels(List<ReturnsVO> returnsVOs) throws ServiceException {
+    List<MobileReturnsModel> mobileReturnsModels = new ArrayList<>(returnsVOs.size());
+    for (ReturnsVO returnsVO : returnsVOs) {
+      mobileReturnsModels.add(buildMobileReturnsModel(returnsVO));
+    }
+    return mobileReturnsModels;
+  }
   public MobileReturnsModel buildMobileReturnsModel(ReturnsVO returnsVO) throws ServiceException {
     MobileReturnsModel mobileReturnsModel = new MobileReturnsModel();
     mobileReturnsModel.setReturnId(returnsVO.getId());
