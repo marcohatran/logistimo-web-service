@@ -26,16 +26,19 @@ package com.logistimo.returns.service;
 import com.logistimo.returns.entity.Returns;
 import com.logistimo.returns.entity.ReturnsItem;
 import com.logistimo.returns.entity.ReturnsItemBatch;
-import com.logistimo.returns.entity.values.ReturnsStatus;
 import com.logistimo.returns.models.ReturnFilters;
 import com.logistimo.returns.vo.ReturnsItemBatchVO;
 import com.logistimo.returns.vo.ReturnsItemVO;
 import com.logistimo.returns.vo.ReturnsVO;
+import com.logistimo.utils.LocalDateUtil;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Repository;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -139,13 +142,17 @@ public class ReturnsDao extends Dao {
       query.append("  and  r.status=:status");
       filters.put("status", returnFilters.getStatus());
     }
+    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     if (returnFilters.getStartDate() != null) {
       query.append(" and r.created_at>=:fromDate");
-      filters.put("fromDate", returnFilters.getStartDate());
+      filters.put("fromDate", sdf.format(returnFilters.getStartDate()));
     }
     if (returnFilters.getEndDate() != null) {
+      Date
+          untilDate =
+          LocalDateUtil.getOffsetDate(returnFilters.getEndDate(), 1, Calendar.DAY_OF_MONTH);
       query.append(" and r.created_at<=:endDate");
-      filters.put("endDate", returnFilters.getEndDate());
+      filters.put("endDate", sdf.format(untilDate));
     }
 
     query.append(" order by r.id desc");

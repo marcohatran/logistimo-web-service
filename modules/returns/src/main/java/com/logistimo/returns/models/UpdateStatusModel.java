@@ -25,6 +25,7 @@ package com.logistimo.returns.models;
 
 import com.logistimo.returns.Status;
 
+import jnr.ffi.annotations.In;
 import lombok.Data;
 
 /**
@@ -37,5 +38,6 @@ public class UpdateStatusModel {
   private Long returnId;
   private String userId;
   private String comment;
+  private Integer source;
 
 }

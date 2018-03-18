@@ -33,6 +33,7 @@ import com.logistimo.returns.models.MobileReturnsUpdateStatusRequestModel;
 import com.logistimo.returns.models.UpdateStatusModel;
 import com.logistimo.returns.service.ReturnsService;
 import com.logistimo.returns.vo.ReturnsVO;
+import com.logistimo.services.DuplicationException;
 import com.logistimo.services.ServiceException;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -76,7 +77,7 @@ public class ReturnController {
   MobileReturnsUpdateStatusModel updateStatus(@PathVariable Long returnId,
                                               @PathVariable String status,
                                               @RequestBody MobileReturnsUpdateStatusRequestModel mobileReturnsUpdateStatusRequestModel)
-      throws ServiceException {
+      throws ServiceException, DuplicationException {
     UpdateStatusModel updateStatusModel=returnsBuilder.buildUpdateStatusModel(returnId,status,mobileReturnsUpdateStatusRequestModel);
     ReturnsVO returnsVO=returnsService.updateReturnsStatus(updateStatusModel);
     return returnsBuilder.buildMobileReturnsUpdateModel(returnsVO, mobileReturnsUpdateStatusRequestModel);

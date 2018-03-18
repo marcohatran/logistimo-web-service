@@ -25,11 +25,15 @@ package com.logistimo.returns.service;
 
 import com.logistimo.activity.entity.IActivity;
 import com.logistimo.activity.service.ActivityService;
+import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.conversations.entity.IMessage;
 import com.logistimo.conversations.service.ConversationService;
 import com.logistimo.exception.InvalidDataException;
+import com.logistimo.inventory.entity.ITransaction;
+import com.logistimo.inventory.service.InventoryManagementService;
 import com.logistimo.orders.service.impl.DemandService;
 import com.logistimo.returns.Status;
+import com.logistimo.returns.helper.ReturnsHelper;
 import com.logistimo.returns.models.ReturnFilters;
 import com.logistimo.returns.models.UpdateStatusModel;
 import com.logistimo.returns.validators.ReturnsValidator;
@@ -37,6 +41,7 @@ import com.logistimo.returns.vo.ReturnsItemBatchVO;
 import com.logistimo.returns.vo.ReturnsItemVO;
 import com.logistimo.returns.vo.ReturnsStatusVO;
 import com.logistimo.returns.vo.ReturnsVO;
+import com.logistimo.services.DuplicationException;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.impl.PMF;
 
@@ -80,6 +85,9 @@ public class ReturnsService {
   @Autowired
   private ConversationService conversationService;
 
+  @Autowired
+  private InventoryManagementService inventoryManagementService;
+
   @Transactional(transactionManager = "transactionManager")
   public ReturnsVO createReturns(ReturnsVO returnsVO) throws ServiceException {
     returnsValidator.isQuantityValid(returnsVO.getItems(), returnsVO.getOrderId());
@@ -90,7 +98,7 @@ public class ReturnsService {
     returnsItemVOList.forEach(returnsItemVO -> {
       returnsItemVO.setReturnsId(returnId);
       final BigDecimal[] quantity = new BigDecimal[1];
-      quantity[0]=BigDecimal.ZERO;
+      quantity[0] = BigDecimal.ZERO;
       List<ReturnsItemBatchVO>
           returnsItemBatchVOList = returnsItemVO.getReturnItemBatches();
       returnsItemVO = returnsDao.saveReturnsItems(returnsItemVO);
@@ -108,16 +116,11 @@ public class ReturnsService {
       returnedQuantity.put(returnsItemVO.getMaterialId(), quantity[0]);
     });
 
-    demandService.updateDemandReturns(returnsVO.getOrderId(),returnedQuantity);
+    demandService.updateDemandReturns(returnsVO.getOrderId(), returnedQuantity);
     returnsVO.setItems(returnsItemVOList);
 
-    IMessage message = null;
-    if (returnsVO.getComment() != null) {
-      message = addComment(returnsVO.getId(), returnsVO.getComment(), returnsVO.getCreatedBy(),
-              returnsVO.getSourceDomain());
-    }
-    addStatusHistory(returnsVO.getId(), null, returnsVO.getStatus().getStatus().toString(),
-        returnsVO.getSourceDomain(), message, returnsVO.getCreatedBy());
+    IMessage message = addComment(returnsVO);
+    addStatusHistory(returnsVO, null, returnsVO.getStatus().getStatus().toString(), message);
 
     return returnsVO;
   }
@@ -130,7 +133,8 @@ public class ReturnsService {
   }
 
   @Transactional
-  public ReturnsVO updateReturnsStatus(UpdateStatusModel statusModel) throws ServiceException {
+  public ReturnsVO updateReturnsStatus(UpdateStatusModel statusModel)
+      throws ServiceException, DuplicationException {
     ReturnsVO returnsVO = returnsDao.getReturnsById(statusModel.getReturnId());
     Status newStatus = statusModel.getStatus();
     Status oldStatus = returnsVO.getStatus().getStatus();
@@ -151,21 +155,30 @@ public class ReturnsService {
       returnsVO = returnsDao.saveReturns(returnsVO);
 
     }
-    returnsVO.setItems(getReturnsItem(returnsVO.getId()));
 
+    returnsVO.setItems(getReturnsItem(returnsVO.getId()));
+    postTransactions(statusModel, returnsVO);
     IMessage message = null;
     if (returnsVO.getComment() != null) {
-      message = addComment(returnsVO.getId(), returnsVO.getComment(), returnsVO.getCreatedBy(),
-              returnsVO.getSourceDomain());
+      message = addComment(returnsVO);
     }
-    addStatusHistory(returnsVO.getId(), oldStatus.toString(), newStatus.toString(),
-        returnsVO.getSourceDomain(), message, returnsVO.getCreatedBy());
-
+    addStatusHistory(returnsVO, oldStatus.toString(), newStatus.toString(), message);
     return returnsVO;
   }
 
+  private void postTransactions(UpdateStatusModel statusModel, ReturnsVO returnsVO)
+      throws ServiceException, DuplicationException {
+    if (statusModel.getStatus() == Status.RECEIVED || statusModel.getStatus() == Status.SHIPPED) {
+      Long domainId = SecurityUtils.getCurrentDomainId();
+      List<ITransaction>
+          transactionsList =
+          new ReturnsHelper().postTransactions(statusModel, returnsVO, domainId);
+      inventoryManagementService.updateInventoryTransactions(domainId, transactionsList);
+    }
+  }
+
   public ReturnsVO getReturnsById(Long returnId) {
-    ReturnsVO returnsVO=returnsDao.getReturnsById(returnId);
+    ReturnsVO returnsVO = returnsDao.getReturnsById(returnId);
     returnsVO.setItems(getReturnsItem(returnId));
     return returnsVO;
   }
@@ -174,26 +187,28 @@ public class ReturnsService {
     return returnsDao.getReturns(filters);
   }
 
-  private void addStatusHistory(Long returnId, String oldStatus, String newStatus, Long domainId,
-                                IMessage iMessage, String userId) {
+  private void addStatusHistory(ReturnsVO returnVO, String oldStatus, String newStatus,
+                                IMessage iMessage) {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     try {
-      activityService.createActivity(IActivity.TYPE.RETURNS.name(), String.valueOf(returnId),
-          "STATUS", oldStatus, newStatus, userId, domainId,
-          iMessage != null ? iMessage.getMessageId() : null, "RETURNS:" + returnId, pm);
+      activityService
+          .createActivity(IActivity.TYPE.RETURNS.name(), String.valueOf(returnVO.getId()),
+              "STATUS", oldStatus, newStatus, returnVO.getCreatedBy(), returnVO.getSourceDomain(),
+              iMessage != null ? iMessage.getMessageId() : null, "RETURNS:" + returnVO.getId(), pm);
     } finally {
       pm.close();
     }
   }
 
-  public IMessage addComment(Long returnId, String message, String userId, Long domainId)
+  public IMessage addComment(ReturnsVO returnsVO)
       throws ServiceException {
-    if (message != null) {
+    if (returnsVO.getComment() != null) {
       PersistenceManager pm = PMF.get().getPersistenceManager();
       try {
         return conversationService.addMsgToConversation(IActivity.TYPE.RETURNS.name(),
-            String.valueOf(returnId), message, userId, Collections.singleton("RETURNS:" + returnId)
-                , domainId, pm);
+            String.valueOf(returnsVO.getId()), returnsVO.getComment(), returnsVO.getCreatedBy(),
+            Collections.singleton("RETURNS:" + returnsVO.getId())
+            , returnsVO.getSourceDomain(), pm);
       } finally {
         pm.close();
       }

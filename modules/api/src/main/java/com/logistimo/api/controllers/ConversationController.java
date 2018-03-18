@@ -40,6 +40,7 @@ import com.logistimo.orders.service.OrderManagementService;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
 import com.logistimo.returns.service.ReturnsService;
+import com.logistimo.returns.vo.ReturnsVO;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
@@ -273,8 +274,12 @@ public class ConversationController {
         iMessage = conversationService.addMsgToConversation(objType, objId, message.data, user.getUsername(),
             Collections.singleton(objType + objId), user.getDomainId(), null);
       } else if ("RETURNS".equals(objType)) {
-        iMessage = returnsService.addComment(Long.parseLong(objId), message.data,
-            user.getUsername(), user.getDomainId());
+        ReturnsVO returnsVO=new ReturnsVO();
+        returnsVO.setId(Long.parseLong(objId));
+        returnsVO.setCreatedBy(user.getUsername());
+        returnsVO.setSourceDomain(user.getDomainId());
+        returnsVO.setComment(message.data);
+        iMessage = returnsService.addComment(returnsVO);
       } else {
         throw new InvalidDataException("Unrecognised object type " + objType);
       }
