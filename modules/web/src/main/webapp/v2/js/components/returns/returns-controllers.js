@@ -121,13 +121,15 @@ function CreateReturnsController($scope, $location, returnsService, trnService) 
                 item.batches = [];
                 var totalReturnQuantity = 0;
                 angular.forEach(returnItem.returnBatches, function(returnBatch){
-                    item.batches.push({
-                        batch_id : returnBatch.id,
-                        return_quantity : returnBatch.returnQuantity,
-                        material_status : returnBatch.returnMaterialStatus,
-                        reason : returnBatch.returnReason
-                    });
-                    totalReturnQuantity += returnBatch.returnQuantity;
+                    if(checkNotNullEmpty(returnBatch.returnQuantity)) {
+                        item.batches.push({
+                            batch_id: returnBatch.id,
+                            return_quantity: returnBatch.returnQuantity,
+                            material_status: returnBatch.returnMaterialStatus,
+                            reason: returnBatch.returnReason
+                        });
+                        totalReturnQuantity += returnBatch.returnQuantity * 1;
+                    }
                 });
                 item.return_quantity = totalReturnQuantity;
             }
