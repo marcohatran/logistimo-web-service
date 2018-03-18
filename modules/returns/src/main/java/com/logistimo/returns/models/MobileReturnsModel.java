@@ -43,6 +43,9 @@ public class MobileReturnsModel {
   @SerializedName("order_id")
   private Long orderId;
 
+  @SerializedName("order_type")
+  private Integer orderType;
+
   private EntityModel customer;
 
   private EntityModel vendor;
@@ -50,13 +53,13 @@ public class MobileReturnsModel {
   private StatusModel status;
 
   @SerializedName("created_at")
-  private Date createdAt;
+  private String createdAt;
 
   @SerializedName("created_by")
   private UserModel createdBy;
 
   @SerializedName("updated_at")
-  private Date updatedAt;
+  private String updatedAt;
 
   @SerializedName("updated_by")
   private UserModel updatedBy;
@@ -77,6 +80,14 @@ public class MobileReturnsModel {
 
   public void setOrderId(Long orderId) {
     this.orderId = orderId;
+  }
+
+  public Integer getOrderType() {
+    return orderType;
+  }
+
+  public void setOrderType(Integer orderType) {
+    this.orderType = orderType;
   }
 
   public EntityModel getCustomer() {
@@ -103,11 +114,11 @@ public class MobileReturnsModel {
     this.status = statusModel;
   }
 
-  public Date getCreatedAt() {
+  public String getCreatedAt() {
     return createdAt;
   }
 
-  public void setCreatedAt(Date createdAt) {
+  public void setCreatedAt(String createdAt) {
     this.createdAt = createdAt;
   }
 
@@ -119,11 +130,11 @@ public class MobileReturnsModel {
     this.createdBy = createdBy;
   }
 
-  public Date getUpdatedAt() {
+  public String getUpdatedAt() {
     return updatedAt;
   }
 
-  public void setUpdatedAt(Date updatedAt) {
+  public void setUpdatedAt(String updatedAt) {
     this.updatedAt = updatedAt;
   }
 

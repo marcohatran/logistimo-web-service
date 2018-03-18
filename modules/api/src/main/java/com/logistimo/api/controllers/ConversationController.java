@@ -39,6 +39,7 @@ import com.logistimo.logger.XLog;
 import com.logistimo.orders.service.OrderManagementService;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
+import com.logistimo.returns.service.ReturnsService;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
@@ -75,6 +76,7 @@ public class ConversationController {
   private ConversationService conversationService;
   private ShipmentService shipmentService;
   private OrderManagementService orderManagementService;
+  private ReturnsService returnsService;
 
   @Autowired
   public void setConversationBuilder(ConversationBuilder conversationBuilder) {
@@ -99,6 +101,11 @@ public class ConversationController {
   @Autowired
   public void setOrderManagementService(OrderManagementService orderManagementService) {
     this.orderManagementService = orderManagementService;
+  }
+
+  @Autowired
+  public void setReturnsService(ReturnsService returnsService) {
+    this.returnsService = returnsService;
   }
 
   @RequestMapping(value = "/", method = RequestMethod.POST)
@@ -265,6 +272,9 @@ public class ConversationController {
       } else if ("APPROVAL".equals(objType)) {
         iMessage = conversationService.addMsgToConversation(objType, objId, message.data, user.getUsername(),
             Collections.singleton(objType + objId), user.getDomainId(), null);
+      } else if ("RETURNS".equals(objType)) {
+        iMessage = returnsService.addComment(Long.parseLong(objId), message.data,
+            user.getUsername(), user.getDomainId());
       } else {
         throw new InvalidDataException("Unrecognised object type " + objType);
       }

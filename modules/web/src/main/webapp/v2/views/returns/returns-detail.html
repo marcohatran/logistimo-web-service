@@ -21,7 +21,7 @@
   ~ the commercial license, please contact us at opensource@logistimo.com
   -->
 
-<div ng-controller="ReturnsDetailController" class="overflowYonly paddinglr10">
+<div ng-controller="DetailReturnsController" class="overflowYonly paddinglr10">
     <div class="animate-switch-container" ng-switch on="page">
         <div ng-switch-when="detail">
             <div class="row mt18 lPad5">
@@ -29,9 +29,17 @@
                     <span class="h3">
                         Return: {{returns.return_id}}
                     </span>
-                    <span class="badge currentstatus" ng-class="{'cancelled': shipment.statusCode == ORDER.CANCELLED}">{{ORDER.statusTxt[shipment.statusCode]}}</span>
-                    <span class="suborder h5" ng-show="returns.order_type == 1">({{resourceBundle['order']}}: <a ng-href="#/orders/detail/{{returns.order_id}}/" target="_blank">{{returns.order_id}}</a>)</span>
-                    <span class="suborder h5" ng-show="returns.order_type == 0">({{resourceBundle['transactions.transfer.upper']}}: <a ng-href="#/orders/transfers/detail/{{returns.order_id}}/">{{returns.order_id}}</a>)</span>
+                    <span class="badge currentstatus" ng-class="{'cancelled': returns.status.status == RETURNS.status.CANCELLED}">{{RETURNS.statusLabel[returns.status.status]}}</span>
+
+                    <span class="suborder h5" ng-if="returns.order_type !=0">
+                        ({{resourceBundle['order']}}: <a ng-href="#/orders/detail/{{returns.order_id}}/" target="_blank">{{returns.order_id}}</a>)
+                    </span>
+                    <span class="suborder h5" ng-if="returns.order_type == 0">
+                        <span ng-hide="transRelease">({{resourceBundle['transactions.transfer.upper']}}</span>
+                        <span ng-show="transRelease">({{resourceBundle['transactions.release.upper']}}</span>
+                        : <a ng-href="#/orders/transfers/detail/{{returns.order_id}}/">{{returns.order_id}}</a>)
+                    </span>
+
                     <span class="litetext"  >
                         {{resourceBundle['createdon']}} {{returns.created_at}} {{resourceBundle['by']}}
                         <a ng-href="#/setup/users/all/details?userId={{returns.created_by.user_id}}" target="_blank"> {{returns.created_by.full_name}}</a>
@@ -61,7 +69,7 @@
                             <div class="col-sm-9">
                                 <div ng-include="'views/orders/status-indicator.html'"></div>
                                 <span class="glyphicons glyphicons-history codegray large"
-                                      uib-tooltip="{{dispStatusHistory ? 'Hide' : 'Show'}} status history"
+                                      uib-tooltip="{{displayStatusHistory ? 'Hide' : 'Show'}} status history"
                                       tooltip-append-to-body="true" ng-click="toggleStatusHistory()"></span>
                             </div>
                             <div class="col-sm-3 btn-group">
@@ -87,9 +95,9 @@
                                     </span>
                                 </div>
                             </div>
-                            <div ng-if="dispStatusHistory">
+                            <div ng-if="displayStatusHistory">
                                 <div class="col-sm-12 pt15">
-                                    <div ng-include="'views/orders/status-history.html'"></div>
+                                    <div ng-include="'views/orders/status-history.html'" ng-init="isReturns = true"></div>
                                 </div>
                             </div>
                         </div>
@@ -136,10 +144,10 @@
                 <div class="col-sm-12">
                     <ul class="nav nav-tabs subnav-tabs">
                         <li ng-class="{ active: subPage == 'consignment'}"><a
-                                ng-click="view='consignment'">{{resourceBundle['items']}} <span class="badge">{{returns.items ? returns.items.length : 0}}</span></a>
+                                ng-click="subPage='consignment'">{{resourceBundle['items']}} <span class="badge">{{returns.items ? returns.items.length : 0}}</span></a>
                         </li>
                         <li ng-class="{ active: subPage == 'message'}">
-                            <a ng-click="view='message'">{{resourceBundle['comments']}} <span class="badge">{{messageCount ? messageCount : 0}}</span></a>
+                            <a ng-click="subPage='message'">{{resourceBundle['comments']}} <span class="badge">{{messageCount ? messageCount : 0}}</span></a>
                         </li>
                     </ul>
                 </div>

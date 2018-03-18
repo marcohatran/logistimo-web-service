@@ -2497,7 +2497,7 @@ public class ShipmentService implements IShipmentService {
       queryBuilder.setLength(queryBuilder.length() - 1);
 
       Query q =
-          pm.newQuery("javax.jdo.query.SQL",queryBuilder.append(")").toString());
+          pm.newQuery("javax.jdo.query.SQL",queryBuilder.append(") GROUP BY SI.MID,BID").toString());
       List params = new ArrayList(2);
       params.add(orderId);
       params.add(materialIdList);

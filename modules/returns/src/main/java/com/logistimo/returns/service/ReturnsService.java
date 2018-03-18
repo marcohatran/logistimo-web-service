@@ -110,6 +110,15 @@ public class ReturnsService {
 
     demandService.updateDemandReturns(returnsVO.getOrderId(),returnedQuantity);
     returnsVO.setItems(returnsItemVOList);
+
+    IMessage message = null;
+    if (returnsVO.getComment() != null) {
+      message = addComment(returnsVO.getId(), returnsVO.getComment(), returnsVO.getCreatedBy(),
+              returnsVO.getSourceDomain());
+    }
+    addStatusHistory(returnsVO.getId(), null, returnsVO.getStatus().getStatus().toString(),
+        returnsVO.getSourceDomain(), message, returnsVO.getCreatedBy());
+
     return returnsVO;
   }
 
@@ -143,6 +152,15 @@ public class ReturnsService {
 
     }
     returnsVO.setItems(getReturnsItem(returnsVO.getId()));
+
+    IMessage message = null;
+    if (returnsVO.getComment() != null) {
+      message = addComment(returnsVO.getId(), returnsVO.getComment(), returnsVO.getCreatedBy(),
+              returnsVO.getSourceDomain());
+    }
+    addStatusHistory(returnsVO.getId(), oldStatus.toString(), newStatus.toString(),
+        returnsVO.getSourceDomain(), message, returnsVO.getCreatedBy());
+
     return returnsVO;
   }
 
@@ -168,7 +186,7 @@ public class ReturnsService {
     }
   }
 
-  private IMessage addComment(Long returnId, String message, String userId, Long domainId)
+  public IMessage addComment(Long returnId, String message, String userId, Long domainId)
       throws ServiceException {
     if (message != null) {
       PersistenceManager pm = PMF.get().getPersistenceManager();

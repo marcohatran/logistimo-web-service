@@ -45,6 +45,9 @@ public class ReturnsItemModel {
   @NotNull
   private Long materialId;
 
+  @SerializedName("material_name")
+  private String materialName;
+
   @NotNull
   @SerializedName("return_quantity")
   private BigDecimal returnQuantity;
@@ -77,6 +80,14 @@ public class ReturnsItemModel {
 
   public void setMaterialId(Long materialId) {
     this.materialId = materialId;
+  }
+
+  public String getMaterialName() {
+    return materialName;
+  }
+
+  public void setMaterialName(String materialName) {
+    this.materialName = materialName;
   }
 
   public BigDecimal getReturnQuantity() {

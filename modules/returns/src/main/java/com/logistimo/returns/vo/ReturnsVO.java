@@ -49,5 +49,7 @@ public class ReturnsVO {
   private GeoLocationVO location;
   private ReturnsStatusVO status;
   private List<ReturnsItemVO> items;
+  private String comment;
+  private String orderType;
 
 }

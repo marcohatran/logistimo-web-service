@@ -41,6 +41,12 @@ public class EntityModel {
   @SerializedName("entity_city")
   private String city;
 
+  @SerializedName("entity_address")
+  private String address;
+
+  @SerializedName("has_access")
+  private Boolean hasAccess;
+
   public Long getId() {
     return id;
   }
@@ -65,4 +71,19 @@ public class EntityModel {
     this.city = city;
   }
 
+  public String getAddress() {
+    return address;
+  }
+
+  public void setAddress(String address) {
+    this.address = address;
+  }
+
+  public Boolean getHasAccess() {
+    return hasAccess;
+  }
+
+  public void setHasAccess(Boolean hasAccess) {
+    this.hasAccess = hasAccess;
+  }
 }

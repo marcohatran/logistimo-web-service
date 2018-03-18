@@ -27,10 +27,10 @@
 
 
 logistimoApp.controller('CreateReturnsController', CreateReturnsController);
-logistimoApp.controller('ReturnsDetailController', ReturnsDetailController);
+logistimoApp.controller('DetailReturnsController', DetailReturnsController);
 
 CreateReturnsController.$inject = ['$scope','$location', 'returnsService','trnService'];
-ReturnsDetailController.$inject = ['$scope', 'requestContext', 'returnsService'];
+DetailReturnsController.$inject = ['$scope', 'requestContext', 'RETURNS', 'returnsService', 'conversationService', 'activityService'];
 
 function CreateReturnsController($scope, $location, returnsService, trnService) {
 
@@ -119,7 +119,7 @@ function CreateReturnsController($scope, $location, returnsService, trnService) 
                 material_status : returnItem.returnMaterialStatus,
                 reason : returnItem.returnReason
             };
-            if(returnItem.returnBatches) {
+            if(checkNotNullEmpty(returnItem.returnBatches)) {
                 item.batches = [];
                 var totalReturnQuantity = 0;
                 angular.forEach(returnItem.returnBatches, function(returnBatch){
@@ -147,19 +147,111 @@ function CreateReturnsController($scope, $location, returnsService, trnService) 
     }
 }
 
-function ReturnsDetailController($scope, requestContext, returnsService) {
+function DetailReturnsController($scope, requestContext, RETURNS, returnsService, conversationService, activityService) {
+    $scope.RETURNS = RETURNS;
     $scope.page = 'detail';
     $scope.subPage = 'consignment';
 
     var returnId = requestContext.getParam("returnId");
 
     $scope.showLoading();
-    returnsService.get(returnId).then(function(data){
-        $scope.returns = data.data;
-    }).catch(function error(msg) {
-        $scope.showErrorMsg(msg);
-    }).finally(function () {
-        $scope.hideLoading();
-    });
+    returnsService.get(returnId)
+        .then(function (data) {
+            $scope.returns = data.data;
+        })
+        .then(getMessageCount)
+        .then(getStatusHistory)
+        .then(checkStatusList)
+        .catch(function error(msg) {
+            $scope.showErrorMsg(msg);
+        }).finally(function () {
+            $scope.hideLoading();
+        });
+
+    function getMessageCount() {
+        conversationService.getMessagesByObj('RETURNS', returnId, 0, 1, true).then(function (data) {
+            if (checkNotNullEmpty(data.data)) {
+                $scope.messageCount = data.data.numFound;
+            }
+        })
+    }
+
+    $scope.setMessageCount = function (count) {
+        $scope.messageCount = count;
+    };
+
+    function getStatusHistory() {
+        activityService.getStatusHistory(returnId, 'RETURNS', null).then(function (data) {
+            if (checkNotNullEmpty(data.data) && checkNotNullEmpty(data.data.results)) {
+                $scope.history = data.data.results;
+                var hMap = {};
+                var pVal;
+                $scope.history.forEach(function (data) {
+                    if (checkNullEmpty(hMap[data.newValue])) {
+                        hMap[data.newValue] = {
+                            "status": RETURNS.statusLabel[data.newValue],
+                            "updatedon": data.createDate,
+                            "updatedby": data.userName,
+                            "updatedId": data.userId
+                        };
+                        if (RETURNS.status.CANCELLED == data.newValue) {
+                            pVal = data.prevValue;
+                        }
+                    }
+                });
+                $scope.si = [];
+                var end = false;
+                var siInd = 0;
+
+                function constructStatus(stCode, stText) {
+                    if ($scope.returns.status.status != RETURNS.status.CANCELLED || !end) {
+                        $scope.si[siInd] = (!end && hMap[stCode]) ? hMap[stCode] : {
+                            "status": stText,
+                            "updatedon": "",
+                            "updatedby": ""
+                        };
+                        $scope.si[siInd].completed = $scope.returns.status.status == stCode ? "end" : (end ? "false" : "true");
+                        siInd += 1;
+                    }
+                    if (!end) {
+                        end = $scope.returns.status.status == stCode || ($scope.returns.status.status == RETURNS.status.CANCELLED && pVal == stCode);
+                    }
+                }
+
+                constructStatus(RETURNS.status.OPEN, RETURNS.statusLabel[RETURNS.status.OPEN]);
+                constructStatus(RETURNS.status.SHIPPED, RETURNS.statusLabel[RETURNS.status.SHIPPED]);
+                constructStatus(RETURNS.status.RECEIVED, RETURNS.statusLabel[RETURNS.status.RECEIVED]);
+                if ($scope.returns.status.status == RETURNS.status.CANCELLED) {
+                    $scope.si[siInd] = hMap[RETURNS.status.CANCELLED];
+                    $scope.si[siInd].completed = "cancel";
+                }
+            }
+        });
+    }
+
+    $scope.toggleStatusHistory = function () {
+        $scope.displayStatusHistory = !$scope.displayStatusHistory;
+    };
+
+    function checkStatusList() {
+        switch ($scope.returns.status.status) {
+            case RETURNS.status.OPEN:
+                if ($scope.returns.customer.has_access) {
+                    $scope.statusList = [RETURNS.status.SHIPPED];
+                }
+                $scope.statusList.push(RETURNS.status.CANCELLED);
+                break;
+            case RETURNS.status.SHIPPED:
+                $scope.statusList = [];
+                if ($scope.returns.vendor.has_access) {
+                    $scope.statusList.push(RETURNS.status.RECEIVED);
+                }
+                $scope.statusList.push(RETURNS.status.CANCELLED);
+                break;
+            default:
+                $scope.statusList = [];
+        }
+    }
+
 }
 

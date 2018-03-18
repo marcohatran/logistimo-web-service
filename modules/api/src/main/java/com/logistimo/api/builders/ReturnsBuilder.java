@@ -27,10 +27,11 @@ import com.logistimo.api.servlets.mobile.builders.MobileOrderBuilder;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.CharacterConstants;
-import com.logistimo.constants.SourceConstants;
+import com.logistimo.entities.auth.EntityAuthoriser;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.logger.XLog;
+import com.logistimo.materials.service.MaterialCatalogService;
 import com.logistimo.orders.entity.IOrder;
 import com.logistimo.orders.service.OrderManagementService;
 import com.logistimo.proto.MobileOrderModel;
@@ -57,6 +58,7 @@ import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
+import com.logistimo.utils.LocalDateUtil;
 
 import org.apache.commons.lang.StringUtils;
 import org.modelmapper.ModelMapper;
@@ -93,6 +95,9 @@ public class ReturnsBuilder {
   @Autowired
   UsersService usersService;
 
+  @Autowired
+  MaterialCatalogService materialCatalogService;
+
   public List<MobileReturnsModel> buildMobileReturnsModels(List<ReturnsVO> returnsVOs) throws ServiceException {
     List<MobileReturnsModel> mobileReturnsModels = new ArrayList<>(returnsVOs.size());
     for (ReturnsVO returnsVO : returnsVOs) {
@@ -104,15 +109,20 @@ public class ReturnsBuilder {
     MobileReturnsModel mobileReturnsModel = new MobileReturnsModel();
     mobileReturnsModel.setReturnId(returnsVO.getId());
     mobileReturnsModel.setOrderId(returnsVO.getOrderId());
+    IOrder order = orderManagementService.getOrder(returnsVO.getOrderId());
+    mobileReturnsModel.setOrderType(order.getOrderType());
     mobileReturnsModel.setCustomer(getEntityModel(returnsVO.getCustomerId()));
     mobileReturnsModel.setVendor(getEntityModel(returnsVO.getVendorId()));
     mobileReturnsModel.setStatus(getStatusModel(returnsVO.getStatus()));
-    mobileReturnsModel.setCreatedAt(returnsVO.getCreatedAt());
+    mobileReturnsModel.setCreatedAt(
+        LocalDateUtil.format(returnsVO.getCreatedAt(), SecurityUtils.getLocale(), SecurityUtils.getTimezone()));
     mobileReturnsModel.setCreatedBy(getUserModel(returnsVO.getCreatedBy()));
-    mobileReturnsModel.setUpdatedAt(returnsVO.getUpdatedAt());
-    mobileReturnsModel.setCreatedBy(getUserModel(returnsVO.getUpdatedBy()));
-    if(returnsVO.getItems()!=null)
-    mobileReturnsModel.setItems(getItemModels(returnsVO.getItems()));
+    mobileReturnsModel.setUpdatedAt(
+        LocalDateUtil.format(returnsVO.getUpdatedAt(), SecurityUtils.getLocale(), SecurityUtils.getTimezone()));
+    mobileReturnsModel.setUpdatedBy(getUserModel(returnsVO.getUpdatedBy()));
+    if(returnsVO.getItems()!=null) {
+      mobileReturnsModel.setItems(getItemModels(returnsVO.getItems()));
+    }
     return mobileReturnsModel;
   }
 
@@ -122,24 +132,24 @@ public class ReturnsBuilder {
     Date now = new Date();
     String username = SecurityUtils.getUsername();
     putItemsMeta(returnRequestModel.getItems(), now, username);
-
-    ReturnsVO returns = new ReturnsVO();
-    returns.setSourceDomain(SecurityUtils.getCurrentDomainId());
-    returns.setOrderId(returnRequestModel.getOrderId());
+    ReturnsVO returnsVO = new ReturnsVO();
+    returnsVO.setSourceDomain(SecurityUtils.getCurrentDomainId());
+    returnsVO.setOrderId(returnRequestModel.getOrderId());
     IOrder order = orderManagementService.getOrder(returnRequestModel.getOrderId());
-    returns.setCustomerId(order.getKioskId());
-    returns.setVendorId(order.getServicingKiosk());
+    returnsVO.setCustomerId(order.getKioskId());
+    returnsVO.setVendorId(order.getServicingKiosk());
     if(returnRequestModel.getLocation() != null) {
-      returns.setLocation(getGeoLocation(returnRequestModel.getLocation()));
+      returnsVO.setLocation(getGeoLocation(returnRequestModel.getLocation()));
     }
-    returns.setStatus(getReturnsStatus(now, username));
-    returns.setCreatedAt(now);
-    returns.setCreatedBy(username);
-    returns.setUpdatedAt(now);
-    returns.setUpdatedBy(username);
-    returns.setSource(returnRequestModel.getSource());
-    returns.setItems(getItems(returnRequestModel.getItems()));
-    return returns;
+    returnsVO.setStatus(getReturnsStatus(now, username));
+    returnsVO.setCreatedAt(now);
+    returnsVO.setCreatedBy(username);
+    returnsVO.setUpdatedAt(now);
+    returnsVO.setUpdatedBy(username);
+    returnsVO.setSource(returnRequestModel.getSource());
+    returnsVO.setItems(getItems(returnRequestModel.getItems()));
+    returnsVO.setComment(returnRequestModel.getComment());
+    return returnsVO;
   }
 
   private GeoLocationVO getGeoLocation(ReturnsRequestModel.Location location) {
@@ -245,6 +255,12 @@ public class ReturnsBuilder {
   private ReturnsItemModel getReturnsItemModel(ReturnsItemVO item) {
     ReturnsItemModel itemModel = new ReturnsItemModel();
     itemModel.setMaterialId(item.getMaterialId());
+    try {
+      itemModel.setMaterialName(materialCatalogService.getMaterial(item.getMaterialId()).getName());
+    } catch (ServiceException e) {
+      xLogger.warn("Error while fetching material name", e);
+    }
+    itemModel.setMaterialId(item.getMaterialId());
     itemModel.setReturnQuantity(item.getQuantity());
     itemModel.setMaterialStatus(item.getMaterialStatus());
     itemModel.setReason(item.getReason());
@@ -303,6 +319,8 @@ public class ReturnsBuilder {
     if (kiosk != null) {
       entityModel.setName(kiosk.getName());
       entityModel.setCity(kiosk.getCity());
+      entityModel.setAddress(kiosk.getFormattedAddress());
+      entityModel.setHasAccess(EntityAuthoriser.authoriseEntity(entityId));
     }
     return entityModel;
   }

@@ -37,12 +37,14 @@
                     </div>
                     <div style="display: inline-block">
                         <span ng-show="data.objectType == 'ORDER'">Order</span>
-                        <span ng-hide="data.objectType == 'ORDER'">Shipment
+                        <span ng-show="data.objectType == 'RETURNS'">Return</span>
+                        <span ng-show="data.objectType == 'SHIPMENT'">Shipment
                             <a ng-hide="isShip" href="#orders/shipment/detail/{{data.objectId}}" target="_blank">({{data.objectId}})</a>
                         </span>
-                        <b ng-if="!$last && data.newValue == ORDER.PENDING">re-opened</b>
-                        <b ng-if="$last || data.newValue == ORDER.OPEN">opened</b>
-                        <b ng-if="ORDER.statusTxt[data.newValue] != 'Pending'" class="text-lowercase" >{{ORDER.statusTxt[data.newValue]}}</b>
+                        <b ng-if="!$last && data.newValue == 'pn'">re-opened</b>
+                        <b ng-if="$last || data.newValue == 'op'">opened</b>
+                        <b ng-if="isReturns && data.newValue != 'op'" class="text-lowercase" >{{RETURNS.statusLabel[data.newValue]}}</b>
+                        <b ng-if="!isReturns && ORDER.statusTxt[data.newValue] != 'Pending'" class="text-lowercase" >{{ORDER.statusTxt[data.newValue]}}</b>
                         on {{data.createDate}} by
                         <a href="#/setup/users/all/details?userId={{data.userId}}" target="_blank">{{data.userName}}</a>
                         <br/>

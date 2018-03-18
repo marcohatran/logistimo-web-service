@@ -64,12 +64,10 @@ public class ReturnsValidator {
     if (CollectionUtils.isEmpty(returnItemList)) {
       throw new InvalidDataException("Items list cannot be empty!!");
     }
-    List<Long>
-        materialIdList =
+    List<Long> materialIdList =
         returnItemList.stream().map(ReturnsItemVO::getMaterialId).collect(Collectors.toList());
 
-    List<FulfilledQuantityModel>
-        shipmentList =
+    List<FulfilledQuantityModel> shipmentList =
         shipmentService.getFulfilledQuantityByOrderId(orderId, materialIdList);
 
     if (CollectionUtils.isEmpty(shipmentList)) {
@@ -79,21 +77,20 @@ public class ReturnsValidator {
     Map<Long, Map<String, BigDecimal>> shipmentItemMap = new HashMap<>();
     shipmentList.forEach(fulfilledQuantityModel -> {
       Long materialId = fulfilledQuantityModel.getMaterialId();
-      Map<String, BigDecimal> batchesMap = MapUtils.EMPTY_MAP;
+      Map<String, BigDecimal> batchesMap;
       if (!shipmentItemMap.containsKey(materialId)) {
         batchesMap = new HashMap<>();
         shipmentItemMap.put(materialId, batchesMap);
+      } else {
+        batchesMap = shipmentItemMap.get(materialId);
       }
-      batchesMap = shipmentItemMap.get(materialId);
       batchesMap
           .put(fulfilledQuantityModel.getBatchId(), fulfilledQuantityModel.getFulfilledQuantity());
     });
-    Map<Long, BigDecimal>
-        handlingUnitMap =
+    Map<Long, BigDecimal> handlingUnitMap =
         getHandlingUnit(materialIdList).orElse(MapUtils.EMPTY_MAP);
     for (ReturnsItemVO returnsItemVO : returnItemList) {
-      Map<String, BigDecimal>
-          fulfilledQuantityByBatches =
+      Map<String, BigDecimal> fulfilledQuantityByBatches =
           shipmentItemMap.get(returnsItemVO.getMaterialId());
       if (fulfilledQuantityByBatches == null) {
         throw new InvalidDataException("No demand item entry present!!");
@@ -120,14 +117,12 @@ public class ReturnsValidator {
 
     returnsItemVO.getReturnItemBatches().forEach(returnsItemBatchVO -> {
       validateHandlingUnit(handlingUnitQuantity, returnsItemBatchVO.getQuantity());
-      BigDecimal
-          quantity =
+      BigDecimal quantity =
           fulfilledQuantityByBatches.get(returnsItemBatchVO.getBatch().getBatchId());
       if (returnsItemBatchVO.getQuantity().compareTo(quantity) > 0) {
         throw new InvalidDataException("Returned quantity is greater than ordered quantity!!");
       }
     });
-
   }
 
   private void validateHandlingUnit(BigDecimal handlingUnitQuantity, BigDecimal quantity) {

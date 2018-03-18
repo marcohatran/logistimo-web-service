@@ -332,9 +332,12 @@ public class DemandService implements IDemandService {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     try {
       List<IDemandItem> demandItems = getDemandItems(orderId,pm);
-      demandItems.stream().forEach(demandItem ->
-        demandItem.setReturnedQuantity(demandItem.getReturnedQuantity().add(returnQuantities.get(demandItem.getMaterialId())))
-      );
+      demandItems.stream()
+          .filter(demandItem -> returnQuantities.containsKey(demandItem.getMaterialId()))
+          .forEach(demandItem ->
+                  demandItem.setReturnedQuantity(demandItem.getReturnedQuantity()
+                      .add(returnQuantities.get(demandItem.getMaterialId())))
+          );
       pm.makePersistentAll(demandItems);
       return (List<IDemandItem>) pm.detachCopyAll(demandItems);
     } catch (Exception e) {
