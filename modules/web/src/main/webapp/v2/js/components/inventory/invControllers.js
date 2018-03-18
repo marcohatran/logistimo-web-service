@@ -1147,7 +1147,7 @@ invControllers.controller('BatchDetailCtrl', ['$scope', 'invService','trnService
             ft['kioskid'] = '' + m.kId;
             ft['transtype'] = transType;
             ft['reason'] = reason;
-            ft['materials'] = {};
+            ft['materials'] = [];
             if(transType == 'p' || transType == 'w') {
                 if(checkNotNullEmpty(atd)) {
                     ft['transactual'] = '' + formatDate(atd);
@@ -1156,18 +1156,15 @@ invControllers.controller('BatchDetailCtrl', ['$scope', 'invService','trnService
                     return null;
                 }
             }
-            ft['bmaterials'] = {};
+            ft['bmaterials'] = [];
             if(checkNotNullEmpty(m)){
                 if(transType == 'p'){
                     m.q = 0;
                 }
-                ft['bmaterials'][m.mId + "\t" + m.bid] = {
-                    q: '' + m.q,
-                    e: formatDate(parseUrlDate(m.bexp,true)),
-                    mr: m.bmfnm,
-                    r : reason,
-                    md: formatDate(parseUrlDate(m.bmfdt,true))
-                };
+                var items = {};
+                items[m.mId + "\t" + m.bid] = {q:''+ m.q,e: formatDate(parseUrlDate(m.bexp,true)),mr: m.bmfnm,md: formatDate(parseUrlDate(m.bmfdt,true)),
+                    r : reason};
+                ft['bmaterials'].push(items);
             }
             return ft;
         };
