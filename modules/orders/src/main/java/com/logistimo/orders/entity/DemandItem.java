@@ -578,7 +578,7 @@ public class DemandItem implements IDemandItem {
 
   @Override
   public BigDecimal getReturnedQuantity() {
-    return rq;
+    return BigUtil.getZeroIfNull(rq);
   }
 
   @Override
