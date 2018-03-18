@@ -99,7 +99,7 @@
                     <span ng-hide="edit.otags">
                         <div ng-logi-tags tgs="order.tgs" style="border-radius: 10px;"></div>
                         <span ng-show="isUndef(order.tgs)" class="dinline cbx control-label">Add order tags</span>
-                        <a uib-tooltip="Edit" ng-click="editTags()" tooltip-append-to-body="true">
+                        <a ng-show="order.st == ORDER.PENDING || order.st == ORDER.CONFIRMED" uib-tooltip="Edit" ng-click="editTags()" tooltip-append-to-body="true">
                             <span ng-hide="dp.vp || !editMetaDataPermission" class="ml15 glyphicons glyphicons-edit cbx"></span>
                         </a>
                     </span>

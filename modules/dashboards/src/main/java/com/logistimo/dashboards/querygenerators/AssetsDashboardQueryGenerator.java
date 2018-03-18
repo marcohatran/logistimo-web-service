@@ -24,7 +24,7 @@
 package com.logistimo.dashboards.querygenerators;
 
 import com.logistimo.constants.CharacterConstants;
-import com.logistimo.constants.QueryConstants;
+import com.logistimo.tags.entity.ITag;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -32,6 +32,7 @@ import org.apache.commons.lang.StringUtils;
  * Created by smriti on 12/02/18.
  */
 public class AssetsDashboardQueryGenerator {
+  public static final String K_COUNTRY = " K.COUNTRY = ";
   private Long domainId;
   private String includeEntityTags;
   private String excludeEntityTags;
@@ -42,7 +43,8 @@ public class AssetsDashboardQueryGenerator {
   private String state;
   private String district;
 
-  private static final String TAG_QUERY = "SELECT ID FROM TAG WHERE NAME IN";
+  private static final String KIOSK_TAG_QUERY = "SELECT KIOSKID FROM KIOSK_TAGS WHERE ID IN(SELECT ID FROM TAG WHERE NAME IN(";
+  private static final String AND_TYPE = ") AND TYPE=";
 
   public AssetsDashboardQueryGenerator withDomainId(Long domainId) {
     this.domainId = domainId;
@@ -112,20 +114,17 @@ public class AssetsDashboardQueryGenerator {
     fromClause.append("LEFT JOIN (SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID = ")
         .append(domainId);
     if (StringUtils.isNotEmpty(includeEntityTags) || StringUtils.isNotEmpty(excludeEntityTags)) {
-      fromClause.append(" AND KIOSKID_OID IN(SELECT KIOSKID FROM KIOSK_TAGS WHERE ID");
 
       if (StringUtils.isNotEmpty(includeEntityTags)) {
-        fromClause.append(QueryConstants.IN).append(CharacterConstants.O_BRACKET).append(TAG_QUERY)
-            .append(CharacterConstants.O_BRACKET)
-            .append(includeEntityTags).append(
-            CharacterConstants.C_BRACKET)
-            .append(CharacterConstants.C_BRACKET);
+        fromClause.append(" AND KIOSKID_OID IN(")
+            .append(KIOSK_TAG_QUERY).append(includeEntityTags)
+            .append(AND_TYPE).append(
+            ITag.KIOSK_TAG).append(CharacterConstants.C_BRACKET);
       } else if (StringUtils.isNotEmpty(excludeEntityTags)) {
-        fromClause.append(" NOT IN")
-            .append(CharacterConstants.O_BRACKET).append(TAG_QUERY)
-            .append(CharacterConstants.O_BRACKET)
-            .append(excludeEntityTags).append(CharacterConstants.C_BRACKET)
-            .append(CharacterConstants.C_BRACKET);
+        fromClause.append(" AND KIOSKID_OID NOT IN(")
+            .append(KIOSK_TAG_QUERY)
+            .append(excludeEntityTags).append(AND_TYPE).append(
+            ITag.KIOSK_TAG).append(CharacterConstants.C_BRACKET);
       }
       fromClause.append(CharacterConstants.C_BRACKET);
     }
@@ -163,7 +162,7 @@ public class AssetsDashboardQueryGenerator {
 
   private void applyDistrict(StringBuilder whereClause, StringBuilder query,
                              StringBuilder groupBy) {
-    whereClause.append(" K.COUNTRY = ").append(CharacterConstants.S_QUOTE).append(country)
+    whereClause.append(K_COUNTRY).append(CharacterConstants.S_QUOTE).append(country)
         .append(CharacterConstants.S_QUOTE).append(
         " AND K.STATE = ").append(CharacterConstants.S_QUOTE).append(state)
         .append(CharacterConstants.S_QUOTE);
@@ -173,12 +172,12 @@ public class AssetsDashboardQueryGenerator {
       whereClause.append(" AND K.DISTRICT = ").append(CharacterConstants.S_QUOTE).append(district)
           .append(CharacterConstants.S_QUOTE);
     }
-    query.append(", K.NAME NAME");
-    groupBy.append(", NAME");
+    query.append(", K.NAME NAME, K.KIOSKID AS KIOSKID");
+    groupBy.append(", KIOSKID");
   }
 
   private void applyState(StringBuilder whereClause, StringBuilder query, StringBuilder groupBy) {
-    whereClause.append(" K.COUNTRY = ").append(CharacterConstants.S_QUOTE).append(country)
+    whereClause.append(K_COUNTRY).append(CharacterConstants.S_QUOTE).append(country)
         .append(CharacterConstants.S_QUOTE).append(" AND K.STATE = ")
         .append(CharacterConstants.S_QUOTE).append(state).append(CharacterConstants.S_QUOTE);
 
@@ -187,7 +186,7 @@ public class AssetsDashboardQueryGenerator {
   }
 
   private void applyCountry(StringBuilder whereClause, StringBuilder query, StringBuilder groupBy) {
-    whereClause.append(" K.COUNTRY = ").append(CharacterConstants.S_QUOTE).append(country)
+    whereClause.append(K_COUNTRY).append(CharacterConstants.S_QUOTE).append(country)
         .append(CharacterConstants.S_QUOTE);
 
     query.append(",K.STATE STATE, K.STATE_ID STATE_ID");

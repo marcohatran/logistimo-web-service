@@ -894,6 +894,759 @@ domainControllers.controller('ViewDashboardController', ['$scope', 'dashboardSer
     }
 ]);
 
+domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$timeout', '$sce', 'dashboardService', 'configService', 'domainCfgService', 'requestContext', '$location', '$q',
+    function ($scope, $timeout, $sce, dashboardService, configService, domainCfgService, requestContext, $location, $q) {
+
+        var mapColors, mapRange, workingPieColors = 0;
+
+        $scope.loading = true;
+        $scope.mloading = true;
+        $scope.links = [];
+        $scope.asset = [];
+        $scope.at = {mda: [], mna: []};
+        $scope.period = "0";
+        const MONITORED_ASSETS = 2;
+        const MONITORING_ASSETS = 1;
+
+        function initWatches() {
+            $scope.$watch('eTag', function (newVal, oldVal) {
+                if (checkNotNullEmpty(newVal)) {
+                    $scope.excludeTag = undefined;
+                }
+            });
+            $scope.$watch('excludeTag', function (newVal, oldVal) {
+                if (checkNotNullEmpty(newVal)) {
+                    $scope.eTag = undefined;
+                }
+            });
+        };
+
+        $scope.applyFilters = function () {
+            $scope.toggleFilter('a', false);
+            $scope.toggleFilter('e', false);
+            $scope.setURLParams();
+        };
+
+        $scope.addFilter = function (filter, level, index, skipLink) {
+            var apply = true;
+            if (!skipLink) {
+                $scope.links.push({filter: filter, text: undefined, level: level});
+            } else if (index != undefined) {
+                $scope.links.splice(index + 1, $scope.links.length - index);
+                apply = false;
+            }
+            if (apply) {
+                $scope.$apply(function () {
+                    $scope.setURLParams();
+                });
+            } else {
+                $scope.setURLParams();
+            }
+        };
+
+        $scope.filterAssets = function (query) {
+            var rData = {results: []};
+            if (checkNotNullEmpty($scope.mtype)) {
+                var allAssets = $scope.mtype == 1 ? $scope.monitoringAssets : $scope.monitoredAssets;
+                for (var key in allAssets) {
+                    if (allAssets[key].toLowerCase().indexOf(query.term.toLowerCase()) != -1) {
+                        rData.results.push({'text': allAssets[key], 'id': key});
+                    }
+                }
+            }
+            query.callback(rData);
+        };
+
+        $scope.setURLParams = function () {
+            var lastLink = angular.copy($scope.links[$scope.links.length - 1]);
+            $location.$$search = {};
+            if (lastLink.level == 'state') {
+                $location.$$search['st'] = lastLink.filter;
+            } else if (lastLink.level == 'district') {
+                $location.$$search['st'] = lastLink.filter.substr(0, lastLink.filter.indexOf("_"));
+                $location.$$search['dt'] = lastLink.filter.substr(lastLink.filter.indexOf("_") + 1);
+            }
+            if (checkNotNullEmpty($scope.status)) {
+                $location.$$search['ws'] = $scope.status;
+                if (checkNotNullEmpty($scope.period) && $scope.status > 0) {
+                    $location.$$search['p'] = $scope.period;
+                }
+            }
+
+            if ($scope.eTag && $scope.eTag.length > 0) {
+                $location.$$search['et'] = constructModel($scope.eTag, false, true).replace(/'/g, '');
+            }
+
+            if ($scope.excludeTag && $scope.excludeTag.length > 0) {
+                $location.$$search['eet'] = constructModel($scope.excludeTag, false, true).replace(/'/g, '');
+            }
+
+            if ($scope.mtype == 1 && $scope.at.mna && $scope.at.mna.length > 0) {
+                $location.$$search['at'] = constructModel($scope.at.mna, true).replace(/'/g, '');
+            }
+
+            if ($scope.mtype == 2 && $scope.at.mda && $scope.at.mda.length > 0) {
+                $location.$$search['at'] = constructModel($scope.at.mda, true).replace(/'/g, '');
+            }
+
+            if (checkNotNullEmpty($scope.mtype)) {
+                $location.$$search['mt'] = $scope.mtype;
+            }
+            $location.$$compose();
+        };
+
+        var renderContext = requestContext.getRenderContext(requestContext.getAction(), ["st", "dt", "p", "et", "eet", "at", "mt", "ws"]);
+        $scope.$on("requestContextChanged", function () {
+            if (!renderContext.isChangeRelevant()) {
+                return;
+            }
+            $scope.initDefaults();
+        });
+        $scope.toggleFilter = function (type, force) {
+            var show;
+            if (force != undefined) {
+                if (type == 'a') {
+                    $scope.showAFilter = force;
+                } else if (type == 'e') {
+                    $scope.showEFilter = force;
+                }
+                show = force;
+            } else {
+                if (type == 'a') {
+                    $scope.showAFilter = !$scope.showAFilter;
+                    show = $scope.showAFilter;
+                } else if (type == 'e') {
+                    $scope.showEFilter = !$scope.showEFilter;
+                    show = $scope.showEFilter;
+                }
+            }
+            var d = document.getElementById('filter_' + type);
+            if (show) {
+                d.style.top = '10%';
+                d.style.opacity = '100';
+                d.style.zIndex = '1';
+            } else {
+                d.style.top = '0';
+                d.style.opacity = '0';
+                d.style.zIndex = '-1';
+            }
+        };
+
+        $scope.initDefaults = function (skipCache) {
+            var filter = undefined;
+            var level = undefined;
+            var valid = true;
+            $scope.mrValues = ["wr", "ur", "br", "cd", "sb", "df"];
+            $scope.captions = ["Working", "Under repair", "Beyond repair", "Condemned", "Stand by", "Defrosting"];
+            $scope.showPeriod = false;
+            $scope.asset = [];
+            var state = requestContext.getParam("st");
+            $scope.links = [];
+            if (requestContext.getParam("dt") && state) {
+                if (($scope.dstate && state != $scope.dstate) ||
+                    ($scope.ddist && state != $scope.ddist)) {
+                    valid = false;
+                }
+                if (valid) {
+                    filter = state + "_" + requestContext.getParam("dt");
+                    level = 'district';
+                    if (!$scope.dstate) {
+                        $scope.links.push({
+                            filter: undefined,
+                            text: $scope.locationMapping.data[$scope.dcntry].name,
+                            level: undefined
+                        })
+                    }
+                    if (!$scope.ddist) {
+                        $scope.links.push({
+                            filter: $scope.dstate || state,
+                            text: $scope.dstate || state,
+                            level: 'state'
+                        })
+                    }
+                }
+            } else if (state) {
+                if ($scope.dstate && filter != $scope.dstate) {
+                    valid = false;
+                }
+                if (valid) {
+                    filter = state;
+                    level = 'state';
+                    $scope.links.push({
+                        filter: undefined,
+                        text: $scope.locationMapping.data[$scope.dcntry].name,
+                        level: undefined
+                    })
+                }
+            }
+
+            if (requestContext.getParam("p")) {
+                var p = requestContext.getParam("p");
+                if (p == '0' || p == '7' || p == '15' || p == '30' || p == '60') {
+                    $scope.period = p;
+                }
+            } else {
+                $scope.period = '0';
+            }
+
+            if (requestContext.getParam("et")) {
+                var eTag = requestContext.getParam("et").split(",");
+                $scope.eTag = [];
+                eTag.forEach(function (data) {
+                    $scope.eTag.push({'text': data, 'id': data});
+                });
+                $scope.includeETag = constructModel($scope.eTag);
+            } else if (requestContext.getParam("eet")) {
+                var eeTag = requestContext.getParam("eet").split(",");
+                $scope.excludeTag = [];
+                eeTag.forEach(function (data) {
+                    $scope.excludeTag.push({'text': data, 'id': data});
+                });
+                $scope.excludeETag = constructModel($scope.excludeTag);
+            } else {
+                $scope.eTag = undefined;
+            }
+
+            if (requestContext.getParam("mt")) {
+                $scope.mtype = requestContext.getParam("mt");
+            }
+
+            if (requestContext.getParam("at")) {
+                var assets = requestContext.getParam("at").split(",");
+                var allAssets = $scope.mtype == 1 ? $scope.monitoringAssets : $scope.monitoredAssets;
+                assets.forEach(function (data) {
+                    $scope.asset.push({'text': allAssets[data], 'id': data});
+                });
+                if ($scope.mtype == 1) {
+                    $scope.at.mna = angular.copy($scope.asset);
+                } else {
+                    $scope.at.mda = angular.copy($scope.asset);
+                }
+            }
+
+            $scope.status = requestContext.getParam("ws") || "0";
+
+            $scope.getDashboardData(filter, level, skipCache);
+        };
+
+        function populateWorkingStatuses() {
+            if (checkNotNullEmpty($scope.assetConfig) && checkNotNullEmpty($scope.assetConfig.wses)) {
+                for (var i in $scope.assetConfig.wses) {
+                    $scope.assetWSFilters[$scope.assetConfig.wses[i].status] = {
+                        "status": $scope.assetConfig.wses[i].status,
+                        "dV": $scope.assetConfig.wses[i].dV
+                    };
+                }
+            }
+        }
+
+        function getSystemDashboardConfig() {
+            $scope.showLoading();
+            domainCfgService.getSystemDashboardConfig().then(function (data) {
+                var dconfig = angular.fromJson(data.data);
+                mapColors = dconfig.mc;
+                $scope.mc = mapColors;
+                mapRange = dconfig.mr;
+                $scope.mr = mapRange;
+                workingPieColors = dconfig.pie.wc;
+                $scope.initDefaults();
+                initWatches();
+            }).catch(function (error) {
+                $scope.showErrorMsg(error);
+            }).finally(function () {
+                $scope.hideLoading();
+                populateWorkingStatuses();
+            });
+        };
+
+        function getDashboardConfig() {
+            $scope.at = {};
+            $scope.at.mda = [];
+            $scope.at.mna = [];
+            $scope.showLoading();
+            domainCfgService.getDashboardCfg().then(function (data) {
+                if (checkNotNullEmpty(data.data.exet)) {
+                    $scope.excludeTag = [];
+                    data.data.exet.forEach(function (data) {
+                        $scope.excludeTag.push({'text': data, 'id': data});
+                    });
+                    $scope.excludeETag = constructModel($scope.excludeTag);
+                }
+                $scope.mtype = data.data.dmt || 2;
+                if(checkNotNullEmpty(data.data.dats) && data.data.dats.length > 0) {
+                    var assets = [];
+                    var allAssets = $scope.mtype == 1 ? $scope.monitoringAssets : $scope.monitoredAssets;
+                    data.data.dats.forEach(function (data) {
+                        assets.push({'text': allAssets[data], 'id': data});
+                    });
+                    if($scope.mtype == 1) {
+                        $scope.at.mna = angular.copy(assets);
+                    } else {
+                        $scope.at.mda = angular.copy(assets);
+                    }
+                }
+            }).catch(function error(msg) {
+                $scope.showErrorMsg(msg);
+            }).finally(function () {
+                $scope.hideLoading();
+                getSystemDashboardConfig();
+            });
+        };
+
+        function getLocationMapping() {
+            $scope.showLoading();
+            domainCfgService.getMapLocationMapping().then(function (data) {
+                if (checkNotNullEmpty(data.data)) {
+                    $scope.locationMapping = angular.fromJson(data.data);
+                }
+            }).catch(function error(msg) {
+                $scope.showErrorMsg(msg);
+            }).finally(function () {
+                $scope.hideLoading();
+                getDashboardConfig();
+            });
+        };
+
+        function init(){
+            $scope.showLoading();
+            $q.all([getAssetTypes(MONITORING_ASSETS),getAssetTypes(MONITORED_ASSETS)]).then(function(){
+                getLocationMapping();
+            }) .finally(function () {
+                $scope.hideLoading();
+            });
+        }
+
+        function getAssetTypes(type) {
+            return domainCfgService.getAssetSysCfg(type).then(function (data) {
+                if (type == MONITORING_ASSETS) {
+                    $scope.monitoringAssets = data.data;
+                } else {
+                    $scope.monitoredAssets = data.data;
+                }
+            }).catch(function error(msg) {
+                $scope.showErrorMsg(msg);
+            })
+        }
+
+        $scope.hardRefreshDashboard = function () {
+            $scope.initDefaults(true);
+        };
+
+        $scope.pOpt = {
+            "showLabels": 0,
+            "showLegend": 1,
+            "showPercentValues": 1,
+            "showPercentInToolTip": 0,
+            "enableSmartLabels": 1,
+            "toolTipSepChar": ": ",
+            "theme": "fint",
+            "enableRotation": 0,
+            "enableMultiSlicing": 0,
+            //"startingAngle": 90,
+            "labelFontSize": 12,
+            "slicingDistance": 15,
+            "useDataPlotColorForLabels": 1,
+            "subCaptionFontSize": 10,
+            "interactiveLegend": 0,
+            "exportEnabled": 1
+        };
+
+        function getAssetType() {
+            var assets = [];
+            if($scope.mtype == 1) {
+                assets = checkNotNullEmpty($scope.at.mna) ? $scope.at.mna : [];
+            } else {
+                assets = checkNotNullEmpty($scope.at.mda) ? $scope.at.mda : [];
+            }
+            return assets;
+        }
+
+        function constructPie(data, color, pieId, label) {
+            var d = [];
+            var isOneDataAvailable = false;
+            for(var or in data){
+                var dd = data[or];
+                var o = {};
+                var link = undefined ;
+                if(or <= 5) {
+                    o.label = $scope.captions[or];
+                    o.color = color[or];
+                    link = or >=1 ? or : 0;
+                } else {
+                    o.label = "Others";
+                    o.color = "#aaaaaa";
+                }
+                var event = $scope.mapEvent || 0;
+                if (event == link) {
+                    o.isSliced = 1;
+                }
+                o.value = dd || 0;
+                o.toolText = "$label: $value of $unformattedSum" + " " + label;
+                if (data[or]) {
+                    isOneDataAvailable = true;
+                }
+                o.showValue = o.value > 0 ? 1 : 0;
+                if(link != undefined) {
+                    o.link = "JavaScript: angular.element(document.getElementById('cid')).scope().constructMapData('" + link + "');";
+                }
+                d.push(o);
+            }
+            var subCaption = "<b>Monitoring type: </b>";
+            subCaption += $scope.mtype == 1 ? "Monitoring assets" : "Monitored assets";
+
+            var period = $scope.period;
+
+            if (checkNotNullEmpty($scope.eTag)) {
+                subCaption = (checkNullEmpty(subCaption) ? '' : subCaption + ',  ') + "<b>" + $scope.resourceBundle.kiosk + " tag(s): </b>" + $scope.eTagText;
+            }
+            if (checkNotNullEmpty($scope.status) && $scope.status > 0 && checkNotNullEmpty(period)) {
+                subCaption = (checkNullEmpty(subCaption) ? '' : subCaption + ',  ') + "<b>Period: </b>" + period + " day(s)";
+            }
+
+            var assets = getAssetType();
+            subCaption = (checkNullEmpty(subCaption) ? '' : subCaption + ',  ') + "<b>Asset type: </b>";
+            if(checkNullEmpty(assets)) {
+                subCaption += "All";
+            } else {
+                subCaption += constructModel(assets, false, true);
+            }
+
+            subCaption = (checkNullEmpty(subCaption) ? '' : subCaption + ',  ') + "<b>Status: </b>";
+            subCaption += $scope.status * 1 == 0 ? "All" : $scope.captions[$scope.status * 1 - 1];
+
+            if (pieId == "p1") {
+                $scope.pCaption = "Working assets";
+                $scope.pSubCaption = $sce.trustAsHtml(subCaption || '&nbsp;');
+            }
+            return isOneDataAvailable ? d : [];
+        }
+
+        function constructPieData(data) {
+            if (checkNotNullEmpty(data) && checkNotNullEmpty(data.assetDomain)) {
+                if($scope.status != 0) {
+                    var assetDomainMap = {};
+                    var count = 0;
+                    for(var index in data.assetDomain) {
+                        if($scope.status * 1 - 1 == index) {
+                            assetDomainMap[index] = data.assetDomain[index];
+                        } else {
+                            count += data.assetDomain[index];
+                        }
+                    }
+                    assetDomainMap[10] = count;
+                    data.assetDomain = assetDomainMap;
+                    $scope.mapEvent = $scope.status * 1 - 1;
+                }
+                $scope.pieData = [];
+                $scope.pieOpt = [];
+                $scope.pieOpt[0] = angular.copy($scope.pOpt);
+                $scope.pieData[0] = constructPie(data.assetDomain, workingPieColors, "p1", "working status");
+            }
+        }
+
+        $scope.mapOpt = {
+            "nullEntityColor": "#cccccc",
+            "nullEntityAlpha": "50",
+            "hoverOnNull": "0",
+            "showLabels": "0",
+            "showCanvasBorder": "0",
+            "useSNameInLabels": "0",
+            "toolTipSepChar": ": ",
+            "legendPosition": "BOTTOM",
+            "borderColor": "FFFFFF",
+            //"entityBorderHoverThickness": "2",
+            "interactiveLegend": 1,
+            "exportEnabled": 1,
+            "baseFontColor": "#000000"
+        };
+
+        function setMapRange(eventType) {
+            var event = $scope.mrValues[eventType];
+            $scope.mapRange = {color: []};
+
+            for (var i = 1; i < mapRange[event].length; i++) {
+                var o = {};
+                o.minvalue = mapRange[event][i - 1];
+                o.maxvalue = mapRange[event][i];
+                o.code = mapColors[event][i - 1];
+                if (i == 1) {
+                    o.displayValue = "<" + mapRange[event][1] + "%"
+                } else if (i == mapRange[event].length - 1) {
+                    o.displayValue = ">" + mapRange[event][i - 1] + "%"
+                } else {
+                    o.displayValue = mapRange[event][i - 1] + "-" + mapRange[event][i] + "%"
+                }
+                $scope.mapRange.color.push(o);
+            }
+        };
+
+        $scope.barOpt = {
+            "showAxisLines": "0",
+            "valueFontColor":"#000000",
+            "theme": "fint",
+            "yAxisName": "Percentage",
+            "yAxisNameFontSize": 12,
+            "exportEnabled": 1,
+            "caption": ' ',
+            "yAxisMaxValue": 100
+        };
+
+        function constructBarData(data, allData, eventType, addLink, level) {
+            var bData = [];
+
+            var event = $scope.mrValues[eventType];
+            for (var f in allData) {
+                if (checkNotNullEmpty(f)) {
+                    bData.push({"label": f});
+                }
+            }
+            for (var n in allData) {
+                if (checkNotNullEmpty(n)) {
+                    var per = 0;
+                    var value = 0;
+                    var den = 0;
+                    var kid = undefined;
+                    if (data != undefined && data[n] != undefined) {
+                        per = data[n].per;
+                        value = data[n].value;
+                        den = data[n].den;
+                        kid = data[n].kid;
+                    }
+                    for (var i = 0; i < bData.length; i++) {
+                        var bd = bData[i];
+                        if (n == bd.label) {
+                            bd.value = per;
+                            bd.displayValue = bd.value.toFixed(1) + "%";
+                            bd.toolText = value + " of " + den + " assets";
+
+                            for (var r = 1; r < mapRange[event].length; r++) {
+                                if (per <= mapRange[event][r]) {
+                                    bd.color = mapColors[event][r - 1];
+                                    break;
+                                }
+                            }
+                            if (addLink) {
+                                var filter = bd.label;
+                                if ($scope.dashboardView.level == "state") {
+                                    filter = $scope.dashboardView.mTyNm + "_" + bd.label;
+                                }
+                                bd.link = "JavaScript: angular.element(document.getElementById('cid')).scope().addFilter('" + filter + "','" + level + "')";
+                            } else if($scope.mrValues.indexOf(event) != -1) {
+                                var ws = (parseInt(eventType, 10) + 1).toString();
+                                bd.link = "N-#/assets/all?ws=" + ws;
+                                if(checkNotNullEmpty(kid)) {
+                                    bd.link += "&eid=" + kid;
+                                }
+                                var asset = '';
+                                    var assets;
+                                    if ($scope.mtype == 1) {
+                                        assets = checkNotNullEmpty($scope.at.mna) ? angular.copy($scope.at.mna) : [];
+                                    } else {
+                                        assets = checkNotNullEmpty($scope.at.mda) ? angular.copy($scope.at.mda) : [];
+                                    }
+                                    if(checkNotNullEmpty(assets)) {
+                                        asset = constructModel(assets, true, true);
+                                        bd.link += "&at=" + asset;
+                                    }
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+            $scope.barHeight = bData.length * 20 + 80;
+            $scope.barData = sortByKeyDesc(bData, 'value');
+            $scope.barRange = "";
+            if(checkNotNullEmpty(event)) {
+                $scope.barEvent= $scope.mrValues[event];
+            }
+        }
+
+
+        $scope.constructMapData = function (event, init) {
+            if ($scope.mapEvent == event && !init) {
+                return;
+            }
+            $scope.mloading = true;
+            $scope.subCaption = "<b>Monitoring type: </b>";
+            $scope.subCaption += $scope.mtype == 1 ? "Monitoring assets" : "Monitored assets";
+            var subData = $scope.dashboardView.asset[event];
+
+            var allSubData = subData;
+            var fPeriod = $scope.period == undefined ? "0" : $scope.period;
+            $scope.subCaption += ($scope.subCaption == '' ? '' : ',  ') + "<b>Period:</b> " + fPeriod + " day(s)";
+
+            if (checkNotNullEmpty($scope.eTag)) {
+                $scope.subCaption += ($scope.subCaption == '' ? '' : ',  ') + "<b>" + $scope.resourceBundle.kiosk + " tag(s): </b>" + $scope.eTagText;
+            }
+            $scope.subCaption += ($scope.subCaption == '' ? '' : ',  ') + "<b>Asset Type: </b>";
+            if (checkNotNullEmpty($scope.asset)) {
+                $scope.subCaption += constructModel($scope.asset, false, true);
+            } else {
+                $scope.subCaption += "All";
+            }
+            $scope.subCaption = (checkNullEmpty($scope.subCaption ) ? '' : $scope.subCaption ) + ',  ' + "<b>Status: </b>";
+            $scope.subCaption += $scope.captions[event];
+            $scope.subCaption = $sce.trustAsHtml($scope.subCaption);
+            var addLink = false;
+            if ($scope.showSwitch) {
+                var mData = [];
+                var level = undefined;
+                if ($scope.dashboardView.level == "country") {
+                    level = "state";
+                } else if ($scope.dashboardView.level == "state") {
+                    level = "district";
+                }
+                for (var n in allSubData) {
+                    if (checkNotNullEmpty(n)) {
+                        var per = 0;
+                        var value = 0;
+                        var den = 0;
+                        if (subData != undefined && subData[n] != undefined) {
+                            per = subData[n].per;
+                            value = subData[n].value;
+                            den = subData[n].den;
+                        }
+                        var o = {};
+                        var filter;
+                        if ($scope.dashboardView.level == "country") {
+                            if ($scope.locationMapping.data[$scope.dashboardView.mTy] != undefined &&
+                                $scope.locationMapping.data[$scope.dashboardView.mTy].states[n] != undefined) {
+                                o.id = $scope.locationMapping.data[$scope.dashboardView.mTy].states[n].id;
+                            }
+                            filter = n;
+                        } else if ($scope.dashboardView.level == "state") {
+                            if (checkNotNullEmpty($scope.locationMapping.data[$scope.dashboardView.mPTy].states[$scope.dashboardView.mTyNm].districts[n])) {
+                                if ($scope.locationMapping.data[$scope.dashboardView.mPTy] != undefined &&
+                                    $scope.locationMapping.data[$scope.dashboardView.mPTy].states[$scope.dashboardView.mTyNm] != undefined &&
+                                    $scope.locationMapping.data[$scope.dashboardView.mPTy].states[$scope.dashboardView.mTyNm].districts[n] != undefined) {
+                                    o.id = $scope.locationMapping.data[$scope.dashboardView.mPTy].states[$scope.dashboardView.mTyNm].districts[n].id;
+                                }
+                                filter = $scope.dashboardView.mTyNm + "_" + n;
+                            }
+                        }
+                        o.label = n;
+                        o.value = per;
+                        o.displayValue = o.label + "<br/>" + per.toFixed(1) + "%";
+                        o.toolText = o.label + ": " + value + " of " + den + " " + " assets";
+                        o.showLabel = "1";
+                        if (checkNotNullEmpty(value)) {
+                            o.link = "JavaScript: angular.element(document.getElementById('cid')).scope().addFilter('" + filter + "','" + level + "')";
+                        }
+                        mData.push(o);
+                    }
+                }
+                $scope.mapData = mData;
+
+                addLink = true;
+            }
+
+            $scope.mapEvent = event;
+            setMapRange(event);
+            constructBarData(subData, allSubData, event, addLink, level, event);
+
+            if (!init) {
+                $timeout(function () {
+                    $scope.mloading = false;
+                }, 190);
+                $scope.$digest();
+            } else {
+                $timeout(function () {
+                    $scope.mloading = false;
+                }, 1250);
+            }
+        };
+
+        $scope.setShowMap = function(value) {
+            $scope.showMap = value;
+        };
+
+        $scope.getDashboardData = function (filter, level, skipCache) {
+            if (checkNotNullEmpty($scope.dcntry)) {
+                $scope.loading = true;
+                $scope.showLoading();
+
+                var asset = '';
+
+                if (checkNotNullEmpty($scope.asset) && $scope.asset.length > 0) {
+                    var first = true;
+                    $scope.asset.forEach(function (data) {
+                        if (!first) {
+                            asset += "," + data.id;
+                        } else {
+                            asset += data.id;
+                            first = false;
+                        }
+
+                    });
+                }
+
+                if (checkNotNullEmpty($scope.excludeTag)) {
+                    $scope.excludeETag = constructModel($scope.excludeTag, false, true);
+                    $scope.eeTagObj = angular.copy($scope.excludeTag);
+                } else {
+                    $scope.excludeETag = $scope.eeTagObj = undefined;
+                }
+                if (checkNotNullEmpty($scope.eTag)) {
+                    $scope.includeETag = constructModel($scope.eTag, false, true);
+                    $scope.eTagObj = angular.copy($scope.eTag);
+                    $scope.eTagText = $scope.includeETag.replace(/'/g, '');
+                } else {
+                    $scope.includeETag = $scope.eTagObj = $scope.eTagText = undefined;
+                }
+
+                var asset = '';
+                if (checkNotNullEmpty($scope.mtype)) {
+                    var assets = [];
+                    if ($scope.mtype == 1) {
+                        assets = angular.copy($scope.at.mna);
+                    } else {
+                        assets = angular.copy($scope.at.mda);
+                    }
+                    asset = constructModel(assets, true, true);
+                }
+
+                dashboardService.getAssetStatus(filter, $scope.mtype, asset, $scope.includeETag, $scope.excludeETag,
+                    $scope.period, level, skipCache).then(function (data) {
+                        if (typeof loadDashboardFusionMaps === "function") {
+                            $scope.showMap = true;
+                            $scope.showSwitch = true;
+                        } else {
+                            $scope.showMap = false;
+                            $scope.showSwitch = false;
+                        }
+                        $scope.dashboardView = data.data;
+                        var linkText;
+                        if ($scope.dashboardView.level == "country") {
+                            linkText = $scope.locationMapping.data[$scope.dashboardView.mTy].name;
+                            $scope.mapType = "maps/" + linkText;
+                        } else if ($scope.dashboardView.level == "state") {
+                            linkText = $scope.dashboardView.mTyNm;
+                            $scope.mapType = "maps/" + $scope.dashboardView.mTy;
+                        } else {
+                            if(checkNotNullEmpty($scope.dashboardView.mTyNm)) {
+                                linkText = $scope.dashboardView.mTyNm.substr($scope.dashboardView.mTyNm.lastIndexOf("_") + 1);
+                            }
+                            $scope.showMap = false;
+                            $scope.showSwitch = false;
+                            $scope.mapData = [];
+                        }
+                        $scope.links.push({filter: filter, text: linkText, level: level});
+                        constructPieData($scope.dashboardView);
+                        var event = $scope.mapEvent || 0;
+                        $scope.constructMapData(event, true);
+                    }).catch(function error(msg) {
+                        $scope.showErrorMsg(msg);
+                    }).finally(function () {
+                        $scope.hideLoading();
+                        $scope.loading = false;
+                    });
+            }
+        };
+
+        init();
+    }]);
+
 domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '$sce', 'dashboardService', 'INVENTORY', 'configService', 'domainCfgService','requestContext','matService','$location','$window',
     function ($scope, $timeout, $sce, dashboardService, INVENTORY, configService, domainCfgService, requestContext, matService,$location,$window) {
 
@@ -1610,7 +2363,7 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
                     }
                 }
             }
-            $scope.barHeight = bData.length * 20 + 80;
+            $scope.barHeight = bData.length * 10 + 80;
             $scope.barData = bData;
         }
         function constructMatBarData(data, allData, event) {
@@ -1977,7 +2730,6 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
                 $window.open("#/inventory/"+search);
             }else{
                 $scope.showWarning($scope.resourceBundle['past.date.selected']);
-                console.log("message");
             }
         };
 

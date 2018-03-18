@@ -25,13 +25,16 @@
     <div class="subnavbar navbar navbar-default" role="navigation">
         <ul class="nav navbar-nav subnav">
             <li ng-class="{enable: subview == 'overview'}"><a
-                    href="#/dashboard/overview/">Overview</a>
+                    href="#/dashboard/overview/">{{resourceBundle['overview']}}</a>
             </li>
             <li ng-class="{enable: subview == 'inventory'}"><a
-                    href="#/dashboard/inventory/" ng-show="hasDashbaccess && !tempOnlyAU">Inventory</a>
+                    href="#/dashboard/inventory/" ng-show="hasDashbaccess && !tempOnlyAU">{{resourceBundle['inventory']}}</a>
+            </li>
+            <li ng-class="{enable: subview == 'assets'}"><a
+                    href="#/dashboard/assets/" ng-show="hasDashbaccess && tempEnabled">{{resourceBundle['assets']}}</a>
             </li>
             <li ng-hide="hbUTag" ng-class="{enable: subview == 'activity'}"><a
-                    href="#/dashboard/activity/" ng-show="hasDashbaccess && !tempOnlyAU && (dashboardConfig.ape || dashboardConfig.ipe)">Activity</a>
+                    href="#/dashboard/activity/" ng-show="hasDashbaccess && !tempOnlyAU && (dashboardConfig.ape || dashboardConfig.ipe)">{{resourceBundle['activity']}}</a>
             </li>
             <li ng-class="{enable: subview == 'customdashboard' || subview == 'viewcustomdashboard'}"><a
                     href="#/dashboard/customdashboard/" ng-show="hasDashbaccess && dashboardConfig.edm && !tempOnlyAU">{{resourceBundle['custom.dashboards']}}</a>
@@ -47,6 +50,9 @@
     <div ng-switch="subview">
         <div ng-switch-when="overview">
             <div ng-if="hasDashbaccess" ng-include="'views/dashboard/main-dashboard.html'"></div>
+        </div>
+        <div ng-switch-when="assets">
+            <div ng-include="'views/dashboard/assets.html'"></div>
         </div>
         <div ng-switch-when="inventory">
             <div ng-include="'views/dashboard/inventory.html'"></div>

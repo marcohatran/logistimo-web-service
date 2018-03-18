@@ -324,6 +324,8 @@ logistimoApp.config(function ($routeProvider) {
         action: "newreports"
     }).when("/dashboard/overview", {
         action: "dashboard.overview"
+    }).when("/dashboard/assets", {
+       action: "dashboard.assets"
     }).when("/dashboard/", {
         action: "dashboard.overview"
     }).when("/exportstatus",{
