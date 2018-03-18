@@ -27,13 +27,11 @@ import com.logistimo.entities.auth.EntityAuthoriser;
 import com.logistimo.exception.InvalidDataException;
 import com.logistimo.materials.model.HandlingUnitModel;
 import com.logistimo.materials.service.IHandlingUnitService;
-import com.logistimo.orders.entity.IDemandItem;
-import com.logistimo.orders.service.IDemandService;
 import com.logistimo.returns.Status;
-import com.logistimo.returns.vo.ReturnsItemBatchVO;
 import com.logistimo.returns.vo.ReturnsItemVO;
 import com.logistimo.services.ServiceException;
-import com.logistimo.shipments.entity.IShipmentItemBatch;
+import com.logistimo.shipments.FulfilledQuantityModel;
+import com.logistimo.shipments.service.impl.ShipmentService;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
@@ -41,7 +39,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -54,61 +52,82 @@ import java.util.stream.Collectors;
 public class ReturnsValidator {
 
   @Autowired
-  IDemandService demandService;
+  ShipmentService shipmentService;
 
   @Autowired
   IHandlingUnitService handlingUnitService;
 
-  public boolean isQuantityValid(List<ReturnsItemVO> returnItemList, Long orderId) {
 
-    List<IDemandItem> demandItemList = demandService.getDemandItemsWithBatches(orderId);
+  public boolean isQuantityValid(List<ReturnsItemVO> returnItemList, Long orderId)
+      throws ServiceException {
 
-    if (CollectionUtils.isEmpty(demandItemList)) {
+    if (CollectionUtils.isEmpty(returnItemList)) {
+      throw new InvalidDataException("Items list cannot be empty!!");
+    }
+    List<Long>
+        materialIdList =
+        returnItemList.stream().map(ReturnsItemVO::getMaterialId).collect(Collectors.toList());
+
+    List<FulfilledQuantityModel>
+        shipmentList =
+        shipmentService.getFulfilledQuantityByOrderId(orderId, materialIdList);
+
+    if (CollectionUtils.isEmpty(shipmentList)) {
       throw new InvalidDataException("No order present!");
     }
-    Map<Long, IDemandItem> demandItemMap = demandItemList.stream().collect(Collectors.toMap(
-        IDemandItem::getMaterialId, demandItem -> demandItem));
+
+    Map<Long, Map<String, BigDecimal>> shipmentItemMap = new HashMap<>();
+    shipmentList.forEach(fulfilledQuantityModel -> {
+      Long materialId = fulfilledQuantityModel.getMaterialId();
+      Map<String, BigDecimal> batchesMap = MapUtils.EMPTY_MAP;
+      if (!shipmentItemMap.containsKey(materialId)) {
+        batchesMap = new HashMap<>();
+        shipmentItemMap.put(materialId, batchesMap);
+      }
+      batchesMap = shipmentItemMap.get(materialId);
+      batchesMap
+          .put(fulfilledQuantityModel.getBatchId(), fulfilledQuantityModel.getFulfilledQuantity());
+    });
     Map<Long, BigDecimal>
         handlingUnitMap =
-       getHandlingUnit(new ArrayList<>(demandItemMap.keySet())).orElse(MapUtils.EMPTY_MAP);
+        getHandlingUnit(materialIdList).orElse(MapUtils.EMPTY_MAP);
     for (ReturnsItemVO returnsItemVO : returnItemList) {
-      IDemandItem demandItem = demandItemMap.get(returnsItemVO.getMaterialId());
-      if (demandItem == null) {
+      Map<String, BigDecimal>
+          fulfilledQuantityByBatches =
+          shipmentItemMap.get(returnsItemVO.getMaterialId());
+      if (fulfilledQuantityByBatches == null) {
         throw new InvalidDataException("No demand item entry present!!");
       }
-      BigDecimal handlingUnitQuantity=BigDecimal.ONE;
-      if(!handlingUnitMap.isEmpty()) {
-         handlingUnitQuantity = handlingUnitMap.get(returnsItemVO.getMaterialId());
+      BigDecimal handlingUnitQuantity = BigDecimal.ONE;
+      if (!handlingUnitMap.isEmpty()) {
+        handlingUnitQuantity = handlingUnitMap.get(returnsItemVO.getMaterialId());
       }
       if (CollectionUtils.isEmpty(returnsItemVO.getReturnItemBatches())) {
-        if (returnsItemVO.getQuantity().compareTo(demandItem.getFulfilledQuantity()) > 0) {
+        if (returnsItemVO.getQuantity().compareTo(fulfilledQuantityByBatches.get(null)) > 0) {
           throw new InvalidDataException("Returned quantity is greater than ordered quantity!!");
         }
         validateHandlingUnit(handlingUnitQuantity, returnsItemVO.getQuantity());
       } else {
-        validateBatches(returnsItemVO, demandItem, handlingUnitQuantity);
+        validateBatches(returnsItemVO, fulfilledQuantityByBatches, handlingUnitQuantity);
       }
     }
     return true;
   }
 
-  private void validateBatches(ReturnsItemVO returnsItemVO, IDemandItem demandItem,
+  private void validateBatches(ReturnsItemVO returnsItemVO,
+                               Map<String, BigDecimal> fulfilledQuantityByBatches,
                                BigDecimal handlingUnitQuantity) {
 
-    Map<String, BigDecimal>
-        batchItemMap =
-        demandItem.getItemBatches().stream()
-            .collect(Collectors.toMap(IShipmentItemBatch::getBatchId,
-                IShipmentItemBatch::getQuantity));
-
-    for (ReturnsItemBatchVO returnsItemBatch : returnsItemVO.getReturnItemBatches()) {
-      BigDecimal quantity = batchItemMap.get(returnsItemBatch.getBatch().getBatchId());
-      validateHandlingUnit(handlingUnitQuantity, quantity);
-
-      if (returnsItemBatch.getQuantity().compareTo(quantity) > 0) {
+    returnsItemVO.getReturnItemBatches().forEach(returnsItemBatchVO -> {
+      validateHandlingUnit(handlingUnitQuantity, returnsItemBatchVO.getQuantity());
+      BigDecimal
+          quantity =
+          fulfilledQuantityByBatches.get(returnsItemBatchVO.getBatch().getBatchId());
+      if (returnsItemBatchVO.getQuantity().compareTo(quantity) > 0) {
         throw new InvalidDataException("Returned quantity is greater than ordered quantity!!");
       }
-    }
+    });
+
   }
 
   private void validateHandlingUnit(BigDecimal handlingUnitQuantity, BigDecimal quantity) {
@@ -122,7 +141,7 @@ public class ReturnsValidator {
     List<HandlingUnitModel>
         handlingUnitModelList =
         handlingUnitService.getHandlingUnitDataByMaterialIds(materialIdList);
-    if(CollectionUtils.isNotEmpty(handlingUnitModelList)) {
+    if (CollectionUtils.isNotEmpty(handlingUnitModelList)) {
       return Optional.of(handlingUnitModelList.stream().collect(
           Collectors
               .toMap(HandlingUnitModel::getMaterialId, HandlingUnitModel::getQuantity)));
@@ -141,7 +160,7 @@ public class ReturnsValidator {
     }
   }
 
-  public boolean hasAccessToEntity( Long entityId) throws ServiceException{
+  public boolean hasAccessToEntity(Long entityId) throws ServiceException {
     return (EntityAuthoriser.authoriseEntity(entityId));
   }
 

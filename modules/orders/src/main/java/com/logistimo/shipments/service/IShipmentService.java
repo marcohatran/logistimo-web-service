@@ -33,6 +33,7 @@ import com.logistimo.orders.models.PDFResponseModel;
 import com.logistimo.pagination.Results;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
+import com.logistimo.shipments.FulfilledQuantityModel;
 import com.logistimo.shipments.ShipmentStatus;
 import com.logistimo.shipments.entity.IShipment;
 import com.logistimo.shipments.entity.IShipmentItem;
@@ -144,4 +145,7 @@ public interface IShipmentService {
    */
   PDFResponseModel generateShipmentVoucher(String shipmentId)
       throws ServiceException, ObjectNotFoundException, IOException, ValidationException;
+
+  public List<FulfilledQuantityModel> getFulfilledQuantityByOrderId(Long orderId,
+                                                                    List<Long> materialIdList) throws ServiceException;
 }
