@@ -23,6 +23,8 @@
 
 package com.logistimo.returns.service;
 
+import com.logistimo.exception.InvalidDataException;
+import com.logistimo.orders.service.impl.DemandService;
 import com.logistimo.returns.Status;
 import com.logistimo.returns.models.ReturnFilters;
 import com.logistimo.returns.models.UpdateStatusModel;
@@ -33,14 +35,18 @@ import com.logistimo.returns.vo.ReturnsStatusVO;
 import com.logistimo.returns.vo.ReturnsVO;
 import com.logistimo.services.ServiceException;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by pratheeka on 13/03/18.
@@ -55,31 +61,47 @@ public class ReturnsService {
   private ReturnsValidator returnsValidator;
 
   @Autowired
+  private DemandService demandService;
+
+  @Autowired
   private ReturnsDao returnsDao;
 
   @Transactional(transactionManager = "transactionManager")
-  public ReturnsVO createReturns(ReturnsVO returnsVO) {
+  public ReturnsVO createReturns(ReturnsVO returnsVO) throws ServiceException {
     returnsValidator.isQuantityValid(returnsVO.getItems(), returnsVO.getOrderId());
     List<ReturnsItemVO> returnsItemVOList = returnsVO.getItems();
+    Map<Long, BigDecimal> returnedQuantity = new HashMap<>();
     ReturnsVO updatedReturnsVo = returnsDao.saveReturns(returnsVO);
     Long returnId = updatedReturnsVo.getId();
     returnsItemVOList.forEach(returnsItemVO -> {
       returnsItemVO.setReturnsId(returnId);
+      final BigDecimal[] quantity = new BigDecimal[1];
       List<ReturnsItemBatchVO>
           returnsItemBatchVOList = returnsItemVO.getReturnItemBatches();
       returnsItemVO = returnsDao.saveReturnsItems(returnsItemVO);
-      Long itemId = returnsItemVO.getId();
-      returnsItemBatchVOList.forEach(returnsItemBatchVO -> {
-        returnsItemBatchVO.setItemId(itemId);
-        returnsItemBatchVO = returnsDao.saveReturnBatchItems(returnsItemBatchVO);
-      });
-      returnsItemVO.setReturnItemBatches(returnsItemBatchVOList);
+      if (CollectionUtils.isNotEmpty(returnsItemBatchVOList)) {
+        Long itemId = returnsItemVO.getId();
+        returnsItemBatchVOList.forEach(returnsItemBatchVO -> {
+          returnsItemBatchVO.setItemId(itemId);
+          quantity[0] = quantity[0].add(returnsItemBatchVO.getQuantity());
+          returnsItemBatchVO = returnsDao.saveReturnBatchItems(returnsItemBatchVO);
+        });
+        returnsItemVO.setReturnItemBatches(returnsItemBatchVOList);
+      } else {
+        quantity[0] = returnsItemVO.getQuantity();
+      }
+      returnedQuantity.put(returnsItemVO.getMaterialId(), quantity[0]);
     });
+
+    demandService.updateDemandReturns(returnsVO.getOrderId(),returnedQuantity);
     returnsVO.setItems(returnsItemVOList);
     return returnsVO;
   }
 
   public List<ReturnsItemVO> getReturnsItem(Long returnId) {
+    if (returnId == null) {
+      throw new InvalidDataException("Returns Id cannot be null");
+    }
     return returnsDao.getReturnedItems(returnId);
   }
 
@@ -103,6 +125,7 @@ public class ReturnsService {
       returnsVO.setUpdatedBy(statusModel.getUserId());
       returnsVO.setUpdatedAt(updatedAt);
       returnsVO = returnsDao.saveReturns(returnsVO);
+
     }
     returnsVO.setItems(getReturnsItem(returnsVO.getId()));
     return returnsVO;
