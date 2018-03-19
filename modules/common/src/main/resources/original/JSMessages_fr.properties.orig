@@ -1270,3 +1270,8 @@ cannot.exceed.issued.quantity=ne peut pas dépasser la quantité émise
 cannot.exceed.received.quantity=ne peut pas dépasser la quantité reçue
 choose.transactions=Choisissez les transactions
 return.against.unique.related.entity=Vous pouvez uniquement envoyer des déclarations uniquement à l'égard d'une entité apparentée unique ou d'une entité associée
+handling.units.mismatch.message=ne correspond pas aux multiples d'unités attendus dans
+handling.units.expected.message=Il devrait être en multiples de
+reason.required=La raison est requise
+return.not.allowed.non.existing.batch=que vous essayez de retourner n'existe pas pour le matériel
+

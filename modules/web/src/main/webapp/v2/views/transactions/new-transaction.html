@@ -54,7 +54,7 @@
                         <div class="col-sm-7">
                             <select class="form-control" ng-class="{'c-visited' : submitted}"
                                     ng-disabled="validType || !transaction.eent"
-                                    ng-change = "dInventory=null;dInv=false;transaction.dent=null;"
+                                    ng-change = "dInventory=null;dInv=false;transaction.dent=null;setReturnFormValid()"
                                     ng-model="transaction.type" required>
                                 <option ng-selected="trn.value == transaction.type"
                                         ng-repeat="trn in transactions_arr" value="{{trn.value}}">{{trn.displayName}}
@@ -321,7 +321,7 @@
                                 </table>
                                 <button type="button" ng-hide="exRow[$index] === 'add' || exRow[$index] === 'show'" class="btn btn-sm btn-primary">Enter returns</button>
                             </div>
-                            <div ng-show="showMaterials && transaction.materials.length - 1 !== $index && !transaction.material.isBatch && material.quantity > 0">
+                            <div ng-show="showMaterials && transaction.materials.length - 1 !== $index && !transaction.material.isBatch && material.quantity > 0 && transaction.type != 'ri' && transaction.type != 'ro'">
                                 <span class="litetext float-left" ng-class="{'required' : msm}" ng-show="(!material.ts && isDef(matstatus)) || (material.ts && isDef(tempmatstatus))">{{resourceBundle['inventory.material.status']}}</span>
                                 <select ng-hide="material.ts || isUndef(matstatus)"
                                         class="form-control mt5"

@@ -68,7 +68,7 @@
                                     popover-trigger="showpopup">
                               <option ng-repeat="stats in tempmatstatus track by $index" value="{{stats}}">{{stats || resourceBundle['select'] + " " + resourceBundle['status.lower']}}</option>
                             </select>
-                              <span class="litetext float-left">{{resourceBundle['reason']}}</span>
+                              <span class="litetext float-left" ng-class="{'required' : reasons.length > 0}">{{resourceBundle['reason']}}</span>
                               <select ng-hide="reasons.length == 0" ng-model="returnitem.rrsn" class="form-control">
                                   <option ng-repeat="rsn in reasons track by $index" value="{{rsn}}">{{rsn || resourceBundle['select'] + " " + resourceBundle['reason.lowercase']}}</option>
                               </select>
@@ -162,7 +162,7 @@
             </table>
             <div class="pull-right">
               <button ng-click="saveReturnTransactions($index)" class="btn btn-sm btn-primary">{{resourceBundle['save']}}</button>
-              <button ng-click="toggle($index);returnFormOpen = false;" class="btn btn-sm btn-default">{{resourceBundle['close']}}</button>
+              <button ng-click="toggle($index);" class="btn btn-sm btn-default">{{resourceBundle['close']}}</button>
             </div>
           </div>
         </div>
