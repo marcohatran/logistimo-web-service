@@ -76,7 +76,7 @@
 
                                                             <label  class="col-sm-3 control-label">{{resourceBundle['config.reasons.issue']}}</label>
                                                             <div class="col-sm-8">
-                                                                <input ng-blur="refreshDefaultReasons(inv.ri);refreshCRIssueList = !refreshCRIssueList;refreshIssueList[0] = !refreshIssueList[0];" type="text" class="form-control" id="cnfIss" ng-model="inv.ri.rsns" ng-list
+                                                                <input ng-blur="checkAndUpdateReasons(inv.ri);refreshCRIssueList = !refreshCRIssueList;refreshIssueList[0] = !refreshIssueList[0];" type="text" class="form-control" id="cnfIss" ng-model="inv.ri.rsns" ng-list
                                                                        autocomplete="off" maxlength="500">
                                                             </div>
                                                         </div>
@@ -129,7 +129,7 @@
                                                                     <p ng-show="inv.imt.length>$index+1" class="temp">{{itag.mtg}}</p>
                                                                 </td>
                                                                 <td>
-                                                                    <input type="text" ng-blur="refreshDefaultReasons(itag.rsnCfgModel);refreshCRIssueList = !refreshCRIssueList; refreshIssueList[$index + 1] = !refreshIssueList[$index + 1]" class="form-control" id="mtrsn" ng-model="itag.rsnCfgModel.rsns" ng-list
+                                                                    <input type="text" ng-blur="checkAndUpdateReasons(itag.rsnCfgModel);refreshCRIssueList = !refreshCRIssueList; refreshIssueList[$index + 1] = !refreshIssueList[$index + 1]" class="form-control" id="mtrsn" ng-model="itag.rsnCfgModel.rsns" ng-list
                                                                            autocomplete="off" maxlength="500">
                                                                 </td>
                                                                 <td>
@@ -152,7 +152,7 @@
                                                         <div class="form-group">
                                                             <label for="cnfRec" class="col-sm-3 control-label">{{resourceBundle['config.reasons.receipt']}}</label>
                                                             <div class="col-sm-8">
-                                                                <input ng-blur="refreshDefaultReasons(inv.rr);refreshReceiptList[0] = !refreshReceiptList[0]" type="text" class="form-control" id="cnfRec" ng-model="inv.rr.rsns" ng-list
+                                                                <input ng-blur="checkAndUpdateReasons(inv.rr);refreshReceiptList[0] = !refreshReceiptList[0]" type="text" class="form-control" id="cnfRec" ng-model="inv.rr.rsns" ng-list
                                                                        autocomplete="off" maxlength="500">
                                                             </div>
                                                         </div>
@@ -205,7 +205,7 @@
                                                                     <p ng-show="inv.rmt.length>$index+1" class="temp">{{rtag.mtg}}</p>
                                                                 </td>
                                                                 <td>
-                                                                    <input ng-blur="refreshDefaultReasons(rtag.rsnCfgModel); refreshReceiptList[$index + 1] = !refreshReceiptList[$index + 1]" type="text" class="form-control" id="rmtrsn" ng-model="rtag.rsnCfgModel.rsns" ng-list
+                                                                    <input ng-blur="checkAndUpdateReasons(rtag.rsnCfgModel); refreshReceiptList[$index + 1] = !refreshReceiptList[$index + 1]" type="text" class="form-control" id="rmtrsn" ng-model="rtag.rsnCfgModel.rsns" ng-list
                                                                            autocomplete="off" maxlength="500">
                                                                 </td>
                                                                 <td>
@@ -228,7 +228,7 @@
                                                         <div class="form-group">
                                                             <label for="cnfStc" class="col-sm-3 control-label">{{resourceBundle['config.reasons.stockcount']}}</label>
                                                             <div class="col-sm-8">
-                                                                <input ng-blur="refreshDefaultReasons(inv.rs); refreshStockcountList[0] = !refreshStockcountList[0]" type="text" class="form-control" id="cnfStc" ng-model="inv.rs.rsns" ng-list
+                                                                <input ng-blur="checkAndUpdateReasons(inv.rs); refreshStockcountList[0] = !refreshStockcountList[0]" type="text" class="form-control" id="cnfStc" ng-model="inv.rs.rsns" ng-list
                                                                        autocomplete="off" maxlength="500">
                                                             </div>
                                                         </div>
@@ -281,7 +281,7 @@
                                                                     <p ng-show="inv.smt.length>$index+1" class="temp">{{stag.mtg}}</p>
                                                                 </td>
                                                                 <td>
-                                                                    <input ng-blur="refreshDefaultReasons(stag.rsnCfgModel); refreshStockcountList[$index + 1] = !refreshStockcountList[$index + 1]" type="text" class="form-control" id="smtrsn" ng-model="stag.rsnCfgModel.rsns" ng-list
+                                                                    <input ng-blur="checkAndUpdateReasons(stag.rsnCfgModel); refreshStockcountList[$index + 1] = !refreshStockcountList[$index + 1]" type="text" class="form-control" id="smtrsn" ng-model="stag.rsnCfgModel.rsns" ng-list
                                                                            autocomplete="off" maxlength="500">
                                                                 </td>
                                                                 <td>
@@ -304,7 +304,7 @@
                                                         <div class="form-group">
                                                             <label for="cnfDis" class="col-sm-3 control-label">{{resourceBundle['config.reasons.wastage']}}</label>
                                                             <div class="col-sm-8">
-                                                                <input ng-blur="refreshDefaultReasons(inv.rd); refreshDiscardList[0] = !refreshDiscardList[0]" type="text" class="form-control" id="cnfdis" ng-model="inv.rd.rsns" ng-list
+                                                                <input ng-blur="checkAndUpdateReasons(inv.rd); refreshDiscardList[0] = !refreshDiscardList[0]" type="text" class="form-control" id="cnfdis" ng-model="inv.rd.rsns" ng-list
                                                                        autocomplete="off" maxlength="500">
                                                             </div>
                                                         </div>
@@ -357,7 +357,7 @@
                                                                     <p ng-show="inv.dmt.length>$index+1" class="temp">{{dtag.mtg}}</p>
                                                                 </td>
                                                                 <td>
-                                                                    <input ng-blur="refreshDefaultReasons(dtag.rsnCfgModel); refreshDiscardsList[$index + 1] = !refreshDiscardsList[$index + 1]" type="text" class="form-control" id="dmtrsn" ng-model="dtag.rsnCfgModel.rsns" ng-list
+                                                                    <input ng-blur="checkAndUpdateReasons(dtag.rsnCfgModel); refreshDiscardsList[$index + 1] = !refreshDiscardsList[$index + 1]" type="text" class="form-control" id="dmtrsn" ng-model="dtag.rsnCfgModel.rsns" ng-list
                                                                            autocomplete="off" maxlength="500">
                                                                 </td>
                                                                 <td>
@@ -380,7 +380,7 @@
                                                         <div class="form-group">
                                                             <label for="cnfTns" class="col-sm-3 control-label">{{resourceBundle['config.reasons.transfer']}}</label>
                                                             <div class="col-sm-8">
-                                                                <input ng-blur="refreshDefaultReasons(inv.rt); refreshTransferList[0] = !refreshTransferList[0]" type="text" class="form-control" id="cnfTns" ng-model="inv.rt.rsns" ng-list
+                                                                <input ng-blur="checkAndUpdateReasons(inv.rt); refreshTransferList[0] = !refreshTransferList[0]" type="text" class="form-control" id="cnfTns" ng-model="inv.rt.rsns" ng-list
                                                                        autocomplete="off" maxlength="500">
                                                             </div>
                                                         </div>
@@ -433,7 +433,7 @@
                                                                     <p ng-show="inv.tmt.length>$index+1" class="temp">{{ttag.mtg}}</p>
                                                                 </td>
                                                                 <td>
-                                                                    <input ng-blur="refreshDefaultReasons(ttag.rsnCfgModel);refreshTransferList[$index + 1] = !refreshTransferList[$index + 1]" type="text" class="form-control" id="tmtrsn" ng-model="ttag.rsnCfgModel.rsns" ng-list
+                                                                    <input ng-blur="checkAndUpdateReasons(ttag.rsnCfgModel);refreshTransferList[$index + 1] = !refreshTransferList[$index + 1]" type="text" class="form-control" id="tmtrsn" ng-model="ttag.rsnCfgModel.rsns" ng-list
                                                                            autocomplete="off" maxlength="500">
                                                                 </td>
                                                                 <td>
@@ -456,7 +456,7 @@
                                                         <div class="form-group">
                                                             <label  class="col-sm-3 control-label">{{resourceBundle['config.reasons.returns.incoming']}}</label>
                                                             <div class="col-sm-8">
-                                                                <input type="text" ng-blur="refreshDefaultReasons(inv.rri); refreshCRReturnsIncomingList = !refreshCRReturnsIncomingList; refreshReturnsIncomingList[0] = !refreshReturnsIncomingList[0]" class="form-control" id="cnfRetInc" ng-model="inv.rri.rsns" ng-list
+                                                                <input type="text" ng-blur="checkAndUpdateReasons(inv.rri); refreshCRReturnsIncomingList = !refreshCRReturnsIncomingList; refreshReturnsIncomingList[0] = !refreshReturnsIncomingList[0]" class="form-control" id="cnfRetInc" ng-model="inv.rri.rsns" ng-list
                                                                        autocomplete="off" maxlength="500">
                                                             </div>
                                                         </div>
@@ -509,7 +509,7 @@
                                                                     <p ng-show="inv.rimt.length>$index+1" class="temp">{{ritag.mtg}}</p>
                                                                 </td>
                                                                 <td>
-                                                                    <input ng-blur="refreshDefaultReasons(ritag.rsnCfgModel); refreshCRReturnsIncomingList = !refreshCRReturnsIncomingList; refreshReturnsIncomingList[$index + 1] = !refreshReturnsIncomingList[$index + 1]" type="text" class="form-control" id="rimtrsn" ng-model="ritag.rsnCfgModel.rsns" ng-list
+                                                                    <input ng-blur="checkAndUpdateReasons(ritag.rsnCfgModel); refreshCRReturnsIncomingList = !refreshCRReturnsIncomingList; refreshReturnsIncomingList[$index + 1] = !refreshReturnsIncomingList[$index + 1]" type="text" class="form-control" id="rimtrsn" ng-model="ritag.rsnCfgModel.rsns" ng-list
                                                                            autocomplete="off" maxlength="500">
                                                                 </td>
                                                                 <td>
@@ -532,7 +532,7 @@
                                                         <div class="form-group">
                                                             <label  class="col-sm-3 control-label">{{resourceBundle['config.reasons.returns.outgoing']}}</label>
                                                             <div class="col-sm-8">
-                                                                <input ng-blur="refreshDefaultReasons(inv.rro); refreshReturnsOutgoingList[0] = !refreshReturnsOutgoingList[0]" type="text" class="form-control" id="cnfRetOut" ng-model="inv.rro.rsns" ng-list
+                                                                <input ng-blur="checkAndUpdateReasons(inv.rro); refreshReturnsOutgoingList[0] = !refreshReturnsOutgoingList[0]" type="text" class="form-control" id="cnfRetOut" ng-model="inv.rro.rsns" ng-list
                                                                        autocomplete="off" maxlength="500">
                                                             </div>
                                                         </div>
@@ -585,7 +585,7 @@
                                                                     <p ng-show="inv.romt.length>$index+1" class="temp">{{rotag.mtg}}</p>
                                                                 </td>
                                                                 <td>
-                                                                    <input ng-blur="refreshDefaultReasons(rotag.rsnCfgModel); refreshReturnsOutgoingList[$index + 1] = !refreshReturnsOutgoingList[$index + 1]" type="text" class="form-control" id="romtrsn" ng-model="rotag.rsnCfgModel.rsns" ng-list
+                                                                    <input ng-blur="checkAndUpdateReasons(rotag.rsnCfgModel); refreshReturnsOutgoingList[$index + 1] = !refreshReturnsOutgoingList[$index + 1]" type="text" class="form-control" id="romtrsn" ng-model="rotag.rsnCfgModel.rsns" ng-list
                                                                            autocomplete="off" maxlength="500">
                                                                 </td>
                                                                 <td>

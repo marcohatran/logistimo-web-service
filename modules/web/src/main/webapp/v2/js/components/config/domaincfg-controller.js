@@ -1473,11 +1473,12 @@ domainCfgControllers.controller('InventoryConfigurationController', ['$scope', '
             ));
         }
 
-        $scope.refreshDefaultReasons = function(reasonConfigModel) {
+        $scope.checkAndUpdateReasons = function(reasonConfigModel) {
             if (reasonConfigModel && checkNullEmpty(reasonConfigModel.rsns)) {
                 reasonConfigModel.defRsn = undefined;
                 reasonConfigModel.defRsnUI = undefined;
             }
+            reasonConfigModel.rsns = Array.from(new Set(reasonConfigModel.rsns));
         };
 
         $scope.setMtg = function (newVal) {
