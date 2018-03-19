@@ -1279,27 +1279,7 @@ trnControllers.controller('transactions.MaterialController', ['$scope','trnServi
                     $scope.material.bquantity = [];
                     $scope.material.bidbatchDetMap = {};
                     if ($scope.transaction.type == 'ri' || $scope.transaction.type == 'ro') {
-                        // Fetch all batch details for the material
-                        $scope.showLoading();
-                        invService.getBatchDetail($scope.material.name.mId, $scope.entity.id, true,undefined).then(function (data) {
-                            var batchDet = data.data;
-                            if (checkNotNullEmpty(batchDet)) {
-                                batchDet.forEach(function (det) {
-                                    det.bexp = formatDate(parseUrlDate(det.bexp, true));
-                                    if (checkNotNullEmpty(det.bmfdt)) {
-                                        det.bmfdt = formatDate(parseUrlDate(det.bmfdt, true));
-                                    }
-                                    det.mId = $scope.material.name.mId;
-                                    $scope.material.bidbatchDetMap[det.bid] = det;
-                                });
-                            }
-                            $scope.loading = false;
-                            $scope.hideLoading();
-                        }).catch(function error(msg) {
-                            $scope.loading = false;
-                            $scope.hideLoading();
-                            $scope.showErrorMsg(msg);
-                        });
+                        fetchBatchDetails();
                     }
                 }
                 $scope.material.mm = "(" + name.reord.toFixed(0) + ',' + name.max.toFixed(0) + ")";
@@ -1348,6 +1328,29 @@ trnControllers.controller('transactions.MaterialController', ['$scope','trnServi
                 });
             }
             return fBatMat;
+        }
+
+        function fetchBatchDetails() {
+            $scope.showLoading();
+            invService.getBatchDetail($scope.material.name.mId, $scope.entity.id, true,undefined).then(function (data) {
+                var batchDet = data.data;
+                if (checkNotNullEmpty(batchDet)) {
+                    batchDet.forEach(function (det) {
+                        det.bexp = formatDate(parseUrlDate(det.bexp, true));
+                        if (checkNotNullEmpty(det.bmfdt)) {
+                            det.bmfdt = formatDate(parseUrlDate(det.bmfdt, true));
+                        }
+                        det.mId = $scope.material.name.mId;
+                        $scope.material.bidbatchDetMap[det.bid] = det;
+                    });
+                }
+                $scope.loading = false;
+                $scope.hideLoading();
+            }).catch(function error(msg) {
+                $scope.loading = false;
+                $scope.hideLoading();
+                $scope.showErrorMsg(msg);
+            });
         }
     }
 ]);
