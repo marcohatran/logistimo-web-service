@@ -42,7 +42,6 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -62,7 +61,7 @@ public class ReturnsValidator {
 
     Map<Long, Map<String, BigDecimal>> shipments = getShipments(shipmentList);
 
-    Map<Long, BigDecimal> handlingUnits = getHandlingUnit(handlingUnitModelList);
+    Map<Long, BigDecimal> handlingUnits = getHandlingUnitsAsMap(handlingUnitModelList);
     for (ReturnsItemVO returnsItemVO : returnItemList) {
 
       Map<String, BigDecimal> fulfilledQuantityByBatches =
@@ -125,9 +124,8 @@ public class ReturnsValidator {
     }
   }
 
-  private Map<Long, BigDecimal> getHandlingUnit( List<HandlingUnitModel>
+  private Map<Long, BigDecimal> getHandlingUnitsAsMap(List<HandlingUnitModel>
                                                                handlingUnitModelList) {
-
     if (CollectionUtils.isNotEmpty(handlingUnitModelList)) {
       return handlingUnitModelList.stream().collect(
           Collectors
