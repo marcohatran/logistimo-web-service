@@ -30,6 +30,7 @@ import com.logistimo.constants.CharacterConstants;
 import com.logistimo.entities.auth.EntityAuthoriser;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
+import com.logistimo.exception.InvalidDataException;
 import com.logistimo.logger.XLog;
 import com.logistimo.materials.service.MaterialCatalogService;
 import com.logistimo.orders.entity.IOrder;
@@ -164,6 +165,7 @@ public class ReturnsBuilder {
       item.setUpdatedBy(userModel);
       item.setCreatedAt(now);
       item.setCreatedBy(userModel);
+      item.setCreatedBy(userModel);
     }
   }
 
@@ -227,7 +229,7 @@ public class ReturnsBuilder {
       throws ServiceException {
     MobileReturnsUpdateStatusModel mobileReturnsUpdateStatusModel =
         new MobileReturnsUpdateStatusModel();
-    if (StringUtils.isBlank(updateStatusModel.getEmbed())) {
+    if (StringUtils.isNotBlank(updateStatusModel.getEmbed())) {
       String[] embedValues = updateStatusModel.getEmbed().split(CharacterConstants.COMMA);
       for (String embedValue : embedValues) {
         if (RETURNS.equals(embedValue)) {
@@ -360,7 +362,14 @@ public class ReturnsBuilder {
 
   public UpdateStatusModel buildUpdateStatusModel(Long returnId,String status,MobileReturnsUpdateStatusRequestModel mobileReturnsUpdateStatusRequestModel){
     UpdateStatusModel updateStatusModel=new UpdateStatusModel();
-    updateStatusModel.setStatus(Status.getStatus(status));
+    Status actualStatus;
+    switch (status) {
+      case "ship": actualStatus = Status.SHIPPED; break;
+      case "receive": actualStatus = Status.RECEIVED; break;
+      case "cancel": actualStatus = Status.CANCELLED; break;
+      default: throw new InvalidDataException("Invalid status " + status + " for returns " + returnId);
+    }
+    updateStatusModel.setStatus(actualStatus);
     updateStatusModel.setReturnId(returnId);
     updateStatusModel.setUserId(SecurityUtils.getUsername());
     updateStatusModel.setComment(mobileReturnsUpdateStatusRequestModel.getComment());

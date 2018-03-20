@@ -28,9 +28,12 @@
 
 logistimoApp.controller('CreateReturnsController', CreateReturnsController);
 logistimoApp.controller('DetailReturnsController', DetailReturnsController);
+logistimoApp.controller('ReceiveReturnsController', ReceiveReturnsController);
+logistimoApp.controller('ListReturnsController', ListReturnsController);
 
 CreateReturnsController.$inject = ['$scope','$location', 'returnsService','trnService'];
-DetailReturnsController.$inject = ['$scope', 'requestContext', 'RETURNS', 'returnsService', 'conversationService', 'activityService'];
+DetailReturnsController.$inject = ['$scope', '$uibModal', 'requestContext', 'RETURNS', 'returnsService', 'conversationService', 'activityService'];
+ListReturnsController.$inject = ['$scope', '$location', 'requestContext', 'returnsService', 'exportService'];
 
 function CreateReturnsController($scope, $location, returnsService, trnService) {
 
@@ -147,26 +150,29 @@ function CreateReturnsController($scope, $location, returnsService, trnService) 
     }
 }
 
-function DetailReturnsController($scope, requestContext, RETURNS, returnsService, conversationService, activityService) {
+function DetailReturnsController($scope, $uibModal, requestContext, RETURNS, returnsService, conversationService, activityService) {
     $scope.RETURNS = RETURNS;
     $scope.page = 'detail';
     $scope.subPage = 'consignment';
 
     var returnId = requestContext.getParam("returnId");
 
-    $scope.showLoading();
-    returnsService.get(returnId)
-        .then(function (data) {
-            $scope.returns = data.data;
-        })
-        .then(getMessageCount)
-        .then(getStatusHistory)
-        .then(checkStatusList)
-        .catch(function error(msg) {
-            $scope.showErrorMsg(msg);
-        }).finally(function () {
-            $scope.hideLoading();
-        });
+    $scope.getReturn = function() {
+        $scope.showLoading();
+        returnsService.get(returnId)
+            .then(function (data) {
+                $scope.returns = data.data;
+            })
+            .then(getMessageCount)
+            .then(getStatusHistory)
+            .then(checkStatusList)
+            .catch(function error(msg) {
+                $scope.showErrorMsg(msg);
+            }).finally(function () {
+                $scope.hideLoading();
+            });
+    };
+    $scope.getReturn();
 
     function getMessageCount() {
         conversationService.getMessagesByObj('RETURNS', returnId, 0, 1, true).then(function (data) {
@@ -253,5 +259,109 @@ function DetailReturnsController($scope, requestContext, RETURNS, returnsService
         }
     }
 
+    $scope.changeStatus = function (value) {
+        $scope.new_status = value;
+        $scope.newStatus = {};
+        if (value == RETURNS.status.RECEIVED) {
+            $scope.toggleReceive();
+            return;
+        }
+        $scope.modalInstance = $uibModal.open({
+            templateUrl: 'views/returns/returns-ship.html',
+            scope: $scope,
+            keyboard: false,
+            backdrop: 'static'
+        });
+    };
+
+    $scope.toggleReceive = function (update) {
+        if ($scope.page == 'detail') {
+            $scope.page = "receive";
+        } else {
+            $scope.page = 'detail';
+            if (update) {
+                $scope.getReturn();
+            }
+        }
+    };
+
+    $scope.doShip = function() {
+        $scope.showLoading();
+        returnsService.ship(returnId, {comment:$scope.newStatus.comment}).then(function (data) {
+            $scope.closeShip();
+            $scope.getReturn();
+        }).catch(function error(msg) {
+            $scope.showErrorMsg(msg);
+        }).finally(function () {
+            $scope.hideLoading();
+        });
+    };
+
+    $scope.closeShip = function () {
+        $scope.modalInstance.dismiss('cancel');
+    };
 }
+
+function ReceiveReturnsController($scope, returnsService, requestContext) {
+
+    var returnId = requestContext.getParam("returnId");
+    $scope.comment = undefined;
+
+    $scope.doReceive = function() {
+        $scope.showLoading();
+        returnsService.receive(returnId,{comment:$scope.comment}).then(function (data) {
+            $scope.toggleReceive(true);
+        }).catch(function error(msg) {
+            $scope.showErrorMsg(msg);
+        }).finally(function () {
+            $scope.hideLoading();
+        });
+    }
+}
+
+function ListReturnsController($scope, $location, requestContext, returnsService, exportService) {
+
+    ListingController.call(this, $scope, requestContext, $location);
+
+    $scope.showLoading();
+    returnsService.getAll({
+        customerId : checkNotNullEmpty($scope.entity)? $scope.entity.id : undefined,
+        vendorId : checkNotNullEmpty($scope.entity)? $scope.entity.id : undefined,
+        status : $scope.status,
+        startDate : formatDate($scope.from),
+        endDate : formatDate($scope.to),
+        orderId : $scope.orderId
+    }).then(function (data) {
+        $scope.filtered = data.data.results;
+        $scope.setResults(data.data);
+    }).catch(function error(msg) {
+        $scope.showErrorMsg(msg);
+    }).finally(function () {
+        $scope.hideLoading();
+    });
+
+    $scope.exportData = function() {
+        $scope.showLoading();
+        exportService.exportData({
+            from_date: checkNotNullEmpty($scope.from) ? formatDate2Url($scope.from) : undefined,
+            end_date: checkNotNullEmpty($scope.to) ? formatDate2Url($scope.to) : undefined,
+            customer_id: eid,
+            vendor_id: eid,
+            order_id: $scope.orderId,
+            status: $scope.status,
+            titles: {
+                filters: getCaption()
+            },
+            module: module,
+            templateId: templateId
+        }).then(function (data) {
+            $scope.showSuccess(data.data);
+        }).catch(function error(msg) {
+            $scope.showErrorMsg(msg);
+        }).finally(function(){
+            $scope.hideLoading();
+        });
+    }
+}
+
 

@@ -23,9 +23,12 @@
 
 package com.logistimo.returns.models;
 
+import com.google.gson.annotations.SerializedName;
+
 import com.logistimo.returns.Status;
 
 import java.sql.Timestamp;
+import java.util.Date;
 
 import lombok.Data;
 
@@ -36,14 +39,12 @@ import lombok.Data;
 public class ReturnFilters {
   private Long customerId;
   private Status status;
-  private Timestamp startDate;
-  private Timestamp endDate;
+  private Date startDate;
+  private Date endDate;
   private Long orderId;
-//  private String referenceId;
-//  private String storeTags;
   private Long vendorId;
-  private Long domainId;
 
+  private Long domainId;
   private boolean isManager;
   private String userId;
 }

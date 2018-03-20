@@ -57,4 +57,26 @@ logistimoApp.service('returnsService', ['APIService', function (apiService) {
         return apiService.get('/s2/api/returns/' + id);
     };
 
+    this.getAll = function (filters) {
+        var filterArray = [];
+        for (var filter in filters) {
+            if(filters.hasOwnProperty(filter) && checkNotNullEmpty(filters[filter])){
+                filterArray.push(filter + "=" + filters[filter]);
+            }
+        }
+        return apiService.get('/s2/api/returns' + (filterArray.length > 0 ? '?' + filterArray.join("&") : ''));
+    };
+
+    this.ship = function (id, data) {
+        return apiService.post(data, '/s2/api/returns/' + id + '/ship');
+    };
+
+    this.receive = function (id, data) {
+        return apiService.post(data, '/s2/api/returns/' + id + '/receive');
+    };
+
+    this.cancel = function (id, data) {
+        return apiService.post(data, '/s2/api/returns/' + id + '/cancel');
+    };
+
 }]);

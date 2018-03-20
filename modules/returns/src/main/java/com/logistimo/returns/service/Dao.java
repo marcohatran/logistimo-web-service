@@ -42,10 +42,13 @@ public class Dao {
   @PersistenceContext
   private EntityManager entityManager;
 
-
-
   public <T> T save(T entity){
     entityManager.persist(entity);
+    return entity;
+  }
+
+  public <T> T update(T entity){
+    entityManager.merge(entity);
     return entity;
   }
 

@@ -23,6 +23,7 @@
 
 package com.logistimo.returns.service;
 
+import com.logistimo.constants.Constants;
 import com.logistimo.returns.entity.Returns;
 import com.logistimo.returns.entity.ReturnsItem;
 import com.logistimo.returns.entity.ReturnsItemBatch;
@@ -64,6 +65,13 @@ public class ReturnsDao extends Dao {
   public ReturnsVO saveReturns(ReturnsVO returnsVO) {
     Returns returns = modelMapper.map(returnsVO, Returns.class);
     returns = super.save(returns);
+    returnsVO.setId(returns.getId());
+    return returnsVO;
+  }
+
+  public ReturnsVO updateReturns(ReturnsVO returnsVO) {
+    Returns returns = modelMapper.map(returnsVO, Returns.class);
+    returns = super.update(returns);
     returnsVO.setId(returns.getId());
     return returnsVO;
   }
@@ -113,15 +121,15 @@ public class ReturnsDao extends Dao {
 
   public List<ReturnsVO> getReturns(ReturnFilters returnFilters) {
     Map<String, Object> filters = new HashMap<>();
-    StringBuilder query = new StringBuilder("select r from `RETURNS` r where ");
+    StringBuilder query = new StringBuilder("select * from `RETURNS` r where ");
     if (returnFilters.getVendorId() == null && returnFilters.getCustomerId() == null) {
       if (returnFilters.isManager()) {
         query.append(" (r.customer_id IN ").append(USER_DOMAIN_QUERY).append(" OR r.vendor_id IN ")
-            .append(USER_DOMAIN_QUERY);
+            .append(USER_DOMAIN_QUERY).append(")");
         filters.put("userId", returnFilters.getUserId());
       } else {
         query.append(" (r.customer_id IN ").append(KIOSK_DOMAIN_QUERY).append(" OR r.vendor_id IN ")
-            .append(KIOSK_DOMAIN_QUERY);
+            .append(KIOSK_DOMAIN_QUERY).append(")");
         filters.put("domainId", returnFilters.getDomainId());
       }
     } else {
@@ -129,7 +137,6 @@ public class ReturnsDao extends Dao {
         query.append(" r.vendor_id=:vendorId");
         filters.put("vendorId", returnFilters.getVendorId());
       } else if (returnFilters.getCustomerId() != null) {
-
         query.append(" r.customer_id=:customerId");
         filters.put("customerId", returnFilters.getCustomerId());
       }
@@ -142,7 +149,7 @@ public class ReturnsDao extends Dao {
       query.append("  and  r.status=:status");
       filters.put("status", returnFilters.getStatus());
     }
-    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATETIME_CSV_FORMAT);
     if (returnFilters.getStartDate() != null) {
       query.append(" and r.created_at>=:fromDate");
       filters.put("fromDate", sdf.format(returnFilters.getStartDate()));

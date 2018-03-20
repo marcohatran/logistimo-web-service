@@ -25,17 +25,25 @@ package com.logistimo.api.controllers;
 
 import com.logistimo.api.builders.ReturnsBuilder;
 import com.logistimo.auth.utils.SecurityUtils;
+import com.logistimo.config.models.DomainConfig;
+import com.logistimo.constants.Constants;
+import com.logistimo.exception.BadRequestException;
+import com.logistimo.logger.XLog;
+import com.logistimo.pagination.Results;
+import com.logistimo.returns.Status;
 import com.logistimo.returns.models.MobileReturnsModel;
-import com.logistimo.returns.models.ReturnFilters;
-import com.logistimo.returns.models.ReturnsRequestModel;
 import com.logistimo.returns.models.MobileReturnsUpdateStatusModel;
 import com.logistimo.returns.models.MobileReturnsUpdateStatusRequestModel;
+import com.logistimo.returns.models.ReturnFilters;
+import com.logistimo.returns.models.ReturnsRequestModel;
 import com.logistimo.returns.models.UpdateStatusModel;
 import com.logistimo.returns.service.ReturnsService;
 import com.logistimo.returns.vo.ReturnsVO;
 import com.logistimo.services.DuplicationException;
 import com.logistimo.services.ServiceException;
+import com.logistimo.utils.LocalDateUtil;
 
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -44,6 +52,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import java.text.ParseException;
 import java.util.List;
 
 import javax.validation.Valid;
@@ -54,6 +63,8 @@ import javax.validation.Valid;
 @Controller
 @RequestMapping("/returns")
 public class ReturnController {
+
+  private static final XLog xLogger = XLog.getLog(ReturnController.class);
 
   @Autowired
   ReturnsBuilder returnsBuilder;
@@ -94,12 +105,38 @@ public class ReturnController {
   @RequestMapping(method = RequestMethod.GET)
   public
   @ResponseBody
-  List<MobileReturnsModel> getAll(@RequestBody ReturnFilters filters) throws ServiceException {
-    filters.setDomainId(SecurityUtils.getCurrentDomainId());
-    filters.setManager(SecurityUtils.isManager());
-    filters.setUserId(SecurityUtils.getUsername());
-    List<ReturnsVO> returnsVOs=returnsService.getReturns(filters);
-    return returnsBuilder.buildMobileReturnsModels(returnsVOs);
+  Results getAll(@RequestBody(required = false) Long customerId,
+                 @RequestBody(required = false) Long vendorId,
+                 @RequestBody(required = false) String status,
+                 @RequestBody(required = false) String startDate,
+                 @RequestBody(required = false) String endDate,
+                 @RequestBody(required = false) Long orderId
+  ) throws ServiceException {
+    try {
+      DomainConfig dc = DomainConfig.getInstance(SecurityUtils.getCurrentDomainId());
+      ReturnFilters filters = new ReturnFilters();
+      filters.setCustomerId(customerId);
+      filters.setVendorId(vendorId);
+      filters.setStatus(Status.getStatus(status));
+      if(StringUtils.isNotBlank(startDate)) {
+        filters.setStartDate(
+            LocalDateUtil.parseCustom(startDate, Constants.DATE_FORMAT, dc.getTimezone()));
+      }
+      if(StringUtils.isNotBlank(endDate)) {
+        filters.setEndDate(LocalDateUtil.parseCustom(endDate, Constants.DATE_FORMAT,
+            dc.getTimezone()));
+      }
+      filters.setOrderId(orderId);
+      filters.setDomainId(SecurityUtils.getCurrentDomainId());
+      filters.setManager(SecurityUtils.isManager());
+      filters.setUserId(SecurityUtils.getUsername());
+      List<ReturnsVO> returnsVOs = returnsService.getReturns(filters);
+      return new Results<>(returnsBuilder.buildMobileReturnsModels(returnsVOs), null);
+    } catch (ParseException e) {
+      xLogger.severe("Error while parsing date while getting returns on domain {0}",
+          SecurityUtils.getCurrentDomainId(), e);
+      throw new BadRequestException("Error while fetching all returns");
+    }
   }
 
 }

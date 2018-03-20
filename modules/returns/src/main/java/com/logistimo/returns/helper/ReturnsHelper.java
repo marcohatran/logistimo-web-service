@@ -30,8 +30,12 @@ import com.logistimo.returns.models.UpdateStatusModel;
 import com.logistimo.returns.vo.BatchVO;
 import com.logistimo.returns.vo.ReturnsItemVO;
 import com.logistimo.returns.vo.ReturnsVO;
+
+import org.apache.commons.collections.CollectionUtils;
+
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -65,7 +69,7 @@ public class ReturnsHelper {
                                              Long linkedKioskId, Integer source,
                                              ReturnsItemVO returnsItemVo, Status status) {
     List<ITransaction> transactionList = new ArrayList<>();
-    if (returnsItemVo.getReturnItemBatches() != null) {
+    if (CollectionUtils.isNotEmpty(returnsItemVo.getReturnItemBatches())) {
       returnsItemVo.getReturnItemBatches().forEach(returnsItemBatchVO -> {
         ITransaction transaction = JDOUtils.createInstance(ITransaction.class);
         BatchVO batchVO = returnsItemBatchVO.getBatch();
@@ -86,6 +90,11 @@ public class ReturnsHelper {
       });
     } else {
       ITransaction transaction = JDOUtils.createInstance(ITransaction.class);
+      if (status == Status.RECEIVED) {
+        transaction.setType(ITransaction.TYPE_RETURNS_INCOMING);
+      } else {
+        transaction.setType(ITransaction.TYPE_RETURNS_OUTGOING);
+      }
       buildTransaction(
           new TransactionModel(userId, domainId, kioskId, linkedKioskId, returnsItemVo.getReason(),
               returnsItemVo.getMaterialStatus(),

@@ -22,7 +22,7 @@
   -->
 <div class="box topbox">
     <!--<div ng-controller="ReturnsListingController">-->
-    <div ng-controller="NoController">
+    <div ng-controller="ListReturnsController">
         <div class="filter-box form-group">
             <div ng-controller="ResetController">
                 <div class="row">
@@ -55,21 +55,14 @@
                     <div class="col-sm-3">
                         <span class="filter-label">{{resourceBundle['order']}}</span>
                         <div class="has-feedback">
-                            <input type="text" class="form-control" ng-model="returnsId" autocomplete="off"
+                            <input type="text" class="form-control" ng-model="orderId" autocomplete="off"
                                    typeahead-wait-ms="300"
-                                   placeholder="{{resourceBundle['returns.number']}}"
-                                   uib-typeahead="val for val in getSuggestions($viewValue,'retId')"
-                                   typeahead-loading="loadingReturnId"
-                                   typeahead-on-select="showOrder(ordId)">
-                            <span ng-show="loadingReturnId" class="form-control-feedback typehead-loading"
+                                   placeholder="{{resourceBundle['order.num']}}"
+                                   uib-typeahead="val for val in getSuggestions($viewValue,'oid')"
+                                   typeahead-loading="loadingOrderId">
+                            <span ng-show="loadingOrderId" class="form-control-feedback typehead-loading"
                                   aria-hidden="true"> <span class="glyphicons glyphicons-cogwheel spin"></span> </span>
                         </div>
-                    </div>
-                </div>
-                <div class="row" ng-show="showMore">
-                    <div ng-show="iAdm && isUndef(entity.id) && isUndef(orderId)" class="col-sm-3 cbx pt10 mh40">
-                        <span class="filter-label">{{resourceBundle['kiosk']}} {{resourceBundle['tag.lower']}}:</span>
-                        <tag-filter ng-model="etag" tag-type="entity"></tag-filter>
                     </div>
                 </div>
                 <div ng-include="'views/common/reset-filters.html'"/>
@@ -134,7 +127,7 @@
                         <th></th>
                     </tr>
                     </thead>
-                    <tbody ng-repeat="item in filtered = orders.results" ng-controller="NoController">
+                    <tbody ng-repeat="item in filtered" ng-controller="NoController">
                     <tr class="clickable" ng-click="openOrder(item)">
                         <td>
                             <span class="glyphicons glyphicons-bring-to-front tglyph"

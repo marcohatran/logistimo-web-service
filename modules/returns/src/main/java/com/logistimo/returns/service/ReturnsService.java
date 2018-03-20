@@ -46,6 +46,7 @@ import com.logistimo.services.ServiceException;
 import com.logistimo.services.impl.PMF;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -119,7 +120,7 @@ public class ReturnsService {
     demandService.updateDemandReturns(returnsVO.getOrderId(), returnedQuantity);
     returnsVO.setItems(returnsItemVOList);
 
-    IMessage message = addComment(returnsVO);
+    IMessage message = addComment(returnsVO.getId(), returnsVO.getComment(), returnsVO.getCreatedBy(), returnsVO.getSourceDomain());
     addStatusHistory(returnsVO, null, returnsVO.getStatus().getStatus().toString(), message);
 
     return returnsVO;
@@ -152,15 +153,15 @@ public class ReturnsService {
       returnsVO.setStatus(statusVO);
       returnsVO.setUpdatedBy(statusModel.getUserId());
       returnsVO.setUpdatedAt(updatedAt);
-      returnsVO = returnsDao.saveReturns(returnsVO);
+      returnsVO = returnsDao.updateReturns(returnsVO);
 
     }
 
     returnsVO.setItems(getReturnsItem(returnsVO.getId()));
     postTransactions(statusModel, returnsVO);
     IMessage message = null;
-    if (returnsVO.getComment() != null) {
-      message = addComment(returnsVO);
+    if (StringUtils.isNotBlank(statusModel.getComment())) {
+      message = addComment(returnsVO.getId(), statusModel.getComment(), returnsVO.getUpdatedBy(), returnsVO.getSourceDomain());
     }
     addStatusHistory(returnsVO, oldStatus.toString(), newStatus.toString(), message);
     return returnsVO;
@@ -170,10 +171,9 @@ public class ReturnsService {
       throws ServiceException, DuplicationException {
     if (statusModel.getStatus() == Status.RECEIVED || statusModel.getStatus() == Status.SHIPPED) {
       Long domainId = SecurityUtils.getCurrentDomainId();
-      List<ITransaction>
-          transactionsList =
+      List<ITransaction> transactionsList =
           new ReturnsHelper().postTransactions(statusModel, returnsVO, domainId);
-      inventoryManagementService.updateInventoryTransactions(domainId, transactionsList);
+      inventoryManagementService.updateInventoryTransactions(domainId, transactionsList, null, true, false, null);
     }
   }
 
@@ -200,15 +200,14 @@ public class ReturnsService {
     }
   }
 
-  public IMessage addComment(ReturnsVO returnsVO)
+  public IMessage addComment(Long returnId, String message, String userId, Long domainId)
       throws ServiceException {
-    if (returnsVO.getComment() != null) {
+    if (message != null) {
       PersistenceManager pm = PMF.get().getPersistenceManager();
       try {
         return conversationService.addMsgToConversation(IActivity.TYPE.RETURNS.name(),
-            String.valueOf(returnsVO.getId()), returnsVO.getComment(), returnsVO.getCreatedBy(),
-            Collections.singleton("RETURNS:" + returnsVO.getId())
-            , returnsVO.getSourceDomain(), pm);
+            String.valueOf(returnId), message, userId, Collections.singleton("RETURNS:" + returnId)
+            , domainId, pm);
       } finally {
         pm.close();
       }
