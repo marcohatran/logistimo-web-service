@@ -29,6 +29,7 @@ import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.Constants;
 import com.logistimo.exception.BadRequestException;
 import com.logistimo.logger.XLog;
+import com.logistimo.pagination.PageParams;
 import com.logistimo.returns.Status;
 import com.logistimo.returns.models.ReturnsModel;
 import com.logistimo.returns.models.ReturnsUpdateStatusModel;
@@ -112,7 +113,9 @@ public class ReturnController {
                  @RequestParam(required = false) String status,
                  @RequestParam(required = false) String startDate,
                  @RequestParam(required = false) String endDate,
-                 @RequestParam(required = false) Long orderId
+                 @RequestParam(required = false) Long orderId,
+                 @RequestParam(required = false, defaultValue = PageParams.DEFAULT_SIZE_STR) Integer size,
+                 @RequestParam(required = false, defaultValue = PageParams.DEFAULT_OFFSET_STR) Integer offset
   ) throws ServiceException {
     try {
       DomainConfig dc = DomainConfig.getInstance(SecurityUtils.getCurrentDomainId());
@@ -129,6 +132,8 @@ public class ReturnController {
             dc.getTimezone()));
       }
       filters.setOrderId(orderId);
+      filters.setOffset(offset);
+      filters.setSize(size);
       filters.setDomainId(SecurityUtils.getCurrentDomainId());
       filters.setManager(SecurityUtils.isManager());
       filters.setUserId(SecurityUtils.getUsername());

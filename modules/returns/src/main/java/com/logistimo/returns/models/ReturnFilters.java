@@ -44,6 +44,9 @@ public class ReturnFilters {
   private Long orderId;
   private Long vendorId;
 
+  private Integer offset;
+  private Integer size;
+
   private Long domainId;
   private boolean isManager;
   private String userId;

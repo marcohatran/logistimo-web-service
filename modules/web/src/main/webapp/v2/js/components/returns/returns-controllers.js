@@ -347,6 +347,7 @@ function ListReturnsController($scope, $location, requestContext, RETURNS, retur
         }).catch(function error(msg) {
             $scope.showErrorMsg(msg);
         }).finally(function () {
+            $scope.loading = false;
             $scope.hideLoading();
         });
     };
