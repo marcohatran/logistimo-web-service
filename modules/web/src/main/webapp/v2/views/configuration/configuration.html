@@ -47,7 +47,7 @@
                 <a href="#/configuration/custom/">{{resourceBundle['report.customreports']}}</a></li>
             <li ng-if="iSU || (iAdm && dp.av)" ng-class="{ enable: subview == 'asset' }">
                 <a href="#/configuration/asset/">{{resourceBundle['assets']}}</a></li>
-            <li ng-if="!isTempMonOnly" ng-class="{ enable: subview == 'dashboard' }">
+            <li ng-class="{ enable: subview == 'dashboard' }">
                 <a href="#/configuration/dashboard/">{{resourceBundle['dashboard']}}</a></li>
             <li ng-if="hasChild && (iSU || dp.ce)" ng-class="{ enable: subview == 'options'}">
                 <a href="#/configuration/options/">{{resourceBundle['configuration.options']}}</a>
