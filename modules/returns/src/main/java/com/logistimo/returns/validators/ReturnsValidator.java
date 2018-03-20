@@ -59,34 +59,43 @@ public class ReturnsValidator {
       throw new InvalidDataException("No order present!");
     }
 
-    Map<Long, Map<String, BigDecimal>> shipments = getShipments(shipmentList);
+    Map<Long, Map<String, BigDecimal>> shipments = getShipmentsAsMap(shipmentList);
 
     Map<Long, BigDecimal> handlingUnits = getHandlingUnitsAsMap(handlingUnitModelList);
+
+
     for (ReturnsItemVO returnsItemVO : returnItemList) {
 
-      Map<String, BigDecimal> fulfilledQuantityByBatches =
-          shipments.get(returnsItemVO.getMaterialId());
+      Map<String, BigDecimal> fulfilledQuantityByBatches = shipments.get(returnsItemVO.getMaterialId());
+
       if (fulfilledQuantityByBatches == null) {
         throw new InvalidDataException("No demand item entry present!!");
       }
+
       BigDecimal handlingUnitQuantity = BigDecimal.ONE;
       if (!handlingUnits.isEmpty()) {
         handlingUnitQuantity = handlingUnits.get(returnsItemVO.getMaterialId());
       }
+
       if (CollectionUtils.isEmpty(returnsItemVO.getReturnItemBatches())) {
-        if (returnsItemVO.getQuantity().compareTo(fulfilledQuantityByBatches.get(null)) > 0) {
-          throw new InvalidDataException("Returned quantity is greater than ordered quantity!!");
-        }
-        validateHandlingUnit(handlingUnitQuantity, returnsItemVO.getQuantity());
+        validateNonBatchQuantity(returnsItemVO, fulfilledQuantityByBatches, handlingUnitQuantity);
       } else {
-        validateBatches(returnsItemVO, fulfilledQuantityByBatches, handlingUnitQuantity);
+        validateBatchQuantity(returnsItemVO, fulfilledQuantityByBatches, handlingUnitQuantity);
       }
     }
     return true;
   }
 
-  private Map<Long, Map<String, BigDecimal>> getShipments(
-      List<FulfilledQuantityModel> shipmentList) {
+  private void validateNonBatchQuantity(ReturnsItemVO returnsItemVO,
+                                        Map<String, BigDecimal> fulfilledQuantityByBatches,
+                                        BigDecimal handlingUnitQuantity) {
+    if (returnsItemVO.getQuantity().compareTo(fulfilledQuantityByBatches.get(null)) > 0) {
+      throw new InvalidDataException("Returned quantity is greater than ordered quantity!!");
+    }
+    validateHandlingUnit(handlingUnitQuantity, returnsItemVO.getQuantity());
+  }
+
+  private Map<Long, Map<String, BigDecimal>> getShipmentsAsMap(List<FulfilledQuantityModel> shipmentList) {
     Map<Long, Map<String, BigDecimal>> shipmentItemMap = new HashMap<>();
     shipmentList.forEach(fulfilledQuantityModel -> {
       Long materialId = fulfilledQuantityModel.getMaterialId();
@@ -103,9 +112,9 @@ public class ReturnsValidator {
     return shipmentItemMap;
   }
 
-  private void validateBatches(ReturnsItemVO returnsItemVO,
-                               Map<String, BigDecimal> fulfilledQuantityByBatches,
-                               BigDecimal handlingUnitQuantity) {
+  private void validateBatchQuantity(ReturnsItemVO returnsItemVO,
+                                     Map<String, BigDecimal> fulfilledQuantityByBatches,
+                                     BigDecimal handlingUnitQuantity) {
 
     returnsItemVO.getReturnItemBatches().forEach(returnsItemBatchVO -> {
       validateHandlingUnit(handlingUnitQuantity, returnsItemBatchVO.getQuantity());
@@ -135,6 +144,9 @@ public class ReturnsValidator {
   }
 
   public void validateStatusChange(Status newStatus, Status oldStatus) {
+    if(newStatus==null){
+      throw new InvalidDataException("Status cannot be empty!!");
+    }
     if (oldStatus == Status.OPEN && !(newStatus == Status.CANCELLED
         || newStatus == Status.SHIPPED)) {
       throw new InvalidDataException("Invalid status");

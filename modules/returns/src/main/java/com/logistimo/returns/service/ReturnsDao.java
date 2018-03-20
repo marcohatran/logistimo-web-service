@@ -125,7 +125,7 @@ public class ReturnsDao extends Dao {
     buildQuery(returnFilters, filters, query);
     List<Returns>
         returnsList =
-        super.findAllByNativeQuery(query.toString(), filters, Returns.class);
+        super.findAllByNativeQuery(query.toString(), filters);
     List<ReturnsVO> returnsVOList = new ArrayList<>(returnsList.size());
     returnsList.forEach(returns -> {
       ReturnsVO returnsVO = modelMapper.map(returns, ReturnsVO.class);
@@ -140,7 +140,7 @@ public class ReturnsDao extends Dao {
     buildQuery(returnFilters, filters, query);
     List<Long>
         returnsList =
-        super.findAllByNativeQuery(query.toString(), filters, Long.class);
+        super.findAllByNativeQuery(query.toString(), filters);
     return returnsList.get(0);
   }
 
