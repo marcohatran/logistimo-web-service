@@ -27,18 +27,15 @@ import com.logistimo.entities.auth.EntityAuthoriser;
 import com.logistimo.exception.InvalidDataException;
 import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.materials.model.HandlingUnitModel;
-import com.logistimo.materials.service.IHandlingUnitService;
 import com.logistimo.returns.Status;
 import com.logistimo.returns.models.UpdateStatusModel;
 import com.logistimo.returns.vo.ReturnsItemVO;
 import com.logistimo.returns.vo.ReturnsVO;
 import com.logistimo.services.ServiceException;
 import com.logistimo.shipments.FulfilledQuantityModel;
-import com.logistimo.shipments.service.impl.ShipmentService;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -54,24 +51,10 @@ import java.util.stream.Collectors;
 @Component
 public class ReturnsValidator {
 
-  @Autowired
-  ShipmentService shipmentService;
-
-  @Autowired
-  IHandlingUnitService handlingUnitService;
 
 
-  public boolean isQuantityValid(List<ReturnsItemVO> returnItemList, Long orderId)
-      throws ServiceException {
-
-    if (CollectionUtils.isEmpty(returnItemList)) {
-      throw new InvalidDataException("Items list cannot be empty!!");
-    }
-    List<Long> materialIdList =
-        returnItemList.stream().map(ReturnsItemVO::getMaterialId).collect(Collectors.toList());
-
-    List<FulfilledQuantityModel> shipmentList =
-        shipmentService.getFulfilledQuantityByOrderId(orderId, materialIdList);
+  public boolean validateReturnedQuantity(List<ReturnsItemVO> returnItemList, List<FulfilledQuantityModel> shipmentList, List<HandlingUnitModel>
+      handlingUnitModelList){
 
     if (CollectionUtils.isEmpty(shipmentList)) {
       throw new InvalidDataException("No order present!");
@@ -79,8 +62,7 @@ public class ReturnsValidator {
 
     Map<Long, Map<String, BigDecimal>> shipments = getShipments(shipmentList);
 
-    Map<Long, BigDecimal> handlingUnitMap =
-        getHandlingUnit(materialIdList).orElse(MapUtils.EMPTY_MAP);
+    Map<Long, BigDecimal> handlingUnits = getHandlingUnit(handlingUnitModelList);
     for (ReturnsItemVO returnsItemVO : returnItemList) {
 
       Map<String, BigDecimal> fulfilledQuantityByBatches =
@@ -89,8 +71,8 @@ public class ReturnsValidator {
         throw new InvalidDataException("No demand item entry present!!");
       }
       BigDecimal handlingUnitQuantity = BigDecimal.ONE;
-      if (!handlingUnitMap.isEmpty()) {
-        handlingUnitQuantity = handlingUnitMap.get(returnsItemVO.getMaterialId());
+      if (!handlingUnits.isEmpty()) {
+        handlingUnitQuantity = handlingUnits.get(returnsItemVO.getMaterialId());
       }
       if (CollectionUtils.isEmpty(returnsItemVO.getReturnItemBatches())) {
         if (returnsItemVO.getQuantity().compareTo(fulfilledQuantityByBatches.get(null)) > 0) {
@@ -143,16 +125,15 @@ public class ReturnsValidator {
     }
   }
 
-  private Optional<Map<Long, BigDecimal>> getHandlingUnit(List<Long> materialIdList) {
-    List<HandlingUnitModel>
-        handlingUnitModelList =
-        handlingUnitService.getHandlingUnitDataByMaterialIds(materialIdList);
+  private Map<Long, BigDecimal> getHandlingUnit( List<HandlingUnitModel>
+                                                               handlingUnitModelList) {
+
     if (CollectionUtils.isNotEmpty(handlingUnitModelList)) {
-      return Optional.of(handlingUnitModelList.stream().collect(
+      return handlingUnitModelList.stream().collect(
           Collectors
-              .toMap(HandlingUnitModel::getMaterialId, HandlingUnitModel::getQuantity)));
+              .toMap(HandlingUnitModel::getMaterialId, HandlingUnitModel::getQuantity));
     }
-    return Optional.empty();
+    return MapUtils.EMPTY_MAP;
   }
 
   public void validateStatusChange(Status newStatus, Status oldStatus) {

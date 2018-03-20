@@ -31,6 +31,8 @@ import com.logistimo.conversations.service.ConversationService;
 import com.logistimo.exception.InvalidDataException;
 import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.inventory.service.InventoryManagementService;
+import com.logistimo.materials.model.HandlingUnitModel;
+import com.logistimo.materials.service.IHandlingUnitService;
 import com.logistimo.orders.service.impl.DemandService;
 import com.logistimo.returns.Status;
 import com.logistimo.returns.helper.ReturnsHelper;
@@ -44,6 +46,8 @@ import com.logistimo.returns.vo.ReturnsVO;
 import com.logistimo.services.DuplicationException;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.impl.PMF;
+import com.logistimo.shipments.FulfilledQuantityModel;
+import com.logistimo.shipments.service.impl.ShipmentService;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -59,6 +63,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.jdo.PersistenceManager;
 
@@ -89,10 +94,35 @@ public class ReturnsService {
   @Autowired
   private InventoryManagementService inventoryManagementService;
 
+
+  @Autowired
+  ShipmentService shipmentService;
+
+  @Autowired
+  IHandlingUnitService handlingUnitService;
+
+
   @Transactional(transactionManager = "transactionManager")
   public ReturnsVO createReturns(ReturnsVO returnsVO) throws ServiceException {
-    returnsValidator.isQuantityValid(returnsVO.getItems(), returnsVO.getOrderId());
+
     List<ReturnsItemVO> returnsItemVOList = returnsVO.getItems();
+    if (CollectionUtils.isEmpty(returnsItemVOList)) {
+      throw new InvalidDataException("Items list cannot be empty!!");
+    }
+    List<Long> materialIdList =
+        returnsItemVOList.stream().map(ReturnsItemVO::getMaterialId)
+            .collect(Collectors.toList());
+
+    List<FulfilledQuantityModel> shipmentList =
+        shipmentService.getFulfilledQuantityByOrderId(returnsVO.getOrderId(), materialIdList);
+
+    List<HandlingUnitModel>
+        handlingUnitModelList =
+        handlingUnitService.getHandlingUnitDataByMaterialIds(materialIdList);
+
+    returnsValidator.validateReturnedQuantity(returnsVO.getItems(), shipmentList, handlingUnitModelList);
+
+
     Map<Long, BigDecimal> returnedQuantity = new HashMap<>();
     ReturnsVO updatedReturnsVo = returnsDao.saveReturns(returnsVO);
     Long returnId = updatedReturnsVo.getId();
@@ -120,7 +150,10 @@ public class ReturnsService {
     demandService.updateDemandReturns(returnsVO.getOrderId(), returnedQuantity);
     returnsVO.setItems(returnsItemVOList);
 
-    IMessage message = addComment(returnsVO.getId(), returnsVO.getComment(), returnsVO.getCreatedBy(), returnsVO.getSourceDomain());
+    IMessage
+        message =
+        addComment(returnsVO.getId(), returnsVO.getComment(), returnsVO.getCreatedBy(),
+            returnsVO.getSourceDomain());
     addStatusHistory(returnsVO, null, returnsVO.getStatus().getStatus().toString(), message);
 
     return returnsVO;
@@ -142,12 +175,14 @@ public class ReturnsService {
     returnsValidator.validateStatusChange(newStatus, oldStatus);
     if (returnsValidator.checkAccessForStatusChange(statusModel, returnsVO)) {
       buildReturns(statusModel, returnsVO, newStatus);
-      returnsVO = returnsDao.saveReturns(returnsVO);
+      returnsVO = returnsDao.updateReturns(returnsVO);
       returnsVO.setItems(getReturnsItem(returnsVO.getId()));
       postTransactions(statusModel, returnsVO);
       IMessage message = null;
       if (StringUtils.isNotBlank(statusModel.getComment())) {
-        message = addComment(returnsVO.getId(), statusModel.getComment(), returnsVO.getUpdatedBy(), returnsVO.getSourceDomain());
+        message =
+            addComment(returnsVO.getId(), statusModel.getComment(), returnsVO.getUpdatedBy(),
+                returnsVO.getSourceDomain());
       }
       addStatusHistory(returnsVO, oldStatus.toString(), newStatus.toString(), message);
     }
@@ -155,9 +190,8 @@ public class ReturnsService {
   }
 
 
-
   private void buildReturns(UpdateStatusModel statusModel, ReturnsVO returnsVO,
-                                 Status newStatus) {
+                            Status newStatus) {
     ReturnsStatusVO statusVO = new ReturnsStatusVO();
     statusVO.setStatus(newStatus);
     Timestamp updatedAt = new Timestamp(new Date().getTime());
@@ -175,7 +209,8 @@ public class ReturnsService {
       List<ITransaction>
           transactionsList =
           new ReturnsHelper().postTransactions(statusModel, returnsVO, domainId);
-      inventoryManagementService.updateInventoryTransactions(domainId, transactionsList, null, true, false, null);
+      inventoryManagementService
+          .updateInventoryTransactions(domainId, transactionsList, null, true, false, null);
     }
   }
 
@@ -217,7 +252,7 @@ public class ReturnsService {
     return null;
   }
 
-  public Long getReturnsCount(ReturnFilters returnFilters){
+  public Long getReturnsCount(ReturnFilters returnFilters) {
     return returnsDao.getReturnsCount(returnFilters);
   }
 
