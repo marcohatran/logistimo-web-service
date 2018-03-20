@@ -209,16 +209,18 @@ public class TransactionsController {
       @RequestParam(required = false) Long eid,
       @RequestParam(required = false) Long mid,
       @RequestParam(required = false) Long lEntityId,
+      @RequestParam(required = false) boolean onlywithoutlkid,
       HttpServletRequest request) {
     return getAndBuildTransactions(request, from, to, offset, size, ktag, tag, type, eid, lEntityId,
-        mid, bId, atd, reason);
+        mid, bId, atd, reason, onlywithoutlkid);
   }
+
 
   @SuppressWarnings("unchecked")
   private Results getAndBuildTransactions(HttpServletRequest request,
                                           String from, String to, int offset, int size, String ktag,
                                           String mtag, String type, Long entityId, Long lEntityId,
-                                          Long materialId, String bId, boolean atd, String reason) {
+                                          Long materialId, String bId, boolean atd, String reason, boolean onlywithoutlkid) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     Long domainId = sUser.getCurrentDomainId();
@@ -253,14 +255,23 @@ public class TransactionsController {
         }
       }
       trnResults = inventoryManagementService.getInventoryTransactions(startDate, endDate,
-              domainId, entityId, materialId, type, lEntityId, ktag, mtag, kioskIds,
-              pageParams, bId, atd, reason);
+          domainId, entityId, materialId, type, lEntityId, ktag, mtag, kioskIds,
+          pageParams, bId, atd, reason, onlywithoutlkid);
       trnResults.setOffset(offset);
       return transactionBuilder.buildTransactions(trnResults, sUser, SecurityUtils.getDomainId());
     } catch (ServiceException e) {
       xLogger.severe("Error in fetching transactions : {0}", e);
       throw new InvalidServiceException(backendMessages.getString("transactions.fetch.error"));
     }
+  }
+
+  @SuppressWarnings("unchecked")
+  private Results getAndBuildTransactions(HttpServletRequest request,
+                                          String from, String to, int offset, int size, String ktag,
+                                          String mtag, String type, Long entityId, Long lEntityId,
+                                          Long materialId, String bId, boolean atd, String reason) {
+    return getAndBuildTransactions(request, from, to, offset, size, ktag, mtag, type, entityId, lEntityId,
+        materialId, bId, atd, reason, false);
   }
 
   @RequestMapping(value = "/undo", method = RequestMethod.POST)

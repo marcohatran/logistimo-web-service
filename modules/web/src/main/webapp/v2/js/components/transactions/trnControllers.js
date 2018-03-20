@@ -2055,7 +2055,7 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
             }
             trnService.getTransactions(null, null, checkNotNullEmpty(fromDate) ? formatDate(fromDate) : fromDate, null,
                 type, $scope.offset, $scope.size, null, null, eid, leid,
-                mid, null).then(function (data) {
+                mid, null,true).then(function (data) {
                     $scope.setData(data.data);
                 }).catch(function error(msg) {
                     $scope.setData(null);
@@ -2150,7 +2150,14 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
         };
 
         function isReturnItemsValid() {
-            return ($scope.returnitems.every(isTransactionValid));
+            return ($scope.returnitems.every(isReturnQuantityValid)) && ($scope.returnitems.every(isTransactionValid));
+        }
+
+        function isReturnQuantityValid(transaction) {
+            if (checkNullEmpty(transaction.rq)) {
+                $scope.showWarning("Invalid return quantity");
+                return false;
+            }
         }
 
         function isTransactionValid(transaction) {

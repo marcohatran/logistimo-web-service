@@ -1206,10 +1206,23 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
                                           Long linkedKioskId, String kioskTag,
                                           String materialTag, List<Long> kioskIds,
                                           PageParams pageParams, String bid, boolean atd,
+                                          String reason,boolean onlyWithoutLkid) throws ServiceException {
+    return getInventoryTransactions(sinceDate, untilDate, domainId, kioskId, materialId,
+        transType != null ? Collections.singletonList(transType) : null, linkedKioskId, kioskTag,
+        materialTag, kioskIds, pageParams, bid, atd, reason, null, onlyWithoutLkid, null);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public Results getInventoryTransactions(Date sinceDate, Date untilDate, Long domainId,
+                                          Long kioskId, Long materialId, String transType,
+                                          Long linkedKioskId, String kioskTag,
+                                          String materialTag, List<Long> kioskIds,
+                                          PageParams pageParams, String bid, boolean atd,
                                           String reason) throws ServiceException {
     return getInventoryTransactions(sinceDate, untilDate, domainId, kioskId, materialId,
         transType != null ? Collections.singletonList(transType) : null, linkedKioskId, kioskTag,
-        materialTag, kioskIds, pageParams, bid, atd, reason, null, null);
+        materialTag, kioskIds, pageParams, bid, atd, reason, null, false, null);
   }
 
   @SuppressWarnings("unchecked")
@@ -1219,13 +1232,13 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
                                           Long linkedKioskId, String kioskTag,
                                           String materialTag, List<Long> kioskIds,
                                           PageParams pageParams, String bid,
-                                          boolean atd, String reason, List<String> excludeReasons,
+                                          boolean atd, String reason, List<String> excludeReasons, boolean onlyWithoutLkid,
                                           PersistenceManager pm)
       throws ServiceException {
     xLogger.fine("Entering getInventoryTransactions");
     Results results = transDao.getInventoryTransactions(sinceDate, untilDate, domainId, kioskId,
         materialId, transTypes, linkedKioskId, kioskTag, materialTag, kioskIds, pageParams, bid,
-        atd, reason, excludeReasons, pm);
+        atd, reason, excludeReasons, onlyWithoutLkid, pm);
     xLogger.fine("Exiting getInventoryTransactions");
     return results;
   }
