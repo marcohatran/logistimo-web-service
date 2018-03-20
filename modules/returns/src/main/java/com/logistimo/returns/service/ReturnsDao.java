@@ -134,7 +134,7 @@ public class ReturnsDao extends Dao {
     return returnsVOList;
   }
 
-  public Long getCount(ReturnFilters returnFilters){
+  public Long getReturnsCount(ReturnFilters returnFilters){
     Map<String, Object> filters = new HashMap<>();
     StringBuilder query = new StringBuilder("select COUNT(1) from `RETURNS` r where ");
     buildQuery(returnFilters, filters, query);

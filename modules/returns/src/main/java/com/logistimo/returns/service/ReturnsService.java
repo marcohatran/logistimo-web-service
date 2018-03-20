@@ -217,4 +217,8 @@ public class ReturnsService {
     return null;
   }
 
+  public Long getReturnsCount(ReturnFilters returnFilters){
+    return returnsDao.getReturnsCount(returnFilters);
+  }
+
 }
