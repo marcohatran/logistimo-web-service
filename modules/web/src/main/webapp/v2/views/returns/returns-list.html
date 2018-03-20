@@ -26,8 +26,8 @@
         <div class="filter-box form-group">
             <div ng-controller="ResetController">
                 <div class="row">
-                    <div class="col-sm-3" ng-show="showEntityFilter">
-                        <span class="filter-label" ng-class="{'required':isManager}">{{resourceBundle.kiosk}}</span>
+                    <div class="col-sm-3">
+                        <span class="filter-label">{{resourceBundle.kiosk}}</span>
                         <entity-select ent-model="entity" classes="form-control"
                                        place-holder="{{resourceBundle.filterby}} {{resourceBundle['kiosks.lower']}}">
                         </entity-select>
@@ -36,10 +36,10 @@
                         <span class="filter-label">{{resourceBundle.status}}</span>
                         <select class="form-control" ng-model="status">
                             <option value="">{{resourceBundle.all}}</option>
-                            <option value="op">{{resourceBundle['returns.pending']}}</option>
-                            <option value="sp">{{resourceBundle['returns.shipped']}}</option>
-                            <option value="rd">{{resourceBundle['returns.received']}}</option>
-                            <option value="cn">{{resourceBundle['returns.cancelled']}}</option>
+                            <option value="op">{{RETURNS.statusLabel['op']}}</option>
+                            <option value="sp">{{RETURNS.statusLabel['sp']}}</option>
+                            <option value="rd">{{RETURNS.statusLabel['rd']}}</option>
+                            <option value="cn">{{RETURNS.statusLabel['cn']}}</option>
                         </select>
                     </div>
                     <div class="col-sm-3">
@@ -58,7 +58,7 @@
                             <input type="text" class="form-control" ng-model="orderId" autocomplete="off"
                                    typeahead-wait-ms="300"
                                    placeholder="{{resourceBundle['order.num']}}"
-                                   uib-typeahead="val for val in getSuggestions($viewValue,'oid')"
+                                   uib-typeahead="val for val in getSuggestions($viewValue)"
                                    typeahead-loading="loadingOrderId">
                             <span ng-show="loadingOrderId" class="form-control-feedback typehead-loading"
                                   aria-hidden="true"> <span class="glyphicons glyphicons-cogwheel spin"></span> </span>
@@ -76,7 +76,7 @@
             </div>
         </div>
         <div class="row">
-            <div ng-show="showMore && isUndef(orderId)">
+            <div ng-show="showMore">
                 <div class="col-sm-12">
                     <span class="glyphicons glyphicons-chevron-up medium filter-expand" ng-click="showMore = false"></span>
                 </div>
@@ -84,17 +84,17 @@
         </div>
         <div class="row action-bar">
             <div class="col-sm-8 noLRpad" >
-                <export ng-show="resSize > 0" callback="exportData()"></export>
+                <!--<export ng-show="filtered.length > 0" callback="exportData()"></export>-->
             </div>
 
             <div class="col-sm-4 noLRpad" ng-show="entity!= null && entity.id != null && entity.id != ''" >
                 <div class="pull-right">
                     <div class="btn-group">
-                        <label class="btn btn-sm btn-default" ng-model="rtype" uib-btn-radio="'icr'">
-                            <span>{{resourceBundle.outgoing}}</span>
+                        <label class="btn btn-sm btn-default" ng-model="returnsType" uib-btn-radio="'outgoing'">
+                            <span>Returns outgoing</span>
                         </label>
-                        <label class="btn btn-sm btn-default" ng-model="rtype" uib-btn-radio="'ogr'">
-                            <span>{{resourceBundle.incoming}}</span>
+                        <label class="btn btn-sm btn-default" ng-model="returnsType" uib-btn-radio="'incoming'">
+                            <span>Returns incoming</span>
                         </label>
                     </div>
                 </div>
@@ -124,7 +124,7 @@
                     </tr>
                     </thead>
                     <tbody ng-repeat="return in filtered">
-                    <tr class="clickable" ng-click="goToReturn(return)">
+                    <tr class="clickable" ng-click="goToReturn(return.return_id)">
                         <td>
                             <span class="glyphicons glyphicons-bring-to-front tglyph"
                                   ng-if="currentDomain != return.source_domain"

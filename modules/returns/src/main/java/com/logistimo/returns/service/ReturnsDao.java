@@ -170,7 +170,7 @@ public class ReturnsDao extends Dao {
     }
     if (returnFilters.getStatus() != null) {
       query.append("  and  r.status=:status");
-      filters.put("status", returnFilters.getStatus());
+      filters.put("status", returnFilters.getStatus().name());
     }
     SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATETIME_CSV_FORMAT);
     if (returnFilters.getStartDate() != null) {

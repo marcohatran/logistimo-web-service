@@ -33,7 +33,7 @@ logistimoApp.controller('ListReturnsController', ListReturnsController);
 
 CreateReturnsController.$inject = ['$scope','$location', 'returnsService','trnService'];
 DetailReturnsController.$inject = ['$scope', '$uibModal', 'requestContext', 'RETURNS', 'returnsService', 'conversationService', 'activityService'];
-ListReturnsController.$inject = ['$scope', '$location', 'requestContext', 'RETURNS', 'returnsService', 'exportService'];
+ListReturnsController.$inject = ['$scope', '$location', 'requestContext', 'RETURNS', 'returnsService','ordService', 'exportService'];
 
 function CreateReturnsController($scope, $location, returnsService, trnService) {
 
@@ -163,9 +163,11 @@ function DetailReturnsController($scope, $uibModal, requestContext, RETURNS, ret
             .then(function (data) {
                 $scope.returns = data.data;
             })
-            .then(getMessageCount)
-            .then(getStatusHistory)
-            .then(checkStatusList)
+            .then(function(){
+                getMessageCount();
+                getStatusHistory();
+                checkStatusList();
+            })
             .catch(function error(msg) {
                 $scope.showErrorMsg(msg);
             }).finally(function () {
@@ -319,25 +321,41 @@ function ReceiveReturnsController($scope, returnsService, requestContext) {
     }
 }
 
-function ListReturnsController($scope, $location, requestContext, RETURNS, returnsService, exportService) {
+function ListReturnsController($scope, $location, requestContext, RETURNS, returnsService, orderService, exportService) {
+
+    const OUTGOING = 'outgoing';
+    const INCOMING = 'incoming';
 
     $scope.RETURNS = RETURNS;
-    $scope.wparams = [["eid", "entity.id"], ["status", "status"], ["from", "from", "", formatDate2Url], ["to", "to", "", formatDate2Url], ["oid", "orderId"], ["o", "offset"], ["s", "size"]];
+    $scope.wparams = [["eid", "entity.id"], ["status", "status"], ["from", "from", "", formatDate2Url], ["type", "returnsType", OUTGOING], ["to", "to", "", formatDate2Url], ["oid", "orderId"], ["o", "offset"], ["s", "size"]];
 
     ListingController.call(this, $scope, requestContext, $location);
 
     $scope.localFilters = ['entity', 'status', 'from', 'to', 'orderId'];
     $scope.initLocalFilters = [];
+    $scope.returnsType = OUTGOING;
+    $scope.today = new Date();
 
     $scope.fetch = function() {
+        var customer = undefined;
+        var vendor = undefined;
+        if(checkNotNullEmpty($scope.entity)){
+            if($scope.returnsType == OUTGOING) {
+                customer = $scope.entity.id;
+            } else if($scope.returnsType == INCOMING) {
+                vendor = $scope.entity.id;
+            }
+        }
         $scope.showLoading();
         returnsService.getAll({
-            customerId: checkNotNullEmpty($scope.entity) ? $scope.entity.id : undefined,
-            vendorId: checkNotNullEmpty($scope.entity) ? $scope.entity.id : undefined,
+            customerId: customer,
+            vendorId: vendor,
             status: $scope.status,
             startDate: formatDate($scope.from),
             endDate: formatDate($scope.to),
-            orderId: $scope.orderId
+            orderId: $scope.orderId,
+            offset: $scope.offset,
+            size: $scope.size
         }).then(function (data) {
             $scope.filtered = data.data.returns;
             $scope.setResults({
@@ -349,6 +367,9 @@ function ListReturnsController($scope, $location, requestContext, RETURNS, retur
         }).finally(function () {
             $scope.loading = false;
             $scope.hideLoading();
+            setTimeout(function () {
+                fixTable();
+            }, 200);
         });
     };
 
@@ -368,15 +389,48 @@ function ListReturnsController($scope, $location, requestContext, RETURNS, retur
     };
     $scope.init();
 
+    $scope.goToReturn = function(returnId) {
+        $location.path('/orders/returns/detail/' + returnId);
+    };
+
+    $scope.getSuggestions = function (text) {
+        if (checkNotNullEmpty(text)) {
+            return orderService.getIdSuggestions(text, 'oid').then(function (data) {
+                return data.data;
+            }).catch(function (errorMsg) {
+                $scope.showErrorMsg(errorMsg);
+            });
+        }
+    };
+
+    $scope.resetFilters = function () {
+        $scope.entity = null;
+        $scope.status = "";
+        $scope.from = undefined;
+        $scope.to = undefined;
+        $scope.orderId = undefined;
+        $scope.returnsType = OUTGOING;
+        $scope.showMore = undefined;
+    };
+
     $scope.exportData = function() {
+        var customer = undefined;
+        var vendor = undefined;
+        if(checkNotNullEmpty($scope.entity)){
+            if($scope.returnsType == OUTGOING) {
+                customer = $scope.entity.id;
+            } else if($scope.returnsType == INCOMING) {
+                vendor = $scope.entity.id;
+            }
+        }
         $scope.showLoading();
         exportService.exportData({
+            customer_id: customer,
+            vendor_id: vendor,
+            status: $scope.status,
             from_date: checkNotNullEmpty($scope.from) ? formatDate2Url($scope.from) : undefined,
             end_date: checkNotNullEmpty($scope.to) ? formatDate2Url($scope.to) : undefined,
-            customer_id: eid,
-            vendor_id: eid,
             order_id: $scope.orderId,
-            status: $scope.status,
             titles: {
                 filters: getCaption()
             },

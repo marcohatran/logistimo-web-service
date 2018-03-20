@@ -1986,12 +1986,17 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
             $window.open("#/orders/shipment/detail/" + sID, '_blank');
         };
 
+        $scope.openReturns = function (returnId) {
+            $window.open("#/orders/returns/detail/" + returnId, '_blank');
+        };
+
         $scope.cancelNewShipment = function () {
             $scope.openView("orderDetail");
             $scope.enableScroll();
         };
 
         $scope.checkReturn = function() {
+            //todo: get the policy details
             if ($scope.order.st == ORDER.BACKORDERED || $scope.order.st == ORDER.COMPLETED || $scope.order.st == ORDER.FULFILLED) {
                 $scope.canReturn = $scope.order.its.some(function (item) {
                     return item.fq > 0;
@@ -4179,7 +4184,7 @@ ordControllers.controller('ConsignmentController', ['$scope','returnsService', f
                 return items;
             })();
             if (isReturnValid(selectedItems)) {
-                returnsService.setItems(selectedItems);
+                returnsService.setItems(angular.copy(selectedItems));
                 returnsService.setOrder($scope.order);
                 $scope.setPageSelection('createReturns');
             } else {
