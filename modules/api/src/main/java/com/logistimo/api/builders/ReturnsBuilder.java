@@ -27,6 +27,7 @@ import com.logistimo.api.servlets.mobile.builders.MobileOrderBuilder;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.CharacterConstants;
+import com.logistimo.domains.service.DomainsService;
 import com.logistimo.entities.auth.EntityAuthoriser;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
@@ -37,17 +38,17 @@ import com.logistimo.orders.entity.IOrder;
 import com.logistimo.orders.service.OrderManagementService;
 import com.logistimo.proto.MobileOrderModel;
 import com.logistimo.returns.Status;
-import com.logistimo.returns.models.MobileReturnsModel;
-import com.logistimo.returns.models.ReturnsRequestModel;
-import com.logistimo.returns.models.MobileReturnsUpdateStatusModel;
-import com.logistimo.returns.models.MobileReturnsUpdateStatusRequestModel;
 import com.logistimo.returns.models.ReturnsItemBatchModel;
 import com.logistimo.returns.models.ReturnsItemModel;
+import com.logistimo.returns.models.ReturnsModel;
+import com.logistimo.returns.models.ReturnsRequestModel;
+import com.logistimo.returns.models.ReturnsUpdateStatusModel;
+import com.logistimo.returns.models.ReturnsUpdateStatusRequestModel;
 import com.logistimo.returns.models.UpdateStatusModel;
 import com.logistimo.returns.models.submodels.EntityModel;
+import com.logistimo.returns.models.submodels.ReceivedModel;
 import com.logistimo.returns.models.submodels.StatusModel;
 import com.logistimo.returns.models.submodels.UserModel;
-import com.logistimo.returns.models.submodels.ReceivedModel;
 import com.logistimo.returns.vo.BatchVO;
 import com.logistimo.returns.vo.GeoLocationVO;
 import com.logistimo.returns.vo.ReturnsItemBatchVO;
@@ -68,7 +69,9 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -99,32 +102,53 @@ public class ReturnsBuilder {
   @Autowired
   MaterialCatalogService materialCatalogService;
 
-  public List<MobileReturnsModel> buildMobileReturnsModels(List<ReturnsVO> returnsVOs) throws ServiceException {
-    List<MobileReturnsModel> mobileReturnsModels = new ArrayList<>(returnsVOs.size());
+  @Autowired
+  DomainsService domainsService;
+
+  public List<ReturnsModel> buildMobileReturnsModels(List<ReturnsVO> returnsVOs) throws ServiceException {
+    List<ReturnsModel> returnsModels = new ArrayList<>(returnsVOs.size());
     for (ReturnsVO returnsVO : returnsVOs) {
-      mobileReturnsModels.add(buildMobileReturnsModel(returnsVO));
+      returnsModels.add(buildMobileReturnsModel(returnsVO));
     }
-    return mobileReturnsModels;
+    addSourceDomainName(returnsModels);
+    return returnsModels;
   }
-  public MobileReturnsModel buildMobileReturnsModel(ReturnsVO returnsVO) throws ServiceException {
-    MobileReturnsModel mobileReturnsModel = new MobileReturnsModel();
-    mobileReturnsModel.setReturnId(returnsVO.getId());
-    mobileReturnsModel.setOrderId(returnsVO.getOrderId());
-    IOrder order = orderManagementService.getOrder(returnsVO.getOrderId());
-    mobileReturnsModel.setOrderType(order.getOrderType());
-    mobileReturnsModel.setCustomer(getEntityModel(returnsVO.getCustomerId()));
-    mobileReturnsModel.setVendor(getEntityModel(returnsVO.getVendorId()));
-    mobileReturnsModel.setStatus(getStatusModel(returnsVO.getStatus()));
-    mobileReturnsModel.setCreatedAt(
-        LocalDateUtil.format(returnsVO.getCreatedAt(), SecurityUtils.getLocale(), SecurityUtils.getTimezone()));
-    mobileReturnsModel.setCreatedBy(getUserModel(returnsVO.getCreatedBy()));
-    mobileReturnsModel.setUpdatedAt(
-        LocalDateUtil.format(returnsVO.getUpdatedAt(), SecurityUtils.getLocale(), SecurityUtils.getTimezone()));
-    mobileReturnsModel.setUpdatedBy(getUserModel(returnsVO.getUpdatedBy()));
-    if(returnsVO.getItems()!=null) {
-      mobileReturnsModel.setItems(getItemModels(returnsVO.getItems()));
+
+  private void addSourceDomainName(List<ReturnsModel> returnsModels) {
+    Map<Long, String> domainNames = new HashMap<>();
+    for (ReturnsModel returnsModel : returnsModels) {
+      String domainName = domainNames.get(returnsModel.getSourceDomain());
+      if (domainName == null) {
+        try {
+          domainName = domainsService.getDomain(returnsModel.getSourceDomain()).getName();
+          domainNames.put(returnsModel.getSourceDomain(), domainName);
+        } catch (Exception ignored) {}
+      } else {
+        returnsModel.setSourceDomainName(domainName);
+      }
     }
-    return mobileReturnsModel;
+  }
+
+  public ReturnsModel buildMobileReturnsModel(ReturnsVO returnsVO) throws ServiceException {
+    ReturnsModel returnsModel = new ReturnsModel();
+    returnsModel.setReturnId(returnsVO.getId());
+    returnsModel.setOrderId(returnsVO.getOrderId());
+    IOrder order = orderManagementService.getOrder(returnsVO.getOrderId());
+    returnsModel.setOrderType(order.getOrderType());
+    returnsModel.setCustomer(getEntityModel(returnsVO.getCustomerId()));
+    returnsModel.setVendor(getEntityModel(returnsVO.getVendorId()));
+    returnsModel.setStatus(getStatusModel(returnsVO.getStatus()));
+    returnsModel.setCreatedAt(
+        LocalDateUtil.format(returnsVO.getCreatedAt(), SecurityUtils.getLocale(), SecurityUtils.getTimezone()));
+    returnsModel.setCreatedBy(getUserModel(returnsVO.getCreatedBy()));
+    returnsModel.setUpdatedAt(
+        LocalDateUtil.format(returnsVO.getUpdatedAt(), SecurityUtils.getLocale(), SecurityUtils.getTimezone()));
+    returnsModel.setUpdatedBy(getUserModel(returnsVO.getUpdatedBy()));
+    if(returnsVO.getItems()!=null) {
+      returnsModel.setItems(getItemModels(returnsVO.getItems()));
+    }
+    returnsModel.setSourceDomain(returnsVO.getSourceDomain());
+    return returnsModel;
   }
 
   public ReturnsVO buildReturns(ReturnsRequestModel returnRequestModel)
@@ -224,24 +248,24 @@ public class ReturnsBuilder {
     );
   }
 
-  public MobileReturnsUpdateStatusModel buildMobileReturnsUpdateModel(
-      ReturnsVO returns, MobileReturnsUpdateStatusRequestModel updateStatusModel)
+  public ReturnsUpdateStatusModel buildMobileReturnsUpdateModel(
+      ReturnsVO returns, ReturnsUpdateStatusRequestModel updateStatusModel)
       throws ServiceException {
-    MobileReturnsUpdateStatusModel mobileReturnsUpdateStatusModel =
-        new MobileReturnsUpdateStatusModel();
+    ReturnsUpdateStatusModel returnsUpdateStatusModel =
+        new ReturnsUpdateStatusModel();
     if (StringUtils.isNotBlank(updateStatusModel.getEmbed())) {
       String[] embedValues = updateStatusModel.getEmbed().split(CharacterConstants.COMMA);
       for (String embedValue : embedValues) {
         if (RETURNS.equals(embedValue)) {
-          mobileReturnsUpdateStatusModel.setReturns(buildMobileReturnsModel(returns));
+          returnsUpdateStatusModel.setReturns(buildMobileReturnsModel(returns));
         } else if (ORDER.equals(embedValue)) {
           IOrder order = orderManagementService.getOrder(returns.getOrderId());
-          mobileReturnsUpdateStatusModel
+          returnsUpdateStatusModel
               .setOrder(buildMobileOrderModel(order, updateStatusModel.getEntityId()));
         }
       }
     }
-    return mobileReturnsUpdateStatusModel;
+    return returnsUpdateStatusModel;
   }
 
   private ReturnsStatusVO getReturnsStatus(Date now, String username) {
@@ -360,7 +384,7 @@ public class ReturnsBuilder {
         true, isAccounting, true, isBatchEnabled);
   }
 
-  public UpdateStatusModel buildUpdateStatusModel(Long returnId,String status,MobileReturnsUpdateStatusRequestModel mobileReturnsUpdateStatusRequestModel){
+  public UpdateStatusModel buildUpdateStatusModel(Long returnId,String status,ReturnsUpdateStatusRequestModel returnsUpdateStatusRequestModel){
     UpdateStatusModel updateStatusModel=new UpdateStatusModel();
     Status actualStatus;
     switch (status) {
@@ -372,7 +396,7 @@ public class ReturnsBuilder {
     updateStatusModel.setStatus(actualStatus);
     updateStatusModel.setReturnId(returnId);
     updateStatusModel.setUserId(SecurityUtils.getUsername());
-    updateStatusModel.setComment(mobileReturnsUpdateStatusRequestModel.getComment());
+    updateStatusModel.setComment(returnsUpdateStatusRequestModel.getComment());
     return updateStatusModel;
   }
 }

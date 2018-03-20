@@ -1268,3 +1268,5 @@ default.country=Veuillez choisir le pays par défaut pour que le domaine active 
 asset.dashboard.help=% des actifs qui sont dans un état de fonctionnement ou autre dans une juridiction donnée. Seuls les actifs associés à une entité sont pris en compte.
 return=Revenir
 receive=Recevoir
+returning.entity=Entité de retour
+receiving.entity=Entité réceptrice

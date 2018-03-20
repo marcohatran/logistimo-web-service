@@ -25,50 +25,31 @@ package com.logistimo.returns.models;
 
 import com.google.gson.annotations.SerializedName;
 
-import com.logistimo.constants.SourceConstants;
-
-import java.util.List;
-
-import javax.validation.constraints.NotNull;
-
-import lombok.Getter;
+import com.logistimo.proto.MobileOrderModel;
 
 /**
  * @author Mohan Raja
  */
-@Getter
-public class ReturnsRequestModel {
+public class ReturnsUpdateStatusModel {
 
-  @SerializedName("order_id")
-  @NotNull(message = "Order Id cannot be null!!")
-  private Long orderId;
+  @SerializedName("return")
+  private ReturnsModel returns;
 
-  @SerializedName("geo_location")
-  private Location location;
+  private MobileOrderModel order;
 
-  private String comment;
-
-  @NotNull(message = "Items cannot be null!!")
-  private List<ReturnsItemModel> items;
-
-  private Integer source = SourceConstants.MOBILE;
-
-  @SerializedName("send_time")
-  private Long sendTime;
-
-  @Getter
-  public class Location {
-
-    private Double latitude;
-
-    private Double longitude;
-
-    @SerializedName("geo_accuracy")
-    private Double geoAccuracy;
-
-    @SerializedName("geo_error")
-    private String geoError;
-
+  public ReturnsModel getReturns() {
+    return returns;
   }
 
+  public void setReturns(ReturnsModel returns) {
+    this.returns = returns;
+  }
+
+  public MobileOrderModel getOrder() {
+    return order;
+  }
+
+  public void setOrder(MobileOrderModel order) {
+    this.order = order;
+  }
 }

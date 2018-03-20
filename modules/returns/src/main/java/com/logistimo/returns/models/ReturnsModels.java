@@ -25,37 +25,22 @@ package com.logistimo.returns.models;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.util.List;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
 /**
- * @author Mohan Raja
+ * Created by mohan on 20/03/18.
  */
-public class MobileReturnsUpdateStatusRequestModel {
 
-  private String comment;
-  private String embed;
-  @SerializedName("entity_id")
-  private Long entityId;
+@Data
+@AllArgsConstructor
+public class ReturnsModels {
 
-  public String getComment() {
-    return comment;
-  }
+  private List<ReturnsModel> returns;
 
-  public void setComment(String comment) {
-    this.comment = comment;
-  }
+  @SerializedName("total_count")
+  private Long totalCount;
 
-  public String getEmbed() {
-    return embed;
-  }
-
-  public void setEmbed(String embed) {
-    this.embed = embed;
-  }
-
-  public Long getEntityId() {
-    return entityId;
-  }
-
-  public void setEntityId(Long entityId) {
-    this.entityId = entityId;
-  }
 }

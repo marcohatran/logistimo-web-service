@@ -107,56 +107,50 @@
                 </div>
             </div>
         </div>
-        <div class="row" ng-show="resSize > 0">
+        <div class="row" ng-show="filtered.length > 0">
             <div class="col-sm-12">
-                <table class="table table-condensed table-hover table-logistimo"
-                       ng-hide="filtered.length<=0" id="fixTable">
+                <table class="table table-condensed table-hover table-logistimo" id="fixTable">
                     <thead>
                     <tr>
-                        <th></th>
-                        <th><input type="checkbox" ng-change="selectAll(selAll)" ng-model='selAll'/>
-                        <th class="text-center">{{resourceBundle['serialnum']}}</th>
-                        <th class="text-center">{{resourceBundle['return']}}</th>
-                        <th class="text-center">{{resourceBundle['order']}}</th>
-                        <th class="text-center">{{resourceBundle['items']}}</th>
-                        <th>{{resourceBundle['status']}}</th>
-                        <th>{{resourceBundle['returning.store']}}</th>
-                        <th>{{resourceBundle['receiving.store']}}</th>
-                        <th>{{resourceBundle['created']}}</th>
-                        <th></th>
-                        <th></th>
+                        <th class="col-sm-0-1"></th>
+                        <th class="text-center col-sm-0-2">{{resourceBundle['serialnum']}}</th>
+                        <th class="text-center col-sm-1">{{resourceBundle['return']}}</th>
+                        <th class="text-center col-sm-1">{{resourceBundle['order']}}</th>
+                        <th class="col-sm-1">{{resourceBundle['status']}}</th>
+                        <th class="col-sm-2">{{resourceBundle['returning.entity']}}</th>
+                        <th class="col-sm-2">{{resourceBundle['receiving.entity']}}</th>
+                        <th class="col-sm-2">{{resourceBundle['created']}}</th>
+                        <th class="col-sm-0-1"></th>
                     </tr>
                     </thead>
-                    <tbody ng-repeat="item in filtered" ng-controller="NoController">
-                    <tr class="clickable" ng-click="openOrder(item)">
+                    <tbody ng-repeat="return in filtered">
+                    <tr class="clickable" ng-click="goToReturn(return)">
                         <td>
                             <span class="glyphicons glyphicons-bring-to-front tglyph"
-                                  ng-if="currentDomain != item.sdid"
-                                  ng-click="switchDomain(item.sdid,item.sdname)"
-                                  uib-tooltip="{{item.sdname}}"
+                                  ng-if="currentDomain != return.source_domain"
+                                  ng-click="switchDomain(return.source_domain,return.source_domain_name)"
+                                  uib-tooltip="{{return.source_domain_name}}"
                                   tooltip-append-to-body="true">
                             </span>
                         </td>
-                        <td><input type="checkbox" checklist-model="selectedOrderIds" checklist-value="item.id" ng-click="$event.stopPropagation();"/></td>
-                        <td class="text-center">{{item.sno}}</td>
-                        <td class="text-center">{{item.return.id}}</td>
-                        <td class="text-center">{{item.id}}</td>
-                        <td class="text-center">{{item.size}}</td>
-                        <td>{{item.status}}</td>
-                        <td><a href="#/setup/entities/detail/{{item.eid}}"
+                        <td class="text-center">{{offset + $index + 1}}</td>
+                        <td class="text-center">{{return.return_id}}</td>
+                        <td class="text-center">{{return.order_id}}</td>
+                        <td>{{RETURNS.statusLabel[return.status.status]}}</td>
+                        <td><a href="#/setup/entities/detail/{{return.customer.entity_id}}"
                                ng-click="$event.stopPropagation();"
-                               target="_blank">{{item.enm}}</a>
-                            <span class="litetext">{{item.eadd}}</span>
+                               target="_blank">{{return.customer.entity_name}}</a>
+                            <span class="litetext">{{return.customer.entity_address}}</span>
                         </td>
-                        <td><a href="#/setup/entities/detail/{{item.vid}}"
+                        <td><a href="#/setup/entities/detail/{{return.vendor.entity_id}}"
                                ng-click="$event.stopPropagation();"
-                               target="_blank">{{item.vnm}}</a>
-                            <span class="litetext">{{item.vadd}}</span>
+                               target="_blank">{{return.vendor.entity_name}}</a>
+                            <span class="litetext">{{return.vendor.entity_address}}</span>
                         </td>
-                        <td><a ng-href="#/setup/users/all/details?userId={{item.uid}}"
+                        <td><a ng-href="#/setup/users/all/details?userId={{return.created_by.user_id}}"
                                ng-click="$event.stopPropagation();"
-                               target="_blank">{{item.unm}}</a>
-                            <span class="litetext">{{item.cdt}}</span>
+                               target="_blank">{{return.created_by.full_name}}</a>
+                            <span class="litetext">{{return.created_at}}</span>
                         </td>
                         <td>
                             <span ng-if="item.src == 1" class="glyphicons glyphicons-display"
@@ -168,9 +162,6 @@
                             <span ng-if="item.src == 4" class="glyphicons glyphicons-sms"
                                   uib-tooltip="{{resourceBundle['sms']}}" tooltip-placement="left"></span>
                         </td>
-                        <td ng-click="openOrder(item, 'true');$event.stopPropagation();"><span ng-hide="item.lt == undefined || item.ln == undefined || (item.lt == 0 && item.ln == 0)"><span class="glyphicons glyphicons-globe"></span></span></td>
-
-
                     </tr>
                     </tbody>
                 </table>
@@ -178,10 +169,8 @@
         </div>
         <div class="row mt5">
             <div class="col-sm-12">
-                <p class=" alert alert-warning" ng-show="!loading && filtered.length == 0">
-                    {{resourceBundle['orders.none']}}</p>
-                <p ng-show="mxE && isUndef(entity)" class="alert alert-info">
-                    {{resourceBundle['selectkioskmsg']}}
+                <p class=" alert alert-warning" ng-show="filtered.length == 0">
+                    No returns
                 </p>
             </div>
         </div>

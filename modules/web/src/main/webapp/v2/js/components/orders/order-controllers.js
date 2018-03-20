@@ -441,9 +441,10 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
 ]);
 
 ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', 'userService', 'domainCfgService',
-    'invService', 'entityService', '$timeout', 'requestContext', '$uibModal', 'trnService', 'conversationService', '$window', 'ORDERSTATUSTEXT', 'approvalService',
-    function ($scope, ordService, ORDER, userService, domainCfgService, invService, entityService, $timeout, requestContext, $uibModal, trnService, conversationService, $window, ORDERSTATUSTEXT, approvalService) {
+    'invService', 'entityService', '$timeout', 'requestContext', '$uibModal', 'trnService', 'conversationService', '$window', 'ORDERSTATUSTEXT', 'approvalService','RETURNS', 'returnsService',
+    function ($scope, ordService, ORDER, userService, domainCfgService, invService, entityService, $timeout, requestContext, $uibModal, trnService, conversationService, $window, ORDERSTATUSTEXT, approvalService, RETURNS, returnsService) {
         $scope.ORDER = ORDER;
+        $scope.RETURNS = RETURNS;
         $scope.ORDERSTATUSTEXT = ORDERSTATUSTEXT;
         $scope.edit = {mat: false};
         $scope.payOpts = [];
@@ -1326,6 +1327,15 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                     }
                     count += 1;
                     callCheckStatus(count);
+                }).catch(function error(msg) {
+                    $scope.showErrorMsg(msg);
+                }).finally(function () {
+                    $scope.hideLoading();
+                });
+
+                $scope.showLoading();
+                returnsService.getAll({orderId : $scope.orderId}).then(function (data) {
+                    $scope.returnsList = data.data.returns;
                 }).catch(function error(msg) {
                     $scope.showErrorMsg(msg);
                 }).finally(function () {

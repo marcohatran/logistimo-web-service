@@ -33,7 +33,7 @@ logistimoApp.controller('ListReturnsController', ListReturnsController);
 
 CreateReturnsController.$inject = ['$scope','$location', 'returnsService','trnService'];
 DetailReturnsController.$inject = ['$scope', '$uibModal', 'requestContext', 'RETURNS', 'returnsService', 'conversationService', 'activityService'];
-ListReturnsController.$inject = ['$scope', '$location', 'requestContext', 'returnsService', 'exportService'];
+ListReturnsController.$inject = ['$scope', '$location', 'requestContext', 'RETURNS', 'returnsService', 'exportService'];
 
 function CreateReturnsController($scope, $location, returnsService, trnService) {
 
@@ -319,26 +319,53 @@ function ReceiveReturnsController($scope, returnsService, requestContext) {
     }
 }
 
-function ListReturnsController($scope, $location, requestContext, returnsService, exportService) {
+function ListReturnsController($scope, $location, requestContext, RETURNS, returnsService, exportService) {
+
+    $scope.RETURNS = RETURNS;
+    $scope.wparams = [["eid", "entity.id"], ["status", "status"], ["from", "from", "", formatDate2Url], ["to", "to", "", formatDate2Url], ["oid", "orderId"], ["o", "offset"], ["s", "size"]];
 
     ListingController.call(this, $scope, requestContext, $location);
 
-    $scope.showLoading();
-    returnsService.getAll({
-        customerId : checkNotNullEmpty($scope.entity)? $scope.entity.id : undefined,
-        vendorId : checkNotNullEmpty($scope.entity)? $scope.entity.id : undefined,
-        status : $scope.status,
-        startDate : formatDate($scope.from),
-        endDate : formatDate($scope.to),
-        orderId : $scope.orderId
-    }).then(function (data) {
-        $scope.filtered = data.data.results;
-        $scope.setResults(data.data);
-    }).catch(function error(msg) {
-        $scope.showErrorMsg(msg);
-    }).finally(function () {
-        $scope.hideLoading();
-    });
+    $scope.localFilters = ['entity', 'status', 'from', 'to', 'orderId'];
+    $scope.initLocalFilters = [];
+
+    $scope.fetch = function() {
+        $scope.showLoading();
+        returnsService.getAll({
+            customerId: checkNotNullEmpty($scope.entity) ? $scope.entity.id : undefined,
+            vendorId: checkNotNullEmpty($scope.entity) ? $scope.entity.id : undefined,
+            status: $scope.status,
+            startDate: formatDate($scope.from),
+            endDate: formatDate($scope.to),
+            orderId: $scope.orderId
+        }).then(function (data) {
+            $scope.filtered = data.data.returns;
+            $scope.setResults({
+                results: data.data.returns,
+                numFound: data.data.total_count
+            });
+        }).catch(function error(msg) {
+            $scope.showErrorMsg(msg);
+        }).finally(function () {
+            $scope.hideLoading();
+        });
+    };
+
+    $scope.init = function() {
+        var entityId = requestContext.getParam("eid");
+        if (checkNotNullEmpty(entityId)) {
+            if (checkNullEmpty($scope.entity) || $scope.entity.id != parseInt(entityId)) {
+                $scope.entity = {id: parseInt(entityId), nm: ""};
+                $scope.initLocalFilters.push("entity")
+            }
+        }
+        $scope.status = requestContext.getParam("status") || "";
+        $scope.from = parseUrlDate(requestContext.getParam("from"));
+        $scope.to = parseUrlDate(requestContext.getParam("to"));
+        $scope.orderId = requestContext.getParam("oid");
+        $scope.fetch();
+    };
+    $scope.init();
 
     $scope.exportData = function() {
         $scope.showLoading();

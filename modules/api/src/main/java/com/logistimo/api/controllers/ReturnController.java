@@ -29,12 +29,12 @@ import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.Constants;
 import com.logistimo.exception.BadRequestException;
 import com.logistimo.logger.XLog;
-import com.logistimo.pagination.Results;
 import com.logistimo.returns.Status;
-import com.logistimo.returns.models.MobileReturnsModel;
-import com.logistimo.returns.models.MobileReturnsUpdateStatusModel;
-import com.logistimo.returns.models.MobileReturnsUpdateStatusRequestModel;
+import com.logistimo.returns.models.ReturnsModel;
+import com.logistimo.returns.models.ReturnsUpdateStatusModel;
+import com.logistimo.returns.models.ReturnsUpdateStatusRequestModel;
 import com.logistimo.returns.models.ReturnFilters;
+import com.logistimo.returns.models.ReturnsModels;
 import com.logistimo.returns.models.ReturnsRequestModel;
 import com.logistimo.returns.models.UpdateStatusModel;
 import com.logistimo.returns.service.ReturnsService;
@@ -75,7 +75,7 @@ public class ReturnController {
   @RequestMapping(method = RequestMethod.POST)
   public
   @ResponseBody
-  MobileReturnsModel create(@Valid @RequestBody ReturnsRequestModel returnsRequestModel)
+  ReturnsModel create(@Valid @RequestBody ReturnsRequestModel returnsRequestModel)
       throws ServiceException {
     ReturnsVO returnsVO = returnsBuilder.buildReturns(returnsRequestModel);
     returnsVO=returnsService.createReturns(returnsVO);
@@ -85,19 +85,20 @@ public class ReturnController {
   @RequestMapping(value = "/{returnId}/{status}", method = RequestMethod.POST)
   public
   @ResponseBody
-  MobileReturnsUpdateStatusModel updateStatus(@PathVariable Long returnId,
+  ReturnsUpdateStatusModel updateStatus(@PathVariable Long returnId,
                                               @PathVariable String status,
-                                              @RequestBody MobileReturnsUpdateStatusRequestModel mobileReturnsUpdateStatusRequestModel)
+                                              @RequestBody ReturnsUpdateStatusRequestModel returnsUpdateStatusRequestModel)
       throws ServiceException, DuplicationException {
-    UpdateStatusModel updateStatusModel=returnsBuilder.buildUpdateStatusModel(returnId,status,mobileReturnsUpdateStatusRequestModel);
+    UpdateStatusModel updateStatusModel=returnsBuilder.buildUpdateStatusModel(returnId,status,
+        returnsUpdateStatusRequestModel);
     ReturnsVO returnsVO=returnsService.updateReturnsStatus(updateStatusModel);
-    return returnsBuilder.buildMobileReturnsUpdateModel(returnsVO, mobileReturnsUpdateStatusRequestModel);
+    return returnsBuilder.buildMobileReturnsUpdateModel(returnsVO, returnsUpdateStatusRequestModel);
   }
 
   @RequestMapping(value = "/{returnId}", method = RequestMethod.GET)
   public
   @ResponseBody
-  MobileReturnsModel get(@PathVariable Long returnId) throws ServiceException {
+  ReturnsModel get(@PathVariable Long returnId) throws ServiceException {
     ReturnsVO returnsVO=returnsService.getReturnsById(returnId);
     return returnsBuilder.buildMobileReturnsModel(returnsVO);
   }
@@ -105,7 +106,7 @@ public class ReturnController {
   @RequestMapping(method = RequestMethod.GET)
   public
   @ResponseBody
-  Results getAll(@RequestBody(required = false) Long customerId,
+  ReturnsModels getAll(@RequestBody(required = false) Long customerId,
                  @RequestBody(required = false) Long vendorId,
                  @RequestBody(required = false) String status,
                  @RequestBody(required = false) String startDate,
@@ -131,7 +132,8 @@ public class ReturnController {
       filters.setManager(SecurityUtils.isManager());
       filters.setUserId(SecurityUtils.getUsername());
       List<ReturnsVO> returnsVOs = returnsService.getReturns(filters);
-      return new Results<>(returnsBuilder.buildMobileReturnsModels(returnsVOs), null);
+//      Long totalCount = returnsService.getReturnsCount(filters);
+      return new ReturnsModels(returnsBuilder.buildMobileReturnsModels(returnsVOs), null);
     } catch (ParseException e) {
       xLogger.severe("Error while parsing date while getting returns on domain {0}",
           SecurityUtils.getCurrentDomainId(), e);

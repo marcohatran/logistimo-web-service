@@ -25,31 +25,55 @@ package com.logistimo.returns.models;
 
 import com.google.gson.annotations.SerializedName;
 
-import com.logistimo.proto.MobileOrderModel;
+import com.logistimo.returns.models.submodels.EntityModel;
+import com.logistimo.returns.models.submodels.UserModel;
+import com.logistimo.returns.models.submodels.StatusModel;
+
+import java.util.Date;
+import java.util.List;
+
+import lombok.Data;
 
 /**
  * @author Mohan Raja
  */
-public class MobileReturnsUpdateStatusModel {
+@Data
+public class ReturnsModel {
 
-  @SerializedName("return")
-  private MobileReturnsModel returns;
+  @SerializedName("return_id")
+  private Long returnId;
 
-  private MobileOrderModel order;
+  @SerializedName("order_id")
+  private Long orderId;
 
-  public MobileReturnsModel getReturns() {
-    return returns;
-  }
+  @SerializedName("order_type")
+  private Integer orderType;
 
-  public void setReturns(MobileReturnsModel returns) {
-    this.returns = returns;
-  }
+  private EntityModel customer;
 
-  public MobileOrderModel getOrder() {
-    return order;
-  }
+  private EntityModel vendor;
 
-  public void setOrder(MobileOrderModel order) {
-    this.order = order;
-  }
+  private StatusModel status;
+
+  @SerializedName("created_at")
+  private String createdAt;
+
+  @SerializedName("created_by")
+  private UserModel createdBy;
+
+  @SerializedName("updated_at")
+  private String updatedAt;
+
+  @SerializedName("updated_by")
+  private UserModel updatedBy;
+
+  private List<ReturnsItemModel> items;
+
+  @SerializedName("source_domain")
+  private Long sourceDomain;
+
+  @SerializedName("source_domain_name")
+  private String sourceDomainName;
+
+
 }
