@@ -50,6 +50,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.text.ParseException;
@@ -106,12 +107,12 @@ public class ReturnController {
   @RequestMapping(method = RequestMethod.GET)
   public
   @ResponseBody
-  ReturnsModels getAll(@RequestBody(required = false) Long customerId,
-                 @RequestBody(required = false) Long vendorId,
-                 @RequestBody(required = false) String status,
-                 @RequestBody(required = false) String startDate,
-                 @RequestBody(required = false) String endDate,
-                 @RequestBody(required = false) Long orderId
+  ReturnsModels getAll(@RequestParam(required = false) Long customerId,
+                 @RequestParam(required = false) Long vendorId,
+                 @RequestParam(required = false) String status,
+                 @RequestParam(required = false) String startDate,
+                 @RequestParam(required = false) String endDate,
+                 @RequestParam(required = false) Long orderId
   ) throws ServiceException {
     try {
       DomainConfig dc = DomainConfig.getInstance(SecurityUtils.getCurrentDomainId());
@@ -132,8 +133,8 @@ public class ReturnController {
       filters.setManager(SecurityUtils.isManager());
       filters.setUserId(SecurityUtils.getUsername());
       List<ReturnsVO> returnsVOs = returnsService.getReturns(filters);
-    Long totalCount = returnsService.getReturnsCount(filters);
-      return new ReturnsModels(returnsBuilder.buildMobileReturnsModels(returnsVOs), null);
+      Long totalCount = returnsService.getReturnsCount(filters);
+      return new ReturnsModels(returnsBuilder.buildMobileReturnsModels(returnsVOs), totalCount);
     } catch (ParseException e) {
       xLogger.severe("Error while parsing date while getting returns on domain {0}",
           SecurityUtils.getCurrentDomainId(), e);
