@@ -319,7 +319,8 @@
                                     </tr>
                                     </tbody>
                                 </table>
-                                <button type="button" ng-hide="exRow[$index] === 'add' || exRow[$index] === 'show'" class="btn btn-sm btn-primary">Enter returns</button>
+                                <button type="button" class="btn btn-sm btn-primary" ng-hide="exRow[$index] === 'add' || exRow[$index] === 'show'" ng-click="op='add'">Enter returns</button>
+                                <button type="button" ng-hide="exRow[$index] === 'add' || exRow[$index] === 'show' ||  isUndef(material.returnitems) || material.returnitems.length == 0" class="btn btn-sm btn-primary" ng-click="op='edit'">Edit</button>
                             </div>
                             <div ng-show="showMaterials && transaction.materials.length - 1 !== $index && !transaction.material.isBatch && material.quantity > 0 && transaction.type != 'ri' && transaction.type != 'ro'">
                                 <span class="litetext float-left" ng-class="{'required' : msm}" ng-show="(!material.ts && isDef(matstatus)) || (material.ts && isDef(tempmatstatus))">{{resourceBundle['inventory.material.status']}}</span>

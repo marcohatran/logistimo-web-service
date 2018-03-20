@@ -484,7 +484,7 @@ trnControllers.controller('TransMapCtrl', ['$scope','mapService','uiGmapGoogleMa
 trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibModal','trnService', 'invService', 'domainCfgService', 'entityService','$timeout',
     function ($rootScope,$scope, $uibModal, trnService, invService, domainCfgService, entityService,$timeout) {
         $scope.invalidPopup = 0;
-
+        $scope.op = 'add';
         $scope.validate = function (material, index, source) {
             if(!material.isBatch && !material.isBinary) {
                 material.isVisited = material.isVisited || checkNotNullEmpty(source);
@@ -817,6 +817,7 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                             batch.rsn = returnitem.rrsn;
                             copy.bquantity.push(batch);
                         }
+                        copy.returnitems = undefined;
                         transactionmaterials.push(copy);
                     });
                 });
@@ -2000,14 +2001,12 @@ trnControllers.controller('StockBatchTransactionCtrl',['$scope','invService','$t
     }
 ]);
 
-trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','requestContext','$location', 'domainCfgService', 'trnService','invService',
-    function ($scope,$timeout,requestContext,$location,domainCfgService,trnService,invService) {
+trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','requestContext','$location', 'domainCfgService', 'trnService',
+    function ($scope,$timeout,requestContext,$location,domainCfgService,trnService) {
         $scope.noWatch = true;
         ListingController.call(this, $scope, requestContext, $location);
         $scope.size = 10;
         $scope.returnitems = angular.copy($scope.material.returnitems);
-        $scope.showTransactionsList = checkNullEmpty($scope.returnitems) || $scope.returnitems.length == 0;
-        $scope.transactions = {results:[]};
         domainCfgService.getReturnConfig($scope.entity.id).then(function (data) {
             $scope.rc = data.data;
             $scope.fetch();
@@ -2015,9 +2014,6 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
             $scope.showErrorMsg(msg, true);
         });
         $scope.fetch = function () {
-            if (!$scope.showTransactionsList) {
-                return;
-            }
             var fromDate = new Date();
             if (checkNotNullEmpty($scope.rc)) {
                 if ($scope.type == 'ri' && checkNotNullEmpty($scope.rc.incDur)) {
@@ -2030,7 +2026,6 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
             } else {
                 fromDate = undefined;
             }
-            $scope.transactions = {results: []};
             $scope.exRow = [];
             $scope.loading = true;
             $scope.showLoading();
@@ -2069,9 +2064,16 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
         };
         $scope.setData = function (data) {
             if (data != null) {
-                $scope.transactions = data;
+                var transactions = data;
+                if ($scope.offset == 0) {
+                    $scope.transactions = {results: []};
+                    $scope.transactions.numFound = data.numFound;
+                    $scope.transactions.results = transactions.results;
+                } else {
+                    $scope.transactions.results = $scope.transactions.results.concat(transactions.results);
+                }
                 $scope.setResults($scope.transactions);
-                $scope.setFiltered($scope.transactions.results)
+                $scope.setFiltered($scope.transactions.results);
                 setDefaultReason();
             } else {
                 $scope.transactions = {results:[]};
@@ -2087,11 +2089,14 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
                 transaction.rrsn = $scope.material.reason;
             });
         }
-        $scope.saveReturnTransactions = function() {
+        $scope.saveReturnTransactions = function(index) {
             if (!isReturnTransactionsValid()) {
                 return;
             }
-
+            if($scope.atd == '2' && checkNullEmpty($scope.transaction.date)){
+                $scope.showWarning($scope.resourceBundle['trn.atd.mandatory']);
+                return;
+            }
             angular.forEach($scope.transactions.results,function(transaction) {
                 if(transaction.rq > 0) {
                     if (!$scope.returnitems) {
@@ -2103,6 +2108,8 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
                     }
                 }
             });
+            $scope.material.returnitems = $scope.returnitems;
+            $scope.toggle(index);
         };
 
         function isReturnTransactionsValid() {
@@ -2128,6 +2135,10 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
 
         $scope.saveEditedReturnTransactions = function(index) {
             if (!isReturnItemsValid()) {
+                return;
+            }
+            if($scope.atd == '2' && checkNullEmpty($scope.transaction.date)){
+                $scope.showWarning($scope.resourceBundle['trn.atd.mandatory']);
                 return;
             }
             $scope.material.returnitems = $scope.returnitems;
@@ -2278,10 +2289,6 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
                         $scope.returnitems.splice(i,1);
                     }
                 }
-            }
-            if ($scope.returnitems.length == 0) {
-                $scope.showTransactionsList = true;
-                $scope.fetch();
             }
         }
     }]);

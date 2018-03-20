@@ -1274,4 +1274,5 @@ handling.units.mismatch.message=ne correspond pas aux multiples d'unités attend
 handling.units.expected.message=Il devrait être en multiples de
 reason.required=La raison est requise
 return.not.allowed.non.existing.batch=que vous essayez de retourner n'existe pas pour le matériel
-
+no.returns.to.edit=Aucun retour à modifier.
+invalid.return.quantity=Quantité de retour non valide
