@@ -147,7 +147,7 @@ public class ReturnsValidator {
     }
   }
 
-  public boolean hasEntityAccess(Long entityId) throws ServiceException {
+  private boolean hasEntityAccess(Long entityId) throws ServiceException {
     if(!EntityAuthoriser.authoriseEntity(entityId)){
       throw new UnauthorizedException("No access to entity");
     }
@@ -161,7 +161,7 @@ public class ReturnsValidator {
         (statusModel.getStatus() == Status.RECEIVED && hasEntityAccess(
             returnsVO.getVendorId())) || (
         statusModel.getStatus() == Status.CANCELLED && (hasEntityAccess(
-            returnsVO.getVendorId())) || hasEntityAccess(returnsVO.getCustomerId()));
+            returnsVO.getVendorId()) || hasEntityAccess(returnsVO.getCustomerId())));
   }
 
 }
