@@ -158,12 +158,47 @@ public class RequestModel {
   private String tagType;
 
 
+  @SerializedName(value = "TOKEN_DURATION",alternate = "duration")
+  @Expose
+  private String duration;
+
+  @SerializedName(value = "TOKEN_ST",alternate = "state")
+  @Expose
+  private String state;
+
+  @SerializedName(value = "TOKEN_DIS",alternate = "district")
+  @Expose
+  private String district;
+
+
+
+  @SerializedName(value = "TOKEN_TALUK",alternate = "taluk")
+  @Expose
+
+  private String taluk;
+
+  @SerializedName(value = "TOKEN_STOCK_OUT_DAYS",alternate = "stock_out_days")
+  private String stockOutDays;
+
+  @SerializedName(value = "TOKEN_EXCLUDE_ENTITY_TAGS",alternate = "exclude_entity_tags")
+  @Expose
+  private String excludedEntityTags;
+
   @Expose(deserialize = false, serialize = false)
   private Map<String, String> titles;
 
   public String getTagType() {
     return tagType;
   }
+
+  public String getStockOutDays() {
+    return stockOutDays;
+  }
+
+  public void setStockOutDays(String stockOutDays) {
+    this.stockOutDays = stockOutDays;
+  }
+
 
   public void setTagType(String tagType) {
     this.tagType = tagType;
@@ -179,6 +214,38 @@ public class RequestModel {
 
   public String getReferenceId() {
     return referenceId;
+  }
+
+  public String getDuration() {
+    return duration;
+  }
+
+  public void setDuration(String duration) {
+    this.duration = duration;
+  }
+
+  public String getState() {
+    return state;
+  }
+
+  public void setState(String state) {
+    this.state = state;
+  }
+
+  public String getDistrict() {
+    return district;
+  }
+
+  public void setDistrict(String district) {
+    this.district = district;
+  }
+
+  public String getTaluk() {
+    return taluk;
+  }
+
+  public void setTaluk(String taluk) {
+    this.taluk = taluk;
   }
 
   public void setReferenceId(String referenceId) {
@@ -419,5 +486,12 @@ public class RequestModel {
 
   public void setExcludeTransfer(String excludeTransfer) {
     this.excludeTransfer = excludeTransfer;
+  }
+  public String getExcludedEntityTags() {
+    return excludedEntityTags;
+  }
+
+  public void setExcludedEntityTags(String excludedEntityTags) {
+    this.excludedEntityTags = excludedEntityTags;
   }
 }

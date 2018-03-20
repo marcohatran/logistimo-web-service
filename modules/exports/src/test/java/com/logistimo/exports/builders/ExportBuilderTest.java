@@ -113,7 +113,6 @@ public class ExportBuilderTest {
     assertEquals("123456",exportModel.filters.get("TOKEN_DID"));
     assertEquals("2018-01-01 00:00:00",exportModel.filters.get("TOKEN_START_TIME"));
     assertEquals("2018-01-02 00:00:00",exportModel.filters.get("TOKEN_END_TIME"));
-    assertEquals("DEFAULT", exportModel.additionalData.get("typeId"));
     assertEquals(TEST_DOMAIN, exportModel.additionalData.get("domainName"));
     assertEquals(TEST_TIMEZONE, exportModel.additionalData.get("domainTimezone"));
     assertEquals("2018-01-01 00:00:00", exportModel.additionalData.get("exportTime"));
