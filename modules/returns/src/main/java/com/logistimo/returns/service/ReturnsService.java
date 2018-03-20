@@ -140,7 +140,7 @@ public class ReturnsService {
     Status newStatus = statusModel.getStatus();
     Status oldStatus = returnsVO.getStatus().getStatus();
     returnsValidator.validateStatusChange(newStatus, oldStatus);
-    if (returnsValidator.checkStatusChangeAccess(statusModel, returnsVO)) {
+    if (returnsValidator.checkAccessForStatusChange(statusModel, returnsVO)) {
       buildReturns(statusModel, returnsVO, newStatus);
       returnsVO = returnsDao.saveReturns(returnsVO);
       returnsVO.setItems(getReturnsItem(returnsVO.getId()));

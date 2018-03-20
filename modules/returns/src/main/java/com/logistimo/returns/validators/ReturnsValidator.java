@@ -173,13 +173,13 @@ public class ReturnsValidator {
     return true;
   }
 
-  public boolean checkStatusChangeAccess(UpdateStatusModel statusModel, ReturnsVO returnsVO)
+  public boolean checkAccessForStatusChange(UpdateStatusModel statusModel, ReturnsVO returnsVO)
       throws ServiceException {
     return (statusModel.getStatus() == Status.SHIPPED && hasEntityAccess(
         returnsVO.getCustomerId())) ||
         (statusModel.getStatus() == Status.RECEIVED && hasEntityAccess(
             returnsVO.getVendorId())) || (
-        statusModel.getStatus() == Status.RECEIVED && (hasEntityAccess(
+        statusModel.getStatus() == Status.CANCELLED && (hasEntityAccess(
             returnsVO.getVendorId())) || hasEntityAccess(returnsVO.getCustomerId()));
   }
 
