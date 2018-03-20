@@ -132,7 +132,7 @@ public class ReturnController {
       filters.setManager(SecurityUtils.isManager());
       filters.setUserId(SecurityUtils.getUsername());
       List<ReturnsVO> returnsVOs = returnsService.getReturns(filters);
-//      Long totalCount = returnsService.getReturnsCount(filters);
+    Long totalCount = returnsService.getReturnsCount(filters);
       return new ReturnsModels(returnsBuilder.buildMobileReturnsModels(returnsVOs), null);
     } catch (ParseException e) {
       xLogger.severe("Error while parsing date while getting returns on domain {0}",

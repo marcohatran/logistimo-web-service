@@ -36,6 +36,7 @@ import com.logistimo.utils.LocalDateUtil;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -125,7 +126,7 @@ public class ReturnsDao extends Dao {
     buildQuery(returnFilters, filters, query);
     List<Returns>
         returnsList =
-        super.findAllByNativeQuery(query.toString(), filters);
+        super.findAllByNativeQuery(query.toString(), filters, Returns.class);
     List<ReturnsVO> returnsVOList = new ArrayList<>(returnsList.size());
     returnsList.forEach(returns -> {
       ReturnsVO returnsVO = modelMapper.map(returns, ReturnsVO.class);
@@ -138,10 +139,8 @@ public class ReturnsDao extends Dao {
     Map<String, Object> filters = new HashMap<>();
     StringBuilder query = new StringBuilder("select COUNT(1) from `RETURNS` r where ");
     buildQuery(returnFilters, filters, query);
-    List<Long>
-        returnsList =
-        super.findAllByNativeQuery(query.toString(), filters);
-    return returnsList.get(0);
+    return
+        ((BigInteger)super.findByNativeQuery(query.toString(), filters)).longValue();
   }
 
   private void buildQuery(ReturnFilters returnFilters, Map<String, Object> filters,

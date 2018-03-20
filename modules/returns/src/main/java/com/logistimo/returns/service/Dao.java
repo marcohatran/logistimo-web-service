@@ -70,10 +70,16 @@ public class Dao {
     return (T)entityManager.find(cls,id);
   }
 
-  public <T> List<T> findAllByNativeQuery(String query,Map<String,Object> filters){
-    Query query1=entityManager.createNativeQuery(query);
+  public <T> List<T> findAllByNativeQuery(String query,Map<String,Object> filters,Class mappingClass){
+    Query query1=entityManager.createNativeQuery(query, mappingClass);
     filters.forEach(query1::setParameter);
     return query1.getResultList();
+  }
+
+  public <T> T findByNativeQuery(String query,Map<String,Object> filters){
+    Query query1=entityManager.createNativeQuery(query);
+    filters.forEach(query1::setParameter);
+    return (T)query1.getSingleResult();
   }
 
 }
