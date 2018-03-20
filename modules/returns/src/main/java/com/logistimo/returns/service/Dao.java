@@ -70,9 +70,11 @@ public class Dao {
     return (T)entityManager.find(cls,id);
   }
 
-  public <T> List<T> findAllByNativeQuery(String query,Map<String,Object> filters,Class mappingClass){
+  public <T> List<T> findAllByNativeQuery(String query,Map<String,Object> filters,Class mappingClass,int size,int offset){
     Query query1=entityManager.createNativeQuery(query, mappingClass);
     filters.forEach(query1::setParameter);
+    query1.setFirstResult(offset);
+    query1.setMaxResults(size);
     return query1.getResultList();
   }
 

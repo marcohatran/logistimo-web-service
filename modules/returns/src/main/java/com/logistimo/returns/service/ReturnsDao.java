@@ -126,7 +126,7 @@ public class ReturnsDao extends Dao {
     buildQuery(returnFilters, filters, query);
     List<Returns>
         returnsList =
-        super.findAllByNativeQuery(query.toString(), filters, Returns.class);
+        super.findAllByNativeQuery(query.toString(), filters, Returns.class,returnFilters.getSize(),returnFilters.getOffset());
     List<ReturnsVO> returnsVOList = new ArrayList<>(returnsList.size());
     returnsList.forEach(returns -> {
       ReturnsVO returnsVO = modelMapper.map(returns, ReturnsVO.class);
