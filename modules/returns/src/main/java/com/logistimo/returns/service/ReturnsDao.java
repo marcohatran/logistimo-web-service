@@ -122,6 +122,30 @@ public class ReturnsDao extends Dao {
   public List<ReturnsVO> getReturns(ReturnFilters returnFilters) {
     Map<String, Object> filters = new HashMap<>();
     StringBuilder query = new StringBuilder("select * from `RETURNS` r where ");
+    buildQuery(returnFilters, filters, query);
+    List<Returns>
+        returnsList =
+        super.findAllByNativeQuery(query.toString(), filters, Returns.class);
+    List<ReturnsVO> returnsVOList = new ArrayList<>(returnsList.size());
+    returnsList.forEach(returns -> {
+      ReturnsVO returnsVO = modelMapper.map(returns, ReturnsVO.class);
+      returnsVOList.add(returnsVO);
+    });
+    return returnsVOList;
+  }
+
+  public Long getCount(ReturnFilters returnFilters){
+    Map<String, Object> filters = new HashMap<>();
+    StringBuilder query = new StringBuilder("select COUNT(1) from `RETURNS` r where ");
+    buildQuery(returnFilters, filters, query);
+    List<Long>
+        returnsList =
+        super.findAllByNativeQuery(query.toString(), filters, Long.class);
+    return returnsList.get(0);
+  }
+
+  private void buildQuery(ReturnFilters returnFilters, Map<String, Object> filters,
+                          StringBuilder query) {
     if (returnFilters.getVendorId() == null && returnFilters.getCustomerId() == null) {
       if (returnFilters.isManager()) {
         query.append(" (r.customer_id IN ").append(USER_DOMAIN_QUERY).append(" OR r.vendor_id IN ")
@@ -163,15 +187,6 @@ public class ReturnsDao extends Dao {
     }
 
     query.append(" order by r.id desc");
-    List<Returns>
-        returnsList =
-        super.findAllByNativeQuery(query.toString(), filters, Returns.class);
-    List<ReturnsVO> returnsVOList = new ArrayList<>(returnsList.size());
-    returnsList.forEach(returns -> {
-      ReturnsVO returnsVO = modelMapper.map(returns, ReturnsVO.class);
-      returnsVOList.add(returnsVO);
-    });
-    return returnsVOList;
   }
 
 }

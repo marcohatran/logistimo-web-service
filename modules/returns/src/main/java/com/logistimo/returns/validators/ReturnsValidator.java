@@ -25,10 +25,13 @@ package com.logistimo.returns.validators;
 
 import com.logistimo.entities.auth.EntityAuthoriser;
 import com.logistimo.exception.InvalidDataException;
+import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.materials.model.HandlingUnitModel;
 import com.logistimo.materials.service.IHandlingUnitService;
 import com.logistimo.returns.Status;
+import com.logistimo.returns.models.UpdateStatusModel;
 import com.logistimo.returns.vo.ReturnsItemVO;
+import com.logistimo.returns.vo.ReturnsVO;
 import com.logistimo.services.ServiceException;
 import com.logistimo.shipments.FulfilledQuantityModel;
 import com.logistimo.shipments.service.impl.ShipmentService;
@@ -74,24 +77,14 @@ public class ReturnsValidator {
       throw new InvalidDataException("No order present!");
     }
 
-    Map<Long, Map<String, BigDecimal>> shipmentItemMap = new HashMap<>();
-    shipmentList.forEach(fulfilledQuantityModel -> {
-      Long materialId = fulfilledQuantityModel.getMaterialId();
-      Map<String, BigDecimal> batchesMap;
-      if (!shipmentItemMap.containsKey(materialId)) {
-        batchesMap = new HashMap<>();
-        shipmentItemMap.put(materialId, batchesMap);
-      } else {
-        batchesMap = shipmentItemMap.get(materialId);
-      }
-      batchesMap
-          .put(fulfilledQuantityModel.getBatchId(), fulfilledQuantityModel.getFulfilledQuantity());
-    });
+    Map<Long, Map<String, BigDecimal>> shipments = getShipments(shipmentList);
+
     Map<Long, BigDecimal> handlingUnitMap =
         getHandlingUnit(materialIdList).orElse(MapUtils.EMPTY_MAP);
     for (ReturnsItemVO returnsItemVO : returnItemList) {
+
       Map<String, BigDecimal> fulfilledQuantityByBatches =
-          shipmentItemMap.get(returnsItemVO.getMaterialId());
+          shipments.get(returnsItemVO.getMaterialId());
       if (fulfilledQuantityByBatches == null) {
         throw new InvalidDataException("No demand item entry present!!");
       }
@@ -109,6 +102,24 @@ public class ReturnsValidator {
       }
     }
     return true;
+  }
+
+  private Map<Long, Map<String, BigDecimal>> getShipments(
+      List<FulfilledQuantityModel> shipmentList) {
+    Map<Long, Map<String, BigDecimal>> shipmentItemMap = new HashMap<>();
+    shipmentList.forEach(fulfilledQuantityModel -> {
+      Long materialId = fulfilledQuantityModel.getMaterialId();
+      Map<String, BigDecimal> batchesMap;
+      if (!shipmentItemMap.containsKey(materialId)) {
+        batchesMap = new HashMap<>();
+        shipmentItemMap.put(materialId, batchesMap);
+      } else {
+        batchesMap = shipmentItemMap.get(materialId);
+      }
+      batchesMap
+          .put(fulfilledQuantityModel.getBatchId(), fulfilledQuantityModel.getFulfilledQuantity());
+    });
+    return shipmentItemMap;
   }
 
   private void validateBatches(ReturnsItemVO returnsItemVO,
@@ -155,9 +166,21 @@ public class ReturnsValidator {
     }
   }
 
-  public boolean validateEntityAccess(Long entityId) throws ServiceException {
-    return (EntityAuthoriser.authoriseEntity(entityId));
+  public boolean hasEntityAccess(Long entityId) throws ServiceException {
+    if(!EntityAuthoriser.authoriseEntity(entityId)){
+      throw new UnauthorizedException("No access to entity");
+    }
+    return true;
   }
 
+  public boolean checkStatusChangeAccess(UpdateStatusModel statusModel, ReturnsVO returnsVO)
+      throws ServiceException {
+    return (statusModel.getStatus() == Status.SHIPPED && hasEntityAccess(
+        returnsVO.getCustomerId())) ||
+        (statusModel.getStatus() == Status.RECEIVED && hasEntityAccess(
+            returnsVO.getVendorId())) || (
+        statusModel.getStatus() == Status.RECEIVED && (hasEntityAccess(
+            returnsVO.getVendorId())) || hasEntityAccess(returnsVO.getCustomerId()));
+  }
 
 }

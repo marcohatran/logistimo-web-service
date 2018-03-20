@@ -140,38 +140,40 @@ public class ReturnsService {
     Status newStatus = statusModel.getStatus();
     Status oldStatus = returnsVO.getStatus().getStatus();
     returnsValidator.validateStatusChange(newStatus, oldStatus);
-    if ((statusModel.getStatus() == Status.SHIPPED && returnsValidator
-        .validateEntityAccess(returnsVO.getCustomerId())) ||
-        statusModel.getStatus() == Status.RECEIVED && returnsValidator
-            .validateEntityAccess(returnsVO.getVendorId())) {
-
-      ReturnsStatusVO statusVO = new ReturnsStatusVO();
-      statusVO.setStatus(newStatus);
-      Timestamp updatedAt = new Timestamp(new Date().getTime());
-      statusVO.setUpdatedAt(updatedAt);
-      statusVO.setUpdatedBy(statusModel.getUserId());
-      returnsVO.setStatus(statusVO);
-      returnsVO.setUpdatedBy(statusModel.getUserId());
-      returnsVO.setUpdatedAt(updatedAt);
-      returnsVO = returnsDao.updateReturns(returnsVO);
-
+    if (returnsValidator.checkStatusChangeAccess(statusModel, returnsVO)) {
+      buildReturns(statusModel, returnsVO, newStatus);
+      returnsVO = returnsDao.saveReturns(returnsVO);
+      returnsVO.setItems(getReturnsItem(returnsVO.getId()));
+      postTransactions(statusModel, returnsVO);
+      IMessage message = null;
+      if (StringUtils.isNotBlank(statusModel.getComment())) {
+        message = addComment(returnsVO.getId(), statusModel.getComment(), returnsVO.getUpdatedBy(), returnsVO.getSourceDomain());
+      }
+      addStatusHistory(returnsVO, oldStatus.toString(), newStatus.toString(), message);
     }
-
-    returnsVO.setItems(getReturnsItem(returnsVO.getId()));
-    postTransactions(statusModel, returnsVO);
-    IMessage message = null;
-    if (StringUtils.isNotBlank(statusModel.getComment())) {
-      message = addComment(returnsVO.getId(), statusModel.getComment(), returnsVO.getUpdatedBy(), returnsVO.getSourceDomain());
-    }
-    addStatusHistory(returnsVO, oldStatus.toString(), newStatus.toString(), message);
     return returnsVO;
+  }
+
+
+
+  private void buildReturns(UpdateStatusModel statusModel, ReturnsVO returnsVO,
+                                 Status newStatus) {
+    ReturnsStatusVO statusVO = new ReturnsStatusVO();
+    statusVO.setStatus(newStatus);
+    Timestamp updatedAt = new Timestamp(new Date().getTime());
+    statusVO.setUpdatedAt(updatedAt);
+    statusVO.setUpdatedBy(statusModel.getUserId());
+    returnsVO.setStatus(statusVO);
+    returnsVO.setUpdatedBy(statusModel.getUserId());
+    returnsVO.setUpdatedAt(updatedAt);
   }
 
   private void postTransactions(UpdateStatusModel statusModel, ReturnsVO returnsVO)
       throws ServiceException, DuplicationException {
     if (statusModel.getStatus() == Status.RECEIVED || statusModel.getStatus() == Status.SHIPPED) {
       Long domainId = SecurityUtils.getCurrentDomainId();
-      List<ITransaction> transactionsList =
+      List<ITransaction>
+          transactionsList =
           new ReturnsHelper().postTransactions(statusModel, returnsVO, domainId);
       inventoryManagementService.updateInventoryTransactions(domainId, transactionsList, null, true, false, null);
     }
