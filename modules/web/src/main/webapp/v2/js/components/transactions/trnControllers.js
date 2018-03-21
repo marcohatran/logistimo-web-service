@@ -880,15 +880,6 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                             items[m.mId + "\t" + m.bid] = {q:''+ m.quantity,e: m.bexp,mr: m.bmfnm,md: m.bmfdt,
                                 r : reason, mst: m.mst, trkid: trackingid};
                             ft['bmaterials'].push(items);
-                            /*
-                            ft['bmaterials'][m.mId + "\t" + m.bid] = {
-                                q: '' + m.quantity,
-                                e: m.bexp,
-                                mr: m.bmfnm,
-                                md: m.bmfdt,
-                                r : mat.reason,
-                                mst : m.mst
-                            };*/
                         }
                     });
                 } else if (mat.isBinary) {
@@ -2150,14 +2141,18 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
         };
 
         function isReturnItemsValid() {
-            return ($scope.returnitems.every(isReturnQuantityValid)) && ($scope.returnitems.every(isTransactionValid));
+            if ($scope.returnitems.every(isReturnQuantityValid) && $scope.returnitems.every(isTransactionValid)) {
+                    return true;
+            }
+            return false;
         }
 
         function isReturnQuantityValid(transaction) {
-            if (checkNullEmpty(transaction.rq)) {
+            if (checkNullEmpty(transaction.rq) || transaction.rq == 0) {
                 $scope.showWarning("Invalid return quantity");
                 return false;
             }
+            return true;
         }
 
         function isTransactionValid(transaction) {
