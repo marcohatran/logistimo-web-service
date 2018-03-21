@@ -728,13 +728,13 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                 return true;
             }
             var index = 0;
-            var invalidQuantity = $scope.transaction.materials.some(function (mat) {
+            var invalidQuantity = $scope.transaction.modifiedmaterials.some(function (mat) {
                 if(checkNotNullEmpty($scope.transaction.dent) && $scope.transaction.ent.nm === $scope.transaction.dent.enm){
                     $scope.showWarning($scope.resourceBundle['form.error']);
                     return true;
                 }
                 if(checkNotNullEmpty($scope.exRow[index])){
-                    $scope.showWarning($scope.resourceBundle['trn.batch.open'] + ' ' + $scope.transaction.materials[index].name.mnm + '. ' + $scope.resourceBundle['trn.batch.save.cancel']);
+                    $scope.showWarning($scope.resourceBundle['trn.batch.open'] + ' ' + $scope.transaction.modifiedmaterials[index].name.mnm + '. ' + $scope.resourceBundle['trn.batch.save.cancel']);
                     return true;
                 }
                 if (!mat.isBatch && !mat.isBinary) {
@@ -756,7 +756,7 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
             });
             var isStatusEmpty = false;
             index = 0;
-            $scope.transaction.materials.forEach(function (mat) {
+            $scope.transaction.modifiedmaterials.forEach(function (mat) {
                 if(checkNotNullEmpty(mat.name) && !mat.isBatch && !mat.isBinary && mat.quantity != "0") {
                     var status = mat.ts ? $scope.tempmatstatus : $scope.matstatus;
                     if (checkNotNullEmpty(status) && checkNullEmpty(mat.mst) && $scope.msm) {
@@ -821,18 +821,38 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                         transactionmaterials.push(copy);
                     });
                 });
-                $scope.transaction.materials = transactionmaterials;
+                $scope.transaction.modifiedmaterials = transactionmaterials;
+            } else {
+                $scope.transaction.modifiedmaterials = $scope.transaction.materials;
             }
         }
 
         function validateReturnTransactions() {
-            return !$scope.transaction.materials.some(function(material){
-                if(checkNullEmpty(material.quantity)) {
-                    $scope.showWarning($scope.resourceBundle['invalid.quantity'] + " " + $scope.resourceBundle['of'] + " " + (material.mnm || material.name.mnm));
+            if (checkNullEmpty($scope.transaction.modifiedmaterials)) {
+                $scope.showWarning($scope.resourceBundle['invalid.quantity'])
+                return false;
+            }
+            // Check if all the selected materials selected have quantities
+            var valid = $scope.transaction.materials.every(function(material) {
+                if (checkNotNullEmpty(material.name)) {
+                    return (isMaterialInModifiedMaterials(material));
+                } else {
                     return true;
                 }
             });
+            if (!valid) {
+                $scope.showWarning($scope.resourceBundle['invalid.quantity'])
+                return false;
+            }
             return true;
+        }
+
+        function isMaterialInModifiedMaterials(material) {
+            return $scope.transaction.modifiedmaterials.some(function(mat){
+                if (mat.name.mId == material.name.mId) {
+                    return true;
+                }
+            });
         }
 
         function handleTimeout() {
@@ -870,7 +890,7 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
             }
             ft['materials'] = [];
             ft['bmaterials'] = [];
-            $scope.transaction.materials.forEach(function (mat) {
+            $scope.transaction.modifiedmaterials.forEach(function (mat) {
                 if (mat.isBatch) {
                     mat.bquantity.forEach(function (m) {
                         var reason = ($scope.transaction.type == 'ri' || $scope.transaction.type == 'ro' ? m.rsn : mat.reason);

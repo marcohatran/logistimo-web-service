@@ -306,8 +306,8 @@
                                 <table class="table table-striped table-nobot-mar table-condensed" ng-show="isDef(material.returnitems) && material.returnitems.length">
                                     <tbody>
                                     <tr>
-                                        <td>Transaction ID</td>
-                                        <td>Return quantity</td>
+                                        <td>{{resourceBundle['transactionid']}}</td>
+                                        <td>{{resourceBundle['return.quantity']}}</td>
                                         <td ng-show="material.isBatch">{{resourceBundle['batch']}}</td>
                                         <td ng-show="material.isBatch">{{resourceBundle['expiry']}}</td>
                                     </tr>
