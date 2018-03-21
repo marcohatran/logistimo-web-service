@@ -1997,25 +1997,30 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
         $scope.noWatch = true;
         ListingController.call(this, $scope, requestContext, $location);
         $scope.size = 10;
+        $scope.fromDate = new Date();
+        $scope.toDate = undefined;
+
         $scope.returnitems = angular.copy($scope.material.returnitems);
         domainCfgService.getReturnConfig($scope.entity.id).then(function (data) {
             $scope.rc = data.data;
-            $scope.fetch();
+            $scope.fetch(true);
         }).catch(function error(msg) {
             $scope.showErrorMsg(msg, true);
         });
-        $scope.fetch = function () {
-            var fromDate = new Date();
-            if (checkNotNullEmpty($scope.rc)) {
-                if ($scope.type == 'ri' && checkNotNullEmpty($scope.rc.incDur)) {
-                    fromDate.setDate(fromDate.getDate() - $scope.rc.incDur);
-                } else if($scope.type == 'ro' && checkNotNullEmpty($scope.rc.outDur)) {
-                    fromDate.setDate(fromDate.getDate() - $scope.rc.outDur);
+        $scope.fetch = function (firstTime) {
+            if (firstTime) {
+                if (checkNotNullEmpty($scope.rc)) {
+                    if ($scope.type == 'ri' && checkNotNullEmpty($scope.rc.incDur)) {
+                        $scope.fromDate.setDate($scope.fromDate.getDate() - $scope.rc.incDur);
+                    } else if ($scope.type == 'ro' && checkNotNullEmpty($scope.rc.outDur)) {
+                        $scope.fromDate.setDate($scope.fromDate.getDate() - $scope.rc.outDur);
+                    } else {
+                        $scope.fromDate = undefined;
+                    }
                 } else {
-                    fromDate = undefined;
+                    $scope.fromDate = undefined;
                 }
-            } else {
-                fromDate = undefined;
+                $scope.minDate = $scope.fromDate;
             }
             $scope.exRow = [];
             $scope.loading = true;
@@ -2044,7 +2049,7 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
                     leid = $scope.transaction.dent.eid;
                 }
             }
-            trnService.getTransactions(null, null, checkNotNullEmpty(fromDate) ? formatDate(fromDate) : fromDate, null,
+            trnService.getTransactions(null, null, checkNotNullEmpty($scope.fromDate) ? formatDate($scope.fromDate) : $scope.fromDate, checkNotNullEmpty($scope.toDate) ? formatDate($scope.toDate) : $scope.toDate,
                 type, $scope.offset, $scope.size, null, null, eid, leid,
                 mid, null,true).then(function (data) {
                     $scope.setData(data.data);
@@ -2080,6 +2085,14 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
                 transaction.rrsn = $scope.material.reason;
             });
         }
+
+        $scope.applyFilter = function() {
+            $scope.fromDate = $scope.from;
+            $scope.toDate = $scope.to;
+            $scope.offset = 0;
+            $scope.fetch();
+        };
+
         $scope.saveReturnTransactions = function(index) {
             if (!isReturnTransactionsValid()) {
                 return;
