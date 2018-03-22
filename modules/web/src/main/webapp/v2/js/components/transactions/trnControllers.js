@@ -856,14 +856,11 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                 }
             });
             return valid;
-            // return true;
         }
 
         function isMaterialInModifiedMaterials(material) {
             return $scope.transaction.modifiedmaterials.some(function(mat){
-                if (mat.name.mId == material.name.mId) {
-                    return true;
-                }
+                return (mat.name.mId == material.name.mId);
             });
         }
 
