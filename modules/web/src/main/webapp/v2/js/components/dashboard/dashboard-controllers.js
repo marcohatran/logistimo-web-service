@@ -924,6 +924,7 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
         $scope.applyFilters = function () {
             $scope.toggleFilter('a', false);
             $scope.toggleFilter('e', false);
+            $scope.mapEvent = $scope.status == "0" ? 0 : $scope.status * 1 - 1;
             $scope.setURLParams();
         };
 
