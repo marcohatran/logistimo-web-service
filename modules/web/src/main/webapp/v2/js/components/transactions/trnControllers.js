@@ -829,22 +829,34 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
 
         function validateReturnTransactions() {
             if (checkNullEmpty($scope.transaction.modifiedmaterials)) {
-                $scope.showWarning($scope.resourceBundle['invalid.quantity'])
+                $scope.showWarning($scope.resourceBundle['invalid.return.quantity'] + " " +  $scope.resourceBundle['for'] + " " + $scope.transaction.materials[0].name.mnm);
                 return false;
             }
             // Check if all the selected materials selected have quantities
             var valid = $scope.transaction.materials.every(function(material) {
                 if (checkNotNullEmpty(material.name)) {
-                    return (isMaterialInModifiedMaterials(material));
+                    if (!isMaterialInModifiedMaterials(material)) {
+                        $scope.showWarning($scope.resourceBundle['invalid.return.quantity'] + " " +  $scope.resourceBundle['for'] + " " + material.name.mnm);
+                        return false;
+                    } else {
+                        return true;
+                    }
                 } else {
                     return true;
                 }
             });
             if (!valid) {
-                $scope.showWarning($scope.resourceBundle['invalid.quantity'])
                 return false;
             }
-            return true;
+            // Check if the return form is open for any of the modified materials
+            valid = !$scope.transaction.modifiedmaterials.some(function(material) {
+                if(checkNotNullEmpty(material.op)) {
+                    $scope.showWarning($scope.resourceBundle['edit.returns.form.open.message'] + " " + material.name.mnm + ". " + $scope.resourceBundle['edit.returns.save.cancel.message']);
+                    return true;
+                }
+            });
+            return valid;
+            // return true;
         }
 
         function isMaterialInModifiedMaterials(material) {
@@ -2126,10 +2138,8 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
                     if (!$scope.returnitems) {
                         $scope.returnitems = [];
                     }
-                    if (isReturnsAgainstSingleLinkedKiosk()) {
-                        $scope.returnitems.push(angular.copy(transaction));
-                        transaction.rq = undefined;
-                    }
+                    $scope.returnitems.push(angular.copy(transaction));
+                    transaction.rq = undefined;
                 }
             });
             $scope.material.returnitems = $scope.returnitems;
@@ -2181,15 +2191,12 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
         };
 
         function isReturnItemsValid() {
-            if ($scope.returnitems.every(isReturnQuantityValid) && $scope.returnitems.every(isTransactionValid)) {
-                    return true;
-            }
-            return false;
+            return ($scope.returnitems.every(isReturnQuantityValid) && $scope.returnitems.every(isTransactionValid));
         }
 
         function isReturnQuantityValid(transaction) {
             if (checkNullEmpty(transaction.rq) || transaction.rq == 0) {
-                $scope.showWarning("Invalid return quantity");
+                $scope.showWarning($scope.resourceBundle['invalid.return.quantity'] + " " + $scope.resourceBundle['for'] + " " + transaction.mnm);
                 return false;
             }
             return true;

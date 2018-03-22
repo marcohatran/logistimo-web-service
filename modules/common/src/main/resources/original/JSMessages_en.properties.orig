@@ -1280,5 +1280,8 @@ return.not.allowed.non.existing.batch=which you are trying to return does not ex
 no.returns.to.edit=No returns to edit.
 invalid.return.quantity=Invalid return quantity
 enter.returns=Enter returns
+edit.returns.form.open.message=You have opened the edit returns form for
+edit.returns.save.cancel.message=Please save or cancel the form to proceed.
+
 
 

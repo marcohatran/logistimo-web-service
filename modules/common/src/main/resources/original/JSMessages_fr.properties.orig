@@ -1277,3 +1277,5 @@ return.not.allowed.non.existing.batch=que vous essayez de retourner n'existe pas
 no.returns.to.edit=Aucun retour à modifier.
 invalid.return.quantity=Quantité de retour non valide
 enter.returns=Entrer les retours
+edit.returns.form.open.message=Vous avez ouvert le formulaire de modification des déclarations pour
+edit.returns.save.cancel.message=Veuillez sauvegarder ou annuler le formulaire pour continuer.
