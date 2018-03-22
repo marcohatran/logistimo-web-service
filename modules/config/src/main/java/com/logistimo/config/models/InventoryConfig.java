@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -42,6 +42,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 /**
@@ -833,6 +834,13 @@ public class InventoryConfig implements Serializable {
 
   public void setReturnsConfig(List<ReturnsConfig> returnsConfig) {
     this.returnsConfig = returnsConfig;
+  }
+
+  public Optional<ReturnsConfig> getReturnsConfig(List<String> entityTags) {
+    return returnsConfig.stream()
+        .filter(returnConfig -> entityTags.stream()
+            .anyMatch(tag -> returnConfig.getEntityTags().contains(tag)))
+        .findFirst();
   }
 
   public static class Permissions implements Serializable {
