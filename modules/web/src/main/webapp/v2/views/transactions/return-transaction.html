@@ -50,7 +50,7 @@
                           <tbody>
                           <tr ng-repeat="returnitem in returnitems">
                             <td><p class="text-center">{{$index + 1}}</p></td>
-                            <td><p>{{returnitem.lknm}} On {{returnitem.ts}}</p></td>
+                            <td><p>On {{returnitem.ts}}</p></td>
                             <td><p class="text-center">{{returnitem.q}}</p>
                                 <span class="litetext float-left" ng-show="material.isBatch">{{resourceBundle['batch']}}: {{returnitem.bid}}, {{resourceBundle['expiry']}}: {{returnitem.bexp}}</span>
                             </td>
@@ -148,7 +148,7 @@
                       <tbody>
                       <tr ng-repeat="trans in transactions.results">
                         <td><p class="text-center">{{$index + 1}}</p></td>
-                        <td><p>{{trans.lknm}} On {{trans.ts}}</p></td>
+                        <td><p>On {{trans.ts}}</p></td>
                         <td><p class="text-center">{{trans.q | number}}</p>
                             <span class="litetext float-left" ng-show="material.isBatch">{{resourceBundle['batch']}}: {{trans.bid}}, {{resourceBundle['expiry']}}: {{trans.bexp}}</span>
                         </td>
