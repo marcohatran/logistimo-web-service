@@ -1312,10 +1312,14 @@ trnControllers.controller('transactions.MaterialController', ['$scope','trnServi
                             $scope.material.rsns = data.data.rsns;
                             $scope.material.reason = data.data.defRsn;
                             if (checkNotNullEmpty($scope.material.rsns) && $scope.material.rsns.length > 0) {
-                                $scope.material.rsns.splice(0,0,"");
+                                if ($scope.material.rsns.indexOf("") == -1) {
+                                    $scope.material.rsns.splice(0, 0, "");
+                                }
                                 $scope.$parent.showReason = true;
                             } else if (checkNotNullEmpty($scope.reasons) && $scope.reasons.length > 0) {
-                                $scope.reasons.splice(0,0,"");
+                                if ($scope.reasons.indexOf("") == -1) {
+                                    $scope.reasons.splice(0, 0, "");
+                                }
                                 $scope.material.reason = $scope.defaultReason;
                             }
                         }).catch(function error(msg) {
@@ -2151,23 +2155,6 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
 
         function isReturnTransactionsValid() {
             return ($scope.transactions.results.every(isTransactionValid));
-        }
-
-        function isReturnsAgainstSingleLinkedKiosk() {
-            var uniquelkid = true;
-            angular.forEach($scope.transactions.results,function(transaction) {
-                if(transaction.rq > 0) {
-                    if (checkNotNullEmpty($scope.returnitems)) {
-                        uniquelkid = !$scope.returnitems.some(function(returnitem){
-                            return (checkNotNullEmpty(transaction.lkId) || checkNotNullEmpty(returnitem.lkId) && (transaction.lkId != returnitem.lkId));
-                        });
-                    }
-                }
-            });
-            if (!uniquelkid) {
-                $scope.showWarning($scope.resourceBundle['return.against.unique.related.entity']);
-            }
-            return uniquelkid;
         }
 
         $scope.saveEditedReturnTransactions = function(index) {
