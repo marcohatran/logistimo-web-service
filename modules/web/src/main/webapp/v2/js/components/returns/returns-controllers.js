@@ -127,10 +127,10 @@ function CreateReturnsController($scope, $location, $timeout, returnsService, tr
         return $scope.returnItems.every(function (returnItem) {
             if (checkNotNullEmpty(returnItem.returnBatches)) {
                 return returnItem.returnBatches.some(function (returnBatch) {
-                    return checkNotNullEmpty(returnBatch.returnQuantity);
+                    return checkNotNullEmpty(returnBatch.returnQuantity) && returnBatch.returnQuantity > 0;
                 });
             } else {
-                return checkNotNullEmpty(returnItem.returnQuantity);
+                return checkNotNullEmpty(returnItem.returnQuantity) && returnItem.returnQuantity > 0;
             }
         });
     }
