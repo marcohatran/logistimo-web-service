@@ -484,7 +484,7 @@ trnControllers.controller('TransMapCtrl', ['$scope','mapService','uiGmapGoogleMa
 trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibModal','trnService', 'invService', 'domainCfgService', 'entityService','$timeout',
     function ($rootScope,$scope, $uibModal, trnService, invService, domainCfgService, entityService,$timeout) {
         $scope.invalidPopup = 0;
-        $scope.op = 'add';
+        // $scope.op = undefined;
         $scope.validate = function (material, index, source) {
             if(!material.isBatch && !material.isBinary) {
                 material.isVisited = material.isVisited || checkNotNullEmpty(source);
@@ -2133,7 +2133,13 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
                 }
             });
             $scope.material.returnitems = $scope.returnitems;
+            $scope.op=undefined;
             $scope.toggle(index);
+        };
+
+        $scope.toggle = function(index) {
+            $scope.material.op = undefined;
+            $scope.select(index);
         };
 
         function isReturnTransactionsValid() {
@@ -2170,6 +2176,7 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
                 var dent = {eid: $scope.returnitems[0].lkId, enm:$scope.returnitems[0].lknm};
                 $scope.transaction.dent = dent;
             }
+            $scope.op=undefined;
             $scope.toggle(index);
         };
 

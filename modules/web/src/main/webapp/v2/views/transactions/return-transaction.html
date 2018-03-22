@@ -23,6 +23,7 @@
   -->
 
 <div ng-controller="ReturnTransactionCtrl">
+    **myop: {{op}}
     <div class="panel panel-default">
         <div class="panel-heading">
             <b>{{resourceBundle['returns']}} {{resourceBundle['for']}} {{mnm}}</b>
@@ -179,7 +180,7 @@
                     </table>
                     <div class="pull-right">
                       <button ng-click="saveReturnTransactions($index);" class="btn btn-sm btn-primary">{{resourceBundle['save']}}</button>
-                      <button ng-click=" toggle($index);" class="btn btn-sm btn-default">{{resourceBundle['close']}}</button>
+                      <button ng-click="toggle($index);" class="btn btn-sm btn-default">{{resourceBundle['close']}}</button>
                     </div>
                   </div>
                 </div>

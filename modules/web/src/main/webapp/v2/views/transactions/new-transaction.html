@@ -302,7 +302,7 @@
                                    ng-focus="hidePopup(material,$index)"
                                    ng-blur="validate(material,$index,'b')" id="{{material.name.mId}}{{$index}}" popover-trigger="showpopup"/>
                             </div>
-                            <div class = "text-center" ng-show="showMaterials && transaction.materials.length - 1 !== $index && (transaction.type == 'ri' || transaction.type == 'ro')" ng-click="selectOnType($index)">
+                            <div class = "text-center" ng-show="showMaterials && transaction.materials.length - 1 !== $index && (transaction.type == 'ri' || transaction.type == 'ro')">
                                 <table class="table table-striped table-nobot-mar table-condensed" ng-show="isDef(material.returnitems) && material.returnitems.length">
                                     <tbody>
                                     <tr>
@@ -319,8 +319,8 @@
                                     </tr>
                                     </tbody>
                                 </table>
-                                <button type="button" class="btn btn-sm btn-primary" ng-hide="exRow[$index] === 'add' || exRow[$index] === 'show'" ng-click="op='add'">Enter returns</button>
-                                <button type="button" ng-hide="exRow[$index] === 'add' || exRow[$index] === 'show' ||  isUndef(material.returnitems) || material.returnitems.length == 0" class="btn btn-sm btn-primary" ng-click="op='edit'">Edit</button>
+                                <button type="button" class="btn btn-sm btn-primary" ng-disabled="material.op=='edit'" ng-hide="exRow[$index] === 'add' || exRow[$index] === 'show'" ng-click="material.op='add'; selectOnType($index)">{{resourceBundle['enter.returns']}}</button>
+                                <button type="button" ng-disabled="material.op=='add'" ng-hide="exRow[$index] === 'add' || exRow[$index] === 'show' ||  isUndef(material.returnitems) || material.returnitems.length == 0" class="btn btn-sm btn-primary" ng-click="material.op='edit'; selectOnType($index)">{{resourceBundle['edit']}}</button>
                             </div>
                             <div ng-show="showMaterials && transaction.materials.length - 1 !== $index && !transaction.material.isBatch && material.quantity > 0 && transaction.type != 'ri' && transaction.type != 'ro'">
                                 <span class="litetext float-left" ng-class="{'required' : msm}" ng-show="(!material.ts && isDef(matstatus)) || (material.ts && isDef(tempmatstatus))">{{resourceBundle['inventory.material.status']}}</span>
@@ -411,7 +411,7 @@
                     </tr>
                     <tr data-ng-switch-when="return">
                         <td colspan=100% class="partialview">
-                            <div ng-init="view='views/transactions/return-transaction.html'; huName = material.name.huName; huQty = material.name.huQty; mnm = material.name.mnm ; mid = material.name.mId ; kid = material.name.kId ; bdata = material.oquantity; bndata = material.bnquantity; type = transaction.type; index = $index"
+                            <div ng-init="view='views/transactions/return-transaction.html'; op = material.op; huName = material.name.huName; huQty = material.name.huQty; mnm = material.name.mnm ; mid = material.name.mId ; kid = material.name.kId ; bdata = material.oquantity; bndata = material.bnquantity; type = transaction.type; index = $index"
                                  ng-include="'views/partial.html'"></div>
                         </td>
                     </tr>
