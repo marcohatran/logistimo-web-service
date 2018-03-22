@@ -155,6 +155,19 @@ function drawStockEvent(divId, url, color, callback) {
         callback();
     });
 }
+
+function toCSV(tags) {
+    var csv = '';
+    if (checkNotNullEmpty(tags)) {
+        angular.forEach(tags.split(","), function (d) {
+            if (checkNotNullEmpty(csv)) {
+                csv += ",";
+            }
+            csv += "'" + d + "'";
+        });
+    }
+    return csv;
+}
 function formatDate(date) {
     return checkNotNullEmpty(date) ? date.getDate() + "/" + (date.getMonth() + 1) + "/" + date.getFullYear() : "";
 }

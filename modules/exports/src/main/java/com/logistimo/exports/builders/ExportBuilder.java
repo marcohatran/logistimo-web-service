@@ -72,7 +72,8 @@ public class ExportBuilder {
     IDomain domain = domainsService.getDomain(domainId);
     model.setDomainId(String.valueOf(domainId));
 
-    Type type = new TypeToken<Map<String, String>>() {}.getType();
+    Type type = new TypeToken<Map<String, String>>() {
+    }.getType();
     DomainConfig domainConfig = DomainConfig.getInstance(domainId);
     String timezone = domainConfig.getTimezone();
     model.setFromDate(getDomainTime(model.getFromDate(), timezone));
@@ -90,14 +91,13 @@ public class ExportBuilder {
     exportModel.timezone = sUser.getTimezone();
     exportModel.templateId = model.getTemplateId();
     exportModel.filters = filters;
-    exportModel.additionalData =new HashMap<>();
-    exportModel.additionalData.put("typeId", "DEFAULT");
+    exportModel.additionalData = new HashMap<>();
     exportModel.additionalData.put("domainName", domain.getName());
     exportModel.additionalData.put("domainTimezone", timezone);
     exportModel.additionalData.put("userRole", sUser.getRole());
     exportModel.additionalData.put("exportTime", LocalDateUtil
         .formatCustom(new Date(), Constants.DATETIME_CSV_FORMAT, sUser.getTimezone()));
-    buildAdditionalFilters(model.getModule(),exportModel.additionalData, domainConfig);
+    buildAdditionalFilters(model.getModule(), exportModel.additionalData, domainConfig, filters);
     exportModel.titles = model.getTitles();
     return exportModel;
   }
@@ -115,11 +115,25 @@ public class ExportBuilder {
     return date;
   }
 
-  private void buildAdditionalFilters(String moduleName, Map<String, String> filters,
-                                      DomainConfig domainConfig) {
-    if ("Orders".equalsIgnoreCase(moduleName) || "Transfers".equalsIgnoreCase(moduleName)) {
-      filters.put("isAccountingEnabled", String.valueOf(domainConfig.isAccountingEnabled()));
-      filters.put("isDisableOrdersPricing", String.valueOf(domainConfig.isDisableOrdersPricing()));
+  private void buildAdditionalFilters(String moduleName, Map<String, String> additionalData,
+                                      DomainConfig domainConfig, Map<String, String> filters) {
+
+    String TYPE_ID = "typeId";
+    if ("orders".equalsIgnoreCase(moduleName) || "transfers".equalsIgnoreCase(moduleName)) {
+      additionalData.put("isAccountingEnabled", String.valueOf(domainConfig.isAccountingEnabled()));
+      additionalData
+          .put("isDisableOrdersPricing", String.valueOf(domainConfig.isDisableOrdersPricing()));
+    } else if ("inventory".equalsIgnoreCase(moduleName)) {
+      additionalData.put("isMinMaxAbsolute",
+          String.valueOf(domainConfig.getInventoryConfig().isMinMaxAbsolute()));
+      String displayFreq = domainConfig.getInventoryConfig().getDisplayCRFreq();
+      additionalData.put("displayFreq", displayFreq);
+
+      if (filters.containsKey("includeBatchInfo")) {
+        additionalData.put(TYPE_ID, "T_BATCH");
+      } else {
+        additionalData.put(TYPE_ID, "T_NON_BATCH");
+      }
     }
   }
 }

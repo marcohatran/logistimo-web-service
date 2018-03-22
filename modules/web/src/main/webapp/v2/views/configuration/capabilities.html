@@ -86,41 +86,43 @@
                                         </tr>
                                         <tr>
                                             <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[0]" ng-change="setFormUpdated();toggleViewStock('vs')"> {{resourceBundle['config.viewstock']}}</td>
+                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[20]" ng-change="setFormUpdated();toggleViewStock('etvs')"> Enter transactions from 'View stock' </td>
                                             <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[1]" ng-change="setFormUpdated()"> {{resourceBundle['config.enterissues']}}</td>
-                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[2]" ng-change="setFormUpdated()"> {{resourceBundle['config.enterreceipts']}}</td>
+
                                         </tr>
                                         <tr>
+                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[2]" ng-change="setFormUpdated()"> {{resourceBundle['config.enterreceipts']}}</td>
                                             <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[3]" ng-change="setFormUpdated()"> {{resourceBundle['config.enterstockcounts']}}</td>
                                             <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[4]" ng-change="setFormUpdated()"> {{resourceBundle['config.enterwastage']}}</td>
-                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[5]" ng-change="setFormUpdated()"> {{resourceBundle['config.transferstock']}}</td>
                                         </tr>
                                         <tr>
                                             <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[6]" ng-change="setFormUpdated();toggleReturns('eri')"> {{resourceBundle['config.enter.returns.incoming']}}</td>
                                             <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[7]" ng-change="setFormUpdated();toggleReturns('ero')"> {{resourceBundle['config.enter.returns.outgoing']}}</td>
-                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[8]" ng-change="setFormUpdated()"> {{resourceBundle['config.ordernewstock']}}</td>
+                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[21]" ng-change="setFormUpdated();toggleReturns('erir')"> {{resourceBundle['config.enter.returns.issues']}} </td>
                                         </tr>
                                         <tr>
+                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[8]" ng-change="setFormUpdated()"> {{resourceBundle['config.ordernewstock']}}</td>
                                             <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[9]" ng-change="setFormUpdated()"> {{resourceBundle['config.vieworders']}}</td>
                                             <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[10]" ng-change="setFormUpdated()"> {{resourceBundle['config.entityviewprofile']}}</td>
-                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[11]" ng-change="setFormUpdated()"> {{resourceBundle['config.entityeditprofile']}} </td>
                                         </tr>
                                         <tr>
+                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[11]" ng-change="setFormUpdated()"> {{resourceBundle['config.entityeditprofile']}} </td>
                                             <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[12]" ng-change="setFormUpdated()"> {{resourceBundle['config.printinventory']}}</td>
                                             <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[13]" ng-change="setFormUpdated()"> {{resourceBundle['config.exportinventory']}}</td>
-                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[14]"ng-change="setFormUpdated()"> {{resourceBundle['config.transactionhistory']}}</td>
                                         </tr>
                                         <tr ng-show="uiCnf.ro == 'ROLE_sm' || uiCnf.ro == 'ROLE_ko'">
                                             <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[15]" ng-change="setFormUpdated();toggleTransfers('v')"> {{resourceBundle['config.view.transfer.order']}}</td>
                                             <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[16]" ng-change="setFormUpdated();toggleTransfers('c')"> {{resourceBundle['config.create.transfer.order']}}</td>
                                         </tr>
                                         <tr>
+                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[14]"ng-change="setFormUpdated()"> {{resourceBundle['config.transactionhistory']}}</td>
                                             <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[17]" ng-change="setFormUpdated();toggleAssets('v')"> {{resourceBundle['config.view.assets']}}</td>
                                             <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[18]" ng-change="setFormUpdated();toggleAssets('c')"> {{resourceBundle['config.change.status.assets']}}</td>
-                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[19]" ng-change="setFormUpdated();"> View likes</td>
+                                            <!--<td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[19]" ng-change="setFormUpdated();"> View likes</td>-->
                                         </tr>
                                         <tr>
-                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[20]" ng-change="setFormUpdated();toggleViewStock('etvs')"> Enter transactions from 'View stock' </td>
-                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[21]" ng-change="setFormUpdated();toggleReturns('erir')"> Enter returns with issues or receipts</td>
+                                            <td><input type="checkbox" checklist-model="uiCnf.tm" checklist-value="tm[5]" ng-change="setFormUpdated()"> {{resourceBundle['config.transferstock']}}</td>
+
                                         </tr>
                                     </table>
                                 </div>

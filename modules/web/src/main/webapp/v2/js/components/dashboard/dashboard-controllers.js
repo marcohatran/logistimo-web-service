@@ -924,6 +924,7 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
         $scope.applyFilters = function () {
             $scope.toggleFilter('a', false);
             $scope.toggleFilter('e', false);
+            $scope.mapEvent = $scope.status == "0" ? 0 : $scope.status * 1 - 1;
             $scope.setURLParams();
         };
 
@@ -1324,17 +1325,6 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
         function constructPieData(data) {
             if (checkNotNullEmpty(data) && checkNotNullEmpty(data.assetDomain)) {
                 if($scope.status != 0) {
-                    var assetDomainMap = {};
-                    var count = 0;
-                    for(var index in data.assetDomain) {
-                        if($scope.status * 1 - 1 == index) {
-                            assetDomainMap[index] = data.assetDomain[index];
-                        } else {
-                            count += data.assetDomain[index];
-                        }
-                    }
-                    assetDomainMap[10] = count;
-                    data.assetDomain = assetDomainMap;
                     $scope.mapEvent = $scope.status * 1 - 1;
                 }
                 $scope.pieData = [];
@@ -1431,7 +1421,7 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
                                     filter = $scope.dashboardView.mTyNm + "_" + bd.label;
                                 }
                                 bd.link = "JavaScript: angular.element(document.getElementById('cid')).scope().addFilter('" + filter + "','" + level + "')";
-                            } else if($scope.mrValues.indexOf(event) != -1) {
+                            } else if($scope.mrValues.indexOf(event) != -1 && !$scope.iMan) {
                                 var ws = (parseInt(eventType, 10) + 1).toString();
                                 bd.link = "N-#/assets/all?ws=" + ws;
                                 if(checkNotNullEmpty(kid)) {
@@ -1607,7 +1597,7 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
                 }
 
                 dashboardService.getAssetStatus(filter, $scope.mtype, asset, $scope.includeETag, $scope.excludeETag,
-                    $scope.period, level, skipCache).then(function (data) {
+                    $scope.period, $scope.status, level, skipCache).then(function (data) {
                         if (typeof loadDashboardFusionMaps === "function") {
                             $scope.showMap = true;
                             $scope.showSwitch = true;

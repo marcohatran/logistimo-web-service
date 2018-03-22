@@ -622,18 +622,16 @@ domainCfgControllers.controller('CapabilitiesConfigurationController', ['$scope'
 
         $scope.toggleReturns = function(type){
             if(type == 'eri'){
-                if($scope.uiCnf.tm.indexOf('eri') == -1 && $scope.uiCnf.tm.indexOf('ero') != -1 && $scope.uiCnf.tm.indexOf('erir') == -1 ) {
+                if($scope.uiCnf.tm.indexOf('eri') == -1 && $scope.uiCnf.tm.indexOf('erir') == -1 ) {
                     $scope.uiCnf.tm.push("erir");
                     $scope.uiCnf.tm.push("eri");
                 }
             }else if (type == 'ero'){
-              if($scope.uiCnf.tm.indexOf('eri') != -1 && $scope.uiCnf.tm.indexOf('ero') == -1 && $scope.uiCnf.tm.indexOf('erir') == -1 ) {
+              if($scope.uiCnf.tm.indexOf('eri') != -1 && $scope.uiCnf.tm.indexOf('erir') == -1 ) {
                   $scope.uiCnf.tm.push("erir");
-                  $scope.uiCnf.tm.push("ero");
               }
             }else if(type == 'erir') {
-                if($scope.uiCnf.tm.indexOf('erir') != -1 && ($scope.uiCnf.tm.indexOf('ero') != -1) && $scope.uiCnf.tm.indexOf('eri') != -1) {
-                    $scope.uiCnf.tm.splice($scope.uiCnf.tm.indexOf('ero'), 1);
+                if($scope.uiCnf.tm.indexOf('erir') != -1 && $scope.uiCnf.tm.indexOf('eri') != -1) {
                     $scope.uiCnf.tm.splice($scope.uiCnf.tm.indexOf('eri'), 1);
                     $scope.uiCnf.tm.splice($scope.uiCnf.tm.indexOf('erir'), 1);
                 }
