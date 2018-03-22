@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -242,6 +242,9 @@ domainCfgServices.factory('domainCfgService', ['APIService','$http', function (a
         },
         getApprovalsEnabledConfig: function () {
             return apiService.get("/s2/api/config/domain/approvals-enabled");
+        },
+        getReturnConfig: function (entityId) {
+            return apiService.get('/s2/api/config/domain/return-config?entityId=' + entityId);
         }
     }
 }]);
