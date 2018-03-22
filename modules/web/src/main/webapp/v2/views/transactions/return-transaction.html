@@ -23,7 +23,13 @@
   -->
 
 <div ng-controller="ReturnTransactionCtrl">
-    **myop: {{op}}
+    <div class="row">
+        <div class="col-sm-12">
+        <span class="pull-right">
+            <a href="" ng-click="toggle($index)"><span class="glyphicons glyphicons-remove large" uib-tooltip="{{resourceBundle['close']}}" tooltip-placement="left"></span></a>
+        </span>
+        </div>
+    </div>
     <div class="panel panel-default">
         <div class="panel-heading">
             <b>{{resourceBundle['returns']}} {{resourceBundle['for']}} {{mnm}}</b>
