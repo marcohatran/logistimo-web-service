@@ -1996,11 +1996,13 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
         };
 
         $scope.checkReturn = function() {
-            //todo: get the policy details
-            if ($scope.order.st == ORDER.BACKORDERED || $scope.order.st == ORDER.COMPLETED || $scope.order.st == ORDER.FULFILLED) {
+            if ($scope.order.st == ORDER.FULFILLED) {
                 $scope.canReturn = $scope.order.its.some(function (item) {
                     return item.fq > 0;
                 });
+                if($scope.canReturn) {
+                    //todo: get the policy details and validate
+                }
             }
         }
     }

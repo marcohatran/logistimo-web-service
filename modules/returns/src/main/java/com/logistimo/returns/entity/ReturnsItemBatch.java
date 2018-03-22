@@ -47,7 +47,8 @@ import lombok.Data;
 @Table(name = "RETURNS_ITEM_BATCH")
 @Data
 @NamedQueries(value = {
-    @NamedQuery(name = "ReturnsItemBatch.findByItemId", query = "SELECT r FROM ReturnsItemBatch r where r.itemId=:itemId")})
+    @NamedQuery(name = "ReturnsItemBatch.findByItemId", query = "SELECT r FROM ReturnsItemBatch r where r.itemId=:itemId")
+})
 public class ReturnsItemBatch {
 
   @Id

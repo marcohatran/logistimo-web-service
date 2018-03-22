@@ -27,9 +27,12 @@ import com.google.gson.annotations.SerializedName;
 
 import java.util.Date;
 
+import lombok.Data;
+
 /**
  * @author Mohan Raja
  */
+@Data
 public class EntityModel {
 
   @SerializedName("entity_id")
@@ -46,44 +49,4 @@ public class EntityModel {
 
   @SerializedName("has_access")
   private Boolean hasAccess;
-
-  public Long getId() {
-    return id;
-  }
-
-  public void setId(Long id) {
-    this.id = id;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public void setName(String name) {
-    this.name = name;
-  }
-
-  public String getCity() {
-    return city;
-  }
-
-  public void setCity(String city) {
-    this.city = city;
-  }
-
-  public String getAddress() {
-    return address;
-  }
-
-  public void setAddress(String address) {
-    this.address = address;
-  }
-
-  public Boolean getHasAccess() {
-    return hasAccess;
-  }
-
-  public void setHasAccess(Boolean hasAccess) {
-    this.hasAccess = hasAccess;
-  }
 }

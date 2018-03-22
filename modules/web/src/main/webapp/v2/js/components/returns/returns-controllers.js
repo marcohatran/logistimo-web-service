@@ -31,16 +31,17 @@ logistimoApp.controller('DetailReturnsController', DetailReturnsController);
 logistimoApp.controller('ReceiveReturnsController', ReceiveReturnsController);
 logistimoApp.controller('ListReturnsController', ListReturnsController);
 
-CreateReturnsController.$inject = ['$scope','$location', 'returnsService','trnService'];
+CreateReturnsController.$inject = ['$scope', '$location', '$timeout', 'returnsService', 'trnService'];
 DetailReturnsController.$inject = ['$scope', '$uibModal', 'requestContext', 'RETURNS', 'returnsService', 'conversationService', 'activityService'];
-ListReturnsController.$inject = ['$scope', '$location', 'requestContext', 'RETURNS', 'returnsService','ordService', 'exportService'];
+ListReturnsController.$inject = ['$scope', '$location', 'requestContext', 'RETURNS', 'returnsService', 'ordService', 'exportService'];
 
-function CreateReturnsController($scope, $location, returnsService, trnService) {
+function CreateReturnsController($scope, $location, $timeout, returnsService, trnService) {
 
     const SOURCE_WEB = 1;
 
     $scope.returnItems = returnsService.getItems();
     $scope.returnOrder = returnsService.getOrder();
+    $scope.invalidPopup = 0;
 
     $scope.showLoading();
     trnService.getReasons('ro')
@@ -52,18 +53,20 @@ function CreateReturnsController($scope, $location, returnsService, trnService) 
             angular.forEach($scope.returnItems, function (returnItem) {
                 if (returnItem.materialTags) {
                     trnService.getReasons('ro', returnItem.materialTags).then(function (data) {
-                        returnItem.reasons = [""].concat(data.data.rsns);
-                        returnItem.returnReason = data.data.defRsn;
-                        angular.forEach(returnItem.returnBatches, function (returnBatch) {
-                            returnBatch.returnReason = angular.copy(returnItem.returnReason);
-                        });
+                        if(checkNotNullEmpty(data.data) && checkNotNullEmpty(data.data.rsns)) {
+                            returnItem.reasons = [""].concat(data.data.rsns);
+                            returnItem.returnReason = angular.copy(data.data.defRsn);
+                            returnItem.defaultReturnReason = angular.copy(data.data.defRsn);
+                            angular.forEach(returnItem.returnBatches, function (returnBatch) {
+                                returnBatch.returnReason = angular.copy(returnItem.returnReason);
+                                returnBatch.defaultReturnReason = angular.copy(returnItem.returnReason);
+                            });
+                        } else {
+                            setCommonReasons(returnItem);
+                        }
                     });
                 } else {
-                    returnItem.reasons = angular.copy($scope.reasons);
-                    returnItem.returnReason = angular.copy($scope.defaultReason);
-                    angular.forEach(returnItem.returnBatches, function (returnBatch) {
-                        returnBatch.returnReason = angular.copy(returnItem.returnReason);
-                    });
+                    setCommonReasons(returnItem);
                 }
             })
         }).catch(function error(msg) {
@@ -72,26 +75,42 @@ function CreateReturnsController($scope, $location, returnsService, trnService) 
             $scope.hideLoading();
         });
 
-    $scope.cancel = function() {
+    function setCommonReasons(item) {
+        item.reasons = angular.copy($scope.reasons);
+        item.returnReason = angular.copy($scope.defaultReason);
+        item.defaultReturnReason = angular.copy($scope.defaultReason);
+        angular.forEach(item.returnBatches, function (returnBatch) {
+            returnBatch.returnReason = angular.copy(item.returnReason);
+            returnBatch.defaultReturnReason = angular.copy(item.returnReason);
+        });
+    }
+
+    $scope.cancel = function () {
         $scope.setPageSelection('orderDetail');
         $scope.enableScroll();
     };
 
-    $scope.create = function() {
-        if(isReturnValid('returnQuantity')) {
-            if(isReturnValid('returnReason')) {
-                if(!$scope.transConfig.rosm || isReturnValid('returnMaterialStatus')) {
-                    $scope.showLoading();
-                    returnsService.create(getCreateRequest()).then(function (data) {
-                        $scope.showSuccess("Returns created successfully");
-                        $location.path('/orders/returns/detail/' + data.data.return_id);
-                    }).catch(function error(msg) {
-                        $scope.showErrorMsg(msg);
-                    }).finally(function () {
-                        $scope.hideLoading();
-                    });
+    $scope.create = function () {
+        if (isAllValid()) {
+            $scope.showLoading();
+            returnsService.create(getCreateRequest()).then(function (data) {
+                $scope.showSuccess("Returns created successfully");
+                $location.path('/orders/returns/detail/' + data.data.return_id);
+            }).catch(function error(msg) {
+                $scope.showErrorMsg(msg);
+            }).finally(function () {
+                $scope.hideLoading();
+            });
+        }
+    };
+
+    function isAllValid() {
+        if (isReturnQuantityAdded()) {
+            if (isReturnValid('returnReason')) {
+                if (!$scope.transConfig.rosm || isReturnValid('returnMaterialStatus')) {
+                    return true;
                 } else {
-                    $scope.showWarning("Material status is mandatory for all materials being returned")
+                    $scope.showWarning("Material status is mandatory for all materials being returned");
                 }
             } else {
                 $scope.showWarning("Reason is mandatory for all materials being returned")
@@ -99,34 +118,211 @@ function CreateReturnsController($scope, $location, returnsService, trnService) 
         } else {
             $scope.showWarning("Please specify return quantity for all materials")
         }
-    };
+    }
 
-    function isReturnValid(field) {
+    function isReturnQuantityAdded() {
         return $scope.returnItems.every(function (returnItem) {
             if (checkNotNullEmpty(returnItem.returnBatches)) {
                 return returnItem.returnBatches.some(function (returnBatch) {
-                    return checkNotNullEmpty(returnBatch[field]);
+                    return checkNotNullEmpty(returnBatch.returnQuantity);
                 });
             } else {
-                return checkNotNullEmpty(returnItem[field]);
+                return checkNotNullEmpty(returnItem.returnQuantity);
+            }
+        });
+    }
+
+    function redrawAllPopup(type) {
+        var index = -1;
+        $scope.returnItems.forEach(function (returnItem) {
+            index += 1;
+            if (checkNotNullEmpty(returnItem.returnBatches)) {
+                var batchIndex = -1;
+                returnItem.returnBatches.forEach(function (returnBatch) {
+                    batchIndex += 1;
+                    if (returnBatch.popupMsg) {
+                        type == 'show' ?
+                            $scope.validateBatchQuantity(returnItem, returnBatch, batchIndex) :
+                            hidePopup($scope, returnBatch, returnItem.id + returnBatch.id, batchIndex, $timeout);
+                    }
+                    if (returnBatch.sPopupMsg) {
+                        type == 'show' ?
+                            $scope.validateBatchStatus(returnItem, returnBatch, batchIndex, returnItem.tm) :
+                            hidePopup($scope, returnBatch, 's' + (returnItem.tm ? 't' : '') + returnItem.id + returnBatch.id, batchIndex, $timeout);
+                    }
+                    if (returnBatch.rPopupMsg) {
+                        type == 'show' ?
+                            $scope.validateBatchReason(returnItem, returnBatch, batchIndex) :
+                            hidePopup($scope, returnBatch, 'r' + returnItem.id + returnBatch.id, batchIndex, $timeout);
+                    }
+                });
+            } else {
+                if (returnItem.popupMsg) {
+                    type == 'show' ?
+                        $scope.validateQuantity(returnItem, index) :
+                        hidePopup($scope, returnItem, returnItem.id, index, $timeout);
+                }
+                if (returnItem.sPopupMsg) {
+                    type == 'show' ?
+                        $scope.validateStatus(returnItem, index, returnItem.tm) :
+                        hidePopup($scope, returnItem, 's' + (returnItem.tm ? 't' : '') + returnItem.id, index, $timeout);
+                }
+                if (returnItem.rPopupMsg) {
+                    type == 'show' ?
+                        $scope.validateReason(returnItem, index) :
+                        hidePopup($scope, returnItem, 'r' + returnItem.id, index, $timeout);
+                }
+            }
+        });
+        if (type != 'show') {
+            $timeout(function () {
+                redrawAllPopup('show');
+            }, 0);
+        }
+    }
+
+    $scope.validateQuantity = function (material, index) {
+        //todo validate against fulfilled quantity
+        var redraw = false;
+        if(material.displayMeta != material.returnQuantity > 0) {
+            redraw = true;
+        }
+        material.displayMeta = material.returnQuantity > 0;
+        var isInvalid = false;
+        if(checkNotNullEmpty(material.returnQuantity)) {
+            if (checkNotNullEmpty(material.huName) && checkNotNullEmpty(material.huQty) &&
+                material.returnQuantity % material.huQty != 0) {
+                showPopup($scope, material, material.id,
+                    material.returnQuantity + " of " + material.nm + " does not match the multiples of units expected in " +
+                    material.huName + ". It should be in multiples of " + material.huQty + " " + material.nm + ".",
+                    index, $timeout);
+                isInvalid = true;
+            }
+        } else {
+            material.sinvalidPopup = material.sPopupMsg = material.rinvalidPopup = material.rPopupMsg = undefined;
+            material.returnReason = angular.copy(material.defaultReturnReason);
+        }
+        if(redraw) {
+            redrawAllPopup();
+        }
+        return isInvalid;
+    };
+
+    $scope.validateBatchQuantity = function (material, batchMaterial, index) {
+
+        var redraw = false;
+        if(batchMaterial.displayMeta != batchMaterial.returnQuantity > 0) {
+            redraw = true;
+        }
+        batchMaterial.displayMeta = batchMaterial.returnQuantity > 0;
+        var isInvalid = false;
+        if(checkNotNullEmpty(batchMaterial.returnQuantity)) {
+            if (checkNotNullEmpty(material.huName) && checkNotNullEmpty(material.huQty) &&
+                batchMaterial.returnQuantity % material.huQty != 0) {
+                showPopup($scope, batchMaterial, material.id + batchMaterial.id,
+                    batchMaterial.returnQuantity + " of " + material.nm + " does not match the multiples of units expected in " +
+                    material.huName + ". It should be in multiples of " + material.huQty + " " + material.nm + ".",
+                    index, $timeout);
+                isInvalid = true;
+            }
+        } else {
+            batchMaterial.sinvalidPopup = batchMaterial.sPopupMsg = batchMaterial.rinvalidPopup = batchMaterial.rPopupMsg = undefined;
+            batchMaterial.returnReason = angular.copy(batchMaterial.defaultReturnReason);
+        }
+        if(redraw) {
+            redrawAllPopup();
+        }
+        return isInvalid;
+    };
+
+    $scope.validateReason = function (material, index) {
+        if (checkNullEmpty(material.returnReason)) {
+            showPopup($scope, material, 'r' + material.id, "Reason is mandatory", index, $timeout, false, false, true);
+            return true;
+        }
+    };
+
+    $scope.validateBatchReason = function (material, batchMaterial, index) {
+        if (checkNullEmpty(batchMaterial.returnReason)) {
+            showPopup($scope, batchMaterial, 'r' + material.id + batchMaterial.id, "Reason is mandatory", index, $timeout, false, false, true);
+            return true;
+        }
+    };
+
+    $scope.validateStatus = function (material, index, isTempStatus) {
+        if ($scope.transConfig.rosm && checkNullEmpty(material.returnMaterialStatus)) {
+            showPopup($scope, material, 's' + (isTempStatus ? 't' : '') + material.id, "Material status is mandatory", index, $timeout);
+            return true;
+        }
+    };
+
+    $scope.validateBatchStatus = function (material, batchMaterial, index, isTempStatus) {
+        if ($scope.transConfig.rosm && checkNullEmpty(material.returnMaterialStatus)) {
+            showPopup($scope, batchMaterial, 's' + (isTempStatus ? 't' : '') + material.id + batchMaterial.id, "Material status is mandatory", index, $timeout);
+            return true;
+        }
+    };
+
+    $scope.closePopup = function (material, index, prefix) {
+        hidePopup($scope, material, (prefix ? prefix : '') + material.id, index, $timeout, false, false, prefix == 'r');
+    };
+
+    $scope.closeBatchPopup = function (material, batchMaterial, index, prefix) {
+        hidePopup($scope, batchMaterial, (prefix ? prefix : '') + material.id + batchMaterial.id, index, $timeout, false, false, prefix == 'r');
+    };
+
+    function isReturnValid(field) {
+        var index = -1;
+        return !$scope.returnItems.some(function (returnItem) {
+            index += 1;
+            var batchIndex = -1;
+            if (checkNotNullEmpty(returnItem.returnBatches)) {
+                return returnItem.returnBatches.some(function (returnBatch) {
+                    batchIndex += 1;
+                    if (checkNotNullEmpty(returnBatch.returnQuantity)) {
+                        if (field == 'returnReason') {
+                            return $scope.validateBatchReason(returnItem, returnBatch, batchIndex);
+                        } else if (field == 'returnMaterialStatus') {
+                            if (returnItem.tm) {
+                                if (checkNotNullEmpty($scope.tempmatstatus)) {
+                                    return $scope.validateBatchStatus(returnItem, returnBatch, batchIndex, true);
+                                }
+                            } else {
+                                return $scope.validateBatchStatus(returnItem, returnBatch, batchIndex);
+                            }
+                        }
+                    }
+                });
+            } else {
+                if (field == 'returnReason') {
+                    return $scope.validateReason(returnItem, index);
+                } else if (field == 'returnMaterialStatus') {
+                    if (returnItem.tm) {
+                        if (checkNotNullEmpty($scope.tempmatstatus)) {
+                            return $scope.validateStatus(returnItem, index, true);
+                        }
+                    } else {
+                        return $scope.validateStatus(returnItem, index);
+                    }
+                }
             }
         });
     }
 
     function getCreateRequest() {
         var items = [];
-        angular.forEach($scope.returnItems, function(returnItem) {
+        angular.forEach($scope.returnItems, function (returnItem) {
             var item = {
-                material_id : returnItem.id,
-                return_quantity : returnItem.returnQuantity,
-                material_status : returnItem.returnMaterialStatus,
-                reason : returnItem.returnReason
+                material_id: returnItem.id,
+                return_quantity: returnItem.returnQuantity,
+                material_status: returnItem.returnMaterialStatus,
+                reason: returnItem.returnReason
             };
-            if(checkNotNullEmpty(returnItem.returnBatches)) {
+            if (checkNotNullEmpty(returnItem.returnBatches)) {
                 item.batches = [];
                 var totalReturnQuantity = 0;
-                angular.forEach(returnItem.returnBatches, function(returnBatch){
-                    if(checkNotNullEmpty(returnBatch.returnQuantity)) {
+                angular.forEach(returnItem.returnBatches, function (returnBatch) {
+                    if (checkNotNullEmpty(returnBatch.returnQuantity)) {
                         item.batches.push({
                             batch_id: returnBatch.id,
                             return_quantity: returnBatch.returnQuantity,
@@ -142,10 +338,10 @@ function CreateReturnsController($scope, $location, returnsService, trnService) 
         });
 
         return {
-            order_id : $scope.order.id,
-            comment : $scope.comment,
-            items : items,
-            source : SOURCE_WEB
+            order_id: $scope.order.id,
+            comment: $scope.comment,
+            items: items,
+            source: SOURCE_WEB
         }
     }
 }
@@ -157,13 +353,13 @@ function DetailReturnsController($scope, $uibModal, requestContext, RETURNS, ret
 
     var returnId = requestContext.getParam("returnId");
 
-    $scope.getReturn = function() {
+    $scope.getReturn = function () {
         $scope.showLoading();
         returnsService.get(returnId)
             .then(function (data) {
                 $scope.returns = data.data;
             })
-            .then(function(){
+            .then(function () {
                 getMessageCount();
                 getStatusHistory();
                 checkStatusList();
@@ -287,9 +483,9 @@ function DetailReturnsController($scope, $uibModal, requestContext, RETURNS, ret
         }
     };
 
-    $scope.doShip = function() {
+    $scope.doShip = function () {
         $scope.showLoading();
-        returnsService.ship(returnId, {comment:$scope.newStatus.comment}).then(function (data) {
+        returnsService.ship(returnId, {comment: $scope.newStatus.comment}).then(function (data) {
             $scope.closeShip();
             $scope.getReturn();
         }).catch(function error(msg) {
@@ -309,9 +505,9 @@ function ReceiveReturnsController($scope, returnsService, requestContext) {
     var returnId = requestContext.getParam("returnId");
     $scope.comment = undefined;
 
-    $scope.doReceive = function() {
+    $scope.doReceive = function () {
         $scope.showLoading();
-        returnsService.receive(returnId,{comment:$scope.comment}).then(function (data) {
+        returnsService.receive(returnId, {comment: $scope.comment}).then(function (data) {
             $scope.toggleReceive(true);
         }).catch(function error(msg) {
             $scope.showErrorMsg(msg);
@@ -336,13 +532,13 @@ function ListReturnsController($scope, $location, requestContext, RETURNS, retur
     $scope.returnsType = OUTGOING;
     $scope.today = new Date();
 
-    $scope.fetch = function() {
+    $scope.fetch = function () {
         var customer = undefined;
         var vendor = undefined;
-        if(checkNotNullEmpty($scope.entity)){
-            if($scope.returnsType == OUTGOING) {
+        if (checkNotNullEmpty($scope.entity)) {
+            if ($scope.returnsType == OUTGOING) {
                 customer = $scope.entity.id;
-            } else if($scope.returnsType == INCOMING) {
+            } else if ($scope.returnsType == INCOMING) {
                 vendor = $scope.entity.id;
             }
         }
@@ -373,7 +569,7 @@ function ListReturnsController($scope, $location, requestContext, RETURNS, retur
         });
     };
 
-    $scope.init = function() {
+    $scope.init = function () {
         var entityId = requestContext.getParam("eid");
         if (checkNotNullEmpty(entityId)) {
             if (checkNullEmpty($scope.entity) || $scope.entity.id != parseInt(entityId)) {
@@ -389,7 +585,7 @@ function ListReturnsController($scope, $location, requestContext, RETURNS, retur
     };
     $scope.init();
 
-    $scope.goToReturn = function(returnId) {
+    $scope.goToReturn = function (returnId) {
         $location.path('/orders/returns/detail/' + returnId);
     };
 
@@ -413,13 +609,13 @@ function ListReturnsController($scope, $location, requestContext, RETURNS, retur
         $scope.showMore = undefined;
     };
 
-    $scope.exportData = function() {
+    $scope.exportData = function () {
         var customer = undefined;
         var vendor = undefined;
-        if(checkNotNullEmpty($scope.entity)){
-            if($scope.returnsType == OUTGOING) {
+        if (checkNotNullEmpty($scope.entity)) {
+            if ($scope.returnsType == OUTGOING) {
                 customer = $scope.entity.id;
-            } else if($scope.returnsType == INCOMING) {
+            } else if ($scope.returnsType == INCOMING) {
                 vendor = $scope.entity.id;
             }
         }
@@ -440,7 +636,7 @@ function ListReturnsController($scope, $location, requestContext, RETURNS, retur
             $scope.showSuccess(data.data);
         }).catch(function error(msg) {
             $scope.showErrorMsg(msg);
-        }).finally(function(){
+        }).finally(function () {
             $scope.hideLoading();
         });
     }

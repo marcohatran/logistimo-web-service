@@ -21,7 +21,7 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.returns.service;
+package com.logistimo.api.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -50,7 +50,7 @@ public class PersistenceJPAConfig{
   public LocalContainerEntityManagerFactoryBean entityManagerFactory() {
     LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
     em.setDataSource(dataSource());
-    em.setPackagesToScan(new String[] { "com.logistimo.returns.entity" });
+    em.setPackagesToScan(new String[] { "com.logistimo" });
 
     JpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
     em.setJpaVendorAdapter(vendorAdapter);

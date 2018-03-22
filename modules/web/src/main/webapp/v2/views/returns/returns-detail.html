@@ -160,11 +160,11 @@
                                 <div class="row">
                                     <div class="col-sm-12 mt10">
                                         <div class="row">
-                                            <div class="col-sm-8 col-sm-offset-2 mt10">
+                                            <div class="col-sm-6 mt10">
                                                 <table class="table table-condensed table-hover table-logistimo table-fixed">
                                                     <tr>
                                                         <th class="col-sm-2 text-center">{{resourceBundle['material']}}</th>
-                                                        <th class="col-sm-3 text-center">
+                                                        <th class="col-sm-4 text-center">
                                                             {{resourceBundle['quantity']}}
                                                         </th>
                                                     </tr>
@@ -176,25 +176,25 @@
                                                             </td>
                                                             <td class="text-center">
                                                                 {{item.return_quantity}}
-                                                                <span class="litetext text-left" ng-show="isDef(item.material_status) && isUndef(item.batches)">{{resourceBundle['inventory.material.status']}}: {{item.material_status}}</span>
-                                                                <span class="litetext text-left" ng-show="isDef(item.reason) && isUndef(item.batches)">{{resourceBundle['reason']}}: {{item.reason}}</span>
+                                                                <span class="litetext text-center" ng-show="isDef(item.material_status) && isUndef(item.batches)">{{resourceBundle['inventory.material.status']}}: {{item.material_status}}</span>
+                                                                <span class="litetext text-center" ng-show="isDef(item.reason) && isUndef(item.batches)">{{resourceBundle['reason']}}: {{item.reason}}</span>
                                                                 <table class="table table-striped table-nobot-mar table-condensed table-fixed"
                                                                        ng-if="item.batches && item.batches.length > 0" style="margin-left: auto; margin-right: auto;">
                                                                     <thead>
                                                                     <tr>
-                                                                        <th class=" text-center">{{resourceBundle['batch']}}</th>
-                                                                        <th class=" text-center">{{resourceBundle['expiry']}}</th>
-                                                                        <th class=" text-center">{{resourceBundle['quantity']}}</th>
+                                                                        <th class=" text-center col-sm-4">{{resourceBundle['batch']}}</th>
+                                                                        <th class=" text-center col-sm-3">{{resourceBundle['expiry']}}</th>
+                                                                        <th class=" text-center col-sm-5">{{resourceBundle['quantity']}}</th>
                                                                     </tr>
                                                                     </thead>
                                                                     <tbody>
                                                                     <tr ng-repeat="batch in item.batches">
-                                                                        <td class=" text-center">{{batch.batch_id}}</td>
-                                                                        <td class=" text-center">{{batch.expiry}}</td>
-                                                                        <td class=" text-center">
+                                                                        <td class="text-center">{{batch.batch_id}}</td>
+                                                                        <td class="text-center">{{batch.expiry}}</td>
+                                                                        <td class="text-center">
                                                                             {{batch.return_quantity}}
-                                                                            <span class="litetext text-left" ng-show="isDef(batch.material_status)">{{resourceBundle['inventory.material.status']}}: {{batch.material_status}}</span>
-                                                                            <span class="litetext text-left" ng-show="isDef(batch.reason)">{{resourceBundle['reason']}}: {{batch.reason}}</span>
+                                                                            <span class="litetext text-center" ng-show="isDef(batch.material_status)">{{resourceBundle['inventory.material.status']}}: {{batch.material_status}}</span>
+                                                                            <span class="litetext text-center" ng-show="isDef(batch.reason)">{{resourceBundle['reason']}}: {{batch.reason}}</span>
                                                                         </td>
                                                                     </tr>
                                                                     </tbody>

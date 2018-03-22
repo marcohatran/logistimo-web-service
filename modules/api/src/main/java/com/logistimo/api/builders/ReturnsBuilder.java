@@ -27,11 +27,14 @@ import com.logistimo.api.servlets.mobile.builders.MobileOrderBuilder;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.CharacterConstants;
+import com.logistimo.constants.Constants;
 import com.logistimo.domains.service.DomainsService;
 import com.logistimo.entities.auth.EntityAuthoriser;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.exception.InvalidDataException;
+import com.logistimo.inventory.entity.IInvntryBatch;
+import com.logistimo.inventory.service.InventoryManagementService;
 import com.logistimo.logger.XLog;
 import com.logistimo.materials.service.MaterialCatalogService;
 import com.logistimo.orders.entity.IOrder;
@@ -105,6 +108,9 @@ public class ReturnsBuilder {
   @Autowired
   DomainsService domainsService;
 
+  @Autowired
+  InventoryManagementService inventoryManagementService;
+
   public List<ReturnsModel> buildMobileReturnsModels(List<ReturnsVO> returnsVOs) throws ServiceException {
     List<ReturnsModel> returnsModels = new ArrayList<>(returnsVOs.size());
     for (ReturnsVO returnsVO : returnsVOs) {
@@ -172,7 +178,7 @@ public class ReturnsBuilder {
     returnsVO.setUpdatedAt(now);
     returnsVO.setUpdatedBy(username);
     returnsVO.setSource(returnRequestModel.getSource());
-    returnsVO.setItems(getItems(returnRequestModel.getItems()));
+    returnsVO.setItems(getItems(returnRequestModel.getItems(), returnsVO.getVendorId(), returnsVO.getCustomerId()));
     returnsVO.setComment(returnRequestModel.getComment());
     return returnsVO;
   }
@@ -183,7 +189,8 @@ public class ReturnsBuilder {
   }
 
   private void putItemsMeta(List<ReturnsItemModel> items, Date now, String username) {
-    UserModel userModel = new UserModel(username);
+    UserModel userModel = new UserModel();
+    userModel.setUserId(username);
     for (ReturnsItemModel item : items) {
       item.setUpdatedAt(now);
       item.setUpdatedBy(userModel);
@@ -193,7 +200,7 @@ public class ReturnsBuilder {
     }
   }
 
-  private List<ReturnsItemVO> getItems(List<ReturnsItemModel> itemModels) {
+  private List<ReturnsItemVO> getItems(List<ReturnsItemModel> itemModels, Long vendorId, Long customerId) {
     List<ReturnsItemVO> returnsItems = new ArrayList<>(itemModels.size());
     for (ReturnsItemModel itemModel : itemModels) {
       ReturnsItemVO returnsItem = new ReturnsItemVO();
@@ -209,18 +216,19 @@ public class ReturnsBuilder {
       returnsItem.setUpdatedAt(itemModel.getUpdatedAt());
       returnsItem.setUpdatedBy(itemModel.getUpdatedBy().getUserId());
       if(itemModel.getBatches()!= null) {
-        returnsItem.setReturnItemBatches(getItemBatches(itemModel.getBatches()));
+        returnsItem.setReturnItemBatches(getItemBatches(itemModel.getBatches(), vendorId, customerId, itemModel.getMaterialId()));
       }
       returnsItems.add(returnsItem);
     }
     return returnsItems;
   }
 
-  private List<ReturnsItemBatchVO> getItemBatches(List<ReturnsItemBatchModel> itemBatchModels) {
+  private List<ReturnsItemBatchVO> getItemBatches(List<ReturnsItemBatchModel> itemBatchModels,
+                                                  Long vendorId, Long customerId, Long materialId) {
     List<ReturnsItemBatchVO> itemBatches = new ArrayList<>(itemBatchModels.size());
     for (ReturnsItemBatchModel itemBatchModel : itemBatchModels) {
       ReturnsItemBatchVO itemBatch = new ReturnsItemBatchVO();
-      itemBatch.setBatch(getBatch(itemBatchModel));
+      itemBatch.setBatch(getBatch(itemBatchModel, vendorId, customerId, materialId));
       itemBatch.setQuantity(itemBatchModel.getReturnQuantity());
       itemBatch.setMaterialStatus(itemBatchModel.getMaterialStatus());
       itemBatch.setReason(itemBatchModel.getReason());
@@ -232,12 +240,21 @@ public class ReturnsBuilder {
     return itemBatches;
   }
 
-  private BatchVO getBatch(ReturnsItemBatchModel itemBatchModel) {
+  private BatchVO getBatch(ReturnsItemBatchModel itemBatchModel, Long vendorId, Long customerId, Long materialId) {
+    IInvntryBatch
+        inventoryBatch;
+    try {
+      inventoryBatch = inventoryManagementService
+          .getInventoryBatch(vendorId, materialId, itemBatchModel.getBatchId(), null);
+    } catch (ObjectNotFoundException e) {
+      inventoryBatch = inventoryManagementService
+          .getInventoryBatch(customerId, materialId, itemBatchModel.getBatchId(), null);
+    }
     return new BatchVO(
         itemBatchModel.getBatchId(),
-        itemBatchModel.getExpiry(),
-        itemBatchModel.getManufacturer(),
-        itemBatchModel.getManufacturedDate());
+        inventoryBatch.getBatchExpiry(),
+        inventoryBatch.getBatchManufacturer(),
+        inventoryBatch.getBatchManufacturedDate());
   }
 
   private ReturnsReceivedVO getReturnsReceived(ReceivedModel receivedModel) {
@@ -314,9 +331,9 @@ public class ReturnsBuilder {
     ReturnsItemBatchModel itemBatchModel = new ReturnsItemBatchModel();
     BatchVO batch = itemBatch.getBatch();
     itemBatchModel.setBatchId(batch.getBatchId());
-    itemBatchModel.setExpiry(batch.getExpiryDate());
+    itemBatchModel.setExpiry(LocalDateUtil.formatCustom(batch.getExpiryDate(), Constants.DATE_FORMAT,null));
     itemBatchModel.setManufacturer(batch.getManufacturer());
-    itemBatchModel.setManufacturedDate(batch.getManufacturedDate());
+    itemBatchModel.setManufacturedDate(LocalDateUtil.formatCustom(batch.getManufacturedDate(), Constants.DATE_FORMAT,null));
     itemBatchModel.setReturnQuantity(itemBatch.getQuantity());
     itemBatchModel.setMaterialStatus(itemBatch.getMaterialStatus());
     itemBatchModel.setReason(itemBatch.getReason());

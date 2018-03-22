@@ -36,9 +36,12 @@ import java.util.List;
 
 import javax.validation.constraints.NotNull;
 
+import lombok.Data;
+
 /**
  * @author Mohan Raja
  */
+@Data
 public class ReturnsItemModel {
 
   @SerializedName("material_id")
@@ -73,93 +76,5 @@ public class ReturnsItemModel {
   private UserModel updatedBy;
 
   private List<ReturnsItemBatchModel> batches;
-
-  public Long getMaterialId() {
-    return materialId;
-  }
-
-  public void setMaterialId(Long materialId) {
-    this.materialId = materialId;
-  }
-
-  public String getMaterialName() {
-    return materialName;
-  }
-
-  public void setMaterialName(String materialName) {
-    this.materialName = materialName;
-  }
-
-  public BigDecimal getReturnQuantity() {
-    return returnQuantity;
-  }
-
-  public void setReturnQuantity(BigDecimal returnQuantity) {
-    this.returnQuantity = returnQuantity;
-  }
-
-  public String getMaterialStatus() {
-    return materialStatus;
-  }
-
-  public void setMaterialStatus(String materialStatus) {
-    this.materialStatus = materialStatus;
-  }
-
-  public String getReason() {
-    return reason;
-  }
-
-  public void setReason(String reason) {
-    this.reason = reason;
-  }
-
-  public ReceivedModel getReceived() {
-    return received;
-  }
-
-  public void setReceived(ReceivedModel receivedModel) {
-    this.received = receivedModel;
-  }
-
-  public Date getCreatedAt() {
-    return createdAt;
-  }
-
-  public void setCreatedAt(Date createdAt) {
-    this.createdAt = createdAt;
-  }
-
-  public UserModel getCreatedBy() {
-    return createdBy;
-  }
-
-  public void setCreatedBy(UserModel createdBy) {
-    this.createdBy = createdBy;
-  }
-
-  public Date getUpdatedAt() {
-    return updatedAt;
-  }
-
-  public void setUpdatedAt(Date updatedAt) {
-    this.updatedAt = updatedAt;
-  }
-
-  public UserModel getUpdatedBy() {
-    return updatedBy;
-  }
-
-  public void setUpdatedBy(UserModel updatedBy) {
-    this.updatedBy = updatedBy;
-  }
-
-  public List<ReturnsItemBatchModel> getBatches() {
-    return batches;
-  }
-
-  public void setBatches(List<ReturnsItemBatchModel> batches) {
-    this.batches = batches;
-  }
 
 }
