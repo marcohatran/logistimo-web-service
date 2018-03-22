@@ -1133,9 +1133,9 @@ invControllers.controller('BatchDetailCtrl', ['$scope', 'invService','trnService
                         if ($scope.reasons.indexOf("") == -1) {
                             $scope.reasons.splice(0, 0, "");
                         }
-                        $scope.expBatchDet[index].showReason=!$scope.expBatchDet[index].showReason;
-                        $scope.expBatchDet[index].reason = $scope.expBatchDet[index].showReason ? $scope.defaultReason: undefined;
                     }
+                    $scope.expBatchDet[index].showReason=!$scope.expBatchDet[index].showReason;
+                    $scope.expBatchDet[index].reason = $scope.expBatchDet[index].showReason ? $scope.defaultReason: undefined;
                 }
             }
         }
