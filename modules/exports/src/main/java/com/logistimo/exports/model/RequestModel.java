@@ -23,10 +23,10 @@
 
 package com.logistimo.exports.model;
 
-    import com.google.gson.annotations.Expose;
-    import com.google.gson.annotations.SerializedName;
+import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
 
-    import java.util.Map;
+import java.util.Map;
 
 /**
  * Created by pratheeka on 29/01/18.
@@ -158,29 +158,31 @@ public class RequestModel {
   private String tagType;
 
 
-  @SerializedName(value = "TOKEN_DURATION",alternate = "duration")
+  @SerializedName(value = "TOKEN_DURATION", alternate = "duration")
   @Expose
   private String duration;
 
-  @SerializedName(value = "TOKEN_ST",alternate = "state")
+  @SerializedName(value = "TOKEN_ST", alternate = "state")
   @Expose
   private String state;
 
-  @SerializedName(value = "TOKEN_DIS",alternate = "district")
+  @SerializedName(value = "TOKEN_DIS", alternate = "district")
   @Expose
   private String district;
 
+  @SerializedName(value = "email")
+  @Expose
+  private String email;
 
-
-  @SerializedName(value = "TOKEN_TALUK",alternate = "taluk")
+  @SerializedName(value = "TOKEN_TALUK", alternate = "taluk")
   @Expose
 
   private String taluk;
 
-  @SerializedName(value = "TOKEN_STOCK_OUT_DAYS",alternate = "stock_out_days")
+  @SerializedName(value = "TOKEN_STOCK_OUT_DAYS", alternate = "stock_out_days")
   private String stockOutDays;
 
-  @SerializedName(value = "TOKEN_EXCLUDE_ENTITY_TAGS",alternate = "exclude_entity_tags")
+  @SerializedName(value = "TOKEN_EXCLUDE_ENTITY_TAGS", alternate = "exclude_entity_tags")
   @Expose
   private String excludedEntityTags;
 
@@ -487,6 +489,7 @@ public class RequestModel {
   public void setExcludeTransfer(String excludeTransfer) {
     this.excludeTransfer = excludeTransfer;
   }
+
   public String getExcludedEntityTags() {
     return excludedEntityTags;
   }
@@ -494,4 +497,13 @@ public class RequestModel {
   public void setExcludedEntityTags(String excludedEntityTags) {
     this.excludedEntityTags = excludedEntityTags;
   }
+
+  public String getEmail() {
+    return email;
+  }
+
+  public void setEmail(String email) {
+    this.email = email;
+  }
+
 }
