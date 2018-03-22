@@ -29,14 +29,15 @@ import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.conversations.entity.IMessage;
 import com.logistimo.conversations.service.ConversationService;
 import com.logistimo.exception.InvalidDataException;
+import com.logistimo.exception.ValidationException;
 import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.inventory.service.InventoryManagementService;
 import com.logistimo.materials.model.HandlingUnitModel;
 import com.logistimo.materials.service.IHandlingUnitService;
 import com.logistimo.orders.service.impl.DemandService;
 import com.logistimo.returns.Status;
-import com.logistimo.returns.helper.ReturnsHelper;
-import com.logistimo.returns.models.ReturnFilters;
+import com.logistimo.returns.transactions.ReturnsTransactionHandler;
+import com.logistimo.returns.models.ReturnsFilters;
 import com.logistimo.returns.models.UpdateStatusModel;
 import com.logistimo.returns.validators.ReturnsValidator;
 import com.logistimo.returns.vo.ReturnsItemBatchVO;
@@ -83,7 +84,7 @@ public class ReturnsService {
   private DemandService demandService;
 
   @Autowired
-  private ReturnsDao returnsDao;
+  private ReturnsRepository returnsDao;
 
   @Autowired
   private ActivityService activityService;
@@ -107,7 +108,8 @@ public class ReturnsService {
 
     List<ReturnsItemVO> returnsItemVOList = returnsVO.getItems();
     if (CollectionUtils.isEmpty(returnsItemVOList)) {
-      throw new InvalidDataException("Items list cannot be empty!!");
+      throw new ValidationException("RT001","Items list cannot be empty!!");
+      //TODO
     }
     List<Long> materialIdList =
         returnsItemVOList.stream().map(ReturnsItemVO::getMaterialId)
@@ -128,27 +130,25 @@ public class ReturnsService {
     Long returnId = updatedReturnsVo.getId();
     returnsItemVOList.forEach(returnsItemVO -> {
       returnsItemVO.setReturnsId(returnId);
-      final BigDecimal[] quantity = new BigDecimal[1];
-      quantity[0] = BigDecimal.ZERO;
+      returnsDao.saveReturnsItems(returnsItemVO);
+      BigDecimal quantity = BigDecimal.ZERO;
       List<ReturnsItemBatchVO>
           returnsItemBatchVOList = returnsItemVO.getReturnItemBatches();
-      returnsItemVO = returnsDao.saveReturnsItems(returnsItemVO);
       if (CollectionUtils.isNotEmpty(returnsItemBatchVOList)) {
         Long itemId = returnsItemVO.getId();
-        returnsItemBatchVOList.forEach(returnsItemBatchVO -> {
+        quantity = returnsItemBatchVOList.stream().map(returnsItemBatchVO -> {
           returnsItemBatchVO.setItemId(itemId);
-          quantity[0] = quantity[0].add(returnsItemBatchVO.getQuantity());
-          returnsItemBatchVO = returnsDao.saveReturnBatchItems(returnsItemBatchVO);
-        });
+          return returnsDao.saveReturnBatchItems(returnsItemBatchVO).getQuantity();
+        }).reduce(BigDecimal.ZERO,BigDecimal::add);
         returnsItemVO.setReturnItemBatches(returnsItemBatchVOList);
       } else {
-        quantity[0] = returnsItemVO.getQuantity();
+        quantity = returnsItemVO.getQuantity();
       }
-      returnedQuantity.put(returnsItemVO.getMaterialId(), quantity[0]);
+      returnedQuantity.put(returnsItemVO.getMaterialId(), quantity);
     });
 
     demandService.updateDemandReturns(returnsVO.getOrderId(), returnedQuantity);
-    returnsVO.setItems(returnsItemVOList);
+//    returnsVO.setItems(returnsItemVOList);
 
     IMessage
         message =
@@ -208,7 +208,7 @@ public class ReturnsService {
       Long domainId = SecurityUtils.getCurrentDomainId();
       List<ITransaction>
           transactionsList =
-          new ReturnsHelper().postTransactions(statusModel, returnsVO, domainId);
+          new ReturnsTransactionHandler().postTransactions(statusModel, returnsVO, domainId);
       inventoryManagementService
           .updateInventoryTransactions(domainId, transactionsList, null, true, false, null);
     }
@@ -220,7 +220,7 @@ public class ReturnsService {
     return returnsVO;
   }
 
-  public List<ReturnsVO> getReturns(ReturnFilters filters) {
+  public List<ReturnsVO> getReturns(ReturnsFilters filters) {
     return returnsDao.getReturns(filters);
   }
 
@@ -252,8 +252,8 @@ public class ReturnsService {
     return null;
   }
 
-  public Long getReturnsCount(ReturnFilters returnFilters) {
-    return returnsDao.getReturnsCount(returnFilters);
+  public Long getReturnsCount(ReturnsFilters returnsFilters) {
+    return returnsDao.getReturnsCount(returnsFilters);
   }
 
 }

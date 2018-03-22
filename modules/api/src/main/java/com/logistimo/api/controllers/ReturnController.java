@@ -34,7 +34,7 @@ import com.logistimo.returns.Status;
 import com.logistimo.returns.models.ReturnsModel;
 import com.logistimo.returns.models.ReturnsUpdateStatusModel;
 import com.logistimo.returns.models.ReturnsUpdateStatusRequestModel;
-import com.logistimo.returns.models.ReturnFilters;
+import com.logistimo.returns.models.ReturnsFilters;
 import com.logistimo.returns.models.ReturnsModels;
 import com.logistimo.returns.models.ReturnsRequestModel;
 import com.logistimo.returns.models.UpdateStatusModel;
@@ -119,7 +119,7 @@ public class ReturnController {
   ) throws ServiceException {
     try {
       DomainConfig dc = DomainConfig.getInstance(SecurityUtils.getCurrentDomainId());
-      ReturnFilters filters = new ReturnFilters();
+      ReturnsFilters filters = new ReturnsFilters();
       filters.setCustomerId(customerId);
       filters.setVendorId(vendorId);
       filters.setStatus(Status.getStatus(status));
@@ -135,7 +135,7 @@ public class ReturnController {
       filters.setOffset(offset);
       filters.setSize(size);
       filters.setDomainId(SecurityUtils.getCurrentDomainId());
-      filters.setManager(SecurityUtils.isManager());
+      filters.setLimitToUserKiosks(SecurityUtils.isManager());
       filters.setUserId(SecurityUtils.getUsername());
       List<ReturnsVO> returnsVOs = returnsService.getReturns(filters);
       Long totalCount = returnsService.getReturnsCount(filters);

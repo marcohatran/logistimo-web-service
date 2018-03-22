@@ -21,7 +21,7 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.returns.helper;
+package com.logistimo.returns.transactions;
 
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.inventory.entity.ITransaction;
@@ -38,23 +38,23 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
 /**
  * Created by pratheeka on 18/03/18.
  */
-public class ReturnsHelper {
+public class ReturnsTransactionHandler {
   public List<ITransaction> postTransactions(UpdateStatusModel statusModel, ReturnsVO returnsVO,
                                              Long domainId) {
 
     List<ITransaction> transactionsList = new ArrayList<>();
-    Long
-        customerId =
+    Long customerId =
         (statusModel.getStatus() == Status.RECEIVED) ? returnsVO.getVendorId()
             : returnsVO.getCustomerId();
-    Long
-        vendorId =
+    Long vendorId =
         (statusModel.getStatus() == Status.RECEIVED) ? returnsVO.getCustomerId()
             : returnsVO.getVendorId();
     returnsVO.getItems().forEach(returnsItemVO ->
@@ -68,9 +68,8 @@ public class ReturnsHelper {
   private List<ITransaction> getTransactions(String userId, Long domainId, Long kioskId,
                                              Long linkedKioskId, Integer source,
                                              ReturnsItemVO returnsItemVo, Status status) {
-    List<ITransaction> transactionList = new ArrayList<>();
     if (CollectionUtils.isNotEmpty(returnsItemVo.getReturnItemBatches())) {
-      returnsItemVo.getReturnItemBatches().forEach(returnsItemBatchVO -> {
+      return returnsItemVo.getReturnItemBatches().stream().map(returnsItemBatchVO -> {
         ITransaction transaction = JDOUtils.createInstance(ITransaction.class);
         BatchVO batchVO = returnsItemBatchVO.getBatch();
         transaction.setBatchId(batchVO.getBatchId());
@@ -86,8 +85,8 @@ public class ReturnsHelper {
             returnsItemBatchVO.getReason(),
             returnsItemBatchVO.getMaterialStatus(),
             returnsItemBatchVO.getItemId(), returnsItemBatchVO.getQuantity(), source), transaction);
-        transactionList.add(transaction);
-      });
+        return transaction;
+      }).collect(Collectors.toList());
     } else {
       ITransaction transaction = JDOUtils.createInstance(ITransaction.class);
       if (status == Status.RECEIVED) {
@@ -99,11 +98,8 @@ public class ReturnsHelper {
           new TransactionModel(userId, domainId, kioskId, linkedKioskId, returnsItemVo.getReason(),
               returnsItemVo.getMaterialStatus(),
               returnsItemVo.getMaterialId(), returnsItemVo.getQuantity(), source), transaction);
-      transactionList.add(transaction);
+      return Collections.singletonList(transaction);
     }
-    return transactionList;
-
-
   }
 
   private void buildTransaction(TransactionModel transactionModel,
@@ -117,9 +113,7 @@ public class ReturnsHelper {
     transaction.setTimestamp(new Date());
     transaction.setReason(transactionModel.getReason());
     transaction.setMaterialStatus(transactionModel.getMatStatus());
-    if (transactionModel.getLinkedKioskId() != null) {
-      transaction.setLinkedKioskId(transactionModel.getLinkedKioskId());
-    }
+    transaction.setLinkedKioskId(transactionModel.getLinkedKioskId());
   }
 
   @Data

@@ -36,7 +36,7 @@ import lombok.Data;
  * Created by pratheeka on 14/03/18.
  */
 @Data
-public class ReturnFilters {
+public class ReturnsFilters {
   private Long customerId;
   private Status status;
   private Date startDate;
@@ -48,6 +48,30 @@ public class ReturnFilters {
   private Integer size;
 
   private Long domainId;
-  private boolean isManager;
+  private boolean limitToUserKiosks;
   private String userId;
+
+  public boolean hasVendorId() {
+    return vendorId != null;
+  }
+
+  public boolean hasCustomerId() {
+    return customerId != null;
+  }
+
+  public boolean hasOrderId() {
+    return orderId != null;
+  }
+
+  public boolean hasStatus() {
+    return status != null;
+  }
+
+  public boolean hasStartDate() {
+    return startDate != null;
+  }
+
+  public boolean hasEndDate() {
+    return endDate != null;
+  }
 }

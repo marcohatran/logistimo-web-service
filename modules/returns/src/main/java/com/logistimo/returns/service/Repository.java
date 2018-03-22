@@ -37,7 +37,7 @@ import javax.persistence.Query;
  */
 @Component
 
-public class Dao {
+public class Repository {
 
   @PersistenceContext
   private EntityManager entityManager;
