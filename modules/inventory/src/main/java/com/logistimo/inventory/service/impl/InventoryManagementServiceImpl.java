@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -1673,15 +1673,17 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     if (StringUtils.isEmpty(trans.getTrackingId()) || StringUtils.isEmpty(trans.getTrackingObjectType())) {
       throw new LogiException("M017", (Object[]) null);
     }
-    if (!(ITransaction.TYPE_ISSUE_TRANSACTION.equals(trans.getTrackingObjectType()) || ITransaction.TYPE_RECEIPT_TRANSACTION.equals(trans.getTrackingObjectType()))) {
+    if (!(ITransaction.TYPE_RETURN.equals(trans.getTrackingObjectType()) || ITransaction.TYPE_ISSUE_TRANSACTION.equals(trans.getTrackingObjectType()) || ITransaction.TYPE_RECEIPT_TRANSACTION.equals(trans.getTrackingObjectType()))) {
       throw new LogiException("M017", (Object[]) null);
     }
     if (StringUtils.isEmpty(trans.getReason())) {
       throw new LogiException("M018", (Object[]) null);
     }
-    ITransaction linkedTransaction = transDao.getById(trans.getTrackingId(),pm);
-    if (BigUtil.greaterThan(trans.getQuantity(), linkedTransaction.getQuantity())) {
-      throw new LogiException("M019", trans.getQuantity(), linkedTransaction.getQuantity());
+    if(!ITransaction.TYPE_RETURN.equals(trans.getTrackingObjectType())) {
+      ITransaction linkedTransaction = transDao.getById(trans.getTrackingId(), pm);
+      if (BigUtil.greaterThan(trans.getQuantity(), linkedTransaction.getQuantity())) {
+        throw new LogiException("M019", trans.getQuantity(), linkedTransaction.getQuantity());
+      }
     }
   }
 
@@ -1787,8 +1789,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
           String type = trans.getType();
           if (ITransaction.TYPE_ISSUE.equals(type) || ITransaction.TYPE_WASTAGE.equals(type)) {
             issues.add(trans);
-          } else if (ITransaction.TYPE_RECEIPT.equals(type) || ITransaction.TYPE_RETURN
-              .equals(type)) {
+          } else if (ITransaction.TYPE_RECEIPT.equals(type)) {
             receipts.add(trans);
           } else {
             errorList.add(trans);
@@ -1832,8 +1833,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
               invBatch.setQuantity(invBatch.getQuantity().add(t.getQuantity()));
             }
             isUpdated = true;
-          } else if (ITransaction.TYPE_RECEIPT.equals(type) || ITransaction.TYPE_RETURN
-              .equals(type)) {
+          } else if (ITransaction.TYPE_RECEIPT.equals(type)) {
             BigDecimal stock = inv.getStock().subtract(t.getQuantity());
             if (BigUtil.lesserThanZero(stock)) {
               stock = BigDecimal.ZERO;

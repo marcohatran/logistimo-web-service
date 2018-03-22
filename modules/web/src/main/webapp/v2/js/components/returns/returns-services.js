@@ -29,6 +29,8 @@ logistimoApp.service('returnsService', ['APIService', function (apiService) {
     var _items = [];
     var _order = {};
 
+    const SOURCE_WEB = 1;
+
     this.setItems = function (items) {
         _items = items;
     };
@@ -49,8 +51,44 @@ logistimoApp.service('returnsService', ['APIService', function (apiService) {
         return tOrder;
     };
 
+    function getCreateRequest(returns) {
+        var items = [];
+        angular.forEach(returns.returnItems, function (returnItem) {
+            var item = {
+                material_id: returnItem.id,
+                return_quantity: returnItem.returnQuantity,
+                material_status: returnItem.returnMaterialStatus,
+                reason: returnItem.returnReason
+            };
+            if (checkNotNullEmpty(returnItem.returnBatches)) {
+                item.batches = [];
+                var totalReturnQuantity = 0;
+                angular.forEach(returnItem.returnBatches, function (returnBatch) {
+                    if (checkNotNullEmpty(returnBatch.returnQuantity)) {
+                        item.batches.push({
+                            batch_id: returnBatch.id,
+                            return_quantity: returnBatch.returnQuantity,
+                            material_status: returnBatch.returnMaterialStatus,
+                            reason: returnBatch.returnReason
+                        });
+                        totalReturnQuantity += returnBatch.returnQuantity * 1;
+                    }
+                });
+                item.return_quantity = totalReturnQuantity;
+            }
+            items.push(item);
+        });
+
+        return {
+            order_id: returns.order_id,
+            comment: returns.comment,
+            items: items,
+            source: SOURCE_WEB
+        }
+    }
+
     this.create = function (data) {
-        return apiService.post(data, '/s2/api/returns');
+        return apiService.post(getCreateRequest(data), '/s2/api/returns');
     };
 
     this.get = function (id) {
@@ -68,14 +106,17 @@ logistimoApp.service('returnsService', ['APIService', function (apiService) {
     };
 
     this.ship = function (id, data) {
+        data.source = SOURCE_WEB;
         return apiService.post(data, '/s2/api/returns/' + id + '/ship');
     };
 
     this.receive = function (id, data) {
+        data.source = SOURCE_WEB;
         return apiService.post(data, '/s2/api/returns/' + id + '/receive');
     };
 
     this.cancel = function (id, data) {
+        data.source = SOURCE_WEB;
         return apiService.post(data, '/s2/api/returns/' + id + '/cancel');
     };
 

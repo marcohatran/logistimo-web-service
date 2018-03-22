@@ -414,6 +414,7 @@ public class ReturnsBuilder {
     updateStatusModel.setReturnId(returnId);
     updateStatusModel.setUserId(SecurityUtils.getUsername());
     updateStatusModel.setComment(returnsUpdateStatusRequestModel.getComment());
+    updateStatusModel.setSource(returnsUpdateStatusRequestModel.getSource());
     return updateStatusModel;
   }
 }

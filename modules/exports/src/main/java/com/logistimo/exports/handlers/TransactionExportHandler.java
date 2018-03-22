@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -326,8 +326,6 @@ public class TransactionExportHandler implements IExportHandler {
       name = messages.getString("transactions.reorder");
     } else if (ITransaction.TYPE_WASTAGE.equals(transType)) {
       name = messages.getString("transactions.wastage");
-    } else if (ITransaction.TYPE_RETURN.equals(transType)) {
-      name = messages.getString("transactions.return");
     } else if (ITransaction.TYPE_TRANSFER.equals(transType)) {
       name = messages.getString("transactions.transfer");
     }

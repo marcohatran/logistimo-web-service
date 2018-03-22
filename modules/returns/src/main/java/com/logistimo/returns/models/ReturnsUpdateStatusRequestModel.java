@@ -25,6 +25,8 @@ package com.logistimo.returns.models;
 
 import com.google.gson.annotations.SerializedName;
 
+import com.logistimo.constants.SourceConstants;
+
 import lombok.Data;
 
 /**
@@ -34,7 +36,12 @@ import lombok.Data;
 public class ReturnsUpdateStatusRequestModel {
 
   private String comment;
+
   private String embed;
+
   @SerializedName("entity_id")
   private Long entityId;
+
+  private Integer source = SourceConstants.MOBILE;
+
 }

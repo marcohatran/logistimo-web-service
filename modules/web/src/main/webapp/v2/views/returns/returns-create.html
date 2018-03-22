@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright © 2017 Logistimo.
+  ~ Copyright © 2018 Logistimo.
   ~
   ~ This file is part of Logistimo.
   ~
@@ -22,7 +22,7 @@
   -->
 
 <div class="box topbox" ng-controller="CreateReturnsController">
-    <h3>Create returns for order <a ng-href="#/orders/detail/{{order.id}}/">{{order.id}}</a></h3>
+    <h3>Create returns for order <a ng-href="#/orders/detail/{{returnOrder.id}}/">{{returnOrder.id}}</a></h3>
     <hr/>
     <div class="row mt10">
         <div class="col-sm-6">
@@ -34,8 +34,8 @@
                     <div class="row lPad5 mb5">
                         <div class="col-sm-12">
                             <p><a class="capitalize"
-                                  ng-href="#/setup/entities/detail/{{order.eid}}" target="_blank">{{order.enm}}</a></p>
-                            <p class="capitalize">{{order.eadd}}</p>
+                                  ng-href="#/setup/entities/detail/{{returnOrder.eid}}" target="_blank">{{returnOrder.enm}}</a></p>
+                            <p class="capitalize">{{returnOrder.eadd}}</p>
                         </div>
                     </div>
                 </div>
@@ -50,8 +50,8 @@
                     <div class="row lPad5 mb5">
                         <div class="col-sm-12">
                             <p><a class="capitalize"
-                                  ng-href="#/setup/entities/detail/{{order.vid}}" target="_blank">{{order.vnm}}</a></p>
-                            <p class="capitalize">{{order.vadd}}</p>
+                                  ng-href="#/setup/entities/detail/{{returnOrder.vid}}" target="_blank">{{returnOrder.vnm}}</a></p>
+                            <p class="capitalize">{{returnOrder.vadd}}</p>
                         </div>
                     </div>
                 </div>
