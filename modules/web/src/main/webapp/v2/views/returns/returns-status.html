@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright © 2017 Logistimo.
+  ~ Copyright © 2018 Logistimo.
   ~
   ~ This file is part of Logistimo.
   ~
@@ -45,7 +45,10 @@
     <div class="modal-footer ws">
         <div class="col-sm-12">
             <div class="pull-right">
-                <button class="btn btn-sm btn-primary" ng-click="doShip()">
+                <button class="btn btn-sm btn-primary" ng-if="new_status == RETURNS.status.SHIPPED" ng-click="doShip()">
+                    {{resourceBundle['save']}}
+                </button>
+                <button class="btn btn-sm btn-primary" ng-if="new_status == RETURNS.status.CANCELLED" ng-click="doCancel()">
                     {{resourceBundle['save']}}
                 </button>
                 <button class="btn btn-sm btn-default" ng-click="closeShip()">

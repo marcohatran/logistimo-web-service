@@ -441,7 +441,7 @@ function DetailReturnsController($scope, $uibModal, requestContext, RETURNS, ret
             return;
         }
         $scope.modalInstance = $uibModal.open({
-            templateUrl: 'views/returns/returns-ship.html',
+            templateUrl: 'views/returns/returns-status.html',
             scope: $scope,
             keyboard: false,
             backdrop: 'static'
@@ -462,7 +462,7 @@ function DetailReturnsController($scope, $uibModal, requestContext, RETURNS, ret
     $scope.doShip = function () {
         $scope.showLoading();
         returnsService.ship(returnId, {comment: $scope.newStatus.comment}).then(function (data) {
-            $scope.closeShip();
+            $scope.closeStatusModal();
             $scope.getReturn();
         }).catch(function error(msg) {
             $scope.showErrorMsg(msg);
@@ -471,7 +471,19 @@ function DetailReturnsController($scope, $uibModal, requestContext, RETURNS, ret
         });
     };
 
-    $scope.closeShip = function () {
+    $scope.doCancel = function () {
+        $scope.showLoading();
+        returnsService.cancel(returnId, {comment: $scope.newStatus.comment}).then(function (data) {
+            $scope.closeStatusModal();
+            $scope.getReturn();
+        }).catch(function error(msg) {
+            $scope.showErrorMsg(msg);
+        }).finally(function () {
+            $scope.hideLoading();
+        });
+    };
+
+    $scope.closeStatusModal = function () {
         $scope.modalInstance.dismiss('cancel');
     };
 }
