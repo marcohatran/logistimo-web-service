@@ -1211,10 +1211,23 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
                                           Long linkedKioskId, String kioskTag,
                                           String materialTag, List<Long> kioskIds,
                                           PageParams pageParams, String bid, boolean atd,
+                                          String reason,boolean onlyWithoutLkid) throws ServiceException {
+    return getInventoryTransactions(sinceDate, untilDate, domainId, kioskId, materialId,
+        transType != null ? Collections.singletonList(transType) : null, linkedKioskId, kioskTag,
+        materialTag, kioskIds, pageParams, bid, atd, reason, null, onlyWithoutLkid, null);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public Results getInventoryTransactions(Date sinceDate, Date untilDate, Long domainId,
+                                          Long kioskId, Long materialId, String transType,
+                                          Long linkedKioskId, String kioskTag,
+                                          String materialTag, List<Long> kioskIds,
+                                          PageParams pageParams, String bid, boolean atd,
                                           String reason) throws ServiceException {
     return getInventoryTransactions(sinceDate, untilDate, domainId, kioskId, materialId,
         transType != null ? Collections.singletonList(transType) : null, linkedKioskId, kioskTag,
-        materialTag, kioskIds, pageParams, bid, atd, reason, null, null);
+        materialTag, kioskIds, pageParams, bid, atd, reason, null, false, null);
   }
 
   @SuppressWarnings("unchecked")
@@ -1224,13 +1237,13 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
                                           Long linkedKioskId, String kioskTag,
                                           String materialTag, List<Long> kioskIds,
                                           PageParams pageParams, String bid,
-                                          boolean atd, String reason, List<String> excludeReasons,
+                                          boolean atd, String reason, List<String> excludeReasons, boolean onlyWithoutLkid,
                                           PersistenceManager pm)
       throws ServiceException {
     xLogger.fine("Entering getInventoryTransactions");
     Results results = transDao.getInventoryTransactions(sinceDate, untilDate, domainId, kioskId,
         materialId, transTypes, linkedKioskId, kioskTag, materialTag, kioskIds, pageParams, bid,
-        atd, reason, excludeReasons, pm);
+        atd, reason, excludeReasons, onlyWithoutLkid, pm);
     xLogger.fine("Exiting getInventoryTransactions");
     return results;
   }
@@ -1668,7 +1681,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
 
   /**
    * This method checks whether there are any errors in case the transaction is of type incoming returns or outgoing returns.
-   * It checks if tracking id, tracking object type and reason are present. The quantity returned cannot be greater than quantity of the corresponding issue or receipt transaction
+   * It checks if tracking id, tracking object type are present. The quantity returned cannot be greater than quantity of the corresponding issue or receipt transaction
    * against which the return is being posted.
    * @param trans
    * @param pm
@@ -1680,9 +1693,6 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     }
     if (!(ITransaction.TYPE_RETURN.equals(trans.getTrackingObjectType()) || ITransaction.TYPE_ISSUE_TRANSACTION.equals(trans.getTrackingObjectType()) || ITransaction.TYPE_RECEIPT_TRANSACTION.equals(trans.getTrackingObjectType()))) {
       throw new LogiException("M017", (Object[]) null);
-    }
-    if (StringUtils.isEmpty(trans.getReason())) {
-      throw new LogiException("M018", (Object[]) null);
     }
     if(!ITransaction.TYPE_RETURN.equals(trans.getTrackingObjectType())) {
       ITransaction linkedTransaction = transDao.getById(trans.getTrackingId(), pm);

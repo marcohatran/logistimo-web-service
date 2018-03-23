@@ -81,9 +81,14 @@ public class EmailHelper {
     String fileName = getFileName(jobStatus);
     final String exportTime = model.get(ExportConstants.EXPORT_TIME);
     String subject = getMailSubject(model, fileName, exportTime);
-    List<String> userIds = StringUtil.getList(u.getEmail());
+    List<String> emailIds;
+    if (model.containsKey(MobileExportConstants.EMAIL_ID_KEY)) {
+      emailIds = StringUtil.getList(model.get(MobileExportConstants.EMAIL_ID_KEY));
+    } else {
+      emailIds = StringUtil.getList(u.getEmail());
+    }
     List<String> addresses = new ArrayList<>();
-    String[] addressArray = userIds.toArray(new String[userIds.size()]);
+    String[] addressArray = emailIds.toArray(new String[emailIds.size()]);
     Collections.addAll(addresses, addressArray);
     String message;
     if (StringUtils.isNotBlank(customMessage)) {

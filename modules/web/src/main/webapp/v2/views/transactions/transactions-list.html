@@ -49,6 +49,8 @@
                             <option value="p">{{resourceBundle['transactions.stockcount.upper']}}</option>
                             <option value="w">{{resourceBundle['transactions.wastage.upper']}}</option>
                             <option value="t">{{resourceBundle['transfers']}}</option>
+                            <option value="ri">{{resourceBundle['transactions.returns.incoming.upper']}}</option>
+                            <option value="ro">{{resourceBundle['transactions.returns.outgoing.upper']}}</option>
                         </select>
                     </div>
                     <div class="col-sm-3">
@@ -212,6 +214,8 @@
                                        class="clickable litetext" ng-href="#/orders/returns/detail/{{item.trkid}}"
                                        target="_blank">({{resourceBundle['returns']}}: {{item.trkid}})</a>
                                     <span ng-show="isDef(item.trkid) && isDef(item.trkObTy) && item.trkObTy == 't'" class = "litetext">({{resourceBundle['transactions.viatransfer']}} {{item.trkid}})</span>
+                                    <span ng-show="isDef(item.trkid) && isDef(item.trkObTy) && item.trkObTy == 'iss_trn'" class = "litetext">({{resourceBundle['transactions.issue.upper']}} {{item.trkid}})</span>
+                                    <span ng-show="isDef(item.trkid) && isDef(item.trkObTy) && item.trkObTy == 'rec_trn'" class = "litetext">({{resourceBundle['transactions.receipt.upper']}} {{item.trkid}})</span>
                                     <span ng-show=" item.ty=='t'" class = "litetext">({{resourceBundle['transactions.id']}}: {{item.trnId}})</span>
                                 </td>
                                 <td class="text-center">{{item.q | number}}</td>

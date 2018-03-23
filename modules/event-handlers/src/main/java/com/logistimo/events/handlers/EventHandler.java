@@ -722,7 +722,7 @@ public class EventHandler {
     } else if (JDOUtils.getImplClass(ITransaction.class).getName().equals(objectType)) {
       ITransDao transDao = StaticApplicationContext.getBean(ITransDao.class);
       Results res = transDao.getInventoryTransactions(start, null, domainId,
-          null, null, null, null, null, null, null, pageParams, null, false, null, null, null);
+          null, null, null, null, null, null, null, pageParams, null, false, null, null, false, null);
       List results = (res != null) ? res.getResults() : null;
       hasNoActivity = results == null || results.isEmpty();
     } else if (JDOUtils.getImplClass(IUserAccount.class).getName()

@@ -54,7 +54,7 @@
                         <div class="col-sm-7">
                             <select class="form-control" ng-class="{'c-visited' : submitted}"
                                     ng-disabled="validType || !transaction.eent"
-                                    ng-change = "dInventory=null;dInv=false;transaction.dent=null;"
+                                    ng-change = "dInventory=null;dInv=false;transaction.dent=null;setReturnFormValid()"
                                     ng-model="transaction.type" required>
                                 <option ng-selected="trn.value == transaction.type"
                                         ng-repeat="trn in transactions_arr" value="{{trn.value}}">{{trn.displayName}}
@@ -82,7 +82,7 @@
                             </a>
                         </script>
 
-                        <div ng-show="transaction.type == 'i'" class="col-sm-7">
+                        <div ng-show="transaction.type == 'i' || transaction.type == 'ri'" class="col-sm-7">
                             <div class="form-group has-feedback mgh0 mgb0">
                                 <input type="text" ng-model="transaction.dent"
                                        typeahead-template-url="destTemplate"
@@ -101,7 +101,7 @@
                             </div>
                         </div>
 
-                        <div ng-show="transaction.type == 'r'" class="col-sm-7">
+                        <div ng-show="transaction.type == 'r' || transaction.type == 'ro'" class="col-sm-7">
                             <div class="form-group has-feedback mgh0 mgb0">
                                 <input type="text" ng-model="transaction.dent" typeahead-template-url="destTemplate"
                                        autocomplete="off"
@@ -141,7 +141,7 @@
                             <div ng-show="transaction.ent.nm === transaction.dent.enm" class="has-error">
                                 <span class="help-block">{{resourceBundle['materials.transfer']}}</span>
                             </div>
-                            <div ng-show="tranDomainConfig.showCInv && (transaction.type == 't' || transaction.type == 'i') && transaction.dent.enm.length > 0 && transaction.ent.nm !== transaction.dent.enm && showDestInvPermission > 0" class="temp">
+                            <div ng-show="tranDomainConfig.showCInv && (transaction.type == 't' || transaction.type == 'i' || transaction.type == 'ri') && transaction.dent.enm.length > 0 && transaction.ent.nm !== transaction.dent.enm && showDestInvPermission > 0" class="temp">
                                 <span class="litetext"> <input type="checkbox" ng-model="showDestInv" ng-disabled="showDestInv"> {{resourceBundle['show.currentstock.at']}} {{transaction.dent.enm}}</span>
                             </div>
                         </div>
@@ -241,20 +241,19 @@
                                 <span ng-show="transaction.ent.nm.length > 17">...</span>
                             </span>
                         </th>
-                            <!--<span class="litetext-head"><input type="checkbox" ng-model="showMinMax"> {{resourceBundle['minmax.show']}} </span></th>-->
                         <th class="col-sm-1 text-center" ng-show="ordersTabEnabled">{{resourceBundle['available.stock']}}
                             <span class="litetext">{{transaction.ent.nm | limitTo:17}}
                                 <span ng-show="transaction.ent.nm.length > 17">...</span>
                             </span>
                         </th>
-                        <th class="col-sm-1 text-center">{{resourceBundle['quantity']}}</th>
-                        <th  class="col-sm-1 text-center">{{resourceBundle['reason']}}</th>
+                        <th class="col-sm-1 text-center" ng-hide="transaction.type == 'ri' || transaction.type == 'ro'">{{resourceBundle['quantity']}}</th>
+                        <th class="col-sm-1 text-center" ng-show="transaction.type == 'ri' || transaction.type == 'ro'">{{resourceBundle['return.quantity']}}</th>
+                        <th class="col-sm-1 text-center" ng-hide="transaction.type == 'ri' || transaction.type == 'ro'">{{resourceBundle['reason']}}</th>
                         <th class="col-sm-0-5 text-center"></th>
                         <th ng-show="dInv" class="col-sm-2 text-center">{{resourceBundle['material.stockonhand']}}
                             <span class="litetext">{{transaction.dent.enm | limitTo:17}}
                                 <span ng-show="transaction.dent.enm.length > 17">...</span>
                             </span>
-                            <!--<span class="litetext-head"><input type="checkbox" ng-model="showMinMax"> {{resourceBundle['minmax.show']}} </span>-->
                         </th>
                     </tr>
                     </tbody>
@@ -294,14 +293,36 @@
                             </span>
                         </td>
                         <td>
-                            <input only-digits ng-show="!material.isBatch && !material.isBinary && showMaterials && transaction.materials.length - 1 !== $index"
+                            <div ng-hide="transaction.type == 'ri' || transaction.type == 'ro'">
+                                <input only-digits ng-show="!material.isBatch && !material.isBinary && showMaterials && transaction.materials.length - 1 !== $index"
                                    type="text" ng-model="material.quantity" class="form-control" maxlength="12"
                                    tabindex="{{$index+100}}"
                                    ng-class="{'red-border':material.invalidPopup}"
                                    uib-popover="{{material.popupMsg}}"
                                    ng-focus="hidePopup(material,$index)"
                                    ng-blur="validate(material,$index,'b')" id="{{material.name.mId}}{{$index}}" popover-trigger="showpopup"/>
-                            <div ng-show="showMaterials && transaction.materials.length - 1 !== $index && !transaction.material.isBatch && material.quantity > 0">
+                            </div>
+                            <div class = "text-center" ng-show="showMaterials && transaction.materials.length - 1 !== $index && (transaction.type == 'ri' || transaction.type == 'ro')">
+                                <table class="table table-striped table-nobot-mar table-condensed" ng-show="isDef(material.returnitems) && material.returnitems.length">
+                                    <tbody>
+                                    <tr>
+                                        <td>{{resourceBundle['transactionid']}}</td>
+                                        <td>{{resourceBundle['return.quantity']}}</td>
+                                        <td ng-show="material.isBatch">{{resourceBundle['batch']}}</td>
+                                        <td ng-show="material.isBatch">{{resourceBundle['expiry']}}</td>
+                                    </tr>
+                                    <tr ng-repeat="returnitem in material.returnitems">
+                                        <td>{{returnitem.trnId}}</td>
+                                        <td>{{returnitem.rq}}</td>
+                                        <td ng-show="material.isBatch">{{returnitem.bid}}</td>
+                                        <td ng-show="material.isBatch">{{returnitem.bexp}}</td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                                <button type="button" class="btn btn-sm btn-primary" ng-disabled="material.op=='edit'" ng-hide="exRow[$index] === 'add' || exRow[$index] === 'show'" ng-click="material.op='add'; selectOnType($index)">{{resourceBundle['enter.returns']}}</button>
+                                <button type="button" ng-disabled="material.op=='add'" ng-hide="exRow[$index] === 'add' || exRow[$index] === 'show' ||  isUndef(material.returnitems) || material.returnitems.length == 0" class="btn btn-sm btn-primary" ng-click="material.op='edit'; selectOnType($index)">{{resourceBundle['edit']}}</button>
+                            </div>
+                            <div ng-show="showMaterials && transaction.materials.length - 1 !== $index && !transaction.material.isBatch && material.quantity > 0 && transaction.type != 'ri' && transaction.type != 'ro'">
                                 <span class="litetext float-left" ng-class="{'required' : msm}" ng-show="(!material.ts && isDef(matstatus)) || (material.ts && isDef(tempmatstatus))">{{resourceBundle['inventory.material.status']}}</span>
                                 <select ng-hide="material.ts || isUndef(matstatus)"
                                         class="form-control mt5"
@@ -324,7 +345,7 @@
                                     <option ng-repeat="stats in tempmatstatus track by $index" value="{{stats}}" ng-selected="material.mst == stats">{{stats || resourceBundle['select'] + " " + resourceBundle['status.lower']}}</option>
                                 </select>
                             </div>
-                            <div class="text-center clickable dummyLink" ng-show="material.isBatch && showMaterials" ng-click="selectOnType($index)">
+                            <div class="text-center clickable dummyLink" ng-show="material.isBatch && showMaterials && transaction.type != 'ri' && transaction.type != 'ro'" ng-click="selectOnType($index)">
                                 <table class="table table-striped table-nobot-mar table-condensed" ng-show="material.bquantity.length">
                                     <tbody>
                                     <tr ng-show="fBatMat.length > 0">
@@ -344,7 +365,7 @@
                             </div>
                             <p class="text-center temp" ng-show="material.isBinary && showMaterials">1</p>
                         </td>
-                        <td>
+                        <td ng-hide="transaction.type == 'ri' || transaction.type == 'ro'">
                             <div ng-show="showMaterials && material.rsns && material.rsns.length > 0 && showReason && transaction.materials.length - 1 !== $index" >
                                 <select class="form-control" ng-model="material.reason" tabindex="{{$index+100}}">
                                     <option ng-repeat="reason in material.rsns track by $index" value="{{reason}}" ng-selected="material.reason == reason">{{reason || '--' + resourceBundle['select'] + ' ' + resourceBundle['reason'] + '--'}}</option>
@@ -388,12 +409,18 @@
                                  ng-include="'views/partial.html'"></div>
                         </td>
                     </tr>
+                    <tr data-ng-switch-when="return">
+                        <td colspan=100% class="partialview">
+                            <div ng-init="view='views/transactions/return-transaction.html'; reasons = material.rsns; defReason = material.reason; showReason = material.showReason; op = material.op; huName = material.name.huName; huQty = material.name.huQty; mnm = material.name.mnm ; mid = material.name.mId ; kid = material.name.kId ; bdata = material.oquantity; bndata = material.bnquantity; type = transaction.type; index = $index"
+                                 ng-include="'views/transactions/return-transaction.html'"></div>
+                        </td>
+                    </tr>
                     </tbody>
                 </table>
                 <div class="form-group">
                     <div class="col-sm-12">
                         <div class="pull-right">
-                            <button type="button" ng-disabled="invalidPopup != 0 || transaction.materials.length<=1 || !addTransaction.$valid " ng-click="submitted=true; addTransaction.$valid && update()" class="btn btn-sm btn-primary">{{resourceBundle['submit']}}</button>
+                            <button type="button" ng-disabled="invalidPopup != 0 || transaction.materials.length<=1 || !addTransaction.$valid" ng-click="submitted=true; addTransaction.$valid && update()" class="btn btn-sm btn-primary">{{resourceBundle['submit']}}</button>
                             <button type="button" class="btn btn-sm btn-default" ng-click="reset()">{{resourceBundle['reset']}}</button>
                         </div>
                     </div>

@@ -53,7 +53,7 @@ public interface ITransDao {
                                    String kioskTag,
                                    String materialTag, List<Long> kioskIds, PageParams pageParams,
                                    String bid,
-                                   boolean atd, String reason, List<String> excludeReasons,
+                                   boolean atd, String reason, List<String> excludeReasons, boolean onlyWithoutLkid,
                                    PersistenceManager pm);
 
   QueryParams buildTransactionsQuery(Date sinceDate, Date untilDate, Long domainId, Long kioskId,
@@ -61,5 +61,5 @@ public interface ITransDao {
                                      String kioskTag,
                                      String materialTag, List<Long> kioskIds, String bid,
                                      boolean atd, String reason,
-                                     List<String> excludeReasons);
+                                     List<String> excludeReasons, boolean onlyWithoutLkid);
 }

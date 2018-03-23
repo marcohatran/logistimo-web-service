@@ -209,16 +209,18 @@ public class TransactionsController {
       @RequestParam(required = false) Long eid,
       @RequestParam(required = false) Long mid,
       @RequestParam(required = false) Long lEntityId,
+      @RequestParam(required = false) boolean onlywithoutlkid,
       HttpServletRequest request) {
     return getAndBuildTransactions(request, from, to, offset, size, ktag, tag, type, eid, lEntityId,
-        mid, bId, atd, reason);
+        mid, bId, atd, reason, onlywithoutlkid);
   }
+
 
   @SuppressWarnings("unchecked")
   private Results getAndBuildTransactions(HttpServletRequest request,
                                           String from, String to, int offset, int size, String ktag,
                                           String mtag, String type, Long entityId, Long lEntityId,
-                                          Long materialId, String bId, boolean atd, String reason) {
+                                          Long materialId, String bId, boolean atd, String reason, boolean onlywithoutlkid) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     Long domainId = sUser.getCurrentDomainId();
@@ -253,14 +255,23 @@ public class TransactionsController {
         }
       }
       trnResults = inventoryManagementService.getInventoryTransactions(startDate, endDate,
-              domainId, entityId, materialId, type, lEntityId, ktag, mtag, kioskIds,
-              pageParams, bId, atd, reason);
+          domainId, entityId, materialId, type, lEntityId, ktag, mtag, kioskIds,
+          pageParams, bId, atd, reason, onlywithoutlkid);
       trnResults.setOffset(offset);
       return transactionBuilder.buildTransactions(trnResults, sUser, SecurityUtils.getDomainId());
     } catch (ServiceException e) {
       xLogger.severe("Error in fetching transactions : {0}", e);
       throw new InvalidServiceException(backendMessages.getString("transactions.fetch.error"));
     }
+  }
+
+  @SuppressWarnings("unchecked")
+  private Results getAndBuildTransactions(HttpServletRequest request,
+                                          String from, String to, int offset, int size, String ktag,
+                                          String mtag, String type, Long entityId, Long lEntityId,
+                                          Long materialId, String bId, boolean atd, String reason) {
+    return getAndBuildTransactions(request, from, to, offset, size, ktag, mtag, type, entityId, lEntityId,
+        materialId, bId, atd, reason, false);
   }
 
   @RequestMapping(value = "/undo", method = RequestMethod.POST)
@@ -327,6 +338,7 @@ public class TransactionsController {
       IUserAccount u = usersService.getUserAccount(userId);
       List dest = entitiesService.getKiosks(u, domainId, null, null, null).getResults();
       model.dest = constructKioskMap(dest);
+
       ActualTransConfig atci = ic.getActualTransConfigByType(ITransaction.TYPE_ISSUE);
       model.atdi = atci != null ? atci.getTy() : ActualTransConfig.ACTUAL_NONE;
 
@@ -342,6 +354,12 @@ public class TransactionsController {
       ActualTransConfig atct = ic.getActualTransConfigByType(ITransaction.TYPE_TRANSFER);
       model.atdt = atct != null ? atct.getTy() : ActualTransConfig.ACTUAL_NONE;
 
+      ActualTransConfig atcri = ic.getActualTransConfigByType(ITransaction.TYPE_RETURNS_INCOMING);
+      model.atdri = atcri != null ? atcri.getTy() : ActualTransConfig.ACTUAL_NONE;
+
+      ActualTransConfig atcro = ic.getActualTransConfigByType(ITransaction.TYPE_RETURNS_OUTGOING);
+      model.atdro = atcro != null ? atcro.getTy() : ActualTransConfig.ACTUAL_NONE;
+      model.atdc = configurationModelBuilder.buildActualTransConfigAsStringByTransType(ic);
       PageParams pageParams = new PageParams(1);
       model.noc =
           entitiesService.getKioskLinks(kioskId, IKioskLink.TYPE_CUSTOMER, null, null, pageParams).getNumFound();
@@ -560,31 +578,38 @@ public class TransactionsController {
                 .parseCustom(String.valueOf(transaction.get("transactual")), Constants.DATE_FORMAT,
                     null);
       }
-      LinkedTreeMap materials = (LinkedTreeMap) transaction.get("materials");
+      List<LinkedTreeMap> items = (List) transaction.get("materials");
       List<String> berrorMaterials = new ArrayList<>(1);
-      for (Object m : materials.keySet()) {
-        Long materialId = Long.parseLong(String.valueOf(m));
-        LinkedTreeMap mat = (LinkedTreeMap) materials.get(m);
-        BigDecimal quantity = new BigDecimal(Long.parseLong(String.valueOf(mat.get("q"))));
-        String reason = String.valueOf(mat.get("r"));
-        if (reason.equals("null")) {
-          reason = "";
-        }
-        String status = String.valueOf(mat.get("mst"));
-        if (status.equals("null")) {
-          status = "";
-        }
-        if (checkBatchMgmt) {
-          IMaterial material = materialCatalogService.getMaterial(materialId);
-          if (material.isBatchEnabled()) {
-            berrorMaterials.add(material.getName());
+      for (LinkedTreeMap materials : items) {
+        for (Object m : materials.keySet()) {
+          Long materialId = Long.parseLong(String.valueOf(m));
+          LinkedTreeMap mat = (LinkedTreeMap) materials.get(m);
+          BigDecimal quantity = new BigDecimal(Long.parseLong(String.valueOf(mat.get("q"))));
+          String reason = String.valueOf(mat.get("r"));
+          if (reason.equals("null")) {
+            reason = "";
           }
+          String status = String.valueOf(mat.get("mst"));
+          if (status.equals("null")) {
+            status = "";
+          }
+          if (checkBatchMgmt) {
+            IMaterial material = materialCatalogService.getMaterial(materialId);
+            if (material.isBatchEnabled()) {
+              berrorMaterials.add(material.getName());
+            }
+          }
+          String trkid = String.valueOf(mat.get("trkid"));
+          if (trkid == "null") {
+            trkid = null;
+          }
+          ITransaction
+              trans =
+              getTransaction(userId, domainId, transType, kioskId, linkedKioskId, reason, status,
+                  now,
+                  materialId, quantity, "", actualTransDate, trkid);
+          transList.add(trans);
         }
-        ITransaction
-            trans =
-            getTransaction(userId, domainId, transType, kioskId, linkedKioskId, reason, status, now,
-                materialId, quantity, "", actualTransDate);
-        transList.add(trans);
       }
       if (!berrorMaterials.isEmpty()) {
         xLogger.info(
@@ -606,36 +631,44 @@ public class TransactionsController {
             .append(StringUtil.getCSV(berrorMaterials));
         throw new BadRequestException(builder.toString());
       }
-      LinkedTreeMap batchMaterials = (LinkedTreeMap) transaction.get("bmaterials");
-      for (Object m : batchMaterials.keySet()) {
-        String keys[] = String.valueOf(m).split("\t");
-        Long materialId = Long.parseLong(keys[0]);
-        String batch = keys[1];
-        LinkedTreeMap batchMaterial = (LinkedTreeMap) batchMaterials.get(m);
-        BigDecimal
-            quantity =
-            new BigDecimal(Long.parseLong(String.valueOf(batchMaterial.get("q"))));
-        String expiry = String.valueOf(batchMaterial.get("e"));
-        String manufacturer = String.valueOf(batchMaterial.get("mr"));
-        String manufactured = String.valueOf(batchMaterial.get("md"));
-        String reason = String.valueOf(batchMaterial.get("r"));
-        if (reason.equals("null")) {
-          reason = "";
+      List<LinkedTreeMap> batchItems = (List) transaction.get("bmaterials");
+      for (LinkedTreeMap batchMaterials: batchItems) {
+        for (Object m : batchMaterials.keySet()) {
+          String keys[] = String.valueOf(m).split("\t");
+          Long materialId = Long.parseLong(keys[0]);
+          String batch = keys[1];
+          LinkedTreeMap batchMaterial = (LinkedTreeMap) batchMaterials.get(m);
+          BigDecimal
+              quantity =
+              new BigDecimal(Long.parseLong(String.valueOf(batchMaterial.get("q"))));
+          String expiry = String.valueOf(batchMaterial.get("e"));
+          String manufacturer = String.valueOf(batchMaterial.get("mr"));
+          String manufactured = String.valueOf(batchMaterial.get("md"));
+          String reason = String.valueOf(batchMaterial.get("r"));
+          if (reason.equals("null")) {
+            reason = "";
+          }
+          String status = String.valueOf(batchMaterial.get("mst"));
+          if (status.equals("null")) {
+            status = "";
+          }
+          if (manufactured.equals("null")) {
+            manufactured = "";
+          }
+          String trkid = String.valueOf(batchMaterial.get("trkid"));
+          if (trkid == "null") {
+            trkid = null;
+          }
+
+          ITransaction
+              trans =
+              getTransaction(userId, domainId, transType, kioskId, linkedKioskId, reason, status,
+                  now,
+                  materialId, quantity, batch, actualTransDate, trkid);
+          TransactionUtil.setBatchData(trans, batch, expiry, manufacturer, manufactured);
+          transList.add(trans);
         }
-        String status = String.valueOf(batchMaterial.get("mst"));
-        if (status.equals("null")) {
-          status = "";
-        }
-        if (manufactured.equals("null")) {
-          manufactured = "";
-        }
-        ITransaction
-            trans =
-            getTransaction(userId, domainId, transType, kioskId, linkedKioskId, reason, status, now,
-                materialId, quantity, batch, actualTransDate);
-        TransactionUtil.setBatchData(trans, batch, expiry, manufacturer, manufactured);
-        transList.add(trans);
-      }
+    }
 
       List<ITransaction> errors = inventoryManagementService.updateInventoryTransactions(domainId, transList, true).getErrorTransactions();
       if (errors != null && errors.size() > 0) {
@@ -665,7 +698,7 @@ public class TransactionsController {
   private ITransaction getTransaction(String userId, Long domainId, String transType, Long kioskId,
                                       Long linkedKioskId, String reason, String matStatus, Date now,
                                       Long materialId, BigDecimal quantity, String batch,
-                                      Date actualTransDate) {
+                                      Date actualTransDate, String trkid) {
     ITransaction trans = JDOUtils.createInstance(ITransaction.class);
     trans.setDomainId(domainId);
     trans.setKioskId(kioskId);
@@ -681,6 +714,12 @@ public class TransactionsController {
     trans.setAtd(actualTransDate);
     if (linkedKioskId != null) {
       trans.setLinkedKioskId(linkedKioskId);
+    }
+    trans.setTrackingId(trkid);
+    if (ITransaction.TYPE_RETURNS_INCOMING.equals(transType)) {
+      trans.setTrackingObjectType(ITransaction.TYPE_ISSUE_TRANSACTION);
+    } else if (ITransaction.TYPE_RETURNS_OUTGOING.equals(transType)) {
+      trans.setTrackingObjectType(ITransaction.TYPE_RECEIPT_TRANSACTION);
     }
     transDao.setKey(trans);
     return trans;

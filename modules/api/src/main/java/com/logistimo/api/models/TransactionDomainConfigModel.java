@@ -27,6 +27,7 @@ import com.logistimo.api.models.configuration.ReasonConfigModel;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by mohan raja on 23/11/14
@@ -45,6 +46,9 @@ public class TransactionDomainConfigModel {
   public String atdp;
   public String atdw;
   public String atdt;
+  public String atdri;
+  public String atdro;
+  public Map<String,String> atdc;
 
   class ReasonWrapper {
     String type;

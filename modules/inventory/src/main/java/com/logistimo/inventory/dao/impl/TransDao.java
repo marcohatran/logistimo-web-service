@@ -98,7 +98,7 @@ public class TransDao implements ITransDao {
                                           Long linkedKioskId, String kioskTag,
                                           String materialTag, List<Long> kioskIds,
                                           PageParams pageParams, String bid, boolean atd,
-                                          String reason, List<String> excludeReasons,
+                                          String reason, List<String> excludeReasons, boolean onlyWithoutLkid,
                                           PersistenceManager pm) {
 
     PersistenceManager localpm;
@@ -113,7 +113,7 @@ public class TransDao implements ITransDao {
     try {
       QueryParams queryParams = buildTransactionsQuery(sinceDate, untilDate, domainId,
           kioskId, materialId, transTypes, linkedKioskId, kioskTag, materialTag, kioskIds,
-          bid, atd, reason, excludeReasons);
+          bid, atd, reason, excludeReasons, onlyWithoutLkid);
       StringBuilder sqlQuery = new StringBuilder(queryParams.query);
       final String orderBy = " ORDER BY T DESC";
       String limitStr = null;
@@ -165,7 +165,7 @@ public class TransDao implements ITransDao {
                                             Long linkedKioskId, String kioskTag,
                                             String materialTag, List<Long> kioskIds, String bid,
                                             boolean atd, String reason,
-                                            List<String> excludeReasons) {
+                                            List<String> excludeReasons, boolean onlyWithoutLkid) {
 
     List<String> parameters = new ArrayList<>(1);
     StringBuilder sqlQuery = new StringBuilder("SELECT * FROM TRANSACTION");
@@ -219,6 +219,8 @@ public class TransDao implements ITransDao {
     if (linkedKioskId != null) {
       sqlQuery.append(" AND LKID = ").append(CharacterConstants.QUESTION);
       parameters.add(String.valueOf(linkedKioskId));
+    } else if (onlyWithoutLkid) {
+      sqlQuery.append(" AND LKID IS NULL ");
     }
     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     if (sinceDate != null) {
