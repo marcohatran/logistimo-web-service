@@ -1268,3 +1268,4 @@ default.country=Veuillez choisir le pays par défaut pour que le domaine active 
 asset.dashboard.help=% des actifs qui sont dans un état de fonctionnement ou autre dans une juridiction donnée. Seuls les actifs associés à une entité sont pris en compte.
 view.inventory.assets=Afficher l'inventaire et les actifs
 config.enter.returns.issues=Entrez les retours avec des problèmes
+sidebar.landing.screen=Barre latérale et écran d'atterrissage
