@@ -54,9 +54,10 @@ import java.util.stream.Collectors;
 public class ReturnsValidator {
 
 
-
-  public boolean validateReturnedQuantity(List<ReturnsItemVO> returnItemList, List<FulfilledQuantityModel> shipmentList, List<HandlingUnitModel>
-      handlingUnitModelList){
+  public boolean validateReturnedQuantity(List<ReturnsItemVO> returnItemList,
+                                          List<FulfilledQuantityModel> shipmentList,
+                                          List<HandlingUnitModel>
+                                              handlingUnitModelList) {
 
     if (CollectionUtils.isEmpty(shipmentList)) {
       throw new InvalidDataException("No order present!");
@@ -66,10 +67,11 @@ public class ReturnsValidator {
 
     Map<Long, BigDecimal> handlingUnits = getHandlingUnitsAsMap(handlingUnitModelList);
 
-
     for (ReturnsItemVO returnsItemVO : returnItemList) {
 
-      Map<String, BigDecimal> fulfilledQuantityByBatches = shipments.get(returnsItemVO.getMaterialId());
+      Map<String, BigDecimal>
+          fulfilledQuantityByBatches =
+          shipments.get(returnsItemVO.getMaterialId());
 
       if (fulfilledQuantityByBatches == null) {
         throw new InvalidDataException("No demand item entry present!!");
@@ -98,7 +100,8 @@ public class ReturnsValidator {
     validateHandlingUnit(handlingUnitQuantity, returnsItemVO.getQuantity());
   }
 
-  private Map<Long, Map<String, BigDecimal>> getShipmentsAsMap(List<FulfilledQuantityModel> shipmentList) {
+  private Map<Long, Map<String, BigDecimal>> getShipmentsAsMap(
+      List<FulfilledQuantityModel> shipmentList) {
     Map<Long, Map<String, BigDecimal>> shipmentItemMap = new HashMap<>();
     shipmentList.forEach(fulfilledQuantityModel -> {
       Long materialId = fulfilledQuantityModel.getMaterialId();
@@ -137,7 +140,7 @@ public class ReturnsValidator {
   }
 
   private Map<Long, BigDecimal> getHandlingUnitsAsMap(List<HandlingUnitModel>
-                                                               handlingUnitModelList) {
+                                                          handlingUnitModelList) {
     if (CollectionUtils.isNotEmpty(handlingUnitModelList)) {
       return handlingUnitModelList.stream().collect(
           Collectors
@@ -146,20 +149,22 @@ public class ReturnsValidator {
     return MapUtils.EMPTY_MAP;
   }
 
-  public void validateReturnsPolicy(Optional<ReturnsConfig> returnsConfig,Long orderFulfillmentTime){
-    if(!returnsConfig.isPresent()){
+  public void validateReturnsPolicy(ReturnsConfig returnsConfiguration, Long orderFulfillmentTime) {
+
+    if (returnsConfiguration.getIncomingDuration().compareTo(0) == 0) {
       return;
     }
-    ReturnsConfig returnsConfiguration=returnsConfig.get();
+    Long
+        incomingDuration =returnsConfiguration.getIncomingDuration() * 24 * 60 * 60 * 1000l;
+    if ((System.currentTimeMillis() - orderFulfillmentTime) > incomingDuration) {
 
-    if((System.currentTimeMillis()-orderFulfillmentTime)>returnsConfiguration.getIncomingDuration()){
-
-      throw new ValidationException("Duration cannot be greater than the duration configuered for returns");
+      throw new ValidationException(
+          "Duration cannot be greater than the duration configuered for returns");
     }
   }
 
   public void validateStatusChange(Status newStatus, Status oldStatus) {
-    if(newStatus==null){
+    if (newStatus == null) {
       throw new InvalidDataException("Status cannot be empty!!");
     }
     if (oldStatus == Status.OPEN && !(newStatus == Status.CANCELLED
@@ -167,13 +172,14 @@ public class ReturnsValidator {
       throw new InvalidDataException("Invalid status");
     } else if (oldStatus == Status.CANCELLED || oldStatus == Status.RECEIVED) {
       throw new InvalidDataException("Status cannot be changed");
-    } else if (oldStatus == Status.SHIPPED && (newStatus != Status.RECEIVED || newStatus!=Status.CANCELLED)) {
+    } else if (oldStatus == Status.SHIPPED && (newStatus != Status.RECEIVED
+        || newStatus != Status.CANCELLED)) {
       throw new InvalidDataException("Invalid status");
     }
   }
 
   private boolean hasEntityAccess(Long entityId) throws ServiceException {
-    if(!EntityAuthoriser.authoriseEntity(entityId)){
+    if (!EntityAuthoriser.authoriseEntity(entityId)) {
       throw new UnauthorizedException("No access to entity");
     }
     return true;
@@ -187,8 +193,9 @@ public class ReturnsValidator {
             returnsVO.getVendorId())) || (
         statusModel.getStatus() == Status.CANCELLED && (hasEntityAccess(
             returnsVO.getVendorId()) || hasEntityAccess(returnsVO.getCustomerId())) ||
-            (returnsVO.getStatus().getStatus()==Status.SHIPPED && statusModel.getStatus()==Status.CANCELLED && hasEntityAccess(
-            returnsVO.getVendorId())));
+            (returnsVO.getStatus().getStatus() == Status.SHIPPED
+                && statusModel.getStatus() == Status.CANCELLED && hasEntityAccess(
+                returnsVO.getVendorId())));
   }
 
 }

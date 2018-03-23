@@ -179,8 +179,12 @@ public class ReturnsService {
     Optional<ReturnsConfig>
         returnsConfiguration =
         inventoryManagementService.getReturnsConfig(vendorId);
+    if (!returnsConfiguration.isPresent()) {
+      return;
+    }
+
     returnsValidator
-        .validateReturnsPolicy(returnsConfiguration, order.getStatusUpdatedOn().getTime());
+        .validateReturnsPolicy(returnsConfiguration.get(), order.getStatusUpdatedOn().getTime());
 
   }
 
