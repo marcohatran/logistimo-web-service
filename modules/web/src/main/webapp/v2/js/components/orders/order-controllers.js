@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -996,7 +996,18 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                     }
                 }
             });
-            $scope.checkReturn();
+            if($scope.returnPolicyDuration == undefined) {
+                $scope.showLoading();
+                domainCfgService.getReturnConfig($scope.order.vid).then(function(data){
+                    $scope.returnPolicyDuration = data.data.incDur || 0;
+                }).catch(function error(msg) {
+                    $scope.showErrorMsg(msg);
+                }).finally(function () {
+                    $scope.hideLoading();
+                    $scope.checkReturn();
+                });
+            }
+
         }
 
         $scope.saveStatus = function () {
@@ -2000,8 +2011,11 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                 $scope.canReturn = $scope.order.its.some(function (item) {
                     return item.fq > 0;
                 });
-                if($scope.canReturn) {
-                    //todo: get the policy details and validate
+                if($scope.canReturn && $scope.returnPolicyDuration > 0) {
+                    var fulfilDate = string2Date($scope.order.statusUpdateDate, "dd/MM/yyyy HH:mm:ss", "/");
+                    var oneDay = (1000 * 60 * 60 * 24);
+                    var days = Math.round(Math.abs((new Date().getTime() - fulfilDate.getTime()) / (oneDay)));
+                    $scope.canReturn = days <=  $scope.returnPolicyDuration;
                 }
             }
         }
@@ -4161,7 +4175,7 @@ ordControllers.controller('ConsignmentController', ['$scope','returnsService', f
         $scope.sel.selectedRows = [];
         if (newval) {
             for (var i = 0; i < $scope.order.its.length; i++) {
-                if ($scope.order.its[i].q != $scope.order.its[i].isq) {
+                if ($scope.order.its[i].q != $scope.order.its[i].isq || ($scope.canReturn && $scope.order.its[i].fq > 0)) {
                     $scope.sel.selectedRows.push(i);
                 }
             }

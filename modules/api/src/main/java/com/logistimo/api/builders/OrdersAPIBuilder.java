@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -231,6 +231,7 @@ public class OrdersAPIBuilder {
       model.enm = k.getName();
       model.eadd = CommonUtils.getAddress(k.getCity(), k.getTaluk(), k.getDistrict(), k.getState());
       model.cdt = LocalDateUtil.format(o.getCreatedOn(), locale, timezone);
+      model.statusUpdateDate = LocalDateUtil.formatCustom(o.getStatusUpdatedOn(), Constants.DATETIME_FORMAT, timezone);
       model.ubid = o.getUpdatedBy();
       model.src = o.getSrc();
       model.rid = o.getReferenceID();

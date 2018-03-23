@@ -84,7 +84,8 @@ public class ReturnsTransactionHandler {
         buildTransaction(new TransactionModel(userId, domainId, kioskId, linkedKioskId,
             returnsItemBatchVO.getReason(),
             returnsItemBatchVO.getMaterialStatus(),
-            returnsItemBatchVO.getItemId(), returnsItemBatchVO.getQuantity(), source), transaction);
+            returnsItemVo.getMaterialId(), returnsItemBatchVO.getQuantity(), source,
+            returnsItemVo.getReturnsId()), transaction);
         return transaction;
       }).collect(Collectors.toList());
     } else {
@@ -97,13 +98,13 @@ public class ReturnsTransactionHandler {
       buildTransaction(
           new TransactionModel(userId, domainId, kioskId, linkedKioskId, returnsItemVo.getReason(),
               returnsItemVo.getMaterialStatus(),
-              returnsItemVo.getMaterialId(), returnsItemVo.getQuantity(), source), transaction);
+              returnsItemVo.getMaterialId(), returnsItemVo.getQuantity(), source,
+              returnsItemVo.getReturnsId()), transaction);
       return Collections.singletonList(transaction);
     }
   }
 
-  private void buildTransaction(TransactionModel transactionModel,
-                                ITransaction transaction) {
+  private void buildTransaction(TransactionModel transactionModel, ITransaction transaction) {
     transaction.setSrc(transactionModel.getSource());
     transaction.setDomainId(transactionModel.getDomainId());
     transaction.setKioskId(transactionModel.getKioskId());
@@ -114,6 +115,8 @@ public class ReturnsTransactionHandler {
     transaction.setReason(transactionModel.getReason());
     transaction.setMaterialStatus(transactionModel.getMatStatus());
     transaction.setLinkedKioskId(transactionModel.getLinkedKioskId());
+    transaction.setTrackingId(transactionModel.getReturnId().toString());
+    transaction.setTrackingObjectType(ITransaction.TYPE_RETURN);
   }
 
   @Data
@@ -128,5 +131,6 @@ public class ReturnsTransactionHandler {
     Long materialId;
     BigDecimal quantity;
     Integer source;
+    Long returnId;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -258,8 +258,6 @@ public class Transaction implements ITransaction {
       name = messages.getString("transactions.reorder");
     } else if (TYPE_WASTAGE.equals(transType)) {
       name = messages.getString("transactions.wastage");
-    } else if (TYPE_RETURN.equals(transType)) {
-      name = messages.getString("transactions.return");
     } else if (TYPE_TRANSFER.equals(transType)) {
       name = messages.getString("transactions.transfer");
     }

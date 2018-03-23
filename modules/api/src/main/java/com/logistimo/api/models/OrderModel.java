@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -44,7 +44,7 @@ public class OrderModel extends PermissionsModel {
   public String status;
   public String cdt;
   public String udt;
-  public String msg;
+  public String statusUpdateDate;
   public BigDecimal tax;
   public String uid;
   public Long eid;
