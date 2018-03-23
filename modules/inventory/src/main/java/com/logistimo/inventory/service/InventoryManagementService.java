@@ -24,6 +24,7 @@
 package com.logistimo.inventory.service;
 
 import com.logistimo.config.models.DomainConfig;
+import com.logistimo.config.models.ReturnsConfig;
 import com.logistimo.entities.models.LocationSuggestionModel;
 import com.logistimo.inventory.entity.IInvAllocation;
 import com.logistimo.inventory.entity.IInventoryMinMaxLog;
@@ -44,6 +45,7 @@ import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.jdo.PersistenceManager;
 
@@ -488,5 +490,7 @@ public interface InventoryManagementService {
   BigDecimal getUnusableStock(Long kId, Long mId) throws ServiceException;
 
   Long getInvMaterialCount(Long domainId, Long tagId) throws ServiceException;
+
+  Optional<ReturnsConfig> getReturnsConfig(Long entityId);
 
 }

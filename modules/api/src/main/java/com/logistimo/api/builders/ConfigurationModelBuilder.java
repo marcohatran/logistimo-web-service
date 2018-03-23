@@ -1774,24 +1774,4 @@ public class ConfigurationModelBuilder {
     return reasonConfigModel;
   }
 
-  /**
-   * This method returns the Returns configuration model for the specified entity. If the entity is associated with multiple tags, it returns the return
-   * configuration for the first entity tag found.
-   * @param entityId
-   * @return
-   */
-  public ReturnsConfigModel buildReturnsConfigModelForEntity(InventoryConfig inventoryConfig, Long entityId) {
-    if (entityId == null) {
-      throw new IllegalArgumentException("Invalid input parameter while building return configuration: Entity id is not available");
-    }
-    try {
-      IKiosk kiosk = entitiesService.getKiosk(entityId, false);
-      List<String> kioskTags = kiosk.getTags();
-      Optional<ReturnsConfig> returnsConfig = inventoryConfig.getReturnsConfig(kioskTags);
-      return returnsConfig.isPresent() ? buildReturnsConfigModel(returnsConfig.get()) : null;
-    } catch (ServiceException e) {
-      xLogger.warn("Exception while getting entity with id: {0}", entityId, e);
-    }
-    return null;
-  }
 }

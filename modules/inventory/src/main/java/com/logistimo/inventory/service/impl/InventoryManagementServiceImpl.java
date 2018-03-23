@@ -32,6 +32,7 @@ import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.config.models.ConfigurationException;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.InventoryConfig;
+import com.logistimo.config.models.ReturnsConfig;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.QueryConstants;
@@ -74,6 +75,7 @@ import com.logistimo.models.shipments.ShipmentItemBatchModel;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.QueryParams;
 import com.logistimo.pagination.Results;
+import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.DuplicationException;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
@@ -110,6 +112,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -118,6 +121,8 @@ import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import javax.jdo.Transaction;
+
+import static com.logistimo.auth.utils.SecurityUtils.getUserDetails;
 
 
 /**
@@ -134,6 +139,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
       "/s2/api/entities/task/updateentityactivitytimestamps";
   private static final int LOCK_RETRY_COUNT = 25;
   private static final int LOCK_RETRY_DELAY_IN_MILLISECONDS = 2400;
+  public static final String BACKEND_MESSAGES = "BackendMessages";
   private static Set<String> vldTransTypes = new HashSet<>(Arrays.asList(ITransaction.TYPE_ISSUE,
       ITransaction.TYPE_RECEIPT, ITransaction.TYPE_PHYSICALCOUNT, ITransaction.TYPE_TRANSFER,
       ITransaction.TYPE_WASTAGE, ITransaction.TYPE_RETURNS_INCOMING, ITransaction.TYPE_RETURNS_OUTGOING));
@@ -970,7 +976,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
               LockUtil.lock(String.valueOf(kioskId), LOCK_RETRY_COUNT,
                   LOCK_RETRY_DELAY_IN_MILLISECONDS);
           if (!LockUtil.isLocked(lockStatus)) {
-            ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages",
+            ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES,
                 SecurityUtils.getLocale());
             throw new ServiceException(backendMessages.getString("lockinventory.failed"));
           }
@@ -3931,5 +3937,31 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
       in.setUpdatedBy(user);
     }
     in.setUpdatedOn(new Date());
+  }
+
+  public Optional<ReturnsConfig> getReturnsConfig(Long entityId) {
+    if (entityId == null) {
+      throw new IllegalArgumentException(
+          "Invalid input parameter while building return configuration: Entity id is not available");
+    }
+    try {
+      SecureUserDetails sUser = getUserDetails();
+      IKiosk kiosk = entitiesService.getKiosk(entityId, false);
+      Long domainId = kiosk.getDomainId();
+      if (domainId == null) {
+        Locale locale = sUser.getLocale();
+        ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
+        xLogger.severe("Error while fetching Return configuration");
+        throw new InvalidServiceException(
+            backendMessages
+                .getString("Error while fetching return configuration for entity: " + entityId));
+      }
+      DomainConfig dc = DomainConfig.getInstance(domainId);
+      List<String> kioskTags = kiosk.getTags();
+      return dc.getInventoryConfig().getReturnsConfig(kioskTags);
+    } catch (ServiceException e) {
+      xLogger.warn("Exception while getting entity with id: {0}", entityId, e);
+    }
+    return Optional.empty();
   }
 }
