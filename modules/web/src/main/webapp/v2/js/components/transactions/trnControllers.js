@@ -1320,7 +1320,9 @@ trnControllers.controller('transactions.MaterialController', ['$scope','trnServi
                                 if ($scope.reasons.indexOf("") == -1) {
                                     $scope.reasons.splice(0, 0, "");
                                 }
+                                $scope.material.rsns = $scope.reasons;
                                 $scope.material.reason = $scope.defaultReason;
+                                $scope.$parent.showReason = true;
                             }
                         }).catch(function error(msg) {
                             $scope.showErrorMsg(msg);
@@ -1330,6 +1332,7 @@ trnControllers.controller('transactions.MaterialController', ['$scope','trnServi
                             $scope.reasons.splice(0, 0, "");
                         }
                         $scope.material.reason = $scope.defaultReason;
+                        $scope.material.rsns = $scope.reasons;
                     }
                 }
 
@@ -2115,7 +2118,7 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
         };
         function setDefaultReason() {
             angular.forEach($scope.transactions.results, function(transaction){
-                transaction.rrsn = $scope.material.reason;
+                transaction.rrsn = $scope.defReason;
             });
         }
 
