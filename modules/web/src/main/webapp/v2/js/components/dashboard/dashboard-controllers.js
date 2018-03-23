@@ -894,8 +894,8 @@ domainControllers.controller('ViewDashboardController', ['$scope', 'dashboardSer
     }
 ]);
 
-domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$timeout', '$sce', 'dashboardService', 'configService', 'domainCfgService', 'requestContext', '$location', '$window',
-    function ($scope, $timeout, $sce, dashboardService, configService, domainCfgService, requestContext, $location, $window) {
+domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$timeout', '$sce', 'dashboardService', 'configService', 'domainCfgService', 'requestContext', '$location', '$q',
+    function ($scope, $timeout, $sce, dashboardService, configService, domainCfgService, requestContext, $location, $q) {
 
         var mapColors, mapRange, workingPieColors = 0;
 
@@ -905,6 +905,8 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
         $scope.asset = [];
         $scope.at = {mda: [], mna: []};
         $scope.period = "0";
+        const MONITORED_ASSETS = 2;
+        const MONITORING_ASSETS = 1;
 
         function initWatches() {
             $scope.$watch('eTag', function (newVal, oldVal) {
@@ -922,6 +924,7 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
         $scope.applyFilters = function () {
             $scope.toggleFilter('a', false);
             $scope.toggleFilter('e', false);
+            $scope.mapEvent = $scope.status == "0" ? 0 : $scope.status * 1 - 1;
             $scope.setURLParams();
         };
 
@@ -966,7 +969,7 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
             }
             if (checkNotNullEmpty($scope.status)) {
                 $location.$$search['ws'] = $scope.status;
-                if (checkNotNullEmpty($scope.period)) {
+                if (checkNotNullEmpty($scope.period) && $scope.status > 0) {
                     $location.$$search['p'] = $scope.period;
                 }
             }
@@ -979,11 +982,11 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
                 $location.$$search['eet'] = constructModel($scope.excludeTag, false, true).replace(/'/g, '');
             }
 
-            if ($scope.at.mna && $scope.at.mna.length > 0) {
+            if ($scope.mtype == 1 && $scope.at.mna && $scope.at.mna.length > 0) {
                 $location.$$search['at'] = constructModel($scope.at.mna, true).replace(/'/g, '');
             }
 
-            if ($scope.at.mda && $scope.at.mda.length > 0) {
+            if ($scope.mtype == 2 && $scope.at.mda && $scope.at.mda.length > 0) {
                 $location.$$search['at'] = constructModel($scope.at.mda, true).replace(/'/g, '');
             }
 
@@ -1122,11 +1125,7 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
                 }
             }
 
-            if (requestContext.getParam("ws")) {
-                $scope.status = requestContext.getParam("ws");
-            } else {
-                $scope.status = "0";
-            }
+            $scope.status = requestContext.getParam("ws") || "0";
 
             $scope.getDashboardData(filter, level, skipCache);
         };
@@ -1151,7 +1150,6 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
                 mapRange = dconfig.mr;
                 $scope.mr = mapRange;
                 workingPieColors = dconfig.pie.wc;
-                $scope.mapEvent = "0";
                 $scope.initDefaults();
                 initWatches();
             }).catch(function (error) {
@@ -1210,20 +1208,26 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
             });
         };
 
-        function getAssetTypes(type) {
+        function init(){
             $scope.showLoading();
-            domainCfgService.getAssetSysCfg(type).then(function (data) {
-                if (type == 1) {
+            $q.all([getAssetTypes(MONITORING_ASSETS),getAssetTypes(MONITORED_ASSETS)]).then(function(){
+                getLocationMapping();
+            }) .finally(function () {
+                $scope.hideLoading();
+            });
+        }
+
+        function getAssetTypes(type) {
+            return domainCfgService.getAssetSysCfg(type).then(function (data) {
+                if (type == MONITORING_ASSETS) {
                     $scope.monitoringAssets = data.data;
                 } else {
                     $scope.monitoredAssets = data.data;
                 }
             }).catch(function error(msg) {
                 $scope.showErrorMsg(msg);
-            }).finally(function () {
-                $scope.hideLoading();
-            });
-        };
+            })
+        }
 
         $scope.hardRefreshDashboard = function () {
             $scope.initDefaults(true);
@@ -1248,42 +1252,33 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
             "exportEnabled": 1
         };
 
+        function getAssetType() {
+            var assets = [];
+            if($scope.mtype == 1) {
+                assets = checkNotNullEmpty($scope.at.mna) ? $scope.at.mna : [];
+            } else {
+                assets = checkNotNullEmpty($scope.at.mda) ? $scope.at.mda : [];
+            }
+            return assets;
+        }
+
         function constructPie(data, color, pieId, label) {
             var d = [];
             var isOneDataAvailable = false;
             for(var or in data){
                 var dd = data[or];
                 var o = {};
-                var link = "0";
-                if(or == "0") {
-                    o.label = "Working";
-                    o.color = color[0];
-                    link = or;
-                } else if(or == "1") {
-                    o.label = "Under repair";
-                    o.color = color[1];
-                    link = or;
-                } else if (or == "2") {
-                    o.label = "Beyond repair";
-                    o.color = color[2];
-                    link = or;
-                } else if(or == "3") {
-                    o.label = "Condemned";
-                    o.color = color[3];
-                    link = or;
-                } else if(or == "4") {
-                    o.label = "Stand by";
-                    o.color = color[4];
-                    link = or;
-                } else if (or == "5") {
-                    o.label = "Defrosting";
-                    o.color = color[5];
-                    link = or;
+                var link = undefined ;
+                if(or <= 5) {
+                    o.label = $scope.captions[or];
+                    o.color = color[or];
+                    link = or >=1 ? or : 0;
                 } else {
                     o.label = "Others";
                     o.color = "#aaaaaa";
                 }
-                if (($scope.status == 0 && or == $scope.status) || or == $scope.status - 1) {
+                var event = $scope.mapEvent || 0;
+                if (event == link) {
                     o.isSliced = 1;
                 }
                 o.value = dd || 0;
@@ -1292,38 +1287,33 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
                     isOneDataAvailable = true;
                 }
                 o.showValue = o.value > 0 ? 1 : 0;
-                o.link = "JavaScript: angular.element(document.getElementById('cid')).scope().constructMapData('" + link + "');";
+                if(link != undefined) {
+                    o.link = "JavaScript: angular.element(document.getElementById('cid')).scope().constructMapData('" + link + "');";
+                }
                 d.push(o);
             }
-            var subCaption = undefined;
+            var subCaption = "<b>Monitoring type: </b>";
+            subCaption += $scope.mtype == 1 ? "Monitoring assets" : "Monitored assets";
 
             var period = $scope.period;
 
             if (checkNotNullEmpty($scope.eTag)) {
-                subCaption = (checkNullEmpty(subCaption) ? '' : subCaption + ', ') + "<b>" + $scope.resourceBundle.kiosk + " tag(s): </b>" + $scope.eTagText;
+                subCaption = (checkNullEmpty(subCaption) ? '' : subCaption + ',  ') + "<b>" + $scope.resourceBundle.kiosk + " tag(s): </b>" + $scope.eTagText;
             }
             if (checkNotNullEmpty($scope.status) && $scope.status > 0 && checkNotNullEmpty(period)) {
-                subCaption = (checkNullEmpty(subCaption) ? '' : subCaption + ', ') + "<b>Period: </b>" + period + " day(s)";
+                subCaption = (checkNullEmpty(subCaption) ? '' : subCaption + ',  ') + "<b>Period: </b>" + period + " day(s)";
             }
 
-            var assets = [];
-            if($scope.mtype == 1) {
-                assets = $scope.at.mna;
+            var assets = getAssetType();
+            subCaption = (checkNullEmpty(subCaption) ? '' : subCaption + ',  ') + "<b>Asset type: </b>";
+            if(checkNullEmpty(assets)) {
+                subCaption += "All";
             } else {
-                assets = $scope.at.mda;
+                subCaption += constructModel(assets, false, true);
             }
-            if (checkNotNullEmpty(assets) && assets.length > 0) {
-                subCaption = (checkNullEmpty(subCaption) ? '' : subCaption + ', ') + "<b>Asset type: </b>";
-                var first = true;
-                assets.forEach(function (data) {
-                    if (!first) {
-                        subCaption += ", " + data.text;
-                    } else {
-                        subCaption += data.text;
-                        first = false;
-                    }
-                });
-            }
+
+            subCaption = (checkNullEmpty(subCaption) ? '' : subCaption + ',  ') + "<b>Status: </b>";
+            subCaption += $scope.status * 1 == 0 ? "All" : $scope.captions[$scope.status * 1 - 1];
 
             if (pieId == "p1") {
                 $scope.pCaption = "Working assets";
@@ -1334,18 +1324,8 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
 
         function constructPieData(data) {
             if (checkNotNullEmpty(data) && checkNotNullEmpty(data.assetDomain)) {
-                if($scope.status > 0) {
-                    var assetDomainMap = new Object();
-                    var count = 0;
-                    for(var index in data.assetDomain) {
-                        if($scope.status - 1 == index) {
-                            assetDomainMap[index] = data.assetDomain[index];
-                        } else {
-                            count += data.assetDomain[index];
-                        }
-                    }
-                    assetDomainMap[count] = count;
-                    data.assetDomain = assetDomainMap;
+                if($scope.status != 0) {
+                    $scope.mapEvent = $scope.status * 1 - 1;
                 }
                 $scope.pieData = [];
                 $scope.pieOpt = [];
@@ -1441,13 +1421,23 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
                                     filter = $scope.dashboardView.mTyNm + "_" + bd.label;
                                 }
                                 bd.link = "JavaScript: angular.element(document.getElementById('cid')).scope().addFilter('" + filter + "','" + level + "')";
-                            } else if($scope.mrValues.indexOf(event) != -1) {
+                            } else if($scope.mrValues.indexOf(event) != -1 && !$scope.iMan) {
                                 var ws = (parseInt(eventType, 10) + 1).toString();
                                 bd.link = "N-#/assets/all?ws=" + ws;
                                 if(checkNotNullEmpty(kid)) {
                                     bd.link += "&eid=" + kid;
                                 }
-
+                                var asset = '';
+                                    var assets;
+                                    if ($scope.mtype == 1) {
+                                        assets = checkNotNullEmpty($scope.at.mna) ? angular.copy($scope.at.mna) : [];
+                                    } else {
+                                        assets = checkNotNullEmpty($scope.at.mda) ? angular.copy($scope.at.mda) : [];
+                                    }
+                                    if(checkNotNullEmpty(assets)) {
+                                        asset = constructModel(assets, true, true);
+                                        bd.link += "&at=" + asset;
+                                    }
                             }
                             break;
                         }
@@ -1455,7 +1445,7 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
                 }
             }
             $scope.barHeight = bData.length * 20 + 80;
-            $scope.barData = bData;
+            $scope.barData = sortByKeyDesc(bData, 'value');
             $scope.barRange = "";
             if(checkNotNullEmpty(event)) {
                 $scope.barEvent= $scope.mrValues[event];
@@ -1468,30 +1458,25 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
                 return;
             }
             $scope.mloading = true;
-            $scope.caption = '';
-            $scope.subCaption = '';
+            $scope.subCaption = "<b>Monitoring type: </b>";
+            $scope.subCaption += $scope.mtype == 1 ? "Monitoring assets" : "Monitored assets";
             var subData = $scope.dashboardView.asset[event];
-            $scope.caption = $scope.captions[event];
 
             var allSubData = subData;
             var fPeriod = $scope.period == undefined ? "0" : $scope.period;
-            $scope.subCaption += ($scope.subCaption == '' ? '' : ', ') + "<b>Period:</b> " + fPeriod + " day(s)";
+            $scope.subCaption += ($scope.subCaption == '' ? '' : ',  ') + "<b>Period:</b> " + fPeriod + " day(s)";
 
             if (checkNotNullEmpty($scope.eTag)) {
-                $scope.subCaption += ($scope.subCaption == '' ? '' : ', ') + "<b>" + $scope.resourceBundle.kiosk + " tag(s): </b>" + $scope.eTagText;
+                $scope.subCaption += ($scope.subCaption == '' ? '' : ',  ') + "<b>" + $scope.resourceBundle.kiosk + " tag(s): </b>" + $scope.eTagText;
             }
+            $scope.subCaption += ($scope.subCaption == '' ? '' : ',  ') + "<b>Asset Type: </b>";
             if (checkNotNullEmpty($scope.asset)) {
-                $scope.subCaption += ($scope.subCaption == '' ? '' : ', ') + "<b>Asset Type:</b> ";
-                var first = true;
-                $scope.asset.forEach(function(data) {
-                    if(!first) {
-                        $scope.subCaption += ", " + data.text;
-                    } else {
-                        $scope.subCaption += data.text;
-                        first = false;
-                    }
-                });
+                $scope.subCaption += constructModel($scope.asset, false, true);
+            } else {
+                $scope.subCaption += "All";
             }
+            $scope.subCaption = (checkNullEmpty($scope.subCaption ) ? '' : $scope.subCaption ) + ',  ' + "<b>Status: </b>";
+            $scope.subCaption += $scope.captions[event];
             $scope.subCaption = $sce.trustAsHtml($scope.subCaption);
             var addLink = false;
             if ($scope.showSwitch) {
@@ -1611,13 +1596,8 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
                     asset = constructModel(assets, true, true);
                 }
 
-                if(checkNotNullEmpty($scope.status) && $scope.status == "0") {
-                    $scope.period = "0";
-                }
-
-
                 dashboardService.getAssetStatus(filter, $scope.mtype, asset, $scope.includeETag, $scope.excludeETag,
-                    $scope.period, level, skipCache).then(function (data) {
+                    $scope.period, $scope.status, level, skipCache).then(function (data) {
                         if (typeof loadDashboardFusionMaps === "function") {
                             $scope.showMap = true;
                             $scope.showSwitch = true;
@@ -1642,10 +1622,9 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
                             $scope.mapData = [];
                         }
                         $scope.links.push({filter: filter, text: linkText, level: level});
-
                         constructPieData($scope.dashboardView);
-                        $scope.mapEvent = $scope.status == 0 ? $scope.status : $scope.status - 1;
-                        $scope.constructMapData($scope.mapEvent, true);
+                        var event = $scope.mapEvent || 0;
+                        $scope.constructMapData(event, true);
                     }).catch(function error(msg) {
                         $scope.showErrorMsg(msg);
                     }).finally(function () {
@@ -1654,12 +1633,6 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
                     });
             }
         };
-
-        function init() {
-            getAssetTypes(1);
-            getAssetTypes(2);
-            getLocationMapping();
-        }
 
         init();
     }]);

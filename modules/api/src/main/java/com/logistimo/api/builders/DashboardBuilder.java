@@ -57,6 +57,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -567,16 +568,17 @@ public class DashboardBuilder {
     return null;
   }
 
-  public AssetDashboardModel getAssetDashboardData(ResultSet assetRes, String colFilter)
+  public AssetDashboardModel getAssetDashboardData(ResultSet assetRes, ResultSet assetOverallRes, String colFilter)
       throws SQLException {
     AssetDashboardModel model = new AssetDashboardModel();
     model.setAsset(constructAssetData(assetRes, colFilter));
-    model.setAssetDomain(addAssetDetailData(model.getAsset()));
+    model.setAssetDomain(addAssetDetailData(model.getAsset(), assetOverallRes));
     return model;
   }
 
   private Map<String, Long> addAssetDetailData(
-      Map<String, Map<String, DashboardChartModel>> assets) {
+      Map<String, Map<String, DashboardChartModel>> assets, ResultSet assetOverallRes)
+      throws SQLException {
     Map<String, Long> data = new HashMap<>();
     Long denominator = 0l;
     for (Map.Entry<String, Map<String, DashboardChartModel>> entry : assets.entrySet()) {
@@ -586,6 +588,17 @@ public class DashboardBuilder {
       }
       denominator = denominator + statusCount;
       data.put(entry.getKey(), statusCount);
+    }
+    if(assetOverallRes != null) {
+      long count = 0l;
+      while (assetOverallRes.next()) {
+        count = count + Long.parseLong(assetOverallRes.getString("COUNT"));
+      }
+      Optional<String> key = data.keySet().stream().findFirst();
+      if(key.isPresent()) {
+        count = count - data.get(key.get());
+      }
+      data.put("Others", count);
     }
 
     for (Map<String, DashboardChartModel> model : assets.values()) {

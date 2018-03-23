@@ -1265,7 +1265,9 @@ config.returns.policy.returns.outgoing.duration=Durée du retour sortant
 monitoring.type=Type de surveillance
 by.location=Par emplacement
 default.country=Veuillez choisir le pays par défaut pour que le domaine active les tableaux de bord.
-return.quantity=Quantité de retour
+asset.dashboard.help=% des actifs qui sont dans un état de fonctionnement ou autre dans une juridiction donnée. Seuls les actifs associés à une entité sont pris en compte.
+view.inventory.assets=Afficher l'inventaire et les actifs
+config.enter.returns.issues=Entrez les retours avec des problèmesreturn.quantity=Quantité de retour
 cannot.exceed.issued.quantity=ne peut pas dépasser la quantité émise
 cannot.exceed.received.quantity=ne peut pas dépasser la quantité reçue
 choose.transactions=Choisissez les transactions

@@ -118,7 +118,7 @@
                     <div ng-show="tempEnabled"
                          class="col-sm-offset-3 col-sm-6">
                         <h4 class="text-center mb0">{{pCaption}} <span
-                                uib-tooltip="% of assets that are in a particular state - working, under repair, beyond repair and so on."
+                                uib-tooltip="{{resourceBundle['asset.dashboard.help']}}"
                                 style="display: inline" class="litetext glyphicons glyphicons-info-sign"></span>
                 <span uib-tooltip="Filters" ng-click="toggleFilter('a')"
                       class="glyphicons glyphicons-filter codegray pull-right" style="cursor: pointer;"></span>
@@ -172,14 +172,14 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="row pb10" ng-hide="isUndef(status) || status == 0">
+                            <div class="row pb10" ng-hide="isUndef(status) || status == '0'">
                                 <div class="col-sm-12">
                                     <label class="col-sm-4 noLRpad control-label cbx">{{resourceBundle['period.since']}}</label>
 
                                     <div class="col-sm-8 noLRpad lPad5">
                                         <select ng-model="period" class="form-control">
                                             <option value="0">Now</option>
-                                            <option value="7">7 day</option>
+                                            <option value="7">7 days</option>
                                             <option value="15">15 days</option>
                                             <option value="30">30 days</option>
                                             <option value="60">60 days</option>
@@ -210,8 +210,8 @@
         </div>
         <div ng-hide="!tempEnabled" class="box topbox">
             <div ng-if="!mloading" class="row" style="min-height: 700px">
-                <h4 class="text-center mb0">{{caption}}</h4>
-                <div class="litetext text-center" ng-if="subCaption != '&amp;nbsp;'  && status != '0'" ng-bind-html="subCaption"></div>
+                <h4 class="text-center mb0">{{pCaption}}</h4>
+                <div class="litetext text-center" ng-if="subCaption != '&amp;nbsp;'" ng-bind-html="subCaption"></div>
                 <div class="row pt20">
                     <div class="col-sm-offset-3 col-sm-6">
                         <div class="text-center text-bold">{{resourceBundle['by.location']}}
@@ -235,9 +235,9 @@
                                   chart-id="bar1" simple="'true'">
                     </fusion-chart>
                     <div ng-if="!showMap" class="text-center">
-                    <span ng-repeat="value in mr[barEvent]" ng-if="!($first)">
-                        <span class="paddinglr5" style="background-color:{{mc[barEvent][$index-1]}}"></span>
-                        <span style="font-size: 80%">&nbsp; {{mr[barEvent][$index-1]}}-{{value}}%</span>
+                    <span ng-repeat="value in mr[mrValues[mapEvent]]" ng-if="!($first)">
+                        <span class="paddinglr5" style="background-color:{{mc[mrValues[mapEvent]][$index-1]}}"></span>
+                        <span style="font-size: 80%">&nbsp; {{mr[mrValues[mapEvent]][$index-1]}}-{{value}}%</span>
                     </span>
                     </div>
                 </div>

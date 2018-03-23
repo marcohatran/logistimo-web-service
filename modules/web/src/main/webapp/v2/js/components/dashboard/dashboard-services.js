@@ -37,7 +37,7 @@ dashboardServices.factory('dashboardService', ['APIService','$q', function (apiS
         getAll: function () {
             return apiService.get('/s2/api/dashboard/all/');
         },
-        getAssetStatus: function(filter, monitoringType, assetType, entityTag, excludeEntityTag, period, level, skipCache) {
+        getAssetStatus: function(filter, monitoringType, assetType, entityTag, excludeEntityTag, period, status, level, skipCache) {
           var url = '';
             if (checkNotNullEmpty(filter)) {
                 url = '?location=' + filter;
@@ -56,6 +56,9 @@ dashboardServices.factory('dashboardService', ['APIService','$q', function (apiS
             }
             if (checkNotNullEmpty(excludeEntityTag)) {
                 url += (url == '' ? '?' : '&') + 'eeTag=' + excludeEntityTag;
+            }
+            if (checkNotNullEmpty(status) && (status * 1) > 0) {
+                url += (url == '' ? '?' : '&') + 'status=' + (status * 1 - 1);
             }
             if (checkNotNullEmpty(period)) {
                 url += (url == '' ? '?' : '&') + 'period=' + period;

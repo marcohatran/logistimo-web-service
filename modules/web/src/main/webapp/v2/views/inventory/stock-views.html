@@ -144,10 +144,7 @@
             </div>
         </div>
         <div class="row action-bar">
-            <export-data mail-id="mailId" export-type="inventory" batch-enabled="true"
-                         entity-id="entity.id" mat-id="material.mId" abn-type="abntype" e-tag="etag" ee-tag="eetag" m-tag="mtag"
-                         abn-dur="dur" location="loc" pdos="pdos"
-                         entity-name="entity.nm" material-name="material.mnm" ebf="ebf" batch-number="bno" rows="numFound"></export-data>
+            <export callback="exportData()"></export>
             <div class="pull-right">
                 <div ng-show="((isUndef(entity.id) && dashBoardEnabled) || isDef(material.mId)) && isUndef(bno) && isUndef(ebf)"
                      ng-map-tab-switch vw="vw">

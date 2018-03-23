@@ -27,7 +27,6 @@
 package com.logistimo.api.util;
 
 
-import com.logistimo.AppFactory;
 import com.logistimo.accounting.entity.IAccount;
 import com.logistimo.accounting.service.IAccountingService;
 import com.logistimo.accounting.service.impl.AccountingServiceImpl;
@@ -73,12 +72,13 @@ import com.logistimo.entities.models.KioskLinkFilters;
 import com.logistimo.entities.models.UserEntitiesModel;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
-import com.logistimo.entity.IJobStatus;
 import com.logistimo.exception.ExceptionUtils;
 import com.logistimo.exception.InvalidDataException;
 import com.logistimo.exception.SystemException;
 import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.exports.BulkExportMgr;
+import com.logistimo.exports.MobileExportAdapter;
+import com.logistimo.exports.util.MobileExportConstants;
 import com.logistimo.inventory.TransactionUtil;
 import com.logistimo.inventory.dao.ITransDao;
 import com.logistimo.inventory.entity.IInvntry;
@@ -112,13 +112,11 @@ import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.impl.PMF;
-import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.tags.TagUtil;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.users.service.impl.UsersServiceImpl;
 import com.logistimo.utils.BigUtil;
-import com.logistimo.utils.JobUtil;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.StringUtil;
 
@@ -165,7 +163,6 @@ public class RESTUtil {
   private static final XLog xLogger = XLog.getLog(RESTUtil.class);
 
   // URLs
-  private static final String EXPORT_URL = "/task/export";
   private static final String TRANSACTIONS = "transactions";
   private static final String INVENTORY = "inventory";
   private static final String ORDERS = "orders";
@@ -173,7 +170,6 @@ public class RESTUtil {
   private static final String MINIMUM_RESPONSE_CODE_TWO = "2";
   private static final short GUI_THEME_FROM_DOMAIN_CONFIGURATION = -1;
 
-  private static ITaskService taskService = AppFactory.get().getTaskService();
 
   @SuppressWarnings("unchecked")
   public static Results getInventoryData(Long kioskId, Locale locale,
@@ -1203,7 +1199,6 @@ public class RESTUtil {
                                                HttpServletResponse resp) throws ProtocolException {
     xLogger.fine("Entered scheduleKioskDataExport");
     Locale locale = null;
-    String timezone;
     String message;
     boolean isValid;
     Long domainId;
@@ -1234,7 +1229,6 @@ public class RESTUtil {
       }
       domainId = u.getDomainId();
       locale = u.getLocale();
-      timezone = u.getTimezone();
     } catch (UnauthorizedException e) {
       message = e.getMessage();
       resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -1257,7 +1251,7 @@ public class RESTUtil {
     reqParamsMap.put(RestConstantsZ.STARTDATE, req.getParameter(RestConstantsZ.STARTDATE));
     reqParamsMap.put(RestConstantsZ.ENDDATE, req.getParameter(RestConstantsZ.ENDDATE));
     ParsedRequest parsedTransExportFilters =
-        parseTransactionsExportFilters(reqParamsMap, backendMessages, timezone);
+        parseTransactionsExportFilters(reqParamsMap, backendMessages);
     if (StringUtils.isNotEmpty(parsedTransExportFilters.errMessage)) {
       message = parsedTransExportFilters.errMessage;
       return getKioskDataExportJsonOutput(locale, false, message);
@@ -1265,61 +1259,55 @@ public class RESTUtil {
     parsedRequest.parsedReqMap.putAll(parsedTransExportFilters.parsedReqMap);
     // Export, if still valid
     Map<String, String> params = new HashMap<>();
-    params.put("action", "be"); // batch export
-    params.put("type", (String) parsedRequest.parsedReqMap.get(RestConstantsZ.TYPE));
-    params.put("domainid", domainId.toString());
-    params.put("sourceuserid", userId);
-    params.put("userids", userId);
-    params.put("kioskid", parsedRequest.parsedReqMap.get(RestConstantsZ.KIOSK_ID).toString());
+    params.put(MobileExportConstants.EXPORT_TYPE_KEY,
+        (String) parsedRequest.parsedReqMap.get(RestConstantsZ.TYPE));
+    params.put(MobileExportConstants.DOMAIN_ID_KEY, domainId.toString());
+    params.put(MobileExportConstants.KIOSK_ID_KEY,
+        parsedRequest.parsedReqMap.get(RestConstantsZ.KIOSK_ID).toString());
     if (BulkExportMgr.TYPE_TRANSACTIONS
         .equals(parsedRequest.parsedReqMap.get(RestConstantsZ.TYPE))) {
       if (parsedRequest.parsedReqMap.get(RestConstantsZ.ENDDATE) != null) {
-        params.put("to", LocalDateUtil
+        params.put(MobileExportConstants.END_DATE_KEY, LocalDateUtil
             .formatCustom((Date) parsedRequest.parsedReqMap.get(RestConstantsZ.ENDDATE),
-                Constants.DATETIME_FORMAT, null));
+                Constants.DATE_FORMAT_CSV, null));
       }
       if (parsedRequest.parsedReqMap.get(RestConstantsZ.STARTDATE) != null) {
-        params.put("from", LocalDateUtil
+        params.put(MobileExportConstants.FROM_DATE_KEY, LocalDateUtil
             .formatCustom((Date) parsedRequest.parsedReqMap.get(RestConstantsZ.STARTDATE),
-                Constants.DATETIME_FORMAT, null));
+                Constants.DATE_FORMAT_CSV, null));
       } else {
         // Export a year's worth of transactions/orders
         Calendar cal = GregorianCalendar.getInstance();
         cal.add(Calendar.YEAR, -1);
-        params.put("from",
-            LocalDateUtil.formatCustom(cal.getTime(), Constants.DATETIME_FORMAT, null));
+        params.put(MobileExportConstants.FROM_DATE_KEY,
+            LocalDateUtil.formatCustom(cal.getTime(), Constants.DATE_FORMAT_CSV, null));
       }
       if (parsedRequest.parsedReqMap.get(RestConstantsZ.MATERIAL_ID) != null) {
-        params.put("materialid",
+        params.put(MobileExportConstants.MATERIAL_ID_KEY,
             parsedRequest.parsedReqMap.get(RestConstantsZ.MATERIAL_ID).toString());
       }
       if (parsedRequest.parsedReqMap.get(RestConstantsZ.TRANSACTION_TYPE) != null) {
-        params.put("transactiontype",
+        params.put(MobileExportConstants.TRANSACTIONS_TYPE_KEY,
             parsedRequest.parsedReqMap.get(RestConstantsZ.TRANSACTION_TYPE).toString());
       }
     }
-    params.put("emailid", (String) parsedRequest.parsedReqMap.get(RestConstantsZ.EMAIL));
+    params.put(MobileExportConstants.EMAIL_ID_KEY, (String) parsedRequest.parsedReqMap.get(RestConstantsZ.EMAIL));
     if (BulkExportMgr.TYPE_ORDERS.equals(parsedRequest.parsedReqMap.get(RestConstantsZ.TYPE))) {
       // Export a year's worth of transactions/orders
       Calendar cal = GregorianCalendar.getInstance();
       cal.add(Calendar.YEAR, -1);
-      params.put("from",
-          LocalDateUtil.formatCustom(cal.getTime(), Constants.DATETIME_FORMAT, null));
+      params.put(MobileExportConstants.FROM_DATE_KEY,
+          LocalDateUtil.formatCustom(cal.getTime(), Constants.DATE_FORMAT_CSV, null));
 
-      params.put("otype", (String) parsedRequest.parsedReqMap.get(RestConstantsZ.ORDER_TYPE));
-      params.put("orderType", (String) parsedRequest.parsedReqMap.get("orderType"));
+      params.put(MobileExportConstants.ORDER_TYPE_KEY,
+          (String) parsedRequest.parsedReqMap.get(RestConstantsZ.ORDER_TYPE));
+      params.put(MobileExportConstants.ORDERS_SUB_TYPE_KEY,
+          (String) parsedRequest.parsedReqMap.get(MobileExportConstants.ORDERS_SUB_TYPE_KEY));
     }
-    // Get headers to target backend
-    Map<String, String> headers = BulkExportMgr.getExportBackendHeader();
-    // Create a entry in the JobStatus table using JobUtil.createJob method.
-    Long jobId =
-        JobUtil.createJob(domainId, userId, null, IJobStatus.TYPE_EXPORT, params.get("type"),
-            params);
-    params.put("jobid", jobId.toString());
-    // Schedule task
     try {
-      taskService.schedule(ITaskService.QUEUE_EXPORTER, EXPORT_URL, params, headers,
-          ITaskService.METHOD_POST, domainId, userId, "EXPORT_KIOSK");
+
+      MobileExportAdapter exportAdapter = StaticApplicationContext.getBean(MobileExportAdapter.class);
+      exportAdapter.buildExportRequest(params);
       message =
           "Successfully scheduled export, data will be sent to email address \""
               + parsedRequest.parsedReqMap.get(RestConstantsZ.EMAIL)
@@ -1734,6 +1722,17 @@ public class RESTUtil {
       String[] kioskTags = TagUtil.getTagsArray(dc.getKioskTags());
       if (kioskTags != null) {
         config.put(JsonTagsZ.ENTITY_TAG, Arrays.asList(kioskTags));
+      }
+
+
+      // Add default material tags, if configured in the domain
+      String[] defaultMaterialTags = TagUtil.getTagsArray(dc.getDashboardConfig().getDbOverConfig().dmtg);
+      if (defaultMaterialTags != null) {
+        Hashtable<String, Object>
+            configDB =
+            new Hashtable<>();
+        configDB.put(JsonTagsZ.DEFAULT_MATERIAL_TAGS, Arrays.asList(defaultMaterialTags));
+        config.put(JsonTagsZ.DASHBOARD, configDB);
       }
       // Returns policy configuration
       List<ReturnsConfig> returnsConfigs = dc.getInventoryConfig().getReturnsConfig();
@@ -2346,8 +2345,7 @@ public class RESTUtil {
 
   private static ParsedRequest parseTransactionsExportFilters(
       Map<String, String> reqParamsMap,
-      ResourceBundle backendMessages,
-      String timezone) {
+      ResourceBundle backendMessages) {
     ParsedRequest parsedRequest = new ParsedRequest();
     if (reqParamsMap == null || reqParamsMap.isEmpty()) {
       return parsedRequest;
@@ -2356,8 +2354,8 @@ public class RESTUtil {
     Date endDate = new Date();
     if (StringUtils.isNotEmpty(endDateStr)) {
       try {
-        endDate = LocalDateUtil.parseCustom(endDateStr,Constants.DATE_FORMAT,timezone);
-        parsedRequest.parsedReqMap.put(RestConstantsZ.ENDDATE, endDate);
+        endDate = LocalDateUtil.parseCustom(endDateStr,Constants.DATE_FORMAT,null);
+        parsedRequest.parsedReqMap.put(RestConstantsZ.ENDDATE,endDate);
       } catch (ParseException pe) {
         parsedRequest.errMessage = backendMessages.getString("error.invalidenddate");
         xLogger.severe("Exception while parsing end date {0}: ",
@@ -2371,8 +2369,8 @@ public class RESTUtil {
     Date startDate = null;
     if (StringUtils.isNotEmpty(startDateStr)) {
       try {
-        startDate = LocalDateUtil.parseCustom(startDateStr, Constants.DATE_FORMAT, timezone);
-        parsedRequest.parsedReqMap.put(RestConstantsZ.STARTDATE, startDate);
+        startDate = LocalDateUtil.parseCustom(startDateStr, Constants.DATE_FORMAT, null);
+        parsedRequest.parsedReqMap.put(RestConstantsZ.STARTDATE,startDate);
       } catch (ParseException pe) {
         parsedRequest.errMessage = backendMessages.getString("error.notvalidstartdate");
         xLogger.severe("Exception while parsing start date {0}: ", startDateStr, pe);

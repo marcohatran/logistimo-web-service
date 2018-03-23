@@ -41,10 +41,7 @@
                 </div>
                 <div class="row action-bar">
                     <div class="col-sm-12">
-                        <export-data mail-id="mailId" batch-enabled="true"
-                                     entity-id="entityId"
-                                     mat-id="mid" entity-name="entity.nm" m-name="material.mnm"
-                                     ebf="ebf" export-type="inventory" rows="numFound"></export-data>
+                        <export callback="exportData()"></export>
                     </div>
                 </div>
             </div>

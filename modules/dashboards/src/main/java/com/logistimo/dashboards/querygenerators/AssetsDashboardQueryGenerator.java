@@ -24,7 +24,7 @@
 package com.logistimo.dashboards.querygenerators;
 
 import com.logistimo.constants.CharacterConstants;
-import com.logistimo.constants.QueryConstants;
+import com.logistimo.tags.entity.ITag;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -43,7 +43,8 @@ public class AssetsDashboardQueryGenerator {
   private String state;
   private String district;
 
-  private static final String TAG_QUERY = "SELECT ID FROM TAG WHERE NAME IN";
+  private static final String KIOSK_TAG_QUERY = "SELECT KIOSKID FROM KIOSK_TAGS WHERE ID IN(SELECT ID FROM TAG WHERE NAME IN(";
+  private static final String AND_TYPE = ") AND TYPE=";
 
   public AssetsDashboardQueryGenerator withDomainId(Long domainId) {
     this.domainId = domainId;
@@ -113,20 +114,17 @@ public class AssetsDashboardQueryGenerator {
     fromClause.append("LEFT JOIN (SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID = ")
         .append(domainId);
     if (StringUtils.isNotEmpty(includeEntityTags) || StringUtils.isNotEmpty(excludeEntityTags)) {
-      fromClause.append(" AND KIOSKID_OID IN(SELECT KIOSKID FROM KIOSK_TAGS WHERE ID");
 
       if (StringUtils.isNotEmpty(includeEntityTags)) {
-        fromClause.append(QueryConstants.IN).append(CharacterConstants.O_BRACKET).append(TAG_QUERY)
-            .append(CharacterConstants.O_BRACKET)
-            .append(includeEntityTags).append(
-            CharacterConstants.C_BRACKET)
-            .append(CharacterConstants.C_BRACKET);
+        fromClause.append(" AND KIOSKID_OID IN(")
+            .append(KIOSK_TAG_QUERY).append(includeEntityTags)
+            .append(AND_TYPE).append(
+            ITag.KIOSK_TAG).append(CharacterConstants.C_BRACKET);
       } else if (StringUtils.isNotEmpty(excludeEntityTags)) {
-        fromClause.append(" NOT IN")
-            .append(CharacterConstants.O_BRACKET).append(TAG_QUERY)
-            .append(CharacterConstants.O_BRACKET)
-            .append(excludeEntityTags).append(CharacterConstants.C_BRACKET)
-            .append(CharacterConstants.C_BRACKET);
+        fromClause.append(" AND KIOSKID_OID NOT IN(")
+            .append(KIOSK_TAG_QUERY)
+            .append(excludeEntityTags).append(AND_TYPE).append(
+            ITag.KIOSK_TAG).append(CharacterConstants.C_BRACKET);
       }
       fromClause.append(CharacterConstants.C_BRACKET);
     }

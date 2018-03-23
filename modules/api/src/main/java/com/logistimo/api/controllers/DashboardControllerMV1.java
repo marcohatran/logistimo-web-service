@@ -24,6 +24,7 @@
 package com.logistimo.api.controllers;
 
 import com.logistimo.AppFactory;
+import com.logistimo.api.builders.AssetDashboardBuilder;
 import com.logistimo.api.builders.DashboardBuilder;
 import com.logistimo.api.builders.mobile.MobileInvDashboardBuilder;
 import com.logistimo.api.models.AssetDashboardModel;
@@ -81,10 +82,14 @@ public class DashboardControllerMV1 {
   public static final String ALL_ACTIVITY = "all_activity";
   public static final String ALL_INV = "all_inv";
   public static final String INV = "inv";
+  public static final String ASSET = "asset";
+  public static final String STATUS = "status";
+  public static final String PERIOD = "period";
   private static final XLog xLogger = XLog.getLog(DashboardControllerMV1.class);
 
   private IDashboardService dashboardService;
   private DashboardBuilder dashboardBuilder;
+  private AssetDashboardBuilder assetDashboardBuilder;
 
   private MemcacheService memcacheService;
 
@@ -103,6 +108,11 @@ public class DashboardControllerMV1 {
   @Autowired
   public void setDashboardBuilder(DashboardBuilder dashboardBuilder) {
     this.dashboardBuilder = dashboardBuilder;
+  }
+
+  @Autowired
+  public void setAssetDashboardBuilder(AssetDashboardBuilder assetDashboardBuilder) {
+    this.assetDashboardBuilder = assetDashboardBuilder;
   }
 
   @RequestMapping(value = "/inventory", method = RequestMethod.GET)
@@ -437,9 +447,14 @@ public class DashboardControllerMV1 {
     }
     Map<String, String> filters = buildQueryFilters(queryModel);
     level = queryModel.locty;
-    String colFilter = getLocationFilter(level, queryModel);
-    ResultSet assetRes = dashboardService.getMainDashboardResults(domainId, filters, "asset");
-    model = dashboardBuilder.getAssetDashboardData(assetRes, colFilter);
+    String columnFilter = getLocationFilter(level, queryModel);
+    ResultSet assetRes = dashboardService.getMainDashboardResults(domainId, filters, ASSET);
+    ResultSet assetOverallRes = null;
+    if(StringUtils.isNotBlank(filters.get(STATUS))) {
+      Map<String, String> assetsOverAllDashboardFilter = buildQueryFilters(queryModel);
+      assetOverallRes = getAssetsOverAllData(domainId, assetsOverAllDashboardFilter);
+    }
+    model = assetDashboardBuilder.buildAssetDashboardModel(assetRes, assetOverallRes, columnFilter);
     setMapDrillDownLevel(level, location, model, dc, country, state, queryModel);
     model.setUpdatedTime(LocalDateUtil.getFormattedTimeStamp(getGeneratedTime(),
         SecurityUtils.getLocale(), SecurityUtils.getTimezone(), domainId));
@@ -448,6 +463,11 @@ public class DashboardControllerMV1 {
       cache.put(cacheKey, model, 1800); // 30 min expiry
     }
     return model;
+  }
+  private ResultSet getAssetsOverAllData(Long domainId, Map<String, String> filters) {
+      filters.remove(STATUS);
+      filters.remove(PERIOD);
+      return dashboardService.getMainDashboardResults(domainId, filters, ASSET);
   }
 
   private void setMapDrillDownLevel(@RequestParam(required = false) String level,
@@ -515,7 +535,7 @@ public class DashboardControllerMV1 {
       cacheKey += CharacterConstants.UNDERSCORE + model.incetags;
     }
     if (StringUtils.isNotEmpty(model.exetags)) {
-      cacheKey += CharacterConstants.UNDERSCORE + model.exetags;
+      cacheKey += CharacterConstants.UNDERSCORE + "E" + model.exetags;
     }
     if (StringUtils.isNotBlank(model.date)) {
       cacheKey += CharacterConstants.UNDERSCORE + model.date;
