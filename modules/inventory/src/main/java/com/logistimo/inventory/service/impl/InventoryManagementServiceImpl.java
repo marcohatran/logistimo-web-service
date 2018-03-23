@@ -122,7 +122,6 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import javax.jdo.Transaction;
 
-import static com.logistimo.auth.utils.SecurityUtils.getUserDetails;
 
 
 /**
@@ -3945,7 +3944,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
           "Invalid input parameter while building return configuration: Entity id is not available");
     }
     try {
-      SecureUserDetails sUser = getUserDetails();
+      SecureUserDetails sUser = SecurityUtils.getUserDetails();
       IKiosk kiosk = entitiesService.getKiosk(entityId, false);
       Long domainId = kiosk.getDomainId();
       if (domainId == null) {
