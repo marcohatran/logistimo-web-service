@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -235,6 +235,8 @@ public class DemandModel implements Comparable<DemandModel> {
    * Fulfilled quantity
    */
   public BigDecimal fq;
+
+  public BigDecimal returnedQuantity;
   /**
    * Shipment id and quantity
    */

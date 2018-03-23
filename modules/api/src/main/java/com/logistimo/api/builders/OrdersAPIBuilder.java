@@ -657,9 +657,7 @@ public class OrdersAPIBuilder {
         showStocks =
         IOrder.PENDING.equals(order.getStatus()) || IOrder.CONFIRMED.equals(order.getStatus())
             || IOrder.BACKORDERED.equals(order.getStatus());
-    boolean isReturnsAllowed =
-        IOrder.BACKORDERED.equals(order.getStatus()) || IOrder.COMPLETED.equals(order.getStatus())
-            || IOrder.FULFILLED.equals(order.getStatus());
+    boolean isReturnsAllowed = IOrder.FULFILLED.equals(order.getStatus());
     boolean showVendorStock = dc.autoGI() && order.getServicingKiosk() != null;
 
     if (order.getServicingKiosk() != null) {
@@ -856,6 +854,7 @@ public class OrdersAPIBuilder {
         //itemModel.mst = item.getMaterialStatus();
         itemModel.rq = item.getRecommendedOrderQuantity();
         itemModel.fq = item.getFulfilledQuantity();
+        itemModel.returnedQuantity = item.getReturnedQuantity();
         itemModel.oastk = BigDecimal.ZERO;
         itemModel.astk = BigDecimal.ZERO;
         itemModel.tm = m.isTemperatureSensitive();
@@ -947,6 +946,7 @@ public class OrdersAPIBuilder {
                 allocatedStock = allocatedStock.add(batchModel.q);
                 batches.add(batchModel);
               }
+              addReceivedQuantity(batches);
             }
           } else {
             if (fReasons != null) {
@@ -1011,6 +1011,10 @@ public class OrdersAPIBuilder {
       model.its = modelItems;
     }
     return model;
+  }
+
+  private void addReceivedQuantity(Set<DemandItemBatchModel> batches) {
+
   }
 
   private ShipmentItemBatchModel getShipmentItemBatchBD(String shipmentID,

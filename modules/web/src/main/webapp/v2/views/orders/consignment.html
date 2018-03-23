@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright © 2017 Logistimo.
+  ~ Copyright © 2018 Logistimo.
   ~
   ~ This file is part of Logistimo.
   ~
@@ -61,6 +61,7 @@
                         <th class="text-center col-sm-2" ng-hide="!allocate || isUndef(vendor) || !showStock || !order.atvv">{{resourceBundle['allocated']}}</th>
                         <th class="text-center" ng-hide="isUndef(vendor)" ng-class="{'col-sm-3':order.st == ORDER.COMPLETED || order.st == ORDER.FULFILLED}">{{resourceBundle['shipped']}}</th>
                         <th class="text-center col-sm-3" ng-show="order.st == ORDER.FULFILLED">{{resourceBundle['fulfilled']}}</th>
+                        <!--<th class="text-center col-sm-3" ng-show="order.st == ORDER.FULFILLED && returnsList.length > 0">{{resourceBundle['received']}}</th>-->
                         <th class="text-center" ng-hide="isUndef(vendor) || !showStock || !order.atvv">{{resourceBundle['yet.to.ship']}}</th>
                         <th class="text-center" ng-hide="isUndef(vendor) || !showStock || !order.atvv || !edit.mat">{{resourceBundle['in.shipment']}}(s)</th>
                         <th class="text-center" ng-hide="isUndef(vendor) || !showStock || !order.atvv || !edit.mat">{{resourceBundle['yet.to.createshipment']}}</th>
@@ -258,9 +259,9 @@
                                         <table class="table table-bordered table-order-batch" ng-show="item.bts" style="margin-left: auto; margin-right: auto;">
                                             <thead>
                                             <tr style="font-size: x-small;">
-                                                <th class=" text-center">{{resourceBundle['batch']}}</th>
-                                                <th class=" text-center">{{resourceBundle['expiry']}}</th>
-                                                <th class=" text-center">{{resourceBundle['quantity']}}</th>
+                                                <th class="text-center">{{resourceBundle['batch']}}</th>
+                                                <th class="text-center">{{resourceBundle['expiry']}}</th>
+                                                <th class="text-center">{{resourceBundle['quantity']}}</th>
                                             </tr>
                                             </thead>
                                             <tbody>
@@ -283,6 +284,37 @@
                                 </div>
                             </div>
                         </td>
+                        <!--<td class="text-center pr30" ng-show="order.st == ORDER.FULFILLED && returnsList.length > 0">
+                            <span class="col-sm-8 text-right">{{item.returnedQuantity}}</span>
+                            <span ng-show="item.isBa && item.returnedQuantity > 0"
+                                  class="glyphicons glyphicons-list-alt col-sm-2 pl0  pr0 text-left"
+                                  style="vertical-align:middle;"
+                                  ng-click="toggleBatch('rBDetail',$index)">
+                            </span>
+                            <div ng-if="item.rBDetail">
+                                <div ng-switch on="item.isBa">
+                                    <div ng-switch-when="true">
+                                        <table class="table table-bordered table-order-batch" ng-show="item.returnBatches" style="margin-left: auto; margin-right: auto;">
+                                            <thead>
+                                            <tr style="font-size: x-small;">
+                                                <th class=" text-center">{{resourceBundle['batch']}}</th>
+                                                <th class=" text-center">{{resourceBundle['expiry']}}</th>
+                                                <th class=" text-center">{{resourceBundle['quantity']}}</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            <tr style="font-size: xx-small;" ng-repeat="bi in item.returnBatches"
+                                                ng-hide="isUndef(bi.rq) || bi.rq == 0">
+                                                <td class=" text-center">{{bi.id}}</td>
+                                                <td class=" text-center">{{bi.e}}</td>
+                                                <td class=" text-center">{{bi.rq}</td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>-->
                         <td class="text-center" ng-hide="isUndef(vendor) || !showStock || !order.atvv">{{item.yts}}</td>
                         <td class="text-center" ng-hide="isUndef(vendor) || !showStock || !order.atvv || !edit.mat">{{item.isq}}</td>
                         <td class="text-center" ng-hide="isUndef(vendor) || !showStock || !order.atvv || !edit.mat">{{item.ytcs}}</td>

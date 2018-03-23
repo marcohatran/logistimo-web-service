@@ -2012,9 +2012,9 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                     return item.fq > 0;
                 });
                 if($scope.canReturn && $scope.returnPolicyDuration > 0) {
-                    var fulfilDate = string2Date($scope.order.statusUpdateDate, "dd/MM/yyyy HH:mm:ss", "/");
+                    var fulfilDate = string2Date($scope.order.statusUpdateDate, "dd/MM/yyyy", "/", true);
                     var oneDay = (1000 * 60 * 60 * 24);
-                    var days = Math.round(Math.abs((new Date().getTime() - fulfilDate.getTime()) / (oneDay)));
+                    var days = (new Date().setHours(0,0,0,0) - fulfilDate.getTime()) / oneDay;
                     $scope.canReturn = days <=  $scope.returnPolicyDuration;
                 }
             }
