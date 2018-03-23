@@ -718,13 +718,6 @@ public class InventoryConfig implements Serializable {
     return mtagRetOutRsns != null ? mtagRetOutRsns.get(mtag) : null;
   }
 
-  public Optional<ReturnsConfig> getReturnsConfig(List<String> entityTags) {
-    return returnsConfig.stream()
-        .filter(returnConfig -> entityTags.stream()
-            .anyMatch(tag -> returnConfig.getEntityTags().contains(tag)))
-            .findFirst();
-  }
-
   public JSONObject toJSONObject() throws ConfigurationException {
     try {
       JSONObject json = new JSONObject();
