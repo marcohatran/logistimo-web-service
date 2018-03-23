@@ -23,9 +23,11 @@
 
 package com.logistimo.returns.validators;
 
+import com.logistimo.config.models.ReturnsConfig;
 import com.logistimo.entities.auth.EntityAuthoriser;
 import com.logistimo.exception.InvalidDataException;
 import com.logistimo.exception.UnauthorizedException;
+import com.logistimo.exception.ValidationException;
 import com.logistimo.materials.model.HandlingUnitModel;
 import com.logistimo.returns.Status;
 import com.logistimo.returns.models.UpdateStatusModel;
@@ -42,6 +44,7 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -143,6 +146,18 @@ public class ReturnsValidator {
     return MapUtils.EMPTY_MAP;
   }
 
+  public void validateReturnsPolicy(Optional<ReturnsConfig> returnsConfig,Long orderFulfillmentTime){
+    if(!returnsConfig.isPresent()){
+      return;
+    }
+    ReturnsConfig returnsConfiguration=returnsConfig.get();
+
+    if((System.currentTimeMillis()-orderFulfillmentTime)>returnsConfiguration.getIncomingDuration()){
+
+      throw new ValidationException("Duration cannot be greater than the duration configuered for returns");
+    }
+  }
+
   public void validateStatusChange(Status newStatus, Status oldStatus) {
     if(newStatus==null){
       throw new InvalidDataException("Status cannot be empty!!");
@@ -152,7 +167,7 @@ public class ReturnsValidator {
       throw new InvalidDataException("Invalid status");
     } else if (oldStatus == Status.CANCELLED || oldStatus == Status.RECEIVED) {
       throw new InvalidDataException("Status cannot be changed");
-    } else if (oldStatus == Status.SHIPPED && newStatus != Status.RECEIVED) {
+    } else if (oldStatus == Status.SHIPPED && (newStatus != Status.RECEIVED || newStatus!=Status.CANCELLED)) {
       throw new InvalidDataException("Invalid status");
     }
   }
@@ -171,7 +186,9 @@ public class ReturnsValidator {
         (statusModel.getStatus() == Status.RECEIVED && hasEntityAccess(
             returnsVO.getVendorId())) || (
         statusModel.getStatus() == Status.CANCELLED && (hasEntityAccess(
-            returnsVO.getVendorId()) || hasEntityAccess(returnsVO.getCustomerId())));
+            returnsVO.getVendorId()) || hasEntityAccess(returnsVO.getCustomerId())) ||
+            (returnsVO.getStatus().getStatus()==Status.SHIPPED && statusModel.getStatus()==Status.CANCELLED && hasEntityAccess(
+            returnsVO.getVendorId())));
   }
 
 }

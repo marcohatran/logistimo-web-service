@@ -26,14 +26,16 @@ package com.logistimo.returns.service;
 import com.logistimo.activity.entity.IActivity;
 import com.logistimo.activity.service.ActivityService;
 import com.logistimo.auth.utils.SecurityUtils;
+import com.logistimo.config.models.ReturnsConfig;
 import com.logistimo.conversations.entity.IMessage;
 import com.logistimo.conversations.service.ConversationService;
 import com.logistimo.exception.InvalidDataException;
 import com.logistimo.exception.ValidationException;
-import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.inventory.service.InventoryManagementService;
 import com.logistimo.materials.model.HandlingUnitModel;
 import com.logistimo.materials.service.IHandlingUnitService;
+import com.logistimo.orders.entity.IOrder;
+import com.logistimo.orders.service.OrderManagementService;
 import com.logistimo.orders.service.impl.DemandService;
 import com.logistimo.returns.Status;
 import com.logistimo.returns.transactions.ReturnsTransactionHandler;
@@ -64,6 +66,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.jdo.PersistenceManager;
@@ -102,13 +105,57 @@ public class ReturnsService {
   @Autowired
   IHandlingUnitService handlingUnitService;
 
+  @Autowired
+  OrderManagementService orderManagementService;
+
 
   @Transactional(transactionManager = "transactionManager")
   public ReturnsVO createReturns(ReturnsVO returnsVO) throws ServiceException {
 
     List<ReturnsItemVO> returnsItemVOList = returnsVO.getItems();
+
+    validateQuantity(returnsVO, returnsItemVOList);
+
+    validateReturnsPolicy(returnsVO.getOrderId(),returnsVO.getVendorId());
+
+    Map<Long, BigDecimal> returnedQuantity = new HashMap<>();
+    returnsDao.saveReturns(returnsVO);
+    Long returnId = returnsVO.getId();
+    returnsItemVOList.forEach(returnsItemVO -> {
+      returnsItemVO.setReturnsId(returnId);
+      returnsDao.saveReturnsItems(returnsItemVO);
+      BigDecimal quantity = BigDecimal.ZERO;
+      List<ReturnsItemBatchVO>
+          returnsItemBatchVOList = returnsItemVO.getReturnItemBatches();
+      if (CollectionUtils.isNotEmpty(returnsItemBatchVOList)) {
+        Long itemId = returnsItemVO.getId();
+        quantity = returnsItemBatchVOList.stream().map(returnsItemBatchVO -> {
+          returnsItemBatchVO.setItemId(itemId);
+          returnsDao.saveReturnBatchItems(returnsItemBatchVO);
+          return returnsItemBatchVO.getQuantity();
+        }).reduce(BigDecimal.ZERO, BigDecimal::add);
+        returnsItemVO.setReturnItemBatches(returnsItemBatchVOList);
+      } else {
+        quantity = returnsItemVO.getQuantity();
+      }
+      returnedQuantity.put(returnsItemVO.getMaterialId(), quantity);
+    });
+
+    demandService.updateDemandReturns(returnsVO.getOrderId(), returnedQuantity,false);
+
+    IMessage
+        message =
+        addComment(returnsVO.getId(), returnsVO.getComment(), returnsVO.getCreatedBy(),
+            returnsVO.getSourceDomain());
+    addStatusHistory(returnsVO, null, returnsVO.getStatus().getStatus().toString(), message);
+
+    return returnsVO;
+  }
+
+  private void validateQuantity(ReturnsVO returnsVO, List<ReturnsItemVO> returnsItemVOList)
+      throws ServiceException {
     if (CollectionUtils.isEmpty(returnsItemVOList)) {
-      throw new ValidationException("RT001","Items list cannot be empty!!");
+      throw new ValidationException("RT001", "Items list cannot be empty!!");
       //TODO
     }
     List<Long> materialIdList =
@@ -122,41 +169,19 @@ public class ReturnsService {
         handlingUnitModelList =
         handlingUnitService.getHandlingUnitDataByMaterialIds(materialIdList);
 
-    returnsValidator.validateReturnedQuantity(returnsVO.getItems(), shipmentList, handlingUnitModelList);
+    returnsValidator
+        .validateReturnedQuantity(returnsVO.getItems(), shipmentList, handlingUnitModelList);
+  }
 
+  private void validateReturnsPolicy(Long orderId, Long vendorId) throws ServiceException {
 
-    Map<Long, BigDecimal> returnedQuantity = new HashMap<>();
-    ReturnsVO updatedReturnsVo = returnsDao.saveReturns(returnsVO);
-    Long returnId = updatedReturnsVo.getId();
-    returnsItemVOList.forEach(returnsItemVO -> {
-      returnsItemVO.setReturnsId(returnId);
-      returnsDao.saveReturnsItems(returnsItemVO);
-      BigDecimal quantity = BigDecimal.ZERO;
-      List<ReturnsItemBatchVO>
-          returnsItemBatchVOList = returnsItemVO.getReturnItemBatches();
-      if (CollectionUtils.isNotEmpty(returnsItemBatchVOList)) {
-        Long itemId = returnsItemVO.getId();
-        quantity = returnsItemBatchVOList.stream().map(returnsItemBatchVO -> {
-          returnsItemBatchVO.setItemId(itemId);
-          return returnsDao.saveReturnBatchItems(returnsItemBatchVO).getQuantity();
-        }).reduce(BigDecimal.ZERO,BigDecimal::add);
-        returnsItemVO.setReturnItemBatches(returnsItemBatchVOList);
-      } else {
-        quantity = returnsItemVO.getQuantity();
-      }
-      returnedQuantity.put(returnsItemVO.getMaterialId(), quantity);
-    });
+    IOrder order = orderManagementService.getOrder(orderId);
+    Optional<ReturnsConfig>
+        returnsConfiguration =
+        inventoryManagementService.getReturnsConfig(vendorId);
+    returnsValidator
+        .validateReturnsPolicy(returnsConfiguration, order.getStatusUpdatedOn().getTime());
 
-    demandService.updateDemandReturns(returnsVO.getOrderId(), returnedQuantity);
-//    returnsVO.setItems(returnsItemVOList);
-
-    IMessage
-        message =
-        addComment(returnsVO.getId(), returnsVO.getComment(), returnsVO.getCreatedBy(),
-            returnsVO.getSourceDomain());
-    addStatusHistory(returnsVO, null, returnsVO.getStatus().getStatus().toString(), message);
-
-    return returnsVO;
   }
 
   public List<ReturnsItemVO> getReturnsItem(Long returnId) {
@@ -175,8 +200,9 @@ public class ReturnsService {
     returnsValidator.validateStatusChange(newStatus, oldStatus);
     if (returnsValidator.checkAccessForStatusChange(statusModel, returnsVO)) {
       buildReturns(statusModel, returnsVO, newStatus);
-      returnsVO = returnsDao.updateReturns(returnsVO);
+      returnsDao.updateReturns(returnsVO);
       returnsVO.setItems(getReturnsItem(returnsVO.getId()));
+      updateDemandItems(returnsVO,statusModel.getStatus());
       postTransactions(statusModel, returnsVO);
       IMessage message = null;
       if (StringUtils.isNotBlank(statusModel.getComment())) {
@@ -187,6 +213,24 @@ public class ReturnsService {
       addStatusHistory(returnsVO, oldStatus.toString(), newStatus.toString(), message);
     }
     return returnsVO;
+  }
+
+  private void updateDemandItems(ReturnsVO returnsVO,Status status) {
+    if(status==Status.CANCELLED) {
+      Map<Long, BigDecimal> returnedQuantity = new HashMap<>();
+      returnsVO.getItems().forEach(returnsItemVO -> {
+        BigDecimal quantity = BigDecimal.ZERO;
+        if (returnsItemVO.getReturnItemBatches() != null) {
+          quantity =
+              returnsItemVO.getReturnItemBatches().stream().map(ReturnsItemBatchVO::getQuantity)
+                  .reduce(BigDecimal.ZERO, BigDecimal::add);
+        } else {
+          quantity = returnsItemVO.getQuantity();
+        }
+        returnedQuantity.put(returnsItemVO.getMaterialId(), quantity);
+      });
+      demandService.updateDemandReturns(returnsVO.getOrderId(), returnedQuantity, true);
+    }
   }
 
 
@@ -206,11 +250,7 @@ public class ReturnsService {
       throws ServiceException, DuplicationException {
     if (statusModel.getStatus() == Status.RECEIVED || statusModel.getStatus() == Status.SHIPPED) {
       Long domainId = SecurityUtils.getCurrentDomainId();
-      List<ITransaction>
-          transactionsList =
           new ReturnsTransactionHandler().postTransactions(statusModel, returnsVO, domainId);
-      inventoryManagementService
-          .updateInventoryTransactions(domainId, transactionsList, null, true, false, null);
     }
   }
 

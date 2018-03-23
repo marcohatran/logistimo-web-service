@@ -36,7 +36,6 @@ import com.logistimo.utils.LocalDateUtil;
 import org.modelmapper.ModelMapper;
 
 import java.math.BigInteger;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -62,32 +61,28 @@ public class ReturnsRepository extends Repository {
       "(SELECT KIOSKID FROM USERTOKIOSK UD,KIOSK K WHERE K.KIOSKID=UD.KIOSKID AND UD.USERID=:userId)";
 
 
-  public ReturnsVO saveReturns(ReturnsVO returnsVO) {
+  public void saveReturns(ReturnsVO returnsVO) {
     Returns returns = modelMapper.map(returnsVO, Returns.class);
     returns = super.save(returns);
     returnsVO.setId(returns.getId());
-    return returnsVO;
   }
 
-  public ReturnsVO updateReturns(ReturnsVO returnsVO) {
+  public void updateReturns(ReturnsVO returnsVO) {
     Returns returns = modelMapper.map(returnsVO, Returns.class);
     returns = super.update(returns);
     returnsVO.setId(returns.getId());
-    return returnsVO;
   }
 
-  public ReturnsItemVO saveReturnsItems(ReturnsItemVO returnsItemVO) {
+  public void saveReturnsItems(ReturnsItemVO returnsItemVO) {
     ReturnsItem returnsItem = modelMapper.map(returnsItemVO, ReturnsItem.class);
     returnsItem = super.save(returnsItem);
     returnsItemVO.setId(returnsItem.getId());
-    return returnsItemVO;
   }
 
-  public ReturnsItemBatchVO saveReturnBatchItems(ReturnsItemBatchVO returnsItemBatchVO) {
+  public void saveReturnBatchItems(ReturnsItemBatchVO returnsItemBatchVO) {
     ReturnsItemBatch returnsItemBatch = modelMapper.map(returnsItemBatchVO, ReturnsItemBatch.class);
     returnsItemBatch = super.save(returnsItemBatch);
     returnsItemBatchVO.setId(returnsItemBatch.getId());
-    return returnsItemBatchVO;
   }
 
   public ReturnsVO getReturnsById(Long returnId) {

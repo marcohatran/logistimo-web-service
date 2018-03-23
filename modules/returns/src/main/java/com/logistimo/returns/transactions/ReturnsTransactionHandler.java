@@ -25,13 +25,18 @@ package com.logistimo.returns.transactions;
 
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.inventory.entity.ITransaction;
+import com.logistimo.inventory.service.InventoryManagementService;
 import com.logistimo.returns.Status;
 import com.logistimo.returns.models.UpdateStatusModel;
 import com.logistimo.returns.vo.BatchVO;
 import com.logistimo.returns.vo.ReturnsItemVO;
 import com.logistimo.returns.vo.ReturnsVO;
+import com.logistimo.services.DuplicationException;
+import com.logistimo.services.ServiceException;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -46,9 +51,15 @@ import lombok.Data;
 /**
  * Created by pratheeka on 18/03/18.
  */
+@Component
 public class ReturnsTransactionHandler {
-  public List<ITransaction> postTransactions(UpdateStatusModel statusModel, ReturnsVO returnsVO,
-                                             Long domainId) {
+
+  @Autowired
+  private InventoryManagementService inventoryManagementService;
+
+  public void postTransactions(UpdateStatusModel statusModel, ReturnsVO returnsVO,
+                                             Long domainId)
+      throws DuplicationException, ServiceException {
 
     List<ITransaction> transactionsList = new ArrayList<>();
     Long customerId =
@@ -61,7 +72,10 @@ public class ReturnsTransactionHandler {
         transactionsList.addAll(
             getTransactions(statusModel.getUserId(), domainId, customerId,
                 vendorId, statusModel.getSource(), returnsItemVO, statusModel.getStatus())));
-    return transactionsList;
+
+    inventoryManagementService
+        .updateInventoryTransactions(domainId, transactionsList, null, true, false, null);
+
 
   }
 

@@ -81,7 +81,7 @@ public interface IDemandService {
 
   List<IDemandItem> getDemandItemsWithBatches(Long orderId);
 
-  List<IDemandItem> updateDemandReturns(Long orderId, Map<Long, BigDecimal> returnQuantities);
+  List<IDemandItem> updateDemandReturns(Long orderId, Map<Long, BigDecimal> returnQuantities,boolean decrement);
 
   QueryParams getQueryParams(Long domainId, String oType, Boolean excludeTransfer,
                                        Long kioskId, List<Long> kioskIds, Long materialId,
