@@ -172,8 +172,7 @@ public class ReturnsValidator {
       throw new InvalidDataException("Invalid status");
     } else if (oldStatus == Status.CANCELLED || oldStatus == Status.RECEIVED) {
       throw new InvalidDataException("Status cannot be changed");
-    } else if (oldStatus == Status.SHIPPED && (newStatus != Status.RECEIVED
-        || newStatus != Status.CANCELLED)) {
+    } else if (oldStatus == Status.SHIPPED && (newStatus != Status.RECEIVED && newStatus != Status.CANCELLED)) {
       throw new InvalidDataException("Invalid status");
     }
   }

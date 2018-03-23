@@ -76,7 +76,6 @@ import javax.jdo.PersistenceManager;
  */
 @Service
 @EnableTransactionManagement
-
 public class ReturnsService {
 
 
@@ -107,6 +106,9 @@ public class ReturnsService {
 
   @Autowired
   OrderManagementService orderManagementService;
+
+  @Autowired
+  ReturnsTransactionHandler returnsTransactionHandler;
 
 
   @Transactional(transactionManager = "transactionManager")
@@ -254,7 +256,7 @@ public class ReturnsService {
       throws ServiceException, DuplicationException {
     if (statusModel.getStatus() == Status.RECEIVED || statusModel.getStatus() == Status.SHIPPED) {
       Long domainId = SecurityUtils.getCurrentDomainId();
-          new ReturnsTransactionHandler().postTransactions(statusModel, returnsVO, domainId);
+      returnsTransactionHandler.postTransactions(statusModel, returnsVO, domainId);
     }
   }
 
