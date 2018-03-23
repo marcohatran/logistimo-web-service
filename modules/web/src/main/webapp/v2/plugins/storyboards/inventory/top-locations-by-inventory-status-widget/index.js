@@ -73,6 +73,8 @@ angular.module('logistimo.storyboard.topLocationsByInventoryStatusWidget', [])
                         $scope.locationMapping = angular.fromJson(data.data);
                         setFilters();
                         loadLocationMap();
+                    }else{
+                        $scope.noDataToRender();
                     }
                 });
             };
@@ -123,8 +125,9 @@ angular.module('logistimo.storyboard.topLocationsByInventoryStatusWidget', [])
                 dashboardService.get(undefined, undefined, $scope.exFilter, $scope.exType, $scope.period, undefined,
                     undefined, constructModel(filter.entityTag), fDate, constructModel(filter.exEntityTag),
                     false).then(function (data) {
+                    if(checkNotNullEmpty(data.data)) {
                         $scope.dashboardView = data.data;
-                        if($scope.mapEvent == 'avlbl') {
+                        if ($scope.mapEvent == 'avlbl') {
                             $scope.dashboardView.inv['avlbl'] = getAvailable($scope.dashboardView.inv);
                         }
                         var linkText;
@@ -142,9 +145,11 @@ angular.module('logistimo.storyboard.topLocationsByInventoryStatusWidget', [])
                             $scope.mapData = [];
                         }
                         constructMapData($scope.mapEvent, true, $scope, INVENTORY, $sce, mapRange, mapColors,
-                            invPieOrder, $timeout, true,barColor);
+                            invPieOrder, $timeout, true, barColor);
                         setWidgetData();
+                    }
                     }).catch(function error(msg) {
+                        $scope.noDataToRender();
                         showError(msg, $scope);
                     }).finally(function () {
                         $scope.loading = false;

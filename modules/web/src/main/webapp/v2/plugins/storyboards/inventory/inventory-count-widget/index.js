@@ -78,8 +78,11 @@ angular.module('logistimo.storyboard.inventoryCountWidget', [])
             dashboardService.get(undefined, undefined, $scope.exFilter, $scope.exType, $scope.period, undefined,
                 undefined, constructModel(filter.entityTag), fDate, constructModel(filter.exEntityTag), false).then(
                 function (data) {
-                    getTotalItems(data.data.invDomain);
+                    if(checkNotNullEmpty(data.data.invDomain)) {
+                        getTotalItems(data.data.invDomain);
+                    }
                 }).catch(function error(msg) {
+                    $scope.noDataToRender();
                     $scope.showErrorMsg(msg);
                 }).finally(function () {
                     $scope.hideLoading();
