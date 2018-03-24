@@ -31,12 +31,12 @@ import com.logistimo.exception.BadRequestException;
 import com.logistimo.logger.XLog;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.returns.Status;
-import com.logistimo.returns.models.ReturnsModel;
-import com.logistimo.returns.models.ReturnsUpdateStatusModel;
-import com.logistimo.returns.models.ReturnsUpdateStatusRequestModel;
 import com.logistimo.returns.models.ReturnsFilters;
+import com.logistimo.returns.models.ReturnsModel;
 import com.logistimo.returns.models.ReturnsModels;
 import com.logistimo.returns.models.ReturnsRequestModel;
+import com.logistimo.returns.models.ReturnsUpdateStatusModel;
+import com.logistimo.returns.models.ReturnsUpdateStatusRequestModel;
 import com.logistimo.returns.models.UpdateStatusModel;
 import com.logistimo.returns.service.ReturnsService;
 import com.logistimo.returns.vo.ReturnsVO;
@@ -80,20 +80,20 @@ public class ReturnController {
   ReturnsModel create(@Valid @RequestBody ReturnsRequestModel returnsRequestModel)
       throws ServiceException {
     ReturnsVO returnsVO = returnsBuilder.buildReturns(returnsRequestModel);
-    returnsVO=returnsService.createReturns(returnsVO);
-    return returnsBuilder.buildMobileReturnsModel(returnsVO);
+    returnsVO = returnsService.createReturns(returnsVO);
+    return returnsBuilder.buildReturnsModel(returnsVO);
   }
 
   @RequestMapping(value = "/{returnId}/{status}", method = RequestMethod.POST)
   public
   @ResponseBody
   ReturnsUpdateStatusModel updateStatus(@PathVariable Long returnId,
-                                              @PathVariable String status,
-                                              @RequestBody ReturnsUpdateStatusRequestModel returnsUpdateStatusRequestModel)
+                                        @PathVariable String status,
+                                        @RequestBody ReturnsUpdateStatusRequestModel returnsUpdateStatusRequestModel)
       throws ServiceException, DuplicationException {
-    UpdateStatusModel updateStatusModel=returnsBuilder.buildUpdateStatusModel(returnId,status,
+    UpdateStatusModel updateStatusModel = returnsBuilder.buildUpdateStatusModel(returnId, status,
         returnsUpdateStatusRequestModel);
-    ReturnsVO returnsVO=returnsService.updateReturnsStatus(updateStatusModel);
+    ReturnsVO returnsVO = returnsService.updateReturnsStatus(updateStatusModel);
     return returnsBuilder.buildMobileReturnsUpdateModel(returnsVO, returnsUpdateStatusRequestModel);
   }
 
@@ -101,45 +101,41 @@ public class ReturnController {
   public
   @ResponseBody
   ReturnsModel get(@PathVariable Long returnId) throws ServiceException {
-    ReturnsVO returnsVO=returnsService.getReturnsById(returnId);
-    return returnsBuilder.buildMobileReturnsModel(returnsVO);
+    ReturnsVO returnsVO = returnsService.getReturnsById(returnId);
+    return returnsBuilder.buildReturnsModel(returnsVO);
   }
 
   @RequestMapping(method = RequestMethod.GET)
   public
   @ResponseBody
   ReturnsModels getAll(@RequestParam(required = false) Long customerId,
-                 @RequestParam(required = false) Long vendorId,
-                 @RequestParam(required = false) String status,
-                 @RequestParam(required = false) String startDate,
-                 @RequestParam(required = false) String endDate,
-                 @RequestParam(required = false) Long orderId,
-                 @RequestParam(required = false, defaultValue = PageParams.DEFAULT_SIZE_STR) Integer size,
-                 @RequestParam(required = false, defaultValue = PageParams.DEFAULT_OFFSET_STR) Integer offset
+                       @RequestParam(required = false) Long vendorId,
+                       @RequestParam(required = false) String status,
+                       @RequestParam(required = false) String startDate,
+                       @RequestParam(required = false) String endDate,
+                       @RequestParam(required = false) Long orderId,
+                       @RequestParam(required = false, defaultValue = PageParams.DEFAULT_SIZE_STR) Integer size,
+                       @RequestParam(required = false, defaultValue = PageParams.DEFAULT_OFFSET_STR) Integer offset
   ) throws ServiceException {
     try {
       DomainConfig dc = DomainConfig.getInstance(SecurityUtils.getCurrentDomainId());
-      ReturnsFilters filters = new ReturnsFilters();
-      filters.setCustomerId(customerId);
-      filters.setVendorId(vendorId);
-      filters.setStatus(Status.getStatus(status));
-      if(StringUtils.isNotBlank(startDate)) {
-        filters.setStartDate(
-            LocalDateUtil.parseCustom(startDate, Constants.DATE_FORMAT, dc.getTimezone()));
-      }
-      if(StringUtils.isNotBlank(endDate)) {
-        filters.setEndDate(LocalDateUtil.parseCustom(endDate, Constants.DATE_FORMAT,
-            dc.getTimezone()));
-      }
-      filters.setOrderId(orderId);
-      filters.setOffset(offset);
-      filters.setSize(size);
-      filters.setDomainId(SecurityUtils.getCurrentDomainId());
-      filters.setLimitToUserKiosks(SecurityUtils.isManager());
-      filters.setUserId(SecurityUtils.getUsername());
+      ReturnsFilters filters = ReturnsFilters.builder()
+          .customerId(customerId)
+          .vendorId(vendorId)
+          .status(Status.getStatus(status))
+          .orderId(orderId)
+          .offset(offset)
+          .size(size).domainId(SecurityUtils.getCurrentDomainId())
+          .limitToUserKiosks(SecurityUtils.isManager())
+          .userId(SecurityUtils.getUsername())
+          .startDate(StringUtils.isNotBlank(startDate) ? LocalDateUtil
+              .parseCustom(startDate, Constants.DATE_FORMAT, dc.getTimezone()) : null)
+          .endDate(StringUtils.isNotBlank(endDate) ? LocalDateUtil
+              .parseCustom(endDate, Constants.DATE_FORMAT, dc.getTimezone()) : null)
+          .build();
       List<ReturnsVO> returnsVOs = returnsService.getReturns(filters);
       Long totalCount = returnsService.getReturnsCount(filters);
-      return new ReturnsModels(returnsBuilder.buildMobileReturnsModels(returnsVOs), totalCount);
+      return new ReturnsModels(returnsBuilder.buildReturnsModels(returnsVOs), totalCount);
     } catch (ParseException e) {
       xLogger.severe("Error while parsing date while getting returns on domain {0}",
           SecurityUtils.getCurrentDomainId(), e);

@@ -72,6 +72,11 @@ import com.logistimo.orders.entity.approvals.IOrderApprovalMapping;
 import com.logistimo.orders.models.UpdatedOrder;
 import com.logistimo.orders.service.IDemandService;
 import com.logistimo.pagination.Results;
+import com.logistimo.returns.models.ReturnsFilters;
+import com.logistimo.returns.service.ReturnsService;
+import com.logistimo.returns.vo.ReturnsItemBatchVO;
+import com.logistimo.returns.vo.ReturnsItemVO;
+import com.logistimo.returns.vo.ReturnsVO;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
@@ -87,6 +92,7 @@ import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.CommonUtils;
 import com.logistimo.utils.LocalDateUtil;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -102,6 +108,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 @Component
 public class OrdersAPIBuilder {
@@ -124,6 +131,9 @@ public class OrdersAPIBuilder {
   private IShipmentService shipmentService;
   private IInvntryDao invntryDao;
   private IApprovalsDao approvalsDao;
+
+  @Autowired
+  private ReturnsService returnsService;
 
   @Autowired
   public void setOrderApprovalsService(IOrderApprovalsService orderApprovalsService) {
@@ -752,6 +762,7 @@ public class OrdersAPIBuilder {
     Map<Long, Map<String, BigDecimal>> quantityByBatches = null;
     Map<Long, Map<String, DemandBatchMeta>> fQuantityByBatches = null;
     Map<Long, List<ShipmentItemModel>> fReasons = null;
+    Map<Long, Map<String, BigDecimal>> receivedQuantityByBatches = null;
     if (!showStocks || isReturnsAllowed) {
       quantityByBatches = new HashMap<>();
       for (IShipment shipment : shipments) {
@@ -816,6 +827,9 @@ public class OrdersAPIBuilder {
             }
           }
         }
+      }
+      if(isReturnsAllowed) {
+        receivedQuantityByBatches = getReceivedQuantityByBatches(order.getOrderId());
       }
     }
     List<IDemandItem> items = demandService.getDemandItems(order.getOrderId());
@@ -946,7 +960,15 @@ public class OrdersAPIBuilder {
                 allocatedStock = allocatedStock.add(batchModel.q);
                 batches.add(batchModel);
               }
-              addReceivedQuantity(batches);
+              if(isReturnsAllowed) {
+                final Map<String, BigDecimal> receivedBatchQuantity =
+                    receivedQuantityByBatches.get(item.getMaterialId());
+                for (DemandItemBatchModel batch : batches) {
+                  if(receivedBatchQuantity != null && receivedBatchQuantity.containsKey(batch.id)) {
+                    batch.returnedQuantity = receivedBatchQuantity.get(batch.id);
+                  }
+                }
+              }
             }
           } else {
             if (fReasons != null) {
@@ -1013,8 +1035,37 @@ public class OrdersAPIBuilder {
     return model;
   }
 
-  private void addReceivedQuantity(Set<DemandItemBatchModel> batches) {
-
+  private Map<Long,Map<String, BigDecimal>> getReceivedQuantityByBatches(Long orderId) {
+    final ReturnsFilters f = ReturnsFilters.builder().orderId(orderId).domainId(SecurityUtils.getCurrentDomainId()).build();
+    List<ReturnsVO> returnsVOs =
+        returnsService.getReturns(f);
+    Map<Long,Map<String, BigDecimal>> returnQuantityByBatches = new HashMap<>();
+    for (ReturnsVO returnsVO : returnsVOs) {
+      final List<ReturnsItemVO> returnsItemVOs = returnsService.getReturnsItem(returnsVO.getId());
+      returnsItemVOs.stream()
+          .filter(returnsItemVO -> CollectionUtils.isNotEmpty(returnsItemVO.getReturnItemBatches()))
+          .forEach(returnsItemVO -> {
+            Map<String, BigDecimal> returnQuantityByBatch = returnsItemVO.getReturnItemBatches()
+                .stream()
+                .collect(Collectors
+                    .toMap(b -> b.getBatch().getBatchId(), ReturnsItemBatchVO::getQuantity));
+            if (!returnQuantityByBatches.containsKey(returnsItemVO.getMaterialId())) {
+              returnQuantityByBatches.put(returnsItemVO.getMaterialId(), returnQuantityByBatch);
+            } else {
+              Map<String, BigDecimal> batchQuantityMap =
+                  returnQuantityByBatches.get(returnsItemVO.getMaterialId());
+              for (Map.Entry<String, BigDecimal> entry : returnQuantityByBatch.entrySet()) {
+                if (batchQuantityMap.containsKey(entry.getKey())) {
+                  batchQuantityMap.put(entry.getKey(),
+                      batchQuantityMap.get(entry.getKey()).add(entry.getValue()));
+                } else {
+                  batchQuantityMap.put(entry.getKey(), entry.getValue());
+                }
+              }
+            }
+          });
+    }
+    return returnQuantityByBatches;
   }
 
   private ShipmentItemBatchModel getShipmentItemBatchBD(String shipmentID,

@@ -1006,6 +1006,8 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                     $scope.hideLoading();
                     $scope.checkReturn();
                 });
+            } else {
+                $scope.checkReturn();
             }
 
         }
@@ -2009,13 +2011,13 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
         $scope.checkReturn = function() {
             if ($scope.order.st == ORDER.FULFILLED) {
                 $scope.canReturn = $scope.order.its.some(function (item) {
-                    return item.fq > 0;
+                    return item.fq > 0 && item.returnedQuantity < item.fq;
                 });
                 if($scope.canReturn && $scope.returnPolicyDuration > 0) {
                     var fulfilDate = string2Date($scope.order.statusUpdateDate, "dd/MM/yyyy", "/", true);
-                    var oneDay = (1000 * 60 * 60 * 24);
-                    var days = (new Date().setHours(0,0,0,0) - fulfilDate.getTime()) / oneDay;
-                    $scope.canReturn = days <=  $scope.returnPolicyDuration;
+                    var oneDayInMillis = 1000 * 60 * 60 * 24;
+                    var days =  (new Date().setHours(0, 0, 0, 0) - fulfilDate.getTime()) / oneDayInMillis;
+                    $scope.returnPolicyExpired = days >  $scope.returnPolicyDuration;
                 }
             }
         }

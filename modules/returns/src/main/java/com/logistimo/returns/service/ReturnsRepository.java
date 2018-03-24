@@ -36,7 +36,6 @@ import com.logistimo.utils.LocalDateUtil;
 import org.modelmapper.ModelMapper;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -94,18 +93,15 @@ public class ReturnsRepository extends Repository {
     Map<String, Object> filters = new HashMap<>(1);
     filters.put("returnsId", returnId);
     List<ReturnsItem> returnsItemList = super.findAll("ReturnsItem.findAllByReturnId", filters);
-    List<ReturnsItemVO>
-        returnsItemVOList =
+    List<ReturnsItemVO> returnsItemVOList =
         returnsItemList.stream().map(i -> modelMapper.map(i, ReturnsItemVO.class))
             .collect(Collectors.toList());
     returnsItemVOList.forEach(returnsItem -> {
       filters.clear();
       filters.put("itemId", returnsItem.getId());
-      List<ReturnsItemBatch>
-          returnsItemBatchList =
+      List<ReturnsItemBatch> returnsItemBatchList =
           super.findAll("ReturnsItemBatch.findByItemId", filters);
-      List<ReturnsItemBatchVO>
-          returnsItemBatchVOList =
+      List<ReturnsItemBatchVO> returnsItemBatchVOList =
           returnsItemBatchList.stream().map(i -> modelMapper.map(i, ReturnsItemBatchVO.class))
               .collect(Collectors.toList());
       returnsItem.setReturnItemBatches(returnsItemBatchVOList);
@@ -118,24 +114,18 @@ public class ReturnsRepository extends Repository {
     Map<String, Object> filters = new HashMap<>();
     StringBuilder query = new StringBuilder("select * from `RETURNS` r where ");
     buildQuery(returnsFilters, filters, query);
-    List<Returns>
-        returnsList =
+    List<Returns> returnsList =
         super.findAllByNativeQuery(query.toString(), filters, Returns.class, returnsFilters.getSize(),
             returnsFilters.getOffset());
-    List<ReturnsVO> returnsVOList = new ArrayList<>(returnsList.size());
-    returnsList.forEach(returns -> {
-      ReturnsVO returnsVO = modelMapper.map(returns, ReturnsVO.class);
-      returnsVOList.add(returnsVO);
-    });
-    return returnsVOList;
+    return returnsList.stream().map(returns ->
+        modelMapper.map(returns, ReturnsVO.class)).collect(Collectors.toList());
   }
 
   public Long getReturnsCount(ReturnsFilters returnsFilters){
     Map<String, Object> filters = new HashMap<>();
     StringBuilder query = new StringBuilder("select COUNT(1) from `RETURNS` r where ");
     buildQuery(returnsFilters, filters, query);
-    return
-        ((BigInteger)super.findByNativeQuery(query.toString(), filters)).longValue();
+    return ((BigInteger)super.findByNativeQuery(query.toString(), filters)).longValue();
   }
 
   private void buildQuery(ReturnsFilters returnsFilters, Map<String, Object> filters,

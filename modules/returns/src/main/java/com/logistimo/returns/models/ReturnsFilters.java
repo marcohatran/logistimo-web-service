@@ -23,19 +23,18 @@
 
 package com.logistimo.returns.models;
 
-import com.google.gson.annotations.SerializedName;
-
 import com.logistimo.returns.Status;
 
-import java.sql.Timestamp;
 import java.util.Date;
 
+import lombok.Builder;
 import lombok.Data;
 
 /**
  * Created by pratheeka on 14/03/18.
  */
 @Data
+@Builder
 public class ReturnsFilters {
   private Long customerId;
   private Status status;
@@ -44,8 +43,8 @@ public class ReturnsFilters {
   private Long orderId;
   private Long vendorId;
 
-  private Integer offset;
-  private Integer size;
+  @Builder.Default private Integer offset = 0;
+  @Builder.Default private Integer size = 50;
 
   private Long domainId;
   private boolean limitToUserKiosks;

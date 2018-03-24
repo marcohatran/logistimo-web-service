@@ -27,20 +27,21 @@ import com.logistimo.activity.entity.IActivity;
 import com.logistimo.activity.service.ActivityService;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.config.models.ReturnsConfig;
+import com.logistimo.constants.Constants;
 import com.logistimo.conversations.entity.IMessage;
 import com.logistimo.conversations.service.ConversationService;
-import com.logistimo.exception.InvalidDataException;
+import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exception.ValidationException;
 import com.logistimo.inventory.service.InventoryManagementService;
+import com.logistimo.logger.XLog;
 import com.logistimo.materials.model.HandlingUnitModel;
 import com.logistimo.materials.service.IHandlingUnitService;
-import com.logistimo.orders.entity.IOrder;
 import com.logistimo.orders.service.OrderManagementService;
 import com.logistimo.orders.service.impl.DemandService;
 import com.logistimo.returns.Status;
-import com.logistimo.returns.transactions.ReturnsTransactionHandler;
 import com.logistimo.returns.models.ReturnsFilters;
 import com.logistimo.returns.models.UpdateStatusModel;
+import com.logistimo.returns.transactions.ReturnsTransactionHandler;
 import com.logistimo.returns.validators.ReturnsValidator;
 import com.logistimo.returns.vo.ReturnsItemBatchVO;
 import com.logistimo.returns.vo.ReturnsItemVO;
@@ -51,6 +52,7 @@ import com.logistimo.services.ServiceException;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.shipments.FulfilledQuantityModel;
 import com.logistimo.shipments.service.impl.ShipmentService;
+import com.logistimo.utils.LockUtil;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -78,6 +80,7 @@ import javax.jdo.PersistenceManager;
 @EnableTransactionManagement
 public class ReturnsService {
 
+  private static final XLog xLogger = XLog.getLog(ReturnsService.class);
 
   @Autowired
   private ReturnsValidator returnsValidator;
@@ -86,7 +89,7 @@ public class ReturnsService {
   private DemandService demandService;
 
   @Autowired
-  private ReturnsRepository returnsDao;
+  private ReturnsRepository returnsRepository;
 
   @Autowired
   private ActivityService activityService;
@@ -97,78 +100,88 @@ public class ReturnsService {
   @Autowired
   private InventoryManagementService inventoryManagementService;
 
+  @Autowired
+  private ShipmentService shipmentService;
 
   @Autowired
-  ShipmentService shipmentService;
+  private IHandlingUnitService handlingUnitService;
 
   @Autowired
-  IHandlingUnitService handlingUnitService;
+  private OrderManagementService orderManagementService;
 
   @Autowired
-  OrderManagementService orderManagementService;
-
-  @Autowired
-  ReturnsTransactionHandler returnsTransactionHandler;
+  private ReturnsTransactionHandler returnsTransactionHandler;
 
 
   @Transactional(transactionManager = "transactionManager")
   public ReturnsVO createReturns(ReturnsVO returnsVO) throws ServiceException {
 
-    List<ReturnsItemVO> returnsItemVOList = returnsVO.getItems();
+    LockUtil.LockStatus lockStatus = LockUtil.lock(Constants.TX_O + returnsVO.getOrderId());
+    if (!LockUtil.isLocked(lockStatus)) {
+      throw new InvalidServiceException(new ServiceException("O002", returnsVO.getOrderId()));
+    }
+    try {
+      List<ReturnsItemVO> returnsItemVOList = returnsVO.getItems();
+      validateQuantity(returnsVO, returnsItemVOList);
+      validateReturnsPolicy(returnsVO.getOrderId(), returnsVO.getVendorId());
+      returnsRepository.saveReturns(returnsVO);
+      Map<Long, BigDecimal> quantityByMaterial = saveReturnItems(returnsVO.getId(), returnsItemVOList);
+      demandService.updateDemandReturns(returnsVO.getOrderId(), quantityByMaterial, false);
 
-    validateQuantity(returnsVO, returnsItemVOList);
+      IMessage message = addComment(returnsVO.getId(), returnsVO.getComment(),
+          returnsVO.getCreatedBy(), returnsVO.getSourceDomain());
+      addStatusHistory(returnsVO, null, returnsVO.getStatus().getStatus().toString(), message);
 
-    validateReturnsPolicy(returnsVO.getOrderId(),returnsVO.getVendorId());
+      return returnsVO;
+    } finally {
+      if (LockUtil.shouldReleaseLock(lockStatus) && !LockUtil
+          .release(Constants.TX_O + returnsVO.getOrderId())) {
+        xLogger.warn("Unable to release lock for key {0}", Constants.TX_O + returnsVO.getOrderId());
+      }
+    }
+  }
 
-    Map<Long, BigDecimal> returnedQuantity = new HashMap<>();
-    returnsDao.saveReturns(returnsVO);
-    Long returnId = returnsVO.getId();
+  private Map<Long, BigDecimal> saveReturnItems(Long returnId,
+                                                List<ReturnsItemVO> returnsItemVOList) {
+    Map<Long, BigDecimal> quantityByMaterial = new HashMap<>();
     returnsItemVOList.forEach(returnsItemVO -> {
       returnsItemVO.setReturnsId(returnId);
-      returnsDao.saveReturnsItems(returnsItemVO);
+      returnsRepository.saveReturnsItems(returnsItemVO);
       BigDecimal quantity = BigDecimal.ZERO;
       List<ReturnsItemBatchVO>
           returnsItemBatchVOList = returnsItemVO.getReturnItemBatches();
       if (CollectionUtils.isNotEmpty(returnsItemBatchVOList)) {
         Long itemId = returnsItemVO.getId();
-        quantity = returnsItemBatchVOList.stream().map(returnsItemBatchVO -> {
-          returnsItemBatchVO.setItemId(itemId);
-          returnsDao.saveReturnBatchItems(returnsItemBatchVO);
-          return returnsItemBatchVO.getQuantity();
-        }).reduce(BigDecimal.ZERO, BigDecimal::add);
+        quantity = saveBatchItems(itemId, returnsItemBatchVOList);
         returnsItemVO.setReturnItemBatches(returnsItemBatchVOList);
       } else {
         quantity = returnsItemVO.getQuantity();
       }
-      returnedQuantity.put(returnsItemVO.getMaterialId(), quantity);
+      quantityByMaterial.put(returnsItemVO.getMaterialId(), quantity);
     });
+    return quantityByMaterial;
+  }
 
-    demandService.updateDemandReturns(returnsVO.getOrderId(), returnedQuantity,false);
-
-    IMessage
-        message =
-        addComment(returnsVO.getId(), returnsVO.getComment(), returnsVO.getCreatedBy(),
-            returnsVO.getSourceDomain());
-    addStatusHistory(returnsVO, null, returnsVO.getStatus().getStatus().toString(), message);
-
-    return returnsVO;
+  private BigDecimal saveBatchItems(Long itemId, List<ReturnsItemBatchVO> returnsItemBatchVOList) {
+    return returnsItemBatchVOList.stream().map(returnsItemBatchVO -> {
+      returnsItemBatchVO.setItemId(itemId);
+      returnsRepository.saveReturnBatchItems(returnsItemBatchVO);
+      return returnsItemBatchVO.getQuantity();
+    }).reduce(BigDecimal.ZERO, BigDecimal::add);
   }
 
   private void validateQuantity(ReturnsVO returnsVO, List<ReturnsItemVO> returnsItemVOList)
       throws ServiceException {
     if (CollectionUtils.isEmpty(returnsItemVOList)) {
-      throw new ValidationException("RT001", "Items list cannot be empty!!");
-      //TODO
+      throw new ValidationException("RT001");
     }
-    List<Long> materialIdList =
-        returnsItemVOList.stream().map(ReturnsItemVO::getMaterialId)
+    List<Long> materialIdList = returnsItemVOList.stream().map(ReturnsItemVO::getMaterialId)
             .collect(Collectors.toList());
 
     List<FulfilledQuantityModel> shipmentList =
         shipmentService.getFulfilledQuantityByOrderId(returnsVO.getOrderId(), materialIdList);
 
-    List<HandlingUnitModel>
-        handlingUnitModelList =
+    List<HandlingUnitModel> handlingUnitModelList =
         handlingUnitService.getHandlingUnitDataByMaterialIds(materialIdList);
 
     returnsValidator
@@ -176,53 +189,46 @@ public class ReturnsService {
   }
 
   private void validateReturnsPolicy(Long orderId, Long vendorId) throws ServiceException {
-
-    IOrder order = orderManagementService.getOrder(orderId);
-    Optional<ReturnsConfig>
-        returnsConfiguration =
+    Optional<ReturnsConfig> returnsConfiguration =
         inventoryManagementService.getReturnsConfig(vendorId);
+
     if (!returnsConfiguration.isPresent()) {
       return;
     }
-
-    returnsValidator
-        .validateReturnsPolicy(returnsConfiguration.get(), order.getStatusUpdatedOn().getTime());
+    Date fulfilDate = orderManagementService.getOrder(orderId).getStatusUpdatedOn();
+    returnsValidator.validateReturnsPolicy(returnsConfiguration.get(), fulfilDate.getTime());
 
   }
 
   public List<ReturnsItemVO> getReturnsItem(Long returnId) {
     if (returnId == null) {
-      throw new InvalidDataException("Returns Id cannot be null");
+      throw new ValidationException("RT002");
     }
-    return returnsDao.getReturnedItems(returnId);
+    return returnsRepository.getReturnedItems(returnId);
   }
 
   @Transactional
   public ReturnsVO updateReturnsStatus(UpdateStatusModel statusModel)
       throws ServiceException, DuplicationException {
-    ReturnsVO returnsVO = returnsDao.getReturnsById(statusModel.getReturnId());
+    ReturnsVO returnsVO = returnsRepository.getReturnsById(statusModel.getReturnId());
     Status newStatus = statusModel.getStatus();
     Status oldStatus = returnsVO.getStatus().getStatus();
     returnsValidator.validateStatusChange(newStatus, oldStatus);
     if (returnsValidator.checkAccessForStatusChange(statusModel, returnsVO)) {
       buildReturns(statusModel, returnsVO, newStatus);
-      returnsDao.updateReturns(returnsVO);
+      returnsRepository.updateReturns(returnsVO);
       returnsVO.setItems(getReturnsItem(returnsVO.getId()));
-      updateDemandItems(returnsVO,statusModel.getStatus());
+      updateDemandItems(returnsVO, statusModel.getStatus());
       postTransactions(statusModel, returnsVO);
-      IMessage message = null;
-      if (StringUtils.isNotBlank(statusModel.getComment())) {
-        message =
-            addComment(returnsVO.getId(), statusModel.getComment(), returnsVO.getUpdatedBy(),
+      IMessage message = addComment(returnsVO.getId(), statusModel.getComment(), returnsVO.getUpdatedBy(),
                 returnsVO.getSourceDomain());
-      }
       addStatusHistory(returnsVO, oldStatus.toString(), newStatus.toString(), message);
     }
     return returnsVO;
   }
 
-  private void updateDemandItems(ReturnsVO returnsVO,Status status) {
-    if(status==Status.CANCELLED) {
+  private void updateDemandItems(ReturnsVO returnsVO, Status status) {
+    if (status == Status.CANCELLED) {
       Map<Long, BigDecimal> returnedQuantity = new HashMap<>();
       returnsVO.getItems().forEach(returnsItemVO -> {
         BigDecimal quantity = BigDecimal.ZERO;
@@ -261,13 +267,13 @@ public class ReturnsService {
   }
 
   public ReturnsVO getReturnsById(Long returnId) {
-    ReturnsVO returnsVO = returnsDao.getReturnsById(returnId);
+    ReturnsVO returnsVO = returnsRepository.getReturnsById(returnId);
     returnsVO.setItems(getReturnsItem(returnId));
     return returnsVO;
   }
 
   public List<ReturnsVO> getReturns(ReturnsFilters filters) {
-    return returnsDao.getReturns(filters);
+    return returnsRepository.getReturns(filters);
   }
 
   private void addStatusHistory(ReturnsVO returnVO, String oldStatus, String newStatus,
@@ -285,7 +291,7 @@ public class ReturnsService {
 
   public IMessage addComment(Long returnId, String message, String userId, Long domainId)
       throws ServiceException {
-    if (message != null) {
+    if (StringUtils.isNotBlank(message)) {
       PersistenceManager pm = PMF.get().getPersistenceManager();
       try {
         return conversationService.addMsgToConversation(IActivity.TYPE.RETURNS.name(),
@@ -299,7 +305,7 @@ public class ReturnsService {
   }
 
   public Long getReturnsCount(ReturnsFilters returnsFilters) {
-    return returnsDao.getReturnsCount(returnsFilters);
+    return returnsRepository.getReturnsCount(returnsFilters);
   }
 
 }

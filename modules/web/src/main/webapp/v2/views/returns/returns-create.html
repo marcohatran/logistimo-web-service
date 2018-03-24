@@ -67,11 +67,12 @@
                 <div class="panel-body">
                     <table class="table table-condensed table-hover table-logistimo">
                         <tr>
-                            <th class="col-sm-1 text-center">SI.No.</th>
-                            <th class="col-sm-2 ">Material</th>
-                            <th class="col-sm-1 text-center">Ordered</th>
-                            <th class="col-sm-2 text-center">Fulfilled</th>
-                            <th class="col-sm-5 text-center">Return</th>
+                            <th class="col-sm-1 text-center">{{resourceBundle['serialnum']}}</th>
+                            <th class="col-sm-2 ">{{resourceBundle['material']}}</th>
+                            <th class="col-sm-1 text-center">{{resourceBundle['ordered']}}</th>
+                            <th class="col-sm-1 text-center">{{resourceBundle['fulfilled']}}</th>
+                            <th class="col-sm-1 text-center">{{resourceBundle['returned']}}</th>
+                            <th class="col-sm-6 text-center">{{resourceBundle['return']}}</th>
                         </tr>
                         <tr ng-repeat="item in returnItems">
                             <td class="text-center"><p class="cbx">{{$index + 1}}</p></td>
@@ -84,8 +85,11 @@
                             <td class="text-center">
                                 <p class="cbx">{{item.fq}}</p>
                             </td>
+                            <td class="text-center">
+                                <p class="cbx">{{item.returnedQuantity}}</p>
+                            </td>
                             <td>
-                                <div ng-if="isUndef(item.returnBatches)">
+                                <div ng-if="isUndef(item.returnBatches)" class="col-sm-6 col-sm-offset-3">
                                     <input class="form-control" only-digits ng-model="item.returnQuantity"
                                            id="{{item.id}}{{$index}}"
                                            ng-class="{'red-border':item.invalidPopup}"
@@ -136,18 +140,17 @@
                                     <tr>
                                         <th class=" text-center">{{resourceBundle['batch']}}</th>
                                         <th class=" text-center">{{resourceBundle['expiry']}}</th>
-                                        <th class=" text-center">{{resourceBundle['shipped']}}</th>
                                         <th class=" text-center">{{resourceBundle['fulfilled']}}</th>
+                                        <th class=" text-center">{{resourceBundle['returned']}}</th>
                                         <th class=" text-center">{{resourceBundle['quantity']}}</th>
-                                        <th class=" text-center"></th>
                                     </tr>
                                     </thead>
                                     <tbody>
-                                    <tr ng-repeat="batch in item.returnBatches" ng-hide="isUndef(batch.fq) || batch.fq == 0">
+                                    <tr ng-repeat="batch in item.returnBatches" ng-hide="isUndef(batch.fq) || batch.fq == 0 || batch.fq == batch.returnedQuantity">
                                         <td class=" text-center">{{batch.id}}</td>
                                         <td class=" text-center">{{batch.e}}</td>
-                                        <td class=" text-center">{{batch.q}}</td>
                                         <td class=" text-center">{{batch.fq}}</td>
+                                        <td class=" text-center">{{batch.returnedQuantity || 0}}</td>
                                         <td class=" text-center">
                                             <input class="form-control" only-digits ng-model="batch.returnQuantity"
                                                    id="{{item.id}}{{batch.id}}{{$index}}"

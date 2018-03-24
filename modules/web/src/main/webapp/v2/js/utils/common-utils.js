@@ -171,9 +171,9 @@ function toCSV(tags) {
 function formatDate(date) {
     return checkNotNullEmpty(date) ? date.getDate() + "/" + (date.getMonth() + 1) + "/" + date.getFullYear() : "";
 }
-function string2Date(dateString, format, delimiter, removeTime) {
+function string2Date(dateString, format, delimiter, hasTime) {
     if (checkNotNullEmpty(dateString) && checkNotNullEmpty(format) && checkNotNullEmpty(delimiter)) {
-        if(removeTime) {
+        if(hasTime) {
             dateString = dateString.substring(0,dateString.indexOf(" "));
         }
         format = format.toLowerCase();
