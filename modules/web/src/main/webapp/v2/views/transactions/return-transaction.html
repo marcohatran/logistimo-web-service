@@ -92,7 +92,7 @@
                     </div>
                 </div>
                 <div ng-show="(isUndef(returnitems) || returnitems.length == 0)" class="padding:10px">
-                    <div class="col-sm-12">
+                    <div class="col-sm-12 padding5">
                         <div>
                             <p class=" alert alert-warning mt18">{{resourceBundle['no.returns.to.edit']}}</p>
                         </div>
@@ -186,19 +186,19 @@
                       </tr>
                       </tbody>
                     </table>
-                    <div class="pull-right">
-                      <button ng-click="saveReturnTransactions($index);" class="btn btn-sm btn-primary">{{resourceBundle['save']}}</button>
-                      <button ng-click="toggle($index);" class="btn btn-sm btn-default">{{resourceBundle['close']}}</button>
+                  </div>
+                </div>
+                <div ng-show="transactions.results.length == 0 && !loading" class="row">
+                    <div class="col-sm-12 padding5">
+                        <div>
+                            <p class=" alert alert-warning mt18">{{resourceBundle['transactions.none']}}</p>
+                        </div>
                     </div>
-                  </div>
                 </div>
-            <div ng-show="transactions.results.length == 0 && !loading" class="row">
-                <div class="col-sm-12">
-                  <div>
-                    <p class=" alert alert-warning mt18">{{resourceBundle['transactions.none']}}</p>
-                  </div>
+                <div class="pull-right">
+                    <button ng-disabled="transactions.results.length == 0" ng-click="saveReturnTransactions($index);" class="btn btn-sm btn-primary">{{resourceBundle['save']}}</button>
+                    <button ng-click="toggle($index);" class="btn btn-sm btn-default">{{resourceBundle['close']}}</button>
                 </div>
-            </div>
         </div>
       </div>
     </div>
