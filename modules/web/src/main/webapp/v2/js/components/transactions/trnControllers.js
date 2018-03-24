@@ -1360,7 +1360,7 @@ trnControllers.controller('transactions.MaterialController', ['$scope','trnServi
 
         function fetchBatchDetails() {
             $scope.showLoading();
-            invService.getBatchDetail($scope.material.name.mId, $scope.entity.id, true,undefined).then(function (data) {
+            invService.getBatchDetail($scope.material.name.mId, $scope.transaction.ent.id, true,undefined).then(function (data) {
                 var batchDet = data.data;
                 if (checkNotNullEmpty(batchDet)) {
                     batchDet.forEach(function (det) {
@@ -2037,7 +2037,7 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
         $scope.toDate = undefined;
 
         $scope.returnitems = angular.copy($scope.material.returnitems);
-        domainCfgService.getReturnConfig($scope.entity.id).then(function (data) {
+        domainCfgService.getReturnConfig($scope.transaction.ent.id).then(function (data) {
             $scope.rc = data.data;
             $scope.fetch(true);
         }).catch(function error(msg) {
@@ -2061,13 +2061,13 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
             $scope.exRow = [];
             $scope.loading = true;
             $scope.showLoading();
-            if (checkNullEmpty($scope.entity)) {
+            if (checkNullEmpty($scope.transaction.ent)) {
                 $scope.setData(null);
                 return;
             }
             var eid, mid;
-            if (checkNotNullEmpty($scope.entity)) {
-                eid = $scope.entity.id;
+            if (checkNotNullEmpty($scope.transaction.ent)) {
+                eid = $scope.transaction.ent.id;
             }
             if (checkNotNullEmpty($scope.mid)) {
                 mid = $scope.mid;
