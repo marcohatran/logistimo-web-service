@@ -484,7 +484,6 @@ trnControllers.controller('TransMapCtrl', ['$scope','mapService','uiGmapGoogleMa
 trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibModal','trnService', 'invService', 'domainCfgService', 'entityService','$timeout',
     function ($rootScope,$scope, $uibModal, trnService, invService, domainCfgService, entityService,$timeout) {
         $scope.invalidPopup = 0;
-        // $scope.op = undefined;
         $scope.validate = function (material, index, source) {
             if(!material.isBatch && !material.isBinary) {
                 material.isVisited = material.isVisited || checkNotNullEmpty(source);

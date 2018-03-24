@@ -81,10 +81,10 @@
                                 </span>
                             </a>
                         </script>
-
                         <div ng-show="transaction.type == 'i' || transaction.type == 'ri'" class="col-sm-7">
                             <div class="form-group has-feedback mgh0 mgb0">
                                 <input type="text" ng-model="transaction.dent"
+                                       ng-disabled="transaction.materials.length > 1 && transaction.type == 'ri'"
                                        typeahead-template-url="destTemplate"
                                        typeahead-on-select="checkPermission(transaction.dent)"
                                        autocomplete="off"
@@ -104,6 +104,7 @@
                         <div ng-show="transaction.type == 'r' || transaction.type == 'ro'" class="col-sm-7">
                             <div class="form-group has-feedback mgh0 mgb0">
                                 <input type="text" ng-model="transaction.dent" typeahead-template-url="destTemplate"
+                                       ng-disabled="transaction.materials.length > 1 && transaction.type == 'ro'"
                                        autocomplete="off"
                                        class="form-control"
                                        placeholder="{{entityType}}"
