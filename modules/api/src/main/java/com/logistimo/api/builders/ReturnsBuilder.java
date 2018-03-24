@@ -88,7 +88,7 @@ public class ReturnsBuilder {
   private static final String RETURNS = "returns";
   private static final String ORDER = "order";
 
-  private  ModelMapper modelMapper=new ModelMapper();
+  private ModelMapper modelMapper = new ModelMapper();
 
   @Autowired
   OrderManagementService orderManagementService;
@@ -111,10 +111,11 @@ public class ReturnsBuilder {
   @Autowired
   InventoryManagementService inventoryManagementService;
 
-  public List<ReturnsModel> buildMobileReturnsModels(List<ReturnsVO> returnsVOs) throws ServiceException {
+  public List<ReturnsModel> buildReturnsModels(List<ReturnsVO> returnsVOs)
+      throws ServiceException {
     List<ReturnsModel> returnsModels = new ArrayList<>(returnsVOs.size());
     for (ReturnsVO returnsVO : returnsVOs) {
-      returnsModels.add(buildMobileReturnsModel(returnsVO));
+      returnsModels.add(buildReturnsModel(returnsVO));
     }
     addSourceDomainName(returnsModels);
     return returnsModels;
@@ -129,13 +130,12 @@ public class ReturnsBuilder {
           domainName = domainsService.getDomain(returnsModel.getSourceDomain()).getName();
           domainNames.put(returnsModel.getSourceDomain(), domainName);
         } catch (Exception ignored) {}
-      } else {
-        returnsModel.setSourceDomainName(domainName);
       }
+      returnsModel.setSourceDomainName(domainName);
     }
   }
 
-  public ReturnsModel buildMobileReturnsModel(ReturnsVO returnsVO) throws ServiceException {
+  public ReturnsModel buildReturnsModel(ReturnsVO returnsVO) throws ServiceException {
     ReturnsModel returnsModel = new ReturnsModel();
     returnsModel.setReturnId(returnsVO.getId());
     returnsModel.setOrderId(returnsVO.getOrderId());
@@ -145,12 +145,14 @@ public class ReturnsBuilder {
     returnsModel.setVendor(getEntityModel(returnsVO.getVendorId()));
     returnsModel.setStatus(getStatusModel(returnsVO.getStatus()));
     returnsModel.setCreatedAt(
-        LocalDateUtil.format(returnsVO.getCreatedAt(), SecurityUtils.getLocale(), SecurityUtils.getTimezone()));
+        LocalDateUtil.format(returnsVO.getCreatedAt(), SecurityUtils.getLocale(),
+            SecurityUtils.getTimezone()));
     returnsModel.setCreatedBy(getUserModel(returnsVO.getCreatedBy()));
     returnsModel.setUpdatedAt(
-        LocalDateUtil.format(returnsVO.getUpdatedAt(), SecurityUtils.getLocale(), SecurityUtils.getTimezone()));
+        LocalDateUtil.format(returnsVO.getUpdatedAt(), SecurityUtils.getLocale(),
+            SecurityUtils.getTimezone()));
     returnsModel.setUpdatedBy(getUserModel(returnsVO.getUpdatedBy()));
-    if(returnsVO.getItems()!=null) {
+    if (returnsVO.getItems() != null) {
       returnsModel.setItems(getItemModels(returnsVO.getItems()));
     }
     returnsModel.setSourceDomain(returnsVO.getSourceDomain());
@@ -159,7 +161,6 @@ public class ReturnsBuilder {
 
   public ReturnsVO buildReturns(ReturnsRequestModel returnRequestModel)
       throws ServiceException {
-
     Date now = new Date();
     String username = SecurityUtils.getUsername();
     putItemsMeta(returnRequestModel.getItems(), now, username);
@@ -169,7 +170,7 @@ public class ReturnsBuilder {
     IOrder order = orderManagementService.getOrder(returnRequestModel.getOrderId());
     returnsVO.setCustomerId(order.getKioskId());
     returnsVO.setVendorId(order.getServicingKiosk());
-    if(returnRequestModel.getLocation() != null) {
+    if (returnRequestModel.getLocation() != null) {
       returnsVO.setLocation(getGeoLocation(returnRequestModel.getLocation()));
     }
     returnsVO.setStatus(getReturnsStatus(now, username));
@@ -178,71 +179,70 @@ public class ReturnsBuilder {
     returnsVO.setUpdatedAt(now);
     returnsVO.setUpdatedBy(username);
     returnsVO.setSource(returnRequestModel.getSource());
-    returnsVO.setItems(getItems(returnRequestModel.getItems(), returnsVO.getVendorId(), returnsVO.getCustomerId()));
+    returnsVO.setItems(getItems(returnRequestModel.getItems(), returnsVO.getVendorId(),
+        returnsVO.getCustomerId()));
     returnsVO.setComment(returnRequestModel.getComment());
     return returnsVO;
   }
 
   private GeoLocationVO getGeoLocation(ReturnsRequestModel.Location location) {
-
-    return modelMapper.map(location,GeoLocationVO.class);
+    return modelMapper.map(location, GeoLocationVO.class);
   }
 
   private void putItemsMeta(List<ReturnsItemModel> items, Date now, String username) {
     UserModel userModel = new UserModel();
     userModel.setUserId(username);
-    for (ReturnsItemModel item : items) {
+    items.forEach(item -> {
       item.setUpdatedAt(now);
       item.setUpdatedBy(userModel);
       item.setCreatedAt(now);
       item.setCreatedBy(userModel);
       item.setCreatedBy(userModel);
-    }
+    });
   }
 
-  private List<ReturnsItemVO> getItems(List<ReturnsItemModel> itemModels, Long vendorId, Long customerId) {
-    List<ReturnsItemVO> returnsItems = new ArrayList<>(itemModels.size());
-    for (ReturnsItemModel itemModel : itemModels) {
+  private List<ReturnsItemVO> getItems(List<ReturnsItemModel> itemModels, Long vendorId,
+                                       Long customerId) {
+    return itemModels.stream().map(itemModel -> {
       ReturnsItemVO returnsItem = new ReturnsItemVO();
       returnsItem.setMaterialId(itemModel.getMaterialId());
       returnsItem.setQuantity(itemModel.getReturnQuantity());
       returnsItem.setMaterialStatus(itemModel.getMaterialStatus());
       returnsItem.setReason(itemModel.getReason());
-      if(itemModel.getReceived()!=null) {
+      if (itemModel.getReceived() != null) {
         returnsItem.setReceived(getReturnsReceived(itemModel.getReceived()));
       }
       returnsItem.setCreatedAt(itemModel.getCreatedAt());
       returnsItem.setCreatedBy(itemModel.getCreatedBy().getUserId());
       returnsItem.setUpdatedAt(itemModel.getUpdatedAt());
       returnsItem.setUpdatedBy(itemModel.getUpdatedBy().getUserId());
-      if(itemModel.getBatches()!= null) {
-        returnsItem.setReturnItemBatches(getItemBatches(itemModel.getBatches(), vendorId, customerId, itemModel.getMaterialId()));
+      if (itemModel.getBatches() != null) {
+        returnsItem.setReturnItemBatches(
+            getItemBatches(itemModel.getBatches(), vendorId, customerId,
+                itemModel.getMaterialId()));
       }
-      returnsItems.add(returnsItem);
-    }
-    return returnsItems;
+      return returnsItem;
+    }).collect(Collectors.toList());
   }
 
   private List<ReturnsItemBatchVO> getItemBatches(List<ReturnsItemBatchModel> itemBatchModels,
                                                   Long vendorId, Long customerId, Long materialId) {
-    List<ReturnsItemBatchVO> itemBatches = new ArrayList<>(itemBatchModels.size());
-    for (ReturnsItemBatchModel itemBatchModel : itemBatchModels) {
+    return itemBatchModels.stream().map(itemBatchModel -> {
       ReturnsItemBatchVO itemBatch = new ReturnsItemBatchVO();
       itemBatch.setBatch(getBatch(itemBatchModel, vendorId, customerId, materialId));
       itemBatch.setQuantity(itemBatchModel.getReturnQuantity());
       itemBatch.setMaterialStatus(itemBatchModel.getMaterialStatus());
       itemBatch.setReason(itemBatchModel.getReason());
-      if(itemBatchModel.getReceived()!=null) {
+      if (itemBatchModel.getReceived() != null) {
         itemBatch.setReceived(getReturnsReceived(itemBatchModel.getReceived()));
       }
-      itemBatches.add(itemBatch);
-    }
-    return itemBatches;
+      return itemBatch;
+    }).collect(Collectors.toList());
   }
 
-  private BatchVO getBatch(ReturnsItemBatchModel itemBatchModel, Long vendorId, Long customerId, Long materialId) {
-    IInvntryBatch
-        inventoryBatch;
+  private BatchVO getBatch(ReturnsItemBatchModel itemBatchModel, Long vendorId, Long customerId,
+                           Long materialId) {
+    IInvntryBatch inventoryBatch;
     try {
       inventoryBatch = inventoryManagementService
           .getInventoryBatch(vendorId, materialId, itemBatchModel.getBatchId(), null);
@@ -268,13 +268,12 @@ public class ReturnsBuilder {
   public ReturnsUpdateStatusModel buildMobileReturnsUpdateModel(
       ReturnsVO returns, ReturnsUpdateStatusRequestModel updateStatusModel)
       throws ServiceException {
-    ReturnsUpdateStatusModel returnsUpdateStatusModel =
-        new ReturnsUpdateStatusModel();
+    ReturnsUpdateStatusModel returnsUpdateStatusModel = new ReturnsUpdateStatusModel();
     if (StringUtils.isNotBlank(updateStatusModel.getEmbed())) {
       String[] embedValues = updateStatusModel.getEmbed().split(CharacterConstants.COMMA);
       for (String embedValue : embedValues) {
         if (RETURNS.equals(embedValue)) {
-          returnsUpdateStatusModel.setReturns(buildMobileReturnsModel(returns));
+          returnsUpdateStatusModel.setReturns(buildReturnsModel(returns));
         } else if (ORDER.equals(embedValue)) {
           IOrder order = orderManagementService.getOrder(returns.getOrderId());
           returnsUpdateStatusModel
@@ -290,9 +289,7 @@ public class ReturnsBuilder {
   }
 
   private List<ReturnsItemModel> getItemModels(List<ReturnsItemVO> items) {
-    List<ReturnsItemModel> itemModels = new ArrayList<>(items.size());
-    itemModels.addAll(items.stream().map(this::getReturnsItemModel).collect(Collectors.toList()));
-    return itemModels;
+    return items.stream().map(this::getReturnsItemModel).collect(Collectors.toList());
   }
 
   private ReturnsItemModel getReturnsItemModel(ReturnsItemVO item) {
@@ -307,37 +304,36 @@ public class ReturnsBuilder {
     itemModel.setReturnQuantity(item.getQuantity());
     itemModel.setMaterialStatus(item.getMaterialStatus());
     itemModel.setReason(item.getReason());
-    if(item.getReceived()!=null) {
+    if (item.getReceived() != null) {
       itemModel.setReceived(getReceivedModel(item.getReceived()));
     }
     itemModel.setCreatedAt(item.getCreatedAt());
     itemModel.setCreatedBy(getUserModel(item.getCreatedBy()));
     itemModel.setUpdatedAt(item.getUpdatedAt());
     itemModel.setUpdatedBy(getUserModel(item.getUpdatedBy()));
-    if(item.getReturnItemBatches() != null) {
+    if (item.getReturnItemBatches() != null) {
       itemModel.setBatches(getItemBatchModels(item.getReturnItemBatches()));
     }
     return itemModel;
   }
 
   private List<ReturnsItemBatchModel> getItemBatchModels(List<ReturnsItemBatchVO> batches) {
-    List<ReturnsItemBatchModel> itemBatchModels = new ArrayList<>(batches.size());
-    itemBatchModels
-        .addAll(batches.stream().map(this::getReturnsItemBatchModel).collect(Collectors.toList()));
-    return itemBatchModels;
+    return batches.stream().map(this::getReturnsItemBatchModel).collect(Collectors.toList());
   }
 
   private ReturnsItemBatchModel getReturnsItemBatchModel(ReturnsItemBatchVO itemBatch) {
     ReturnsItemBatchModel itemBatchModel = new ReturnsItemBatchModel();
     BatchVO batch = itemBatch.getBatch();
     itemBatchModel.setBatchId(batch.getBatchId());
-    itemBatchModel.setExpiry(LocalDateUtil.formatCustom(batch.getExpiryDate(), Constants.DATE_FORMAT,null));
+    itemBatchModel
+        .setExpiry(LocalDateUtil.formatCustom(batch.getExpiryDate(), Constants.DATE_FORMAT, null));
     itemBatchModel.setManufacturer(batch.getManufacturer());
-    itemBatchModel.setManufacturedDate(LocalDateUtil.formatCustom(batch.getManufacturedDate(), Constants.DATE_FORMAT,null));
+    itemBatchModel.setManufacturedDate(
+        LocalDateUtil.formatCustom(batch.getManufacturedDate(), Constants.DATE_FORMAT, null));
     itemBatchModel.setReturnQuantity(itemBatch.getQuantity());
     itemBatchModel.setMaterialStatus(itemBatch.getMaterialStatus());
     itemBatchModel.setReason(itemBatch.getReason());
-    if(itemBatch.getReceived() != null) {
+    if (itemBatch.getReceived() != null) {
       itemBatchModel.setReceived(getReceivedModel(itemBatch.getReceived()));
     }
     return itemBatchModel;
@@ -401,14 +397,20 @@ public class ReturnsBuilder {
         true, isAccounting, true, isBatchEnabled);
   }
 
-  public UpdateStatusModel buildUpdateStatusModel(Long returnId,String status,ReturnsUpdateStatusRequestModel returnsUpdateStatusRequestModel){
-    UpdateStatusModel updateStatusModel=new UpdateStatusModel();
-    Status actualStatus;
+  public UpdateStatusModel buildUpdateStatusModel(Long returnId, String status,
+                                                  ReturnsUpdateStatusRequestModel returnsUpdateStatusRequestModel) {
+    UpdateStatusModel updateStatusModel = new UpdateStatusModel();
+    Status actualStatus = null;
     switch (status) {
-      case "ship": actualStatus = Status.SHIPPED; break;
-      case "receive": actualStatus = Status.RECEIVED; break;
-      case "cancel": actualStatus = Status.CANCELLED; break;
-      default: throw new InvalidDataException("Invalid status " + status + " for returns " + returnId);
+      case "ship":
+        actualStatus = Status.SHIPPED;
+        break;
+      case "receive":
+        actualStatus = Status.RECEIVED;
+        break;
+      case "cancel":
+        actualStatus = Status.CANCELLED;
+        break;
     }
     updateStatusModel.setStatus(actualStatus);
     updateStatusModel.setReturnId(returnId);

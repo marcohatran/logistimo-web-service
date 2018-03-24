@@ -35,7 +35,7 @@ public class DemandItemBatchModel {
 
   public BigDecimal q;
   public BigDecimal fq;
-  public BigDecimal rq;
+  public BigDecimal returnedQuantity;
   public String e;
   public String m;
   public String mdt;

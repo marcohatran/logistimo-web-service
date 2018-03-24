@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright © 2017 Logistimo.
+  ~ Copyright © 2018 Logistimo.
   ~
   ~ This file is part of Logistimo.
   ~
@@ -25,14 +25,16 @@
     <div class="col-sm-6 mb10 mt10">
         <table ng-if="returnsList.length > 0" class="table table-condensed table-hover table-logistimo">
             <tr>
-                <th class="text-left">Return Id</th>
+                <th class="text-left">{{resourceBundle['return']}} {{resourceBundle['id']}}</th>
                 <th class="text-center">{{resourceBundle['status']}}</th>
-                <th class="text-center">Created</th>
+                <th class="text-center">{{resourceBundle['created']}}</th>
             </tr>
             <tr ng-repeat="return in returnsList" class="clickable" ng-click="openReturns(return.return_id)">
-                <td class="text-left">{{return.return_id}}</td>
-                <td class="text-center">{{RETURNS.statusLabel[return.status.status]}}</td>
-                <td class="text-center"><a ng-href="#/setup/users/all/details?userId={{return.created_by.user_id}}" target="_blank" ng-click="$event.stopPropagation();">{{return.created_by.full_name}}</a>
+                <td class="text-left vmiddle">{{return.return_id}}</td>
+                <td class="text-center vmiddle">{{RETURNS.statusLabel[return.status.status]}}</td>
+                <td class="text-center">
+                    <a ng-href="#/setup/users/all/details?userId={{return.created_by.user_id}}" target="_blank" ng-click="$event.stopPropagation();">{{return.created_by.full_name}}</a>
+                    <span class="litetext">{{return.created_at}}</span>
                 </td>
             </tr>
         </table>

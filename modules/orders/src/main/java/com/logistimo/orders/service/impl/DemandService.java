@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -325,22 +325,22 @@ public class DemandService implements IDemandService {
   /**
    *
    * @param orderId
-   * @param returnQuantities - Key: Material Id, value - Return quantity
+   * @param quantityByMaterial - Key: Material Id, value - Return quantity
    * @return
    */
-  public List<IDemandItem> updateDemandReturns(Long orderId, Map<Long, BigDecimal> returnQuantities,boolean decrement) {
+  public List<IDemandItem> updateDemandReturns(Long orderId, Map<Long, BigDecimal> quantityByMaterial,boolean decrement) {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     try {
       List<IDemandItem> demandItems = getDemandItems(orderId, pm);
       demandItems.stream()
-          .filter(demandItem -> returnQuantities.containsKey(demandItem.getMaterialId()))
+          .filter(demandItem -> quantityByMaterial.containsKey(demandItem.getMaterialId()))
           .forEach(demandItem -> {
                 if (decrement) {
                   demandItem.setReturnedQuantity(demandItem.getReturnedQuantity()
-                      .subtract(returnQuantities.get(demandItem.getMaterialId())));
+                      .subtract(quantityByMaterial.get(demandItem.getMaterialId())));
                 } else {
                   demandItem.setReturnedQuantity(demandItem.getReturnedQuantity()
-                      .add(returnQuantities.get(demandItem.getMaterialId())));
+                      .add(quantityByMaterial.get(demandItem.getMaterialId())));
                 }
               }
           );

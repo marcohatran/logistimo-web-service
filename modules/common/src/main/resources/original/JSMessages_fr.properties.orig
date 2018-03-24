@@ -1282,6 +1282,7 @@ enter.returns=Entrer les retours
 edit.returns.form.open.message=Vous avez ouvert le formulaire de modification des déclarations pour
 edit.returns.save.cancel.message=Veuillez sauvegarder ou annuler le formulaire pour continuer.
 return=Revenir
+returned=Revenu
 receive=Recevoir
 returning.entity=Entité de retour
 receiving.entity=Entité réceptrice

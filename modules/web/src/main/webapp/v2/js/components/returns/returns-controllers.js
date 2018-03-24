@@ -197,6 +197,11 @@ function CreateReturnsController($scope, $location, $timeout, returnsService, tr
                     "Quantity " + material.returnQuantity + " exceed fulfilled quantity " + material.fq + ".",
                     index, $timeout);
                 isInvalid = true;
+            } else if(material.returnQuantity > material.fq - material.returnedQuantity) {
+                showPopup($scope, material, material.id,
+                    "Quantity " + material.returnQuantity + " exceed remaining return quantity " + (material.fq - material.returnedQuantity) + ".",
+                    index, $timeout);
+                isInvalid = true;
             } else if (checkNotNullEmpty(material.huName) && checkNotNullEmpty(material.huQty) &&
                 material.returnQuantity % material.huQty != 0) {
                 showPopup($scope, material, material.id,
@@ -226,6 +231,11 @@ function CreateReturnsController($scope, $location, $timeout, returnsService, tr
         if(batchMaterial.returnQuantity > batchMaterial.fq) {
             showPopup($scope, batchMaterial, material.id + batchMaterial.id,
                 "Quantity " + batchMaterial.returnQuantity + " exceed fulfilled quantity " + batchMaterial.fq + ".",
+                index, $timeout);
+            isInvalid = true;
+        } else if(batchMaterial.returnQuantity > batchMaterial.fq - batchMaterial.returnedQuantity) {
+            showPopup($scope, batchMaterial, material.id + batchMaterial.id,
+                "Quantity " + batchMaterial.returnQuantity + " exceed remaining return quantity " + (batchMaterial.fq - batchMaterial.returnedQuantity) + ".",
                 index, $timeout);
             isInvalid = true;
         } else if(checkNotNullEmpty(batchMaterial.returnQuantity)) {
@@ -329,7 +339,7 @@ function DetailReturnsController($scope, $uibModal, requestContext, RETURNS, ret
 
     var returnId = requestContext.getParam("returnId");
 
-    $scope.getReturn = function () {
+    function getReturn() {
         $scope.showLoading();
         returnsService.get(returnId)
             .then(function (data) {
@@ -345,8 +355,8 @@ function DetailReturnsController($scope, $uibModal, requestContext, RETURNS, ret
             }).finally(function () {
                 $scope.hideLoading();
             });
-    };
-    $scope.getReturn();
+    }
+    getReturn();
 
     function getMessageCount() {
         conversationService.getMessagesByObj('RETURNS', returnId, 0, 1, true).then(function (data) {
@@ -425,8 +435,8 @@ function DetailReturnsController($scope, $uibModal, requestContext, RETURNS, ret
                 $scope.statusList = [];
                 if ($scope.returns.vendor.has_access) {
                     $scope.statusList.push(RETURNS.status.RECEIVED);
+                    $scope.statusList.push(RETURNS.status.CANCELLED);
                 }
-                $scope.statusList.push(RETURNS.status.CANCELLED);
                 break;
             default:
                 $scope.statusList = [];
@@ -454,7 +464,7 @@ function DetailReturnsController($scope, $uibModal, requestContext, RETURNS, ret
         } else {
             $scope.page = 'detail';
             if (update) {
-                $scope.getReturn();
+                getReturn();
             }
         }
     };
@@ -462,8 +472,8 @@ function DetailReturnsController($scope, $uibModal, requestContext, RETURNS, ret
     $scope.doShip = function () {
         $scope.showLoading();
         returnsService.ship(returnId, {comment: $scope.newStatus.comment}).then(function (data) {
-            $scope.closeStatusModal();
-            $scope.getReturn();
+            closeStatusModal();
+            getReturn();
         }).catch(function error(msg) {
             $scope.showErrorMsg(msg);
         }).finally(function () {
@@ -474,8 +484,8 @@ function DetailReturnsController($scope, $uibModal, requestContext, RETURNS, ret
     $scope.doCancel = function () {
         $scope.showLoading();
         returnsService.cancel(returnId, {comment: $scope.newStatus.comment}).then(function (data) {
-            $scope.closeStatusModal();
-            $scope.getReturn();
+            closeStatusModal();
+            getReturn();
         }).catch(function error(msg) {
             $scope.showErrorMsg(msg);
         }).finally(function () {
@@ -483,8 +493,12 @@ function DetailReturnsController($scope, $uibModal, requestContext, RETURNS, ret
         });
     };
 
-    $scope.closeStatusModal = function () {
+     function closeStatusModal() {
         $scope.modalInstance.dismiss('cancel');
+    }
+
+    $scope.hasStatus = function (status) {
+        return (checkNotNullEmpty($scope.statusList) && $scope.statusList.indexOf(status) > -1);
     };
 }
 

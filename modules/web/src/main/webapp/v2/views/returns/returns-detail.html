@@ -74,23 +74,21 @@
                             </div>
                             <div class="col-sm-3 btn-group">
                                 <div class="pull-right">
-                                    <ul class="nav navbar-nav" ng-hide="dp.vp || isUndef(statusList) || statusList.length == 0">
-                                        <li>
-                                            <button type="button" class="btn btn-sm btn-primary dropdown-toggle"
-                                                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                <span class="glyphicons glyphicons-show-lines medium pt2" uib-tooltip="Change status" tooltip-append-to-body="true"></span>
-                                            </button>
-                                            <ul class="dropdown-menu dropdown-menu-right">
-                                                <li ng-repeat="status in statusList">
-                                                    <a ng-click="changeStatus(status)"> {{RETURNS.status[status]}}</a>
-                                                </li>
-                                            </ul>
-                                        </li>
-                                    </ul>
                                     <span class="lPad5">
-                                        <button type="button" ng-show="hasStatus(RETURNS.status.SHIPPED)" class="btn btn-sm btn-primary" ng-click="changeStatus(RETURNS.status.SHIPPED)">{{resourceBundle['ship']}}
+                                        <button type="button" ng-show="hasStatus(RETURNS.status.SHIPPED)"
+                                                class="btn btn-sm btn-primary"
+                                                ng-click="changeStatus(RETURNS.status.SHIPPED)">
+                                            {{resourceBundle['ship']}}
                                         </button>
-                                         <button type="button" ng-show="hasStatus(RETURNS.status.RECEIVED)" class="btn btn-sm btn-primary" ng-click="changeStatus(RETURNS.status.RECEIVED)">{{resourceBundle['receive']}}
+                                        <button type="button" ng-show="hasStatus(RETURNS.status.RECEIVED)"
+                                                class="btn btn-sm btn-primary"
+                                                ng-click="changeStatus(RETURNS.status.RECEIVED)">
+                                            {{resourceBundle['receive']}}
+                                        </button>
+                                        <button type="button" ng-show="hasStatus(RETURNS.status.CANCELLED)"
+                                                class="btn btn-sm btn-primary"
+                                                ng-click="changeStatus(RETURNS.status.RECEIVED)">
+                                            {{resourceBundle['cancel']}}
                                          </button>
                                     </span>
                                 </div>
