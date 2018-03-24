@@ -315,12 +315,12 @@ logistimoApp.constant('NOTIFICATIONS', {
 			"extraParams": { "id" : "status","type" : "list", prefix : "stockDiscarded", "placeholder": "-- Select Status --", name: "Status"}},
 			{ "id" : "com.logistimo.inventory.entity.Invntry:201", "name" : "< Min." },
 			{ "id" : "com.logistimo.inventory.entity.Invntry:202", "name" : "> Max." },
-			{ "id" : "com.logistimo.inventory.entity.Transaction:210", "name" : "Incoming return entered",
-				"params" : [ { "id" : "reason", "type" : "list", "prefix" : "incomingReturnEntered", "placeholder" : "-- Select Reason --", "name" : "Reason"}],
-				"extraParams": { "id" : "status","type" : "list", prefix : "incomingReturnEntered", "placeholder": "-- Select Status --", name: "Status"}},
-			{ "id" : "com.logistimo.inventory.entity.Transaction:211", "name" : "Outgoing return entered",
-				"params" : [ { "id" : "reason", "type" : "list", "prefix" : "outgoingReturnEntered", "placeholder" : "-- Select Reason --", "name" : "Reason"}],
-				"extraParams": { "id" : "status","type" : "list", prefix : "outgoingReturnEntered", "placeholder": "-- Select Status --", name: "Status"}}]
+			{ "id" : "com.logistimo.inventory.entity.Transaction:210", "name" : "Incoming return received",
+				"params" : [ { "id" : "reason", "type" : "list", "prefix" : "incomingReturnReceived", "placeholder" : "-- Select Reason --", "name" : "Reason"}],
+				"extraParams": { "id" : "status","type" : "list", prefix : "incomingReturnReceived", "placeholder": "-- Select Status --", name: "Status"}},
+			{ "id" : "com.logistimo.inventory.entity.Transaction:211", "name" : "Outgoing return sent",
+				"params" : [ { "id" : "reason", "type" : "list", "prefix" : "outgoingReturnSent", "placeholder" : "-- Select Reason --", "name" : "Reason"}],
+				"extraParams": { "id" : "status","type" : "list", prefix : "outgoingReturnSent", "placeholder": "-- Select Status --", name: "Status"}}]
 	},
 	accountLabel : {
 		'events' : [{"id" : "com.logistimo.accounting.entity.Account:300", "name" : "Credit limit exceeded"}]
