@@ -110,21 +110,23 @@
             <div ng-show="op=='add'">
                 <div ng-show="transactions.results.length > 0" class="row">
                     <div class="col-sm-12">
-                        <div class="col-sm-3">
+                        <div class="col-sm-2">
                             <span class="filter-label">{{resourceBundle['from']}}</span>
                             <date-picker date-model="from" place-holder="From" min-date="minDate" max-date="today"></date-picker>
                         </div>
-                        <div class="col-sm-3">
+                        <div class="col-sm-2">
                             <span class="filter-label">{{resourceBundle['to']}}</span>
                             <date-picker date-model="to" place-holder="To" min-date="from" max-date="today"></date-picker>
                         </div>
+                        <div class="col-sm-8">
+                            <div class="col-sm-12">&nbsp</div>
+                            <div class="col-sm-12">
+                                <div class="btn btn-sm btn-primary " ng-click="applyFilter()">{{resourceBundle['filter']}}</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div ng-show="transactions.results.length > 0" class="row">
-                    <div class="col-sm-12">
-                        <div class="pull-right btn btn-sm btn-primary " ng-click="applyFilter()">{{resourceBundle['filter']}}</div>
-                    </div>
-                </div>
+
                 <div ng-show="transactions.results.length > 0" class="row">
                     <div class="col-sm-12">
                         <div class="col-sm-12">
