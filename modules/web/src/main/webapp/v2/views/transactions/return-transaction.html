@@ -49,9 +49,11 @@
                           <tbody>
                           <tr ng-repeat="returnitem in returnitems">
                             <td><p class="text-center">{{$index + 1}}</p></td>
-                            <td><p>{{resourceBundle['on.upper']}} {{returnitem.ts}}</p></td>
+                            <td><p>{{resourceBundle['on.upper']}} {{returnitem.ts}}</p>
+                                <span class="litetext float-left" ng-show="isDef(returnitem.atd)">{{returnitem.atd}}</span>
+                            </td>
                             <td><p class="text-center">{{returnitem.q}}</p>
-                                <span class="litetext float-left" ng-show="material.isBatch">{{resourceBundle['batch']}}: {{returnitem.bid}}, {{resourceBundle['expiry']}}: {{returnitem.bexp}}</span>
+                                <span class="litetext text-center" ng-show="material.isBatch">{{resourceBundle['batch']}}: {{returnitem.bid}}, {{resourceBundle['expiry']}}: {{returnitem.bexp}}</span>
                             </td>
                             <td><input type="text" class="form-control" maxlength="12" only-digits ng-model="returnitem.rq" ng-class="{'red-border': returnitem.rq > returnitem.q == true}"
                                        id="rq{{returnitem.id}}{{$index}}"
@@ -150,9 +152,11 @@
                       <tbody>
                       <tr ng-repeat="trans in transactions.results">
                         <td><p class="text-center">{{$index + 1}}</p></td>
-                        <td><p>{{resourceBundle['on.upper']}} {{trans.ts}}</p></td>
+                        <td><p>{{resourceBundle['on.upper']}} {{trans.ts}}</p>
+                            <span class="litetext float-left" ng-show="isDef(trans.atd)">{{trans.atd}}</span>
+                        </td>
                         <td><p class="text-center">{{trans.q | number}}</p>
-                            <span class="litetext float-left" ng-show="material.isBatch">{{resourceBundle['batch']}}: {{trans.bid}}, {{resourceBundle['expiry']}}: {{trans.bexp}}</span>
+                            <span class="litetext text-center" ng-show="material.isBatch">{{resourceBundle['batch']}}: {{trans.bid}}, {{resourceBundle['expiry']}}: {{trans.bexp}}</span>
                         </td>
                         <td><input ng-disabled="isReturnEnteredForTransaction(trans.sno)" type="text" class="form-control" maxlength="12" only-digits ng-model="trans.rq"
                                    ng-class="{'red-border': trans.rq > trans.q == true}" id="rq{{trans.id}}{{$index}}"
