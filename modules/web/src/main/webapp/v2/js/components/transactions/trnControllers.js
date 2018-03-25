@@ -2129,11 +2129,11 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
         };
 
         $scope.saveReturnTransactions = function(index) {
-            if (!isReturnTransactionsValid()) {
-                return;
-            }
             if($scope.atd == '2' && checkNullEmpty($scope.transaction.date)){
                 $scope.showWarning($scope.resourceBundle['trn.atd.mandatory']);
+                return;
+            }
+            if (!isReturnTransactionsValid()) {
                 return;
             }
             angular.forEach($scope.transactions.results,function(transaction) {
@@ -2225,6 +2225,22 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
                 if (checkNotNullEmpty($scope.reasons) && $scope.reasons.length > 0 && checkNullEmpty(transaction.rrsn)) {
                     $scope.showWarning($scope.resourceBundle['reason.required']);
                     return false;
+                }
+                if (checkNotNullEmpty($scope.transaction.date) && checkNotNullEmpty(transaction.atd)) {
+                    var type = undefined;
+                    if ($scope.transaction.type == 'ri') {
+                        type = 'issue';
+                    } else if ($scope.transaction.type == 'ro'){
+                        type = 'receipt';
+                    } else {
+                        return false;
+                    }
+                    var retAtd = string2Date(formatDate($scope.transaction.date), 'dd/mm/yyyy', '/');
+                    var transAtd = string2Date(transaction.atd, 'dd/mm/yyyy', '/');
+                    if (retAtd < transAtd) {
+                        $scope.showWarning($scope.resourceBundle['return.transaction.atd.message'] + " " + type + " " + $scope.resourceBundle['for'] + " " + $scope.mnm + ".");
+                        return false;
+                    }
                 }
             }
             return true;
