@@ -22,7 +22,14 @@
   -->
 
 <div class="box topbox" ng-controller="CreateReturnsController">
-    <h3>Create returns for order <a ng-href="#/orders/detail/{{returnOrder.id}}/">{{returnOrder.id}}</a></h3>
+    <h3>Create returns for
+        <span ng-show="returnOrder.oty == 1"> {{resourceBundle['order']}}:  <a ng-href="#/orders/detail/{{returnOrder.id}}/">{{returnOrder.id}}</a></span>
+        <span ng-show="returnOrder.oty == 0">
+            <span ng-hide="transRelease"> {{resourceBundle['transactions.transfer.upper']}}: </span>
+            <span ng-show="transRelease"> {{resourceBundle['transactions.release.upper']}}: </span>
+              <a ng-href="#/orders/transfers/detail/{{returnOrder.id}}/">{{returnOrder.id}}</a>
+            </span>
+    </h3>
     <hr/>
     <div class="row mt10">
         <div class="col-sm-6">

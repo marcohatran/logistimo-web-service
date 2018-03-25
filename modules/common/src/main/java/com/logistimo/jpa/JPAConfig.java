@@ -34,7 +34,6 @@ import org.springframework.orm.jpa.JpaVendorAdapter;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import java.util.Properties;
 
@@ -48,11 +47,22 @@ import javax.sql.DataSource;
 @org.springframework.transaction.annotation.EnableTransactionManagement
 public class JPAConfig {
 
+  private static final Properties properties = new Properties();
+
+  static {
+    try {
+      properties.load(Thread.currentThread().getContextClassLoader()
+          .getResourceAsStream("jpa.properties"));
+    } catch (Exception e) {
+      throw new SystemException("Unable to load jpa.properties", e);
+    }
+  }
+
   @Bean
   public LocalContainerEntityManagerFactoryBean entityManagerFactory() {
     LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
     em.setDataSource(dataSource());
-    em.setPackagesToScan(new String[] { "com.logistimo" });
+    em.setPackagesToScan("com.logistimo");
 
     JpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
     em.setJpaVendorAdapter(vendorAdapter);
@@ -63,18 +73,11 @@ public class JPAConfig {
 
   @Bean
   public DataSource dataSource(){
-    Properties properties= new Properties();
-    try {
-      properties.load(Thread.currentThread().getContextClassLoader()
-          .getResourceAsStream("jpa.properties"));
-    } catch (Exception e) {
-      throw new SystemException("Unable to load jpa.properties", e);
-    }
     DriverManagerDataSource dataSource = new DriverManagerDataSource();
     dataSource.setDriverClassName("org.mariadb.jdbc.Driver");
-    dataSource.setUrl(properties.getProperty("databaseUrl"));
-    dataSource.setUsername( properties.getProperty("databaseUserName"));
-    dataSource.setPassword(  properties.getProperty("databasePassword" ));
+    dataSource.setUrl((String) properties.getOrDefault("database.url","jdbc:mariadb://localhost:3306/logistimo"));
+    dataSource.setUsername((String) properties.getOrDefault("database.username", "logistimo"));
+    dataSource.setPassword((String) properties.getOrDefault("database.password","logistimo"));
     return dataSource;
   }
 
@@ -91,9 +94,11 @@ public class JPAConfig {
     return new PersistenceExceptionTranslationPostProcessor();
   }
 
-  Properties additionalProperties() {
-    Properties properties = new Properties();
-    properties.setProperty("hibernate.dialect", "org.hibernate.dialect.MySQL5Dialect");
-    return properties;
+  private Properties additionalProperties() {
+    Properties additionalProperties = new Properties();
+    properties.stringPropertyNames().stream()
+        .filter(key -> !key.startsWith("database"))
+        .forEach(key -> additionalProperties.setProperty(key, properties.getProperty(key)));
+    return additionalProperties;
   }
 }
