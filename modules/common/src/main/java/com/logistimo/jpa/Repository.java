@@ -21,7 +21,7 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.returns.service;
+package com.logistimo.jpa;
 
 
 import org.apache.commons.collections.CollectionUtils;
@@ -52,6 +52,7 @@ public class Repository {
     return entity;
   }
 
+  @SuppressWarnings("unchecked")
   public <T> List<T> findAll(String query,Map<String,Object> filters){
     Query query1=entityManager.createNamedQuery(query);
     filters.forEach(query1::setParameter);
@@ -66,10 +67,13 @@ public class Repository {
     return null;
   }
 
+  @SuppressWarnings("unchecked")
   public <T> T findById(Class cls,Long id){
+
     return (T)entityManager.find(cls,id);
   }
 
+  @SuppressWarnings("unchecked")
   public <T> List<T> findAllByNativeQuery(String query,Map<String,Object> filters,Class mappingClass,int size,int offset){
     Query query1=entityManager.createNativeQuery(query, mappingClass);
     filters.forEach(query1::setParameter);
@@ -78,6 +82,7 @@ public class Repository {
     return query1.getResultList();
   }
 
+  @SuppressWarnings("unchecked")
   public <T> T findByNativeQuery(String query,Map<String,Object> filters){
     Query query1=entityManager.createNativeQuery(query);
     filters.forEach(query1::setParameter);

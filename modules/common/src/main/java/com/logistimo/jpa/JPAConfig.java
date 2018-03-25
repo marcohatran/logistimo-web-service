@@ -21,7 +21,9 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.api.config;
+package com.logistimo.jpa;
+
+import com.logistimo.exception.SystemException;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -43,8 +45,8 @@ import javax.sql.DataSource;
  * Created by pratheeka on 15/03/18.
  */
 @Configuration
-@EnableTransactionManagement
-public class PersistenceJPAConfig{
+@org.springframework.transaction.annotation.EnableTransactionManagement
+public class JPAConfig {
 
   @Bean
   public LocalContainerEntityManagerFactoryBean entityManagerFactory() {
@@ -61,11 +63,18 @@ public class PersistenceJPAConfig{
 
   @Bean
   public DataSource dataSource(){
+    Properties properties= new Properties();
+    try {
+      properties.load(Thread.currentThread().getContextClassLoader()
+          .getResourceAsStream("jpa.properties"));
+    } catch (Exception e) {
+      throw new SystemException("Unable to load jpa.properties", e);
+    }
     DriverManagerDataSource dataSource = new DriverManagerDataSource();
     dataSource.setDriverClassName("org.mariadb.jdbc.Driver");
-    dataSource.setUrl("jdbc:mariadb://localhost:3306/logistimo");
-    dataSource.setUsername( "logistimo" );
-    dataSource.setPassword( "logistimo" );
+    dataSource.setUrl(properties.getProperty("databaseUrl"));
+    dataSource.setUsername( properties.getProperty("databaseUserName"));
+    dataSource.setPassword(  properties.getProperty("databasePassword" ));
     return dataSource;
   }
 

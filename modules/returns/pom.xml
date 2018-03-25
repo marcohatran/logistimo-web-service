@@ -119,19 +119,6 @@
       <artifactId>xml-apis</artifactId>
       <version> 1.4.01</version>
     </dependency>
-    <!-- Hibernate Core -->
-    <dependency>
-      <groupId>org.hibernate</groupId>
-      <artifactId>hibernate-core</artifactId>
-      <version>5.2.14.Final</version>
-    </dependency>
-
-    <!-- Hibernate Validator -->
-    <dependency>
-      <groupId>org.hibernate</groupId>
-      <artifactId>hibernate-validator</artifactId>
-      <version>5.4.1.Final</version>
-    </dependency>
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>

@@ -24,6 +24,7 @@
 package com.logistimo.returns.service;
 
 import com.logistimo.constants.Constants;
+import com.logistimo.jpa.Repository;
 import com.logistimo.returns.entity.Returns;
 import com.logistimo.returns.entity.ReturnsItem;
 import com.logistimo.returns.entity.ReturnsItemBatch;
