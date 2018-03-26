@@ -21,13 +21,15 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.returns.service;
+package com.logistimo.jpa;
 
 
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Component;
+
 import java.util.List;
 import java.util.Map;
+
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
@@ -42,46 +44,51 @@ public class Repository {
   @PersistenceContext
   private EntityManager entityManager;
 
-  public <T> T save(T entity){
+  public <T> T save(T entity) {
     entityManager.persist(entity);
     return entity;
   }
 
-  public <T> T update(T entity){
+  public <T> T update(T entity) {
     entityManager.merge(entity);
     return entity;
   }
 
-  public <T> List<T> findAll(String query,Map<String,Object> filters){
-    Query query1=entityManager.createNamedQuery(query);
-    filters.forEach(query1::setParameter);
-    return query1.getResultList();
+  @SuppressWarnings("unchecked")
+  public <T> List<T> findAll(String query, Map<String, Object> filters) {
+    Query q = entityManager.createNamedQuery(query);
+    filters.forEach(q::setParameter);
+    return q.getResultList();
   }
 
-  public <T> T find(String query,Map<String,Object> filters){
-    List<T> results=findAll(query,filters);
-    if(CollectionUtils.isNotEmpty(results)){
+  public <T> T find(String query, Map<String, Object> filters) {
+    List<T> results = findAll(query, filters);
+    if (CollectionUtils.isNotEmpty(results)) {
       return results.get(0);
     }
     return null;
   }
 
-  public <T> T findById(Class cls,Long id){
-    return (T)entityManager.find(cls,id);
+  @SuppressWarnings("unchecked")
+  public <T> T findById(Class cls, Long id) {
+    return (T) entityManager.find(cls, id);
   }
 
-  public <T> List<T> findAllByNativeQuery(String query,Map<String,Object> filters,Class mappingClass,int size,int offset){
-    Query query1=entityManager.createNativeQuery(query, mappingClass);
-    filters.forEach(query1::setParameter);
-    query1.setFirstResult(offset);
-    query1.setMaxResults(size);
-    return query1.getResultList();
+  @SuppressWarnings("unchecked")
+  public <T> List<T> findAllByNativeQuery(String query, Map<String, Object> filters,
+                                          Class mappingClass, int size, int offset) {
+    Query q = entityManager.createNativeQuery(query, mappingClass);
+    filters.forEach(q::setParameter);
+    q.setFirstResult(offset);
+    q.setMaxResults(size);
+    return q.getResultList();
   }
 
-  public <T> T findByNativeQuery(String query,Map<String,Object> filters){
-    Query query1=entityManager.createNativeQuery(query);
-    filters.forEach(query1::setParameter);
-    return (T)query1.getSingleResult();
+  @SuppressWarnings("unchecked")
+  public <T> T findByNativeQuery(String query, Map<String, Object> filters) {
+    Query q = entityManager.createNativeQuery(query);
+    filters.forEach(q::setParameter);
+    return (T) q.getSingleResult();
   }
 
 }

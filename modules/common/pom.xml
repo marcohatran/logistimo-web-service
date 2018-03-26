@@ -36,6 +36,12 @@
         <build.version>2.7.0</build.version>
     </properties>
 
+    <parent>
+        <artifactId>logistimo</artifactId>
+        <groupId>com.logistimo</groupId>
+        <version>2.7.0</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
     <dependencies>
 
         <dependency>
@@ -246,6 +252,20 @@
             <artifactId>commons-collections</artifactId>
             <version>3.2.1</version>
         </dependency>
+        <!-- Hibernate Core -->
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-core</artifactId>
+            <version>5.2.14.Final</version>
+        </dependency>
+
+        <!-- Hibernate Validator -->
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-validator</artifactId>
+            <version>5.4.1.Final</version>
+        </dependency>
+
     </dependencies>
     <build>
         <plugins>

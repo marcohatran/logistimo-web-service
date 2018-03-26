@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright © 2017 Logistimo.
+  ~ Copyright © 2018 Logistimo.
   ~
   ~ This file is part of Logistimo.
   ~
@@ -25,8 +25,8 @@
     <h3>Fulfill the shipment <a ng-href="#/orders/shipment/detail/{{shipment.sId}}/">{{shipment.sId}}</a>
         <span ng-show="shipment.oty == 1">({{resourceBundle['order']}}: <a ng-href="#/orders/detail/{{shipment.orderId}}/" target="_blank">{{shipment.orderId}}</a>)</span>
         <span ng-show="shipment.oty == 0">(
-            <span ng-hide="transRelease">({{resourceBundle['transactions.transfer.upper']}}</span>
-            <span ng-show="transRelease">({{resourceBundle['transactions.release.upper']}}</span>
+            <span ng-hide="transRelease">{{resourceBundle['transactions.transfer.upper']}}</span>
+            <span ng-show="transRelease">{{resourceBundle['transactions.release.upper']}}</span>
             : <a ng-href="#/orders/transfers/detail/{{shipment.orderId}}/">{{shipment.orderId}}</a>)</span>
     </h3>
     <hr/>
