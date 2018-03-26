@@ -36,24 +36,29 @@
             <div ng-show="op=='edit'">
                 <div class="row">
                     <div class="col-sm-12">
-                        <table class="table table-striped table-codensed ">
+                        <table class="table table-striped table-condensed table-fixed">
                           <thead>
                           <tr>
-                            <th class="col-sm-1 text-center">{{resourceBundle['serialnum']}}</th>
+                            <th class="col-sm-0-2 text-center">{{resourceBundle['serialnum']}}</th>
                             <th class="col-sm-2">{{transaction.type == 'ri' ? 'Issue' : 'Receipt'}}</th>
-                            <th class="col-sm-2 text-center">{{resourceBundle['quantity']}}</th>
-                            <th class="col-sm-1 required">{{resourceBundle['return.quantity']}}</th>
+                            <th class="col-sm-2 text-center" ng-show="material.isBatch">{{resourceBundle['batch']}}</th>
+                            <th class="col-sm-2 text-center" ng-show="material.isBatch">{{resourceBundle['expiry']}}</th>
+                            <th ng-class="{'col-sm-1':material.isBatch,'col-sm-3':!material.isBatch}" class="text-center">{{resourceBundle['quantity']}}</th>
+                            <th class="col-sm-2 required">{{resourceBundle['return.quantity']}}</th>
                             <th class="col-sm-0-5 text-center"></th>
                           </tr>
                           </thead>
                           <tbody>
                           <tr ng-repeat="returnitem in returnitems">
-                            <td><p class="text-center">{{$index + 1}}</p></td>
+                            <td class="text-center">{{$index + 1}}</td>
                             <td><p>{{resourceBundle['on.upper']}} {{returnitem.ts}}</p>
                                 <span class="litetext float-left" ng-show="isDef(returnitem.atd)">{{returnitem.atd}}</span>
                             </td>
-                            <td><p class="text-center">{{returnitem.q}}</p>
-                                <span class="litetext text-center" ng-show="material.isBatch">{{resourceBundle['batch']}}: {{returnitem.bid}}, {{resourceBundle['expiry']}}: {{returnitem.bexp}}</span>
+                              <td ng-show="material.isBatch" class="text-center">{{returnitem.bid}}
+                              </td>
+                              <td ng-show="material.isBatch" class="text-center">{{returnitem.bexp}}
+                              </td>
+                            <td class="text-center">{{returnitem.q}}</p>
                             </td>
                             <td><input type="text" class="form-control" maxlength="12" only-digits ng-model="returnitem.rq" ng-class="{'red-border': returnitem.rq > returnitem.q == true}"
                                        id="rq{{returnitem.id}}{{$index}}"
@@ -140,23 +145,28 @@
                 </div>
                 <div ng-show="transactions.results.length > 0" class="row">
                   <div class="col-sm-12">
-                    <table class="table table-striped table-codensed ">
+                    <table class="table table-striped table-condensed table-fixed">
                       <thead>
                       <tr>
-                        <th class="col-sm-1 text-center">{{resourceBundle['serialnum']}}</th>
+                        <th class="col-sm-0-2 text-center">{{resourceBundle['serialnum']}}</th>
                         <th class="col-sm-2">{{transaction.type == 'ri' ? 'Issue' : 'Receipt'}}</th>
-                        <th class="col-sm-2 text-center">{{resourceBundle['quantity']}}</th>
-                        <th class="col-sm-1 required">{{resourceBundle['return.quantity']}}</th>
+                        <th class="col-sm-2 text-center" ng-show="material.isBatch">{{resourceBundle['batch']}}</th>
+                        <th class="col-sm-2 text-center" ng-show="material.isBatch">{{resourceBundle['expiry']}}</th>
+                        <th ng-class="{'col-sm-1':material.isBatch,'col-sm-3':!material.isBatch}" class="text-center">{{resourceBundle['quantity']}}</th>
+                        <th class="col-sm-2 required">{{resourceBundle['return.quantity']}}</th>
                       </tr>
                       </thead>
                       <tbody>
                       <tr ng-repeat="trans in transactions.results">
-                        <td><p class="text-center">{{$index + 1}}</p></td>
+                        <td class="text-center">{{$index + 1}}</td>
                         <td><p>{{resourceBundle['on.upper']}} {{trans.ts}}</p>
                             <span class="litetext float-left" ng-show="isDef(trans.atd)">{{trans.atd}}</span>
                         </td>
-                        <td><p class="text-center">{{trans.q | number}}</p>
-                            <span class="litetext text-center" ng-show="material.isBatch">{{resourceBundle['batch']}}: {{trans.bid}}, {{resourceBundle['expiry']}}: {{trans.bexp}}</span>
+                        <td ng-show="material.isBatch" class="text-center">{{trans.bid}}
+                        </td>
+                        <td ng-show="material.isBatch" class="text-center">{{trans.bexp}}
+                        </td>
+                        <td class="text-center">{{trans.q | number}}
                         </td>
                         <td><input ng-disabled="isReturnEnteredForTransaction(trans.sno)" type="text" class="form-control" maxlength="12" only-digits ng-model="trans.rq"
                                    ng-class="{'red-border': trans.rq > trans.q == true}" id="rq{{trans.id}}{{$index}}"
