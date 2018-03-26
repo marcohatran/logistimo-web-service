@@ -816,6 +816,7 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                             batch.rsn = returnitem.rrsn;
                             copy.bquantity.push(batch);
                         }
+
                         copy.returnitems = undefined;
                         transactionmaterials.push(copy);
                     });
@@ -836,6 +837,9 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                 if (checkNotNullEmpty(material.name)) {
                     if (!isMaterialInModifiedMaterials(material)) {
                         $scope.showWarning($scope.resourceBundle['invalid.return.quantity'] + " " +  $scope.resourceBundle['for'] + " " + material.name.mnm);
+                        return false;
+                    } else if (isTotalReturnQuantityGreaterThanAtpStock(material)){
+                        $scope.showWarning($scope.resourceBundle['total.return.quantity'] + " " + $scope.resourceBundle['cannotexceedstock'] + ' (' + material.atpstock + ') ' + $scope.resourceBundle['for'] + " " + material.name.mnm + ".");
                         return false;
                     } else {
                         return true;
@@ -861,6 +865,17 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
             return $scope.transaction.modifiedmaterials.some(function(mat){
                 return (mat.name.mId == material.name.mId);
             });
+        }
+
+
+        function isTotalReturnQuantityGreaterThanAtpStock(material) {
+            var totalReturnQuantity = 0;
+            angular.forEach($scope.transaction.modifiedmaterials,function(mat){
+                if (material.name.mId == mat.name.mId && !material.isBatch) {
+                    totalReturnQuantity += parseInt(mat.quantity);
+                }
+            });
+            return (totalReturnQuantity > material.atpstock);
         }
 
         function handleTimeout() {
@@ -2034,7 +2049,12 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
         $scope.size = 10;
         $scope.fromDate = new Date();
         $scope.toDate = undefined;
-
+        $scope.returnAgainstType = undefined;
+        if ($scope.transaction.type == 'ri') {
+            $scope.returnAgainstType = $scope.resourceBundle['transactions.issue.upper'];
+        } else {
+            $scope.returnAgainstType = $scope.resourceBundle['transactions.receipt.upper'];
+        }
         $scope.returnitems = angular.copy($scope.material.returnitems);
         domainCfgService.getReturnConfig($scope.transaction.ent.id).then(function (data) {
             $scope.rc = data.data;
