@@ -40,7 +40,7 @@
                           <thead>
                           <tr>
                             <th class="col-sm-0-2 text-center">{{resourceBundle['serialnum']}}</th>
-                            <th class="col-sm-2">{{transaction.type == 'ri' ? 'Issue' : 'Receipt'}}</th>
+                            <th class="col-sm-2">{{returnAgainstType}}</th>
                             <th class="col-sm-2 text-center" ng-show="material.isBatch">{{resourceBundle['batch']}}</th>
                             <th class="col-sm-2 text-center" ng-show="material.isBatch">{{resourceBundle['expiry']}}</th>
                             <th ng-class="{'col-sm-1':material.isBatch,'col-sm-3':!material.isBatch}" class="text-center">{{resourceBundle['quantity']}}</th>
@@ -149,7 +149,7 @@
                       <thead>
                       <tr>
                         <th class="col-sm-0-2 text-center">{{resourceBundle['serialnum']}}</th>
-                        <th class="col-sm-2">{{transaction.type == 'ri' ? 'Issue' : 'Receipt'}}</th>
+                        <th class="col-sm-2">{{returnAgainstType}}</th>
                         <th class="col-sm-2 text-center" ng-show="material.isBatch">{{resourceBundle['batch']}}</th>
                         <th class="col-sm-2 text-center" ng-show="material.isBatch">{{resourceBundle['expiry']}}</th>
                         <th ng-class="{'col-sm-1':material.isBatch,'col-sm-3':!material.isBatch}" class="text-center">{{resourceBundle['quantity']}}</th>

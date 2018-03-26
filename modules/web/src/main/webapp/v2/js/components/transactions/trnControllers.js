@@ -2034,7 +2034,12 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
         $scope.size = 10;
         $scope.fromDate = new Date();
         $scope.toDate = undefined;
-
+        $scope.returnAgainstType = undefined;
+        if ($scope.transaction.type == 'ri') {
+            $scope.returnAgainstType = $scope.resourceBundle['transactions.issue.upper'];
+        } else {
+            $scope.returnAgainstType = $scope.resourceBundle['transactions.receipt.upper'];
+        }
         $scope.returnitems = angular.copy($scope.material.returnitems);
         domainCfgService.getReturnConfig($scope.transaction.ent.id).then(function (data) {
             $scope.rc = data.data;
