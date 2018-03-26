@@ -53,13 +53,28 @@ public interface ITransDao {
                                    String kioskTag,
                                    String materialTag, List<Long> kioskIds, PageParams pageParams,
                                    String bid,
-                                   boolean atd, String reason, List<String> excludeReasons, boolean onlyWithoutLkid,
+                                   boolean atd, String reason, List<String> reasons, boolean onlyWithoutLkid,
                                    PersistenceManager pm);
+
+  Results getInventoryTransactions(Date sinceDate, Date untilDate, Long domainId,
+                                   Long kioskId, Long materialId, List<String> transTypes,
+                                   Long linkedKioskId, String kioskTag,
+                                   String materialTag, List<Long> kioskIds,
+                                   PageParams pageParams, String bid, boolean atd,
+                                   String reason, List<String> reasons, boolean onlyWithoutLkid,
+                                   PersistenceManager pm,boolean excludeReasons);
 
   QueryParams buildTransactionsQuery(Date sinceDate, Date untilDate, Long domainId, Long kioskId,
                                      Long materialId, List<String> transTypes, Long linkedKioskId,
                                      String kioskTag,
                                      String materialTag, List<Long> kioskIds, String bid,
                                      boolean atd, String reason,
-                                     List<String> excludeReasons, boolean onlyWithoutLkid);
+                                     List<String> reasons, boolean onlyWithoutLkid,boolean excludeReasons);
+
+  QueryParams buildTransactionsQuery(Date sinceDate, Date untilDate, Long domainId, Long kioskId,
+                                     Long materialId, List<String> transTypes, Long linkedKioskId,
+                                     String kioskTag,
+                                     String materialTag, List<Long> kioskIds, String bid,
+                                     boolean atd, String reason,
+                                     List<String> reasons, boolean onlyWithoutLkid);
 }

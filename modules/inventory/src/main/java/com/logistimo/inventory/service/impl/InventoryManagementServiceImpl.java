@@ -152,7 +152,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
       put(ITransaction.TYPE_TRANSFER, IEvent.STOCK_TRANSFERRED);
       put(ITransaction.TYPE_RETURNS_INCOMING, IEvent.INCOMING_RETURN_ENTERED);
       put(ITransaction.TYPE_RETURNS_OUTGOING, IEvent.OUTGOING_RETURN_ENTERED);
-      }
+    }
   });
 
   private ITagDao tagDao;
@@ -691,7 +691,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     xLogger.fine("Entered getValidBatches");
     // Form query
     String queryStr = "SELECT FROM " + JDOUtils.getImplClass(IInvntryBatch.class).getName()
-            + " WHERE mId == mIdParam && kId == kIdParam && vld == vldParam PARAMETERS Long mIdParam, Long kIdParam, Boolean vldParam ORDER BY bexp ASC";
+        + " WHERE mId == mIdParam && kId == kIdParam && vld == vldParam PARAMETERS Long mIdParam, Long kIdParam, Boolean vldParam ORDER BY bexp ASC";
     Query q = pm.newQuery(queryStr);
     if (pageParams != null) {
       QueryUtil.setPageParams(q, pageParams);
@@ -1164,7 +1164,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     }
     // Get the query and params
     String query = "SELECT FROM " + JDOUtils.getImplClass(ITransaction.class).getName()
-            + " WHERE uId == uIdParam && t > fromParam";
+        + " WHERE uId == uIdParam && t > fromParam";
     Map<String, Object> params = new HashMap<>();
     params.put("uIdParam", userId);
     params.put("fromParam", LocalDateUtil.getOffsetDate(fromDate, -1, Calendar.MILLISECOND));
@@ -1204,6 +1204,16 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     return new Results(transactions, cursor);
   }
 
+  @Override
+  public Results getInventoryTransactions(Date sinceDate, Date untilDate, Long domainId,
+                                          Long kioskId, Long materialId, List<String> transTypes,
+                                          Long linkedKioskId, String kioskTag, String materialTag,
+                                          List<Long> kioskIds, PageParams pageParams, String bid,
+                                          boolean atd, String reason, List<String> excludeReasons,
+                                          PersistenceManager pm) throws ServiceException {
+    return getInventoryTransactions(sinceDate,untilDate,domainId,kioskId,materialId,transTypes,linkedKioskId,kioskTag,materialTag,kioskIds,pageParams,bid,atd,reason,excludeReasons,pm);
+  }
+
   @SuppressWarnings("unchecked")
   @Override
   public Results getInventoryTransactions(Date sinceDate, Date untilDate, Long domainId,
@@ -1230,6 +1240,17 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
         materialTag, kioskIds, pageParams, bid, atd, reason, null, false, null);
   }
 
+  @Override
+  public Results getInventoryTransactions(Date sinceDate, Date untilDate, Long domainId,
+                                          Long kioskId, Long materialId, List<String> transTypes,
+                                          Long linkedKioskId, String kioskTag,
+                                          String materialTag, List<Long> kioskIds,
+                                          PageParams pageParams, String bid,
+                                          boolean atd, String reason, List<String> reasons, boolean onlyWithoutLkid,
+                                          PersistenceManager pm) throws ServiceException {
+    return getInventoryTransactions(sinceDate,untilDate,domainId,kioskId,materialId,transTypes,linkedKioskId,kioskTag,materialTag,kioskIds,pageParams,bid,atd,reason,reasons,onlyWithoutLkid,pm,true);
+  }
+
   @SuppressWarnings("unchecked")
   @Override
   public Results getInventoryTransactions(Date sinceDate, Date untilDate, Long domainId,
@@ -1237,13 +1258,13 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
                                           Long linkedKioskId, String kioskTag,
                                           String materialTag, List<Long> kioskIds,
                                           PageParams pageParams, String bid,
-                                          boolean atd, String reason, List<String> excludeReasons, boolean onlyWithoutLkid,
-                                          PersistenceManager pm)
+                                          boolean atd, String reason, List<String> reasons, boolean onlyWithoutLkid,
+                                          PersistenceManager pm, boolean excludeReasons)
       throws ServiceException {
     xLogger.fine("Entering getInventoryTransactions");
     Results results = transDao.getInventoryTransactions(sinceDate, untilDate, domainId, kioskId,
         materialId, transTypes, linkedKioskId, kioskTag, materialTag, kioskIds, pageParams, bid,
-        atd, reason, excludeReasons, onlyWithoutLkid, pm);
+        atd, reason, reasons, onlyWithoutLkid, pm, excludeReasons);
     xLogger.fine("Exiting getInventoryTransactions");
     return results;
   }
@@ -1284,43 +1305,43 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
    */
 
   public CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
-                                                        List<ITransaction> inventoryTransactions)
+                                                                   List<ITransaction> inventoryTransactions)
       throws ServiceException, DuplicationException {
     return updateInventoryTransactions(domainId, inventoryTransactions, false);
   }
 
   public CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
-                                                        List<ITransaction> inventoryTransactions,
-                                                        PersistenceManager pm)
+                                                                   List<ITransaction> inventoryTransactions,
+                                                                   PersistenceManager pm)
       throws ServiceException, DuplicationException {
     return updateInventoryTransactions(domainId, inventoryTransactions, false, pm);
   }
 
   public CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
-                                                        List<ITransaction> inventoryTransactions,
-                                                        boolean skipVal)
+                                                                   List<ITransaction> inventoryTransactions,
+                                                                   boolean skipVal)
       throws ServiceException, DuplicationException {
     return updateInventoryTransactions(domainId, inventoryTransactions, skipVal, false);
   }
 
   public CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
-                                                        List<ITransaction> inventoryTransactions,
-                                                        boolean skipVal, PersistenceManager pm)
+                                                                   List<ITransaction> inventoryTransactions,
+                                                                   boolean skipVal, PersistenceManager pm)
       throws ServiceException, DuplicationException {
     return updateInventoryTransactions(domainId, inventoryTransactions, skipVal, false, pm);
   }
 
   public CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
-                                                        List<ITransaction> inventoryTransactions,
-                                                        boolean skipVal, boolean skipPred)
+                                                                   List<ITransaction> inventoryTransactions,
+                                                                   boolean skipVal, boolean skipPred)
       throws ServiceException, DuplicationException {
     return updateInventoryTransactions(domainId, inventoryTransactions, skipVal, skipPred, null);
   }
 
   public CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
-                                                        List<ITransaction> inventoryTransactions,
-                                                        boolean skipVal, boolean skipPred,
-                                                        PersistenceManager pm)
+                                                                   List<ITransaction> inventoryTransactions,
+                                                                   boolean skipVal, boolean skipPred,
+                                                                   PersistenceManager pm)
       throws DuplicationException, ServiceException {
     return updateInventoryTransactions(domainId, inventoryTransactions, null, skipVal, skipPred,
         pm);
@@ -1329,9 +1350,9 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
   @Override
   @SuppressWarnings({"unchecked", "rawtypes"})
   public CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
-                                                        List<ITransaction> inventoryTransactions,
-                                                        List<IInvntry> invntryList, boolean skipVal,
-                                                        boolean skipPred, PersistenceManager pm)
+                                                                   List<ITransaction> inventoryTransactions,
+                                                                   List<IInvntry> invntryList, boolean skipVal,
+                                                                   boolean skipPred, PersistenceManager pm)
       throws ServiceException, DuplicationException {
     xLogger.fine("Entering updateInventoryTransactions");
     boolean closePM = pm == null;
@@ -3661,7 +3682,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     Query query = null;
     try {
       query = pm.newQuery("javax.jdo.query.SQL",
-              "SELECT * FROM INVNTRYEVNTLOG WHERE INVID = " + invId + " AND ED IS NULL");
+          "SELECT * FROM INVNTRYEVNTLOG WHERE INVID = " + invId + " AND ED IS NULL");
       query.setClass(JDOUtils.getImplClass(IInvntryEvntLog.class));
       query.setUnique(true);
       IInvntryEvntLog invntryEvntLog = (IInvntryEvntLog) query.execute();
@@ -3695,16 +3716,16 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     try {
       results =
           invntryDao.getInventory(new InventoryFilters().withDomainId(domainId)
-              .withKioskId(kioskId)
-              .withKioskIds(kioskIds)
-              .withKioskTags(kioskTags)
-              .withExcludedKioskTags(excludedKioskTags)
-              .withMaterialId(materialId)
-              .withMaterialTags(materialTag)
-              .withMatType(matType)
-              .withOnlyNonZeroStk(onlyNonZeroStk)
-              .withPdos(pdos)
-              .withLocation(location)
+                  .withKioskId(kioskId)
+                  .withKioskIds(kioskIds)
+                  .withKioskTags(kioskTags)
+                  .withExcludedKioskTags(excludedKioskTags)
+                  .withMaterialId(materialId)
+                  .withMaterialTags(materialTag)
+                  .withMatType(matType)
+                  .withOnlyNonZeroStk(onlyNonZeroStk)
+                  .withPdos(pdos)
+                  .withLocation(location)
               , params, pm);
     } finally {
       pm.close();
@@ -3746,7 +3767,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
       throws ServiceException {
     try {
       return updateMultipleInventoryTransactionsAction.execute(materialTransactionsMap,
-        domainId, userId);
+          domainId, userId);
     } catch (ConfigurationException e) {
       throw new ServiceException(e);
     }

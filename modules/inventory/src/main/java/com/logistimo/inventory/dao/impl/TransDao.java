@@ -38,6 +38,7 @@ import com.logistimo.tags.dao.ITagDao;
 import com.logistimo.tags.entity.ITag;
 import com.logistimo.utils.LocalDateUtil;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Repository;
 
 import java.text.SimpleDateFormat;
@@ -99,7 +100,18 @@ public class TransDao implements ITransDao {
                                           String materialTag, List<Long> kioskIds,
                                           PageParams pageParams, String bid, boolean atd,
                                           String reason, List<String> excludeReasons, boolean onlyWithoutLkid,
-                                          PersistenceManager pm) {
+                                          PersistenceManager pm){
+    return getInventoryTransactions(sinceDate,untilDate,domainId,kioskId,materialId,transTypes,linkedKioskId,kioskTag,materialTag,kioskIds,pageParams,bid,atd,reason,excludeReasons,onlyWithoutLkid,pm,true);
+  }
+
+  @Override
+  public Results getInventoryTransactions(Date sinceDate, Date untilDate, Long domainId,
+                                          Long kioskId, Long materialId, List<String> transTypes,
+                                          Long linkedKioskId, String kioskTag,
+                                          String materialTag, List<Long> kioskIds,
+                                          PageParams pageParams, String bid, boolean atd,
+                                          String reason, List<String> reasons, boolean onlyWithoutLkid,
+                                          PersistenceManager pm,boolean excludeReasons) {
 
     PersistenceManager localpm;
     if (pm != null) {
@@ -113,7 +125,7 @@ public class TransDao implements ITransDao {
     try {
       QueryParams queryParams = buildTransactionsQuery(sinceDate, untilDate, domainId,
           kioskId, materialId, transTypes, linkedKioskId, kioskTag, materialTag, kioskIds,
-          bid, atd, reason, excludeReasons, onlyWithoutLkid);
+          bid, atd, reason, reasons, onlyWithoutLkid,excludeReasons);
       StringBuilder sqlQuery = new StringBuilder(queryParams.query);
       final String orderBy = " ORDER BY T DESC";
       String limitStr = null;
@@ -159,13 +171,22 @@ public class TransDao implements ITransDao {
 
   }
 
+  public QueryParams buildTransactionsQuery(Date sinceDate, Date untilDate, Long domainId,
+                                            Long kioskId, Long materialId, List<String> transTypes,
+                                            Long linkedKioskId, String kioskTag,
+                                            String materialTag, List<Long> kioskIds, String bid,
+                                            boolean atd, String reason,
+                                            List<String> reasons, boolean onlyWithoutLkid){
+    return buildTransactionsQuery(sinceDate,untilDate,domainId,kioskId,materialId,transTypes,linkedKioskId,kioskTag,materialTag,kioskIds,bid,atd,reason,reasons,onlyWithoutLkid,true);
+  }
+
   @Override
   public QueryParams buildTransactionsQuery(Date sinceDate, Date untilDate, Long domainId,
                                             Long kioskId, Long materialId, List<String> transTypes,
                                             Long linkedKioskId, String kioskTag,
                                             String materialTag, List<Long> kioskIds, String bid,
                                             boolean atd, String reason,
-                                            List<String> excludeReasons, boolean onlyWithoutLkid) {
+                                            List<String> reasons, boolean onlyWithoutLkid,boolean excludeReasons) {
 
     List<String> parameters = new ArrayList<>(1);
     StringBuilder sqlQuery = new StringBuilder("SELECT * FROM TRANSACTION");
@@ -249,23 +270,19 @@ public class TransDao implements ITransDao {
       sqlQuery.append(" AND RS = ").append(CharacterConstants.QUESTION);
       parameters.add(reason);
     }
-    if (excludeReasons != null && excludeReasons.size() > 0) {
-      if (excludeReasons.size() == 1) {
-        sqlQuery
-            .append(" AND (RS IS NULL OR RS <> ")
-            .append(CharacterConstants.QUESTION)
-            .append(CharacterConstants.C_BRACKET);
-        parameters.add(excludeReasons.get(0));
-      } else {
+    if (CollectionUtils.isNotEmpty(reasons)) {
+      if (excludeReasons) {
         sqlQuery.append(" AND ( RS IS NULL OR RS NOT IN (");
-        for (String excludeReason : excludeReasons) {
-          sqlQuery.append(CharacterConstants.QUESTION)
-              .append(CharacterConstants.COMMA);
-          parameters.add(excludeReason);
-        }
-        sqlQuery.append(sqlQuery.length() - 1);
-        sqlQuery.append(CharacterConstants.C_BRACKET).append(CharacterConstants.C_BRACKET);
+      } else {
+        sqlQuery.append(" AND ( RS IN (");
       }
+      for (String rsn : reasons) {
+        sqlQuery.append(CharacterConstants.QUESTION)
+            .append(CharacterConstants.COMMA);
+        parameters.add(rsn);
+      }
+      sqlQuery.append(sqlQuery.length() - 1);
+      sqlQuery.append(CharacterConstants.C_BRACKET).append(CharacterConstants.C_BRACKET);
     }
     final String orderBy = " ORDER BY T DESC";
     sqlQuery.append(orderBy);
