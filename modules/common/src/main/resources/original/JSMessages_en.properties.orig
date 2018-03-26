@@ -1293,3 +1293,5 @@ returning.entity=Returning entity
 receiving.entity=Receiving entity
 on.upper=On
 return.transaction.atd.message=Actual date of transaction of return cannot be lesser than the actual date of
+total.return.quantity=Total return quantity
+in.batch=in batch

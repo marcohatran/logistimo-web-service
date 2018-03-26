@@ -1288,3 +1288,5 @@ returning.entity=Entité de retour
 receiving.entity=Entité réceptrice
 on.upper=Sur
 return.transaction.atd.message=La date réelle de la transaction de retour ne peut être inférieure à la date réelle de
+total.return.quantity=Quantité totale de retour
+in.batch=en lot
