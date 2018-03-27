@@ -63,6 +63,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -604,7 +605,7 @@ public class DemandService implements IDemandService {
         }
         model.id = Long.parseLong(String.valueOf(di[0]));
         model.oId = (Long.parseLong(String.valueOf(di[3])));
-        model.rId = o.getReferenceID();
+        model.rId = o.getSalesReferenceID();
         model.oty = o.getOrderType();
         model.mId = (Long.parseLong(String.valueOf(di[2])));
         model.cmId = m.getCustomId();
@@ -826,7 +827,7 @@ public class DemandService implements IDemandService {
                                          Locale locale, String timezone,
                                          boolean forceIntegerQuantity) {
     if (items == null || items.size() == 0) {
-      return null;
+      return Collections.emptyList();
     }
     List<Map> materialsList = new ArrayList<>(1);
     Iterator<IDemandItem> it = (Iterator<IDemandItem>) items.iterator();

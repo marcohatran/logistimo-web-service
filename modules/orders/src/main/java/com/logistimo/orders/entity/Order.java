@@ -45,6 +45,7 @@ import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.NumberUtil;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -195,7 +196,8 @@ public class Order implements IOrder {
   @Persistent
   private Integer oty = 1; //Order type
   @Persistent
-  private String rid; // Reference ID
+  @Column(name = "sales_ref_id")
+  private String salesRefId; // Sales Reference ID
   /**
      * Estimated date of arrival
    */
@@ -254,6 +256,18 @@ public class Order implements IOrder {
    */
   @Persistent
   private Long tart;
+  /**
+   * Purchase reference id
+   */
+  @Persistent
+  @Column(name = "purchase_ref_id")
+  private String purchaseRefId;
+  /**
+   * Transfer reference id
+   */
+  @Persistent
+  @Column(name = "transfer_ref_id")
+  private String transferRefId;
 
   public Order() {
 
@@ -1049,7 +1063,7 @@ public class Order implements IOrder {
       List<Map>
           materials =
           ds.getDemandItems(items, cr, locale, timezone, forceIntegerQuantity);
-      if (materials != null) {
+      if (materials != null && CollectionUtils.isNotEmpty(materials)) {
         map.put(JsonTagsZ.MATERIALS, materials);
       }
     }
@@ -1211,12 +1225,12 @@ public class Order implements IOrder {
     }
   }
 
-  public String getReferenceID() {
-    return rid;
+  public String getSalesReferenceID() {
+    return salesRefId;
   }
 
-  public void setReferenceID(String rid) {
-    this.rid = rid;
+  public void setSalesReferenceID(String salesRefId) {
+    this.salesRefId = salesRefId;
   }
 
   @Override
@@ -1350,8 +1364,18 @@ public class Order implements IOrder {
   }
 
   @Override
-  public boolean hasReferenceId() {
-    return StringUtils.isNotEmpty(rid);
+  public boolean hasSalesReferenceId() {
+    return StringUtils.isNotEmpty(salesRefId);
   }
+
+  @Override
+  public String getPurchaseReferenceId() { return purchaseRefId;}
+
+  public void setPurchaseReferenceId(String purchaseRefId) { this.purchaseRefId = purchaseRefId; }
+
+  public String getTransferReferenceId() { return transferRefId; }
+
+  public void setTransferReferenceId(String transferRefId) { this.transferRefId = transferRefId; }
+
 
 }

@@ -66,14 +66,37 @@
                         </div>
                     </div>
                     <div class="col-sm-3" ng-show="isUndef(orderId)">
-                        <span class="filter-label">{{resourceBundle['referenceid']}}</span>
+                        <span class="filter-label">{{resourceBundle['sales.reference.id']}}</span>
                         <div class="has-feedback">
-                            <input type="text" class="form-control" ng-model="refId" autocomplete="off"
-                                   typeahead-wait-ms="300" placeholder="{{resourceBundle['referenceid']}}"
-                                   uib-typeahead="val for val in getSuggestions($viewValue, 'rid')"
-                                   typeahead-loading="loadingRefID" typeahead-on-select="showOrderByReferenceId(refId)">
-                            <span ng-show="loadingRefID" class="form-control-feedback typehead-loading"
+                            <input type="text" class="form-control" ng-model="salesRefId" autocomplete="off"
+                                   typeahead-wait-ms="300" placeholder="{{resourceBundle['sales.reference.id']}}"
+                                   uib-typeahead="val for val in getSuggestions($viewValue, 'salesRefId')"
+                                   typeahead-loading="loadingSalesRefID" typeahead-on-select="showOrderByReferenceId(salesRefId, 'sales')">
+                            <span ng-show="loadingSalesRefID" class="form-control-feedback typehead-loading"
                                   aria-hidden="true"> <span class="glyphicons glyphicons-cogwheel spin"></span> </span>
+                        </div>
+                    </div>
+                    <div class="col-sm-3" ng-show="isUndef(orderId) && ordType != 'trn'">
+                        <span class="filter-label">{{resourceBundle['purchase.reference.id']}}</span>
+                        <div class="has-feedback">
+                        <input type="text" class="form-control" ng-model="purchaseRefId" autocomplete="off"
+                               typeahead-wait-ms="300" placeholder="{{resourceBundle['purchase.reference.id']}}"
+                               uib-typeahead="val for val in getSuggestions($viewValue, 'purchaseRefId')"
+                               typeahead-loading="loadingPurchaseRefID" typeahead-on-select="showOrderByReferenceId(purchaseRefId, 'purchase')">
+                        <span ng-show="loadingPurchaseRefID" class="form-control-feedback typehead-loading"
+                                  aria-hidden="true"> <span class="glyphicons glyphicons-cogwheel spin"></span> </span>
+                        </div>
+                    </div>
+                    <div class="col-sm-3" ng-show="isUndef(orderId) && ordType == 'trn'">
+                        <span class="filter-label" ng-hide="transRelease">{{resourceBundle['transfer.reference.id']}}</span>
+                        <span class="filter-label" ng-show="transRelease">{{resourceBundle['release.reference.id']}}</span>
+                        <div class="has-feedback">
+                            <input type="text" class="form-control" ng-model="transferRefId" autocomplete="off"
+                                   typeahead-wait-ms="300" placeholder="{{resourceBundle['transfer.reference.id']}}"
+                                   uib-typeahead="val for val in getSuggestions($viewValue, 'transferRefId')"
+                                   typeahead-loading="loadingTransferRefID" typeahead-on-select="showOrderByReferenceId(transferRefId, 'transfer')">
+                        <span ng-show="loadingTransferRefID" class="form-control-feedback typehead-loading"
+                              aria-hidden="true"> <span class="glyphicons glyphicons-cogwheel spin"></span> </span>
                         </div>
                     </div>
                     <div class="col-sm-3">

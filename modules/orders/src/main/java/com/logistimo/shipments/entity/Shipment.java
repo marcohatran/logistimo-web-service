@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Element;
 import javax.jdo.annotations.IdentityType;
 import javax.jdo.annotations.Join;
@@ -150,7 +151,8 @@ public class Shipment implements IShipment {
   private List<ShipmentItem> items;
 
   @Persistent
-  private String rid;
+  @Column(name = "sales_ref_id")
+  private String salesRefId;
 
   @Override
   public String getShipmentId() {
@@ -448,8 +450,8 @@ public class Shipment implements IShipment {
   }
 
   @Override
-  public String getReferenceId() { return rid; }
+  public String getSalesReferenceId() { return salesRefId; }
 
   @Override
-  public void setReferenceId(String rid) { this.rid = rid; }
+  public void setSalesReferenceId(String salesRefId) { this.salesRefId = salesRefId; }
 }

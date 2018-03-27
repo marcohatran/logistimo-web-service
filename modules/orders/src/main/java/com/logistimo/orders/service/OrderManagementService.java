@@ -34,6 +34,7 @@ import com.logistimo.orders.entity.IDemandItem;
 import com.logistimo.orders.entity.IOrder;
 import com.logistimo.orders.models.OrderFilters;
 import com.logistimo.orders.models.PDFResponseModel;
+import com.logistimo.orders.models.UpdateOrderTransactionsModel;
 import com.logistimo.orders.models.UpdatedOrder;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
@@ -73,7 +74,7 @@ public interface OrderManagementService {
    */
   String shipNow(IOrder order, String transporter, String trackingId, String reason,
       Date expectedFulfilmentDate,
-      String userId, String ps, int source, String referenceId, Boolean updateOrderFields)
+      String userId, String ps, int source, String salesRefId, Boolean updateOrderFields)
       throws ServiceException, ObjectNotFoundException, ValidationException;
 
   /**
@@ -136,13 +137,13 @@ public interface OrderManagementService {
    */
   Results getOrders(Long domainId, Long kioskId, String status, Date since, Date untilDate,
       String otype, String tagType, String tag, List<Long> kioskIds,
-      PageParams pageParams, Integer orderType, String referenceId, String approvalStatus)
+      PageParams pageParams, Integer orderType, String salesReferenceId, String approvalStatus, String purchaseRefId, String transferRefId)
       throws ServiceException;
 
   Results getOrders(Long domainId, Long kioskId, String status, Date since, Date untilDate,
       String otype, String tagType, String tag, List<Long> kioskIds,
-      PageParams pageParams, Integer orderType, String referenceId, String approvalStatus,
-      boolean withDemand);
+      PageParams pageParams, Integer orderType, String salesReferenceId, String approvalStatus,
+      boolean withDemand, String purchaseRefId, String transferRefId);
 
   /**
    * Get orders placed by a certain user
@@ -200,15 +201,7 @@ public interface OrderManagementService {
   ) throws ServiceException;
 
   OrderResults updateOrderTransactions(
-      Long domainId, String userId, String transType, List<ITransaction> inventoryTransactions,
-      Long kioskId, Long trackingId,
-      String message, boolean createOrder, Long servicingKiosk, Double latitude, Double longitude,
-      Double geoAccuracy, String geoErrorCode,
-      String utcExpectedFulfillmentTimeRangesCSV, String utcConfirmedFulfillmentTimeRange,
-      BigDecimal payment, String paymentOption, String packageSize,
-      boolean allowEmptyOrders, List<String> orderTags, Integer orderType, Boolean isSalesOrder,
-      String referenceId, Date reqByDate, Date eta, int source, PersistenceManager pm
-  ) throws ServiceException;
+      UpdateOrderTransactionsModel updateOrderTransactionsRequest) throws ServiceException;
 
   /**
    * Update an order's status, and post inventory issues/receipts, if needed. NOTE: If message and
@@ -235,8 +228,8 @@ public interface OrderManagementService {
                    String utcEstimatedFulfillmentTimeRanges,
                    String utcConfirmedFulfillmentTimeRange, BigDecimal payment,
                    String paymentOption, boolean allowEmptyOrders,
-                   List<String> orderTags, String referenceId,
-                   PersistenceManager pm) throws ServiceException;
+                   List<String> orderTags, String salesReferenceId,
+                   PersistenceManager pm, String purchaseReferenceId, String transferReferenceId) throws ServiceException;
 
 
   BigDecimal computeRecommendedOrderQuantity(IInvntry invntry) throws ServiceException;
@@ -260,7 +253,7 @@ public interface OrderManagementService {
   BigDecimal getLeadTime(Long kid, Long mid, float orderPeriodicityInConfig,
       LeadTimeAvgConfig leadTimeAvgConfig, float leadTimeDefaultInConfig) throws ServiceException;
 
-  void updateOrderMetadata(Long orderId, String updatedBy, PersistenceManager pm, String referenceId, Date estimatedArrivalDate, Boolean updateOrderFields);
+  void updateOrderMetadata(Long orderId, String updatedBy, PersistenceManager pm, String salesRefId, Date estimatedArrivalDate, Boolean updateOrderFields);
 
   void updateOrderMetadata(Long orderId, String updatedBy, PersistenceManager pm);
 
@@ -272,5 +265,8 @@ public interface OrderManagementService {
 
   void updateOrderReferenceId(Long orderId, String referenceId, String userId,
                               PersistenceManager pm)
+      throws ServiceException;
+
+  OrderResults createOrder(UpdateOrderTransactionsModel updateOrderTransactionsRequest)
       throws ServiceException;
 }

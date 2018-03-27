@@ -190,7 +190,7 @@ public class BulkExportMgr {
     String orderIdStr = req.getParameter("orderid"); // Order ID
     boolean etrn = req.getParameter("etrn") != null; // Exclude transfer orders
     String approvalStatus = req.getParameter("approvalstatus");
-    String referenceId = req.getParameter("refid");
+    String salesReferenceId = req.getParameter("salesRefId");
     String tagType = req.getParameter("tagtype");
 
     // Get the parameter objects
@@ -344,7 +344,7 @@ public class BulkExportMgr {
               .setTagType(tagType)
               .setTag(eTags)
               .setApprovalStatus(approvalStatus)
-              .setReferenceId(referenceId)
+              .setSalesReferenceId(salesReferenceId)
               .setOrderType(Integer.parseInt(spTransfer)));
     }
     // Form query params.

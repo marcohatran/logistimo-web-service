@@ -55,5 +55,5 @@ public class OrderStatusModel {
   /**
    * Reference id
    */
-  public String rid;
+  public String salesRefId;
 }

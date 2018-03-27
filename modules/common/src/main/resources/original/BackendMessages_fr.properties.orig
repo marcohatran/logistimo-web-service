@@ -502,3 +502,6 @@ approvals.config.update.success=La configuration des approbations a été mise �
 general.notification.update.success=Configuration des notifications mise à jour avec succès.
 ship.reference.id.update.success=Id de référence mis à jour avec succès.
 ship.reference.id.update.error=Erreur lors de la mise à jour de Reference Id
+transfer.reference.id.update.error.message=Le numéro de référence de transfert ne peut pas être modifié.
+transfer.reference.id.mandatory.error=Le numéro de référence de transfert est obligatoire. Veuillez entrer le numéro de référence du transfert et réessayer.
+purchase.reference.id.mandatory.error=Le numéro de référence d'achat est obligatoire. Veuillez entrer le numéro de référence d'achat et réessayer.

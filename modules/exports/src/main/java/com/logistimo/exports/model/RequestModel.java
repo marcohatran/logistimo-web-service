@@ -128,9 +128,9 @@ public class RequestModel {
   @Expose
   private String status;
 
-  @SerializedName(value = "TOKEN_REF_ID", alternate = "reference_id")
+  @SerializedName(value = "TOKEN_SALES_REFERENCE_ID", alternate = "sales_reference_id")
   @Expose
-  private String referenceId;
+  private String salesReferenceId;
 
   //For sales/purchase order
   @SerializedName(value = "TOKEN_ORDER_SUBTYPE", alternate = "order_subtype")
@@ -186,6 +186,14 @@ public class RequestModel {
   @Expose
   private String excludedEntityTags;
 
+  @SerializedName(value = "TOKEN_PURCHASE_REFERENCE_ID", alternate = "purchase_reference_id")
+  @Expose
+  private String purchaseReferenceId;
+
+  @SerializedName(value = "TOKEN_TRANSFER_REFERENCE_ID", alternate = "transfer_reference_id")
+  @Expose
+  private String transferReferenceId;
+
   @Expose(deserialize = false, serialize = false)
   private Map<String, String> titles;
 
@@ -214,8 +222,8 @@ public class RequestModel {
     this.templateId = templateId;
   }
 
-  public String getReferenceId() {
-    return referenceId;
+  public String getSalesReferenceId() {
+    return salesReferenceId;
   }
 
   public String getDuration() {
@@ -250,8 +258,8 @@ public class RequestModel {
     this.taluk = taluk;
   }
 
-  public void setReferenceId(String referenceId) {
-    this.referenceId = referenceId;
+  public void setSalesReferenceId(String salesReferenceId) {
+    this.salesReferenceId = salesReferenceId;
   }
 
   public String getApprovalStatus() {
@@ -506,4 +514,9 @@ public class RequestModel {
     this.email = email;
   }
 
+  public String getPurchaseReferenceId() { return purchaseReferenceId; }
+  public void setPurchaseReferenceId(String purchaseReferenceId) { this.purchaseReferenceId = purchaseReferenceId; }
+
+  public String getTransferReferenceId() { return transferReferenceId; }
+  public void setTransferReferenceId(String transferReferenceId) { this.transferReferenceId = transferReferenceId; }
 }

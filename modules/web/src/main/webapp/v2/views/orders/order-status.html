@@ -35,9 +35,9 @@
                 </div>
             </div>
             <div class="row mb10" ng-show="nStatus == 'cm'">
-                <label class="col-sm-4 control-label" ng-class="{'required':oCfg.ridm}"> {{resourceBundle['referenceid']}}</label>
+                <label class="col-sm-4 control-label" ng-class="{'required':oCfg.ridm}"> {{resourceBundle['sales.reference.id']}}</label>
                 <div class="col-sm-7">
-                    <input class="form-control" ng-model="newStatus.rid" max-length="100" ng-init="newStatus.rid = order.rid">
+                    <input class="form-control" ng-model="newStatus.salesRefId" max-length="100" ng-init="newStatus.salesRefId = order.salesRefId">
                 </div>
             </div>
             <div class="form-group" ng-show="nStatus == 'cn'">
