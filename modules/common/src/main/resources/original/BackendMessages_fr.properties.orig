@@ -505,3 +505,4 @@ ship.reference.id.update.error=Erreur lors de la mise à jour de Reference Id
 transfer.reference.id.update.error.message=Le numéro de référence de transfert ne peut pas être modifié.
 transfer.reference.id.mandatory.error=Le numéro de référence de transfert est obligatoire. Veuillez entrer le numéro de référence du transfert et réessayer.
 purchase.reference.id.mandatory.error=Le numéro de référence d'achat est obligatoire. Veuillez entrer le numéro de référence d'achat et réessayer.
+release.reference.id.mandatory.error=Le numéro de référence de publication est obligatoire. Veuillez entrer le numéro de référence de version et réessayer.

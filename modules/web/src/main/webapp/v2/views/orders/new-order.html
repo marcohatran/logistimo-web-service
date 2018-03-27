@@ -109,7 +109,7 @@
                                         <label class="col-sm-4 control-label" ng-hide="transRelease" ng-class="{'required':oCfg.transfer}">{{resourceBundle['transfer.reference.id']}}</label>
                                         <label class="col-sm-4 control-label" ng-show="transRelease" ng-class="{'required':oCfg.transfer}">{{resourceBundle['release.reference.id']}}</label>
                                         <div class="col-sm-7">
-                                            <input type="text" ng-model="order.rid" placeholder="{{resourceBundle['transfer.reference.id']}}" class="form-control" maxlength="100">
+                                            <input type="text" ng-model="order.rid" placeholder="{{transRelease ? resourceBundle['release.reference.id'] : resourceBundle['transfer.reference.id']}}" class="form-control" maxlength="100">
                                         </div>
                                     </div>
 

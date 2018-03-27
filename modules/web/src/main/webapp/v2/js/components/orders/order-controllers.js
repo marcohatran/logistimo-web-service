@@ -1172,7 +1172,11 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                 $scope.showWarning($scope.resourceBundle['purchase.reference.id.mandatory.error']);
                 return;
             } else if(checkNullEmpty(value) && referenceType == 'transferRefId' && $scope.oCfg.transfer) {
-                $scope.showWarning($scope.resourceBundle['transfer.reference.id.mandatory.error']);
+                if($scope.transRelease) {
+                    $scope.showWarning($scope.resourceBundle['release.reference.id.mandatory.error']);
+                } else {
+                    $scope.showWarning($scope.resourceBundle['transfer.reference.id.mandatory.error']);
+                }
                 return;
             }
 
@@ -2342,7 +2346,11 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
                     $scope.showWarning($scope.resourceBundle['purchase.reference.id.mandatory.error']);
                     return;
                 } else if(checkNullEmpty($scope.order.rid) && $scope.type == 2 && $scope.oCfg.transfer) {
-                    $scope.showWarning($scope.resourceBundle['transfer.reference.id.mandatory.error']);
+                    if($scope.transRelease) {
+                        $scope.showWarning($scope.resourceBundle['release.reference.id.mandatory.error']);
+                    } else {
+                        $scope.showWarning($scope.resourceBundle['transfer.reference.id.mandatory.error']);
+                    }
                     return;
                 }
             }
