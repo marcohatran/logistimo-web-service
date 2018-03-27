@@ -2305,82 +2305,112 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
             return true;
         }
 
-
-
         $scope.$watch("offset", function(){
             $scope.fetch();
         });
 
-        $scope.validate = function (transaction, index, material) {
-            if (checkNotNullEmpty(transaction.rq) && transaction.rq > transaction.q) {
-                if ($scope.transaction.type == 'ri') {
-                    showPopUP(transaction, $scope.resourceBundle['return.quantity'] + " (" + transaction.rq + ") " + $scope.resourceBundle['cannot.exceed.issued.quantity'] + " (" + transaction.q + ") " + $scope.resourceBundle['for'] + " " + $scope.mnm, index,"rq");
-                    return false;
-                } else if ($scope.transaction.type == 'ro') {
-                        showPopUP(transaction, $scope.resourceBundle['return.quantity'] + " (" + transaction.rq + ") " + $scope.resourceBundle['cannot.exceed.received.quantity'] + " (" + transaction.q + ") " + $scope.resourceBundle['for'] + " " + $scope.mnm, index, "rq");
-                        return false;
+        $scope.validate = function (transaction, index, idPrefix, type) {
+            var redraw = false;
+            var material = $scope.material;
+            var isInvalid = true;
+            if(type == undefined || type == 'q') {
+                if(transaction.displayMeta != transaction.rq > 0) {
+                    redraw = true;
                 }
-            }
-            if ($scope.transaction.type == 'ro') {
-                if (checkNotNullEmpty(transaction.bid)) {
-                    if (checkNullEmpty($scope.material.bidbatchDetMap[transaction.bid])) {
-                        showPopUP(transaction,$scope.resourceBundle['batch'] + " " + transaction.bid + " " + $scope.resourceBundle['return.not.allowed.non.existing.batch'] + " " + $scope.mnm + ".", index, "rq");
-                        return false;
-                    } else if (transaction.rq > $scope.material.bidbatchDetMap[transaction.bid].atpstk) {
-                        showPopUP(transaction,$scope.resourceBundle['return.quantity'] + ' (' + transaction.rq + ') ' + $scope.resourceBundle['cannotexceedstock'] + ' (' + $scope.material.bidbatchDetMap[transaction.bid].atpstk + ') ' + $scope.resourceBundle['for'] + " " + $scope.resourceBundle['batch.lower'] + " " + transaction.bid + " " + $scope.resourceBundle['of'] + " " + $scope.mnm + ".", index, "rq");
-                        return false;
+                transaction.displayMeta = transaction.rq > 0;
+                if (checkNotNullEmpty(transaction.rq) && transaction.rq > transaction.q) {
+                    if ($scope.transaction.type == 'ri') {
+                        showPopup($scope, transaction, idPrefix + transaction.id,
+                            $scope.resourceBundle['return.quantity'] + " (" + transaction.rq + ") " + $scope.resourceBundle['cannot.exceed.issued.quantity'] + " (" + transaction.q + ") " + $scope.resourceBundle['for'] + " " + $scope.mnm,
+                            index, $timeout);
+                        isInvalid = false;
+                    } else if ($scope.transaction.type == 'ro') {
+                        showPopup($scope, transaction, idPrefix + transaction.id, $scope.resourceBundle['return.quantity'] + " (" + transaction.rq + ") " + $scope.resourceBundle['cannot.exceed.received.quantity'] + " (" + transaction.q + ") " + $scope.resourceBundle['for'] + " " + $scope.mnm,
+                            index, $timeout);
+                        isInvalid = false;
                     }
-                } else if (transaction.rq > $scope.material.atpstock){
-                    showPopUP(transaction,$scope.resourceBundle['return.quantity'] + ' (' + transaction.rq + ') ' + $scope.resourceBundle['cannotexceedstock'] + ' (' + material.atpstock + ') ' + $scope.resourceBundle['for'] + " " + $scope.mnm + ".", index, "rq");
-                    return false;
+                }
+
+                if (!isInvalid && $scope.transaction.type == 'ro') {
+                    if (checkNotNullEmpty(transaction.bid)) {
+                        if (checkNullEmpty($scope.material.bidbatchDetMap[transaction.bid])) {
+                            showPopup($scope, transaction, idPrefix + transaction.id,
+                                $scope.resourceBundle['batch'] + " " + transaction.bid + " " + $scope.resourceBundle['return.not.allowed.non.existing.batch'] + " " + $scope.mnm + ".",
+                                index, $timeout);
+                            isInvalid = false;
+                        } else if (transaction.rq > $scope.material.bidbatchDetMap[transaction.bid].atpstk) {
+                            showPopup($scope, transaction, idPrefix + transaction.id, $scope.resourceBundle['return.quantity'] + ' (' + transaction.rq + ') ' + $scope.resourceBundle['cannotexceedstock'] + ' (' + $scope.material.bidbatchDetMap[transaction.bid].atpstk + ') ' + $scope.resourceBundle['for'] + " " + $scope.resourceBundle['batch.lower'] + " " + transaction.bid + " " + $scope.resourceBundle['of'] + " " + $scope.mnm + ".",
+                                index, $timeout);
+                            isInvalid = false;
+                        }
+                    } else if (transaction.rq > $scope.material.atpstock) {
+                        showPopup($scope, transaction, idPrefix + transaction.id, $scope.resourceBundle['return.quantity'] + ' (' + transaction.rq + ') ' + $scope.resourceBundle['cannotexceedstock'] + ' (' + material.atpstock + ') ' + $scope.resourceBundle['for'] + " " + $scope.mnm + ".",
+                            index, $timeout);
+                        isInvalid = false;
+                    }
+                }
+
+                if (!isInvalid && checkNotNullEmpty(material.name.huName) && checkNotNullEmpty(material.name.huQty) && checkNotNullEmpty(transaction.rq) && transaction.rq % material.name.huQty != 0) {
+                    showPopup($scope, transaction, idPrefix + transaction.id, transaction.rq + " " + $scope.resourceBundle['of'] + " " + material.name.mnm + " " + $scope.resourceBundle['handling.units.mismatch.message'] + " " + material.name.huName + ". " + $scope.resourceBundle['handling.units.expected.message'] + " " + material.name.huQty + " " + material.name.mnm + ".",
+                        index, $timeout);
+                    isInvalid = false;
                 }
             }
 
-            if (checkNotNullEmpty(material.name.huName) && checkNotNullEmpty(material.name.huQty) && checkNotNullEmpty(transaction.rq) && transaction.rq % material.name.huQty != 0) {
-                showPopUP(transaction, transaction.rq + " " + $scope.resourceBundle['of'] + " " + material.name.mnm + " " + $scope.resourceBundle['handling.units.mismatch.message'] + " " + material.name.huName + ". " + $scope.resourceBundle['handling.units.expected.message'] + " " + material.name.huQty + " " + material.name.mnm + ".", index,"rq");
-                return false;
+            if(type == undefined || type == 's') {
+                var status = material.ts ? $scope.tempmatstatus : $scope.matstatus;
+                if (checkNotNullEmpty(status) && checkNullEmpty(transaction.rmst) && $scope.msm) {
+                    showPopup($scope, transaction, idPrefix + transaction.id, $scope.resourceBundle['status.required'],
+                        index, $timeout, false, true);
+                    isInvalid = false;
+                }
             }
-            var status = material.ts ? $scope.tempmatstatus : $scope.matstatus;
-            if(checkNotNullEmpty(status) && checkNullEmpty(transaction.rmst) && $scope.msm) {
-                showPopUP(transaction, $scope.resourceBundle['status.required'], index,"rmst");
-                return false;
+
+            if(type == undefined || type == 'r') {
+                if (checkNotNullEmpty($scope.reasons) && $scope.reasons.length > 0 && checkNullEmpty(transaction.rrsn)) {
+                    showPopup($scope, transaction, idPrefix + transaction.id, $scope.resourceBundle['reason.required'],
+                        index, $timeout, false, false, true);
+                    isInvalid = false;
+                }
             }
-            if (checkNotNullEmpty($scope.reasons) && $scope.reasons.length > 0 && checkNullEmpty(transaction.rrsn)) {
-                showPopUP(transaction, $scope.resourceBundle['reason.required'], index,"rrsn");
-                return false;
+            if(redraw) {
+                redrawAllPopup();
             }
-            return true;
+            return isInvalid;
         };
 
-        function showPopUP(transaction, msg, index, source) {
-            $timeout(function () {
-                if (source == 'rq') {
-                    transaction.popupMsg = msg;
-                    if (!transaction.invalidPopup) {
-                        transaction.invalidPopup = true;
-                        $scope.invalidPopup += 1;
-                    }
-                } else if (source == 'rmst') {
-                    transaction.aPopupMsg = msg;
-                    if (!transaction.ainvalidPopup) {
-                        transaction.ainvalidPopup = true;
-                        $scope.invalidPopup += 1;
-                    }
+
+        function redrawAllPopup(type) {
+            var index = -1;
+            var items = $scope.op == 'edit' ? $scope.returnItems : $scope.transactions.results;
+            items.forEach(function (item) {
+                index += 1;
+                if (item.popupMsg) {
+                    type == 'show' ?
+                        $scope.validate(item, index, $scope.op == 'edit' ? 'er' : 'r', 'q') :
+                        $scope.hidePopup(item, index, $scope.op == 'edit' ? 'er' : 'r', 'q');
                 }
+                if (item.sPopupMsg) {
+                    type == 'show' ?
+                        $scope.validate(item, index, ($scope.op == 'edit' ? 'ers' : 'rs') + (item.tm ? 't' : ''), 's') :
+                        $scope.hidePopup(item, index, ($scope.op == 'edit' ? 'ers' : 'rs') + (item.tm ? 't' : ''), 's');
+                }
+                if (item.rPopupMsg) {
+                    type == 'show' ?
+                        $scope.validate(item, index, $scope.op == 'edit' ? 'err' : 'rr', 'r') :
+                        $scope.hidePopup(item, index, $scope.op == 'edit' ? 'err' : 'rr', 'r');
+                }
+
+            });
+            if (type != 'show') {
                 $timeout(function () {
-                    $("[id='"+ source + transaction.id + index + "']").trigger('showpopup');
+                    redrawAllPopup('show');
                 }, 0);
-            }, 0);
+            }
         }
 
-        $scope.hidePopup = function(transaction,index, source){
-            if (transaction.invalidPopup || transaction.ainvalidPopup) {
-                $scope.invalidPopup = $scope.invalidPopup <= 0 ? 0 : $scope.invalidPopup - 1;
-            }
-            transaction.invalidPopup = false;
-            $timeout(function () {
-                $("[id='"+ source + transaction.id + index + "']").trigger('hidepopup');
-            }, 0);
+        $scope.hidePopup = function(transaction, index, idPrefix, type) {
+            hidePopup($scope, transaction, (idPrefix ? idPrefix : '') + transaction.id, index, $timeout, false, type == 's', type == 'r');
         };
 
         $scope.isReturnEnteredForTransaction = function(id) {

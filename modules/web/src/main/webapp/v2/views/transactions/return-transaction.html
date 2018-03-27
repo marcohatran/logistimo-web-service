@@ -25,197 +25,281 @@
     <div class="row">
         <div class="col-sm-12">
         <span class="pull-right">
-            <a href="" ng-click="toggle($index)"><span class="glyphicons glyphicons-remove large" uib-tooltip="{{resourceBundle['close']}}" tooltip-placement="left"></span></a>
+            <a href="" ng-click="toggle($index)"><span class="glyphicons glyphicons-remove large"
+                                                       uib-tooltip="{{resourceBundle['close']}}"
+                                                       tooltip-placement="left"></span></a>
         </span>
 
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            <b>{{resourceBundle['returns']}} {{resourceBundle['for']}} {{mnm}}</b>
-        </div>
-        <div class="panel-body">
-            <div ng-show="op=='edit'">
-                <div class="row">
-                    <div class="col-sm-12">
-                        <table class="table table-striped table-condensed table-fixed">
-                          <thead>
-                          <tr>
-                            <th class="col-sm-0-2 text-center">{{resourceBundle['serialnum']}}</th>
-                            <th class="col-sm-2">{{returnAgainstType}}</th>
-                            <th class="col-sm-2 text-center" ng-show="material.isBatch">{{resourceBundle['batch']}}</th>
-                            <th class="col-sm-2 text-center" ng-show="material.isBatch">{{resourceBundle['expiry']}}</th>
-                            <th ng-class="{'col-sm-1':material.isBatch,'col-sm-3':!material.isBatch}" class="text-center">{{resourceBundle['quantity']}}</th>
-                            <th class="col-sm-2 required">{{resourceBundle['return.quantity']}}</th>
-                            <th class="col-sm-0-5 text-center"></th>
-                          </tr>
-                          </thead>
-                          <tbody>
-                          <tr ng-repeat="returnitem in returnitems">
-                            <td class="text-center">{{$index + 1}}</td>
-                            <td><p>{{resourceBundle['on.upper']}} {{returnitem.ts}}</p>
-                                <span class="litetext float-left" ng-show="isDef(returnitem.atd)">{{returnitem.atd}}</span>
-                            </td>
-                              <td ng-show="material.isBatch" class="text-center">{{returnitem.bid}}
-                              </td>
-                              <td ng-show="material.isBatch" class="text-center">{{returnitem.bexp}}
-                              </td>
-                            <td class="text-center">{{returnitem.q}}</p>
-                            </td>
-                            <td><input type="text" class="form-control" maxlength="12" only-digits ng-model="returnitem.rq" ng-class="{'red-border': returnitem.rq > returnitem.q == true}"
-                                       id="rq{{returnitem.id}}{{$index}}"
-                                       uib-popover="{{returnitem.popupMsg}}"
-                                       ng-focus="hidePopup(returnitem,$index,'rq')"
-                                       ng-blur="validate(returnitem,$index,material)"
-                                       popover-trigger="showpopup"/>
-                              <div ng-show="returnitem.rq > 0" class="mt5">
-                                <span class="litetext float-left" ng-class="{'required' : msm}" ng-show="(!material.ts && isDef(matstatus)) || (material.ts && isDef(tempmatstatus))">{{resourceBundle['inventory.material.status']}}</span>
-                                <select ng-hide="material.ts || isUndef(matstatus)" ng-model="returnitem.rmst" class="form-control"
-                                        uib-popover="{{returnitem.aPopupMsg}}"
-                                        ng-blur="validate(returnitem,$index,material)"
-                                        id="rmst{returnitem.id}}{{$index}}"
-                                        popover-trigger="showpopup">
-                                  <option ng-repeat="stats in matstatus track by $index" value="{{stats}}">{{stats || resourceBundle['select'] + " " + resourceBundle['status.lower']}}</option>
-                                </select>
-                                <select ng-show="material.ts && isDef(tempmatstatus)" ng-model="returnitem.rmst" class="form-control"
-                                        uib-popover="{{returnitem.aPopupMsg}}"
-                                        ng-blur="validate(returnitem,$index,material)"
-                                        popover-trigger="showpopup">
-                                  <option ng-repeat="stats in tempmatstatus track by $index" value="{{stats}}">{{stats || resourceBundle['select'] + " " + resourceBundle['status.lower']}}</option>
-                                </select>
-                                  <span class="litetext float-left" ng-class="{'required' : reasons.length > 0}">{{resourceBundle['reason']}}</span>
-                                  <select ng-hide="isUndef(reasons) || reasons.length == 0" ng-model="returnitem.rrsn" class="form-control">
-                                      <option ng-repeat="rsn in reasons track by $index" value="{{rsn}}">{{rsn || resourceBundle['select'] + " " + resourceBundle['reason.lowercase']}}</option>
-                                  </select>
-                                  <p ng-show="isUndef(reasons)" class="text-center cbx">NA</p>
-                              </div>
-                            </td>
-                              <td class="text-center">
-                                  <a href="" ng-click="removeFromReturnItems(returnitem.sno);">
-                                      <span class="glyphicons glyphicons-bin temp"></span>
-                                  </a>
-                              </td>
-                          </tr>
-                          </tbody>
-                        </table>
-                    </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <b>{{resourceBundle['returns']}} {{resourceBundle['for']}} {{mnm}}</b>
                 </div>
-                <div ng-show="(isUndef(returnitems) || returnitems.length == 0)" class="padding:10px">
-                    <div class="col-sm-12 padding5">
-                        <div>
-                            <p class=" alert alert-warning mt18">{{resourceBundle['no.returns.to.edit']}}</p>
+                <div class="panel-body">
+                    <div ng-show="op=='edit'">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <table class="table table-striped table-condensed table-fixed">
+                                    <thead>
+                                    <tr>
+                                        <th class="col-sm-0-2 text-center">{{resourceBundle['serialnum']}}</th>
+                                        <th class="col-sm-2">{{returnAgainstType}}</th>
+                                        <th class="col-sm-2 text-center" ng-show="material.isBatch">
+                                            {{resourceBundle['batch']}}
+                                        </th>
+                                        <th class="col-sm-2 text-center" ng-show="material.isBatch">
+                                            {{resourceBundle['expiry']}}
+                                        </th>
+                                        <th ng-class="{'col-sm-1':material.isBatch,'col-sm-3':!material.isBatch}"
+                                            class="text-center">{{resourceBundle['quantity']}}
+                                        </th>
+                                        <th class="col-sm-2 required">{{resourceBundle['return.quantity']}}</th>
+                                        <th class="col-sm-0-5 text-center"></th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr ng-repeat="returnitem in returnitems">
+                                        <td class="text-center">{{$index + 1}}</td>
+                                        <td><p>{{resourceBundle['on.upper']}} {{returnitem.ts}}</p>
+                                            <span class="litetext float-left" ng-show="isDef(returnitem.atd)">{{returnitem.atd}}</span>
+                                        </td>
+                                        <td ng-show="material.isBatch" class="text-center">{{returnitem.bid}}
+                                        </td>
+                                        <td ng-show="material.isBatch" class="text-center">{{returnitem.bexp}}
+                                        </td>
+                                        <td class="text-center">{{returnitem.q}}
+                                        </td>
+                                        <td><input type="text" class="form-control" maxlength="12" only-digits
+                                                   ng-model="returnitem.rq"
+                                                   ng-class="{'red-border': returnitem.rq > returnitem.q}"
+                                                   id="er{{returnitem.id}}{{$index}}"
+                                                   uib-popover="{{returnitem.popupMsg}}"
+                                                   ng-focus="hidePopup(returnitem,$index,'er','q')"
+                                                   ng-blur="validate(returnitem,$index, 'er','q')"
+                                                   popover-trigger="showpopup"/>
+
+                                            <div ng-show="returnitem.displayMeta" class="mt5">
+                                                <span class="litetext float-left" ng-class="{'required' : msm}"
+                                                      ng-show="(!material.ts && isDef(matstatus)) || (material.ts && isDef(tempmatstatus))">{{resourceBundle['inventory.material.status']}}</span>
+                                                <select ng-hide="material.ts || isUndef(matstatus)"
+                                                        ng-model="returnitem.rmst"
+                                                        class="form-control"
+                                                        uib-popover="{{returnitem.sPopupMsg}}"
+                                                        ng-focus="hidePopup(returnitem,$index,'ers','s')"
+                                                        ng-blur="validate(returnitem,$index,'ers','s')"
+                                                        id="ers{{returnitem.id}}{{$index}}"
+                                                        popover-trigger="showpopup">
+                                                    <option ng-repeat="stats in matstatus track by $index"
+                                                            value="{{stats}}">
+                                                        {{stats || resourceBundle['select'] + " " +
+                                                        resourceBundle['status.lower']}}
+                                                    </option>
+                                                </select>
+                                                <select ng-show="material.ts && isDef(tempmatstatus)"
+                                                        ng-model="returnitem.rmst"
+                                                        class="form-control"
+                                                        uib-popover="{{returnitem.sPopupMsg}}"
+                                                        ng-focus="hidePopup(returnitem,$index,'erst','s')"
+                                                        ng-blur="validate(returnitem,$index,'erst' ,'s')"
+                                                        id="erst{{returnitem.id}}{{$index}}"
+                                                        popover-trigger="showpopup">
+                                                    <option ng-repeat="stats in tempmatstatus track by $index"
+                                                            value="{{stats}}">
+                                                        {{stats || resourceBundle['select'] + " " +
+                                                        resourceBundle['status.lower']}}
+                                                    </option>
+                                                </select>
+                                                <span class="litetext float-left"
+                                                      ng-class="{'required' : reasons.length > 0}">{{resourceBundle['reason']}}</span>
+                                                <select ng-hide="isUndef(reasons) || reasons.length == 0"
+                                                        ng-model="returnitem.rrsn" class="form-control"
+                                                        uib-popover="{{returnitem.rPopupMsg}}"
+                                                        ng-focus="hidePopup(returnitem,$index,'err','r')"
+                                                        ng-blur="validate(returnitem,$index,'err', 'r')"
+                                                        id="err{{returnitem.id}}{{$index}}"
+                                                        popover-trigger="showpopup">
+                                                    <option ng-repeat="rsn in reasons track by $index" value="{{rsn}}">
+                                                        {{rsn ||
+                                                        resourceBundle['select'] + " " +
+                                                        resourceBundle['reason.lowercase']}}
+                                                    </option>
+                                                </select>
+
+                                                <p ng-show="isUndef(reasons)" class="text-center cbx">NA</p>
+                                            </div>
+                                        </td>
+                                        <td class="text-center">
+                                            <a href="" ng-click="removeFromReturnItems(returnitem.sno);">
+                                                <span class="glyphicons glyphicons-bin temp"></span>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div ng-show="(isUndef(returnitems) || returnitems.length == 0)" class="padding:10px">
+                            <div class="col-sm-12 padding5">
+                                <div>
+                                    <p class=" alert alert-warning mt18">{{resourceBundle['no.returns.to.edit']}}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-12">
+                                <div class="pull-right">
+                                    <button type="button" ng-click="saveEditedReturnTransactions($index)" ng-disabled="invalidPopup > 0"
+                                            class="btn btn-sm btn-primary">{{resourceBundle['save']}}
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-default" ng-click="toggle($index);">
+                                        {{resourceBundle['cancel']}}
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <div class="col-sm-12">
+                    <div ng-show="op=='add'">
+                        <div ng-show="transactions.results.length > 0" class="row">
+                            <div class="col-sm-12">
+                                <div class="col-sm-2">
+                                    <span class="filter-label">{{resourceBundle['from']}}</span>
+                                    <date-picker date-model="from" place-holder="From" min-date="minDate"
+                                                 max-date="today"></date-picker>
+                                </div>
+                                <div class="col-sm-2">
+                                    <span class="filter-label">{{resourceBundle['to']}}</span>
+                                    <date-picker date-model="to" place-holder="To" min-date="from"
+                                                 max-date="today"></date-picker>
+                                </div>
+                                <div class="col-sm-8">
+                                    <div class="col-sm-12">&nbsp</div>
+                                    <div class="col-sm-12">
+                                        <div class="btn btn-sm btn-primary " ng-click="applyFilter()">
+                                            {{resourceBundle['filter']}}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div ng-show="transactions.results.length > 0" class="row">
+                            <div class="col-sm-12">
+                                <div class="col-sm-12">
+                                    <div class="pull-right pt10">
+                                        <div ng-include="'views/load-more-paginator.html'"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div ng-show="transactions.results.length > 0" class="row">
+                            <div class="col-sm-12">
+                                <table class="table table-striped table-condensed table-fixed">
+                                    <thead>
+                                    <tr>
+                                        <th class="col-sm-0-2 text-center">{{resourceBundle['serialnum']}}</th>
+                                        <th class="col-sm-2">{{returnAgainstType}}</th>
+                                        <th class="col-sm-2 text-center" ng-show="material.isBatch">
+                                            {{resourceBundle['batch']}}
+                                        </th>
+                                        <th class="col-sm-2 text-center" ng-show="material.isBatch">
+                                            {{resourceBundle['expiry']}}
+                                        </th>
+                                        <th ng-class="{'col-sm-1':material.isBatch,'col-sm-3':!material.isBatch}"
+                                            class="text-center">{{resourceBundle['quantity']}}
+                                        </th>
+                                        <th class="col-sm-2 required">{{resourceBundle['return.quantity']}}</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr ng-repeat="trans in transactions.results">
+                                        <td class="text-center">{{$index + 1}}</td>
+                                        <td><p>{{resourceBundle['on.upper']}} {{trans.ts}}</p>
+                                            <span class="litetext float-left"
+                                                  ng-show="isDef(trans.atd)">{{trans.atd}}</span>
+                                        </td>
+                                        <td ng-show="material.isBatch" class="text-center">{{trans.bid}}
+                                        </td>
+                                        <td ng-show="material.isBatch" class="text-center">{{trans.bexp}}
+                                        </td>
+                                        <td class="text-center">{{trans.q | number}}
+                                        </td>
+                                        <td><input ng-disabled="isReturnEnteredForTransaction(trans.sno)" type="text"
+                                                   class="form-control" maxlength="12" only-digits ng-model="trans.rq"
+                                                   ng-class="{'red-border': trans.rq > trans.q == true}"
+                                                   id="r{{trans.id}}{{$index}}"
+                                                   uib-popover="{{trans.popupMsg}}"
+                                                   ng-focus="hidePopup(trans,$index,'r','q')"
+                                                   ng-blur="validate(trans,$index,'r', 'q')"
+                                                   popover-trigger="showpopup"/>
+
+                                            <div ng-show="trans.displayMeta" class="mt5">
+                                                <span class="litetext float-left" ng-class="{'required' : msm}"
+                                                      ng-show="(!material.ts && isDef(matstatus)) || (material.ts && isDef(tempmatstatus))">{{resourceBundle['inventory.material.status']}}</span>
+                                                <select ng-hide="material.ts || isUndef(matstatus)"
+                                                        ng-model="trans.rmst" class="form-control"
+                                                        uib-popover="{{trans.sPopupMsg}}"
+                                                        ng-focus="hidePopup(trans,$index,'rs','s')"
+                                                        ng-blur="validate(trans,$index,'rs', 's')"
+                                                        id="rs{trans.id}}{{$index}}"
+                                                        popover-trigger="showpopup">
+                                                    <option ng-repeat="stats in matstatus track by $index"
+                                                            value="{{stats}}">{{stats || resourceBundle['select'] + " "
+                                                        + resourceBundle['status.lower']}}
+                                                    </option>
+                                                </select>
+                                                <select ng-show="material.ts && isDef(tempmatstatus)"
+                                                        ng-model="trans.rmst" class="form-control"
+                                                        uib-popover="{{trans.sPopupMsg}}"
+                                                        ng-focus="hidePopup(trans,$index,'rst','s')"
+                                                        ng-blur="validate(trans,$index,'rst', 's')"
+                                                        id="rst{{trans.id}}{{$index}}"
+                                                        popover-trigger="showpopup">
+                                                    <option ng-repeat="stats in tempmatstatus track by $index"
+                                                            value="{{stats}}">{{stats || resourceBundle['select'] + " "
+                                                        + resourceBundle['status.lower']}}
+                                                    </option>
+                                                </select>
+                                                <span ng-hide="reasons.length == 0" class="litetext float-left"
+                                                      ng-class="{'required' : reasons.length > 0}">{{resourceBundle['reason']}}</span>
+                                                <select ng-hide="isUndef(reasons) || reasons.length == 0"
+                                                        ng-model="trans.rrsn" class="form-control"
+                                                        uib-popover="{{trans.rPopupMsg}}"
+                                                        ng-focus="hidePopup(trans,$index,'rr','r')"
+                                                        ng-blur="validate(trans,$index,'rr', 'r')"
+                                                        id="rr{{trans.id}}{{$index}}"
+                                                        popover-trigger="showpopup">
+                                                    <option ng-repeat="rsn in reasons track by $index" value="{{rsn}}">
+                                                        {{rsn || resourceBundle['select'] + " " +
+                                                        resourceBundle['reason.lowercase']}}
+                                                    </option>
+                                                </select>
+
+                                                <p ng-show="isUndef(reasons)" class="text-center cbx">NA</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div ng-show="transactions.results.length == 0 && !loading" class="row">
+                            <div class="col-sm-12 padding5">
+                                <div>
+                                    <p class=" alert alert-warning mt18">{{resourceBundle['transactions.none']}}</p>
+                                </div>
+                            </div>
+                        </div>
                         <div class="pull-right">
-                            <button type="button" ng-click="saveEditedReturnTransactions($index)" class="btn btn-sm btn-primary">{{resourceBundle['save']}}</button>
-                            <button type="button" class="btn btn-sm btn-default" ng-click="toggle($index);">{{resourceBundle['cancel']}}</button>
+                            <button ng-disabled="transactions.results.length == 0 || invalidPopup > 0"
+                                    ng-click="saveReturnTransactions($index);" class="btn btn-sm btn-primary">
+                                {{resourceBundle['save']}}
+                            </button>
+                            <button ng-click="toggle($index);" class="btn btn-sm btn-default">
+                                {{resourceBundle['close']}}
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
-            <div ng-show="op=='add'">
-                <div ng-show="transactions.results.length > 0" class="row">
-                    <div class="col-sm-12">
-                        <div class="col-sm-2">
-                            <span class="filter-label">{{resourceBundle['from']}}</span>
-                            <date-picker date-model="from" place-holder="From" min-date="minDate" max-date="today"></date-picker>
-                        </div>
-                        <div class="col-sm-2">
-                            <span class="filter-label">{{resourceBundle['to']}}</span>
-                            <date-picker date-model="to" place-holder="To" min-date="from" max-date="today"></date-picker>
-                        </div>
-                        <div class="col-sm-8">
-                            <div class="col-sm-12">&nbsp</div>
-                            <div class="col-sm-12">
-                                <div class="btn btn-sm btn-primary " ng-click="applyFilter()">{{resourceBundle['filter']}}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div ng-show="transactions.results.length > 0" class="row">
-                    <div class="col-sm-12">
-                        <div class="col-sm-12">
-                            <div class="pull-right pt10">
-                                <div ng-include="'views/load-more-paginator.html'"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div ng-show="transactions.results.length > 0" class="row">
-                  <div class="col-sm-12">
-                    <table class="table table-striped table-condensed table-fixed">
-                      <thead>
-                      <tr>
-                        <th class="col-sm-0-2 text-center">{{resourceBundle['serialnum']}}</th>
-                        <th class="col-sm-2">{{returnAgainstType}}</th>
-                        <th class="col-sm-2 text-center" ng-show="material.isBatch">{{resourceBundle['batch']}}</th>
-                        <th class="col-sm-2 text-center" ng-show="material.isBatch">{{resourceBundle['expiry']}}</th>
-                        <th ng-class="{'col-sm-1':material.isBatch,'col-sm-3':!material.isBatch}" class="text-center">{{resourceBundle['quantity']}}</th>
-                        <th class="col-sm-2 required">{{resourceBundle['return.quantity']}}</th>
-                      </tr>
-                      </thead>
-                      <tbody>
-                      <tr ng-repeat="trans in transactions.results">
-                        <td class="text-center">{{$index + 1}}</td>
-                        <td><p>{{resourceBundle['on.upper']}} {{trans.ts}}</p>
-                            <span class="litetext float-left" ng-show="isDef(trans.atd)">{{trans.atd}}</span>
-                        </td>
-                        <td ng-show="material.isBatch" class="text-center">{{trans.bid}}
-                        </td>
-                        <td ng-show="material.isBatch" class="text-center">{{trans.bexp}}
-                        </td>
-                        <td class="text-center">{{trans.q | number}}
-                        </td>
-                        <td><input ng-disabled="isReturnEnteredForTransaction(trans.sno)" type="text" class="form-control" maxlength="12" only-digits ng-model="trans.rq"
-                                   ng-class="{'red-border': trans.rq > trans.q == true}" id="rq{{trans.id}}{{$index}}"
-                                   uib-popover="{{trans.popupMsg}}"
-                                   ng-focus="hidePopup(trans,$index,'rq')"
-                                   ng-blur="validate(trans,$index,material)"
-                                   popover-trigger="showpopup"/>
-
-                            <div ng-show="trans.rq > 0" class="mt5">
-                            <span class="litetext float-left" ng-class="{'required' : msm}" ng-show="(!material.ts && isDef(matstatus)) || (material.ts && isDef(tempmatstatus))">{{resourceBundle['inventory.material.status']}}</span>
-                            <select ng-hide="material.ts || isUndef(matstatus)" ng-model="trans.rmst" class="form-control"
-                                    uib-popover="{{trans.aPopupMsg}}"
-                                    ng-blur="validate(trans,$index,material)" id="rmst{trans.id}}{{$index}}"
-                                    popover-trigger="showpopup">
-                              <option ng-repeat="stats in matstatus track by $index" value="{{stats}}">{{stats || resourceBundle['select'] + " " + resourceBundle['status.lower']}}</option>
-                            </select>
-                            <select ng-show="material.ts && isDef(tempmatstatus)" ng-model="trans.rmst" class="form-control"
-                                uib-popover="{{trans.aPopupMsg}}"
-                                ng-blur="validate(trans,$index,material)"
-                                id="rmst{{trans.id}}{{$index}}"
-                                popover-trigger="showpopup">
-                                <option ng-repeat="stats in tempmatstatus track by $index" value="{{stats}}">{{stats || resourceBundle['select'] + " " + resourceBundle['status.lower']}}</option>
-                            </select>
-                            <span ng-hide="reasons.length == 0" class="litetext float-left" ng-class="{'required' : reasons.length > 0}">{{resourceBundle['reason']}}</span>
-                            <select ng-hide="isUndef(reasons) || reasons.length == 0" ng-model="trans.rrsn" class="form-control">
-                                <option ng-repeat="rsn in reasons track by $index" value="{{rsn}}">{{rsn || resourceBundle['select'] + " " + resourceBundle['reason.lowercase']}}</option>
-                            </select>
-                                <p ng-show="isUndef(reasons)" class="text-center cbx">NA</p>
-                          </div>
-                        </td>
-                      </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-                <div ng-show="transactions.results.length == 0 && !loading" class="row">
-                    <div class="col-sm-12 padding5">
-                        <div>
-                            <p class=" alert alert-warning mt18">{{resourceBundle['transactions.none']}}</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="pull-right">
-                    <button ng-disabled="transactions.results.length == 0" ng-click="saveReturnTransactions($index);" class="btn btn-sm btn-primary">{{resourceBundle['save']}}</button>
-                    <button ng-click="toggle($index);" class="btn btn-sm btn-default">{{resourceBundle['close']}}</button>
-                </div>
         </div>
-      </div>
-    </div>
-    </div>
     </div>
 </div>
