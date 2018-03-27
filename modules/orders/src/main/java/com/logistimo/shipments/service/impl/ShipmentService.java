@@ -829,6 +829,8 @@ public class ShipmentService implements IShipmentService {
         t.setDomainId(shipment.getLinkedDomainId());
         if (inv != null) {
           inv.setInTransitStock(inv.getInTransitStock().add(shipmentItem.getQuantity()));
+          inv.setUpdatedOn(new Date());
+          inv.setUpdatedBy(userId);
           inTransitList.add(inv);
         }
       } else if (ShipmentStatus.CANCELLED.equals(shipment.getStatus())) {

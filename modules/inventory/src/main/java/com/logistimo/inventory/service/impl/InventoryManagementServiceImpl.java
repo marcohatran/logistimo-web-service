@@ -1850,6 +1850,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
             isUpdated = true;
           }
           inv.setUpdatedOn(now);
+          inv.setUpdatedBy(SecurityUtils.getUsername());
           // If updated, create a new inventory log
           if (isUpdated) {
             logList.add(createInventoryLevelLog(inv, invBatch, now));
@@ -2222,6 +2223,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
       trans.setStockDifference(stockDifference);
     }
     in.setTimestamp(time);
+    in.setUpdatedBy(SecurityUtils.getUsername());
     if(in.getInventoryActiveTime() == null) {
       in.setInventoryActiveTime(time);
     }
@@ -3622,6 +3624,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
         pm.makePersistent(invBatch);
       }
       inv.setUpdatedOn(new Date());
+      inv.setUpdatedBy(SecurityUtils.getUsername());
       pm.makePersistent(inv);
     } finally {
       if (closePM) {
