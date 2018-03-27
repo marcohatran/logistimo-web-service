@@ -816,7 +816,6 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                             batch.rsn = returnitem.rrsn;
                             copy.bquantity.push(batch);
                         }
-
                         copy.returnitems = undefined;
                         transactionmaterials.push(copy);
                     });
@@ -838,8 +837,12 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                     if (!isMaterialInModifiedMaterials(material)) {
                         $scope.showWarning($scope.resourceBundle['invalid.return.quantity'] + " " +  $scope.resourceBundle['for'] + " " + material.name.mnm);
                         return false;
-                    } else if (isTotalReturnQuantityGreaterThanAtpStock(material)){
-                        $scope.showWarning($scope.resourceBundle['total.return.quantity'] + " " + $scope.resourceBundle['cannotexceedstock'] + ' (' + material.atpstock + ') ' + $scope.resourceBundle['for'] + " " + material.name.mnm + ".");
+                    } else if ($scope.transaction.type == 'ro' && isTotalReturnQuantityGreaterThanAtpStock(material)){
+                        if (material.isBatch) {
+                            $scope.showWarning($scope.resourceBundle['total.return.quantity'] + "(" + $scope.totalReturnQuantity + ") " + $scope.resourceBundle['cannotexceedstock'] + ' (' + material.bidbatchDetMap[$scope.errorBid].atpstk + ') ' + $scope.resourceBundle['for'] + " batch " + $scope.errorBid + " " + $scope.resourceBundle['of'] + " " +  material.name.mnm + ".");
+                        } else {
+                            $scope.showWarning($scope.resourceBundle['total.return.quantity'] + "(" + + $scope.totalReturnQuantity + ") " + $scope.resourceBundle['cannotexceedstock'] + ' (' + material.atpstock + ') ' + $scope.resourceBundle['for'] + " " + material.name.mnm + ".");
+                        }
                         return false;
                     } else {
                         return true;
@@ -867,15 +870,51 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
             });
         }
 
-
         function isTotalReturnQuantityGreaterThanAtpStock(material) {
             var totalReturnQuantity = 0;
-            angular.forEach($scope.transaction.modifiedmaterials,function(mat){
-                if (material.name.mId == mat.name.mId && !material.isBatch) {
-                    totalReturnQuantity += parseInt(mat.quantity);
+            $scope.errorBid = undefined;
+            $scope.totalReturnQuantity = 0;
+
+            var returnValue = $scope.transaction.modifiedmaterials.some(function(mat){
+                if (material.name.mId == mat.name.mId) {
+                    var atpstock = 0;
+                    if (material.isBatch) {
+                        totalReturnQuantity = getTotalReturnQuantityForBatch(mat.bquantity[0].bid);
+                        atpstock = material.bidbatchDetMap[mat.bquantity[0].bid].atpstk;
+                    } else {
+                        totalReturnQuantity = getTotalReturnQuantityForMaterial(material);
+                        atpstock = material.atpstock;
+                    }
+                    if (totalReturnQuantity > atpstock) {
+                        if (material.isBatch) {
+                            $scope.errorBid = mat.bquantity[0].bid;
+                        }
+                        $scope.totalReturnQuantity = totalReturnQuantity;
+                        return true;
+                    }
                 }
             });
-            return (totalReturnQuantity > material.atpstock);
+            return returnValue;
+        }
+
+        function getTotalReturnQuantityForBatch(bid) {
+            var totalReturnQuantityForBatch = 0;
+            angular.forEach($scope.transaction.modifiedmaterials,function(mat) {
+                if (checkNotNullEmpty(mat.bquantity) && mat.bquantity[0].bid == bid) {
+                    totalReturnQuantityForBatch += parseInt(mat.bquantity[0].quantity);
+                }
+            });
+            return totalReturnQuantityForBatch;
+        }
+
+        function getTotalReturnQuantityForMaterial(material) {
+            var totalReturnQuantity = 0;
+            angular.forEach($scope.transaction.modifiedmaterials,function(mat){
+                if (material.name.mId == mat.name.mId) {
+                        totalReturnQuantity += parseInt(mat.quantity);
+                }
+            });
+            return totalReturnQuantity;
         }
 
         function handleTimeout() {
