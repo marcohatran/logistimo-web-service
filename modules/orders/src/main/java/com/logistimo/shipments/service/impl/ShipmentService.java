@@ -235,7 +235,7 @@ public class ShipmentService implements IShipmentService {
         ead = sdf.parse(model.ead);
         shipment.setExpectedArrivalDate(ead);
       }
-      shipment.setReferenceId(model.rid);
+      shipment.setSalesReferenceId(model.salesRefId);
       shipment.setNumberOfItems(model.items != null ? model.items.size() : 0);
       shipment.setKioskId(model.customerId);
       shipment.setServicingKiosk(model.vendorId);
@@ -375,7 +375,7 @@ public class ShipmentService implements IShipmentService {
       // if both conversation and activity returns success, proceed to commit changes
       if (isDirectShipOrFulfil) {
         updateShipmentStatus(shipment.getShipmentId(), model.status, null, model.userID, pm, null,
-            shipment, true, false, source, model.rid, ead, updateOrderFields);
+            shipment, true, false, source, model.salesRefId, ead, updateOrderFields);
       } else {
         orderManagementService.updateOrderMetadata(model.orderId, model.userID, pm);
       }
@@ -619,7 +619,7 @@ public class ShipmentService implements IShipmentService {
       String userId,
       PersistenceManager pm, String reason, IShipment shipment,
                                              boolean updateOrderStatus, boolean isOrderFulfil,
-                                             int source, String referenceId, Date estimatedDateOfArrival, Boolean updateOrderFields)
+                                             int source, String salesRefId, Date estimatedDateOfArrival, Boolean updateOrderFields)
       throws LogiException {
     Long orderId = extractOrderId(shipmentId);
     LockUtil.LockStatus lockStatus = LockUtil.lock(Constants.TX_O + orderId);
@@ -744,7 +744,7 @@ public class ShipmentService implements IShipmentService {
       if (updateOrderStatus) {
         updateOrderStatus(shipment.getOrderId(), shipment.getStatus(), userId, pm);
       }
-      orderManagementService.updateOrderMetadata(orderId, userId, pm, referenceId, estimatedDateOfArrival, updateOrderFields);
+      orderManagementService.updateOrderMetadata(orderId, userId, pm, salesRefId, estimatedDateOfArrival, updateOrderFields);
       if (closePM) {
         tx.commit();
       }
@@ -829,6 +829,8 @@ public class ShipmentService implements IShipmentService {
         t.setDomainId(shipment.getLinkedDomainId());
         if (inv != null) {
           inv.setInTransitStock(inv.getInTransitStock().add(shipmentItem.getQuantity()));
+          inv.setUpdatedOn(new Date());
+          inv.setUpdatedBy(userId);
           inTransitList.add(inv);
         }
       } else if (ShipmentStatus.CANCELLED.equals(shipment.getStatus())) {
@@ -1271,7 +1273,7 @@ public class ShipmentService implements IShipmentService {
           } else if ("ps".equals(entry.getKey())) {
             shipment.setPackageSize(entry.getValue());
           } else if ("rid".equals(entry.getKey())) {
-            shipment.setReferenceId(entry.getValue());
+            shipment.setSalesReferenceId(entry.getValue());
           }
         });
 

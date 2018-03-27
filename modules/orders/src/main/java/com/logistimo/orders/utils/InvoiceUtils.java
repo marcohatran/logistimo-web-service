@@ -25,6 +25,7 @@ package com.logistimo.orders.utils;
 
 import com.logistimo.activity.entity.IActivity;
 import com.logistimo.activity.service.ActivityService;
+import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.Constants;
 import com.logistimo.entities.entity.IKiosk;
@@ -38,6 +39,7 @@ import com.logistimo.orders.entity.IDemandItem;
 import com.logistimo.orders.entity.IOrder;
 import com.logistimo.orders.models.InvoiceItem;
 import com.logistimo.security.SecureUserDetails;
+import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.storage.StorageUtil;
 import com.logistimo.shipments.ShipmentStatus;
@@ -63,7 +65,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.ResourceBundle;
 import java.util.TimeZone;
 
 import javax.imageio.ImageIO;
@@ -93,11 +97,13 @@ public class InvoiceUtils {
   private static final String CUSTOMER_PHONE = "CustomerPhone";
   private static final String INVOICE_DATE = "InvoiceDate";
   private static final String ORDER_NUMBER = "OrderNumber";
-  private static final String REFERENCE_NUMBER = "ReferenceNumber";
+  private static final String SALES_REFERENCE_NUMBER = "SalesReferenceNumber";
   private static final String SHIPMENT_NUMBER = "ShipmentNumber";
   private static final String DATE_OF_SUPPLY = "DateOfSupply";
   private static final String DATE_OF_RECEIPT = "DateOfReceipt";
   private static final String YYYY_MM_DD_HHMM_SS = "yyyy-MM-dd-HHmmSS";
+  private static final String OTHER_REFERENCE_NUMBER = "OtherReferenceNumber";
+  private static final String REFERENCE_NUMBER_TYPE = "ReferenceNumberType";
 
   private final InventoryManagementService inventoryService;
   private final MaterialCatalogService materialService;
@@ -394,16 +400,41 @@ public class InvoiceUtils {
         user.getTimezone(), true));
 
     parameters.put(ORDER_NUMBER, order.getOrderId().toString());
-    parameters.put(REFERENCE_NUMBER, order.getReferenceID());
 
     if (shipment != null) {
       parameters.put(SHIPMENT_NUMBER, shipment.getShipmentId());
       updateShipmentDateOfSupplyAndReceipt(user, shipment, activityService, parameters);
+      parameters.put(SALES_REFERENCE_NUMBER, shipment.getSalesReferenceId());
     } else {
       updateOrderDateOfSupplyAndReceipt(user, order, activityService, parameters);
+      updateOrderReferenceNumber(order, parameters);
     }
 
     return parameters;
+  }
+  private void updateOrderReferenceNumber(IOrder order, Map<String, Object> parameters) {
+      parameters.put(SALES_REFERENCE_NUMBER, order.getSalesReferenceID());
+      ResourceBundle messages = Resources.get().getBundle("Messages", Locale.ENGLISH);
+      String referenceId = Constants.EMPTY;
+      String referenceType;
+      if (IOrder.TRANSFER_ORDER == order.getOrderType()) {
+        if(StringUtils.isNotEmpty(order.getTransferReferenceId())) {
+          referenceId = order.getTransferReferenceId();
+        }
+        DomainConfig domainConfig = DomainConfig.getInstance(SecurityUtils.getCurrentDomainId());
+        if(domainConfig.getOrdersConfig().isTransferRelease()) {
+          referenceType = messages.getString("release.reference.id");
+        } else {
+          referenceType = messages.getString("transfer.reference.id");
+        }
+      } else {
+        if(StringUtils.isNotEmpty(order.getPurchaseReferenceId())) {
+          referenceId = order.getPurchaseReferenceId();
+        }
+        referenceType = messages.getString("purchase.reference.id");
+      }
+    parameters.put(OTHER_REFERENCE_NUMBER, referenceId);
+    parameters.put(REFERENCE_NUMBER_TYPE, referenceType);
   }
 
   private void updateOrderDateOfSupplyAndReceipt(SecureUserDetails user, IOrder order,

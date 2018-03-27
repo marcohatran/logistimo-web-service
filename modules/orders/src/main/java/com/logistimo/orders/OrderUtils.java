@@ -192,7 +192,7 @@ public class OrderUtils {
                                    OrderManagementService oms, IOrder o, UpdatedOrder uo)
       throws ServiceException {
     if (dc.getOrdersConfig()
-        .isReferenceIdMandatory() && !o.hasReferenceId() && !uosReq.hasReferenceId()) {
+        .isReferenceIdMandatory() && !o.hasSalesReferenceId() && !uosReq.hasReferenceId()) {
       uo.inventoryError = true;
       uo.message = "Reference id is required before shipping";
       return true;
@@ -342,9 +342,9 @@ public class OrderUtils {
         if (dc.getOrdersConfig()
             .isReferenceIdMandatory()) {
           IOrder order = oms.getOrder(s.getOrderId());
-          if (!order.hasReferenceId() && !uosReq.hasReferenceId()) {
+          if (!order.hasSalesReferenceId() && !uosReq.hasReferenceId()) {
             uo.inventoryError = true;
-            uo.message = "Reference id is mandatory before shipping.";
+            uo.message = "Reference # is mandatory before shipping.";
             return uo;
           }
         }

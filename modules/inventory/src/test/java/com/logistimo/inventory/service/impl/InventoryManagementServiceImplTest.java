@@ -23,6 +23,7 @@
 
 package com.logistimo.inventory.service.impl;
 
+import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.exception.LogiException;
 import com.logistimo.inventory.dao.impl.TransDao;
@@ -33,8 +34,12 @@ import com.logistimo.inventory.entity.Invntry;
 import com.logistimo.inventory.entity.Transaction;
 import com.logistimo.tags.dao.TagDao;
 
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -52,18 +57,26 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 /**
  * Created by charan on 15/12/17.
  */
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(SecurityUtils.class)
 public class InventoryManagementServiceImplTest {
-  static InventoryManagementServiceImpl ims = new InventoryManagementServiceImpl();
-  PersistenceManager pm = mock(PersistenceManager.class);
+  InventoryManagementServiceImpl ims;
+  PersistenceManager pm;
 
-  @BeforeClass
-  public static void setup() {
+  @Before
+  public void setup() {
+    ims = new InventoryManagementServiceImpl();
+    pm = mock(PersistenceManager.class);
     TagDao tagDao = new TagDao();
     ims.setTagDao(tagDao);
+    mockStatic(SecurityUtils.class);
+    PowerMockito.when(SecurityUtils.getUsername()).thenReturn("user");
+
   }
 
   @Test

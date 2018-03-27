@@ -129,7 +129,7 @@ public interface IShipment extends ICrossDomain {
 
   boolean hasEAD();
 
-  String getReferenceId();
+  String getSalesReferenceId();
 
-  void setReferenceId(String rid);
+  void setSalesReferenceId(String salesReferenceId);
 }

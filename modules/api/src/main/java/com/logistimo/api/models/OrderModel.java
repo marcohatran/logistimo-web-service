@@ -206,9 +206,9 @@ public class OrderModel extends PermissionsModel {
    */
   public Integer oty;
   /**
-   * Reference Id
+   * Sales Reference Id
    */
-  public String rid;
+  public String salesRefId;
   /**
    * Expected fulfillment date
    */
@@ -257,6 +257,14 @@ public class OrderModel extends PermissionsModel {
    * @return
    */
   private OrderApproverModel approver;
+  /**
+   * Purchase Reference Id
+   */
+  private String purchaseRefId;
+  /**
+   * Transfer Reference Id
+   */
+  private String transferRefId;
 
   public List<Long> getDids() {
     return dids;
@@ -299,4 +307,12 @@ public class OrderModel extends PermissionsModel {
     this.approver = approver;
   }
 
-}
+  public String getPurchaseReferenceId() { return purchaseRefId; }
+
+  public void setPurchaseReferenceId(String purchaseRefId) { this.purchaseRefId = purchaseRefId; }
+
+  public String getTransfereReferenceId() { return transferRefId; }
+
+  public void setTransferReferenceId(String transferRefId) { this.transferRefId = transferRefId; }
+
+  }

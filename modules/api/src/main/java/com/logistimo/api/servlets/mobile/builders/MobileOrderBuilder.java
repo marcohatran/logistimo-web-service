@@ -164,7 +164,13 @@ public class MobileOrderBuilder {
     MobileOrderModel mom = new MobileOrderModel();
     IUserAccount user;
     mom.tid = o.getOrderId();
-    mom.rid = o.getReferenceID();
+    mom.rid = o.getSalesReferenceID();
+    mom.setSalesReferenceId(o.getSalesReferenceID());
+    if(IOrder.TRANSFER == o.getOrderType()) {
+      mom.setTransferReferenceId(o.getTransferReferenceId());
+    } else {
+      mom.setPurchaseReferenceId(o.getPurchaseReferenceId());
+    }
     mom.ost = o.getStatus();
     mom.q = o.getNumberOfItems();
     mom.cbid = o.getUserId();

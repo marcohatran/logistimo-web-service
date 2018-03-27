@@ -105,6 +105,7 @@ angular.module('logistimo.storyboard.temperatureStatusMapWidget', [])
                 dashboardService.get(undefined, undefined, $scope.exFilter, $scope.exType, $scope.period,
                     $scope.widget.conf.tPeriod, asset, constructModel(filter.entityTag), fDate,
                     constructModel(filter.exEntityTag), false).then(function (data) {
+                    if(checkNotNullEmpty(data.data)) {
                         $scope.dashboardView = data.data;
                         var linkText;
                         if ($scope.dashboardView.mLev == "country") {
@@ -118,7 +119,11 @@ angular.module('logistimo.storyboard.temperatureStatusMapWidget', [])
                             tempPieOrder, $timeout);
                         setTitle();
                         setWidgetData();
+                    }else{
+                        $scope.noDataToRender();
+                    }
                     }).catch(function error(msg) {
+                        $scope.noDataToRender();
                         showError(msg, $scope);
                     }).finally(function () {
                         $scope.loading = false;

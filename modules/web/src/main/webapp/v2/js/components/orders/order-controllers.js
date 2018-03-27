@@ -24,10 +24,10 @@
 var ordControllers = angular.module('ordControllers', []);
 ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgService', 'entityService', 'requestContext', '$location', 'exportService',
     function ($scope, ordService, domainCfgService, entityService, requestContext, $location, exportService) {
-        $scope.wparams = [["etag", "etag"], ["otag", "otag"], ["status", "status"], ["o", "offset"], ["s", "size"], ["eid", "entity.id"], ["otype", "otype", "sle"], ["from", "from", "", formatDate2Url], ["to", "to", "", formatDate2Url], ["oid", "orderId"], ["rid", "referenceId"], ["approval_status", "approval_status"]];
+        $scope.wparams = [["etag", "etag"], ["otag", "otag"], ["status", "status"], ["o", "offset"], ["s", "size"], ["eid", "entity.id"], ["otype", "otype", "sle"], ["from", "from", "", formatDate2Url], ["to", "to", "", formatDate2Url], ["oid", "orderId"], ["sales_ref_id", "salesReferenceId"], ["approval_status", "approval_status"], ["purchase_ref_id", "purchaseReferenceId"], ["transfer_ref_id", "transferReferenceId"]];
         $scope.orders;
         $scope.otype;
-        $scope.localFilters = ['entity', 'status', 'dateModel', 'from', 'to', 'ordId', 'refId', 'etag', 'tpdos', 'etag', 'otag', 'approval_status'];
+        $scope.localFilters = ['entity', 'status', 'dateModel', 'from', 'to', 'salesRefId', 'refId', 'etag', 'tpdos', 'etag', 'otag', 'approval_status', 'purchaseRefId', 'transferRefId'];
         $scope.exRow = [];
         $scope.etag;
         $scope.otag;
@@ -96,11 +96,23 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
             $scope.orderId = $scope.ordId = requestContext.getParam("oid");
             $scope.hideOrder = false;
             if (firstTimeInit) {
-                delete $location.$$search.rid;
-                $scope.referenceId = null;
+                delete $location.$$search.sales_ref_id;
+                $scope.salesReferenceId = null;
+                if($scope.ordType == 'trn') {
+                    delete $location.$$search.transfer_ref_id;
+                    $scope.transferReferenceId = null;
+                } else {
+                    delete $location.$$search.purchase_ref_id;
+                    $scope.purchaseReferenceId = null;
+                }
                 $location.$$compose();
             } else {
-                $scope.referenceId = requestContext.getParam("rid");
+                $scope.salesReferenceId = requestContext.getParam("sales_ref_id");
+                if($scope.ordType == 'trn') {
+                    $scope.transferReferenceId = requestContext.getParam("transfer_ref_id");
+                } else {
+                    $scope.purchaseReferenceId = requestContext.getParam("purchase_ref_id");
+                }
             }
             if (checkNullEmpty($scope.otype)) {
                 $scope.otype = "sle";
@@ -147,7 +159,16 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
             caption += getFilterTitle(getStatusLabel($scope.status), $scope.resourceBundle['status']);
             caption += getFilterTitle(formatDate2Url($scope.from), $scope.resourceBundle['from']);
             caption += getFilterTitle(formatDate2Url($scope.to), $scope.resourceBundle['to']);
-            caption += getFilterTitle($scope.referenceId, $scope.resourceBundle['referenceid']);
+            caption += getFilterTitle($scope.salesReferenceId, $scope.resourceBundle['sales.reference.id']);
+            if($scope.ordType == 'trn') {
+                if($scope.transRelease) {
+                    caption += getFilterTitle($scope.transferReferenceId, $scope.resourceBundle['release.reference.id']);
+                } else {
+                    caption += getFilterTitle($scope.transferReferenceId, $scope.resourceBundle['transfer.reference.id']);
+                }
+            } else {
+                caption += getFilterTitle($scope.purchaseReferenceId, $scope.resourceBundle['purchase.reference.id']);
+            }
             caption += getFilterTitle(getApprovalStatusLabel($scope.approval_status), $scope.resourceBundle['approval.status']);
             caption += getFilterTitle(checkNullEmpty($scope.entity) ? $scope.etag : "", $scope.resourceBundle['kiosk'] + " " + $scope.resourceBundle['tag.lower']);
             caption += getFilterTitle($scope.otag, $scope.resourceBundle['order'] + " " + $scope.resourceBundle['tag.lower']);
@@ -207,7 +228,9 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
                 end_date: checkNotNullEmpty($scope.to) ? formatDate2Url($scope.to) : undefined,
                 entity_id: eid,
                 ktag: ktag,
-                reference_id: $scope.referenceId,
+                sales_reference_id: $scope.salesReferenceId,
+                purchase_reference_id: $scope.purchaseReferenceId,
+                transfer_reference_id: $scope.transferReferenceId,
                 linked_kid: $scope.lEntityId,
                 order_subtype: $scope.otype,
                 status: $scope.status,
@@ -234,7 +257,7 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
                 $scope.setResults($scope.orders);
                 $scope.initLoad = false;
                 var orderData = $scope.orders.results;
-                if (checkNotNullEmpty($scope.referenceId) && orderData.length == 1) {
+                if (orderData.length == 1) {
                     $scope.orderId = orderData[0].id;
                 }
             } else {
@@ -274,10 +297,11 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
             var oty = $scope.type == '2' ? '0' : '1';
             if (checkNotNullEmpty($scope.entity)) {
                 $scope.ft = undefined;
-                ordService.getEntityOrders($scope.entity.id, $scope.otype, $scope.status, $scope.tType, $scope.ft, formatDate($scope.from), formatDate($scope.to), $scope.offset, $scope.size, oty, $scope.referenceId, $scope.approval_status).then(function (data) {
+                ordService.getEntityOrders($scope.entity.id, $scope.otype, $scope.status, $scope.tType, $scope.ft, formatDate($scope.from), formatDate($scope.to), $scope.offset, $scope.size, oty,
+                    $scope.salesReferenceId, $scope.approval_status, $scope.purchaseReferenceId, $scope.transferReferenceId).then(function (data) {
                     if (checkNotNullEmpty(data.data)) {
                         $scope.setData(data.data);
-                        if (checkNotNullEmpty(data.data.results) && data.data.results.length == 1 && checkNotNullEmpty($scope.referenceId)) {
+                        if (checkNotNullEmpty(data.data.results) && data.data.results.length == 1) {
                             $scope.openOrder($scope.orderId);
                         }
                     }
@@ -291,10 +315,11 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
                     }, 200);
                 });
             } else {
-                ordService.getOrders($scope.otype, $scope.status, $scope.tType, $scope.ft, formatDate($scope.from), formatDate($scope.to), $scope.offset, $scope.size, oty, $scope.referenceId, $scope.approval_status).then(function (data) {
+                ordService.getOrders($scope.otype, $scope.status, $scope.tType, $scope.ft, formatDate($scope.from), formatDate($scope.to), $scope.offset, $scope.size, oty,
+                    $scope.salesReferenceId, $scope.approval_status, $scope.purchaseReferenceId, $scope.transferReferenceId).then(function (data) {
                     if (checkNotNullEmpty(data.data)) {
                         $scope.setData(data.data);
-                        if (checkNotNullEmpty(data.data.results) && data.data.results.length == 1 && checkNotNullEmpty($scope.referenceId)) {
+                        if (checkNotNullEmpty(data.data.results) && data.data.results.length == 1) {
                             $scope.openOrder($scope.orderId);
                         }
                     }
@@ -390,9 +415,19 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
                 $scope.etag = null;
             }
         });
-        $scope.$watch("refId", function (newVal) {
+        $scope.$watch("salesRefId", function (newVal) {
             if (checkNullEmpty(newVal)) {
-                $scope.referenceId = null;
+                $scope.salesReferenceId = null;
+            }
+        });
+        $scope.$watch("purchaseRefId", function(newVal) {
+            if(checkNullEmpty(newVal)) {
+                $scope.purchaseReferenceId = null;
+            }
+        });
+        $scope.$watch("transferRefId", function(newVal) {
+            if(checkNullEmpty(newVal)) {
+                $scope.transferReferenceId = null;
             }
         });
         $scope.$watch("apStatus", function (newVal) {
@@ -416,8 +451,12 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
             $scope.orderId = undefined;
             $scope.order = undefined;
             $scope.hideOrder = false;
-            $scope.refId = null;
-            $scope.referenceId = null;
+            $scope.salesRefId = undefined;
+            $scope.salesReferenceId = undefined;
+            $scope.purchaseRefId = undefined;
+            $scope.purchaseReferenceId = undefined;
+            $scope.transferRefId = undefined;
+            $scope.transferReferenceId = undefined;
             $scope.approvalStatus = null;
             $scope.apStatus = null;
             $scope.type = undefined;
@@ -432,9 +471,15 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
             }
         };
 
-        $scope.showOrderByReferenceId = function (referenceId) {
+        $scope.showOrderByReferenceId = function (referenceId, referenceType) {
             if (checkNotNullEmpty(referenceId)) {
-                $scope.referenceId = referenceId;
+                if(referenceType == "sales") {
+                    $scope.salesReferenceId = referenceId;
+                } else if(referenceType == "purchase") {
+                    $scope.purchaseReferenceId = referenceId;
+                } else if(referenceType == "transfer") {
+                    $scope.transferReferenceId = referenceId;
+                }
             }
         }
     }
@@ -1009,7 +1054,7 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                         $scope.newStatus.cdrsn = $scope.newStatus.ncdrsn;
                     }
                 } else if ($scope.newStatus.st == ORDER.COMPLETED) {
-                    if ($scope.oCfg.ridm && checkNullEmpty($scope.newStatus.rid)) {
+                    if ($scope.oCfg.ridm && checkNullEmpty($scope.newStatus.salesRefId)) {
                         $scope.showWarning($scope.resourceBundle['reference.id.mandatory.error']);
                         return;
                     } else if ($scope.oCfg.eadm && checkNullEmpty($scope.newStatus.efd)) {
@@ -1122,18 +1167,27 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
             });
         };
 
-        $scope.updateRefId = function () {
+        $scope.updateRefId = function (value, referenceType) {
+            if(checkNullEmpty(value) && referenceType == 'purchaseRefId' && $scope.oCfg.purchase) {
+                $scope.showWarning($scope.resourceBundle['purchase.reference.id.mandatory.error']);
+                return;
+            } else if(checkNullEmpty(value) && referenceType == 'transferRefId' && $scope.oCfg.transfer) {
+                $scope.showWarning($scope.resourceBundle['transfer.reference.id.mandatory.error']);
+                return;
+            }
 
             $scope.showLoading();
-            ordService.updateReferenceID($scope.order.id, $scope.order.tempRID, $scope.order.orderUpdatedAt)
+            ordService.updateReferenceID($scope.order.id, value, $scope.order.orderUpdatedAt, referenceType)
                 .then(function (data) {
-                    $scope.order.rid = data.data.order.rid;
+                    $scope.order.salesRefId = data.data.order.salesRefId;
+                    $scope.order.purchaseRefId = data.data.order.purchaseRefId;
+                    $scope.order.transferRefId = data.data.order.transferRefId;
                     $scope.order.orderUpdatedAt = data.data.order.orderUpdatedAt;
                     $scope.showSuccess("<b>Reference Id</b> updated successfully");
                 }).catch(function (errorMsg) {
                 $scope.showErrorMsg(errorMsg);
             }).finally(function () {
-                $scope.toggleEdit("rid");
+                $scope.toggleEdit(referenceType);
                 $scope.hideLoading();
             });
         };
@@ -1168,9 +1222,19 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                 });
             }
         };
-        $scope.editRID = function () {
-            $scope.order.tempRID = $scope.order.rid;
-            $scope.toggleEdit("rid");
+        $scope.editRID = function (type) {
+            switch(type) {
+                case "salesRefId":
+                    $scope.order.tempSalesRefId = $scope.order.salesRefId;
+                    break;
+                case "purchaseRefId":
+                    $scope.order.tempPurchaseRefId = $scope.order.purchaseRefId;
+                    break;
+                case "transferRefId":
+                    $scope.order.tempTransferRefId = $scope.order.transferRefId;
+                    break;
+            }
+            $scope.toggleEdit(type);
         };
         $scope.editTags = function () {
             $scope.oTags.tag = [];
@@ -2111,8 +2175,7 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
                 if ($scope.reset("ty")) {
                     if ($scope.type == "0") {
                         $scope.coffset = 0;
-                    }
-                    if ($scope.type == "1") {
+                    } else if ($scope.type == "1") {
                         $scope.availableInventory.some(function (mat) {
                             mat.enable = true;
                             mat.hide = false;
@@ -2274,6 +2337,13 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
                     if (!confirm($scope.resourceBundle['order.create.quantity'] + " " + count + " " + $scope.resourceBundle['order.create.recommend.message'])) {
                         return false;
                     }
+                }
+                if(checkNullEmpty($scope.order.rid) && $scope.type == 1 && $scope.oCfg.purchase) {
+                    $scope.showWarning($scope.resourceBundle['purchase.reference.id.mandatory.error']);
+                    return;
+                } else if(checkNullEmpty($scope.order.rid) && $scope.type == 2 && $scope.oCfg.transfer) {
+                    $scope.showWarning($scope.resourceBundle['transfer.reference.id.mandatory.error']);
+                    return;
                 }
             }
             if (checkNotNullEmpty(invalidQMats)) {
@@ -2847,7 +2917,7 @@ ordControllers.controller('NewShipmentController', ['$scope', 'ordService', '$lo
             $scope.shipment.transporter = $scope.transporter;
             $scope.shipment.trackingId = $scope.trackingId;
             $scope.shipment.ps = $scope.ps;
-            $scope.shipment.rid = $scope.rid;
+            $scope.shipment.salesRefId = $scope.salesRefId;
             $scope.shipment.ead = formatDate($scope.ead);
             if (showDialog) {
                 $scope.shipment.ship = 0;
@@ -2869,7 +2939,7 @@ ordControllers.controller('NewShipmentController', ['$scope', 'ordService', '$lo
                 if ($scope.oCfg.eadm && checkNullEmpty($scope.shipment.ead)) {
                     $scope.showWarning($scope.resourceBundle['estimated.date.of.arrival.mandatory.error']);
                     return;
-                } else if ($scope.oCfg.ridm && checkNullEmpty($scope.shipment.rid)) {
+                } else if ($scope.oCfg.ridm && checkNullEmpty($scope.shipment.salesRefId)) {
                     $scope.showWarning($scope.resourceBundle['reference.id.mandatory.error']);
                     return;
                 }
@@ -3797,7 +3867,7 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService', 'reques
                     return;
                 }
 
-                if ($scope.oCfg.ridm && checkNullEmpty($scope.shipment.rid)) {
+                if ($scope.oCfg.ridm && checkNullEmpty($scope.shipment.salesRefId)) {
                     $scope.showWarning($scope.resourceBundle['reference.id.mandatory.error']);
                     return;
                 } else if ($scope.oCfg.eadm && checkNullEmpty($scope.shipment.ead)) {
@@ -3913,9 +3983,9 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService', 'reques
                         $scope.showErrorMsg(msg);
                     });
                     break;
-                case 'rid':
+                case 'salesRefId':
                     ordService.updateShipmentReferenceId(content, $scope.sid, $scope.shipment.orderUpdatedAt).then(function (data) {
-                        $scope.shipment.rid = $scope.shipment.tempReferenceId;
+                        $scope.shipment.salesRefId = $scope.shipment.tempSalesRefId;
                         $scope.showSuccess(data.data.respMsg);
                         $scope.shipment.orderUpdatedAt = data.data.orderUpdatedAt;
                         $scope.toggleEdit(field);
@@ -4026,8 +4096,8 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService', 'reques
                 $scope.shipment.tempTrackingId = $scope.shipment.trackingId;
             } else if (field == 'ps') {
                 $scope.shipment.tempPS = $scope.shipment.ps;
-            } else if (field == 'rid') {
-                $scope.shipment.tempReferenceId = $scope.shipment.rid;
+            } else if (field == 'salesRefId') {
+                $scope.shipment.tempSalesRefId = $scope.shipment.salesRefId;
             }
             $scope.edit[field] = !$scope.edit[field];
         };

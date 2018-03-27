@@ -65,13 +65,16 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -82,7 +85,9 @@ public class SMSBuilder {
 
   private static final XLog xLogger = XLog.getLog(SMSBuilder.class);
   private static final int SMS_AUTH_TOKEN_LENGTH = 4;
-
+  private static final String ISSUE_TRANSACTION_TRACKING_OBJECT_TYPE = "it";
+  private static final String RECEIPT_TRANSACTION_TRACKING_OBJECT_TYPE = "rt";
+  private static final String SMS_DEFAULT_REASON = "SMS_DEFAULT_REASON";
   private InventoryManagementService inventoryManagementService;
   private EntitiesService entitiesService;
   private MaterialCatalogService materialCatalogService;
@@ -113,7 +118,7 @@ public class SMSBuilder {
    *
    * @param message request message
    * @return Transaction Model
-   * @throws ServiceException        from service layer
+   * @throws ServiceException from service layer
    */
   public SMSTransactionModel buildSMSModel(String message)
       throws ServiceException {
@@ -121,7 +126,7 @@ public class SMSBuilder {
     SMSTransactionModel model = new SMSTransactionModel();
     try {
       List<String> fields = Arrays.asList(message
-              .split(SMSConstants.FIELD_SEPARATOR + PatternConstants.ESCAPE_INSIDE_DOUBLE_QUOTES));
+          .split(SMSConstants.FIELD_SEPARATOR + PatternConstants.ESCAPE_INSIDE_DOUBLE_QUOTES));
       String inventoryDetails = null;
       //Get fields
       for (String field : fields) {
@@ -130,7 +135,7 @@ public class SMSBuilder {
             field.split(SMSConstants.KEY_SEPARATOR + PatternConstants.ESCAPE_INSIDE_DOUBLE_QUOTES);
         switch (keyValue[0]) {
           case SMSConstants.TOKEN:
-            if(keyValue[1] != null && keyValue[1].length() >= SMS_AUTH_TOKEN_LENGTH){
+            if (keyValue[1] != null && keyValue[1].length() >= SMS_AUTH_TOKEN_LENGTH) {
               model.setToken(keyValue[1]);
             }
             break;
@@ -180,7 +185,7 @@ public class SMSBuilder {
   private void setActualTransactionDate(SMSTransactionModel model, String value) {
     if (model.getSendTime() != null) {
       model.setActualTransactionDate(model.getSendTime()
-          - Integer.parseInt(value) * SMSConstants.DAYS_IN_MILLI_SEC);
+                                     - Integer.parseInt(value) * SMSConstants.DAYS_IN_MILLI_SEC);
     } else {
       model.setActualTransactionDate(
           (long) (Integer.parseInt(value) * SMSConstants.DAYS_IN_MILLI_SEC));
@@ -232,8 +237,8 @@ public class SMSBuilder {
   /**
    * Method to populate inventory for each material
    *
-   * @param material              Material Details string
-   * @param sendTime              Send Time
+   * @param material Material Details string
+   * @param sendTime Send Time
    * @return Inventory Transactions
    */
   private InventoryTransactions getInventoryTransactions(String material, Long sendTime)
@@ -277,9 +282,9 @@ public class SMSBuilder {
   /**
    * Populate the mobile transaction model quantity, opening stock based on the values in the SMS request
    *
-   * @param transaction        Transaction String
-   * @param sendTime           Send Time
-   * @param entryTimeInMillis  Entry Time in millis
+   * @param transaction       Transaction String
+   * @param sendTime          Send Time
+   * @param entryTimeInMillis Entry Time in millis
    * @return Mobile Trans Model
    */
   private MobileTransModel populateTransModel(String transaction, Long sendTime,
@@ -297,23 +302,50 @@ public class SMSBuilder {
         new BigDecimal(String.valueOf(SMSDecodeUtil.decode(transactionDet[2]))) : null;
     //set actual transaction date
     Long actualTransactionDate = null;
-    if (transactionDet.length > 3 && transactionDet[3] != null && !transactionDet[3]
+    int trnFieldsLength = transactionDet.length;
+    if (trnFieldsLength > 3 && transactionDet[3] != null && !transactionDet[3]
         .equalsIgnoreCase(CharacterConstants.EMPTY)) {
       Long days = SMSDecodeUtil.decode(transactionDet[3]);
       actualTransactionDate = sendTime - days * SMSConstants.DAYS_IN_MILLI_SEC;
     }
-    mobileTransModel.bid =
-        ((transactionDet.length > 4) && (transactionDet[4] != null) && !CharacterConstants.EMPTY
-            .equalsIgnoreCase(transactionDet[4])) ? transactionDet[4].replaceAll
-            (PatternConstants.REMOVE_DOUBLE_QUOTES, "") : null;
-    mobileTransModel.lkid =
-        (transactionDet.length > 5 && transactionDet[5] != null
-            && !transactionDet[5].equalsIgnoreCase(CharacterConstants.EMPTY)) ?
-            SMSDecodeUtil.decode(transactionDet[5]) : null;
+    if(trnFieldsLength > 4 && StringUtils.isNotEmpty(transactionDet[4])) {
+      mobileTransModel.bid = transactionDet[4].
+          replaceAll(PatternConstants.REMOVE_DOUBLE_QUOTES, "");
+    }
+    if(trnFieldsLength > 5 && StringUtils.isNotEmpty(transactionDet[5])) {
+      mobileTransModel.lkid = SMSDecodeUtil.decode(transactionDet[5]);
+    }
     if (actualTransactionDate != null) {
       mobileTransModel.atd = sdf.format(new Date(actualTransactionDate));
     }
+    populateTrackingData(mobileTransModel, transactionDet);
     return mobileTransModel;
+  }
+
+  private void populateTrackingData(MobileTransModel mobileTransModel, String[] transactionDet)
+      throws UnsupportedEncodingException {
+    int trnFieldsLength = transactionDet.length;
+    if(trnFieldsLength > 6 && StringUtils.isNotEmpty(transactionDet[6])) {
+      mobileTransModel.tid = String.valueOf(SMSDecodeUtil.decode(transactionDet[6]));
+    }
+    if(trnFieldsLength > 7 && StringUtils.isNotEmpty(transactionDet[7])) {
+      mobileTransModel.troty = convertTrackingObjectType(transactionDet[7]);
+    }
+    if(trnFieldsLength > 8 && StringUtils.isNotEmpty(transactionDet[8])) {
+      mobileTransModel.local_tid = String.valueOf(SMSDecodeUtil.decode(transactionDet[8]));
+    }
+    if(mobileTransModel.isTypeReturn()) {
+      mobileTransModel.rsn = SMS_DEFAULT_REASON;
+    }
+  }
+
+  String convertTrackingObjectType(String smsTrackingObjectType) {
+    if (ISSUE_TRANSACTION_TRACKING_OBJECT_TYPE.equals(smsTrackingObjectType)) {
+      return ITransaction.TYPE_ISSUE_TRANSACTION;
+    } else if (RECEIPT_TRANSACTION_TRACKING_OBJECT_TYPE.equals(smsTrackingObjectType)) {
+      return ITransaction.TYPE_RECEIPT_TRANSACTION;
+    }
+    return null;
   }
 
 
@@ -324,7 +356,7 @@ public class SMSBuilder {
    * @param mobileResponse response populated from service
    * @param errorMsg       Error message
    * @return Response String
-   * @throws ServiceException        from service layer
+   * @throws ServiceException from service layer
    */
   public String buildResponse(SMSTransactionModel model,
                               MobileUpdateInvTransResponse mobileResponse, String errorMsg)
@@ -336,7 +368,7 @@ public class SMSBuilder {
       //Append the kiosk and part ID to response
       response.append(SMSConstants.KIOSK_ID).append(SMSConstants.KEY_SEPARATOR)
           .append(model.getKioskId()).append(SMSConstants.FIELD_SEPARATOR);
-      if(StringUtils.isNotBlank(model.getPartialId())) {
+      if (StringUtils.isNotBlank(model.getPartialId())) {
         response.append(SMSConstants.PARTIAL_ID).append(SMSConstants.KEY_SEPARATOR)
             .append(model.getPartialId()).append(SMSConstants.FIELD_SEPARATOR);
       }
@@ -346,20 +378,22 @@ public class SMSBuilder {
         Map<Long, MobileInvModel> invModelHashMap = populateInvMap(mobileResponse);
         List<InventoryTransactions> list = model.getInventoryTransactionsList();
         for (InventoryTransactions transactions : list) {
-          Long materialId = transactions.getMaterialShortId();
+          Long materialShortId = transactions.getMaterialShortId();
           StringBuilder matDetails = new StringBuilder();
-          MobileInvModel invModel = invModelHashMap.get(transactions.getMaterialShortId());
-          matDetails.append(updateMaterialDetails(invModel, materialId,transactions.getMobileTransModelList()));
-          if (errorMap != null && errorMap.containsKey(materialId)) {
+          MobileInvModel invModel = invModelHashMap.get(materialShortId);
+          matDetails.append(
+              updateMaterialDetails(invModel, materialShortId, transactions.getMobileTransModelList()));
+          matDetails.append(getSuccessTrnKeys(transactions.getMaterialId(),
+              mobileResponse));
+          if (errorMap != null && errorMap.containsKey(materialShortId)) {
             if (failResp == null) {
               failResp = new StringBuilder();
             }
-            List<MobileTransErrorDetailModel> errorDetailModelList = errorMap.get(materialId);
+            List<MobileTransErrorDetailModel> errorDetailModelList = errorMap.get(materialShortId);
             appendErrorResponse(errorDetailModelList, matDetails);
 
             matDetails.setLength(matDetails.length() - 1);
-            failResp.append(matDetails)
-                .append(SMSConstants.STAR_SEPARATOR);
+            failResp.append(matDetails).append(SMSConstants.STAR_SEPARATOR);
           } else {
             sucResp.append(matDetails).append(SMSConstants.STAR_SEPARATOR);
           }
@@ -388,6 +422,39 @@ public class SMSBuilder {
   }
 
   /**
+   * Method to append successful Transaction keys to the SMS response
+   * @param materialId
+   * @param mobileResponse
+   * @return
+   */
+  private StringBuilder getSuccessTrnKeys(
+      Long materialId, MobileUpdateInvTransResponse mobileResponse) {
+    StringBuilder trnKeys = new StringBuilder();
+    if (mobileResponse.success != null) {
+      final AtomicInteger index = new AtomicInteger(-1);
+      mobileResponse.success.stream()
+          .filter(successModel -> materialId.longValue() == successModel.mid.longValue())
+          .map(successModel -> successModel.successDetails.get(0))
+          .filter(Objects::nonNull)
+          .map(detailModel -> {
+            index.compareAndSet(-1,detailModel.index);
+            return detailModel.keys;
+          })
+          .filter(Objects::nonNull)
+          .flatMap(Collection::stream)
+          .filter(StringUtils::isNotEmpty)
+          .map(s -> SMSDecodeUtil.encode(Long.valueOf(s)))
+          .forEach(s -> trnKeys
+              .append(trnKeys.length() > 0
+                  ? CharacterConstants.COMMA
+                  : SMSConstants.MATERIAL_RESPONSE_FIELDS_SEPARATOR
+                    + index.get() + SMSConstants.RESPONSE_TRN_INDEX_KEYS_SEPARATOR)
+              .append(s));
+    }
+    return trnKeys;
+  }
+
+  /**
    * Method to append the error to response with code and index
    *
    * @param errorDetailModelList Error Details List
@@ -410,7 +477,8 @@ public class SMSBuilder {
    * @param materialId Material Id
    * @return String Builder
    */
-  private StringBuilder updateMaterialDetails(MobileInvModel invModel, Long materialId,List<MobileTransModel> mobileTransModelList) {
+  private StringBuilder updateMaterialDetails(MobileInvModel invModel, Long materialId,
+                                              List<MobileTransModel> mobileTransModelList) {
     StringBuilder materialDetails = new StringBuilder();
     materialDetails.append(materialId)
         .append(SMSConstants.ENTRY_TIME_SEPARATOR);
@@ -418,7 +486,7 @@ public class SMSBuilder {
     if (invBatchModelList != null && !invBatchModelList.isEmpty()) {
 
       //Create a set with the batchid received in the request
-      Set<String> batchIdSet=
+      Set<String> batchIdSet =
           mobileTransModelList.stream().filter(transModel -> StringUtils.isNotBlank(transModel.bid))
               .map(transModel -> transModel.bid).collect(Collectors.toSet());
       //append batch information only for the requested batches
@@ -515,7 +583,7 @@ public class SMSBuilder {
    * Build the transaction map with material id as key and list of associated transactions
    *
    * @param model Transaction model
-   * @return Map with material id and Itransaction object
+   * @return Map with material id and ITransaction object
    * @throws ServiceException when user,kiosk not found
    */
   public Map<Long, List<ITransaction>> buildTransaction(SMSTransactionModel model)
@@ -531,7 +599,7 @@ public class SMSBuilder {
 
       for (InventoryTransactions inventoryTransactions : list) {
         IInvntry invntry = inventoryManagementService.getInvntryByShortID(sourceKiosk.getKioskId(),
-                inventoryTransactions.getMaterialShortId());
+            inventoryTransactions.getMaterialShortId());
         IMaterial material = materialCatalogService.getMaterial(invntry.getMaterialId());
         inventoryTransactions.setMaterialId(material.getMaterialId());
         List<MobileTransModel>
@@ -563,13 +631,13 @@ public class SMSBuilder {
   /**
    * Method to set details to the transaction object
    *
-   * @param mobileTransModel      Mobile transaction model
-   * @param ua                    User Account
-   * @param kioskId               Kiosk ID
-   * @param materialId            Material ID
+   * @param mobileTransModel Mobile transaction model
+   * @param ua               User Account
+   * @param kioskId          Kiosk ID
+   * @param materialId       Material ID
    * @return ITransaction
-   * @throws ParseException          when unable to parse date
-   * @throws ServiceException        Exception thrown from Service Layer
+   * @throws ParseException   when unable to parse date
+   * @throws ServiceException Exception thrown from Service Layer
    */
   private ITransaction setTransactionDetails(MobileTransModel mobileTransModel, IUserAccount ua,
                                              Long kioskId, Long materialId) throws
@@ -603,8 +671,12 @@ public class SMSBuilder {
     if (mobileTransModel.lkid != null) {
       transaction.setLinkedKioskId(mobileTransModel.lkid);
     }
+    transaction.setReason(mobileTransModel.rsn);
     transaction.setSrc(SourceConstants.SMS);
     transaction.setMaterialId(materialId);
+    transaction.setTrackingId(mobileTransModel.tid);
+    transaction.setTrackingObjectType(mobileTransModel.troty);
+    transaction.setLocalTrackingID(mobileTransModel.local_tid);
     return transaction;
   }
 
