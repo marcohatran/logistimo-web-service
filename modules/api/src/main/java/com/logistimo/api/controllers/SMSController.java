@@ -221,7 +221,7 @@ public class SMSController {
         mobileTransactionsBuilder
             .buildMobileUpdateInvTransResponse(domainId, model.getUserId(), model.getKioskId(),
                 model.getPartialId(),
-                null, midResponseDetailModelMap, populateMaterialList(model));
+                null, midResponseDetailModelMap, populateMaterialList(model), isDuplicate);
     if (!isDuplicate && mobUpdateInvTransResp != null) {
         TransactionUtil.setObjectInCache(String.valueOf(model.getSendTime()), model.getUserId(),
             model.getKioskId(), model.getPartialId(),

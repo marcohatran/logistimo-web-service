@@ -88,11 +88,10 @@
                         </div>
                     </div>
                     <div class="col-sm-3" ng-show="isUndef(orderId) && ordType == 'trn'">
-                        <span class="filter-label" ng-hide="transRelease">{{resourceBundle['transfer.reference.id']}}</span>
-                        <span class="filter-label" ng-show="transRelease">{{resourceBundle['release.reference.id']}}</span>
+                        <span class="filter-label">{{transRelease ? resourceBundle['release.reference.id'] : resourceBundle['transfer.reference.id']}}</span>
                         <div class="has-feedback">
                             <input type="text" class="form-control" ng-model="transferRefId" autocomplete="off"
-                                   typeahead-wait-ms="300" placeholder="{{resourceBundle['transfer.reference.id']}}"
+                                   typeahead-wait-ms="300" placeholder="{{transRelease ? resourceBundle['release.reference.id'] : resourceBundle['transfer.reference.id']}}"
                                    uib-typeahead="val for val in getSuggestions($viewValue, 'transferRefId')"
                                    typeahead-loading="loadingTransferRefID" typeahead-on-select="showOrderByReferenceId(transferRefId, 'transfer')">
                         <span ng-show="loadingTransferRefID" class="form-control-feedback typehead-loading"

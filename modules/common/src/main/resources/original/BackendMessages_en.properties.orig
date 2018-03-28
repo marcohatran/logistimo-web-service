@@ -508,3 +508,4 @@ ship.reference.id.update.error=Error while updating Reference Id
 transfer.reference.id.update.error.message=Transfer reference # can not be edited.
 transfer.reference.id.mandatory.error=Transfer reference # is mandatory. Please enter the transfer reference # and try again.
 purchase.reference.id.mandatory.error=Purchase reference # is mandatory. Please enter the purchase reference # and try again.
+release.reference.id.mandatory.error=Release reference # is mandatory. Please enter the release reference # and try again.
