@@ -239,7 +239,7 @@
                                                         uib-popover="{{trans.sPopupMsg}}"
                                                         ng-focus="hidePopup(trans,$index,'rs','s')"
                                                         ng-blur="validate(trans,$index,'rs', 's')"
-                                                        id="rs{trans.id}}{{$index}}"
+                                                        id="rs{{trans.id}}{{$index}}"
                                                         popover-trigger="showpopup">
                                                     <option ng-repeat="stats in matstatus track by $index"
                                                             value="{{stats}}">{{stats || resourceBundle['select'] + " "
