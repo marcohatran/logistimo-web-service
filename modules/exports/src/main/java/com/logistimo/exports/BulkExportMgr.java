@@ -109,6 +109,7 @@ public class BulkExportMgr {
   // Export types
   // NOTE: values should be same as the resource keys in resource property files
   public static final String TYPE_ORDERS = "orders";
+  public static final String TYPE_TRANSFERS = "transfers";
   public static final String TYPE_TRANSACTIONS = "transactions";
   public static final String TYPE_INVENTORY = "inventory";
   public static final String TYPE_USERS = "users";

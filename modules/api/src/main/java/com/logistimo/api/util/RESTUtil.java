@@ -166,6 +166,8 @@ public class RESTUtil {
   private static final String TRANSACTIONS = "transactions";
   private static final String INVENTORY = "inventory";
   private static final String ORDERS = "orders";
+  private static final String TRANSFERS = "transfers";
+
 
   private static final String MINIMUM_RESPONSE_CODE_TWO = "2";
   private static final short GUI_THEME_FROM_DOMAIN_CONFIGURATION = -1;
@@ -1292,7 +1294,7 @@ public class RESTUtil {
       }
     }
     params.put(MobileExportConstants.EMAIL_ID_KEY, (String) parsedRequest.parsedReqMap.get(RestConstantsZ.EMAIL));
-    if (BulkExportMgr.TYPE_ORDERS.equals(parsedRequest.parsedReqMap.get(RestConstantsZ.TYPE))) {
+    if (BulkExportMgr.TYPE_ORDERS.equals(parsedRequest.parsedReqMap.get(RestConstantsZ.TYPE)) || TRANSFERS.equals(parsedRequest.parsedReqMap.get(RestConstantsZ.TYPE))) {
       // Export a year's worth of transactions/orders
       Calendar cal = GregorianCalendar.getInstance();
       cal.add(Calendar.YEAR, -1);
@@ -1300,9 +1302,9 @@ public class RESTUtil {
           LocalDateUtil.formatCustom(cal.getTime(), Constants.DATE_FORMAT_CSV, null));
 
       params.put(MobileExportConstants.ORDER_TYPE_KEY,
-          (String) parsedRequest.parsedReqMap.get(RestConstantsZ.ORDER_TYPE));
-      params.put(MobileExportConstants.ORDERS_SUB_TYPE_KEY,
           (String) parsedRequest.parsedReqMap.get(MobileExportConstants.ORDERS_SUB_TYPE_KEY));
+      params.put(MobileExportConstants.ORDERS_SUB_TYPE_KEY,
+          (String) parsedRequest.parsedReqMap.get(RestConstantsZ.ORDER_TYPE));
     }
     try {
 
@@ -2300,7 +2302,7 @@ public class RESTUtil {
     }
     String type = reqParamsMap.get(RestConstantsZ.TYPE);
     if (StringUtils.isEmpty(type) || !(INVENTORY.equals(type) || TRANSACTIONS.equals(type)
-        || ORDERS.equals(type))) {
+        || ORDERS.equals(type) || TRANSFERS.equals(type))) {
       parsedRequest.errMessage = backendMessages.getString("error.invalidexporttype");
       return parsedRequest;
     }
@@ -2334,7 +2336,11 @@ public class RESTUtil {
     parsedRequest.parsedReqMap.put(RestConstantsZ.ORDER_TYPE, otype);
     int
         orderType =
-        IOrder.NONTRANSFER; // defaulted to non transfer. Can be non transfer or transfer
+        IOrder.NONTRANSFER;
+    if( reqParamsMap.get(RestConstantsZ.TYPE).equalsIgnoreCase(TRANSFERS)){
+      orderType=IOrder.TRANSFER;
+    }
+   // defaulted to non transfer. Can be non transfer or transfer
     String
         spTransfer =
         String.valueOf(

@@ -41,8 +41,10 @@ public class MobileExportConstants {
   public static final String EXPORT_TYPE_KEY = "exportType";
   public static final String ORDERS_KEY = "orders";
   public static final String TRANSFERS_KEY = "transfers";
+  //to identify sales/purchase
   public static final String ORDERS_SUB_TYPE_KEY = "orderType";
   public static final String TRANSACTIONS_KEY = "transactions";
+  //to identify transfer/non transfer
   public static final String ORDER_TYPE_KEY = "otype";
   public static final String TRANSACTIONS_TYPE_KEY = "transactiontype";
   public static final String INVENTORY_KEY = "inventory";
