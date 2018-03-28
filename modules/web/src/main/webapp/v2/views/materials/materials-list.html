@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright © 2017 Logistimo.
+  ~ Copyright © 2018 Logistimo.
   ~
   ~ This file is part of Logistimo.
   ~
@@ -55,7 +55,7 @@
         </div>
         <div ng-hide="noMaterialsFound">
             <div class="row action-bar">
-                <export callback="exportData()"></export>
+                <export></export>
                 <button ng-show="iSU || dp.mr" type="button" class="btn btn-sm btn-default" ng-click="deleteMaterials()">
                     {{resourceBundle['remove']}}
                 </button>
@@ -87,7 +87,7 @@
                 </div>
             </div>
             <div class="row action-bar" ng-show="filtered.length > 10">
-                <export callback="exportData()"></export>
+                <export></export>
                 <button ng-show="iSU || dp.mr" type="button" class="btn btn-sm btn-default" ng-click="deleteMaterials()">
                     {{resourceBundle['remove']}}
                 </button>

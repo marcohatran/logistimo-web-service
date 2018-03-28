@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -578,7 +578,13 @@ entityControllers.controller('EntityListController', ['$scope', 'entityService',
             $scope.search = {};
         };
 
-        $scope.exportData=function() {
+        $scope.exportData=function(isInfo) {
+            if(isInfo) {
+                return {
+                    filters: getCaption(),
+                    type: $scope.resourceBundle['kiosks']
+                };
+            }
             $scope.showLoading();
             exportService.exportData({
                 ent_name: $scope.search.key || undefined,
