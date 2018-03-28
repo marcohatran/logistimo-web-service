@@ -67,7 +67,7 @@ angular.module('logistimo.storyboard.inventoryStatusMapWidget', [])
 
             $scope.init = function () {
                 domainCfgService.getMapLocationMapping().then(function (data) {
-                    if (checkNotNullEmpty(data.data)) {
+                    if (!checkNullEmptyObject(data.data)) {
                         $scope.locationMapping = angular.fromJson(data.data);
                         setFilters();
                         loadLocationMap();
@@ -126,8 +126,9 @@ angular.module('logistimo.storyboard.inventoryStatusMapWidget', [])
                 dashboardService.get(undefined, undefined, $scope.exFilter, $scope.exType, $scope.period, undefined,
                     undefined, constructModel(filter.entityTag), fDate, constructModel(filter.exEntityTag),
                     false).then(function (data) {
+                    if(!checkNullEmptyObject(data.data)) {
                         $scope.dashboardView = data.data;
-                        if($scope.mapEvent == 'avlbl'){
+                        if ($scope.mapEvent == 'avlbl') {
                             $scope.dashboardView.inv['avlbl'] = getAvailable($scope.dashboardView.inv);
                         }
                         var linkText;
@@ -138,9 +139,12 @@ angular.module('logistimo.storyboard.inventoryStatusMapWidget', [])
                             $scope.mapType = $scope.dashboardView.mTy;
                         }
                         constructMapData($scope.mapEvent, true, $scope, INVENTORY, $sce, mapRange, mapColors,
-                            invPieOrder, $timeout,barColor);
+                            invPieOrder, $timeout, barColor);
                         setTitle();
                         setWidgetData();
+                    }else{
+                        $scope.noDataToRender();
+                    }
                     }).catch(function error(msg) {
                         showError(msg, $scope);
                     }).finally(function () {

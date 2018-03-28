@@ -79,7 +79,7 @@ angular.module('logistimo.storyboard.storesCountWidget', [])
             dashboardService.get(undefined, undefined, $scope.exFilter, $scope.exType, $scope.period, undefined,
                 undefined, constructModel(filter.entityTag), fDate, constructModel(filter.exEntityTag), false).then(
                 function (data) {
-                    if(checkNotNullEmpty(data.data.entDomain)) {
+                    if(!checkNullEmptyObject(data.data.entDomain)) {
                         getTotalItems(data.data.entDomain);
                         setWidgetData();
                     }else{

@@ -101,7 +101,7 @@ angular.module('logistimo.storyboard.temperatureStatusDonutWidget', [])
             dashboardService.get(undefined, undefined, $scope.exFilter, $scope.exType, $scope.period,
                 $scope.widget.conf.tPeriod, asset, constructModel(filter.entityTag), fDate,
                 constructModel(filter.exEntityTag), false).then(function (data) {
-                if(checkNotNull(data.data.tempDomain)) {
+                if(!checkNullEmptyObject(data.data.tempDomain)) {
                     chartData = constructPieData(data.data.tempDomain, tempPieColors, tempPieOrder, INVENTORY,
                         $scope.mapEvent, undefined);
                     var normalPercent = getPercent(data.data.tempDomain, $scope.assetStatus);
