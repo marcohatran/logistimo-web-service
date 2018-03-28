@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -235,7 +235,13 @@ userControllers.controller('UsersListController', ['$scope', 'userService', 'req
 
         };
 
-        $scope.exportData=function() {
+        $scope.exportData=function(isInfo) {
+            if(isInfo) {
+                return {
+                    filters: getCaption(),
+                    type: 'users'
+                };
+            }
             $scope.showLoading();
             var mobile = angular.copy($scope.uphn);
             if(mobile && !mobile.startsWith("+")) {
@@ -286,14 +292,14 @@ userControllers.controller('UsersListController', ['$scope', 'userService', 'req
                         case 'ROLE_sm': return $scope.resourceBundle['role.servicemanager'];
                         case 'ROLE_do': return $scope.resourceBundle['role.domainowner'];
                         case 'ROLE_su': return $scope.resourceBundle['role.superuser'];
-                        default: return $scope.resourceBundle['all'];
+                        //default: return $scope.resourceBundle['all'];
                     }
                     break;
                 case 'a':
                     switch (text) {
                         case 'true': return $scope.resourceBundle['user.active'];
                         case 'false': return $scope.resourceBundle['user.disabled'];
-                        default: return $scope.resourceBundle['all'];
+                        //default: return $scope.resourceBundle['all'];
                     }
                     break;
                 case 'l':

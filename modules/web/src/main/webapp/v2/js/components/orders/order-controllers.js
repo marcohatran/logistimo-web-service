@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -187,8 +187,6 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
                     return $scope.resourceBundle['approvals.approved'];
                 case 'ex':
                     return $scope.resourceBundle['approvals.expired'];
-                default:
-                    return $scope.resourceBundle['all'];
             }
         }
 
@@ -206,13 +204,11 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
                     return $scope.resourceBundle['order.fulfilled'];
                 case 'cn':
                     return $scope.resourceBundle['order.cancelled'];
-                default:
-                    return $scope.resourceBundle['all'];
             }
         }
 
 
-        $scope.exportData = function () {
+        $scope.exportData = function (isInfo) {
             var eid, ktag = undefined;
             if (checkNotNullEmpty($scope.entity)) {
                 eid = $scope.entity.id;
@@ -222,6 +218,12 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
             var oty = $scope.type == '2' ? '0' : '1';
             var module = oty == 0 ? 'transfers' : 'orders';
             var templateId = oty == 0 ? 'transfers' : 'orders';
+            if(isInfo) {
+                return {
+                    filters: getCaption(),
+                    type: module
+                };
+            }
             $scope.showLoading();
             exportService.exportData({
                 from_date: checkNotNullEmpty($scope.from) ? formatDate2Url($scope.from) : undefined,

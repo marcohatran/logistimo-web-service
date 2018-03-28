@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -4137,7 +4137,13 @@ domainCfgControllers.controller('NotificationMessageController', ['$scope', 'dom
             $scope.to = '';
         };
 
-        $scope.exportData=function() {
+        $scope.exportData=function(isInfo) {
+            if(isInfo) {
+                return {
+                    filters: getCaption(),
+                    type: 'notification messages'
+                };
+            }
             $scope.showLoading();
             exportService.exportData({
                 from_date: formatDate2Url($scope.from) || undefined,

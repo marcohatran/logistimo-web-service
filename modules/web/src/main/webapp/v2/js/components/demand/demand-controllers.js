@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -783,7 +783,13 @@ demandControllers.controller('DiscrepanciesListingCtrl', ['$scope', 'demandServi
         ListingController.call(this, $scope, requestContext, $location);
         $scope.fetch();
 
-        $scope.exportData=function() {
+        $scope.exportData=function(isInfo) {
+            if(isInfo) {
+                return {
+                    filters: getCaption(),
+                    type: 'discrepancies'
+                };
+            }
             $scope.showLoading();
             exportService.exportData({
                 entity_id: checkNotNullEmpty($scope.entity) ? $scope.entity.id : undefined,

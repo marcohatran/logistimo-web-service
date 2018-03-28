@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright © 2017 Logistimo.
+  ~ Copyright © 2018 Logistimo.
   ~
   ~ This file is part of Logistimo.
   ~
@@ -139,8 +139,7 @@
         </div>
         <div class="row action-bar" ng-show="isUndef(orderId)">
             <div class="col-sm-8 noLRpad" >
-
-                    <export ng-show="resSize > 0" callback="exportData()"></export>
+                    <export ng-show="resSize > 0"></export>
             </div>
 
             <div class="col-sm-4 noLRpad" ng-show="(iMan || (entity!= null && entity.id != null && entity.id != ''))" >

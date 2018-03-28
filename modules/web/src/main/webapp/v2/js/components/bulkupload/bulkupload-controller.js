@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -178,7 +178,13 @@ blkUpControllers.controller('ViewBulkUploadController', ['$scope','requestContex
             $location.$$compose();
         };
 
-        $scope.exportData=function() {
+        $scope.exportData=function(isInfo) {
+            if(isInfo) {
+                return {
+                    filters: getCaption(),
+                    type: 'uploaded transactions'
+                };
+            }
             var eid;
             if (checkNotNullEmpty($scope.entity)) {
                 eid = $scope.entity.id;

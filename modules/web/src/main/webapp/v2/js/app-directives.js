@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -2356,19 +2356,64 @@ logistimoApp.directive('noteData', function () {
 logistimoApp.directive('export', function () {
     return {
         restrict: 'E',
-        scope: {
-            reportType: '=',
-            callback: '&'
-        },
         controller: ExportController,
-        template: '<button class="btn btn-sm btn-primary" ng-click="exportData()">Export</button>'
+        template: '<button class="btn btn-sm btn-primary" ng-click="confirmExport()">Export</button>'
     };
 });
 
-function ExportController($scope) {
-    $scope.exportData = function () {
-        $scope.callback();
+function ExportController($scope, $uibModal) {
+
+    const NO_FILTER_TEMPLATE = "You have chosen to export all '{0}'. If needed, please filter the data before you export to ensure faster delivery of the export file. " +
+        "Exported data will be emailed to {1}. Continue?";
+    const FILTER_TEMPLATE = "You have chosen to export '{0}' with filters as specified below. Exported data will be emailed to {1}. Continue?";
+
+    var exportModal = '<div class="modal-header ws">' +
+        '<h3 class="modal-title">Export data</h3>' +
+        '</div>' +
+        '<div class="modal-body ws">' +
+        '<p>{{message}}</p>' +
+        '<p ng-if="exportFilters" class="litetext" style="white-space: pre"><b>Filters:</b> {{exportFilters}}</p>' +
+        '<span ng-show="exportShowIncludeBatch">' +
+        '<input type="checkbox" ng-model="exportIncludeBatch"> Include batch details</span>' +
+        '</div>' +
+        '<div class="modal-footer ws">' +
+        '<button class="btn btn-primary" ng-click="startExport()">OK</button>' +
+        '<button class="btn btn-default" ng-click="close()">Cancel</button>' +
+        '</div>';
+
+    function messageFormat(text) {
+        var args = arguments;
+        return text.replace(/\{(\d+)\}/g, function () {
+            return args[arguments[1] * 1 + 1];
+        });
     }
+
+    $scope.doExport = function() {
+        $scope.close();
+        $scope.exportData();
+    };
+
+    $scope.confirmExport = function () {
+        $scope.exportIncludeBatch = undefined;
+        var info = $scope.exportData('info');
+        $scope.exportShowIncludeBatch = info.includeBatch;
+        $scope.exportFilters = info.filters ? info.filters : undefined;
+        $scope.message = messageFormat(info.filters == '' ? NO_FILTER_TEMPLATE : FILTER_TEMPLATE, info.type, $scope.mailId);
+        $scope.modalInstance = $uibModal.open({
+            template: exportModal,
+            scope: $scope,
+            controller: ['$scope', function ($scope) {
+                $scope.startExport = function(){
+                    $scope.$parent.exportIncludeBatch = $scope.exportIncludeBatch;
+                    $scope.doExport();
+                }
+            }]
+        });
+    };
+
+    $scope.close = function () {
+        $scope.modalInstance.dismiss('cancel');
+    };
 }
 
 logistimoApp.directive('exportData', function () {
