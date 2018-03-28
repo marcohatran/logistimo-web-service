@@ -53,6 +53,7 @@ import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.StringUtil;
 import com.sun.rowset.CachedRowSetImpl;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -527,14 +528,15 @@ public class DemandService implements IDemandService {
       orderQuery.append(" AND ");
     }
     // kioskIds can be present with out without kioskId
-    if (kioskIds != null && !kioskIds.isEmpty()) {
+    if (!CollectionUtils.isEmpty(kioskIds)) {
       StringBuilder kioskIdQuery = new StringBuilder();
       List<String> kids = new ArrayList<>(kioskIds.size());
       for (Long id : kioskIds) {
-        kioskIdQuery.append(CharacterConstants.QUESTION).append(CharacterConstants.COMMA);
+        kioskIdQuery.append(CharacterConstants.QUESTION);
         kids.add(String.valueOf(id));
+        kioskIdQuery.append(CharacterConstants.COMMA);
       }
-      kioskIdQuery.setLength(orderQuery.length() - 1);
+      kioskIdQuery.setLength(kioskIdQuery.length() - 1);
 
       orderQuery.append("(KID IN (");
       orderQuery.append(kioskIdQuery);
