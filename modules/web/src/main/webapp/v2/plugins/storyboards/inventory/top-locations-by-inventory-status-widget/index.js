@@ -125,7 +125,7 @@ angular.module('logistimo.storyboard.topLocationsByInventoryStatusWidget', [])
                 dashboardService.get(undefined, undefined, $scope.exFilter, $scope.exType, $scope.period, undefined,
                     undefined, constructModel(filter.entityTag), fDate, constructModel(filter.exEntityTag),
                     false).then(function (data) {
-                    if(checkNotNullEmpty(data.data)) {
+                    if(!checkNullEmptyObject(data.data)) {
                         $scope.dashboardView = data.data;
                         if ($scope.mapEvent == 'avlbl') {
                             $scope.dashboardView.inv['avlbl'] = getAvailable($scope.dashboardView.inv);

@@ -80,7 +80,7 @@ angular.module('logistimo.storyboard.storesActivityWidget', [])
             dashboardService.get(undefined, undefined, $scope.exFilter, $scope.exType, $scope.period, undefined,
                 undefined, constructModel(filter.entityTag), fDate, constructModel(filter.exEntityTag), false).then(
                 function (data) {
-                    if(checkNotNullEmpty(data.data.entDomain)){
+                    if(!checkNullEmptyObject(data.data.entDomain)){
                         constructStackData(data.data.entDomain);
                     }else{
                         $scope.noDataToRender();
