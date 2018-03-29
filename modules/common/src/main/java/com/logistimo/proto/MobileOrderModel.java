@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -23,6 +23,8 @@
 
 package com.logistimo.proto;
 
+
+import com.google.gson.annotations.SerializedName;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -229,4 +231,44 @@ public class MobileOrderModel {
    * is visible to customer
    */
   public boolean vtc;
+
+  /**
+   * Sales reference id
+   */
+  @SerializedName(value = "sales_ref_id")
+  private String salesReferenceId;
+  /**
+   * Purchase reference id
+   */
+  @SerializedName(value = "purchase_ref_id")
+  private String purchaseReferenceId;
+  /**
+   * Transfer reference id
+   */
+  @SerializedName(value = "transfer_ref_id")
+  private String transferReferenceId;
+
+  public String getSalesReferenceId() {
+    return salesReferenceId;
+  }
+
+  public void setSalesReferenceId(String salesReferenceId) {
+    this.salesReferenceId = salesReferenceId;
+  }
+
+  public String getPurchaseReferenceId() {
+    return purchaseReferenceId;
+  }
+
+  public void setPurchaseReferenceId(String purchaseReferenceId) {
+    this.purchaseReferenceId = purchaseReferenceId;
+  }
+
+  public String getTransferReferenceId() {
+    return transferReferenceId;
+  }
+
+  public void setTransferReferenceId(String transferReferenceId) {
+    this.transferReferenceId = transferReferenceId;
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -601,7 +601,6 @@ public class InventoryServlet extends JsonRestServlet {
       } else {
         // Parse the JSON input array, and get the list of transaction objects (issued and/or received)
         UpdateInventoryInput updInventoryJson;
-        //updInventoryJson.fromJSONString( jsonString );
         updInventoryJson = GsonUtil.updateInventoryInputFromJson(jsonString);
 
         // Get the user Id
@@ -647,7 +646,7 @@ public class InventoryServlet extends JsonRestServlet {
           // Get tracking Id, if any
           trackingIdStr = updInventoryJson.getTrackingId();
           // Get macro-message, if any
-          message = ""; //// updInventoryJson.getMessage();
+          message = "";
           // Get update transactions
           List<ITransaction>
               list =
@@ -681,12 +680,6 @@ public class InventoryServlet extends JsonRestServlet {
               xLogger.warn("DuplicationException when updating inventory transactions: {0}",
                   e.getMessage());
               isDuplicateUpdate = true;
-              //status = true;
-              //message = backendMessages.getString( "transactions.duplicates" );
-                                                        /*
-                                                        status = false;
-							message = backendMessages.getString( "transactions.duplicates" );
-							*/
               // Act as though the transaction has succeeded and send back the same message as for a successful invne
             } catch (InvalidDataException ide) {
               xLogger.warn("Unable to update inventory transactions: {0}", ide.getMessage());
@@ -698,26 +691,15 @@ public class InventoryServlet extends JsonRestServlet {
             // FOR BACKWARD COMPATIBILITY: check whether integer stock has to be sent (for mobile app versions 1.2.0 onwards, float stock is sent)
             boolean forceIntegerForStock = RESTUtil.forceIntegerForStock(appVersion);
             // Get the material id and current stock on hand for the set of materials (with local format timestamp)
-            //materials = getStockOnHand( list, ims, forceIntegerForStock, as, locale, timezone );
             materialList =
                 getStockOnHand(list, ims, forceIntegerForStock, as, locale, timezone, domainId);
             // Get the error hash tables
             if (!isDuplicateUpdate) {
               errors = getErrorMessages(errorTrans, locale, timezone, domainId);
-              status = !(errors != null && errors.size() > 0);
+              status = !(errors != null && !errors.isEmpty());
             }
             // Get formatted time
             formattedTime = LocalDateUtil.format(now, locale, timezone);
-            // Schedule reverse transactions, if necessary, and if and ONLY IF this is NOT a reverse transaction itself
-                                                /* 4/2/2013 - DISABLING THIS, given its semantics have to be ascertained, and there were concurrent modification exceptions (perhaps due to updates > 1 per sec. for an entity group)
-                                                if ( !isReverse ) {
-							try {
-								RESTUtil.scheduleReverseTransactions( domainId, userId, password, transType, list, errorTrans );
-							} catch ( Exception e ) {
-								xLogger.severe( "{0} when scheduling reverse transactions for trans-type {1} for kiosk {2} in domain {3} for {4} transactions with {5} errors: {6}", e.getClass().getName(), transType, kioskId, domainId, list.size(), ( errorTrans == null ? "0" : errorTrans.size() ), e.getMessage() );
-							}
-						}
-						*/
           }
         }
       }
@@ -750,16 +732,11 @@ public class InventoryServlet extends JsonRestServlet {
       status = false;
     }
     String localeStr = Constants.LANG_DEFAULT;
-    ////if ( u != null )
-    ////	localeStr = u.getLocale().toString();
     if (locale != null) {
       localeStr = locale.toString();
     }
     try {
       // Get the JSON return object
-      //UpdateInventoryOutput jsonOutput = new UpdateInventoryOutput(
-      //		status, materials, message, errors, formattedTime, trackingIdStr, localeStr, RESTUtil.VERSION_01 );
-      //String respStr = jsonOutput.toJSONString();
       String
           respStr =
           GsonUtil.updateInventoryOutputToJson(status, message, materialList, errors, formattedTime,
@@ -876,8 +853,7 @@ public class InventoryServlet extends JsonRestServlet {
     }
   }
 
-  private void validateMobileUpdateInvTransRequest(MobileUpdateInvTransRequest mobUpdateInvTransReq, ResourceBundle backendMessages) throws
-      InvalidDataException {
+  private void validateMobileUpdateInvTransRequest(MobileUpdateInvTransRequest mobUpdateInvTransReq, ResourceBundle backendMessages) {
     if (StringUtils.isEmpty(mobUpdateInvTransReq.uid) || mobUpdateInvTransReq.kid == null || mobUpdateInvTransReq.sntm == null || mobUpdateInvTransReq.trns == null || mobUpdateInvTransReq.trns.isEmpty()) {
       throw new InvalidDataException(backendMessages.getString("error.invaliddata.frommobile"));
     }
@@ -889,7 +865,7 @@ public class InventoryServlet extends JsonRestServlet {
         mobileTransactionsBuilder.buildMobileUpdateInvTransResponse(
             domainId, mobUpdateInvTransReq.uid, mobUpdateInvTransReq.kid,
             mobUpdateInvTransReq.pid, errorMessage, midResponseDetailModelMap,
-            mobUpdateInvTransReq.trns);
+            mobUpdateInvTransReq.trns, isDuplicate);
     String mobUpdateInvTransRespJsonStr = new Gson().toJson(mobUpdateInvTransResp);
     if (!isDuplicate && mobUpdateInvTransResp != null) {
       TransactionUtil.setObjectInCache(String.valueOf(mobUpdateInvTransReq.sntm),

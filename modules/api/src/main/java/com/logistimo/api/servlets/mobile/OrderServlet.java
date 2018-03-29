@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -67,6 +67,7 @@ import com.logistimo.orders.actions.GetFilteredOrdersAction;
 import com.logistimo.orders.entity.IDemandItem;
 import com.logistimo.orders.entity.IOrder;
 import com.logistimo.orders.models.OrderFilters;
+import com.logistimo.orders.models.UpdateOrderTransactionsModel;
 import com.logistimo.orders.models.UpdatedOrder;
 import com.logistimo.orders.service.OrderManagementService;
 import com.logistimo.orders.service.impl.OrderManagementServiceImpl;
@@ -440,9 +441,8 @@ public class OrderServlet extends JsonRestServlet {
           OrderFilters
               filters =
               new OrderFilters().setDomainId(domainId).setKioskId(kioskId).setStatus(statusStr)
-                  .setSince(startDate).setUntil(endDate).setOtype(otype).setTagType(null)
-                  .setTag(null).setKioskIds(null).setOrderType(orderType).setReferenceId(null)
-                  .setApprovalStatus(null).setWithDemand(loadAll)
+                  .setSince(startDate).setUntil(endDate).setOtype(otype)
+                  .setOrderType(orderType).setWithDemand(loadAll)
                   .setUpdatedSince(modifiedSinceDate.orElse(null));
           Results
               res = oms.getOrders(filters, pageParams);
@@ -798,6 +798,9 @@ public class OrderServlet extends JsonRestServlet {
           String signature = null;
           MemcacheService cache = null;
           boolean isAlreadyProcessed = false;
+          if(StringUtils.isNotEmpty(uoReq.rid)) {
+            uoReq.setSalesReferenceId(uoReq.rid);
+          }
           OrderManagementService oms =
               StaticApplicationContext.getBean(OrderManagementServiceImpl.class);
           if (RestConstantsZ.TYPE_REORDER.equalsIgnoreCase(type)) {
@@ -807,7 +810,18 @@ public class OrderServlet extends JsonRestServlet {
               status = false;
               mom = buildOrderModel(timezone, o, locale, includeBatchDetails, uoReq);
             }
-
+            if (StringUtils.isNotEmpty(uoReq.getTransferReferenceId()) && !uoReq
+                .getTransferReferenceId().equals(o.getTransferReferenceId())
+                && IOrder.TRANSFER_ORDER == o.getOrderType()) {
+              status = false;
+              message = backendMessages.getString("transfer.reference.id.update.error.message");
+            }
+            if (StringUtils.isEmpty(uoReq.getPurchaseReferenceId()) && StringUtils
+                .isNotEmpty(o.getPurchaseReferenceId()) && dc.getOrdersConfig()
+                .isPurchaseReferenceIdMandatory()) {
+              status = false;
+              message = backendMessages.getString("purchase.reference.id.mandatory.error");
+            }
           }
           if (status) {
             if (RestConstantsZ.TYPE_REORDER.equals(type)) {
@@ -844,16 +858,29 @@ public class OrderServlet extends JsonRestServlet {
                 pm = PMF.get().getPersistenceManager();
                 tx = pm.currentTransaction();
                 tx.begin();
-                // Update order transactions
-                or =
-                    oms.updateOrderTransactions(domainId, uoReq.uid, type, list,
-                        uoReq.kid, uoReq.tid,
-                        uoReq.ms, createOrder, uoReq.lkid, uoReq.lat, uoReq.lng,
-                        uoReq.gacc, uoReq.gerr,
-                        uoReq.efts, uoReq.cft, uoReq.pymt, uoReq.popt, uoReq.pksz,
-                        allowEmptyOrders, orderTags,
-                        tOrNt, isSalesOrder, uoReq.rid, uoReq.rbd, uoReq.eta,
-                        SourceConstants.MOBILE, pm);
+                if(RestConstantsZ.TYPE_REORDER.equals(type)) {
+                  // Update order transactions
+                  or =
+                      oms.updateOrderTransactions(
+                          new UpdateOrderTransactionsModel(domainId, uoReq.uid, type, list,
+                              uoReq.kid, uoReq.tid, uoReq.ms, createOrder, uoReq.lkid, uoReq.lat,
+                              uoReq.lng, uoReq.gacc, uoReq.gerr, uoReq.efts, uoReq.cft, uoReq.pymt,
+                              uoReq.popt, uoReq.pksz, allowEmptyOrders, orderTags, tOrNt,
+                              isSalesOrder, uoReq.getSalesReferenceId(), uoReq.rbd, uoReq.eta,
+                              SourceConstants.MOBILE,
+                              pm, uoReq.getPurchaseReferenceId(), uoReq.getTransferReferenceId(), null));
+                } else if(RestConstantsZ.TYPE_ORDER.equals(type)){
+                  buildReferenceId(uoReq);
+                  or =
+                      oms.createOrder(
+                          new UpdateOrderTransactionsModel(domainId, uoReq.uid, type, list,
+                              uoReq.kid, uoReq.tid, uoReq.ms, createOrder, uoReq.lkid, uoReq.lat,
+                              uoReq.lng, uoReq.gacc, uoReq.gerr, uoReq.efts, uoReq.cft, uoReq.pymt,
+                              uoReq.popt, uoReq.pksz, allowEmptyOrders, orderTags, tOrNt,
+                              isSalesOrder, null, uoReq.rbd, uoReq.eta,
+                              SourceConstants.MOBILE,
+                              pm, null, null, uoReq.rid));
+                }
                 // Check if order status has to be updated to a newer one
                 if (or != null) {
                   o = or.getOrder();
@@ -1353,6 +1380,10 @@ public class OrderServlet extends JsonRestServlet {
           if (status) {
             // Update order status
             UpdatedOrder uo = new UpdatedOrder();
+            if(StringUtils.isBlank(uosReq.rid)){
+              uosReq.rid = uosReq.getSalesRefId();
+            }
+
             if (uosReq.hasShipmentId()) {
               if (!uosReq.hasOrderId()) {
                 uo = OrderUtils.updateShpStatus(uosReq,
@@ -1539,6 +1570,19 @@ public class OrderServlet extends JsonRestServlet {
     return (ac != null && ac.getOrderConfig() != null && (
         !ac.getOrderConfig().getPurchaseSalesOrderApproval().isEmpty() || ac.getOrderConfig()
             .isTransferApprovalEnabled()));
+  }
+
+  private void buildReferenceId(UpdateOrderRequest updateOrderRequest) {
+    if (StringUtils.isNotEmpty(updateOrderRequest.rid)) {
+      // do nothing
+    } else if (StringUtils.isNotEmpty(updateOrderRequest.getSalesReferenceId())) {
+      updateOrderRequest.rid = updateOrderRequest.getSalesReferenceId();
+    } else if (StringUtils.isNotEmpty(updateOrderRequest.getPurchaseReferenceId())
+        && !IOrder.TYPE_TRANSFER.equals(updateOrderRequest.oty)) {
+      updateOrderRequest.rid = updateOrderRequest.getPurchaseReferenceId();
+    } else {
+      updateOrderRequest.rid = updateOrderRequest.getTransferReferenceId();
+    }
   }
 
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -288,8 +288,7 @@ public class Report {
   public Map<String,Float> nodprsn;
   public Map<String,Float> nsdprsn;
   public Map<String,Float> nfdprsn;
-
-
+  public Map<String,Float> rrsni;
 
   public Long getDomainId() {
     return did;
@@ -1209,6 +1208,11 @@ public class Report {
   public Map<String,Float> getNegativeFulfillmentDiscrepancyPercentageByReason() {
     return nfdprsn;
   }
+
+  public Map<String, Float> getIncomingReturnsReason() {
+    return rrsni;
+  }
+
   public Long getTotalOrderDiscrepancyCount() {
      return (podc == null ? 0 : podc) + (nodc == null ? 0 : nodc);
   }

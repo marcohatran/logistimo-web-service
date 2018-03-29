@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -73,6 +73,7 @@ import com.logistimo.orders.entity.IOrder;
 import com.logistimo.orders.entity.Order;
 import com.logistimo.orders.models.OrderFilters;
 import com.logistimo.orders.models.PDFResponseModel;
+import com.logistimo.orders.models.UpdateOrderTransactionsModel;
 import com.logistimo.orders.models.UpdatedOrder;
 import com.logistimo.orders.service.IDemandService;
 import com.logistimo.orders.service.OrderManagementService;
@@ -546,7 +547,7 @@ public class OrderManagementServiceImpl implements OrderManagementService {
 
   @Override
   public String shipNow(IOrder order, String transporter, String trackingId, String reason,
-      Date expectedFulfilmentDate, String userId, String ps, int source, String referenceId, Boolean updateOrderFields)
+      Date expectedFulfilmentDate, String userId, String ps, int source, String salesRefId, Boolean updateOrderFields)
       throws ServiceException, ObjectNotFoundException, ValidationException {
     ShipmentModel model = new ShipmentModel();
     if (expectedFulfilmentDate != null) {
@@ -565,7 +566,7 @@ public class OrderManagementServiceImpl implements OrderManagementService {
     model.userID = userId;
     model.items = new ArrayList<>();
     model.sdid = order.getDomainId();
-    model.rid = referenceId;
+    model.salesRefId = salesRefId;
     DomainConfig dc = DomainConfig.getInstance(order.getDomainId());
     for (IDemandItem demandItem : order.getItems()) {
       if (BigUtil.greaterThanZero(demandItem.getQuantity())) {
@@ -636,16 +637,17 @@ public class OrderManagementServiceImpl implements OrderManagementService {
   @SuppressWarnings("unchecked")
   public Results getOrders(Long domainId, Long kioskId, String status, Date since, Date until,
       String otype, String tagType, String tag, List<Long> kioskIds,
-      PageParams pageParams, Integer orderType, String referenceId, String approvalStatus)
+      PageParams pageParams, Integer orderType, String salesReferenceId, String approvalStatus,
+      String purchaseReferenceId, String transferReferenceId)
       throws ServiceException {
     return getOrders(domainId, kioskId, status, since, until, otype, tagType, tag, kioskIds,
-        pageParams, orderType, referenceId, approvalStatus, false);
+        pageParams, orderType, salesReferenceId, approvalStatus, false, purchaseReferenceId, transferReferenceId);
   }
 
   public Results getOrders(Long domainId, Long kioskId, String status, Date since, Date until,
       String otype, String tagType, String tag, List<Long> kioskIds,
-      PageParams pageParams, Integer orderType, String referenceId,
-      String approvalStatus, boolean withDemand) {
+      PageParams pageParams, Integer orderType, String salesReferenceId,
+      String approvalStatus, boolean withDemand, String purchaseReferenceId, String transferReferenceId) {
     OrderFilters filters = new OrderFilters().setDomainId(domainId)
         .setKioskId(kioskId)
         .setStatus(status)
@@ -656,9 +658,11 @@ public class OrderManagementServiceImpl implements OrderManagementService {
         .setTag(tag)
         .setKioskIds(kioskIds)
         .setOrderType(orderType)
-        .setReferenceId(referenceId)
+        .setSalesReferenceId(salesReferenceId)
         .setApprovalStatus(approvalStatus)
-        .setWithDemand(withDemand);
+        .setWithDemand(withDemand)
+        .setPurchaseReferenceId(purchaseReferenceId)
+        .setTransferReferenceId(transferReferenceId);
     return getOrders(filters, pageParams);
   }
 
@@ -731,7 +735,7 @@ public class OrderManagementServiceImpl implements OrderManagementService {
   }
 
   @Override
-  public void updateOrderReferenceId(Long orderId, String referenceId, String userId,
+  public void updateOrderReferenceId(Long orderId, String salesReferenceId, String userId,
                                      PersistenceManager pm) throws ServiceException {
     PersistenceManager localPm = pm;
     if (pm == null) {
@@ -739,7 +743,7 @@ public class OrderManagementServiceImpl implements OrderManagementService {
     }
     try {
       IOrder order = JDOUtils.getObjectById(IOrder.class, orderDao.createKey(orderId), localPm);
-      order.setReferenceID(referenceId);
+      order.setSalesReferenceID(salesReferenceId);
     } finally {
       if (pm == null && localPm != null) {
         localPm.close();
@@ -955,124 +959,141 @@ public class OrderManagementServiceImpl implements OrderManagementService {
       String packageSize,
       boolean allowEmptyOrders, List<String> orderTags, Integer orderType, Boolean isSalesOrder,
       String referenceId, Date reqByDate, Date eta, int src) throws ServiceException {
-    return updateOrderTransactions(domainId, userId, transType, inventoryTransactions, kioskId,
-        trackingId, message,
-        createOrder, servicingKioskId, latitude, longitude, geoAccuracy, geoErrorCode,
-        utcExpectedFulfillmentTimeRangesCSV, utcConfirmedFulfillmentTimeRange, payment,
-        paymentOption,
-        packageSize, allowEmptyOrders, orderTags, orderType, isSalesOrder, referenceId, reqByDate,
-        eta, src, null);
+    return updateOrderTransactions(
+        new UpdateOrderTransactionsModel(domainId, userId, transType, inventoryTransactions,
+            kioskId, trackingId, message, createOrder, servicingKioskId, latitude, longitude,
+            geoAccuracy, geoErrorCode, utcExpectedFulfillmentTimeRangesCSV,
+            utcConfirmedFulfillmentTimeRange, payment, paymentOption, packageSize, allowEmptyOrders,
+            orderTags, orderType, isSalesOrder, referenceId, reqByDate, eta, src, null, null, null, null));
   }
 
   @Override
   public OrderResults updateOrderTransactions(
-      Long domainId, String userId, String transType, List<ITransaction> inventoryTransactions,
-      Long kioskId,
-      Long trackingId, String message, boolean createOrder, Long servicingKioskId, Double latitude,
-      Double longitude, Double geoAccuracy, String geoErrorCode,
-      String utcExpectedFulfillmentTimeRangesCSV,
-      String utcConfirmedFulfillmentTimeRange, BigDecimal payment, String paymentOption,
-      String packageSize,
-      boolean allowEmptyOrders, List<String> orderTags, Integer orderType, Boolean isSalesOrder,
-      String referenceId, Date reqByDate, Date eta, int source, PersistenceManager pm)
+      UpdateOrderTransactionsModel updateOrderTransactionsRequest)
       throws ServiceException {
     xLogger.fine("Entering updateOrderTransactions");
-    if (domainId == null) {
+    if (updateOrderTransactionsRequest.getDomainId() == null) {
       throw new ServiceException("Unknown domain");
     }
-    boolean useLocalPM = pm == null;
+    boolean useLocalPM = updateOrderTransactionsRequest.getPm() == null;
     if (useLocalPM) {
-      pm = PMF.get().getPersistenceManager();
+      updateOrderTransactionsRequest.setPm(PMF.get().getPersistenceManager());
     }
     Date now = new Date(); // timestamp for transactions
     IOrder o = null;
     List<IDemandItem> items = null;
     // Flag for re-ordering
-    boolean reorder = ITransaction.TYPE_REORDER.equals(transType);
+    boolean reorder = ITransaction.TYPE_REORDER.equals(
+        updateOrderTransactionsRequest.getTransType());
     javax.jdo.Transaction tx = null;
     // Check transaction availability
-    if ((inventoryTransactions == null || inventoryTransactions.isEmpty()) && !(reorder
-        || allowEmptyOrders)) {
+    if ((updateOrderTransactionsRequest.getInventoryTransactions() == null || updateOrderTransactionsRequest
+        .getInventoryTransactions().isEmpty()) && !(reorder
+        || updateOrderTransactionsRequest.isAllowEmptyOrders())) {
       throw new ServiceException("Transaction list cannot be empty");
     }
     // Update or create order
     if (reorder) {
-      if (trackingId == null) {
-        xLogger.severe("No tracking id sent on re-order for kiosk {0}", kioskId);
+      if (updateOrderTransactionsRequest.getTrackingId() == null) {
+        xLogger.severe("No tracking id sent on re-order for kiosk {0}",
+            updateOrderTransactionsRequest.getKioskId());
         throw new ServiceException("Order id was not specified");
       }
-      LockUtil.LockStatus lockStatus = LockUtil.lock(Constants.TX_O + trackingId);
+      LockUtil.LockStatus lockStatus = LockUtil.lock(Constants.TX_O + updateOrderTransactionsRequest
+          .getTrackingId());
       if (!LockUtil.isLocked(lockStatus)) {
-        throw new ServiceException("O002", trackingId);
+        throw new ServiceException("O002", updateOrderTransactionsRequest.getTrackingId());
       }
       try {
         // Get the order
-        o = JDOUtils.getObjectById(IOrder.class, trackingId, pm);
-        o.setItems(demandService.getDemandItems(o.getOrderId(), pm));
+        o = JDOUtils.getObjectById(IOrder.class, updateOrderTransactionsRequest.getTrackingId(),
+            updateOrderTransactionsRequest.getPm());
+        o.setItems(demandService.getDemandItems(o.getOrderId(),
+            updateOrderTransactionsRequest.getPm()));
         xLogger.fine("inventoryTransactions: {0}, order size: {1}",
-            (inventoryTransactions == null ? "NULL" : inventoryTransactions.size()), o.size());
-        o.setDueDate(reqByDate);
-        o.setExpectedArrivalDate(eta);
-        modifyOrder(o, userId, inventoryTransactions, now, domainId, transType, message,
-            utcExpectedFulfillmentTimeRangesCSV, utcConfirmedFulfillmentTimeRange, payment,
-            paymentOption, allowEmptyOrders, orderTags, referenceId, pm);
+            (updateOrderTransactionsRequest.getInventoryTransactions() == null ? "NULL" : updateOrderTransactionsRequest
+                .getInventoryTransactions().size()), o.size());
+        o.setDueDate(updateOrderTransactionsRequest.getReqByDate());
+        o.setExpectedArrivalDate(updateOrderTransactionsRequest.getEta());
+        modifyOrder(o, updateOrderTransactionsRequest.getUserId(),
+            updateOrderTransactionsRequest.getInventoryTransactions(), now,
+            updateOrderTransactionsRequest.getDomainId(),
+            updateOrderTransactionsRequest.getTransType(),
+            updateOrderTransactionsRequest.getMessage(),
+            updateOrderTransactionsRequest.getUtcExpectedFulfillmentTimeRangesCSV(),
+            updateOrderTransactionsRequest.getUtcConfirmedFulfillmentTimeRange(),
+            updateOrderTransactionsRequest.getPayment(),
+            updateOrderTransactionsRequest.getPaymentOption(),
+            updateOrderTransactionsRequest.isAllowEmptyOrders(),
+            updateOrderTransactionsRequest.getOrderTags(),
+            updateOrderTransactionsRequest.getSalesReferenceId(),
+            updateOrderTransactionsRequest.getPm(),
+            updateOrderTransactionsRequest.getPurchaseReferenceId(),
+            updateOrderTransactionsRequest.getTransferReferenceId());
         // Prevent an order from being edited out of all items, unless empty orders are allowed
-        if (!allowEmptyOrders && o.size() == 0) {
+        if (!updateOrderTransactionsRequest.isAllowEmptyOrders() && o.size() == 0) {
           throw new ServiceException("Order has no items with a quantity greater than zero");
         }
         // Persist the order and item updates
         if (useLocalPM) {
-          tx = pm.currentTransaction();
+          tx = updateOrderTransactionsRequest.getPm().currentTransaction();
           tx.begin();
         }
-        UpdatedOrder uo = updateOrder(o, source, true, true, userId, pm);
+        UpdatedOrder uo = updateOrder(o, updateOrderTransactionsRequest.getSource(), true, true,
+            updateOrderTransactionsRequest.getUserId(),
+            updateOrderTransactionsRequest.getPm());
         o = uo.order;
 
         List<IDemandItem> localItems = (List<IDemandItem>) o.getItems();
         o.setNumberOfItems(localItems.size());
-        o = pm.detachCopy(o);
-        o.setItems((List<IDemandItem>) pm.detachCopyAll(localItems));
+        o = updateOrderTransactionsRequest.getPm().detachCopy(o);
+        o.setItems((List<IDemandItem>) updateOrderTransactionsRequest.getPm()
+            .detachCopyAll(localItems));
         if (useLocalPM) {
           tx.commit();
         }
       } catch (JDOObjectNotFoundException e) {
         xLogger
-            .severe("Order with i {0} not found while re-ordering for kiosk {1}: {2}", trackingId,
-                kioskId, e.getMessage(), e);
+            .severe("Order with i {0} not found while re-ordering for kiosk {1}: {2}",
+                updateOrderTransactionsRequest.getTrackingId(),
+                updateOrderTransactionsRequest.getKioskId(), e.getMessage(), e);
         final Locale locale = SecurityUtils.getLocale();
         ResourceBundle messages = Resources.get().getBundle("Messages", locale);
         ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
         throw new ServiceException(
-            messages.getString("order") + " " + trackingId + " " + backendMessages
+            messages.getString("order") + " " + updateOrderTransactionsRequest.getTrackingId() + " " + backendMessages
                 .getString("error.notfound"));
       } catch (Exception e) {
         xLogger.severe("Exception while re-ordering: {0}", e.getMessage(), e);
         throw new ServiceException(e);
       } finally {
         if (LockUtil.shouldReleaseLock(lockStatus) && !LockUtil
-            .release(Constants.TX_O + trackingId)) {
-          xLogger.warn("Unable to release lock for key {0}", Constants.TX_O + trackingId);
+            .release(Constants.TX_O + updateOrderTransactionsRequest.getTrackingId())) {
+          xLogger.warn("Unable to release lock for key {0}", Constants.TX_O + updateOrderTransactionsRequest
+              .getTrackingId());
         }
         if (useLocalPM) {
           if (tx != null && tx.isActive()) {
             tx.rollback();
           }
-          pm.close();
+          updateOrderTransactionsRequest.getPm().close();
         }
       }
     } else {
       // First time order
       List<IDemandItem> demandList = new ArrayList<>(); // demand list
-      if (inventoryTransactions != null && !inventoryTransactions.isEmpty()) {
+      if (updateOrderTransactionsRequest.getInventoryTransactions()
+          != null && !updateOrderTransactionsRequest
+          .getInventoryTransactions().isEmpty()) {
         // Get the transactions and demand items
-        for (ITransaction trans : inventoryTransactions) {
+        for (ITransaction trans : updateOrderTransactionsRequest.getInventoryTransactions()) {
           // Update timestamp, if needed
           if (trans.getTimestamp() == null) {
             trans.setTimestamp(now);
           }
-          trans.setDomainId(domainId);
+          trans.setDomainId(updateOrderTransactionsRequest.getDomainId());
           // Update trans. type
-          trans.setType(transType);
+          trans.setType(updateOrderTransactionsRequest.getTransType());
           // Get material
           Long materialId = trans.getMaterialId();
           IMaterial m = materialCatalogService.getMaterial(materialId);
@@ -1081,7 +1102,7 @@ public class OrderManagementServiceImpl implements OrderManagementService {
           if (inv == null) {
             xLogger.warn(
                 "Inv. for kiosk-material {0}-{1} in domain {2} is not available. Cannot process order.",
-                trans.getKioskId(), materialId, domainId);
+                trans.getKioskId(), materialId, updateOrderTransactionsRequest.getDomainId());
             throw new ServiceException("Material " + m.getName()
                 + " is not available at this entity. Please contact administrator and ensure it is configured.");
           }
@@ -1104,42 +1125,56 @@ public class OrderManagementServiceImpl implements OrderManagementService {
       // Make the updated objects persistent
       try {
         // Update demand items and orders, if necessary
-        if (createOrder) {
+        if (updateOrderTransactionsRequest.isCreateOrder()) {
           // Get tax info. if present (from kiosk)
           BigDecimal taxPercent = BigDecimal.ZERO;
           String currency = null;
           List<String> kioskTags = null;
           // Get kiosk
-          if (kioskId != null) {
-            IKiosk k = entitiesService.getKiosk(kioskId, false);
+          if (updateOrderTransactionsRequest.getKioskId() != null) {
+            IKiosk k = entitiesService.getKiosk(updateOrderTransactionsRequest.getKioskId(), false);
             taxPercent = k.getTax();
             currency = k.getCurrency();
             kioskTags = k.getTags();
           }
           // Create dummy order, so we can get order Id (created by system)
           o = JDOUtils.createInstance(IOrder.class);
-          o = pm.makePersistent(o);
-          o = getDetached(o, pm);
+          o = updateOrderTransactionsRequest.getPm().makePersistent(o);
+          o = getDetached(o, updateOrderTransactionsRequest.getPm());
           // Persist the order and its items (via transaction, given demand items will also be updated)
           if (useLocalPM) {
-            tx = pm.currentTransaction();
+            tx = updateOrderTransactionsRequest.getPm().currentTransaction();
             tx.begin();
           }
           // Update order data
-          createOrder(o, domainId, kioskId, userId, demandList, taxPercent, currency,
-              servicingKioskId, latitude, longitude, geoAccuracy, geoErrorCode,
-              utcExpectedFulfillmentTimeRangesCSV, utcConfirmedFulfillmentTimeRange, payment,
-              paymentOption, kioskTags, orderTags, orderType, referenceId);
+          createOrder(o, updateOrderTransactionsRequest.getDomainId(),
+              updateOrderTransactionsRequest.getKioskId(),
+              updateOrderTransactionsRequest.getUserId(), demandList, taxPercent, currency,
+              updateOrderTransactionsRequest.getServicingKiosk(),
+              updateOrderTransactionsRequest.getLatitude(),
+              updateOrderTransactionsRequest.getLongitude(),
+              updateOrderTransactionsRequest.getGeoAccuracy(),
+              updateOrderTransactionsRequest.getGeoErrorCode(),
+              updateOrderTransactionsRequest.getUtcExpectedFulfillmentTimeRangesCSV(),
+              updateOrderTransactionsRequest.getUtcConfirmedFulfillmentTimeRange(),
+              updateOrderTransactionsRequest.getPayment(),
+              updateOrderTransactionsRequest.getPaymentOption(), kioskTags,
+              updateOrderTransactionsRequest.getOrderTags(),
+              updateOrderTransactionsRequest.getOrderType(),
+              updateOrderTransactionsRequest.getReferenceId());
           o.setNumberOfItems(demandList.size());
-          o.setExpectedArrivalDate(eta);
-          o.setDueDate(reqByDate);
-          o.setSrc(source);
-          DomainConfig dc = DomainConfig.getInstance(domainId);
-          orderVisibilityAction.invoke(o, domainId);
-          o = pm.makePersistent(o);
-          demandList = (List<IDemandItem>) pm.makePersistentAll(demandList);
-          demandList = (List<IDemandItem>) pm.detachCopyAll(demandList);
-          if (isSalesOrder != null && isSalesOrder && dc.getOrdersConfig()
+          o.setExpectedArrivalDate(updateOrderTransactionsRequest.getEta());
+          o.setDueDate(updateOrderTransactionsRequest.getReqByDate());
+          o.setSrc(updateOrderTransactionsRequest.getSource());
+          DomainConfig dc = DomainConfig.getInstance(updateOrderTransactionsRequest.getDomainId());
+          orderVisibilityAction.invoke(o, updateOrderTransactionsRequest.getDomainId());
+          o = updateOrderTransactionsRequest.getPm().makePersistent(o);
+          demandList = (List<IDemandItem>) updateOrderTransactionsRequest.getPm()
+              .makePersistentAll(demandList);
+          demandList = (List<IDemandItem>) updateOrderTransactionsRequest.getPm()
+              .detachCopyAll(demandList);
+          if (updateOrderTransactionsRequest.getIsSalesOrder()
+              != null && updateOrderTransactionsRequest.getIsSalesOrder() && dc.getOrdersConfig()
               .allowSalesOrderAsConfirmed()) {
             o.setStatus(IOrder.CONFIRMED);
             if (dc.autoGI() && dc.getOrdersConfig().allocateStockOnConfirmation()) {
@@ -1150,7 +1185,8 @@ public class OrderManagementServiceImpl implements OrderManagementService {
                 try {
                   inventoryManagementService.allocateAutomatically(o.getServicingKiosk(), d.getMaterialId(),
                       IInvAllocation.Type.ORDER, String.valueOf(d.getOrderId()), tag,
-                      d.getOriginalQuantity(), d.getUserId(), autoAssignStatus, pm);
+                      d.getOriginalQuantity(), d.getUserId(), autoAssignStatus,
+                      updateOrderTransactionsRequest.getPm());
                   d.setStatus(IOrder.CONFIRMED);
                 } catch (InventoryAllocationException invException) {
                   xLogger.warn("Could not allocate fully to Order for k: {0}, m: {1}, q: {2}",
@@ -1161,26 +1197,31 @@ public class OrderManagementServiceImpl implements OrderManagementService {
             }
           }
           IMessage iMessage = null;
-          if (message != null && !message.isEmpty()) {
-            iMessage = addMessageToOrder(o.getOrderId(), o.getDomainId(), message, userId, pm);
+          if (updateOrderTransactionsRequest.getMessage() != null && !updateOrderTransactionsRequest
+              .getMessage().isEmpty()) {
+            iMessage = addMessageToOrder(o.getOrderId(), o.getDomainId(),
+                updateOrderTransactionsRequest.getMessage(),
+                updateOrderTransactionsRequest.getUserId(),
+                updateOrderTransactionsRequest.getPm());
           }
-          addStatusHistory(o.getOrderId(), null, o.getStatus(), o.getDomainId(), iMessage, userId,
-              pm);
-          o = pm.detachCopy(o);
+          addStatusHistory(o.getOrderId(), null, o.getStatus(), o.getDomainId(), iMessage,
+              updateOrderTransactionsRequest.getUserId(),
+              updateOrderTransactionsRequest.getPm());
+          o = updateOrderTransactionsRequest.getPm().detachCopy(o);
           o.setItems(demandList);
           if (useLocalPM) {
             tx.commit();
           }
           // Generate event only if order is visible to both parties.
           if (o.isVisibleToCustomer() && o.isVisibleToVendor()) {
-            generateEvent(domainId, IEvent.CREATED, o, null, null);
+            generateEvent(updateOrderTransactionsRequest.getDomainId(), IEvent.CREATED, o, null, null);
           }
-          if (BigUtil.notEqualsZero(payment)) {
-            generateEvent(domainId, IEvent.PAID, o, null, null);
+          if (BigUtil.notEqualsZero(updateOrderTransactionsRequest.getPayment())) {
+            generateEvent(updateOrderTransactionsRequest.getDomainId(), IEvent.PAID, o, null, null);
           }
         } else {
           // Simply persist demand items (without order)
-          pm.makePersistentAll(demandList);
+          updateOrderTransactionsRequest.getPm().makePersistentAll(demandList);
           // Get demand list
           items = new ArrayList<>();
           for (IDemandItem aDemandList : demandList) {
@@ -1196,8 +1237,195 @@ public class OrderManagementServiceImpl implements OrderManagementService {
             tx.rollback();
           }
           // Close the persistence manager
-          pm.close();
+          updateOrderTransactionsRequest.getPm().close();
         }
+      }
+    }
+    // Update kiosk activity timestamp
+    updateEntityActivityTimestamps(o);
+    return new OrderResults(items, null, o);
+  }
+
+  public OrderResults createOrder(UpdateOrderTransactionsModel updateOrderTransactionsRequest)
+      throws ServiceException {
+    xLogger.fine("Entering updateOrderTransactions");
+    if (updateOrderTransactionsRequest.getDomainId() == null) {
+      throw new ServiceException("Unknown domain");
+    }
+    boolean useLocalPM = updateOrderTransactionsRequest.getPm() == null;
+    if (useLocalPM) {
+      updateOrderTransactionsRequest.setPm(PMF.get().getPersistenceManager());
+    }
+    Date now = new Date(); // timestamp for transactions
+    IOrder o = null;
+    List<IDemandItem> items = null;
+    javax.jdo.Transaction tx = null;
+    // Check transaction availability
+    if ((updateOrderTransactionsRequest.getInventoryTransactions() == null
+        || updateOrderTransactionsRequest
+        .getInventoryTransactions().isEmpty()) && !(updateOrderTransactionsRequest.isAllowEmptyOrders())) {
+      throw new ServiceException("Transaction list cannot be empty");
+    }
+    List<IDemandItem> demandList = new ArrayList<>(); // demand list
+    if (updateOrderTransactionsRequest.getInventoryTransactions()
+        != null && !updateOrderTransactionsRequest
+        .getInventoryTransactions().isEmpty()) {
+      // Get the transactions and demand items
+      for (ITransaction trans : updateOrderTransactionsRequest.getInventoryTransactions()) {
+        // Update timestamp, if needed
+        if (trans.getTimestamp() == null) {
+          trans.setTimestamp(now);
+        }
+        trans.setDomainId(updateOrderTransactionsRequest.getDomainId());
+        // Update trans. type
+        trans.setType(updateOrderTransactionsRequest.getTransType());
+        // Get material
+        Long materialId = trans.getMaterialId();
+        IMaterial m = materialCatalogService.getMaterial(materialId);
+        // Get inventory
+        IInvntry inv = inventoryManagementService.getInventory(trans.getKioskId(), materialId);
+        if (inv == null) {
+          xLogger.warn(
+              "Inv. for kiosk-material {0}-{1} in domain {2} is not available. Cannot process order.",
+              trans.getKioskId(), materialId, updateOrderTransactionsRequest.getDomainId());
+          throw new ServiceException("Material " + m.getName()
+              + " is not available at this entity. Please contact administrator and ensure it is configured.");
+        }
+        // Check if this demand item is already in the list (possible when there are multiple transactions for same material of different batches)
+        if (trans.hasBatch()) {
+          IDemandItem item = getDemandItemByMaterial(demandList, materialId);
+          if (item != null) {
+            item.addBatch(JDOUtils.createInstance(IDemandItemBatch.class).init(trans));
+          }
+        }
+        try {
+          validateHU(trans.getQuantity(), m.getMaterialId(), m.getName());
+        } catch (LogiException e) {
+          throw new ServiceException(e.getCode(), e.getMessage());
+        }
+        // Add to demand list
+        demandList.add(getDemandItem(trans, m,
+            inv)); // if transaction has batch, then a DemandItemBatch is also created within the demand item
+      } // end while
+    }
+    // Make the updated objects persistent
+    try {
+      // Update demand items and orders, if necessary
+      if (updateOrderTransactionsRequest.isCreateOrder()) {
+        // Get tax info. if present (from kiosk)
+        BigDecimal taxPercent = BigDecimal.ZERO;
+        String currency = null;
+        List<String> kioskTags = null;
+        // Get kiosk
+        if (updateOrderTransactionsRequest.getKioskId() != null) {
+          IKiosk k = entitiesService.getKiosk(updateOrderTransactionsRequest.getKioskId(), false);
+          taxPercent = k.getTax();
+          currency = k.getCurrency();
+          kioskTags = k.getTags();
+        }
+        // Create dummy order, so we can get order Id (created by system)
+        o = JDOUtils.createInstance(IOrder.class);
+        o = updateOrderTransactionsRequest.getPm().makePersistent(o);
+        o = getDetached(o, updateOrderTransactionsRequest.getPm());
+        // Persist the order and its items (via transaction, given demand items will also be updated)
+        if (useLocalPM) {
+          tx = updateOrderTransactionsRequest.getPm().currentTransaction();
+          tx.begin();
+        }
+        // Update order data
+        createOrder(o, updateOrderTransactionsRequest.getDomainId(),
+            updateOrderTransactionsRequest.getKioskId(),
+            updateOrderTransactionsRequest.getUserId(), demandList, taxPercent, currency,
+            updateOrderTransactionsRequest.getServicingKiosk(),
+            updateOrderTransactionsRequest.getLatitude(),
+            updateOrderTransactionsRequest.getLongitude(),
+            updateOrderTransactionsRequest.getGeoAccuracy(),
+            updateOrderTransactionsRequest.getGeoErrorCode(),
+            updateOrderTransactionsRequest.getUtcExpectedFulfillmentTimeRangesCSV(),
+            updateOrderTransactionsRequest.getUtcConfirmedFulfillmentTimeRange(),
+            updateOrderTransactionsRequest.getPayment(),
+            updateOrderTransactionsRequest.getPaymentOption(), kioskTags,
+            updateOrderTransactionsRequest.getOrderTags(),
+            updateOrderTransactionsRequest.getOrderType(),
+            updateOrderTransactionsRequest.getReferenceId());
+        o.setNumberOfItems(demandList.size());
+        o.setExpectedArrivalDate(updateOrderTransactionsRequest.getEta());
+        o.setDueDate(updateOrderTransactionsRequest.getReqByDate());
+        o.setSrc(updateOrderTransactionsRequest.getSource());
+        DomainConfig dc = DomainConfig.getInstance(updateOrderTransactionsRequest.getDomainId());
+        orderVisibilityAction.invoke(o, updateOrderTransactionsRequest.getDomainId());
+        o = updateOrderTransactionsRequest.getPm().makePersistent(o);
+        demandList = (List<IDemandItem>) updateOrderTransactionsRequest.getPm()
+            .makePersistentAll(demandList);
+        demandList = (List<IDemandItem>) updateOrderTransactionsRequest.getPm()
+            .detachCopyAll(demandList);
+        if (updateOrderTransactionsRequest.getIsSalesOrder()
+            != null && updateOrderTransactionsRequest.getIsSalesOrder() && dc.getOrdersConfig()
+            .allowSalesOrderAsConfirmed()) {
+          o.setStatus(IOrder.CONFIRMED);
+          if (dc.autoGI() && dc.getOrdersConfig().allocateStockOnConfirmation()) {
+            boolean autoAssignStatus = dc.getOrdersConfig().autoAssignFirstMatStatus();
+            for (IDemandItem d : demandList) {
+              String tag = IInvAllocation.Type.ORDER.toString().concat(":")
+                  .concat(String.valueOf(d.getOrderId()));
+              try {
+                inventoryManagementService
+                    .allocateAutomatically(o.getServicingKiosk(), d.getMaterialId(),
+                        IInvAllocation.Type.ORDER, String.valueOf(d.getOrderId()), tag,
+                        d.getOriginalQuantity(), d.getUserId(), autoAssignStatus,
+                        updateOrderTransactionsRequest.getPm());
+                d.setStatus(IOrder.CONFIRMED);
+              } catch (InventoryAllocationException invException) {
+                xLogger.warn("Could not allocate fully to Order for k: {0}, m: {1}, q: {2}",
+                    o.getServicingKiosk(), d.getMaterialId(), d.getOriginalQuantity(),
+                    invException);
+              }
+            }
+          }
+        }
+        IMessage iMessage = null;
+        if (updateOrderTransactionsRequest.getMessage() != null && !updateOrderTransactionsRequest
+            .getMessage().isEmpty()) {
+          iMessage = addMessageToOrder(o.getOrderId(), o.getDomainId(),
+              updateOrderTransactionsRequest.getMessage(),
+              updateOrderTransactionsRequest.getUserId(),
+              updateOrderTransactionsRequest.getPm());
+        }
+        addStatusHistory(o.getOrderId(), null, o.getStatus(), o.getDomainId(), iMessage,
+            updateOrderTransactionsRequest.getUserId(),
+            updateOrderTransactionsRequest.getPm());
+        o = updateOrderTransactionsRequest.getPm().detachCopy(o);
+        o.setItems(demandList);
+        if (useLocalPM) {
+          tx.commit();
+        }
+        // Generate event only if order is visible to both parties.
+        if (o.isVisibleToCustomer() && o.isVisibleToVendor()) {
+          generateEvent(updateOrderTransactionsRequest.getDomainId(), IEvent.CREATED, o, null,
+              null);
+        }
+        if (BigUtil.notEqualsZero(updateOrderTransactionsRequest.getPayment())) {
+          generateEvent(updateOrderTransactionsRequest.getDomainId(), IEvent.PAID, o, null, null);
+        }
+      } else {
+        // Simply persist demand items (without order)
+        updateOrderTransactionsRequest.getPm().makePersistentAll(demandList);
+        // Get demand list
+        items = new ArrayList<>();
+        for (IDemandItem aDemandList : demandList) {
+          items.add(aDemandList);
+        }
+      }
+    } catch (Exception e) {
+      xLogger.severe("Exception: {0}", e.getMessage(), e);
+      throw new ServiceException(e);
+    } finally {
+      if (useLocalPM) {
+        if (tx != null && tx.isActive()) {
+          tx.rollback();
+        }
+        // Close the persistence manager
+        updateOrderTransactionsRequest.getPm().close();
       }
     }
     // Update kiosk activity timestamp
@@ -1277,7 +1505,13 @@ public class OrderManagementServiceImpl implements OrderManagementService {
       }
       o.setItems(items);
       o.setTotalPrice(o.computeTotalPrice());
-      o.setReferenceID(referenceId);
+      if(IOrder.SALES_ORDER == o.getOrderType()) {
+        o.setSalesReferenceID(referenceId);
+      } else if(IOrder.PURCHASE_ORDER == o.getOrderType()) {
+        o.setPurchaseReferenceId(referenceId);
+      } else if(IOrder.TRANSFER_ORDER == o.getOrderType()) {
+        o.setTransferReferenceId(referenceId);
+      }
     }
     o.setDomainId(domainId);
     updateOrderMetadata(o, utcEstimatedFulfillmentTimeRangesCSV, utcConfirmedFulfillmentTimeRange,
@@ -1294,7 +1528,7 @@ public class OrderManagementServiceImpl implements OrderManagementService {
       throws ServiceException {
     modifyOrder(o, userId, transactions, timestamp, domainId, transType, message,
         utcEstimatedFulfillmentTimeRanges, utcConfirmedFulfillmentTimeRange, payment, paymentOption,
-        allowEmptyOrders, orderTags, referenceId, null);
+        allowEmptyOrders, orderTags, referenceId, null, null, null);
   }
 
   @Override
@@ -1306,8 +1540,8 @@ public class OrderManagementServiceImpl implements OrderManagementService {
                           String utcConfirmedFulfillmentTimeRange,
                           BigDecimal payment, String paymentOption,
                           boolean allowEmptyOrders,
-                          List<String> orderTags, String referenceId,
-                          PersistenceManager pm) throws ServiceException {
+                          List<String> orderTags, String salesReferenceId,
+                          PersistenceManager pm, String purchaseReferenceId, String transferReferenceId) throws ServiceException {
     Date t = null;
     if (transactions != null && !transactions.isEmpty()) {
       for (ITransaction trans : transactions) {
@@ -1402,7 +1636,16 @@ public class OrderManagementServiceImpl implements OrderManagementService {
       generateOrderCommentEvent(domainId, IEvent.COMMENTED, JDOUtils.getImplClassName(IOrder.class),
           o.getOrderId().toString(), null, null);
     }
-    o.setReferenceID(referenceId);
+    setReferenceId(o, salesReferenceId, purchaseReferenceId, transferReferenceId);
+  }
+
+  private void setReferenceId(IOrder o, String salesReferenceId, String purchaseReferenceId, String transferReferenceId) {
+    o.setSalesReferenceID(salesReferenceId);
+    if(IOrder.TRANSFER_ORDER != o.getOrderType()) {
+      o.setPurchaseReferenceId(purchaseReferenceId);
+    } else {
+      o.setTransferReferenceId(transferReferenceId);
+    }
   }
 
   // Update other order metadata (fulfillment times, payment options, package size, etc.)
@@ -1555,9 +1798,15 @@ public class OrderManagementServiceImpl implements OrderManagementService {
     String filterQuery = "SELECT ID_OID FROM ORDER_DOMAINS WHERE DOMAIN_ID = " + domainId;
     StringBuilder sqlQuery = new StringBuilder();
     if (StringUtils.isNotEmpty(type)) {
-      if ("rid".equals(type)) {
-        sqlQuery.append("SELECT DISTINCT RID FROM `ORDER` WHERE ID IN (").append(filterQuery)
-            .append(") AND RID LIKE '").append(id).append("%' ");
+      if ("salesRefId".equals(type)) {
+        sqlQuery.append("SELECT DISTINCT SALES_REF_ID FROM `ORDER` WHERE ID IN (").append(filterQuery)
+            .append(") AND SALES_REF_ID LIKE '").append(id).append("%' ");
+      } else if("purchaseRefId".equals(type)) {
+        sqlQuery.append("SELECT DISTINCT PURCHASE_REF_ID FROM `ORDER` WHERE ID IN (").append(filterQuery)
+            .append(") AND PURCHASE_REF_ID LIKE '").append(id).append("%' ");
+      } else if ("transferRefId".equals(type)) {
+        sqlQuery.append("SELECT DISTINCT TRANSFER_REF_ID FROM `ORDER` WHERE ID IN (").append(filterQuery)
+            .append(") AND TRANSFER_REF_ID LIKE '").append(id).append("%' ");
       } else if ("oid".equals(type)) {
         sqlQuery.append("SELECT ID FROM `ORDER` WHERE ID IN (");
         sqlQuery.append(filterQuery).append(" AND ID_OID LIKE '").append(id).append("%')");
@@ -1695,7 +1944,7 @@ public class OrderManagementServiceImpl implements OrderManagementService {
 
   @Override
   public void updateOrderMetadata(Long orderId, String updatedBy,
-      PersistenceManager persistenceManager, String referenceId, Date expectedArrivalDate, Boolean updateOrderFields) {
+      PersistenceManager persistenceManager, String salesReferenceId, Date expectedArrivalDate, Boolean updateOrderFields) {
     Boolean isLocalPersistentManager = Boolean.FALSE;
     if (persistenceManager == null) {
       persistenceManager = PMF.get().getPersistenceManager();
@@ -1705,7 +1954,7 @@ public class OrderManagementServiceImpl implements OrderManagementService {
     order.setUpdatedBy(updatedBy);
     order.setUpdatedOn(new Date());
     if(updateOrderFields) {
-      order.setReferenceID(referenceId);
+      order.setSalesReferenceID(salesReferenceId);
       order.setExpectedArrivalDate(expectedArrivalDate);
     }
 

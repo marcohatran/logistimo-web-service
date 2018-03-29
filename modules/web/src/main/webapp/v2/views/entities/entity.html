@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright © 2017 Logistimo.
+  ~ Copyright © 2018 Logistimo.
   ~
   ~ This file is part of Logistimo.
   ~
@@ -252,7 +252,7 @@
                         href="#/setup/entities/detail/{{entityId}}/stockboard/"> {{resourceBundle.stockboard}}</a></li>
                 <li ng-show="iSU" ng-class="{active: subview == 'domains' }"><a
                         href="#/setup/entities/detail/{{entityId}}/domains/"> {{resourceBundle.domains}}</a></li>
-                <li ng-show="tempEnabled && (iSU || dp.av) && entity.perm > 1"
+                <li ng-show="tempEnabled && (iSU || dp.av) && entity.perm > 0"
                     ng-class="{active: subview == 'assets' }"><a
                         href="#/setup/entities/detail/{{entityId}}/assets/"> {{resourceBundle.assets}}</a></li>
                 <li ng-class="{active: subview == 'summary' }"><a

@@ -37,7 +37,7 @@ public class MobileTransSuccessModel {
   @SerializedName("mid")
   public Long mid;
   /**
-   * Error details containing error code (reason why the transaction was rejected) and index of the first rejected transaction
+   * Success details
    */
   @SerializedName("success_details")
   public List<MobileTransSuccessDetailModel> successDetails;

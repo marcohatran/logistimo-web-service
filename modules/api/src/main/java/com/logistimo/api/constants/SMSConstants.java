@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -42,6 +42,8 @@ public class SMSConstants {
   public static final String FIELD_SEPARATOR = ":";
   public static final String MATERIAL_SEPARATOR = "_";
   public static final String ENTRY_TIME_SEPARATOR = ";";
+  public static final String MATERIAL_RESPONSE_FIELDS_SEPARATOR = ";";
+  public static final String RESPONSE_TRN_INDEX_KEYS_SEPARATOR = "#";
   public static final String REGEX_MATERIAL_DETAIL_SEPARATOR = "\\*";
   public static final String STAR_SEPARATOR = "*";
   public static final String TRANSACTION_SEPARATOR = "_";
@@ -54,7 +56,6 @@ public class SMSConstants {
   public static final int DAYS_IN_MILLI_SEC = 24 * 60 * 60 * 1000;
   public static final int MIN_IN_MILLI_SEC = 60 * 1000;
   public static final int MILLISECONDS = 1000;
-
 
 
 }

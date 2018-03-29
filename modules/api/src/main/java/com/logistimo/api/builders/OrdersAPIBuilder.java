@@ -244,7 +244,9 @@ public class OrdersAPIBuilder {
       model.statusUpdateDate = LocalDateUtil.formatCustom(o.getStatusUpdatedOn(), Constants.DATETIME_FORMAT, timezone);
       model.ubid = o.getUpdatedBy();
       model.src = o.getSrc();
-      model.rid = o.getReferenceID();
+      model.salesRefId = o.getSalesReferenceID();
+      model.setPurchaseReferenceId(o.getPurchaseReferenceId());
+      model.setTransferReferenceId(o.getTransferReferenceId());
       if (o.getUpdatedBy() != null) {
         try {
           model.uby = usersService.getUserAccount(o.getUpdatedBy()).getFullName();
@@ -753,7 +755,9 @@ public class OrdersAPIBuilder {
       model.alc = true;
     }
     model.tgs = order.getTags(TagUtil.TYPE_ORDER);
-    model.rid = order.getReferenceID();
+    model.salesRefId = order.getSalesReferenceID();
+    model.setPurchaseReferenceId(order.getPurchaseReferenceId());
+    model.setTransferReferenceId(order.getTransferReferenceId());
     model.pt = LocalDateUtil.getFormattedMillisInHoursDays(order.getProcessingTime(), locale, true);
     model.dlt =
         LocalDateUtil.getFormattedMillisInHoursDays(order.getDeliveryLeadTime(), locale, true);

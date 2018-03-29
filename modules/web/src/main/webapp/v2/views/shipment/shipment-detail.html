@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright © 2017 Logistimo.
+  ~ Copyright © 2018 Logistimo.
   ~
   ~ This file is part of Logistimo.
   ~
@@ -36,24 +36,24 @@
                         <span ng-show="transRelease">({{resourceBundle['transactions.release.upper']}}</span>
                         : <a ng-href="#/orders/transfers/detail/{{shipment.orderId}}/">{{shipment.orderId}}</a>)</span>
                     <div>
-                        <span class="litetext lnk" ng-show="isUndef(shipment.rid) && !edit.rid && shipment.statusCode == 'op'" ng-class="{'required': oCfg.ridm && shipment.statusCode == 'op'}">{{"Add " + resourceBundle['referenceid'] }} </span>
-                        <span class="litetext lnk" ng-show="isDef(shipment.rid) && !edit.rid">
-                            <span ng-class="{'required': oCfg.ridm && shipment.statusCode == 'op'}">{{resourceBundle['referenceid']}}</span>
-                            <span>{{ ": " + shipment.rid }} </span>
+                        <span class="lnk" ng-show="isUndef(shipment.salesRefId) && !edit.salesRefId && shipment.statusCode == 'op'" ng-class="{'required': oCfg.ridm && shipment.statusCode == 'op'}">{{"Add " + resourceBundle['sales.reference.id'] }} </span>
+                        <span class="lnk" ng-show="isDef(shipment.salesRefId) && !edit.salesRefId">
+                            <span ng-class="{'required': oCfg.ridm && shipment.statusCode == 'op'}">{{resourceBundle['sales.reference.id']}}</span>
+                            <span>{{ ": " + shipment.salesRefId }} </span>
                         </span>
                         <div class="lnk">
-                            <div ng-show="edit.rid" class="litetext" style="width: 30%">
-                                <span ng-class="{'required': oCfg.ridm && shipment.statusCode == 'op'}">{{resourceBundle['referenceid']}}</span>
+                            <div ng-show="edit.salesRefId" class="" style="width: 30%">
+                                <span ng-class="{'required': oCfg.ridm && shipment.statusCode == 'op'}">{{resourceBundle['sales.reference.id']}}</span>
                                 <span>:</span>
-                                <editable-text edit-model="shipment.tempReferenceId"
-                                               on-ok="updateShipmentField('rid', shipment.tempReferenceId)"
+                                <editable-text edit-model="shipment.tempSalesRefId"
+                                               on-ok="updateShipmentField('salesRefId', shipment.tempSalesRefId)"
                                                max-length="100"
-                                               on-cancel="toggleEdit('rid')"
+                                               on-cancel="toggleEdit('salesRefId')"
                                                set-focus="">
                                 </editable-text>
                             </div>
-                            <a ng-show="!edit.rid && (dp.vp || shipment.statusCode == 'op')"
-                               uib-tooltip="{{resourceBundle['edit']}}" tooltip-append-to-body="true" ng-click="toggleEdit('rid')">
+                            <a ng-show="!edit.salesRefId && (dp.vp || shipment.statusCode == 'op')"
+                               uib-tooltip="{{resourceBundle['edit']}}" tooltip-append-to-body="true" ng-click="toggleEdit('salesRefId')">
                                 <span class="glyphicons glyphicons-edit pt2 ml15"></span>
                             </a>
                         </div>

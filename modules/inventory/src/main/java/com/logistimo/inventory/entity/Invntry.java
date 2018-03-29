@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -26,6 +26,7 @@
  */
 package com.logistimo.inventory.entity;
 
+import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.InventoryConfig;
 import com.logistimo.constants.Constants;
@@ -805,6 +806,7 @@ public class Invntry implements IInvntry {
     setTimestamp(new Date());
     setPSTimestamp(null);
     setDQTimestamp(null);
+    setUpdatedBy(SecurityUtils.getUsername());
   }
 
 

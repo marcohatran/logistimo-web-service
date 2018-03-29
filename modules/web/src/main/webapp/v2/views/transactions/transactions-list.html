@@ -140,7 +140,7 @@
         <div ng-show="resSize > 0">
             <div class="row action-bar">
                 <span class="col-sm-12 noLRpad" >
-                    <export callback="exportData()"></export>
+                    <export></export>
                     <button ng-show="iSU" type="button" class="btn btn-sm btn-default" ng-click="undoTransactions()">
                         {{resourceBundle['undo']}}
                     </button>
@@ -273,7 +273,7 @@
         <div ng-show="resSize > 0">
             <div class="row action-bar">
                 <span class="col-sm-12 noLRpad" >
-                    <export callback="exportData()"></export>
+                    <export></export>
                 <button ng-show="iSU" type="button" class="btn btn-sm btn-default" ng-click="undoTransactions()">
                     {{resourceBundle['undo']}}
                 </button>

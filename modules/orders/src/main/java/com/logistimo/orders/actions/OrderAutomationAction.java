@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -226,7 +226,7 @@ public class OrderAutomationAction {
           ITransaction.TYPE_REORDER, message, null, null,
           null,
           null,
-          true, null, order.getReferenceID());
+          true, null, null);
       orderManagementService
           .updateOrder(order, SourceConstants.SYSTEM, true, true, Constants.SYSTEM_USER_ID);
       LOGGER.info("Added new materials to order {0} for kiosk {1} with message {2}", orderId,

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -52,6 +52,9 @@ public class SMSDecodeTest {
         + "26,HQ,6,,";
     //TODO: initialise using spring
     SMSBuilder smsBuilder = new SMSBuilder();
+    smsBuilder.buildSMSModel(message);
+
+    message = "O=9af4:S=QmRFgqy:V=2:U=ckop230:K=5f9z:I=8;1uW_i,1vE,o,0,,5fJ2,,,QmRFewL;1uG_ri,1uQ,5,0,,5fJ2,,it,QmRFewL";
     smsBuilder.buildSMSModel(message);
   }
 

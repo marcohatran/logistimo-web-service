@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -152,9 +152,16 @@ public class GetFilteredOrdersQueryAction {
 
   private void applyReferenceIdFilter(StringBuilder sqlQuery, List<String> parameters,
                                       OrderFilters filters) {
-    if (StringUtils.isNotBlank(filters.getReferenceId())) {
-      sqlQuery.append(" AND RID = ?");
-      parameters.add(filters.getReferenceId());
+    if (StringUtils.isNotBlank(filters.getSalesReferenceId())) {
+      sqlQuery.append(" AND SALES_REF_ID = ?");
+      parameters.add(filters.getSalesReferenceId());
+    }
+    if(StringUtils.isNotBlank(filters.getPurchaseReferenceId())) {
+      sqlQuery.append(" AND PURCHASE_REF_ID = ?");
+      parameters.add(filters.getPurchaseReferenceId());
+    } else if(StringUtils.isNotBlank(filters.getTransferReferenceId())) {
+      sqlQuery.append(" AND TRANSFER_REF_ID = ?");
+      parameters.add(filters.getTransferReferenceId());
     }
   }
 

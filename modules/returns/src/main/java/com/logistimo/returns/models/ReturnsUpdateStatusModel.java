@@ -27,16 +27,29 @@ import com.google.gson.annotations.SerializedName;
 
 import com.logistimo.proto.MobileOrderModel;
 
-import lombok.Data;
-
 /**
  * @author Mohan Raja
  */
-@Data
 public class ReturnsUpdateStatusModel {
 
   @SerializedName("return")
   private ReturnsModel returns;
 
   private MobileOrderModel order;
+
+  public ReturnsModel getReturns() {
+    return returns;
+  }
+
+  public void setReturns(ReturnsModel returns) {
+    this.returns = returns;
+  }
+
+  public MobileOrderModel getOrder() {
+    return order;
+  }
+
+  public void setOrder(MobileOrderModel order) {
+    this.order = order;
+  }
 }

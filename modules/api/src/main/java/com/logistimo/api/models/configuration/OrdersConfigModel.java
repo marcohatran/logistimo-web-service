@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -116,6 +116,7 @@ public class OrdersConfigModel {
    * Mark transfer/release reference id  mandatory
    */
   private boolean transfer;
+
 
 
   public String getLogo() {

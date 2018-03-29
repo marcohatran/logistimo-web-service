@@ -1,3 +1,26 @@
+/*
+ * Copyright © 2018 Logistimo.
+ *
+ * This file is part of Logistimo.
+ *
+ * Logistimo software is a mobile & web platform for supply chain management and remote temperature monitoring in
+ * low-resource settings, made available under the terms of the GNU Affero General Public License (AGPL).
+ *
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General
+ * Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any
+ * later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/>.
+ *
+ * You can be released from the requirements of the license by purchasing a commercial license. To know more about
+ * the commercial license, please contact us at opensource@logistimo.com
+ */
+
 angular.module('logistimo.storyboard.inventoryStatusDonutWidget', [])
     .config(function (widgetsRepositoryProvider) {
         widgetsRepositoryProvider.addWidget({
@@ -119,18 +142,23 @@ angular.module('logistimo.storyboard.inventoryStatusDonutWidget', [])
                 dashboardService.get(undefined, undefined, $scope.exFilter, $scope.exType, $scope.period, undefined,
                     undefined, constructModel(filter.entityTag), fDate, constructModel(filter.exEntityTag), false).then(
                     function (data) {
-                        chartData = constructPieData(data.data.invDomain, invPieColors, invPieOrder, INVENTORY,
-                            $scope.mapEvent);
-                        var normalPercent = getPercent(data.data.invDomain, $scope.widType);
-                        normalPercent = formatDecimal(normalPercent);
-                        totalInv = getItemCount(data.data.invDomain, $scope.widType);
-                        if(totalInv>1){
-                            $scope.totalInvText = totalInv + " inventory items";
+                        if(!checkNullEmptyObject(data.data.invDomain)) {
+                            chartData = constructPieData(data.data.invDomain, invPieColors, invPieOrder, INVENTORY,
+                                $scope.mapEvent);
+                            var normalPercent = getPercent(data.data.invDomain, $scope.widType);
+                            normalPercent = formatDecimal(normalPercent);
+                            totalInv = getItemCount(data.data.invDomain, $scope.widType);
+                            if (totalInv > 1) {
+                                $scope.totalInvText = totalInv + " inventory items";
+                            } else {
+                                $scope.totalInvText = totalInv + " inventory item";
+                            }
+                            setWidgetData(normalPercent, chartData);
                         }else{
-                            $scope.totalInvText = totalInv + " inventory item";
+                            $scope.noDataToRender();
                         }
-                        setWidgetData(normalPercent, chartData);
                     }).catch(function error(msg) {
+                        $scope.noDataToRender();
                         showError(msg, $scope);
                     }).finally(function () {
                         $scope.loading = false;

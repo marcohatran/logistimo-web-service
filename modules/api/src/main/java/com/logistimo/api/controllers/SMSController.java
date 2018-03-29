@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -32,6 +32,7 @@ import com.logistimo.api.models.SMSTransactionModel;
 import com.logistimo.api.servlets.mobile.builders.MobileTransactionsBuilder;
 import com.logistimo.api.util.SMSUtil;
 import com.logistimo.auth.GenericAuthoriser;
+import com.logistimo.auth.SecurityMgr;
 import com.logistimo.communications.service.MessageService;
 import com.logistimo.exception.InvalidDataException;
 import com.logistimo.exception.LogiException;
@@ -132,6 +133,8 @@ public class SMSController {
             smsMessage.getAddress(), ua.getMobilePhoneNumber(),
             smsMessage.getMessage());
         return;
+      } else {
+        SecurityMgr.setSessionDetails(model.getUserId());
       }
       isDuplicate =
           SMSUtil.isDuplicateMsg(model.getSendTime(), model.getUserId(), model.getKioskId(),
@@ -218,7 +221,7 @@ public class SMSController {
         mobileTransactionsBuilder
             .buildMobileUpdateInvTransResponse(domainId, model.getUserId(), model.getKioskId(),
                 model.getPartialId(),
-                null, midResponseDetailModelMap, populateMaterialList(model));
+                null, midResponseDetailModelMap, populateMaterialList(model), isDuplicate);
     if (!isDuplicate && mobUpdateInvTransResp != null) {
         TransactionUtil.setObjectInCache(String.valueOf(model.getSendTime()), model.getUserId(),
             model.getKioskId(), model.getPartialId(),
@@ -231,7 +234,7 @@ public class SMSController {
    * Method to build material list for response
    *
    * @param model Transaction model
-   * @return List of Mobile trnasaction models
+   * @return List of Mobile transaction models
    */
   private List<MobileMaterialTransModel> populateMaterialList(SMSTransactionModel model) {
     List<MobileMaterialTransModel> mobileMaterialTransModelList = new ArrayList<>();

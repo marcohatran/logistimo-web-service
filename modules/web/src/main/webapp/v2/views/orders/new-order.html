@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright © 2017 Logistimo.
+  ~ Copyright © 2018 Logistimo.
   ~
   ~ This file is part of Logistimo.
   ~
@@ -93,10 +93,26 @@
                                         </div>
                                 </div>
                                 <div class="form-group">
-                                    <label class="col-sm-4 control-label">{{resourceBundle['referenceid']}}</label>
-                                    <div class="col-sm-7">
-                                        <input type="text" ng-model="order.rid" placeholder="{{resourceBundle['referenceid']}}" class="form-control" maxlength="50">
+                                    <div ng-if="type == 0">
+                                        <label class="col-sm-4 control-label">{{resourceBundle['sales.reference.id']}}</label>
+                                        <div class="col-sm-7">
+                                            <input type="text" ng-model="order.rid" placeholder="{{resourceBundle['sales.reference.id']}}" class="form-control" maxlength="100">
+                                        </div>
                                     </div>
+                                    <div ng-if="type == 1">
+                                        <label class="col-sm-4 control-label" ng-class="{'required':oCfg.purchase}">{{resourceBundle['purchase.reference.id']}}</label>
+                                        <div class="col-sm-7">
+                                            <input type="text" ng-model="order.rid" placeholder="{{resourceBundle['purchase.reference.id']}}" class="form-control" maxlength="100">
+                                        </div>
+                                    </div>
+                                    <div ng-if="type == 2">
+                                        <label class="col-sm-4 control-label" ng-hide="transRelease" ng-class="{'required':oCfg.transfer}">{{resourceBundle['transfer.reference.id']}}</label>
+                                        <label class="col-sm-4 control-label" ng-show="transRelease" ng-class="{'required':oCfg.transfer}">{{resourceBundle['release.reference.id']}}</label>
+                                        <div class="col-sm-7">
+                                            <input type="text" ng-model="order.rid" placeholder="{{transRelease ? resourceBundle['release.reference.id'] : resourceBundle['transfer.reference.id']}}" class="form-control" maxlength="100">
+                                        </div>
+                                    </div>
+
                                 </div>
                                 <div class="form-group">
                                     <label class="col-sm-4 control-label">{{resourceBundle['order.tags']}}</label>

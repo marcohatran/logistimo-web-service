@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -129,7 +129,7 @@ public interface IShipment extends ICrossDomain {
 
   boolean hasEAD();
 
-  String getReferenceId();
+  String getSalesReferenceId();
 
-  void setReferenceId(String rid);
+  void setSalesReferenceId(String salesReferenceId);
 }

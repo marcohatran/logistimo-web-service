@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -73,6 +73,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -240,7 +241,7 @@ public class MobileTransactionsBuilder {
                                                                            String userId, Long kioskId, String partialId,
                                                                            String errorMessage,
                                                                            Map<Long,ResponseDetailModel> responseDetailModelByMaterial,
-                                                                           List<MobileMaterialTransModel> mobMatTransList) {
+                                                                           List<MobileMaterialTransModel> mobMatTransList, boolean isDuplicate) {
     if (domainId == null) {
       return null;
     }
@@ -254,7 +255,11 @@ public class MobileTransactionsBuilder {
       } else if (isSuccess(responseDetailModelByMaterial)) {
         mobUpdateInvTransResp.st = SUCCESS;
       } else {
-        mobUpdateInvTransResp.st = PARTIAL_ERROR;
+        if (!isDuplicate) {
+          mobUpdateInvTransResp.st = PARTIAL_ERROR;
+        } else {
+          mobUpdateInvTransResp.st = SUCCESS;
+        }
       }
       mobUpdateInvTransResp.kid = kioskId;
       Map<Long,List<SuccessDetailModel>> successDetailModelsByMaterial = getSuccessDetailModelsByMaterial(
@@ -289,7 +294,7 @@ public class MobileTransactionsBuilder {
  public List<MobileInvModel> buildMobileInvModelList(Long domainId, String userId, Long kioskId,
                                                       List<MobileMaterialTransModel> mobMatTransList) {
    if (mobMatTransList == null || mobMatTransList.isEmpty()) {
-     return null;
+     return Collections.emptyList();
    }
    Set<Long> mids = mobMatTransList.stream()
             .map(mobileMaterialTransModel->mobileMaterialTransModel.mid)
@@ -342,15 +347,13 @@ public class MobileTransactionsBuilder {
 
   private List<ITransaction> buildTransactions(String userId, Long kid, MobileMaterialTransModel mobileMaterialTransModel) {
     if (mobileMaterialTransModel == null || mobileMaterialTransModel.trns == null) {
-      return null;
+      return Collections.emptyList();
     }
     List<ITransaction> transactions = new ArrayList<>(mobileMaterialTransModel.trns.size());
     for (MobileTransModel mobileTransModel : mobileMaterialTransModel.trns) {
       ITransaction transaction = buildTransaction(userId, kid, mobileTransModel);
-      if (transaction != null) {
-        transaction.setMaterialId(mobileMaterialTransModel.mid);
-        transactions.add(transaction);
-      }
+      transaction.setMaterialId(mobileMaterialTransModel.mid);
+      transactions.add(transaction);
     }
     return transactions;
   }
@@ -415,8 +418,8 @@ public class MobileTransactionsBuilder {
   }
 
   private List<MobileTransErrModel> buildErrorModelList(Map<Long,List<ErrorDetailModel>> midErrorDetailModelsMap) {
-    if (midErrorDetailModelsMap == null || midErrorDetailModelsMap.isEmpty()) {
-      return null;
+    if (MapUtils.isEmpty(midErrorDetailModelsMap)) {
+      return Collections.emptyList();
     }
     List<MobileTransErrModel> mobileTransErrModels = new ArrayList<>(midErrorDetailModelsMap.size());
     Set<Long> mids = midErrorDetailModelsMap.keySet();
@@ -429,7 +432,7 @@ public class MobileTransactionsBuilder {
 
   private MobileTransErrModel buildMobileTransErrorModel(Long mid,
                                                        List<ErrorDetailModel> errorDetailModels) {
-    if (mid == null || errorDetailModels == null || errorDetailModels.isEmpty()) {
+    if (mid == null || CollectionUtils.isEmpty(errorDetailModels)) {
       return null;
     }
     MobileTransErrModel mobileTransErrModel = new MobileTransErrModel();
@@ -439,8 +442,8 @@ public class MobileTransactionsBuilder {
   }
 
   private List<MobileTransErrorDetailModel> buildMobileTransErrorDetailModel(List<ErrorDetailModel> errorDetailModels) {
-    if(errorDetailModels == null || errorDetailModels.isEmpty()) {
-      return null;
+    if(CollectionUtils.isEmpty(errorDetailModels)) {
+      return Collections.emptyList();
     }
     List<MobileTransErrorDetailModel> mobileTransErrorDetailModels = new ArrayList<>(errorDetailModels.size());
     for (ErrorDetailModel errorDetailModel : errorDetailModels) {
@@ -481,7 +484,7 @@ public class MobileTransactionsBuilder {
     return responseDetailModelByMaterial.entrySet()
         .stream()
         .filter(entry -> !CollectionUtils.isEmpty(entry.getValue().errorDetailModels))
-        .collect(Collectors.toMap(entry -> entry.getKey(), entry-> entry.getValue().errorDetailModels));
+        .collect(Collectors.toMap(Entry::getKey, entry-> entry.getValue().errorDetailModels));
   }
 
   protected Map<Long,List<SuccessDetailModel>> getSuccessDetailModelsByMaterial(Map<Long,ResponseDetailModel> responseDetailModelByMaterial) {
@@ -491,7 +494,7 @@ public class MobileTransactionsBuilder {
     return responseDetailModelByMaterial.entrySet()
         .stream()
         .filter(entry -> !CollectionUtils.isEmpty(entry.getValue().successDetailModels))
-        .collect(Collectors.toMap(entry -> entry.getKey(), entry-> entry.getValue().successDetailModels));
+        .collect(Collectors.toMap(Entry::getKey, entry-> entry.getValue().successDetailModels));
   }
 
   protected List<MobileTransSuccessModel> buildSuccessModels(Map<Long,List<SuccessDetailModel>> successDetailModelsByMaterial) {

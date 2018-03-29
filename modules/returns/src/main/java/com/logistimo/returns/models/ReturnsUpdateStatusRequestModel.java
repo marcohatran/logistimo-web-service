@@ -25,23 +25,37 @@ package com.logistimo.returns.models;
 
 import com.google.gson.annotations.SerializedName;
 
-import com.logistimo.constants.SourceConstants;
-
-import lombok.Data;
-
 /**
  * @author Mohan Raja
  */
-@Data
 public class ReturnsUpdateStatusRequestModel {
 
   private String comment;
-
   private String embed;
-
   @SerializedName("entity_id")
   private Long entityId;
 
-  private Integer source = SourceConstants.MOBILE;
+  public String getComment() {
+    return comment;
+  }
 
+  public void setComment(String comment) {
+    this.comment = comment;
+  }
+
+  public String getEmbed() {
+    return embed;
+  }
+
+  public void setEmbed(String embed) {
+    this.embed = embed;
+  }
+
+  public Long getEntityId() {
+    return entityId;
+  }
+
+  public void setEntityId(Long entityId) {
+    this.entityId = entityId;
+  }
 }

@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright © 2017 Logistimo.
+  ~ Copyright © 2018 Logistimo.
   ~
   ~ This file is part of Logistimo.
   ~
@@ -77,10 +77,10 @@
                                 </div>
                             </div>
                             <div class="row mb10">
-                                <label class="col-sm-4 cbx control-label ml10"> Tracking Id</label>
+                                <label class="col-sm-4 cbx control-label ml10"> {{resourceBundle['trackingid']}}</label>
 
                                 <div class="col-sm-7">
-                                    <input class="form-control" ng-model="trackingId" placeholder="Tracking Id">
+                                    <input class="form-control" ng-model="trackingId" placeholder="{{resourceBundle['trackingid']}}">
                                 </div>
                             </div>
                             <div class="row mb10">
@@ -133,9 +133,9 @@
                         </div>
                         <div class="col-sm-6 mt10">
                             <div class="row">
-                                <label class="col-sm-4 control-label cbx ml10" ng-class="{'required': oCfg.ridm}">{{resourceBundle['referenceid']}}</label>
+                                <label class="col-sm-4 control-label cbx ml10" ng-class="{'required': oCfg.ridm}">{{resourceBundle['sales.reference.id']}}</label>
                                 <div class="col-sm-7 mb10">
-                                    <input type="text" class="form-control" ng-model="rid" max-length="100" ng-init="rid = order.rid">
+                                    <input type="text" class="form-control" ng-model="salesRefId" max-length="100" ng-init="salesRefId = order.salesRefId">
                                 </div>
                             </div>
                         </div>

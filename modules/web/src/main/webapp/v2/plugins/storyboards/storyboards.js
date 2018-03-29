@@ -1,3 +1,26 @@
+/*
+ * Copyright © 2018 Logistimo.
+ *
+ * This file is part of Logistimo.
+ *
+ * Logistimo software is a mobile & web platform for supply chain management and remote temperature monitoring in
+ * low-resource settings, made available under the terms of the GNU Affero General Public License (AGPL).
+ *
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General
+ * Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any
+ * later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/>.
+ *
+ * You can be released from the requirements of the license by purchasing a commercial license. To know more about
+ * the commercial license, please contact us at opensource@logistimo.com
+ */
+
 angular.module('logistimo.storyboard', ['logistimo.storyboard.bulletinboards']);
 /*
  * Copyright © 2017 Logistimo.
@@ -26,7 +49,7 @@ angular.module('logistimo.storyboard', ['logistimo.storyboard.bulletinboards']);
  * Created by naveensnair on 15/11/17.
  */
 
-angular.module('logistimo.storyboard.bulletinboards', ['logistimo.storyboard.dashboards','ngAnimate'])
+angular.module('logistimo.storyboard.bulletinboards', ['logistimo.storyboard.dashboards', 'ngAnimate'])
     .provider('bulletinBoardRepository', function () {
         return {
             $get: ['$q', function ($q) {
@@ -95,20 +118,20 @@ angular.module('logistimo.storyboard.bulletinboards', ['logistimo.storyboard.das
             $scope.bulletinBoard.dashboards.splice(index, 1);
         }
     }])
-    .controller('BulletinBoardsListingController', ['bulletinBoardRepository', '$scope', '$window',function (bulletinBoardRepository, $scope, $window) {
+    .controller('BulletinBoardsListingController', ['bulletinBoardRepository', '$scope', '$window', function (bulletinBoardRepository, $scope, $window) {
         $scope.init = function () {
             $scope.bulletinBoards = {};
         };
         $scope.init();
-
+        
         function getAllBulletinBoards() {
             bulletinBoardRepository.getAll($scope).then(function (bulletinBoards) {
                 $scope.bulletinBoards = bulletinBoards;
             });
         }
-
+        
         getAllBulletinBoards();
-
+        
         $scope.viewBulletinBoard = function(bulletinBoardId) {
             if($scope.isBulletinBoard) {
                 $window.location.href = "#/view/" + bulletinBoardId;
@@ -116,11 +139,11 @@ angular.module('logistimo.storyboard.bulletinboards', ['logistimo.storyboard.das
                 $window.location.href="#configuration/bulletin/view/" + bulletinBoardId;
             }
         };
-
+        
         $scope.delete = function(bulletinBoardId) {
-          bulletinBoardRepository.delete(bulletinBoardId, $scope).then(function (data) {
-             getAllBulletinBoards();
-          });
+            bulletinBoardRepository.delete(bulletinBoardId, $scope).then(function (data) {
+                getAllBulletinBoards();
+            });
         }
     }])
     .controller('BulletinBoardViewController', ['bulletinBoardRepository', '$scope','$timeout', function (bulletinBoardRepository, $scope, $timeout) {
@@ -135,7 +158,9 @@ angular.module('logistimo.storyboard.bulletinboards', ['logistimo.storyboard.das
             if ($scope.bulletinBoardId != undefined) {
                 bulletinBoardRepository.get($scope.bulletinBoardId, $scope).then(function (bulletinBoard) {
                     $scope.bulletinBoard = bulletinBoard;
-                    renderDashboards();
+                    $scope.bulletinBoard.displayTime = $scope.bulletinBoard.max;
+                    $scope.bulletinBoard.min = 5; // default minimum time is 5 seconds
+                    $scope.renderDashboards();
                 });
             } else {
                 $scope.bulletinBoard = {dashboards: []};
@@ -146,20 +171,33 @@ angular.module('logistimo.storyboard.bulletinboards', ['logistimo.storyboard.das
             $scope.count = 0;
         };
         $scope.init();
-        function renderDashboards() {
+        $scope.renderDashboards = function(){
             $scope.dashboardId = $scope.bulletinBoard.dashboards[$scope.count].id;
             $scope.renderDashboardsPage = true;
             $timeout(function () {
-                $scope.count = $scope.count + 1;
-                $scope.renderDashboardsPage = false;
-                if ($scope.count == $scope.bulletinBoard.dashboards.length) {
-                    $scope.count = 0;
+                if($scope.bulletinBoard.dashboards[$scope.count].hasNoData){
+                    $scope.count = $scope.count + 1;
+                    $scope.renderDashboardsPage = false;
+                    if ($scope.count == $scope.bulletinBoard.dashboards.length) {
+                        $scope.count = 0;
+                    }
+                    $timeout(function () {
+                        $scope.renderDashboards();
+                    }, 10);
+                }else {
+                    $timeout(function () {
+                        $scope.count = $scope.count + 1;
+                        $scope.renderDashboardsPage = false;
+                        if ($scope.count == $scope.bulletinBoard.dashboards.length) {
+                            $scope.count = 0;
+                        }
+                        $timeout(function () {
+                            $scope.renderDashboards();
+                        }, 10);
+                    }, $scope.bulletinBoard.max * 1000);
                 }
-                $timeout(function () {
-                    renderDashboards();
-                }, 10);
-            }, $scope.bulletinBoard.max * 1000);
-        }
+            },$scope.bulletinBoard.min * 1000);
+        };
         
         $scope.setBulletinBoardTitle = function (title, subTitle, index) {
             $scope.title = title;
@@ -172,17 +210,26 @@ angular.module('logistimo.storyboard.bulletinboards', ['logistimo.storyboard.das
         $scope.setTitles = function(title, info, index) {
             $scope.setBulletinBoardTitle(title, info, index);
         };
-
+        
         $scope.isPrimary = function (index) {
             return $scope.count == index;
         };
-
+        
         $scope.isSecondary = function (index) {
             if ($scope.count + 1 == $scope.bulletinBoard.dashboards.length) {
                 return index == 0;
             }
             return $scope.count + 1 == index;
         };
+
+        $scope.markDashboardNoData = function (dashboardId) {
+            $scope.bulletinBoard.dashboards.some(function (dashboard) {
+                if(dashboard.id == dashboardId){
+                    dashboard.hasNoData = true;
+                    return true;
+                }
+            });
+        }
 
     }]);
 
@@ -941,9 +988,10 @@ angular.module('logistimo.storyboard.dashboards', ['logistimo.storyboard.widgets
             }]
         };
     })
-    .controller('DashboardViewController', ['dashboardRepository', '$scope', '$window','$timeout', function (dashboardRepository, $scope, $window, $timeout) {
+    .controller('DashboardViewController', ['dashboardRepository', '$scope', '$window', '$timeout', function (dashboardRepository, $scope, $window, $timeout) {
         
         function init() {
+            $scope.widgetsCount = 0;
             if(checkNullEmpty($scope.dashboardId) && $scope.preview) {
                 $scope.dashboardId = Math.floor(Math.random() * 10);
             }
@@ -961,6 +1009,13 @@ angular.module('logistimo.storyboard.dashboards', ['logistimo.storyboard.widgets
                 $scope.checkNetwork();
                 dashboardRepository.get($scope.dashboardId, $scope).then(function (dashboard) {
                     $scope.db = dashboard;
+                    if($scope.db.widgets != undefined) {
+                        for(var widget in $scope.db.widgets) {
+                            if($scope.db.widgets.hasOwnProperty(widget)) {
+                                $scope.widgetsCount = $scope.widgetsCount + 1;
+                            }
+                        }
+                    }
                     if (!$scope.showTitle) {
                         $scope.setTitles($scope.db.title, $scope.db.info, $scope.index);
                     }
@@ -979,9 +1034,18 @@ angular.module('logistimo.storyboard.dashboards', ['logistimo.storyboard.widgets
         
         init();
         
-        $scope.completeRendering = function (widgetId) {
-            $scope.renderingStatus[widgetId] = true;
-            //check if all widgets have signalled completion and then emit so bulletin board can switch dashboard.
+        $scope.renderedFailedCount = 0;
+        
+        $scope.completeRendering = function () {
+            $scope.renderedCount = $scope.renderedCount + 1;
+            
+        };
+        
+        $scope.noDataToRender = function() {
+            $scope.renderedFailedCount = $scope.renderedFailedCount+1;
+            if($scope.renderedFailedCount == $scope.widgetsCount && $scope.isBulletinBoard) {
+                $scope.markDashboardNoData($scope.dashboardId);
+            }
         }
         
     }])
@@ -1059,10 +1123,10 @@ angular.module('logistimo.storyboard.dashboards', ['logistimo.storyboard.widgets
         $scope.checkNullEmpty = function (argument) {
             return !$scope.checkNotNullEmpty(argument);
         };
-
+        
         $scope.delete = function(dashboardId) {
             dashboardRepository.delete(dashboardId, $scope).then(function (data) {
-               getAllDashboards();
+                getAllDashboards();
             });
         }
     }])
@@ -1422,8 +1486,8 @@ angular.module('logistimo.storyboard').run(['$templateCache', function($template
         "    </div>\n" +
         "</div>"
     );
-
-
+    
+    
     $templateCache.put('/angular-storyboards/src/bulletinboard/templates/view-bulletin-board.html',
         "<div>\n" +
         "    <div class=\"col-sm-12\">\n" +
@@ -1624,8 +1688,8 @@ angular.module('logistimo.storyboard').run(['$templateCache', function($template
         "    </div>\n" +
         "</div>"
     );
-
-
+    
+    
     $templateCache.put('/angular-storyboards/src/dashboard/templates/view-dashboard.html',
         "<div class=\"row\">\n" +
         "    <div class=\"col-sm-12\">\n" +
@@ -1727,7 +1791,7 @@ angular.module('logistimo.storyboard').run(['$templateCache', function($template
     
     $templateCache.put('/angular-storyboards/src/widget/templates/view-widget.html',
         "<div ng-controller=\"WidgetsViewController\">\n" +
-        "    <div style=\"height: {{widget.computedHeight}}px; min-height: {{widget.computedHeight}}px;max-height: {{widget.computedHeight}}px; overflow: hidden;background-color: #272727; padding: 2px\">\n" +
+        "    <div style=\"height: {{widget.computedHeight}}px; min-height: {{widget.computedHeight}}px;max-height: {{widget.computedHeight}}px; overflow: hidden; background-color: #272727; padding: 2px\">\n" +
         "        <div ng-include=\"widgetTemplate.templateUrl\"></div>\n" +
         "    </div>\n" +
         "</div>"

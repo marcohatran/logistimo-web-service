@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -154,7 +154,7 @@ public class MnlTransactionUtil {
           // Reset order quantities
           oms.modifyOrder(order, userId, transList, null, domainId, ITransaction.TYPE_ORDER, null,
               null, null,
-              null, null, false, orderTags, null, null);
+              null, null, false, orderTags, null, null, null, null);
           UpdatedOrder
               updorder =
               oms.updateOrder(order, SourceConstants.UPLOAD,

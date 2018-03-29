@@ -24,19 +24,20 @@
 package com.logistimo.returns.service;
 
 import com.logistimo.constants.Constants;
-import com.logistimo.jpa.Repository;
 import com.logistimo.returns.entity.Returns;
 import com.logistimo.returns.entity.ReturnsItem;
 import com.logistimo.returns.entity.ReturnsItemBatch;
-import com.logistimo.returns.models.ReturnsFilters;
+import com.logistimo.returns.models.ReturnFilters;
 import com.logistimo.returns.vo.ReturnsItemBatchVO;
 import com.logistimo.returns.vo.ReturnsItemVO;
 import com.logistimo.returns.vo.ReturnsVO;
 import com.logistimo.utils.LocalDateUtil;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.stereotype.Repository;
 
-import java.math.BigInteger;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -47,8 +48,8 @@ import java.util.stream.Collectors;
 /**
  * Created by pratheeka on 13/03/18.
  */
-@org.springframework.stereotype.Repository
-public class ReturnsRepository extends Repository {
+@Repository
+public class ReturnsDao extends Dao {
 
   private ModelMapper modelMapper = new ModelMapper();
 
@@ -61,28 +62,32 @@ public class ReturnsRepository extends Repository {
       "(SELECT KIOSKID FROM USERTOKIOSK UD,KIOSK K WHERE K.KIOSKID=UD.KIOSKID AND UD.USERID=:userId)";
 
 
-  public void saveReturns(ReturnsVO returnsVO) {
+  public ReturnsVO saveReturns(ReturnsVO returnsVO) {
     Returns returns = modelMapper.map(returnsVO, Returns.class);
     returns = super.save(returns);
     returnsVO.setId(returns.getId());
+    return returnsVO;
   }
 
-  public void updateReturns(ReturnsVO returnsVO) {
+  public ReturnsVO updateReturns(ReturnsVO returnsVO) {
     Returns returns = modelMapper.map(returnsVO, Returns.class);
     returns = super.update(returns);
     returnsVO.setId(returns.getId());
+    return returnsVO;
   }
 
-  public void saveReturnsItems(ReturnsItemVO returnsItemVO) {
+  public ReturnsItemVO saveReturnsItems(ReturnsItemVO returnsItemVO) {
     ReturnsItem returnsItem = modelMapper.map(returnsItemVO, ReturnsItem.class);
     returnsItem = super.save(returnsItem);
     returnsItemVO.setId(returnsItem.getId());
+    return returnsItemVO;
   }
 
-  public void saveReturnBatchItems(ReturnsItemBatchVO returnsItemBatchVO) {
+  public ReturnsItemBatchVO saveReturnBatchItems(ReturnsItemBatchVO returnsItemBatchVO) {
     ReturnsItemBatch returnsItemBatch = modelMapper.map(returnsItemBatchVO, ReturnsItemBatch.class);
     returnsItemBatch = super.save(returnsItemBatch);
     returnsItemBatchVO.setId(returnsItemBatch.getId());
+    return returnsItemBatchVO;
   }
 
   public ReturnsVO getReturnsById(Long returnId) {
@@ -94,15 +99,18 @@ public class ReturnsRepository extends Repository {
     Map<String, Object> filters = new HashMap<>(1);
     filters.put("returnsId", returnId);
     List<ReturnsItem> returnsItemList = super.findAll("ReturnsItem.findAllByReturnId", filters);
-    List<ReturnsItemVO> returnsItemVOList =
+    List<ReturnsItemVO>
+        returnsItemVOList =
         returnsItemList.stream().map(i -> modelMapper.map(i, ReturnsItemVO.class))
             .collect(Collectors.toList());
     returnsItemVOList.forEach(returnsItem -> {
       filters.clear();
       filters.put("itemId", returnsItem.getId());
-      List<ReturnsItemBatch> returnsItemBatchList =
+      List<ReturnsItemBatch>
+          returnsItemBatchList =
           super.findAll("ReturnsItemBatch.findByItemId", filters);
-      List<ReturnsItemBatchVO> returnsItemBatchVOList =
+      List<ReturnsItemBatchVO>
+          returnsItemBatchVOList =
           returnsItemBatchList.stream().map(i -> modelMapper.map(i, ReturnsItemBatchVO.class))
               .collect(Collectors.toList());
       returnsItem.setReturnItemBatches(returnsItemBatchVOList);
@@ -111,64 +119,71 @@ public class ReturnsRepository extends Repository {
     return returnsItemVOList;
   }
 
-  public List<ReturnsVO> getReturns(ReturnsFilters returnsFilters) {
+  public List<ReturnsVO> getReturns(ReturnFilters returnFilters) {
     Map<String, Object> filters = new HashMap<>();
     StringBuilder query = new StringBuilder("select * from `RETURNS` r where ");
-    buildQuery(returnsFilters, filters, query);
-    List<Returns> returnsList =
-        super.findAllByNativeQuery(query.toString(), filters, Returns.class, returnsFilters.getSize(),
-            returnsFilters.getOffset());
-    return returnsList.stream().map(returns ->
-        modelMapper.map(returns, ReturnsVO.class)).collect(Collectors.toList());
+    buildQuery(returnFilters, filters, query);
+    List<Returns>
+        returnsList =
+        super.findAllByNativeQuery(query.toString(), filters, Returns.class);
+    List<ReturnsVO> returnsVOList = new ArrayList<>(returnsList.size());
+    returnsList.forEach(returns -> {
+      ReturnsVO returnsVO = modelMapper.map(returns, ReturnsVO.class);
+      returnsVOList.add(returnsVO);
+    });
+    return returnsVOList;
   }
 
-  public Long getReturnsCount(ReturnsFilters returnsFilters){
+  public Long getReturnsCount(ReturnFilters returnFilters){
     Map<String, Object> filters = new HashMap<>();
     StringBuilder query = new StringBuilder("select COUNT(1) from `RETURNS` r where ");
-    buildQuery(returnsFilters, filters, query);
-    return ((BigInteger)super.findByNativeQuery(query.toString(), filters)).longValue();
+    buildQuery(returnFilters, filters, query);
+    List<Long>
+        returnsList =
+        super.findAllByNativeQuery(query.toString(), filters, null);
+    return returnsList.get(0);
   }
 
-  private void buildQuery(ReturnsFilters returnsFilters, Map<String, Object> filters,
+  private void buildQuery(ReturnFilters returnFilters, Map<String, Object> filters,
                           StringBuilder query) {
-    if (!returnsFilters.hasVendorId() && !returnsFilters.hasCustomerId()) {
-      if (returnsFilters.isLimitToUserKiosks()) {
+    if (returnFilters.getVendorId() == null && returnFilters.getCustomerId() == null) {
+      if (returnFilters.isManager()) {
         query.append(" (r.customer_id IN ").append(USER_DOMAIN_QUERY).append(" OR r.vendor_id IN ")
             .append(USER_DOMAIN_QUERY).append(")");
-        filters.put("userId", returnsFilters.getUserId());
+        filters.put("userId", returnFilters.getUserId());
       } else {
         query.append(" (r.customer_id IN ").append(KIOSK_DOMAIN_QUERY).append(" OR r.vendor_id IN ")
             .append(KIOSK_DOMAIN_QUERY).append(")");
-        filters.put("domainId", returnsFilters.getDomainId());
+        filters.put("domainId", returnFilters.getDomainId());
       }
     } else {
-      if (returnsFilters.hasVendorId()) {
+      if (returnFilters.getVendorId() != null) {
         query.append(" r.vendor_id=:vendorId");
-        filters.put("vendorId", returnsFilters.getVendorId());
-      } else if (returnsFilters.hasCustomerId()) {
+        filters.put("vendorId", returnFilters.getVendorId());
+      } else if (returnFilters.getCustomerId() != null) {
         query.append(" r.customer_id=:customerId");
-        filters.put("customerId", returnsFilters.getCustomerId());
+        filters.put("customerId", returnFilters.getCustomerId());
       }
     }
-    if (returnsFilters.hasOrderId()) {
+    if (returnFilters.getOrderId() != null) {
       query.append(" and r.order_id=:orderId");
-      filters.put("orderId", returnsFilters.getOrderId());
+      filters.put("orderId", returnFilters.getOrderId());
     }
-    if (returnsFilters.hasStatus()) {
+    if (returnFilters.getStatus() != null) {
       query.append("  and  r.status=:status");
-      filters.put("status", returnsFilters.getStatus().name());
+      filters.put("status", returnFilters.getStatus());
     }
-    if (returnsFilters.hasStartDate()) {
+    SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATETIME_CSV_FORMAT);
+    if (returnFilters.getStartDate() != null) {
       query.append(" and r.created_at>=:fromDate");
-      filters.put("fromDate", LocalDateUtil.formatCustom(returnsFilters.getStartDate(),
-          Constants.DATETIME_CSV_FORMAT,null));
+      filters.put("fromDate", sdf.format(returnFilters.getStartDate()));
     }
-    if (returnsFilters.hasEndDate()) {
-      Date untilDate =
-          LocalDateUtil.getOffsetDate(returnsFilters.getEndDate(), 1, Calendar.DAY_OF_MONTH);
+    if (returnFilters.getEndDate() != null) {
+      Date
+          untilDate =
+          LocalDateUtil.getOffsetDate(returnFilters.getEndDate(), 1, Calendar.DAY_OF_MONTH);
       query.append(" and r.created_at<=:endDate");
-      filters.put("endDate", LocalDateUtil.formatCustom(untilDate, Constants.DATETIME_CSV_FORMAT,
-          null));
+      filters.put("endDate", sdf.format(untilDate));
     }
 
     query.append(" order by r.id desc");

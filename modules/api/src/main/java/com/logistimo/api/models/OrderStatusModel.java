@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -55,5 +55,5 @@ public class OrderStatusModel {
   /**
    * Reference id
    */
-  public String rid;
+  public String salesRefId;
 }

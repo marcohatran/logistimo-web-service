@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -67,12 +67,21 @@ public class OrderFilters {
    * Indicates incoming/outgoing or purchase/sale
    */
   private Integer orderType;
-  private String referenceId;
+  private String salesReferenceId;
 
   private String approvalStatus;
   boolean withDemand;
   private String userId;
   private Long linkedKioskId;
+
+  /**
+   * Purchase reference Id
+   */
+  private String purchaseReferenceId;
+  /**
+   * Transfer reference Id
+   */
+  private String transferReferenceId;
 
   public Long getDomainId() {
     return domainId;
@@ -166,12 +175,12 @@ public class OrderFilters {
     return this;
   }
 
-  public String getReferenceId() {
-    return referenceId;
+  public String getSalesReferenceId() {
+    return salesReferenceId;
   }
 
-  public OrderFilters setReferenceId(String referenceId) {
-    this.referenceId = referenceId;
+  public OrderFilters setSalesReferenceId(String salesReferenceId) {
+    this.salesReferenceId = salesReferenceId;
     return this;
   }
 
@@ -209,5 +218,23 @@ public class OrderFilters {
 
   public Long getLinkedKioskId() {
     return linkedKioskId;
+  }
+
+  public String getPurchaseReferenceId() {
+    return purchaseReferenceId;
+  }
+
+  public OrderFilters setPurchaseReferenceId(String purchaseReferenceId) {
+    this.purchaseReferenceId = purchaseReferenceId;
+    return this;
+  }
+
+  public String getTransferReferenceId() {
+    return transferReferenceId;
+  }
+
+  public OrderFilters setTransferReferenceId(String transferReferenceId) {
+    this.transferReferenceId = transferReferenceId;
+    return this;
   }
 }

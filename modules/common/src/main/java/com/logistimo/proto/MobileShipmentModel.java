@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -22,6 +22,8 @@
  */
 
 package com.logistimo.proto;
+
+import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
 
@@ -93,5 +95,12 @@ public class MobileShipmentModel {
    * Reference id
    */
   public String rid;
+  /**
+   * Sales reference id
+   */
+  @SerializedName(value = "sales_ref_id")
+  private String salesReferenceId;
+
+  public void setSalesReferenceId(String salesReferenceId) { this.salesReferenceId = salesReferenceId; }
 
 }
