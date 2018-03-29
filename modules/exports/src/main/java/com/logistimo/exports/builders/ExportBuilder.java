@@ -118,7 +118,7 @@ public class ExportBuilder {
   private void buildAdditionalFilters(String moduleName, Map<String, String> additionalData,
                                       DomainConfig domainConfig, Map<String, String> filters) {
 
-    String TYPE_ID = "typeId";
+    final String typeId = "typeId";
     if ("orders".equalsIgnoreCase(moduleName) || "transfers".equalsIgnoreCase(moduleName)) {
       additionalData.put("isAccountingEnabled", String.valueOf(domainConfig.isAccountingEnabled()));
       additionalData
@@ -129,10 +129,10 @@ public class ExportBuilder {
       String displayFreq = domainConfig.getInventoryConfig().getDisplayCRFreq();
       additionalData.put("displayFreq", displayFreq);
 
-      if (filters.containsKey("includeBatchInfo")) {
-        additionalData.put(TYPE_ID, "T_BATCH");
+      if (filters.containsKey("include_batch_info")) {
+        additionalData.put(typeId, "T_BATCH");
       } else {
-        additionalData.put(TYPE_ID, "T_NON_BATCH");
+        additionalData.put(typeId, "T_NON_BATCH");
       }
     }
   }

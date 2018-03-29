@@ -277,11 +277,11 @@ public class Kiosk implements IKiosk, Serializable {
     }
     // Add operator data, if any
     if (includeOperators && users != null && !users.isEmpty()) {
-      Vector<Hashtable<String, String>> usersVector = new Vector<>();
+      Vector<Hashtable<String, Object>> usersVector = new Vector<>();
       Iterator<UserAccount> it = users.iterator();
       while (it.hasNext()) {
         IUserAccount u = it.next();
-        Hashtable<String, String> uht = new Hashtable<>();
+        Hashtable<String, Object> uht = new Hashtable<>();
         uht.put(JsonTagsZ.USER_ID, u.getUserId());
         uht.put(JsonTagsZ.FIRST_NAME, u.getFirstName());
         String lastName = u.getLastName();
@@ -291,6 +291,9 @@ public class Kiosk implements IKiosk, Serializable {
         uht.put(JsonTagsZ.MOBILE, u.getMobilePhoneNumber());
         if (StringUtils.isNotEmpty(u.getLandPhoneNumber())) {
           uht.put(JsonTagsZ.LANDLINE, u.getLandPhoneNumber());
+        }
+        if(StringUtils.isNotEmpty(StringUtils.join(u.getTags(),","))) {
+          uht.put(JsonTagsZ.ALL_TAGS, u.getTags());
         }
         uht.put(JsonTagsZ.ROLE, u.getRole());
         String state = u.getState();

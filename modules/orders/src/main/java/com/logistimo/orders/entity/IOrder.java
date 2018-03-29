@@ -269,9 +269,9 @@ public interface IOrder extends ICrossDomain {
 
   void setOrderType(Integer orderType);
 
-  String getReferenceID();
+  String getSalesReferenceID();
 
-  void setReferenceID(String referenceID);
+  void setSalesReferenceID(String referenceID);
 
   String getCancelledDiscrepancyReason();
 
@@ -317,6 +317,14 @@ public interface IOrder extends ICrossDomain {
 
   void setTransferApprovalResponseTime(Long transferApprovalResponseTime);
 
-  boolean hasReferenceId();
+  boolean hasSalesReferenceId();
+
+  String getPurchaseReferenceId();
+
+  void setPurchaseReferenceId(String purchaseReferenceId);
+
+  String getTransferReferenceId();
+
+  void setTransferReferenceId(String transferReferenceId);
 
 }

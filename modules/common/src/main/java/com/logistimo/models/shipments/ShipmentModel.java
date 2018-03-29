@@ -146,8 +146,8 @@ public class ShipmentModel {
    */
   public String comment;
   /**
-   * Reference id
+   * Sales Reference id
    */
-  public String rid;
+  public String salesRefId;
 
 }

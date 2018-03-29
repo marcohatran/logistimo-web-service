@@ -70,8 +70,13 @@ angular.module('logistimo.storyboard.assetsCountWidget', [])
             dashboardService.get(undefined, undefined, $scope.exFilter, $scope.exType, $scope.period,
                 $scope.widget.conf.tPeriod, asset, constructModel(filter.entityTag), fDate,
                 constructModel(filter.exEntityTag), false).then(function (data) {
-                    $scope.totalAssets = getTotalItems(data.data.tempDomain);
+                    if(!checkNullEmptyObject(data.data.tempDomain)) {
+                        $scope.totalAssets = getTotalItems(data.data.tempDomain);
+                    }else{
+                        $scope.noDataToRender();
+                    }
                 }).catch(function error(msg) {
+                    $scope.noDataToRender();
                     showError(msg, $scope);
                 }).finally(function () {
                     $scope.loading = false;

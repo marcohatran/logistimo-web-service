@@ -24,11 +24,16 @@
 package com.logistimo.proto;
 
 import java.math.BigDecimal;
+import java.util.Objects;
 
 /**
  * Created by vani on 21/03/17.
  */
 public class MobileTransModel {
+
+  static final String TYPE_RETURNS_INCOMING = "ri";
+  static final String TYPE_RETURNS_OUTGOING = "ro";
+
   /**
    * Transaction entry time in milliseconds (time at which the transaction is entered on the mobile)
    */
@@ -100,4 +105,12 @@ public class MobileTransModel {
    * Local tracking ID
    */
   public String local_tid;
+
+  /**
+   * @return true if Transaction type is return
+   */
+  public boolean isTypeReturn() {
+    return Objects.equals(ty, TYPE_RETURNS_INCOMING)
+           || Objects.equals(ty, TYPE_RETURNS_OUTGOING);
+  }
 }

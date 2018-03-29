@@ -13,7 +13,7 @@
     <parameter name="ShipmentNumber" class="java.lang.String"/>
     <parameter name="OrderNumber" class="java.lang.String"/>
     <parameter name="DateOfReceipt" class="java.lang.String"/>
-    <parameter name="ReferenceNumber" class="java.lang.String"/>
+    <parameter name="SalesReferenceNumber" class="java.lang.String"/>
     <parameter name="logo" class="Object" isForPrompting="false">
         <parameterDescription><![CDATA[The letterhead image]]></parameterDescription>
         <defaultValueExpression><![CDATA[]]></defaultValueExpression>
@@ -330,14 +330,14 @@
                 <textFieldExpression><![CDATA[$P{ShipmentNumber}]]></textFieldExpression>
             </textField>
             <staticText>
-                <reportElement mode="Opaque" x="20" y="127" width="60" height="15" forecolor="#333333" backcolor="#FFFFFF" uuid="5f12ec12-af7e-47d5-a13f-dfe1b4e76cfc">
+                <reportElement mode="Opaque" x="1" y="127" width="79" height="15" forecolor="#333333" backcolor="#FFFFFF" uuid="5f12ec12-af7e-47d5-a13f-dfe1b4e76cfc">
                     <property name="com.jaspersoft.studio.unit.y" value="pixel"/>
                 </reportElement>
                 <box topPadding="1" leftPadding="1" bottomPadding="1" rightPadding="5"/>
                 <textElement textAlignment="Right" verticalAlignment="Middle">
                     <font fontName="Arial" size="8"/>
                 </textElement>
-                <text><![CDATA[Reference #]]></text>
+                <text><![CDATA[Sales reference #]]></text>
             </staticText>
             <textField isBlankWhenNull="true">
                 <reportElement mode="Opaque" x="81" y="127" width="150" height="15" forecolor="#333333" backcolor="#F5F5F5" uuid="f129c9d3-198a-4297-afb3-d44b9ecdf481">
@@ -347,7 +347,7 @@
                 <textElement verticalAlignment="Middle">
                     <font fontName="Arial" size="8"/>
                 </textElement>
-                <textFieldExpression><![CDATA[$P{ReferenceNumber}]]></textFieldExpression>
+                <textFieldExpression><![CDATA[$P{SalesReferenceNumber}]]></textFieldExpression>
             </textField>
             <staticText>
                 <reportElement mode="Opaque" x="300" y="109" width="80" height="15" forecolor="#333333" backcolor="#FFFFFF" uuid="38f26f1c-6065-47d8-a7d4-0ea0cdb3031b"/>

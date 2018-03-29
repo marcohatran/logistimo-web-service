@@ -315,7 +315,10 @@ public class InventoryBuilder {
     }
     model.mnm = material.getName();
     model.b = material.getType();
-    model.t = LocalDateUtil.format(invntry.getTimestamp(), sUser.getLocale(), sUser.getTimezone());
+    if(invntry.getTimestamp() != null) {
+      model.t =
+          LocalDateUtil.format(invntry.getTimestamp(), sUser.getLocale(), sUser.getTimezone());
+    }
     String empty = "";
     IInvntryEvntLog lastEventLog = invDao.getInvntryEvntLog(invntry);
 

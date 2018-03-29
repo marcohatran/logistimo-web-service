@@ -71,6 +71,7 @@ import com.logistimo.orders.approvals.service.IOrderApprovalsService;
 import com.logistimo.orders.entity.IDemandItem;
 import com.logistimo.orders.entity.IOrder;
 import com.logistimo.orders.models.PDFResponseModel;
+import com.logistimo.orders.models.UpdateOrderTransactionsModel;
 import com.logistimo.orders.models.UpdatedOrder;
 import com.logistimo.orders.service.IDemandService;
 import com.logistimo.orders.service.OrderManagementService;
@@ -251,11 +252,13 @@ public class OrdersController {
                           @RequestParam(required = false) String tgType,
                           @RequestParam(required = false) String tag,
                           @RequestParam(required = false) Integer oty,
-                          @RequestParam(required = false) String rid,
+                          @RequestParam(required = false) String salesRefId,
                           @RequestParam(required = false) String approval_status,
+                          @RequestParam(required = false) String purchaseRefId,
+                          @RequestParam(required = false) String transferRefId,
                           HttpServletRequest request) {
-    return getOrders(null, offset, size, status, from, until, otype, tgType, tag, oty, rid,
-        approval_status, request);
+    return getOrders(null, offset, size, status, from, until, otype, tgType, tag, oty, salesRefId,
+        approval_status, purchaseRefId, transferRefId, request);
   }
 
   @RequestMapping("/entity/{entityId}")
@@ -271,11 +274,13 @@ public class OrdersController {
                           @RequestParam(required = false) String tgType,
                           @RequestParam(required = false) String tag,
                           @RequestParam(required = false) Integer oty,
-                          @RequestParam(required = false) String rid,
+                          @RequestParam(required = false) String salesRefId,
                           @RequestParam(required = false) String approval_status,
+                          @RequestParam(required = false) String purchaseRefId,
+                          @RequestParam(required = false) String transferRefId,
                           HttpServletRequest request) {
-    return getOrders(entityId, offset, size, status, from, until, otype, tgType, tag, oty, rid,
-        approval_status, request);
+    return getOrders(entityId, offset, size, status, from, until, otype, tgType, tag, oty, salesRefId,
+        approval_status, purchaseRefId, transferRefId, request);
   }
 
 
@@ -285,7 +290,7 @@ public class OrdersController {
   OrderResponseModel updateVendor(@PathVariable Long orderId, @RequestBody OrderUpdateModel model,
                                   HttpServletRequest request) {
     return updateOrder("vend", orderId, model.orderUpdatedAt, null, Long.valueOf(model.updateValue),
-        null, null, request);
+        null, null, null, request);
   }
 
   @RequestMapping(value = "/order/{orderId}/invoice", method = RequestMethod.GET)
@@ -305,7 +310,7 @@ public class OrdersController {
                                        @RequestBody OrderUpdateModel model,
                                        HttpServletRequest request) {
     return updateOrder("trans", orderId, model.orderUpdatedAt, null, null, null,
-        null, request);
+        null,null, request);
   }
 
   @RequestMapping(value = "/order/{orderId}/status", method = RequestMethod.POST)
@@ -349,7 +354,7 @@ public class OrdersController {
             .isStatus(IOrder.FULFILLED)) {
           shipmentId =
               orderManagementService.shipNow(o, status.t, status.tid, status.cdrsn, efd, user.getUsername(),
-                  status.ps, SourceConstants.WEB, status.rid, true);
+                  status.ps, SourceConstants.WEB, status.salesRefId, true);
         } else if (o.isStatus(IOrder.COMPLETED)) {
           if (shipments == null || shipments.size() > 1) {
             xLogger.warn("Invalid order {0} ({1}) cannot fulfill, already has more shipments or " +
@@ -410,7 +415,7 @@ public class OrdersController {
                                    @RequestBody PaymentModel paymentDetails,
                                    HttpServletRequest request) {
     return updateOrder("pmt", orderId, paymentDetails.orderUpdatedAt, paymentDetails, null, null,
-        null, request);
+        null, null, request);
   }
 
   @RequestMapping(value = "/order/{orderId}/fulfillmenttime", method = RequestMethod.POST)
@@ -420,7 +425,7 @@ public class OrdersController {
                                            @RequestBody OrderUpdateModel model,
                                            HttpServletRequest request) {
     return updateOrder("cft", orderId, model.orderUpdatedAt, null, null, model.updateValue,
-        null, request);
+        null, null, request);
   }
 
   @RequestMapping(value = "/order/{orderId}/efd", method = RequestMethod.POST)
@@ -430,7 +435,7 @@ public class OrdersController {
                                                    @RequestBody OrderUpdateModel model,
                                                    HttpServletRequest request) {
     return updateOrder("efd", orderId, model.orderUpdatedAt, null, null, model.updateValue,
-        null, request);
+        null, null, request);
   }
 
   @RequestMapping(value = "/order/{orderId}/edd", method = RequestMethod.POST)
@@ -439,7 +444,7 @@ public class OrdersController {
   OrderResponseModel updateDueDate(@PathVariable Long orderId, @RequestBody OrderUpdateModel model,
                                    HttpServletRequest request) {
     return updateOrder("edd", orderId, model.orderUpdatedAt, null, null, model.updateValue,
-        null, request);
+        null, null, request);
   }
 
   @RequestMapping(value = "/order/{orderId}/statusJSON", method = RequestMethod.GET)
@@ -503,7 +508,7 @@ public class OrdersController {
             modifyOrder(order, user.getUsername(), transactions, new Date(), domainId,
                 ITransaction.TYPE_REORDER, model.msg, null, null, BigDecimal.ZERO, null,
                 dc.allowEmptyOrders(), order.getTags(TagUtil.TYPE_ORDER),
-                order.getReferenceID());
+                null);
       }
       order = orderAPIBuilder.buildOrderMaterials(order, model.items);
       //TODO use OrderManagementServiceImpl updateOrderWithAllocations
@@ -592,7 +597,7 @@ public class OrdersController {
   private OrderResponseModel updateOrder(String updType, Long orderId, String orderUpdatedAt,
                                          PaymentModel paymentDetails,
                                          Long vendorId, String data,
-                                         List<String> tags, HttpServletRequest request) {
+                                         List<String> tags, String referenceType, HttpServletRequest request) {
     SecureUserDetails user = SecurityUtils.getUserDetails();
     Locale locale = user.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
@@ -620,7 +625,13 @@ public class OrdersController {
       } else if (updType.equals("tgs")) {
         order.setTgs(tagDao.getTagsByNames(tags, ITag.ORDER_TAG), TagUtil.TYPE_ORDER);
       } else if (updType.equals("rid")) {
-        order.setReferenceID(data);
+        if("salesRefId".equals(referenceType)) {
+          order.setSalesReferenceID(data);
+        } else if("purchaseRefId".equals(referenceType)){
+          order.setPurchaseReferenceId(data);
+        } else if("transferRefId".equals(referenceType)) {
+          order.setTransferReferenceId(data);
+        }
       } else if (updType.equals("efd")) {
         if (StringUtils.isNotEmpty(data)) {
           SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATE_FORMAT);
@@ -662,7 +673,8 @@ public class OrdersController {
 
   public Results getOrders(Long entityId, int offset, int size,
                            String status, String from, String until, String otype, String tgType,
-                           String tag, Integer oty, String rid, String approvalStatus,
+                           String tag, Integer oty, String salesRefId, String approvalStatus,
+                           String purchaseRefId, String transferRefId,
                            HttpServletRequest request) {
     SecureUserDetails user = SecurityUtils.getUserDetails();
     Locale locale = user.getLocale();
@@ -684,18 +696,16 @@ public class OrdersController {
               0);
       PageParams pageParams = new PageParams(navigator.getCursor(offset), offset, size);
       List<Long> kioskIds = null;
-      if (user.getUsername() != null) {
+      if (user.getUsername() != null && SecurityConstants.ROLE_SERVICEMANAGER.equals(user.getRole())) {
         // Get user
-        if (SecurityConstants.ROLE_SERVICEMANAGER.equals(user.getRole())) {
-          kioskIds = entitiesService.getKioskIdsForUser(user.getUsername(), null, null)
-              .getResults();
-          if (kioskIds == null || kioskIds.isEmpty()) {
-            return new Results<>(null, null, 0, offset);
-          }
+        kioskIds = entitiesService.getKioskIdsForUser(user.getUsername(), null, null)
+            .getResults();
+        if (kioskIds == null || kioskIds.isEmpty()) {
+          return new Results<>(null, null, 0, offset);
         }
       }
       Results or = orderManagementService.getOrders(domainId, entityId, status, startDate, endDate,
-          otype, tgType, tag, kioskIds, pageParams, oty, rid, approvalStatus);
+          otype, tgType, tag, kioskIds, pageParams, oty, salesRefId, approvalStatus, purchaseRefId, transferRefId);
       return orderAPIBuilder.buildOrders(or, SecurityUtils.getDomainId());
     } catch (Exception e) {
       xLogger.severe("Error in fetching orders for entity {0} of type {1}", entityId, otype, e);
@@ -800,12 +810,12 @@ public class OrdersController {
       }
       if (model.items == null) {
         OrderResults orderResults =
-            orderManagementService.updateOrderTransactions(domainId, userId, ITransaction.TYPE_ORDER,
+            orderManagementService.updateOrderTransactions(new UpdateOrderTransactionsModel(domainId, userId, ITransaction.TYPE_ORDER,
                 transList, kioskId, null, ordMsg, dc.autoOrderGeneration(), vendorKioskId, null,
                 null, null,
                 null, null, null, BigDecimal.ZERO, null, null, dc.allowEmptyOrders(), oTag, oType,
                 oType == 2,
-                referenceId, edd, efd, SourceConstants.WEB);
+                null, edd, efd, SourceConstants.WEB, null, null, null, referenceId));
         IOrder order = orderResults.getOrder();
         String prefix = CharacterConstants.EMPTY;
         if (oType == 0) {
@@ -917,7 +927,7 @@ public class OrdersController {
                                      @RequestBody OrderUpdateModel model,
                                      HttpServletRequest request) {
     List<String> tags = StringUtil.getList(model.updateValue, true);
-    return updateOrder("tgs", orderId, model.orderUpdatedAt, null, null, null, tags, request);
+    return updateOrder("tgs", orderId, model.orderUpdatedAt, null, null, null, tags, null, request);
   }
 
   @RequestMapping(value = "/order/{orderId}/referenceid", method = RequestMethod.POST)
@@ -925,9 +935,10 @@ public class OrdersController {
   @ResponseBody
   OrderResponseModel updateReferenceID(@PathVariable Long orderId,
                                        @RequestBody OrderUpdateModel model,
+                                       @RequestParam String referenceType,
                                        HttpServletRequest request) {
     return updateOrder("rid", orderId, model.orderUpdatedAt, null, null, model.updateValue,
-        null, request);
+        null, referenceType, request);
   }
 
   @RequestMapping(value = "/filter", method = RequestMethod.GET)

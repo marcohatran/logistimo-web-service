@@ -166,10 +166,15 @@ trnControllers.controller('TransactionsCtrl', ['$scope', 'trnService', 'domainCf
                 case 'p': return $scope.resourceBundle['transactions.stockcount.upper'];
                 case 'w': return $scope.resourceBundle['transactions.wastage.upper'];
                 case 't': return $scope.resourceBundle['transfers'];
-                default: return $scope.resourceBundle['all'] + " " + $scope.resourceBundle['transactions.lowercase'];
             }
         }
-        $scope.exportData=function(){
+        $scope.exportData=function(isInfo){
+            if(isInfo) {
+                return {
+                    filters: getCaption(),
+                    type: 'transactions'
+                };
+            }
             var eid,mid,ktag,mtag=undefined;
             if (checkNotNullEmpty($scope.entity)) {
                 eid = $scope.entity.id;

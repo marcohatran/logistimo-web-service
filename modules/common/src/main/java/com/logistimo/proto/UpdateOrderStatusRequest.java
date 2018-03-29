@@ -24,6 +24,8 @@
 package com.logistimo.proto;
 
 
+import com.google.gson.annotations.SerializedName;
+
 import org.apache.commons.lang.StringUtils;
 
 import java.util.Date;
@@ -115,6 +117,13 @@ public class UpdateOrderStatusRequest {
    */
   public String rid;
 
+  /**
+   * Sales reference Id
+   * @return
+   */
+  @SerializedName(value = "sales_ref_id")
+  private String salesRefId;
+
   public boolean hasPackageSize() {
     return StringUtils.isNotEmpty(pksz);
   }
@@ -132,7 +141,7 @@ public class UpdateOrderStatusRequest {
   }
 
   public boolean hasReferenceId() {
-    return StringUtils.isNotEmpty(rid);
+    return StringUtils.isNotEmpty(rid) || StringUtils.isNotEmpty(salesRefId);
   }
 
   public boolean hasShipmentId() {
@@ -142,4 +151,7 @@ public class UpdateOrderStatusRequest {
   public boolean hasOrderId() {
     return tid != null;
   }
+
+  public String getSalesRefId() { return salesRefId; }
+  public void setSalesrefId(String sales_ref_id) { this.salesRefId = sales_ref_id; }
 }

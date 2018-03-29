@@ -218,6 +218,7 @@ public class JsonTagsZ {
   public static final String TAX = "tx";
   public static final String TAX_ID = "txid";
   public static final String TAGS = "tg";
+  public static final String ALL_TAGS = "tags";
   public static final String TAGS_INVENTORY = "tgi";
   public static final String TAGS_ORDERS = "tgo";
   public static final String TAGS_INVENTORY_OPERATION = "tgiov";

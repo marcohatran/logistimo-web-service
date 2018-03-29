@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright © 2017 Logistimo.
+  ~ Copyright © 2018 Logistimo.
   ~
   ~ This file is part of Logistimo.
   ~
@@ -66,7 +66,7 @@
             </div>
         </div>
         <div class="row action-bar" ng-show="!loading && filtered.length > 0">
-            <export ng-hide="iAU" callback="exportData()"></export>
+            <export ng-hide="iAU"></export>
 
             <button ng-show="iSU || dp.ar" type="button" class="btn btn-sm btn-default" ng-click="deleteAssets()">
                 {{resourceBundle['remove']}} {{resourceBundle['assets'] | lowercase}}

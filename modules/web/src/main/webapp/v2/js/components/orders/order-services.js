@@ -24,7 +24,7 @@
 var ordServices = angular.module('ordServices', []);
 ordServices.factory('ordService', ['APIService', function (apiService) {
     return {
-        getEntityOrders: function (entityId, orderType, status, tgType, tag, from, to, offset, size, oType, rid, approvalStatus) {
+        getEntityOrders: function (entityId, orderType, status, tgType, tag, from, to, offset, size, oType, salesRefId, approvalStatus, purchaseRefId, transferRefId) {
             offset = typeof offset !== 'undefined' ? offset : 0;
             size = typeof size !== 'undefined' ? size : 50;
             var urlStr = '/s2/api/orders/entity/' + entityId + "?offset=" + offset + "&size=" + size;
@@ -49,18 +49,24 @@ ordServices.factory('ordService', ['APIService', function (apiService) {
             if (checkNotNullEmpty(oType)) {
                 urlStr = urlStr + "&oty=" + oType;
             }
-            if (checkNotNullEmpty(rid)) {
-                urlStr = urlStr + "&rid=" + encodeURIComponent(rid);
+            if (checkNotNullEmpty(salesRefId)) {
+                urlStr = urlStr + "&salesRefId=" + encodeURIComponent(salesRefId);
             }
             if (checkNotNullEmpty(approvalStatus)) {
                 urlStr = urlStr + "&approval_status=" + approvalStatus;
+            }
+            if (checkNotNullEmpty(purchaseRefId)) {
+                urlStr = urlStr + "&purchaseRefId=" + encodeURIComponent(purchaseRefId);
+            }
+            if (checkNotNullEmpty(transferRefId)) {
+                urlStr = urlStr + "&transferRefId=" + encodeURIComponent(transferRefId);
             }
             return apiService.get(urlStr);
         },
         getOrder: function (orderId) {
             return apiService.get('/s2/api/orders/order/' + orderId + '?embed=permissions');
         },
-        getOrders: function (orderType, status, tgType, tag, from, to, offset, size, oType, rid, approvalStatus) {
+        getOrders: function (orderType, status, tgType, tag, from, to, offset, size, oType, salesRefId, approvalStatus, purchaseRefId, transferRefId) {
             offset = typeof offset !== 'undefined' ? offset : 0;
             size = typeof size !== 'undefined' ? size : 50;
             var urlStr = '/s2/api/orders/?offset=' + offset + "&size=" + size;
@@ -85,11 +91,17 @@ ordServices.factory('ordService', ['APIService', function (apiService) {
             if (checkNotNullEmpty(oType) || oType == 0) {
                 urlStr = urlStr + "&oty=" + oType;
             }
-            if (checkNotNullEmpty(rid)) {
-                urlStr = urlStr + "&rid=" + encodeURIComponent(rid);
+            if (checkNotNullEmpty(salesRefId)) {
+                urlStr = urlStr + "&salesRefId=" + encodeURIComponent(salesRefId);
             }
             if (checkNotNullEmpty(approvalStatus)) {
                 urlStr = urlStr + "&approval_status=" + approvalStatus;
+            }
+            if (checkNotNullEmpty(purchaseRefId)) {
+                urlStr = urlStr + "&purchaseRefId=" + encodeURIComponent(purchaseRefId);
+            }
+            if (checkNotNullEmpty(transferRefId)) {
+                urlStr = urlStr + "&transferRefId=" + encodeURIComponent(transferRefId);
             }
             return apiService.get(urlStr);
         },
@@ -190,11 +202,11 @@ ordServices.factory('ordService', ['APIService', function (apiService) {
                 orderUpdatedAt: orderUpdatedAt
             }, '/s2/api/orders/order/' + orderId + '/tags');
         },
-        updateReferenceID: function(orderId,referenceID, orderUpdatedAt) {
+        updateReferenceID: function(orderId,referenceID, orderUpdatedAt, referenceType) {
             return apiService.post({
                 updateValue: referenceID,
                 orderUpdatedAt: orderUpdatedAt
-            }, '/s2/api/orders/order/' + orderId + '/referenceid');
+            }, '/s2/api/orders/order/' + orderId + '/referenceid?referenceType='+ referenceType);
         },
         getIdSuggestions: function(id, type, oty) {
             var urlStr = '/s2/api/orders/filter/?id=' + encodeURIComponent(id) + "&type="+type;
