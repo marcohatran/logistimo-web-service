@@ -1287,7 +1287,6 @@ enter.returns=Enter returns
 edit.returns.form.open.message=You have opened the edit returns form for
 edit.returns.save.cancel.message=Please save or cancel the form to proceed.
 return=Return
-returned=Returned
 receive=Receive
 returning.entity=Returning entity
 receiving.entity=Receiving entity
