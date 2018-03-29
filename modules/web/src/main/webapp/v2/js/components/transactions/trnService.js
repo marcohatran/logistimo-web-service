@@ -79,7 +79,7 @@ trnServices.factory('trnService', ['APIService', function (apiService) {
             }
             return apiService.get(urlStr);
         },
-        getTransactions: function (etag, tag, from, to, type, offset, size,bId,atd,eid,lEntityId,mid,rsn,onlywithoutlkid) {
+        getTransactions: function (etag, tag, from, to, type, offset, size,bId,atd,eid,lEntityId,mid,rsn,ignoreLkid) {
             offset = typeof offset !== 'undefined' ? offset : 0;
             size = typeof size !== 'undefined' ? size : 50;
             atd = atd === true;
@@ -114,8 +114,8 @@ trnServices.factory('trnService', ['APIService', function (apiService) {
             if (typeof rsn !== 'undefined' && rsn != null && rsn != "") {
                 urlStr = urlStr + "&reason=" + rsn;
             }
-            if (typeof onlywithoutlkid !== 'undefined' && onlywithoutlkid != null && onlywithoutlkid != "") {
-                urlStr = urlStr + "&onlywithoutlkid=" + onlywithoutlkid;
+            if (typeof ignoreLkid !== 'undefined' && ignoreLkid != null && ignoreLkid != "") {
+                urlStr = urlStr + "&ignoreLkid=" + ignoreLkid;
             }
             return apiService.get(urlStr);
         },

@@ -803,11 +803,11 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                 angular.forEach($scope.transaction.materials, function (material) {
                     var returnitems = material.returnitems;
                     angular.forEach(returnitems,function(returnitem){
-                        var copy = angular.copy(material);
-                        copy.quantity = returnitem.rq;
-                        copy.mst = returnitem.rmst;
-                        copy.rsn = returnitem.rrsn;
-                        copy.trkid = returnitem.id;
+                        var materialcopy = angular.copy(material);
+                        materialcopy.quantity = returnitem.rq;
+                        materialcopy.mst = returnitem.rmst;
+                        materialcopy.rsn = returnitem.rrsn;
+                        materialcopy.trkid = returnitem.id;
                         if (checkNotNullEmpty(returnitem.bid)) {
                             var batch = {};
                             batch.mId = returnitem.mid;
@@ -819,10 +819,10 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                             batch.mst = returnitem.rmst;
                             batch.trkid = returnitem.id;
                             batch.rsn = returnitem.rrsn;
-                            copy.bquantity.push(batch);
+                            materialcopy.bquantity.push(batch);
                         }
-                        copy.returnitems = undefined;
-                        transactionmaterials.push(copy);
+                        materialcopy.returnitems = undefined;
+                        transactionmaterials.push(materialcopy);
                     });
                 });
                 $scope.transaction.modifiedmaterials = transactionmaterials;
@@ -1004,9 +1004,9 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                     }
                 }
             }
-            if (newVal == 'i' || newVal == 'ri' && $scope.tranDomainConfig.noc > 0) {
+            if ((newVal == 'i' || newVal == 'ri') && $scope.tranDomainConfig.noc > 0) {
                 $scope.entityType = $scope.resourceBundle['customer'];
-            } else if (newVal == 'r' || newVal == 'ro' && $scope.tranDomainConfig.nov > 0) {
+            } else if ((newVal == 'r' || newVal == 'ro') && $scope.tranDomainConfig.nov > 0) {
                 $scope.entityType = $scope.resourceBundle['vendor'];
             } else if (newVal == 't') {
                 $scope.entityType = "Transfer to";
@@ -2388,7 +2388,7 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','request
         function redrawAllPopup(type) {
             var index = -1;
             var items = $scope.op == 'edit' ? $scope.returnItems : $scope.transactions.results;
-            items.forEach(function (item) {
+            angular.forEach(items,function (item) {
                 index += 1;
                 if (item.popupMsg) {
                     type == 'show' ?

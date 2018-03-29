@@ -209,10 +209,10 @@ public class TransactionsController {
       @RequestParam(required = false) Long eid,
       @RequestParam(required = false) Long mid,
       @RequestParam(required = false) Long lEntityId,
-      @RequestParam(required = false) boolean onlywithoutlkid,
+      @RequestParam(required = false) boolean ignoreLkid,
       HttpServletRequest request) {
     return getAndBuildTransactions(request, from, to, offset, size, ktag, tag, type, eid, lEntityId,
-        mid, bId, atd, reason, onlywithoutlkid);
+        mid, bId, atd, reason, ignoreLkid);
   }
 
 
@@ -220,7 +220,7 @@ public class TransactionsController {
   private Results getAndBuildTransactions(HttpServletRequest request,
                                           String from, String to, int offset, int size, String ktag,
                                           String mtag, String type, Long entityId, Long lEntityId,
-                                          Long materialId, String bId, boolean atd, String reason, boolean onlywithoutlkid) {
+                                          Long materialId, String bId, boolean atd, String reason, boolean ignoreLkid) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     Long domainId = sUser.getCurrentDomainId();
@@ -256,7 +256,7 @@ public class TransactionsController {
       }
       trnResults = inventoryManagementService.getInventoryTransactions(startDate, endDate,
           domainId, entityId, materialId, type, lEntityId, ktag, mtag, kioskIds,
-          pageParams, bId, atd, reason, onlywithoutlkid);
+          pageParams, bId, atd, reason, ignoreLkid);
       trnResults.setOffset(offset);
       return transactionBuilder.buildTransactions(trnResults, sUser, SecurityUtils.getDomainId());
     } catch (ServiceException e) {
@@ -717,9 +717,9 @@ public class TransactionsController {
     }
     trans.setTrackingId(trkid);
     if (ITransaction.TYPE_RETURNS_INCOMING.equals(transType)) {
-      trans.setTrackingObjectType(ITransaction.TYPE_ISSUE_TRANSACTION);
+      trans.setTrackingObjectType(ITransaction.TRACKING_OBJECT_TYPE_ISSUE_TRANSACTION);
     } else if (ITransaction.TYPE_RETURNS_OUTGOING.equals(transType)) {
-      trans.setTrackingObjectType(ITransaction.TYPE_RECEIPT_TRANSACTION);
+      trans.setTrackingObjectType(ITransaction.TRACKING_OBJECT_TYPE_RECEIPT_TRANSACTION);
     }
     transDao.setKey(trans);
     return trans;

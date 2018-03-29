@@ -249,7 +249,7 @@ public class UpdateMultipleInventoryTransactionsActionTest {
     transaction2.setType(ITransaction.TYPE_RETURNS_INCOMING);
     ITransaction transaction3 = new Transaction();
     transaction3.setLocalTrackingID("ltid_2");
-    transaction3.setType(ITransaction.TYPE_RECEIPT_TRANSACTION);
+    transaction3.setType(ITransaction.TYPE_RECEIPT);
     ITransaction transaction4 = new Transaction();
     transaction4.setLocalTrackingID("ltid_2");
     transaction4.setType(ITransaction.TYPE_RETURNS_OUTGOING);

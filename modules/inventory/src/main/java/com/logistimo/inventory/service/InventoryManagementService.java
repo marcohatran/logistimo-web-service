@@ -264,7 +264,7 @@ public interface InventoryManagementService {
                                    Long materialId, String transType, Long linkedKioskId,
                                    String kioskTag, String materialTag,
                                    List<Long> kioskIds, PageParams pageParams, String bid,
-                                   boolean atd, String reason,boolean onlyWithoutLkid)
+                                   boolean atd, String reason,boolean ignoreLkid)
       throws ServiceException;
 
   /**
@@ -506,7 +506,7 @@ public interface InventoryManagementService {
                                    Long linkedKioskId, String kioskTag,
                                    String materialTag, List<Long> kioskIds,
                                    PageParams pageParams, String bid,
-                                   boolean atd, String reason, List<String> reasons, boolean onlyWithoutLkid,
+                                   boolean atd, String reason, List<String> reasons, boolean ignoreLkid,
                                    PersistenceManager pm,boolean excludeReasons) throws ServiceException;
 
    Results getInventoryTransactions(Date sinceDate, Date untilDate, Long domainId,
@@ -514,7 +514,7 @@ public interface InventoryManagementService {
                                           Long linkedKioskId, String kioskTag,
                                           String materialTag, List<Long> kioskIds,
                                           PageParams pageParams, String bid,
-                                          boolean atd, String reason, List<String> reasons, boolean onlyWithoutLkid,
+                                          boolean atd, String reason, List<String> reasons, boolean ignoreLkid,
                                           PersistenceManager pm) throws ServiceException;
 
 }

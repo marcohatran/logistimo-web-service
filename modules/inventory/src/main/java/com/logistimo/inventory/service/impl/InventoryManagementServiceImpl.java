@@ -1221,10 +1221,10 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
                                           Long linkedKioskId, String kioskTag,
                                           String materialTag, List<Long> kioskIds,
                                           PageParams pageParams, String bid, boolean atd,
-                                          String reason,boolean onlyWithoutLkid) throws ServiceException {
+                                          String reason,boolean ignoreLkid) throws ServiceException {
     return getInventoryTransactions(sinceDate, untilDate, domainId, kioskId, materialId,
         transType != null ? Collections.singletonList(transType) : null, linkedKioskId, kioskTag,
-        materialTag, kioskIds, pageParams, bid, atd, reason, null, onlyWithoutLkid, null);
+        materialTag, kioskIds, pageParams, bid, atd, reason, null, ignoreLkid, null);
   }
 
   @SuppressWarnings("unchecked")
@@ -1246,9 +1246,9 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
                                           Long linkedKioskId, String kioskTag,
                                           String materialTag, List<Long> kioskIds,
                                           PageParams pageParams, String bid,
-                                          boolean atd, String reason, List<String> reasons, boolean onlyWithoutLkid,
+                                          boolean atd, String reason, List<String> reasons, boolean ignoreLkid,
                                           PersistenceManager pm) throws ServiceException {
-    return getInventoryTransactions(sinceDate,untilDate,domainId,kioskId,materialId,transTypes,linkedKioskId,kioskTag,materialTag,kioskIds,pageParams,bid,atd,reason,reasons,onlyWithoutLkid,pm,true);
+    return getInventoryTransactions(sinceDate,untilDate,domainId,kioskId,materialId,transTypes,linkedKioskId,kioskTag,materialTag,kioskIds,pageParams,bid,atd,reason,reasons,ignoreLkid,pm,true);
   }
 
   @SuppressWarnings("unchecked")
@@ -1258,13 +1258,13 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
                                           Long linkedKioskId, String kioskTag,
                                           String materialTag, List<Long> kioskIds,
                                           PageParams pageParams, String bid,
-                                          boolean atd, String reason, List<String> reasons, boolean onlyWithoutLkid,
+                                          boolean atd, String reason, List<String> reasons, boolean ignoreLkid,
                                           PersistenceManager pm, boolean excludeReasons)
       throws ServiceException {
     xLogger.fine("Entering getInventoryTransactions");
     Results results = transDao.getInventoryTransactions(sinceDate, untilDate, domainId, kioskId,
         materialId, transTypes, linkedKioskId, kioskTag, materialTag, kioskIds, pageParams, bid,
-        atd, reason, reasons, onlyWithoutLkid, pm, excludeReasons);
+        atd, reason, reasons, ignoreLkid, pm, excludeReasons);
     xLogger.fine("Exiting getInventoryTransactions");
     return results;
   }
@@ -1712,7 +1712,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     if (StringUtils.isEmpty(trans.getTrackingId()) || StringUtils.isEmpty(trans.getTrackingObjectType())) {
       throw new LogiException("M017", (Object[]) null);
     }
-    if (!(ITransaction.TYPE_RETURN.equals(trans.getTrackingObjectType()) || ITransaction.TYPE_ISSUE_TRANSACTION.equals(trans.getTrackingObjectType()) || ITransaction.TYPE_RECEIPT_TRANSACTION.equals(trans.getTrackingObjectType()))) {
+    if (!(ITransaction.TYPE_RETURN.equals(trans.getTrackingObjectType()) || ITransaction.TRACKING_OBJECT_TYPE_ISSUE_TRANSACTION.equals(trans.getTrackingObjectType()) || ITransaction.TRACKING_OBJECT_TYPE_RECEIPT_TRANSACTION.equals(trans.getTrackingObjectType()))) {
       throw new LogiException("M017", (Object[]) null);
     }
     if(!ITransaction.TYPE_RETURN.equals(trans.getTrackingObjectType())) {

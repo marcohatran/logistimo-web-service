@@ -99,9 +99,9 @@ public class TransDao implements ITransDao {
                                           Long linkedKioskId, String kioskTag,
                                           String materialTag, List<Long> kioskIds,
                                           PageParams pageParams, String bid, boolean atd,
-                                          String reason, List<String> excludeReasons, boolean onlyWithoutLkid,
+                                          String reason, List<String> excludeReasons, boolean ignoreLkid,
                                           PersistenceManager pm){
-    return getInventoryTransactions(sinceDate,untilDate,domainId,kioskId,materialId,transTypes,linkedKioskId,kioskTag,materialTag,kioskIds,pageParams,bid,atd,reason,excludeReasons,onlyWithoutLkid,pm,true);
+    return getInventoryTransactions(sinceDate,untilDate,domainId,kioskId,materialId,transTypes,linkedKioskId,kioskTag,materialTag,kioskIds,pageParams,bid,atd,reason,excludeReasons,ignoreLkid,pm,true);
   }
 
   @Override
@@ -110,7 +110,7 @@ public class TransDao implements ITransDao {
                                           Long linkedKioskId, String kioskTag,
                                           String materialTag, List<Long> kioskIds,
                                           PageParams pageParams, String bid, boolean atd,
-                                          String reason, List<String> reasons, boolean onlyWithoutLkid,
+                                          String reason, List<String> reasons, boolean ignoreLkid,
                                           PersistenceManager pm,boolean excludeReasons) {
 
     PersistenceManager localpm;
@@ -125,7 +125,7 @@ public class TransDao implements ITransDao {
     try {
       QueryParams queryParams = buildTransactionsQuery(sinceDate, untilDate, domainId,
           kioskId, materialId, transTypes, linkedKioskId, kioskTag, materialTag, kioskIds,
-          bid, atd, reason, reasons, onlyWithoutLkid,excludeReasons);
+          bid, atd, reason, reasons, ignoreLkid,excludeReasons);
       StringBuilder sqlQuery = new StringBuilder(queryParams.query);
       final String orderBy = " ORDER BY T DESC";
       String limitStr = null;
@@ -176,8 +176,8 @@ public class TransDao implements ITransDao {
                                             Long linkedKioskId, String kioskTag,
                                             String materialTag, List<Long> kioskIds, String bid,
                                             boolean atd, String reason,
-                                            List<String> reasons, boolean onlyWithoutLkid){
-    return buildTransactionsQuery(sinceDate,untilDate,domainId,kioskId,materialId,transTypes,linkedKioskId,kioskTag,materialTag,kioskIds,bid,atd,reason,reasons,onlyWithoutLkid,true);
+                                            List<String> reasons, boolean ignoreLkid){
+    return buildTransactionsQuery(sinceDate,untilDate,domainId,kioskId,materialId,transTypes,linkedKioskId,kioskTag,materialTag,kioskIds,bid,atd,reason,reasons,ignoreLkid,true);
   }
 
   @Override
@@ -186,7 +186,7 @@ public class TransDao implements ITransDao {
                                             Long linkedKioskId, String kioskTag,
                                             String materialTag, List<Long> kioskIds, String bid,
                                             boolean atd, String reason,
-                                            List<String> reasons, boolean onlyWithoutLkid,boolean excludeReasons) {
+                                            List<String> reasons, boolean ignoreLkid,boolean excludeReasons) {
 
     List<String> parameters = new ArrayList<>(1);
     StringBuilder sqlQuery = new StringBuilder("SELECT * FROM TRANSACTION");
@@ -240,7 +240,7 @@ public class TransDao implements ITransDao {
     if (linkedKioskId != null) {
       sqlQuery.append(" AND LKID = ").append(CharacterConstants.QUESTION);
       parameters.add(String.valueOf(linkedKioskId));
-    } else if (onlyWithoutLkid) {
+    } else if (ignoreLkid) {
       sqlQuery.append(" AND LKID IS NULL ");
     }
     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
