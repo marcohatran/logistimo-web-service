@@ -1712,10 +1712,10 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     if (StringUtils.isEmpty(trans.getTrackingId()) || StringUtils.isEmpty(trans.getTrackingObjectType())) {
       throw new LogiException("M017", (Object[]) null);
     }
-    if (!(ITransaction.TYPE_RETURN.equals(trans.getTrackingObjectType()) || ITransaction.TRACKING_OBJECT_TYPE_ISSUE_TRANSACTION.equals(trans.getTrackingObjectType()) || ITransaction.TRACKING_OBJECT_TYPE_RECEIPT_TRANSACTION.equals(trans.getTrackingObjectType()))) {
+    if (!(ITransaction.TRACKING_OBJECT_TYPE_ORDER.equals(trans.getTrackingObjectType()) || ITransaction.TRACKING_OBJECT_TYPE_TRANSFER.equals(trans.getTrackingObjectType())  || ITransaction.TYPE_ISSUE_TRANSACTION.equals(trans.getTrackingObjectType()) || ITransaction.TYPE_RECEIPT_TRANSACTION.equals(trans.getTrackingObjectType()))) {
       throw new LogiException("M017", (Object[]) null);
     }
-    if(!ITransaction.TYPE_RETURN.equals(trans.getTrackingObjectType())) {
+    if(!(ITransaction.TRACKING_OBJECT_TYPE_ORDER.equals(trans.getTrackingObjectType()) || ITransaction.TRACKING_OBJECT_TYPE_TRANSFER.equals(trans.getTrackingObjectType()))) {
       ITransaction linkedTransaction = transDao.getById(trans.getTrackingId(), pm);
       if (BigUtil.greaterThan(trans.getQuantity(), linkedTransaction.getQuantity())) {
         throw new LogiException("M019", trans.getQuantity(), linkedTransaction.getQuantity());
