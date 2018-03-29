@@ -198,7 +198,7 @@ angular.module('logistimo.storyboard.bulletinboards', ['logistimo.storyboard.das
             }
             return $scope.count + 1 == index;
         };
-        
+
         $scope.markDashboardNoData = function (dashboardId) {
             $scope.bulletinBoard.dashboards.some(function (dashboard) {
                 if(dashboard.id == dashboardId){
@@ -207,7 +207,7 @@ angular.module('logistimo.storyboard.bulletinboards', ['logistimo.storyboard.das
                 }
             });
         }
-        
+
     }]);
 
 
@@ -1020,7 +1020,7 @@ angular.module('logistimo.storyboard.dashboards', ['logistimo.storyboard.widgets
         
         $scope.noDataToRender = function() {
             $scope.renderedFailedCount = $scope.renderedFailedCount+1;
-            if($scope.renderedFailedCount == $scope.widgetsCount) {
+            if($scope.renderedFailedCount == $scope.widgetsCount && $scope.isBulletinBoard) {
                 $scope.markDashboardNoData($scope.dashboardId);
             }
         }
