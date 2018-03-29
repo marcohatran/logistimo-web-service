@@ -307,13 +307,7 @@ public class InventoryManagementServiceImplTest {
       assertTrue(exception.getCode().equals("M017"));
     }
     transaction.setTrackingObjectType("iss_trn");
-    try {
-      inventoryManagementService.checkReturnsErrors(transaction, mockPm);
-    } catch(LogiException exception) {
-      assertTrue(exception.getCode().equals("M018"));
-    }
     transaction.setReason("Customer did not like the product");
-
     try {
       inventoryManagementService.checkReturnsErrors(transaction, mockPm);
     } catch(LogiException exception) {
