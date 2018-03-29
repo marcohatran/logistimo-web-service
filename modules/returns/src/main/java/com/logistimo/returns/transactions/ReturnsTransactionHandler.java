@@ -96,11 +96,7 @@ public class ReturnsTransactionHandler {
         transaction.setBatchExpiry(batchVO.getExpiryDate());
         transaction.setBatchManufacturedDate(batchVO.getManufacturedDate());
         transaction.setBatchManufacturer(batchVO.getManufacturer());
-        if (status == Status.RECEIVED) {
-          transaction.setType(ITransaction.TYPE_RETURNS_INCOMING);
-        } else {
-          transaction.setType(ITransaction.TYPE_RETURNS_OUTGOING);
-        }
+        setType(status, transaction);
         buildTransaction(new TransactionModel(userId, domainId, kioskId, linkedKioskId,
             returnsItemBatchVO.getReason(),
             returnsItemBatchVO.getMaterialStatus(),
@@ -110,17 +106,21 @@ public class ReturnsTransactionHandler {
       }).collect(Collectors.toList());
     } else {
       ITransaction transaction = JDOUtils.createInstance(ITransaction.class);
-      if (status == Status.RECEIVED) {
-        transaction.setType(ITransaction.TYPE_RETURNS_INCOMING);
-      } else {
-        transaction.setType(ITransaction.TYPE_RETURNS_OUTGOING);
-      }
+      setType(status, transaction);
       buildTransaction(
           new TransactionModel(userId, domainId, kioskId, linkedKioskId, returnsItemVo.getReason(),
               returnsItemVo.getMaterialStatus(),
               returnsItemVo.getMaterialId(), returnsItemVo.getQuantity(), source,
               returnsItemVo.getReturnsId(), trackingObjType), transaction);
       return Collections.singletonList(transaction);
+    }
+  }
+
+  private void setType(Status status, ITransaction transaction) {
+    if (status == Status.RECEIVED) {
+      transaction.setType(ITransaction.TYPE_RETURNS_INCOMING);
+    } else {
+      transaction.setType(ITransaction.TYPE_RETURNS_OUTGOING);
     }
   }
 
