@@ -53,6 +53,8 @@ envsubst < $TOMCAT_HOME/webapps/ROOT/WEB-INF/classes/samaanguru.properties.templ
 
 envsubst < $TOMCAT_HOME/webapps/ROOT/WEB-INF/classes/readonlyDB.properties.template  > $TOMCAT_HOME/webapps/ROOT/WEB-INF/classes/readonlyDB.properties
 
+envsubst < $TOMCAT_HOME/webapps/ROOT/WEB-INF/classes/jpa.properties.template  > $TOMCAT_HOME/webapps/ROOT/WEB-INF/classes/jpa.properties
+
 JAVA_OPTS="-Xms$JAVA_XMS -Xmx$JAVA_XMX \
         -\"javaagent://$TOMCAT_HOME/jmx_prometheus_javaagent-0.7.jar=$JMX_AGENT_PORT:$TOMCAT_HOME/jmx_exporter.json\""
 
