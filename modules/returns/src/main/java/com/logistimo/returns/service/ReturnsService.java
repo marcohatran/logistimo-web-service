@@ -36,6 +36,7 @@ import com.logistimo.inventory.service.InventoryManagementService;
 import com.logistimo.logger.XLog;
 import com.logistimo.materials.model.HandlingUnitModel;
 import com.logistimo.materials.service.IHandlingUnitService;
+import com.logistimo.orders.entity.IOrder;
 import com.logistimo.orders.service.OrderManagementService;
 import com.logistimo.orders.service.impl.DemandService;
 import com.logistimo.returns.Status;
@@ -219,6 +220,8 @@ public class ReturnsService {
       returnsRepository.updateReturns(returnsVO);
       returnsVO.setItems(getReturnsItem(returnsVO.getId()));
       updateDemandItems(returnsVO, statusModel.getStatus());
+      IOrder order = orderManagementService.getOrder(returnsVO.getOrderId());
+      statusModel.setTransferOrder(order.getOrderType() == IOrder.TRANSFER_ORDER);
       postTransactions(statusModel, returnsVO);
       IMessage message = addComment(returnsVO.getId(), statusModel.getComment(), returnsVO.getUpdatedBy(),
                 returnsVO.getSourceDomain());

@@ -39,5 +39,6 @@ public class UpdateStatusModel {
   private String userId;
   private String comment;
   private Integer source;
+  private boolean isTransferOrder;
 
 }

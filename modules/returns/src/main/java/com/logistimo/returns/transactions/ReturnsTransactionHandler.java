@@ -58,7 +58,7 @@ public class ReturnsTransactionHandler {
   private InventoryManagementService inventoryManagementService;
 
   public void postTransactions(UpdateStatusModel statusModel, ReturnsVO returnsVO,
-                                             Long domainId)
+                               Long domainId)
       throws DuplicationException, ServiceException {
 
     List<ITransaction> transactionsList = new ArrayList<>();
@@ -68,10 +68,15 @@ public class ReturnsTransactionHandler {
     Long vendorId =
         (statusModel.getStatus() == Status.RECEIVED) ? returnsVO.getCustomerId()
             : returnsVO.getVendorId();
+    String
+        trackingObjectType =
+        statusModel.isTransferOrder() ? ITransaction.TRACKING_OBJECT_TYPE_TRANSFER
+            : ITransaction.TRACKING_OBJECT_TYPE_ORDER;
     returnsVO.getItems().forEach(returnsItemVO ->
         transactionsList.addAll(
             getTransactions(statusModel.getUserId(), domainId, customerId,
-                vendorId, statusModel.getSource(), returnsItemVO, statusModel.getStatus())));
+                vendorId, statusModel.getSource(), returnsItemVO, statusModel.getStatus(),
+                trackingObjectType)));
 
     inventoryManagementService
         .updateInventoryTransactions(domainId, transactionsList, null, true, false, null);
@@ -81,7 +86,8 @@ public class ReturnsTransactionHandler {
 
   private List<ITransaction> getTransactions(String userId, Long domainId, Long kioskId,
                                              Long linkedKioskId, Integer source,
-                                             ReturnsItemVO returnsItemVo, Status status) {
+                                             ReturnsItemVO returnsItemVo, Status status,
+                                             String trackingObjType) {
     if (CollectionUtils.isNotEmpty(returnsItemVo.getReturnItemBatches())) {
       return returnsItemVo.getReturnItemBatches().stream().map(returnsItemBatchVO -> {
         ITransaction transaction = JDOUtils.createInstance(ITransaction.class);
@@ -99,7 +105,7 @@ public class ReturnsTransactionHandler {
             returnsItemBatchVO.getReason(),
             returnsItemBatchVO.getMaterialStatus(),
             returnsItemVo.getMaterialId(), returnsItemBatchVO.getQuantity(), source,
-            returnsItemVo.getReturnsId()), transaction);
+            returnsItemVo.getReturnsId(), trackingObjType), transaction);
         return transaction;
       }).collect(Collectors.toList());
     } else {
@@ -113,7 +119,7 @@ public class ReturnsTransactionHandler {
           new TransactionModel(userId, domainId, kioskId, linkedKioskId, returnsItemVo.getReason(),
               returnsItemVo.getMaterialStatus(),
               returnsItemVo.getMaterialId(), returnsItemVo.getQuantity(), source,
-              returnsItemVo.getReturnsId()), transaction);
+              returnsItemVo.getReturnsId(), trackingObjType), transaction);
       return Collections.singletonList(transaction);
     }
   }
@@ -130,7 +136,7 @@ public class ReturnsTransactionHandler {
     transaction.setMaterialStatus(transactionModel.getMatStatus());
     transaction.setLinkedKioskId(transactionModel.getLinkedKioskId());
     transaction.setTrackingId(transactionModel.getReturnId().toString());
-    transaction.setTrackingObjectType(ITransaction.TYPE_RETURN);
+    transaction.setTrackingObjectType(transactionModel.getTrackingObjectType());
   }
 
   @Data
@@ -146,5 +152,6 @@ public class ReturnsTransactionHandler {
     BigDecimal quantity;
     Integer source;
     Long returnId;
+    String trackingObjectType;
   }
 }
