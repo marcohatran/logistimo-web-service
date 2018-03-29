@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright © 2017 Logistimo.
+  ~ Copyright © 2018 Logistimo.
   ~
   ~ This file is part of Logistimo.
   ~
@@ -40,7 +40,7 @@
                           ng-click="switchConsole()">{{resourceBundle['switch.console']}}</span>
                     <!--<span ng-if="subview !='manage'" class="userdomaininfo"><a ng-href="#/setup/users/all/details?userId={{curUser}}">{{curUserName}}</a> {{resourceBundle['in']}} <b>{{domainName}}</b></span>-->
                     <span class="userdomaininfo dropdown" ng-if="!iAU">
-                            <a href="#" id="shortcutsMenu" class="dropdown-toggle" data-toggle="dropdown" role="button"
+                            <a id="shortcutsMenu" class="dummyLink clickable dropdown-toggle" data-toggle="dropdown" role="button"
                                aria-haspopup="true" aria-expanded="false">Shortcuts&nbsp;<span
                                     class="caret"></span></a>
                             <ul class="dropdown-menu dropdown-menu-right" role="menu" aria-labelledby="shortcutsMenu">
@@ -143,6 +143,7 @@
                         <li><a href="#/orders/discrepancies/">{{resourceBundle.discrepancies}}</a></li>
                         <li><a href="#/orders/demand/">{{resourceBundle.demand}}</a></li>
                         <li><a href="#/orders/approvals/">{{resourceBundle['approvals.upper.case']}}</a></li>
+                        <li><a href="#/orders/returns/">{{resourceBundle['returns']}}</a></li>
                     </ul>
                 </li>
                 <li ng-if="invTabEnabled" ng-class="{active:subview == 'inventory' }">

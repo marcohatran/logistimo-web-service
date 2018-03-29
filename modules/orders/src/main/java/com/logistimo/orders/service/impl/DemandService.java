@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -46,6 +46,8 @@ import com.logistimo.pagination.Results;
 import com.logistimo.proto.JsonTagsZ;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.impl.PMF;
+import com.logistimo.shipments.entity.IShipmentItemBatch;
+import com.logistimo.shipments.service.impl.ShipmentService;
 import com.logistimo.tags.dao.ITagDao;
 import com.logistimo.tags.entity.ITag;
 import com.logistimo.utils.BigUtil;
@@ -53,6 +55,7 @@ import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.StringUtil;
 import com.sun.rowset.CachedRowSetImpl;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -87,6 +90,7 @@ public class DemandService implements IDemandService {
   private EntitiesService entitiesService;
   private MaterialCatalogService materialCatalogService;
   private OrderManagementService orderManagementService;
+  private ShipmentService shipmentService;
 
   @Autowired
   public void setTagDao(ITagDao tagDao) {
@@ -112,6 +116,11 @@ public class DemandService implements IDemandService {
   @Autowired
   public void setOrderManagementService(OrderManagementService orderManagementService) {
     this.orderManagementService = orderManagementService;
+  }
+
+  @Autowired
+  public void setShipmentService(ShipmentService shipmentService) {
+    this.shipmentService = shipmentService;
   }
 
   @Override
@@ -269,6 +278,80 @@ public class DemandService implements IDemandService {
       if (useLocalPM) {
         localPM.close();
       }
+    }
+    return null;
+  }
+
+  /**
+   * Batches are grouped across all shipments by batch id, ignoring all meta. Only quantities and
+   * batch id can be read.
+   *
+   * @param orderId
+   * @return
+   */
+  public List<IDemandItem> getDemandItemsWithBatches(Long orderId) {
+    try {
+      List<IDemandItem> demandItems = getDemandItems(orderId);
+      Map<Long, IDemandItem> demandItemMap = new HashMap<>(demandItems.size());
+      demandItems.stream().forEach(demandItem -> demandItemMap.put(demandItem.getMaterialId(), demandItem));
+      List<IShipmentItemBatch> shipmentItemBatches = shipmentService.getShipmentsBatchByOrderId(orderId);
+      if(shipmentItemBatches != null) {
+        Map<String, IShipmentItemBatch> shipmentItemBatchMap = new HashMap<>();
+        shipmentItemBatches.stream().forEach(shipmentItemBatch -> {
+              String key = shipmentItemBatch.getMaterialId() + "_" + shipmentItemBatch.getBatchId();
+              if(!shipmentItemBatchMap.containsKey(key)) {
+                shipmentItemBatchMap.put(key,shipmentItemBatch);
+              } else {
+                IShipmentItemBatch iShipmentItemBatch = shipmentItemBatchMap.get(key);
+                iShipmentItemBatch.setQuantity(iShipmentItemBatch.getQuantity().add(shipmentItemBatch.getQuantity()));
+                iShipmentItemBatch.setDiscrepancyQuantity(
+                    iShipmentItemBatch.getDiscrepancyQuantity().add(shipmentItemBatch.getDiscrepancyQuantity()));
+                iShipmentItemBatch.setFulfilledQuantity(
+                    iShipmentItemBatch.getFulfilledQuantity().add(shipmentItemBatch.getFulfilledQuantity()));
+              }
+            }
+        );
+        for (Map.Entry<String, IShipmentItemBatch> shipmentItemBatchEntry : shipmentItemBatchMap
+            .entrySet()) {
+          Long materialId = Long.valueOf(shipmentItemBatchEntry.getKey().split("_")[0]);
+          demandItemMap.get(materialId).addBatch(shipmentItemBatchEntry.getValue());
+        }
+      }
+      return demandItems;
+    } catch (Exception e) {
+      xLogger.severe("Error while fetching demand items with batches for order {0}", orderId, e);
+    }
+    return null;
+  }
+
+  /**
+   *
+   * @param orderId
+   * @param quantityByMaterial - Key: Material Id, value - Return quantity
+   * @return
+   */
+  public List<IDemandItem> updateDemandReturns(Long orderId, Map<Long, BigDecimal> quantityByMaterial,boolean decrement) {
+    PersistenceManager pm = PMF.get().getPersistenceManager();
+    try {
+      List<IDemandItem> demandItems = getDemandItems(orderId, pm);
+      demandItems.stream()
+          .filter(demandItem -> quantityByMaterial.containsKey(demandItem.getMaterialId()))
+          .forEach(demandItem -> {
+                if (decrement) {
+                  demandItem.setReturnedQuantity(demandItem.getReturnedQuantity()
+                      .subtract(quantityByMaterial.get(demandItem.getMaterialId())));
+                } else {
+                  demandItem.setReturnedQuantity(demandItem.getReturnedQuantity()
+                      .add(quantityByMaterial.get(demandItem.getMaterialId())));
+                }
+              }
+          );
+      pm.makePersistentAll(demandItems);
+      return (List<IDemandItem>) pm.detachCopyAll(demandItems);
+    } catch (Exception e) {
+      xLogger.severe("Error while updating demand items with return quantity for order {0}", orderId, e);
+    } finally {
+      pm.close();
     }
     return null;
   }
@@ -527,14 +610,15 @@ public class DemandService implements IDemandService {
       orderQuery.append(" AND ");
     }
     // kioskIds can be present with out without kioskId
-    if (kioskIds != null && !kioskIds.isEmpty()) {
+    if (!CollectionUtils.isEmpty(kioskIds)) {
       StringBuilder kioskIdQuery = new StringBuilder();
       List<String> kids = new ArrayList<>(kioskIds.size());
       for (Long id : kioskIds) {
-        kioskIdQuery.append(CharacterConstants.QUESTION).append(CharacterConstants.COMMA);
+        kioskIdQuery.append(CharacterConstants.QUESTION);
         kids.add(String.valueOf(id));
+        kioskIdQuery.append(CharacterConstants.COMMA);
       }
-      kioskIdQuery.setLength(orderQuery.length() - 1);
+      kioskIdQuery.setLength(kioskIdQuery.length() - 1);
 
       orderQuery.append("(KID IN (");
       orderQuery.append(kioskIdQuery);

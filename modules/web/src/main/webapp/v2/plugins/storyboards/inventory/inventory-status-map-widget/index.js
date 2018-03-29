@@ -1,3 +1,26 @@
+/*
+ * Copyright © 2018 Logistimo.
+ *
+ * This file is part of Logistimo.
+ *
+ * Logistimo software is a mobile & web platform for supply chain management and remote temperature monitoring in
+ * low-resource settings, made available under the terms of the GNU Affero General Public License (AGPL).
+ *
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General
+ * Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any
+ * later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/>.
+ *
+ * You can be released from the requirements of the license by purchasing a commercial license. To know more about
+ * the commercial license, please contact us at opensource@logistimo.com
+ */
+
 /**
  * Created by yuvaraj on 10/11/17.
  */
@@ -67,7 +90,7 @@ angular.module('logistimo.storyboard.inventoryStatusMapWidget', [])
 
             $scope.init = function () {
                 domainCfgService.getMapLocationMapping().then(function (data) {
-                    if (checkNotNullEmpty(data.data)) {
+                    if (!checkNullEmptyObject(data.data)) {
                         $scope.locationMapping = angular.fromJson(data.data);
                         setFilters();
                         loadLocationMap();
@@ -126,8 +149,9 @@ angular.module('logistimo.storyboard.inventoryStatusMapWidget', [])
                 dashboardService.get(undefined, undefined, $scope.exFilter, $scope.exType, $scope.period, undefined,
                     undefined, constructModel(filter.entityTag), fDate, constructModel(filter.exEntityTag),
                     false).then(function (data) {
+                    if(!checkNullEmptyObject(data.data)) {
                         $scope.dashboardView = data.data;
-                        if($scope.mapEvent == 'avlbl'){
+                        if ($scope.mapEvent == 'avlbl') {
                             $scope.dashboardView.inv['avlbl'] = getAvailable($scope.dashboardView.inv);
                         }
                         var linkText;
@@ -138,9 +162,12 @@ angular.module('logistimo.storyboard.inventoryStatusMapWidget', [])
                             $scope.mapType = $scope.dashboardView.mTy;
                         }
                         constructMapData($scope.mapEvent, true, $scope, INVENTORY, $sce, mapRange, mapColors,
-                            invPieOrder, $timeout,barColor);
+                            invPieOrder, $timeout, barColor);
                         setTitle();
                         setWidgetData();
+                    }else{
+                        $scope.noDataToRender();
+                    }
                     }).catch(function error(msg) {
                         showError(msg, $scope);
                     }).finally(function () {

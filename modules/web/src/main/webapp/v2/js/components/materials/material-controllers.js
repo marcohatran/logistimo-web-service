@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -243,7 +243,13 @@ matControllers.controller('MaterialListController', ['$scope', 'matService', 'do
             $scope.mtag = "";
         };
 
-        $scope.exportData=function() {
+        $scope.exportData=function(isInfo) {
+            if(isInfo) {
+                return {
+                    filters: getCaption(),
+                    type: 'materials'
+                };
+            }
             $scope.showLoading();
             exportService.exportData({
                 mat_name: $scope.search.key || undefined,

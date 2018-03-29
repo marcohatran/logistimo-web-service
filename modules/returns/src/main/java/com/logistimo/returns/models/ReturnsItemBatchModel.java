@@ -30,20 +30,23 @@ import com.logistimo.returns.models.submodels.ReceivedModel;
 import java.math.BigDecimal;
 import java.util.Date;
 
+import lombok.Data;
+
 /**
  * @author Mohan Raja
  */
+@Data
 public class ReturnsItemBatchModel {
 
   @SerializedName("batch_id")
   private String batchId;
 
-  private Date expiry;
+  private String expiry;
 
   private String manufacturer;
 
   @SerializedName("manufactured_date")
-  private Date manufacturedDate;
+  private String manufacturedDate;
 
   @SerializedName("return_quantity")
   private BigDecimal returnQuantity;
@@ -54,69 +57,5 @@ public class ReturnsItemBatchModel {
   private String reason;
 
   private ReceivedModel received;
-
-  public String getBatchId() {
-    return batchId;
-  }
-
-  public void setBatchId(String batchId) {
-    this.batchId = batchId;
-  }
-
-  public Date getExpiry() {
-    return expiry;
-  }
-
-  public void setExpiry(Date expiry) {
-    this.expiry = expiry;
-  }
-
-  public String getManufacturer() {
-    return manufacturer;
-  }
-
-  public void setManufacturer(String manufacturer) {
-    this.manufacturer = manufacturer;
-  }
-
-  public Date getManufacturedDate() {
-    return manufacturedDate;
-  }
-
-  public void setManufacturedDate(Date manufacturedDate) {
-    this.manufacturedDate = manufacturedDate;
-  }
-
-  public BigDecimal getReturnQuantity() {
-    return returnQuantity;
-  }
-
-  public void setReturnQuantity(BigDecimal returnQuantity) {
-    this.returnQuantity = returnQuantity;
-  }
-
-  public String getMaterialStatus() {
-    return materialStatus;
-  }
-
-  public void setMaterialStatus(String materialStatus) {
-    this.materialStatus = materialStatus;
-  }
-
-  public String getReason() {
-    return reason;
-  }
-
-  public void setReason(String reason) {
-    this.reason = reason;
-  }
-
-  public ReceivedModel getReceived() {
-    return received;
-  }
-
-  public void setReceived(ReceivedModel receivedModel) {
-    this.received = receivedModel;
-  }
 
 }

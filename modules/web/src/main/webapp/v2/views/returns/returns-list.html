@@ -1,0 +1,186 @@
+<!--
+  ~ Copyright © 2018 Logistimo.
+  ~
+  ~ This file is part of Logistimo.
+  ~
+  ~ Logistimo software is a mobile & web platform for supply chain management and remote temperature monitoring in
+  ~ low-resource settings, made available under the terms of the GNU Affero General Public License (AGPL).
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General
+  ~ Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any
+  ~ later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+  ~ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+  ~ for more details.
+  ~
+  ~ You should have received a copy of the GNU Affero General Public License along with this program.  If not, see
+  ~ <http://www.gnu.org/licenses/>.
+  ~
+  ~ You can be released from the requirements of the license by purchasing a commercial license. To know more about
+  ~ the commercial license, please contact us at opensource@logistimo.com
+  -->
+
+<div class="box topbox">
+    <!--<div ng-controller="ReturnsListingController">-->
+    <div ng-controller="ListReturnsController">
+        <div class="filter-box form-group">
+            <div ng-controller="ResetController">
+                <div class="row">
+                    <div class="col-sm-3">
+                        <span class="filter-label">{{resourceBundle.kiosk}}</span>
+                        <entity-select ent-model="entity" classes="form-control"
+                                       place-holder="{{resourceBundle.filterby}} {{resourceBundle['kiosks.lower']}}">
+                        </entity-select>
+                    </div>
+                    <div class="col-sm-3 ">
+                        <span class="filter-label">{{resourceBundle.status}}</span>
+                        <select class="form-control" ng-model="status">
+                            <option value="">{{resourceBundle.all}}</option>
+                            <option value="op">{{RETURNS.statusLabel['op']}}</option>
+                            <option value="sp">{{RETURNS.statusLabel['sp']}}</option>
+                            <option value="rd">{{RETURNS.statusLabel['rd']}}</option>
+                            <option value="cn">{{RETURNS.statusLabel['cn']}}</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-3">
+                        <span class="filter-label">{{resourceBundle.from}}</span>
+                        <date-picker date-model="from" place-holder="From" max-date="today"></date-picker>
+                    </div>
+                    <div class="col-sm-3">
+                        <span class="filter-label">{{resourceBundle.to}}</span>
+                        <date-picker date-model="to" place-holder="To" min-date="from" max-date="today"></date-picker>
+                    </div>
+                </div>
+                <div class="row" ng-show="showMore">
+                    <div class="col-sm-3">
+                        <span class="filter-label">{{resourceBundle['order']}}</span>
+                        <div class="has-feedback">
+                            <input type="text" class="form-control" ng-model="orderId" autocomplete="off"
+                                   typeahead-wait-ms="300"
+                                   placeholder="{{resourceBundle['order.num']}}"
+                                   uib-typeahead="val for val in getSuggestions($viewValue)"
+                                   typeahead-loading="loadingOrderId">
+                            <span ng-show="loadingOrderId" class="form-control-feedback typehead-loading"
+                                  aria-hidden="true"> <span class="glyphicons glyphicons-cogwheel spin"></span> </span>
+                        </div>
+                    </div>
+                </div>
+                <div ng-include="'views/common/reset-filters.html'"/>
+            </div>
+        </div>
+        <div class="row">
+            <div ng-hide="showMore">
+                <div class="col-sm-12">
+                    <span class="glyphicons glyphicons-chevron-down medium filter-expand" ng-click="showMore = true"></span>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div ng-show="showMore">
+                <div class="col-sm-12">
+                    <span class="glyphicons glyphicons-chevron-up medium filter-expand" ng-click="showMore = false"></span>
+                </div>
+            </div>
+        </div>
+        <div class="row action-bar">
+            <div class="col-sm-8 noLRpad" >
+                <!--<export ng-show="filtered.length > 0" callback="exportData()"></export>-->
+            </div>
+
+            <div class="col-sm-4 noLRpad" ng-show="entity!= null && entity.id != null && entity.id != ''" >
+                <div class="pull-right">
+                    <div class="btn-group">
+                        <label class="btn btn-sm btn-default" ng-model="returnsType" uib-btn-radio="'outgoing'">
+                            <span>{{resourceBundle['transactions.returns.outgoing.upper']}}</span>
+                        </label>
+                        <label class="btn btn-sm btn-default" ng-model="returnsType" uib-btn-radio="'incoming'">
+                            <span>{{resourceBundle['transactions.returns.incoming.upper']}}</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="pull-right">
+                    <div ng-include="'views/paginator.html'"></div>
+                </div>
+            </div>
+        </div>
+        <div class="row" ng-show="filtered.length > 0">
+            <div class="col-sm-12">
+                <table class="table table-condensed table-hover table-logistimo" id="fixTable">
+                    <thead>
+                    <tr>
+                        <th class="col-sm-0-1"></th>
+                        <th class="text-center col-sm-0-2">{{resourceBundle['serialnum']}}</th>
+                        <th class="text-center col-sm-1">{{resourceBundle['return']}}</th>
+                        <th class="text-center col-sm-1">{{resourceBundle['order']}}</th>
+                        <th class="col-sm-1">{{resourceBundle['status']}}</th>
+                        <th class="col-sm-2">{{resourceBundle['returning.entity']}}</th>
+                        <th class="col-sm-2">{{resourceBundle['receiving.entity']}}</th>
+                        <th class="col-sm-2">{{resourceBundle['created']}}</th>
+                        <th class="col-sm-0-1"></th>
+                    </tr>
+                    </thead>
+                    <tbody ng-repeat="return in filtered">
+                    <tr class="clickable" ng-click="goToReturn(return.return_id)">
+                        <td>
+                            <span class="glyphicons glyphicons-bring-to-front tglyph"
+                                  ng-if="currentDomain != return.source_domain"
+                                  ng-click="switchDomain(return.source_domain,return.source_domain_name)"
+                                  uib-tooltip="{{return.source_domain_name}}"
+                                  tooltip-append-to-body="true">
+                            </span>
+                        </td>
+                        <td class="text-center">{{offset + $index + 1}}</td>
+                        <td class="text-center">{{return.return_id}}</td>
+                        <td class="text-center">{{return.order_id}}</td>
+                        <td>{{RETURNS.statusLabel[return.status.status]}}</td>
+                        <td><a href="#/setup/entities/detail/{{return.customer.entity_id}}"
+                               ng-click="$event.stopPropagation();"
+                               target="_blank">{{return.customer.entity_name}}</a>
+                            <span class="litetext">{{return.customer.entity_address}}</span>
+                        </td>
+                        <td><a href="#/setup/entities/detail/{{return.vendor.entity_id}}"
+                               ng-click="$event.stopPropagation();"
+                               target="_blank">{{return.vendor.entity_name}}</a>
+                            <span class="litetext">{{return.vendor.entity_address}}</span>
+                        </td>
+                        <td><a ng-href="#/setup/users/all/details?userId={{return.created_by.user_id}}"
+                               ng-click="$event.stopPropagation();"
+                               target="_blank">{{return.created_by.full_name}}</a>
+                            <span class="litetext">{{return.created_at}}</span>
+                        </td>
+                        <td>
+                            <span ng-if="item.src == 1" class="glyphicons glyphicons-display"
+                                  uib-tooltip="{{resourceBundle['web']}}" tooltip-placement="left"></span>
+                            <span ng-if="item.src == 2" class="glyphicons glyphicons-iphone"
+                                  uib-tooltip="{{resourceBundle['mob']}}" tooltip-placement="left"></span>
+                            <span ng-if="item.src == 3" class="glyphicons glyphicons-cloud-upload"
+                                  uib-tooltip="{{resourceBundle['upl']}}" tooltip-placement="left"></span>
+                            <span ng-if="item.src == 4" class="glyphicons glyphicons-sms"
+                                  uib-tooltip="{{resourceBundle['sms']}}" tooltip-placement="left"></span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="row mt5">
+            <div class="col-sm-12">
+                <p class=" alert alert-warning" ng-show="filtered.length == 0">
+                    No returns
+                </p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-3 col-sm-offset-9">
+                <div class="pull-right">
+                    <div ng-include="'views/paginator.html'"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

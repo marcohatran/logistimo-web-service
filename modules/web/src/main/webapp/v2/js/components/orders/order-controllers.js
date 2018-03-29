@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -187,8 +187,6 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
                     return $scope.resourceBundle['approvals.approved'];
                 case 'ex':
                     return $scope.resourceBundle['approvals.expired'];
-                default:
-                    return $scope.resourceBundle['all'];
             }
         }
 
@@ -206,13 +204,11 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
                     return $scope.resourceBundle['order.fulfilled'];
                 case 'cn':
                     return $scope.resourceBundle['order.cancelled'];
-                default:
-                    return $scope.resourceBundle['all'];
             }
         }
 
 
-        $scope.exportData = function () {
+        $scope.exportData = function (isInfo) {
             var eid, ktag = undefined;
             if (checkNotNullEmpty($scope.entity)) {
                 eid = $scope.entity.id;
@@ -222,6 +218,12 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
             var oty = $scope.type == '2' ? '0' : '1';
             var module = oty == 0 ? 'transfers' : 'orders';
             var templateId = oty == 0 ? 'transfers' : 'orders';
+            if(isInfo) {
+                return {
+                    filters: getCaption(),
+                    type: module
+                };
+            }
             $scope.showLoading();
             exportService.exportData({
                 from_date: checkNotNullEmpty($scope.from) ? formatDate2Url($scope.from) : undefined,
@@ -486,9 +488,10 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
 ]);
 
 ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', 'userService', 'domainCfgService',
-    'invService', 'entityService', '$timeout', 'requestContext', '$uibModal', 'trnService', 'conversationService', '$window', 'ORDERSTATUSTEXT', 'approvalService',
-    function ($scope, ordService, ORDER, userService, domainCfgService, invService, entityService, $timeout, requestContext, $uibModal, trnService, conversationService, $window, ORDERSTATUSTEXT, approvalService) {
+    'invService', 'entityService', '$timeout', 'requestContext', '$uibModal', 'trnService', 'conversationService', '$window', 'ORDERSTATUSTEXT', 'approvalService','RETURNS', 'returnsService',
+    function ($scope, ordService, ORDER, userService, domainCfgService, invService, entityService, $timeout, requestContext, $uibModal, trnService, conversationService, $window, ORDERSTATUSTEXT, approvalService, RETURNS, returnsService) {
         $scope.ORDER = ORDER;
+        $scope.RETURNS = RETURNS;
         $scope.ORDERSTATUSTEXT = ORDERSTATUSTEXT;
         $scope.edit = {mat: false};
         $scope.payOpts = [];
@@ -681,6 +684,10 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                 $scope.edit.vend = false;
             }
         });
+
+        $scope.setPageSelection = function(page) {
+            $scope.selection = page;
+        };
 
         $scope.openView = function (view, selRows, sn) {
             $scope.sMTShip = [];
@@ -1036,6 +1043,20 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                     }
                 }
             });
+            if($scope.returnPolicyDuration == undefined) {
+                $scope.showLoading();
+                domainCfgService.getReturnConfig($scope.order.vid).then(function(data){
+                    $scope.returnPolicyDuration = data.data.incDur || 0;
+                }).catch(function error(msg) {
+                    $scope.showErrorMsg(msg);
+                }).finally(function () {
+                    $scope.hideLoading();
+                    $scope.checkReturn();
+                });
+            } else {
+                $scope.checkReturn();
+            }
+
         }
 
         $scope.saveStatus = function () {
@@ -1389,6 +1410,15 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                     }
                     count += 1;
                     callCheckStatus(count);
+                }).catch(function error(msg) {
+                    $scope.showErrorMsg(msg);
+                }).finally(function () {
+                    $scope.hideLoading();
+                });
+
+                $scope.showLoading();
+                returnsService.getAll({orderId : $scope.orderId}).then(function (data) {
+                    $scope.returnsList = data.data.returns;
                 }).catch(function error(msg) {
                     $scope.showErrorMsg(msg);
                 }).finally(function () {
@@ -2039,10 +2069,28 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
             $window.open("#/orders/shipment/detail/" + sID, '_blank');
         };
 
+        $scope.openReturns = function (returnId) {
+            $window.open("#/orders/returns/detail/" + returnId, '_blank');
+        };
+
         $scope.cancelNewShipment = function () {
             $scope.openView("orderDetail");
             $scope.enableScroll();
         };
+
+        $scope.checkReturn = function() {
+            if ($scope.order.st == ORDER.FULFILLED) {
+                $scope.canReturn = $scope.order.its.some(function (item) {
+                    return item.fq > 0 && item.returnedQuantity < item.fq;
+                });
+                if($scope.canReturn && $scope.returnPolicyDuration > 0) {
+                    var fulfilDate = string2Date($scope.order.statusUpdateDate, "dd/MM/yyyy", "/", true);
+                    var oneDayInMillis = 1000 * 60 * 60 * 24;
+                    var days =  (new Date().setHours(0, 0, 0, 0) - fulfilDate.getTime()) / oneDayInMillis;
+                    $scope.returnPolicyExpired = days >  $scope.returnPolicyDuration;
+                }
+            }
+        }
     }
 ]);
 ordControllers.controller('orders.MaterialController', ['$scope',
@@ -4200,7 +4248,7 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService', 'reques
     }
 ]);
 
-ordControllers.controller('ConsignmentController', ['$scope', '$uibModal', function ($scope, $uibModal) {
+ordControllers.controller('ConsignmentController', ['$scope','returnsService', function ($scope,returnsService) {
     $scope.batchOrder = true;
     $scope.selectedMaterialIds = [];
     $scope.sel = {};
@@ -4209,7 +4257,7 @@ ordControllers.controller('ConsignmentController', ['$scope', '$uibModal', funct
         $scope.sel.selectedRows = [];
         if (newval) {
             for (var i = 0; i < $scope.order.its.length; i++) {
-                if ($scope.order.its[i].q != $scope.order.its[i].isq) {
+                if ($scope.order.its[i].q != $scope.order.its[i].isq || ($scope.canReturn && $scope.order.its[i].fq > 0)) {
                     $scope.sel.selectedRows.push(i);
                 }
             }
@@ -4223,6 +4271,33 @@ ordControllers.controller('ConsignmentController', ['$scope', '$uibModal', funct
             $scope.showWarning("Please select any material to create Shipment");
         }
     };
+
+    $scope.doReturn = function() {
+        if ($scope.sel.selectedRows.length > 0) {
+            var selectedItems = (function(){
+                var items = [];
+                for (var i = 0; i < $scope.sel.selectedRows.length; i++) {
+                    items.push($scope.order.its[$scope.sel.selectedRows[i]]);
+                }
+                return items;
+            })();
+            if (isReturnValid(selectedItems)) {
+                returnsService.setItems(angular.copy(selectedItems));
+                returnsService.setOrder($scope.order);
+                $scope.setPageSelection('createReturns');
+            } else {
+                $scope.showWarning("Please select the items which are partially/fully fulfilled to create Returns");
+            }
+        } else {
+            $scope.showWarning("Please select any material to create Returns");
+        }
+    };
+
+    function isReturnValid(selectedItems) {
+        return !selectedItems.some(function (item) {
+            return item.fq == 0
+        })
+    }
 
 }]);
 

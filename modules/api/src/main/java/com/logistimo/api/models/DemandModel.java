@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -83,6 +83,11 @@ public class DemandModel implements Comparable<DemandModel> {
    * Batches
    */
   public Set<DemandItemBatchModel> bts;
+
+  /**
+   * Batches
+   */
+  public Set<DemandItemBatchModel> returnBatches;
 
   /**
    * vendor stock
@@ -230,6 +235,8 @@ public class DemandModel implements Comparable<DemandModel> {
    * Fulfilled quantity
    */
   public BigDecimal fq;
+
+  public BigDecimal returnedQuantity;
   /**
    * Shipment id and quantity
    */
@@ -262,6 +269,9 @@ public class DemandModel implements Comparable<DemandModel> {
    * Used for displaying tooltip breakdown on Order detail page
    */
   public List<ShipmentItemModel> bd = new ArrayList<>();
+
+
+  public List<String> materialTags;
 
   /* (non-Javadoc)
    * @see java.lang.Comparable#compareTo(java.lang.Object)

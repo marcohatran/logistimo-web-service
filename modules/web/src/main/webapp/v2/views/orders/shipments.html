@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright © 2017 Logistimo.
+  ~ Copyright © 2018 Logistimo.
   ~
   ~ This file is part of Logistimo.
   ~
@@ -31,16 +31,18 @@
                 <th class="text-center">{{resourceBundle['transporter']}}</th>
                 <th class="text-center">{{resourceBundle['trackingid']}}</th>
                 <th class="text-center">EDA</th>
-                <th class="text-center">Created</th>
+                <th class="text-center">{{resourceBundle['created']}}</th>
             </tr>
             <tr ng-repeat="si in shipmentList" class="clickable" ng-click="openShipment(si.sId)">
-                <td class="text-left">{{si.sId}}</td>
-                <td class="text-center">{{si.status}}</td>
-                <td class="text-center">{{si.noi}}</td>
-                <td class="text-center">{{si.transporter}}</td>
-                <td class="text-center">{{si.trackingId}}</td>
-                <td class="text-center">{{si.eadLabel}}</td>
-                <td class="text-center"><a ng-href="#/setup/users/all/details?userId={{si.userID}}" target="_blank" ng-click="$event.stopPropagation();">{{si.createdBy}}</a>
+                <td class="text-left vmiddle">{{si.sId}}</td>
+                <td class="text-center vmiddle">{{si.status}}</td>
+                <td class="text-center vmiddle">{{si.noi}}</td>
+                <td class="text-center vmiddle">{{si.transporter}}</td>
+                <td class="text-center vmiddle">{{si.trackingId}}</td>
+                <td class="text-center vmiddle">{{si.eadLabel}}</td>
+                <td class="text-center">
+                    <a ng-href="#/setup/users/all/details?userId={{si.userID}}" target="_blank" ng-click="$event.stopPropagation();">{{si.createdBy}}</a>
+                    <span class="litetext">{{si.cOn}}</span>
                 </td>
             </tr>
         </table>

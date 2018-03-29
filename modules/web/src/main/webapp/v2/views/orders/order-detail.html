@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright © 2017 Logistimo.
+  ~ Copyright © 2018 Logistimo.
   ~
   ~ This file is part of Logistimo.
   ~
@@ -243,6 +243,9 @@
                         <li ng-class="{ active: view == 'shipment'}"><a
                                 ng-click="view='shipment'">{{resourceBundle['shipments']}} <span class="badge">{{shipmentList ? shipmentList.length : 0}}</span></a>
                         </li>
+                        <li ng-class="{ active: view == 'returns'}"><a
+                                ng-click="view='returns'">{{resourceBundle['returns']}} <span class="badge">{{returnsList ? returnsList.length : 0}}</span></a>
+                        </li>
                         <li ng-class="{ active: view == 'message'}">
                             <a ng-click="view='message'">{{resourceBundle['comments']}} <span class="badge">{{messageCnt ? messageCnt : 0}}</span></a>
                         </li>
@@ -259,6 +262,9 @@
                             <div class="tab-pane" ng-switch-when="shipment">
                                 <div ng-include="'views/orders/shipments.html'"></div>
                             </div>
+                            <div class="tab-pane" ng-switch-when="returns">
+                                <div ng-include="'views/orders/returns.html'"></div>
+                            </div>
                             <div class="tab-pane" ng-switch-when="message">
                                 <div ng-include="'views/conversation/messages.html'"
                                      ng-init="objId = orderId;objType = 'ORDER'"></div>
@@ -274,6 +280,9 @@
         </div>
         <div ng-switch-when="fulfilShipment">
             <div ng-include="'views/shipment/fulfil-shipment.html'" ng-init="isOrderFulfil=true"></div>
+        </div>
+        <div ng-switch-when="createReturns">
+            <div ng-include="'views/returns/returns-create.html'"></div>
         </div>
     </div>
 </div>

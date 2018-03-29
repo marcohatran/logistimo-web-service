@@ -21,70 +21,27 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.returns.models;
+package com.logistimo.returns.vo;
 
-import com.google.gson.annotations.SerializedName;
 
-import java.util.List;
+import java.math.BigDecimal;
+import lombok.Data;
 
 /**
- * @author Mohan Raja
+ * Created by pratheeka on 13/03/18.
  */
-public class MobileReturnsRequestModel {
+@Data
+public class ReturnsItemBatchVO {
+  private Long id;
+  private Long itemId;
+  private BigDecimal quantity;
 
-  @SerializedName("order_id")
-  private Long orderId;
+  private String materialStatus;
 
-  @SerializedName("geo_location")
-  private Location location;
+  private String reason;
 
-  private String comment;
+  private ReturnsReceivedVO received;
 
-  private List<ReturnsItemModel> items;
-
-  public Long getOrderId() {
-    return orderId;
-  }
-
-  public Location getLocation() {
-    return location;
-  }
-
-  public String getComment() {
-    return comment;
-  }
-
-  public List<ReturnsItemModel> getItems() {
-    return items;
-  }
-
-  public class Location {
-
-    private Double latitude;
-
-    private Double longitude;
-
-    @SerializedName("geo_accuracy")
-    private Double geoAccuracy;
-
-    @SerializedName("geo_error")
-    private String geoError;
-
-    public Double getLatitude() {
-      return latitude;
-    }
-
-    public Double getLongitude() {
-      return longitude;
-    }
-
-    public Double getGeoAccuracy() {
-      return geoAccuracy;
-    }
-
-    public String getGeoError() {
-      return geoError;
-    }
-  }
+  private BatchVO batch;
 
 }

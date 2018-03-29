@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -341,9 +341,9 @@ public class SMSBuilder {
 
   String convertTrackingObjectType(String smsTrackingObjectType) {
     if (ISSUE_TRANSACTION_TRACKING_OBJECT_TYPE.equals(smsTrackingObjectType)) {
-      return ITransaction.TYPE_ISSUE_TRANSACTION;
+      return ITransaction.TRACKING_OBJECT_TYPE_ISSUE_TRANSACTION;
     } else if (RECEIPT_TRANSACTION_TRACKING_OBJECT_TYPE.equals(smsTrackingObjectType)) {
-      return ITransaction.TYPE_RECEIPT_TRANSACTION;
+      return ITransaction.TRACKING_OBJECT_TYPE_RECEIPT_TRANSACTION;
     }
     return null;
   }

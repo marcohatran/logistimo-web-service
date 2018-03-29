@@ -197,6 +197,10 @@ public class RequestModel {
   @Expose(deserialize = false, serialize = false)
   private Map<String, String> titles;
 
+  @SerializedName(value = "include_batch_info")
+  @Expose
+  private boolean includeBatchInfo = false;
+
   public String getTagType() {
     return tagType;
   }

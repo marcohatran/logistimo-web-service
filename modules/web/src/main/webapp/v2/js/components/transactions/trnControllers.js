@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -141,7 +141,6 @@ trnControllers.controller('TransactionsCtrl', ['$scope', 'trnService', 'domainCf
             $scope.loading = false;
             $scope.hideLoading();
             fixTable();
-
         };
         function getCaption() {
             var caption = getFilterTitle($scope.entity, $scope.resourceBundle['kiosk'], 'nm');
@@ -167,10 +166,15 @@ trnControllers.controller('TransactionsCtrl', ['$scope', 'trnService', 'domainCf
                 case 'p': return $scope.resourceBundle['transactions.stockcount.upper'];
                 case 'w': return $scope.resourceBundle['transactions.wastage.upper'];
                 case 't': return $scope.resourceBundle['transfers'];
-                default: return $scope.resourceBundle['all'] + " " + $scope.resourceBundle['transactions.lowercase'];
             }
         }
-        $scope.exportData=function(){
+        $scope.exportData=function(isInfo){
+            if(isInfo) {
+                return {
+                    filters: getCaption(),
+                    type: 'transactions'
+                };
+            }
             var eid,mid,ktag,mtag=undefined;
             if (checkNotNullEmpty($scope.entity)) {
                 eid = $scope.entity.id;
@@ -485,7 +489,6 @@ trnControllers.controller('TransMapCtrl', ['$scope','mapService','uiGmapGoogleMa
 trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibModal','trnService', 'invService', 'domainCfgService', 'entityService','$timeout',
     function ($rootScope,$scope, $uibModal, trnService, invService, domainCfgService, entityService,$timeout) {
         $scope.invalidPopup = 0;
-
         $scope.validate = function (material, index, source) {
             if(!material.isBatch && !material.isBinary) {
                 material.isVisited = material.isVisited || checkNotNullEmpty(source);
@@ -561,7 +564,10 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
             {value: 'r', displayName: 'Receipt', capabilityName: 'er'},
             {value: 'p', displayName: 'Stock Count', capabilityName: 'sc'},
             {value: 'w', displayName: 'Discards', capabilityName: 'wa'},
-            {value: 't', displayName: 'Transfer', capabilityName: 'ts'}]
+            {value: 't', displayName: 'Transfer', capabilityName: 'ts'},
+            {value: 'ri', displayName: 'Incoming returns', capabilityName: 'eri'},
+            {value: 'ro', displayName: 'Outgoing returns', capabilityName: 'ero'}
+        ];
 
         $scope.getAllCapabilities = function () {
             var capabName;
@@ -712,6 +718,12 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
         };
         $scope.entityType = "";
         $scope.update = function () {
+            createReturnTransactions();
+            if ($scope.transaction.type == 'ri' || $scope.transaction.type == 'ro') {
+                if (!validateReturnTransactions()) {
+                    return true;
+                }
+            }
             if ($scope.timestamp == undefined) {
                 $scope.timestamp = new Date().getTime();
             }
@@ -720,13 +732,13 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                 return true;
             }
             var index = 0;
-            var invalidQuantity = $scope.transaction.materials.some(function (mat) {
+            var invalidQuantity = $scope.transaction.modifiedmaterials.some(function (mat) {
                 if(checkNotNullEmpty($scope.transaction.dent) && $scope.transaction.ent.nm === $scope.transaction.dent.enm){
                     $scope.showWarning($scope.resourceBundle['form.error']);
                     return true;
                 }
                 if(checkNotNullEmpty($scope.exRow[index])){
-                    $scope.showWarning($scope.resourceBundle['trn.batch.open'] + ' ' + $scope.transaction.materials[index].name.mnm + '. ' + $scope.resourceBundle['trn.batch.save.cancel']);
+                    $scope.showWarning($scope.resourceBundle['trn.batch.open'] + ' ' + $scope.transaction.modifiedmaterials[index].name.mnm + '. ' + $scope.resourceBundle['trn.batch.save.cancel']);
                     return true;
                 }
                 if (!mat.isBatch && !mat.isBinary) {
@@ -748,7 +760,7 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
             });
             var isStatusEmpty = false;
             index = 0;
-            $scope.transaction.materials.forEach(function (mat) {
+            $scope.transaction.modifiedmaterials.forEach(function (mat) {
                 if(checkNotNullEmpty(mat.name) && !mat.isBatch && !mat.isBinary && mat.quantity != "0") {
                     var status = mat.ts ? $scope.tempmatstatus : $scope.matstatus;
                     if (checkNotNullEmpty(status) && checkNullEmpty(mat.mst) && $scope.msm) {
@@ -785,6 +797,131 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
             }
         };
 
+        function createReturnTransactions() {
+            if ($scope.transaction.type == 'ri' || $scope.transaction.type == 'ro') {
+                var transactionmaterials = [];
+                angular.forEach($scope.transaction.materials, function (material) {
+                    var returnitems = material.returnitems;
+                    angular.forEach(returnitems,function(returnitem){
+                        var materialcopy = angular.copy(material);
+                        materialcopy.quantity = returnitem.rq;
+                        materialcopy.mst = returnitem.rmst;
+                        materialcopy.rsn = returnitem.rrsn;
+                        materialcopy.trkid = returnitem.id;
+                        if (checkNotNullEmpty(returnitem.bid)) {
+                            var batch = {};
+                            batch.mId = returnitem.mid;
+                            batch.bid = returnitem.bid;
+                            batch.quantity = returnitem.rq;
+                            batch.bexp = returnitem.bexp;
+                            batch.bmfdt = returnitem.bmfdt;
+                            batch.bmfnm = returnitem.bmfnm;
+                            batch.mst = returnitem.rmst;
+                            batch.trkid = returnitem.id;
+                            batch.rsn = returnitem.rrsn;
+                            materialcopy.bquantity.push(batch);
+                        }
+                        materialcopy.returnitems = undefined;
+                        transactionmaterials.push(materialcopy);
+                    });
+                });
+                $scope.transaction.modifiedmaterials = transactionmaterials;
+            } else {
+                $scope.transaction.modifiedmaterials = $scope.transaction.materials;
+            }
+        }
+
+        function validateReturnTransactions() {
+            if (checkNullEmpty($scope.transaction.modifiedmaterials)) {
+                $scope.showWarning($scope.resourceBundle['invalid.return.quantity'] + " " +  $scope.resourceBundle['for'] + " " + $scope.transaction.materials[0].name.mnm);
+                return false;
+            }
+            // Check if all the selected materials selected have quantities
+            var valid = $scope.transaction.materials.every(function(material) {
+                if (checkNotNullEmpty(material.name)) {
+                    if (!isMaterialInModifiedMaterials(material)) {
+                        $scope.showWarning($scope.resourceBundle['invalid.return.quantity'] + " " +  $scope.resourceBundle['for'] + " " + material.name.mnm);
+                        return false;
+                    } else if ($scope.transaction.type == 'ro' && isTotalReturnQuantityGreaterThanAtpStock(material)){
+                        if (material.isBatch) {
+                            $scope.showWarning($scope.resourceBundle['total.return.quantity'] + "(" + $scope.totalReturnQuantity + ") " + $scope.resourceBundle['cannotexceedstock'] + ' (' + material.bidbatchDetMap[$scope.errorBid].atpstk + ') ' + $scope.resourceBundle['for'] + " batch " + $scope.errorBid + " " + $scope.resourceBundle['of'] + " " +  material.name.mnm + ".");
+                        } else {
+                            $scope.showWarning($scope.resourceBundle['total.return.quantity'] + "(" + + $scope.totalReturnQuantity + ") " + $scope.resourceBundle['cannotexceedstock'] + ' (' + material.atpstock + ') ' + $scope.resourceBundle['for'] + " " + material.name.mnm + ".");
+                        }
+                        return false;
+                    } else {
+                        return true;
+                    }
+                } else {
+                    return true;
+                }
+            });
+            if (!valid) {
+                return false;
+            }
+            // Check if the return form is open for any of the modified materials
+            valid = !$scope.transaction.modifiedmaterials.some(function(material) {
+                if(checkNotNullEmpty(material.op)) {
+                    $scope.showWarning($scope.resourceBundle['edit.returns.form.open.message'] + " " + material.name.mnm + ". " + $scope.resourceBundle['edit.returns.save.cancel.message']);
+                    return true;
+                }
+            });
+            return valid;
+        }
+
+        function isMaterialInModifiedMaterials(material) {
+            return $scope.transaction.modifiedmaterials.some(function(mat){
+                return (mat.name.mId == material.name.mId);
+            });
+        }
+
+        function isTotalReturnQuantityGreaterThanAtpStock(material) {
+            var totalReturnQuantity = 0;
+            $scope.errorBid = undefined;
+            $scope.totalReturnQuantity = 0;
+
+            var returnValue = $scope.transaction.modifiedmaterials.some(function(mat){
+                if (material.name.mId == mat.name.mId) {
+                    var atpstock = 0;
+                    if (material.isBatch) {
+                        totalReturnQuantity = getTotalReturnQuantityForBatch(mat.bquantity[0].bid);
+                        atpstock = material.bidbatchDetMap[mat.bquantity[0].bid].atpstk;
+                    } else {
+                        totalReturnQuantity = getTotalReturnQuantityForMaterial(material);
+                        atpstock = material.atpstock;
+                    }
+                    if (totalReturnQuantity > atpstock) {
+                        if (material.isBatch) {
+                            $scope.errorBid = mat.bquantity[0].bid;
+                        }
+                        $scope.totalReturnQuantity = totalReturnQuantity;
+                        return true;
+                    }
+                }
+            });
+            return returnValue;
+        }
+
+        function getTotalReturnQuantityForBatch(bid) {
+            var totalReturnQuantityForBatch = 0;
+            angular.forEach($scope.transaction.modifiedmaterials,function(mat) {
+                if (checkNotNullEmpty(mat.bquantity) && mat.bquantity[0].bid == bid) {
+                    totalReturnQuantityForBatch += parseInt(mat.bquantity[0].quantity);
+                }
+            });
+            return totalReturnQuantityForBatch;
+        }
+
+        function getTotalReturnQuantityForMaterial(material) {
+            var totalReturnQuantity = 0;
+            angular.forEach($scope.transaction.modifiedmaterials,function(mat){
+                if (material.name.mId == mat.name.mId) {
+                        totalReturnQuantity += parseInt(mat.quantity);
+                }
+            });
+            return totalReturnQuantity;
+        }
+
         function handleTimeout() {
             $scope.modalInstance = $uibModal.open({
                 template: '<div class="modal-header ws">' +
@@ -818,27 +955,28 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
             if(checkNotNullEmpty($scope.transaction.date)) {
                 ft['transactual'] = '' + formatDate($scope.transaction.date);
             }
-            ft['materials'] = {};
-            ft['bmaterials'] = {};
-            $scope.transaction.materials.forEach(function (mat) {
+            ft['materials'] = [];
+            ft['bmaterials'] = [];
+            $scope.transaction.modifiedmaterials.forEach(function (mat) {
                 if (mat.isBatch) {
                     mat.bquantity.forEach(function (m) {
+                        var reason = ($scope.transaction.type == 'ri' || $scope.transaction.type == 'ro' ? m.rsn : mat.reason);
+                        var trackingid = checkNotNullEmpty(mat.trkid) ? mat.trkid : undefined;
+                        var items = {};
                         if (checkNotNullEmpty(m.quantity)) {
-                            ft['bmaterials'][m.mId + "\t" + m.bid] = {
-                                q: '' + m.quantity,
-                                e: m.bexp,
-                                mr: m.bmfnm,
-                                md: m.bmfdt,
-                                r : mat.reason,
-                                mst : m.mst
-                            };
+                            items[m.mId + "\t" + m.bid] = {q:''+ m.quantity,e: m.bexp,mr: m.bmfnm,md: m.bmfdt,
+                                r : reason, mst: m.mst, trkid: trackingid};
+                            ft['bmaterials'].push(items);
                         }
                     });
                 } else if (mat.isBinary) {
                     ft['materials'][mat.name.mId] = "1";
                 } else if (checkNotNull(mat.ind)) {
-                    ft['materials'][mat.name.mId] = {q:''+ mat.quantity,
-                        r :mat.reason, mst: mat.mst};
+                    var items = {};
+                    var trackingid = checkNotNullEmpty(mat.trkid) ? mat.trkid : undefined;
+                    items[mat.name.mId] = {q:''+ mat.quantity,
+                        r :mat.reason, mst: mat.mst, trkid: trackingid};
+                    ft['materials'].push(items);
                 }
             });
             ft['signature'] = $scope.curUser + $scope.timestamp;
@@ -866,9 +1004,9 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                     }
                 }
             }
-            if (newVal == 'i' && $scope.tranDomainConfig.noc > 0) {
+            if ((newVal == 'i' || newVal == 'ri') && $scope.tranDomainConfig.noc > 0) {
                 $scope.entityType = $scope.resourceBundle['customer'];
-            } else if (newVal == 'r' && $scope.tranDomainConfig.nov > 0) {
+            } else if ((newVal == 'r' || newVal == 'ro') && $scope.tranDomainConfig.nov > 0) {
                 $scope.entityType = $scope.resourceBundle['vendor'];
             } else if (newVal == 't') {
                 $scope.entityType = "Transfer to";
@@ -888,6 +1026,12 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
             }else if(newVal =='t'){
                 $scope.atd = $scope.tranDomainConfig.atdt;
                 $scope.msm = $scope.statusData.tsm;
+            } else if(newVal =='ri'){
+                $scope.atd = $scope.tranDomainConfig.atdri;
+                $scope.msm = $scope.statusData.rism;
+            } else if(newVal =='ro'){
+                $scope.atd = $scope.tranDomainConfig.atdro;
+                $scope.msm = $scope.statusData.rosm;
             }
             $scope.showMaterials = true;
             $scope.showLoading();
@@ -1147,6 +1291,8 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                 type = 'add';
             }else if($scope.transaction.type === 'i' || $scope.transaction.type === 'w' || $scope.transaction.type === 't') {
                 type = 'show';
+            } else if ($scope.transaction.type === 'ri' || $scope.transaction.type === 'ro') {
+                type = 'return';
             }
             $scope.select(index,type);
         };
@@ -1161,10 +1307,13 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
         $scope.$on('$destroy', function cleanup() {
             $scope.stopInvFetch = true;
         });
+        $scope.isTransactionTypeReturn = function() {
+            return checkNotNullEmpty($scope.transaction.type) && ($scope.transaction.type == 'ri' || $scope.transaction.type == 'ro');
+        }
     }
 ]);
-trnControllers.controller('transactions.MaterialController', ['$scope','trnService',
-    function ($scope,trnService) {
+trnControllers.controller('transactions.MaterialController', ['$scope','trnService','invService',
+    function ($scope,trnService,invService) {
         $scope.updateBatch = function (batchDet) {
             $scope.material.bquantity = batchDet;
             countTotalBatchQuantities(batchDet);
@@ -1207,6 +1356,10 @@ trnControllers.controller('transactions.MaterialController', ['$scope','trnServi
                 $scope.material.isBatch = name.be;
                 if (name.be) {
                     $scope.material.bquantity = [];
+                    $scope.material.bidbatchDetMap = {};
+                    if ($scope.transaction.type == 'ri' || $scope.transaction.type == 'ro') {
+                        fetchBatchDetails();
+                    }
                 }
                 $scope.material.mm = "(" + name.reord.toFixed(0) + ',' + name.max.toFixed(0) + ")";
                 $scope.material.isBinary = name.b === 'bn';
@@ -1217,11 +1370,17 @@ trnControllers.controller('transactions.MaterialController', ['$scope','trnServi
                             $scope.material.rsns = data.data.rsns;
                             $scope.material.reason = data.data.defRsn;
                             if (checkNotNullEmpty($scope.material.rsns) && $scope.material.rsns.length > 0) {
-                                $scope.material.rsns.splice(0,0,"");
+                                if ($scope.material.rsns.indexOf("") == -1) {
+                                    $scope.material.rsns.splice(0, 0, "");
+                                }
                                 $scope.$parent.showReason = true;
                             } else if (checkNotNullEmpty($scope.reasons) && $scope.reasons.length > 0) {
-                                $scope.reasons.splice(0,0,"");
+                                if ($scope.reasons.indexOf("") == -1) {
+                                    $scope.reasons.splice(0, 0, "");
+                                }
+                                $scope.material.rsns = $scope.reasons;
                                 $scope.material.reason = $scope.defaultReason;
+                                $scope.$parent.showReason = true;
                             }
                         }).catch(function error(msg) {
                             $scope.showErrorMsg(msg);
@@ -1231,6 +1390,7 @@ trnControllers.controller('transactions.MaterialController', ['$scope','trnServi
                             $scope.reasons.splice(0, 0, "");
                         }
                         $scope.material.reason = $scope.defaultReason;
+                        $scope.material.rsns = $scope.reasons;
                     }
                 }
 
@@ -1254,6 +1414,29 @@ trnControllers.controller('transactions.MaterialController', ['$scope','trnServi
                 });
             }
             return fBatMat;
+        }
+
+        function fetchBatchDetails() {
+            $scope.showLoading();
+            invService.getBatchDetail($scope.material.name.mId, $scope.transaction.ent.id, true,undefined).then(function (data) {
+                var batchDet = data.data;
+                if (checkNotNullEmpty(batchDet)) {
+                    batchDet.forEach(function (det) {
+                        det.bexp = formatDate(parseUrlDate(det.bexp, true));
+                        if (checkNotNullEmpty(det.bmfdt)) {
+                            det.bmfdt = formatDate(parseUrlDate(det.bmfdt, true));
+                        }
+                        det.mId = $scope.material.name.mId;
+                        $scope.material.bidbatchDetMap[det.bid] = det;
+                    });
+                }
+                $scope.loading = false;
+                $scope.hideLoading();
+            }).catch(function error(msg) {
+                $scope.loading = false;
+                $scope.hideLoading();
+                $scope.showErrorMsg(msg);
+            });
         }
     }
 ]);
@@ -1434,7 +1617,6 @@ trnControllers.controller('BatchTransactionCtrl', ['$scope', 'invService','$time
                             return true;
                         }
                         isValidQuantity = true;
-
                     }
                     index+=1;
                 });
@@ -1903,3 +2085,356 @@ trnControllers.controller('StockBatchTransactionCtrl',['$scope','invService','$t
         $scope.today = formatDate2Url(new Date());
     }
 ]);
+
+trnControllers.controller('ReturnTransactionCtrl', ['$scope','$timeout','requestContext','$location', 'domainCfgService', 'trnService',
+    function ($scope,$timeout,requestContext,$location,domainCfgService,trnService) {
+        $scope.noWatch = true;
+        ListingController.call(this, $scope, requestContext, $location);
+        $scope.size = 10;
+        $scope.fromDate = new Date();
+        $scope.toDate = undefined;
+        $scope.returnAgainstType = undefined;
+        if ($scope.transaction.type == 'ri') {
+            $scope.returnAgainstType = $scope.resourceBundle['transactions.issue.upper'];
+        } else {
+            $scope.returnAgainstType = $scope.resourceBundle['transactions.receipt.upper'];
+        }
+        $scope.returnitems = angular.copy($scope.material.returnitems);
+        domainCfgService.getReturnConfig($scope.transaction.ent.id).then(function (data) {
+            $scope.rc = data.data;
+            $scope.fetch(true);
+        }).catch(function error(msg) {
+            $scope.showErrorMsg(msg, true);
+        });
+        $scope.fetch = function (firstTime) {
+            if (firstTime) {
+                if (checkNotNullEmpty($scope.rc)) {
+                    if ($scope.type == 'ri' && checkNotNullEmpty($scope.rc.incDur)) {
+                        $scope.fromDate.setDate($scope.fromDate.getDate() - $scope.rc.incDur);
+                    } else if ($scope.type == 'ro' && checkNotNullEmpty($scope.rc.outDur)) {
+                        $scope.fromDate.setDate($scope.fromDate.getDate() - $scope.rc.outDur);
+                    } else {
+                        $scope.fromDate = undefined;
+                    }
+                } else {
+                    $scope.fromDate = undefined;
+                }
+                $scope.minDate = $scope.fromDate;
+            }
+            $scope.exRow = [];
+            $scope.loading = true;
+            $scope.showLoading();
+            if (checkNullEmpty($scope.transaction.ent)) {
+                $scope.setData(null);
+                return;
+            }
+            var eid, mid;
+            if (checkNotNullEmpty($scope.transaction.ent)) {
+                eid = $scope.transaction.ent.id;
+            }
+            if (checkNotNullEmpty($scope.mid)) {
+                mid = $scope.mid;
+            }
+            var type = undefined;
+            var leid = undefined;
+            if ($scope.type == 'ri') {
+                type = 'i';
+                if (checkNotNullEmpty($scope.transaction.dent) && checkNotNullEmpty($scope.transaction.dent.eid)) {
+                    leid = $scope.transaction.dent.eid;
+                }
+            } else if ($scope.type == 'ro') {
+                type = 'r';
+                if (checkNotNullEmpty($scope.transaction.dent) && checkNotNullEmpty($scope.transaction.dent.eid)) {
+                    leid = $scope.transaction.dent.eid;
+                }
+            }
+            trnService.getTransactions(null, null, checkNotNullEmpty($scope.fromDate) ? formatDate($scope.fromDate) : $scope.fromDate, checkNotNullEmpty($scope.toDate) ? formatDate($scope.toDate) : $scope.toDate,
+                type, $scope.offset, $scope.size, null, null, eid, leid,
+                mid, null,true).then(function (data) {
+                    $scope.setData(data.data);
+                }).catch(function error(msg) {
+                    $scope.setData(null);
+                    $scope.showErrorMsg(msg);
+                });
+        };
+        $scope.setData = function (data) {
+            if (data != null) {
+                var transactions = data;
+                if ($scope.offset == 0) {
+                    $scope.transactions = {results: []};
+                    $scope.transactions.numFound = data.numFound;
+                    $scope.transactions.results = transactions.results;
+                } else {
+                    $scope.transactions.results = $scope.transactions.results.concat(transactions.results);
+                }
+                $scope.setResults($scope.transactions);
+                $scope.setFiltered($scope.transactions.results);
+                setDefaultReason();
+            } else {
+                $scope.transactions = {results:[]};
+                $scope.setResults(null);
+            }
+            $scope.loading = false;
+            $scope.hideLoading();
+            fixTable();
+
+        };
+        function setDefaultReason() {
+            angular.forEach($scope.transactions.results, function(transaction){
+                transaction.rrsn = $scope.defReason;
+            });
+        }
+
+        $scope.applyFilter = function() {
+            $scope.fromDate = $scope.from;
+            $scope.toDate = $scope.to;
+            $scope.offset = 0;
+            $scope.fetch();
+        };
+
+        $scope.saveReturnTransactions = function(index) {
+            if($scope.atd == '2' && checkNullEmpty($scope.transaction.date)){
+                $scope.showWarning($scope.resourceBundle['trn.atd.mandatory']);
+                return;
+            }
+            if (!isReturnTransactionsValid()) {
+                return;
+            }
+            angular.forEach($scope.transactions.results,function(transaction) {
+                if(transaction.rq > 0) {
+                    if (!$scope.returnitems) {
+                        $scope.returnitems = [];
+                    }
+                    $scope.returnitems.push(angular.copy(transaction));
+                    transaction.rq = undefined;
+                }
+            });
+            $scope.material.returnitems = $scope.returnitems;
+            $scope.op=undefined;
+            $scope.toggle(index);
+        };
+
+        $scope.toggle = function(index) {
+            $scope.material.op = undefined;
+            $scope.select(index);
+        };
+
+        function isReturnTransactionsValid() {
+            return ($scope.transactions.results.every(isTransactionValid));
+        }
+
+        $scope.saveEditedReturnTransactions = function(index) {
+            if (!isReturnItemsValid()) {
+                return;
+            }
+            if($scope.atd == '2' && checkNullEmpty($scope.transaction.date)){
+                $scope.showWarning($scope.resourceBundle['trn.atd.mandatory']);
+                return;
+            }
+            $scope.material.returnitems = $scope.returnitems;
+            if ($scope.returnitems.length > 0 && checkNotNullEmpty($scope.returnitems[0].lkId)) {
+                var dent = {eid: $scope.returnitems[0].lkId, enm:$scope.returnitems[0].lknm};
+                $scope.transaction.dent = dent;
+            }
+            $scope.op=undefined;
+            $scope.toggle(index);
+        };
+
+        function isReturnItemsValid() {
+            return ($scope.returnitems.every(isReturnQuantityValid) && $scope.returnitems.every(isTransactionValid));
+        }
+
+        function isReturnQuantityValid(transaction) {
+            if (checkNullEmpty(transaction.rq) || transaction.rq == 0) {
+                $scope.showWarning($scope.resourceBundle['invalid.return.quantity'] + " " + $scope.resourceBundle['for'] + " " + transaction.mnm);
+                return false;
+            }
+            return true;
+        }
+
+        function isTransactionValid(transaction) {
+            if (checkNotNullEmpty(transaction.rq)) {
+                if (transaction.rq > transaction.q) {
+                    if ($scope.transaction.type == 'ri') {
+                        $scope.showWarning($scope.resourceBundle['return.quantity'] + " (" + transaction.rq + ") " + $scope.resourceBundle['cannot.exceed.issued.quantity'] + " (" + transaction.q + ") " + $scope.resourceBundle['for'] + " " + $scope.mnm + ".");
+                        return false;
+                    } else if ($scope.transaction.type == 'ro') {
+                        $scope.showWarning($scope.resourceBundle['return.quantity'] + " (" + transaction.rq + ") " + $scope.resourceBundle['cannot.exceed.received.quantity'] + " (" + transaction.q + ") " + $scope.resourceBundle['for'] + " " + $scope.mnm + ".");
+                        return false;
+                    }
+                }
+                if ($scope.transaction.type == 'ro') {
+                    if (checkNotNullEmpty(transaction.bid)) {
+                        if (checkNullEmpty($scope.material.bidbatchDetMap[transaction.bid])) {
+                            $scope.showWarning($scope.resourceBundle['batch'] + " " + transaction.bid + " " + $scope.resourceBundle['return.not.allowed.non.existing.batch'] + " " + $scope.mnm + ".");
+                            return false;
+                        } else if (transaction.rq > $scope.material.bidbatchDetMap[transaction.bid].atpstk) {
+                            $scope.showWarning($scope.resourceBundle['return.quantity'] + ' (' + transaction.rq + ') ' + $scope.resourceBundle['cannotexceedstock'] + ' (' + $scope.material.bidbatchDetMap[transaction.bid].atpstk + ') ' + $scope.resourceBundle['for'] + " " + $scope.resourceBundle['batch.lower'] + " " + transaction.bid + " " + $scope.resourceBundle['of'] + " " + $scope.mnm + ".");
+                            return false;
+                        }
+                    } else if (transaction.rq > $scope.material.atpstock){
+                        $scope.showWarning($scope.resourceBundle['return.quantity'] + ' (' + transaction.rq + ') ' + $scope.resourceBundle['cannotexceedstock'] + ' (' + $scope.material.atpstock + ') ' + $scope.resourceBundle['for'] + " " + $scope.mnm + ".");
+                        return false;
+                    }
+                }
+                if (checkNotNullEmpty($scope.material.name.huName) && checkNotNullEmpty($scope.material.name.huQty) && checkNotNullEmpty(transaction.rq) && transaction.rq % $scope.material.name.huQty != 0) {
+                    $scope.showWarning(transaction.rq + " " + $scope.resourceBundle['of'] + " " + $scope.material.name.mnm + " " + $scope.resourceBundle['handling.units.mismatch.message'] + " " + $scope.material.name.huName + ". " + $scope.resourceBundle['handling.units.expected.message'] + " " + $scope.material.name.huQty + " " + $scope.material.name.mnm + ".");
+                    return false;
+                }
+                var status = $scope.material.ts ? $scope.tempmatstatus : $scope.matstatus;
+                if (checkNotNullEmpty(status) && checkNullEmpty(transaction.rmst) && $scope.msm) {
+                    $scope.showWarning($scope.resourceBundle['status.required'] + " " + $scope.resourceBundle['for'] + " " + $scope.mnm + ".");
+                    return false;
+                }
+                if (checkNotNullEmpty($scope.reasons) && $scope.reasons.length > 0 && checkNullEmpty(transaction.rrsn)) {
+                    $scope.showWarning($scope.resourceBundle['reason.required']);
+                    return false;
+                }
+                if (checkNotNullEmpty($scope.transaction.date) && checkNotNullEmpty(transaction.atd)) {
+                    var type = undefined;
+                    if ($scope.transaction.type == 'ri') {
+                        type = 'issue';
+                    } else if ($scope.transaction.type == 'ro'){
+                        type = 'receipt';
+                    } else {
+                        return false;
+                    }
+                    var retAtd = string2Date(formatDate($scope.transaction.date), 'dd/mm/yyyy', '/');
+                    var transAtd = string2Date(transaction.atd, 'dd/mm/yyyy', '/');
+                    if (retAtd < transAtd) {
+                        $scope.showWarning($scope.resourceBundle['return.transaction.atd.message'] + " " + type + " " + $scope.resourceBundle['for'] + " " + $scope.mnm + ".");
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        $scope.$watch("offset", function(){
+            $scope.fetch();
+        });
+
+        $scope.validate = function (transaction, index, idPrefix, type) {
+            var redraw = false;
+            var material = $scope.material;
+            var isInvalid = false;
+            if(type == undefined || type == 'q') {
+                if(transaction.displayMeta != transaction.rq > 0) {
+                    redraw = true;
+                }
+                transaction.displayMeta = transaction.rq > 0;
+                if (checkNotNullEmpty(transaction.rq) && transaction.rq > transaction.q) {
+                    if ($scope.transaction.type == 'ri') {
+                        showPopup($scope, transaction, idPrefix + transaction.id,
+                            $scope.resourceBundle['return.quantity'] + " (" + transaction.rq + ") " + $scope.resourceBundle['cannot.exceed.issued.quantity'] + " (" + transaction.q + ") " + $scope.resourceBundle['for'] + " " + $scope.mnm,
+                            index, $timeout);
+                        isInvalid = true;
+                    } else if ($scope.transaction.type == 'ro') {
+                        showPopup($scope, transaction, idPrefix + transaction.id, $scope.resourceBundle['return.quantity'] + " (" + transaction.rq + ") " + $scope.resourceBundle['cannot.exceed.received.quantity'] + " (" + transaction.q + ") " + $scope.resourceBundle['for'] + " " + $scope.mnm,
+                            index, $timeout);
+                        isInvalid = true;
+                    }
+                }
+
+                if (!isInvalid && $scope.transaction.type == 'ro') {
+                    if (checkNotNullEmpty(transaction.bid)) {
+                        if (checkNullEmpty($scope.material.bidbatchDetMap[transaction.bid])) {
+                            showPopup($scope, transaction, idPrefix + transaction.id,
+                                $scope.resourceBundle['batch'] + " " + transaction.bid + " " + $scope.resourceBundle['return.not.allowed.non.existing.batch'] + " " + $scope.mnm + ".",
+                                index, $timeout);
+                            isInvalid = true;
+                        } else if (transaction.rq > $scope.material.bidbatchDetMap[transaction.bid].atpstk) {
+                            showPopup($scope, transaction, idPrefix + transaction.id, $scope.resourceBundle['return.quantity'] + ' (' + transaction.rq + ') ' + $scope.resourceBundle['cannotexceedstock'] + ' (' + $scope.material.bidbatchDetMap[transaction.bid].atpstk + ') ' + $scope.resourceBundle['for'] + " " + $scope.resourceBundle['batch.lower'] + " " + transaction.bid + " " + $scope.resourceBundle['of'] + " " + $scope.mnm + ".",
+                                index, $timeout);
+                            isInvalid = true;
+                        }
+                    } else if (transaction.rq > $scope.material.atpstock) {
+                        showPopup($scope, transaction, idPrefix + transaction.id, $scope.resourceBundle['return.quantity'] + ' (' + transaction.rq + ') ' + $scope.resourceBundle['cannotexceedstock'] + ' (' + material.atpstock + ') ' + $scope.resourceBundle['for'] + " " + $scope.mnm + ".",
+                            index, $timeout);
+                        isInvalid = true;
+                    }
+                }
+
+                if (!isInvalid && checkNotNullEmpty(material.name.huName) && checkNotNullEmpty(material.name.huQty) && checkNotNullEmpty(transaction.rq) && transaction.rq % material.name.huQty != 0) {
+                    showPopup($scope, transaction, idPrefix + transaction.id, transaction.rq + " " + $scope.resourceBundle['of'] + " " + material.name.mnm + " " + $scope.resourceBundle['handling.units.mismatch.message'] + " " + material.name.huName + ". " + $scope.resourceBundle['handling.units.expected.message'] + " " + material.name.huQty + " " + material.name.mnm + ".",
+                        index, $timeout);
+                    isInvalid = true;
+                }
+            }
+
+            if(type == undefined || type == 's') {
+                var status = material.ts ? $scope.tempmatstatus : $scope.matstatus;
+                if (checkNotNullEmpty(status) && checkNullEmpty(transaction.rmst) && $scope.msm) {
+                    showPopup($scope, transaction, idPrefix + transaction.id, $scope.resourceBundle['status.required'],
+                        index, $timeout, false, true);
+                    isInvalid = true;
+                }
+            }
+
+            if(type == undefined || type == 'r') {
+                if (checkNotNullEmpty($scope.reasons) && $scope.reasons.length > 0 && checkNullEmpty(transaction.rrsn)) {
+                    showPopup($scope, transaction, idPrefix + transaction.id, $scope.resourceBundle['reason.required'],
+                        index, $timeout, false, false, true);
+                    isInvalid = true;
+                }
+            }
+            if(redraw) {
+                redrawAllPopup();
+            }
+            return !isInvalid;
+        };
+
+
+        function redrawAllPopup(type) {
+            var index = -1;
+            var items = $scope.op == 'edit' ? $scope.returnItems : $scope.transactions.results;
+            angular.forEach(items,function (item) {
+                index += 1;
+                if (item.popupMsg) {
+                    type == 'show' ?
+                        $scope.validate(item, index, $scope.op == 'edit' ? 'er' : 'r', 'q') :
+                        $scope.hidePopup(item, index, $scope.op == 'edit' ? 'er' : 'r', 'q');
+                }
+                if (item.sPopupMsg) {
+                    type == 'show' ?
+                        $scope.validate(item, index, ($scope.op == 'edit' ? 'ers' : 'rs') + (item.tm ? 't' : ''), 's') :
+                        $scope.hidePopup(item, index, ($scope.op == 'edit' ? 'ers' : 'rs') + (item.tm ? 't' : ''), 's');
+                }
+                if (item.rPopupMsg) {
+                    type == 'show' ?
+                        $scope.validate(item, index, $scope.op == 'edit' ? 'err' : 'rr', 'r') :
+                        $scope.hidePopup(item, index, $scope.op == 'edit' ? 'err' : 'rr', 'r');
+                }
+
+            });
+            if (type != 'show') {
+                $timeout(function () {
+                    redrawAllPopup('show');
+                }, 0);
+            }
+        }
+
+        $scope.hidePopup = function(transaction, index, idPrefix, type) {
+            hidePopup($scope, transaction, (idPrefix ? idPrefix : '') + transaction.id, index, $timeout, false, type == 's', type == 'r');
+        };
+
+        $scope.isReturnEnteredForTransaction = function(id) {
+            if (checkNotNullEmpty($scope.returnitems)) {
+                return $scope.returnitems.some(function(returnitem){
+                    return (returnitem.sno == id);
+                });
+            }
+            return false;
+        };
+
+        $scope.removeFromReturnItems = function(id) {
+            if (checkNotNullEmpty($scope.returnitems)) {
+                for (var i = 0;  i < $scope.returnitems.length; i++) {
+                    if (id == $scope.returnitems[i].sno) {
+                        $scope.returnitems.splice(i,1);
+                    }
+                }
+            }
+        }
+    }]);
+

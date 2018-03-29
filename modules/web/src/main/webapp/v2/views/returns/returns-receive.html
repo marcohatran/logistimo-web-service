@@ -1,0 +1,143 @@
+<!--
+  ~ Copyright © 2018 Logistimo.
+  ~
+  ~ This file is part of Logistimo.
+  ~
+  ~ Logistimo software is a mobile & web platform for supply chain management and remote temperature monitoring in
+  ~ low-resource settings, made available under the terms of the GNU Affero General Public License (AGPL).
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General
+  ~ Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any
+  ~ later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+  ~ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+  ~ for more details.
+  ~
+  ~ You should have received a copy of the GNU Affero General Public License along with this program.  If not, see
+  ~ <http://www.gnu.org/licenses/>.
+  ~
+  ~ You can be released from the requirements of the license by purchasing a commercial license. To know more about
+  ~ the commercial license, please contact us at opensource@logistimo.com
+  -->
+
+<div class="box topbox" ng-controller="ReceiveReturnsController">
+    <h3>Receive the returns <a ng-href="#/orders/returns/detail/{{returns.return_id}}/">{{returns.return_id}}</a>
+        <span ng-if="returns.order_type !=0">
+            ({{resourceBundle['order']}}: <a ng-href="#/orders/detail/{{returns.order_id}}/" target="_blank">{{returns.order_id}}</a>)
+        </span>
+        <span ng-if="returns.order_type == 0">
+            <span ng-hide="transRelease">({{resourceBundle['transactions.transfer.upper']}}</span>
+            <span ng-show="transRelease">({{resourceBundle['transactions.release.upper']}}</span>
+            : <a ng-href="#/orders/transfers/detail/{{returns.order_id}}/">{{returns.order_id}}</a>)
+        </span>
+    </h3>
+    <hr/>
+    <div class="row mt10">
+        <div class="col-sm-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    {{resourceBundle['customer']}}
+                </div>
+                <div class="panel-body">
+                    <div class="row lPad5 mb5">
+                        <div class="col-sm-12">
+                            <p>
+                                <a class="capitalize" ng-href="#/setup/entities/detail/{{returns.customer.entity_id}}" target="_blank">
+                                    {{returns.customer.entity_name}}</a>
+                            </p>
+                            <p class="capitalize">{{returns.customer.entity_address}}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    {{resourceBundle['vendor']}}
+                </div>
+                <div class="panel-body">
+                    <div class="row lPad5 mb5">
+                        <div class="col-sm-12">
+                            <p>
+                                <a class="capitalize" ng-href="#/setup/entities/detail/{{returns.vendor.entity_id}}" target="_blank">
+                                    {{returns.vendor.entity_name}}</a>
+                            </p>
+                            <p class="capitalize">{{returns.vendor.entity_address}}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    {{resourceBundle['items']}}
+                </div>
+                <div class="panel-body">
+                    <table class="table table-condensed table-hover table-logistimo">
+                        <tr>
+                            <th class="col-sm-0-1 text-center">SI.No.</th>
+                            <th class="col-sm-2 text-left">{{resourceBundle['material']}}</th>
+                            <th class="col-sm-2 text-center">Shipped</th>
+                        </tr>
+                        <tbody ng-repeat="item in returns.items">
+                        <tr>
+                            <td class="text-center">{{$index + 1}}</td>
+                            <td class="text-left">{{item.material_name}}</td>
+                            <td class="text-center">{{item.return_quantity}}
+                                <div ng-if="isDef(item.batches)" class="dummyLink">
+                                    <table  class="table table-striped table-nobot-mar table-condensed">
+                                        <tbody>
+                                        <tr>
+                                            <td>{{resourceBundle['batch']}}</td>
+                                            <td>{{resourceBundle['expiry']}}</td>
+                                            <td>Shipped</td>
+                                        </tr>
+                                        <tr ng-repeat="batch in item.batches">
+                                            <td>{{batch.batch_id}}</td>
+                                            <td>{{batch.expiry}}</td>
+                                            <td>{{batch.return_quantity}}
+                                                <span class="litetext" ng-show="isDef(batch.material_status)">{{batch.material_status}}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <div class="row mt10">
+                        <label class="col-sm-2 control-label">Comment </label>
+                        <div class="col-sm-5">
+                            <textarea class="form-control" rows="4" ng-model="comment"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="form-group">
+            <div class="col-sm-12">
+                <div class="pull-right">
+                    <button type="button" class="btn btn-sm btn-primary" ng-click="doReceive()">{{resourceBundle['receive']}}</button>
+                    <button type="button" class="btn btn-sm btn-default" ng-click="toggleReceive(false)">{{resourceBundle['cancel']}}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright © 2017 Logistimo.
+  ~ Copyright © 2018 Logistimo.
   ~
   ~ This file is part of Logistimo.
   ~
@@ -139,8 +139,7 @@
         </div>
         <div class="row action-bar" ng-show="isUndef(orderId)">
             <div class="col-sm-8 noLRpad" >
-
-                    <export ng-show="resSize > 0" callback="exportData()"></export>
+                    <export ng-show="resSize > 0"></export>
             </div>
 
             <div class="col-sm-4 noLRpad" ng-show="(iMan || (entity!= null && entity.id != null && entity.id != ''))" >
@@ -181,7 +180,6 @@
                     <thead>
                     <tr>
                         <th></th>
-                        <th><input type="checkbox" ng-change="selectAll(selAll)" ng-model='selAll'/>
                         <th class="text-center">{{resourceBundle['serialnum']}}</th>
                         <th class="text-center">{{resourceBundle['order']}}</th>
                         <th class="text-center">{{resourceBundle['items']}}</th>
@@ -197,7 +195,6 @@
                     <tbody ng-repeat="item in filtered = orders.results" ng-controller="NoController">
                     <tr class="clickable" ng-click="openOrder(item)">
                         <td><span class="glyphicons glyphicons-bring-to-front tglyph" ng-if="currentDomain != item.sdid" ng-click="switchDomain(item.sdid,item.sdname)" uib-tooltip="{{item.sdname}}" tooltip-append-to-body="true"></span></td>
-                        <td><input type="checkbox" checklist-model="selectedOrderIds" checklist-value="item.id" ng-click="$event.stopPropagation();"/></td>
                         <td class="text-center">{{item.sno}}</td>
                         <td class="text-center">{{item.id}}</td>
                         <td class="text-center">{{item.size}}</td>

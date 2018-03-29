@@ -1,0 +1,240 @@
+<!--
+  ~ Copyright © 2018 Logistimo.
+  ~
+  ~ This file is part of Logistimo.
+  ~
+  ~ Logistimo software is a mobile & web platform for supply chain management and remote temperature monitoring in
+  ~ low-resource settings, made available under the terms of the GNU Affero General Public License (AGPL).
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General
+  ~ Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any
+  ~ later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+  ~ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+  ~ for more details.
+  ~
+  ~ You should have received a copy of the GNU Affero General Public License along with this program.  If not, see
+  ~ <http://www.gnu.org/licenses/>.
+  ~
+  ~ You can be released from the requirements of the license by purchasing a commercial license. To know more about
+  ~ the commercial license, please contact us at opensource@logistimo.com
+  -->
+
+<div class="box topbox" ng-controller="CreateReturnsController">
+    <h3>Create returns for
+        <span ng-show="returnOrder.oty == 1"> {{resourceBundle['order']}}:  <a ng-href="#/orders/detail/{{returnOrder.id}}/">{{returnOrder.id}}</a></span>
+        <span ng-show="returnOrder.oty == 0">
+            <span ng-hide="transRelease"> {{resourceBundle['transactions.transfer.upper']}}: </span>
+            <span ng-show="transRelease"> {{resourceBundle['transactions.release.upper']}}: </span>
+              <a ng-href="#/orders/transfers/detail/{{returnOrder.id}}/">{{returnOrder.id}}</a>
+            </span>
+    </h3>
+    <hr/>
+    <div class="row mt10">
+        <div class="col-sm-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    {{resourceBundle['customer']}}
+                </div>
+                <div class="panel-body">
+                    <div class="row lPad5 mb5">
+                        <div class="col-sm-12">
+                            <p><a class="capitalize"
+                                  ng-href="#/setup/entities/detail/{{returnOrder.eid}}" target="_blank">{{returnOrder.enm}}</a></p>
+                            <p class="capitalize">{{returnOrder.eadd}}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    {{resourceBundle['vendor']}}
+                </div>
+                <div class="panel-body">
+                    <div class="row lPad5 mb5">
+                        <div class="col-sm-12">
+                            <p><a class="capitalize"
+                                  ng-href="#/setup/entities/detail/{{returnOrder.vid}}" target="_blank">{{returnOrder.vnm}}</a></p>
+                            <p class="capitalize">{{returnOrder.vadd}}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    Items
+                </div>
+                <div class="panel-body">
+                    <table class="table table-condensed table-hover table-logistimo">
+                        <tr>
+                            <th class="col-sm-1 text-center">{{resourceBundle['serialnum']}}</th>
+                            <th class="col-sm-2 ">{{resourceBundle['material']}}</th>
+                            <th class="col-sm-1 text-center">{{resourceBundle['ordered']}}</th>
+                            <th class="col-sm-1 text-center">{{resourceBundle['fulfilled']}}</th>
+                            <th class="col-sm-1 text-center">{{resourceBundle['returned']}}</th>
+                            <th class="col-sm-6 text-center">{{resourceBundle['return']}}</th>
+                        </tr>
+                        <tr ng-repeat="item in returnItems">
+                            <td class="text-center"><p class="cbx">{{$index + 1}}</p></td>
+                            <td>
+                                <p class="cbx">
+                                    <a href="#/setup/materials/all/detail/{{item.id}}" target="_blank">{{item.nm}}</a>
+                                </p>
+                            </td>
+                            <td class="text-center"><p class="cbx">{{item.q}}</p></td>
+                            <td class="text-center">
+                                <p class="cbx">{{item.fq}}</p>
+                            </td>
+                            <td class="text-center">
+                                <p class="cbx">{{item.returnedQuantity}}</p>
+                            </td>
+                            <td>
+                                <div ng-if="isUndef(item.returnBatches)" class="col-sm-6 col-sm-offset-3">
+                                    <input class="form-control" only-digits ng-model="item.returnQuantity"
+                                           id="{{item.id}}{{$index}}"
+                                           ng-class="{'red-border':item.invalidPopup}"
+                                           uib-popover="{{item.popupMsg}}" popover-trigger="showpopup"
+                                           ng-focus="closePopup(item,$index)"
+                                           ng-blur="validateQuantity(item,$index)">
+                                    <div ng-show="item.displayMeta">
+                                                <span class="litetext text-left" ng-class="{'required' : transConfig.rosm}"
+                                                      ng-show="(!item.tm && isDef(matstatus)) || (item.tm && isDef(tempmatstatus))">{{resourceBundle['inventory.material.status']}}</span>
+                                        <select ng-show="isDef(matstatus) && !item.tm" ng-model="item.returnMaterialStatus" class="form-control"
+                                                ng-class="{'red-border': item.sinvalidPopup}"
+                                                uib-popover="{{item.sPopupMsg}}"
+                                                ng-blur="validateStatus(item, $index)"
+                                                ng-focus="closePopup(item, $index, 's')"
+                                                id="s{{item.id}}{{$index}}"
+                                                popover-trigger="showpopup">
+                                            <option ng-repeat="status in matstatus" value="{{status}}">{{status|| resourceBundle['pleaseselect']}}
+                                            </option>
+                                        </select>
+                                        <select ng-show="isDef(tempmatstatus) && item.tm" ng-model="item.returnMaterialStatus" class="form-control"
+                                                ng-class="{'red-border': item.sinvalidPopup}"
+                                                uib-popover="{{item.sPopupMsg}}"
+                                                ng-blur="validateStatus(item, $index, true)"
+                                                ng-focus="closePopup(item, $index, 'st')"
+                                                id="st{{item.id}}{{$index}}"
+                                                popover-trigger="showpopup">
+                                            <option ng-repeat="status in tempmatstatus" value="{{status}}">{{status|| resourceBundle['pleaseselect']}}
+                                            </option>
+                                        </select>
+
+                                        <div ng-show="item.reasons && item.reasons.length > 0">
+                                            <span class="litetext text-left required" >{{resourceBundle['reason']}}</span>
+                                            <select class="form-control" ng-model="item.returnReason"
+                                                    ng-class="{'red-border': item.rinvalidPopup}"
+                                                    uib-popover="{{item.rPopupMsg}}"
+                                                    ng-blur="validateReason(item, $index, true)"
+                                                    ng-focus="closePopup(item, $index, 'r')"
+                                                    id="r{{item.id}}{{$index}}"
+                                                    popover-trigger="showpopup">
+                                                <option ng-repeat="reason in item.reasons track by $index" value="{{reason}}" ng-selected="item.returnReason == reason">{{reason || '--' + resourceBundle['select'] + ' ' + resourceBundle['reason'] + '--'}}</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <table class="table table-striped table-nobot-mar table-condensed"
+                                       ng-if="item.returnBatches && item.returnBatches.length > 0" style="margin-left: auto; margin-right: auto;">
+                                    <thead>
+                                    <tr>
+                                        <th class=" text-center">{{resourceBundle['batch']}}</th>
+                                        <th class=" text-center">{{resourceBundle['expiry']}}</th>
+                                        <th class=" text-center">{{resourceBundle['fulfilled']}}</th>
+                                        <th class=" text-center">{{resourceBundle['returned']}}</th>
+                                        <th class=" text-center">{{resourceBundle['quantity']}}</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr ng-repeat="batch in item.returnBatches" ng-hide="isUndef(batch.fq) || batch.fq == 0 || batch.fq == batch.returnedQuantity">
+                                        <td class=" text-center">{{batch.id}}</td>
+                                        <td class=" text-center">{{batch.e}}</td>
+                                        <td class=" text-center">{{batch.fq}}</td>
+                                        <td class=" text-center">{{batch.returnedQuantity || 0}}</td>
+                                        <td class=" text-center">
+                                            <input class="form-control" only-digits ng-model="batch.returnQuantity"
+                                                   id="{{item.id}}{{batch.id}}{{$index}}"
+                                                   ng-class="{'red-border':batch.invalidPopup}"
+                                                   uib-popover="{{batch.popupMsg}}" popover-trigger="showpopup"
+                                                   ng-focus="closeBatchPopup(item, batch, $index)"
+                                                   ng-blur="validateBatchQuantity(item, batch, $index)">
+                                            <div ng-show="batch.displayMeta">
+                                                <span class="litetext text-left" ng-class="{'required' : transConfig.rosm}"
+                                                      ng-show="(!item.tm && isDef(matstatus)) || (item.tm && isDef(tempmatstatus))">{{resourceBundle['inventory.material.status']}}</span>
+                                                <select ng-show="isDef(matstatus) && !item.tm" ng-model="batch.returnMaterialStatus" class="form-control"
+                                                        ng-class="{'red-border': batch.sinvalidPopup}"
+                                                        uib-popover="{{batch.sPopupMsg}}"
+                                                        ng-blur="validateBatchStatus(item, batch, $index)"
+                                                        ng-focus="closeBatchPopup(item, batch, $index,'s')"
+                                                        id="s{{item.id}}{{batch.id}}{{$index}}"
+                                                        popover-trigger="showpopup">
+                                                    <option ng-repeat="status in matstatus" value="{{status}}">{{status|| resourceBundle['pleaseselect']}}
+                                                    </option>
+                                                </select>
+                                                <select ng-show="isDef(tempmatstatus) && item.tm" ng-model="batch.returnMaterialStatus" class="form-control"
+                                                        ng-class="{'red-border': batch.sinvalidPopup}"
+                                                        uib-popover="{{batch.sPopupMsg}}"
+                                                        ng-blur="validateBatchStatus(item, batch, $index, true)"
+                                                        ng-focus="closeBatchPopup(item, batch, $index,'st')"
+                                                        id="st{{item.id}}{{batch.id}}{{$index}}"
+                                                        popover-trigger="showpopup">
+                                                    <option ng-repeat="status in tempmatstatus" value="{{status}}">{{status|| resourceBundle['pleaseselect']}}
+                                                    </option>
+                                                </select>
+
+                                                <div ng-show="item.reasons && item.reasons.length > 0">
+                                                    <span class="litetext text-left required" >{{resourceBundle['reason']}}</span>
+                                                    <select class="form-control" ng-model="batch.returnReason"
+                                                            ng-class="{'red-border': batch.rinvalidPopup}"
+                                                            uib-popover="{{batch.rPopupMsg}}"
+                                                            ng-blur="validateBatchReason(item, batch, $index, true)"
+                                                            ng-focus="closeBatchPopup(item, batch, $index,'r')"
+                                                            id="r{{item.id}}{{batch.id}}{{$index}}"
+                                                            popover-trigger="showpopup">
+                                                        <option ng-repeat="reason in item.reasons track by $index" value="{{reason}}" ng-selected="batch.returnReason == reason">{{reason || '--' + resourceBundle['select'] + ' ' + resourceBundle['reason'] + '--'}}</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <div class="row mt10">
+                        <label class="col-sm-2 control-label">Comment </label>
+                        <div class="col-sm-5">
+                            <textarea class="form-control" rows="4" ng-model="comment"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="form-group">
+            <div class="col-sm-12">
+                <div class="pull-right">
+                    <button type="button" ng-disabled="invalidPopup > 0" class="btn btn-sm btn-primary" ng-click="create()">{{resourceBundle['submit']}}</button>
+                    <button type="button" class="btn btn-sm btn-default" ng-click="cancel()">{{resourceBundle['cancel']}}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

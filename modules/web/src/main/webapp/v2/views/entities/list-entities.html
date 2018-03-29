@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright © 2017 Logistimo.
+  ~ Copyright © 2018 Logistimo.
   ~
   ~ This file is part of Logistimo.
   ~
@@ -61,7 +61,7 @@
                         <span ng-show="iSU || dp.ir"> {{resourceBundle['materials.remove']}}</span>
                         <span ng-show="!iSU && dp.ia && !dp.ir"> {{resourceBundle['materials']}}</span>
                     </a>
-                <export ng-show="vw=='t' && !iAU" callback="exportData()"></export>
+                <export ng-show="vw=='t' && !iAU"></export>
                 <button ng-show="vw=='t' && (iSU || dp.er)" type="button" class="btn btn-sm btn-default" ng-click="deleteEntities()">
                     {{resourceBundle['kiosks.remove']}}
                 </button>
@@ -171,7 +171,7 @@
                         <span ng-show="iSU || dp.ir"> {{resourceBundle['materials.remove']}}</span>
                         <span ng-show="!iSU && dp.ia && !dp.ir"> {{resourceBundle['materials']}}</span>
                     </a>
-                    <export ng-show="vw=='t' && !iAU" callback="exportData()"></export>
+                    <export ng-show="vw=='t' && !iAU"></export>
                     <button ng-show="vw=='t' && (iSU || dp.er)" type="button" class="btn btn-sm btn-default" ng-click="deleteEntities()">
                         {{resourceBundle['kiosks.remove']}}
                     </button>

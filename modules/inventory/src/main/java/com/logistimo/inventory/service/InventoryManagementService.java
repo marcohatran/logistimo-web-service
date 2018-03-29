@@ -24,6 +24,7 @@
 package com.logistimo.inventory.service;
 
 import com.logistimo.config.models.DomainConfig;
+import com.logistimo.config.models.ReturnsConfig;
 import com.logistimo.entities.models.LocationSuggestionModel;
 import com.logistimo.inventory.entity.IInvAllocation;
 import com.logistimo.inventory.entity.IInventoryMinMaxLog;
@@ -44,6 +45,7 @@ import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.jdo.PersistenceManager;
 
@@ -258,6 +260,13 @@ public interface InventoryManagementService {
                                    boolean atd, String reason)
       throws ServiceException;
 
+  Results getInventoryTransactions(Date sinceDate, Date untilDate, Long domainId, Long kioskId,
+                                   Long materialId, String transType, Long linkedKioskId,
+                                   String kioskTag, String materialTag,
+                                   List<Long> kioskIds, PageParams pageParams, String bid,
+                                   boolean atd, String reason,boolean ignoreLkid)
+      throws ServiceException;
+
   /**
    * Get inventory transactions by tracking id
    */
@@ -269,33 +278,33 @@ public interface InventoryManagementService {
    * @return Erroneous transactions with error message in the object
    */
   CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
-                                                 List<ITransaction> inventoryTransactions)
+                                                            List<ITransaction> inventoryTransactions)
       throws ServiceException, DuplicationException;
 
   CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
-                                                 List<ITransaction> inventoryTransactions,
-                                                 PersistenceManager pm)
+                                                            List<ITransaction> inventoryTransactions,
+                                                            PersistenceManager pm)
       throws ServiceException, DuplicationException;
 
   CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
-                                                 List<ITransaction> inventoryTransactions,
-                                                 boolean skipVal)
+                                                            List<ITransaction> inventoryTransactions,
+                                                            boolean skipVal)
       throws ServiceException, DuplicationException;
 
   CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
-                                                 List<ITransaction> inventoryTransactions,
-                                                 boolean skipVal, PersistenceManager pm)
+                                                            List<ITransaction> inventoryTransactions,
+                                                            boolean skipVal, PersistenceManager pm)
       throws ServiceException, DuplicationException;
 
   CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
-                                                 List<ITransaction> inventoryTransactions,
-                                                 boolean skipVal, boolean skipPred)
+                                                            List<ITransaction> inventoryTransactions,
+                                                            boolean skipVal, boolean skipPred)
       throws ServiceException, DuplicationException;
 
   CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
-                                                 List<ITransaction> inventoryTransactions,
-                                                 boolean skipVal, boolean skipPred,
-                                                 PersistenceManager pm)
+                                                            List<ITransaction> inventoryTransactions,
+                                                            boolean skipVal, boolean skipPred,
+                                                            PersistenceManager pm)
       throws ServiceException, DuplicationException;
 
 
@@ -312,9 +321,9 @@ public interface InventoryManagementService {
    */
   @SuppressWarnings({"unchecked", "rawtypes"})
   CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
-                                                 List<ITransaction> inventoryTransactions,
-                                                 List<IInvntry> invntryList, boolean skipVal,
-                                                 boolean skipPred, PersistenceManager pm)
+                                                            List<ITransaction> inventoryTransactions,
+                                                            List<IInvntry> invntryList, boolean skipVal,
+                                                            boolean skipPred, PersistenceManager pm)
       throws ServiceException, DuplicationException;
 
   /**
@@ -488,5 +497,24 @@ public interface InventoryManagementService {
   BigDecimal getUnusableStock(Long kId, Long mId) throws ServiceException;
 
   Long getInvMaterialCount(Long domainId, Long tagId) throws ServiceException;
+
+
+  Optional<ReturnsConfig> getReturnsConfig(Long entityId);
+
+  Results getInventoryTransactions(Date sinceDate, Date untilDate, Long domainId,
+                                   Long kioskId, Long materialId, List<String> transTypes,
+                                   Long linkedKioskId, String kioskTag,
+                                   String materialTag, List<Long> kioskIds,
+                                   PageParams pageParams, String bid,
+                                   boolean atd, String reason, List<String> reasons, boolean ignoreLkid,
+                                   PersistenceManager pm,boolean excludeReasons) throws ServiceException;
+
+   Results getInventoryTransactions(Date sinceDate, Date untilDate, Long domainId,
+                                          Long kioskId, Long materialId, List<String> transTypes,
+                                          Long linkedKioskId, String kioskTag,
+                                          String materialTag, List<Long> kioskIds,
+                                          PageParams pageParams, String bid,
+                                          boolean atd, String reason, List<String> reasons, boolean ignoreLkid,
+                                          PersistenceManager pm) throws ServiceException;
 
 }

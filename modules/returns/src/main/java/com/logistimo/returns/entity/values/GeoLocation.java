@@ -26,10 +26,19 @@ package com.logistimo.returns.entity.values;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Value;
+
 /**
  * @author Mohan Raja
  */
 @Embeddable
+@NoArgsConstructor
+@Data
+@AllArgsConstructor
 public class GeoLocation {
 
   @Column(name = "latitude")
@@ -43,33 +52,5 @@ public class GeoLocation {
 
   @Column(name = "geo_error")
   private String geoError;
-
-  @SuppressWarnings("unused")
-  private GeoLocation() {
-    //Added to support JPA
-  }
-
-  public GeoLocation(Double latitude, Double longitude, Double geoAccuracy, String geoError) {
-    this.latitude = latitude;
-    this.longitude = longitude;
-    this.geoAccuracy = geoAccuracy;
-    this.geoError = geoError;
-  }
-
-  public Double getLatitude() {
-    return latitude;
-  }
-
-  public Double getLongitude() {
-    return longitude;
-  }
-
-  public Double getGeoAccuracy() {
-    return geoAccuracy;
-  }
-
-  public String getGeoError() {
-    return geoError;
-  }
 
 }

@@ -1,3 +1,4 @@
+
 /*
  * Copyright © 2018 Logistimo.
  *
@@ -34,10 +35,19 @@ import javax.persistence.Enumerated;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Value;
+
 /**
  * @author Mohan Raja
  */
 @Embeddable
+@NoArgsConstructor
+@Data
+@AllArgsConstructor
 public class ReturnsStatus {
 
   @Enumerated(EnumType.STRING)
@@ -48,38 +58,11 @@ public class ReturnsStatus {
   private String cancelReason;
 
   @Temporal(TemporalType.TIMESTAMP)
-  @Column(name="updated_at")
+  @Column(name="status_updated_at")
   private Date updatedAt;
 
-  @Column(name="updated_by")
+  @Column(name="status_updated_by")
   private String updatedBy;
 
-  @SuppressWarnings("unused")
-  private ReturnsStatus() {
-    //Added to support JPA
-  }
-
-  public ReturnsStatus(Status status, String cancelReason, Date updatedAt, String updatedBy) {
-    this.status = status;
-    this.cancelReason = cancelReason;
-    this.updatedAt = updatedAt;
-    this.updatedBy = updatedBy;
-  }
-
-  public Status getStatus() {
-    return status;
-  }
-
-  public String getCancelReason() {
-    return cancelReason;
-  }
-
-  public Date getUpdatedAt() {
-    return updatedAt;
-  }
-
-  public String getUpdatedBy() {
-    return updatedBy;
-  }
 
 }

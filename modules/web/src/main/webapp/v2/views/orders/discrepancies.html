@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright © 2017 Logistimo.
+  ~ Copyright © 2018 Logistimo.
   ~
   ~ This file is part of Logistimo.
   ~
@@ -102,7 +102,7 @@
         </div>
         <div class="row action-bar">
             <div class="col-sm-9 noLRpad">
-                <export ng-show="resSize > 0" callback="exportData()"></export>
+                <export ng-show="resSize > 0"></export>
             </div>
             <div class="btn-group pull-right" ng-show="(entity!= null && entity.id != null && entity.id != '') && isUndef(orderId)" ng-click="showColumns()">
                 <label class="btn btn-sm btn-default" ng-model="oType" uib-btn-radio="'sle'">{{resourceBundle.salesorders}}</label>

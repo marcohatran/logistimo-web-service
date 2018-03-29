@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -227,12 +227,11 @@ invControllers.controller('StockViewsController', ['$scope', '$timeout', 'matSer
         };
 
         function getCaption() {
-            var ktag = checkNotNullEmpty($scope.etag) ? $scope.etag : 'All';
-            var mtag = checkNotNullEmpty($scope.mtag) ? $scope.mtag : 'All';
             var caption = getFilterTitle($scope.bno, $scope.resourceBundle['batch']);
-            caption += getFilterTitle(ktag, $scope.resourceBundle['include.entity.tag']);
+            caption += getFilterTitle($scope.etag, $scope.resourceBundle['include.entity.tag']);
             caption += getFilterTitle($scope.material, $scope.resourceBundle['material'], 'mnm');
             caption += getFilterTitle($scope.eetag,$scope.resourceBundle['exclude.entity.tag']);
+            caption += getFilterTitle($scope.mtag,$scope.resourceBundle['material'] + " " + $scope.resourceBundle['tag.lower']);
             caption += getFilterTitle(formatDate2Url($scope.ebf), $scope.resourceBundle['expires.before']);
             caption += getFilterTitle($scope.entity, $scope.resourceBundle['kiosk'], 'nm');
             if ($scope.loc != undefined) {
@@ -260,10 +259,10 @@ invControllers.controller('StockViewsController', ['$scope', '$timeout', 'matSer
             }
         }
 
-        $scope.exportData = function () {
+        $scope.exportData = function (isInfo) {
             var kid = checkNotNullEmpty($scope.entity) ? $scope.entity.id : undefined;
             var mid = checkNotNullEmpty($scope.material) ? $scope.material.mId : undefined;
-            var batchNo, module, state, district, taluk = undefined;
+            var batchNo, module, state, district, taluk;
             var templateId = '';
             if ($scope.loc != undefined) {
                 state = $scope.loc.state != undefined ? $scope.loc.state.label : undefined;
@@ -279,6 +278,13 @@ invControllers.controller('StockViewsController', ['$scope', '$timeout', 'matSer
                 module = 'inventory';
             }
 
+            if (isInfo) {
+                return {
+                    filters: getCaption(),
+                    type: module == "inventory" ? "Inventory" : "Batch inventory",
+                    includeBatch: module == "inventory"
+                };
+            }
             $scope.showLoading();
             exportService.exportData({
                 ktag: toCSV($scope.etag),
@@ -298,7 +304,8 @@ invControllers.controller('StockViewsController', ['$scope', '$timeout', 'matSer
                 duration: $scope.dur,
                 state: state,
                 district: district,
-                taluk: taluk
+                taluk: taluk,
+                include_batch_info: $scope.exportIncludeBatch
             }).then(function (data) {
                 $scope.showSuccess(data.data);
             }).catch(function error(msg) {
@@ -396,11 +403,18 @@ invControllers.controller('InventoryCtrl', ['$scope', 'invService', 'domainCfgSe
         };
 
         function getCaption() {
-            var mtag = checkNotNullEmpty($scope.mtag) ? $scope.mtag : 'All';
-            return getFilterTitle(mtag, $scope.resourceBundle['material'] + " " + $scope.resourceBundle['tag.lower']);
+            var caption = getFilterTitle($scope.entity, $scope.resourceBundle['kiosk'], 'nm');
+            return caption+getFilterTitle($scope.mtag, $scope.resourceBundle['material'] + " " + $scope.resourceBundle['tag.lower']);
         }
 
-        $scope.exportData = function () {
+        $scope.exportData = function (isInfo) {
+            if(isInfo) {
+                return {
+                    filters: getCaption(),
+                    type: 'Inventory',
+                    includeBatch: true
+                };
+            }
             var kid = checkNotNullEmpty($scope.entity) ? $scope.entity.id : undefined;
             var templateId = 'stock_views';
             var module = 'inventory';
@@ -411,6 +425,7 @@ invControllers.controller('InventoryCtrl', ['$scope', 'invService', 'domainCfgSe
                     filters: getCaption()
                 },
                 entity_id: kid,
+                include_batch_info: $scope.exportIncludeBatch,
                 module: module,
                 templateId: templateId
             }).then(function (data) {
@@ -1278,9 +1293,9 @@ invControllers.controller('BatchDetailCtrl', ['$scope', 'invService', 'trnServic
                         if ($scope.reasons.indexOf("") == -1) {
                             $scope.reasons.splice(0, 0, "");
                         }
-                        $scope.expBatchDet[index].showReason = !$scope.expBatchDet[index].showReason;
-                        $scope.expBatchDet[index].reason = $scope.expBatchDet[index].showReason ? $scope.defaultReason : undefined;
                     }
+                    $scope.expBatchDet[index].showReason=!$scope.expBatchDet[index].showReason;
+                    $scope.expBatchDet[index].reason = $scope.expBatchDet[index].showReason ? $scope.defaultReason: undefined;
                 }
             }
         }
@@ -1292,27 +1307,24 @@ invControllers.controller('BatchDetailCtrl', ['$scope', 'invService', 'trnServic
             ft['kioskid'] = '' + m.kId;
             ft['transtype'] = transType;
             ft['reason'] = reason;
-            ft['materials'] = {};
-            if (transType == 'p' || transType == 'w') {
-                if (checkNotNullEmpty(atd)) {
+            ft['materials'] = [];
+            if(transType == 'p' || transType == 'w') {
+                if(checkNotNullEmpty(atd)) {
                     ft['transactual'] = '' + formatDate(atd);
                 } else if (checkNullEmpty(atd) && $scope.atd == 2) {
                     $scope.showWarning("Please select actual date of physical transaction.");
                     return null;
                 }
             }
-            ft['bmaterials'] = {};
-            if (checkNotNullEmpty(m)) {
-                if (transType == 'p') {
+            ft['bmaterials'] = [];
+            if(checkNotNullEmpty(m)){
+                if(transType == 'p'){
                     m.q = 0;
                 }
-                ft['bmaterials'][m.mId + "\t" + m.bid] = {
-                    q: '' + m.q,
-                    e: formatDate(parseUrlDate(m.bexp, true)),
-                    mr: m.bmfnm,
-                    r: reason,
-                    md: formatDate(parseUrlDate(m.bmfdt, true))
-                };
+                var items = {};
+                items[m.mId + "\t" + m.bid] = {q:''+ m.q,e: formatDate(parseUrlDate(m.bexp,true)),mr: m.bmfnm,md: formatDate(parseUrlDate(m.bmfdt,true)),
+                    r : reason};
+                ft['bmaterials'].push(items);
             }
             return ft;
         };
@@ -1563,11 +1575,9 @@ invControllers.controller('AbnormalStockCtrl', ['$scope', 'invService', 'domainC
         }
 
         function getCaption() {
-            var ktag = checkNotNullEmpty($scope.etag) ? $scope.etag : 'All';
-            var materialTag = checkNotNullEmpty($scope.mtag) ? $scope.mtag : 'All';
             var caption = getFilterTitle(getEventsLabel($scope.aStock), $scope.resourceBundle['events']);
-            caption += getFilterTitle(ktag, $scope.resourceBundle['kiosk'] + " " + $scope.resourceBundle['tag.lower']);
-            caption += getFilterTitle(materialTag, $scope.resourceBundle['material'] + " " + $scope.resourceBundle['tag.lower']);
+            caption += getFilterTitle($scope.etag, $scope.resourceBundle['kiosk'] + " " + $scope.resourceBundle['tag.lower']);
+            caption += getFilterTitle($scope.mtag, $scope.resourceBundle['material'] + " " + $scope.resourceBundle['tag.lower']);
             return caption;
         }
 
@@ -1581,14 +1591,18 @@ invControllers.controller('AbnormalStockCtrl', ['$scope', 'invService', 'domainC
             }
         }
 
-        $scope.exportData = function () {
-            var ktag = checkNotNullEmpty($scope.etag) ? $scope.etag : undefined;
-            var mtag = checkNotNullEmpty($scope.mtag) ? $scope.mtag : undefined;
+        $scope.exportData = function (isInfo) {
+            if (isInfo) {
+                return {
+                    filters: getCaption(),
+                    type: 'Abnormal stock'
+                };
+            }
             $scope.showLoading();
             exportService.exportData({
                 type: checkNotNullEmpty($scope.aStock) ? $scope.aStock.et : undefined,
-                ktag: ktag,
-                mtag: mtag,
+                ktag: checkNotNullEmpty($scope.etag) ? $scope.etag : undefined,
+                mtag: checkNotNullEmpty($scope.mtag) ? $scope.mtag : undefined,
                 titles: {
                     filters: getCaption()
                 },

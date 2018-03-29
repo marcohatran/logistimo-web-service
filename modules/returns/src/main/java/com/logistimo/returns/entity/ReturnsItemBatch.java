@@ -34,21 +34,29 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.Table;
+
+import lombok.Data;
 
 /**
  * @author Mohan Raja
  */
 @Entity
 @Table(name = "RETURNS_ITEM_BATCH")
+@Data
+@NamedQueries(value = {
+    @NamedQuery(name = "ReturnsItemBatch.findByItemId", query = "SELECT r FROM ReturnsItemBatch r where r.itemId=:itemId")
+})
 public class ReturnsItemBatch {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
-  @Column(name = "id")
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "id",updatable = false)
   private Long id;
 
-  @Column(name = "item_id")
+  @Column(name = "item_id",updatable = false)
   private Long itemId;
 
   @Embedded
@@ -66,65 +74,4 @@ public class ReturnsItemBatch {
   @Embedded
   private ReturnsReceived received;
 
-  public Long getId() {
-    return id;
-  }
-
-  public void setId(Long id) {
-    if(this.id != null) {
-      throw new IllegalStateException("Id can't be modified");
-    }
-    this.id = id;
-  }
-
-  public Long getItemId() {
-    return itemId;
-  }
-
-  public void setItemId(Long itemId) {
-    if(this.itemId != null) {
-      throw new IllegalStateException("Item id can't be modified");
-    }
-    this.itemId = itemId;
-  }
-
-  public Batch getBatch() {
-    return batch;
-  }
-
-  public void setBatch(Batch batch) {
-    this.batch = batch;
-  }
-
-  public BigDecimal getQuantity() {
-    return quantity;
-  }
-
-  public void setQuantity(BigDecimal quantity) {
-    this.quantity = quantity;
-  }
-
-  public String getMaterialStatus() {
-    return materialStatus;
-  }
-
-  public void setMaterialStatus(String status) {
-    this.materialStatus = status;
-  }
-
-  public String getReason() {
-    return reason;
-  }
-
-  public void setReason(String reason) {
-    this.reason = reason;
-  }
-
-  public ReturnsReceived getReceived() {
-    return received;
-  }
-
-  public void setReceived(ReturnsReceived received) {
-    this.received = received;
-  }
 }

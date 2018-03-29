@@ -32,16 +32,22 @@ import com.logistimo.returns.models.submodels.StatusModel;
 import java.util.Date;
 import java.util.List;
 
+import lombok.Data;
+
 /**
  * @author Mohan Raja
  */
-public class MobileReturnsModel {
+@Data
+public class ReturnsModel {
 
   @SerializedName("return_id")
   private Long returnId;
 
   @SerializedName("order_id")
   private Long orderId;
+
+  @SerializedName("order_type")
+  private Integer orderType;
 
   private EntityModel customer;
 
@@ -50,96 +56,24 @@ public class MobileReturnsModel {
   private StatusModel status;
 
   @SerializedName("created_at")
-  private Date createdAt;
+  private String createdAt;
 
   @SerializedName("created_by")
   private UserModel createdBy;
 
   @SerializedName("updated_at")
-  private Date updatedAt;
+  private String updatedAt;
 
   @SerializedName("updated_by")
   private UserModel updatedBy;
 
   private List<ReturnsItemModel> items;
 
-  public Long getReturnId() {
-    return returnId;
-  }
+  @SerializedName("source_domain")
+  private Long sourceDomain;
 
-  public void setReturnId(Long returnId) {
-    this.returnId = returnId;
-  }
+  @SerializedName("source_domain_name")
+  private String sourceDomainName;
 
-  public Long getOrderId() {
-    return orderId;
-  }
 
-  public void setOrderId(Long orderId) {
-    this.orderId = orderId;
-  }
-
-  public EntityModel getCustomer() {
-    return customer;
-  }
-
-  public void setCustomer(EntityModel customer) {
-    this.customer = customer;
-  }
-
-  public EntityModel getVendor() {
-    return vendor;
-  }
-
-  public void setVendor(EntityModel vendor) {
-    this.vendor = vendor;
-  }
-
-  public StatusModel getStatus() {
-    return status;
-  }
-
-  public void setStatus(StatusModel statusModel) {
-    this.status = statusModel;
-  }
-
-  public Date getCreatedAt() {
-    return createdAt;
-  }
-
-  public void setCreatedAt(Date createdAt) {
-    this.createdAt = createdAt;
-  }
-
-  public UserModel getCreatedBy() {
-    return createdBy;
-  }
-
-  public void setCreatedBy(UserModel createdBy) {
-    this.createdBy = createdBy;
-  }
-
-  public Date getUpdatedAt() {
-    return updatedAt;
-  }
-
-  public void setUpdatedAt(Date updatedAt) {
-    this.updatedAt = updatedAt;
-  }
-
-  public UserModel getUpdatedBy() {
-    return updatedBy;
-  }
-
-  public void setUpdatedBy(UserModel updatedBy) {
-    this.updatedBy = updatedBy;
-  }
-
-  public List<ReturnsItemModel> getItems() {
-    return items;
-  }
-
-  public void setItems(List<ReturnsItemModel> items) {
-    this.items = items;
-  }
 }

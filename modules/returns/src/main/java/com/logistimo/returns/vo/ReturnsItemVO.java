@@ -21,41 +21,42 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.returns.models;
+package com.logistimo.returns.vo;
 
-import com.google.gson.annotations.SerializedName;
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.List;
+import lombok.Data;
 
 /**
- * @author Mohan Raja
+ * Created by pratheeka on 13/03/18.
  */
-public class MobileReturnsUpdateStatusRequestModel {
+@Data
+public class ReturnsItemVO {
 
-  private String comment;
-  private String embed;
-  @SerializedName("entity_id")
-  private Long entityId;
+  private Long id;
 
-  public String getComment() {
-    return comment;
-  }
+  private Long returnsId;
 
-  public void setComment(String comment) {
-    this.comment = comment;
-  }
+  private Long materialId;
 
-  public String getEmbed() {
-    return embed;
-  }
+  private BigDecimal quantity;
 
-  public void setEmbed(String embed) {
-    this.embed = embed;
-  }
+  private String materialStatus;
 
-  public Long getEntityId() {
-    return entityId;
-  }
+  private String reason;
 
-  public void setEntityId(Long entityId) {
-    this.entityId = entityId;
-  }
+  private ReturnsReceivedVO received;
+
+  private List<ReturnsItemBatchVO> returnItemBatches;
+
+  private String updatedBy;
+
+  private Date updatedAt;
+
+  private String createdBy;
+
+  private Date createdAt;
+
+
 }
