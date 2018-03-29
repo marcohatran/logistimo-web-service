@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -32,6 +32,7 @@ import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.config.models.ConfigurationException;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.InventoryConfig;
+import com.logistimo.config.models.ReturnsConfig;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.QueryConstants;
@@ -74,6 +75,7 @@ import com.logistimo.models.shipments.ShipmentItemBatchModel;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.QueryParams;
 import com.logistimo.pagination.Results;
+import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.DuplicationException;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
@@ -110,6 +112,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -118,6 +121,7 @@ import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import javax.jdo.Transaction;
+
 
 
 /**
@@ -134,6 +138,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
       "/s2/api/entities/task/updateentityactivitytimestamps";
   private static final int LOCK_RETRY_COUNT = 25;
   private static final int LOCK_RETRY_DELAY_IN_MILLISECONDS = 2400;
+  public static final String BACKEND_MESSAGES = "BackendMessages";
   private static Set<String> vldTransTypes = new HashSet<>(Arrays.asList(ITransaction.TYPE_ISSUE,
       ITransaction.TYPE_RECEIPT, ITransaction.TYPE_PHYSICALCOUNT, ITransaction.TYPE_TRANSFER,
       ITransaction.TYPE_WASTAGE, ITransaction.TYPE_RETURNS_INCOMING, ITransaction.TYPE_RETURNS_OUTGOING));
@@ -147,7 +152,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
       put(ITransaction.TYPE_TRANSFER, IEvent.STOCK_TRANSFERRED);
       put(ITransaction.TYPE_RETURNS_INCOMING, IEvent.INCOMING_RETURN_ENTERED);
       put(ITransaction.TYPE_RETURNS_OUTGOING, IEvent.OUTGOING_RETURN_ENTERED);
-      }
+    }
   });
 
   private ITagDao tagDao;
@@ -686,7 +691,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     xLogger.fine("Entered getValidBatches");
     // Form query
     String queryStr = "SELECT FROM " + JDOUtils.getImplClass(IInvntryBatch.class).getName()
-            + " WHERE mId == mIdParam && kId == kIdParam && vld == vldParam PARAMETERS Long mIdParam, Long kIdParam, Boolean vldParam ORDER BY bexp ASC";
+        + " WHERE mId == mIdParam && kId == kIdParam && vld == vldParam PARAMETERS Long mIdParam, Long kIdParam, Boolean vldParam ORDER BY bexp ASC";
     Query q = pm.newQuery(queryStr);
     if (pageParams != null) {
       QueryUtil.setPageParams(q, pageParams);
@@ -970,7 +975,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
               LockUtil.lock(String.valueOf(kioskId), LOCK_RETRY_COUNT,
                   LOCK_RETRY_DELAY_IN_MILLISECONDS);
           if (!LockUtil.isLocked(lockStatus)) {
-            ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages",
+            ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES,
                 SecurityUtils.getLocale());
             throw new ServiceException(backendMessages.getString("lockinventory.failed"));
           }
@@ -1159,7 +1164,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     }
     // Get the query and params
     String query = "SELECT FROM " + JDOUtils.getImplClass(ITransaction.class).getName()
-            + " WHERE uId == uIdParam && t > fromParam";
+        + " WHERE uId == uIdParam && t > fromParam";
     Map<String, Object> params = new HashMap<>();
     params.put("uIdParam", userId);
     params.put("fromParam", LocalDateUtil.getOffsetDate(fromDate, -1, Calendar.MILLISECOND));
@@ -1199,6 +1204,29 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     return new Results(transactions, cursor);
   }
 
+  @Override
+  public Results getInventoryTransactions(Date sinceDate, Date untilDate, Long domainId,
+                                          Long kioskId, Long materialId, List<String> transTypes,
+                                          Long linkedKioskId, String kioskTag, String materialTag,
+                                          List<Long> kioskIds, PageParams pageParams, String bid,
+                                          boolean atd, String reason, List<String> excludeReasons,
+                                          PersistenceManager pm) throws ServiceException {
+    return getInventoryTransactions(sinceDate,untilDate,domainId,kioskId,materialId,transTypes,linkedKioskId,kioskTag,materialTag,kioskIds,pageParams,bid,atd,reason,excludeReasons,pm);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public Results getInventoryTransactions(Date sinceDate, Date untilDate, Long domainId,
+                                          Long kioskId, Long materialId, String transType,
+                                          Long linkedKioskId, String kioskTag,
+                                          String materialTag, List<Long> kioskIds,
+                                          PageParams pageParams, String bid, boolean atd,
+                                          String reason,boolean ignoreLkid) throws ServiceException {
+    return getInventoryTransactions(sinceDate, untilDate, domainId, kioskId, materialId,
+        transType != null ? Collections.singletonList(transType) : null, linkedKioskId, kioskTag,
+        materialTag, kioskIds, pageParams, bid, atd, reason, null, ignoreLkid, null);
+  }
+
   @SuppressWarnings("unchecked")
   @Override
   public Results getInventoryTransactions(Date sinceDate, Date untilDate, Long domainId,
@@ -1209,7 +1237,18 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
                                           String reason) throws ServiceException {
     return getInventoryTransactions(sinceDate, untilDate, domainId, kioskId, materialId,
         transType != null ? Collections.singletonList(transType) : null, linkedKioskId, kioskTag,
-        materialTag, kioskIds, pageParams, bid, atd, reason, null, null);
+        materialTag, kioskIds, pageParams, bid, atd, reason, null, false, null);
+  }
+
+  @Override
+  public Results getInventoryTransactions(Date sinceDate, Date untilDate, Long domainId,
+                                          Long kioskId, Long materialId, List<String> transTypes,
+                                          Long linkedKioskId, String kioskTag,
+                                          String materialTag, List<Long> kioskIds,
+                                          PageParams pageParams, String bid,
+                                          boolean atd, String reason, List<String> reasons, boolean ignoreLkid,
+                                          PersistenceManager pm) throws ServiceException {
+    return getInventoryTransactions(sinceDate,untilDate,domainId,kioskId,materialId,transTypes,linkedKioskId,kioskTag,materialTag,kioskIds,pageParams,bid,atd,reason,reasons,ignoreLkid,pm,true);
   }
 
   @SuppressWarnings("unchecked")
@@ -1219,13 +1258,13 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
                                           Long linkedKioskId, String kioskTag,
                                           String materialTag, List<Long> kioskIds,
                                           PageParams pageParams, String bid,
-                                          boolean atd, String reason, List<String> excludeReasons,
-                                          PersistenceManager pm)
+                                          boolean atd, String reason, List<String> reasons, boolean ignoreLkid,
+                                          PersistenceManager pm, boolean excludeReasons)
       throws ServiceException {
     xLogger.fine("Entering getInventoryTransactions");
     Results results = transDao.getInventoryTransactions(sinceDate, untilDate, domainId, kioskId,
         materialId, transTypes, linkedKioskId, kioskTag, materialTag, kioskIds, pageParams, bid,
-        atd, reason, excludeReasons, pm);
+        atd, reason, reasons, ignoreLkid, pm, excludeReasons);
     xLogger.fine("Exiting getInventoryTransactions");
     return results;
   }
@@ -1266,43 +1305,43 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
    */
 
   public CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
-                                                        List<ITransaction> inventoryTransactions)
+                                                                   List<ITransaction> inventoryTransactions)
       throws ServiceException, DuplicationException {
     return updateInventoryTransactions(domainId, inventoryTransactions, false);
   }
 
   public CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
-                                                        List<ITransaction> inventoryTransactions,
-                                                        PersistenceManager pm)
+                                                                   List<ITransaction> inventoryTransactions,
+                                                                   PersistenceManager pm)
       throws ServiceException, DuplicationException {
     return updateInventoryTransactions(domainId, inventoryTransactions, false, pm);
   }
 
   public CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
-                                                        List<ITransaction> inventoryTransactions,
-                                                        boolean skipVal)
+                                                                   List<ITransaction> inventoryTransactions,
+                                                                   boolean skipVal)
       throws ServiceException, DuplicationException {
     return updateInventoryTransactions(domainId, inventoryTransactions, skipVal, false);
   }
 
   public CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
-                                                        List<ITransaction> inventoryTransactions,
-                                                        boolean skipVal, PersistenceManager pm)
+                                                                   List<ITransaction> inventoryTransactions,
+                                                                   boolean skipVal, PersistenceManager pm)
       throws ServiceException, DuplicationException {
     return updateInventoryTransactions(domainId, inventoryTransactions, skipVal, false, pm);
   }
 
   public CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
-                                                        List<ITransaction> inventoryTransactions,
-                                                        boolean skipVal, boolean skipPred)
+                                                                   List<ITransaction> inventoryTransactions,
+                                                                   boolean skipVal, boolean skipPred)
       throws ServiceException, DuplicationException {
     return updateInventoryTransactions(domainId, inventoryTransactions, skipVal, skipPred, null);
   }
 
   public CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
-                                                        List<ITransaction> inventoryTransactions,
-                                                        boolean skipVal, boolean skipPred,
-                                                        PersistenceManager pm)
+                                                                   List<ITransaction> inventoryTransactions,
+                                                                   boolean skipVal, boolean skipPred,
+                                                                   PersistenceManager pm)
       throws DuplicationException, ServiceException {
     return updateInventoryTransactions(domainId, inventoryTransactions, null, skipVal, skipPred,
         pm);
@@ -1311,9 +1350,9 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
   @Override
   @SuppressWarnings({"unchecked", "rawtypes"})
   public CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
-                                                        List<ITransaction> inventoryTransactions,
-                                                        List<IInvntry> invntryList, boolean skipVal,
-                                                        boolean skipPred, PersistenceManager pm)
+                                                                   List<ITransaction> inventoryTransactions,
+                                                                   List<IInvntry> invntryList, boolean skipVal,
+                                                                   boolean skipPred, PersistenceManager pm)
       throws ServiceException, DuplicationException {
     xLogger.fine("Entering updateInventoryTransactions");
     boolean closePM = pm == null;
@@ -1663,7 +1702,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
 
   /**
    * This method checks whether there are any errors in case the transaction is of type incoming returns or outgoing returns.
-   * It checks if tracking id, tracking object type and reason are present. The quantity returned cannot be greater than quantity of the corresponding issue or receipt transaction
+   * It checks if tracking id, tracking object type are present. The quantity returned cannot be greater than quantity of the corresponding issue or receipt transaction
    * against which the return is being posted.
    * @param trans
    * @param pm
@@ -1673,15 +1712,14 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     if (StringUtils.isEmpty(trans.getTrackingId()) || StringUtils.isEmpty(trans.getTrackingObjectType())) {
       throw new LogiException("M017", (Object[]) null);
     }
-    if (!(ITransaction.TYPE_ISSUE_TRANSACTION.equals(trans.getTrackingObjectType()) || ITransaction.TYPE_RECEIPT_TRANSACTION.equals(trans.getTrackingObjectType()))) {
+    if (!(ITransaction.TRACKING_OBJECT_TYPE_ORDER.equals(trans.getTrackingObjectType()) || ITransaction.TRACKING_OBJECT_TYPE_TRANSFER.equals(trans.getTrackingObjectType())  || ITransaction.TRACKING_OBJECT_TYPE_ISSUE_TRANSACTION.equals(trans.getTrackingObjectType()) || ITransaction.TRACKING_OBJECT_TYPE_RECEIPT_TRANSACTION.equals(trans.getTrackingObjectType()))) {
       throw new LogiException("M017", (Object[]) null);
     }
-    if (StringUtils.isEmpty(trans.getReason())) {
-      throw new LogiException("M018", (Object[]) null);
-    }
-    ITransaction linkedTransaction = transDao.getById(trans.getTrackingId(),pm);
-    if (BigUtil.greaterThan(trans.getQuantity(), linkedTransaction.getQuantity())) {
-      throw new LogiException("M019", trans.getQuantity(), linkedTransaction.getQuantity());
+    if(!(ITransaction.TRACKING_OBJECT_TYPE_ORDER.equals(trans.getTrackingObjectType()) || ITransaction.TRACKING_OBJECT_TYPE_TRANSFER.equals(trans.getTrackingObjectType()))) {
+      ITransaction linkedTransaction = transDao.getById(trans.getTrackingId(), pm);
+      if (BigUtil.greaterThan(trans.getQuantity(), linkedTransaction.getQuantity())) {
+        throw new LogiException("M019", trans.getQuantity(), linkedTransaction.getQuantity());
+      }
     }
   }
 
@@ -1787,8 +1825,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
           String type = trans.getType();
           if (ITransaction.TYPE_ISSUE.equals(type) || ITransaction.TYPE_WASTAGE.equals(type)) {
             issues.add(trans);
-          } else if (ITransaction.TYPE_RECEIPT.equals(type) || ITransaction.TYPE_RETURN
-              .equals(type)) {
+          } else if (ITransaction.TYPE_RECEIPT.equals(type)) {
             receipts.add(trans);
           } else {
             errorList.add(trans);
@@ -1832,8 +1869,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
               invBatch.setQuantity(invBatch.getQuantity().add(t.getQuantity()));
             }
             isUpdated = true;
-          } else if (ITransaction.TYPE_RECEIPT.equals(type) || ITransaction.TYPE_RETURN
-              .equals(type)) {
+          } else if (ITransaction.TYPE_RECEIPT.equals(type)) {
             BigDecimal stock = inv.getStock().subtract(t.getQuantity());
             if (BigUtil.lesserThanZero(stock)) {
               stock = BigDecimal.ZERO;
@@ -3649,7 +3685,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     Query query = null;
     try {
       query = pm.newQuery("javax.jdo.query.SQL",
-              "SELECT * FROM INVNTRYEVNTLOG WHERE INVID = " + invId + " AND ED IS NULL");
+          "SELECT * FROM INVNTRYEVNTLOG WHERE INVID = " + invId + " AND ED IS NULL");
       query.setClass(JDOUtils.getImplClass(IInvntryEvntLog.class));
       query.setUnique(true);
       IInvntryEvntLog invntryEvntLog = (IInvntryEvntLog) query.execute();
@@ -3683,16 +3719,16 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     try {
       results =
           invntryDao.getInventory(new InventoryFilters().withDomainId(domainId)
-              .withKioskId(kioskId)
-              .withKioskIds(kioskIds)
-              .withKioskTags(kioskTags)
-              .withExcludedKioskTags(excludedKioskTags)
-              .withMaterialId(materialId)
-              .withMaterialTags(materialTag)
-              .withMatType(matType)
-              .withOnlyNonZeroStk(onlyNonZeroStk)
-              .withPdos(pdos)
-              .withLocation(location)
+                  .withKioskId(kioskId)
+                  .withKioskIds(kioskIds)
+                  .withKioskTags(kioskTags)
+                  .withExcludedKioskTags(excludedKioskTags)
+                  .withMaterialId(materialId)
+                  .withMaterialTags(materialTag)
+                  .withMatType(matType)
+                  .withOnlyNonZeroStk(onlyNonZeroStk)
+                  .withPdos(pdos)
+                  .withLocation(location)
               , params, pm);
     } finally {
       pm.close();
@@ -3734,7 +3770,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
       throws ServiceException {
     try {
       return updateMultipleInventoryTransactionsAction.execute(materialTransactionsMap,
-        domainId, userId);
+          domainId, userId);
     } catch (ConfigurationException e) {
       throw new ServiceException(e);
     }
@@ -3934,5 +3970,31 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
       in.setUpdatedBy(user);
     }
     in.setUpdatedOn(new Date());
+  }
+
+  public Optional<ReturnsConfig> getReturnsConfig(Long entityId) {
+    if (entityId == null) {
+      throw new IllegalArgumentException(
+          "Invalid input parameter while building return configuration: Entity id is not available");
+    }
+    try {
+      SecureUserDetails sUser = SecurityUtils.getUserDetails();
+      IKiosk kiosk = entitiesService.getKiosk(entityId, false);
+      Long domainId = kiosk.getDomainId();
+      if (domainId == null) {
+        Locale locale = sUser.getLocale();
+        ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
+        xLogger.severe("Error while fetching Return configuration");
+        throw new InvalidServiceException(
+            backendMessages
+                .getString("Error while fetching return configuration for entity: " + entityId));
+      }
+      DomainConfig dc = DomainConfig.getInstance(domainId);
+      List<String> kioskTags = kiosk.getTags();
+      return dc.getInventoryConfig().getReturnsConfig(kioskTags);
+    } catch (ServiceException e) {
+      xLogger.warn("Exception while getting entity with id: {0}", entityId, e);
+    }
+    return Optional.empty();
   }
 }

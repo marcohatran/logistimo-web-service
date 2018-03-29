@@ -2855,8 +2855,8 @@ domainCfgControllers.controller('NotificationsConfigurationController', ['$scope
             $scope.stockTransferred = getFilteredReasons($scope.inv.rt, $scope.inv.tmt);
             $scope.stockReceived = getFilteredReasons($scope.inv.rr, $scope.inv.rmt);
             $scope.stockDiscarded = getFilteredReasons($scope.inv.rd, $scope.inv.dmt);
-            $scope.incomingReturnEntered = getFilteredReasons($scope.inv.rri, $scope.inv.rimt);
-            $scope.outgoingReturnEntered = getFilteredReasons($scope.inv.rro, $scope.inv.romt);
+            $scope.incomingReturnReceived = getFilteredReasons($scope.inv.rri, $scope.inv.rimt);
+            $scope.outgoingReturnSent = getFilteredReasons($scope.inv.rro, $scope.inv.romt);
 
 
             $scope.stockCountedStatus = getFilteredCombined($scope.inv.pdf, $scope.inv.pestm);
@@ -2864,8 +2864,8 @@ domainCfgControllers.controller('NotificationsConfigurationController', ['$scope
             $scope.stockTransferredStatus = getFilteredCombined($scope.inv.tdf, $scope.inv.testm);
             $scope.stockReceivedStatus = getFilteredCombined($scope.inv.rdf, $scope.inv.restm);
             $scope.stockDiscardedStatus = getFilteredCombined($scope.inv.wdf, $scope.inv.westm);
-            $scope.incomingReturnEnteredStatus = getFilteredCombined($scope.inv.ridf, $scope.inv.riestm);
-            $scope.outgoingReturnEnteredStatus = getFilteredCombined($scope.inv.rodf, $scope.inv.roestm);
+            $scope.incomingReturnReceivedStatus = getFilteredCombined($scope.inv.ridf, $scope.inv.riestm);
+            $scope.outgoingReturnSentStatus = getFilteredCombined($scope.inv.rodf, $scope.inv.roestm);
         };
 
         $scope.resetParams = function () {
@@ -3030,7 +3030,7 @@ domainCfgControllers.controller('NotificationsConfigurationController', ['$scope
                                 $scope.prSelect = $scope.prefixName;
                                 $scope.prExtraSelect = $scope.extraParamsName;
                                 break;
-                            } else if ($scope.prefixName == 'incomingReturnEntered' || $scope.extraParamsName == 'incomingReturnEntered') {
+                            } else if ($scope.prefixName == 'incomingReturnReceived' || $scope.extraParamsName == 'incomingReturnReceived') {
                                 if (getFilteredReasons($scope.inv.rri, $scope.inv.rimt).length > 0) {
                                     $scope.showSelection = true;
                                 }
@@ -3040,7 +3040,7 @@ domainCfgControllers.controller('NotificationsConfigurationController', ['$scope
                                 $scope.prSelect = $scope.prefixName;
                                 $scope.prExtraSelect = $scope.extraParamsName;
                                 break;
-                            } else if ($scope.prefixName == 'outgoingReturnEntered' || $scope.extraParamsName == 'outgoingReturnEntered') {
+                            } else if ($scope.prefixName == 'outgoingReturnSent' || $scope.extraParamsName == 'outgoingReturnSent') {
                                 if (getFilteredReasons($scope.inv.rro, $scope.inv.romt).length > 0) {
                                     $scope.showSelection = true;
                                 }

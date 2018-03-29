@@ -44,11 +44,14 @@ public interface ITransaction
   String TYPE_WASTAGE = "w";
   String TYPE_RETURN = "rt";
   String TYPE_ORDER_SHIPMENT = "os";
+  String TRACKING_OBJECT_TYPE_TRANSFER = "tr";
+  String TRACKING_OBJECT_TYPE_ORDER = "or";
+
   String TYPE_TRANSFER_SHIPMENT = "ts";
   String TYPE_RETURNS_INCOMING = "ri";
   String TYPE_RETURNS_OUTGOING = "ro";
-  String TYPE_ISSUE_TRANSACTION = "iss_trn";
-  String TYPE_RECEIPT_TRANSACTION = "rec_trn";
+  String TRACKING_OBJECT_TYPE_ISSUE_TRANSACTION = "iss_trn";
+  String TRACKING_OBJECT_TYPE_RECEIPT_TRANSACTION = "rec_trn";
 
   Long getKey();
 

@@ -33,9 +33,11 @@ import com.logistimo.orders.models.PDFResponseModel;
 import com.logistimo.pagination.Results;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
+import com.logistimo.shipments.FulfilledQuantityModel;
 import com.logistimo.shipments.ShipmentStatus;
 import com.logistimo.shipments.entity.IShipment;
 import com.logistimo.shipments.entity.IShipmentItem;
+import com.logistimo.shipments.entity.IShipmentItemBatch;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -97,6 +99,8 @@ public interface IShipmentService {
 
   List<IShipment> getShipmentsByOrderId(Long orderId);
 
+  List<IShipmentItemBatch> getShipmentsBatchByOrderId(Long orderId);
+
     /**
      * Get list of shipments according to permissions of user
      *
@@ -141,4 +145,7 @@ public interface IShipmentService {
    */
   PDFResponseModel generateShipmentVoucher(String shipmentId)
       throws ServiceException, ObjectNotFoundException, IOException, ValidationException;
+
+  public List<FulfilledQuantityModel> getFulfilledQuantityByOrderId(Long orderId,
+                                                                    List<Long> materialIdList) throws ServiceException;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -35,6 +35,7 @@ public class DemandItemBatchModel {
 
   public BigDecimal q;
   public BigDecimal fq;
+  public BigDecimal returnedQuantity;
   public String e;
   public String m;
   public String mdt;

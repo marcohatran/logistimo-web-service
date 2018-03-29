@@ -24,6 +24,7 @@
 package com.logistimo.materials.service;
 
 import com.logistimo.materials.entity.IHandlingUnit;
+import com.logistimo.materials.model.HandlingUnitModel;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
 import com.logistimo.services.ServiceException;
@@ -53,4 +54,6 @@ public interface IHandlingUnitService {
   Results getAllHandlingUnits(Long domainId, PageParams pageParams) throws ServiceException;
 
   Map<String, String> getHandlingUnitDataByMaterialId(Long materialId);
+
+  List<HandlingUnitModel> getHandlingUnitDataByMaterialIds(List<Long> materialIdList);
 }

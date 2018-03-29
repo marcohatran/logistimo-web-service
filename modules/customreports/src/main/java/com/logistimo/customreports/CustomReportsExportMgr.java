@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -893,7 +893,7 @@ public class CustomReportsExportMgr {
     } else if (CustomReportConstants.TYPE_TRANSACTIONS.equals(type)) {
       ITransDao transDao = StaticApplicationContext.getBean(ITransDao.class);
       return transDao.buildTransactionsQuery(from, to, domainId, null, null, null, null,
-          null, null, null, null, false, null, null);
+          null, null, null, null, false, null, null, false);
     } else {
       String queryStr = "";
       String paramsStr = " PARAMETERS ";

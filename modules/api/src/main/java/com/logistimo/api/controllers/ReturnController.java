@@ -24,21 +24,40 @@
 package com.logistimo.api.controllers;
 
 import com.logistimo.api.builders.ReturnsBuilder;
+import com.logistimo.auth.utils.SecurityUtils;
+import com.logistimo.config.models.DomainConfig;
+import com.logistimo.constants.Constants;
+import com.logistimo.exception.BadRequestException;
 import com.logistimo.logger.XLog;
-import com.logistimo.returns.entity.Returns;
-import com.logistimo.returns.models.MobileReturnsModel;
-import com.logistimo.returns.models.MobileReturnsRequestModel;
-import com.logistimo.returns.models.MobileReturnsUpdateStatusModel;
-import com.logistimo.returns.models.MobileReturnsUpdateStatusRequestModel;
+import com.logistimo.pagination.PageParams;
+import com.logistimo.returns.Status;
+import com.logistimo.returns.models.ReturnsFilters;
+import com.logistimo.returns.models.ReturnsModel;
+import com.logistimo.returns.models.ReturnsModels;
+import com.logistimo.returns.models.ReturnsRequestModel;
+import com.logistimo.returns.models.ReturnsUpdateStatusModel;
+import com.logistimo.returns.models.ReturnsUpdateStatusRequestModel;
+import com.logistimo.returns.models.UpdateStatusModel;
+import com.logistimo.returns.service.ReturnsService;
+import com.logistimo.returns.vo.ReturnsVO;
+import com.logistimo.services.DuplicationException;
 import com.logistimo.services.ServiceException;
+import com.logistimo.utils.LocalDateUtil;
 
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+
+import java.text.ParseException;
+import java.util.List;
+
+import javax.validation.Valid;
 
 /**
  * @author Mohan Raja
@@ -47,36 +66,81 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @RequestMapping("/returns")
 public class ReturnController {
 
+  private static final XLog xLogger = XLog.getLog(ReturnController.class);
+
   @Autowired
   ReturnsBuilder returnsBuilder;
+
+  @Autowired
+  ReturnsService returnsService;
 
   @RequestMapping(method = RequestMethod.POST)
   public
   @ResponseBody
-  MobileReturnsModel create(@RequestBody MobileReturnsRequestModel mobileReturnsRequestModel)
+  ReturnsModel create(@Valid @RequestBody ReturnsRequestModel returnsRequestModel)
       throws ServiceException {
-    Returns returns = returnsBuilder.createNewReturns(mobileReturnsRequestModel);
-    //todo: Persist Returns using ReturnService and re-initialise the returns variable with updated one
-    return returnsBuilder.buildMobileReturnsModel(returns);
+    ReturnsVO returnsVO = returnsBuilder.buildReturns(returnsRequestModel);
+    returnsVO = returnsService.createReturns(returnsVO);
+    return returnsBuilder.buildReturnsModel(returnsVO);
   }
 
   @RequestMapping(value = "/{returnId}/{status}", method = RequestMethod.POST)
   public
   @ResponseBody
-  MobileReturnsUpdateStatusModel updateStatus(@PathVariable String returnId,
-                                              @PathVariable String status,
-                                              @RequestBody MobileReturnsUpdateStatusRequestModel updateStatusModel)
-      throws ServiceException {
-    //todo: With ReturnService update the Returns with status by returnId and get the updated Returns
-    return returnsBuilder.buildMobileReturnsUpdateModel(new Returns(), updateStatusModel);
+  ReturnsUpdateStatusModel updateStatus(@PathVariable Long returnId,
+                                        @PathVariable String status,
+                                        @RequestBody ReturnsUpdateStatusRequestModel returnsUpdateStatusRequestModel)
+      throws ServiceException, DuplicationException {
+    UpdateStatusModel updateStatusModel = returnsBuilder.buildUpdateStatusModel(returnId, status,
+        returnsUpdateStatusRequestModel);
+    ReturnsVO returnsVO = returnsService.updateReturnsStatus(updateStatusModel);
+    return returnsBuilder.buildMobileReturnsUpdateModel(returnsVO, returnsUpdateStatusRequestModel);
   }
 
   @RequestMapping(value = "/{returnId}", method = RequestMethod.GET)
   public
   @ResponseBody
-  MobileReturnsModel get(@PathVariable String returnId) throws ServiceException {
-    //todo: With ReturnService get the Returns object by returnId
-    return returnsBuilder.buildMobileReturnsModel(new Returns());
+  ReturnsModel get(@PathVariable Long returnId) throws ServiceException {
+    ReturnsVO returnsVO = returnsService.getReturnsById(returnId);
+    return returnsBuilder.buildReturnsModel(returnsVO);
+  }
+
+  @RequestMapping(method = RequestMethod.GET)
+  public
+  @ResponseBody
+  ReturnsModels getAll(@RequestParam(required = false) Long customerId,
+                       @RequestParam(required = false) Long vendorId,
+                       @RequestParam(required = false) String status,
+                       @RequestParam(required = false) String startDate,
+                       @RequestParam(required = false) String endDate,
+                       @RequestParam(required = false) Long orderId,
+                       @RequestParam(required = false, defaultValue = PageParams.DEFAULT_SIZE_STR) Integer size,
+                       @RequestParam(required = false, defaultValue = PageParams.DEFAULT_OFFSET_STR) Integer offset
+  ) throws ServiceException {
+    try {
+      DomainConfig dc = DomainConfig.getInstance(SecurityUtils.getCurrentDomainId());
+      ReturnsFilters filters = ReturnsFilters.builder()
+          .customerId(customerId)
+          .vendorId(vendorId)
+          .status(Status.getStatus(status))
+          .orderId(orderId)
+          .offset(offset)
+          .size(size).domainId(SecurityUtils.getCurrentDomainId())
+          .limitToUserKiosks(SecurityUtils.isManager())
+          .userId(SecurityUtils.getUsername())
+          .startDate(StringUtils.isNotBlank(startDate) ? LocalDateUtil
+              .parseCustom(startDate, Constants.DATE_FORMAT, dc.getTimezone()) : null)
+          .endDate(StringUtils.isNotBlank(endDate) ? LocalDateUtil
+              .parseCustom(endDate, Constants.DATE_FORMAT, dc.getTimezone()) : null)
+          .build();
+      List<ReturnsVO> returnsVOs = returnsService.getReturns(filters);
+      Long totalCount = returnsService.getReturnsCount(filters);
+      return new ReturnsModels(returnsBuilder.buildReturnsModels(returnsVOs), totalCount);
+    } catch (ParseException e) {
+      xLogger.severe("Error while parsing date while getting returns on domain {0}",
+          SecurityUtils.getCurrentDomainId(), e);
+      throw new BadRequestException("Error while fetching all returns");
+    }
   }
 
 }

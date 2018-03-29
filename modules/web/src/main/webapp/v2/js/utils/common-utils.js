@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -171,9 +171,9 @@ function toCSV(tags) {
 function formatDate(date) {
     return checkNotNullEmpty(date) ? date.getDate() + "/" + (date.getMonth() + 1) + "/" + date.getFullYear() : "";
 }
-function string2Date(dateString, format, delimiter, removeTime) {
+function string2Date(dateString, format, delimiter, hasTime) {
     if (checkNotNullEmpty(dateString) && checkNotNullEmpty(format) && checkNotNullEmpty(delimiter)) {
-        if(removeTime) {
+        if(hasTime) {
             dateString = dateString.substring(0,dateString.indexOf(" "));
         }
         format = format.toLowerCase();
@@ -314,7 +314,7 @@ function checkEmail(email){
     return re.test(email);
 }
 
-showPopup = function($scope, mat, matId, msg, index, $timeout, isAllocate, isStatus){
+showPopup = function($scope, mat, matId, msg, index, $timeout, isAllocate, isStatus, isReason){
     if(checkNotNullEmpty(mat) && checkNotNullEmpty(matId)){
         $timeout(function () {
             if (isAllocate) {
@@ -327,6 +327,12 @@ showPopup = function($scope, mat, matId, msg, index, $timeout, isAllocate, isSta
                 mat.sPopupMsg = msg;
                 if(!mat.sinvalidPopup) {
                     mat.sinvalidPopup = true;
+                    $scope.invalidPopup += 1;
+                }
+            } else if(isReason) {
+                mat.rPopupMsg = msg;
+                if(!mat.rinvalidPopup) {
+                    mat.rinvalidPopup = true;
                     $scope.invalidPopup += 1;
                 }
             } else {
@@ -343,17 +349,24 @@ showPopup = function($scope, mat, matId, msg, index, $timeout, isAllocate, isSta
     }
 };
 
-hidePopup = function ($scope, mat, matId, index, $timeout, isAllocate, isStatus){
+hidePopup = function ($scope, mat, matId, index, $timeout, isAllocate, isStatus, isReason){
     if (checkNotNullEmpty(mat) && checkNotNullEmpty(matId)){
-        if (mat.invalidPopup) {
-            $scope.invalidPopup = $scope.invalidPopup <= 0 ? 0 : $scope.invalidPopup - 1;
-        }
+        var isInvalid;
         if (isAllocate) {
+            isInvalid = mat.ainvalidPopup;
             mat.ainvalidPopup = false;
         } else if(checkNotNullEmpty(isStatus)) {
+            isInvalid = mat.sinvalidPopup;
             mat.sinvalidPopup = false;
+        } else if(checkNotNullEmpty(isReason)) {
+            isInvalid = mat.rinvalidPopup;
+            mat.rinvalidPopup = false;
         } else {
+            isInvalid = mat.invalidPopup;
             mat.invalidPopup = false;
+        }
+        if (isInvalid) {
+            $scope.invalidPopup = $scope.invalidPopup <= 0 ? 0 : $scope.invalidPopup - 1;
         }
         $timeout(function () {
             $("[id='"+ matId + index + "']").trigger('hidepopup');

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -1106,13 +1106,6 @@ public class OrderManagementServiceImpl implements OrderManagementService {
             throw new ServiceException("Material " + m.getName()
                 + " is not available at this entity. Please contact administrator and ensure it is configured.");
           }
-          // Check if this demand item is already in the list (possible when there are multiple transactions for same material of different batches)
-          if (trans.hasBatch()) {
-            IDemandItem item = getDemandItemByMaterial(demandList, materialId);
-            if (item != null) {
-              item.addBatch(JDOUtils.createInstance(IDemandItemBatch.class).init(trans));
-            }
-          }
           try {
             validateHU(trans.getQuantity(), m.getMaterialId(), m.getName());
           } catch (LogiException e) {
@@ -1290,13 +1283,6 @@ public class OrderManagementServiceImpl implements OrderManagementService {
               trans.getKioskId(), materialId, updateOrderTransactionsRequest.getDomainId());
           throw new ServiceException("Material " + m.getName()
               + " is not available at this entity. Please contact administrator and ensure it is configured.");
-        }
-        // Check if this demand item is already in the list (possible when there are multiple transactions for same material of different batches)
-        if (trans.hasBatch()) {
-          IDemandItem item = getDemandItemByMaterial(demandList, materialId);
-          if (item != null) {
-            item.addBatch(JDOUtils.createInstance(IDemandItemBatch.class).init(trans));
-          }
         }
         try {
           validateHU(trans.getQuantity(), m.getMaterialId(), m.getName());
@@ -1721,9 +1707,6 @@ public class OrderManagementServiceImpl implements OrderManagementService {
         TagUtil.TYPE_ENTITY);
     di.setTgs(tagDao.getTagsByNames(inv.getTags(TagUtil.TYPE_MATERIAL), ITag.MATERIAL_TAG),
         TagUtil.TYPE_MATERIAL);
-    if (trans.hasBatch()) {
-      di.addBatch(JDOUtils.createInstance(IDemandItemBatch.class).init(trans));
-    }
     // Add price metadata
     BigDecimal p = m.getRetailerPrice();
     if (BigUtil.notEqualsZero(inv.getRetailerPrice())) {

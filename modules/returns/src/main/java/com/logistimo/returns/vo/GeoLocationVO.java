@@ -21,35 +21,25 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.returns.models;
+package com.logistimo.returns.vo;
 
-import com.google.gson.annotations.SerializedName;
-
-import com.logistimo.proto.MobileOrderModel;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
- * @author Mohan Raja
+ * Created by pratheeka on 13/03/18.
  */
-public class MobileReturnsUpdateStatusModel {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class GeoLocationVO {
+  private Double latitude;
 
-  @SerializedName("return")
-  private MobileReturnsModel returns;
+  private Double longitude;
 
-  private MobileOrderModel order;
+  private Double geoAccuracy;
 
-  public MobileReturnsModel getReturns() {
-    return returns;
-  }
+  private String geoError;
 
-  public void setReturns(MobileReturnsModel returns) {
-    this.returns = returns;
-  }
-
-  public MobileOrderModel getOrder() {
-    return order;
-  }
-
-  public void setOrder(MobileOrderModel order) {
-    this.order = order;
-  }
 }

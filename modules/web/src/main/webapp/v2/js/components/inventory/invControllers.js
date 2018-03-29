@@ -1293,9 +1293,9 @@ invControllers.controller('BatchDetailCtrl', ['$scope', 'invService', 'trnServic
                         if ($scope.reasons.indexOf("") == -1) {
                             $scope.reasons.splice(0, 0, "");
                         }
-                        $scope.expBatchDet[index].showReason = !$scope.expBatchDet[index].showReason;
-                        $scope.expBatchDet[index].reason = $scope.expBatchDet[index].showReason ? $scope.defaultReason : undefined;
                     }
+                    $scope.expBatchDet[index].showReason=!$scope.expBatchDet[index].showReason;
+                    $scope.expBatchDet[index].reason = $scope.expBatchDet[index].showReason ? $scope.defaultReason: undefined;
                 }
             }
         }
@@ -1307,27 +1307,24 @@ invControllers.controller('BatchDetailCtrl', ['$scope', 'invService', 'trnServic
             ft['kioskid'] = '' + m.kId;
             ft['transtype'] = transType;
             ft['reason'] = reason;
-            ft['materials'] = {};
-            if (transType == 'p' || transType == 'w') {
-                if (checkNotNullEmpty(atd)) {
+            ft['materials'] = [];
+            if(transType == 'p' || transType == 'w') {
+                if(checkNotNullEmpty(atd)) {
                     ft['transactual'] = '' + formatDate(atd);
                 } else if (checkNullEmpty(atd) && $scope.atd == 2) {
                     $scope.showWarning("Please select actual date of physical transaction.");
                     return null;
                 }
             }
-            ft['bmaterials'] = {};
-            if (checkNotNullEmpty(m)) {
-                if (transType == 'p') {
+            ft['bmaterials'] = [];
+            if(checkNotNullEmpty(m)){
+                if(transType == 'p'){
                     m.q = 0;
                 }
-                ft['bmaterials'][m.mId + "\t" + m.bid] = {
-                    q: '' + m.q,
-                    e: formatDate(parseUrlDate(m.bexp, true)),
-                    mr: m.bmfnm,
-                    r: reason,
-                    md: formatDate(parseUrlDate(m.bmfdt, true))
-                };
+                var items = {};
+                items[m.mId + "\t" + m.bid] = {q:''+ m.q,e: formatDate(parseUrlDate(m.bexp,true)),mr: m.bmfnm,md: formatDate(parseUrlDate(m.bmfdt,true)),
+                    r : reason};
+                ft['bmaterials'].push(items);
             }
             return ft;
         };

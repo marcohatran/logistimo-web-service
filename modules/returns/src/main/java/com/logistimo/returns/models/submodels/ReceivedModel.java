@@ -27,9 +27,12 @@ import com.google.gson.annotations.SerializedName;
 
 import java.math.BigDecimal;
 
+import lombok.Data;
+
 /**
  * @author Mohan Raja
  */
+@Data
 public class ReceivedModel {
 
   @SerializedName("received_quantity")
@@ -40,28 +43,4 @@ public class ReceivedModel {
 
   @SerializedName("discrepancy_reason")
   private String reason;
-
-  public BigDecimal getReceivedQuantity() {
-    return receivedQuantity;
-  }
-
-  public void setReceivedQuantity(BigDecimal receivedQuantity) {
-    this.receivedQuantity = receivedQuantity;
-  }
-
-  public String getMaterialStatus() {
-    return materialStatus;
-  }
-
-  public void setMaterialStatus(String materialStatus) {
-    this.materialStatus = materialStatus;
-  }
-
-  public String getReason() {
-    return reason;
-  }
-
-  public void setReason(String reason) {
-    this.reason = reason;
-  }
 }

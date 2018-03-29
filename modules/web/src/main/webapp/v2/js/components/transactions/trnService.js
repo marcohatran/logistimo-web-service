@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -79,7 +79,7 @@ trnServices.factory('trnService', ['APIService', function (apiService) {
             }
             return apiService.get(urlStr);
         },
-        getTransactions: function (etag, tag, from, to, type, offset, size,bId,atd,eid,lEntityId,mid,rsn) {
+        getTransactions: function (etag, tag, from, to, type, offset, size,bId,atd,eid,lEntityId,mid,rsn,ignoreLkid) {
             offset = typeof offset !== 'undefined' ? offset : 0;
             size = typeof size !== 'undefined' ? size : 50;
             atd = atd === true;
@@ -114,6 +114,9 @@ trnServices.factory('trnService', ['APIService', function (apiService) {
             if (typeof rsn !== 'undefined' && rsn != null && rsn != "") {
                 urlStr = urlStr + "&reason=" + rsn;
             }
+            if (typeof ignoreLkid !== 'undefined' && ignoreLkid != null && ignoreLkid != "") {
+                urlStr = urlStr + "&ignoreLkid=" + ignoreLkid;
+            }
             return apiService.get(urlStr);
         },
         undoTransactions: function (tran) {
@@ -129,7 +132,11 @@ trnServices.factory('trnService', ['APIService', function (apiService) {
             return apiService.get('/s2/api/transactions/actualroute?userId=' + userId + '&from=' + from + '&to=' + to);
         },
         getReasons : function(type,tags){
-            return apiService.get('/s2/api/transactions/reasons?type=' + type + '&tags=' + tags);
+            var urlStr = '/s2/api/transactions/reasons?type=' + type;
+            if (checkNotNullEmpty(tags)) {
+                urlStr = urlStr + "&tags=" + tags;
+            }
+            return apiService.get(urlStr);
         },
         getMatStatus : function(type,ts){
             return apiService.get('/s2/api/transactions/matStatus?type=' + type + '&ts=' + ts);

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -331,7 +331,7 @@ public class BulkExportMgr {
       ITransDao transDao = StaticApplicationContext.getBean(ITransDao.class);
       return transDao.buildTransactionsQuery(from, to, domainId, kioskId, materialId,
           trnType != null ? Collections.singletonList(trnType) : null, lkIdParam, eTags, mTag,
-          kioskIds, batchIdStr, hasAtd, reason, null);
+          kioskIds, batchIdStr, hasAtd, reason, null, false);
     } else if (TYPE_ORDERS.equals(type)) {
       return StaticApplicationContext.getBean(GetFilteredOrdersQueryAction.class).invoke(
           new OrderFilters()

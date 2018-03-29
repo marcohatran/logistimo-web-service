@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -72,6 +72,11 @@ import com.logistimo.orders.entity.approvals.IOrderApprovalMapping;
 import com.logistimo.orders.models.UpdatedOrder;
 import com.logistimo.orders.service.IDemandService;
 import com.logistimo.pagination.Results;
+import com.logistimo.returns.models.ReturnsFilters;
+import com.logistimo.returns.service.ReturnsService;
+import com.logistimo.returns.vo.ReturnsItemBatchVO;
+import com.logistimo.returns.vo.ReturnsItemVO;
+import com.logistimo.returns.vo.ReturnsVO;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
@@ -87,6 +92,7 @@ import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.CommonUtils;
 import com.logistimo.utils.LocalDateUtil;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -102,6 +108,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 @Component
 public class OrdersAPIBuilder {
@@ -124,6 +131,9 @@ public class OrdersAPIBuilder {
   private IShipmentService shipmentService;
   private IInvntryDao invntryDao;
   private IApprovalsDao approvalsDao;
+
+  @Autowired
+  private ReturnsService returnsService;
 
   @Autowired
   public void setOrderApprovalsService(IOrderApprovalsService orderApprovalsService) {
@@ -231,6 +241,7 @@ public class OrdersAPIBuilder {
       model.enm = k.getName();
       model.eadd = CommonUtils.getAddress(k.getCity(), k.getTaluk(), k.getDistrict(), k.getState());
       model.cdt = LocalDateUtil.format(o.getCreatedOn(), locale, timezone);
+      model.statusUpdateDate = LocalDateUtil.formatCustom(o.getStatusUpdatedOn(), Constants.DATETIME_FORMAT, timezone);
       model.ubid = o.getUpdatedBy();
       model.src = o.getSrc();
       model.salesRefId = o.getSalesReferenceID();
@@ -658,6 +669,7 @@ public class OrdersAPIBuilder {
         showStocks =
         IOrder.PENDING.equals(order.getStatus()) || IOrder.CONFIRMED.equals(order.getStatus())
             || IOrder.BACKORDERED.equals(order.getStatus());
+    boolean isReturnsAllowed = IOrder.FULFILLED.equals(order.getStatus());
     boolean showVendorStock = dc.autoGI() && order.getServicingKiosk() != null;
 
     if (order.getServicingKiosk() != null) {
@@ -754,7 +766,8 @@ public class OrdersAPIBuilder {
     Map<Long, Map<String, BigDecimal>> quantityByBatches = null;
     Map<Long, Map<String, DemandBatchMeta>> fQuantityByBatches = null;
     Map<Long, List<ShipmentItemModel>> fReasons = null;
-    if (!showStocks) {
+    Map<Long, Map<String, BigDecimal>> receivedQuantityByBatches = null;
+    if (!showStocks || isReturnsAllowed) {
       quantityByBatches = new HashMap<>();
       for (IShipment shipment : shipments) {
         boolean isFulfilled = ShipmentStatus.FULFILLED.equals(shipment.getStatus());
@@ -819,6 +832,9 @@ public class OrdersAPIBuilder {
           }
         }
       }
+      if(isReturnsAllowed) {
+        receivedQuantityByBatches = getReceivedQuantityByBatches(order.getOrderId());
+      }
     }
     List<IDemandItem> items = demandService.getDemandItems(order.getOrderId());
     if (items != null) {
@@ -836,6 +852,7 @@ public class OrdersAPIBuilder {
         DemandModel itemModel = new DemandModel();
         itemModel.nm = m.getName();
         itemModel.id = mid;
+        itemModel.materialTags = m.getTags();
         itemModel.q = item.getQuantity();
         itemModel.p = item.getFormattedPrice();
         itemModel.t = item.getTax();
@@ -855,6 +872,7 @@ public class OrdersAPIBuilder {
         //itemModel.mst = item.getMaterialStatus();
         itemModel.rq = item.getRecommendedOrderQuantity();
         itemModel.fq = item.getFulfilledQuantity();
+        itemModel.returnedQuantity = item.getReturnedQuantity();
         itemModel.oastk = BigDecimal.ZERO;
         itemModel.astk = BigDecimal.ZERO;
         itemModel.tm = m.isTemperatureSensitive();
@@ -904,7 +922,10 @@ public class OrdersAPIBuilder {
             }
             itemModel.oastk = itemModel.oastk.add(ia.getQuantity());
           }
-        } else {
+        }
+        Set<DemandItemBatchModel> batches = new HashSet<>();
+        BigDecimal allocatedStock = BigDecimal.ZERO;
+        if(!showStocks || isReturnsAllowed) {
           if (itemModel.isBa) {
             Map<String, BigDecimal> batchMap = quantityByBatches.get(item.getMaterialId());
             Map<String, DemandBatchMeta> fBatchMap = null;
@@ -940,11 +961,17 @@ public class OrdersAPIBuilder {
                 batchModel.m = b.getBatchManufacturer();
                 batchModel.mdt = b.getBatchManufacturedDate() != null ? LocalDateUtil
                     .formatCustom(b.getBatchManufacturedDate(), "dd/MM/yyyy", null) : "";
-                itemModel.astk = itemModel.astk.add(batchModel.q);
-                if (itemModel.bts == null) {
-                  itemModel.bts = new HashSet<>();
+                allocatedStock = allocatedStock.add(batchModel.q);
+                batches.add(batchModel);
+              }
+              if(isReturnsAllowed) {
+                final Map<String, BigDecimal> receivedBatchQuantity =
+                    receivedQuantityByBatches.get(item.getMaterialId());
+                for (DemandItemBatchModel batch : batches) {
+                  if(receivedBatchQuantity != null && receivedBatchQuantity.containsKey(batch.id)) {
+                    batch.returnedQuantity = receivedBatchQuantity.get(batch.id);
+                  }
                 }
-                itemModel.bts.add(batchModel);
               }
             }
           } else {
@@ -952,6 +979,11 @@ public class OrdersAPIBuilder {
               itemModel.bd = fReasons.get(item.getMaterialId());
             }
           }
+        }
+        itemModel.returnBatches = batches;
+        if(!showStocks) {
+          itemModel.bts = batches;
+          itemModel.astk = allocatedStock;
         }
         if (showVendorStock && showStocks) {
           try {
@@ -1005,6 +1037,39 @@ public class OrdersAPIBuilder {
       model.its = modelItems;
     }
     return model;
+  }
+
+  private Map<Long,Map<String, BigDecimal>> getReceivedQuantityByBatches(Long orderId) {
+    final ReturnsFilters f = ReturnsFilters.builder().orderId(orderId).domainId(SecurityUtils.getCurrentDomainId()).build();
+    List<ReturnsVO> returnsVOs =
+        returnsService.getReturns(f);
+    Map<Long,Map<String, BigDecimal>> returnQuantityByBatches = new HashMap<>();
+    for (ReturnsVO returnsVO : returnsVOs) {
+      final List<ReturnsItemVO> returnsItemVOs = returnsService.getReturnsItem(returnsVO.getId());
+      returnsItemVOs.stream()
+          .filter(returnsItemVO -> CollectionUtils.isNotEmpty(returnsItemVO.getReturnItemBatches()))
+          .forEach(returnsItemVO -> {
+            Map<String, BigDecimal> returnQuantityByBatch = returnsItemVO.getReturnItemBatches()
+                .stream()
+                .collect(Collectors
+                    .toMap(b -> b.getBatch().getBatchId(), ReturnsItemBatchVO::getQuantity));
+            if (!returnQuantityByBatches.containsKey(returnsItemVO.getMaterialId())) {
+              returnQuantityByBatches.put(returnsItemVO.getMaterialId(), returnQuantityByBatch);
+            } else {
+              Map<String, BigDecimal> batchQuantityMap =
+                  returnQuantityByBatches.get(returnsItemVO.getMaterialId());
+              for (Map.Entry<String, BigDecimal> entry : returnQuantityByBatch.entrySet()) {
+                if (batchQuantityMap.containsKey(entry.getKey())) {
+                  batchQuantityMap.put(entry.getKey(),
+                      batchQuantityMap.get(entry.getKey()).add(entry.getValue()));
+                } else {
+                  batchQuantityMap.put(entry.getKey(), entry.getValue());
+                }
+              }
+            }
+          });
+    }
+    return returnQuantityByBatches;
   }
 
   private ShipmentItemBatchModel getShipmentItemBatchBD(String shipmentID,

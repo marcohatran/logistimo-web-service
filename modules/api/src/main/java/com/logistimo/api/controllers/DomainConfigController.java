@@ -79,6 +79,7 @@ import com.logistimo.config.models.LeadTimeAvgConfig;
 import com.logistimo.config.models.OptimizerConfig;
 import com.logistimo.config.models.OrdersConfig;
 import com.logistimo.config.models.ReportsConfig;
+import com.logistimo.config.models.ReturnsConfig;
 import com.logistimo.config.models.SupportConfig;
 import com.logistimo.config.models.SyncConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
@@ -102,6 +103,7 @@ import com.logistimo.exception.InvalidTaskException;
 import com.logistimo.exception.TaskSchedulingException;
 import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.inventory.entity.ITransaction;
+import com.logistimo.inventory.service.InventoryManagementService;
 import com.logistimo.logger.XLog;
 import com.logistimo.pagination.Navigator;
 import com.logistimo.pagination.PageParams;
@@ -147,6 +149,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 import javax.jdo.PersistenceManager;
@@ -180,6 +183,9 @@ public class DomainConfigController {
   private NotificationBuilder notificationBuilder;
   private ConfigurationMgmtService configurationMgmtService;
   private UsersService usersService;
+
+  @Autowired
+  private InventoryManagementService inventoryManagementService;
 
   @Autowired
   public void setUserMessageBuilder(UserMessageBuilder userMessageBuilder) {
@@ -2686,22 +2692,15 @@ public class DomainConfigController {
   public
   @ResponseBody
   ReturnsConfigModel getReturnConfig(@RequestParam(required = true) Long entityId) {
-    SecureUserDetails sUser = getUserDetails();
-    Locale locale = sUser.getLocale();
-    Long domainId = SecurityUtils.getCurrentDomainId();
-    DomainConfig dc = DomainConfig.getInstance(domainId);
-    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     try {
-      if (domainId == null) {
-        xLogger.severe("Error while fetching Return configuration");
-        throw new InvalidServiceException(
-            backendMessages.getString("Error while fetching return configuration for entity: " + entityId));
+      Optional<ReturnsConfig> returnsConfig = inventoryManagementService.getReturnsConfig(entityId);
+      if (returnsConfig.isPresent()) {
+        return configurationModelBuilder.buildReturnsConfigModel(returnsConfig.get());
       }
-      return configurationModelBuilder.buildReturnsConfigModelForEntity(dc.getInventoryConfig(), entityId);
     } catch (Exception e) {
       xLogger.warn("Error in fetching reasons for transactions", e);
-      return null;
     }
+    return null;
   }
 
   private SyncConfig generateSyncConfig(CapabilitiesConfigModel model) {

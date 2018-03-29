@@ -29,9 +29,12 @@ import com.logistimo.returns.Status;
 
 import java.util.Date;
 
+import lombok.Data;
+
 /**
  * @author Mohan Raja
  */
+@Data
 public class StatusModel {
 
   private Status status;
@@ -44,36 +47,4 @@ public class StatusModel {
 
   @SerializedName("updated_by")
   private UserModel updatedBy;
-
-  public Status getStatus() {
-    return status;
-  }
-
-  public void setStatus(Status status) {
-    this.status = status;
-  }
-
-  public String getCancelReason() {
-    return cancelReason;
-  }
-
-  public void setCancelReason(String cancelReason) {
-    this.cancelReason = cancelReason;
-  }
-
-  public Date getUpdatedAt() {
-    return updatedAt;
-  }
-
-  public void setUpdatedAt(Date updatedAt) {
-    this.updatedAt = updatedAt;
-  }
-
-  public UserModel getUpdatedBy() {
-    return updatedBy;
-  }
-
-  public void setUpdatedBy(UserModel updatedBy) {
-    this.updatedBy = updatedBy;
-  }
 }

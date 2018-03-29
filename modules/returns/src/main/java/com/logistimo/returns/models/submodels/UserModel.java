@@ -25,9 +25,12 @@ package com.logistimo.returns.models.submodels;
 
 import com.google.gson.annotations.SerializedName;
 
+import lombok.Data;
+
 /**
  * @author Mohan Raja
  */
+@Data
 public class UserModel {
 
   @SerializedName("user_id")
@@ -35,26 +38,4 @@ public class UserModel {
 
   @SerializedName("full_name")
   private String fullName;
-
-  public UserModel() {}
-
-  public UserModel(String userId) {
-    this.userId = userId;
-  }
-
-  public String getUserId() {
-    return userId;
-  }
-
-  public void setUserId(String userId) {
-    this.userId = userId;
-  }
-
-  public String getFullName() {
-    return fullName;
-  }
-
-  public void setFullName(String fullName) {
-    this.fullName = fullName;
-  }
 }

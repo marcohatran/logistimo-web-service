@@ -27,7 +27,6 @@ import com.logistimo.returns.entity.values.GeoLocation;
 import com.logistimo.returns.entity.values.ReturnsStatus;
 
 import java.util.Date;
-import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Embedded;
@@ -38,24 +37,26 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
-import javax.persistence.Transient;
+
+import lombok.Data;
 
 /**
  * @author Mohan Raja
  */
 @Entity
 @Table(name="RETURNS")
+@Data
 public class Returns {
 
   @Id
-  @GeneratedValue(strategy= GenerationType.AUTO)
-  @Column(name = "id")
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "id",updatable = false)
   private Long id;
 
-  @Column(name = "source_domain")
+  @Column(name = "source_domain",updatable = false)
   private Long sourceDomain;
 
-  @Column(name = "order_id")
+  @Column(name = "order_id",updatable = false)
   private Long orderId;
 
   @Column(name = "customer_id")
@@ -87,125 +88,5 @@ public class Returns {
   @Column(name = "source")
   private Integer source;
 
-  @Transient
-  private List<ReturnsItem> items;
 
-  public Long getId() {
-    return id;
-  }
-
-  public void setId(Long id) {
-    if(this.id != null) {
-      throw new IllegalStateException("Id can't be modified");
-    }
-    this.id = id;
-  }
-
-  public Long getSourceDomain() {
-    return sourceDomain;
-  }
-
-  public void setSourceDomain(Long sourceDomain) {
-    if(this.sourceDomain != null) {
-      throw new IllegalStateException("Source domain can't be modified");
-    }
-    this.sourceDomain = sourceDomain;
-  }
-
-  public Long getOrderId() {
-    return orderId;
-  }
-
-  public void setOrderId(Long orderId) {
-    if(this.orderId != null) {
-      throw new IllegalStateException("Order can't be modified");
-    }
-    this.orderId = orderId;
-  }
-
-  public Long getCustomerId() {
-    return customerId;
-  }
-
-  public void setCustomerId(Long customerId) {
-    this.customerId = customerId;
-  }
-
-  public Long getVendorId() {
-    return vendorId;
-  }
-
-  public void setVendorId(Long vendorId) {
-    this.vendorId = vendorId;
-  }
-
-  public GeoLocation getLocation() {
-    return location;
-  }
-
-  public void setLocation(GeoLocation location) {
-    this.location = location;
-  }
-
-  public ReturnsStatus getStatus() {
-    return status;
-  }
-
-  public void setStatus(ReturnsStatus status) {
-    this.status = status;
-  }
-
-  public Date getCreatedAt() {
-    return createdAt;
-  }
-
-  public void setCreatedAt(Date createdAt) {
-    if(this.createdAt != null) {
-      throw new IllegalStateException("Created date can't be modified");
-    }
-    this.createdAt = createdAt;
-  }
-
-  public String getCreatedBy() {
-    return createdBy;
-  }
-
-  public void setCreatedBy(String createdBy) {
-    if(this.createdBy != null) {
-      throw new IllegalStateException("Created by can't be modified");
-    }
-    this.createdBy = createdBy;
-  }
-
-  public Date getUpdatedAt() {
-    return updatedAt;
-  }
-
-  public void setUpdatedAt(Date updatedAt) {
-    this.updatedAt = updatedAt;
-  }
-
-  public String getUpdatedBy() {
-    return updatedBy;
-  }
-
-  public void setUpdatedBy(String updatedBy) {
-    this.updatedBy = updatedBy;
-  }
-
-  public Integer getSource() {
-    return source;
-  }
-
-  public void setSource(Integer source) {
-    this.source = source;
-  }
-
-  public List<ReturnsItem> getItems() {
-    return items;
-  }
-
-  public void setItems(List<ReturnsItem> items) {
-    this.items = items;
-  }
 }
