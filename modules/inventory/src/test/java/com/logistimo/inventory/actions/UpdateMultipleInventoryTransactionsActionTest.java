@@ -308,8 +308,8 @@ public class UpdateMultipleInventoryTransactionsActionTest {
     createdTransaction2.setKey(2l);
     Transaction createdTransaction3 = ((Transaction) (transaction2.clone()));
     createdTransaction3.setKey(null);
-    createdTransaction3.setMsgCode("M018");
-    createdTransaction3.setMessage("Reason not specified for return");
+    createdTransaction3.setMsgCode("M017");
+    createdTransaction3.setMessage(null);
     Transaction createdTransaction4 = ((Transaction) (transaction3.clone()));
     createdTransaction4.setKey(null);
 
@@ -324,7 +324,7 @@ public class UpdateMultipleInventoryTransactionsActionTest {
     assertTrue(errorDetailModelByMaterialMap.size() == 1);
     assertNotNull(errorDetailModelByMaterialMap.get(2l));
     assertTrue(errorDetailModelByMaterialMap.get(2l).size() == 1);
-    ErrorDetailModel expectedErrorDetailModel = new ErrorDetailModel("M018",0,"Reason not specified for return");
+    ErrorDetailModel expectedErrorDetailModel = new ErrorDetailModel("M017",0,null);
     assertEquals(expectedErrorDetailModel, errorDetailModelByMaterialMap.get(2l).get(0));
     assertTrue(successDetailModelByMaterialMap.size() == 1);
     assertNotNull(successDetailModelByMaterialMap.get(1l));

@@ -651,15 +651,19 @@ demandControllers.controller('DiscrepanciesListingCtrl', ['$scope', 'demandServi
             $scope.oType = requestContext.getParam("otype") || "sle";
             $scope.etrn = requestContext.getParam("etrn") || false;
 
+            $scope.initLocalFilters = [];
+
             if (checkNotNullEmpty(requestContext.getParam("eid"))) {
                 if (checkNullEmpty($scope.entity) || $scope.entityId != requestContext.getParam("eid")) {
                     $scope.entity = {id: parseInt(requestContext.getParam("eid")), nm: ""};
+                    $scope.initLocalFilters.push("entity")
                 }
             } else if(!$scope.isEnt){
                 if(firstTimeInit && checkNotNullEmpty($scope.defaultEntityId)){
                     $location.$$search.eid = $scope.defaultEntityId;
                     $location.$$compose();
                     $scope.entity = {id: $scope.defaultEntityId, nm: ""};
+                    $scope.initLocalFilters.push("entity")
                 }else {
                     $scope.entity = null;
                 }
@@ -668,6 +672,7 @@ demandControllers.controller('DiscrepanciesListingCtrl', ['$scope', 'demandServi
             if (checkNotNullEmpty(requestContext.getParam("mid"))) {
                 if(checkNullEmpty($scope.material) || $scope.material.mId != parseInt(requestContext.getParam("mid"))){
                     $scope.material = {mId: parseInt(requestContext.getParam("mid")),mnm:""};
+                    $scope.initLocalFilters.push("material")
                 }
             }else{
                 $scope.material = null;

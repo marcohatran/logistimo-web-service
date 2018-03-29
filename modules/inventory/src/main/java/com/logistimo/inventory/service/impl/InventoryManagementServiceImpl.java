@@ -50,6 +50,7 @@ import com.logistimo.events.processor.EventPublisher;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exception.LogiException;
 import com.logistimo.exception.TaskSchedulingException;
+import com.logistimo.exception.ValidationException;
 import com.logistimo.inventory.TransactionUtil;
 import com.logistimo.inventory.actions.UpdateMultipleInventoryTransactionsAction;
 import com.logistimo.inventory.dao.IInvntryDao;
@@ -115,6 +116,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import javax.jdo.JDOObjectNotFoundException;
@@ -1691,7 +1693,8 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
   }
 
   private void checkHandlinkUnitErrors(ITransaction trans) throws LogiException {
-    Map<String, String> huMap = handlingUnitService.getHandlingUnitDataByMaterialId(trans.getMaterialId());
+    Map<String, String> huMap = handlingUnitService.getHandlingUnitDataByMaterialId(
+        trans.getMaterialId());
     if (huMap != null && BigUtil.notEqualsZero(
         trans.getQuantity().remainder(new BigDecimal(huMap.get(IHandlingUnit.QUANTITY))))) {
       String matName = materialCatalogService.getMaterial(trans.getMaterialId()).getName();
@@ -1720,6 +1723,40 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
       if (BigUtil.greaterThan(trans.getQuantity(), linkedTransaction.getQuantity())) {
         throw new LogiException("M019", trans.getQuantity(), linkedTransaction.getQuantity());
       }
+      try {
+        Optional<ReturnsConfig> returnsConfiguration = this.getReturnsConfig(trans.getKioskId());
+        if (!returnsConfiguration.isPresent()) {
+          return;
+        }
+        validateReturnsPolicy(trans.getTrackingObjectType(), linkedTransaction, returnsConfiguration.get());
+      } catch (ValidationException e) {
+        throw new LogiException("M018", (Object[]) null);
+      }
+    }
+  }
+
+  /**
+   * Validates if return for a kiosk allowed based on return policy.
+   * @param trackingObjType - Tracking object type based on which validation is done against incoming or outgoing duration
+   * @param linkedTransaction - The transaction against which the return is being posted
+   * @throws ValidationException
+   */
+  protected void validateReturnsPolicy(String trackingObjType, ITransaction linkedTransaction, ReturnsConfig returnsConfiguration) throws
+      ValidationException {
+    if (!(ITransaction.TRACKING_OBJECT_TYPE_ISSUE_TRANSACTION.equals(trackingObjType) || ITransaction.TRACKING_OBJECT_TYPE_RECEIPT_TRANSACTION.equals(trackingObjType))) {
+      return;
+    }
+
+    Date linkedTransactionDate = linkedTransaction.getTimestamp();
+    Integer duration = ITransaction.TRACKING_OBJECT_TYPE_ISSUE_TRANSACTION.equals(trackingObjType) ? returnsConfiguration.getIncomingDuration() : returnsConfiguration.getOutgoingDuration();
+    if (duration.compareTo(0) == 0) {
+      return;
+    }
+    Long
+        durationInMillis = TimeUnit.DAYS.toMillis(duration);
+    if ((System.currentTimeMillis() - linkedTransactionDate.getTime()) > durationInMillis) {
+      throw new ValidationException("M018",
+          "Duration cannot be greater than the duration configured for returns");
     }
   }
 
@@ -3719,15 +3756,15 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     try {
       results =
           invntryDao.getInventory(new InventoryFilters().withDomainId(domainId)
-                  .withKioskId(kioskId)
-                  .withKioskIds(kioskIds)
-                  .withKioskTags(kioskTags)
-                  .withExcludedKioskTags(excludedKioskTags)
-                  .withMaterialId(materialId)
-                  .withMaterialTags(materialTag)
-                  .withMatType(matType)
-                  .withOnlyNonZeroStk(onlyNonZeroStk)
-                  .withPdos(pdos)
+              .withKioskId(kioskId)
+              .withKioskIds(kioskIds)
+              .withKioskTags(kioskTags)
+              .withExcludedKioskTags(excludedKioskTags)
+              .withMaterialId(materialId)
+              .withMaterialTags(materialTag)
+              .withMatType(matType)
+              .withOnlyNonZeroStk(onlyNonZeroStk)
+              .withPdos(pdos)
                   .withLocation(location)
               , params, pm);
     } finally {

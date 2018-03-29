@@ -73,6 +73,24 @@ function CreateReturnsController($scope, $location, $timeout, returnsService, tr
         $scope.hideLoading();
     });
 
+    $scope.showLoading();
+    trnService.getMatStatus("ro", false).then(function (data) {
+        $scope.matstatus = data.data;
+    }).catch(function error(msg) {
+        $scope.showErrorMsg(msg);
+    }).finally(function () {
+        $scope.hideLoading();
+    });
+
+    $scope.showLoading();
+    trnService.getMatStatus("ro", true).then(function (data) {
+        $scope.tempmatstatus = data.data;
+    }).catch(function error(msg) {
+        $scope.showErrorMsg(msg);
+    }).finally(function () {
+        $scope.hideLoading();
+    });
+
     function setCommonReasons(item) {
         item.reasons = angular.copy($scope.reasons);
         item.returnReason = angular.copy($scope.defaultReason);
