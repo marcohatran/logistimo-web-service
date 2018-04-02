@@ -337,7 +337,9 @@ function CreateReturnsController($scope, $location, $timeout, returnsService, tr
                                     return $scope.validateBatchStatus(returnItem, returnBatch, batchIndex, true);
                                 }
                             } else {
-                                return $scope.validateBatchStatus(returnItem, returnBatch, batchIndex);
+                                if (checkNotNullEmpty($scope.matstatus)) {
+                                    return $scope.validateBatchStatus(returnItem, returnBatch, batchIndex);
+                                }
                             }
                         }
                     }
@@ -351,7 +353,9 @@ function CreateReturnsController($scope, $location, $timeout, returnsService, tr
                             return $scope.validateStatus(returnItem, index, true);
                         }
                     } else {
-                        return $scope.validateStatus(returnItem, index);
+                        if (checkNotNullEmpty($scope.matstatus)) {
+                            return $scope.validateStatus(returnItem, index);
+                        }
                     }
                 }
             }
