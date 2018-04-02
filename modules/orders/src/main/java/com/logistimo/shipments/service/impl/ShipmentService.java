@@ -986,7 +986,7 @@ public class ShipmentService implements IShipmentService {
     return
         orderManagementService.getOrder(shipment.getOrderId(), false, pm).getOrderType()
             == IOrder.TRANSFER_ORDER
-            ? ITransaction.TYPE_TRANSFER_SHIPMENT : ITransaction.TYPE_ORDER_SHIPMENT;
+            ? ITransaction.TRACKING_OBJECT_TYPE_TRANSFER_SHIPMENT : ITransaction.TRACKING_OBJECT_TYPE_ORDER_SHIPMENT;
   }
 
   /**

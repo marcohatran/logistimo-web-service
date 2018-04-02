@@ -181,9 +181,9 @@ public class TransactionExportHandler implements IExportHandler {
           totStr = messages.getString("order");
         } else if (ITransaction.TYPE_TRANSFER.equalsIgnoreCase(totStr)) {
           totStr = messages.getString("transactions.transfer.upper");
-        } else if (ITransaction.TYPE_ORDER_SHIPMENT.equalsIgnoreCase(totStr)) {
+        } else if (ITransaction.TRACKING_OBJECT_TYPE_ORDER_SHIPMENT.equalsIgnoreCase(totStr)) {
           totStr = messages.getString("order.shipment");
-        } else if (ITransaction.TYPE_TRANSFER_SHIPMENT.equalsIgnoreCase(totStr)) {
+        } else if (ITransaction.TRACKING_OBJECT_TYPE_TRANSFER_SHIPMENT.equalsIgnoreCase(totStr)) {
           totStr = messages.getString("transfer.shipment");
         }
       }
