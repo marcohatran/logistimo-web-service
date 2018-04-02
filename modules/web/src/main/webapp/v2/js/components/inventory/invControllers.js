@@ -248,11 +248,11 @@ invControllers.controller('StockViewsController', ['$scope', '$timeout', 'matSer
 
         function getAbnormalityTypeLabel(type) {
             switch (type) {
-                case 200:
+                case '200':
                     return $scope.resourceBundle['inventory.zerostock'];
-                case 201:
+                case '201':
                     return $scope.resourceBundle['inventory.lessthanmin'];
-                case 202:
+                case '202':
                     return $scope.resourceBundle['inventory.morethanmax'];
                 default:
                     return "";

@@ -58,7 +58,7 @@ public class ReturnsRepository extends Repository {
 
   private static final String
       USER_DOMAIN_QUERY =
-      "(SELECT KIOSKID FROM USERTOKIOSK UD,KIOSK K WHERE K.KIOSKID=UD.KIOSKID AND UD.USERID=:userId)";
+      "(SELECT UD.KIOSKID FROM USERTOKIOSK UD,KIOSK K WHERE K.KIOSKID=UD.KIOSKID AND UD.USERID=:userId)";
 
 
   public void saveReturns(ReturnsVO returnsVO) {
