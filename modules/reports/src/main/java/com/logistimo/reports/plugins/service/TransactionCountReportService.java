@@ -139,7 +139,7 @@ public class TransactionCountReportService extends ReportServiceUtil implements 
 
   @Override
   public String getColumns(Map<String, String> filters, ReportViewType viewType) {
-    return "ic,rc,sc,wc,trc,tc,iec,rec,scec,wec,trec,tec,lic"
+    return "ic,rc,sc,wc,trc,tc,iec,rec,scec,wec,trec,tec,lic,trric,trroc,riec,roec"
         + getSelectiveColumns(filters, viewType);
   }
 
@@ -248,6 +248,34 @@ public class TransactionCountReportService extends ReportServiceUtil implements 
           .add(addData(Math.min(((float) report.getTransferEntityCount() / denominator) * 100, 100),
               report.getTransferEntityCount(), denominator));
     }
+
+    values.add(addData(report.getReturnsIncomingCount()));
+    if (denominator == null || denominator == 0) {
+      values.add(addData(ZERO));
+      values.add(addData(ZERO));
+    } else {
+      values.add(
+          addData((float) report.getReturnsIncomingCount() / denominator, report.getReturnsIncomingCount(),
+              denominator));
+      values
+          .add(addData(Math.min(((float) report.getReturnsIncomingEntityCount() / denominator) * 100, 100),
+              report.getReturnsIncomingEntityCount(), denominator));
+    }
+
+    values.add(addData(report.getReturnsOutgoingCount()));
+    if (denominator == null || denominator == 0) {
+      values.add(addData(ZERO));
+      values.add(addData(ZERO));
+    } else {
+      values.add(
+          addData((float) report.getReturnsOutgoingCount() / denominator, report.getReturnsOutgoingCount(),
+              denominator));
+      values
+          .add(addData(Math.min(((float) report.getReturnsOutgoingEntityCount() / denominator) * 100, 100),
+              report.getReturnsOutgoingEntityCount(), denominator));
+    }
+
+
     return values;
   }
 
