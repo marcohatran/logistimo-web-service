@@ -108,7 +108,7 @@
                                                         resourceBundle['status.lower']}}
                                                     </option>
                                                 </select>
-                                                <span class="litetext float-left"
+                                                <span ng-hide="isUndef(reasons) || reasons.length == 0" class="litetext float-left"
                                                       ng-class="{'required' : reasons.length > 0}">{{resourceBundle['reason']}}</span>
                                                 <select ng-hide="isUndef(reasons) || reasons.length == 0"
                                                         ng-model="returnitem.rrsn" class="form-control"
@@ -123,8 +123,6 @@
                                                         resourceBundle['reason.lowercase']}}
                                                     </option>
                                                 </select>
-
-                                                <p ng-show="isUndef(reasons)" class="text-center cbx">NA</p>
                                             </div>
                                         </td>
                                         <td class="text-center">
@@ -258,7 +256,7 @@
                                                         + resourceBundle['status.lower']}}
                                                     </option>
                                                 </select>
-                                                <span ng-hide="reasons.length == 0" class="litetext float-left"
+                                                <span ng-hide="isUndef(reasons) || reasons.length == 0" class="litetext float-left"
                                                       ng-class="{'required' : reasons.length > 0}">{{resourceBundle['reason']}}</span>
                                                 <select ng-hide="isUndef(reasons) || reasons.length == 0"
                                                         ng-model="trans.rrsn" class="form-control"
@@ -272,8 +270,6 @@
                                                         resourceBundle['reason.lowercase']}}
                                                     </option>
                                                 </select>
-
-                                                <p ng-show="isUndef(reasons)" class="text-center cbx">NA</p>
                                             </div>
                                         </td>
                                     </tr>

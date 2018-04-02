@@ -98,6 +98,7 @@
                                 <span ng-show="loadingDent" class="form-control-feedback typehead-loading" aria-hidden="true">
                                     <span class="glyphicons glyphicons-cogwheel spin"></span>
                                 </span>
+                                <span ng-show="isUndef(transaction.dent) && transaction.type == 'ri'" class="litetext"> {{resourceBundle['customer.not.selected.note']}}</span>
                             </div>
                         </div>
 
@@ -115,6 +116,7 @@
                                 <span ng-show="loadingDent" class="form-control-feedback typehead-loading" aria-hidden="true">
                                     <span class="glyphicons glyphicons-cogwheel spin"></span>
                                 </span>
+                                <span ng-show="isUndef(transaction.dent) && transaction.type == 'ro'" class="litetext"> {{resourceBundle['vendor.not.selected.note']}}</span>
                             </div>
                         </div>
 

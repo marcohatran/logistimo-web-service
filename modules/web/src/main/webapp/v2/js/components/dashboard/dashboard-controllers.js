@@ -2353,7 +2353,7 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
                     }
                 }
             }
-            $scope.barHeight = bData.length * 10 + 80;
+            $scope.barHeight = bData.length * 20 + 80;
             $scope.barData = bData;
         }
         function constructMatBarData(data, allData, event) {

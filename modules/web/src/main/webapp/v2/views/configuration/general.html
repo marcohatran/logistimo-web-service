@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright © 2017 Logistimo.
+  ~ Copyright © 2018 Logistimo.
   ~
   ~ This file is part of Logistimo.
   ~
@@ -170,42 +170,6 @@
                                                 <div class="col-sm-7">
                                                     <textarea class="form-control" id="cnfPgh" rows="2"
                                                               ng-model="cnf.pgh"></textarea>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row" ng-show="iSU && !onlyNewUI"> <!--Switch Console-->
-                                        <div class="col-sm-7">
-                                            <div class="form-group">
-                                                <label class="col-sm-4 control-label">{{resourceBundle['switch.users.console']}}</label>
-
-                                                <div class="col-sm-7 cbx">
-                                                    <input type="checkbox" ng-model="cnf.sc">
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row" ng-show="iSU"> <!--Switch to new host-->
-                                        <div class="col-sm-7">
-                                            <div class="form-group">
-                                                <label class="col-sm-4 control-label">{{resourceBundle['switch.newhost']}}</label>
-
-                                                <div class="col-sm-7 cbx">
-                                                    <input type="checkbox" ng-model="cnf.snh" ng-change="cnf.nhn=''">
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                    </div>
-                                    <div class="row" ng-show="iSU && cnf.snh">
-                                        <div class="col-sm-7">
-                                            <div class="form-group">
-                                                <label class="col-sm-4 control-label">{{resourceBundle['newhostname']}}</label>
-
-                                                <div class="col-sm-7">
-                                                    <input type="text" class="form-control w25 wh"
-                                                           maxlength="144" ng-model="cnf.nhn"
-                                                           placeholder="{{resourceBundle['newhostname']}}">
                                                 </div>
                                             </div>
                                         </div>

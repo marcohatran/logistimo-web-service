@@ -24,8 +24,10 @@
 package com.logistimo.inventory.service.impl;
 
 import com.logistimo.auth.utils.SecurityUtils;
+import com.logistimo.config.models.ReturnsConfig;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.exception.LogiException;
+import com.logistimo.exception.ValidationException;
 import com.logistimo.inventory.dao.impl.TransDao;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.IInvntryBatch;
@@ -46,6 +48,8 @@ import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 
 import javax.jdo.PersistenceManager;
@@ -312,6 +316,48 @@ public class InventoryManagementServiceImplTest {
       inventoryManagementService.checkReturnsErrors(transaction, mockPm);
     } catch(LogiException exception) {
       assertTrue(exception.getCode().equals("M019"));
+    }
+  }
+
+  @Test
+  public void testValidateReturnsPolicy() {
+    ReturnsConfig returnsConfig = new ReturnsConfig();
+    returnsConfig.setEntityTags(Arrays.asList("CCP"));
+    returnsConfig.setIncomingDuration(1);
+    returnsConfig.setOutgoingDuration(1);
+
+    ITransaction linkedTransaction = new Transaction();
+    linkedTransaction.setType(ITransaction.TYPE_ISSUE);
+    linkedTransaction.setTimestamp(new Date());
+    InventoryManagementServiceImpl inventoryManagementService =
+        new InventoryManagementServiceImpl();
+
+    inventoryManagementService
+        .validateReturnsPolicy(ITransaction.TRACKING_OBJECT_TYPE_ISSUE_TRANSACTION,
+            linkedTransaction, returnsConfig);
+
+    linkedTransaction.setType(ITransaction.TYPE_RECEIPT);
+
+    inventoryManagementService
+        .validateReturnsPolicy(ITransaction.TRACKING_OBJECT_TYPE_RECEIPT_TRANSACTION,
+            linkedTransaction, returnsConfig);
+
+    Calendar c = Calendar.getInstance(); // starts with today's date and time
+    c.add(Calendar.DAY_OF_YEAR, -2);  // goes back by 2 days
+    linkedTransaction.setTimestamp(c.getTime());
+    linkedTransaction.setType(ITransaction.TYPE_ISSUE);
+
+    try {
+      inventoryManagementService.validateReturnsPolicy(ITransaction.TRACKING_OBJECT_TYPE_ISSUE_TRANSACTION, linkedTransaction, returnsConfig);
+    } catch(ValidationException exception) {
+      assertNotNull(exception);
+    }
+
+    linkedTransaction.setType(ITransaction.TYPE_RECEIPT);
+    try {
+      inventoryManagementService.validateReturnsPolicy(ITransaction.TRACKING_OBJECT_TYPE_RECEIPT_TRANSACTION, linkedTransaction, returnsConfig);
+    } catch(ValidationException exception) {
+      assertNotNull(exception);
     }
   }
 
