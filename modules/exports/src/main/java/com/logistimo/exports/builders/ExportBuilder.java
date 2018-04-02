@@ -129,7 +129,7 @@ public class ExportBuilder {
       String displayFreq = domainConfig.getInventoryConfig().getDisplayCRFreq();
       additionalData.put("displayFreq", displayFreq);
 
-      if (filters.containsKey("include_batch_info")) {
+      if ("true".equalsIgnoreCase(filters.get("include_batch_info"))) {
         additionalData.put(typeId, "T_BATCH");
       } else {
         additionalData.put(typeId, "T_NON_BATCH");
