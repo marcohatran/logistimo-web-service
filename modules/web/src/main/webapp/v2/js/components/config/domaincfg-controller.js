@@ -4149,7 +4149,7 @@ domainCfgControllers.controller('NotificationMessageController', ['$scope', 'dom
             if(isInfo) {
                 return {
                     filters: getCaption(),
-                    type: 'Notification messages'
+                    type: $scope.resourceBundle['exports.notificationstatus']
                 };
             }
             $scope.showLoading();

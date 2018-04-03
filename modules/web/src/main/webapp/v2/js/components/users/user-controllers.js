@@ -239,7 +239,7 @@ userControllers.controller('UsersListController', ['$scope', 'userService', 'req
             if(isInfo) {
                 return {
                     filters: getCaption(),
-                    type: 'Users'
+                    type: $scope.resourceBundle['exports.users']
                 };
             }
             $scope.showLoading();

@@ -221,7 +221,7 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
             if(isInfo) {
                 return {
                     filters: getCaption(),
-                    type: oty == 0 ? 'Transfer orders' : 'Orders'
+                    type: oty == 0 ? $scope.resourceBundle['exports.transfers'] : $scope.resourceBundle['exports.orders']
                 };
             }
             $scope.showLoading();

@@ -281,7 +281,7 @@ invControllers.controller('StockViewsController', ['$scope', '$timeout', 'matSer
             if (isInfo) {
                 return {
                     filters: getCaption(),
-                    type: module == "inventory" ? "Inventory" : "Batch inventory",
+                    type: module == "inventory" ? $scope.resourceBundle['exports.inventory'] : $scope.resourceBundle['exports.batch.inventory'],
                     includeBatch: module == "inventory"
                 };
             }
@@ -411,7 +411,7 @@ invControllers.controller('InventoryCtrl', ['$scope', 'invService', 'domainCfgSe
             if(isInfo) {
                 return {
                     filters: getCaption(),
-                    type: 'Inventory',
+                    type: $scope.resourceBundle['exports.inventory'],
                     includeBatch: true
                 };
             }
@@ -1595,7 +1595,7 @@ invControllers.controller('AbnormalStockCtrl', ['$scope', 'invService', 'domainC
             if (isInfo) {
                 return {
                     filters: getCaption(),
-                    type: 'Abnormal stock'
+                    type: $scope.resourceBundle['exports.stev']
                 };
             }
             $scope.showLoading();

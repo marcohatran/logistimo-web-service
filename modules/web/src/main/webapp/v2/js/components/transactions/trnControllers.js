@@ -172,7 +172,7 @@ trnControllers.controller('TransactionsCtrl', ['$scope', 'trnService', 'domainCf
             if(isInfo) {
                 return {
                     filters: getCaption(),
-                    type: 'Transactions'
+                    type: $scope.resourceBundle['exports.transactions']
                 };
             }
             var eid,mid,ktag,mtag=undefined;
