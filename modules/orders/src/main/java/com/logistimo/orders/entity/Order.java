@@ -1365,7 +1365,7 @@ public class Order implements IOrder {
 
   @Override
   public boolean hasSalesReferenceId() {
-    return StringUtils.isNotEmpty(salesRefId);
+    return StringUtils.isNotBlank(salesRefId);
   }
 
   @Override

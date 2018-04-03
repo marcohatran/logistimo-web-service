@@ -810,14 +810,14 @@ public class OrderServlet extends JsonRestServlet {
               status = false;
               mom = buildOrderModel(timezone, o, locale, includeBatchDetails, uoReq);
             }
-            if (StringUtils.isNotEmpty(uoReq.getTransferReferenceId()) && !uoReq
+            if (StringUtils.isNotBlank(uoReq.getTransferReferenceId()) && !uoReq
                 .getTransferReferenceId().equals(o.getTransferReferenceId())
                 && IOrder.TRANSFER_ORDER == o.getOrderType()) {
               status = false;
               message = backendMessages.getString("transfer.reference.id.update.error.message");
             }
-            if (StringUtils.isEmpty(uoReq.getPurchaseReferenceId()) && StringUtils
-                .isNotEmpty(o.getPurchaseReferenceId()) && dc.getOrdersConfig()
+            if (StringUtils.isBlank(uoReq.getPurchaseReferenceId()) && StringUtils
+                .isNotBlank(o.getPurchaseReferenceId()) && dc.getOrdersConfig()
                 .isPurchaseReferenceIdMandatory()) {
               status = false;
               message = backendMessages.getString("purchase.reference.id.mandatory.error");
