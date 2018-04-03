@@ -86,7 +86,7 @@ public class TransactionsEventGenerator extends EventGenerator {
       if (o instanceof ITransaction) {
         String transType = ((ITransaction) o).getType();
         if (ITransaction.TYPE_ISSUE.equals(transType) || ITransaction.TYPE_TRANSFER
-            .equals(transType)) {
+            .equals(transType) || ITransaction.TYPE_RETURNS_OUTGOING.equals(transType)) {
           kioskId = ((ITransaction) o).getLinkedKioskId();
         } else {
           kioskId = ((ITransaction) o).getKioskId();
@@ -102,9 +102,9 @@ public class TransactionsEventGenerator extends EventGenerator {
       if (o instanceof ITransaction) {
         String transType = ((ITransaction) o).getType();
         if (ITransaction.TYPE_ISSUE.equals(transType) || ITransaction.TYPE_TRANSFER
-            .equals(transType)) {
+            .equals(transType) || ITransaction.TYPE_RETURNS_OUTGOING.equals(transType)) {
           kioskId = ((ITransaction) o).getKioskId();
-        } else if (ITransaction.TYPE_RECEIPT.equals(transType)) {
+        } else if (ITransaction.TYPE_RECEIPT.equals(transType) || ITransaction.TYPE_RETURNS_INCOMING.equals(transType)) {
           kioskId = ((ITransaction) o).getLinkedKioskId();
         }
       }
