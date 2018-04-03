@@ -521,19 +521,11 @@ public class TransactionUtil {
                 trans.getType(), index);
             throw new LogiException("M010", (Object[]) null);
           }
-          if (isTransTypeReturn) {
-            if (!isTrackingDetailsPresent(trans)) {
+          if (isTransTypeReturn && !isTrackingDetailsPresent(trans)) {
               xLogger.warn(
                   "Tracking ID, Local tracking ID or Tracking object type is not specified for transaction type {0} at index {1}",
                   trans.getType(), index);
               throw new LogiException("M010", (Object[]) null);
-            }
-            if (StringUtils.isEmpty(trans.getReason())) {
-              xLogger.warn(
-                  "Reason is not specified for transaction type {0} at index {1}",
-                  trans.getType(), index);
-              throw new LogiException("M010", (Object[]) null);
-            }
           }
           if (!isTransTypeReturn && (StringUtils.isNotEmpty(trans.getTrackingObjectType()) || StringUtils.isNotEmpty(trans.getTrackingId()))) {
             xLogger.warn(
