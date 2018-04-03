@@ -250,4 +250,8 @@ public final class Constants {
 
   public static final String USER_KEY = "user";
   public static final String KIOSK_KEY = "kiosk";
+
+  public static final String MESSAGES = "Messages";
+
+  public static final String BACKEND_MESSAGES = "BackendMessages";
 }

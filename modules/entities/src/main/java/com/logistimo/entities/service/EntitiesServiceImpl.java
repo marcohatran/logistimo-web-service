@@ -66,6 +66,7 @@ import com.logistimo.entity.comparator.LocationComparator;
 import com.logistimo.events.entity.IEvent;
 import com.logistimo.events.exceptions.EventGenerationException;
 import com.logistimo.events.processor.EventPublisher;
+import com.logistimo.exception.HttpBadRequestException;
 import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.locations.client.LocationClient;
 import com.logistimo.locations.model.LocationResponseModel;
@@ -88,6 +89,7 @@ import com.logistimo.users.service.UsersService;
 import com.logistimo.utils.Counter;
 import com.logistimo.utils.QueryUtil;
 import com.logistimo.utils.StringUtil;
+import com.netflix.hystrix.exception.HystrixBadRequestException;
 
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
@@ -532,8 +534,8 @@ public class EntitiesServiceImpl implements EntitiesService {
         query.closeAll();
       }
       final Locale locale = SecurityUtils.getLocale();
-      ResourceBundle messages = Resources.get().getBundle("Messages", locale);
-      ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+      ResourceBundle messages = Resources.get().getBundle(Constants.MESSAGES, locale);
+      ResourceBundle backendMessages = Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
 
       if (results == null || results.size() == 0) {
         updateKioskLocationIds(kiosk);
@@ -758,7 +760,12 @@ public class EntitiesServiceImpl implements EntitiesService {
     }
 
     if (exception != null) {
-      throw new ServiceException(exception.getMessage());
+      if (exception instanceof HystrixBadRequestException) {
+        HttpBadRequestException ex = (HttpBadRequestException) exception.getCause();
+        throw new ServiceException(ex.getCode(), SecurityUtils.getLocale(), (String) null);
+      } else {
+        throw new ServiceException(exception.getMessage());
+      }
     }
     // Update the reports configuration for this domain
     if (kiosk.getDomainIds() != null) {
@@ -855,8 +862,8 @@ public class EntitiesServiceImpl implements EntitiesService {
     } catch (JDOObjectNotFoundException e) {
       xLogger.warn("getKiosk: Kiosk {0} does not exist", kioskId);
       final Locale locale = SecurityUtils.getLocale();
-      ResourceBundle messages = Resources.get().getBundle("Messages", locale);
-      ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+      ResourceBundle messages = Resources.get().getBundle(Constants.MESSAGES, locale);
+      ResourceBundle backendMessages = Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
       throw new ObjectNotFoundException(
           messages.getString("kiosk") + " " + kioskId + " " + backendMessages
               .getString("error.notfound"), e);
@@ -883,7 +890,7 @@ public class EntitiesServiceImpl implements EntitiesService {
     try {
       if (!authorizationService.authoriseUpdateKiosk(sUserId, domainId)) {
         final Locale locale = SecurityUtils.getLocale();
-        ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+        ResourceBundle backendMessages = Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
         throw new UnauthorizedException(backendMessages.getString("permission.denied"));
       }
       List<IKiosk> kiosks = new ArrayList<>(kioskIds.size());
@@ -902,7 +909,7 @@ public class EntitiesServiceImpl implements EntitiesService {
       }
       if (!sdFailedKiosks.isEmpty()) {
         final Locale locale = SecurityUtils.getLocale();
-        ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+        ResourceBundle backendMessages = Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
         throw new ServiceException(
             backendMessages.getString("entity.deletion.permission.denied") + " : " + StringUtil
                 .getCSV(sdFailedKiosks));
@@ -1494,8 +1501,8 @@ public class EntitiesServiceImpl implements EntitiesService {
     xLogger.fine("Exiting updatePoolGroup");
     if (!poolgroupExists) {
       final Locale locale = SecurityUtils.getLocale();
-      ResourceBundle messages = Resources.get().getBundle("Messages", locale);
-      ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+      ResourceBundle messages = Resources.get().getBundle(Constants.MESSAGES, locale);
+      ResourceBundle backendMessages = Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
       errMsg = messages.getString("poolgroup") + " " + backendMessages.getString("error.notfound");
     }
     if (errMsg != null) {
@@ -1548,8 +1555,8 @@ public class EntitiesServiceImpl implements EntitiesService {
     } catch (JDOObjectNotFoundException e) {
       xLogger.warn("getPoolGroup: FAILED!! PoolGroup {0} does not exist", groupId);
       final Locale locale = SecurityUtils.getLocale();
-      ResourceBundle messages = Resources.get().getBundle("Messages", locale);
-      ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+      ResourceBundle messages = Resources.get().getBundle(Constants.MESSAGES, locale);
+      ResourceBundle backendMessages = Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
       errMsg = messages.getString("poolgroup") + " " + backendMessages.getString("error.notfound");
       exception = e;
     } catch (Exception e) {

@@ -41,6 +41,7 @@ import com.logistimo.entity.comparator.LocationComparator;
 import com.logistimo.events.entity.IEvent;
 import com.logistimo.events.exceptions.EventGenerationException;
 import com.logistimo.events.processor.EventPublisher;
+import com.logistimo.exception.HttpBadRequestException;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exception.SystemException;
 import com.logistimo.exception.UnauthorizedException;
@@ -72,6 +73,7 @@ import com.logistimo.utils.PasswordEncoder;
 import com.logistimo.utils.QueryUtil;
 import com.logistimo.utils.StringUtil;
 import com.logistimo.utils.ThreadLocalUtil;
+import com.netflix.hystrix.exception.HystrixBadRequestException;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -208,8 +210,8 @@ public class UsersServiceImpl implements UsersService {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     Transaction tx = pm.currentTransaction();
     final Locale locale = ThreadLocalUtil.get().getSecureUserDetails().getLocale();
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle messages = Resources.get().getBundle(Constants.MESSAGES, locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
     try {
       try {
         if (!authorizationService.authoriseUpdateKiosk(
@@ -389,19 +391,21 @@ public class UsersServiceImpl implements UsersService {
     xLogger.fine("Entered getUsers, includeSuperusers: {0}", includeSuperusers);
     List<IUserAccount> filteredUsers = new ArrayList<>();
     String role = user.getRole();
-    List<IUserAccount> users;
+    List<IUserAccount> users = null;
     Results results;
     boolean isDomainOwner = SecurityConstants.ROLE_DOMAINOWNER.equals(role);
     if (SecurityConstants.ROLE_SUPERUSER.equals(role) || isDomainOwner) {
       results = findAllAccountsByDomain(domainId, nameStartsWith, pageParams,
           includeChildDomainUsers, user);
-      users = (List<IUserAccount>) results.getResults();
+      if(results.getResults() != null) {
+        users = (List<IUserAccount>) results.getResults();
+      }
       if (includeSuperusers && SecurityConstants.ROLE_SUPERUSER.equals(role)) {
         List<IUserAccount> superusers = getSuperusers();
         if (superusers != null && !superusers.isEmpty()) {
           for (IUserAccount superuser : superusers) {
             String nsuperuserName = superuser.getFullName().toLowerCase();
-            if (!users.contains(superuser) && (nameStartsWith == null || nameStartsWith.isEmpty()
+            if (users != null && !users.contains(superuser) && (nameStartsWith == null || nameStartsWith.isEmpty()
                 || nsuperuserName.startsWith(nameStartsWith))) {
               users.add(superuser);
             }
@@ -531,8 +535,8 @@ public class UsersServiceImpl implements UsersService {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     Transaction tx = pm.currentTransaction();
     final Locale locale = ThreadLocalUtil.get().getSecureUserDetails().getLocale();
-    ResourceBundle messages = Resources.get().getBundle("Messages", locale);
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    ResourceBundle messages = Resources.get().getBundle(Constants.MESSAGES, locale);
+    ResourceBundle backendMessages = Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
     try {
       if (!authorizationService.authoriseUpdateKiosk(updatedBy, account.getDomainId())) {
         throw new UnauthorizedException(backendMessages.getString("permission.denied"));
@@ -634,7 +638,12 @@ public class UsersServiceImpl implements UsersService {
       pm.close();
     }
     if (exception != null) {
-      throw new ServiceException(exception);
+      if (exception instanceof HystrixBadRequestException) {
+        HttpBadRequestException ex = (HttpBadRequestException) exception.getCause();
+        throw new ServiceException(ex.getCode(), ThreadLocalUtil.get().getSecureUserDetails().getLocale(), (String) null);
+      } else {
+        throw new ServiceException(exception.getMessage());
+      }
     }
     xLogger.fine("Exiting updateAccount");
   }
@@ -654,7 +663,7 @@ public class UsersServiceImpl implements UsersService {
       List<Long> uAccDids = ua.getAccessibleDomainIds();
       if (uAccDids == null || uAccDids.isEmpty()) {
         final Locale locale = ThreadLocalUtil.get().getSecureUserDetails().getLocale();
-        ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+        ResourceBundle backendMessages = Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
         xLogger
             .warn("Error while adding accessible domains for user {0}, uAccDids is null ", userId);
         throw new InvalidServiceException(
@@ -714,7 +723,7 @@ public class UsersServiceImpl implements UsersService {
     try {
       if (!authorizationService.authoriseUpdateKiosk(sUser, domainId)) {
         final Locale locale = ThreadLocalUtil.get().getSecureUserDetails().getLocale();
-        ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+        ResourceBundle backendMessages = Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
         throw new UnauthorizedException(backendMessages.getString("permission.denied"));
       }
       for (String accountId : accountIds) {
@@ -1433,8 +1442,8 @@ public class UsersServiceImpl implements UsersService {
     }
     if (!userExists) {
       final Locale locale = ThreadLocalUtil.get().getSecureUserDetails().getLocale();
-      ResourceBundle messages = Resources.get().getBundle("Messages", locale);
-      ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+      ResourceBundle messages = Resources.get().getBundle(Constants.MESSAGES, locale);
+      ResourceBundle backendMessages = Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
       errMsg = messages.getString("user") + " '" + userId + "' " + backendMessages
           .getString("error.notfound");
     }
