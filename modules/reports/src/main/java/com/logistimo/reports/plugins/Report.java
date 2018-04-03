@@ -272,6 +272,12 @@ public class Report {
   public Long tdio;
   public Long tdis;
   public Long tdif;
+  public Long trric;
+  public Long trroc;
+  public Long riec;
+  public Long roec;
+  public Float trroq;
+  public Float trriq;
   public Map<String,Long> podcrsn;
   public Map<String,Long> psdcrsn;
   public Map<String,Long> pfdcrsn;
@@ -292,6 +298,27 @@ public class Report {
   public Map<String,Float> nfdprsn;
   public Map<String,Float> rrsni;
   public Map<String,Float> torrsni;
+
+  public Float getReturnsOutgoingQuantity(){ return trroq; }
+
+  public Float getReturnsIncomingQuantity(){ return trriq; }
+
+  public Long getReturnsIncomingCount() {
+    return trric;
+  }
+
+  public Long getReturnsOutgoingCount() {
+    return trroc;
+  }
+
+  public Long getReturnsIncomingEntityCount() {
+    return riec;
+  }
+
+  public Long getReturnsOutgoingEntityCount() {
+    return roec;
+  }
+
 
   public Long getDomainId() {
     return did;

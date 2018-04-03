@@ -1462,13 +1462,21 @@ domainCfgControllers.controller('InventoryConfigurationController', ['$scope', '
         }
 
         function isReturnsConfigurationValid() {
-            return !($scope.inv.rcm.some(function (data) {
-                    if (checkNullEmpty(data.enTgs) || (checkNullEmpty(data.incDur) && checkNullEmpty(data.outDur))) {
-                        $scope.showWarning($scope.resourceBundle['config.returns.policy.configure']);
-                        return true;
-                    }
-                }
-            ));
+            var isReturnsConfigValid = $scope.inv.rcm.every(function(data){
+               if (!(checkNotNullEmpty(data.enTgs) && (checkNotNullEmpty(data.incDur) || checkNotNullEmpty(data.outDur)))) {
+                   $scope.showWarning($scope.resourceBundle['config.returns.policy.configure']);
+                   return false;
+               } else {
+                   if (checkNullEmpty(data.incDur)) {
+                       data.incDur = undefined;
+                   }
+                   if (checkNullEmpty(data.outDur)) {
+                       data.outDur = undefined;
+                   }
+                   return true;
+               }
+            });
+            return isReturnsConfigValid;
         }
 
         $scope.checkAndUpdateReasons = function(reasonConfigModel) {
