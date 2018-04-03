@@ -1371,8 +1371,8 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     boolean isOrder =
         ITransaction.TYPE_ORDER.equals(trkType) || IInvAllocation.Type.SHIPMENT.toString()
             .equals(trkType)
-            || ITransaction.TYPE_ORDER_SHIPMENT.equals(trkType)
-            || ITransaction.TYPE_TRANSFER_SHIPMENT.equals(trkType);
+            || ITransaction.TRACKING_OBJECT_TYPE_ORDER_SHIPMENT.equals(trkType)
+            || ITransaction.TRACKING_OBJECT_TYPE_TRANSFER_SHIPMENT.equals(trkType);
     boolean isReturn = ITransaction.TYPE_RETURNS_INCOMING.equals(tType) || ITransaction.TYPE_RETURNS_OUTGOING.equals(tType);
     Locale locale = SecurityUtils.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);

@@ -1232,6 +1232,7 @@ exports.report=Report
 exports.stev=Abnormal stock
 exports.transactions=Transactions
 exports.users=Users
+exports.manualtransactions=Uploaded transactions
 temperature.states.default.exclude=Temperature states to exclude by default
 dashboard.overview=Overview dashboard
 activity.default.period=Default period for activity

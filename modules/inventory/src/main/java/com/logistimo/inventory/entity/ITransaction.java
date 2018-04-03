@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -42,14 +42,13 @@ public interface ITransaction
   String TYPE_ORDER = "o";
   String TYPE_REORDER = "oo";
   String TYPE_WASTAGE = "w";
-  String TYPE_RETURN = "rt";
-  String TYPE_ORDER_SHIPMENT = "os";
-  String TRACKING_OBJECT_TYPE_TRANSFER = "tr";
-  String TRACKING_OBJECT_TYPE_ORDER = "or";
-
-  String TYPE_TRANSFER_SHIPMENT = "ts";
   String TYPE_RETURNS_INCOMING = "ri";
   String TYPE_RETURNS_OUTGOING = "ro";
+
+  String TRACKING_OBJECT_TYPE_ORDER_SHIPMENT = "os";
+  String TRACKING_OBJECT_TYPE_TRANSFER_SHIPMENT = "ts";
+  String TRACKING_OBJECT_TYPE_TRANSFER = "tr";
+  String TRACKING_OBJECT_TYPE_ORDER = "or";
   String TRACKING_OBJECT_TYPE_ISSUE_TRANSACTION = "iss_trn";
   String TRACKING_OBJECT_TYPE_RECEIPT_TRANSACTION = "rec_trn";
 

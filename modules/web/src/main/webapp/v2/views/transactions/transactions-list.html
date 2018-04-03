@@ -210,9 +210,12 @@
                                     <a ng-show="isDef(item.trkid) && isDef(item.trkObTy) && item.trkObTy == 'ts'"
                                        class="clickable litetext" ng-href="#/orders/shipment/detail/{{item.trkid}}"
                                        target="_blank">({{resourceBundle['transfer.shipment']}}: {{item.trkid}})</a>
-                                    <a ng-show="isDef(item.trkid) && isDef(item.trkObTy) && item.trkObTy == 'rt'"
+                                    <a ng-show="isDef(item.trkid) && isDef(item.trkObTy) && item.trkObTy == 'or'"
                                        class="clickable litetext" ng-href="#/orders/returns/detail/{{item.trkid}}"
-                                       target="_blank">({{resourceBundle['returns']}}: {{item.trkid}})</a>
+                                       target="_blank">({{resourceBundle['order.returns']}}: {{item.trkid}})</a>
+                                    <a ng-show="isDef(item.trkid) && isDef(item.trkObTy) && item.trkObTy == 'tr'"
+                                       class="clickable litetext" ng-href="#/orders/returns/detail/{{item.trkid}}"
+                                       target="_blank">({{resourceBundle['transfer.returns']}}: {{item.trkid}})</a>
                                     <span ng-show="isDef(item.trkid) && isDef(item.trkObTy) && item.trkObTy == 't'" class = "litetext">({{resourceBundle['transactions.viatransfer']}} {{item.trkid}})</span>
                                     <span ng-show="isDef(item.trkid) && isDef(item.trkObTy) && item.trkObTy == 'iss_trn'" class = "litetext">({{resourceBundle['transactions.issue.upper']}}: {{item.trkid}})</span>
                                     <span ng-show="isDef(item.trkid) && isDef(item.trkObTy) && item.trkObTy == 'rec_trn'" class = "litetext">({{resourceBundle['transactions.receipt.upper']}}: {{item.trkid}})</span>
@@ -233,7 +236,7 @@
                                 <td>
                                     <span ng-if="item.trnSrc == 1" class="glyphicons glyphicons-display" uib-tooltip="{{resourceBundle['web']}}" tooltip-placement="left"></span>
                                     <span ng-if="item.trnSrc == 2" class="glyphicons glyphicons-iphone" uib-tooltip="{{resourceBundle['mob']}}" tooltip-placement="left"></span>
-                                    <span ng-if="item.trnSrc== 3" class="glyphicons glyphicons-cloud-upload" uib-tooltip="{{resourceBundle['upl']}}" tooltip-placement="left"></span>
+                                    <span ng-if="item.trnSrc == 3" class="glyphicons glyphicons-cloud-upload" uib-tooltip="{{resourceBundle['upl']}}" tooltip-placement="left"></span>
                                     <span ng-if="item.trnSrc == 4" class="glyphicons glyphicons-sms" uib-tooltip="{{resourceBundle['sms']}}" tooltip-placement="left"></span>
                                 </td>
                                 <td>

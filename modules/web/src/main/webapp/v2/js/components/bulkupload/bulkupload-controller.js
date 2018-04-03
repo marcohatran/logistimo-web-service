@@ -182,7 +182,7 @@ blkUpControllers.controller('ViewBulkUploadController', ['$scope','requestContex
             if(isInfo) {
                 return {
                     filters: getCaption(),
-                    type: 'uploaded transactions'
+                    type: $scope.resourceBundle['exports.manualtransactions']
                 };
             }
             var eid;
@@ -197,7 +197,7 @@ blkUpControllers.controller('ViewBulkUploadController', ['$scope','requestContex
                 titles: {
                     filters: getCaption()
                 },
-                module: "manual.transactions",
+                module: "manualtransactions",
                 templateId: "i_manual_transaction"
             }).then(function (data) {
                 $scope.showSuccess(data.data);

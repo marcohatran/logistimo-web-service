@@ -91,6 +91,15 @@ function CreateReturnsController($scope, $location, $timeout, returnsService, tr
         $scope.hideLoading();
     });
 
+    $scope.showLoading();
+    trnService.getStatusMandatory().then(function (data) {
+        $scope.statusMandatoryConfig = data.data;
+    }).catch(function error(msg) {
+        $scope.showErrorMsg(msg);
+    }).finally(function () {
+        $scope.hideLoading();
+    });
+
     function setCommonReasons(item) {
         item.reasons = angular.copy($scope.reasons);
         item.returnReason = angular.copy($scope.defaultReason);
@@ -128,7 +137,7 @@ function CreateReturnsController($scope, $location, $timeout, returnsService, tr
     function isAllValid() {
         if (isReturnQuantityAdded()) {
             if (isReturnValid('returnReason')) {
-                if (!$scope.transConfig.rosm || isReturnValid('returnMaterialStatus')) {
+                if (!$scope.statusMandatoryConfig.rosm || isReturnValid('returnMaterialStatus')) {
                     return true;
                 } else {
                     $scope.showWarning("Material status is mandatory for all materials being returned");
@@ -290,14 +299,14 @@ function CreateReturnsController($scope, $location, $timeout, returnsService, tr
     };
 
     $scope.validateStatus = function (material, index, isTempStatus) {
-        if ($scope.transConfig.rosm && checkNullEmpty(material.returnMaterialStatus)) {
+        if ($scope.statusMandatoryConfig.rosm && checkNullEmpty(material.returnMaterialStatus)) {
             showPopup($scope, material, 's' + (isTempStatus ? 't' : '') + material.id, "Material status is mandatory", index, $timeout);
             return true;
         }
     };
 
     $scope.validateBatchStatus = function (material, batchMaterial, index, isTempStatus) {
-        if ($scope.transConfig.rosm && checkNullEmpty(material.returnMaterialStatus)) {
+        if ($scope.statusMandatoryConfig.rosm && checkNullEmpty(material.returnMaterialStatus)) {
             showPopup($scope, batchMaterial, 's' + (isTempStatus ? 't' : '') + material.id + batchMaterial.id, "Material status is mandatory", index, $timeout);
             return true;
         }
@@ -328,7 +337,9 @@ function CreateReturnsController($scope, $location, $timeout, returnsService, tr
                                     return $scope.validateBatchStatus(returnItem, returnBatch, batchIndex, true);
                                 }
                             } else {
-                                return $scope.validateBatchStatus(returnItem, returnBatch, batchIndex);
+                                if (checkNotNullEmpty($scope.matstatus)) {
+                                    return $scope.validateBatchStatus(returnItem, returnBatch, batchIndex);
+                                }
                             }
                         }
                     }
@@ -342,7 +353,9 @@ function CreateReturnsController($scope, $location, $timeout, returnsService, tr
                             return $scope.validateStatus(returnItem, index, true);
                         }
                     } else {
-                        return $scope.validateStatus(returnItem, index);
+                        if (checkNotNullEmpty($scope.matstatus)) {
+                            return $scope.validateStatus(returnItem, index);
+                        }
                     }
                 }
             }
@@ -514,6 +527,10 @@ function DetailReturnsController($scope, $uibModal, requestContext, RETURNS, ret
     function closeStatusModal() {
         $scope.modalInstance.dismiss('cancel');
     }
+
+    $scope.closeStatus = function () {
+        closeStatusModal();
+    };
 
     $scope.hasStatus = function (status) {
         return (checkNotNullEmpty($scope.statusList) && $scope.statusList.indexOf(status) > -1);
