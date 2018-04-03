@@ -182,7 +182,7 @@ blkUpControllers.controller('ViewBulkUploadController', ['$scope','requestContex
             if(isInfo) {
                 return {
                     filters: getCaption(),
-                    type: 'uploaded transactions'
+                    type: 'Uploaded transactions'
                 };
             }
             var eid;

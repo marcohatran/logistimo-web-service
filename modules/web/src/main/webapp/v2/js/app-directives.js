@@ -2372,7 +2372,7 @@ function ExportController($scope, $uibModal) {
         '</div>' +
         '<div class="modal-body ws">' +
         '<p>{{message}}</p>' +
-        '<p ng-if="exportFilters" class="litetext" style="white-space: pre"><b>Filters:</b> {{exportFilters}}</p>' +
+        '<p ng-if="exportFilters" class="litetext word-wrap" style="white-space: pre"><b>Filters:</b> {{exportFilters}}</p>' +
         '<span ng-show="exportShowIncludeBatch">' +
         '<input type="checkbox" ng-model="exportIncludeBatch"> Include batch details</span>' +
         '</div>' +

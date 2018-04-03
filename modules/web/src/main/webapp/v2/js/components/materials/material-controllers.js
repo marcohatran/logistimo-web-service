@@ -247,7 +247,7 @@ matControllers.controller('MaterialListController', ['$scope', 'matService', 'do
             if(isInfo) {
                 return {
                     filters: getCaption(),
-                    type: 'materials'
+                    type: 'Materials'
                 };
             }
             $scope.showLoading();

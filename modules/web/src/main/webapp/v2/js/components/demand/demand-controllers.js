@@ -792,7 +792,7 @@ demandControllers.controller('DiscrepanciesListingCtrl', ['$scope', 'demandServi
             if(isInfo) {
                 return {
                     filters: getCaption(),
-                    type: 'discrepancies'
+                    type: 'Order discrepancies'
                 };
             }
             $scope.showLoading();

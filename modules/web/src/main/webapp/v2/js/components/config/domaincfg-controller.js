@@ -4141,7 +4141,7 @@ domainCfgControllers.controller('NotificationMessageController', ['$scope', 'dom
             if(isInfo) {
                 return {
                     filters: getCaption(),
-                    type: 'notification messages'
+                    type: 'Notification messages'
                 };
             }
             $scope.showLoading();
