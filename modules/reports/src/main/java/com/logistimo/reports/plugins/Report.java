@@ -111,7 +111,6 @@ public class Report {
   public Float trq;
   public Float troiq;
   public Float torq;
-  public Float trriq;
   public Float trorq;
   public Long tuc;
   public Long uc;
