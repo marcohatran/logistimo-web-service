@@ -1230,6 +1230,8 @@ purchases.sales.approvals=Achats et ventes
 transfer.approvals=Transferts / Sorties
 order.shipmentCommande d'expédition
 transfer.shipment=Transfert d'expédition
+order.returns=Retours de commande
+transfer.returns=Retours de transfert
 transactions.returns.incoming.upper=Retours-entrant
 transactions.returns.outgoing.upper=Retours-sortants
 purchase.reference.id=Numéro de référence d'achat

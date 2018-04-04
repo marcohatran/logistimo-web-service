@@ -1293,7 +1293,6 @@ public class RESTUtil {
             parsedRequest.parsedReqMap.get(RestConstantsZ.TRANSACTION_TYPE).toString());
       }
     }
-    params.put(MobileExportConstants.EMAIL_ID_KEY, (String) parsedRequest.parsedReqMap.get(RestConstantsZ.EMAIL));
     if (BulkExportMgr.TYPE_ORDERS.equals(parsedRequest.parsedReqMap.get(RestConstantsZ.TYPE)) || TRANSFERS.equals(parsedRequest.parsedReqMap.get(RestConstantsZ.TYPE))) {
       // Export a year's worth of transactions/orders
       Calendar cal = GregorianCalendar.getInstance();
@@ -1307,7 +1306,7 @@ public class RESTUtil {
           (String) parsedRequest.parsedReqMap.get(RestConstantsZ.ORDER_TYPE));
     }
     try {
-
+      params.put(MobileExportConstants.EMAIL_ID_KEY, (String) parsedRequest.parsedReqMap.get(RestConstantsZ.EMAIL));
       MobileExportAdapter exportAdapter = StaticApplicationContext.getBean(MobileExportAdapter.class);
       exportAdapter.buildExportRequest(params);
       message =

@@ -141,7 +141,7 @@ public class UpdateOrderStatusRequest {
   }
 
   public boolean hasReferenceId() {
-    return StringUtils.isNotEmpty(rid) || StringUtils.isNotEmpty(salesRefId);
+    return StringUtils.isNotBlank(rid) || StringUtils.isNotBlank(salesRefId);
   }
 
   public boolean hasShipmentId() {

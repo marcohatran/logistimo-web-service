@@ -52,5 +52,5 @@ public class MobileExportConstants {
 
   public static final String INVENTORY_MODULE_KEY = "inventory";
 
-  public static final String EMAIL_ID_KEY = "emailid";
+  public static final String EMAIL_ID_KEY = "email";
 }

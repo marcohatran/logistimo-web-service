@@ -110,6 +110,7 @@ public class Report {
   public Long trc;
   public Float trq;
   public Float troiq;
+  public Float torq;
   public Float trorq;
   public Long tuc;
   public Long uc;
@@ -295,6 +296,7 @@ public class Report {
   public Map<String,Float> nsdprsn;
   public Map<String,Float> nfdprsn;
   public Map<String,Float> rrsni;
+  public Map<String,Float> torrsni;
 
   public Float getReturnsOutgoingQuantity(){ return trroq; }
 
@@ -729,6 +731,14 @@ public class Report {
 
   public Float getTransferOrderIssueQuantity() {
     return troiq == null ? 0 : troiq;
+  }
+
+  public Float getTransferOrderReturnIncomingQuantity() {
+    return torq == null ? 0 : torq;
+  }
+
+  public Float getReturnIncomingQuantity() {
+    return trriq == null ? 0 : trriq;
   }
 
   public Float getTransferOrderReceiptQuantity() {
@@ -1238,6 +1248,10 @@ public class Report {
 
   public Map<String, Float> getIncomingReturnsReason() {
     return rrsni;
+  }
+
+  public Map<String, Float> getTransferOrderIncomingReturnsReason() {
+    return torrsni;
   }
 
   public Long getTotalOrderDiscrepancyCount() {

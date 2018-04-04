@@ -221,7 +221,7 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
             if(isInfo) {
                 return {
                     filters: getCaption(),
-                    type: module
+                    type: oty == 0 ? $scope.resourceBundle['exports.transfers'] : $scope.resourceBundle['exports.orders']
                 };
             }
             $scope.showLoading();
@@ -1075,8 +1075,8 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                         $scope.newStatus.cdrsn = $scope.newStatus.ncdrsn;
                     }
                 } else if ($scope.newStatus.st == ORDER.COMPLETED) {
-                    if ($scope.oCfg.ridm && checkNullEmpty($scope.newStatus.salesRefId)) {
-                        $scope.showWarning($scope.resourceBundle['reference.id.mandatory.error']);
+                    if ($scope.oCfg.ridm && (checkNullEmpty($scope.newStatus.salesRefId) || checkNullEmpty($scope.newStatus.salesRefId.trim()))) {
+                        $scope.showWarning($scope.resourceBundle['sales.reference.id.mandatory.error']);
                         return;
                     } else if ($scope.oCfg.eadm && checkNullEmpty($scope.newStatus.efd)) {
                         $scope.showWarning($scope.resourceBundle['estimated.date.of.arrival.mandatory.error']);
@@ -2393,7 +2393,7 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
                 if(checkNullEmpty($scope.order.rid) && $scope.type == 1 && $scope.oCfg.purchase) {
                     $scope.showWarning($scope.resourceBundle['purchase.reference.id.mandatory.error']);
                     return;
-                } else if(checkNullEmpty($scope.order.rid) && $scope.type == 2 && $scope.oCfg.transfer) {
+                } else if((checkNullEmpty($scope.order.rid) || checkNullEmpty($scope.order.rid.trim())) && $scope.type == 2 && $scope.oCfg.transfer) {
                     if($scope.transRelease) {
                         $scope.showWarning($scope.resourceBundle['release.reference.id.mandatory.error']);
                     } else {
@@ -2995,8 +2995,8 @@ ordControllers.controller('NewShipmentController', ['$scope', 'ordService', '$lo
                 if ($scope.oCfg.eadm && checkNullEmpty($scope.shipment.ead)) {
                     $scope.showWarning($scope.resourceBundle['estimated.date.of.arrival.mandatory.error']);
                     return;
-                } else if ($scope.oCfg.ridm && checkNullEmpty($scope.shipment.salesRefId)) {
-                    $scope.showWarning($scope.resourceBundle['reference.id.mandatory.error']);
+                } else if ($scope.oCfg.ridm && (checkNullEmpty($scope.shipment.salesRefId) || checkNullEmpty($scope.shipment.salesRefId.trim()))) {
+                    $scope.showWarning($scope.resourceBundle['sales.reference.id.mandatory.error']);
                     return;
                 }
                 $scope.shipment.changeStatus = 'sp';
@@ -3922,9 +3922,8 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService', 'reques
                     $scope.showWarning($scope.resourceBundle['transportermandatory']);
                     return;
                 }
-
-                if ($scope.oCfg.ridm && checkNullEmpty($scope.shipment.salesRefId)) {
-                    $scope.showWarning($scope.resourceBundle['reference.id.mandatory.error']);
+                if ($scope.oCfg.ridm && (checkNullEmpty($scope.shipment.salesRefId) || checkNullEmpty($scope.shipment.salesRefId.trim()))) {
+                    $scope.showWarning($scope.resourceBundle['sales.reference.id.mandatory.error']);
                     return;
                 } else if ($scope.oCfg.eadm && checkNullEmpty($scope.shipment.ead)) {
                     $scope.showWarning($scope.resourceBundle['estimated.date.of.arrival.mandatory.error']);

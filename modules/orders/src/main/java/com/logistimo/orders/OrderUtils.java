@@ -194,7 +194,7 @@ public class OrderUtils {
     if (dc.getOrdersConfig()
         .isReferenceIdMandatory() && !o.hasSalesReferenceId() && !uosReq.hasReferenceId()) {
       uo.inventoryError = true;
-      uo.message = "Reference id is required before shipping";
+      uo.message = "Sales reference # is mandatory before shipping.";
       return true;
     }
     if (dc.getOrdersConfig().isExpectedArrivalDateMandatory() && !uosReq
@@ -344,7 +344,7 @@ public class OrderUtils {
           IOrder order = oms.getOrder(s.getOrderId());
           if (!order.hasSalesReferenceId() && !uosReq.hasReferenceId()) {
             uo.inventoryError = true;
-            uo.message = "Reference # is mandatory before shipping.";
+            uo.message = "Sales reference # is mandatory before shipping.";
             return uo;
           }
         }
