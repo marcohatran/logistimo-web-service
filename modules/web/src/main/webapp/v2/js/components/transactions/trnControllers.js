@@ -166,6 +166,8 @@ trnControllers.controller('TransactionsCtrl', ['$scope', 'trnService', 'domainCf
                 case 'p': return $scope.resourceBundle['transactions.stockcount.upper'];
                 case 'w': return $scope.resourceBundle['transactions.wastage.upper'];
                 case 't': return $scope.resourceBundle['transfers'];
+                case 'ro': return $scope.resourceBundle['transactions.returns.outgoing.upper'];
+                case 'ri': return $scope.resourceBundle['transactions.returns.incoming.upper'];
             }
         }
         $scope.exportData=function(isInfo){
@@ -560,13 +562,13 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
         };
 
         $scope.transactions_arr = [{value: 'z', displayName: '-- Select Type --', capabilityName: ''},
-            {value: 'i', displayName: 'Issues', capabilityName: 'es'},
-            {value: 'r', displayName: 'Receipt', capabilityName: 'er'},
-            {value: 'p', displayName: 'Stock Count', capabilityName: 'sc'},
-            {value: 'w', displayName: 'Discards', capabilityName: 'wa'},
-            {value: 't', displayName: 'Transfer', capabilityName: 'ts'},
-            {value: 'ri', displayName: 'Incoming returns', capabilityName: 'eri'},
-            {value: 'ro', displayName: 'Outgoing returns', capabilityName: 'ero'}
+            {value: 'i', displayName: $scope.resourceBundle['issues'], capabilityName: 'es'},
+            {value: 'r', displayName: $scope.resourceBundle['receipts'], capabilityName: 'er'},
+            {value: 'p', displayName: $scope.resourceBundle['transactions.stockcount.upper'], capabilityName: 'sc'},
+            {value: 'w', displayName: $scope.resourceBundle['transactions.wastage.upper'], capabilityName: 'wa'},
+            {value: 't', displayName: $scope.resourceBundle['transfers'], capabilityName: 'ts'},
+            {value: 'ri', displayName: $scope.resourceBundle['transactions.returns.incoming.upper'], capabilityName: 'eri'},
+            {value: 'ro', displayName: $scope.resourceBundle['transactions.returns.outgoing.upper'], capabilityName: 'ero'}
         ];
 
         $scope.getAllCapabilities = function () {
