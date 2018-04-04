@@ -1501,11 +1501,6 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
             stockOnHand = BigDecimal.ZERO;
           }
 
-          // Get the stock-on-hand for linked inventory item, if transfer
-          BigDecimal linkedKioskStockOnHand = BigDecimal.ZERO;
-          IInvntry linkedKioskInv = null;
-          IInvntryBatch linkedInvBatch = null;
-
           try {
             checkTransactionErrors(stockOnHand, trans);
           } catch (LogiException e) {
@@ -1515,7 +1510,11 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
             continue;
           }
 
-          if (ITransaction.TYPE_TRANSFER.equals(tType) || (isReturn && trans.getLinkedKioskId() != null)) {
+          BigDecimal linkedKioskStockOnHand = BigDecimal.ZERO;
+          IInvntry linkedKioskInv = null;
+          IInvntryBatch linkedInvBatch = null;
+
+          if (ITransaction.TYPE_TRANSFER.equals(tType)) {
             linkedKioskInv = getInventory(trans.getLinkedKioskId(), materialId, pm);
             if (linkedKioskInv == null) {
               IMaterial m = materialCatalogService.getMaterial(materialId);
