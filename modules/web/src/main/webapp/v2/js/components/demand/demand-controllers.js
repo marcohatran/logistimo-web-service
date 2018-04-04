@@ -639,6 +639,7 @@ demandControllers.controller('DiscrepanciesListingCtrl', ['$scope', 'demandServi
         $scope.discType;
         $scope.today = formatDate2Url(new Date());
 
+        $scope.initLocalFilters = [];
         $scope.init = function (firstTimeInit) {
 
             $scope.mTag = requestContext.getParam("mtag") || "";
@@ -651,10 +652,8 @@ demandControllers.controller('DiscrepanciesListingCtrl', ['$scope', 'demandServi
             $scope.oType = requestContext.getParam("otype") || "sle";
             $scope.etrn = requestContext.getParam("etrn") || false;
 
-            $scope.initLocalFilters = [];
-
             if (checkNotNullEmpty(requestContext.getParam("eid"))) {
-                if (checkNullEmpty($scope.entity) || $scope.entityId != requestContext.getParam("eid")) {
+                if (checkNullEmpty($scope.entity) || $scope.entity.id != requestContext.getParam("eid")) {
                     $scope.entity = {id: parseInt(requestContext.getParam("eid")), nm: ""};
                     $scope.initLocalFilters.push("entity")
                 }

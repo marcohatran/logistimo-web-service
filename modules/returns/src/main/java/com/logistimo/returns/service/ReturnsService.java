@@ -235,7 +235,7 @@ public class ReturnsService {
       Map<Long, BigDecimal> returnedQuantity = new HashMap<>();
       returnsVO.getItems().forEach(returnsItemVO -> {
         BigDecimal quantity = BigDecimal.ZERO;
-        if (returnsItemVO.getReturnItemBatches() != null) {
+        if (CollectionUtils.isNotEmpty(returnsItemVO.getReturnItemBatches())) {
           quantity =
               returnsItemVO.getReturnItemBatches().stream().map(ReturnsItemBatchVO::getQuantity)
                   .reduce(BigDecimal.ZERO, BigDecimal::add);
