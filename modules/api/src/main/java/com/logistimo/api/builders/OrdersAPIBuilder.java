@@ -72,6 +72,7 @@ import com.logistimo.orders.entity.approvals.IOrderApprovalMapping;
 import com.logistimo.orders.models.UpdatedOrder;
 import com.logistimo.orders.service.IDemandService;
 import com.logistimo.pagination.Results;
+import com.logistimo.returns.Status;
 import com.logistimo.returns.models.ReturnsFilters;
 import com.logistimo.returns.service.ReturnsService;
 import com.logistimo.returns.vo.ReturnsItemBatchVO;
@@ -1045,8 +1046,9 @@ public class OrdersAPIBuilder {
         returnsService.getReturns(f);
     Map<Long,Map<String, BigDecimal>> returnQuantityByBatches = new HashMap<>();
     for (ReturnsVO returnsVO : returnsVOs) {
-      final List<ReturnsItemVO> returnsItemVOs = returnsService.getReturnsItem(returnsVO.getId());
-      returnsItemVOs.stream()
+      if(returnsVO.getStatus().getStatus()!= Status.CANCELLED) {
+        final List<ReturnsItemVO> returnsItemVOs = returnsService.getReturnsItem(returnsVO.getId());
+        returnsItemVOs.stream()
           .filter(returnsItemVO -> CollectionUtils.isNotEmpty(returnsItemVO.getReturnItemBatches()))
           .forEach(returnsItemVO -> {
             Map<String, BigDecimal> returnQuantityByBatch = returnsItemVO.getReturnItemBatches()
@@ -1068,6 +1070,7 @@ public class OrdersAPIBuilder {
               }
             }
           });
+      }
     }
     return returnQuantityByBatches;
   }
