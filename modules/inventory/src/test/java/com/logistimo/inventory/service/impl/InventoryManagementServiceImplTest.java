@@ -359,6 +359,25 @@ public class InventoryManagementServiceImplTest {
     } catch(ValidationException exception) {
       assertNotNull(exception);
     }
+
+    // Test for null value of incoming duration
+    returnsConfig.setOutgoingDuration(2);
+    returnsConfig.setIncomingDuration(null);
+    linkedTransaction.setType(ITransaction.TYPE_ISSUE);
+    inventoryManagementService.validateReturnsPolicy(ITransaction.TRACKING_OBJECT_TYPE_ISSUE_TRANSACTION, linkedTransaction, returnsConfig);
+
+    // Test for null value of outgoing duration
+    returnsConfig.setOutgoingDuration(null);
+    returnsConfig.setIncomingDuration(2);
+    linkedTransaction.setType(ITransaction.TYPE_RECEIPT);
+    inventoryManagementService.validateReturnsPolicy(ITransaction.TRACKING_OBJECT_TYPE_RECEIPT_TRANSACTION, linkedTransaction, returnsConfig);
+
+    // Test for null values of incoming and outgoing duration
+    returnsConfig.setOutgoingDuration(null);
+    returnsConfig.setIncomingDuration(null);
+    linkedTransaction.setType(ITransaction.TYPE_RECEIPT);
+    inventoryManagementService.validateReturnsPolicy(ITransaction.TRACKING_OBJECT_TYPE_RECEIPT_TRANSACTION, linkedTransaction, returnsConfig);
+
   }
 
 }

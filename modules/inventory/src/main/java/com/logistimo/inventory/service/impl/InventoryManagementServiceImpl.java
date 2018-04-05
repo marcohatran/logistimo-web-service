@@ -1748,7 +1748,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
 
     Date linkedTransactionDate = linkedTransaction.getTimestamp();
     Integer duration = ITransaction.TRACKING_OBJECT_TYPE_ISSUE_TRANSACTION.equals(trackingObjType) ? returnsConfiguration.getIncomingDuration() : returnsConfiguration.getOutgoingDuration();
-    if (duration.compareTo(0) == 0) {
+    if (duration == null || duration.compareTo(0) == 0) {
       return;
     }
     Long
