@@ -132,28 +132,27 @@ angular.module('logistimo.storyboard.topLocationsByTemperatureStatusWidget', [])
                 dashboardService.get(undefined, undefined, $scope.exFilter, $scope.exType, $scope.period,
                     $scope.widget.conf.tPeriod, asset, constructModel(filter.entityTag), fDate,
                     constructModel(filter.exEntityTag), false).then(function (data) {
-                    if(!checkNullEmptyObject(data.data)) {
-                        $scope.dashboardView = data.data;
-                        var linkText;
-                        if ($scope.dashboardView.mLev == "country") {
-                            linkText = $scope.locationMapping.data[$scope.dashboardView.mTy].name;
-                            $scope.mapType = "maps/" + linkText;
-                        } else if ($scope.dashboardView.mLev == "state") {
-                            linkText = $scope.dashboardView.mTyNm;
-                            $scope.mapType = "maps/" + $scope.dashboardView.mTy;
-                        } else {
-                            linkText =
-                                $scope.dashboardView.mTyNm.substr($scope.dashboardView.mTyNm.lastIndexOf("_") + 1);
-                            $scope.showMap = false;
-                            $scope.showSwitch = false;
-                            $scope.mapData = [];
-                        }
-                        constructMapData($scope.mapEvent, true, $scope, INVENTORY, $sce, mapRange, mapColors,
-                            tempPieOrder, $timeout, true, barColor);
-                        setWidgetData();
-                    }else{
+                    if(checkNullEmptyObject(data.data)) {
                         $scope.noDataToRender();
                     }
+                    $scope.dashboardView = data.data;
+                    var linkText;
+                    if ($scope.dashboardView.mLev == "country") {
+                        linkText = $scope.locationMapping.data[$scope.dashboardView.mTy].name;
+                        $scope.mapType = "maps/" + linkText;
+                    } else if ($scope.dashboardView.mLev == "state") {
+                        linkText = $scope.dashboardView.mTyNm;
+                        $scope.mapType = "maps/" + $scope.dashboardView.mTy;
+                    } else {
+                        linkText =
+                            $scope.dashboardView.mTyNm.substr($scope.dashboardView.mTyNm.lastIndexOf("_") + 1);
+                        $scope.showMap = false;
+                        $scope.showSwitch = false;
+                        $scope.mapData = [];
+                    }
+                    constructMapData($scope.mapEvent, true, $scope, INVENTORY, $sce, mapRange, mapColors,
+                        tempPieOrder, $timeout, true, barColor);
+                    setWidgetData();
                     }).catch(function error(msg) {
                         $scope.noDataToRender();
                         showError(msg, $scope);

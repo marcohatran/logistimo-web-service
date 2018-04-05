@@ -124,22 +124,21 @@ angular.module('logistimo.storyboard.temperatureStatusDonutWidget', [])
             dashboardService.get(undefined, undefined, $scope.exFilter, $scope.exType, $scope.period,
                 $scope.widget.conf.tPeriod, asset, constructModel(filter.entityTag), fDate,
                 constructModel(filter.exEntityTag), false).then(function (data) {
-                if(!checkNullEmptyObject(data.data.tempDomain)) {
-                    chartData = constructPieData(data.data.tempDomain, tempPieColors, tempPieOrder, INVENTORY,
-                        $scope.mapEvent, undefined);
-                    var normalPercent = getPercent(data.data.tempDomain, $scope.assetStatus);
-                    normalPercent = formatDecimal(normalPercent);
-                    totalAssets = getItemCount(data.data.tempDomain, $scope.assetStatus);
-    
-                    if (totalAssets > 1) {
-                        $scope.totalAssetsText = totalAssets + " assets";
-                    } else {
-                        $scope.totalAssetsText = totalAssets + " asset";
-                    }
-                    setWidgetData(normalPercent, chartData);
-                }else{
+                if(checkNullEmptyObject(data.data.tempDomain)) {
                     $scope.noDataToRender();
                 }
+                chartData = constructPieData(data.data.tempDomain, tempPieColors, tempPieOrder, INVENTORY,
+                    $scope.mapEvent, undefined);
+                var normalPercent = getPercent(data.data.tempDomain, $scope.assetStatus);
+                normalPercent = formatDecimal(normalPercent);
+                totalAssets = getItemCount(data.data.tempDomain, $scope.assetStatus);
+    
+                if (totalAssets > 1) {
+                    $scope.totalAssetsText = totalAssets + " assets";
+                } else {
+                    $scope.totalAssetsText = totalAssets + " asset";
+                }
+                setWidgetData(normalPercent, chartData);
                 }).catch(function error(msg) {
                     $scope.noDataToRender();
                     showError(msg, $scope);

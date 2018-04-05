@@ -128,23 +128,22 @@ angular.module('logistimo.storyboard.temperatureStatusMapWidget', [])
                 dashboardService.get(undefined, undefined, $scope.exFilter, $scope.exType, $scope.period,
                     $scope.widget.conf.tPeriod, asset, constructModel(filter.entityTag), fDate,
                     constructModel(filter.exEntityTag), false).then(function (data) {
-                    if(!checkNullEmptyObject(data.data)) {
-                        $scope.dashboardView = data.data;
-                        var linkText;
-                        if ($scope.dashboardView.mLev == "country") {
-                            linkText = $scope.locationMapping.data[$scope.dashboardView.mTy].name;
-                            $scope.mapType = linkText;
-                        } else if ($scope.dashboardView.mLev == "state") {
-                            linkText = $scope.dashboardView.mTyNm;
-                            $scope.mapType = $scope.dashboardView.mTy;
-                        }
-                        constructMapData($scope.mapEvent, true, $scope, INVENTORY, $sce, mapRange, mapColors,
-                            tempPieOrder, $timeout);
-                        setTitle();
-                        setWidgetData();
-                    }else{
+                    if(checkNullEmptyObject(data.data)) {
                         $scope.noDataToRender();
                     }
+                    $scope.dashboardView = data.data;
+                    var linkText;
+                    if ($scope.dashboardView.mLev == "country") {
+                        linkText = $scope.locationMapping.data[$scope.dashboardView.mTy].name;
+                        $scope.mapType = linkText;
+                    } else if ($scope.dashboardView.mLev == "state") {
+                        linkText = $scope.dashboardView.mTyNm;
+                        $scope.mapType = $scope.dashboardView.mTy;
+                    }
+                    constructMapData($scope.mapEvent, true, $scope, INVENTORY, $sce, mapRange, mapColors,
+                        tempPieOrder, $timeout);
+                    setTitle();
+                    setWidgetData();
                     }).catch(function error(msg) {
                         $scope.noDataToRender();
                         showError(msg, $scope);

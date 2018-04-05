@@ -148,28 +148,27 @@ angular.module('logistimo.storyboard.topMaterialsByInventoryStatusWidget', [])
                 dashboardService.get(undefined, undefined, $scope.exFilter, $scope.exType, $scope.period, undefined,
                     undefined, constructModel(filter.entityTag), fDate, constructModel(filter.exEntityTag),
                     false).then(function (data) {
-                    if(!checkNullEmptyObject(data.data)) {
-                        $scope.dashboardView = data.data;
-                        if ($scope.mapEvent == 'avlbl') {
-                            $scope.dashboardView.inv['avlbl'] = getAvailable($scope.dashboardView.inv);
-                        }
-                        var linkText;
-                        if ($scope.dashboardView.mLev == "country") {
-                            linkText = $scope.locationMapping.data[$scope.dashboardView.mTy].name;
-                            $scope.mapType = "maps/" + linkText;
-                        } else if ($scope.dashboardView.mLev == "state") {
-                            $scope.mapType = "maps/" + $scope.dashboardView.mTy;
-                        } else {
-                            $scope.showMap = false;
-                            $scope.showSwitch = false;
-                            $scope.mapData = [];
-                        }
-                        constructMapData($scope.mapEvent, true, $scope, INVENTORY, $sce, mapRange, mapColors,
-                            invPieOrder, $timeout, false, barColor);
-                        setWidgetData();
-                    }else{
-                        $scope.noDataToRender();
+                    if(checkNullEmptyObject(data.data)) {
+                        $scope.noDataToRender();   
                     }
+                    $scope.dashboardView = data.data;
+                    if ($scope.mapEvent == 'avlbl') {
+                        $scope.dashboardView.inv['avlbl'] = getAvailable($scope.dashboardView.inv);
+                    }
+                    var linkText;
+                    if ($scope.dashboardView.mLev == "country") {
+                        linkText = $scope.locationMapping.data[$scope.dashboardView.mTy].name;
+                        $scope.mapType = "maps/" + linkText;
+                    } else if ($scope.dashboardView.mLev == "state") {
+                        $scope.mapType = "maps/" + $scope.dashboardView.mTy;
+                    } else {
+                        $scope.showMap = false;
+                        $scope.showSwitch = false;
+                        $scope.mapData = [];
+                    }
+                    constructMapData($scope.mapEvent, true, $scope, INVENTORY, $sce, mapRange, mapColors,
+                        invPieOrder, $timeout, false, barColor);
+                    setWidgetData();
                     }).catch(function error(msg) {
                         $scope.noDataToRender();
                         showError(msg, $scope);
