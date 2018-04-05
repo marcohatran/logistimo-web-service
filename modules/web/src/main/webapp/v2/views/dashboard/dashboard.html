@@ -37,7 +37,7 @@
                     href="#/dashboard/activity/" ng-show="hasDashbaccess && !tempOnlyAU && (dashboardConfig.ape || dashboardConfig.ipe)">{{resourceBundle['activity']}}</a>
             </li>
             <li ng-class="{enable: subview == 'customdashboard' || subview == 'viewcustomdashboard'}"><a
-                    href="#/dashboard/customdashboard/" ng-show="hasDashbaccess && dashboardConfig.edm && !tempOnlyAU">{{resourceBundle['custom.dashboards']}}</a>
+                    href="#/dashboard/customdashboard/" ng-show="(hasDashbaccess || dashboardConfig.edm) && !tempOnlyAU">{{resourceBundle['custom.dashboards']}}</a>
             </li>
             <!--<li ng-class="{enable: subview == 'hierarchy'}"><a
                     href="#/dashboard/hierarchy/" ng-show="iAdm && !tempOnlyAU && (dashboardConfig.ope || dashboardConfig.rpe)">Hierarchy chart</a>
