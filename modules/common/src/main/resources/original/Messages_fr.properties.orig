@@ -1237,3 +1237,5 @@ transactions.returns.outgoing.upper=Retours-sortants
 purchase.reference.id=Numéro de référence d'achat
 transfer.reference.id=Numéro de référence de transfert
 release.reference.id=Numéro de référence du communiqué
+transactions.return.incoming=retour entrant
+transactions.return.outgoing=retour sortant

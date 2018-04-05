@@ -362,9 +362,9 @@ public class TransactionUtil {
     } else if (ITransaction.TYPE_TRANSFER.equals(transType)) {
       name = messages.getString("transactions.transfer");
     } else if (ITransaction.TYPE_RETURNS_INCOMING.equals(transType)) {
-      name = messages.getString("transactions.returns.incoming.upper");
+      name = messages.getString("transactions.return.incoming");
     } else if (ITransaction.TYPE_RETURNS_OUTGOING.equals(transType)) {
-      name = messages.getString("transactions.returns.outgoing.upper");
+      name = messages.getString("transactions.return.outgoing");
     }
     return name;
   }
