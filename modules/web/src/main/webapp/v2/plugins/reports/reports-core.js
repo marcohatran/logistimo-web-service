@@ -1160,7 +1160,11 @@ function reportCoreFunction() {
                         if (isTotalValue) {
                             lData = angular.copy(lData);
                             angular.forEach(lData.value, function (v) {
-                                v.value = (parseFloat(v.value) + (-1 * parseFloat(v.secValue))) + "";
+                                if(checkNotNullEmpty(v.value) && checkNotNullEmpty(v.secValue)) {
+                                    v.value = (parseFloat(v.value) + (-1 * parseFloat(v.secValue))) + "";
+                                } else if (checkNotNullEmpty(v.value)) {
+                                    v.value = parseFloat(v.value) + "";
+                                }
                                 v.num = v.den =undefined;
                             });
                         }

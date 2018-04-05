@@ -457,8 +457,9 @@ function DetailReturnsController($scope, $uibModal, requestContext, RETURNS, ret
     function checkStatusList() {
         switch ($scope.returns.status.status) {
             case RETURNS.status.OPEN:
+                $scope.statusList = [];
                 if ($scope.returns.customer.has_access) {
-                    $scope.statusList = [RETURNS.status.SHIPPED];
+                    $scope.statusList.push(RETURNS.status.SHIPPED);
                 }
                 $scope.statusList.push(RETURNS.status.CANCELLED);
                 break;
