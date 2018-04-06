@@ -174,7 +174,7 @@ public class ReturnsService {
   private void validateQuantity(ReturnsVO returnsVO, List<ReturnsItemVO> returnsItemVOList)
       throws ServiceException {
     if (CollectionUtils.isEmpty(returnsItemVOList)) {
-      throw new ValidationException("RT001");
+      throw new ValidationException("RT001", (Object[]) null);
     }
     List<Long> materialIdList = returnsItemVOList.stream().map(ReturnsItemVO::getMaterialId)
             .collect(Collectors.toList());
@@ -203,7 +203,7 @@ public class ReturnsService {
 
   public List<ReturnsItemVO> getReturnsItem(Long returnId) {
     if (returnId == null) {
-      throw new ValidationException("RT002");
+      throw new ValidationException("RT002", (Object[]) null);
     }
     return returnsRepository.getReturnedItems(returnId);
   }
@@ -226,6 +226,8 @@ public class ReturnsService {
       IMessage message = addComment(returnsVO.getId(), statusModel.getComment(), returnsVO.getUpdatedBy(),
                 returnsVO.getSourceDomain());
       addStatusHistory(returnsVO, oldStatus.toString(), newStatus.toString(), message);
+    } else {
+      throw new ValidationException("RT003", (Object[]) null);
     }
     return returnsVO;
   }
