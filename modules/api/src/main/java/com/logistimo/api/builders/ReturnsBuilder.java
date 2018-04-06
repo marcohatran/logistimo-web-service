@@ -32,7 +32,6 @@ import com.logistimo.domains.service.DomainsService;
 import com.logistimo.entities.auth.EntityAuthoriser;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
-import com.logistimo.exception.InvalidDataException;
 import com.logistimo.inventory.entity.IInvntryBatch;
 import com.logistimo.inventory.service.InventoryManagementService;
 import com.logistimo.logger.XLog;
@@ -359,7 +358,7 @@ public class ReturnsBuilder {
       entityModel.setName(kiosk.getName());
       entityModel.setCity(kiosk.getCity());
       entityModel.setAddress(kiosk.getFormattedAddress());
-      entityModel.setHasAccess(EntityAuthoriser.authoriseEntity(entityId));
+      entityModel.setHasAccess(EntityAuthoriser.authoriseEntityPerm(entityId) > 1);
     }
     return entityModel;
   }

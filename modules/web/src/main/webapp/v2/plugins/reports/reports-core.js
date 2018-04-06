@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -1128,7 +1128,7 @@ function reportCoreService() {
 
 function reportCoreFunction() {
     return {
-        getReportFCSeries: function (data, seriesno, name, type, isLinkDisabled, filterSeriesIndex, showvalue, color, noAnchor, zeroWithEmpty, forceSum, skipSeriesInLabel, isSecValue, isTotalValue) {
+        getReportFCSeries: function (data, seriesno, name, type, isLinkDisabled, filterSeriesIndex, showvalue, color, noAnchor, zeroWithEmpty, forceSum, skipSeriesInLabel, isSecValue, isTotalValue, dontNegateSecValue) {
             if (checkNotNullEmpty(data) && data[0]) {
                 if (data[0].value.length > seriesno) {
                     var series = {};
@@ -1147,9 +1147,9 @@ function reportCoreFunction() {
                             lData = angular.copy(lData);
                             angular.forEach(lData.value, function (v) {
                                 if(checkNotNullEmpty(v.secValue)) {
-                                    v.value = -1 * v.secValue + "";
+                                    v.value = -1 * v.secValue * (dontNegateSecValue?-1:1) + "";
                                 }
-                                if (checkNotNullEmpty(v.secNum)) {
+                                if (checkNotNullEmpty(v.secNum) * (dontNegateSecValue?-1:1)) {
                                     v.num = -1 * v.secNum;
                                 }
                                 if (checkNotNullEmpty(v.secDen)) {
@@ -1160,7 +1160,11 @@ function reportCoreFunction() {
                         if (isTotalValue) {
                             lData = angular.copy(lData);
                             angular.forEach(lData.value, function (v) {
-                                v.value = (parseFloat(v.value) + (-1 * parseFloat(v.secValue))) + "";
+                                if(checkNotNullEmpty(v.value) && checkNotNullEmpty(v.secValue)) {
+                                    v.value = (parseFloat(v.value) + (-1 * parseFloat(v.secValue))) + "";
+                                } else if (checkNotNullEmpty(v.value)) {
+                                    v.value = parseFloat(v.value) + "";
+                                }
                                 v.num = v.den =undefined;
                             });
                         }

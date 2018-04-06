@@ -180,6 +180,7 @@ public class RequestModel {
   private String taluk;
 
   @SerializedName(value = "TOKEN_STOCK_OUT_DAYS", alternate = "stock_out_days")
+  @Expose
   private String stockOutDays;
 
   @SerializedName(value = "TOKEN_EXCLUDE_ENTITY_TAGS", alternate = "exclude_entity_tags")

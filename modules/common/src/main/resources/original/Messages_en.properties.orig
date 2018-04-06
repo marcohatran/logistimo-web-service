@@ -1255,4 +1255,6 @@ sidebar.landing.screen=Sidebar & Landing screen
 purchase.reference.id=Purchase reference #
 transfer.reference.id=Transfer reference #
 release.reference.id=Release reference #
+transactions.return.incoming=incoming return
+transactions.return.outgoing=outgoing return
 
