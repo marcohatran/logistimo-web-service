@@ -92,6 +92,7 @@ public class AssetBuilder {
   private static final String DEV = "dev";
   private static final String YOM = "yom";
   private static final String MDL = "mdl";
+  private static final Integer MPID_OALL = 99;
 
   GsonBuilder gsonBuilder = new GsonBuilder();
   Gson gson = gsonBuilder.create();
@@ -397,7 +398,6 @@ public class AssetBuilder {
     if (assetDetailsModel.alrm != null) {
       for (AssetModels.TempDeviceAlarmModel tempDeviceAlarmModel : assetDetailsModel.alrm) {
         tempDeviceAlarmModel.ftime = formatDate(tempDeviceAlarmModel.time, locale, timezone);
-
         if (tempDeviceAlarmModel.mpId != null && tempDeviceAlarmModel.typ == 4) {
           if (tempDeviceAlarmModel.stat == 0) {
             isMonitoredAssetActive.put(tempDeviceAlarmModel.mpId, true);
@@ -405,8 +405,14 @@ public class AssetBuilder {
             inactiveSince.put(tempDeviceAlarmModel.mpId, tempDeviceAlarmModel.ftime);
             isMonitoredAssetActive.put(tempDeviceAlarmModel.mpId, false);
           }
+        } else if(tempDeviceAlarmModel.mpId == null && tempDeviceAlarmModel.typ == 4){
+          if (tempDeviceAlarmModel.stat == 0) {
+            isMonitoredAssetActive.put(MPID_OALL, true);
+          } else {
+            inactiveSince.put(MPID_OALL, tempDeviceAlarmModel.ftime);
+            isMonitoredAssetActive.put(MPID_OALL, false);
+          }
         }
-
         if (tempDeviceAlarmModel.stat > 0) {
           assetDetailsModel.iDa = true;
         }
@@ -425,12 +431,12 @@ public class AssetBuilder {
 
         assetStatus.isActive =
             isMonitoredAssetActive.containsKey(assetStatus.mpId) ? isMonitoredAssetActive
-                .get(assetStatus.mpId) : true;
+                .get(assetStatus.mpId) : isMonitoredAssetActive.get(MPID_OALL);
 
         if (!assetStatus.isActive) {
           assetStatus.fstut =
               inactiveSince.containsKey(assetStatus.mpId) ? inactiveSince.get(assetStatus.mpId)
-                  : assetStatus.fstut;
+                  : inactiveSince.get(MPID_OALL);
         }
       }
     }
