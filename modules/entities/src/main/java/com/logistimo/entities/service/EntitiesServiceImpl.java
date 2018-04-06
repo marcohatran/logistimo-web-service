@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -538,7 +538,7 @@ public class EntitiesServiceImpl implements EntitiesService {
       ResourceBundle backendMessages = Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
 
       if (results == null || results.size() == 0) {
-//        updateKioskLocationIds(kiosk);
+        updateKioskLocationIds(kiosk);
         boolean customIdExists = false;
         if (kiosk.getCustomId() != null && !kiosk.getCustomId().isEmpty()) {
           customIdExists = checkIfCustomIdExists(kiosk);
@@ -696,7 +696,7 @@ public class EntitiesServiceImpl implements EntitiesService {
       k.setVendorPerm(kiosk.getVendorPerm());
       //add loc ids and fail fast
       if (locindex != 0) {
-//        updateKioskLocationIds(k);
+        updateKioskLocationIds(k);
       }
       // Update users for this kiosk, if necessary. First, check if the kiosk to user mappings have changed
       xLogger.fine("updateKiosk: Updating user kiosk mappings for kiosk {0}", kiosk.getName());

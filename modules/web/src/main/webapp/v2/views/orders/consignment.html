@@ -84,9 +84,9 @@
                     </tr>
                     <tbody ng-repeat="item in order.its" ng-controller="DemandItemController" data-ng-switch on="exRow[$index]">
                     <tr>
-                        <td ng-show="!edit.mat && isDef(vendor) && !dp.vp && ((canReturn && item.fq > 0 ) || (order.atv && showStock)) && !generalconfig.dcs">
+                        <td ng-show="!edit.mat && isDef(vendor) && !dp.vp && (canReturn || (order.atv && showStock)) && !generalconfig.dcs">
                             <input type="checkbox" checklist-model="sel.selectedRows" checklist-value="$index" id="item.id"
-                                   class="ng-scope ng-pristine ng-valid" ng-show="item.q != item.isq || (canReturn && item.fq > 0)">
+                                   class="ng-scope ng-pristine ng-valid" ng-show="(canReturn && item.fq > 0) || item.q != item.isq || (canReturn && item.fq > 0)">
                         </td>
                         <td class="col-sm-2">
                             <a href="#/setup/materials/all/detail/{{item.id}}" target="_blank" class="alignBaseLine">{{item.nm}}</a>

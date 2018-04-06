@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -193,7 +193,7 @@ public class UsersServiceImpl implements UsersService {
     boolean userExists = false;
     String errMsg = null;
     Exception exception = null;
-//    updateUserLocationIds(account);
+    updateUserLocationIds(account);
     Date now = new Date();
     account.setMemberSince(now);
     account.setUpdatedOn(now);
@@ -594,7 +594,7 @@ public class UsersServiceImpl implements UsersService {
       user.setLoginReconnect(account.getLoginReconnect());
       user.setStoreAppTheme(account.getStoreAppTheme());
       if (locindex != 0) {
-//        updateUserLocationIds(user);
+        updateUserLocationIds(user);
       }
       boolean customIdExists = false;
       if (account.getCustomId() != null && !account.getCustomId().isEmpty() && !account
