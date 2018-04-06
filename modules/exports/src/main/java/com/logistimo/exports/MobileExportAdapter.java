@@ -140,7 +140,7 @@ public class MobileExportAdapter {
         .equalsIgnoreCase(MobileExportConstants.TRANSFERS_KEY)) {
       int orderType = Integer.parseInt(params.get(MobileExportConstants.ORDER_TYPE_KEY));
       requestModel.setOrderSubType(params.get(MobileExportConstants.ORDERS_SUB_TYPE_KEY));
-      caption.append(backendMessages.getString("type")).append(": ").append(
+      caption.append(backendMessages.getString("exports.type")).append(": ").append(
           getOrderSubTypeLabel(backendMessages,
               params.get(MobileExportConstants.ORDERS_SUB_TYPE_KEY), orderType)).append("   ");
       requestModel.setType(params.get(MobileExportConstants.ORDER_TYPE_KEY));
@@ -151,7 +151,7 @@ public class MobileExportAdapter {
       requestModel.setTemplateId(MobileExportConstants.TRANSACTIONS_KEY);
       requestModel.setModule(MobileExportConstants.TRANSACTIONS_KEY);
       if( params.containsKey(MobileExportConstants.TRANSACTIONS_TYPE_KEY))
-      caption.append(backendMessages.getString("type")).append(": ").append(
+      caption.append(backendMessages.getString("exports.type")).append(": ").append(
           getTransactionType(backendMessages,
               params.get(MobileExportConstants.TRANSACTIONS_TYPE_KEY))).append("   ");
     } else if (exportType.equalsIgnoreCase(MobileExportConstants.INVENTORY_KEY)) {

@@ -517,3 +517,4 @@ exports.salesorders=Commandes
 exports.incoming=Entrant
 exports.outgoing=Sortant
 exports.purchaseorders=Acheter en ligne
+exports.type=Type

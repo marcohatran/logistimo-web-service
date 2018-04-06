@@ -202,6 +202,10 @@ public class RequestModel {
   @Expose
   private boolean includeBatchInfo = false;
 
+  @SerializedName(value = "is_lite")
+  @Expose
+  private Integer isLite = 1;
+
   public String getTagType() {
     return tagType;
   }
