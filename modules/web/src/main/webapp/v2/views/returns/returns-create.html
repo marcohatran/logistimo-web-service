@@ -127,7 +127,7 @@
                                             </option>
                                         </select>
 
-                                        <div ng-show="item.reasons && item.reasons.length > 0">
+                                        <div ng-show="item.reasons && item.reasons.length > 1">
                                             <span class="litetext text-left required" >{{resourceBundle['reason']}}</span>
                                             <select class="form-control" ng-model="item.returnReason"
                                                     ng-class="{'red-border': item.rinvalidPopup}"
@@ -189,7 +189,7 @@
                                                     </option>
                                                 </select>
 
-                                                <div ng-show="item.reasons && item.reasons.length > 0">
+                                                <div ng-show="item.reasons && item.reasons.length > 1">
                                                     <span class="litetext text-left required" >{{resourceBundle['reason']}}</span>
                                                     <select class="form-control" ng-model="batch.returnReason"
                                                             ng-class="{'red-border': batch.rinvalidPopup}"

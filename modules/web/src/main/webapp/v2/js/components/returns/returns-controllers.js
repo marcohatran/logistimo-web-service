@@ -330,7 +330,9 @@ function CreateReturnsController($scope, $location, $timeout, returnsService, tr
                     batchIndex += 1;
                     if (checkNotNullEmpty(returnBatch.returnQuantity)) {
                         if (field == 'returnReason') {
-                            return $scope.validateBatchReason(returnItem, returnBatch, batchIndex);
+                            if(checkNotNullEmpty(returnItem.reasons) && returnItem.reasons.length > 1) {
+                                return $scope.validateBatchReason(returnItem, returnBatch, batchIndex);
+                            }
                         } else if (field == 'returnMaterialStatus') {
                             if (returnItem.tm) {
                                 if (checkNotNullEmpty($scope.tempmatstatus)) {
@@ -346,7 +348,9 @@ function CreateReturnsController($scope, $location, $timeout, returnsService, tr
                 });
             } else {
                 if (field == 'returnReason') {
-                    return $scope.validateReason(returnItem, index);
+                    if(checkNotNullEmpty(returnItem.reasons) && returnItem.reasons.length > 1) {
+                        return $scope.validateReason(returnItem, index);
+                    }
                 } else if (field == 'returnMaterialStatus') {
                     if (returnItem.tm) {
                         if (checkNotNullEmpty($scope.tempmatstatus)) {

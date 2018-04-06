@@ -26,7 +26,6 @@ package com.logistimo.returns.validators;
 import com.logistimo.config.models.ReturnsConfig;
 import com.logistimo.entities.auth.EntityAuthoriser;
 import com.logistimo.exception.InvalidDataException;
-import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.exception.ValidationException;
 import com.logistimo.materials.model.HandlingUnitModel;
 import com.logistimo.returns.Status;
@@ -44,7 +43,6 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -95,7 +93,8 @@ public class ReturnsValidator {
                                         Map<String, BigDecimal> fulfilledQuantityByBatches,
                                         BigDecimal handlingUnitQuantity) {
     if (returnsItemVO.getQuantity().compareTo(fulfilledQuantityByBatches.get(null)) > 0) {
-      throw new InvalidDataException("Returned quantity is greater than ordered quantity!!");
+      throw new ValidationException("RT006", returnsItemVO.getQuantity().toString(),
+          fulfilledQuantityByBatches.get(null).toString());
     }
     validateHandlingUnit(handlingUnitQuantity, returnsItemVO.getQuantity());
   }
@@ -127,15 +126,14 @@ public class ReturnsValidator {
       BigDecimal quantity =
           fulfilledQuantityByBatches.get(returnsItemBatchVO.getBatch().getBatchId());
       if (returnsItemBatchVO.getQuantity().compareTo(quantity) > 0) {
-        throw new InvalidDataException("Returned quantity is greater than ordered quantity!!");
+        throw new ValidationException("RT006", returnsItemBatchVO.getQuantity(), quantity);
       }
     });
   }
 
   private void validateHandlingUnit(BigDecimal handlingUnitQuantity, BigDecimal quantity) {
     if (quantity.remainder(handlingUnitQuantity).compareTo(BigDecimal.ZERO) != 0) {
-      throw new InvalidDataException(
-          "Returned quantity is not a multiple handling unit quantity!!");
+      throw new ValidationException("RT005", quantity.toString(), handlingUnitQuantity.toString());
     }
   }
 
@@ -157,9 +155,7 @@ public class ReturnsValidator {
     Long
         incomingDuration =returnsConfiguration.getIncomingDuration() * 24 * 60 * 60 * 1000l;
     if ((System.currentTimeMillis() - orderFulfillmentTime) > incomingDuration) {
-
-      throw new ValidationException(
-          "Duration cannot be greater than the duration configuered for returns");
+      throw new ValidationException("RT004", returnsConfiguration.getIncomingDuration());
     }
   }
 
@@ -178,10 +174,7 @@ public class ReturnsValidator {
   }
 
   private boolean hasEntityAccess(Long entityId) throws ServiceException {
-    if (!EntityAuthoriser.authoriseEntity(entityId)) {
-      throw new UnauthorizedException("No access to entity");
-    }
-    return true;
+    return EntityAuthoriser.authoriseEntityPerm(entityId) > 1;
   }
 
   public boolean checkAccessForStatusChange(UpdateStatusModel statusModel, ReturnsVO returnsVO)
