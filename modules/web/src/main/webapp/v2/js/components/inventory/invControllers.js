@@ -282,7 +282,7 @@ invControllers.controller('StockViewsController', ['$scope', '$timeout', 'matSer
                 return {
                     filters: getCaption(),
                     type: module == "inventory" ? $scope.resourceBundle['exports.inventory'] : $scope.resourceBundle['exports.batch.inventory'],
-                    includeBatch: module == "inventory"
+                    includeBatch: module == "inventory",
                 };
             }
             $scope.showLoading();
@@ -305,7 +305,8 @@ invControllers.controller('StockViewsController', ['$scope', '$timeout', 'matSer
                 state: state,
                 district: district,
                 taluk: taluk,
-                include_batch_info: $scope.exportIncludeBatch
+                include_batch_info: $scope.exportIncludeBatch,
+                is_lite: ($scope.fullInventoryExport ? 1 : 0) || 1
             }).then(function (data) {
                 $scope.showSuccess(data.data);
             }).catch(function error(msg) {
@@ -426,6 +427,7 @@ invControllers.controller('InventoryCtrl', ['$scope', 'invService', 'domainCfgSe
                 },
                 entity_id: kid,
                 include_batch_info: $scope.exportIncludeBatch,
+                is_lite: ($scope.fullInventoryExport ? 1 : 0) || 1,
                 module: module,
                 templateId: templateId
             }).then(function (data) {
