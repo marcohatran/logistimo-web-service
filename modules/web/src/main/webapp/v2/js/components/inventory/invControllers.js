@@ -306,7 +306,7 @@ invControllers.controller('StockViewsController', ['$scope', '$timeout', 'matSer
                 district: district,
                 taluk: taluk,
                 include_batch_info: $scope.exportIncludeBatch,
-                is_lite: ($scope.fullInventoryExport ? 1 : 0) || 1
+                is_lite: ($scope.fullInventoryExport ? 0 : 1) || 0
             }).then(function (data) {
                 $scope.showSuccess(data.data);
             }).catch(function error(msg) {
@@ -427,7 +427,7 @@ invControllers.controller('InventoryCtrl', ['$scope', 'invService', 'domainCfgSe
                 },
                 entity_id: kid,
                 include_batch_info: $scope.exportIncludeBatch,
-                is_lite: ($scope.fullInventoryExport ? 1 : 0) || 1,
+                is_lite: ($scope.fullInventoryExport ? 0 : 1) || 0,
                 module: module,
                 templateId: templateId
             }).then(function (data) {
