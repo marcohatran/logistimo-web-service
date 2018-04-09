@@ -433,7 +433,7 @@ public class AssetBuilder {
             isMonitoredAssetActive.containsKey(assetStatus.mpId) ? isMonitoredAssetActive
                 .get(assetStatus.mpId) : isMonitoredAssetActive.get(MPID_OALL);
 
-        if (!assetStatus.isActive) {
+        if (assetStatus.isActive != null && !assetStatus.isActive) {
           assetStatus.fstut =
               inactiveSince.containsKey(assetStatus.mpId) ? inactiveSince.get(assetStatus.mpId)
                   : inactiveSince.get(MPID_OALL);
