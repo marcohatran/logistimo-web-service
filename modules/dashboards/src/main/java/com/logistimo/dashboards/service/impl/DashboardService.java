@@ -1150,18 +1150,17 @@ public class DashboardService implements IDashboardService {
   private String getEntityTempDataQuery(Map<String, String> filter) {
     Long dId = Long.parseLong(filter.get(Constants.PARAM_DOMAINID));
     return
-        "SELECT KID, STAT, COUNT(1) COUNT FROM(SELECT KID,IF(ASF.STAT = 'tu', 'tu', IFNULL((SELECT "
-            + "(SELECT IF(ABNSTATUS = 1, 'tl', 'th')FROM ASSETSTATUS AI WHERE AI.ASSETID = A.ID AND "
-            + "AI.TYPE = 1 AND AI.STATUS = 3 AND AI.TS <= DATE_SUB(NOW(), INTERVAL 0 MINUTE)LIMIT 1) "
-            + "FROM ASSETSTATUS AO WHERE AO.TYPE = 1 AND AO.ASSETID = A.ID AND "
-            + "AO.TS <= DATE_SUB(NOW(), INTERVAL 0 MINUTE)GROUP BY AO.ASSETID), 'tn')) STAT "
+        "SELECT KID, STAT, COUNT(1) COUNT FROM(SELECT KID,IF(ASF.STAT = 'tu', 'tu',"
+            + "(SELECT IF(MAX(ABNSTATUS) = 2, 'th', IF(MAX(ABNSTATUS) = 1, 'tl', 'tn'))"
+            + "FROM ASSETSTATUS AST WHERE AST.ASSETID = A.ID AND AST.TYPE = 1 AND "
+            + "AST.STATUS = 3 AND AST.TS <= DATE_SUB(NOW(), INTERVAL 0 MINUTE))) STAT "
             + "FROM(SELECT A.ID, A.KID FROM ASSET A, ASSET_DOMAINS AD "
             + "WHERE A.TYPE IN (2 , 3, 5, 6, 7)AND A.KID = " + Long.parseLong(
             filter.get(Constants.ENTITY)) + " AND EXISTS "
             + "(SELECT 1 FROM ASSETRELATION R WHERE A.ID = R.ASSETID AND R.TYPE = 2) "
             + "AND 1 = (SELECT IFNULL(0 = (SELECT STATUS FROM ASSETSTATUS S WHERE TYPE = 7 AND "
             + "S.ASSETID = A.ID), 1))AND A.ID = AD.ID_OID AND AD.DOMAIN_ID = " + dId + ") A "
-            + "LEFT JOIN (SELECT ASSETID, IF(SUM(STATUS) > 0, 'tu', 'tk') STAT "
+            + "LEFT JOIN (SELECT ASSETID, IF(MIN(STATUS) = 0, 'tk', 'tu') STAT "
             + "FROM ASSETSTATUS ASI, ASSET_DOMAINS AD WHERE ASI.TYPE = 3 AND ASI.ASSETID = AD.ID_OID "
             + "AND AD.DOMAIN_ID = " + dId + " AND TS <= DATE_SUB(NOW(), INTERVAL 0 MINUTE) "
             + "GROUP BY ASI.ASSETID) ASF ON A.ID = ASF.ASSETID) T GROUP BY T.STAT , T.KID";
