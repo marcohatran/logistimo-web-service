@@ -385,7 +385,7 @@ public class RESTUtil {
     if (InventoryConfig.CR_MANUAL == ic.getConsumptionRate()) { // If consumption rate is manual
       InventoryManagementService ims =
           StaticApplicationContext.getBean(InventoryManagementServiceImpl.class);
-      BigDecimal cr = ims.getDailyConsumptionRate(inv);
+      BigDecimal cr = BigUtil.getZeroIfNull(ims.getDailyConsumptionRate(inv));
       if (displayConsumptionRateDaily && BigUtil.greaterThanZero(cr)) {
         material.put(JsonTagsZ.CR_DAILY, BigUtil.getFormattedValue(cr));
       } else if (displayConsumptionRateWeekly && BigUtil
