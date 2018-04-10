@@ -81,6 +81,8 @@ public class OrdersConfig implements Serializable {
   private static final String SHIPMENT_TEMPLATE_NAME = "shipment_template_name";
   private static final String INVOICE_LOGO_NAME = "invoice_logo_name";
   private static final String REFERENCE_ID_MANDATORY = "ref_id_mandatory";
+  private static final String PURCHASE_REFERENCE_ID_MANDATORY = "purchase_ref_id_mandatory";
+  private static final String TRANSFER_REFERENCE_ID_MANDATORY = "transfer_ref_id_mandatory";
   private static final String EAD_MANDATORY = "ead_mandatory";
 
   String sourceUserId = null; // user who last created the export specification
@@ -322,6 +324,18 @@ public class OrdersConfig implements Serializable {
     }
 
     try {
+      purchaseReferenceIdMandatory = json.getBoolean(PURCHASE_REFERENCE_ID_MANDATORY);
+    } catch (JSONException e) {
+      purchaseReferenceIdMandatory = false;
+    }
+
+    try {
+      transferReferenceIdMandatory = json.getBoolean(TRANSFER_REFERENCE_ID_MANDATORY);
+    } catch (JSONException e) {
+      transferReferenceIdMandatory = false;
+    }
+
+    try {
       expectedArrivalDateMandatory = json.getBoolean(EAD_MANDATORY);
     } catch (JSONException e) {
       expectedArrivalDateMandatory = false;
@@ -397,6 +411,8 @@ public class OrdersConfig implements Serializable {
       json.put(INVOICE_TEMPLATE_NAME, invoiceTemplateName);
       json.put(SHIPMENT_TEMPLATE_NAME, shipmentTemplateName);
       json.put(REFERENCE_ID_MANDATORY, referenceIdMandatory);
+      json.put(PURCHASE_REFERENCE_ID_MANDATORY, purchaseReferenceIdMandatory);
+      json.put(TRANSFER_REFERENCE_ID_MANDATORY, transferReferenceIdMandatory);
       json.put(EAD_MANDATORY, expectedArrivalDateMandatory);
       return json;
     } catch (JSONException e) {
