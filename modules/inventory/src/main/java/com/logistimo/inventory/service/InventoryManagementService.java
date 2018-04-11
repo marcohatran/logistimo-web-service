@@ -264,7 +264,7 @@ public interface InventoryManagementService {
                                    Long materialId, String transType, Long linkedKioskId,
                                    String kioskTag, String materialTag,
                                    List<Long> kioskIds, PageParams pageParams, String bid,
-                                   boolean atd, String reason,boolean ignoreLkid)
+                                   boolean atd, String reason, boolean ignoreLkid)
       throws ServiceException;
 
   /**
@@ -322,7 +322,8 @@ public interface InventoryManagementService {
   @SuppressWarnings({"unchecked", "rawtypes"})
   CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
                                                             List<ITransaction> inventoryTransactions,
-                                                            List<IInvntry> invntryList, boolean skipVal,
+                                                            List<IInvntry> invntryList,
+                                                            boolean skipVal,
                                                             boolean skipPred, PersistenceManager pm)
       throws ServiceException, DuplicationException;
 
@@ -506,15 +507,18 @@ public interface InventoryManagementService {
                                    Long linkedKioskId, String kioskTag,
                                    String materialTag, List<Long> kioskIds,
                                    PageParams pageParams, String bid,
-                                   boolean atd, String reason, List<String> reasons, boolean ignoreLkid,
-                                   PersistenceManager pm,boolean excludeReasons) throws ServiceException;
+                                   boolean atd, String reason, List<String> reasons,
+                                   boolean ignoreLkid,
+                                   PersistenceManager pm, boolean excludeReasons)
+      throws ServiceException;
 
-   Results getInventoryTransactions(Date sinceDate, Date untilDate, Long domainId,
-                                          Long kioskId, Long materialId, List<String> transTypes,
-                                          Long linkedKioskId, String kioskTag,
-                                          String materialTag, List<Long> kioskIds,
-                                          PageParams pageParams, String bid,
-                                          boolean atd, String reason, List<String> reasons, boolean ignoreLkid,
-                                          PersistenceManager pm) throws ServiceException;
+  Results getInventoryTransactions(Date sinceDate, Date untilDate, Long domainId,
+                                   Long kioskId, Long materialId, List<String> transTypes,
+                                   Long linkedKioskId, String kioskTag,
+                                   String materialTag, List<Long> kioskIds,
+                                   PageParams pageParams, String bid,
+                                   boolean atd, String reason, List<String> reasons,
+                                   boolean ignoreLkid,
+                                   PersistenceManager pm) throws ServiceException;
 
 }

@@ -1369,13 +1369,21 @@ public class Order implements IOrder {
   }
 
   @Override
-  public String getPurchaseReferenceId() { return purchaseRefId;}
+  public String getPurchaseReferenceId() {
+    return purchaseRefId;
+  }
 
-  public void setPurchaseReferenceId(String purchaseRefId) { this.purchaseRefId = purchaseRefId; }
+  public void setPurchaseReferenceId(String purchaseRefId) {
+    this.purchaseRefId = purchaseRefId;
+  }
 
-  public String getTransferReferenceId() { return transferRefId; }
+  public String getTransferReferenceId() {
+    return transferRefId;
+  }
 
-  public void setTransferReferenceId(String transferRefId) { this.transferRefId = transferRefId; }
+  public void setTransferReferenceId(String transferRefId) {
+    this.transferRefId = transferRefId;
+  }
 
 
 }

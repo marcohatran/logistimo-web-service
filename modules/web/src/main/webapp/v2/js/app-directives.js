@@ -2389,7 +2389,7 @@ function ExportController($scope, $uibModal) {
         });
     }
 
-    $scope.doExport = function() {
+    $scope.doExport = function () {
         $scope.close();
         $scope.exportData();
     };
@@ -2404,7 +2404,7 @@ function ExportController($scope, $uibModal) {
             template: exportModal,
             scope: $scope,
             controller: ['$scope', function ($scope) {
-                $scope.startExport = function(){
+                $scope.startExport = function () {
                     $scope.$parent.exportIncludeBatch = $scope.exportIncludeBatch;
                     $scope.$parent.fullInventoryExport = $scope.fullInventoryExport;
                     $scope.doExport();

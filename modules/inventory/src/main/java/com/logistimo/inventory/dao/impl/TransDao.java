@@ -99,9 +99,12 @@ public class TransDao implements ITransDao {
                                           Long linkedKioskId, String kioskTag,
                                           String materialTag, List<Long> kioskIds,
                                           PageParams pageParams, String bid, boolean atd,
-                                          String reason, List<String> excludeReasons, boolean ignoreLkid,
-                                          PersistenceManager pm){
-    return getInventoryTransactions(sinceDate,untilDate,domainId,kioskId,materialId,transTypes,linkedKioskId,kioskTag,materialTag,kioskIds,pageParams,bid,atd,reason,excludeReasons,ignoreLkid,pm,true);
+                                          String reason, List<String> excludeReasons,
+                                          boolean ignoreLkid,
+                                          PersistenceManager pm) {
+    return getInventoryTransactions(sinceDate, untilDate, domainId, kioskId, materialId, transTypes,
+        linkedKioskId, kioskTag, materialTag, kioskIds, pageParams, bid, atd, reason,
+        excludeReasons, ignoreLkid, pm, true);
   }
 
   @Override
@@ -111,7 +114,7 @@ public class TransDao implements ITransDao {
                                           String materialTag, List<Long> kioskIds,
                                           PageParams pageParams, String bid, boolean atd,
                                           String reason, List<String> reasons, boolean ignoreLkid,
-                                          PersistenceManager pm,boolean excludeReasons) {
+                                          PersistenceManager pm, boolean excludeReasons) {
 
     PersistenceManager localpm;
     if (pm != null) {
@@ -125,7 +128,7 @@ public class TransDao implements ITransDao {
     try {
       QueryParams queryParams = buildTransactionsQuery(sinceDate, untilDate, domainId,
           kioskId, materialId, transTypes, linkedKioskId, kioskTag, materialTag, kioskIds,
-          bid, atd, reason, reasons, ignoreLkid,excludeReasons);
+          bid, atd, reason, reasons, ignoreLkid, excludeReasons);
       StringBuilder sqlQuery = new StringBuilder(queryParams.query);
       final String orderBy = " ORDER BY T DESC";
       String limitStr = null;
@@ -176,8 +179,10 @@ public class TransDao implements ITransDao {
                                             Long linkedKioskId, String kioskTag,
                                             String materialTag, List<Long> kioskIds, String bid,
                                             boolean atd, String reason,
-                                            List<String> reasons, boolean ignoreLkid){
-    return buildTransactionsQuery(sinceDate,untilDate,domainId,kioskId,materialId,transTypes,linkedKioskId,kioskTag,materialTag,kioskIds,bid,atd,reason,reasons,ignoreLkid,true);
+                                            List<String> reasons, boolean ignoreLkid) {
+    return buildTransactionsQuery(sinceDate, untilDate, domainId, kioskId, materialId, transTypes,
+        linkedKioskId, kioskTag, materialTag, kioskIds, bid, atd, reason, reasons, ignoreLkid,
+        true);
   }
 
   @Override
@@ -186,7 +191,8 @@ public class TransDao implements ITransDao {
                                             Long linkedKioskId, String kioskTag,
                                             String materialTag, List<Long> kioskIds, String bid,
                                             boolean atd, String reason,
-                                            List<String> reasons, boolean ignoreLkid,boolean excludeReasons) {
+                                            List<String> reasons, boolean ignoreLkid,
+                                            boolean excludeReasons) {
 
     List<String> parameters = new ArrayList<>(1);
     StringBuilder sqlQuery = new StringBuilder("SELECT * FROM TRANSACTION");

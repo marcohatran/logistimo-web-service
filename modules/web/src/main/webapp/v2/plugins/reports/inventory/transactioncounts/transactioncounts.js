@@ -76,7 +76,7 @@ registerWidget('itc', 'rpt-transaction-counts', 'Activity', 'Transaction counts'
         $scope.secondaryMetric.push({name: "Outgoing returns", value: "7"});
 
 
-        var seriesNames = ['Issues','Receipts','Stock counts','Discards','Transfers','Incoming returns','Outgoing returns'];
+        var seriesNames = ['Issues', 'Receipts', 'Stock counts', 'Discards', 'Transfers', 'Incoming returns', 'Outgoing returns'];
 
         $scope.downloadAsCSV = function (daily) {
             if(daily) {

@@ -285,29 +285,32 @@ public class DemandService implements IDemandService {
   /**
    * Batches are grouped across all shipments by batch id, ignoring all meta. Only quantities and
    * batch id can be read.
-   *
-   * @param orderId
-   * @return
    */
   public List<IDemandItem> getDemandItemsWithBatches(Long orderId) {
     try {
       List<IDemandItem> demandItems = getDemandItems(orderId);
       Map<Long, IDemandItem> demandItemMap = new HashMap<>(demandItems.size());
-      demandItems.stream().forEach(demandItem -> demandItemMap.put(demandItem.getMaterialId(), demandItem));
-      List<IShipmentItemBatch> shipmentItemBatches = shipmentService.getShipmentsBatchByOrderId(orderId);
-      if(shipmentItemBatches != null) {
+      demandItems.stream()
+          .forEach(demandItem -> demandItemMap.put(demandItem.getMaterialId(), demandItem));
+      List<IShipmentItemBatch>
+          shipmentItemBatches =
+          shipmentService.getShipmentsBatchByOrderId(orderId);
+      if (shipmentItemBatches != null) {
         Map<String, IShipmentItemBatch> shipmentItemBatchMap = new HashMap<>();
         shipmentItemBatches.stream().forEach(shipmentItemBatch -> {
               String key = shipmentItemBatch.getMaterialId() + "_" + shipmentItemBatch.getBatchId();
-              if(!shipmentItemBatchMap.containsKey(key)) {
-                shipmentItemBatchMap.put(key,shipmentItemBatch);
+              if (!shipmentItemBatchMap.containsKey(key)) {
+                shipmentItemBatchMap.put(key, shipmentItemBatch);
               } else {
                 IShipmentItemBatch iShipmentItemBatch = shipmentItemBatchMap.get(key);
-                iShipmentItemBatch.setQuantity(iShipmentItemBatch.getQuantity().add(shipmentItemBatch.getQuantity()));
+                iShipmentItemBatch.setQuantity(
+                    iShipmentItemBatch.getQuantity().add(shipmentItemBatch.getQuantity()));
                 iShipmentItemBatch.setDiscrepancyQuantity(
-                    iShipmentItemBatch.getDiscrepancyQuantity().add(shipmentItemBatch.getDiscrepancyQuantity()));
+                    iShipmentItemBatch.getDiscrepancyQuantity()
+                        .add(shipmentItemBatch.getDiscrepancyQuantity()));
                 iShipmentItemBatch.setFulfilledQuantity(
-                    iShipmentItemBatch.getFulfilledQuantity().add(shipmentItemBatch.getFulfilledQuantity()));
+                    iShipmentItemBatch.getFulfilledQuantity()
+                        .add(shipmentItemBatch.getFulfilledQuantity()));
               }
             }
         );
@@ -325,12 +328,11 @@ public class DemandService implements IDemandService {
   }
 
   /**
-   *
-   * @param orderId
    * @param quantityByMaterial - Key: Material Id, value - Return quantity
-   * @return
    */
-  public List<IDemandItem> updateDemandReturns(Long orderId, Map<Long, BigDecimal> quantityByMaterial,boolean decrement) {
+  public List<IDemandItem> updateDemandReturns(Long orderId,
+                                               Map<Long, BigDecimal> quantityByMaterial,
+                                               boolean decrement) {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     try {
       List<IDemandItem> demandItems = getDemandItems(orderId, pm);
@@ -349,7 +351,9 @@ public class DemandService implements IDemandService {
       pm.makePersistentAll(demandItems);
       return (List<IDemandItem>) pm.detachCopyAll(demandItems);
     } catch (Exception e) {
-      xLogger.severe("Error while updating demand items with return quantity for order {0}", orderId, e);
+      xLogger
+          .severe("Error while updating demand items with return quantity for order {0}", orderId,
+              e);
     } finally {
       pm.close();
     }

@@ -80,7 +80,8 @@
                                 <label class="col-sm-4 cbx control-label ml10"> {{resourceBundle['trackingid']}}</label>
 
                                 <div class="col-sm-7">
-                                    <input class="form-control" ng-model="trackingId" placeholder="{{resourceBundle['trackingid']}}">
+                                    <input class="form-control" ng-model="trackingId"
+                                           placeholder="{{resourceBundle['trackingid']}}">
                                 </div>
                             </div>
                             <div class="row mb10">
@@ -135,7 +136,8 @@
                             <div class="row">
                                 <label class="col-sm-4 control-label cbx ml10" ng-class="{'required': oCfg.ridm}">{{resourceBundle['sales.reference.id']}}</label>
                                 <div class="col-sm-7 mb10">
-                                    <input type="text" class="form-control" ng-model="salesRefId" max-length="100" ng-init="salesRefId = order.salesRefId">
+                                    <input type="text" class="form-control" ng-model="salesRefId" max-length="100"
+                                           ng-init="salesRefId = order.salesRefId">
                                 </div>
                             </div>
                         </div>

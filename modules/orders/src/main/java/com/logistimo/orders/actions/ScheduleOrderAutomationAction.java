@@ -24,6 +24,8 @@
 package com.logistimo.orders.actions;
 
 import com.logistimo.AppFactory;
+import com.logistimo.config.models.DomainConfig;
+import com.logistimo.config.models.OrdersConfig;
 import com.logistimo.domains.entity.IDomain;
 import com.logistimo.domains.service.DomainsService;
 import com.logistimo.exception.TaskSchedulingException;
@@ -68,12 +70,17 @@ public class ScheduleOrderAutomationAction {
 
   private void schedule(IDomain domain) {
     try {
-      AppFactory.get().getTaskService()
-          .schedule(ITaskService.QUEUE_OPTIMZER,
-              ORDER_AUTOMATION_URL + "?domain_id=" + domain.getId(), null,
-              ITaskService.METHOD_GET);
-      LOGGER.info("Scheduled order automation for domain {0}:{1}", domain.getId(),
-          domain.getName());
+      DomainConfig domainConfig = DomainConfig.getInstance(domain.getId());
+      OrdersConfig ordersConfig = domainConfig.getOrdersConfig();
+      if (domainConfig.isCapabilityDisabled(DomainConfig.CAPABILITY_ORDERS) || !ordersConfig
+          .isCreationAutomated()) {
+        AppFactory.get().getTaskService()
+            .schedule(ITaskService.QUEUE_OPTIMZER,
+                ORDER_AUTOMATION_URL + "?domain_id=" + domain.getId(), null,
+                ITaskService.METHOD_GET);
+        LOGGER.info("Scheduled order automation for domain {0}:{1}", domain.getId(),
+            domain.getName());
+      }
     } catch (TaskSchedulingException e) {
       LOGGER
           .warn("Failed to schedule order automation task for domain {0}:{1}", domain.getId(),

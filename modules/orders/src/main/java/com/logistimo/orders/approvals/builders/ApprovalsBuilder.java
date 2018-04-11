@@ -37,7 +37,6 @@ import com.logistimo.logger.XLog;
 import com.logistimo.models.StatusModel;
 import com.logistimo.orders.approvals.ApprovalType;
 import com.logistimo.orders.approvals.constants.ApprovalConstants;
-import com.logistimo.orders.approvals.dao.IApprovalsDao;
 import com.logistimo.orders.approvals.models.ApprovalModel;
 import com.logistimo.orders.approvals.models.ApproverModel;
 import com.logistimo.orders.approvals.models.CreateApprovalResponseModel;
@@ -81,7 +80,6 @@ public class ApprovalsBuilder {
 
   private UsersService usersService;
 
-  private IApprovalsDao approvalsDao;
 
   @Autowired
   public void setUserContactBuilder(UserContactBuilder userContactBuilder) {
@@ -96,11 +94,6 @@ public class ApprovalsBuilder {
   @Autowired
   public void setUsersService(UsersService usersService) {
     this.usersService = usersService;
-  }
-
-  @Autowired
-  public void setApprovalsDao(IApprovalsDao approvalsDao) {
-    this.approvalsDao = approvalsDao;
   }
 
   public IOrderApprovalMapping buildOrderApprovalMapping(CreateApprovalResponse approvalResponse,

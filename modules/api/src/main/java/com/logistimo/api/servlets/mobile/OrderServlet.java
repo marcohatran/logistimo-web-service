@@ -798,7 +798,7 @@ public class OrderServlet extends JsonRestServlet {
           String signature = null;
           MemcacheService cache = null;
           boolean isAlreadyProcessed = false;
-          if(StringUtils.isNotEmpty(uoReq.rid)) {
+          if (StringUtils.isNotEmpty(uoReq.rid)) {
             uoReq.setSalesReferenceId(uoReq.rid);
           }
           OrderManagementService oms =
@@ -858,7 +858,7 @@ public class OrderServlet extends JsonRestServlet {
                 pm = PMF.get().getPersistenceManager();
                 tx = pm.currentTransaction();
                 tx.begin();
-                if(RestConstantsZ.TYPE_REORDER.equals(type)) {
+                if (RestConstantsZ.TYPE_REORDER.equals(type)) {
                   // Update order transactions
                   or =
                       oms.updateOrderTransactions(
@@ -868,8 +868,9 @@ public class OrderServlet extends JsonRestServlet {
                               uoReq.popt, uoReq.pksz, allowEmptyOrders, orderTags, tOrNt,
                               isSalesOrder, uoReq.getSalesReferenceId(), uoReq.rbd, uoReq.eta,
                               SourceConstants.MOBILE,
-                              pm, uoReq.getPurchaseReferenceId(), uoReq.getTransferReferenceId(), null));
-                } else if(RestConstantsZ.TYPE_ORDER.equals(type)){
+                              pm, uoReq.getPurchaseReferenceId(), uoReq.getTransferReferenceId(),
+                              null));
+                } else if (RestConstantsZ.TYPE_ORDER.equals(type)) {
                   buildReferenceId(uoReq);
                   or =
                       oms.createOrder(
@@ -1380,7 +1381,7 @@ public class OrderServlet extends JsonRestServlet {
           if (status) {
             // Update order status
             UpdatedOrder uo = new UpdatedOrder();
-            if(StringUtils.isBlank(uosReq.rid)){
+            if (StringUtils.isBlank(uosReq.rid)) {
               uosReq.rid = uosReq.getSalesRefId();
             }
 

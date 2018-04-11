@@ -68,7 +68,8 @@ public interface UsersService {
   /**
    * Get all active/inactive users of a given role
    */
-  Results getUsers(Long domainId, String role, boolean activeUsersOnly, String nameStartsWith,
+  Results<IUserAccount> getUsers(Long domainId, String role, boolean activeUsersOnly,
+                                 String nameStartsWith,
                    PageParams pageParams) throws ServiceException;
 
   /**

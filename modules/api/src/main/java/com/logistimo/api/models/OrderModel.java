@@ -307,12 +307,20 @@ public class OrderModel extends PermissionsModel {
     this.approver = approver;
   }
 
-  public String getPurchaseReferenceId() { return purchaseRefId; }
-
-  public void setPurchaseReferenceId(String purchaseRefId) { this.purchaseRefId = purchaseRefId; }
-
-  public String getTransfereReferenceId() { return transferRefId; }
-
-  public void setTransferReferenceId(String transferRefId) { this.transferRefId = transferRefId; }
-
+  public String getPurchaseReferenceId() {
+    return purchaseRefId;
   }
+
+  public void setPurchaseReferenceId(String purchaseRefId) {
+    this.purchaseRefId = purchaseRefId;
+  }
+
+  public String getTransfereReferenceId() {
+    return transferRefId;
+  }
+
+  public void setTransferReferenceId(String transferRefId) {
+    this.transferRefId = transferRefId;
+  }
+
+}

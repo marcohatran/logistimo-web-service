@@ -178,8 +178,8 @@ blkUpControllers.controller('ViewBulkUploadController', ['$scope','requestContex
             $location.$$compose();
         };
 
-        $scope.exportData=function(isInfo) {
-            if(isInfo) {
+        $scope.exportData = function (isInfo) {
+            if (isInfo) {
                 return {
                     filters: getCaption(),
                     type: $scope.resourceBundle['exports.manualtransactions']

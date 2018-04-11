@@ -56,7 +56,7 @@ public class GetFilteredOrdersAction {
   @Autowired
   private GetFilteredOrdersQueryAction getFilteredOrdersQueryAction;
 
-  public Results invoke(OrderFilters filters, PageParams pageParams) {
+  public Results<IOrder> invoke(OrderFilters filters, PageParams pageParams) {
     if (filters.getKioskId() == null && filters.getDomainId() == null) {
       throw new IllegalArgumentException(
           "No kiosk or domain specified. At least one of them must be specified");

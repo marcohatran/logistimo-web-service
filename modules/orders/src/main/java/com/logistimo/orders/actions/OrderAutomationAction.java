@@ -226,9 +226,10 @@ public class OrderAutomationAction {
           ITransaction.TYPE_REORDER, message, null, null,
           null,
           null,
-          true, null, null);
+          true, null, order.getSalesReferenceID(), pm, order.getPurchaseReferenceId(),
+          order.getTransferReferenceId());
       orderManagementService
-          .updateOrder(order, SourceConstants.SYSTEM, true, true, Constants.SYSTEM_USER_ID);
+          .updateOrder(order, SourceConstants.SYSTEM, true, true, Constants.SYSTEM_USER_ID, pm);
       LOGGER.info("Added new materials to order {0} for kiosk {1} with message {2}", orderId,
           order.getKioskId(), message);
       tx.commit();

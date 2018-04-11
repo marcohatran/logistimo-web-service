@@ -309,16 +309,16 @@ public class HandlingUnitServiceImpl implements IHandlingUnitService {
       if (data == null || data.isEmpty()) {
         return null;
       }
-      Iterator iterator=data.iterator();
-      List<HandlingUnitModel> handlingUnitModelList=new ArrayList<>(data.size());
-      while(iterator.hasNext()){
+      Iterator iterator = data.iterator();
+      List<HandlingUnitModel> handlingUnitModelList = new ArrayList<>(data.size());
+      while (iterator.hasNext()) {
         Object[] o = (Object[]) iterator.next();
-        HandlingUnitModel model=new HandlingUnitModel();
-        model.setId((Long)o[0]);
+        HandlingUnitModel model = new HandlingUnitModel();
+        model.setId((Long) o[0]);
         model.setName(String.valueOf(o[1]));
         model.setQuantity(new BigDecimal(String.valueOf(o[2])));
         model.setHandlingUnitId(String.valueOf(o[3]));
-        model.setMaterialId((Long)o[4]);
+        model.setMaterialId((Long) o[4]);
         handlingUnitModelList.add(model);
       }
       return handlingUnitModelList;

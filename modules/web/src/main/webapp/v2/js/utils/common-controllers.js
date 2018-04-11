@@ -660,7 +660,7 @@ function WidgetConfigController($scope) {
 cmnControllers.controller('NoController', ['$scope', function ($scope) {}]);
 
 cmnControllers.controller('ResetController', ['$scope', function ($scope) {
-    angular.forEach($scope.localFilters,function (filter) {
+    angular.forEach($scope.localFilters, function (filter) {
         addwatch(filter);
         $scope[filter] = angular.copy($scope[filter]);
         callParentWatches(filter);

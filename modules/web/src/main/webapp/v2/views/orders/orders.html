@@ -44,9 +44,9 @@
 				<li ng-class="{ enable: subview == 'approvals'}">
 					<a href="#/orders/approvals/">{{resourceBundle['approvals.upper.case']}}</a>
 				</li>
-				<li ng-class="{ enable: subview == 'returns'}">
-					<a href="#/orders/returns/">{{resourceBundle['returns']}}</a>
-				</li>
+                <li ng-class="{ enable: subview == 'returns'}">
+                    <a href="#/orders/returns/">{{resourceBundle['returns']}}</a>
+                </li>
 			</ul>
 	</div>
 	<div ng-switch="subview">
@@ -74,9 +74,9 @@
 			<div class="tab-pane">
 				<div ng-include="'views/orders/approvals.html'"></div>
 			</div>
-		</div>
-		<div ng-switch-when="returns">
-			<div ng-include="'views/returns/returns.html'"></div>
+        </div>
+        <div ng-switch-when="returns">
+            <div ng-include="'views/returns/returns.html'"></div>
 		</div>
 	</div>
 </div>

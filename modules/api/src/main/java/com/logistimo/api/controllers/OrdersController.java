@@ -279,7 +279,8 @@ public class OrdersController {
                           @RequestParam(required = false) String purchaseRefId,
                           @RequestParam(required = false) String transferRefId,
                           HttpServletRequest request) {
-    return getOrders(entityId, offset, size, status, from, until, otype, tgType, tag, oty, salesRefId,
+    return getOrders(entityId, offset, size, status, from, until, otype, tgType, tag, oty,
+        salesRefId,
         approval_status, purchaseRefId, transferRefId, request);
   }
 
@@ -310,7 +311,7 @@ public class OrdersController {
                                        @RequestBody OrderUpdateModel model,
                                        HttpServletRequest request) {
     return updateOrder("trans", orderId, model.orderUpdatedAt, null, null, null,
-        null,null, request);
+        null, null, request);
   }
 
   @RequestMapping(value = "/order/{orderId}/status", method = RequestMethod.POST)
@@ -489,7 +490,7 @@ public class OrdersController {
       if (order == null) {
         throw new BadRequestException(backendMessages.getString("order.none") + " " + orderId);
       }
-      if (!model.orderUpdatedAt.equals(
+      if (model.orderUpdatedAt != null && !model.orderUpdatedAt.equals(
           LocalDateUtil.formatCustom(order.getUpdatedOn(), Constants.DATETIME_FORMAT, null))) {
         throw new LogiException("O004", user.getUsername(),
             LocalDateUtil.format(order.getUpdatedOn(), user.getLocale(), user.getTimezone()));
@@ -597,7 +598,8 @@ public class OrdersController {
   private OrderResponseModel updateOrder(String updType, Long orderId, String orderUpdatedAt,
                                          PaymentModel paymentDetails,
                                          Long vendorId, String data,
-                                         List<String> tags, String referenceType, HttpServletRequest request) {
+                                         List<String> tags, String referenceType,
+                                         HttpServletRequest request) {
     SecureUserDetails user = SecurityUtils.getUserDetails();
     Locale locale = user.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
@@ -625,11 +627,11 @@ public class OrdersController {
       } else if (updType.equals("tgs")) {
         order.setTgs(tagDao.getTagsByNames(tags, ITag.ORDER_TAG), TagUtil.TYPE_ORDER);
       } else if (updType.equals("rid")) {
-        if("salesRefId".equals(referenceType)) {
+        if ("salesRefId".equals(referenceType)) {
           order.setSalesReferenceID(data);
-        } else if("purchaseRefId".equals(referenceType)){
+        } else if ("purchaseRefId".equals(referenceType)) {
           order.setPurchaseReferenceId(data);
-        } else if("transferRefId".equals(referenceType)) {
+        } else if ("transferRefId".equals(referenceType)) {
           order.setTransferReferenceId(data);
         }
       } else if (updType.equals("efd")) {
@@ -696,7 +698,8 @@ public class OrdersController {
               0);
       PageParams pageParams = new PageParams(navigator.getCursor(offset), offset, size);
       List<Long> kioskIds = null;
-      if (user.getUsername() != null && SecurityConstants.ROLE_SERVICEMANAGER.equals(user.getRole())) {
+      if (user.getUsername() != null && SecurityConstants.ROLE_SERVICEMANAGER
+          .equals(user.getRole())) {
         // Get user
         kioskIds = entitiesService.getKioskIdsForUser(user.getUsername(), null, null)
             .getResults();
@@ -705,7 +708,8 @@ public class OrdersController {
         }
       }
       Results or = orderManagementService.getOrders(domainId, entityId, status, startDate, endDate,
-          otype, tgType, tag, kioskIds, pageParams, oty, salesRefId, approvalStatus, purchaseRefId, transferRefId);
+          otype, tgType, tag, kioskIds, pageParams, oty, salesRefId, approvalStatus, purchaseRefId,
+          transferRefId);
       return orderAPIBuilder.buildOrders(or, SecurityUtils.getDomainId());
     } catch (Exception e) {
       xLogger.severe("Error in fetching orders for entity {0} of type {1}", entityId, otype, e);
@@ -810,12 +814,13 @@ public class OrdersController {
       }
       if (model.items == null) {
         OrderResults orderResults =
-            orderManagementService.updateOrderTransactions(new UpdateOrderTransactionsModel(domainId, userId, ITransaction.TYPE_ORDER,
+            orderManagementService.updateOrderTransactions(
+                new UpdateOrderTransactionsModel(domainId, userId, ITransaction.TYPE_ORDER,
                 transList, kioskId, null, ordMsg, dc.autoOrderGeneration(), vendorKioskId, null,
                 null, null,
                 null, null, null, BigDecimal.ZERO, null, null, dc.allowEmptyOrders(), oTag, oType,
                 oType == 2,
-                null, edd, efd, SourceConstants.WEB, null, null, null, referenceId));
+                    null, edd, efd, SourceConstants.WEB, null, null, null, referenceId));
         IOrder order = orderResults.getOrder();
         String prefix = CharacterConstants.EMPTY;
         if (oType == 0) {

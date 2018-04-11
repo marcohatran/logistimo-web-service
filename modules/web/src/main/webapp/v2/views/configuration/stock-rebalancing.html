@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright © 2018 Logistimo.
+  ~
+  ~ This file is part of Logistimo.
+  ~
+  ~ Logistimo software is a mobile & web platform for supply chain management and remote temperature monitoring in
+  ~ low-resource settings, made available under the terms of the GNU Affero General Public License (AGPL).
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General
+  ~ Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any
+  ~ later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+  ~ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+  ~ for more details.
+  ~
+  ~ You should have received a copy of the GNU Affero General Public License along with this program.  If not, see
+  ~ <http://www.gnu.org/licenses/>.
+  ~
+  ~ You can be released from the requirements of the license by purchasing a commercial license. To know more about
+  ~ the commercial license, please contact us at opensource@logistimo.com
+  -->
+
+<div class="box topbox">
+    <div class="bizinfo bizinfo-last">
+        <div ng-controller="StockRebalancingConfigurationController">
+            <form ng-if="loading == false" class="form-horizontal" role="form" name="stockRebalancingConfigForm">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="domain-title-heading">
+                            <h4>{{resourceBundle['stock.rebalancing']}}
+                                {{resourceBundle['domain.configuration.lowercase']}}</h4>
+                            <span ng-show="strbCfg.lastUpdated" class="caption pull-right">{{resourceBundle['lastupdated']}} {{resourceBundle['on']}} {{strbCfg.lastUpdated}} {{resourceBundle['by']}}
+                                <a href="#setup/users/all/details?userId={{strbCfg.createdBy}}" target="_new">{{strbCfg.fn}}</a>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="bgr">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="title-heading">
+                                {{resourceBundle['general']}}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="litetext" style="padding-left:5px;">
+                                {{resourceBundle['general.stock.rebalancing.info']}}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-11">
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">
+                                    {{resourceBundle['stock.rebalancing.cap']}}
+                                </label>
+                                <div class="col-sm-8 cbx">
+                                    <input type="checkbox" ng-model="stockRebalancing.enableStockRebalancing">&nbsp;{{resourceBundle['stock.rebalancing.enable']}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-11">
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">
+                                    {{resourceBundle['include.material.tags']}}
+                                </label>
+                                <div class="col-sm-4">
+                                    <tag-select tags-model="stockRebalancing.mTags" type="'material'" force-no-udf="'true'"></tag-select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-11">
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">
+                                    {{resourceBundle['include.entities.tags']}}
+                                </label>
+                                <div class="col-sm-8">
+                                    <div class="litetext mt5">{{resourceBundle['include.entities.tags.info']}}</div>
+                                    <table class="table table-bordered table-condensed table-hover table-logistimo">
+                                        <tbody>
+                                        <tr><th class="col-sm-1 text-center">{{resourceBundle['serialnum']}}</th>
+                                            <th class="col-sm-3 text-center">{{resourceBundle['kiosk.tags']}}</th>
+                                            <th class="col-sm-0-2 text-center"></th>
+                                        </tr>
+                                        </tbody>
+                                        <tbody ng-repeat="tags in stockRebalancing.entityTagsCombination">
+                                        <tr ng-class="{'alert alert-info' : exRow[$index]}">
+                                            <td><p class="text-center temp">{{$index + 1}}</p></td>
+                                            <td>
+                                                <domain-tag-select  tags-model="tags.eTags" type="'entity'" force-no-udf="'true'"></domain-tag-select>
+                                            </td>
+                                            <td class="text-center">
+                                                                    <span>
+                                                                        <span class="glyphicons glyphicons-bin"
+                                                                              uib-tooltip="Delete"
+                                                                              ng-click="deleteRow($index, 'e')"></span>
+                                                                    </span>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                        <tbody>
+                                        <tr>
+                                            <td class="col-sm-1" colspan="100%">
+                                                <button type="button" ng-click="addRow('e')" class="btn btn-sm btn-primary"> + </button>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-11">
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">
+                                    {{resourceBundle['source.destination.geo.fencing']}}
+                                </label>
+                                <div class="col-sm-8">
+                                    <input type="text" ng-model="stockRebalancing.geoFencing" class="form-control" autocomplete="off" placeholder="" maxlength="20" style="width: 15%; display: inline-block;" only-digits>&nbsp;&nbsp;km(s)
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bgr">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="title-heading">
+                                {{resourceBundle['destination.triggers']}}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="litetext" style="padding-left:5px;">
+                                {{resourceBundle['trigger.destination.config.info']}}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-11">
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">
+                                    {{resourceBundle['triggers.enable']}}
+                                </label>
+                                <div class="col-sm-6 cbx">
+                                    <input type="checkbox" ng-model="stockRebalancing.stockOutDurationExceedsThreshold" ng-change="updateTrigger('acceptableLeadTime')">&nbsp;{{resourceBundle['destination.stock.out.threshold']}}
+                                    <div class="bgr col-sm-12" ng-show="stockRebalancing.stockOutDurationExceedsThreshold">
+                                        <div class="form-group">
+                                            <label class="col-sm-8 control-label">
+                                                {{resourceBundle['destination.acceptable.stock.out.days']}}
+                                            </label>
+                                            <div class="col-sm-4">
+                                                <input type="text" ng-model="stockRebalancing.acceptableLeadTime" class="form-control" autocomplete="off" placeholder=""
+                                                       maxlength="20" style="width: 50%; display: inline-block;" only-digits>&nbsp;&nbsp;day(s)
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bgr">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="title-heading">
+                                {{resourceBundle['source.triggers']}}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="litetext" style="padding-left:5px;">
+                                {{resourceBundle['trigger.source.config.info']}}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-11">
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">
+                                    {{resourceBundle['triggers.enable']}}
+                                </label>
+                                <div class="col-sm-6 cbx">
+                                    <input type="checkbox" ng-model="stockRebalancing.expiryCheck" ng-change="updateStockRebalancing('expiryCheckCondition')">&nbsp;{{resourceBundle['source.stock.out.threshold']}}
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label"></label>
+                                <div class="col-sm-6 cbx">
+                                    <input type="checkbox" ng-model="stockRebalancing.maxStock" ng-change="updateStockRebalancing('maxStockDays')">&nbsp;{{resourceBundle['source.stock.max.days']}}
+                                    <div class="bgr col-sm-12" ng-show="stockRebalancing.maxStock">
+                                        <div class="form-group">
+                                            <label class="col-sm-8 control-label">
+                                                {{resourceBundle['source.acceptable.max.days']}}
+                                            </label>
+                                            <div class="col-sm-4">
+                                                <input type="text" ng-model="stockRebalancing.maxStockDays" class="form-control" autocomplete="off" placeholder=""
+                                                       maxlength="20" style="width: 50%; display: inline-block;" only-digits>&nbsp;&nbsp;day(s)
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bgr">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="title-heading">
+                                {{resourceBundle['cost.parameters']}}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="litetext" style="padding-left:5px;">
+                                {{resourceBundle['cost.parameters.info']}}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-11">
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">{{resourceBundle['transportation.cost']}}</label>
+                                <div class="col-sm-6">
+                                    <input type="text" ng-model="stockRebalancing.transportationCost" class="form-control" autocomplete="off" placeholder=""
+                                           maxlength="20" style="width: 50%; display: inline-block;" only-digits>&nbsp;&nbsp;per km
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-11">
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">{{resourceBundle['handling.charges']}}</label>
+                                <div class="col-sm-6">
+                                    <input type="text" ng-model="stockRebalancing.handlingCharges" class="form-control" autocomplete="off" placeholder=""
+                                           maxlength="20" style="width: 50%; display: inline-block;" only-digits>&nbsp;&nbsp;
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bgr">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="title-heading">
+                                {{resourceBundle['benefit.parameters']}}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="litetext" style="padding-left:5px;">
+                                {{resourceBundle['benefit.parameters.info']}}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-11">
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">
+                                    {{resourceBundle['inv.holding.cost']}}
+                                </label>
+                                <div class="col-sm-6">
+                                    <input type="text" ng-model="stockRebalancing.inventoryHoldingCost" class="form-control" autocomplete="off" placeholder=""
+                                           maxlength="20" style="width: 50%; display: inline-block;" only-digits>&nbsp;&nbsp;%<br>
+                                    <span class="litetext">{{resourceBundle['savings.excess.stock']}}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt10" ng-if="iSU || dp.ce">
+                    <div class="col-sm-12  ml5">
+                        <button type="button" ng-click="setStockRebalancingConfiguration()" class="btn btn-primary">{{resourceBundle['save']}}</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

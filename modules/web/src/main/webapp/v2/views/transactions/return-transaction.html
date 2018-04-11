@@ -108,7 +108,8 @@
                                                         resourceBundle['status.lower']}}
                                                     </option>
                                                 </select>
-                                                <span ng-hide="isUndef(reasons) || reasons.length == 0" class="litetext float-left"
+                                                <span ng-hide="isUndef(reasons) || reasons.length == 0"
+                                                      class="litetext float-left"
                                                       ng-class="{'required' : reasons.length > 0}">{{resourceBundle['reason']}}</span>
                                                 <select ng-hide="isUndef(reasons) || reasons.length == 0"
                                                         ng-model="returnitem.rrsn" class="form-control"
@@ -145,7 +146,8 @@
                         <div class="form-group">
                             <div class="col-sm-12">
                                 <div class="pull-right">
-                                    <button type="button" ng-click="saveEditedReturnTransactions($index)" ng-disabled="invalidPopup > 0"
+                                    <button type="button" ng-click="saveEditedReturnTransactions($index)"
+                                            ng-disabled="invalidPopup > 0"
                                             class="btn btn-sm btn-primary">{{resourceBundle['save']}}
                                     </button>
                                     <button type="button" class="btn btn-sm btn-default" ng-click="toggle($index);">
@@ -256,7 +258,8 @@
                                                         + resourceBundle['status.lower']}}
                                                     </option>
                                                 </select>
-                                                <span ng-hide="isUndef(reasons) || reasons.length == 0" class="litetext float-left"
+                                                <span ng-hide="isUndef(reasons) || reasons.length == 0"
+                                                      class="litetext float-left"
                                                       ng-class="{'required' : reasons.length > 0}">{{resourceBundle['reason']}}</span>
                                                 <select ng-hide="isUndef(reasons) || reasons.length == 0"
                                                         ng-model="trans.rrsn" class="form-control"

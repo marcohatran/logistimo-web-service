@@ -33,7 +33,8 @@ var logistimoApp = angular.module('logistimoApp', ['ngCookies', 'ngSanitize', 'n
     'linkedDomainControllers', 'linkedDomainServices','domainControllers','domainServices', 'mediaServices', 'base64',
     'exportControllers','once','assetControllers','assetServices','handlingUnitControllers','handlingUnitServices',
     'conversationServices', 'activityServices','conversationControllers','hc.downloader','reportsPluginCore','approvalServices',
-    'approvalControllers', 'bulletinBoardControllers', 'logistimo.storyboard', 'eventSummaryServices', 'systemCfgControllers'
+    'approvalControllers', 'bulletinBoardControllers', 'logistimo.storyboard', 'eventSummaryServices', 'systemCfgControllers',
+    'stockRebalancingControllers','stockRebalancingServices'
     /*<% do-not-remove-this-comment-grunt-will-insert-dep-for-prod %>*/]);
 
 logistimoApp.config(function (uibDatepickerConfig) {
@@ -144,6 +145,8 @@ logistimoApp.config(function ($routeProvider) {
         action: "orders.returns.detail"
     }).when("/inventory/", {
         action: "inventory.stock"
+    }).when("/inventory/rebalancing/", {
+        action:  "inventory.rebalancing"
     }).when("/inventory/stock/", {
         action: "inventory.stock"
     }).when("/inventory/abnormalstock/", {
@@ -240,6 +243,8 @@ logistimoApp.config(function ($routeProvider) {
         action: "configuration.inventory"
     }).when("/configuration/approvals/", {
         action: "configuration.approvals"
+    }).when("/configuration/stocks/", {
+       action: "configuration.stocks"
     }).when("/configuration/accounting/", {
         action: "configuration.accounting"
     }).when("/configuration/custom", {

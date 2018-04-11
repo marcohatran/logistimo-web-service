@@ -155,6 +155,11 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.logistimo</groupId>
+            <artifactId>logistimo-stock-rebalancing</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.apache.velocity</groupId>
             <artifactId>velocity</artifactId>
             <version>1.7</version>

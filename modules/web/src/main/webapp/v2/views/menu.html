@@ -40,7 +40,8 @@
                           ng-click="switchConsole()">{{resourceBundle['switch.console']}}</span>
                     <!--<span ng-if="subview !='manage'" class="userdomaininfo"><a ng-href="#/setup/users/all/details?userId={{curUser}}">{{curUserName}}</a> {{resourceBundle['in']}} <b>{{domainName}}</b></span>-->
                     <span class="userdomaininfo dropdown" ng-if="!iAU">
-                            <a id="shortcutsMenu" class="dummyLink clickable dropdown-toggle" data-toggle="dropdown" role="button"
+                            <a id="shortcutsMenu" class="dummyLink clickable dropdown-toggle" data-toggle="dropdown"
+                               role="button"
                                aria-haspopup="true" aria-expanded="false">Shortcuts&nbsp;<span
                                     class="caret"></span></a>
                             <ul class="dropdown-menu dropdown-menu-right" role="menu" aria-labelledby="shortcutsMenu">
@@ -156,6 +157,7 @@
                         <li><a href="#/inventory/abnormalstock/">{{resourceBundle.abnormal}}
                             {{resourceBundle['stock.lowercase']}}</a></li>
                         <li><a href="#/inventory/transactions/">{{resourceBundle.transactions}}</a></li>
+                        <li><a href="#/inventory/rebalancing/">{{resourceBundle['stock.rebalancing']}}</a></li>
                     </ul>
                 </li>
                 <li ng-if="accountTabEnabled" ng-class="{active:subview == 'accounts' }">
@@ -218,7 +220,11 @@
                         <li ng-show="(iAdm || iSU)"><a href="#/configuration/bulletin/">{{resourceBundle['bulletin.board.upper']}}</a>
                         </li>
                         <li ng-show="iAdm"><a
-                                href="#/configuration/dashboards/">{{resourceBundle['custom.dashboards']}}</a></li>
+                                href="#/configuration/dashboards/">{{resourceBundle['custom.dashboards']}}</a>
+                        </li>
+                        <li ng-show="iAdm"><a
+                                href="#/configuration/stocks/">{{resourceBundle['stock.rebalancing']}}</a>
+                        </li>
                     </ul>
                 </li>
                 <li ng-class="{active:subview == 'setup'}"

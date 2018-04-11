@@ -31,6 +31,7 @@ import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.entity.IKioskLink;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
+import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.pagination.Results;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
@@ -141,4 +142,11 @@ public class EntityAuthoriser {
   }
 
 
+  public static boolean check(Long entityId) {
+    try {
+      return authoriseEntity(entityId);
+    } catch (ServiceException e) {
+      throw new UnauthorizedException("G002");
+    }
+  }
 }

@@ -235,8 +235,8 @@ userControllers.controller('UsersListController', ['$scope', 'userService', 'req
 
         };
 
-        $scope.exportData=function(isInfo) {
-            if(isInfo) {
+        $scope.exportData = function (isInfo) {
+            if (isInfo) {
                 return {
                     filters: getCaption(),
                     type: $scope.resourceBundle['exports.users']

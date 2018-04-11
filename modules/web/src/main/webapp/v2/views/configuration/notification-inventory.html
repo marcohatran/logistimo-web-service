@@ -60,10 +60,12 @@
                         <option ng-show="prSelect == 'stockDiscarded'" ng-repeat="discard in stockDiscarded"
                                 value="{{discard}}">{{discard}}
                         </option>
-                        <option ng-show="prSelect == 'incomingReturnReceived'" ng-repeat="incomingReturn in incomingReturnReceived"
+                        <option ng-show="prSelect == 'incomingReturnReceived'"
+                                ng-repeat="incomingReturn in incomingReturnReceived"
                                 value="{{incomingReturn}}">{{incomingReturn}}
                         </option>
-                        <option ng-show="prSelect == 'outgoingReturnSent'" ng-repeat="outgoingReturn in outgoingReturnSent"
+                        <option ng-show="prSelect == 'outgoingReturnSent'"
+                                ng-repeat="outgoingReturn in outgoingReturnSent"
                                 value="{{outgoingReturn}}">{{outgoingReturn}}
                         </option>
                     </select>
@@ -86,10 +88,12 @@
                         <option ng-show="prExtraSelect == 'stockDiscarded'" ng-repeat="discard in stockDiscardedStatus"
                                 value="{{discard}}">{{discard}}
                         </option>
-                        <option ng-show="prExtraSelect == 'incomingReturnReceived'" ng-repeat="incomingReturn in incomingReturnReceivedStatus"
+                        <option ng-show="prExtraSelect == 'incomingReturnReceived'"
+                                ng-repeat="incomingReturn in incomingReturnReceivedStatus"
                                 value="{{incomingReturn}}">{{incomingReturn}}
                         </option>
-                        <option ng-show="prExtraSelect == 'outgoingReturnSent'" ng-repeat="outgoingReturn in outgoingReturnSentStatus"
+                        <option ng-show="prExtraSelect == 'outgoingReturnSent'"
+                                ng-repeat="outgoingReturn in outgoingReturnSentStatus"
                                 value="{{outgoingReturn}}">{{outgoingReturn}}
                         </option>
                     </select>

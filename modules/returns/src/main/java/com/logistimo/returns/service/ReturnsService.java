@@ -126,7 +126,9 @@ public class ReturnsService {
       validateQuantity(returnsVO, returnsItemVOList);
       validateReturnsPolicy(returnsVO.getOrderId(), returnsVO.getVendorId());
       returnsRepository.saveReturns(returnsVO);
-      Map<Long, BigDecimal> quantityByMaterial = saveReturnItems(returnsVO.getId(), returnsItemVOList);
+      Map<Long, BigDecimal>
+          quantityByMaterial =
+          saveReturnItems(returnsVO.getId(), returnsItemVOList);
       demandService.updateDemandReturns(returnsVO.getOrderId(), quantityByMaterial, false);
 
       IMessage message = addComment(returnsVO.getId(), returnsVO.getComment(),
@@ -177,7 +179,7 @@ public class ReturnsService {
       throw new ValidationException("RT001", (Object[]) null);
     }
     List<Long> materialIdList = returnsItemVOList.stream().map(ReturnsItemVO::getMaterialId)
-            .collect(Collectors.toList());
+        .collect(Collectors.toList());
 
     List<FulfilledQuantityModel> shipmentList =
         shipmentService.getFulfilledQuantityByOrderId(returnsVO.getOrderId(), materialIdList);
@@ -223,8 +225,10 @@ public class ReturnsService {
       IOrder order = orderManagementService.getOrder(returnsVO.getOrderId());
       statusModel.setTransferOrder(order.getOrderType() == IOrder.TRANSFER_ORDER);
       postTransactions(statusModel, returnsVO);
-      IMessage message = addComment(returnsVO.getId(), statusModel.getComment(), returnsVO.getUpdatedBy(),
-                returnsVO.getSourceDomain());
+      IMessage
+          message =
+          addComment(returnsVO.getId(), statusModel.getComment(), returnsVO.getUpdatedBy(),
+              returnsVO.getSourceDomain());
       addStatusHistory(returnsVO, oldStatus.toString(), newStatus.toString(), message);
     } else {
       throw new ValidationException("RT003", (Object[]) null);

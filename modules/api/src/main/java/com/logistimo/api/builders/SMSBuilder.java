@@ -185,7 +185,7 @@ public class SMSBuilder {
   private void setActualTransactionDate(SMSTransactionModel model, String value) {
     if (model.getSendTime() != null) {
       model.setActualTransactionDate(model.getSendTime()
-                                     - Integer.parseInt(value) * SMSConstants.DAYS_IN_MILLI_SEC);
+          - Integer.parseInt(value) * SMSConstants.DAYS_IN_MILLI_SEC);
     } else {
       model.setActualTransactionDate(
           (long) (Integer.parseInt(value) * SMSConstants.DAYS_IN_MILLI_SEC));
@@ -308,11 +308,11 @@ public class SMSBuilder {
       Long days = SMSDecodeUtil.decode(transactionDet[3]);
       actualTransactionDate = sendTime - days * SMSConstants.DAYS_IN_MILLI_SEC;
     }
-    if(trnFieldsLength > 4 && StringUtils.isNotEmpty(transactionDet[4])) {
+    if (trnFieldsLength > 4 && StringUtils.isNotEmpty(transactionDet[4])) {
       mobileTransModel.bid = transactionDet[4].
           replaceAll(PatternConstants.REMOVE_DOUBLE_QUOTES, "");
     }
-    if(trnFieldsLength > 5 && StringUtils.isNotEmpty(transactionDet[5])) {
+    if (trnFieldsLength > 5 && StringUtils.isNotEmpty(transactionDet[5])) {
       mobileTransModel.lkid = SMSDecodeUtil.decode(transactionDet[5]);
     }
     if (actualTransactionDate != null) {
@@ -325,16 +325,16 @@ public class SMSBuilder {
   private void populateTrackingData(MobileTransModel mobileTransModel, String[] transactionDet)
       throws UnsupportedEncodingException {
     int trnFieldsLength = transactionDet.length;
-    if(trnFieldsLength > 6 && StringUtils.isNotEmpty(transactionDet[6])) {
+    if (trnFieldsLength > 6 && StringUtils.isNotEmpty(transactionDet[6])) {
       mobileTransModel.tid = String.valueOf(SMSDecodeUtil.decode(transactionDet[6]));
     }
-    if(trnFieldsLength > 7 && StringUtils.isNotEmpty(transactionDet[7])) {
+    if (trnFieldsLength > 7 && StringUtils.isNotEmpty(transactionDet[7])) {
       mobileTransModel.troty = convertTrackingObjectType(transactionDet[7]);
     }
-    if(trnFieldsLength > 8 && StringUtils.isNotEmpty(transactionDet[8])) {
+    if (trnFieldsLength > 8 && StringUtils.isNotEmpty(transactionDet[8])) {
       mobileTransModel.local_tid = String.valueOf(SMSDecodeUtil.decode(transactionDet[8]));
     }
-    if(mobileTransModel.isTypeReturn()) {
+    if (mobileTransModel.isTypeReturn()) {
       mobileTransModel.rsn = SMS_DEFAULT_REASON;
     }
   }
@@ -382,7 +382,8 @@ public class SMSBuilder {
           StringBuilder matDetails = new StringBuilder();
           MobileInvModel invModel = invModelHashMap.get(materialShortId);
           matDetails.append(
-              updateMaterialDetails(invModel, materialShortId, transactions.getMobileTransModelList()));
+              updateMaterialDetails(invModel, materialShortId,
+                  transactions.getMobileTransModelList()));
           matDetails.append(getSuccessTrnKeys(transactions.getMaterialId(),
               mobileResponse));
           if (errorMap != null && errorMap.containsKey(materialShortId)) {
@@ -437,7 +438,7 @@ public class SMSBuilder {
           .map(successModel -> successModel.successDetails.get(0))
           .filter(Objects::nonNull)
           .map(detailModel -> {
-            index.compareAndSet(-1,detailModel.index);
+            index.compareAndSet(-1, detailModel.index);
             return detailModel.keys;
           })
           .filter(Objects::nonNull)
@@ -448,7 +449,7 @@ public class SMSBuilder {
               .append(trnKeys.length() > 0
                   ? CharacterConstants.COMMA
                   : SMSConstants.MATERIAL_RESPONSE_FIELDS_SEPARATOR
-                    + index.get() + SMSConstants.RESPONSE_TRN_INDEX_KEYS_SEPARATOR)
+                      + index.get() + SMSConstants.RESPONSE_TRN_INDEX_KEYS_SEPARATOR)
               .append(s));
     }
     return trnKeys;

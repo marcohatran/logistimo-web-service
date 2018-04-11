@@ -116,17 +116,18 @@ public class ReturnsRepository extends Repository {
     StringBuilder query = new StringBuilder("select * from `RETURNS` r where ");
     buildQuery(returnsFilters, filters, query);
     List<Returns> returnsList =
-        super.findAllByNativeQuery(query.toString(), filters, Returns.class, returnsFilters.getSize(),
+        super.findAllByNativeQuery(query.toString(), filters, Returns.class,
+            returnsFilters.getSize(),
             returnsFilters.getOffset());
     return returnsList.stream().map(returns ->
         modelMapper.map(returns, ReturnsVO.class)).collect(Collectors.toList());
   }
 
-  public Long getReturnsCount(ReturnsFilters returnsFilters){
+  public Long getReturnsCount(ReturnsFilters returnsFilters) {
     Map<String, Object> filters = new HashMap<>();
     StringBuilder query = new StringBuilder("select COUNT(1) from `RETURNS` r where ");
     buildQuery(returnsFilters, filters, query);
-    return ((BigInteger)super.findByNativeQuery(query.toString(), filters)).longValue();
+    return ((BigInteger) super.findByNativeQuery(query.toString(), filters)).longValue();
   }
 
   private void buildQuery(ReturnsFilters returnsFilters, Map<String, Object> filters,
@@ -161,7 +162,7 @@ public class ReturnsRepository extends Repository {
     if (returnsFilters.hasStartDate()) {
       query.append(" and r.created_at>=:fromDate");
       filters.put("fromDate", LocalDateUtil.formatCustom(returnsFilters.getStartDate(),
-          Constants.DATETIME_CSV_FORMAT,null));
+          Constants.DATETIME_CSV_FORMAT, null));
     }
     if (returnsFilters.hasEndDate()) {
       Date untilDate =

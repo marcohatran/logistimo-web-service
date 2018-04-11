@@ -1213,7 +1213,9 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
                                           List<Long> kioskIds, PageParams pageParams, String bid,
                                           boolean atd, String reason, List<String> excludeReasons,
                                           PersistenceManager pm) throws ServiceException {
-    return getInventoryTransactions(sinceDate,untilDate,domainId,kioskId,materialId,transTypes,linkedKioskId,kioskTag,materialTag,kioskIds,pageParams,bid,atd,reason,excludeReasons,pm);
+    return getInventoryTransactions(sinceDate, untilDate, domainId, kioskId, materialId, transTypes,
+        linkedKioskId, kioskTag, materialTag, kioskIds, pageParams, bid, atd, reason,
+        excludeReasons, pm);
   }
 
   @SuppressWarnings("unchecked")
@@ -1223,7 +1225,8 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
                                           Long linkedKioskId, String kioskTag,
                                           String materialTag, List<Long> kioskIds,
                                           PageParams pageParams, String bid, boolean atd,
-                                          String reason,boolean ignoreLkid) throws ServiceException {
+                                          String reason, boolean ignoreLkid)
+      throws ServiceException {
     return getInventoryTransactions(sinceDate, untilDate, domainId, kioskId, materialId,
         transType != null ? Collections.singletonList(transType) : null, linkedKioskId, kioskTag,
         materialTag, kioskIds, pageParams, bid, atd, reason, null, ignoreLkid, null);
@@ -1248,9 +1251,12 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
                                           Long linkedKioskId, String kioskTag,
                                           String materialTag, List<Long> kioskIds,
                                           PageParams pageParams, String bid,
-                                          boolean atd, String reason, List<String> reasons, boolean ignoreLkid,
+                                          boolean atd, String reason, List<String> reasons,
+                                          boolean ignoreLkid,
                                           PersistenceManager pm) throws ServiceException {
-    return getInventoryTransactions(sinceDate,untilDate,domainId,kioskId,materialId,transTypes,linkedKioskId,kioskTag,materialTag,kioskIds,pageParams,bid,atd,reason,reasons,ignoreLkid,pm,true);
+    return getInventoryTransactions(sinceDate, untilDate, domainId, kioskId, materialId, transTypes,
+        linkedKioskId, kioskTag, materialTag, kioskIds, pageParams, bid, atd, reason, reasons,
+        ignoreLkid, pm, true);
   }
 
   @SuppressWarnings("unchecked")
@@ -1260,7 +1266,8 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
                                           Long linkedKioskId, String kioskTag,
                                           String materialTag, List<Long> kioskIds,
                                           PageParams pageParams, String bid,
-                                          boolean atd, String reason, List<String> reasons, boolean ignoreLkid,
+                                          boolean atd, String reason, List<String> reasons,
+                                          boolean ignoreLkid,
                                           PersistenceManager pm, boolean excludeReasons)
       throws ServiceException {
     xLogger.fine("Entering getInventoryTransactions");
@@ -1328,21 +1335,24 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
 
   public CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
                                                                    List<ITransaction> inventoryTransactions,
-                                                                   boolean skipVal, PersistenceManager pm)
+                                                                   boolean skipVal,
+                                                                   PersistenceManager pm)
       throws ServiceException, DuplicationException {
     return updateInventoryTransactions(domainId, inventoryTransactions, skipVal, false, pm);
   }
 
   public CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
                                                                    List<ITransaction> inventoryTransactions,
-                                                                   boolean skipVal, boolean skipPred)
+                                                                   boolean skipVal,
+                                                                   boolean skipPred)
       throws ServiceException, DuplicationException {
     return updateInventoryTransactions(domainId, inventoryTransactions, skipVal, skipPred, null);
   }
 
   public CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
                                                                    List<ITransaction> inventoryTransactions,
-                                                                   boolean skipVal, boolean skipPred,
+                                                                   boolean skipVal,
+                                                                   boolean skipPred,
                                                                    PersistenceManager pm)
       throws DuplicationException, ServiceException {
     return updateInventoryTransactions(domainId, inventoryTransactions, null, skipVal, skipPred,
@@ -1353,8 +1363,10 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
   @SuppressWarnings({"unchecked", "rawtypes"})
   public CreateTransactionsReturnModel updateInventoryTransactions(Long domainId,
                                                                    List<ITransaction> inventoryTransactions,
-                                                                   List<IInvntry> invntryList, boolean skipVal,
-                                                                   boolean skipPred, PersistenceManager pm)
+                                                                   List<IInvntry> invntryList,
+                                                                   boolean skipVal,
+                                                                   boolean skipPred,
+                                                                   PersistenceManager pm)
       throws ServiceException, DuplicationException {
     xLogger.fine("Entering updateInventoryTransactions");
     boolean closePM = pm == null;
@@ -1714,10 +1726,15 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     if (StringUtils.isEmpty(trans.getTrackingId()) || StringUtils.isEmpty(trans.getTrackingObjectType())) {
       throw new LogiException("M017", (Object[]) null);
     }
-    if (!(ITransaction.TRACKING_OBJECT_TYPE_ORDER.equals(trans.getTrackingObjectType()) || ITransaction.TRACKING_OBJECT_TYPE_TRANSFER.equals(trans.getTrackingObjectType())  || ITransaction.TRACKING_OBJECT_TYPE_ISSUE_TRANSACTION.equals(trans.getTrackingObjectType()) || ITransaction.TRACKING_OBJECT_TYPE_RECEIPT_TRANSACTION.equals(trans.getTrackingObjectType()))) {
+    if (!(ITransaction.TRACKING_OBJECT_TYPE_ORDER.equals(trans.getTrackingObjectType())
+        || ITransaction.TRACKING_OBJECT_TYPE_TRANSFER.equals(trans.getTrackingObjectType())
+        || ITransaction.TRACKING_OBJECT_TYPE_ISSUE_TRANSACTION.equals(trans.getTrackingObjectType())
+        || ITransaction.TRACKING_OBJECT_TYPE_RECEIPT_TRANSACTION
+        .equals(trans.getTrackingObjectType()))) {
       throw new LogiException("M017", (Object[]) null);
     }
-    if(!(ITransaction.TRACKING_OBJECT_TYPE_ORDER.equals(trans.getTrackingObjectType()) || ITransaction.TRACKING_OBJECT_TYPE_TRANSFER.equals(trans.getTrackingObjectType()))) {
+    if (!(ITransaction.TRACKING_OBJECT_TYPE_ORDER.equals(trans.getTrackingObjectType())
+        || ITransaction.TRACKING_OBJECT_TYPE_TRANSFER.equals(trans.getTrackingObjectType()))) {
       ITransaction linkedTransaction = transDao.getById(trans.getTrackingId(), pm);
       if (BigUtil.greaterThan(trans.getQuantity(), linkedTransaction.getQuantity())) {
         throw new LogiException("M019", trans.getQuantity(), linkedTransaction.getQuantity());
@@ -1727,7 +1744,8 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
         if (!returnsConfiguration.isPresent()) {
           return;
         }
-        validateReturnsPolicy(trans.getTrackingObjectType(), linkedTransaction, returnsConfiguration.get());
+        validateReturnsPolicy(trans.getTrackingObjectType(), linkedTransaction,
+            returnsConfiguration.get());
       } catch (ValidationException e) {
         throw new LogiException("M018", (Object[]) null);
       }
@@ -1740,14 +1758,20 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
    * @param linkedTransaction - The transaction against which the return is being posted
    * @throws ValidationException
    */
-  protected void validateReturnsPolicy(String trackingObjType, ITransaction linkedTransaction, ReturnsConfig returnsConfiguration) throws
+  protected void validateReturnsPolicy(String trackingObjType, ITransaction linkedTransaction,
+                                       ReturnsConfig returnsConfiguration) throws
       ValidationException {
-    if (!(ITransaction.TRACKING_OBJECT_TYPE_ISSUE_TRANSACTION.equals(trackingObjType) || ITransaction.TRACKING_OBJECT_TYPE_RECEIPT_TRANSACTION.equals(trackingObjType))) {
+    if (!(ITransaction.TRACKING_OBJECT_TYPE_ISSUE_TRANSACTION.equals(trackingObjType)
+        || ITransaction.TRACKING_OBJECT_TYPE_RECEIPT_TRANSACTION.equals(trackingObjType))) {
       return;
     }
 
     Date linkedTransactionDate = linkedTransaction.getTimestamp();
-    Integer duration = ITransaction.TRACKING_OBJECT_TYPE_ISSUE_TRANSACTION.equals(trackingObjType) ? returnsConfiguration.getIncomingDuration() : returnsConfiguration.getOutgoingDuration();
+    Integer
+        duration =
+        ITransaction.TRACKING_OBJECT_TYPE_ISSUE_TRANSACTION.equals(trackingObjType)
+            ? returnsConfiguration.getIncomingDuration()
+            : returnsConfiguration.getOutgoingDuration();
     if (duration == null || duration.compareTo(0) == 0) {
       return;
     }
@@ -2296,7 +2320,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     }
     in.setTimestamp(time);
     in.setUpdatedBy(SecurityUtils.getUsername());
-    if(in.getInventoryActiveTime() == null) {
+    if (in.getInventoryActiveTime() == null) {
       in.setInventoryActiveTime(time);
     }
     checkAndResetInventoryLevels(in, invBatch);

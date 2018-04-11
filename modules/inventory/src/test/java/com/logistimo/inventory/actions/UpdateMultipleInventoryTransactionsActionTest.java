@@ -324,7 +324,7 @@ public class UpdateMultipleInventoryTransactionsActionTest {
     assertTrue(errorDetailModelByMaterialMap.size() == 1);
     assertNotNull(errorDetailModelByMaterialMap.get(2l));
     assertTrue(errorDetailModelByMaterialMap.get(2l).size() == 1);
-    ErrorDetailModel expectedErrorDetailModel = new ErrorDetailModel("M017",0,null);
+    ErrorDetailModel expectedErrorDetailModel = new ErrorDetailModel("M017", 0, null);
     assertEquals(expectedErrorDetailModel, errorDetailModelByMaterialMap.get(2l).get(0));
     assertTrue(successDetailModelByMaterialMap.size() == 1);
     assertNotNull(successDetailModelByMaterialMap.get(1l));

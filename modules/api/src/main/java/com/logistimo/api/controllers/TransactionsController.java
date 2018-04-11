@@ -220,7 +220,8 @@ public class TransactionsController {
   private Results getAndBuildTransactions(HttpServletRequest request,
                                           String from, String to, int offset, int size, String ktag,
                                           String mtag, String type, Long entityId, Long lEntityId,
-                                          Long materialId, String bId, boolean atd, String reason, boolean ignoreLkid) {
+                                          Long materialId, String bId, boolean atd, String reason,
+                                          boolean ignoreLkid) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     Long domainId = sUser.getCurrentDomainId();
@@ -270,7 +271,8 @@ public class TransactionsController {
                                           String from, String to, int offset, int size, String ktag,
                                           String mtag, String type, Long entityId, Long lEntityId,
                                           Long materialId, String bId, boolean atd, String reason) {
-    return getAndBuildTransactions(request, from, to, offset, size, ktag, mtag, type, entityId, lEntityId,
+    return getAndBuildTransactions(request, from, to, offset, size, ktag, mtag, type, entityId,
+        lEntityId,
         materialId, bId, atd, reason, false);
   }
 
@@ -396,7 +398,8 @@ public class TransactionsController {
   @RequestMapping(value = "/reasons", method = RequestMethod.GET)
   public
   @ResponseBody
-  ReasonConfigModel getReasons(@RequestParam String type, @RequestParam(required = false) String[] tags) {
+  ReasonConfigModel getReasons(@RequestParam String type,
+                               @RequestParam(required = false) String[] tags) {
     Long domainId = SecurityUtils.getCurrentDomainId();
     DomainConfig dc = DomainConfig.getInstance(domainId);
     InventoryConfig ic = dc.getInventoryConfig();
@@ -632,7 +635,7 @@ public class TransactionsController {
         throw new BadRequestException(builder.toString());
       }
       List<LinkedTreeMap> batchItems = (List) transaction.get("bmaterials");
-      for (LinkedTreeMap batchMaterials: batchItems) {
+      for (LinkedTreeMap batchMaterials : batchItems) {
         for (Object m : batchMaterials.keySet()) {
           String keys[] = String.valueOf(m).split("\t");
           Long materialId = Long.parseLong(keys[0]);
@@ -668,7 +671,7 @@ public class TransactionsController {
           TransactionUtil.setBatchData(trans, batch, expiry, manufacturer, manufactured);
           transList.add(trans);
         }
-    }
+      }
 
       List<ITransaction> errors = inventoryManagementService.updateInventoryTransactions(domainId, transList, true).getErrorTransactions();
       if (errors != null && errors.size() > 0) {
@@ -764,7 +767,7 @@ public class TransactionsController {
   public
   @ResponseBody
   Map<String,Boolean> getStatusMandatory() {
-    Map<String,Boolean> statusList = new HashMap<>(7);
+    Map<String, Boolean> statusList = new HashMap<>(7);
     DomainConfig dc = DomainConfig.getInstance(SecurityUtils.getCurrentDomainId());
     InventoryConfig ic = dc.getInventoryConfig();
     MatStatusConfig msc = ic.getMatStatusConfigByType(ITransaction.TYPE_ISSUE);
@@ -788,11 +791,11 @@ public class TransactionsController {
       statusList.put("tsm", msc.isStatusMandatory());
     }
     msc = ic.getMatStatusConfigByType(ITransaction.TYPE_RETURNS_INCOMING);
-    if(msc != null) {
+    if (msc != null) {
       statusList.put("rism", msc.isStatusMandatory());
     }
     msc = ic.getMatStatusConfigByType(ITransaction.TYPE_RETURNS_OUTGOING);
-    if(msc != null) {
+    if (msc != null) {
       statusList.put("rosm", msc.isStatusMandatory());
     }
     return statusList;

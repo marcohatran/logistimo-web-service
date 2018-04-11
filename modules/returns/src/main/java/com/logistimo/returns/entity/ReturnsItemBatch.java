@@ -53,10 +53,10 @@ public class ReturnsItemBatch {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "id",updatable = false)
+  @Column(name = "id", updatable = false)
   private Long id;
 
-  @Column(name = "item_id",updatable = false)
+  @Column(name = "item_id", updatable = false)
   private Long itemId;
 
   @Embedded

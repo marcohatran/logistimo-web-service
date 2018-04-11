@@ -450,8 +450,12 @@ public class Shipment implements IShipment {
   }
 
   @Override
-  public String getSalesReferenceId() { return salesRefId; }
+  public String getSalesReferenceId() {
+    return salesRefId;
+  }
 
   @Override
-  public void setSalesReferenceId(String salesRefId) { this.salesRefId = salesRefId; }
+  public void setSalesReferenceId(String salesRefId) {
+    this.salesRefId = salesRefId;
+  }
 }

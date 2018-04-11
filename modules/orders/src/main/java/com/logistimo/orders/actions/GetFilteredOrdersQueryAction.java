@@ -81,6 +81,8 @@ public class GetFilteredOrdersQueryAction {
 
     applyLinkedKioskFilter(filterQuery, parameters, filters);
 
+    applyMaterialIdFiler(filterQuery, parameters, filters);
+
     applyStatusFilters(filterQuery, parameters, filters);
 
     applyTagFilters(filterQuery, parameters, filters);
@@ -102,10 +104,19 @@ public class GetFilteredOrdersQueryAction {
 
   }
 
+  private void applyMaterialIdFiler(StringBuilder filterQuery, List<String> parameters,
+                                    OrderFilters filters) {
+    if (filters.getMaterialId() != null) {
+      filterQuery.append(
+          " AND EXISTS(SELECT 1 FROM DEMANDITEM D WHERE D.MID = ? AND D.OID = ID AND D.Q > 0)");
+      parameters.add(String.valueOf(filters.getMaterialId()));
+    }
+  }
+
   private void applyLinkedKioskFilter(StringBuilder filterQuery, List<String> parameters,
                                       OrderFilters filters) {
     if (filters.getLinkedKioskId() != null) {
-      filterQuery.append(" AND SKID = ?");
+      filterQuery.append(" AND ").append(getLinkedKioskField(filters)).append(" = ?");
       parameters.add(String.valueOf(filters.getLinkedKioskId()));
     }
   }
@@ -156,10 +167,10 @@ public class GetFilteredOrdersQueryAction {
       sqlQuery.append(" AND SALES_REF_ID = ?");
       parameters.add(filters.getSalesReferenceId());
     }
-    if(StringUtils.isNotBlank(filters.getPurchaseReferenceId())) {
+    if (StringUtils.isNotBlank(filters.getPurchaseReferenceId())) {
       sqlQuery.append(" AND PURCHASE_REF_ID = ?");
       parameters.add(filters.getPurchaseReferenceId());
-    } else if(StringUtils.isNotBlank(filters.getTransferReferenceId())) {
+    } else if (StringUtils.isNotBlank(filters.getTransferReferenceId())) {
       sqlQuery.append(" AND TRANSFER_REF_ID = ?");
       parameters.add(filters.getTransferReferenceId());
     }
@@ -217,9 +228,14 @@ public class GetFilteredOrdersQueryAction {
 
   private void applyStatusFilters(StringBuilder sqlQuery, List<String> parameters,
                                   OrderFilters filters) {
-    if (StringUtils.isNotBlank(filters.getStatus())) {
-      sqlQuery.append(" AND ST = ?");
-      parameters.add(filters.getStatus());
+    if (filters.getStatusList() != null && !filters.getStatusList().isEmpty()) {
+      sqlQuery.append(" AND ST IN (");
+      for (String status : filters.getStatusList()) {
+        sqlQuery.append(CharacterConstants.QUESTION).append(CharacterConstants.COMMA);
+        parameters.add(String.valueOf(status));
+      }
+      sqlQuery.setLength(sqlQuery.length() - 1);
+      sqlQuery.append(")");
     }
   }
 
@@ -231,8 +247,11 @@ public class GetFilteredOrdersQueryAction {
 
   private void applyKioskFilter(StringBuilder sqlQuery, List<String> parameters,
                                 OrderFilters filters) {
-    sqlQuery.append(getKioskField(filters)).append(" = ?").append(" AND ")
-        .append(getVisibilityField(filters)).append(" = 1");
+    sqlQuery.append(getKioskField(filters)).append(" = ?");
+    if (!filters.getSkipVisibilityCheck()) {
+      sqlQuery.append(" AND ")
+          .append(getVisibilityField(filters)).append(" = 1");
+    }
     parameters.add(String.valueOf(filters.getKioskId()));
   }
 
@@ -253,6 +272,10 @@ public class GetFilteredOrdersQueryAction {
     return IOrder.TYPE_SALE.equals(filters.getOtype()) ? "SKID" : "KID";
   }
 
+  private String getLinkedKioskField(OrderFilters filters) {
+    return IOrder.TYPE_SALE.equals(filters.getOtype()) ? "KID" : "SKID";
+  }
+
   private String getVisibilityField(OrderFilters filters) {
     return IOrder.TYPE_SALE.equals(filters.getOtype()) ? "VTV" : "VTC";
   }
@@ -265,7 +288,9 @@ public class GetFilteredOrdersQueryAction {
       parameters.add(String.valueOf(id));
     }
     sqlQuery.setLength(sqlQuery.length() - 1);
-    sqlQuery.append(")").append(" AND ")
-        .append(getVisibilityField(filters)).append(" = 1");
+    if(!filters.getSkipVisibilityCheck()) {
+      sqlQuery.append(")").append(" AND ")
+          .append(getVisibilityField(filters)).append(" = 1");
+    }
   }
 }

@@ -64,17 +64,19 @@ public class UpdateOrderTransactionsModel {
   private final String referenceId;
 
   public UpdateOrderTransactionsModel(Long domainId, String userId, String transType,
-                                        List<ITransaction> inventoryTransactions, Long kioskId,
-                                        Long trackingId, String message, boolean createOrder,
-                                        Long servicingKiosk, Double latitude, Double longitude,
-                                        Double geoAccuracy, String geoErrorCode,
-                                        String utcExpectedFulfillmentTimeRangesCSV,
-                                        String utcConfirmedFulfillmentTimeRange, BigDecimal payment,
-                                        String paymentOption, String packageSize,
-                                        boolean allowEmptyOrders, List<String> orderTags,
-                                        Integer orderType, Boolean isSalesOrder, String salesReferenceId,
-                                        Date reqByDate, Date eta, int source, PersistenceManager pm,
-                                        String purchaseReferenceId, String transferReferenceId, String referenceId) {
+                                      List<ITransaction> inventoryTransactions, Long kioskId,
+                                      Long trackingId, String message, boolean createOrder,
+                                      Long servicingKiosk, Double latitude, Double longitude,
+                                      Double geoAccuracy, String geoErrorCode,
+                                      String utcExpectedFulfillmentTimeRangesCSV,
+                                      String utcConfirmedFulfillmentTimeRange, BigDecimal payment,
+                                      String paymentOption, String packageSize,
+                                      boolean allowEmptyOrders, List<String> orderTags,
+                                      Integer orderType, Boolean isSalesOrder,
+                                      String salesReferenceId,
+                                      Date reqByDate, Date eta, int source, PersistenceManager pm,
+                                      String purchaseReferenceId, String transferReferenceId,
+                                      String referenceId) {
     this.domainId = domainId;
     this.userId = userId;
     this.transType = transType;
@@ -219,11 +221,15 @@ public class UpdateOrderTransactionsModel {
     return purchaseReferenceId;
   }
 
-  public String getTransferReferenceId() { return transferReferenceId; }
+  public String getTransferReferenceId() {
+    return transferReferenceId;
+  }
 
   public void setPm(PersistenceManager pm) {
     this.pm = pm;
   }
 
-  public String getReferenceId() { return referenceId; }
+  public String getReferenceId() {
+    return referenceId;
+  }
 }

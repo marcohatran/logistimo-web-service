@@ -50,13 +50,13 @@ public class Returns {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "id",updatable = false)
+  @Column(name = "id", updatable = false)
   private Long id;
 
-  @Column(name = "source_domain",updatable = false)
+  @Column(name = "source_domain", updatable = false)
   private Long sourceDomain;
 
-  @Column(name = "order_id",updatable = false)
+  @Column(name = "order_id", updatable = false)
   private Long orderId;
 
   @Column(name = "customer_id")

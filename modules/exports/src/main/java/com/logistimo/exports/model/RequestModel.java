@@ -523,9 +523,19 @@ public class RequestModel {
     this.email = email;
   }
 
-  public String getPurchaseReferenceId() { return purchaseReferenceId; }
-  public void setPurchaseReferenceId(String purchaseReferenceId) { this.purchaseReferenceId = purchaseReferenceId; }
+  public String getPurchaseReferenceId() {
+    return purchaseReferenceId;
+  }
 
-  public String getTransferReferenceId() { return transferReferenceId; }
-  public void setTransferReferenceId(String transferReferenceId) { this.transferReferenceId = transferReferenceId; }
+  public void setPurchaseReferenceId(String purchaseReferenceId) {
+    this.purchaseReferenceId = purchaseReferenceId;
+  }
+
+  public String getTransferReferenceId() {
+    return transferReferenceId;
+  }
+
+  public void setTransferReferenceId(String transferReferenceId) {
+    this.transferReferenceId = transferReferenceId;
+  }
 }

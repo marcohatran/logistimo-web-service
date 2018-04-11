@@ -41,6 +41,7 @@ import com.logistimo.entities.auth.EntityAuthoriser;
 import com.logistimo.entities.entity.IApprover;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.entity.IKioskLink;
+import com.logistimo.entities.entity.jpa.Kiosk;
 import com.logistimo.entities.models.EntityLinkModel;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.inventory.InventoryUtils;
@@ -917,5 +918,23 @@ public class EntityBuilder {
       this.sid = sid;
       this.did = did;
     }
+  }
+
+  public String getLocation(Kiosk kiosk) {
+    String location = "";
+    boolean needsComma = false;
+    if (StringUtils.isNotBlank(kiosk.getCity())) {
+      location += kiosk.getCity();
+      needsComma = true;
+    }
+    if (StringUtils.isNotBlank(kiosk.getDistrict())) {
+      location += (needsComma ? ", " : "") + kiosk.getDistrict();
+      needsComma = true;
+    }
+    if (StringUtils.isNotBlank(kiosk.getState())) {
+      location += (needsComma ? ", " : "") + kiosk.getState();
+    }
+
+    return location;
   }
 }

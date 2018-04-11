@@ -36,13 +36,19 @@
                             </span>
                         </span>
                         <span class="badge currentstatus" ng-class="{'cancelled':order.st == ORDER.CANCELLED}">{{order.status}}</span>
+
                         <div ng-show="order.oty == 0">
-                            <span class="lnk" ng-show="editMetaDataPermission && isUndef(order.transferRefId) && !edit.transferRefId && (order.st == ORDER.PENDING) && order.atv && !transRelease" ng-class="{'required':oCfg.transfer}">{{"Add " + resourceBundle['transfer.reference.id'] }} </span>
-                            <span class="lnk" ng-show="editMetaDataPermission && isUndef(order.transferRefId) && !edit.transferRefId && (order.st == ORDER.PENDING) && order.atv && transRelease" ng-class="{'required':oCfg.transfer}">{{"Add " + resourceBundle['release.reference.id'] }} </span>
+                            <span class="lnk"
+                                  ng-show="editMetaDataPermission && isUndef(order.transferRefId) && !edit.transferRefId && (order.st == ORDER.PENDING) && order.atv && !transRelease"
+                                  ng-class="{'required':oCfg.transfer}">{{"Add " + resourceBundle['transfer.reference.id'] }} </span>
+                            <span class="lnk"
+                                  ng-show="editMetaDataPermission && isUndef(order.transferRefId) && !edit.transferRefId && (order.st == ORDER.PENDING) && order.atv && transRelease"
+                                  ng-class="{'required':oCfg.transfer}">{{"Add " + resourceBundle['release.reference.id'] }} </span>
                             <span class="lnk" ng-show="isDef(order.transferRefId) && !edit.transferRefId">
                                 <span ng-class="{'required':oCfg.transfer && order.st == ORDER.PENDING && order.atv}">{{transRelease ? resourceBundle['release.reference.id'] : resourceBundle['transfer.reference.id']}} </span>
                                 <span>{{": " + order.transferRefId}}</span>
                             </span>
+
                             <div class="lnk">
                                 <div ng-show="edit.transferRefId" style="width: 30%">
                                     <span class="litetext" ng-class="{'required':oCfg.transfer}">{{transRelease ? resourceBundle['release.reference.id'] : resourceBundle['transfer.reference.id']}}:</span>
@@ -54,17 +60,22 @@
                                     </editable-text>
                                 </div>
                                 <a ng-show="!edit.transferRefId && (dp.vp || order.st == ORDER.PENDING) && order.atv && order.alc"
-                                   uib-tooltip="{{resourceBundle['edit']}}" tooltip-append-to-body="true" ng-click="editRID('transferRefId')">
-                                    <span ng-hide="!editMetaDataPermission" class="glyphicons glyphicons-edit pt2 ml15"></span>
+                                   uib-tooltip="{{resourceBundle['edit']}}" tooltip-append-to-body="true"
+                                   ng-click="editRID('transferRefId')">
+                                    <span ng-hide="!editMetaDataPermission"
+                                          class="glyphicons glyphicons-edit pt2 ml15"></span>
                                 </a>
                             </div>
                         </div>
                         <div ng-hide="order.oty == 0">
-                            <span class="lnk" ng-show="editMetaDataPermission && isUndef(order.purchaseRefId) && !edit.purchaseRefId && (order.st == ORDER.PENDING) && order.atc" ng-class="{'required':oCfg.purchase && order.atc}">{{"Add " + resourceBundle['purchase.reference.id'] }} </span>
+                            <span class="lnk"
+                                  ng-show="editMetaDataPermission && isUndef(order.purchaseRefId) && !edit.purchaseRefId && (order.st == ORDER.PENDING) && order.atc"
+                                  ng-class="{'required':oCfg.purchase && order.atc}">{{"Add " + resourceBundle['purchase.reference.id'] }} </span>
                             <span class="lnk" ng-show="isDef(order.purchaseRefId) && !edit.purchaseRefId">
                                 <span ng-class="{'required':oCfg.purchase && order.st == ORDER.PENDING && order.atc}">{{resourceBundle['purchase.reference.id']}}</span>
                                 <span>{{": " + order.purchaseRefId }} </span>
                             </span>
+
                             <div class="lnk">
                                 <div ng-show="edit.purchaseRefId" style="width: 30%">
                                     <span class="litetext" ng-class="{'required':oCfg.purchase}">{{resourceBundle['purchase.reference.id']}}:</span>
@@ -76,13 +87,16 @@
                                     </editable-text>
                                 </div>
                                 <a ng-show="!edit.purchaseRefId && (dp.vp || order.st == ORDER.PENDING) && order.atc"
-                                   uib-tooltip="{{resourceBundle['edit']}}" tooltip-append-to-body="true" ng-click="editRID('purchaseRefId')">
-                                    <span ng-hide="!editMetaDataPermission" class="glyphicons glyphicons-edit pt2 ml15"></span>
+                                   uib-tooltip="{{resourceBundle['edit']}}" tooltip-append-to-body="true"
+                                   ng-click="editRID('purchaseRefId')">
+                                    <span ng-hide="!editMetaDataPermission"
+                                          class="glyphicons glyphicons-edit pt2 ml15"></span>
                                 </a>
                             </div>
                         </div>
                         <div>
-                            <span class="lnk" ng-show="editMetaDataPermission && isUndef(order.salesRefId) && !edit.salesRefId && (order.st == ORDER.PENDING || order.st == ORDER.CONFIRMED) && order.atv">{{"Add " + resourceBundle['sales.reference.id'] }} </span>
+                            <span class="lnk"
+                                  ng-show="editMetaDataPermission && isUndef(order.salesRefId) && !edit.salesRefId && (order.st == ORDER.PENDING || order.st == ORDER.CONFIRMED) && order.atv">{{"Add " + resourceBundle['sales.reference.id'] }} </span>
                             <span class="lnk" ng-show="isDef(order.salesRefId) && !edit.salesRefId">{{resourceBundle['sales.reference.id'] + ": " + order.salesRefId }} </span>
                             <div class="lnk">
                                 <div ng-show="edit.salesRefId" style="width: 30%">
@@ -95,7 +109,8 @@
                                     </editable-text>
                                 </div>
                                 <a ng-show="!edit.salesRefId && (dp.vp || order.st == ORDER.PENDING || order.st == ORDER.CONFIRMED) && order.atv"
-                                   uib-tooltip="{{resourceBundle['edit']}}" tooltip-append-to-body="true" ng-click="editRID('salesRefId')">
+                                   uib-tooltip="{{resourceBundle['edit']}}" tooltip-append-to-body="true"
+                                   ng-click="editRID('salesRefId')">
                                     <span ng-hide="!editMetaDataPermission" class="glyphicons glyphicons-edit pt2 ml15"></span>
                                 </a>
                             </div>

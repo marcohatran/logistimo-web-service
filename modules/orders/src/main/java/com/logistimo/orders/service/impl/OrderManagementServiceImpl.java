@@ -68,7 +68,6 @@ import com.logistimo.orders.approvals.actions.OrderVisibilityAction;
 import com.logistimo.orders.dao.IOrderDao;
 import com.logistimo.orders.dao.OrderUpdateStatus;
 import com.logistimo.orders.entity.IDemandItem;
-import com.logistimo.orders.entity.IDemandItemBatch;
 import com.logistimo.orders.entity.IOrder;
 import com.logistimo.orders.entity.Order;
 import com.logistimo.orders.models.OrderFilters;
@@ -274,7 +273,7 @@ public class OrderManagementServiceImpl implements OrderManagementService {
       o = JDOUtils.getObjectById(IOrder.class, orderDao.createKey(orderId), localPM);
       o = localPM.detachCopy(o);
       if (includeItems) {
-        o.setItems(demandService.getDemandItems(orderId));
+        o.setItems(demandService.getDemandItems(orderId, localPM));
       }
     } catch (JDOObjectNotFoundException e) {
       throw new ObjectNotFoundException("O009", orderId);
@@ -547,7 +546,8 @@ public class OrderManagementServiceImpl implements OrderManagementService {
 
   @Override
   public String shipNow(IOrder order, String transporter, String trackingId, String reason,
-      Date expectedFulfilmentDate, String userId, String ps, int source, String salesRefId, Boolean updateOrderFields)
+                        Date expectedFulfilmentDate, String userId, String ps, int source,
+                        String salesRefId, Boolean updateOrderFields)
       throws ServiceException, ObjectNotFoundException, ValidationException {
     ShipmentModel model = new ShipmentModel();
     if (expectedFulfilmentDate != null) {
@@ -637,17 +637,20 @@ public class OrderManagementServiceImpl implements OrderManagementService {
   @SuppressWarnings("unchecked")
   public Results getOrders(Long domainId, Long kioskId, String status, Date since, Date until,
       String otype, String tagType, String tag, List<Long> kioskIds,
-      PageParams pageParams, Integer orderType, String salesReferenceId, String approvalStatus,
-      String purchaseReferenceId, String transferReferenceId)
+                           PageParams pageParams, Integer orderType, String salesReferenceId,
+                           String approvalStatus,
+                           String purchaseReferenceId, String transferReferenceId)
       throws ServiceException {
     return getOrders(domainId, kioskId, status, since, until, otype, tagType, tag, kioskIds,
-        pageParams, orderType, salesReferenceId, approvalStatus, false, purchaseReferenceId, transferReferenceId);
+        pageParams, orderType, salesReferenceId, approvalStatus, false, purchaseReferenceId,
+        transferReferenceId);
   }
 
   public Results getOrders(Long domainId, Long kioskId, String status, Date since, Date until,
       String otype, String tagType, String tag, List<Long> kioskIds,
-      PageParams pageParams, Integer orderType, String salesReferenceId,
-      String approvalStatus, boolean withDemand, String purchaseReferenceId, String transferReferenceId) {
+                           PageParams pageParams, Integer orderType, String salesReferenceId,
+                           String approvalStatus, boolean withDemand, String purchaseReferenceId,
+                           String transferReferenceId) {
     OrderFilters filters = new OrderFilters().setDomainId(domainId)
         .setKioskId(kioskId)
         .setStatus(status)
@@ -964,7 +967,8 @@ public class OrderManagementServiceImpl implements OrderManagementService {
             kioskId, trackingId, message, createOrder, servicingKioskId, latitude, longitude,
             geoAccuracy, geoErrorCode, utcExpectedFulfillmentTimeRangesCSV,
             utcConfirmedFulfillmentTimeRange, payment, paymentOption, packageSize, allowEmptyOrders,
-            orderTags, orderType, isSalesOrder, referenceId, reqByDate, eta, src, null, null, null, null));
+            orderTags, orderType, isSalesOrder, referenceId, reqByDate, eta, src, null, null, null,
+            null));
   }
 
   @Override
@@ -987,7 +991,8 @@ public class OrderManagementServiceImpl implements OrderManagementService {
         updateOrderTransactionsRequest.getTransType());
     javax.jdo.Transaction tx = null;
     // Check transaction availability
-    if ((updateOrderTransactionsRequest.getInventoryTransactions() == null || updateOrderTransactionsRequest
+    if ((updateOrderTransactionsRequest.getInventoryTransactions() == null
+        || updateOrderTransactionsRequest
         .getInventoryTransactions().isEmpty()) && !(reorder
         || updateOrderTransactionsRequest.isAllowEmptyOrders())) {
       throw new ServiceException("Transaction list cannot be empty");
@@ -1011,8 +1016,9 @@ public class OrderManagementServiceImpl implements OrderManagementService {
         o.setItems(demandService.getDemandItems(o.getOrderId(),
             updateOrderTransactionsRequest.getPm()));
         xLogger.fine("inventoryTransactions: {0}, order size: {1}",
-            (updateOrderTransactionsRequest.getInventoryTransactions() == null ? "NULL" : updateOrderTransactionsRequest
-                .getInventoryTransactions().size()), o.size());
+            (updateOrderTransactionsRequest.getInventoryTransactions() == null ? "NULL"
+                : updateOrderTransactionsRequest
+                    .getInventoryTransactions().size()), o.size());
         o.setDueDate(updateOrderTransactionsRequest.getReqByDate());
         o.setExpectedArrivalDate(updateOrderTransactionsRequest.getEta());
         modifyOrder(o, updateOrderTransactionsRequest.getUserId(),
@@ -1061,7 +1067,8 @@ public class OrderManagementServiceImpl implements OrderManagementService {
         ResourceBundle messages = Resources.get().getBundle("Messages", locale);
         ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
         throw new ServiceException(
-            messages.getString("order") + " " + updateOrderTransactionsRequest.getTrackingId() + " " + backendMessages
+            messages.getString("order") + " " + updateOrderTransactionsRequest.getTrackingId() + " "
+                + backendMessages
                 .getString("error.notfound"));
       } catch (Exception e) {
         xLogger.severe("Exception while re-ordering: {0}", e.getMessage(), e);
@@ -1069,8 +1076,9 @@ public class OrderManagementServiceImpl implements OrderManagementService {
       } finally {
         if (LockUtil.shouldReleaseLock(lockStatus) && !LockUtil
             .release(Constants.TX_O + updateOrderTransactionsRequest.getTrackingId())) {
-          xLogger.warn("Unable to release lock for key {0}", Constants.TX_O + updateOrderTransactionsRequest
-              .getTrackingId());
+          xLogger.warn("Unable to release lock for key {0}",
+              Constants.TX_O + updateOrderTransactionsRequest
+                  .getTrackingId());
         }
         if (useLocalPM) {
           if (tx != null && tx.isActive()) {
@@ -1207,7 +1215,8 @@ public class OrderManagementServiceImpl implements OrderManagementService {
           }
           // Generate event only if order is visible to both parties.
           if (o.isVisibleToCustomer() && o.isVisibleToVendor()) {
-            generateEvent(updateOrderTransactionsRequest.getDomainId(), IEvent.CREATED, o, null, null);
+            generateEvent(updateOrderTransactionsRequest.getDomainId(), IEvent.CREATED, o, null,
+                null);
           }
           if (BigUtil.notEqualsZero(updateOrderTransactionsRequest.getPayment())) {
             generateEvent(updateOrderTransactionsRequest.getDomainId(), IEvent.PAID, o, null, null);
@@ -1256,7 +1265,8 @@ public class OrderManagementServiceImpl implements OrderManagementService {
     // Check transaction availability
     if ((updateOrderTransactionsRequest.getInventoryTransactions() == null
         || updateOrderTransactionsRequest
-        .getInventoryTransactions().isEmpty()) && !(updateOrderTransactionsRequest.isAllowEmptyOrders())) {
+        .getInventoryTransactions().isEmpty()) && !(updateOrderTransactionsRequest
+        .isAllowEmptyOrders())) {
       throw new ServiceException("Transaction list cannot be empty");
     }
     List<IDemandItem> demandList = new ArrayList<>(); // demand list
@@ -1491,11 +1501,11 @@ public class OrderManagementServiceImpl implements OrderManagementService {
       }
       o.setItems(items);
       o.setTotalPrice(o.computeTotalPrice());
-      if(IOrder.SALES_ORDER == o.getOrderType()) {
+      if (IOrder.SALES_ORDER == o.getOrderType()) {
         o.setSalesReferenceID(referenceId);
-      } else if(IOrder.PURCHASE_ORDER == o.getOrderType()) {
+      } else if (IOrder.PURCHASE_ORDER == o.getOrderType()) {
         o.setPurchaseReferenceId(referenceId);
-      } else if(IOrder.TRANSFER_ORDER == o.getOrderType()) {
+      } else if (IOrder.TRANSFER_ORDER == o.getOrderType()) {
         o.setTransferReferenceId(referenceId);
       }
     }
@@ -1527,7 +1537,8 @@ public class OrderManagementServiceImpl implements OrderManagementService {
                           BigDecimal payment, String paymentOption,
                           boolean allowEmptyOrders,
                           List<String> orderTags, String salesReferenceId,
-                          PersistenceManager pm, String purchaseReferenceId, String transferReferenceId) throws ServiceException {
+                          PersistenceManager pm, String purchaseReferenceId,
+                          String transferReferenceId) throws ServiceException {
     Date t = null;
     if (transactions != null && !transactions.isEmpty()) {
       for (ITransaction trans : transactions) {
@@ -1625,9 +1636,10 @@ public class OrderManagementServiceImpl implements OrderManagementService {
     setReferenceId(o, salesReferenceId, purchaseReferenceId, transferReferenceId);
   }
 
-  private void setReferenceId(IOrder o, String salesReferenceId, String purchaseReferenceId, String transferReferenceId) {
+  private void setReferenceId(IOrder o, String salesReferenceId, String purchaseReferenceId,
+                              String transferReferenceId) {
     o.setSalesReferenceID(salesReferenceId);
-    if(IOrder.TRANSFER_ORDER != o.getOrderType()) {
+    if (IOrder.TRANSFER_ORDER != o.getOrderType()) {
       o.setPurchaseReferenceId(purchaseReferenceId);
     } else {
       o.setTransferReferenceId(transferReferenceId);
@@ -1782,13 +1794,16 @@ public class OrderManagementServiceImpl implements OrderManagementService {
     StringBuilder sqlQuery = new StringBuilder();
     if (StringUtils.isNotEmpty(type)) {
       if ("salesRefId".equals(type)) {
-        sqlQuery.append("SELECT DISTINCT SALES_REF_ID FROM `ORDER` WHERE ID IN (").append(filterQuery)
+        sqlQuery.append("SELECT DISTINCT SALES_REF_ID FROM `ORDER` WHERE ID IN (")
+            .append(filterQuery)
             .append(") AND SALES_REF_ID LIKE '").append(id).append("%' ");
-      } else if("purchaseRefId".equals(type)) {
-        sqlQuery.append("SELECT DISTINCT PURCHASE_REF_ID FROM `ORDER` WHERE ID IN (").append(filterQuery)
+      } else if ("purchaseRefId".equals(type)) {
+        sqlQuery.append("SELECT DISTINCT PURCHASE_REF_ID FROM `ORDER` WHERE ID IN (")
+            .append(filterQuery)
             .append(") AND PURCHASE_REF_ID LIKE '").append(id).append("%' ");
       } else if ("transferRefId".equals(type)) {
-        sqlQuery.append("SELECT DISTINCT TRANSFER_REF_ID FROM `ORDER` WHERE ID IN (").append(filterQuery)
+        sqlQuery.append("SELECT DISTINCT TRANSFER_REF_ID FROM `ORDER` WHERE ID IN (")
+            .append(filterQuery)
             .append(") AND TRANSFER_REF_ID LIKE '").append(id).append("%' ");
       } else if ("oid".equals(type)) {
         sqlQuery.append("SELECT ID FROM `ORDER` WHERE ID IN (");
@@ -1927,7 +1942,8 @@ public class OrderManagementServiceImpl implements OrderManagementService {
 
   @Override
   public void updateOrderMetadata(Long orderId, String updatedBy,
-      PersistenceManager persistenceManager, String salesReferenceId, Date expectedArrivalDate, Boolean updateOrderFields) {
+                                  PersistenceManager persistenceManager, String salesReferenceId,
+                                  Date expectedArrivalDate, Boolean updateOrderFields) {
     Boolean isLocalPersistentManager = Boolean.FALSE;
     if (persistenceManager == null) {
       persistenceManager = PMF.get().getPersistenceManager();

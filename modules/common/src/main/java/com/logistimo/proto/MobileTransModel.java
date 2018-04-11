@@ -111,6 +111,6 @@ public class MobileTransModel {
    */
   public boolean isTypeReturn() {
     return Objects.equals(ty, TYPE_RETURNS_INCOMING)
-           || Objects.equals(ty, TYPE_RETURNS_OUTGOING);
+        || Objects.equals(ty, TYPE_RETURNS_OUTGOING);
   }
 }

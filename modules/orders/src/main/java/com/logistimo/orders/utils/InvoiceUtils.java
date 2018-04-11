@@ -412,27 +412,28 @@ public class InvoiceUtils {
 
     return parameters;
   }
+
   private void updateOrderReferenceNumber(IOrder order, Map<String, Object> parameters) {
-      parameters.put(SALES_REFERENCE_NUMBER, order.getSalesReferenceID());
-      ResourceBundle messages = Resources.get().getBundle("Messages", Locale.ENGLISH);
-      String referenceId = Constants.EMPTY;
-      String referenceType;
-      if (IOrder.TRANSFER_ORDER == order.getOrderType()) {
-        if(StringUtils.isNotEmpty(order.getTransferReferenceId())) {
-          referenceId = order.getTransferReferenceId();
-        }
-        DomainConfig domainConfig = DomainConfig.getInstance(SecurityUtils.getCurrentDomainId());
-        if(domainConfig.getOrdersConfig().isTransferRelease()) {
-          referenceType = messages.getString("release.reference.id");
-        } else {
-          referenceType = messages.getString("transfer.reference.id");
-        }
-      } else {
-        if(StringUtils.isNotEmpty(order.getPurchaseReferenceId())) {
-          referenceId = order.getPurchaseReferenceId();
-        }
-        referenceType = messages.getString("purchase.reference.id");
+    parameters.put(SALES_REFERENCE_NUMBER, order.getSalesReferenceID());
+    ResourceBundle messages = Resources.get().getBundle("Messages", Locale.ENGLISH);
+    String referenceId = Constants.EMPTY;
+    String referenceType;
+    if (IOrder.TRANSFER_ORDER == order.getOrderType()) {
+      if (StringUtils.isNotEmpty(order.getTransferReferenceId())) {
+        referenceId = order.getTransferReferenceId();
       }
+      DomainConfig domainConfig = DomainConfig.getInstance(SecurityUtils.getCurrentDomainId());
+      if (domainConfig.getOrdersConfig().isTransferRelease()) {
+        referenceType = messages.getString("release.reference.id");
+      } else {
+        referenceType = messages.getString("transfer.reference.id");
+      }
+    } else {
+      if (StringUtils.isNotEmpty(order.getPurchaseReferenceId())) {
+        referenceId = order.getPurchaseReferenceId();
+      }
+      referenceType = messages.getString("purchase.reference.id");
+    }
     parameters.put(OTHER_REFERENCE_NUMBER, referenceId);
     parameters.put(REFERENCE_NUMBER_TYPE, referenceType);
   }

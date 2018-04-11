@@ -91,26 +91,28 @@ public class MaterialBuilder {
     for (IMaterial material : materials) {
       MaterialModel item = buildMaterialModel(material, itemCount, domainNames);
       if (item != null) {
-        IInvntry inv = getInventory(item.mId, invntries);
-        item.isAdded = inv != null;
-        if (item.isAdded) {
-          item.reord = inv.getReorderLevel();
-          item.max = inv.getMaxStock();
-          item.minDur = inv.getMinDuration();
-          item.maxDur = inv.getMaxDuration();
-          if (allowManualConsumptionRates) {
-            item.crMnl = inv.getConsumptionRateManual();
-          }
-          item.rp =
-              String.valueOf(
-                  BigUtil.equalsZero(inv.getRetailerPrice()) ? material.getRetailerPrice()
-                      : inv.getRetailerPrice());
-          item.tx =
-              BigUtil.notEqualsZero(inv.getTax()) ? inv.getTax()
-                  : k != null ? k.getTax() : BigDecimal.ZERO;
-          if (k != null && k.isOptimizationOn()) {
-            item.im = inv.getInventoryModel();
-            item.sl = inv.getServiceLevel();
+        if(invntries != null) {
+          IInvntry inv = getInventory(item.mId, invntries);
+          item.isAdded = inv != null;
+          if (item.isAdded) {
+            item.reord = inv.getReorderLevel();
+            item.max = inv.getMaxStock();
+            item.minDur = inv.getMinDuration();
+            item.maxDur = inv.getMaxDuration();
+            if (allowManualConsumptionRates) {
+              item.crMnl = inv.getConsumptionRateManual();
+            }
+            item.rp =
+                String.valueOf(
+                    BigUtil.equalsZero(inv.getRetailerPrice()) ? material.getRetailerPrice()
+                        : inv.getRetailerPrice());
+            item.tx =
+                BigUtil.notEqualsZero(inv.getTax()) ? inv.getTax()
+                    : k != null ? k.getTax() : BigDecimal.ZERO;
+            if (k != null && k.isOptimizationOn()) {
+              item.im = inv.getInventoryModel();
+              item.sl = inv.getServiceLevel();
+            }
           }
         }
         newInventory.add(item);
@@ -122,9 +124,11 @@ public class MaterialBuilder {
   }
 
   private IInvntry getInventory(Long mId, List<IInvntry> invntries) {
-    for (IInvntry invntry : invntries) {
-      if (invntry.getMaterialId().equals(mId)) {
-        return invntry;
+    if(invntries != null) {
+      for (IInvntry invntry : invntries) {
+        if (invntry.getMaterialId().equals(mId)) {
+          return invntry;
+        }
       }
     }
     return null;

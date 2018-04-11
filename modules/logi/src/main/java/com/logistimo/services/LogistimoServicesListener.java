@@ -78,6 +78,7 @@ import com.logistimo.services.taskqueue.TaskServer;
 import com.logistimo.services.utils.ConfigUtil;
 import com.logistimo.tags.entity.Tag;
 import com.logistimo.users.entity.UserAccount;
+import com.logistimo.users.entity.UserToken;
 import com.logistimo.utils.MetricsUtil;
 import com.netflix.hystrix.strategy.HystrixPlugins;
 
@@ -125,7 +126,7 @@ public class LogistimoServicesListener implements ServletContextListener {
               AssetStatus.class,
               AssetRelation.class, HandlingUnit.class, HandlingUnitContent.class,
               MaterialManufacturers.class, Conversation.class, Message.class, Activity.class,
-              Dashboard.class, BulletinBoard.class};
+              Dashboard.class, BulletinBoard.class, UserToken.class};
 
       PersistenceManager pm = null;
       try {

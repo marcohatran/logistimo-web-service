@@ -74,7 +74,7 @@ public interface OrderManagementService {
    */
   String shipNow(IOrder order, String transporter, String trackingId, String reason,
       Date expectedFulfilmentDate,
-      String userId, String ps, int source, String salesRefId, Boolean updateOrderFields)
+                 String userId, String ps, int source, String salesRefId, Boolean updateOrderFields)
       throws ServiceException, ObjectNotFoundException, ValidationException;
 
   /**
@@ -137,13 +137,15 @@ public interface OrderManagementService {
    */
   Results getOrders(Long domainId, Long kioskId, String status, Date since, Date untilDate,
       String otype, String tagType, String tag, List<Long> kioskIds,
-      PageParams pageParams, Integer orderType, String salesReferenceId, String approvalStatus, String purchaseRefId, String transferRefId)
+                    PageParams pageParams, Integer orderType, String salesReferenceId,
+                    String approvalStatus, String purchaseRefId, String transferRefId)
       throws ServiceException;
 
   Results getOrders(Long domainId, Long kioskId, String status, Date since, Date untilDate,
       String otype, String tagType, String tag, List<Long> kioskIds,
-      PageParams pageParams, Integer orderType, String salesReferenceId, String approvalStatus,
-      boolean withDemand, String purchaseRefId, String transferRefId);
+                    PageParams pageParams, Integer orderType, String salesReferenceId,
+                    String approvalStatus,
+                    boolean withDemand, String purchaseRefId, String transferRefId);
 
   /**
    * Get orders placed by a certain user
@@ -229,7 +231,8 @@ public interface OrderManagementService {
                    String utcConfirmedFulfillmentTimeRange, BigDecimal payment,
                    String paymentOption, boolean allowEmptyOrders,
                    List<String> orderTags, String salesReferenceId,
-                   PersistenceManager pm, String purchaseReferenceId, String transferReferenceId) throws ServiceException;
+                   PersistenceManager pm, String purchaseReferenceId, String transferReferenceId)
+      throws ServiceException;
 
 
   BigDecimal computeRecommendedOrderQuantity(IInvntry invntry) throws ServiceException;
@@ -253,11 +256,12 @@ public interface OrderManagementService {
   BigDecimal getLeadTime(Long kid, Long mid, float orderPeriodicityInConfig,
       LeadTimeAvgConfig leadTimeAvgConfig, float leadTimeDefaultInConfig) throws ServiceException;
 
-  void updateOrderMetadata(Long orderId, String updatedBy, PersistenceManager pm, String salesRefId, Date estimatedArrivalDate, Boolean updateOrderFields);
+  void updateOrderMetadata(Long orderId, String updatedBy, PersistenceManager pm, String salesRefId,
+                           Date estimatedArrivalDate, Boolean updateOrderFields);
 
   void updateOrderMetadata(Long orderId, String updatedBy, PersistenceManager pm);
 
-  Results getOrders(OrderFilters orderFilters, PageParams pageParams);
+  Results<IOrder> getOrders(OrderFilters orderFilters, PageParams pageParams);
 
   List<IOrder> getOrders(Long kioskId, String status, PageParams pageParams, String orderType,
       boolean isTransfer)

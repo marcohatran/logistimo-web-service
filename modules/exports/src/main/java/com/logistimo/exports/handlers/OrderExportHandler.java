@@ -193,7 +193,8 @@ public class OrderExportHandler implements IExportHandler {
 
     StringBuilder orderDetailsSb = new StringBuilder();
     orderDetailsSb.append(oid).append(CharacterConstants.COMMA)
-        .append(order.getSalesReferenceID() != null ? StringEscapeUtils.escapeCsv(order.getSalesReferenceID()) : CharacterConstants.EMPTY)
+        .append(order.getSalesReferenceID() != null ? StringEscapeUtils
+            .escapeCsv(order.getSalesReferenceID()) : CharacterConstants.EMPTY)
         .append(CharacterConstants.COMMA)
         .append(status).append(CharacterConstants.COMMA)
         .append(order.getKioskId()).append(CharacterConstants.COMMA)

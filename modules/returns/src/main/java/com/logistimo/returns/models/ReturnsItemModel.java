@@ -25,10 +25,8 @@ package com.logistimo.returns.models;
 
 import com.google.gson.annotations.SerializedName;
 
-import com.logistimo.returns.models.submodels.UserModel;
 import com.logistimo.returns.models.submodels.ReceivedModel;
-
-import org.springframework.data.annotation.Transient;
+import com.logistimo.returns.models.submodels.UserModel;
 
 import java.math.BigDecimal;
 import java.util.Date;

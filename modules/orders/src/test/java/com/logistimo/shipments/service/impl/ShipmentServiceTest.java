@@ -33,13 +33,12 @@ import com.logistimo.orders.service.impl.OrderManagementServiceImpl;
 import com.logistimo.shipments.entity.IShipment;
 import com.logistimo.shipments.entity.Shipment;
 
-import static org.junit.Assert.assertEquals;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import javax.jdo.PersistenceManager;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 

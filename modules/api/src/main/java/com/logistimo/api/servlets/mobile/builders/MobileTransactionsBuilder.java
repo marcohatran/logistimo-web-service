@@ -241,7 +241,8 @@ public class MobileTransactionsBuilder {
                                                                            String userId, Long kioskId, String partialId,
                                                                            String errorMessage,
                                                                            Map<Long,ResponseDetailModel> responseDetailModelByMaterial,
-                                                                           List<MobileMaterialTransModel> mobMatTransList, boolean isDuplicate) {
+                                                                        List<MobileMaterialTransModel> mobMatTransList,
+                                                                        boolean isDuplicate) {
     if (domainId == null) {
       return null;
     }
@@ -442,7 +443,7 @@ public class MobileTransactionsBuilder {
   }
 
   private List<MobileTransErrorDetailModel> buildMobileTransErrorDetailModel(List<ErrorDetailModel> errorDetailModels) {
-    if(CollectionUtils.isEmpty(errorDetailModels)) {
+    if (CollectionUtils.isEmpty(errorDetailModels)) {
       return Collections.emptyList();
     }
     List<MobileTransErrorDetailModel> mobileTransErrorDetailModels = new ArrayList<>(errorDetailModels.size());
@@ -484,7 +485,7 @@ public class MobileTransactionsBuilder {
     return responseDetailModelByMaterial.entrySet()
         .stream()
         .filter(entry -> !CollectionUtils.isEmpty(entry.getValue().errorDetailModels))
-        .collect(Collectors.toMap(Entry::getKey, entry-> entry.getValue().errorDetailModels));
+        .collect(Collectors.toMap(Entry::getKey, entry -> entry.getValue().errorDetailModels));
   }
 
   protected Map<Long,List<SuccessDetailModel>> getSuccessDetailModelsByMaterial(Map<Long,ResponseDetailModel> responseDetailModelByMaterial) {
@@ -494,7 +495,7 @@ public class MobileTransactionsBuilder {
     return responseDetailModelByMaterial.entrySet()
         .stream()
         .filter(entry -> !CollectionUtils.isEmpty(entry.getValue().successDetailModels))
-        .collect(Collectors.toMap(Entry::getKey, entry-> entry.getValue().successDetailModels));
+        .collect(Collectors.toMap(Entry::getKey, entry -> entry.getValue().successDetailModels));
   }
 
   protected List<MobileTransSuccessModel> buildSuccessModels(Map<Long,List<SuccessDetailModel>> successDetailModelsByMaterial) {

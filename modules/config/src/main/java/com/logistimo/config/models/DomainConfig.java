@@ -113,6 +113,7 @@ public class DomainConfig implements ILocation, Serializable {
   public static final String ACCOUNTING = "accntng";
   public static final String INVENTORY = "invntry";
   public static final String APPROVALS = "approvals";
+  public static final String STOCK_REBALANCING = "stock_rebalancing";
   public static final String VENDOR_ID = "vid";
   public static final String EVENTS = "evnts";
   public static final String ORDERS = "orders";
@@ -242,6 +243,8 @@ public class DomainConfig implements ILocation, Serializable {
   private InventoryConfig inventoryConfig = null;
   // Approval config
   private ApprovalsConfig approvalsConfig = null;
+  // Stock rebalancing config
+  private StockRebalancingConfig stockRebalancingConfig = null;
   // Event specification for this domain
   private EventsConfig eventsConfig = null;
   // Bulletin board config.
@@ -305,6 +308,7 @@ public class DomainConfig implements ILocation, Serializable {
     optimizerConfig = new OptimizerConfig();
     inventoryConfig = new InventoryConfig();
     approvalsConfig = new ApprovalsConfig();
+    stockRebalancingConfig = new StockRebalancingConfig();
     ordersConfig = new OrdersConfig();
     capabilityMap = new HashMap<>();
     accountingConfig = new AccountingConfig();
@@ -609,6 +613,11 @@ public class DomainConfig implements ILocation, Serializable {
         approvalsConfig = new ApprovalsConfig(json.getJSONObject(APPROVALS));
       } catch (JSONException e) {
         approvalsConfig = new ApprovalsConfig();
+      }
+      try{
+        stockRebalancingConfig = new StockRebalancingConfig(json.getJSONObject(STOCK_REBALANCING));
+      } catch (JSONException e) {
+        stockRebalancingConfig = new StockRebalancingConfig();
       }
       // FOR BACKWARD COMPATIBILITY
       try {
@@ -987,6 +996,9 @@ public class DomainConfig implements ILocation, Serializable {
       }
       if (approvalsConfig != null) {
         json.put(APPROVALS, approvalsConfig.toJSONObject());
+      }
+      if (stockRebalancingConfig != null ) {
+        json.put(STOCK_REBALANCING, stockRebalancingConfig.toJSONObject());
       }
       // Events config.
       if (eventsConfig != null) {
@@ -1665,6 +1677,15 @@ public class DomainConfig implements ILocation, Serializable {
 
   public void setApprovalsConfig(ApprovalsConfig approvalsConfig) {
     this.approvalsConfig = approvalsConfig;
+  }
+
+  public StockRebalancingConfig getStockRebalancingConfig() {
+    return stockRebalancingConfig;
+  }
+
+  public void setStockRebalancingConfig(
+      StockRebalancingConfig stockRebalancingConfig) {
+    this.stockRebalancingConfig = stockRebalancingConfig;
   }
 
   public boolean getUiPreference() {

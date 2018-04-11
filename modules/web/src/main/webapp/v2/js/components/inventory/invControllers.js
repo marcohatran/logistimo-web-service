@@ -231,7 +231,7 @@ invControllers.controller('StockViewsController', ['$scope', '$timeout', 'matSer
             caption += getFilterTitle($scope.etag, $scope.resourceBundle['include.entity.tag']);
             caption += getFilterTitle($scope.material, $scope.resourceBundle['material'], 'mnm');
             caption += getFilterTitle($scope.eetag,$scope.resourceBundle['exclude.entity.tag']);
-            caption += getFilterTitle($scope.mtag,$scope.resourceBundle['material'] + " " + $scope.resourceBundle['tag.lower']);
+            caption += getFilterTitle($scope.mtag, $scope.resourceBundle['material'] + " " + $scope.resourceBundle['tag.lower']);
             caption += getFilterTitle(formatDate2Url($scope.ebf), $scope.resourceBundle['expires.before']);
             caption += getFilterTitle($scope.entity, $scope.resourceBundle['kiosk'], 'nm');
             if ($scope.loc != undefined) {
@@ -405,11 +405,11 @@ invControllers.controller('InventoryCtrl', ['$scope', 'invService', 'domainCfgSe
 
         function getCaption() {
             var caption = getFilterTitle($scope.entity, $scope.resourceBundle['kiosk'], 'nm');
-            return caption+getFilterTitle($scope.mtag, $scope.resourceBundle['material'] + " " + $scope.resourceBundle['tag.lower']);
+            return caption + getFilterTitle($scope.mtag, $scope.resourceBundle['material'] + " " + $scope.resourceBundle['tag.lower']);
         }
 
         $scope.exportData = function (isInfo) {
-            if(isInfo) {
+            if (isInfo) {
                 return {
                     filters: getCaption(),
                     type: $scope.resourceBundle['exports.inventory'],
@@ -1296,8 +1296,8 @@ invControllers.controller('BatchDetailCtrl', ['$scope', 'invService', 'trnServic
                             $scope.reasons.splice(0, 0, "");
                         }
                     }
-                    $scope.expBatchDet[index].showReason=!$scope.expBatchDet[index].showReason;
-                    $scope.expBatchDet[index].reason = $scope.expBatchDet[index].showReason ? $scope.defaultReason: undefined;
+                    $scope.expBatchDet[index].showReason = !$scope.expBatchDet[index].showReason;
+                    $scope.expBatchDet[index].reason = $scope.expBatchDet[index].showReason ? $scope.defaultReason : undefined;
                 }
             }
         }
@@ -1310,8 +1310,8 @@ invControllers.controller('BatchDetailCtrl', ['$scope', 'invService', 'trnServic
             ft['transtype'] = transType;
             ft['reason'] = reason;
             ft['materials'] = [];
-            if(transType == 'p' || transType == 'w') {
-                if(checkNotNullEmpty(atd)) {
+            if (transType == 'p' || transType == 'w') {
+                if (checkNotNullEmpty(atd)) {
                     ft['transactual'] = '' + formatDate(atd);
                 } else if (checkNullEmpty(atd) && $scope.atd == 2) {
                     $scope.showWarning("Please select actual date of physical transaction.");
@@ -1319,13 +1319,18 @@ invControllers.controller('BatchDetailCtrl', ['$scope', 'invService', 'trnServic
                 }
             }
             ft['bmaterials'] = [];
-            if(checkNotNullEmpty(m)){
-                if(transType == 'p'){
+            if (checkNotNullEmpty(m)) {
+                if (transType == 'p') {
                     m.q = 0;
                 }
                 var items = {};
-                items[m.mId + "\t" + m.bid] = {q:''+ m.q,e: formatDate(parseUrlDate(m.bexp,true)),mr: m.bmfnm,md: formatDate(parseUrlDate(m.bmfdt,true)),
-                    r : reason};
+                items[m.mId + "\t" + m.bid] = {
+                    q: '' + m.q,
+                    e: formatDate(parseUrlDate(m.bexp, true)),
+                    mr: m.bmfnm,
+                    md: formatDate(parseUrlDate(m.bmfdt, true)),
+                    r: reason
+                };
                 ft['bmaterials'].push(items);
             }
             return ft;

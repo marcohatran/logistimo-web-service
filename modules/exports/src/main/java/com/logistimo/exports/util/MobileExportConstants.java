@@ -28,7 +28,7 @@ package com.logistimo.exports.util;
  */
 public class MobileExportConstants {
 
-  private MobileExportConstants(){
+  private MobileExportConstants() {
     throw new AssertionError("cannot instantiate");
   }
 

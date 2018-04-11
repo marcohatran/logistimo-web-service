@@ -1293,7 +1293,8 @@ public class RESTUtil {
             parsedRequest.parsedReqMap.get(RestConstantsZ.TRANSACTION_TYPE).toString());
       }
     }
-    if (BulkExportMgr.TYPE_ORDERS.equals(parsedRequest.parsedReqMap.get(RestConstantsZ.TYPE)) || TRANSFERS.equals(parsedRequest.parsedReqMap.get(RestConstantsZ.TYPE))) {
+    if (BulkExportMgr.TYPE_ORDERS.equals(parsedRequest.parsedReqMap.get(RestConstantsZ.TYPE))
+        || TRANSFERS.equals(parsedRequest.parsedReqMap.get(RestConstantsZ.TYPE))) {
       // Export a year's worth of transactions/orders
       Calendar cal = GregorianCalendar.getInstance();
       cal.add(Calendar.YEAR, -1);
@@ -1306,8 +1307,11 @@ public class RESTUtil {
           (String) parsedRequest.parsedReqMap.get(RestConstantsZ.ORDER_TYPE));
     }
     try {
-      params.put(MobileExportConstants.EMAIL_ID_KEY, (String) parsedRequest.parsedReqMap.get(RestConstantsZ.EMAIL));
-      MobileExportAdapter exportAdapter = StaticApplicationContext.getBean(MobileExportAdapter.class);
+      params.put(MobileExportConstants.EMAIL_ID_KEY,
+          (String) parsedRequest.parsedReqMap.get(RestConstantsZ.EMAIL));
+      MobileExportAdapter
+          exportAdapter =
+          StaticApplicationContext.getBean(MobileExportAdapter.class);
       exportAdapter.buildExportRequest(params);
       message =
           "Successfully scheduled export, data will be sent to email address \""
@@ -2336,10 +2340,10 @@ public class RESTUtil {
     int
         orderType =
         IOrder.NONTRANSFER;
-    if( reqParamsMap.get(RestConstantsZ.TYPE).equalsIgnoreCase(TRANSFERS)){
-      orderType=IOrder.TRANSFER;
+    if (reqParamsMap.get(RestConstantsZ.TYPE).equalsIgnoreCase(TRANSFERS)) {
+      orderType = IOrder.TRANSFER;
     }
-   // defaulted to non transfer. Can be non transfer or transfer
+    // defaulted to non transfer. Can be non transfer or transfer
     String
         spTransfer =
         String.valueOf(
@@ -2359,8 +2363,8 @@ public class RESTUtil {
     Date endDate = new Date();
     if (StringUtils.isNotEmpty(endDateStr)) {
       try {
-        endDate = LocalDateUtil.parseCustom(endDateStr,Constants.DATE_FORMAT,null);
-        parsedRequest.parsedReqMap.put(RestConstantsZ.ENDDATE,endDate);
+        endDate = LocalDateUtil.parseCustom(endDateStr, Constants.DATE_FORMAT, null);
+        parsedRequest.parsedReqMap.put(RestConstantsZ.ENDDATE, endDate);
       } catch (ParseException pe) {
         parsedRequest.errMessage = backendMessages.getString("error.invalidenddate");
         xLogger.severe("Exception while parsing end date {0}: ",
@@ -2375,7 +2379,7 @@ public class RESTUtil {
     if (StringUtils.isNotEmpty(startDateStr)) {
       try {
         startDate = LocalDateUtil.parseCustom(startDateStr, Constants.DATE_FORMAT, null);
-        parsedRequest.parsedReqMap.put(RestConstantsZ.STARTDATE,startDate);
+        parsedRequest.parsedReqMap.put(RestConstantsZ.STARTDATE, startDate);
       } catch (ParseException pe) {
         parsedRequest.errMessage = backendMessages.getString("error.notvalidstartdate");
         xLogger.severe("Exception while parsing start date {0}: ", startDateStr, pe);

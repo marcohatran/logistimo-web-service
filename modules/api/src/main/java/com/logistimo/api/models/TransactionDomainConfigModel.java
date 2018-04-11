@@ -48,7 +48,7 @@ public class TransactionDomainConfigModel {
   public String atdt;
   public String atdri;
   public String atdro;
-  public Map<String,String> atdc;
+  public Map<String, String> atdc;
 
   class ReasonWrapper {
     String type;

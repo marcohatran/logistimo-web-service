@@ -28,6 +28,7 @@ import com.logistimo.exception.SystemException;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.dao.annotation.PersistenceExceptionTranslationPostProcessor;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.JpaVendorAdapter;
@@ -45,6 +46,7 @@ import javax.sql.DataSource;
  */
 @Configuration
 @org.springframework.transaction.annotation.EnableTransactionManagement
+@EnableJpaRepositories(basePackages = "com.logistimo")
 public class JPAConfig {
 
   private static final Properties properties = new Properties();
@@ -72,17 +74,18 @@ public class JPAConfig {
   }
 
   @Bean
-  public DataSource dataSource(){
+  public DataSource dataSource() {
     DriverManagerDataSource dataSource = new DriverManagerDataSource();
     dataSource.setDriverClassName("org.mariadb.jdbc.Driver");
-    dataSource.setUrl((String) properties.getOrDefault("database.url","jdbc:mariadb://localhost:3306/logistimo"));
+    dataSource.setUrl((String) properties
+        .getOrDefault("database.url", "jdbc:mariadb://localhost:3306/logistimo"));
     dataSource.setUsername((String) properties.getOrDefault("database.username", "logistimo"));
-    dataSource.setPassword((String) properties.getOrDefault("database.password","logistimo"));
+    dataSource.setPassword((String) properties.getOrDefault("database.password", "logistimo"));
     return dataSource;
   }
 
   @Bean(name = "transactionManager")
-  public PlatformTransactionManager transactionManager(EntityManagerFactory emf){
+  public PlatformTransactionManager transactionManager(EntityManagerFactory emf) {
     JpaTransactionManager transactionManager = new JpaTransactionManager();
     transactionManager.setEntityManagerFactory(emf);
 
@@ -90,7 +93,7 @@ public class JPAConfig {
   }
 
   @Bean
-  public PersistenceExceptionTranslationPostProcessor exceptionTranslation(){
+  public PersistenceExceptionTranslationPostProcessor exceptionTranslation() {
     return new PersistenceExceptionTranslationPostProcessor();
   }
 

@@ -56,12 +56,22 @@ public class Results <T> {
   public Results(List<T> results, String cursor) {
     this.results = results;
     this.cursor = cursor;
+    if(results != null){
+      this.numFound = results.size();
+    }
   }
 
   @SuppressWarnings("rawtypes")
   public Results(List<T> results, String cursor,
                  int numFound, int offset) {
     this(results, cursor);
+    this.numFound = numFound;
+    this.offset = offset;
+  }
+
+  public Results(List<T> results,
+                 int numFound, int offset) {
+    this(results, null);
     this.numFound = numFound;
     this.offset = offset;
   }

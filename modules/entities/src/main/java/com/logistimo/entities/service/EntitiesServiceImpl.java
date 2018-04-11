@@ -535,10 +535,12 @@ public class EntitiesServiceImpl implements EntitiesService {
       }
       final Locale locale = SecurityUtils.getLocale();
       ResourceBundle messages = Resources.get().getBundle(Constants.MESSAGES, locale);
-      ResourceBundle backendMessages = Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
+      ResourceBundle
+          backendMessages =
+          Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
 
       if (results == null || results.size() == 0) {
-        updateKioskLocationIds(kiosk);
+        //updateKioskLocationIds(kiosk);
         boolean customIdExists = false;
         if (kiosk.getCustomId() != null && !kiosk.getCustomId().isEmpty()) {
           customIdExists = checkIfCustomIdExists(kiosk);
@@ -863,7 +865,9 @@ public class EntitiesServiceImpl implements EntitiesService {
       xLogger.warn("getKiosk: Kiosk {0} does not exist", kioskId);
       final Locale locale = SecurityUtils.getLocale();
       ResourceBundle messages = Resources.get().getBundle(Constants.MESSAGES, locale);
-      ResourceBundle backendMessages = Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
+      ResourceBundle
+          backendMessages =
+          Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
       throw new ObjectNotFoundException(
           messages.getString("kiosk") + " " + kioskId + " " + backendMessages
               .getString("error.notfound"), e);
@@ -890,7 +894,9 @@ public class EntitiesServiceImpl implements EntitiesService {
     try {
       if (!authorizationService.authoriseUpdateKiosk(sUserId, domainId)) {
         final Locale locale = SecurityUtils.getLocale();
-        ResourceBundle backendMessages = Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
+        ResourceBundle
+            backendMessages =
+            Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
         throw new UnauthorizedException(backendMessages.getString("permission.denied"));
       }
       List<IKiosk> kiosks = new ArrayList<>(kioskIds.size());
@@ -909,7 +915,9 @@ public class EntitiesServiceImpl implements EntitiesService {
       }
       if (!sdFailedKiosks.isEmpty()) {
         final Locale locale = SecurityUtils.getLocale();
-        ResourceBundle backendMessages = Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
+        ResourceBundle
+            backendMessages =
+            Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
         throw new ServiceException(
             backendMessages.getString("entity.deletion.permission.denied") + " : " + StringUtil
                 .getCSV(sdFailedKiosks));
@@ -1502,7 +1510,9 @@ public class EntitiesServiceImpl implements EntitiesService {
     if (!poolgroupExists) {
       final Locale locale = SecurityUtils.getLocale();
       ResourceBundle messages = Resources.get().getBundle(Constants.MESSAGES, locale);
-      ResourceBundle backendMessages = Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
+      ResourceBundle
+          backendMessages =
+          Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
       errMsg = messages.getString("poolgroup") + " " + backendMessages.getString("error.notfound");
     }
     if (errMsg != null) {
@@ -1556,7 +1566,9 @@ public class EntitiesServiceImpl implements EntitiesService {
       xLogger.warn("getPoolGroup: FAILED!! PoolGroup {0} does not exist", groupId);
       final Locale locale = SecurityUtils.getLocale();
       ResourceBundle messages = Resources.get().getBundle(Constants.MESSAGES, locale);
-      ResourceBundle backendMessages = Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
+      ResourceBundle
+          backendMessages =
+          Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
       errMsg = messages.getString("poolgroup") + " " + backendMessages.getString("error.notfound");
       exception = e;
     } catch (Exception e) {

@@ -128,7 +128,8 @@ public class ReturnsBuilder {
         try {
           domainName = domainsService.getDomain(returnsModel.getSourceDomain()).getName();
           domainNames.put(returnsModel.getSourceDomain(), domainName);
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
       }
       returnsModel.setSourceDomainName(domainName);
     }

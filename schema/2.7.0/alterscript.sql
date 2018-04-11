@@ -72,3 +72,61 @@ CREATE TABLE RETURNS_ITEM_BATCH (
 )  ENGINE=INNODB AUTO_INCREMENT=1100100 DEFAULT CHARSET=UTF8;
 
 create index IDX_RETURNSITEM_ID on RETURNS_ITEM_BATCH (item_id);
+
+CREATE OR REPLACE TABLE `execution_metadata` (
+  `id` varchar(255) NOT NULL,
+  `created_at` datetime NOT NULL,
+  `domain_id` bigint(20) DEFAULT NULL,
+  `end_time` datetime DEFAULT NULL,
+  `start_time` datetime DEFAULT NULL,
+  `status` varchar(255) DEFAULT NULL,
+  `updated_at` datetime NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+CREATE OR REPLACE TABLE `stock_rebalancing_events` (
+  `id` varchar(255) NOT NULL,
+  `execution_id` varchar(255) NOT NULL,
+  `kiosk_id` bigint(20) NOT NULL,
+  `material_id` bigint(20) NOT NULL,
+  `quantity` decimal(19,2) NOT NULL,
+  `short_code` varchar(255) NOT NULL,
+  `status` varchar(255) NOT NULL,
+  `priority` varchar(255) DEFAULT NULL,
+  `type` varchar(255) NOT NULL,
+  `value` decimal(19,2) NOT NULL,
+  `created_at` datetime NOT NULL,
+  `updated_at` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `FKosbxk174c1ysl69viymmxteq5` (`execution_id`),
+  KEY `FKrd22ncxxld31ire57ee0ooq3t` (`kiosk_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+CREATE OR REPLACE TABLE `stock_rebalancing_event_batches` (
+  `id` varchar(255) NOT NULL,
+  `batch_id` varchar(255) DEFAULT NULL,
+  `expiry_date` datetime DEFAULT NULL,
+  `manufacture_date` datetime DEFAULT NULL,
+  `manufacturer_name` varchar(255) DEFAULT NULL,
+  `stock_rebalancing_event_id` varchar(255) NOT NULL,
+  `transfer_quantity` decimal(19,2) DEFAULT NULL,
+  `created_at` datetime NOT NULL,
+  `updated_at` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `FK9af0olxvybsj90sc7gkwrss74` (`stock_rebalancing_event_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+CREATE OR REPLACE TABLE `recommended_transfers` (
+  `id` varchar(255) NOT NULL,
+  `cost` decimal(19,2) NOT NULL,
+  `destination_event_id` varchar(255) DEFAULT NULL,
+  `material_id` bigint(20) NOT NULL,
+  `quantity` decimal(19,2) NOT NULL,
+  `source_event_id` varchar(255) DEFAULT NULL,
+  `status` varchar(255) NOT NULL,
+  `transfer_id` bigint(20) DEFAULT NULL,
+  `value` decimal(19,2) NOT NULL,
+  `created_at` datetime NOT NULL,
+  `updated_at` datetime NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;

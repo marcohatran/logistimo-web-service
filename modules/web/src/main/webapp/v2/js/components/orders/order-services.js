@@ -202,11 +202,11 @@ ordServices.factory('ordService', ['APIService', function (apiService) {
                 orderUpdatedAt: orderUpdatedAt
             }, '/s2/api/orders/order/' + orderId + '/tags');
         },
-        updateReferenceID: function(orderId,referenceID, orderUpdatedAt, referenceType) {
+        updateReferenceID: function (orderId, referenceID, orderUpdatedAt, referenceType) {
             return apiService.post({
                 updateValue: referenceID,
                 orderUpdatedAt: orderUpdatedAt
-            }, '/s2/api/orders/order/' + orderId + '/referenceid?referenceType='+ referenceType);
+            }, '/s2/api/orders/order/' + orderId + '/referenceid?referenceType=' + referenceType);
         },
         getIdSuggestions: function(id, type, oty) {
             var urlStr = '/s2/api/orders/filter/?id=' + encodeURIComponent(id) + "&type="+type;

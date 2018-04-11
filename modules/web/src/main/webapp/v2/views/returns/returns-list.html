@@ -55,6 +55,7 @@
                 <div class="row" ng-show="showMore">
                     <div class="col-sm-3">
                         <span class="filter-label">{{resourceBundle['order']}}</span>
+
                         <div class="has-feedback">
                             <input type="text" class="form-control" ng-model="orderId" autocomplete="off"
                                    typeahead-wait-ms="300"
@@ -72,23 +73,25 @@
         <div class="row">
             <div ng-hide="showMore">
                 <div class="col-sm-12">
-                    <span class="glyphicons glyphicons-chevron-down medium filter-expand" ng-click="showMore = true"></span>
+                    <span class="glyphicons glyphicons-chevron-down medium filter-expand"
+                          ng-click="showMore = true"></span>
                 </div>
             </div>
         </div>
         <div class="row">
             <div ng-show="showMore">
                 <div class="col-sm-12">
-                    <span class="glyphicons glyphicons-chevron-up medium filter-expand" ng-click="showMore = false"></span>
+                    <span class="glyphicons glyphicons-chevron-up medium filter-expand"
+                          ng-click="showMore = false"></span>
                 </div>
             </div>
         </div>
         <div class="row action-bar">
-            <div class="col-sm-8 noLRpad" >
+            <div class="col-sm-8 noLRpad">
                 <!--<export ng-show="filtered.length > 0" callback="exportData()"></export>-->
             </div>
 
-            <div class="col-sm-4 noLRpad" ng-show="entity!= null && entity.id != null && entity.id != ''" >
+            <div class="col-sm-4 noLRpad" ng-show="entity!= null && entity.id != null && entity.id != ''">
                 <div class="pull-right">
                     <div class="btn-group">
                         <label class="btn btn-sm btn-default" ng-model="returnsType" uib-btn-radio="'outgoing'">

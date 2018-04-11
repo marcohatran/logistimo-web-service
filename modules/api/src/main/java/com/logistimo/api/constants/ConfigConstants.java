@@ -40,4 +40,5 @@ public class ConfigConstants {
   public static final String BULLETIN_BOARD = "Bulletin Board";
   public static final String APPROVALS = "Approvals";
   public static final String EVENT_SUMMARY_INVENTORY = "Inventory Event Summary";
+  public static final String STOCK_REBALANCING = "Stock Rebalancing";
 }

@@ -118,7 +118,6 @@ public class OrdersConfigModel {
   private boolean transfer;
 
 
-
   public String getLogo() {
     return logo;
   }

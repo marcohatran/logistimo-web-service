@@ -79,7 +79,7 @@ trnServices.factory('trnService', ['APIService', function (apiService) {
             }
             return apiService.get(urlStr);
         },
-        getTransactions: function (etag, tag, from, to, type, offset, size,bId,atd,eid,lEntityId,mid,rsn,ignoreLkid) {
+        getTransactions: function (etag, tag, from, to, type, offset, size, bId, atd, eid, lEntityId, mid, rsn, ignoreLkid) {
             offset = typeof offset !== 'undefined' ? offset : 0;
             size = typeof size !== 'undefined' ? size : 50;
             atd = atd === true;

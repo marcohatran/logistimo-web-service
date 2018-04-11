@@ -243,8 +243,8 @@ matControllers.controller('MaterialListController', ['$scope', 'matService', 'do
             $scope.mtag = "";
         };
 
-        $scope.exportData=function(isInfo) {
-            if(isInfo) {
+        $scope.exportData = function (isInfo) {
+            if (isInfo) {
                 return {
                     filters: getCaption(),
                     type: $scope.resourceBundle['exports.materials']

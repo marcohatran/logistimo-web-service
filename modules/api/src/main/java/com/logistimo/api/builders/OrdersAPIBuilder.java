@@ -242,7 +242,8 @@ public class OrdersAPIBuilder {
       model.enm = k.getName();
       model.eadd = CommonUtils.getAddress(k.getCity(), k.getTaluk(), k.getDistrict(), k.getState());
       model.cdt = LocalDateUtil.format(o.getCreatedOn(), locale, timezone);
-      model.statusUpdateDate = LocalDateUtil.formatCustom(o.getStatusUpdatedOn(), Constants.DATETIME_FORMAT, timezone);
+      model.statusUpdateDate =
+          LocalDateUtil.formatCustom(o.getStatusUpdatedOn(), Constants.DATETIME_FORMAT, timezone);
       model.ubid = o.getUpdatedBy();
       model.src = o.getSrc();
       model.salesRefId = o.getSalesReferenceID();
@@ -833,7 +834,7 @@ public class OrdersAPIBuilder {
           }
         }
       }
-      if(isReturnsAllowed) {
+      if (isReturnsAllowed) {
         receivedQuantityByBatches = getReceivedQuantityByBatches(order.getOrderId());
       }
     }
@@ -926,7 +927,7 @@ public class OrdersAPIBuilder {
         }
         Set<DemandItemBatchModel> batches = new HashSet<>();
         BigDecimal allocatedStock = BigDecimal.ZERO;
-        if(!showStocks || isReturnsAllowed) {
+        if (!showStocks || isReturnsAllowed) {
           if (itemModel.isBa) {
             Map<String, BigDecimal> batchMap = quantityByBatches.get(item.getMaterialId());
             Map<String, DemandBatchMeta> fBatchMap = null;
@@ -965,11 +966,12 @@ public class OrdersAPIBuilder {
                 allocatedStock = allocatedStock.add(batchModel.q);
                 batches.add(batchModel);
               }
-              if(isReturnsAllowed) {
+              if (isReturnsAllowed) {
                 final Map<String, BigDecimal> receivedBatchQuantity =
                     receivedQuantityByBatches.get(item.getMaterialId());
                 for (DemandItemBatchModel batch : batches) {
-                  if(receivedBatchQuantity != null && receivedBatchQuantity.containsKey(batch.id)) {
+                  if (receivedBatchQuantity != null && receivedBatchQuantity
+                      .containsKey(batch.id)) {
                     batch.returnedQuantity = receivedBatchQuantity.get(batch.id);
                   }
                 }
@@ -982,7 +984,7 @@ public class OrdersAPIBuilder {
           }
         }
         itemModel.returnBatches = batches;
-        if(!showStocks) {
+        if (!showStocks) {
           itemModel.bts = batches;
           itemModel.astk = allocatedStock;
         }
@@ -1040,11 +1042,14 @@ public class OrdersAPIBuilder {
     return model;
   }
 
-  private Map<Long,Map<String, BigDecimal>> getReceivedQuantityByBatches(Long orderId) {
-    final ReturnsFilters f = ReturnsFilters.builder().orderId(orderId).domainId(SecurityUtils.getCurrentDomainId()).build();
+  private Map<Long, Map<String, BigDecimal>> getReceivedQuantityByBatches(Long orderId) {
+    final ReturnsFilters
+        f =
+        ReturnsFilters.builder().orderId(orderId).domainId(SecurityUtils.getCurrentDomainId())
+            .build();
     List<ReturnsVO> returnsVOs =
         returnsService.getReturns(f);
-    Map<Long,Map<String, BigDecimal>> returnQuantityByBatches = new HashMap<>();
+    Map<Long, Map<String, BigDecimal>> returnQuantityByBatches = new HashMap<>();
     for (ReturnsVO returnsVO : returnsVOs) {
       if(returnsVO.getStatus().getStatus()!= Status.CANCELLED) {
         final List<ReturnsItemVO> returnsItemVOs = returnsService.getReturnsItem(returnsVO.getId());

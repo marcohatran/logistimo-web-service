@@ -33,16 +33,21 @@ import java.util.Map;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 
 /**
  * Created by pratheeka on 13/03/18.
  */
+
 @Component
 
 public class Repository {
 
   @PersistenceContext
-  private EntityManager entityManager;
+  protected EntityManager entityManager;
 
   public <T> T save(T entity) {
     entityManager.persist(entity);
@@ -69,26 +74,32 @@ public class Repository {
     return null;
   }
 
-  @SuppressWarnings("unchecked")
-  public <T> T findById(Class cls, Long id) {
-    return (T) entityManager.find(cls, id);
+  public <T> T findById(Class<T> cls, Object id) {
+    return entityManager.find(cls, id);
   }
 
-  @SuppressWarnings("unchecked")
   public <T> List<T> findAllByNativeQuery(String query, Map<String, Object> filters,
-                                          Class mappingClass, int size, int offset) {
-    Query q = entityManager.createNativeQuery(query, mappingClass);
-    filters.forEach(q::setParameter);
-    q.setFirstResult(offset);
-    q.setMaxResults(size);
-    return q.getResultList();
+      Class mappingClass, int size, int offset) {
+    Query query1 = entityManager.createNativeQuery(query, mappingClass);
+    filters.forEach(query1::setParameter);
+    query1.setFirstResult(offset);
+    query1.setMaxResults(size);
+    return query1.getResultList();
   }
 
-  @SuppressWarnings("unchecked")
   public <T> T findByNativeQuery(String query, Map<String, Object> filters) {
-    Query q = entityManager.createNativeQuery(query);
-    filters.forEach(q::setParameter);
-    return (T) q.getSingleResult();
+    Query query1 = entityManager.createNativeQuery(query);
+    filters.forEach(query1::setParameter);
+    return (T) query1.getSingleResult();
   }
 
+  public <T> List<T> findAllBySpecification(Specification<T> specification, int offset, int size) {
+    CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+    CriteriaQuery<T> criteriaQuery = criteriaBuilder.createQuery(specification.getType());
+    Root<T> root = criteriaQuery.from(specification.getType());
+    Predicate predicate = specification.toPredicate(root, criteriaBuilder);
+    criteriaQuery.where(predicate);
+    return entityManager.createQuery(criteriaQuery).setFirstResult(offset).setMaxResults(
+        size).getResultList();
+  }
 }

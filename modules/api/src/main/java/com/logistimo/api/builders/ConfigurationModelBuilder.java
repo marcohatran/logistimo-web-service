@@ -44,6 +44,7 @@ import com.logistimo.api.models.configuration.OrdersConfigModel;
 import com.logistimo.api.models.configuration.ReasonConfigModel;
 import com.logistimo.api.models.configuration.ReturnsConfigModel;
 import com.logistimo.api.models.configuration.Sensor;
+import com.logistimo.api.models.configuration.StockRebalancingConfigModel;
 import com.logistimo.api.models.configuration.SupportConfigModel;
 import com.logistimo.api.models.configuration.TagsConfigModel;
 import com.logistimo.api.models.configuration.WorkingStatus;
@@ -71,6 +72,7 @@ import com.logistimo.config.models.OptimizerConfig;
 import com.logistimo.config.models.OrdersConfig;
 import com.logistimo.config.models.ReasonConfig;
 import com.logistimo.config.models.ReturnsConfig;
+import com.logistimo.config.models.StockRebalancingConfig;
 import com.logistimo.config.models.SupportConfig;
 import com.logistimo.config.models.SyncConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
@@ -79,7 +81,6 @@ import com.logistimo.constants.Constants;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.domains.entity.IDomain;
 import com.logistimo.domains.service.DomainsService;
-import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exception.SystemException;
@@ -125,7 +126,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -339,6 +339,42 @@ public class ConfigurationModelBuilder {
       model.mdp = config.getDashboardConfig().getDbOverConfig().edm;
     }
     return model;
+  }
+
+  public List<List<String>> populateEntityTagsCombination(StockRebalancingConfigModel model) {
+    List<List<String>> tagsCombination = new ArrayList<>();
+    if(model != null && model.getEntityTagsCombination() != null && !model.getEntityTagsCombination().isEmpty()) {
+      for(StockRebalancingConfigModel.EntityTagsCombination combination : model.getEntityTagsCombination()) {
+        List<String> tags = combination.getEntityTags().stream().collect(Collectors.toList());
+        tagsCombination.add(tags);
+      }
+    }
+    return tagsCombination;
+  }
+
+  public StockRebalancingConfig buildStockRebalancingConfig(StockRebalancingConfigModel model) {
+    if(model != null) {
+      StockRebalancingConfig config = new StockRebalancingConfig();
+      config.setEnableStockRebalancing(model.isEnableStockRebalancing());
+      config.setMtTags(model.getMtTags());
+      config.setEntityTagsCombination(populateEntityTagsCombination(model));
+      config.setGeoFencing(model.getGeoFencing());
+      config.setExpiryCheck(model.isExpiryCheck());
+      if(model.isStockOutDurationExceedsThreshold()) {
+        config.setStockOutDurationExceedsThreshold(model.isStockOutDurationExceedsThreshold());
+        config.setAcceptableLeadTime(model.getAcceptableLeadTime());
+      }
+      if(model.isMaxStock()) {
+        config.setMaxStock(model.isMaxStock());
+        config.setMaxStockDays(model.getMaxStockDays());
+      }
+      config.setTransportationCost(model.getTransportationCost());
+      config.setInventoryHoldingCost(model.getInventoryHoldingCost());
+      config.setHandlingCharges(model.getHandlingCharges());
+
+      return config;
+    }
+    return null;
   }
 
   public ApprovalsConfig.OrderConfig buildApprovalsOrderConfig(ApprovalsConfigModel model) {
@@ -1199,6 +1235,76 @@ public class ConfigurationModelBuilder {
     return model;
   }
 
+  public List<StockRebalancingConfigModel.EntityTagsCombination> populateEntityTagsCombinationModel(StockRebalancingConfig config) {
+    List<StockRebalancingConfigModel.EntityTagsCombination> entityTagsCombinationList = new ArrayList<>();
+    for(List<String> entityTags : config.getEntityTagsCombination()) {
+      StockRebalancingConfigModel.EntityTagsCombination combination = new StockRebalancingConfigModel.EntityTagsCombination();
+      List<String> tags = entityTags.stream().collect(Collectors.toList());
+      combination.setEntityTags(tags);
+      entityTagsCombinationList.add(combination);
+    }
+
+    return entityTagsCombinationList;
+  }
+
+  public StockRebalancingConfigModel buildStockRebalancingConfigModel(StockRebalancingConfig config,
+                                                                      Long domainId, Locale locale,
+                                                                      String timezone) {
+    if(config == null) {
+      return null;
+    }
+
+    StockRebalancingConfigModel model = new StockRebalancingConfigModel();
+    DomainConfig dc = DomainConfig.getInstance(domainId);
+    List<String> val = dc.getDomainData(ConfigConstants.STOCK_REBALANCING);
+    if(val != null) {
+      model.setCreatedBy(val.get(0));
+      model.setLastUpdated(LocalDateUtil.format(new Date(Long.parseLong(val.get(1))), locale, timezone));
+      model.setFirstName(getFullName(model.getCreatedBy()));
+    }
+
+    model.setEnableStockRebalancing(config.isEnableStockRebalancing());
+    if(config.getMtTags() != null && !config.getMtTags().isEmpty()) {
+      model.setMtTags(config.getMtTags());
+    }
+    if(config.getEntityTagsCombination() != null && !config.getEntityTagsCombination().isEmpty()) {
+      model.setEntityTagsCombination(populateEntityTagsCombinationModel(config));
+    }
+
+    if(config.getGeoFencing() > 0) {
+      model.setGeoFencing(config.getGeoFencing());
+    }
+
+    if(config.isStockOutDurationExceedsThreshold()) {
+      model.setStockOutDurationExceedsThreshold(config.isStockOutDurationExceedsThreshold());
+      model.setAcceptableLeadTime(config.getAcceptableLeadTime());
+    }
+
+    if(config.isExpiryCheck()) {
+      model.setExpiryCheck(config.isExpiryCheck());
+    }
+
+    if(config.isMaxStock()) {
+      model.setMaxStock(config.isMaxStock());
+      model.setMaxStockDays(config.getMaxStockDays());
+    }
+
+    if(config.getTransportationCost() > 0) {
+      model.setTransportationCost(config.getTransportationCost());
+    }
+
+    if(config.getHandlingCharges() > 0) {
+      model.setHandlingCharges(config.getHandlingCharges());
+    }
+
+    if(config.getInventoryHoldingCost() > 0) {
+      model.setInventoryHoldingCost(config.getInventoryHoldingCost());
+    }
+
+    return model;
+
+  }
+
   public ApprovalsConfigModel buildApprovalsConfigModel(ApprovalsConfig config,
                                                         Long domainId, Locale locale,
                                                         String timezone){
@@ -1776,21 +1882,43 @@ public class ConfigurationModelBuilder {
 
   /**
    * Builds a map of Actual Date Of Transaction Configuration (as a String) by transaction type
-   * @param inventoryConfig
-   * @return
    */
-  public Map<String,String> buildActualTransConfigAsStringByTransType(InventoryConfig inventoryConfig) {
+  public Map<String, String> buildActualTransConfigAsStringByTransType(
+      InventoryConfig inventoryConfig) {
     if (inventoryConfig == null) {
-      throw new IllegalArgumentException("Invalid input parameter while building actual date of transaction configuration as string by transaction type: " + inventoryConfig);
+      throw new IllegalArgumentException(
+          "Invalid input parameter while building actual date of transaction configuration as string by transaction type: "
+              + inventoryConfig);
     }
-    Map<String,String> actTransConfigStringByType = new HashMap<>(7,1);
-    actTransConfigStringByType.put(ITransaction.TYPE_ISSUE, inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_ISSUE) != null ? inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_ISSUE).getTy() : ActualTransConfig.ACTUAL_NONE);
-    actTransConfigStringByType.put(ITransaction.TYPE_RECEIPT, inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_RECEIPT) != null ? inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_RECEIPT).getTy() : ActualTransConfig.ACTUAL_NONE);
-    actTransConfigStringByType.put(ITransaction.TYPE_PHYSICALCOUNT, inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_PHYSICALCOUNT) != null ? inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_PHYSICALCOUNT).getTy() : ActualTransConfig.ACTUAL_NONE);
-    actTransConfigStringByType.put(ITransaction.TYPE_WASTAGE, inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_WASTAGE) != null ? inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_WASTAGE).getTy() : ActualTransConfig.ACTUAL_NONE);
-    actTransConfigStringByType.put(ITransaction.TYPE_TRANSFER, inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_TRANSFER) != null ? inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_TRANSFER).getTy() : ActualTransConfig.ACTUAL_NONE);
-    actTransConfigStringByType.put(ITransaction.TYPE_RETURNS_INCOMING, inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_RETURNS_INCOMING) != null ? inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_RETURNS_INCOMING).getTy() : ActualTransConfig.ACTUAL_NONE);
-    actTransConfigStringByType.put(ITransaction.TYPE_RETURNS_OUTGOING, inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_RETURNS_OUTGOING) != null ? inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_RETURNS_OUTGOING).getTy() : ActualTransConfig.ACTUAL_NONE);
+    Map<String, String> actTransConfigStringByType = new HashMap<>(7, 1);
+    actTransConfigStringByType.put(ITransaction.TYPE_ISSUE,
+        inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_ISSUE) != null
+            ? inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_ISSUE).getTy()
+            : ActualTransConfig.ACTUAL_NONE);
+    actTransConfigStringByType.put(ITransaction.TYPE_RECEIPT,
+        inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_RECEIPT) != null
+            ? inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_RECEIPT).getTy()
+            : ActualTransConfig.ACTUAL_NONE);
+    actTransConfigStringByType.put(ITransaction.TYPE_PHYSICALCOUNT,
+        inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_PHYSICALCOUNT) != null
+            ? inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_PHYSICALCOUNT).getTy()
+            : ActualTransConfig.ACTUAL_NONE);
+    actTransConfigStringByType.put(ITransaction.TYPE_WASTAGE,
+        inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_WASTAGE) != null
+            ? inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_WASTAGE).getTy()
+            : ActualTransConfig.ACTUAL_NONE);
+    actTransConfigStringByType.put(ITransaction.TYPE_TRANSFER,
+        inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_TRANSFER) != null
+            ? inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_TRANSFER).getTy()
+            : ActualTransConfig.ACTUAL_NONE);
+    actTransConfigStringByType.put(ITransaction.TYPE_RETURNS_INCOMING,
+        inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_RETURNS_INCOMING) != null
+            ? inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_RETURNS_INCOMING).getTy()
+            : ActualTransConfig.ACTUAL_NONE);
+    actTransConfigStringByType.put(ITransaction.TYPE_RETURNS_OUTGOING,
+        inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_RETURNS_OUTGOING) != null
+            ? inventoryConfig.getActualTransConfigByType(ITransaction.TYPE_RETURNS_OUTGOING).getTy()
+            : ActualTransConfig.ACTUAL_NONE);
     return actTransConfigStringByType;
   }
 }

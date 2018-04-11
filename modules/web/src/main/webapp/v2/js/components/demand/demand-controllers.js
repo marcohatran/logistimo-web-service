@@ -787,8 +787,8 @@ demandControllers.controller('DiscrepanciesListingCtrl', ['$scope', 'demandServi
         ListingController.call(this, $scope, requestContext, $location);
         $scope.fetch();
 
-        $scope.exportData=function(isInfo) {
-            if(isInfo) {
+        $scope.exportData = function (isInfo) {
+            if (isInfo) {
                 return {
                     filters: getCaption(),
                     type: $scope.resourceBundle['exports.discrepancies']

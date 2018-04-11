@@ -26,10 +26,9 @@ package com.logistimo.returns.models;
 import com.google.gson.annotations.SerializedName;
 
 import com.logistimo.returns.models.submodels.EntityModel;
-import com.logistimo.returns.models.submodels.UserModel;
 import com.logistimo.returns.models.submodels.StatusModel;
+import com.logistimo.returns.models.submodels.UserModel;
 
-import java.util.Date;
 import java.util.List;
 
 import lombok.Data;

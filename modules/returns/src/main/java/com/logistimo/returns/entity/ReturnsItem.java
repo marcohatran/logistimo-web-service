@@ -54,14 +54,14 @@ import lombok.Data;
 public class ReturnsItem {
 
   @Id
-  @GeneratedValue(strategy= GenerationType.IDENTITY)
-  @Column(name = "id",updatable = false)
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "id", updatable = false)
   private Long id;
 
-  @Column(name = "returns_id",updatable = false)
+  @Column(name = "returns_id", updatable = false)
   private Long returnsId;
 
-  @Column(name = "material_id",updatable = false)
+  @Column(name = "material_id", updatable = false)
   private Long materialId;
 
   @Column(name = "quantity")
@@ -80,7 +80,7 @@ public class ReturnsItem {
   @Column(name="created_at")
   private Date createdAt;
 
-  @Column(name="created_by",updatable = false)
+  @Column(name = "created_by", updatable = false)
   private String createdBy;
 
   @Temporal(TemporalType.TIMESTAMP)

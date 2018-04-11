@@ -35,7 +35,7 @@ logistimoApp.service('returnsService', ['APIService', function (apiService) {
         _items = items;
     };
 
-    this.getItems = function() {
+    this.getItems = function () {
         var tItems = _items;
         _items = [];
         return tItems;
@@ -45,7 +45,7 @@ logistimoApp.service('returnsService', ['APIService', function (apiService) {
         _order = order;
     };
 
-    this.getOrder = function() {
+    this.getOrder = function () {
         var tOrder = _order;
         _order = {};
         return tOrder;
@@ -98,7 +98,7 @@ logistimoApp.service('returnsService', ['APIService', function (apiService) {
     this.getAll = function (filters) {
         var filterArray = [];
         for (var filter in filters) {
-            if(filters.hasOwnProperty(filter) && checkNotNullEmpty(filters[filter])){
+            if (filters.hasOwnProperty(filter) && checkNotNullEmpty(filters[filter])) {
                 filterArray.push(filter + "=" + filters[filter]);
             }
         }

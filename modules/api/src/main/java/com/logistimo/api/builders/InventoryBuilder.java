@@ -315,7 +315,7 @@ public class InventoryBuilder {
     }
     model.mnm = material.getName();
     model.b = material.getType();
-    if(invntry.getTimestamp() != null) {
+    if (invntry.getTimestamp() != null) {
       model.t =
           LocalDateUtil.format(invntry.getTimestamp(), sUser.getLocale(), sUser.getTimezone());
     }

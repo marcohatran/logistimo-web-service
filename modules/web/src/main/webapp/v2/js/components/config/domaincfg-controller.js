@@ -699,6 +699,179 @@ domainCfgControllers.controller('CapabilitiesConfigurationController', ['$scope'
     }
 ]);
 
+domainCfgControllers.controller('StockRebalancingConfigurationController', ['$scope', 'domainCfgService',
+    function($scope, domainCfgService) {
+
+        $scope.addRow = function () {
+            if (checkNullEmpty($scope.stockRebalancing.entityTagsCombination)) {
+                $scope.stockRebalancing.entityTagsCombination = [];
+            }
+            $scope.stockRebalancing.entityTagsCombination.push({eTags: []});
+        };
+        $scope.deleteRow = function (index) {
+            $scope.stockRebalancing.entityTagsCombination.splice(index, 1);
+        };
+
+        $scope.updateStockRebalancing = function(data) {
+            $scope.stockRebalancing[data] = 0;
+        };
+
+        function updateTags(){
+            if(checkNotNullEmpty($scope.stockRebalancing)) {
+                if (checkNotNullEmpty($scope.stockRebalancing.entityTagsCombination) && $scope.stockRebalancing.entityTagsCombination.length > 0) {
+                    $scope.stockRebalancing.entityTagsCombination.some(function (data) {
+                        if (checkNotNullEmpty(data.eTags)) {
+                            data.enTags = [];
+                            for (var i = 0; i < data.eTags.length; i++) {
+                                data.enTags.push(data.eTags[i].text);
+                            }
+                        } else if (checkNotNullEmpty(data.enTags)) {
+                            data.eTags = [];
+                            for (var i = 0; i < data.enTags.length; i++) {
+                                data.eTags.push({"id": data.enTags[i], "text": data.enTags[i]});
+                            }
+                        }
+                    });
+                }
+                if (checkNotNullEmpty($scope.stockRebalancing.mTags)) {
+                    $scope.stockRebalancing.mtTags = [];
+                    $scope.stockRebalancing.mTags.some(function (data) {
+                        $scope.stockRebalancing.mtTags.push(data.text);
+                    });
+                } else if (checkNotNullEmpty($scope.stockRebalancing.mtTags)) {
+                    $scope.stockRebalancing.mTags = [];
+                    $scope.stockRebalancing.mtTags.some(function (data) {
+                        $scope.stockRebalancing.mTags.push({"id": data, "text": data});
+                    })
+                }
+            }
+        };
+
+        function validateCostBenefit() {
+            if($scope.stockRebalancing.transportationCost == 0) {
+                $scope.showWarning($scope.resourceBundle['warn.transportation.cost']);
+                $scope.continue = false;
+                return;
+            }
+            if($scope.stockRebalancing.handlingCharges == 0) {
+                $scope.showWarning($scope.resourceBundle['warn.handling.charges']);
+                $scope.continue = false;
+                return;
+            }
+            if($scope.stockRebalancing.inventoryHoldingCost == 0) {
+                $scope.showWarning($scope.resourceBundle['warn.inventory.holding.cost']);
+                $scope.continue = false;
+                return;
+            }
+        };
+
+        function validateTrigger(){
+            if($scope.stockRebalancing.stockOutDurationExceedsThreshold && $scope.stockRebalancing.acceptableLeadTime == 0) {
+                $scope.showWarning($scope.resourceBundle['warn.acceptable.lead.time.days']);
+                $scope.continue = false;
+                return;
+            }
+
+            if($scope.stockRebalancing.maxStock && $scope.stockRebalancing.maxStockDays == 0) {
+                $scope.showWarning($scope.resourceBundle['warn.max.stock.days']);
+                $scope.continue = false;
+                return;
+            }
+            validateCostBenefit();
+        }
+
+        function validateGeneral() {
+            if(checkNullEmpty($scope.stockRebalancing.mTags)) {
+                $scope.showWarning($scope.resourceBundle['warn.include.material.tags']);
+                $scope.continue = false;
+                return;
+            }
+            if(checkNullEmpty($scope.stockRebalancing.entityTagsCombination)) {
+                $scope.showWarning($scope.resourceBundle['warn.include.entity.tags']);
+                $scope.continue = false;
+                return;
+            }
+            if (checkNotNullEmpty($scope.stockRebalancing.entityTagsCombination)) {
+                var warning = $scope.stockRebalancing.entityTagsCombination.some(function(data) {
+                   if(checkNullEmpty(data.eTags)) {
+                       $scope.showWarning($scope.resourceBundle['warn.include.entity.tags']);
+                       return true;
+                   }
+                });
+                if(warning) {
+                    $scope.continue = false;
+                    return;
+                }
+            }
+            if($scope.stockRebalancing.geoFencing == 0) {
+                $scope.showWarning($scope.resourceBundle['warn.geofencing']);
+                $scope.continue = false;
+                return;
+            }
+            validateTrigger();
+        }
+
+        function constructFinal() {
+                $scope.stockRebalancingConfig = {
+                    enableStockRebalancing: $scope.stockRebalancing.enableStockRebalancing,
+                    mtTags: angular.copy($scope.stockRebalancing.mtTags),
+                    entityTagsCombination: angular.copy($scope.stockRebalancing.entityTagsCombination),
+                    geoFencing: parseInt($scope.stockRebalancing.geoFencing),
+                    stockOutDurationExceedsThreshold: $scope.stockRebalancing.stockOutDurationExceedsThreshold,
+                    acceptableLeadTime: parseInt($scope.stockRebalancing.acceptableLeadTime),
+                    expiryCheck: $scope.stockRebalancing.expiryCheck,
+                    maxStock: $scope.stockRebalancing.maxStock,
+                    maxStockDays: parseInt($scope.stockRebalancing.maxStockDays),
+                    transportationCost: parseInt($scope.stockRebalancing.transportationCost),
+                    handlingCharges: parseInt($scope.stockRebalancing.handlingCharges),
+                    inventoryHoldingCost: parseInt($scope.stockRebalancing.inventoryHoldingCost)
+                }
+            }
+
+        $scope.getStockRebalancingConfiguration = function() {
+            $scope.showLoading();
+            domainCfgService.getStockRebalancingConfig().then(function (data) {
+                if(checkNotNullEmpty(data.data)) {
+                    $scope.stockRebalancing = data.data;
+                }
+                updateTags();
+            }).catch(function err(msg) {
+                $scope.showErrorMsg(msg, true);
+            }).finally(function () {
+                $scope.hideLoading();
+            })
+        };
+
+
+        $scope.setStockRebalancingConfiguration = function() {
+            $scope.continue = true;
+            validateGeneral();
+            if($scope.continue) {
+                updateTags();
+                constructFinal();
+                $scope.showLoading();
+                domainCfgService.setStockRebalancingConfig($scope.stockRebalancingConfig).then(function (data) {
+                    $scope.showSuccess(data.data);
+                }).catch(function err(msg) {
+                    $scope.showErrorMsg(msg, true);
+                }).finally(function () {
+                    $scope.getStockRebalancingConfiguration();
+                    $scope.hideLoading();
+                })
+            }
+        };
+
+
+        function init() {
+            $scope.stockRebalancing = {enableStockRebalancing: false, leadTime: "0", mTags: [], entityTagsCombination: [], geoFencing: 0, recommendationNumber: 0,
+                stockOutDurationExceedsThreshold: true, acceptableLeadTime: 0, expiryCheck: true, maxStock: true, maxStockDays: 0,
+                transportationCost: 0, handlingCharges: 0, inventoryHoldingCost: 0};
+                $scope.getStockRebalancingConfiguration();
+        }
+
+        init();
+    }]);
+
 domainCfgControllers.controller('ApprovalConfigurationController', ['$scope', 'domainCfgService',
     function ($scope, domainCfgService) {
         var ty = {ps: true, t: false};
@@ -1462,19 +1635,19 @@ domainCfgControllers.controller('InventoryConfigurationController', ['$scope', '
         }
 
         function isReturnsConfigurationValid() {
-            var isReturnsConfigValid = $scope.inv.rcm.every(function(data){
-               if (!(checkNotNullEmpty(data.enTgs) && (checkNotNullEmpty(data.incDur) || checkNotNullEmpty(data.outDur)))) {
-                   $scope.showWarning($scope.resourceBundle['config.returns.policy.configure']);
-                   return false;
-               } else {
-                   if (checkNullEmpty(data.incDur)) {
-                       data.incDur = undefined;
-                   }
-                   if (checkNullEmpty(data.outDur)) {
-                       data.outDur = undefined;
-                   }
-                   return true;
-               }
+            var isReturnsConfigValid = $scope.inv.rcm.every(function (data) {
+                if (!(checkNotNullEmpty(data.enTgs) && (checkNotNullEmpty(data.incDur) || checkNotNullEmpty(data.outDur)))) {
+                    $scope.showWarning($scope.resourceBundle['config.returns.policy.configure']);
+                    return false;
+                } else {
+                    if (checkNullEmpty(data.incDur)) {
+                        data.incDur = undefined;
+                    }
+                    if (checkNullEmpty(data.outDur)) {
+                        data.outDur = undefined;
+                    }
+                    return true;
+                }
             });
             return isReturnsConfigValid;
         }
@@ -4145,8 +4318,8 @@ domainCfgControllers.controller('NotificationMessageController', ['$scope', 'dom
             $scope.to = '';
         };
 
-        $scope.exportData=function(isInfo) {
-            if(isInfo) {
+        $scope.exportData = function (isInfo) {
+            if (isInfo) {
                 return {
                     filters: getCaption(),
                     type: $scope.resourceBundle['exports.notificationstatus']

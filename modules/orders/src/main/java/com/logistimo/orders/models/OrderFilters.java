@@ -24,6 +24,7 @@
 package com.logistimo.orders.models;
 
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -37,23 +38,12 @@ public class OrderFilters {
   private Long domainId;
   private Long kioskId;
 
-  private String status;
+  private List<String> statusList;
   private Date since;
   private Date until;
 
   //Time after which there is create or update
   private Date updatedSince;
-
-  public Date getUpdatedSince() {
-    return updatedSince;
-  }
-
-  public OrderFilters setUpdatedSince(Date updatedSince) {
-    if (updatedSince != null) {
-      this.updatedSince = updatedSince;
-    }
-    return this;
-  }
 
   /**
    * Indicate transfer/order.
@@ -73,6 +63,7 @@ public class OrderFilters {
   boolean withDemand;
   private String userId;
   private Long linkedKioskId;
+  private Boolean skipVisibilityCheck = Boolean.FALSE;
 
   /**
    * Purchase reference Id
@@ -82,6 +73,8 @@ public class OrderFilters {
    * Transfer reference Id
    */
   private String transferReferenceId;
+
+  private Long materialId;
 
   public Long getDomainId() {
     return domainId;
@@ -98,15 +91,6 @@ public class OrderFilters {
 
   public OrderFilters setKioskId(Long kioskId) {
     this.kioskId = kioskId;
-    return this;
-  }
-
-  public String getStatus() {
-    return status;
-  }
-
-  public OrderFilters setStatus(String status) {
-    this.status = status;
     return this;
   }
 
@@ -236,5 +220,56 @@ public class OrderFilters {
   public OrderFilters setTransferReferenceId(String transferReferenceId) {
     this.transferReferenceId = transferReferenceId;
     return this;
+  }
+
+  public Date getUpdatedSince() {
+    return updatedSince;
+  }
+
+  public OrderFilters setUpdatedSince(Date updatedSince) {
+    if (updatedSince != null) {
+      this.updatedSince = updatedSince;
+    }
+    return this;
+  }
+
+  public Long getMaterialId() {
+    return materialId;
+  }
+
+  public OrderFilters setMaterialId(Long materialId) {
+    this.materialId = materialId;
+    return this;
+  }
+
+  public List<String> getStatusList() {
+    return statusList;
+  }
+
+  public OrderFilters setStatus(String... status) {
+    if (!isEmptyOrNull(status)) {
+      this.statusList = Arrays.asList(status);
+    }
+    return this;
+  }
+
+  private boolean isEmptyOrNull(String[] status) {
+    if (status != null && status.length > 0) {
+      for (String status1 : status) {
+        if (status1 != null) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  public OrderFilters setSkipVisibilityCheck(Boolean skipVisibilityCheck){
+    this.skipVisibilityCheck = skipVisibilityCheck;
+    return this;
+  }
+
+  public Boolean getSkipVisibilityCheck(){
+    return this.skipVisibilityCheck;
   }
 }

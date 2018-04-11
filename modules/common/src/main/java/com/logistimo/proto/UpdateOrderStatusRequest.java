@@ -119,6 +119,7 @@ public class UpdateOrderStatusRequest {
 
   /**
    * Sales reference Id
+   *
    * @return
    */
   @SerializedName(value = "sales_ref_id")
@@ -152,6 +153,10 @@ public class UpdateOrderStatusRequest {
     return tid != null;
   }
 
-  public String getSalesRefId() { return salesRefId; }
-  public void setSalesrefId(String sales_ref_id) { this.salesRefId = sales_ref_id; }
+  public String getSalesRefId() {
+    return salesRefId;
+  }
+
+  public void setSalesrefId(String sales_ref_id) {
+    this.salesRefId = sales_ref_id; }
 }

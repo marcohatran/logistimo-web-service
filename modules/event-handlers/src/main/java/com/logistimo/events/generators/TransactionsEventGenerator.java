@@ -104,7 +104,8 @@ public class TransactionsEventGenerator extends EventGenerator {
         if (ITransaction.TYPE_ISSUE.equals(transType) || ITransaction.TYPE_TRANSFER
             .equals(transType) || ITransaction.TYPE_RETURNS_OUTGOING.equals(transType)) {
           kioskId = ((ITransaction) o).getKioskId();
-        } else if (ITransaction.TYPE_RECEIPT.equals(transType) || ITransaction.TYPE_RETURNS_INCOMING.equals(transType)) {
+        } else if (ITransaction.TYPE_RECEIPT.equals(transType) || ITransaction.TYPE_RETURNS_INCOMING
+            .equals(transType)) {
           kioskId = ((ITransaction) o).getLinkedKioskId();
         }
       }

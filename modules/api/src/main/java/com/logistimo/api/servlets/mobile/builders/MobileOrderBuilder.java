@@ -166,7 +166,7 @@ public class MobileOrderBuilder {
     mom.tid = o.getOrderId();
     mom.rid = o.getSalesReferenceID();
     mom.setSalesReferenceId(o.getSalesReferenceID());
-    if(IOrder.TRANSFER == o.getOrderType()) {
+    if (IOrder.TRANSFER == o.getOrderType()) {
       mom.setTransferReferenceId(o.getTransferReferenceId());
     } else {
       mom.setPurchaseReferenceId(o.getPurchaseReferenceId());

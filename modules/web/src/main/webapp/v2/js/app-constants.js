@@ -47,6 +47,15 @@ logistimoApp.constant('INVENTORY', {
         'OVERSTOCK' : '202'
     }
 });
+logistimoApp.constant('REBALANCING', {
+	reasonCodes : {
+		'sdet' : 'SDET',
+		'sebc' : 'SEBC',
+		'sgtm' : 'SGTM',
+		'sgts' : 'SGTS',
+		'sltm' : 'SLTM'
+	}
+});
 logistimoApp.constant('ORDER', {
 	statusTxt : {
 		'cn' : 'Cancelled',
@@ -315,12 +324,40 @@ logistimoApp.constant('NOTIFICATIONS', {
 			"extraParams": { "id" : "status","type" : "list", prefix : "stockDiscarded", "placeholder": "-- Select Status --", name: "Status"}},
 			{ "id" : "com.logistimo.inventory.entity.Invntry:201", "name" : "< Min." },
 			{ "id" : "com.logistimo.inventory.entity.Invntry:202", "name" : "> Max." },
-			{ "id" : "com.logistimo.inventory.entity.Transaction:210", "name" : "Incoming return received",
-				"params" : [ { "id" : "reason", "type" : "list", "prefix" : "incomingReturnReceived", "placeholder" : "-- Select Reason --", "name" : "Reason"}],
-				"extraParams": { "id" : "status","type" : "list", prefix : "incomingReturnReceived", "placeholder": "-- Select Status --", name: "Status"}},
-			{ "id" : "com.logistimo.inventory.entity.Transaction:211", "name" : "Outgoing return sent",
-				"params" : [ { "id" : "reason", "type" : "list", "prefix" : "outgoingReturnSent", "placeholder" : "-- Select Reason --", "name" : "Reason"}],
-				"extraParams": { "id" : "status","type" : "list", prefix : "outgoingReturnSent", "placeholder": "-- Select Status --", name: "Status"}}]
+            {
+                "id": "com.logistimo.inventory.entity.Transaction:210", "name": "Incoming return received",
+                "params": [{
+                    "id": "reason",
+                    "type": "list",
+                    "prefix": "incomingReturnReceived",
+                    "placeholder": "-- Select Reason --",
+                    "name": "Reason"
+                }],
+                "extraParams": {
+                    "id": "status",
+                    "type": "list",
+                    prefix: "incomingReturnReceived",
+                    "placeholder": "-- Select Status --",
+                    name: "Status"
+                }
+            },
+            {
+                "id": "com.logistimo.inventory.entity.Transaction:211", "name": "Outgoing return sent",
+                "params": [{
+                    "id": "reason",
+                    "type": "list",
+                    "prefix": "outgoingReturnSent",
+                    "placeholder": "-- Select Reason --",
+                    "name": "Reason"
+                }],
+                "extraParams": {
+                    "id": "status",
+                    "type": "list",
+                    prefix: "outgoingReturnSent",
+                    "placeholder": "-- Select Status --",
+                    name: "Status"
+                }
+            }]
 	},
 	accountLabel : {
 		'events' : [{"id" : "com.logistimo.accounting.entity.Account:300", "name" : "Credit limit exceeded"}]
@@ -602,21 +639,21 @@ logistimoApp.constant('APPROVAL', {
     'REJECTED': 'rj'
 });
 logistimoApp.constant('RETURNS', {
-	'status' : {
-		'cn': 'Cancel',
-		'rd': 'Receive',
-		'sp': 'Ship',
-		'OPEN': 'op',
-		'SHIPPED': 'sp',
-		'RECEIVED': 'rd',
-		'CANCELLED': 'cn'
-	},
-	'statusLabel' : {
-		'cn': 'Cancelled',
-		'rd': 'Received',
-		'op': 'Pending',
-		'sp': 'Shipped'
-	}
+    'status': {
+        'cn': 'Cancel',
+        'rd': 'Receive',
+        'sp': 'Ship',
+        'OPEN': 'op',
+        'SHIPPED': 'sp',
+        'RECEIVED': 'rd',
+        'CANCELLED': 'cn'
+    },
+    'statusLabel': {
+        'cn': 'Cancelled',
+        'rd': 'Received',
+        'op': 'Pending',
+        'sp': 'Shipped'
+    }
 });
 logistimoApp.constant('PATTERNS', {
 	'LATITUDE':'^-?(([0-8])?((([0-9])(\\.\\d{1,8})?)|(90(\\.[0]{0,8})?)))$',

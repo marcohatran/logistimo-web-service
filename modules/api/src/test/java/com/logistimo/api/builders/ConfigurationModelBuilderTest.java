@@ -313,10 +313,12 @@ public class ConfigurationModelBuilderTest {
     invConfig.setActualTransDateByType(ITransaction.TYPE_TRANSFER, actTransConfig);
     invConfig.setActualTransDateByType(ITransaction.TYPE_RETURNS_INCOMING, actTransConfig);
     invConfig.setActualTransDateByType(ITransaction.TYPE_RETURNS_OUTGOING, actTransConfig);
-    Map<String,String> actualTransConfigAsStringByTransType = configModelBuilder.buildActualTransConfigAsStringByTransType(invConfig);
+    Map<String, String>
+        actualTransConfigAsStringByTransType =
+        configModelBuilder.buildActualTransConfigAsStringByTransType(invConfig);
     assertNotNull(actualTransConfigAsStringByTransType);
-    assertEquals(7,actualTransConfigAsStringByTransType.size());
-    Map<String,String> expectedMap = Collections.unmodifiableMap(new HashMap<String, String>() {
+    assertEquals(7, actualTransConfigAsStringByTransType.size());
+    Map<String, String> expectedMap = Collections.unmodifiableMap(new HashMap<String, String>() {
       {
         put(ITransaction.TYPE_ISSUE, "0");
         put(ITransaction.TYPE_RECEIPT, "0");
@@ -327,7 +329,7 @@ public class ConfigurationModelBuilderTest {
         put(ITransaction.TYPE_RETURNS_OUTGOING, "0");
       }
     });
-    assertEquals(expectedMap,actualTransConfigAsStringByTransType);
+    assertEquals(expectedMap, actualTransConfigAsStringByTransType);
     invConfig.setActualTransDateByType(ITransaction.TYPE_ISSUE, null);
     invConfig.setActualTransDateByType(ITransaction.TYPE_RECEIPT, null);
     invConfig.setActualTransDateByType(ITransaction.TYPE_PHYSICALCOUNT, null);
@@ -335,10 +337,11 @@ public class ConfigurationModelBuilderTest {
     invConfig.setActualTransDateByType(ITransaction.TYPE_TRANSFER, null);
     invConfig.setActualTransDateByType(ITransaction.TYPE_RETURNS_INCOMING, null);
     invConfig.setActualTransDateByType(ITransaction.TYPE_RETURNS_OUTGOING, null);
-    actualTransConfigAsStringByTransType = configModelBuilder.buildActualTransConfigAsStringByTransType(invConfig);
+    actualTransConfigAsStringByTransType =
+        configModelBuilder.buildActualTransConfigAsStringByTransType(invConfig);
     assertNotNull(actualTransConfigAsStringByTransType);
-    assertEquals(7,actualTransConfigAsStringByTransType.size());
-    assertEquals(expectedMap,actualTransConfigAsStringByTransType);
+    assertEquals(7, actualTransConfigAsStringByTransType.size());
+    assertEquals(expectedMap, actualTransConfigAsStringByTransType);
   }
 
   private Map<String,String> getInvOperationTagsMap() {

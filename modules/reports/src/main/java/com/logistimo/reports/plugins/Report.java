@@ -295,12 +295,16 @@ public class Report {
   public Map<String,Float> nodprsn;
   public Map<String,Float> nsdprsn;
   public Map<String,Float> nfdprsn;
-  public Map<String,Float> rrsni;
-  public Map<String,Float> torrsni;
+  public Map<String, Float> rrsni;
+  public Map<String, Float> torrsni;
 
-  public Float getReturnsOutgoingQuantity(){ return trroq; }
+  public Float getReturnsOutgoingQuantity() {
+    return trroq;
+  }
 
-  public Float getReturnsIncomingQuantity(){ return trriq; }
+  public Float getReturnsIncomingQuantity() {
+    return trriq;
+  }
 
   public Long getReturnsIncomingCount() {
     return trric;

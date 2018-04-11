@@ -123,15 +123,15 @@ angular.module('logistimo.storyboard.bulletinboards', ['logistimo.storyboard.das
             $scope.bulletinBoards = {};
         };
         $scope.init();
-        
+
         function getAllBulletinBoards() {
             bulletinBoardRepository.getAll($scope).then(function (bulletinBoards) {
                 $scope.bulletinBoards = bulletinBoards;
             });
         }
-        
+
         getAllBulletinBoards();
-        
+
         $scope.viewBulletinBoard = function(bulletinBoardId) {
             if($scope.isBulletinBoard) {
                 $window.location.href = "#/view/" + bulletinBoardId;
@@ -139,7 +139,7 @@ angular.module('logistimo.storyboard.bulletinboards', ['logistimo.storyboard.das
                 $window.location.href="#configuration/bulletin/view/" + bulletinBoardId;
             }
         };
-        
+
         $scope.delete = function(bulletinBoardId) {
             bulletinBoardRepository.delete(bulletinBoardId, $scope).then(function (data) {
                 getAllBulletinBoards();
@@ -171,11 +171,11 @@ angular.module('logistimo.storyboard.bulletinboards', ['logistimo.storyboard.das
             $scope.count = 0;
         };
         $scope.init();
-        $scope.renderDashboards = function(){
+        $scope.renderDashboards = function () {
             $scope.dashboardId = $scope.bulletinBoard.dashboards[$scope.count].id;
             $scope.renderDashboardsPage = true;
             $timeout(function () {
-                if($scope.bulletinBoard.dashboards[$scope.count].hasNoData){
+                if ($scope.bulletinBoard.dashboards[$scope.count].hasNoData) {
                     $scope.count = $scope.count + 1;
                     $scope.renderDashboardsPage = false;
                     if ($scope.count == $scope.bulletinBoard.dashboards.length) {
@@ -184,7 +184,7 @@ angular.module('logistimo.storyboard.bulletinboards', ['logistimo.storyboard.das
                     $timeout(function () {
                         $scope.renderDashboards();
                     }, 10);
-                }else {
+                } else {
                     $timeout(function () {
                         $scope.count = $scope.count + 1;
                         $scope.renderDashboardsPage = false;
@@ -196,7 +196,7 @@ angular.module('logistimo.storyboard.bulletinboards', ['logistimo.storyboard.das
                         }, 10);
                     }, $scope.bulletinBoard.max * 1000);
                 }
-            },$scope.bulletinBoard.min * 1000);
+            }, $scope.bulletinBoard.min * 1000);
         };
         
         $scope.setBulletinBoardTitle = function (title, subTitle, index) {
@@ -210,11 +210,11 @@ angular.module('logistimo.storyboard.bulletinboards', ['logistimo.storyboard.das
         $scope.setTitles = function(title, info, index) {
             $scope.setBulletinBoardTitle(title, info, index);
         };
-        
+
         $scope.isPrimary = function (index) {
             return $scope.count == index;
         };
-        
+
         $scope.isSecondary = function (index) {
             if ($scope.count + 1 == $scope.bulletinBoard.dashboards.length) {
                 return index == 0;
@@ -224,7 +224,7 @@ angular.module('logistimo.storyboard.bulletinboards', ['logistimo.storyboard.das
 
         $scope.markDashboardNoData = function (dashboardId) {
             $scope.bulletinBoard.dashboards.some(function (dashboard) {
-                if(dashboard.id == dashboardId){
+                if (dashboard.id == dashboardId) {
                     dashboard.hasNoData = true;
                     return true;
                 }
@@ -1009,9 +1009,9 @@ angular.module('logistimo.storyboard.dashboards', ['logistimo.storyboard.widgets
                 $scope.checkNetwork();
                 dashboardRepository.get($scope.dashboardId, $scope).then(function (dashboard) {
                     $scope.db = dashboard;
-                    if($scope.db.widgets != undefined) {
-                        for(var widget in $scope.db.widgets) {
-                            if($scope.db.widgets.hasOwnProperty(widget)) {
+                    if ($scope.db.widgets != undefined) {
+                        for (var widget in $scope.db.widgets) {
+                            if ($scope.db.widgets.hasOwnProperty(widget)) {
                                 $scope.widgetsCount = $scope.widgetsCount + 1;
                             }
                         }
@@ -1033,17 +1033,17 @@ angular.module('logistimo.storyboard.dashboards', ['logistimo.storyboard.widgets
         }
         
         init();
-        
+
         $scope.renderedFailedCount = 0;
-        
+
         $scope.completeRendering = function () {
             $scope.renderedCount = $scope.renderedCount + 1;
-            
+
         };
-        
-        $scope.noDataToRender = function() {
-            $scope.renderedFailedCount = $scope.renderedFailedCount+1;
-            if($scope.renderedFailedCount == $scope.widgetsCount && $scope.isBulletinBoard) {
+
+        $scope.noDataToRender = function () {
+            $scope.renderedFailedCount = $scope.renderedFailedCount + 1;
+            if ($scope.renderedFailedCount == $scope.widgetsCount && $scope.isBulletinBoard) {
                 $scope.markDashboardNoData($scope.dashboardId);
             }
         }
@@ -1123,7 +1123,7 @@ angular.module('logistimo.storyboard.dashboards', ['logistimo.storyboard.widgets
         $scope.checkNullEmpty = function (argument) {
             return !$scope.checkNotNullEmpty(argument);
         };
-        
+
         $scope.delete = function(dashboardId) {
             dashboardRepository.delete(dashboardId, $scope).then(function (data) {
                 getAllDashboards();
@@ -1486,8 +1486,8 @@ angular.module('logistimo.storyboard').run(['$templateCache', function($template
         "    </div>\n" +
         "</div>"
     );
-    
-    
+
+
     $templateCache.put('/angular-storyboards/src/bulletinboard/templates/view-bulletin-board.html',
         "<div>\n" +
         "    <div class=\"col-sm-12\">\n" +
@@ -1688,8 +1688,8 @@ angular.module('logistimo.storyboard').run(['$templateCache', function($template
         "    </div>\n" +
         "</div>"
     );
-    
-    
+
+
     $templateCache.put('/angular-storyboards/src/dashboard/templates/view-dashboard.html',
         "<div class=\"row\">\n" +
         "    <div class=\"col-sm-12\">\n" +

@@ -631,7 +631,8 @@ public class ShipmentService implements IShipmentService {
                                              PersistenceManager pm, String reason,
                                              IShipment shipment,
                                              boolean updateOrderStatus, boolean isOrderFulfil,
-                                             int source, String salesRefId, Date estimatedDateOfArrival, Boolean updateOrderFields)
+                                             int source, String salesRefId,
+                                             Date estimatedDateOfArrival, Boolean updateOrderFields)
       throws LogiException {
     Long orderId = extractOrderId(shipmentId);
     LockUtil.LockStatus lockStatus = LockUtil.lock(Constants.TX_O + orderId);
@@ -762,7 +763,9 @@ public class ShipmentService implements IShipmentService {
       if (updateOrderStatus) {
         updateOrderStatus(shipment.getOrderId(), shipment.getStatus(), userId, pm);
       }
-      orderManagementService.updateOrderMetadata(orderId, userId, pm, salesRefId, estimatedDateOfArrival, updateOrderFields);
+      orderManagementService
+          .updateOrderMetadata(orderId, userId, pm, salesRefId, estimatedDateOfArrival,
+              updateOrderFields);
       if (closePM) {
         tx.commit();
       }
@@ -986,7 +989,8 @@ public class ShipmentService implements IShipmentService {
     return
         orderManagementService.getOrder(shipment.getOrderId(), false, pm).getOrderType()
             == IOrder.TRANSFER_ORDER
-            ? ITransaction.TRACKING_OBJECT_TYPE_TRANSFER_SHIPMENT : ITransaction.TRACKING_OBJECT_TYPE_ORDER_SHIPMENT;
+            ? ITransaction.TRACKING_OBJECT_TYPE_TRANSFER_SHIPMENT
+            : ITransaction.TRACKING_OBJECT_TYPE_ORDER_SHIPMENT;
   }
 
   /**
@@ -1837,7 +1841,7 @@ public class ShipmentService implements IShipmentService {
 
   @Override
   public List<IShipmentItemBatch> getShipmentsBatchByOrderId(Long orderId) {
-    PersistenceManager  pm = PMF.get().getPersistenceManager();
+    PersistenceManager pm = PMF.get().getPersistenceManager();
     Query q = null;
     try {
       q = pm.newQuery("javax.jdo.query.SQL",
@@ -2473,7 +2477,8 @@ public class ShipmentService implements IShipmentService {
   }
 
   public List<FulfilledQuantityModel> getFulfilledQuantityByOrderId(Long orderId,
-                                                                    List<Long> materialIdList) throws ServiceException{
+                                                                    List<Long> materialIdList)
+      throws ServiceException {
     if (orderId == null) {
       return null;
     }
@@ -2486,17 +2491,20 @@ public class ShipmentService implements IShipmentService {
 //                  + "SHIPMENT S,SHIPMENTITEM SI LEFT JOIN  SHIPMENTITEMBATCH SIB ON SIB.SIID = SI.ID "
 //                  + "WHERE S.ORDERID=? AND S.ID = SI.SID AND SI.MID IN (?) GROUP BY SI.MID,BID");
 
-      StringBuilder queryBuilder= new StringBuilder("SELECT SI.MID, BID, SUM(SI.FQ),SUM(SIB.FQ), SI.SID FROM "
-          + "SHIPMENT S,SHIPMENTITEM SI LEFT JOIN  SHIPMENTITEMBATCH SIB ON SIB.SIID = SI.ID "
-          + "WHERE S.ORDERID=").append(orderId).append(" AND S.ID = SI.SID AND SI.MID IN (");
-      materialIdList.forEach(materailId->{
+      StringBuilder
+          queryBuilder =
+          new StringBuilder("SELECT SI.MID, BID, SUM(SI.FQ),SUM(SIB.FQ), SI.SID FROM "
+              + "SHIPMENT S,SHIPMENTITEM SI LEFT JOIN  SHIPMENTITEMBATCH SIB ON SIB.SIID = SI.ID "
+              + "WHERE S.ORDERID=").append(orderId).append(" AND S.ID = SI.SID AND SI.MID IN (");
+      materialIdList.forEach(materailId -> {
         queryBuilder.append(materailId).append(CharacterConstants.COMMA);
       });
 
       queryBuilder.setLength(queryBuilder.length() - 1);
 
       Query q =
-          pm.newQuery("javax.jdo.query.SQL",queryBuilder.append(") GROUP BY SI.MID,BID").toString());
+          pm.newQuery("javax.jdo.query.SQL",
+              queryBuilder.append(") GROUP BY SI.MID,BID").toString());
       List params = new ArrayList(2);
       params.add(orderId);
       params.add(materialIdList);

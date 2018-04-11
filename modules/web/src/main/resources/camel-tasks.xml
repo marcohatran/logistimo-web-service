@@ -131,6 +131,29 @@
             <to uri="activemq:queue:datax-apps-submit"/>
         </route>
 
+        <route id="stockRebalancingStatusPublisher">
+            <from uri="direct:stock-rebalancing-recommendation-status"/>
+            <marshal ref="gson"/>
+            <to uri="activemq:queue:stock-rebalancing-recommendation-status"/>
+        </route>
+
+        <route id="stockRebalancingStatusHandler" errorHandlerRef="stockRebalancingStatusErrorHandler"
+               autoStartup="{{task.server}}">
+            <from uri="activemq:queue:stock-rebalancing-recommendation-status"/>
+            <unmarshal ref="stockRebalancingRecommendationStatusModel"/>
+            <log message="Routing message from stock rebalancing status queue to Logistimo Web ${body}"/>
+            <bean ref="stockRebalancingStatusProcessor"/>
+        </route>
+
+        <route id="stockRebalancingRunStatusHandler" errorHandlerRef="stockRebalancingRunStatusErrorHandler"
+               autoStartup="{{task.server}}">
+            <from uri="activemq:queue:stock-rebalancing-completion"/>
+            <unmarshal ref="stockRebalancingExecutionModel"/>
+            <log message="Routing message from stock rebalancing status queue to Logistimo Web ${body}"/>
+            <bean ref="stockRebalancingRunStatusProcessor"/>
+        </route>
+
+
     </camelContext>
 
     <bean id="approvalRequestedProcessor"
@@ -146,12 +169,35 @@
           class="com.logistimo.exports.processors.DataXExportStatusProcessor">
     </bean>
 
+    <bean id="stockRebalancingStatusProcessor"
+          class="com.logistimo.stockrebalancing.actions.StockRebalancingRecommendationStatusAction">
+    </bean>
+
+    <bean id="stockRebalancingRunStatusProcessor"
+          class="com.logistimo.stockrebalancing.actions.StockRebalancingRunNotificationAction">
+    </bean>
+
     <bean id="dataxExportStatusErrorHandler" class="org.apache.camel.builder.DeadLetterChannelBuilder">
         <property name="deadLetterUri" value="activemq:queue:datax-mesh-status-ls-export-app-deadletter"/>
         <property name="redeliveryPolicy" ref="dataxExportRedeliveryPolicyConfig"/>
     </bean>
 
     <bean id="dataxExportRedeliveryPolicyConfig" class="org.apache.camel.processor.RedeliveryPolicy">
+        <property name="maximumRedeliveries" value="3"/>
+        <property name="redeliveryDelay" value="5000"/>
+    </bean>
+
+    <bean id="stockRebalancingStatusErrorHandler" class="org.apache.camel.builder.DeadLetterChannelBuilder">
+        <property name="deadLetterUri" value="activemq:queue:stock-rebalancing-status-deadletter"/>
+        <property name="redeliveryPolicy" ref="stockRebalancingRedeliveryPolicyConfig"/>
+    </bean>
+
+    <bean id="stockRebalancingRunStatusErrorHandler" class="org.apache.camel.builder.DeadLetterChannelBuilder">
+        <property name="deadLetterUri" value="activemq:queue:stock-rebalancing-run-status-deadletter"/>
+        <property name="redeliveryPolicy" ref="stockRebalancingRedeliveryPolicyConfig"/>
+    </bean>
+
+    <bean id="stockRebalancingRedeliveryPolicyConfig" class="org.apache.camel.processor.RedeliveryPolicy">
         <property name="maximumRedeliveries" value="3"/>
         <property name="redeliveryDelay" value="5000"/>
     </bean>
@@ -270,6 +316,14 @@
 
     <bean id="dataxResponseModel" class="org.apache.camel.component.gson.GsonDataFormat">
         <property name="unmarshalType" value="com.logistimo.exports.model.ExportResponseModel"/>
+    </bean>
+
+    <bean id="stockRebalancingRecommendationStatusModel" class="org.apache.camel.component.gson.GsonDataFormat">
+        <property name="unmarshalType" value="com.logistimo.stockrebalancing.models.RecommendationStatusModel"/>
+    </bean>
+
+    <bean id="stockRebalancingExecutionModel" class="org.apache.camel.component.gson.GsonDataFormat">
+        <property name="unmarshalType" value="com.logistimo.stockrebalancing.models.ExecutionMetadataModel"/>
     </bean>
 
 </beans>

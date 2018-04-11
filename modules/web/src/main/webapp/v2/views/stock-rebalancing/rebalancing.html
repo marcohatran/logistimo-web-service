@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright © 2018 Logistimo.
+  ~
+  ~ This file is part of Logistimo.
+  ~
+  ~ Logistimo software is a mobile & web platform for supply chain management and remote temperature monitoring in
+  ~ low-resource settings, made available under the terms of the GNU Affero General Public License (AGPL).
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General
+  ~ Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any
+  ~ later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+  ~ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+  ~ for more details.
+  ~
+  ~ You should have received a copy of the GNU Affero General Public License along with this program.  If not, see
+  ~ <http://www.gnu.org/licenses/>.
+  ~
+  ~ You can be released from the requirements of the license by purchasing a commercial license. To know more about
+  ~ the commercial license, please contact us at opensource@logistimo.com
+  -->
+<div class="pane">
+    <div class="bizinfo bizinfo-last">
+        <div ng-controller="RebalancingListingCtrl">
+            <div class="filter-box form-group">
+                <div ng-controller="ResetController">
+                    <div class="row">
+                        <div class="col-sm-3">
+                            <span ng-class="{'required':mxE}" class="filter-label">{{resourceBundle.kiosk}}</span>
+                            <entity-select ent-model="entity" classes="form-control"
+                                           place-holder="{{resourceBundle.filterby}} {{resourceBundle['kiosks.lower']}}">
+                            </entity-select>
+                        </div>
+                        <div class="col-sm-3">
+                            <span class="filter-label">{{resourceBundle.material}}</span>
+                            <material-select mat-model="material" classes="form-control"
+                                             place-holder="{{resourceBundle.filterby}} {{resourceBundle['materials.lowercase']}}">
+                            </material-select>
+                        </div>
+                        <div class="col-sm-3">
+                            <span class="filter-label">{{resourceBundle.type}}</span>
+                            <select class="form-control" ng-model="reason">
+                                <option value="">{{resourceBundle['all']}} {{resourceBundle['reasons.lower']}}
+                                </option>
+                                <option value="SDET">{{resourceBundle['stock.out.likely']}}</option>
+                                <option value="SEBC">{{resourceBundle['expiring']}}</option>
+                                <option value="SGTM">{{resourceBundle['excess.stock.long.duration']}}</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-3 pt30">
+                            <span class="filter-label">{{resourceBundle['kiosk']}} {{resourceBundle['tag.lower']}}:</span>
+                            <tag-filter ng-model="etag" tag-type="entity"></tag-filter>
+                        </div>
+                        <div class="col-sm-3  pt30">
+                            <span class="filter-label">{{resourceBundle['material']}} {{resourceBundle['tag.lower']}}:</span>
+                            <tag-filter ng-model="mtag" tag-type="material"></tag-filter>
+                        </div>
+                    </div>
+                    <div ng-include="'views/common/reset-filters.html'"></div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="pull-right">
+                        <div ng-include="'views/paginator.html'"></div>
+                    </div>
+                    <div class="pull-right" style="padding-top: 10px;"></div>
+                </div>
+            </div>
+            <div class="row" ng-show="filtered.length > 0">
+                <div class="col-sm-12">
+                    <table class="table table-condensed table-hover table-logistimo" id="fixTable">
+                        <thead>
+                        <tr>
+                            <th class="text-center">{{resourceBundle['serialnum']}}</th>
+                            <th>{{resourceBundle['kiosk']}}</th>
+                            <th>{{resourceBundle['material.upper']}}</th>
+                            <th>{{resourceBundle['reason']}}</th>
+                            <th>{{resourceBundle['transfer.quantity']}}</th>
+                            <th>{{resourceBundle['estimated.benefit.of.transfer']}}</th>
+                            <th>{{resourceBundle['transfer.condition']}}</th>
+                        </tr>
+                        </thead>
+                        <tbody ng-repeat="item in filtered" ng-controller="NoController" data-ng-switch
+                               on="showRecommendations[$index]">
+                        <tr class="clickable">
+                            <td class="text-center">{{$index * 1 + 1}}</td>
+                            <td ng-click="toggle($index)"><a
+                                    href="#/setup/entities/detail/{{item.entity_id}}/"
+                                    target="_blank">{{item.entity_name}}</a><span class="litetext">{{item.location}}</span></td>
+                            <td ng-click="toggle($index)"><a
+                                    href="#/setup/materials/all/detail/{{item.material_id}}/"
+                                    target="_blank">{{item.material_name}}</a>
+                                <div class="row" ng-show="item.type == 'SOURCE' && item.batches.length > 0">
+                                    <div class="col-sm-12">
+                                        <table class="table table-bordered table-condensed table-logistimo table-batch">
+                                            <tr>
+                                              <th>{{resourceBundle['batch']}}</th>
+                                              <th>{{resourceBundle['manufacturer']}}</th>
+                                              <th>{{resourceBundle['approvals.expiry']}}</th>
+                                              <th>{{resourceBundle['quantity']}}</th>
+                                            </tr>
+                                            <tr ng-repeat="batch in item.batches">
+                                                <td>{{batch.batch_id}}</td>
+                                                <td>{{batch.manufacturer}}</td>
+                                                <td>{{batch.expiry}}</td>
+                                                <td>{{batch.quantity}}</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </td>
+                            <td ng-click="toggle($index)">{{item.reason}}</td>
+                            <td ng-click="toggle($index)">{{item.quantity}}</td>
+                            <td ng-click="toggle($index)">{{item.value | number}}</td>
+                            <td ng-click="toggle($index)">{{item.recommendations_count}}
+                                <span ng-show="item.type == 'SOURCE'">{{resourceBundle['destinations']}}</span>
+                                <span ng-show="item.type == 'DESTINATION'">{{resourceBundle['sources']}}</span>
+                            <br><span ng-show="item.transfers_count > 0" class="litetext">{{item.transfers_count}} {{resourceBundle['transfers.lower']}} {{resourceBundle['initiated']}}</span></td>
+                        </tr>
+                        <tr data-ng-switch-when="true">
+                            <td colspan="100%" class="partialview">
+                                <div ng-init="view='views/stock-rebalancing/recommendations.html'; entityName = item.entity_name; entityId = item.entity_id;
+                            eventId = item.event_id; materialName = item.material_name; materialId = item.material_id; type = item.type; location = item.location; index = $index;"
+                                     ng-include="'views/partial.html'">
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="row" ng-show="filtered.length == 0">
+                <div class="col-sm-12">
+                    <p class="alert alert-warning">{{resourceBundle['recommendations.none']}}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -348,15 +348,19 @@ public class InventoryManagementServiceImplTest {
     linkedTransaction.setType(ITransaction.TYPE_ISSUE);
 
     try {
-      inventoryManagementService.validateReturnsPolicy(ITransaction.TRACKING_OBJECT_TYPE_ISSUE_TRANSACTION, linkedTransaction, returnsConfig);
-    } catch(ValidationException exception) {
+      inventoryManagementService
+          .validateReturnsPolicy(ITransaction.TRACKING_OBJECT_TYPE_ISSUE_TRANSACTION,
+              linkedTransaction, returnsConfig);
+    } catch (ValidationException exception) {
       assertNotNull(exception);
     }
 
     linkedTransaction.setType(ITransaction.TYPE_RECEIPT);
     try {
-      inventoryManagementService.validateReturnsPolicy(ITransaction.TRACKING_OBJECT_TYPE_RECEIPT_TRANSACTION, linkedTransaction, returnsConfig);
-    } catch(ValidationException exception) {
+      inventoryManagementService
+          .validateReturnsPolicy(ITransaction.TRACKING_OBJECT_TYPE_RECEIPT_TRANSACTION,
+              linkedTransaction, returnsConfig);
+    } catch (ValidationException exception) {
       assertNotNull(exception);
     }
 

@@ -101,6 +101,8 @@ public class MobileShipmentModel {
   @SerializedName(value = "sales_ref_id")
   private String salesReferenceId;
 
-  public void setSalesReferenceId(String salesReferenceId) { this.salesReferenceId = salesReferenceId; }
+  public void setSalesReferenceId(String salesReferenceId) {
+    this.salesReferenceId = salesReferenceId;
+  }
 
 }

@@ -1239,3 +1239,6 @@ transfer.reference.id=Numéro de référence de transfert
 release.reference.id=Numéro de référence du communiqué
 transactions.return.incoming=retour entrant
 transactions.return.outgoing=retour sortant
+release.reference.id=Numéro de référence du communiqué
+stockrebalancing.admin.notification=${inventoryCount} inventory items require stock transfers from other entities in domain ${domainName}. Please review the Stock rebalancing recommendations in the web console to create the relevant transfer orders.
+recommendations.none=Aucune recommandation disponible

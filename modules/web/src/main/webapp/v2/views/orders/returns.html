@@ -33,7 +33,8 @@
                 <td class="text-left vmiddle">{{return.return_id}}</td>
                 <td class="text-center vmiddle">{{RETURNS.statusLabel[return.status.status]}}</td>
                 <td class="text-center">
-                    <a ng-href="#/setup/users/all/details?userId={{return.created_by.user_id}}" target="_blank" ng-click="$event.stopPropagation();">{{return.created_by.full_name}}</a>
+                    <a ng-href="#/setup/users/all/details?userId={{return.created_by.user_id}}" target="_blank"
+                       ng-click="$event.stopPropagation();">{{return.created_by.full_name}}</a>
                     <span class="litetext">{{return.created_at}}</span>
                 </td>
             </tr>

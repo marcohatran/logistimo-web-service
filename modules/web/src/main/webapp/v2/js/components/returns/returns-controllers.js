@@ -51,7 +51,7 @@ function CreateReturnsController($scope, $location, $timeout, returnsService, tr
             angular.forEach($scope.returnItems, function (returnItem) {
                 if (returnItem.materialTags) {
                     trnService.getReasons('ro', returnItem.materialTags).then(function (data) {
-                        if(checkNotNullEmpty(data.data) && checkNotNullEmpty(data.data.rsns)) {
+                        if (checkNotNullEmpty(data.data) && checkNotNullEmpty(data.data.rsns)) {
                             returnItem.reasons = [""].concat(data.data.rsns);
                             returnItem.returnReason = angular.copy(data.data.defRsn);
                             returnItem.defaultReturnReason = angular.copy(data.data.defRsn);
@@ -68,10 +68,10 @@ function CreateReturnsController($scope, $location, $timeout, returnsService, tr
                 }
             })
         }).catch(function error(msg) {
-        $scope.showErrorMsg(msg);
-    }).finally(function () {
-        $scope.hideLoading();
-    });
+            $scope.showErrorMsg(msg);
+        }).finally(function () {
+            $scope.hideLoading();
+        });
 
     $scope.showLoading();
     trnService.getMatStatus("ro", false).then(function (data) {
@@ -213,18 +213,18 @@ function CreateReturnsController($scope, $location, $timeout, returnsService, tr
 
     $scope.validateQuantity = function (material, index) {
         var redraw = false;
-        if(material.displayMeta != material.returnQuantity > 0) {
+        if (material.displayMeta != material.returnQuantity > 0) {
             redraw = true;
         }
         material.displayMeta = material.returnQuantity > 0;
         var isInvalid = false;
-        if(checkNotNullEmpty(material.returnQuantity)) {
-            if(material.returnQuantity > material.fq) {
+        if (checkNotNullEmpty(material.returnQuantity)) {
+            if (material.returnQuantity > material.fq) {
                 showPopup($scope, material, material.id,
                     "Quantity " + material.returnQuantity + " exceed fulfilled quantity " + material.fq + ".",
                     index, $timeout);
                 isInvalid = true;
-            } else if(material.returnQuantity > material.fq - material.returnedQuantity) {
+            } else if (material.returnQuantity > material.fq - material.returnedQuantity) {
                 showPopup($scope, material, material.id,
                     "Quantity " + material.returnQuantity + " exceed remaining return quantity " + (material.fq - material.returnedQuantity) + ".",
                     index, $timeout);
@@ -241,7 +241,7 @@ function CreateReturnsController($scope, $location, $timeout, returnsService, tr
             material.sinvalidPopup = material.sPopupMsg = material.rinvalidPopup = material.rPopupMsg = undefined;
             material.returnReason = angular.copy(material.defaultReturnReason);
         }
-        if(redraw) {
+        if (redraw) {
             redrawAllPopup();
         }
         return isInvalid;
@@ -250,22 +250,22 @@ function CreateReturnsController($scope, $location, $timeout, returnsService, tr
     $scope.validateBatchQuantity = function (material, batchMaterial, index) {
 
         var redraw = false;
-        if(batchMaterial.displayMeta != batchMaterial.returnQuantity > 0) {
+        if (batchMaterial.displayMeta != batchMaterial.returnQuantity > 0) {
             redraw = true;
         }
         batchMaterial.displayMeta = batchMaterial.returnQuantity > 0;
         var isInvalid = false;
-        if(batchMaterial.returnQuantity > batchMaterial.fq) {
+        if (batchMaterial.returnQuantity > batchMaterial.fq) {
             showPopup($scope, batchMaterial, material.id + batchMaterial.id,
                 "Quantity " + batchMaterial.returnQuantity + " exceed fulfilled quantity " + batchMaterial.fq + ".",
                 index, $timeout);
             isInvalid = true;
-        } else if(batchMaterial.returnQuantity > batchMaterial.fq - batchMaterial.returnedQuantity) {
+        } else if (batchMaterial.returnQuantity > batchMaterial.fq - batchMaterial.returnedQuantity) {
             showPopup($scope, batchMaterial, material.id + batchMaterial.id,
                 "Quantity " + batchMaterial.returnQuantity + " exceed remaining return quantity " + (batchMaterial.fq - batchMaterial.returnedQuantity) + ".",
                 index, $timeout);
             isInvalid = true;
-        } else if(checkNotNullEmpty(batchMaterial.returnQuantity)) {
+        } else if (checkNotNullEmpty(batchMaterial.returnQuantity)) {
             if (checkNotNullEmpty(material.huName) && checkNotNullEmpty(material.huQty) &&
                 batchMaterial.returnQuantity % material.huQty != 0) {
                 showPopup($scope, batchMaterial, material.id + batchMaterial.id,
@@ -278,7 +278,7 @@ function CreateReturnsController($scope, $location, $timeout, returnsService, tr
             batchMaterial.sinvalidPopup = batchMaterial.sPopupMsg = batchMaterial.rinvalidPopup = batchMaterial.rPopupMsg = undefined;
             batchMaterial.returnReason = angular.copy(batchMaterial.defaultReturnReason);
         }
-        if(redraw) {
+        if (redraw) {
             redrawAllPopup();
         }
         return isInvalid;
@@ -388,9 +388,10 @@ function DetailReturnsController($scope, $uibModal, requestContext, RETURNS, ret
             .catch(function error(msg) {
                 $scope.showErrorMsg(msg);
             }).finally(function () {
-            $scope.hideLoading();
-        });
+                $scope.hideLoading();
+            });
     }
+
     getReturn();
 
     function getMessageCount() {

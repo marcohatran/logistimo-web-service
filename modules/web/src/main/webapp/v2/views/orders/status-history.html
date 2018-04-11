@@ -43,8 +43,8 @@
                         </span>
                         <b ng-if="!$last && data.newValue == 'pn'">re-opened</b>
                         <b ng-if="$last || data.newValue == 'op'">opened</b>
-                        <b ng-if="isReturns && data.newValue != 'op'" class="text-lowercase" >{{RETURNS.statusLabel[data.newValue]}}</b>
-                        <b ng-if="!isReturns && ORDER.statusTxt[data.newValue] != 'Pending'" class="text-lowercase" >{{ORDER.statusTxt[data.newValue]}}</b>
+                        <b ng-if="isReturns && data.newValue != 'op'" class="text-lowercase">{{RETURNS.statusLabel[data.newValue]}}</b>
+                        <b ng-if="!isReturns && ORDER.statusTxt[data.newValue] != 'Pending'" class="text-lowercase">{{ORDER.statusTxt[data.newValue]}}</b>
                         on {{data.createDate}} by
                         <a href="#/setup/users/all/details?userId={{data.userId}}" target="_blank">{{data.userName}}</a>
                         <br/>

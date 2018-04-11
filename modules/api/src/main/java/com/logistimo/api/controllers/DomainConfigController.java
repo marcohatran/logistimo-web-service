@@ -53,6 +53,7 @@ import com.logistimo.api.models.configuration.NotificationsConfigModel;
 import com.logistimo.api.models.configuration.NotificationsModel;
 import com.logistimo.api.models.configuration.OrdersConfigModel;
 import com.logistimo.api.models.configuration.ReturnsConfigModel;
+import com.logistimo.api.models.configuration.StockRebalancingConfigModel;
 import com.logistimo.api.models.configuration.SupportConfigModel;
 import com.logistimo.api.models.configuration.TagsConfigModel;
 import com.logistimo.api.request.AddCustomReportRequestObj;
@@ -80,6 +81,7 @@ import com.logistimo.config.models.OptimizerConfig;
 import com.logistimo.config.models.OrdersConfig;
 import com.logistimo.config.models.ReportsConfig;
 import com.logistimo.config.models.ReturnsConfig;
+import com.logistimo.config.models.StockRebalancingConfig;
 import com.logistimo.config.models.SupportConfig;
 import com.logistimo.config.models.SyncConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
@@ -2316,6 +2318,27 @@ public class DomainConfigController {
     return currentUserBuilder.buildCurrentUserModel();
   }
 
+  @RequestMapping(value = "/stock-rebalancing", method = RequestMethod.POST)
+  public
+  @ResponseBody
+  String updateStockRebalancingConfig(@RequestBody StockRebalancingConfigModel model)
+      throws ServiceException, ConfigurationException {
+    SecureUserDetails sUser = getUserDetails();
+    Locale locale = sUser.getLocale();
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
+    if (!GenericAuthoriser.authoriseAdmin()) {
+      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
+    }
+    String userId = sUser.getUsername();
+    Long domainId = SecurityUtils.getCurrentDomainId();
+    ConfigContainer cc = getDomainConfig(domainId, userId);
+    StockRebalancingConfig stockRebalancingConfig = configurationModelBuilder.buildStockRebalancingConfig(model);
+    cc.dc.setStockRebalancingConfig(stockRebalancingConfig);
+    cc.dc.addDomainData(ConfigConstants.STOCK_REBALANCING, generateUpdateList(userId));
+    saveDomainConfig(domainId, cc, backendMessages);
+    return "Stock rebalancing configuration updated successfully";
+  }
+
   @RequestMapping(value = "/approvals", method = RequestMethod.POST)
   public
   @ResponseBody
@@ -2357,6 +2380,23 @@ public class DomainConfigController {
     } catch (ObjectNotFoundException e) {
       xLogger.severe("Error in fetching Dashboard configuration", e);
       throw new InvalidServiceException("Error in fetching Dashboard configuration");
+    }
+  }
+
+  @RequestMapping(value = "/stock-rebalancing", method = RequestMethod.GET)
+  public
+  @ResponseBody
+  StockRebalancingConfigModel getStockRebalancingConfig() {
+    SecureUserDetails sUser = getUserDetails();
+    Locale locale = sUser.getLocale();
+    Long domainId = SecurityUtils.getCurrentDomainId();
+    DomainConfig dc = DomainConfig.getInstance(domainId);
+    StockRebalancingConfig stockRebalancingConfig = dc.getStockRebalancingConfig();
+    try {
+      return configurationModelBuilder.buildStockRebalancingConfigModel(stockRebalancingConfig, domainId, locale, sUser.getTimezone());
+    } catch (Exception e) {
+      xLogger.severe("Error in fetching stock rebalancing configuration", e);
+      throw new InvalidServiceException("Error in fetching stock rebalancing configuration");
     }
   }
 

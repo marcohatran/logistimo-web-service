@@ -201,7 +201,8 @@
                                 </td>
                                 <td class="text-center">{{item.os | number}}</td>
                                 <td><span style="display: block;">{{item.type}}</span>
-                                    <span ng-show="isDef(item.lkId)" class="litetext">{{(item.ty=="r" || item.ty=="ri")?resourceBundle.from:resourceBundle.to}}&nbsp;<a ng-href="#/setup/entities/detail/{{item.lkId}}" target="_blank">{{item.lknm}}</a></span>
+                                    <span ng-show="isDef(item.lkId)" class="litetext">{{(item.ty=="r" || item.ty=="ri")?resourceBundle.from:resourceBundle.to}}&nbsp;<a
+                                            ng-href="#/setup/entities/detail/{{item.lkId}}" target="_blank">{{item.lknm}}</a></span>
                                     <span ng-show="isDef(item.resn)" class="litetext">({{item.resn}})</span>
                                     <a ng-show="isDef(item.trkid) && (isUndef(item.trkObTy) || item.trkObTy == 'o' )"  class = "clickable litetext" ng-href="#/orders/detail/{{item.trkid}}/" target="_blank">({{resourceBundle['order']}}: {{item.trkid}})</a>
                                     <a ng-show="isDef(item.trkid) && isDef(item.trkObTy) && item.trkObTy == 'os'"
@@ -217,8 +218,10 @@
                                        class="clickable litetext" ng-href="#/orders/returns/detail/{{item.trkid}}"
                                        target="_blank">({{resourceBundle['transfer.returns']}}: {{item.trkid}})</a>
                                     <span ng-show="isDef(item.trkid) && isDef(item.trkObTy) && item.trkObTy == 't'" class = "litetext">({{resourceBundle['transactions.viatransfer']}} {{item.trkid}})</span>
-                                    <span ng-show="isDef(item.trkid) && isDef(item.trkObTy) && item.trkObTy == 'iss_trn'" class = "litetext">({{resourceBundle['transactions.issue.upper']}}: {{item.trkid}})</span>
-                                    <span ng-show="isDef(item.trkid) && isDef(item.trkObTy) && item.trkObTy == 'rec_trn'" class = "litetext">({{resourceBundle['transactions.receipt.upper']}}: {{item.trkid}})</span>
+                                    <span ng-show="isDef(item.trkid) && isDef(item.trkObTy) && item.trkObTy == 'iss_trn'"
+                                          class="litetext">({{resourceBundle['transactions.issue.upper']}}: {{item.trkid}})</span>
+                                    <span ng-show="isDef(item.trkid) && isDef(item.trkObTy) && item.trkObTy == 'rec_trn'"
+                                          class="litetext">({{resourceBundle['transactions.receipt.upper']}}: {{item.trkid}})</span>
                                     <span ng-show=" item.ty=='t'" class = "litetext">({{resourceBundle['transactions.id']}}: {{item.trnId}})</span>
                                 </td>
                                 <td class="text-center">{{item.q | number}}</td>
@@ -236,7 +239,8 @@
                                 <td>
                                     <span ng-if="item.trnSrc == 1" class="glyphicons glyphicons-display" uib-tooltip="{{resourceBundle['web']}}" tooltip-placement="left"></span>
                                     <span ng-if="item.trnSrc == 2" class="glyphicons glyphicons-iphone" uib-tooltip="{{resourceBundle['mob']}}" tooltip-placement="left"></span>
-                                    <span ng-if="item.trnSrc == 3" class="glyphicons glyphicons-cloud-upload" uib-tooltip="{{resourceBundle['upl']}}" tooltip-placement="left"></span>
+                                    <span ng-if="item.trnSrc == 3" class="glyphicons glyphicons-cloud-upload"
+                                          uib-tooltip="{{resourceBundle['upl']}}" tooltip-placement="left"></span>
                                     <span ng-if="item.trnSrc == 4" class="glyphicons glyphicons-sms" uib-tooltip="{{resourceBundle['sms']}}" tooltip-placement="left"></span>
                                 </td>
                                 <td>

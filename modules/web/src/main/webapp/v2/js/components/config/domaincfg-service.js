@@ -243,6 +243,12 @@ domainCfgServices.factory('domainCfgService', ['APIService','$http', function (a
         getApprovalsEnabledConfig: function () {
             return apiService.get("/s2/api/config/domain/approvals-enabled");
         },
+        setStockRebalancingConfig: function (data) {
+            return apiService.post(data, "/s2/api/config/domain/stock-rebalancing");
+        },
+        getStockRebalancingConfig: function() {
+            return apiService.get("/s2/api/config/domain/stock-rebalancing");
+        },
         getReturnConfig: function (entityId) {
             return apiService.get('/s2/api/config/domain/return-config?entityId=' + entityId);
         }

@@ -98,7 +98,7 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
             if (firstTimeInit) {
                 delete $location.$$search.sales_ref_id;
                 $scope.salesReferenceId = null;
-                if($scope.ordType == 'trn') {
+                if ($scope.ordType == 'trn') {
                     delete $location.$$search.transfer_ref_id;
                     $scope.transferReferenceId = null;
                 } else {
@@ -108,7 +108,7 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
                 $location.$$compose();
             } else {
                 $scope.salesReferenceId = requestContext.getParam("sales_ref_id");
-                if($scope.ordType == 'trn') {
+                if ($scope.ordType == 'trn') {
                     $scope.transferReferenceId = requestContext.getParam("transfer_ref_id");
                 } else {
                     $scope.purchaseReferenceId = requestContext.getParam("purchase_ref_id");
@@ -160,8 +160,8 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
             caption += getFilterTitle(formatDate2Url($scope.from), $scope.resourceBundle['from']);
             caption += getFilterTitle(formatDate2Url($scope.to), $scope.resourceBundle['to']);
             caption += getFilterTitle($scope.salesReferenceId, $scope.resourceBundle['sales.reference.id']);
-            if($scope.ordType == 'trn') {
-                if($scope.transRelease) {
+            if ($scope.ordType == 'trn') {
+                if ($scope.transRelease) {
                     caption += getFilterTitle($scope.transferReferenceId, $scope.resourceBundle['release.reference.id']);
                 } else {
                     caption += getFilterTitle($scope.transferReferenceId, $scope.resourceBundle['transfer.reference.id']);
@@ -218,7 +218,7 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
             var oty = $scope.type == '2' ? '0' : '1';
             var module = oty == 0 ? 'transfers' : 'orders';
             var templateId = oty == 0 ? 'transfers' : 'orders';
-            if(isInfo) {
+            if (isInfo) {
                 return {
                     filters: getCaption(),
                     type: oty == 0 ? $scope.resourceBundle['exports.transfers'] : $scope.resourceBundle['exports.orders']
@@ -422,13 +422,13 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
                 $scope.salesReferenceId = null;
             }
         });
-        $scope.$watch("purchaseRefId", function(newVal) {
-            if(checkNullEmpty(newVal)) {
+        $scope.$watch("purchaseRefId", function (newVal) {
+            if (checkNullEmpty(newVal)) {
                 $scope.purchaseReferenceId = null;
             }
         });
-        $scope.$watch("transferRefId", function(newVal) {
-            if(checkNullEmpty(newVal)) {
+        $scope.$watch("transferRefId", function (newVal) {
+            if (checkNullEmpty(newVal)) {
                 $scope.transferReferenceId = null;
             }
         });
@@ -475,11 +475,11 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
 
         $scope.showOrderByReferenceId = function (referenceId, referenceType) {
             if (checkNotNullEmpty(referenceId)) {
-                if(referenceType == "sales") {
+                if (referenceType == "sales") {
                     $scope.salesReferenceId = referenceId;
-                } else if(referenceType == "purchase") {
+                } else if (referenceType == "purchase") {
                     $scope.purchaseReferenceId = referenceId;
-                } else if(referenceType == "transfer") {
+                } else if (referenceType == "transfer") {
                     $scope.transferReferenceId = referenceId;
                 }
             }
@@ -488,7 +488,7 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
 ]);
 
 ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', 'userService', 'domainCfgService',
-    'invService', 'entityService', '$timeout', 'requestContext', '$uibModal', 'trnService', 'conversationService', '$window', 'ORDERSTATUSTEXT', 'approvalService','RETURNS', 'returnsService',
+    'invService', 'entityService', '$timeout', 'requestContext', '$uibModal', 'trnService', 'conversationService', '$window', 'ORDERSTATUSTEXT', 'approvalService', 'RETURNS', 'returnsService',
     function ($scope, ordService, ORDER, userService, domainCfgService, invService, entityService, $timeout, requestContext, $uibModal, trnService, conversationService, $window, ORDERSTATUSTEXT, approvalService, RETURNS, returnsService) {
         $scope.ORDER = ORDER;
         $scope.RETURNS = RETURNS;
@@ -685,7 +685,7 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
             }
         });
 
-        $scope.setPageSelection = function(page) {
+        $scope.setPageSelection = function (page) {
             $scope.selection = page;
         };
 
@@ -1043,9 +1043,9 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                     }
                 }
             });
-            if($scope.returnPolicyDuration == undefined) {
+            if ($scope.returnPolicyDuration == undefined) {
                 $scope.showLoading();
-                domainCfgService.getReturnConfig($scope.order.vid).then(function(data){
+                domainCfgService.getReturnConfig($scope.order.vid).then(function (data) {
                     $scope.returnPolicyDuration = data.data.incDur || 0;
                 }).catch(function error(msg) {
                     $scope.showErrorMsg(msg);
@@ -1189,11 +1189,11 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
         };
 
         $scope.updateRefId = function (value, referenceType) {
-            if(checkNullEmpty(value) && referenceType == 'purchaseRefId' && $scope.oCfg.purchase) {
+            if (checkNullEmpty(value) && referenceType == 'purchaseRefId' && $scope.oCfg.purchase) {
                 $scope.showWarning($scope.resourceBundle['purchase.reference.id.mandatory.error']);
                 return;
-            } else if(checkNullEmpty(value) && referenceType == 'transferRefId' && $scope.oCfg.transfer) {
-                if($scope.transRelease) {
+            } else if (checkNullEmpty(value) && referenceType == 'transferRefId' && $scope.oCfg.transfer) {
+                if ($scope.transRelease) {
                     $scope.showWarning($scope.resourceBundle['release.reference.id.mandatory.error']);
                 } else {
                     $scope.showWarning($scope.resourceBundle['transfer.reference.id.mandatory.error']);
@@ -1212,7 +1212,7 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                 }).catch(function (errorMsg) {
                 $scope.showErrorMsg(errorMsg);
             }).finally(function () {
-                $scope.toggleEdit(referenceType);
+                    $scope.toggleEdit(referenceType);
                 $scope.hideLoading();
             });
         };
@@ -1248,7 +1248,7 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
             }
         };
         $scope.editRID = function (type) {
-            switch(type) {
+            switch (type) {
                 case "salesRefId":
                     $scope.order.tempSalesRefId = $scope.order.salesRefId;
                     break;
@@ -1417,7 +1417,7 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                 });
 
                 $scope.showLoading();
-                returnsService.getAll({orderId : $scope.orderId}).then(function (data) {
+                returnsService.getAll({orderId: $scope.orderId}).then(function (data) {
                     $scope.returnsList = data.data.returns;
                 }).catch(function error(msg) {
                     $scope.showErrorMsg(msg);
@@ -2078,16 +2078,16 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
             $scope.enableScroll();
         };
 
-        $scope.checkReturn = function() {
+        $scope.checkReturn = function () {
             if ($scope.order.st == ORDER.FULFILLED) {
                 $scope.canReturn = $scope.order.its.some(function (item) {
                     return item.fq > 0 && item.returnedQuantity < item.fq;
                 });
-                if($scope.canReturn && $scope.returnPolicyDuration > 0) {
+                if ($scope.canReturn && $scope.returnPolicyDuration > 0) {
                     var fulfilDate = string2Date($scope.order.statusUpdateDate, "dd/MM/yyyy", "/", true);
                     var oneDayInMillis = 1000 * 60 * 60 * 24;
-                    var days =  (new Date().setHours(0, 0, 0, 0) - fulfilDate.getTime()) / oneDayInMillis;
-                    $scope.returnPolicyExpired = days >  $scope.returnPolicyDuration;
+                    var days = (new Date().setHours(0, 0, 0, 0) - fulfilDate.getTime()) / oneDayInMillis;
+                    $scope.returnPolicyExpired = days > $scope.returnPolicyDuration;
                 }
             }
         }
@@ -2390,11 +2390,11 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
                         return false;
                     }
                 }
-                if(checkNullEmpty($scope.order.rid) && $scope.type == 1 && $scope.oCfg.purchase) {
+                if (checkNullEmpty($scope.order.rid) && $scope.type == 1 && $scope.oCfg.purchase) {
                     $scope.showWarning($scope.resourceBundle['purchase.reference.id.mandatory.error']);
                     return;
-                } else if((checkNullEmpty($scope.order.rid) || checkNullEmpty($scope.order.rid.trim())) && $scope.type == 2 && $scope.oCfg.transfer) {
-                    if($scope.transRelease) {
+                } else if ((checkNullEmpty($scope.order.rid) || checkNullEmpty($scope.order.rid.trim())) && $scope.type == 2 && $scope.oCfg.transfer) {
+                    if ($scope.transRelease) {
                         $scope.showWarning($scope.resourceBundle['release.reference.id.mandatory.error']);
                     } else {
                         $scope.showWarning($scope.resourceBundle['transfer.reference.id.mandatory.error']);
@@ -4247,7 +4247,7 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService', 'reques
     }
 ]);
 
-ordControllers.controller('ConsignmentController', ['$scope','returnsService', function ($scope,returnsService) {
+ordControllers.controller('ConsignmentController', ['$scope', 'returnsService', function ($scope, returnsService) {
     $scope.batchOrder = true;
     $scope.selectedMaterialIds = [];
     $scope.sel = {};
@@ -4271,9 +4271,9 @@ ordControllers.controller('ConsignmentController', ['$scope','returnsService', f
         }
     };
 
-    $scope.doReturn = function() {
+    $scope.doReturn = function () {
         if ($scope.sel.selectedRows.length > 0) {
-            var selectedItems = (function(){
+            var selectedItems = (function () {
                 var items = [];
                 for (var i = 0; i < $scope.sel.selectedRows.length; i++) {
                     items.push($scope.order.its[$scope.sel.selectedRows[i]]);

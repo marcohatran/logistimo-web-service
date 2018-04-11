@@ -25,8 +25,6 @@ package com.logistimo.returns.models.submodels;
 
 import com.google.gson.annotations.SerializedName;
 
-import java.util.Date;
-
 import lombok.Data;
 
 /**

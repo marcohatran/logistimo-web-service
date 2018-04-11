@@ -36,6 +36,7 @@
             </div>
             <div class="row mt10">
                 <label class="col-sm-4 control-label cbx"> Comment </label>
+
                 <div class="col-sm-7">
                     <textarea class="form-control" maxlength="2048" rows="4" ng-model="newStatus.comment"></textarea>
                 </div>
@@ -48,7 +49,8 @@
                 <button class="btn btn-sm btn-primary" ng-if="new_status == RETURNS.status.SHIPPED" ng-click="doShip()">
                     {{resourceBundle['save']}}
                 </button>
-                <button class="btn btn-sm btn-primary" ng-if="new_status == RETURNS.status.CANCELLED" ng-click="doCancel()">
+                <button class="btn btn-sm btn-primary" ng-if="new_status == RETURNS.status.CANCELLED"
+                        ng-click="doCancel()">
                     {{resourceBundle['save']}}
                 </button>
                 <button class="btn btn-sm btn-default" ng-click="closeStatus()">

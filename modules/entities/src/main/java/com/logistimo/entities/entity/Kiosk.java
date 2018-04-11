@@ -292,7 +292,7 @@ public class Kiosk implements IKiosk, Serializable {
         if (StringUtils.isNotEmpty(u.getLandPhoneNumber())) {
           uht.put(JsonTagsZ.LANDLINE, u.getLandPhoneNumber());
         }
-        if(StringUtils.isNotEmpty(StringUtils.join(u.getTags(),","))) {
+        if (StringUtils.isNotEmpty(StringUtils.join(u.getTags(), ","))) {
           uht.put(JsonTagsZ.ALL_TAGS, u.getTags());
         }
         uht.put(JsonTagsZ.ROLE, u.getRole());

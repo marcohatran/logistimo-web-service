@@ -23,11 +23,15 @@
 
 package com.logistimo.orders.models;
 
+import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
+import com.logistimo.entities.models.DemandItemModel;
 import com.logistimo.entities.models.EntityMinModel;
+import com.logistimo.models.StatusModel;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * Created by charan on 26/06/17.
@@ -43,6 +47,30 @@ public class OrderModel {
   private int numItems;
   private Date expectedArrivalDate;
   private Date dueDate;
+  @SerializedName("status")
+  @Expose
+  private StatusModel status;
+
+  @SerializedName("items")
+  @Expose
+  private List<DemandItemModel> items = null;
+
+
+  public List<DemandItemModel> getItems() {
+    return items;
+  }
+
+  public void setItems(List<DemandItemModel> items) {
+    this.items = items;
+  }
+
+  public StatusModel getStatus() {
+    return status;
+  }
+
+  public void setStatus(StatusModel status) {
+    this.status = status;
+  }
 
   public EntityMinModel getCustomer() {
     return customer;

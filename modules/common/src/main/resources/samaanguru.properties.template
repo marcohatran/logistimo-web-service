@@ -148,6 +148,9 @@ cassandra.password=$CASSANDRA_PASS
 #collaboration
 collaboration-service.url=$COLLABORATION_URL
 
+#stock-rebalancing
+stock-rebalancing.schedule.hour=4
+
 
 #JDO properties
 javax.jdo.PersistenceManagerFactoryClass=org.datanucleus.api.jdo.JDOPersistenceManagerFactory

@@ -853,7 +853,8 @@ public class InventoryServlet extends JsonRestServlet {
     }
   }
 
-  private void validateMobileUpdateInvTransRequest(MobileUpdateInvTransRequest mobUpdateInvTransReq, ResourceBundle backendMessages) {
+  private void validateMobileUpdateInvTransRequest(MobileUpdateInvTransRequest mobUpdateInvTransReq,
+                                                   ResourceBundle backendMessages) {
     if (StringUtils.isEmpty(mobUpdateInvTransReq.uid) || mobUpdateInvTransReq.kid == null || mobUpdateInvTransReq.sntm == null || mobUpdateInvTransReq.trns == null || mobUpdateInvTransReq.trns.isEmpty()) {
       throw new InvalidDataException(backendMessages.getString("error.invaliddata.frommobile"));
     }

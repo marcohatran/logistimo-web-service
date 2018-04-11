@@ -347,7 +347,7 @@ public class UsersServiceImpl implements UsersService {
 
   // Get all users of a given role
   @SuppressWarnings("unchecked")
-  public Results getUsers(Long domainId, String role, boolean activeUsersOnly,
+  public Results<IUserAccount> getUsers(Long domainId, String role, boolean activeUsersOnly,
                           String nameStartsWith, PageParams pageParams) throws ServiceException {
     xLogger.fine("Entering getUsers");
     if (domainId == null || role == null) {
@@ -397,7 +397,7 @@ public class UsersServiceImpl implements UsersService {
     if (SecurityConstants.ROLE_SUPERUSER.equals(role) || isDomainOwner) {
       results = findAllAccountsByDomain(domainId, nameStartsWith, pageParams,
           includeChildDomainUsers, user);
-      if(results.getResults() != null) {
+      if (results.getResults() != null) {
         users = (List<IUserAccount>) results.getResults();
       }
       if (includeSuperusers && SecurityConstants.ROLE_SUPERUSER.equals(role)) {
@@ -405,7 +405,8 @@ public class UsersServiceImpl implements UsersService {
         if (superusers != null && !superusers.isEmpty()) {
           for (IUserAccount superuser : superusers) {
             String nsuperuserName = superuser.getFullName().toLowerCase();
-            if (users != null && !users.contains(superuser) && (nameStartsWith == null || nameStartsWith.isEmpty()
+            if (users != null && !users.contains(superuser) && (nameStartsWith == null
+                || nameStartsWith.isEmpty()
                 || nsuperuserName.startsWith(nameStartsWith))) {
               users.add(superuser);
             }
@@ -640,7 +641,8 @@ public class UsersServiceImpl implements UsersService {
     if (exception != null) {
       if (exception instanceof HystrixBadRequestException) {
         HttpBadRequestException ex = (HttpBadRequestException) exception.getCause();
-        throw new ServiceException(ex.getCode(), ThreadLocalUtil.get().getSecureUserDetails().getLocale(), (String) null);
+        throw new ServiceException(ex.getCode(),
+            ThreadLocalUtil.get().getSecureUserDetails().getLocale(), (String) null);
       } else {
         throw new ServiceException(exception.getMessage());
       }
@@ -663,7 +665,9 @@ public class UsersServiceImpl implements UsersService {
       List<Long> uAccDids = ua.getAccessibleDomainIds();
       if (uAccDids == null || uAccDids.isEmpty()) {
         final Locale locale = ThreadLocalUtil.get().getSecureUserDetails().getLocale();
-        ResourceBundle backendMessages = Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
+        ResourceBundle
+            backendMessages =
+            Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
         xLogger
             .warn("Error while adding accessible domains for user {0}, uAccDids is null ", userId);
         throw new InvalidServiceException(
@@ -723,7 +727,9 @@ public class UsersServiceImpl implements UsersService {
     try {
       if (!authorizationService.authoriseUpdateKiosk(sUser, domainId)) {
         final Locale locale = ThreadLocalUtil.get().getSecureUserDetails().getLocale();
-        ResourceBundle backendMessages = Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
+        ResourceBundle
+            backendMessages =
+            Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
         throw new UnauthorizedException(backendMessages.getString("permission.denied"));
       }
       for (String accountId : accountIds) {
@@ -1443,7 +1449,9 @@ public class UsersServiceImpl implements UsersService {
     if (!userExists) {
       final Locale locale = ThreadLocalUtil.get().getSecureUserDetails().getLocale();
       ResourceBundle messages = Resources.get().getBundle(Constants.MESSAGES, locale);
-      ResourceBundle backendMessages = Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
+      ResourceBundle
+          backendMessages =
+          Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
       errMsg = messages.getString("user") + " '" + userId + "' " + backendMessages
           .getString("error.notfound");
     }

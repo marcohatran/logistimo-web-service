@@ -578,8 +578,8 @@ entityControllers.controller('EntityListController', ['$scope', 'entityService',
             $scope.search = {};
         };
 
-        $scope.exportData=function(isInfo) {
-            if(isInfo) {
+        $scope.exportData = function (isInfo) {
+            if (isInfo) {
                 return {
                     filters: getCaption(),
                     type: $scope.resourceBundle['kiosks']

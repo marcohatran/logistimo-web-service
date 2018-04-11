@@ -128,15 +128,15 @@ activityServices.factory('activityService', ['APIService', function (apiService)
         forceLogoutOnMobile: function (userId) {
             return apiService.get("/s2/api/users/forcelogoutonmobile?userId=" + userId);
         },
-        getStatusHistory: function(id, type, tag) {
+        getStatusHistory: function (id, type, tag) {
             var urlStr = '/s2/api/activity/?';
-            if(checkNotNullEmpty(id)) {
+            if (checkNotNullEmpty(id)) {
                 urlStr += '&objectId=' + id;
             }
-            if(checkNotNullEmpty(type)) {
+            if (checkNotNullEmpty(type)) {
                 urlStr += '&objectType=' + type;
             }
-            if(checkNotNullEmpty(tag)) {
+            if (checkNotNullEmpty(tag)) {
                 urlStr += '&tag=' + tag;
             }
             return apiService.get(urlStr);

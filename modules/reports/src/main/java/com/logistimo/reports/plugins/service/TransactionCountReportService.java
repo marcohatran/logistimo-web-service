@@ -255,10 +255,12 @@ public class TransactionCountReportService extends ReportServiceUtil implements 
       values.add(addData(ZERO));
     } else {
       values.add(
-          addData((float) report.getReturnsIncomingCount() / denominator, report.getReturnsIncomingCount(),
+          addData((float) report.getReturnsIncomingCount() / denominator,
+              report.getReturnsIncomingCount(),
               denominator));
       values
-          .add(addData(Math.min(((float) report.getReturnsIncomingEntityCount() / denominator) * 100, 100),
+          .add(addData(
+              Math.min(((float) report.getReturnsIncomingEntityCount() / denominator) * 100, 100),
               report.getReturnsIncomingEntityCount(), denominator));
     }
 
@@ -268,10 +270,12 @@ public class TransactionCountReportService extends ReportServiceUtil implements 
       values.add(addData(ZERO));
     } else {
       values.add(
-          addData((float) report.getReturnsOutgoingCount() / denominator, report.getReturnsOutgoingCount(),
+          addData((float) report.getReturnsOutgoingCount() / denominator,
+              report.getReturnsOutgoingCount(),
               denominator));
       values
-          .add(addData(Math.min(((float) report.getReturnsOutgoingEntityCount() / denominator) * 100, 100),
+          .add(addData(
+              Math.min(((float) report.getReturnsOutgoingEntityCount() / denominator) * 100, 100),
               report.getReturnsOutgoingEntityCount(), denominator));
     }
 

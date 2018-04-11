@@ -147,5 +147,6 @@ public interface IShipmentService {
       throws ServiceException, ObjectNotFoundException, IOException, ValidationException;
 
   public List<FulfilledQuantityModel> getFulfilledQuantityByOrderId(Long orderId,
-                                                                    List<Long> materialIdList) throws ServiceException;
+                                                                    List<Long> materialIdList)
+      throws ServiceException;
 }

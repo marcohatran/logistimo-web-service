@@ -28,7 +28,6 @@ import com.google.gson.annotations.SerializedName;
 import com.logistimo.returns.models.submodels.ReceivedModel;
 
 import java.math.BigDecimal;
-import java.util.Date;
 
 import lombok.Data;
 

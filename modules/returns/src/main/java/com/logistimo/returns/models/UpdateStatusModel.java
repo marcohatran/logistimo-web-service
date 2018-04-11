@@ -25,7 +25,6 @@ package com.logistimo.returns.models;
 
 import com.logistimo.returns.Status;
 
-import jnr.ffi.annotations.In;
 import lombok.Data;
 
 /**
