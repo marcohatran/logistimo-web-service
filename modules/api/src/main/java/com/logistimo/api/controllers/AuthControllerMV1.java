@@ -216,9 +216,13 @@ public class AuthControllerMV1 {
   @RequestMapping(value = "/validate-token", method = RequestMethod.POST)
   public
   @ResponseBody
-  String validateToken(@RequestBody String token)
+  String validateToken(@RequestBody String token, HttpServletRequest req)
       throws ServiceException, ObjectNotFoundException {
-    return authenticationService.authenticateToken(token, -1).getUserId();
+    String initiatorStr = req.getHeader(Constants.ACCESS_INITIATOR);
+    int
+        accessInitiator =
+        StringUtils.isNotBlank(initiatorStr) ? Integer.parseInt(initiatorStr) : -1;
+    return authenticationService.authenticateToken(token, accessInitiator).getUserId();
   }
 
   /**

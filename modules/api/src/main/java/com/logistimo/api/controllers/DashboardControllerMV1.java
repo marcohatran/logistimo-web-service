@@ -127,7 +127,7 @@ public class DashboardControllerMV1 {
       @RequestParam(value = "locty", required = false) String locty,
       @RequestParam(value = "p", required = false) Integer p,
       @RequestParam(value = "date", required = false) String date,
-      @RequestParam(value = "refresh", required = false, defaultValue = "true") Boolean refresh) {
+      @RequestParam(value = "refresh", required = false, defaultValue = "false") Boolean refresh) {
 
     long domainId = SecurityUtils.getCurrentDomainId();
     DomainConfig dc = DomainConfig.getInstance(domainId);
@@ -191,7 +191,7 @@ public class DashboardControllerMV1 {
       @RequestParam(value = "p", required = false) Integer p,
       @RequestParam(value = "date", required = false) String date,
       @RequestParam(value = "groupby", required = true) String groupby,
-      @RequestParam(value = "refresh", required = false, defaultValue = "true") Boolean refresh) {
+      @RequestParam(value = "refresh", required = false, defaultValue = "false") Boolean refresh) {
 
     long domainId = SecurityUtils.getCurrentDomainId();
     DomainConfig dc = DomainConfig.getInstance(domainId);
@@ -346,7 +346,7 @@ public class DashboardControllerMV1 {
                                           @RequestParam(required = false) String locty,
                                           @RequestParam(required = false) Integer p,
                                           @RequestParam(required = false) String date,
-                                          @RequestParam(required = false, defaultValue = "true") Boolean refresh)
+                                          @RequestParam(required = false, defaultValue = "false") Boolean refresh)
       throws SQLException {
     MainDashboardModel model;
     Long domainId = SecurityUtils.getCurrentDomainId();
