@@ -501,9 +501,18 @@ assetControllers.controller("AssetListingController", ['$scope', '$route', 'asse
             });
         };
 
-        $scope.exportData = function () {
+        $scope.exportData = function (isInfo) {
+            if(isInfo) {
+                return {
+                    filters: getCaption(),
+                    type: $scope.resourceBundle['exports.assets']
+                };
+            }
             $scope.showLoading();
             exportService.exportData({
+                titles: {
+                    filters: getCaption()
+                },
                 module: 'setup.assets',
                 templateId: 's_assets'
             }).then(function (data) {
@@ -898,21 +907,30 @@ assetControllers.controller('AssetsDetailsListingController', ['$scope', '$locat
 
         };
 
-        $scope.getCaption=function(){
+        function getCaption() {
             var eid = $scope.entityId == '0' ? null : $scope.entityId;
-            var caption = checkNotNullEmpty(eid) ? ($scope.resourceBundle['kiosk'] + ": " + $scope.entity.nm + "   ") : " ";
-            caption += $scope.resourceBundle['type'] + ": " + $scope.assetTypeFilterText.join(",");
-            caption += "   " + "Relationships: " + $scope.awrDisplay;
-            caption += "   " + $scope.resourceBundle['alarms'] + ": " + $scope.filters[$scope.currentFilter].displayValue;
-            caption += "   " + $scope.resourceBundle['working.status'] + ": " + (($scope.assetWSFilter == 0) ? "All" : $scope.assetConfig.wses[$scope.assetWSFilter].dV);
+            var caption = '';
+            if (checkNotNullEmpty(eid)) {
+                caption += getFilterTitle($scope.entity.nm, $scope.resourceBundle['kiosk']);
+            }
+            caption += getFilterTitle($scope.assetTypeFilterText, $scope.resourceBundle['type']);
+            caption += getFilterTitle($scope.awrDisplay, $scope.resourceBundle['relationships']);
+            caption += getFilterTitle($scope.filters[$scope.currentFilter].displayValue, $scope.resourceBundle['alarms']);
+            caption += getFilterTitle((($scope.assetWSFilter == 0) ? "All" : $scope.assetConfig.wses[$scope.assetWSFilter].dV), $scope.resourceBundle['working.status']);
             if (checkNotNullEmpty($scope.duration)) {
                 var duration = $scope.duration + " " + $scope.filterDur[$scope.aDurationDisplay].displayValue;
-                caption += "   Duration : " + duration;
+                caption += getFilterTitle(duration, $scope.resourceBundle['duration']);
             }
             return caption;
         }
 
-        $scope.exportData=function(){
+        $scope.exportData=function(isInfo){
+            if(isInfo) {
+                return {
+                    filters: getCaption(),
+                    type: $scope.resourceBundle['exports.assets']
+                };
+            }
             var selectedFilters = {};
             var eid = $scope.entityId == '0' ? null : $scope.entityId;
             selectedFilters.entityId = checkNotNullEmpty(eid) ? eid : undefined;
@@ -923,7 +941,7 @@ assetControllers.controller('AssetsDetailsListingController', ['$scope', '$locat
             selectedFilters.loc = $scope.location;
             var duration = $scope.duration * $scope.filterDur[$scope.aDurationDisplay].factorValue;
             selectedFilters.alarmDuration = checkNotNullEmpty(duration) ? duration : undefined;
-            var caption = $scope.getCaption();
+            var caption = getCaption();
             selectedFilters['titles'] = {};
             selectedFilters['titles']['filters'] = caption;
             $scope.showLoading();

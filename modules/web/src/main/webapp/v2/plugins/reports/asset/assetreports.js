@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -351,7 +351,28 @@ function AssetReportController(s, timeout, getData, reportsServiceCore) {
         }
     };
 
-    s.exportData = function(reportType) {
+    function getReportType(reportType) {
+        switch(reportType) {
+            case 'asa':
+                return s.resourceBundle['report.asset.capacity'];
+            case 'aas':
+                return s.resourceBundle['report.asset.status'];
+            case 'apa':
+                return s.resourceBundle['report.power.availability'];
+            case 'art':
+                return s.resourceBundle['report.response.time.to.repair'];
+            case 'asr':
+                return s.resourceBundle['report.sickness.rate'];
+            case 'ate':
+                return s.resourceBundle['report.temperature.excursions'];
+            case 'aut':
+                return s.resourceBundle['report.up.time'];
+            default:
+                return undefined;
+        }
+    }
+
+    s.exportData = function(reportType, isInfo) {
         var selectedFilters = s.populateFilters();
         selectedFilters['type'] = reportType;
         selectedFilters['viewtype'] = s.activeMetric;
@@ -368,7 +389,12 @@ function AssetReportController(s, timeout, getData, reportsServiceCore) {
         selectedFilters['primaryMetricIndex'] = s.metrics.primary;
         selectedFilters['secondaryMetricIndex'] = s.metrics.secondary;
         selectedFilters['tertiaryMetricIndex'] = s.metrics.tertiary;
-
+        if(isInfo) {
+            return {
+                filters: filterTitles,
+                type: getReportType(reportType)
+            };
+        }
         s.showLoading();
         reportsServiceCore.exportData(JSON.stringify(angular.toJson(selectedFilters))).then(function (data) {
             s.showSuccess(data.data);

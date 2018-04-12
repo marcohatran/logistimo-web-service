@@ -36,7 +36,7 @@
                 </div>
                 <div ng-show="!loading && !noData">
                     <rpt-last-run-time report-type="reportType"></rpt-last-run-time>
-                    <rpt-export-data ng-if="activeMetric != 'ot'" report-type="reportType" callback="exportData(reportType)"></rpt-export-data>
+                    <rpt-export-data ng-if="activeMetric != 'ot'" report-type="reportType" callback="exportData(reportType,isInfo)"></rpt-export-data>
                     <div class="row metric-row">
                         <div class="col-sm-2">
                             <span class="form-label">Abnormality type</span>

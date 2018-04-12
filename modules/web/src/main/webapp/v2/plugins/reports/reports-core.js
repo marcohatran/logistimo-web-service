@@ -324,7 +324,7 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
     ModelFilterController.$inject = ['$scope', '$q', 'assetService'];
     AggregationLastRunTimeController.$inject = ['$scope', 'reportsServiceCore'];
     OrderTypeFilterController.$inject = ['$scope'];
-    ExportController.$inject = ['$scope'];
+    ExportController.$inject = ['$scope','$uibModal'];
 
     function ageFilter() {
         function getYears(offset) {
@@ -383,14 +383,55 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
                 callback: '&'
             },
             controller: ExportController,
-            template: '<div><button class="btn btn-primary pull-right" ng-click="exportData()">Export</button></div>'
+            template: '<div><button class="btn btn-primary pull-right" ng-click="confirmExport()">Export</button></div>'
         };
     }
 
-    function ExportController($scope) {
-        $scope.exportData = function () {
+    function ExportController($scope,$uibModal) {
+        $scope.mailId = $scope.$parent.$parent.$parent.$parent.mailId;
+        $scope.doExport = function() {
+            $scope.close();
             $scope.callback({reportType: $scope.reportType});
+        };
+        $scope.close = function () {
+            $scope.modalInstance.dismiss('cancel');
+        };
+        const FILTER_TEMPLATE = "You have chosen to export '{0}' report with filters as specified below. Exported data will be emailed to {1}. Continue?";
+
+        var exportModal = '<div class="modal-header ws">' +
+            '<h3 class="modal-title">Export data</h3>' +
+            '</div>' +
+            '<div class="modal-body ws">' +
+            '<p>{{message}}</p>' +
+            '<p ng-if="exportFilters" class="litetext word-wrap" style="white-space: pre"><b>Filters:</b> {{exportFilters}}</p>' +
+            '</div>' +
+            '<div class="modal-footer ws">' +
+            '<button class="btn btn-primary" ng-click="startExport()">OK</button>' +
+            '<button class="btn btn-default" ng-click="close()">Cancel</button>' +
+            '</div>';
+
+        function messageFormat(text) {
+            var args = arguments;
+            return text.replace(/\{(\d+)\}/g, function () {
+                return args[arguments[1] * 1 + 1];
+            });
         }
+
+        $scope.confirmExport = function () {
+            var info = $scope.callback({reportType: $scope.reportType, isInfo: true});
+            $scope.exportFilters = info.filters ? info.filters : undefined;
+            $scope.message = messageFormat(FILTER_TEMPLATE, info.type, $scope.mailId);
+
+            $scope.modalInstance = $uibModal.open({
+                template: exportModal,
+                scope: $scope,
+                controller: ['$scope', function ($scope) {
+                    $scope.startExport = function(){
+                        $scope.doExport();
+                    }
+                }]
+            });
+        };
     }
 
     function locationFilter() {

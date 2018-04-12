@@ -2372,10 +2372,10 @@ function ExportController($scope, $uibModal) {
         '</div>' +
         '<div class="modal-body ws">' +
         '<p>{{message}}</p>' +
-        '<p ng-if="exportFilters" class="litetext word-wrap" style="white-space: pre"><b>Filters:</b> {{exportFilters}}</p>' +
+        '<p ng-if="exportFilters" class="litetext word-wrap" style="white-space: pre-wrap"><b>Filters:</b> {{exportFilters}}</p>' +
         '<span ng-show="exportShowIncludeBatch">' +
         '<input type="checkbox" ng-model="exportIncludeBatch"> Include batch details' +
-        '<input style="margin-left:10px" type="checkbox" ng-model="fullInventoryExport"> Include advanced fields' +
+        '<input style="margin-left:10px" type="checkbox" ng-model="fullInventoryExport"> Include all fields' +
         '</span></div>' +
         '<div class="modal-footer ws">' +
         '<button class="btn btn-primary" ng-click="startExport()">OK</button>' +

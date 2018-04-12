@@ -30,7 +30,6 @@ function InventoryReportController(s, timeout, getData, reportsServiceCore) {
     s.exportAsCSV = s.$parent.$parent.exportAsCSV;
     s.showSuccess = s.$parent.$parent.showSuccess;
     s.showErrorMsg = s.$parent.$parent.showErrorMsg;
-
     s.MAX_MONTHS = 11;
     s.MAX_WEEKS = 15;
     s.MAX_DAYS = 31;
@@ -448,7 +447,32 @@ function InventoryReportController(s, timeout, getData, reportsServiceCore) {
         }
     };
 
-    s.exportData = function(reportType) {
+    function getReportType(reportType) {
+        switch(reportType) {
+            case 'ias':
+                return s.resourceBundle['report.abnormal.stock'];
+            case 'ic':
+                return s.resourceBundle['report.consumption'];
+            case 'id':
+                return s.resourceBundle['report.discards'];
+            case 'ir':
+                return s.resourceBundle['report.replenishment.response.time'];
+            case 'isa':
+                return s.resourceBundle['report.stock.availability'];
+            case 'ist':
+                return s.resourceBundle['report.stock.trends'];
+            case 'is':
+                return s.resourceBundle['report.supply'];
+            case 'iu':
+                return s.resourceBundle['report.utilization'];
+            case 'itc':
+                return s.resourceBundle['report.transaction.counts'];
+            default:
+                return undefined;
+        }
+    }
+
+    s.exportData = function(reportType,isInfo) {
         var selectedFilters = s.populateFilters();
         selectedFilters['type'] = reportType;
         selectedFilters['viewtype'] = s.activeMetric;
@@ -465,6 +489,12 @@ function InventoryReportController(s, timeout, getData, reportsServiceCore) {
         selectedFilters['primaryMetricIndex'] = s.metrics.primary;
         selectedFilters['secondaryMetricIndex'] = s.metrics.secondary;
         selectedFilters['tertiaryMetricIndex'] = s.metrics.tertiary;
+        if(isInfo) {
+            return {
+                filters: filterTitles,
+                type: getReportType(reportType)
+            };
+        }
         s.showLoading();
         reportsServiceCore.exportData(JSON.stringify(angular.toJson(selectedFilters))).then(function (data) {
             s.showSuccess(data.data);
