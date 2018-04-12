@@ -1579,8 +1579,10 @@ public class ConfigurationModelBuilder {
   private void addAllReasons(Set<String> reasons, Map<String, ReasonConfig> configuredReasons) {
     if (MapUtils.isNotEmpty(configuredReasons)) {
       List<String> reasonsList = new ArrayList<>();
-      configuredReasons.entrySet().forEach(
-          entry -> reasonsList.addAll(configuredReasons.get(entry.getKey()).getReasons()));
+      configuredReasons.entrySet()
+          .stream()
+          .filter(entry->CollectionUtils.isNotEmpty(entry.getValue().getReasons()))
+          .forEach(entry -> reasonsList.addAll(entry.getValue().getReasons()));
       reasons.addAll(reasonsList);
     }
   }
