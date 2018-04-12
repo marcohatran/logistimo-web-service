@@ -87,7 +87,7 @@ public class MobileExportAdapter {
 
   private void setFromDate(Map<String, String> params, StringBuilder caption,
                            RequestModel requestModel, ResourceBundle backendMessages) {
-    if (params.containsKey(params.get(MobileExportConstants.FROM_DATE_KEY))) {
+    if (params.containsKey(MobileExportConstants.FROM_DATE_KEY)) {
       String fromDate = params.get(MobileExportConstants.FROM_DATE_KEY);
       requestModel.setFromDate(fromDate);
       caption.append(backendMessages.getString("from")).append(": ").append(fromDate)
@@ -97,7 +97,7 @@ public class MobileExportAdapter {
 
   private void setEndDate(Map<String, String> params, StringBuilder caption,
                           RequestModel requestModel, ResourceBundle backendMessages) {
-    if (params.containsKey(params.get(MobileExportConstants.END_DATE_KEY))) {
+    if (params.containsKey(MobileExportConstants.END_DATE_KEY)) {
       String endDate = params.get(MobileExportConstants.END_DATE_KEY);
       requestModel.setEndDate(endDate);
       caption.append(backendMessages.getString("to")).append(": ").append(endDate)
@@ -185,12 +185,12 @@ public class MobileExportAdapter {
                                      int isTransfers) {
     if (IOrder.TYPE_SALE.equalsIgnoreCase(orderSubType)) {
       if (isTransfers == IOrder.TRANSFER) {
-        return backendMessages.getString("exports.incoming");
+        return backendMessages.getString("exports.outgoing");
       }
       return backendMessages.getString("exports.salesorders");
     } else {
       if (isTransfers == IOrder.TRANSFER) {
-        return backendMessages.getString("exports.outgoing");
+        return backendMessages.getString("exports.incoming");
       }
       return backendMessages.getString("exports.purchaseorders");
     }
