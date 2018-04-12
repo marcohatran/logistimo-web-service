@@ -821,6 +821,7 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                         materialcopy.mst = returnitem.rmst;
                         materialcopy.rsn = returnitem.rrsn;
                         materialcopy.trkid = returnitem.id;
+                        materialcopy.atd = returnitem.atd;
                         if (checkNotNullEmpty(returnitem.bid)) {
                             var batch = {};
                             batch.mId = returnitem.mid;
@@ -843,6 +844,14 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                 $scope.transaction.modifiedmaterials = $scope.transaction.materials;
             }
         }
+
+        $scope.isReturnTransactionsAtdValid = function(transaction) {
+            if (checkNotNullEmpty($scope.transaction.date) && checkNotNullEmpty(transaction.atd)) {
+                var transAtd = string2Date(transaction.atd, 'dd/mm/yyyy', '/');
+                return ($scope.transaction.date >= transAtd);
+            }
+            return true;
+        };
 
         function validateReturnTransactions() {
             if (checkNullEmpty($scope.transaction.modifiedmaterials)) {
@@ -872,10 +881,15 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
             if (!valid) {
                 return false;
             }
-            // Check if the return form is open for any of the modified materials
-            valid = !$scope.transaction.modifiedmaterials.some(function (material) {
-                if (checkNotNullEmpty(material.op)) {
+
+            valid = !$scope.transaction.modifiedmaterials.some(function(material) {
+                if(checkNotNullEmpty(material.op)) {
                     $scope.showWarning($scope.resourceBundle['edit.returns.form.open.message'] + " " + material.name.mnm + ". " + $scope.resourceBundle['edit.returns.save.cancel.message']);
+                    return true;
+                }
+                if (!$scope.isReturnTransactionsAtdValid(material)) {
+                    var type = $scope.transaction.type == 'ri' ? 'issue' : 'receipt';
+                    $scope.showWarning($scope.resourceBundle['return.transaction.atd.message'] + " " + type + " " + $scope.resourceBundle['for'] + " " + material.name.mnm + ".");
                     return true;
                 }
             });
@@ -2307,21 +2321,11 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope', '$timeout', 'reque
                     $scope.showWarning($scope.resourceBundle['reason.required']);
                     return false;
                 }
-                if (checkNotNullEmpty($scope.transaction.date) && checkNotNullEmpty(transaction.atd)) {
-                    var type = undefined;
-                    if ($scope.transaction.type == 'ri') {
-                        type = 'issue';
-                    } else if ($scope.transaction.type == 'ro') {
-                        type = 'receipt';
-                    } else {
-                        return false;
-                    }
-                    var retAtd = string2Date(formatDate($scope.transaction.date), 'dd/mm/yyyy', '/');
-                    var transAtd = string2Date(transaction.atd, 'dd/mm/yyyy', '/');
-                    if (retAtd < transAtd) {
-                        $scope.showWarning($scope.resourceBundle['return.transaction.atd.message'] + " " + type + " " + $scope.resourceBundle['for'] + " " + $scope.mnm + ".");
-                        return false;
-                    }
+
+                if (!$scope.isReturnTransactionsAtdValid(transaction)) {
+                    var type = $scope.transaction.type == 'ri' ? 'issue' : 'receipt';
+                    $scope.showWarning($scope.resourceBundle['return.transaction.atd.message'] + " " + type + " " + $scope.resourceBundle['for'] + " " + $scope.mnm + ".");
+                    return false;
                 }
             }
             return true;
