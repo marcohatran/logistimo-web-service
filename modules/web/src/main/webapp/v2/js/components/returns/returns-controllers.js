@@ -221,12 +221,12 @@ function CreateReturnsController($scope, $location, $timeout, returnsService, tr
         if (checkNotNullEmpty(material.returnQuantity)) {
             if (material.returnQuantity > material.fq) {
                 showPopup($scope, material, material.id,
-                    "Quantity " + material.returnQuantity + " exceed fulfilled quantity " + material.fq + ".",
+                    "The quantity to be returned " + material.returnQuantity + " cannot exceed the original receipt quantity " + material.fq + ".",
                     index, $timeout);
                 isInvalid = true;
             } else if (material.returnQuantity > material.fq - material.returnedQuantity) {
                 showPopup($scope, material, material.id,
-                    "Quantity " + material.returnQuantity + " exceed remaining return quantity " + (material.fq - material.returnedQuantity) + ".",
+                    "The quantity to be returned " + material.returnQuantity + " cannot exceed the remaining return quantity " + (material.fq - material.returnedQuantity) + ".",
                     index, $timeout);
                 isInvalid = true;
             } else if (checkNotNullEmpty(material.huName) && checkNotNullEmpty(material.huQty) &&
@@ -234,6 +234,11 @@ function CreateReturnsController($scope, $location, $timeout, returnsService, tr
                 showPopup($scope, material, material.id,
                     material.returnQuantity + " of " + material.nm + " does not match the multiples of units expected in " +
                     material.huName + ". It should be in multiples of " + material.huQty + " " + material.nm + ".",
+                    index, $timeout);
+                isInvalid = true;
+            } else if (material.returnQuantity > material.atpstk) {
+                showPopup($scope, material, material.id,
+                    "The quantity to be returned " + material.returnQuantity+ " cannot exceed the available stock "+ material.atpstk + ".",
                     index, $timeout);
                 isInvalid = true;
             }
@@ -257,12 +262,12 @@ function CreateReturnsController($scope, $location, $timeout, returnsService, tr
         var isInvalid = false;
         if (batchMaterial.returnQuantity > batchMaterial.fq) {
             showPopup($scope, batchMaterial, material.id + batchMaterial.id,
-                "Quantity " + batchMaterial.returnQuantity + " exceed fulfilled quantity " + batchMaterial.fq + ".",
+                "The quantity to be returned " + batchMaterial.returnQuantity + " cannot exceed the original receipt quantity " + batchMaterial.fq + ".",
                 index, $timeout);
             isInvalid = true;
         } else if (batchMaterial.returnQuantity > batchMaterial.fq - batchMaterial.returnedQuantity) {
             showPopup($scope, batchMaterial, material.id + batchMaterial.id,
-                "Quantity " + batchMaterial.returnQuantity + " exceed remaining return quantity " + (batchMaterial.fq - batchMaterial.returnedQuantity) + ".",
+                "The quantity to be returned " + batchMaterial.returnQuantity + " cannot exceed the remaining return quantity " + (batchMaterial.fq - batchMaterial.returnedQuantity) + ".",
                 index, $timeout);
             isInvalid = true;
         } else if (checkNotNullEmpty(batchMaterial.returnQuantity)) {
@@ -274,6 +279,11 @@ function CreateReturnsController($scope, $location, $timeout, returnsService, tr
                     index, $timeout);
                 isInvalid = true;
             }
+        } else if (batchMaterial.returnQuantity > batchMaterial.atpstk) {
+            showPopup($scope, batchMaterial, material.id + batchMaterial.id,
+                "The quantity to be returned " + batchMaterial.returnQuantity+ " cannot exceed the available stock "+ batchMaterial.atpstk + ".",
+                index, $timeout);
+            isInvalid = true;
         } else {
             batchMaterial.sinvalidPopup = batchMaterial.sPopupMsg = batchMaterial.rinvalidPopup = batchMaterial.rPopupMsg = undefined;
             batchMaterial.returnReason = angular.copy(batchMaterial.defaultReturnReason);
