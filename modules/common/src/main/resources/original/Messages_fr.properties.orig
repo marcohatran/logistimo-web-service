@@ -1176,7 +1176,8 @@ creator=Créateur
 status.required=État requis
 material.status.required=Sélectionner l'état du matériau du lot
 serialno.format=Le numéro de série saisi n'est pas valide. Il devrait suivre la convention donnée ci-dessous.
-modelno.format=Le numéro de modèle saisi n'est pas valide. Il devrait suivre la convention donnée ci-dessous.material.status.required=Sélectionner l'état du matériau du lot
+modelno.format=Vous avez entré un modèle d'actif non valide.
+material.status.required=Sélectionner l'état du matériau du lot
 profile=Profilmaterial.status.required=Sélectionner l'état du matériau du lot
 config.customreports.inventorytrendsheetname=Nom de la feuille d'évolution des stocks
 config.customreports.historicaleventsheetname=Nom de l'instantané de l'inventaire historique
