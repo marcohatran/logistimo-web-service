@@ -501,6 +501,12 @@ assetControllers.controller("AssetListingController", ['$scope', '$route', 'asse
             });
         };
 
+        function getCaption() {
+            var caption = getFilterTitle($scope.search.key, $scope.resourceBundle['assets']);
+            caption += checkNotNullEmpty($scope.assetTypeFilter) ? getFilterTitle($scope.assetFilters[$scope.assetTypeFilter].dV, $scope.resourceBundle['type']) : "";
+            return caption;
+        }
+
         $scope.exportData = function (isInfo) {
             if(isInfo) {
                 return {

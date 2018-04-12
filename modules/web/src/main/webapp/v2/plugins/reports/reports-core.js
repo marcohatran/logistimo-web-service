@@ -403,7 +403,7 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
             '</div>' +
             '<div class="modal-body ws">' +
             '<p>{{message}}</p>' +
-            '<p ng-if="exportFilters" class="litetext word-wrap" style="white-space: pre"><b>Filters:</b> {{exportFilters}}</p>' +
+            '<p ng-if="exportFilters" class="litetext word-wrap" style="white-space: pre-wrap"><b>Filters:</b> {{exportFilters}}</p>' +
             '</div>' +
             '<div class="modal-footer ws">' +
             '<button class="btn btn-primary" ng-click="startExport()">OK</button>' +
