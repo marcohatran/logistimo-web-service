@@ -322,6 +322,14 @@ public class Report {
     return roec;
   }
 
+  public Map<String, Float> getIncomingReturnsReason() {
+    return rrsni;
+  }
+
+  public Map<String, Float> getTransferOrderIncomingReturnsReason() {
+    return torrsni;
+  }
+
 
   public Long getDomainId() {
     return did;
@@ -1250,13 +1258,7 @@ public class Report {
     return nfdprsn;
   }
 
-  public Map<String, Float> getIncomingReturnsReason() {
-    return rrsni;
-  }
 
-  public Map<String, Float> getTransferOrderIncomingReturnsReason() {
-    return torrsni;
-  }
 
   public Long getTotalOrderDiscrepancyCount() {
      return (podc == null ? 0 : podc) + (nodc == null ? 0 : nodc);

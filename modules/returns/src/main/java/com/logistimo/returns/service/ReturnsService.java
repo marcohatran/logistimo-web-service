@@ -26,6 +26,7 @@ package com.logistimo.returns.service;
 import com.logistimo.activity.entity.IActivity;
 import com.logistimo.activity.service.ActivityService;
 import com.logistimo.auth.utils.SecurityUtils;
+import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.ReturnsConfig;
 import com.logistimo.constants.Constants;
 import com.logistimo.conversations.entity.IMessage;
@@ -39,6 +40,7 @@ import com.logistimo.materials.service.IHandlingUnitService;
 import com.logistimo.orders.entity.IOrder;
 import com.logistimo.orders.service.OrderManagementService;
 import com.logistimo.orders.service.impl.DemandService;
+import com.logistimo.pagination.Results;
 import com.logistimo.returns.Status;
 import com.logistimo.returns.models.ReturnsFilters;
 import com.logistimo.returns.models.UpdateStatusModel;
@@ -218,9 +220,16 @@ public class ReturnsService {
     Status oldStatus = returnsVO.getStatus().getStatus();
     returnsValidator.validateStatusChange(newStatus, oldStatus);
     if (returnsValidator.checkAccessForStatusChange(statusModel, returnsVO)) {
+
       buildReturns(statusModel, returnsVO, newStatus);
+      List<ReturnsItemVO> returnsItemVOList = getReturnsItem(returnsVO.getId());
+      if (statusModel.getStatus() == Status.SHIPPED) {
+        Results results =
+            inventoryManagementService.getInventoryByKiosk(returnsVO.getCustomerId(), null);
+        returnsValidator.validateShippedQuantity(returnsItemVOList, results.getResults());
+      }
       returnsRepository.updateReturns(returnsVO);
-      returnsVO.setItems(getReturnsItem(returnsVO.getId()));
+      returnsVO.setItems(returnsItemVOList);
       updateDemandItems(returnsVO, statusModel.getStatus());
       IOrder order = orderManagementService.getOrder(returnsVO.getOrderId());
       statusModel.setTransferOrder(order.getOrderType() == IOrder.TRANSFER_ORDER);
@@ -271,7 +280,11 @@ public class ReturnsService {
       throws ServiceException, DuplicationException {
     if (statusModel.getStatus() == Status.RECEIVED || statusModel.getStatus() == Status.SHIPPED) {
       Long domainId = SecurityUtils.getCurrentDomainId();
-      returnsTransactionHandler.postTransactions(statusModel, returnsVO, domainId);
+      Long returnsDomainId=returnsVO.getSourceDomain();
+      DomainConfig domainConfig=DomainConfig.getInstance(returnsDomainId);
+      if(domainConfig.autoGI()) {
+        returnsTransactionHandler.postTransactions(statusModel, returnsVO, domainId);
+      }
     }
   }
 

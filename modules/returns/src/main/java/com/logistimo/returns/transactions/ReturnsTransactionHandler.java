@@ -25,6 +25,7 @@ package com.logistimo.returns.transactions;
 
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.inventory.entity.ITransaction;
+import com.logistimo.inventory.models.CreateTransactionsReturnModel;
 import com.logistimo.inventory.service.InventoryManagementService;
 import com.logistimo.returns.Status;
 import com.logistimo.returns.models.UpdateStatusModel;
@@ -78,10 +79,12 @@ public class ReturnsTransactionHandler {
                 vendorId, statusModel.getSource(), returnsItemVO, statusModel.getStatus(),
                 trackingObjectType)));
 
-    inventoryManagementService
+    CreateTransactionsReturnModel createTransactionsReturnModel=inventoryManagementService
         .updateInventoryTransactions(domainId, transactionsList, null, true, false, null);
 
-
+    if(CollectionUtils.isNotEmpty(createTransactionsReturnModel.getErrorTransactions())){
+      throw new ServiceException("Exception posting transaction");
+    }
   }
 
   private List<ITransaction> getTransactions(String userId, Long domainId, Long kioskId,

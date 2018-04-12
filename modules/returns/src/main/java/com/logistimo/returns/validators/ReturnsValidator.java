@@ -27,9 +27,11 @@ import com.logistimo.config.models.ReturnsConfig;
 import com.logistimo.entities.auth.EntityAuthoriser;
 import com.logistimo.exception.InvalidDataException;
 import com.logistimo.exception.ValidationException;
+import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.materials.model.HandlingUnitModel;
 import com.logistimo.returns.Status;
 import com.logistimo.returns.models.UpdateStatusModel;
+import com.logistimo.returns.vo.ReturnsItemBatchVO;
 import com.logistimo.returns.vo.ReturnsItemVO;
 import com.logistimo.returns.vo.ReturnsVO;
 import com.logistimo.services.ServiceException;
@@ -149,7 +151,8 @@ public class ReturnsValidator {
 
   public void validateReturnsPolicy(ReturnsConfig returnsConfiguration, Long orderFulfillmentTime) {
 
-    if (returnsConfiguration.getIncomingDuration()==null || returnsConfiguration.getIncomingDuration().compareTo(0) == 0) {
+    if (returnsConfiguration.getIncomingDuration() == null
+        || returnsConfiguration.getIncomingDuration().compareTo(0) == 0) {
       return;
     }
     Long
@@ -191,4 +194,30 @@ public class ReturnsValidator {
                 returnsVO.getVendorId())));
   }
 
+  public void validateShippedQuantity(List<ReturnsItemVO> returnsItemVOList,
+                                      List<IInvntry> inventoryList) {
+    Map<Long, BigDecimal> quantityByMaterial = new HashMap<>();
+    returnsItemVOList.forEach(returnsItemVO -> {
+      BigDecimal quantity = BigDecimal.ZERO;
+      List<ReturnsItemBatchVO>
+          returnsItemBatchVOList = returnsItemVO.getReturnItemBatches();
+      if (CollectionUtils.isNotEmpty(returnsItemBatchVOList)) {
+        quantity =
+            returnsItemBatchVOList.stream().map(ReturnsItemBatchVO::getQuantity)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+      } else {
+        quantity = returnsItemVO.getQuantity();
+      }
+      quantityByMaterial.put(returnsItemVO.getMaterialId(), quantity);
+    });
+
+    inventoryList.forEach(invntry -> {
+      if (quantityByMaterial.containsKey(invntry.getMaterialId())
+          && invntry.getAvailableStock().compareTo(quantityByMaterial.get(invntry.getMaterialId()))
+          < 0) {
+        throw new ValidationException("RT007");
+      }
+
+    });
+  }
 }
