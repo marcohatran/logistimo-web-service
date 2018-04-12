@@ -3613,7 +3613,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
         if (isClear) {
           xLogger.warn(
               "Resetting available stock for material {0} at entity {1} inv(stk,astk,atpstk,q): " +
-                  "inv({2},{3},{4},{5}", inv.getMaterialName(), inv.getKioskName(), inv.getStock(),
+                  "inv({2},{3},{4},{5}", getMaterialName(inv.getMaterialId()), getKioskName(inv.getKioskId()), inv.getStock(),
               inv.getAllocatedStock(), inv.getAvailableStock(), quantity);
           newQuantity = BigUtil.lesserThanZero(newQuantity) ? BigDecimal.ZERO : inv.getStock();
           isCorrected = true;
@@ -3629,7 +3629,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
         if (isClear) {
           xLogger.warn(
               "Resetting allocated stock for material {0} at entity {1} inv(stk,astk,atpstk,q): " +
-                  "inv({2},{3},{4},{5}", inv.getMaterialName(), inv.getKioskName(), inv.getStock(),
+                  "inv({2},{3},{4},{5}", getMaterialName(inv.getMaterialId()), getKioskName(inv.getKioskId()), inv.getStock(),
               inv.getAllocatedStock(), inv.getAvailableStock(), quantity);
           if (isCorrected) {
             inv.setAllocatedStock(inv.getStock().subtract(inv.getAvailableStock()));
@@ -3637,14 +3637,14 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
             inv.setAllocatedStock(inv.getStock());
           }
         } else {
-          throw new InventoryAllocationException("IA003", SecurityUtils.getLocale(), inv.getKioskName(),
-              inv.getMaterialName(), inv.getAllocatedStock(), quantity.abs(), inv.getStock());
+          throw new InventoryAllocationException("IA003", SecurityUtils.getLocale(), getKioskName(inv.getKioskId()),
+              getMaterialName(inv.getMaterialId()), inv.getAllocatedStock(), quantity.abs(), inv.getStock());
         }
       } else if (isClear && BigUtil.lesserThanZero(inv.getAllocatedStock())) {
         xLogger.warn(
             "Resetting allocated stock to ZERO for material {0} at entity {1} inv(stk,astk,atpstk,q): "
                 +
-                "inv({2},{3},{4},{5}", inv.getMaterialName(), inv.getKioskName(), inv.getStock(),
+                "inv({2},{3},{4},{5}", getMaterialName(inv.getMaterialId()), getKioskName(inv.getKioskId()), inv.getStock(),
             inv.getAllocatedStock(), inv.getAvailableStock(), quantity);
         inv.setAllocatedStock(BigDecimal.ZERO);
       }
@@ -3662,22 +3662,22 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
             xLogger.warn(
                 "Resetting available stock for material {0} - batch {6} at entity {1} invbatch(stk,astk,atpstk,q): "
                     +
-                    "invbatch({2},{3},{4},{5}", inv.getMaterialName(), inv.getKioskName(),
+                    "invbatch({2},{3},{4},{5}", getMaterialName(inv.getMaterialId()), getKioskName(inv.getKioskId()),
                 invBatch.getQuantity(),
                 invBatch.getAllocatedStock(), invBatch.getAvailableStock(), quantity,
                 invBatch.getBatchId());
             newQuantity = invBatch.getQuantity();
             isCorrected = true;
           } else {
-            throw new InventoryAllocationException("IA002", SecurityUtils.getLocale(), inv.getKioskName(),
-                inv.getMaterialName(), invBatch.getBatchId(),
+            throw new InventoryAllocationException("IA002", SecurityUtils.getLocale(), getKioskName(inv.getKioskId()),
+                getMaterialName(inv.getMaterialId()), invBatch.getBatchId(),
                 invBatch.getAvailableStock(), newQuantity);
           }
         } else if (isClear && BigUtil.lesserThanZero(newQuantity)) {
           xLogger.warn(
               "Resetting available stock to ZERO for material {0} - batch {6} at entity {1} invbatch(stk,astk,atpstk,q): "
                   +
-                  "invbatch({2},{3},{4},{5}", inv.getMaterialName(), inv.getKioskName(),
+                  "invbatch({2},{3},{4},{5}", getMaterialName(inv.getMaterialId()), getKioskName(inv.getKioskId()),
               invBatch.getQuantity(),
               invBatch.getAllocatedStock(), invBatch.getAvailableStock(), quantity,
               invBatch.getBatchId());
@@ -3692,7 +3692,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
             xLogger.warn(
                 "Resetting allocated stock for material {0} - batch {6} at entity {1} invbatch(stk,astk,atpstk,q): "
                     +
-                    "invbatch({2},{3},{4},{5}", inv.getMaterialName(), inv.getKioskName(),
+                    "invbatch({2},{3},{4},{5}", getMaterialName(inv.getMaterialId()), getKioskName(inv.getKioskId()),
                 invBatch.getQuantity(),
                 invBatch.getAllocatedStock(), invBatch.getAvailableStock(), quantity,
                 invBatch.getBatchId());
@@ -3703,15 +3703,15 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
               invBatch.setAllocatedStock(invBatch.getQuantity());
             }
           } else {
-            throw new InventoryAllocationException("IA004", SecurityUtils.getLocale(), inv.getKioskName(),
-                inv.getMaterialName(), invBatch.getBatchId(), invBatch.getAllocatedStock(),
+            throw new InventoryAllocationException("IA004", SecurityUtils.getLocale(), getKioskName(inv.getKioskId()),
+                getMaterialName(inv.getMaterialId()), invBatch.getBatchId(), invBatch.getAllocatedStock(),
                 invBatch.getQuantity());
           }
         } else if (isClear && BigUtil.lesserThanZero(invBatch.getAllocatedStock())) {
           xLogger.warn(
               "Resetting allocated stock to ZERO for material {0} - batch {6} at entity {1} invbatch(stk,astk,atpstk,q): "
                   +
-                  "invbatch({2},{3},{4},{5}", inv.getMaterialName(), inv.getKioskName(),
+                  "invbatch({2},{3},{4},{5}", getMaterialName(inv.getMaterialId()), getKioskName(inv.getKioskId()),
               invBatch.getQuantity(),
               invBatch.getAllocatedStock(), invBatch.getAvailableStock(), quantity,
               invBatch.getBatchId());
