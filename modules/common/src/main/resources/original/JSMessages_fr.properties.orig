@@ -1369,6 +1369,7 @@ open.transfers=transfert (s) ouvert (s)
 transfers.lower=transfert(s)
 initiated=initié
 add.existing.transfer=Ajouter au (x) transfert (s) existant (s)
+asset.status.lower=Statut de l'actif
 report.approval.request.status=Statut de la demande d'approbation
 report.approval.response.time=Temps de réponse d'approbation
 report.demand=Demande

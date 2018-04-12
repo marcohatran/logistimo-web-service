@@ -1316,7 +1316,7 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
             subCaption += $scope.status * 1 == 0 ? "All" : $scope.captions[$scope.status * 1 - 1];
 
             if (pieId == "p1") {
-                $scope.pCaption = "Working assets";
+                $scope.pCaption = $scope.resourceBundle['asset.status.lower'];
                 $scope.pSubCaption = $sce.trustAsHtml(subCaption || '&nbsp;');
             }
             return isOneDataAvailable ? d : [];
