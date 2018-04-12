@@ -132,9 +132,6 @@ angular.module('logistimo.storyboard.topLocationsByTemperatureStatusWidget', [])
                 dashboardService.get(undefined, undefined, $scope.exFilter, $scope.exType, $scope.period,
                     $scope.widget.conf.tPeriod, asset, constructModel(filter.entityTag), fDate,
                     constructModel(filter.exEntityTag), false).then(function (data) {
-                    if(checkNullEmptyObject(data.data)) {
-                        $scope.noDataToRender();
-                    }
                     $scope.dashboardView = data.data;
                     var linkText;
                     if ($scope.dashboardView.mLev == "country") {
@@ -213,6 +210,9 @@ angular.module('logistimo.storyboard.topLocationsByTemperatureStatusWidget', [])
                 };
                 $scope.wloading = false;
                 $scope.showChart = true;
+                if(checkNullEmptyObject($scope.barData)){
+                    $scope.noDataToRender();
+                }
             }
         }]);
 

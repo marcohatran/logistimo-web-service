@@ -142,11 +142,11 @@ angular.module('logistimo.storyboard.inventoryStatusDonutWidget', [])
                 dashboardService.get(undefined, undefined, $scope.exFilter, $scope.exType, $scope.period, undefined,
                     undefined, constructModel(filter.entityTag), fDate, constructModel(filter.exEntityTag), false).then(
                     function (data) {
-                        if(checkNullEmptyObject(data.data.invDomain)) {
-                            $scope.noDataToRender();   
-                        }
                         chartData = constructPieData(data.data.invDomain, invPieColors, invPieOrder, INVENTORY,
                             $scope.mapEvent);
+                        if(checkNullEmptyObject(chartData)) {
+                            $scope.noDataToRender();
+                        }
                         var normalPercent = getPercent(data.data.invDomain, $scope.widType);
                         normalPercent = formatDecimal(normalPercent);
                         totalInv = getItemCount(data.data.invDomain, $scope.widType);
