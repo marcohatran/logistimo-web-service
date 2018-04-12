@@ -328,8 +328,10 @@ public class ReturnsBuilder {
     itemBatchModel
         .setExpiry(LocalDateUtil.formatCustom(batch.getExpiryDate(), Constants.DATE_FORMAT, null));
     itemBatchModel.setManufacturer(batch.getManufacturer());
-    itemBatchModel.setManufacturedDate(
-        LocalDateUtil.formatCustom(batch.getManufacturedDate(), Constants.DATE_FORMAT, null));
+    if (batch.getManufacturedDate() != null) {
+      itemBatchModel.setManufacturedDate(
+          LocalDateUtil.formatCustom(batch.getManufacturedDate(), Constants.DATE_FORMAT, null));
+    }
     itemBatchModel.setReturnQuantity(itemBatch.getQuantity());
     itemBatchModel.setMaterialStatus(itemBatch.getMaterialStatus());
     itemBatchModel.setReason(itemBatch.getReason());

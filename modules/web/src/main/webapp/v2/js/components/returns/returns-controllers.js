@@ -316,7 +316,7 @@ function CreateReturnsController($scope, $location, $timeout, returnsService, tr
     };
 
     $scope.validateBatchStatus = function (material, batchMaterial, index, isTempStatus) {
-        if ($scope.statusMandatoryConfig.rosm && checkNullEmpty(material.returnMaterialStatus)) {
+        if ($scope.statusMandatoryConfig.rosm && checkNullEmpty(batchMaterial.returnMaterialStatus)) {
             showPopup($scope, batchMaterial, 's' + (isTempStatus ? 't' : '') + material.id + batchMaterial.id, "Material status is mandatory", index, $timeout);
             return true;
         }
