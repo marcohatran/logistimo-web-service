@@ -149,6 +149,7 @@ public class ReportPluginService {
       Response response = externalServiceClient.postRequest(model);
       return reportBuilder.buildReportTableData(response.readEntity(String.class), viewType, model);
     } catch (Exception e) {
+      xLogger.warn("Error while getting report table data", e);
       return null;
     }
   }
