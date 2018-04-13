@@ -259,7 +259,7 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
                 $scope.setResults($scope.orders);
                 $scope.initLoad = false;
                 var orderData = $scope.orders.results;
-                if (orderData.length == 1) {
+                if (orderData.length == 1 && $scope.isReferenceIdAvailable) {
                     $scope.orderId = orderData[0].id;
                 }
             } else {
@@ -280,6 +280,7 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
         $scope.fetch = function () {
             $scope.orders = {};
             $scope.loading = true;
+            $scope.isReferenceIdAvailable = $scope.salesReferenceId || $scope.purchaseReferenceId || $scope.transferReferenceId;
             $scope.showLoading();
             if ($scope.mxE && checkNullEmpty($scope.entity)) {
                 $scope.setData(null);
@@ -303,7 +304,7 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
                     $scope.salesReferenceId, $scope.approval_status, $scope.purchaseReferenceId, $scope.transferReferenceId).then(function (data) {
                     if (checkNotNullEmpty(data.data)) {
                         $scope.setData(data.data);
-                        if (checkNotNullEmpty(data.data.results) && data.data.results.length == 1) {
+                        if (checkNotNullEmpty(data.data.results) && data.data.results.length == 1 && $scope.isReferenceIdAvailable) {
                             $scope.openOrder($scope.orderId);
                         }
                     }
@@ -321,7 +322,7 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
                     $scope.salesReferenceId, $scope.approval_status, $scope.purchaseReferenceId, $scope.transferReferenceId).then(function (data) {
                     if (checkNotNullEmpty(data.data)) {
                         $scope.setData(data.data);
-                        if (checkNotNullEmpty(data.data.results) && data.data.results.length == 1) {
+                        if (checkNotNullEmpty(data.data.results) && data.data.results.length == 1 && $scope.isReferenceIdAvailable) {
                             $scope.openOrder($scope.orderId);
                         }
                     }

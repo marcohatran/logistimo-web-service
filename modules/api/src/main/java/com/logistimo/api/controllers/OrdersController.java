@@ -509,7 +509,7 @@ public class OrdersController {
             modifyOrder(order, user.getUsername(), transactions, new Date(), domainId,
                 ITransaction.TYPE_REORDER, model.msg, null, null, BigDecimal.ZERO, null,
                 dc.allowEmptyOrders(), order.getTags(TagUtil.TYPE_ORDER),
-                null);
+                order.getSalesReferenceID(), null, order.getPurchaseReferenceId(), order.getTransferReferenceId());
       }
       order = orderAPIBuilder.buildOrderMaterials(order, model.items);
       //TODO use OrderManagementServiceImpl updateOrderWithAllocations
