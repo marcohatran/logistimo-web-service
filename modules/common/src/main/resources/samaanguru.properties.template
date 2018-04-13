@@ -150,7 +150,7 @@ collaboration-service.url=$COLLABORATION_URL
 
 #stock-rebalancing
 stock-rebalancing.schedule.hour=4
-stockrebalancing.url=http://localhost:8700
+stockrebalancing.url=$STOCKREBALANCING_URL
 stockrebalancing.path=/v1/stock-rebalancing
 
 
