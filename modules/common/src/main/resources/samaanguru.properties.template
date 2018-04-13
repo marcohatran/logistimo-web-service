@@ -150,6 +150,8 @@ collaboration-service.url=$COLLABORATION_URL
 
 #stock-rebalancing
 stock-rebalancing.schedule.hour=4
+stockrebalancing.url=http://localhost:8700
+stockrebalancing.path=/v1/stock-rebalancing
 
 
 #JDO properties
