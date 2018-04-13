@@ -42,10 +42,14 @@ public class StockRebalancingEventBatchConverter implements
   public StockRebalancingEventBatchModel convert(StockRebalancingEventBatch source) {
     StockRebalancingEventBatchModel batchModel = new StockRebalancingEventBatchModel();
     batchModel.setBatchId(source.getBatchId());
-    batchModel.setExpiry(LocalDateUtil.formatCustom(source.getExpiryDate(),
-        DATE_FORMAT, null));
-    batchModel.setManufacturedDate(LocalDateUtil.formatCustom(source.getManufactureDate(),
-        DATE_FORMAT, null));
+    if(source.getExpiryDate() != null) {
+      batchModel.setExpiry(LocalDateUtil.formatCustom(source.getExpiryDate(),
+          DATE_FORMAT, null));
+    }
+    if(source.getManufactureDate() != null) {
+      batchModel.setManufacturedDate(LocalDateUtil.formatCustom(source.getManufactureDate(),
+          DATE_FORMAT, null));
+    }
     batchModel.setManufacturer(source.getManufacturerName());
     batchModel.setQuantity(source.getTransferQuantity());
     return batchModel;
