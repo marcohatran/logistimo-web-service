@@ -243,8 +243,8 @@ logistimoApp.config(function ($routeProvider) {
         action: "configuration.inventory"
     }).when("/configuration/approvals/", {
         action: "configuration.approvals"
-    }).when("/configuration/stocks/", {
-       action: "configuration.stocks"
+    }).when("/configuration/rebalancing/", {
+       action: "configuration.rebalancing"
     }).when("/configuration/accounting/", {
         action: "configuration.accounting"
     }).when("/configuration/custom", {

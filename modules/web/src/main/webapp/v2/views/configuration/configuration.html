@@ -61,8 +61,8 @@
             <li ng-class="{enable: subview == 'dashboards' }">
                 <a href="#/configuration/dashboards/">{{resourceBundle['custom.dashboards']}}</a>
             </li>
-            <li ng-class="{enable: subview == 'stocks'}">
-                <a href="#/configuration/stocks/">{{resourceBundle['stock.rebalancing']}}</a>
+            <li ng-class="{enable: subview == 'rebalancing'}">
+                <a href="#/configuration/rebalancing/">{{resourceBundle['stock.rebalancing']}}</a>
             </li>
         </ul>
         <!--<span class="pull-right" ng-class="{ enable: subview == 'push'}">
@@ -114,7 +114,7 @@
         <div ng-switch-when="dashboards">
             <div ng-include="'views/dashboards/dashboards.html'"></div>
         </div>
-        <div ng-switch-when="stocks">
+        <div ng-switch-when="rebalancing">
             <div ng-include="'views/configuration/stock-rebalancing.html'"></div>
         </div>
     </div>
