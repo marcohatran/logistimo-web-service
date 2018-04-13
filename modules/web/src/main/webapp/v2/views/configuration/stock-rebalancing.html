@@ -67,7 +67,7 @@
                     <div class="row">
                         <div class="col-sm-11">
                             <div class="form-group">
-                                <label class="col-sm-3 control-label">
+                                <label class="col-sm-3 control-label required">
                                     {{resourceBundle['include.material.tags']}}
                                 </label>
                                 <div class="col-sm-4">
@@ -79,7 +79,7 @@
                     <div class="row">
                         <div class="col-sm-11">
                             <div class="form-group">
-                                <label class="col-sm-3 control-label">
+                                <label class="col-sm-3 control-label required">
                                     {{resourceBundle['include.entities.tags']}}
                                 </label>
                                 <div class="col-sm-8">
@@ -121,7 +121,7 @@
                     <div class="row">
                         <div class="col-sm-11">
                             <div class="form-group">
-                                <label class="col-sm-3 control-label">
+                                <label class="col-sm-3 control-label required">
                                     {{resourceBundle['source.destination.geo.fencing']}}
                                 </label>
                                 <div class="col-sm-8">
@@ -157,7 +157,7 @@
                                     <input type="checkbox" ng-model="stockRebalancing.stockOutDurationExceedsThreshold" ng-change="updateTrigger('acceptableLeadTime')">&nbsp;{{resourceBundle['destination.stock.out.threshold']}}
                                     <div class="bgr col-sm-12" ng-show="stockRebalancing.stockOutDurationExceedsThreshold">
                                         <div class="form-group">
-                                            <label class="col-sm-8 control-label">
+                                            <label class="col-sm-8 control-label required">
                                                 {{resourceBundle['destination.acceptable.stock.out.days']}}
                                             </label>
                                             <div class="col-sm-4">
@@ -202,7 +202,7 @@
                                     <input type="checkbox" ng-model="stockRebalancing.maxStock" ng-change="updateStockRebalancing('maxStockDays')">&nbsp;{{resourceBundle['source.stock.max.days']}}
                                     <div class="bgr col-sm-12" ng-show="stockRebalancing.maxStock">
                                         <div class="form-group">
-                                            <label class="col-sm-8 control-label">
+                                            <label class="col-sm-8 control-label required">
                                                 {{resourceBundle['source.acceptable.max.days']}}
                                             </label>
                                             <div class="col-sm-4">
@@ -234,7 +234,7 @@
                     <div class="row">
                         <div class="col-sm-11">
                             <div class="form-group">
-                                <label class="col-sm-3 control-label">{{resourceBundle['transportation.cost']}}</label>
+                                <label class="col-sm-3 control-label required">{{resourceBundle['transportation.cost']}}</label>
                                 <div class="col-sm-6">
                                     <input type="text" ng-model="stockRebalancing.transportationCost" class="form-control" autocomplete="off" placeholder=""
                                            maxlength="20" style="width: 50%; display: inline-block;" only-digits>&nbsp;&nbsp;per km
@@ -245,7 +245,7 @@
                     <div class="row">
                         <div class="col-sm-11">
                             <div class="form-group">
-                                <label class="col-sm-3 control-label">{{resourceBundle['handling.charges']}}</label>
+                                <label class="col-sm-3 control-label required">{{resourceBundle['handling.charges']}}</label>
                                 <div class="col-sm-6">
                                     <input type="text" ng-model="stockRebalancing.handlingCharges" class="form-control" autocomplete="off" placeholder=""
                                            maxlength="20" style="width: 50%; display: inline-block;" only-digits>&nbsp;&nbsp;
@@ -272,7 +272,7 @@
                     <div class="row">
                         <div class="col-sm-11">
                             <div class="form-group">
-                                <label class="col-sm-3 control-label">
+                                <label class="col-sm-3 control-label required">
                                     {{resourceBundle['inv.holding.cost']}}
                                 </label>
                                 <div class="col-sm-6">
