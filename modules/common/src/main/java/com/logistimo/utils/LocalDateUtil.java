@@ -35,6 +35,8 @@ import com.logistimo.reports.ReportsConstants;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
 
+import org.apache.commons.lang.StringUtils;
+
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -725,4 +727,25 @@ public class LocalDateUtil {
     }
     return date;
   }
+
+  public static long getNextRunTime(String timezone, int hourOfDay, int minuteOfHour) {
+    Calendar gmtZero = GregorianCalendar.getInstance();
+    gmtZero = LocalDateUtil.resetTimeFields(gmtZero);
+
+    Calendar calendar = GregorianCalendar.getInstance();
+    if (StringUtils.isNotEmpty(timezone)) {
+      calendar.setTimeZone(TimeZone.getTimeZone(timezone));
+    }
+    calendar = LocalDateUtil.resetTimeFields(calendar);
+    calendar.set(Calendar.HOUR_OF_DAY, hourOfDay);
+    calendar.set(Calendar.MINUTE, minuteOfHour);
+
+    if (calendar.getTimeInMillis() - gmtZero.getTimeInMillis()
+        <= 0) { // If current day's time passed, schedule for next day
+      calendar.add(Calendar.DAY_OF_MONTH, 1);
+    }
+
+    return calendar.getTimeInMillis();
+  }
+
 }

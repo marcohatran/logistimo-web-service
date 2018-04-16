@@ -35,14 +35,10 @@ import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.services.utils.ConfigUtil;
 import com.logistimo.utils.LocalDateUtil;
 
-import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.Calendar;
-import java.util.GregorianCalendar;
 import java.util.List;
-import java.util.TimeZone;
 
 /**
  * Created by charan on 01/08/17.
@@ -78,11 +74,14 @@ public class ScheduleStockRebalancingAction {
   private void schedule(IDomain domain) {
     try {
       DomainConfig domainConfig = DomainConfig.getInstance(domain.getId());
-      long etaMillis = getNextRunTime(domainConfig.getTimezone());
+      long
+          etaMillis =
+          LocalDateUtil.getNextRunTime(domainConfig.getTimezone(),
+              ConfigUtil.getInt("stock-rebalancing.schedule.hour", 6),
+              ConfigUtil.getInt("stock-rebalancing.schedule.minute", 30));
 
       if (domainConfig.isCapabilityDisabled(DomainConfig.CAPABILITY_ORDERS)
-        //|| TODO : Add condition to check if Stock rebalancing is configured for this domain.
-          ) {
+          && domainConfig.getStockRebalancingConfig().isEnableStockRebalancing()) {
         AppFactory.get().getTaskService()
             .schedule(ITaskService.QUEUE_OPTIMZER,
                 STOCK_REBALANCING_AUTOMATION_URL + "?domain_id=" + domain.getId(), null, null, null,
@@ -96,25 +95,6 @@ public class ScheduleStockRebalancingAction {
               domain.getName(),
               e);
     }
-  }
-
-  private long getNextRunTime(String timezone) {
-    Calendar gmtZero = GregorianCalendar.getInstance();
-    gmtZero = LocalDateUtil.resetTimeFields(gmtZero);
-
-    Calendar calendar = GregorianCalendar.getInstance();
-    if (StringUtils.isNotEmpty(timezone)) {
-      calendar.setTimeZone(TimeZone.getTimeZone(timezone));
-    }
-    calendar = LocalDateUtil.resetTimeFields(calendar);
-    calendar.set(Calendar.HOUR_OF_DAY, ConfigUtil.getInt("stock-rebalancing.schedule.hour", 4));
-
-    if (calendar.getTimeInMillis() - gmtZero.getTimeInMillis()
-        <= 0) { // If current day's time passed, schedule for next day
-      calendar.add(Calendar.DAY_OF_MONTH, 1);
-    }
-
-    return calendar.getTimeInMillis();
   }
 
 }

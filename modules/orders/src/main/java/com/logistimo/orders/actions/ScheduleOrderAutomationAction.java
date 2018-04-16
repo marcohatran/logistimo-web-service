@@ -33,6 +33,8 @@ import com.logistimo.logger.XLog;
 import com.logistimo.pagination.Results;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.taskqueue.ITaskService;
+import com.logistimo.services.utils.ConfigUtil;
+import com.logistimo.utils.LocalDateUtil;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -74,10 +76,13 @@ public class ScheduleOrderAutomationAction {
       OrdersConfig ordersConfig = domainConfig.getOrdersConfig();
       if (domainConfig.isCapabilityDisabled(DomainConfig.CAPABILITY_ORDERS) || !ordersConfig
           .isCreationAutomated()) {
+        long etaMillis = LocalDateUtil.getNextRunTime(domainConfig.getTimezone(),
+            ConfigUtil.getInt("stock-rebalancing.schedule.hour", 6),
+            ConfigUtil.getInt("stock-rebalancing.schedule.minute", 0));
         AppFactory.get().getTaskService()
             .schedule(ITaskService.QUEUE_OPTIMZER,
-                ORDER_AUTOMATION_URL + "?domain_id=" + domain.getId(), null,
-                ITaskService.METHOD_GET);
+                ORDER_AUTOMATION_URL + "?domain_id=" + domain.getId(), null, null, null,
+                ITaskService.METHOD_GET, etaMillis);
         LOGGER.info("Scheduled order automation for domain {0}:{1}", domain.getId(),
             domain.getName());
       }

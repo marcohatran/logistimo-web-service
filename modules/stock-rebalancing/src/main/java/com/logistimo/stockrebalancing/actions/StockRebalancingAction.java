@@ -67,39 +67,41 @@ public class StockRebalancingAction {
     DomainConfig domainConfig = DomainConfig.getInstance(domainId);
     StockRebalancingConfig stockRebalancingConfig = domainConfig.getStockRebalancingConfig();
 
-    if (stockRebalancingConfig.isEnableStockRebalancing()) {
-
-      List<Map<String, String>> destinationTriggers = new ArrayList<>();
-      List<Map<String, String>> sourceTriggers = new ArrayList<>();
-
-      if (stockRebalancingConfig.isStockOutDurationExceedsThreshold()) {
-        destinationTriggers.add(buildSDETConfigMap(stockRebalancingConfig));
-      }
-
-      if (stockRebalancingConfig.isExpiryCheck()) {
-        sourceTriggers.add(buildSEBCConfigMap());
-      }
-
-      if (stockRebalancingConfig.isMaxStock()) {
-        sourceTriggers.add(buildSGTMConfigMap(stockRebalancingConfig));
-      }
-
-      configureSecondaryTriggers(destinationTriggers, sourceTriggers);
-
-      Configuration configuration = Configuration.builder()
-          .destinationTriggers(destinationTriggers)
-          .sourceTriggers(sourceTriggers)
-          .materialTags(stockRebalancingConfig.getMtTags())
-          .transferMatrix(stockRebalancingConfig.getEntityTagsCombination())
-          .handlingCost(BigDecimal.valueOf(stockRebalancingConfig.getHandlingCharges()))
-          .transportationCost(BigDecimal.valueOf(stockRebalancingConfig.getTransportationCost()))
-          .inventoryHoldingCost(
-              BigDecimal.valueOf(stockRebalancingConfig.getInventoryHoldingCost()))
-          .matchingStrategy(buildMatchingStrategy(stockRebalancingConfig))
-          .build();
-
-      stockRebalancingClient.triggerStockRebalancing(String.valueOf(domainId), configuration);
+    if (!stockRebalancingConfig.isEnableStockRebalancing()) {
+      LOGGER.info("Stock rebalancing not enabled for domain {0} - ", domainId);
+      return;
     }
+
+    List<Map<String, String>> destinationTriggers = new ArrayList<>();
+    List<Map<String, String>> sourceTriggers = new ArrayList<>();
+
+    if (stockRebalancingConfig.isStockOutDurationExceedsThreshold()) {
+      destinationTriggers.add(buildSDETConfigMap(stockRebalancingConfig));
+    }
+
+    if (stockRebalancingConfig.isExpiryCheck()) {
+      sourceTriggers.add(buildSEBCConfigMap());
+    }
+
+    if (stockRebalancingConfig.isMaxStock()) {
+      sourceTriggers.add(buildSGTMConfigMap(stockRebalancingConfig));
+    }
+
+    configureSecondaryTriggers(destinationTriggers, sourceTriggers);
+
+    Configuration configuration = Configuration.builder()
+        .destinationTriggers(destinationTriggers)
+        .sourceTriggers(sourceTriggers)
+        .materialTags(stockRebalancingConfig.getMtTags())
+        .transferMatrix(stockRebalancingConfig.getEntityTagsCombination())
+        .handlingCost(BigDecimal.valueOf(stockRebalancingConfig.getHandlingCharges()))
+        .transportationCost(BigDecimal.valueOf(stockRebalancingConfig.getTransportationCost()))
+        .inventoryHoldingCost(
+            BigDecimal.valueOf(stockRebalancingConfig.getInventoryHoldingCost()))
+        .matchingStrategy(buildMatchingStrategy(stockRebalancingConfig))
+        .build();
+
+    stockRebalancingClient.triggerStockRebalancing(String.valueOf(domainId), configuration);
   }
 
   private void configureSecondaryTriggers(List<Map<String, String>> destinationTriggers,
