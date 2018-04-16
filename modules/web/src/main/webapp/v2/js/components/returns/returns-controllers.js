@@ -310,24 +310,24 @@ function CreateReturnsController($scope, $location, $timeout, returnsService, tr
 
     $scope.validateStatus = function (material, index, isTempStatus) {
         if ($scope.statusMandatoryConfig.rosm && checkNullEmpty(material.returnMaterialStatus)) {
-            showPopup($scope, material, 's' + (isTempStatus ? 't' : '') + material.id, "Material status is mandatory", index, $timeout);
+            showPopup($scope, material, 's' + (isTempStatus ? 't' : '') + material.id, "Material status is mandatory", index, $timeout,false,true,false);
             return true;
         }
     };
 
     $scope.validateBatchStatus = function (material, batchMaterial, index, isTempStatus) {
         if ($scope.statusMandatoryConfig.rosm && checkNullEmpty(batchMaterial.returnMaterialStatus)) {
-            showPopup($scope, batchMaterial, 's' + (isTempStatus ? 't' : '') + material.id + batchMaterial.id, "Material status is mandatory", index, $timeout);
+            showPopup($scope, batchMaterial, 's' + (isTempStatus ? 't' : '') + material.id + batchMaterial.id, "Material status is mandatory", index, $timeout,false,true,false);
             return true;
         }
     };
 
     $scope.closePopup = function (material, index, prefix) {
-        hidePopup($scope, material, (prefix ? prefix : '') + material.id, index, $timeout, false, false, prefix == 'r');
+        hidePopup($scope, material, (prefix ? prefix : '') + material.id, index, $timeout, false, prefix == 's' || prefix == 'st', prefix == 'r');
     };
 
     $scope.closeBatchPopup = function (material, batchMaterial, index, prefix) {
-        hidePopup($scope, batchMaterial, (prefix ? prefix : '') + material.id + batchMaterial.id, index, $timeout, false, false, prefix == 'r');
+        hidePopup($scope, batchMaterial, (prefix ? prefix : '') + material.id + batchMaterial.id, index, $timeout, false, prefix == 's' || prefix == 'st', prefix == 'r');
     };
 
     function isReturnValid(field) {
