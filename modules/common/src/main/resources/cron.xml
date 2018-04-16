@@ -58,8 +58,14 @@
     <cron>
         <url>/s2/api/orders/schedule-automation</url>
         <description>Order automation</description>
-        <schedule>every day 02:30</schedule>
+        <schedule>every day 00:30</schedule>
         <!-- 06:00 AM IST -->
+    </cron>
+    <cron>
+        <url>s2/api/stock-rebalancing/schedule-automation</url>
+        <description>Stock rebalancing automation</description>
+        <schedule>every day 01:00</schedule>
+        <!-- 06:30 AM IST -->
     </cron>
 
 </cronentries>
