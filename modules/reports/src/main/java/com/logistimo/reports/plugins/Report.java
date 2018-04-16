@@ -298,39 +298,6 @@ public class Report {
   public Map<String, Float> rrsni;
   public Map<String, Float> torrsni;
 
-  public Float getReturnsOutgoingQuantity() {
-    return trroq;
-  }
-
-  public Float getReturnsIncomingQuantity() {
-    return trriq;
-  }
-
-  public Long getReturnsIncomingCount() {
-    return trric;
-  }
-
-  public Long getReturnsOutgoingCount() {
-    return trroc;
-  }
-
-  public Long getReturnsIncomingEntityCount() {
-    return riec;
-  }
-
-  public Long getReturnsOutgoingEntityCount() {
-    return roec;
-  }
-
-  public Map<String, Float> getIncomingReturnsReason() {
-    return rrsni;
-  }
-
-  public Map<String, Float> getTransferOrderIncomingReturnsReason() {
-    return torrsni;
-  }
-
-
   public Long getDomainId() {
     return did;
   }
@@ -1282,4 +1249,37 @@ public class Report {
   public Long getTotalLeadTime() {
     return ((pt == null ? 0 : pt) + (dlt == null ? 0 : dlt));
   }
+
+  public Float getReturnsOutgoingQuantity() {
+    return trroq == null ? 0 : trroq;
+  }
+
+  public Float getReturnsIncomingQuantity() {
+    return trriq == null ? 0 : trriq;
+  }
+
+  public Long getReturnsIncomingCount() {
+    return trric == null ? 0 : trric;
+  }
+
+  public Long getReturnsOutgoingCount() {
+    return trroc == null ? 0 : trroc;
+  }
+
+  public Long getReturnsIncomingEntityCount() {
+    return riec == null ? 0 : riec;
+  }
+
+  public Long getReturnsOutgoingEntityCount() {
+    return roec == null ? 0 : roec;
+  }
+
+  public Map<String, Float> getIncomingReturnsReason() {
+    return rrsni;
+  }
+
+  public Map<String, Float> getTransferOrderIncomingReturnsReason() {
+    return torrsni;
+  }
+
 }
