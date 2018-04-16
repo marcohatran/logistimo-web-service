@@ -540,7 +540,7 @@ public class EntitiesServiceImpl implements EntitiesService {
           Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
 
       if (results == null || results.size() == 0) {
-        //updateKioskLocationIds(kiosk);
+        updateKioskLocationIds(kiosk);
         boolean customIdExists = false;
         if (kiosk.getCustomId() != null && !kiosk.getCustomId().isEmpty()) {
           customIdExists = checkIfCustomIdExists(kiosk);
