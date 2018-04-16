@@ -2366,7 +2366,7 @@ function ExportController($scope, $uibModal) {
     const NO_FILTER_TEMPLATE = "You have chosen to export all '{0}'. If needed, please filter the data before you export to ensure faster delivery of the export file. " +
         "Exported data will be emailed to {1}. Continue?";
     const FILTER_TEMPLATE = "You have chosen to export '{0}' with filters as specified below. Exported data will be emailed to {1}. Continue?";
-
+    const DEFAULT_TEMPLATE = "You have chosen to export all '{0}'. Exported data will be emailed to {1}. Continue?";
     var exportModal = '<div class="modal-header ws">' +
         '<h3 class="modal-title">Export data</h3>' +
         '</div>' +
@@ -2398,8 +2398,9 @@ function ExportController($scope, $uibModal) {
         $scope.exportIncludeBatch = undefined;
         var info = $scope.exportData('info');
         $scope.exportShowIncludeBatch = info.includeBatch;
+        var noFilterTemplate = info.useDefaultTemplate ? DEFAULT_TEMPLATE : NO_FILTER_TEMPLATE;
         $scope.exportFilters = info.filters ? info.filters : undefined;
-        $scope.message = messageFormat(info.filters == '' ? NO_FILTER_TEMPLATE : FILTER_TEMPLATE, info.type, $scope.mailId);
+        $scope.message = messageFormat(checkNullEmpty(info.filters) ? noFilterTemplate : FILTER_TEMPLATE, info.type, $scope.mailId);
         $scope.modalInstance = $uibModal.open({
             template: exportModal,
             scope: $scope,
