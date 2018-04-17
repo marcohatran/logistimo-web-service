@@ -988,7 +988,7 @@ public class OrdersAPIBuilder {
           itemModel.bts = batches;
           itemModel.astk = allocatedStock;
         }
-        if (showVendorStock && showStocks) {
+        if ((showVendorStock && showStocks) || isReturnsAllowed) {
           try {
             IInvntry inv = inventoryManagementService.getInventory(order.getServicingKiosk(), mid);
             if (inv != null) {
