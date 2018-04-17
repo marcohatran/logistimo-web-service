@@ -128,12 +128,7 @@
                         <a class="pull-right" ng-href="/s2/api/orders/order/{{orderId}}/invoice" target="_new"
                            uib-tooltip="{{resourceBundle['invoice']}}" tooltip-append-to-body="true"><span
                                 class="glyphicons glyphicons-print tglyph"></span></a>
-                        <a class="pull-right" href=""
-                           onclick="javascript:window.open('/s/help/help.jsp?type=purchaseorder','purchaseorder','location=0,resizable=1,scrollbars=1,width=800,height=350');"
-                           uib-tooltip="{{resourceBundle['help']}}" tooltip-append-to-body="true"><span
-                                class="glyphicons glyphicons-info-sign tglyph"></span></a>
                         <div class="col-sm-12 paddinglr5 mt5">
-
                             <span class="pull-right" ng-hide="order.lt == undefined || order.ln == undefined || (order.lt == 0 && order.ln == 0)">
                                 <a ng-click="toggleMap()">
                                     <span class="glyphicons glyphicons-globe lPad5" uib-tooltip="{{resourceBundle['map.view']}}" tooltip-append-to-body="true"></span>

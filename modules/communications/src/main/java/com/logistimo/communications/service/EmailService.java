@@ -130,6 +130,9 @@ public class EmailService extends MessageService {
     Properties props = new Properties();
     props.put("mail.smtp.host", ConfigUtil.get("mail.smtp.host","localhost"));
     props.put("mail.smtp.port", ConfigUtil.getInt("mail.smtp.port", 25));
+    props.put("mail.smtp.connectiontimeout", ConfigUtil.getInt("mail.smtp.connectiontimeout", 120_000));
+    props.put("mail.smtp.timeout", ConfigUtil.getInt("mail.smtp.timeout", 120_000));
+
     Session session = Session.getDefaultInstance(props, null);
     ServiceResponse resp;
     try {

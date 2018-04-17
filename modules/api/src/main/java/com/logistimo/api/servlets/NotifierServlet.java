@@ -147,7 +147,7 @@ public class NotifierServlet extends SgServlet {
               xLogger.warn(
                   "{0} when getting user {1} for event notification for event {2}:{3} in domain {3}: {4}",
                   e.getClass().getName(), userId, event.getObjectType(), event.getId(),
-                  e.getMessage());
+                  e.getMessage(), e);
               continue;
             }
           }
@@ -344,7 +344,7 @@ public class NotifierServlet extends SgServlet {
     } catch (Exception e) {
       xLogger
           .severe("{0} when sending notification messages {1} in domain {2} with subject {3}: {4}",
-              e.getClass().getName(), messageToUsers, domainId, subject, e.getMessage());
+              e.getClass().getName(), messageToUsers, domainId, subject, e.getMessage(), e);
     }
     xLogger.fine("Exiting sendMessage");
   }
@@ -374,7 +374,7 @@ public class NotifierServlet extends SgServlet {
           }
         } catch (Exception e) {
           xLogger.warn("{0} when getting email address for notification for user {1}: {2}",
-              e.getClass().getName(), userId, e.getMessage());
+              e.getClass().getName(), userId, e.getMessage(), e);
         }
       }
     } finally {
