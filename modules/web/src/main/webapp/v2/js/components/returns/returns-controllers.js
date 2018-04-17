@@ -44,17 +44,17 @@ function CreateReturnsController($scope, $location, $timeout, returnsService, tr
     $scope.showLoading();
     trnService.getReasons('ro')
         .then(function (data) {
-            $scope.reasons = [""].concat(data.data.rsns);
             $scope.defaultReason = data.data.defRsn;
+            $scope.reasons = checkNullEmpty($scope.defaultReason) ? [""].concat(data.data.rsns) : data.data.rsns;
         })
         .then(function () {
             angular.forEach($scope.returnItems, function (returnItem) {
                 if (returnItem.materialTags) {
                     trnService.getReasons('ro', returnItem.materialTags).then(function (data) {
                         if (checkNotNullEmpty(data.data) && checkNotNullEmpty(data.data.rsns)) {
-                            returnItem.reasons = [""].concat(data.data.rsns);
                             returnItem.returnReason = angular.copy(data.data.defRsn);
                             returnItem.defaultReturnReason = angular.copy(data.data.defRsn);
+                            returnItem.reasons = checkNullEmpty(returnItem.defaultReturnReason) ? [""].concat(data.data.rsns) : data.data.rsns;
                             angular.forEach(returnItem.returnBatches, function (returnBatch) {
                                 returnBatch.returnReason = angular.copy(returnItem.returnReason);
                                 returnBatch.defaultReturnReason = angular.copy(returnItem.returnReason);

@@ -1266,7 +1266,9 @@ invControllers.controller('BatchDetailCtrl', ['$scope', 'invService', 'trnServic
                     $scope.defaultReason = data.data.defRsn;
                     if (checkNotNullEmpty($scope.tagReasons)) {
                         $scope.reasons = $scope.tagReasons;
-                        $scope.reasons.splice(0, 0, "");
+                        if (checkNullEmpty($scope.defaultReason)) {
+                            $scope.reasons.splice(0, 0, "");
+                        }
                         $scope.expBatchDet[index].showReason = !$scope.expBatchDet[index].showReason;
                         $scope.expBatchDet[index].reason = $scope.expBatchDet[index].showReason ? $scope.defaultReason : undefined;
                     } else {
@@ -1292,7 +1294,7 @@ invControllers.controller('BatchDetailCtrl', ['$scope', 'invService', 'trnServic
                     });
 
                     if (checkNotNullEmpty($scope.reasons) && $scope.reasons.length > 0) {
-                        if ($scope.reasons.indexOf("") == -1) {
+                        if (checkNullEmpty($scope.defaultReason) && $scope.reasons.indexOf("") == -1) {
                             $scope.reasons.splice(0, 0, "");
                         }
                     }

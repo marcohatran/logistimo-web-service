@@ -1401,12 +1401,12 @@ trnControllers.controller('transactions.MaterialController', ['$scope', 'trnServ
                             $scope.material.rsns = data.data.rsns;
                             $scope.material.reason = data.data.defRsn;
                             if (checkNotNullEmpty($scope.material.rsns) && $scope.material.rsns.length > 0) {
-                                if ($scope.material.rsns.indexOf("") == -1) {
+                                if (checkNullEmpty($scope.material.reason) && $scope.material.rsns.indexOf("") == -1) {
                                     $scope.material.rsns.splice(0, 0, "");
                                 }
                                 $scope.$parent.showReason = true;
                             } else if (checkNotNullEmpty($scope.reasons) && $scope.reasons.length > 0) {
-                                if ($scope.reasons.indexOf("") == -1) {
+                                if (checkNullEmpty($scope.defaultReason) && $scope.reasons.indexOf("") == -1) {
                                     $scope.reasons.splice(0, 0, "");
                                 }
                                 $scope.material.rsns = $scope.reasons;
@@ -1417,7 +1417,7 @@ trnControllers.controller('transactions.MaterialController', ['$scope', 'trnServ
                             $scope.showErrorMsg(msg);
                         });
                     } else if (checkNotNullEmpty($scope.reasons) &&  $scope.reasons.length > 0) {
-                        if ($scope.reasons.indexOf("") == -1) {
+                        if (checkNullEmpty($scope.defaultReason) && $scope.reasons.indexOf("") == -1) {
                             $scope.reasons.splice(0, 0, "");
                         }
                         $scope.material.reason = $scope.defaultReason;
