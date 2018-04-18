@@ -73,7 +73,7 @@ CREATE TABLE RETURNS_ITEM_BATCH (
 
 create index IDX_RETURNSITEM_ID on RETURNS_ITEM_BATCH (item_id);
 
-CREATE OR REPLACE TABLE `execution_metadata` (
+CREATE OR REPLACE TABLE `EXECUTION_METADATA` (
   `id` varchar(255) NOT NULL,
   `created_at` datetime NOT NULL,
   `domain_id` bigint(20) DEFAULT NULL,
@@ -82,9 +82,9 @@ CREATE OR REPLACE TABLE `execution_metadata` (
   `status` varchar(255) DEFAULT NULL,
   `updated_at` datetime NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=INNODB DEFAULT CHARSET=utf8;
 
-CREATE OR REPLACE TABLE `stock_rebalancing_events` (
+CREATE OR REPLACE TABLE `STOCK_REBALANCING_EVENTS` (
   `id` varchar(255) NOT NULL,
   `execution_id` varchar(255) NOT NULL,
   `kiosk_id` bigint(20) NOT NULL,
@@ -100,9 +100,9 @@ CREATE OR REPLACE TABLE `stock_rebalancing_events` (
   PRIMARY KEY (`id`),
   KEY `FKosbxk174c1ysl69viymmxteq5` (`execution_id`),
   KEY `FKrd22ncxxld31ire57ee0ooq3t` (`kiosk_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=INNODB DEFAULT CHARSET=utf8;
 
-CREATE OR REPLACE TABLE `stock_rebalancing_event_batches` (
+CREATE OR REPLACE TABLE `STOCK_REBALANCING_EVENT_BATCHES` (
   `id` varchar(255) NOT NULL,
   `batch_id` varchar(255) DEFAULT NULL,
   `expiry_date` datetime DEFAULT NULL,
@@ -114,9 +114,9 @@ CREATE OR REPLACE TABLE `stock_rebalancing_event_batches` (
   `updated_at` datetime NOT NULL,
   PRIMARY KEY (`id`),
   KEY `FK9af0olxvybsj90sc7gkwrss74` (`stock_rebalancing_event_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=INNODB DEFAULT CHARSET=utf8;
 
-CREATE OR REPLACE TABLE `recommended_transfers` (
+CREATE OR REPLACE TABLE `RECOMMENDED_TRANSFERS` (
   `id` varchar(255) NOT NULL,
   `cost` decimal(19,2) NOT NULL,
   `destination_event_id` varchar(255) DEFAULT NULL,
@@ -129,4 +129,14 @@ CREATE OR REPLACE TABLE `recommended_transfers` (
   `created_at` datetime NOT NULL,
   `updated_at` datetime NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=INNODB DEFAULT CHARSET=utf8;
+
+/* eVIN */
+UPDATE `ORDER` SET PURCHASE_REF_ID = IF(OTY = 1,SALES_REF_ID,NULL),
+TRANSFER_REF_ID = IF(OTY = 0,SALES_REF_ID,NULL),
+SALES_REF_ID = IF(OTY = 2,SALES_REF_ID,NULL);
+
+/* AWS */
+UPDATE `ORDER` SET PURCHASE_REF_ID = IF(OTY = 1,SALES_REF_ID,NULL),
+TRANSFER_REF_ID = IF(OTY = 0,SALES_REF_ID,NULL),
+SALES_REF_ID = IF(OTY = 2,SALES_REF_ID,NULL) WHERE SDID <> 1343921;
