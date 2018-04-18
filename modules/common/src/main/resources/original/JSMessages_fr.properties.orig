@@ -1393,3 +1393,4 @@ report.sickness.rate=Taux de maladie
 report.temperature.excursions=Excursions de température
 report.up.time=Temps de disponibilité
 report.user.activity=Activité de l'utilisateur
+return.reason=Retour raison
