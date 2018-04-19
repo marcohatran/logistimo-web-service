@@ -973,6 +973,10 @@ public class OrdersAPIBuilder {
                   if (receivedBatchQuantity != null && receivedBatchQuantity
                       .containsKey(batch.id)) {
                     batch.returnedQuantity = receivedBatchQuantity.get(batch.id);
+                    IInvntryBatch b = inventoryManagementService
+                        .getInventoryBatch(order.getKioskId(), item.getMaterialId(),
+                            batch.id, null);
+                    batch.atpstk = b.getAvailableStock();
                   }
                 }
               }
@@ -988,7 +992,7 @@ public class OrdersAPIBuilder {
           itemModel.bts = batches;
           itemModel.astk = allocatedStock;
         }
-        if ((showVendorStock && showStocks) || isReturnsAllowed) {
+        if (showVendorStock && showStocks) {
           try {
             IInvntry inv = inventoryManagementService.getInventory(order.getServicingKiosk(), mid);
             if (inv != null) {
@@ -1003,6 +1007,15 @@ public class OrdersAPIBuilder {
               if (lastEventLog != null) {
                 itemModel.vevent = inv.getStockEvent();
               }
+            }
+          } catch (Exception ignored) {
+          }
+        }
+        if(isReturnsAllowed) {
+          try {
+            IInvntry inv = inventoryManagementService.getInventory(order.getKioskId(), mid);
+            if (inv != null) {
+              itemModel.atpstk = inv.getAvailableStock();
             }
           } catch (Exception ignored) {
           }

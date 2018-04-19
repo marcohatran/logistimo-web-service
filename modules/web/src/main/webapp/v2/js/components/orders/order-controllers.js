@@ -4257,7 +4257,8 @@ ordControllers.controller('ConsignmentController', ['$scope', 'returnsService', 
         $scope.sel.selectedRows = [];
         if (newval) {
             for (var i = 0; i < $scope.order.its.length; i++) {
-                if ($scope.order.its[i].q != $scope.order.its[i].isq || ($scope.canReturn && $scope.order.its[i].fq > 0)) {
+                if ($scope.order.its[i].q != $scope.order.its[i].isq || ($scope.canReturn && $scope.order.its[i].fq > 0
+                    && $scope.order.its[i].fq != $scope.order.its[i].returnedQuantity)) {
                     $scope.sel.selectedRows.push(i);
                 }
             }

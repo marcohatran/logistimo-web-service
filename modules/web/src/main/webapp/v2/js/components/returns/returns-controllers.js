@@ -260,30 +260,30 @@ function CreateReturnsController($scope, $location, $timeout, returnsService, tr
         }
         batchMaterial.displayMeta = batchMaterial.returnQuantity > 0;
         var isInvalid = false;
-        if (batchMaterial.returnQuantity > batchMaterial.fq) {
-            showPopup($scope, batchMaterial, material.id + batchMaterial.id,
-                "The quantity to be returned " + batchMaterial.returnQuantity + " cannot exceed the original receipt quantity " + batchMaterial.fq + ".",
-                index, $timeout);
-            isInvalid = true;
-        } else if (batchMaterial.returnQuantity > batchMaterial.fq - batchMaterial.returnedQuantity) {
-            showPopup($scope, batchMaterial, material.id + batchMaterial.id,
-                "The quantity to be returned " + batchMaterial.returnQuantity + " cannot exceed the remaining return quantity " + (batchMaterial.fq - batchMaterial.returnedQuantity) + ".",
-                index, $timeout);
-            isInvalid = true;
-        } else if (checkNotNullEmpty(batchMaterial.returnQuantity)) {
-            if (checkNotNullEmpty(material.huName) && checkNotNullEmpty(material.huQty) &&
+        if (checkNotNullEmpty(batchMaterial.returnQuantity)) {
+            if (batchMaterial.returnQuantity > batchMaterial.fq) {
+                showPopup($scope, batchMaterial, material.id + batchMaterial.id,
+                    "The quantity to be returned " + batchMaterial.returnQuantity + " cannot exceed the original receipt quantity " + batchMaterial.fq + ".",
+                    index, $timeout);
+                isInvalid = true;
+            } else if (batchMaterial.returnQuantity > batchMaterial.fq - batchMaterial.returnedQuantity) {
+                showPopup($scope, batchMaterial, material.id + batchMaterial.id,
+                    "The quantity to be returned " + batchMaterial.returnQuantity + " cannot exceed the remaining return quantity " + (batchMaterial.fq - batchMaterial.returnedQuantity) + ".",
+                    index, $timeout);
+                isInvalid = true;
+            } else if (checkNotNullEmpty(material.huName) && checkNotNullEmpty(material.huQty) &&
                 batchMaterial.returnQuantity % material.huQty != 0) {
                 showPopup($scope, batchMaterial, material.id + batchMaterial.id,
                     batchMaterial.returnQuantity + " of " + material.nm + " does not match the multiples of units expected in " +
                     material.huName + ". It should be in multiples of " + material.huQty + " " + material.nm + ".",
                     index, $timeout);
                 isInvalid = true;
+            } else if (batchMaterial.returnQuantity > batchMaterial.atpstk) {
+                showPopup($scope, batchMaterial, material.id + batchMaterial.id,
+                    "The quantity to be returned " + batchMaterial.returnQuantity + " cannot exceed the available stock " + batchMaterial.atpstk + ".",
+                    index, $timeout);
+                isInvalid = true;
             }
-        } else if (batchMaterial.returnQuantity > batchMaterial.atpstk) {
-            showPopup($scope, batchMaterial, material.id + batchMaterial.id,
-                "The quantity to be returned " + batchMaterial.returnQuantity+ " cannot exceed the available stock "+ batchMaterial.atpstk + ".",
-                index, $timeout);
-            isInvalid = true;
         } else {
             batchMaterial.sinvalidPopup = batchMaterial.sPopupMsg = batchMaterial.rinvalidPopup = batchMaterial.rPopupMsg = undefined;
             batchMaterial.returnReason = angular.copy(batchMaterial.defaultReturnReason);

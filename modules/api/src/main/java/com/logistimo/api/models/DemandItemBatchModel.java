@@ -41,6 +41,7 @@ public class DemandItemBatchModel {
   public String mdt;
   public String id;
   public String mst;
+  public BigDecimal atpstk;
   /**
    * Used for displaying tooltip breakdown on Order detail page
    */
