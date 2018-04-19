@@ -157,7 +157,7 @@
                         <li><a href="#/inventory/abnormalstock/">{{resourceBundle.abnormal}}
                             {{resourceBundle['stock.lowercase']}}</a></li>
                         <li><a href="#/inventory/transactions/">{{resourceBundle.transactions}}</a></li>
-                        <li><a href="#/inventory/rebalancing/">{{resourceBundle['stock.rebalancing']}}</a></li>
+                        <li ng-show="iAdm"><a href="#/inventory/rebalancing/">{{resourceBundle['stock.rebalancing']}}</a></li>
                     </ul>
                 </li>
                 <li ng-if="accountTabEnabled" ng-class="{active:subview == 'accounts' }">
