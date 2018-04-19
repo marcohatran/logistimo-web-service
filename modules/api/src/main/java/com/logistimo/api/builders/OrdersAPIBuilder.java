@@ -973,11 +973,11 @@ public class OrdersAPIBuilder {
                   if (receivedBatchQuantity != null && receivedBatchQuantity
                       .containsKey(batch.id)) {
                     batch.returnedQuantity = receivedBatchQuantity.get(batch.id);
-                    IInvntryBatch b = inventoryManagementService
-                        .getInventoryBatch(order.getKioskId(), item.getMaterialId(),
-                            batch.id, null);
-                    batch.atpstk = b.getAvailableStock();
                   }
+                  IInvntryBatch b = inventoryManagementService
+                      .getInventoryBatch(order.getKioskId(), item.getMaterialId(),
+                          batch.id, null);
+                  batch.atpstk = b.getAvailableStock();
                 }
               }
             }
