@@ -4360,3 +4360,8 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
 @keyframes fadeinout {
     50% { opacity: 1; }
 }
+
+.add-transfer {
+    position: relative;
+    left:65px;
+}

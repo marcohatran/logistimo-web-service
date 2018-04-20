@@ -31,7 +31,7 @@
       <div class="outer">
         <table class="table table-striped table-condensed table-hover table-logistimo">
           <thead>
-            <th></th>
+            <th ng-hide="dp.vp"></th>
             <th>{{resourceBundle['approvals.transfer']}} {{resourceBundle['id']}}</th>
             <th>{{resourceBundle['customer']}}</th>
             <th>{{resourceBundle['vendor']}}</th>
@@ -39,7 +39,7 @@
           </thead>
           <tbody>
           <tr ng-repeat = "transfer in recommendation.open_transfers">
-            <td><input type="checkbox" ng-model="transfer.selected"></td>
+            <td ng-hide="dp.vp"><input type="checkbox" ng-model="transfer.selected"></td>
             <td><a href="#/orders/transfers/detail/{{transfer.orderId}}/">{{transfer.orderId}}</a><span class="litetext">{{transfer.created_at | formatDate:this}}</span></td>
             <td><a href="#/setup/entities/detail/{{transfer.customer.id}}/">{{transfer.customer.name}}<span class="litetext">{{transfer.customer.address}}</span></a></td>
             <td><a href="#/setup/entities/detail/{{transfer.vendor.id}}/">{{transfer.vendor.name}}<span class="litetext">{{transfer.vendor.address}}</span></a></td>
@@ -52,6 +52,6 @@
   </div>
 </div>
 <div class="modal-footer ws">
-  <button class="btn btn-primary" ng-click="addToTransfer()">{{resourceBundle['prm.add']}}</button>
+  <button ng-hide="dp.vp" class="btn btn-primary" ng-click="addToTransfer()">{{resourceBundle['prm.add']}}</button>
   <button class="btn btn-default" ng-click="cancel()">{{resourceBundle['cancel']}}</button>
 </div>

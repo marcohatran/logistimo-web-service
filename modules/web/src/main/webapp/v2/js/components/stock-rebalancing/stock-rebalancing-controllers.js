@@ -249,6 +249,7 @@ stockRebalancingControllers.controller('RebalancingRecommendationsCtrl', ['$scop
             function init() {
                 $scope.recommendations = {};
                 $scope.fetch();
+                $scope.viewTransfer = angular.copy($scope.dp.vp);
             }
 
             init();

@@ -82,9 +82,11 @@
                                 <td>{{item.value | number}}</td>
                                 <td ng-show="isDef(item.transfer) && isDef(item.transfer.orderId) && ordersTabEnabled"><span class="litetext">{{resourceBundle['approvals.transfer']}} : <a href="#/orders/transfers/detail/{{item.transfer.orderId}}" target="_blank">{{item.transfer.orderId}}</a> {{resourceBundle['initiated']}}</span></td>
                                 <td ng-show="isUndef(item.transfer) && isUndef(item.transfer.orderId) && ordersTabEnabled">
-                                    <span class="btn btn-sm btn-primary" ng-click="createTransfer(item)" uib-tooltip="{{resourceBundle['create.transfer']}}">{{resourceBundle['create']}}</span>&nbsp;
-                                    <span ng-show="item.count > 0" class="btn btn-sm btn-primary" ng-click="openTransfers(item)" uib-tooltip="{{resourceBundle['add.existing.transfer']}}">{{resourceBundle['prm.add']}}</span>
-                                    <span ng-show="item.count > 0" class="litetext" style="position: relative;left:35%;">{{item.count}} {{resourceBundle['open.transfers']}}</span>
+                                    <span class="col-sm-8">
+                                        <span ng-hide="dp.vp" class="btn btn-sm btn-primary" ng-click="createTransfer(item)" uib-tooltip="{{resourceBundle['create.transfer']}}">{{resourceBundle['create']}}</span>&nbsp;
+                                        <span ng-hide="dp.vp || item.count == 0" class="btn btn-sm btn-primary" ng-click="openTransfers(item)" uib-tooltip="{{resourceBundle['add.existing.transfer']}}">{{resourceBundle['prm.add']}}</span>
+                                        <span ng-show="dp.vp && item.count > 0" class="btn btn-sm btn-primary" ng-click="openTransfers(item)" uib-tooltip="{{resourceBundle['view']}} {{resourceBundle['transfers.lower']}}">{{resourceBundle['view']}}</span><span ng-show="item.count > 0" ng-class="{'litetext': viewTransfer, 'litetext add-transfer': !viewTransfer}">{{item.count}} {{resourceBundle['open.transfers']}}</span>
+                                    </span>
                                 </td>
                             </tr>
                             </tbody>
