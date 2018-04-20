@@ -144,8 +144,4 @@ public class MenuStatsModel {
    */
   public String utz;
   public String locale;
-  /**
-   * Stock Rebalancing enabled
-   */
-  public boolean sre;
 }
