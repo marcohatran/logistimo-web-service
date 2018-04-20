@@ -429,6 +429,7 @@
                 $scope.tempEnabled = null;
                 $scope.allocate = null;
                 $scope.approvalConfig = null;
+                $scope.sre = false;
             };
 
             $scope.refreshDomainConfig = function () {
@@ -465,6 +466,7 @@
                     $scope.mxE = data.data.mxE;
                     $scope.accd = data.data.accd;
                     $scope.assetConfig = data.data.ac;
+                    $scope.sre = data.data.sre;
                     if (checkNotNullEmpty($scope.assetConfig))
                         $scope.generateAssetFilters();
                     $scope.domainName = data.data.dnm;

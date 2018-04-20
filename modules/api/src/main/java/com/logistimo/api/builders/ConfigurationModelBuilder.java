@@ -338,6 +338,9 @@ public class ConfigurationModelBuilder {
     if(!model.mdp && null != config.getDashboardConfig().getDbOverConfig()) {
       model.mdp = config.getDashboardConfig().getDbOverConfig().edm;
     }
+    if(config.getStockRebalancingConfig() != null) {
+      model.sre = config.getStockRebalancingConfig().isEnableStockRebalancing();
+    }
     return model;
   }
 
