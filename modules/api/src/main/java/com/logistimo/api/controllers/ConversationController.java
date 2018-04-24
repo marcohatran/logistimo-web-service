@@ -273,9 +273,10 @@ public class ConversationController {
         iMessage = conversationService.addMsgToConversation(objType, objId, message.data, user.getUsername(),
             Collections.singleton(objType + objId), user.getDomainId(), null);
       } else if ("RETURNS".equals(objType)) {
-        iMessage =
-            returnsService.addComment(Long.parseLong(objId), message.data, user.getUsername(),
+        String messageId =
+            returnsService.postComment(Long.parseLong(objId), message.data, user.getUsername(),
                 user.getCurrentDomainId());
+        iMessage=conversationService.getMessageById(messageId);
       } else {
         throw new InvalidDataException("Unrecognised object type " + objType);
       }

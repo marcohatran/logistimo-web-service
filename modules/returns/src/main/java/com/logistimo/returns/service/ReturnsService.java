@@ -24,13 +24,13 @@
 package com.logistimo.returns.service;
 
 import com.logistimo.activity.entity.IActivity;
-import com.logistimo.activity.service.ActivityService;
+import com.logistimo.activity.models.ActivityModel;
+import com.logistimo.activity.service.impl.ActivitiesServiceImpl;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.ReturnsConfig;
 import com.logistimo.constants.Constants;
-import com.logistimo.conversations.entity.IMessage;
-import com.logistimo.conversations.service.ConversationService;
+import com.logistimo.conversations.service.impl.ConversationsServiceImpl;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exception.ValidationException;
 import com.logistimo.inventory.service.InventoryManagementService;
@@ -52,7 +52,6 @@ import com.logistimo.returns.vo.ReturnsStatusVO;
 import com.logistimo.returns.vo.ReturnsVO;
 import com.logistimo.services.DuplicationException;
 import com.logistimo.services.ServiceException;
-import com.logistimo.services.impl.PMF;
 import com.logistimo.shipments.FulfilledQuantityModel;
 import com.logistimo.shipments.service.impl.ShipmentService;
 import com.logistimo.utils.LockUtil;
@@ -74,8 +73,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import javax.jdo.PersistenceManager;
-
 /**
  * Created by pratheeka on 13/03/18.
  */
@@ -95,10 +92,10 @@ public class ReturnsService {
   private ReturnsRepository returnsRepository;
 
   @Autowired
-  private ActivityService activityService;
+  private ActivitiesServiceImpl activityService;
 
   @Autowired
-  private ConversationService conversationService;
+  private ConversationsServiceImpl conversationService;
 
   @Autowired
   private InventoryManagementService inventoryManagementService;
@@ -133,9 +130,9 @@ public class ReturnsService {
           saveReturnItems(returnsVO.getId(), returnsItemVOList);
       demandService.updateDemandReturns(returnsVO.getOrderId(), quantityByMaterial, false);
 
-      IMessage message = addComment(returnsVO.getId(), returnsVO.getComment(),
+      String messageId = addComment(returnsVO.getId(), returnsVO.getComment(),
           returnsVO.getCreatedBy(), returnsVO.getSourceDomain());
-      addStatusHistory(returnsVO, null, returnsVO.getStatus().getStatus().toString(), message);
+      addStatusHistory(returnsVO, null, returnsVO.getStatus().getStatus().toString(), messageId);
 
       return returnsVO;
     } finally {
@@ -234,11 +231,11 @@ public class ReturnsService {
       IOrder order = orderManagementService.getOrder(returnsVO.getOrderId());
       statusModel.setTransferOrder(order.getOrderType() == IOrder.TRANSFER_ORDER);
       postTransactions(statusModel, returnsVO);
-      IMessage
-          message =
+      String
+          messageId =
           addComment(returnsVO.getId(), statusModel.getComment(), returnsVO.getUpdatedBy(),
               returnsVO.getSourceDomain());
-      addStatusHistory(returnsVO, oldStatus.toString(), newStatus.toString(), message);
+      addStatusHistory(returnsVO, oldStatus.toString(), newStatus.toString(), messageId);
     } else {
       throw new ValidationException("RT003", (Object[]) null);
     }
@@ -299,31 +296,35 @@ public class ReturnsService {
   }
 
   private void addStatusHistory(ReturnsVO returnVO, String oldStatus, String newStatus,
-                                IMessage iMessage) {
-    PersistenceManager pm = PMF.get().getPersistenceManager();
-    try {
-      activityService
-          .createActivity(IActivity.TYPE.RETURNS.name(), String.valueOf(returnVO.getId()),
-              "STATUS", oldStatus, newStatus, returnVO.getCreatedBy(), returnVO.getSourceDomain(),
-              iMessage != null ? iMessage.getMessageId() : null, "RETURNS:" + returnVO.getId(), pm);
-    } finally {
-      pm.close();
-    }
+                                String messageId) {
+    ActivityModel activityModel=new ActivityModel();
+    activityModel.objectType=IActivity.TYPE.RETURNS.name();
+    activityModel.objectId= String.valueOf(returnVO.getId());
+    activityModel.field="STATUS";
+    activityModel.prevValue=oldStatus;
+    activityModel.newValue=newStatus;
+    activityModel.userId=returnVO.getCreatedBy();
+    activityModel.domainId=returnVO.getSourceDomain();
+    activityModel.messageId=messageId;
+    activityModel.tag="RETURNS:" + returnVO.getId();
+    activityService
+        .saveActivity(activityModel);
+
   }
 
-  public IMessage addComment(Long returnId, String message, String userId, Long domainId)
+
+  private String addComment(Long returnId, String message, String userId, Long domainId)
       throws ServiceException {
     if (StringUtils.isNotBlank(message)) {
-      PersistenceManager pm = PMF.get().getPersistenceManager();
-      try {
-        return conversationService.addMsgToConversation(IActivity.TYPE.RETURNS.name(),
-            String.valueOf(returnId), message, userId, Collections.singleton("RETURNS:" + returnId)
-            , domainId, pm);
-      } finally {
-        pm.close();
-      }
+     return conversationService
+          .addMessageToConversation(IActivity.TYPE.RETURNS.name(), String.valueOf(returnId),
+              message, userId, Collections.singleton("RETURNS:" + returnId), domainId, null);
     }
     return null;
+  }
+  @Transactional(transactionManager = "transactionManager")
+  public String postComment(Long returnId, String message, String userId, Long domainId) throws ServiceException{
+    return addComment(returnId,message,userId,domainId);
   }
 
   public Long getReturnsCount(ReturnsFilters returnsFilters) {
