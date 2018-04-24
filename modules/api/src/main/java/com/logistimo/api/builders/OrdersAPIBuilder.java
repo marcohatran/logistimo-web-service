@@ -241,6 +241,7 @@ public class OrdersAPIBuilder {
       model.st = o.getStatus();
       model.enm = k.getName();
       model.eadd = CommonUtils.getAddress(k.getCity(), k.getTaluk(), k.getDistrict(), k.getState());
+      model.ebm = k.isBatchMgmtEnabled();
       model.cdt = LocalDateUtil.format(o.getCreatedOn(), locale, timezone);
       model.statusUpdateDate =
           LocalDateUtil.formatCustom(o.getStatusUpdatedOn(), Constants.DATETIME_FORMAT, timezone);
@@ -286,6 +287,7 @@ public class OrdersAPIBuilder {
           model.vadd =
               CommonUtils.getAddress(vendor.getCity(), vendor.getTaluk(), vendor.getDistrict(),
                   vendor.getState());
+          model.vbm = vendor.isBatchMgmtEnabled();
           model.hva =
               EntityAuthoriser
                   .authoriseEntity(vendorId, user.getRole(), user.getUsername(), domainId);
@@ -977,7 +979,9 @@ public class OrdersAPIBuilder {
                   IInvntryBatch b = inventoryManagementService
                       .getInventoryBatch(order.getKioskId(), item.getMaterialId(),
                           batch.id, null);
-                  batch.atpstk = b.getAvailableStock();
+                  if(b != null) {
+                    batch.atpstk = b.getAvailableStock();
+                  }
                 }
               }
             }

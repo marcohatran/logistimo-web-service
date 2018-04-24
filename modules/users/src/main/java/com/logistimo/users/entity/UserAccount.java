@@ -861,7 +861,8 @@ public class UserAccount implements IUserAccount, ILocation,Serializable {
   }
 
   public void setAccessibleDomainIds(List<Long> accDids) {
-    this.accDids = accDids;
+    this.accDids.clear();
+    this.accDids.addAll(accDids);
   }
 
   public Date getArchivedAt() {

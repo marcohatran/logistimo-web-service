@@ -46,7 +46,7 @@
                         ng-click="doReturn()">{{resourceBundle['return']}}
                 </button>
                 <span ng-if="returnPolicyExpired" class="litetext">
-                    Returns cannot to initiated. The duration of returns exceeded the vendor return policy duration {{returnPolicyDuration}} days.
+                    Returns cannot to initiated. The duration of returns exceeded the {{resourceBundle['vendor.lowercase']}} return policy duration {{returnPolicyDuration}} days.
                 </span>
             </div>
         </div>

@@ -2090,6 +2090,9 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                     var days = (new Date().setHours(0, 0, 0, 0) - fulfilDate.getTime()) / oneDayInMillis;
                     $scope.returnPolicyExpired = days > $scope.returnPolicyDuration;
                 }
+                if($scope.canReturn && $scope.order.vbm && !$scope.order.ebm) {
+                    $scope.canReturn = false;
+                }
             }
         }
     }

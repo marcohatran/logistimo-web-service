@@ -266,6 +266,16 @@ public class OrderModel extends PermissionsModel {
    */
   private String transferRefId;
 
+  /**
+   * Batch management enabled on customer
+   */
+  public boolean ebm;
+
+  /**
+   * Batch management enabled on vendor
+   */
+  public boolean vbm;
+
   public List<Long> getDids() {
     return dids;
   }
