@@ -256,6 +256,9 @@ public class ReportServiceUtil {
       case TALUK:
         values.add(addData(report.getTaluk()));
         break;
+      case ORDER_TAG:
+        values.add(addData(TagUtil.getTagById(report.getOrderTag(),ITag.ORDER_TAG)));
+        break;
       default:
         values.add(addData(CharacterConstants.EMPTY));
     }
