@@ -47,9 +47,7 @@ import java.util.List;
 public class ScheduleStockRebalancingAction {
 
   private static final XLog LOGGER = XLog.getLog(ScheduleStockRebalancingAction.class);
-  private static final String
-      STOCK_REBALANCING_AUTOMATION_URL =
-      "/s2/api/stock-rebalancing/automate";
+  private static final String STOCK_REBALANCING_AUTOMATION_URL = "/s2/api/stock-rebalancing/automate";
 
 
   private DomainsService domainsService;
@@ -67,34 +65,28 @@ public class ScheduleStockRebalancingAction {
         domains.forEach(this::schedule);
       }
     } catch (ServiceException e) {
-      LOGGER.severe("Failed to schedule order automation", e);
+      LOGGER.severe("Failed to schedule stock rebalancing - {}", e);
     }
   }
 
   private void schedule(IDomain domain) {
     try {
       DomainConfig domainConfig = DomainConfig.getInstance(domain.getId());
-      long
-          etaMillis =
-          LocalDateUtil.getNextRunTime(domainConfig.getTimezone(),
-              ConfigUtil.getInt("stock-rebalancing.schedule.hour", 6),
-              ConfigUtil.getInt("stock-rebalancing.schedule.minute", 30));
+      long etaMillis = LocalDateUtil.getNextRunTime(domainConfig.getTimezone(),
+          ConfigUtil.getInt("stock-rebalancing.schedule.hour", 6),
+          ConfigUtil.getInt("stock-rebalancing.schedule.minute", 30));
 
       if (domainConfig.isCapabilityDisabled(DomainConfig.CAPABILITY_ORDERS)
           && domainConfig.getStockRebalancingConfig().isEnableStockRebalancing()) {
-        AppFactory.get().getTaskService()
-            .schedule(ITaskService.QUEUE_OPTIMZER,
-                STOCK_REBALANCING_AUTOMATION_URL + "?domain_id=" + domain.getId(), null, null, null,
-                ITaskService.METHOD_GET, etaMillis);
+        AppFactory.get().getTaskService().schedule(ITaskService.QUEUE_OPTIMZER,
+            STOCK_REBALANCING_AUTOMATION_URL + "?domain_id=" + domain.getId(), null, null, null,
+            ITaskService.METHOD_GET, etaMillis);
         LOGGER.info("Scheduled stock rebalancing for domain {0}:{1}", domain.getId(),
             domain.getName());
       }
     } catch (TaskSchedulingException e) {
-      LOGGER
-          .warn("Failed to schedule stock rebalancing task for domain {0}:{1}", domain.getId(),
-              domain.getName(),
-              e);
+      LOGGER.warn("Failed to schedule stock rebalancing task for domain {0}:{1}", domain.getId(),
+          domain.getName(), e);
     }
   }
-
 }
