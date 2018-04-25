@@ -242,14 +242,17 @@ public class ReturnsBuilder {
 
   private BatchVO getBatch(ReturnsItemBatchModel itemBatchModel, Long vendorId, Long customerId,
                            Long materialId) {
-    IInvntryBatch inventoryBatch;
-    try {
-      inventoryBatch = inventoryManagementService
+    IInvntryBatch inventoryBatch = inventoryManagementService
           .getInventoryBatch(vendorId, materialId, itemBatchModel.getBatchId(), null);
-    } catch (ObjectNotFoundException e) {
+
+    if (inventoryBatch == null) {
       inventoryBatch = inventoryManagementService
           .getInventoryBatch(customerId, materialId, itemBatchModel.getBatchId(), null);
+      if (inventoryBatch == null) {
+        return new BatchVO(itemBatchModel.getBatchId(), null, null, null);
+      }
     }
+
     return new BatchVO(
         itemBatchModel.getBatchId(),
         inventoryBatch.getBatchExpiry(),
