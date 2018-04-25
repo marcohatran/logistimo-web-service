@@ -45,7 +45,7 @@ function CreateReturnsController($scope, $location, $timeout, returnsService, tr
     trnService.getReasons('ro')
         .then(function (data) {
             $scope.defaultReason = data.data.defRsn;
-            $scope.reasons = checkNullEmpty($scope.defaultReason) ? [""].concat(data.data.rsns) : data.data.rsns;
+            $scope.reasons = (checkNullEmpty($scope.defaultReason) && checkNotNullEmpty(data.data.rsns)) ? [""].concat(data.data.rsns) : data.data.rsns;
         })
         .then(function () {
             angular.forEach($scope.returnItems, function (returnItem) {
@@ -54,7 +54,7 @@ function CreateReturnsController($scope, $location, $timeout, returnsService, tr
                         if (checkNotNullEmpty(data.data) && checkNotNullEmpty(data.data.rsns)) {
                             returnItem.returnReason = angular.copy(data.data.defRsn);
                             returnItem.defaultReturnReason = angular.copy(data.data.defRsn);
-                            returnItem.reasons = checkNullEmpty(returnItem.defaultReturnReason) ? [""].concat(data.data.rsns) : data.data.rsns;
+                            returnItem.reasons = checkNullEmpty(returnItem.defaultReturnReason)? [""].concat(data.data.rsns) : data.data.rsns;
                             angular.forEach(returnItem.returnBatches, function (returnBatch) {
                                 returnBatch.returnReason = angular.copy(returnItem.returnReason);
                                 returnBatch.defaultReturnReason = angular.copy(returnItem.returnReason);
