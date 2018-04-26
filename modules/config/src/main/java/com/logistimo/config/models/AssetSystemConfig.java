@@ -262,7 +262,6 @@ public class AssetSystemConfig {
     Map<Integer, String> allWorkingStatus = new HashMap<>();
     for (WorkingStatus workingStatus : workingStatuses) {
       allWorkingStatus.put(workingStatus.status, workingStatus.displayValue);
-      allWorkingStatus.put(workingStatus.status, workingStatus.color);
     }
     return allWorkingStatus;
   }
