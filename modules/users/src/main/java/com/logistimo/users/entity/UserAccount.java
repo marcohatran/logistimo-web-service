@@ -861,6 +861,9 @@ public class UserAccount implements IUserAccount, ILocation,Serializable {
   }
 
   public void setAccessibleDomainIds(List<Long> accDids) {
+    if(this.accDids == null) {
+      this.accDids = new ArrayList<>();
+    }
     this.accDids.clear();
     this.accDids.addAll(accDids);
   }
@@ -947,6 +950,9 @@ public class UserAccount implements IUserAccount, ILocation,Serializable {
   }
 
   public void setDomainIds(List<Long> domainIds) {
+    if(this.dId == null) {
+      this.dId = new ArrayList<>();
+    }
     this.dId.clear();
     this.dId.addAll(domainIds);
   }
