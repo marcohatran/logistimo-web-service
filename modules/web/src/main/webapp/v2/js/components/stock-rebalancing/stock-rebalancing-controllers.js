@@ -150,9 +150,13 @@ stockRebalancingControllers.controller('RebalancingRecommendationsCtrl', ['$scop
                 }
             }
 
+            $scope.updateTransferId = function(transferId) {
+                $scope.transferId = transferId;
+            };
 
             function setData() {
                 if(checkNotNullEmpty($scope.recommendations)) {
+                    $scope.selectedTransfer = {};
                     $scope.recommendations.some(function(data) {
                         data.color = fetchStockColor(data.current_stock, data.min, data.max);
                         var calculated_stock = 0;
@@ -191,23 +195,19 @@ stockRebalancingControllers.controller('RebalancingRecommendationsCtrl', ['$scop
             };
 
             $scope.addToTransfer = function() {
-              if(checkNotNullEmpty($scope.recommendation.open_transfers)) {
-                  $scope.recommendation.open_transfers.some(function (data) {
-                     if(data.selected) {
-                         $scope.showLoading();
-                         stockRebalancingService.addToExistingTransfer($scope.recommendation.id, data.orderId).then(function (data) {
-                             $scope.showSuccess($scope.resourceBundle['order.transfer'] + " " + data.data.orderId + " " + $scope.resourceBundle['update.success']);
-                         }).catch(function error(msg) {
-                             $scope.showErrorMsg(msg);
-                         }).finally(function() {
-                             $scope.enableScroll();
-                             $scope.modalInstance.dismiss('cancel');
-                             $scope.hideLoading();
-                             $scope.fetchRecommendedTransfers();
-                         });
-                     }
-                  });
-              }
+                if($scope.recommendation.open_transfers != null && checkNotNullEmpty($scope.transferId)) {
+                    $scope.showLoading();
+                    stockRebalancingService.addToExistingTransfer($scope.recommendation.id, $scope.transferId).then(function (data) {
+                        $scope.showSuccess($scope.resourceBundle['order.transfer'] + " " + data.data.orderId + " " + $scope.resourceBundle['update.success']);
+                    }).catch(function error(msg) {
+                        $scope.showErrorMsg(msg);
+                    }).finally(function() {
+                        $scope.enableScroll();
+                        $scope.modalInstance.dismiss('cancel');
+                        $scope.hideLoading();
+                        $scope.fetchRecommendedTransfers();
+                    });
+                }
             };
 
             $scope.cancel = function () {
