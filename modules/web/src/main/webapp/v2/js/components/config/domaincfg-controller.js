@@ -747,24 +747,6 @@ domainCfgControllers.controller('StockRebalancingConfigurationController', ['$sc
             }
         };
 
-        function validateCostBenefit() {
-            if($scope.stockRebalancing.transportationCost == 0) {
-                $scope.showWarning($scope.resourceBundle['warn.transportation.cost']);
-                $scope.continue = false;
-                return;
-            }
-            if($scope.stockRebalancing.handlingCharges == 0) {
-                $scope.showWarning($scope.resourceBundle['warn.handling.charges']);
-                $scope.continue = false;
-                return;
-            }
-            if($scope.stockRebalancing.inventoryHoldingCost == 0) {
-                $scope.showWarning($scope.resourceBundle['warn.inventory.holding.cost']);
-                $scope.continue = false;
-                return;
-            }
-        };
-
         function validateTrigger(){
             if($scope.stockRebalancing.stockOutDurationExceedsThreshold && $scope.stockRebalancing.acceptableLeadTime == 0) {
                 $scope.showWarning($scope.resourceBundle['warn.acceptable.lead.time.days']);
@@ -777,7 +759,6 @@ domainCfgControllers.controller('StockRebalancingConfigurationController', ['$sc
                 $scope.continue = false;
                 return;
             }
-            validateCostBenefit();
         }
 
         function validateGeneral() {
