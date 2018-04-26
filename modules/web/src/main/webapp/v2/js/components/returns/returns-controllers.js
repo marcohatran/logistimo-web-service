@@ -470,6 +470,10 @@ function DetailReturnsController($scope, $uibModal, requestContext, RETURNS, ret
     };
 
     function checkStatusList() {
+        if ($scope.dp.vp) {
+            $scope.statusList = [];
+            return;
+        }
         switch ($scope.returns.status.status) {
             case RETURNS.status.OPEN:
                 $scope.statusList = [];

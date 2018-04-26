@@ -3672,6 +3672,11 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService', 'reques
             $scope.hideLoading();
         });
         $scope.checkStatusList = function () {
+            if ($scope.dp.vp) {
+                $scope.statusList = [];
+                return;
+            }
+
             switch ($scope.shipment.statusCode) {
                 case ORDER.OPEN:
                     if ($scope.shipment.atv) {

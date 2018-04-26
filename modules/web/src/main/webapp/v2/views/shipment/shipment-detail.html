@@ -32,8 +32,8 @@
                     <span class="badge currentstatus" ng-class="{'cancelled': shipment.statusCode == ORDER.CANCELLED}">{{ORDER.statusTxt[shipment.statusCode]}}</span>
                     <span class="suborder h5" ng-show="shipment.oty == 1">({{resourceBundle['order']}}: <a ng-href="#/orders/detail/{{shipment.orderId}}/" target="_blank">{{shipment.orderId}}</a>)</span>
                     <span class="suborder h5" ng-show="shipment.oty == 0">(
-                        <span ng-hide="transRelease">({{resourceBundle['transactions.transfer.upper']}}</span>
-                        <span ng-show="transRelease">({{resourceBundle['transactions.release.upper']}}</span>
+                        <span ng-hide="transRelease">{{resourceBundle['transactions.transfer.upper']}}</span>
+                        <span ng-show="transRelease">{{resourceBundle['transactions.release.upper']}}</span>
                         : <a ng-href="#/orders/transfers/detail/{{shipment.orderId}}/">{{shipment.orderId}}</a>)</span>
                     <div>
                         <span class="lnk"
@@ -54,7 +54,7 @@
                                                set-focus="">
                                 </editable-text>
                             </div>
-                            <a ng-show="!edit.salesRefId && (dp.vp || shipment.statusCode == 'op')"
+                            <a ng-show="!edit.salesRefId && (shipment.statusCode == 'op') && !dp.vp"
                                uib-tooltip="{{resourceBundle['edit']}}" tooltip-append-to-body="true"
                                ng-click="toggleEdit('salesRefId')">
                                 <span class="glyphicons glyphicons-edit pt2 ml15"></span>

@@ -746,6 +746,7 @@ public class UsersServiceImpl implements UsersService {
             if (!results.isEmpty()) {
               xLogger.warn("deleteAccounts: Failed to delete user {0}. User is a kiosk owner.",
                   accountId);
+              throw new ServiceException("USR002", accountId);
             } else {
               try {
                 EventPublisher

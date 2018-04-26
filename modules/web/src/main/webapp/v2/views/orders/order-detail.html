@@ -59,7 +59,7 @@
                                                    set-focus="">
                                     </editable-text>
                                 </div>
-                                <a ng-show="!edit.transferRefId && (dp.vp || order.st == ORDER.PENDING) && order.atv && order.alc"
+                                <a ng-show="!edit.transferRefId && order.st == ORDER.PENDING && order.atv && order.alc && !dp.vp"
                                    uib-tooltip="{{resourceBundle['edit']}}" tooltip-append-to-body="true"
                                    ng-click="editRID('transferRefId')">
                                     <span ng-hide="!editMetaDataPermission"
@@ -86,7 +86,7 @@
                                                    set-focus="">
                                     </editable-text>
                                 </div>
-                                <a ng-show="!edit.purchaseRefId && (dp.vp || order.st == ORDER.PENDING) && order.atc"
+                                <a ng-show="!edit.purchaseRefId && order.st == ORDER.PENDING && order.atc && !dp.vp"
                                    uib-tooltip="{{resourceBundle['edit']}}" tooltip-append-to-body="true"
                                    ng-click="editRID('purchaseRefId')">
                                     <span ng-hide="!editMetaDataPermission"
@@ -108,7 +108,7 @@
                                                    set-focus="">
                                     </editable-text>
                                 </div>
-                                <a ng-show="!edit.salesRefId && (dp.vp || order.st == ORDER.PENDING || order.st == ORDER.CONFIRMED) && order.atv"
+                                <a ng-show="!edit.salesRefId && (order.st == ORDER.PENDING || order.st == ORDER.CONFIRMED) && order.atv && !dp.vp"
                                    uib-tooltip="{{resourceBundle['edit']}}" tooltip-append-to-body="true"
                                    ng-click="editRID('salesRefId')">
                                     <span ng-hide="!editMetaDataPermission" class="glyphicons glyphicons-edit pt2 ml15"></span>
