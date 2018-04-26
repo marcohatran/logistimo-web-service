@@ -23,7 +23,7 @@
 
 <div ng-if="isDef(dcntry)">
     <div  ng-controller="MainDashboardController" id="cid">
-        <div ng-click="openPred()" ng-target="_blank">
+        <div ng-click="openPred()" ng-target="_blank" ng-hide="tempOnlyAU">
             <div style="position: inherit;" ng-show="iPredEnabled && predictiveDiv">
                 <div class="toast toast-warning" style="width: 100%; box-shadow: none; position: relative; overflow: hidden; margin: 0 0 6px; padding: 15px 15px 15px 60px;border-radius: 3px;">
                     <button type="button" class="toast-close-button" ng-click="$event.stopPropagation(); predictiveDiv = false">×</button>
