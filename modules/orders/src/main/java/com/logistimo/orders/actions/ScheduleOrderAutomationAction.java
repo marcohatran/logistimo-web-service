@@ -74,16 +74,19 @@ public class ScheduleOrderAutomationAction {
     try {
       DomainConfig domainConfig = DomainConfig.getInstance(domain.getId());
       OrdersConfig ordersConfig = domainConfig.getOrdersConfig();
-      if (domainConfig.isCapabilityDisabled(DomainConfig.CAPABILITY_ORDERS) || !ordersConfig
+      if (!domainConfig.isCapabilityDisabled(DomainConfig.CAPABILITY_ORDERS) && ordersConfig
           .isCreationAutomated()) {
         long etaMillis = LocalDateUtil.getNextRunTime(domainConfig.getTimezone(),
-            ConfigUtil.getInt("stock-rebalancing.schedule.hour", 6),
-            ConfigUtil.getInt("stock-rebalancing.schedule.minute", 0));
+            ConfigUtil.getInt("order.automation.schedule.hour", 6),
+            ConfigUtil.getInt("order.automation.schedule.minute", 0));
         AppFactory.get().getTaskService()
             .schedule(ITaskService.QUEUE_OPTIMZER,
                 ORDER_AUTOMATION_URL + "?domain_id=" + domain.getId(), null, null, null,
                 ITaskService.METHOD_GET, etaMillis);
         LOGGER.info("Scheduled order automation for domain {0}:{1}", domain.getId(),
+            domain.getName());
+      } else {
+        LOGGER.info("Order automation is not enabled for domain {0}:{1}", domain.getId(),
             domain.getName());
       }
     } catch (TaskSchedulingException e) {

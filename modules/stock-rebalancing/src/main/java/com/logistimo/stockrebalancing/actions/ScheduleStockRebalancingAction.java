@@ -76,12 +76,15 @@ public class ScheduleStockRebalancingAction {
           ConfigUtil.getInt("stock-rebalancing.schedule.hour", 6),
           ConfigUtil.getInt("stock-rebalancing.schedule.minute", 30));
 
-      if (domainConfig.isCapabilityDisabled(DomainConfig.CAPABILITY_ORDERS)
+      if (!domainConfig.isCapabilityDisabled(DomainConfig.CAPABILITY_ORDERS)
           && domainConfig.getStockRebalancingConfig().isEnableStockRebalancing()) {
         AppFactory.get().getTaskService().schedule(ITaskService.QUEUE_OPTIMZER,
             STOCK_REBALANCING_AUTOMATION_URL + "?domain_id=" + domain.getId(), null, null, null,
             ITaskService.METHOD_GET, etaMillis);
         LOGGER.info("Scheduled stock rebalancing for domain {0}:{1}", domain.getId(),
+            domain.getName());
+      } else {
+        LOGGER.info("Stock rebalancing is not enabled for domain {0}:{1}", domain.getId(),
             domain.getName());
       }
     } catch (TaskSchedulingException e) {
