@@ -198,6 +198,19 @@ public class OrderApprovalsServiceImpl implements IOrderApprovalsService {
     return true;
   }
 
+
+  @Override
+  public boolean isTransferEditable(IOrder order) {
+    if (isTransferApprovalRequired(order)) {
+      IOrderApprovalMapping
+          approval =
+          approvalDao.getOrderApprovalMapping(order.getOrderId(), IOrder.TRANSFER_ORDER);
+      return approval == null || !(ApprovalConstants.PENDING.equals(approval.getStatus())
+          || ApprovalConstants.APPROVED.equals(approval.getStatus()));
+    }
+    return true;
+  }
+
   @Override
   public boolean isTransferApprovalRequired(IOrder order) {
     return DomainConfig.getInstance(order.getLinkedDomainId()).getApprovalsConfig().getOrderConfig()

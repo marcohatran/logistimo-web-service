@@ -32,6 +32,7 @@ import com.logistimo.entities.entity.jpa.Kiosk;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.service.InventoryManagementService;
 import com.logistimo.logger.XLog;
+import com.logistimo.orders.approvals.service.IOrderApprovalsService;
 import com.logistimo.orders.builders.OrderBuilder;
 import com.logistimo.orders.entity.IOrder;
 import com.logistimo.orders.models.OrderFilters;
@@ -75,6 +76,9 @@ public class RecommendedTransferBuilder {
   @Autowired
   private EntityBuilder entityBuilder;
 
+  @Autowired
+  private IOrderApprovalsService orderApprovalService;
+
   public List<RecommendedTransferModel> build(List<RecommendedTransfer> recommendedTransfers,
                                               String eventId) {
     return recommendedTransfers.stream().map(
@@ -114,6 +118,7 @@ public class RecommendedTransferBuilder {
       model.setOpenTransfers(
           openOrders.getResults().stream()
               .filter(order -> !order.getOrderId().equals(recommendedTransfer.getTransferId()))
+              .filter(orderApprovalService::isTransferEditable)
               .map(order -> {
                 try {
                   return orderBuilder.build(order, false);
@@ -165,6 +170,7 @@ public class RecommendedTransferBuilder {
 
     return Optional.of(model);
   }
+
 
   private List<StockRebalancingEventBatchModel> allocateBatches(
       List<StockRebalancingEventBatchModel> batches,
