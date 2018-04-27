@@ -23,6 +23,7 @@
 
 package com.logistimo.api.converters;
 
+import com.logistimo.api.builders.EntityBuilder;
 import com.logistimo.api.models.stockrebalancing.StockRebalancingEventBatchModel;
 import com.logistimo.api.models.stockrebalancing.StockRebalancingEventModel;
 import com.logistimo.materials.service.MaterialCatalogService;
@@ -57,6 +58,9 @@ public class StockRebalancingEventConverter implements
   @Autowired
   private GetRecommendedTransfersAction getRecommendedTransfersAction;
 
+  @Autowired
+  private EntityBuilder entityBuilder;
+
 
   @Override
   public StockRebalancingEventModel convert(StockRebalancingEvent source) {
@@ -64,7 +68,7 @@ public class StockRebalancingEventConverter implements
     model.setEventId(source.getId());
     model.setEntityId(source.getKioskId());
     model.setEntityName(source.getKiosk().getName());
-    model.setLocation(source.getKiosk().getCity());
+    model.setLocation(entityBuilder.getLocation(source.getKiosk()));
     model.setMaterialId(source.getMaterialId());
     try {
       model.setMaterialName(materialCatalogueService.getMaterial(source.getMaterialId()).getName());
