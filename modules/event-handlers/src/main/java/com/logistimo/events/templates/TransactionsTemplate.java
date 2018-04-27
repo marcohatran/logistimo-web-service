@@ -66,7 +66,8 @@ public class TransactionsTemplate implements ITemplate {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     try {
       IKiosk customer = null, vendor = null;
-      if (ITransaction.TYPE_ISSUE.equals(transaction.getType()) || ITransaction.TYPE_TRANSFER.equals(transaction.getType())) {
+      if (ITransaction.TYPE_ISSUE.equals(transaction.getType()) || ITransaction.TYPE_TRANSFER.equals(transaction.getType())
+          || ITransaction.TYPE_RETURNS_INCOMING.equals(transaction.getType())) {
         if (transaction.getLinkedKioskId() != null) {
           try {
             customer = pm.getObjectById(Kiosk.class, transaction.getLinkedKioskId());
@@ -83,7 +84,7 @@ public class TransactionsTemplate implements ITemplate {
               "{0} when getting template values and fetching vendor kiosk {1} in transaction {2} in domain {3}: {4}",
               e.getClass().getName(), transaction.getKioskId(), transaction.getKeyString(), transaction.getDomainId(), e.getMessage());
         }
-      } else if (ITransaction.TYPE_RECEIPT.equals(transaction.getType())) {
+      } else if (ITransaction.TYPE_RECEIPT.equals(transaction.getType()) || ITransaction.TYPE_RETURNS_OUTGOING.equals(transaction.getType())) {
         try {
           customer = pm.getObjectById(Kiosk.class, transaction.getKioskId());
         } catch (Exception e) {
