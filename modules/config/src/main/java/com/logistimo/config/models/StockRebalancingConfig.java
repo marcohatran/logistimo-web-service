@@ -23,6 +23,8 @@
 
 package com.logistimo.config.models;
 
+import com.logistimo.logger.XLog;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -35,6 +37,8 @@ import java.util.List;
  */
 
 public class StockRebalancingConfig implements Serializable {
+
+  private static final XLog xLogger = XLog.getLog(StockRebalancingConfig.class);
 
   public static final String ENABLE_STOCK_REBALANCING = "enable_stock_rebalancing";
   public static final String MATERIAL_TAGS = "material_tags";
@@ -105,34 +109,43 @@ public class StockRebalancingConfig implements Serializable {
   }
 
   private void setTriggerConfigurations(JSONObject jsonObject) {
-    if (jsonObject.getInt(TRANSPORTATION_COST) > 0) {
       setTransportationCost(jsonObject.getInt(TRANSPORTATION_COST));
-    }
 
-    if (jsonObject.getInt(HANDLING_CHARGES) > 0) {
       setHandlingCharges(jsonObject.getInt(HANDLING_CHARGES));
-    }
 
-    if (jsonObject.getInt(INVENTORY_HOLDING_COST) > 0) {
       setInventoryHoldingCost(jsonObject.getInt(INVENTORY_HOLDING_COST));
-    }
   }
 
   private void setCostBenefitConfigurations(JSONObject jsonObject) {
-    if (jsonObject.getBoolean(STOCK_OUT_DURATION_EXCEEDS_THRESHOLD)) {
-      setStockOutDurationExceedsThreshold(
-          jsonObject.getBoolean(STOCK_OUT_DURATION_EXCEEDS_THRESHOLD));
-      setAcceptableLeadTime(jsonObject.getInt(ACCEPTABLE_LEAD_TIME));
+    try {
+      if (jsonObject.getBoolean(STOCK_OUT_DURATION_EXCEEDS_THRESHOLD)) {
+        setStockOutDurationExceedsThreshold(
+            jsonObject.getBoolean(STOCK_OUT_DURATION_EXCEEDS_THRESHOLD));
+        setAcceptableLeadTime(jsonObject.getInt(ACCEPTABLE_LEAD_TIME));
+      }
+    } catch (Exception e) {
+      xLogger.warn("Exception while retrieving cost benefit configuration: " + STOCK_OUT_DURATION_EXCEEDS_THRESHOLD, e);
     }
 
-    if (jsonObject.getBoolean(EXPIRY_CHECK)) {
-      setExpiryCheck(jsonObject.getBoolean(EXPIRY_CHECK));
+
+    try {
+      if (jsonObject.getBoolean(EXPIRY_CHECK)) {
+        setExpiryCheck(jsonObject.getBoolean(EXPIRY_CHECK));
+      }
+    } catch (Exception e) {
+      xLogger.warn("Exception while retrieving cost benefit configuration: " + EXPIRY_CHECK, e);
     }
 
-    if (jsonObject.getBoolean(MAX_STOCK)) {
-      setMaxStock(jsonObject.getBoolean(MAX_STOCK));
-      setMaxStockDays(jsonObject.getInt(MAX_STOCK_DAYS));
+    try {
+      if (jsonObject.getBoolean(MAX_STOCK)) {
+        setMaxStock(jsonObject.getBoolean(MAX_STOCK));
+        setMaxStockDays(jsonObject.getInt(MAX_STOCK_DAYS));
+      }
+    } catch (Exception e) {
+      xLogger.warn("Exception while retrieving cost benefit configuration: " + MAX_STOCK, e);
     }
+
+
   }
 
   public StockRebalancingConfig(JSONObject jsonObject) {
@@ -190,17 +203,12 @@ public class StockRebalancingConfig implements Serializable {
       jsonObject.put(MAX_STOCK, isMaxStock());
       jsonObject.put(MAX_STOCK_DAYS, getMaxStockDays());
     }
-    if (getTransportationCost() > 0) {
       jsonObject.put(TRANSPORTATION_COST, getTransportationCost());
-    }
 
-    if (getHandlingCharges() > 0) {
       jsonObject.put(HANDLING_CHARGES, getHandlingCharges());
-    }
 
-    if (getInventoryHoldingCost() > 0) {
       jsonObject.put(INVENTORY_HOLDING_COST, getInventoryHoldingCost());
-    }
+
   }
 
 
