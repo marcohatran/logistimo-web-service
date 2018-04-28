@@ -73,7 +73,7 @@ CREATE TABLE RETURNS_ITEM_BATCH (
 
 create index IDX_RETURNSITEM_ID on RETURNS_ITEM_BATCH (item_id);
 
-CREATE OR REPLACE TABLE `EXECUTION_METADATA` (
+CREATE OR REPLACE TABLE `execution_metadata` (
   `id` varchar(255) NOT NULL,
   `created_at` datetime NOT NULL,
   `domain_id` bigint(20) DEFAULT NULL,
@@ -84,7 +84,7 @@ CREATE OR REPLACE TABLE `EXECUTION_METADATA` (
   PRIMARY KEY (`id`)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8;
 
-CREATE OR REPLACE TABLE `STOCK_REBALANCING_EVENTS` (
+CREATE OR REPLACE TABLE `stock_rebalancing_events` (
   `id` varchar(255) NOT NULL,
   `execution_id` varchar(255) NOT NULL,
   `kiosk_id` bigint(20) NOT NULL,
@@ -102,7 +102,7 @@ CREATE OR REPLACE TABLE `STOCK_REBALANCING_EVENTS` (
   KEY `FKrd22ncxxld31ire57ee0ooq3t` (`kiosk_id`)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8;
 
-CREATE OR REPLACE TABLE `STOCK_REBALANCING_EVENT_BATCHES` (
+CREATE OR REPLACE TABLE `stock_rebalancing_event_batches` (
   `id` varchar(255) NOT NULL,
   `batch_id` varchar(255) DEFAULT NULL,
   `expiry_date` datetime DEFAULT NULL,
@@ -116,7 +116,7 @@ CREATE OR REPLACE TABLE `STOCK_REBALANCING_EVENT_BATCHES` (
   KEY `FK9af0olxvybsj90sc7gkwrss74` (`stock_rebalancing_event_id`)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8;
 
-CREATE OR REPLACE TABLE `RECOMMENDED_TRANSFERS` (
+CREATE OR REPLACE TABLE `recommended_transfers` (
   `id` varchar(255) NOT NULL,
   `cost` decimal(19,2) NOT NULL,
   `destination_event_id` varchar(255) DEFAULT NULL,
