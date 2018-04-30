@@ -692,7 +692,6 @@ public class UsersServiceImpl implements UsersService {
         }
       }
       uAccDids.removeAll(allChildrenIds);
-      ua.setAccessibleDomainIds(uAccDids);
       pm = PMF.get().getPersistenceManager();
       pm.makePersistent(ua);
       //remove from cache

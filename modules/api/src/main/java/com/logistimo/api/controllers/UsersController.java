@@ -969,7 +969,6 @@ public class UsersController {
         }
       }
 
-      ua.setAccessibleDomainIds(uAccDids);
       usersService.updateAccount(ua, sUser.getUsername());
       returnMsg =
           backendMessages.getString("user") + " \'" + userId + "\' " + backendMessages
