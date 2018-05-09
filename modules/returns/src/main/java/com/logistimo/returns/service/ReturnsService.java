@@ -209,7 +209,7 @@ public class ReturnsService {
     return returnsRepository.getReturnedItems(returnId);
   }
 
-  @Transactional
+  @Transactional(transactionManager = "transactionManager")
   public ReturnsVO updateReturnsStatus(UpdateStatusModel statusModel)
       throws ServiceException, DuplicationException {
     ReturnsVO returnsVO = returnsRepository.getReturnsById(statusModel.getReturnId());

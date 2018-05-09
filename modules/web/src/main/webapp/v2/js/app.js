@@ -49,6 +49,7 @@ logistimoApp.config(function (uiSelectConfig) {
 logistimoApp.constant('isBulletinBoard', false);
 /*@endif*/
 
+
 /* @if BULLETIN_BOARD == 'BULLETIN_BOARD' */
 logistimoApp.constant('isBulletinBoard', true);
 /* @endif */
@@ -536,6 +537,9 @@ logistimoApp.config(['$uibTooltipProvider', function($uibTooltipProvider){
     $uibTooltipProvider.setTriggers({
         'showpopup': 'hidepopup',
         'hclick': 'hleave'
+    });
+    $uibTooltipProvider.options({
+        placement: 'auto'
     });
 }]);
 
