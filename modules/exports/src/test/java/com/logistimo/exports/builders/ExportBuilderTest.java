@@ -36,6 +36,8 @@ import com.logistimo.services.ServiceException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -49,7 +51,6 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
@@ -63,12 +64,14 @@ public class ExportBuilderTest {
   public static final String TEST_USER = "test";
   public static final String TEST_TIMEZONE = "Asia/Kolkata";
   public static final String TEST_DOMAIN = "test domain";
-  private final ExportBuilder builder = new ExportBuilder();
+
+  @Mock
+  DomainsServiceImpl domainsService;
+  @InjectMocks
+  private ExportBuilder builder;
 
   @Before
   public void setup() throws Exception {
-    DomainsServiceImpl domainsService = mock(DomainsServiceImpl.class);
-    builder.setDomainsService(domainsService);
     try {
       IDomain domain = new Domain();
       domain.setName(TEST_DOMAIN);
