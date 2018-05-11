@@ -223,7 +223,7 @@ public class EntityActivityQueryGenerator {
    * @return query
    */
   private String getDistinctEntityMaterialsWithPeriodQuery() {
-    StringBuilder query = new StringBuilder("(SELECT KID,MID,COUNT(1) FROM INVNTRY WHERE IAT IS NOT NULL AND");
+    StringBuilder query = new StringBuilder("(SELECT KID,MID,COUNT(1) ");
     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     Calendar cal = new GregorianCalendar();
     if (asOf != null) {
@@ -232,9 +232,9 @@ public class EntityActivityQueryGenerator {
     cal.add(Calendar.DAY_OF_MONTH, -getPeriod());
     cal.add(Calendar.SECOND, 1);
     if (asOf == null) {
-      query.append(" T >= '").append(sdf.format(cal.getTime())).append("'");
+      query.append("FROM INVNTRY WHERE IAT IS NOT NULL AND T >= '").append(sdf.format(cal.getTime())).append("'");
     } else {
-      query.append(" T BETWEEN '").append(sdf.format(cal.getTime())).append("' AND '")
+      query.append("FROM TRANSACTION WHERE T BETWEEN '").append(sdf.format(cal.getTime())).append("' AND '")
           .append(sdf.format(asOf)).append("'");
     }
     query.append(" GROUP BY KID,MID) A");

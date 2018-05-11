@@ -49,7 +49,6 @@ public class EntityActivityQueryGeneratorTest {
         .withExcludeEntityTags("CCP")
         .withMaterialTags("'RI Vaccines'")
         .withMaterialId(12345l)
-        .withAsOf(new Date())
         .withPeriod(7)
         .generate();
     assertNotNull(query);
@@ -124,6 +123,26 @@ public class EntityActivityQueryGeneratorTest {
     assertTrue("Query should contain state KARNATAKA", query.contains("KARNATAKA"));
     assertTrue("Query should contain exclude entity tag GMSD", query.contains("GMSD"));
     assertTrue("Query should contain material id 1234567", query.contains("1234567"));
+  }
+
+  @Test
+  public void testQueryGeneratorWithDateFilter() {
+    EntityActivityQueryGenerator
+        entityActivityQueryGenerator =
+        EntityActivityQueryGenerator.getEntityActivityQueryGenerator();
+    String query = entityActivityQueryGenerator.withDomainId(13l)
+        .withCountry("INDIA")
+        .withState("KARNATAKA")
+        .withDistrict("BENGALURU")
+        .withIsCount(false)
+        .withAsOf(new Date())
+        .withPeriod(7)
+        .generate();
+    assertNotNull(query);
+    assertTrue("Query should contain country INDIA", query.contains("INDIA"));
+    assertTrue("Query should contain state KARNATAKA", query.contains("KARNATAKA"));
+    assertTrue("Query should contain district BENGALURU", query.contains("BENGALURU"));
+    assertTrue("Query should fetch data from TRANSACTION table", query.contains("TRANSACTION"));
   }
 
 }
