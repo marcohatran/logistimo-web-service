@@ -104,7 +104,7 @@
                                     <td class="text-center">{{item.st | roundNoTrailZeros:2}}</td>
                                     <td class="text-center">{{item.min}}<span ng-show="mmdt && item.minDur > 0" class="litetext">{{item.minDur}} {{mmdt}}</span></td>
                                     <td class="text-center">{{item.max}}<span ng-show="mmdt && item.maxDur > 0" class="litetext">{{item.maxDur}} {{mmdt}}</span></td>
-                                    <td>{{item.du | timeStr:false:true}}</td>
+                                    <td>{{item.du | timeStr:true}}</td>
                                     <td>{{item.stDtstr}}</td>
                                 </tr>
                                 <tr data-ng-switch-when="history">

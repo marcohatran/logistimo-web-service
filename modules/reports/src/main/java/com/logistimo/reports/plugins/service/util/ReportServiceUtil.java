@@ -58,9 +58,7 @@ import com.logistimo.utils.LocalDateUtil;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.joda.time.Days;
-import org.joda.time.Period;
-import org.joda.time.PeriodType;
+import org.joda.time.Seconds;
 import org.joda.time.format.DateTimeFormat;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -102,7 +100,7 @@ public class ReportServiceUtil {
 
   protected List<Report> constructReportList(String data)
       throws NoSuchFieldException, IllegalAccessException {
-    if(Constants.NULL.equals(data)) {
+    if (Constants.NULL.equals(data)) {
       return null;
     }
     JSONObject jsonObject = new JSONObject(data);
@@ -136,7 +134,8 @@ public class ReportServiceUtil {
     }
   }
 
-  protected Report constructReport(List<Field> fields, JSONArray row) throws IllegalAccessException {
+  protected Report constructReport(List<Field> fields, JSONArray row)
+      throws IllegalAccessException {
     Report report = new Report();
     for (int j = 0; j < row.length(); j++) {
       Field field = fields.get(j);
@@ -215,7 +214,7 @@ public class ReportServiceUtil {
           reportChartModels.add(rep);
         }
         c.add(period, 1);
-        if(c.after(today)) {
+        if (c.after(today)) {
           break;
         }
         from = labelDateFormat.format(c.getTime());
@@ -245,7 +244,7 @@ public class ReportServiceUtil {
         values.add(addData(es.getKiosk(report.getKioskId(), false).getName()));
         break;
       case ENTITY_TAG:
-        values.add(addData(TagUtil.getTagById(report.getKioskTag(),ITag.KIOSK_TAG)));
+        values.add(addData(TagUtil.getTagById(report.getKioskTag(), ITag.KIOSK_TAG)));
         break;
       case STATE:
         values.add(addData(report.getState()));
@@ -257,7 +256,7 @@ public class ReportServiceUtil {
         values.add(addData(report.getTaluk()));
         break;
       case ORDER_TAG:
-        values.add(addData(TagUtil.getTagById(report.getOrderTag(),ITag.ORDER_TAG)));
+        values.add(addData(TagUtil.getTagById(report.getOrderTag(), ITag.ORDER_TAG)));
         break;
       default:
         values.add(addData(CharacterConstants.EMPTY));
@@ -267,9 +266,10 @@ public class ReportServiceUtil {
   protected ReportDataModel addData(Object value) {
     return new ReportDataModel(value != null ? String.valueOf(value) : ZERO);
   }
+
   protected ReportDataModel addData(Object value, Object secValue) {
     return new ReportDataModel(value != null ? String.valueOf(value) : ZERO,
-        secValue != null ? String.valueOf(secValue) : ZERO );
+        secValue != null ? String.valueOf(secValue) : ZERO);
   }
 
   protected ReportDataModel addData(Object value, Object numerator, Object denominator) {
@@ -278,7 +278,9 @@ public class ReportServiceUtil {
         String.valueOf(numerator != null ? numerator : ZERO),
         String.valueOf(denominator != null ? denominator : ZERO));
   }
-  protected ReportDataModel addData(Object value, Object numerator, Object denominator, Object secValue, Object secNumerator, Object secDenominator) {
+
+  protected ReportDataModel addData(Object value, Object numerator, Object denominator,
+                                    Object secValue, Object secNumerator, Object secDenominator) {
     return new ReportDataModel(
         String.valueOf(value != null ? value : ZERO),
         String.valueOf(numerator != null ? numerator : ZERO),
@@ -335,7 +337,7 @@ public class ReportServiceUtil {
         }
         rowKeySet.add(rowsJson.getJSONArray(i).getString(0));
         String date = rowsJson.getJSONArray(i).getString(1);
-        if(StringUtils.isNotEmpty(date)){
+        if (StringUtils.isNotEmpty(date)) {
           if (QueryHelper.MONTH.equals(model.filters.get(QueryHelper.TOKEN_PERIODICITY))) {
             SimpleDateFormat dateFormat = new SimpleDateFormat(QueryHelper.DATE_FORMAT_MONTH);
             date = labelDateFormat.format(dateFormat.parse(date));
@@ -419,7 +421,8 @@ public class ReportServiceUtil {
           break;
       }
       boolean newRow = false;
-      if (treeBasedTable.rowKeySet().size() == 0 && rowHeadings != null && rowHeadings.length() > 0) {
+      if (treeBasedTable.rowKeySet().size() == 0 && rowHeadings != null
+          && rowHeadings.length() > 0) {
         treeBasedTable.put(rowHeadings.getString(0), ZERO, new ArrayList<>(0));
         newRow = true;
       }
@@ -487,11 +490,10 @@ public class ReportServiceUtil {
     return key;
   }
 
-  private String getTableByMaterialKey(String materialId)
-      throws ServiceException {
-    String key;MaterialCatalogService ms = StaticApplicationContext.getBean(
+  private String getTableByMaterialKey(String materialId) throws ServiceException {
+    MaterialCatalogService ms = StaticApplicationContext.getBean(
         MaterialCatalogServiceImpl.class);
-    key = ms.getMaterial(Long.valueOf(materialId)).getName();
+    String key = ms.getMaterial(Long.valueOf(materialId)).getName();
     key += CharacterConstants.PIPE + materialId;
     return key;
   }
@@ -508,54 +510,47 @@ public class ReportServiceUtil {
 
   protected String getEntityMetaInfo(IKiosk kiosk) throws ServiceException {
     return (kiosk.getName() + CharacterConstants.PIPE + kiosk.getKioskId().toString() +
-        CharacterConstants.PIPE + (StringUtils.isEmpty(kiosk.getCity())? CharacterConstants.EMPTY : kiosk.getCity()) +
-        CharacterConstants.PIPE + (StringUtils.isEmpty(kiosk.getTaluk())? CharacterConstants.EMPTY : kiosk.getTaluk()) +
-        CharacterConstants.PIPE + (StringUtils.isEmpty(kiosk.getDistrict())? CharacterConstants.EMPTY : kiosk.getDistrict()) +
-        CharacterConstants.PIPE + (StringUtils.isEmpty(kiosk.getState())? CharacterConstants.EMPTY : kiosk.getState()));
+        CharacterConstants.PIPE + (StringUtils.isEmpty(kiosk.getCity()) ? CharacterConstants.EMPTY
+        : kiosk.getCity()) +
+        CharacterConstants.PIPE + (StringUtils.isEmpty(kiosk.getTaluk()) ? CharacterConstants.EMPTY
+        : kiosk.getTaluk()) +
+        CharacterConstants.PIPE + (StringUtils.isEmpty(kiosk.getDistrict())
+        ? CharacterConstants.EMPTY : kiosk.getDistrict()) +
+        CharacterConstants.PIPE + (StringUtils.isEmpty(kiosk.getState()) ? CharacterConstants.EMPTY
+        : kiosk.getState()));
   }
 
-  protected Long getMillisInPeriod(String time, String periodicity) {
+  protected Long getMillisInPeriod(String time, String periodicity, DateTime lastRunTime) {
     Long totalMillis;
     String tz = DomainConfig.getInstance(SecurityUtils.getCurrentDomainId()).getTimezone();
     DateTimeZone timezone = StringUtils.isNotEmpty(tz) ? DateTimeZone.forID(tz) : DateTimeZone.UTC;
-    DateTime currentDateTime = new DateTime();
     DateTime from;
     switch (periodicity) {
       case QueryHelper.MONTH:
         from = DateTimeFormat.forPattern(QueryHelper.DATE_FORMAT_MONTH).withZone(timezone)
-                .parseDateTime(time);
-        if (currentDateTime.isAfter(from) && currentDateTime.isBefore(from.plusMonths(1))) {
-          Period p = new Period(
-                  from, from.plusDays(Days.daysBetween(from,currentDateTime).getDays() + 1),
-                  PeriodType.seconds());
-          totalMillis = (long) p.getSeconds() * 1000;
+            .parseDateTime(time);
+        if (lastRunTime.isAfter(from) && lastRunTime.isBefore(from.plusMonths(1))) {
+          totalMillis = (long) Seconds.secondsBetween(from, lastRunTime).getSeconds() * 1000;
         } else {
           totalMillis =
-              LocalDateUtil.MILLISECS_PER_DAY
-                  * from.dayOfMonth().getMaximumValue();
+              LocalDateUtil.MILLISECS_PER_DAY * from.dayOfMonth().getMaximumValue();
         }
         break;
       case QueryHelper.WEEK:
         from = DateTimeFormat.forPattern(QueryHelper.DATE_FORMAT_DAILY).withZone(timezone)
-                .parseDateTime(time);
-        if (currentDateTime.isAfter(from) && currentDateTime.isBefore(from.plusWeeks(1))) {
-          Period p = new Period(
-                  from, from.plusDays(Days.daysBetween(from, currentDateTime).getDays() + 1),
-                  PeriodType.seconds());
-          totalMillis = (long) p.getSeconds() * 1000;
+            .parseDateTime(time);
+        if (lastRunTime.isAfter(from) && lastRunTime.isBefore(from.plusWeeks(1))) {
+          totalMillis = (long) Seconds.secondsBetween(from, lastRunTime).getSeconds() * 1000;
         } else {
           totalMillis = LocalDateUtil.MILLISECS_PER_DAY * 7;
         }
         break;
       case QueryHelper.DAY:
         from = DateTimeFormat.forPattern(QueryHelper.DATE_FORMAT_DAILY).withZone(timezone)
-                .parseDateTime(time);
-        if(currentDateTime.isAfter(from) && currentDateTime.isBefore(from.plusDays(1))){
-          Period p =
-              new Period(from, from.plusDays(Days.daysBetween(from, currentDateTime).getDays() + 1),
-                  PeriodType.seconds());
-          totalMillis = (long) p.getSeconds() * 1000;
-        }else{
+            .parseDateTime(time);
+        if (lastRunTime.isAfter(from) && lastRunTime.isBefore(from.plusDays(1))) {
+          totalMillis = (long) Seconds.secondsBetween(from, lastRunTime).getSeconds() * 1000;
+        } else {
           totalMillis = LocalDateUtil.MILLISECS_PER_DAY;
         }
         break;
@@ -581,10 +576,10 @@ public class ReportServiceUtil {
     if (count == 0) {
       return 0;
     }
-    return timeInDays/count;
+    return timeInDays / count;
   }
 
   private float getTimeInDays(Long timeInMillis) {
-    return (float) timeInMillis/ ReportsConstants.MILLISECONDS_PER_DAY;
+    return (float) timeInMillis / ReportsConstants.MILLISECONDS_PER_DAY;
   }
 }

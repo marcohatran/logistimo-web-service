@@ -69,7 +69,7 @@
                             <td class="text-center">{{item.sno}}</td>
                             <td><a ng-href="#/setup/entities/detail/{{item.kId}}/" target="_blank">{{item.enm}}</a><span class="litetext">{{item.add}}</span></td>
                             <td class="text-center">{{item.stk | roundNoTrailZeros:2}}
-                                <div ng-if="isDef(item.period)" class="small">{{item.period | timeStr:false:true}}</div>
+                                <div ng-if="isDef(item.period)" class="small">{{item.period | timeStr:true}}</div>
                             </td>
                             <td class="text-center">
                                 <div ng-show="item.be" class="clickable" ng-click="select($index,'batch')">
