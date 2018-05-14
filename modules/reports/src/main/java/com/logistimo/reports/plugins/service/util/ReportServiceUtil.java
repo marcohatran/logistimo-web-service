@@ -514,19 +514,18 @@ public class ReportServiceUtil {
         CharacterConstants.PIPE + (StringUtils.isEmpty(kiosk.getState())? CharacterConstants.EMPTY : kiosk.getState()));
   }
 
-  protected Long getMillisInPeriod(String time, String periodicity) {
+  protected Long getMillisInPeriod(String time, String periodicity,DateTime lastRunTime) {
     Long totalMillis;
     String tz = DomainConfig.getInstance(SecurityUtils.getCurrentDomainId()).getTimezone();
     DateTimeZone timezone = StringUtils.isNotEmpty(tz) ? DateTimeZone.forID(tz) : DateTimeZone.UTC;
-    DateTime currentDateTime = new DateTime();
     DateTime from;
     switch (periodicity) {
       case QueryHelper.MONTH:
         from = DateTimeFormat.forPattern(QueryHelper.DATE_FORMAT_MONTH).withZone(timezone)
                 .parseDateTime(time);
-        if (currentDateTime.isAfter(from) && currentDateTime.isBefore(from.plusMonths(1))) {
+        if (lastRunTime.isAfter(from) && lastRunTime.isBefore(from.plusMonths(1))) {
           Period p = new Period(
-                  from, from.plusDays(Days.daysBetween(from,currentDateTime).getDays() + 1),
+                  from, from.plusDays(Days.daysBetween(from,lastRunTime).getDays() + 1),
                   PeriodType.seconds());
           totalMillis = (long) p.getSeconds() * 1000;
         } else {
@@ -538,9 +537,9 @@ public class ReportServiceUtil {
       case QueryHelper.WEEK:
         from = DateTimeFormat.forPattern(QueryHelper.DATE_FORMAT_DAILY).withZone(timezone)
                 .parseDateTime(time);
-        if (currentDateTime.isAfter(from) && currentDateTime.isBefore(from.plusWeeks(1))) {
+        if (lastRunTime.isAfter(from) && lastRunTime.isBefore(from.plusWeeks(1))) {
           Period p = new Period(
-                  from, from.plusDays(Days.daysBetween(from, currentDateTime).getDays() + 1),
+                  from, from.plusDays(Days.daysBetween(from, lastRunTime).getDays() + 1),
                   PeriodType.seconds());
           totalMillis = (long) p.getSeconds() * 1000;
         } else {
@@ -550,9 +549,9 @@ public class ReportServiceUtil {
       case QueryHelper.DAY:
         from = DateTimeFormat.forPattern(QueryHelper.DATE_FORMAT_DAILY).withZone(timezone)
                 .parseDateTime(time);
-        if(currentDateTime.isAfter(from) && currentDateTime.isBefore(from.plusDays(1))){
+        if(lastRunTime.isAfter(from) && lastRunTime.isBefore(from.plusDays(1))){
           Period p =
-              new Period(from, from.plusDays(Days.daysBetween(from, currentDateTime).getDays() + 1),
+              new Period(from, from.plusDays(Days.daysBetween(from, lastRunTime).getDays() + 1),
                   PeriodType.seconds());
           totalMillis = (long) p.getSeconds() * 1000;
         }else{

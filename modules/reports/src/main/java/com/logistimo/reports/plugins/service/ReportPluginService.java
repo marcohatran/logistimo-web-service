@@ -199,6 +199,14 @@ public class ReportPluginService {
     return null;
   }
 
+  public DateTime getAggregationRunTime(String reportType){
+    Date lastRunTime=getLastAggregatedTime(reportType);
+    if(lastRunTime==null){
+      lastRunTime=new Date();
+    }
+    return new DateTime(lastRunTime);
+  }
+
   public ExportModel buildExportModel(String json) throws ParseException, ServiceException {
     JSONObject jsonObject = new JSONObject(json);
     final String reportViewType = jsonObject.getString(JSON_REPORT_VIEW_TYPE);
@@ -241,6 +249,8 @@ public class ReportPluginService {
     eModel.additionalData.put("domainTimezone", dc.getTimezone());
     eModel.additionalData.put("exportTime", LocalDateUtil
         .formatCustom(new Date(), Constants.DATETIME_CSV_FORMAT, userDetails.getTimezone()));
+    DateTime lastRunTime=getAggregationRunTime(eModel.templateId);
+    eModel.additionalData.put("lastRunTime", DateTimeFormat.forPattern(Constants.DATETIME_CSV_FORMAT).print(lastRunTime));
 
     Type type = new TypeToken<Map<String, String>>() {
     }.getType();
