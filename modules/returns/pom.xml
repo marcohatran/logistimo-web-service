@@ -76,15 +76,27 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.12</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
       <version>2.2.10</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.powermock</groupId>
+      <artifactId>powermock-api-mockito2</artifactId>
+      <version>1.7.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.powermock</groupId>
+      <artifactId>powermock-core</artifactId>
+      <version>1.7.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.powermock</groupId>
+      <artifactId>powermock-module-junit4</artifactId>
+      <version>1.5.1</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -124,15 +136,15 @@
         <artifactId>lombok</artifactId>
         <version>1.16.20</version>
     </dependency>
-      <dependency>
-          <groupId>javax.validation</groupId>
-          <artifactId>validation-api</artifactId>
-          <version>1.1.0.Final</version>
-      </dependency>
-      <dependency>
-          <groupId>com.logistimo</groupId>
-          <artifactId>logistimo-orders</artifactId>
-          <version>2.7.0</version>
+    <dependency>
+        <groupId>javax.validation</groupId>
+        <artifactId>validation-api</artifactId>
+        <version>1.1.0.Final</version>
+    </dependency>
+    <dependency>
+        <groupId>com.logistimo</groupId>
+        <artifactId>logistimo-orders</artifactId>
+        <version>2.7.0</version>
     </dependency>
   </dependencies>
   <build>
