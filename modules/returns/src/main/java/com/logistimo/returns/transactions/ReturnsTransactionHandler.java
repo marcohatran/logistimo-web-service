@@ -91,7 +91,7 @@ public class ReturnsTransactionHandler {
 
       List<ITransaction> errorTransactions = createTransactionsReturnModel.getErrorTransactions();
       if (CollectionUtils.isNotEmpty(errorTransactions)) {
-        StringBuilder errorMsg = new StringBuilder();
+        StringBuilder errorMsg = new StringBuilder(MsgUtil.newLine());
         for (ITransaction error : errorTransactions) {
           errorMsg.append("-").append(error.getMessage()).append(MsgUtil.newLine());
         }
