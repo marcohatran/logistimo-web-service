@@ -523,10 +523,12 @@ public class ReportServiceUtil {
   protected Long getMillisInPeriod(String time, String periodicity, DateTime lastRunTime) {
     Long totalMillis;
     DateTime from;
+    String tz = DomainConfig.getInstance(SecurityUtils.getCurrentDomainId()).getTimezone();
+    DateTimeZone timezone = StringUtils.isNotEmpty(tz) ? DateTimeZone.forID(tz) : DateTimeZone.UTC;
     switch (periodicity) {
       case QueryHelper.MONTH:
-        from = DateTimeFormat.forPattern(QueryHelper.DATE_FORMAT_MONTH)
-            .parseDateTime(time);
+        from = DateTimeFormat.forPattern(QueryHelper.DATE_FORMAT_MONTH).withZone(timezone)
+            .parseDateTime(time).withZone(DateTimeZone.UTC);
         if (lastRunTime.isAfter(from) && lastRunTime.isBefore(from.plusMonths(1))) {
           totalMillis = (long) Seconds.secondsBetween(from, lastRunTime).getSeconds() * 1000;
         } else {
@@ -535,8 +537,8 @@ public class ReportServiceUtil {
         }
         break;
       case QueryHelper.WEEK:
-        from = DateTimeFormat.forPattern(QueryHelper.DATE_FORMAT_DAILY)
-            .parseDateTime(time);
+        from = DateTimeFormat.forPattern(QueryHelper.DATE_FORMAT_DAILY).withZone(timezone)
+            .parseDateTime(time).withZone(DateTimeZone.UTC);
         if (lastRunTime.isAfter(from) && lastRunTime.isBefore(from.plusWeeks(1))) {
           totalMillis = (long) Seconds.secondsBetween(from, lastRunTime).getSeconds() * 1000;
         } else {
@@ -544,8 +546,8 @@ public class ReportServiceUtil {
         }
         break;
       case QueryHelper.DAY:
-        from = DateTimeFormat.forPattern(QueryHelper.DATE_FORMAT_DAILY)
-            .parseDateTime(time);
+        from = DateTimeFormat.forPattern(QueryHelper.DATE_FORMAT_DAILY).withZone(timezone)
+            .parseDateTime(time).withZone(DateTimeZone.UTC);
         if (lastRunTime.isAfter(from) && lastRunTime.isBefore(from.plusDays(1))) {
           totalMillis = (long) Seconds.secondsBetween(from, lastRunTime).getSeconds() * 1000;
         } else {
