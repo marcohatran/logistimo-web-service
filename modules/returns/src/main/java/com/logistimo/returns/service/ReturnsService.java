@@ -303,7 +303,7 @@ public class ReturnsService {
     activityModel.field="STATUS";
     activityModel.prevValue=oldStatus;
     activityModel.newValue=newStatus;
-    activityModel.userId=returnVO.getCreatedBy();
+    activityModel.userId=returnVO.getUpdatedBy();
     activityModel.domainId=returnVO.getSourceDomain();
     activityModel.messageId=messageId;
     activityModel.tag="RETURNS:" + returnVO.getId();
