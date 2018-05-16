@@ -9,7 +9,7 @@ It is designed to help manage every stage in a supply-chain from procurement to 
 Latest Release
 ------------------
 
-The most recent release is Logistimo [2.4.0](https://github.com/logistimo/logistimo-web/tree/2.4.0), released on 2017 May 13th.
+The most recent release is Logistimo [2.7.2](https://github.com/logistimo/logistimo-web-service/releases/tag/v2.7.2), released on 2018 May 16th.
 
 How to use Logistimo SCM
 -------------------------
@@ -91,7 +91,7 @@ developers@logistimo.com  is for people who want to contribute code to Logistimo
 License Terms
 ---------------------------
 
-This program is part of Logistimo SCM. Copyright © 2017 Logistimo.
+This program is part of Logistimo SCM. Copyright © 2018 Logistimo.
 
 Logistimo software is a mobile & web platform for supply chain management and remote temperature monitoring in low-resource settings, made available under the terms of the GNU Affero General Public License (AGPL). 
 
