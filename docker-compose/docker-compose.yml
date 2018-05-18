@@ -126,7 +126,7 @@ services:
       - MYSQL_LOGI_PASS="logistimo"
 
   approvals:
-    image: logistimo/approval-service:latest
+    image: logistimo/approvals-service:latest
     container_name: approvals
     ports:
       - "6400:6400"
