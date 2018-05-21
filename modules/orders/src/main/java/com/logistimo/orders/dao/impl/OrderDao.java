@@ -104,6 +104,7 @@ public class OrderDao implements IOrderDao {
     o.setDueDate(order.getDueDate());
     o.setTags(order.getTags(TagUtil.TYPE_ORDER), TagUtil.TYPE_ORDER);
     o.setNumberOfItems(order.getItems().size());
+    order.setNumberOfItems(order.getItems().size());
     pm.makePersistent(order);
     return new OrderUpdateStatus(order, oldStatus, paymentChanged, statusChanged);
   }
