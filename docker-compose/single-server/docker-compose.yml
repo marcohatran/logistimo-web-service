@@ -167,7 +167,7 @@ services:
   image: logistimo/approvals-service:latest
   container_name: approvals-service
   ports:
-   - "9400:9400"
+   - "6400:6400"
   environment:
    - MYSQL_HOST=jdbc:mariadb://mariadb:3306/approval_service
    - CONVERSATION_SERVICE_URL=http://web:8080
