@@ -84,12 +84,12 @@
                             <td>{{item.bexp | date:'dd/MM/yyyy'}}</td>
                             <td class="text-center">{{item.q}}</td>
                             <td class="text-center" ng-show="ordersTabEnabled && allocate">{{item.astk | number}}</td>
-                            <td ng-show="batchPerm > 1 && !dp.vp"><span ng-show="!item.showReason" class="glyphicons glyphicons-disk-remove" uib-tooltip="Discard" ng-click="openReason('w', $index, item.mtgs)"></span>
-                                <span ng-show="!item.showReason" class="glyphicons glyphicons-underground lPad10" uib-tooltip="Batch reset" ng-click="openReason('p', $index, item.mtgs)"></span>
+                            <td ng-show="batchPerm > 1 && !dp.vp"><span ng-show="!item.showReason" class="glyphicons glyphicons-disk-remove" uib-tooltip="Discard" ng-click="openReason('w', $index, item)"></span>
+                                <span ng-show="!item.showReason" class="glyphicons glyphicons-underground lPad10" uib-tooltip="Batch reset" ng-click="openReason('p', $index, item)"></span>
                                 <div class="bgr" ng-show="item.showReason" style="background-color: #fff;">
                                     <div class="domain-title-heading" style="color:#333;">
-                                        <h5>{{title}}</h5>
-                                        <i ng-show="transType == 'p'">({{resourceBundle['batch.reset']}})</i>
+                                        <h5>{{item.title}}</h5>
+                                        <i ng-show="item.transType == 'p'">({{resourceBundle['batch.reset']}})</i>
                                     </div>
                                     <div class="row" ng-show="isDef(reasons) ">
                                         <div class="col-sm-12">
@@ -101,9 +101,9 @@
                                             </select>
                                         </div>
                                     </div>
-                                    <div class="row" ng-show="atd > 0">
+                                    <div class="row" ng-show="item.atdConfig > 0">
                                         <div class="col-sm-12">
-                                            <label class="ml10 mt5 control-label" ng-class="{'required' : atd == '2'}">{{resourceBundle['date.actual.transaction']}}:</label>
+                                            <label class="ml10 mt5 control-label" ng-class="{'required' : item.atdConfig == '2'}">{{resourceBundle['date.actual.transaction']}}:</label>
                                         </div>
                                         <div class="col-sm-8 ml10">
                                                 <date-picker date-model="item.atd" min-date="minDate" max-date="today"></date-picker>
@@ -111,8 +111,8 @@
                                     </div>
                                     <div class="row mt10">
                                         <div class="col-sm-12">
-                                            <button type="button" class="btn btn-sm btn-primary lPad5 ml10" ng-show="item.showReason" ng-click="updateTransaction($index, transType, item.reason, item.atd, item.mtgs)">{{resourceBundle['submit']}}</button>
-                                            <span ng-show="item.showReason" class="btn btn-sm btn-default lPad5" ng-click="openReason(transType, $index, item.mtgs)">{{resourceBundle['cancel']}}</span>
+                                            <button type="button" class="btn btn-sm btn-primary lPad5 ml10" ng-show="item.showReason" ng-click="updateTransaction($index, item.transType, item.reason, item.atd, item.mtgs)">{{resourceBundle['submit']}}</button>
+                                            <span ng-show="item.showReason" class="btn btn-sm btn-default lPad5" ng-click="openReason(item.transType, $index, item)">{{resourceBundle['cancel']}}</span>
                                         </div>
                                     </div>
                                 </div>
