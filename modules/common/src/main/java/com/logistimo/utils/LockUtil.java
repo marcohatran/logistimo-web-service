@@ -42,7 +42,14 @@ public class LockUtil {
 
   private static final int DEFAULT_RETRY_COUNT = 50;
   private static final int DEFAULT_WAIT_TIME_IN_MILLIS = 500;
-  private static MemcacheService cache = AppFactory.get().getMemcacheService();
+  private static MemcacheService cache;
+
+  private static MemcacheService getMemcacheService() {
+    if(cache == null) {
+      cache = AppFactory.get().getMemcacheService();
+    }
+    return cache;
+  }
 
   public static boolean isLocked(LockStatus lockStatus) {
     return !lockStatus.equals(LockStatus.FAILED_TO_LOCK);
@@ -65,7 +72,7 @@ public class LockUtil {
       if (ThreadLocalUtil.get().locks.contains(key)) {
         return LockStatus.ALREADY_LOCKED;
       }
-      if (cache.putIfNotExist(key, Constants.EMPTY)) {
+      if (getMemcacheService().putIfNotExist(key, Constants.EMPTY)) {
         ThreadLocalUtil.get().locks.add(key);
         return LockStatus.NEW_LOCK;
       }
@@ -82,12 +89,12 @@ public class LockUtil {
 
   public static boolean release(String key) {
     ThreadLocalUtil.get().locks.remove(key);
-    return cache.delete(key);
+    return getMemcacheService().delete(key);
   }
 
   public static boolean release(String... keys) {
     ThreadLocalUtil.get().locks.removeAll(Arrays.asList(keys));
-    return cache.deleteMulti(keys);
+    return getMemcacheService().deleteMulti(keys);
   }
 
   public static LockStatus doubleLock(String lockKey, String lockKey2, int retryCount,
@@ -97,7 +104,8 @@ public class LockUtil {
           .contains(lockKey2)) {
         return LockStatus.ALREADY_LOCKED;
       }
-      if (cache.putMultiIfNotExists(lockKey, Constants.EMPTY, lockKey2, Constants.EMPTY)) {
+      if (getMemcacheService().putMultiIfNotExists(lockKey, Constants.EMPTY, lockKey2,
+          Constants.EMPTY)) {
         ThreadLocalUtil.get().locks.add(lockKey);
         ThreadLocalUtil.get().locks.add(lockKey2);
         return LockStatus.NEW_LOCK;
