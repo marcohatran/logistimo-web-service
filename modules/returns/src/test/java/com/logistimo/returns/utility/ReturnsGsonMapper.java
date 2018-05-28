@@ -25,21 +25,15 @@ package com.logistimo.returns.utility;
 
 import com.google.gson.GsonBuilder;
 
-import com.logistimo.returns.vo.BatchVO;
-import com.logistimo.returns.vo.ReturnsStatusVO;
-
 /**
  * Created by pratheeka on 22/05/18.
  */
 public class ReturnsGsonMapper {
 
-  private ReturnsGsonMapper() {
-  }
+  private ReturnsGsonMapper() {}
 
   public static <T> T getTestObject(String jsonString, Class className){
-
      return (T) new GsonBuilder().setDateFormat("yyyy-MM-dd").create().fromJson(jsonString,className);
   }
-
 
 }

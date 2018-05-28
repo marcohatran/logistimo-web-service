@@ -203,41 +203,47 @@ public class ReturnsBuilder {
 
   private List<ReturnsItemVO> getItems(List<ReturnsItemModel> itemModels, Long vendorId,
                                        Long customerId) {
-    return itemModels.stream().map(itemModel -> {
-      ReturnsItemVO returnsItem = new ReturnsItemVO();
-      returnsItem.setMaterialId(itemModel.getMaterialId());
-      returnsItem.setQuantity(itemModel.getReturnQuantity());
-      returnsItem.setMaterialStatus(itemModel.getMaterialStatus());
-      returnsItem.setReason(itemModel.getReason());
-      if (itemModel.getReceived() != null) {
-        returnsItem.setReceived(getReturnsReceived(itemModel.getReceived()));
-      }
-      returnsItem.setCreatedAt(itemModel.getCreatedAt());
-      returnsItem.setCreatedBy(itemModel.getCreatedBy().getUserId());
-      returnsItem.setUpdatedAt(itemModel.getUpdatedAt());
-      returnsItem.setUpdatedBy(itemModel.getUpdatedBy().getUserId());
-      if (itemModel.getBatches() != null) {
-        returnsItem.setReturnItemBatches(
-            getItemBatches(itemModel.getBatches(), vendorId, customerId,
-                itemModel.getMaterialId()));
-      }
-      return returnsItem;
-    }).collect(Collectors.toList());
+    return itemModels.stream().map(itemModel -> getReturnsItemVO(vendorId, customerId, itemModel)).collect(Collectors.toList());
+  }
+
+  private ReturnsItemVO getReturnsItemVO(Long vendorId, Long customerId,
+                                         ReturnsItemModel itemModel) {
+    ReturnsItemVO returnsItem = new ReturnsItemVO();
+    returnsItem.setMaterialId(itemModel.getMaterialId());
+    returnsItem.setQuantity(itemModel.getReturnQuantity());
+    returnsItem.setMaterialStatus(itemModel.getMaterialStatus());
+    returnsItem.setReason(itemModel.getReason());
+    if (itemModel.getReceived() != null) {
+      returnsItem.setReceived(getReturnsReceived(itemModel.getReceived()));
+    }
+    returnsItem.setCreatedAt(itemModel.getCreatedAt());
+    returnsItem.setCreatedBy(itemModel.getCreatedBy().getUserId());
+    returnsItem.setUpdatedAt(itemModel.getUpdatedAt());
+    returnsItem.setUpdatedBy(itemModel.getUpdatedBy().getUserId());
+    if (itemModel.getBatches() != null) {
+      returnsItem.setReturnItemBatches(
+          getItemBatches(itemModel.getBatches(), vendorId, customerId,
+              itemModel.getMaterialId()));
+    }
+    return returnsItem;
   }
 
   private List<ReturnsItemBatchVO> getItemBatches(List<ReturnsItemBatchModel> itemBatchModels,
                                                   Long vendorId, Long customerId, Long materialId) {
-    return itemBatchModels.stream().map(itemBatchModel -> {
-      ReturnsItemBatchVO itemBatch = new ReturnsItemBatchVO();
-      itemBatch.setBatch(getBatch(itemBatchModel, vendorId, customerId, materialId));
-      itemBatch.setQuantity(itemBatchModel.getReturnQuantity());
-      itemBatch.setMaterialStatus(itemBatchModel.getMaterialStatus());
-      itemBatch.setReason(itemBatchModel.getReason());
-      if (itemBatchModel.getReceived() != null) {
-        itemBatch.setReceived(getReturnsReceived(itemBatchModel.getReceived()));
-      }
-      return itemBatch;
-    }).collect(Collectors.toList());
+    return itemBatchModels.stream().map(itemBatchModel -> getReturnsItemBatchVO(vendorId, customerId, materialId, itemBatchModel)).collect(Collectors.toList());
+  }
+
+  private ReturnsItemBatchVO getReturnsItemBatchVO(Long vendorId, Long customerId, Long materialId,
+                                                   ReturnsItemBatchModel itemBatchModel) {
+    ReturnsItemBatchVO itemBatch = new ReturnsItemBatchVO();
+    itemBatch.setBatch(getBatch(itemBatchModel, vendorId, customerId, materialId));
+    itemBatch.setQuantity(itemBatchModel.getReturnQuantity());
+    itemBatch.setMaterialStatus(itemBatchModel.getMaterialStatus());
+    itemBatch.setReason(itemBatchModel.getReason());
+    if (itemBatchModel.getReceived() != null) {
+      itemBatch.setReceived(getReturnsReceived(itemBatchModel.getReceived()));
+    }
+    return itemBatch;
   }
 
   private BatchVO getBatch(ReturnsItemBatchModel itemBatchModel, Long vendorId, Long customerId,
