@@ -243,12 +243,12 @@ public class OrderManagementServiceImpl implements OrderManagementService {
     return null;
   }
 
-  public IOrder getOrder(Long orderId) throws ObjectNotFoundException, ServiceException {
+  public IOrder getOrder(Long orderId) throws ServiceException {
     return getOrder(orderId, false, null);
   }
 
   public IOrder getOrder(Long orderId, boolean includeItems)
-      throws ObjectNotFoundException, ServiceException {
+      throws ServiceException {
     return getOrder(orderId, includeItems, null);
   }
 
@@ -257,7 +257,7 @@ public class OrderManagementServiceImpl implements OrderManagementService {
    */
   @Override
   public IOrder getOrder(Long orderId, boolean includeItems, PersistenceManager pm)
-      throws ObjectNotFoundException, ServiceException {
+      throws ServiceException {
     xLogger.fine("Entered getOrder");
     if (orderId == null) {
       throw new ServiceException("No order ID specified");
@@ -345,7 +345,7 @@ public class OrderManagementServiceImpl implements OrderManagementService {
           order.setStatus(newOrderStatus);
         }
       }
-      OrderUpdateStatus orderUpdateStatus = orderDao.update(order, pm);
+      OrderUpdateStatus orderUpdateStatus = orderDao.update(order);
       if (order.getItems() != null) {
         pm.makePersistentAll(order.getItems());
       }
@@ -539,7 +539,7 @@ public class OrderManagementServiceImpl implements OrderManagementService {
   }
 
   public IMessage addMessageToOrder(Long orderId, String message, String userId)
-      throws ServiceException, ObjectNotFoundException {
+      throws ServiceException {
     IOrder order = getOrder(orderId);
     return addMessageToOrder(orderId, order.getDomainId(), message, userId, null);
   }
@@ -548,7 +548,7 @@ public class OrderManagementServiceImpl implements OrderManagementService {
   public String shipNow(IOrder order, String transporter, String trackingId, String reason,
                         Date expectedFulfilmentDate, String userId, String ps, int source,
                         String salesRefId, Boolean updateOrderFields)
-      throws ServiceException, ObjectNotFoundException, ValidationException {
+      throws ServiceException {
     ShipmentModel model = new ShipmentModel();
     if (expectedFulfilmentDate != null) {
       model.ead = new SimpleDateFormat(Constants.DATE_FORMAT).format(expectedFulfilmentDate);
@@ -2002,7 +2002,7 @@ public class OrderManagementServiceImpl implements OrderManagementService {
 
   @Override
   public PDFResponseModel generateInvoiceForOrder(Long orderId)
-      throws ServiceException, IOException, ValidationException, ObjectNotFoundException {
+      throws ServiceException, IOException {
     IOrder order = getOrder(orderId, true);
     SecureUserDetails user = SecurityUtils.getUserDetails();
     return generateOrderInvoiceAction.invoke(order, user);

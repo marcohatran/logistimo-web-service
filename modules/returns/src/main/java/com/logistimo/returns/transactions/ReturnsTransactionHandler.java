@@ -41,6 +41,7 @@ import com.logistimo.utils.MsgUtil;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -62,6 +63,11 @@ public class ReturnsTransactionHandler {
   @Autowired
   private InventoryManagementService inventoryManagementService;
 
+  public void setInventoryManagementService(
+      InventoryManagementService inventoryManagementService) {
+    this.inventoryManagementService = inventoryManagementService;
+  }
+
   public void postTransactions(UpdateStatusModel statusModel, ReturnsVO returnsVO,
                                Long domainId)
       throws DuplicationException, ServiceException {
@@ -82,7 +88,7 @@ public class ReturnsTransactionHandler {
             getTransactions(statusModel.getUserId(), domainId, customerId,
                 vendorId, statusModel.getSource(), returnsItemVO, statusModel.getStatus(),
                 trackingObjectType)));
-    PersistenceManager pm = PMF.get().getPersistenceManager();
+    PersistenceManager pm = getPersistenceManager();
     Transaction tx = pm.currentTransaction();
     try {
       tx.begin();
@@ -105,8 +111,12 @@ public class ReturnsTransactionHandler {
       throw e;
 
     } finally {
-      PMF.close(pm);
+     pm.close();
     }
+  }
+
+  public PersistenceManager getPersistenceManager() {
+    return PMF.get().getPersistenceManager();
   }
 
   private List<ITransaction> getTransactions(String userId, Long domainId, Long kioskId,

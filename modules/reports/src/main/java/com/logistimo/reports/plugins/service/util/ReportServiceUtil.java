@@ -536,7 +536,7 @@ public class ReportServiceUtil {
           totalMillis = (long) Seconds.secondsBetween(from, lastRunTime).getSeconds() * 1000;
         } else {
           totalMillis =
-              LocalDateUtil.MILLISECS_PER_DAY * from.dayOfMonth().getMaximumValue();
+              LocalDateUtil.MILLISECS_PER_DAY * from.withZone(timezone).dayOfMonth().getMaximumValue();
         }
         break;
       case QueryHelper.WEEK:
