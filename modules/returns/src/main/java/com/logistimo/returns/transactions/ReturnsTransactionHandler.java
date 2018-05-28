@@ -24,6 +24,7 @@
 package com.logistimo.returns.transactions;
 
 import com.logistimo.dao.JDOUtils;
+import com.logistimo.exception.SystemException;
 import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.inventory.models.CreateTransactionsReturnModel;
 import com.logistimo.inventory.service.InventoryManagementService;
@@ -34,6 +35,8 @@ import com.logistimo.returns.vo.ReturnsItemVO;
 import com.logistimo.returns.vo.ReturnsVO;
 import com.logistimo.services.DuplicationException;
 import com.logistimo.services.ServiceException;
+import com.logistimo.services.impl.PMF;
+import com.logistimo.utils.MsgUtil;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +48,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.jdo.PersistenceManager;
+import javax.jdo.Transaction;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -57,6 +62,11 @@ public class ReturnsTransactionHandler {
 
   @Autowired
   private InventoryManagementService inventoryManagementService;
+
+  public void setInventoryManagementService(
+      InventoryManagementService inventoryManagementService) {
+    this.inventoryManagementService = inventoryManagementService;
+  }
 
   public void postTransactions(UpdateStatusModel statusModel, ReturnsVO returnsVO,
                                Long domainId)
@@ -78,13 +88,35 @@ public class ReturnsTransactionHandler {
             getTransactions(statusModel.getUserId(), domainId, customerId,
                 vendorId, statusModel.getSource(), returnsItemVO, statusModel.getStatus(),
                 trackingObjectType)));
+    PersistenceManager pm = getPersistenceManager();
+    Transaction tx = pm.currentTransaction();
+    try {
+      tx.begin();
+      CreateTransactionsReturnModel createTransactionsReturnModel = inventoryManagementService
+          .updateInventoryTransactions(domainId, transactionsList, null, true, false, pm);
 
-    CreateTransactionsReturnModel createTransactionsReturnModel=inventoryManagementService
-        .updateInventoryTransactions(domainId, transactionsList, null, true, false, null);
+      List<ITransaction> errorTransactions = createTransactionsReturnModel.getErrorTransactions();
+      if (CollectionUtils.isNotEmpty(errorTransactions)) {
+        StringBuilder errorMsg = new StringBuilder(MsgUtil.newLine());
+        for (ITransaction error : errorTransactions) {
+          errorMsg.append("-").append(error.getMessage()).append(MsgUtil.newLine());
+        }
+        throw new SystemException("RT008", errorMsg.toString());
+      }
+      tx.commit();
+    } catch (Exception e) {
+      if (tx.isActive()) {
+        tx.rollback();
+      }
+      throw e;
 
-    if(CollectionUtils.isNotEmpty(createTransactionsReturnModel.getErrorTransactions())){
-      throw new ServiceException("Exception posting transaction");
+    } finally {
+     pm.close();
     }
+  }
+
+  public PersistenceManager getPersistenceManager() {
+    return PMF.get().getPersistenceManager();
   }
 
   private List<ITransaction> getTransactions(String userId, Long domainId, Long kioskId,

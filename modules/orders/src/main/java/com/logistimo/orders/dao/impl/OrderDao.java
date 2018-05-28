@@ -31,7 +31,6 @@ import com.logistimo.orders.dao.OrderUpdateStatus;
 import com.logistimo.orders.entity.IOrder;
 import com.logistimo.orders.entity.Order;
 import com.logistimo.services.impl.PMF;
-import com.logistimo.tags.TagUtil;
 import com.logistimo.utils.BigUtil;
 
 import org.springframework.stereotype.Component;
@@ -79,9 +78,9 @@ public class OrderDao implements IOrderDao {
   }
 
   @Override
-  public OrderUpdateStatus update(IOrder order, PersistenceManager pm) throws LogiException {
+  public OrderUpdateStatus update(IOrder order) throws LogiException {
     // Get the order with specified ID
-    IOrder o = getOrder(order.getOrderId(), pm);
+    IOrder o = getOrder(order.getOrderId());
     // Check if status has changed
     String oldStatus = o.getStatus();
     String newStatus = order.getStatus();
@@ -100,11 +99,7 @@ public class OrderDao implements IOrderDao {
       order.commitPayment(
           paidDiff); // NOTE: This method will update accounts, if accounting is enabled
     }
-    o.setExpectedArrivalDate(order.getExpectedArrivalDate());
-    o.setDueDate(order.getDueDate());
-    o.setTags(order.getTags(TagUtil.TYPE_ORDER), TagUtil.TYPE_ORDER);
-    o.setNumberOfItems(order.getItems().size());
-    pm.makePersistent(order);
+    order.setNumberOfItems(order.getItems().size());
     return new OrderUpdateStatus(order, oldStatus, paymentChanged, statusChanged);
   }
 

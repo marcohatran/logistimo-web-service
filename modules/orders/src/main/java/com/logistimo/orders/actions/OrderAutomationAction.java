@@ -206,21 +206,21 @@ public class OrderAutomationAction {
   protected List<ITransaction> filter(List<ITransaction> kioskTransactions,
                                     List<IDemandItem> demandItems) {
     return kioskTransactions.stream()
-        .filter(inventory -> !demandItems.stream()
-            .anyMatch(di -> di.getMaterialId().equals(inventory.getMaterialId())))
+        .filter(inventory -> demandItems.stream()
+            .noneMatch(di -> di.getMaterialId().equals(inventory.getMaterialId())))
         .collect(Collectors.toList());
   }
 
   private void addToExistingOrder(List<ITransaction> kioskTransactions,
                                   Long orderId, Locale locale)
       throws LogiException {
-    IOrder order = orderManagementService.getOrder(orderId, true);
     PersistenceManager pm = PMF.get().getPersistenceManager();
     Transaction tx = null;
     try {
       String message = getAddMaterialsMessage(kioskTransactions, locale);
       tx = pm.currentTransaction();
       tx.begin();
+      IOrder order = orderManagementService.getOrder(orderId, true, pm);
       orderManagementService.modifyOrder(order, Constants.SYSTEM_USER_ID,
           kioskTransactions, new Date(), order.getDomainId(),
           ITransaction.TYPE_REORDER, message, null, null,

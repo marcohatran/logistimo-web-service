@@ -196,6 +196,9 @@ public class OrderExportHandler implements IExportHandler {
         .append(order.getSalesReferenceID() != null ? StringEscapeUtils
             .escapeCsv(order.getSalesReferenceID()) : CharacterConstants.EMPTY)
         .append(CharacterConstants.COMMA)
+        .append(order.getPurchaseReferenceId() != null ? StringEscapeUtils
+            .escapeCsv(order.getPurchaseReferenceId()) : CharacterConstants.EMPTY)
+        .append(CharacterConstants.COMMA)
         .append(status).append(CharacterConstants.COMMA)
         .append(order.getKioskId()).append(CharacterConstants.COMMA)
         .append(c != null && c.getCustomId() != null ? StringEscapeUtils.escapeCsv(c.getCustomId())
@@ -368,7 +371,8 @@ public class OrderExportHandler implements IExportHandler {
     ResourceBundle jsMessages = Resources.get().getBundle("JSMessages", locale);
     StringBuilder headerSb = new StringBuilder();
     headerSb.append(messages.getString("order")).append(CharacterConstants.COMMA)
-        .append(messages.getString("referenceid")).append(CharacterConstants.COMMA)
+        .append(messages.getString("sales.reference.id")).append(CharacterConstants.COMMA)
+        .append(messages.getString("purchase.reference.id")).append(CharacterConstants.COMMA)
         .append(messages.getString("status")).append(CharacterConstants.COMMA)
         .append(messages.getString("customer")).append(CharacterConstants.SPACE)
         .append(jsMessages.getString("id")).append(CharacterConstants.COMMA)

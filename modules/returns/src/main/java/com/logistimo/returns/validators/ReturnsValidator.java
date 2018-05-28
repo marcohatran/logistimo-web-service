@@ -152,7 +152,7 @@ public class ReturnsValidator {
   public void validateReturnsPolicy(ReturnsConfig returnsConfiguration, Long orderFulfillmentTime) {
 
     if (returnsConfiguration.getIncomingDuration() == null
-        || returnsConfiguration.getIncomingDuration().compareTo(0) == 0) {
+        || returnsConfiguration.getIncomingDuration().compareTo(0) == 0 || orderFulfillmentTime==null) {
       return;
     }
     Long
