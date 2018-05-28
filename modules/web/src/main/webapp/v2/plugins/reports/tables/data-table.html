@@ -90,6 +90,12 @@
                         </td>
                         <td class="text-left" ng-if="activeMetric == 'ut'">
                             <a href="#/setup/users/all/details?userId={{key.split('|')[1]}}" target="_blank">{{key.split('|')[0]}}</a>
+                            <span class="litetext">{{
+                                key.split('|')[2] +
+                                (key.split('|')[2] ? ', ':'') + key.split('|')[3] +
+                                (key.split('|')[3] ? ', ':'') + key.split('|')[4] +
+                                (key.split('|')[4] ? ', ':'') + key.split('|')[5]
+                                }}</span>
                         </td>
                         <td ng-if="activeMetric != 'mt' && activeMetric != 'kt' && activeMetric != 'at' && activeMetric!= 'ut' && activeMetric !='ct'"
                             class="text-left">{{key}}

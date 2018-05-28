@@ -475,7 +475,8 @@ public class ReportServiceUtil {
         key = TagUtil.getTagById(Long.valueOf(id), ITag.KIOSK_TAG);
         break;
       case BY_USER:
-        key = getUserDetailsById(id);
+        UsersService usersService = StaticApplicationContext.getBean(UsersServiceImpl.class);
+        key = getUserMetaInfo(usersService.getUserAccount(id));
         break;
       case BY_MANUFACTURER:
         key = StringUtils.capitalize(id);
@@ -499,13 +500,15 @@ public class ReportServiceUtil {
   }
 
   /**
-   * Method to get user details based on ID and form the report table data
+   * Method to get the user details to form the report table data
    */
-  private String getUserDetailsById(String userId)
+  protected String getUserMetaInfo(IUserAccount user)
       throws ServiceException, ObjectNotFoundException {
-    UsersService us = StaticApplicationContext.getBean(UsersServiceImpl.class);
-    IUserAccount userAccount = us.getUserAccount(userId);
-    return userAccount.getFullName() + CharacterConstants.PIPE + userId;
+    return user.getFullName() + CharacterConstants.PIPE + user.getUserId() +
+        CharacterConstants.PIPE + (StringUtils.isEmpty(user.getCity())? CharacterConstants.EMPTY : user.getCity()) +
+        CharacterConstants.PIPE + (StringUtils.isEmpty(user.getTaluk())? CharacterConstants.EMPTY : user.getTaluk()) +
+        CharacterConstants.PIPE + (StringUtils.isEmpty(user.getDistrict())? CharacterConstants.EMPTY : user.getDistrict()) +
+        CharacterConstants.PIPE + (StringUtils.isEmpty(user.getState())? CharacterConstants.EMPTY : user.getState());
   }
 
   protected String getEntityMetaInfo(IKiosk kiosk) throws ServiceException {

@@ -25,16 +25,14 @@ package com.logistimo.reports.plugins.service.util;
 
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.entity.Kiosk;
-import com.logistimo.entities.service.EntitiesService;
-import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.reports.models.ReportDataModel;
+import com.logistimo.users.entity.IUserAccount;
+import com.logistimo.users.entity.UserAccount;
 
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 
 /**
@@ -67,16 +65,26 @@ public class ReportServiceUtilTest {
 
   @Test
   public void testGetEntityMetaInfo() throws Exception {
-    EntitiesService es = mock(EntitiesServiceImpl.class);
     IKiosk kiosk = new Kiosk();
     kiosk.setKioskId(1l);
     kiosk.setName("AishBagh UCHC - Demo");
     kiosk.setState("Uttar Pradesh");
     kiosk.setDistrict("Lucknow");
     kiosk.setCity("Lucknow");
-    when(es.getKiosk(1l,false))
-        .thenReturn(kiosk);
     String entityMetaInfo = reportServiceUtil.getEntityMetaInfo(kiosk);
     assertEquals("AishBagh UCHC - Demo|1|Lucknow||Lucknow|Uttar Pradesh", entityMetaInfo);
+  }
+
+  @Test
+  public void testGetUserMetaInfo() throws Exception {
+    IUserAccount user = new UserAccount();
+    user.setUserId("aditya");
+    user.setFirstName("Adityanath");
+    user.setLastName("Yogi");
+    user.setState("Uttar Pradesh");
+    user.setDistrict("Lucknow");
+    user.setCity("Lucknow");
+    String userDetails = reportServiceUtil.getUserMetaInfo(user);
+    assertEquals("Adityanath Yogi|aditya|Lucknow||Lucknow|Uttar Pradesh", userDetails);
   }
 }
