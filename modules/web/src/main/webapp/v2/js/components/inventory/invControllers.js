@@ -1248,20 +1248,20 @@ invControllers.controller('BatchDetailCtrl', ['$scope', 'invService', 'trnServic
 
         fetchTransConfig();
 
-        $scope.openReason = function (transType, index, tgs) {
-            $scope.transType = transType;
-            if (transType == 'p') {
-                $scope.title = "Stock count";
-                $scope.atd = $scope.tranDomainConfig.atdp;
+        $scope.openReason = function (transType, index, item) {
+            item.transType = transType;
+            if (item.transType == 'p') {
+                item.title = "Stock count";
+                item.atdConfig = $scope.tranDomainConfig.atdp;
             } else {
-                $scope.title = "Discard";
-                $scope.atd = $scope.tranDomainConfig.atdw;
+                item.title = "Discard";
+                item.atdConfig = $scope.tranDomainConfig.atdw;
             }
             $scope.reasons = [];
             $scope.defaultReason = '';
             $scope.tagReasons = [];
-            if (checkNotNullEmpty(tgs)) {
-                trnService.getReasons(transType, tgs).then(function (data) {
+            if (checkNotNullEmpty(item.mtgs)) {
+                trnService.getReasons(item.transType, item.mtgs).then(function (data) {
                     $scope.tagReasons = data.data.rsns;
                     $scope.defaultReason = data.data.defRsn;
                     if (checkNotNullEmpty($scope.tagReasons)) {
@@ -1272,13 +1272,13 @@ invControllers.controller('BatchDetailCtrl', ['$scope', 'invService', 'trnServic
                         $scope.expBatchDet[index].showReason = !$scope.expBatchDet[index].showReason;
                         $scope.expBatchDet[index].reason = $scope.expBatchDet[index].showReason ? $scope.defaultReason : undefined;
                     } else {
-                        setCommonReasons(transType, index);
+                        setCommonReasons(item.transType, index);
                     }
                 }).catch(function error(msg) {
                     $scope.showErrorMsg(msg);
                 });
             } else {
-                setCommonReasons(transType, index);
+                setCommonReasons(item.transType, index);
             }
         };
 
@@ -1338,8 +1338,8 @@ invControllers.controller('BatchDetailCtrl', ['$scope', 'invService', 'trnServic
             return ft;
         };
 
-        $scope.updateTransaction = function (index, transType, reason, atd, tgs) {
-            var fTransaction = $scope.constructFinalTransaction(index, transType, reason, atd);
+        $scope.updateTransaction = function (index, item) {
+            var fTransaction = $scope.constructFinalTransaction(index, item.transType, item.reason, item.atd);
             if (checkNullEmpty(fTransaction)) {
                 return;
             }
@@ -1349,7 +1349,7 @@ invControllers.controller('BatchDetailCtrl', ['$scope', 'invService', 'trnServic
                     $scope.showWarning(data.data);
                 } else {
                     $scope.showSuccess(data.data);
-                    $scope.openReason(transType, index, tgs);
+                    $scope.openReason(item.transType, index, item.mtgs);
                     $scope.getBatchDetails();
                 }
             }).catch(function error(msg) {
