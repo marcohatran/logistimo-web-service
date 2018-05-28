@@ -391,7 +391,7 @@ public class DashboardService implements IDashboardService {
 
   private String getPredictiveStockOutQuery(Long domainId, Map<String, String> filters) {
     StringBuilder query = new StringBuilder();
-    query.append("SELECT 'so' ty, (SELECT NAME from MATERIAL WHERE MATERIALID = MID) MATERIAL,");
+    query.append("SELECT 'so' ty, (SELECT NAME from MATERIAL WHERE MATERIALID = MID) MATERIAL, MID,");
     StringBuilder groupBy = new StringBuilder(" GROUP BY MATERIAL,");
     StringBuilder where = new StringBuilder();
     where.append(" WHERE PDOS <= ").append(PREDICTIVE_PERIOD)
