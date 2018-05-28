@@ -116,7 +116,7 @@ public class ReturnsService {
   @Transactional(transactionManager = "transactionManager")
   public ReturnsVO createReturns(ReturnsVO returnsVO) throws ServiceException {
 
-    LockUtil.LockStatus lockStatus = LockUtil.lock(Constants.TX_O + returnsVO.getOrderId());
+    LockUtil.LockStatus lockStatus = getLockStatus(returnsVO);
     if (!LockUtil.isLocked(lockStatus)) {
       throw new InvalidServiceException(new ServiceException("O002", returnsVO.getOrderId()));
     }
@@ -141,6 +141,10 @@ public class ReturnsService {
         xLogger.warn("Unable to release lock for key {0}", Constants.TX_O + returnsVO.getOrderId());
       }
     }
+  }
+
+  private LockUtil.LockStatus getLockStatus(ReturnsVO returnsVO) {
+    return LockUtil.lock(Constants.TX_O + returnsVO.getOrderId());
   }
 
   private Map<Long, BigDecimal> saveReturnItems(Long returnId,
@@ -245,19 +249,23 @@ public class ReturnsService {
   private void updateDemandItems(ReturnsVO returnsVO, Status status) {
     if (status == Status.CANCELLED) {
       Map<Long, BigDecimal> returnedQuantity = new HashMap<>();
-      returnsVO.getItems().forEach(returnsItemVO -> {
-        BigDecimal quantity = BigDecimal.ZERO;
-        if (CollectionUtils.isNotEmpty(returnsItemVO.getReturnItemBatches())) {
-          quantity =
-              returnsItemVO.getReturnItemBatches().stream().map(ReturnsItemBatchVO::getQuantity)
-                  .reduce(BigDecimal.ZERO, BigDecimal::add);
-        } else {
-          quantity = returnsItemVO.getQuantity();
-        }
-        returnedQuantity.put(returnsItemVO.getMaterialId(), quantity);
-      });
+      returnsVO.getItems().forEach(returnsItemVO ->
+        getQuantityByMaterial(returnedQuantity, returnsItemVO));
       demandService.updateDemandReturns(returnsVO.getOrderId(), returnedQuantity, true);
     }
+  }
+
+  private void getQuantityByMaterial(Map<Long, BigDecimal> returnedQuantity,
+                                     ReturnsItemVO returnsItemVO) {
+    BigDecimal quantity ;
+    if (CollectionUtils.isNotEmpty(returnsItemVO.getReturnItemBatches())) {
+      quantity =
+          returnsItemVO.getReturnItemBatches().stream().map(ReturnsItemBatchVO::getQuantity)
+              .reduce(BigDecimal.ZERO, BigDecimal::add);
+    } else {
+      quantity = returnsItemVO.getQuantity();
+    }
+    returnedQuantity.put(returnsItemVO.getMaterialId(), quantity);
   }
 
 
@@ -313,8 +321,7 @@ public class ReturnsService {
   }
 
 
-  private String addComment(Long returnId, String message, String userId, Long domainId)
-      throws ServiceException {
+  private String addComment(Long returnId, String message, String userId, Long domainId) {
     if (StringUtils.isNotBlank(message)) {
      return conversationService
           .addMessageToConversation(IActivity.TYPE.RETURNS.name(), String.valueOf(returnId),
@@ -323,7 +330,7 @@ public class ReturnsService {
     return null;
   }
   @Transactional(transactionManager = "transactionManager")
-  public String postComment(Long returnId, String message, String userId, Long domainId) throws ServiceException{
+  public String postComment(Long returnId, String message, String userId, Long domainId){
     return addComment(returnId,message,userId,domainId);
   }
 

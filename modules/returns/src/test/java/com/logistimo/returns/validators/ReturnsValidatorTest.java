@@ -30,14 +30,18 @@ import com.logistimo.exception.InvalidDataException;
 import com.logistimo.exception.ValidationException;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.Invntry;
+import com.logistimo.materials.model.HandlingUnitModel;
 import com.logistimo.returns.Status;
 import com.logistimo.returns.models.UpdateStatusModel;
-import com.logistimo.returns.vo.ReturnsItemBatchVO;
+import com.logistimo.returns.utility.ReturnsGsonMapper;
+import com.logistimo.returns.utility.ReturnsTestConstant;
+import com.logistimo.returns.utility.ReturnsTestUtility;
 import com.logistimo.returns.vo.ReturnsItemVO;
 import com.logistimo.returns.vo.ReturnsStatusVO;
 import com.logistimo.returns.vo.ReturnsVO;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ServiceException;
+import com.logistimo.shipments.FulfilledQuantityModel;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -46,11 +50,8 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
-import java.util.Locale;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -60,240 +61,210 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
  * Created by pratheeka on 20/04/18.
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({SecurityUtils.class, EntityAuthoriser.class})
+@PrepareForTest({SecurityUtils.class, EntityAuthoriser.class
+})
 public class ReturnsValidatorTest {
   private ReturnsValidator validator;
-  public static final String TEST_USER = "test";
 
   @Before
   public void setup() throws ServiceException {
     validator = new ReturnsValidator();
     mockStatic(SecurityUtils.class);
     mockStatic(EntityAuthoriser.class);
-    SecureUserDetails userDetails = getSecureUserDetails();
+    SecureUserDetails userDetails = ReturnsTestUtility.getSecureUserDetails();
     PowerMockito.when(SecurityUtils.getUserDetails()).thenReturn(userDetails);
-    PowerMockito.when(EntityAuthoriser.authoriseEntityPerm(1l)).thenReturn(1);
-    PowerMockito.when(EntityAuthoriser.authoriseEntityPerm(2l)).thenReturn(2);
+    PowerMockito.when(EntityAuthoriser.authoriseEntityPerm(1L)).thenReturn(1);
+    PowerMockito.when(EntityAuthoriser.authoriseEntityPerm(2L)).thenReturn(2);
   }
 
   @Test(expected = InvalidDataException.class)
-  public void testInvalidStatusChange() {
+  public void testInvalidReceiveStatusChange() {
     Status oldStatus = Status.OPEN;
     Status newStatus = Status.RECEIVED;
     validator.validateStatusChange(newStatus, oldStatus);
   }
 
   @Test(expected = InvalidDataException.class)
-  public void testForNullStatus() {
+  public void testNullStatusChange() {
     Status oldStatus = Status.OPEN;
     validator.validateStatusChange(null, oldStatus);
   }
 
   @Test(expected = InvalidDataException.class)
-  public void testForInvalidCancelStatus() {
+  public void testInvalidCancelStatus() {
     Status oldStatus = Status.CANCELLED;
     Status newStatus = Status.RECEIVED;
     validator.validateStatusChange(newStatus, oldStatus);
   }
 
   @Test(expected = InvalidDataException.class)
-  public void testForInvalidReceivedStatus() {
+  public void testForInvalidCancelStatusChange() {
     Status oldStatus = Status.RECEIVED;
     Status newStatus = Status.CANCELLED;
     validator.validateStatusChange(newStatus, oldStatus);
   }
 
   @Test(expected = InvalidDataException.class)
-  public void testForInvalidShippedStatusChange() {
+  public void testInvalidOpentatusChange() {
     Status oldStatus = Status.SHIPPED;
     Status newStatus = Status.OPEN;
     validator.validateStatusChange(newStatus, oldStatus);
   }
 
+
   @Test
-  public void testAccess() throws ServiceException {
+  public void testStatusChangeAccess() throws ServiceException {
     UpdateStatusModel statusModel = new UpdateStatusModel();
     statusModel.setStatus(Status.SHIPPED);
     ReturnsVO returnsVO = new ReturnsVO();
-    returnsVO.setCustomerId(2l);
+    returnsVO.setCustomerId(2L);
     assertTrue(validator.checkAccessForStatusChange(statusModel, returnsVO));
-    returnsVO.setCustomerId(1l);
+    returnsVO.setCustomerId(1L);
     returnsVO.setStatus(new ReturnsStatusVO());
     assertFalse(validator.checkAccessForStatusChange(statusModel, returnsVO));
     statusModel.setStatus(Status.RECEIVED);
-    returnsVO.setCustomerId(1l);
-    returnsVO.setVendorId(2l);
+    returnsVO.setCustomerId(1L);
+    returnsVO.setVendorId(2L);
     assertTrue(validator.checkAccessForStatusChange(statusModel, returnsVO));
     statusModel.setStatus(Status.RECEIVED);
-    returnsVO.setCustomerId(1l);
-    returnsVO.setVendorId(1l);
+    returnsVO.setCustomerId(1L);
+    returnsVO.setVendorId(1L);
     assertFalse(validator.checkAccessForStatusChange(statusModel, returnsVO));
     statusModel.setStatus(Status.CANCELLED);
-    returnsVO.setCustomerId(1l);
-    returnsVO.setVendorId(1l);
+    returnsVO.setCustomerId(1L);
+    returnsVO.setVendorId(1L);
     assertFalse(validator.checkAccessForStatusChange(statusModel, returnsVO));
-    returnsVO.setVendorId(2l);
+    returnsVO.setVendorId(2L);
     assertTrue(validator.checkAccessForStatusChange(statusModel, returnsVO));
-    returnsVO.setCustomerId(2l);
-    returnsVO.setVendorId(1l);
+    returnsVO.setCustomerId(2L);
+    returnsVO.setVendorId(1L);
     assertTrue(validator.checkAccessForStatusChange(statusModel, returnsVO));
     ReturnsStatusVO statusVO = new ReturnsStatusVO();
     statusVO.setStatus(Status.SHIPPED);
     returnsVO.setStatus(statusVO);
     statusModel.setStatus(Status.CANCELLED);
-    returnsVO.setVendorId(2l);
+    returnsVO.setVendorId(2L);
     assertTrue(validator.checkAccessForStatusChange(statusModel, returnsVO));
   }
 
   @Test(expected = ValidationException.class)
-  public void policyTest() {
+  public void testReturnsPolicy() {
     ReturnsConfig returnsConfiguration = new ReturnsConfig();
-    Long orderFullfillmentTime = 7l;
+    Long orderFullfillmentTime = 7L;
     validator.validateReturnsPolicy(returnsConfiguration, orderFullfillmentTime);
     returnsConfiguration.setIncomingDuration(0);
     validator.validateReturnsPolicy(returnsConfiguration, orderFullfillmentTime);
     returnsConfiguration.setIncomingDuration(3);
-//     orderFullfillmentTime=null;
-//    validator.validateReturnsPolicy(returnsConfiguration,orderFullfillmentTime);
-    orderFullfillmentTime = 2l;
+    validator.validateReturnsPolicy(returnsConfiguration, null);
+    orderFullfillmentTime = 2L;
     validator.validateReturnsPolicy(returnsConfiguration, orderFullfillmentTime);
-    orderFullfillmentTime = 7l;
+    orderFullfillmentTime = 7L;
     validator.validateReturnsPolicy(returnsConfiguration, orderFullfillmentTime);
   }
 
-  @Test(expected = ValidationException.class)
-  public void testReturnedQtyGreaterThanAvailableQty() {
-    List<IInvntry> inventoryList = getInventoryList();
-    List<ReturnsItemVO> returnsItemVOList = new ArrayList<>(2);
-    ReturnsItemVO returnsItemVO = new ReturnsItemVO();
-    returnsItemVO.setQuantity(new BigDecimal(20));
-    returnsItemVO.setMaterialId(1l);
-    returnsItemVOList.add(returnsItemVO);
-    returnsItemVO = new ReturnsItemVO();
-    returnsItemVO.setQuantity(BigDecimal.TEN);
-    returnsItemVO.setMaterialId(2l);
-    returnsItemVOList.add(returnsItemVO);
-    validator.validateShippedQuantity(returnsItemVOList, inventoryList);
+  @Test(expected = InvalidDataException.class)
+  public void validateShipments() {
+    validator.validateReturnedQuantity(null, null, null);
+  }
+
+  private List<FulfilledQuantityModel> getFulfilledQtyList() {
+    List<FulfilledQuantityModel> fulfilledQuantityModelList = new ArrayList<>(2);
+    FulfilledQuantityModel
+        fulfilledQuantityModel =
+        ReturnsGsonMapper
+            .getTestObject(ReturnsTestConstant.FULFILLED_QTY_MODEL_1, FulfilledQuantityModel.class);
+    fulfilledQuantityModelList.add(fulfilledQuantityModel);
+    FulfilledQuantityModel
+        fulfilledQuantityModel2 =
+        ReturnsGsonMapper
+            .getTestObject(ReturnsTestConstant.FULFILLED_QTY_MODEL_2, FulfilledQuantityModel.class);
+    fulfilledQuantityModelList.add(fulfilledQuantityModel2);
+    FulfilledQuantityModel
+        fulfilledQuantityModelNonBatch =
+        ReturnsGsonMapper
+            .getTestObject(ReturnsTestConstant.FULFILLED_QTY_MODEL_3, FulfilledQuantityModel.class);
+    fulfilledQuantityModelList.add(fulfilledQuantityModelNonBatch);
+    return fulfilledQuantityModelList;
+  }
+
+  @Test(expected = InvalidDataException.class)
+  public void testNullFulfilledQty() {
+    List<ReturnsItemVO>
+        returnItemList =
+        getReturnsItemVOList(ReturnsTestConstant.RETURNS_ITEM_BATCH_2);
+    validator.validateReturnedQuantity(returnItemList, null, null);
   }
 
   @Test(expected = ValidationException.class)
-  public void testBatchReturnedQtyGreaterThanAvailableQty() {
-    List<IInvntry> inventoryList = getInventoryList();
-    List<ReturnsItemVO> returnsItemVOList = new ArrayList<>(2);
-    ReturnsItemVO returnsItemVO = new ReturnsItemVO();
-    returnsItemVO.setQuantity(BigDecimal.TEN);
-    returnsItemVO.setMaterialId(1l);
-    returnsItemVO.setReturnItemBatches(getBatchList(BigDecimal.TEN));
-    returnsItemVOList.add(returnsItemVO);
-    returnsItemVO = new ReturnsItemVO();
-    returnsItemVO.setQuantity(BigDecimal.TEN);
-    returnsItemVO.setMaterialId(2l);
-    returnsItemVO.setReturnItemBatches(getBatchList(BigDecimal.TEN));
-    returnsItemVOList.add(returnsItemVO);
-    validator.validateShippedQuantity(returnsItemVOList, inventoryList);
-  }
-
-  @Test
-  public void batchReturnedQuantityLessThanAvailableQty() {
-    List<IInvntry> inventoryList = getInventoryList();
-    List<ReturnsItemVO> returnsItemVOList = new ArrayList<>(2);
-    ReturnsItemVO returnsItemVO = new ReturnsItemVO();
-    returnsItemVO.setQuantity(BigDecimal.TEN);
-    returnsItemVO.setMaterialId(1l);
-    returnsItemVO.setReturnItemBatches(getBatchList(new BigDecimal(2)));
-    returnsItemVOList.add(returnsItemVO);
-    returnsItemVO = new ReturnsItemVO();
-    returnsItemVO.setQuantity(BigDecimal.TEN);
-    returnsItemVO.setMaterialId(2l);
-    returnsItemVO.setReturnItemBatches(getBatchList(new BigDecimal(2)));
-    returnsItemVOList.add(returnsItemVO);
-    validator.validateShippedQuantity(returnsItemVOList, inventoryList);
-  }
-
-  @Test
-  public void testReturnedQtyLessThanAvailableQty() {
-    List<IInvntry> inventoryList = getInventoryList();
-    List<ReturnsItemVO> returnsItemVOList = new ArrayList<>(2);
-    ReturnsItemVO returnsItemVO = new ReturnsItemVO();
-    returnsItemVO.setQuantity(new BigDecimal(2));
-    returnsItemVO.setMaterialId(1l);
-    returnsItemVOList.add(returnsItemVO);
-    returnsItemVO = new ReturnsItemVO();
-    returnsItemVO.setQuantity(new BigDecimal(2));
-    returnsItemVO.setMaterialId(2l);
-    returnsItemVOList.add(returnsItemVO);
-    validator.validateShippedQuantity(returnsItemVOList, inventoryList);
-  }
-
-
-  @Test
-  public void returnPolicyTest() {
-    ReturnsConfig returnsConfig = new ReturnsConfig();
-    returnsConfig.setIncomingDuration(5);
-    Calendar cal = Calendar.getInstance();
-    cal.add(Calendar.DAY_OF_MONTH, -2);
-    Long orderFulfillmentTime = cal.getTimeInMillis();
-    validator.validateReturnsPolicy(returnsConfig, orderFulfillmentTime);
+  public void testBatchReturnedQtyGreaterThanFulfilledQty() {
+    List<ReturnsItemVO>
+        returnItemList =
+        getReturnsItemVOList(ReturnsTestConstant.RETURNS_ITEM_BATCH_2);
+    List<FulfilledQuantityModel> fulfilledQuantityModelList = getFulfilledQtyList();
+    validator.validateReturnedQuantity(returnItemList, fulfilledQuantityModelList, null);
   }
 
   @Test(expected = ValidationException.class)
-  public void returnDurationPolicyTest() {
-    ReturnsConfig returnsConfig = new ReturnsConfig();
-    returnsConfig.setIncomingDuration(5);
-    Calendar cal = Calendar.getInstance();
-    cal.add(Calendar.DAY_OF_MONTH, -10);
-    Long orderFulfillmentTime = cal.getTimeInMillis();
-    validator.validateReturnsPolicy(returnsConfig, orderFulfillmentTime);
+  public void testNonBatchReturnedQtyGreaterThanFulfilledQty() {
+    List<ReturnsItemVO>
+        returnItemList =
+        getReturnsItemVOList(ReturnsTestConstant.RETURNS_ITEM_NON_BATCH_2);
+    List<FulfilledQuantityModel> fulfilledQuantityModelList = getFulfilledQtyList();
+    validator.validateReturnedQuantity(returnItemList, fulfilledQuantityModelList, null);
   }
 
-  private SecureUserDetails getSecureUserDetails() {
-    SecureUserDetails userDetails = new SecureUserDetails();
-    userDetails.setCurrentDomainId(123456L);
-    userDetails.setUsername(TEST_USER);
-    userDetails.setLocale(Locale.ENGLISH);
-    return userDetails;
+  @Test
+  public void testReturnedQtyLesserThanFulfilledQty() {
+    List<ReturnsItemVO>
+        returnItemList =
+        getReturnsItemVOList(ReturnsTestConstant.RETURNS_ITEM_NON_BATCH_1);
+    returnItemList.addAll(getReturnsItemVOList(ReturnsTestConstant.RETURNS_ITEM_BATCH_1));
+    List<FulfilledQuantityModel> fulfilledQuantityModelList = getFulfilledQtyList();
+    assertTrue(
+        validator.validateReturnedQuantity(returnItemList, fulfilledQuantityModelList, null));
+
   }
 
-  private List<ReturnsItemBatchVO> getBatchList(BigDecimal quantity) {
-    List<ReturnsItemBatchVO> returnsItemBatchVOList = new ArrayList<>(2);
-    ReturnsItemBatchVO returnsItemBatchVO = new ReturnsItemBatchVO();
-    returnsItemBatchVO.setQuantity(quantity);
-    returnsItemBatchVOList.add(returnsItemBatchVO);
-    ReturnsItemBatchVO returnsItemBatchVO1 = new ReturnsItemBatchVO();
-    returnsItemBatchVO1.setQuantity(quantity);
-    returnsItemBatchVOList.add(returnsItemBatchVO1);
-    return returnsItemBatchVOList;
+
+  @Test(expected = ValidationException.class)
+  public void testReturnedQtyNotMultipleOfHandlingUnit() {
+    List<ReturnsItemVO>
+        returnItemList =
+        getReturnsItemVOList(ReturnsTestConstant.RETURNS_ITEM_NON_BATCH_1);
+    returnItemList.addAll(getReturnsItemVOList(ReturnsTestConstant.RETURNS_ITEM_BATCH_1));
+    List<FulfilledQuantityModel> fulfilledQuantityModelList = getFulfilledQtyList();
+    List<HandlingUnitModel> handlingUnitModelList = new ArrayList<>(1);
+    HandlingUnitModel
+        handlingUnitModel =
+        ReturnsGsonMapper
+            .getTestObject(ReturnsTestConstant.HANDLING_UNIT_1, HandlingUnitModel.class);
+    handlingUnitModelList.add(handlingUnitModel);
+    assertTrue(validator.validateReturnedQuantity(returnItemList, fulfilledQuantityModelList,
+        handlingUnitModelList));
+
   }
 
-  private List<ReturnsItemVO> getReturnsItemList() {
-    List<ReturnsItemVO> returnsItemVOList = new ArrayList<>(2);
-    ReturnsItemVO returnsItemVO = new ReturnsItemVO();
-    returnsItemVO.setQuantity(BigDecimal.TEN);
-    returnsItemVO.setMaterialId(1l);
-    returnsItemVO.setReturnItemBatches(getBatchList(BigDecimal.TEN));
-    returnsItemVOList.add(returnsItemVO);
-
-    returnsItemVO = new ReturnsItemVO();
-    returnsItemVO.setQuantity(BigDecimal.TEN);
-    returnsItemVO.setMaterialId(2l);
-    returnsItemVO.setReturnItemBatches(getBatchList(BigDecimal.TEN));
-
-    returnsItemVOList.add(returnsItemVO);
-    return returnsItemVOList;
+  @Test(expected = ValidationException.class)
+  public void testReturnedQtyGreaterThanShippedQty() {
+    List<ReturnsItemVO>
+        returnItemList =
+        getReturnsItemVOList(ReturnsTestConstant.RETURNS_ITEM_BATCH_2);
+    Invntry
+        iInvntry =
+        ReturnsGsonMapper.getTestObject(ReturnsTestConstant.INVENTORY_1, Invntry.class);
+    List<IInvntry> invntryList = new ArrayList<>(1);
+    invntryList.add(iInvntry);
+    validator.validateShippedQuantity(returnItemList, invntryList);
   }
 
-  private List<IInvntry> getInventoryList() {
-    List<IInvntry> inventoryList = new ArrayList<>(2);
-    IInvntry iInvntry = new Invntry();
-    iInvntry.setMaterialId(1l);
-    iInvntry.setAvailableStock(BigDecimal.TEN);
-    inventoryList.add(iInvntry);
-
-    iInvntry = new Invntry();
-    iInvntry.setMaterialId(2l);
-    iInvntry.setAvailableStock(BigDecimal.TEN);
-    inventoryList.add(iInvntry);
-    return inventoryList;
+  public List<ReturnsItemVO> getReturnsItemVOList(String jsonString) {
+    List<ReturnsItemVO> returnItemList = new ArrayList<>(1);
+    ReturnsItemVO
+        vo =
+        ReturnsGsonMapper.getTestObject(jsonString, ReturnsItemVO.class);
+    returnItemList.add(vo);
+    return returnItemList;
   }
+
 
 }
