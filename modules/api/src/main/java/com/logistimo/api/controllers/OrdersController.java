@@ -486,7 +486,10 @@ public class OrdersController {
     PersistenceManager pm = null;
     Transaction tx = null;
     try {
-      IOrder order = orderManagementService.getOrder(orderId);
+      pm = PMF.get().getPersistenceManager();
+      tx = pm.currentTransaction();
+      tx.begin();
+      IOrder order = orderManagementService.getOrder(orderId, false, pm);
       if (order == null) {
         throw new BadRequestException(backendMessages.getString("order.none") + " " + orderId);
       }
@@ -509,14 +512,11 @@ public class OrdersController {
             modifyOrder(order, user.getUsername(), transactions, new Date(), domainId,
                 ITransaction.TYPE_REORDER, model.msg, null, null, BigDecimal.ZERO, null,
                 dc.allowEmptyOrders(), order.getTags(TagUtil.TYPE_ORDER),
-                order.getSalesReferenceID(), null, order.getPurchaseReferenceId(), order.getTransferReferenceId());
+                order.getSalesReferenceID(), pm, order.getPurchaseReferenceId(), order.getTransferReferenceId());
       }
       order = orderAPIBuilder.buildOrderMaterials(order, model.items);
       //TODO use OrderManagementServiceImpl updateOrderWithAllocations
       String oIdStr = String.valueOf(order.getOrderId());
-      pm = PMF.get().getPersistenceManager();
-      tx = pm.currentTransaction();
-      tx.begin();
       if (dc.autoGI() && order.getServicingKiosk() != null) {
         String tag = IInvAllocation.Type.ORDER.toString() + CharacterConstants.COLON + oIdStr;
         for (DemandModel item : model.items) {
@@ -559,7 +559,7 @@ public class OrdersController {
         }
       }
       UpdatedOrder updorder = orderManagementService
-          .updateOrder(order, SourceConstants.WEB, true, true, user.getUsername());
+          .updateOrder(order, SourceConstants.WEB, true, true, user.getUsername(), pm);
       tx.commit();
       return orderAPIBuilder.buildOrderResponseModel(updorder, true, domainId, true,
           OrdersAPIBuilder.DEFAULT_EMBED);

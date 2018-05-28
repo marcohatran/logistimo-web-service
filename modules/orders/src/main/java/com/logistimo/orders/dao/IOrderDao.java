@@ -43,7 +43,7 @@ public interface IOrderDao {
 
   IOrder getOrder(Long orderId, PersistenceManager persistenceManager);
 
-  OrderUpdateStatus update(IOrder order, PersistenceManager pm) throws LogiException;
+  OrderUpdateStatus update(IOrder order) throws LogiException;
 
   List<IOrder> getMigratoryOrders(Integer offset, Integer size, String cutoffDate);
 }
