@@ -141,6 +141,7 @@
                         <td class="text-center">{{return.return_id}}</td>
                         <td class="text-center"><a
                                 href="#/orders/detail/{{return.order_id}}/"
+                                ng-click="$event.stopPropagation();"
                                 target="_blank">{{return.order_id}}</a></td>
                         <td>{{RETURNS.statusLabel[return.status.status]}}</td>
                         <td><a href="#/setup/entities/detail/{{return.customer.entity_id}}"
