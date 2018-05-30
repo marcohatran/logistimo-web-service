@@ -132,22 +132,11 @@ public class OrderAutomationAction {
         .map(this::getTransaction)
         .filter(Optional::isPresent)
         .map(Optional::get)
-        .map(transaction -> {
-          transaction.setReason(getReason(ordersConfig, locale));
-          return transaction;
-        })
         .collect(Collectors.groupingBy(
             iTransaction -> iTransaction.getKioskId() + "_" + iTransaction.getLinkedKioskId()))
         .forEach((key, transactions) -> process(transactions, locale));
 
     LOGGER.info("Completed processing order automation for domain {0}", domainId);
-  }
-
-  private String getReason(OrdersConfig ordersConfig, Locale locale) {
-    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
-    return ordersConfig.isAutoCreateOnMin() ? backendMessages.getString("orders.item.reached.min")
-        : MessageFormat.format(backendMessages.getString("orders.item.likely.stockout"),
-            ordersConfig.getAutoCreatePdos());
   }
 
 
