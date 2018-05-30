@@ -526,3 +526,4 @@ exports.incoming=Incoming
 exports.outgoing=Outgoing
 exports.purchaseorders=Purchase orders
 exports.type=Type
+assets.move.error=Some of the entities in this move have assets which have a relationship with an asset that is not in the same entity. Please remove the relationship or assign the related assets to the same entity for the following assets.
