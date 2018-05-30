@@ -1924,7 +1924,7 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
             return true;
         };
         $scope.validateStatus = function (material, index, source) {
-            if (material.nastk > 0 && material.isVisitedStatus) {
+            if (material.nastk > 0 && material.isVisitedStatus && $scope.isAllocating) {
                 var dispStatus = material.tm ? $scope.tempmatstatus : $scope.matstatus;
                 if (checkNotNullEmpty(dispStatus) && checkNullEmpty(material.mst) && $scope.transConfig.ism) {
                     showPopup($scope, material, source + material.id, $scope.resourceBundle['status.required'], index, $timeout, false, true);

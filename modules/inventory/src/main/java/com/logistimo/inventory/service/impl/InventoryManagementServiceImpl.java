@@ -3248,7 +3248,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
       } else {
         if (autoAssignStatus) {
           IInvAllocation allocation = getInvAllocation(kid, mid, null, type, typeId, pm);
-          if (allocation != null) {
+          if (allocation != null && BigUtil.greaterThanZero(allocation.getQuantity())) {
             matStatus = allocation.getMaterialStatus();
           }
         }
