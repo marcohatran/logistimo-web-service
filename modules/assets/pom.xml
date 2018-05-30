@@ -42,6 +42,13 @@
         <build.version>2.7.0</build.version>
     </properties>
 
+    <parent>
+        <artifactId>logistimo</artifactId>
+        <groupId>com.logistimo</groupId>
+        <version>2.7.0</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
     <dependencies>
         <dependency>
             <groupId>com.logistimo</groupId>
