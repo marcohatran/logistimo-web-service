@@ -139,7 +139,7 @@ public class AssetBuilder {
     asset.setType(assetModel.typ);
     asset.setLocationId(assetModel.lId);
     if(assetModel.meta != null && assetModel.meta.getAsJsonObject() != null && assetModel.meta.getAsJsonObject().getAsJsonObject(DEV) != null) {
-      if(assetModel.meta.getAsJsonObject().getAsJsonObject(DEV).get(YOM) != null) {
+      if(assetModel.meta.getAsJsonObject().getAsJsonObject(DEV).get(YOM) != null && StringUtils.isNotEmpty(assetModel.meta.getAsJsonObject().getAsJsonObject(DEV).get(YOM).getAsString())) {
         asset.setYom(assetModel.meta.getAsJsonObject().getAsJsonObject(DEV).get(YOM).getAsInt());
       }
       if(assetModel.meta.getAsJsonObject().getAsJsonObject(DEV).get(MDL) != null) {
