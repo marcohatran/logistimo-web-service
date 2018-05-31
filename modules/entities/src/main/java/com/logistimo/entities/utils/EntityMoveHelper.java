@@ -111,13 +111,20 @@ public class EntityMoveHelper {
       if (CollectionUtils.isNotEmpty(kioskAssets)) {
         for (IAsset asset : kioskAssets) {
           IAssetRelation assetRelation;
+          Long relatedAssetId = null;
           if (IAsset.MONITORING_ASSET == asset.getType()) {
             assetRelation = assetManagementService.getAssetRelationByRelatedAsset(asset.getId());
+            if(assetRelation != null) {
+              relatedAssetId = assetRelation.getAssetId();
+            }
           } else {
             assetRelation = assetManagementService.getAssetRelationByAsset(asset.getId());
+            if(assetRelation != null) {
+              relatedAssetId = assetRelation.getRelatedAssetId();
+            }
           }
          if(assetRelation != null) {
-           String errorMsg = validateRelatedAssetsBelongsToMovedEntities(assetManagementService, assetRelation, kiosk, asset.getSerialId());
+           String errorMsg = validateRelatedAssetsBelongsToMovedEntities(assetManagementService, relatedAssetId, kiosk, asset.getSerialId());
            if(StringUtils.isNotBlank(errorMsg)) {
              errors.add(errorMsg);
            }
@@ -128,10 +135,10 @@ public class EntityMoveHelper {
     return errors;
   }
 
-  private static String validateRelatedAssetsBelongsToMovedEntities(AssetManagementService assetManagementService, IAssetRelation assetRelation, IKiosk kiosk, String assetSerialNumber)
+  private static String validateRelatedAssetsBelongsToMovedEntities(AssetManagementService assetManagementService, Long relatedAssetId, IKiosk kiosk, String assetSerialNumber)
       throws ServiceException {
     StringBuilder errorMsg = new StringBuilder();
-    IAsset relatedAsset = assetManagementService.getAsset(assetRelation.getAssetId());
+    IAsset relatedAsset = assetManagementService.getAsset(relatedAssetId);
     if (relatedAsset.getKioskId() != null && !kiosk.getKioskId().equals(relatedAsset.getKioskId())) {
       ResourceBundle
           backendMessages =

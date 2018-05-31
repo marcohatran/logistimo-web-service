@@ -49,7 +49,7 @@ public class EntityMoveHelperTest {
   }
 
   @Test
-  public void testIsAssetsMovePossibleWithAssetRelationship() throws ServiceException {
+  public void testIsAssetsMovePossibleWithAssetRelationshipForMonitoredAsset() throws ServiceException {
     List<IKiosk> kioskList = new ArrayList<>();
     kioskList.add(getKiosk(1L, "India GMSD"));
     List<IAsset> assets = new ArrayList<>();
@@ -58,11 +58,31 @@ public class EntityMoveHelperTest {
     when(assetManagementService.getAssetsByKiosk(kioskList.get(0).getKioskId())).thenReturn(assets);
     IAssetRelation assetRelation = new AssetRelation();
     assetRelation.setAssetId(3000L);
+    assetRelation.setRelatedAssetId(2038L);
     when(assetManagementService.getAssetRelationByAsset(2038L)).thenReturn(assetRelation);
     when(assetManagementService.getAssetRelationByAsset(2039L)).thenReturn(null);
-    when(assetManagementService.getAsset(assetRelation.getAssetId())).thenReturn(getAsset(3000L, "TL001", "nexleaf",1,3L));
+    when(assetManagementService.getAsset(assetRelation.getRelatedAssetId())).thenReturn(getAsset(3000L, "TL001", "nexleaf",1,3L));
     List<String> errors = EntityMoveHelper.isAssetsMovePossible(kioskList);
     assertEquals(MsgUtil.newLine() + "Entity: India GMSD" + MsgUtil.newLine() + "Asset(s): ILR001", errors.get(0));
+  }
+
+
+  @Test
+  public void testIsAssetsMovePossibleWithAssetRelationshipForMonitoringAsset() throws ServiceException {
+    List<IKiosk> kioskList = new ArrayList<>();
+    kioskList.add(getKiosk(1L, "India GMSD"));
+    List<IAsset> assets = new ArrayList<>();
+    assets.add(getAsset(2038L, "TL001", "nexleaf", 1, 1L));
+    assets.add(getAsset(2039L, "TL002", "nexleaf", 1, 2L));
+    when(assetManagementService.getAssetsByKiosk(kioskList.get(0).getKioskId())).thenReturn(assets);
+    IAssetRelation assetRelation = new AssetRelation();
+    assetRelation.setAssetId(3000L);
+    assetRelation.setRelatedAssetId(2038L);
+    when(assetManagementService.getAssetRelationByRelatedAsset(2038L)).thenReturn(assetRelation);
+    when(assetManagementService.getAssetRelationByRelatedAsset(2039L)).thenReturn(null);
+    when(assetManagementService.getAsset(assetRelation.getAssetId())).thenReturn(getAsset(3000L, "ILR001", "haier",2,3L));
+    List<String> errors = EntityMoveHelper.isAssetsMovePossible(kioskList);
+    assertEquals(MsgUtil.newLine() + "Entity: India GMSD" + MsgUtil.newLine() + "Asset(s): TL001", errors.get(0));
   }
 
   @Test

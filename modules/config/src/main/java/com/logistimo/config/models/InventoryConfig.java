@@ -822,8 +822,8 @@ public class InventoryConfig implements Serializable {
       return null;
     }
     String matStatus = isTempSensitive ? msConfig.getEtsm() : msConfig.getDf();
-    if(isTempSensitive && StringUtils.isNotBlank(msConfig.getEtsm())) {
-      matStatus = msConfig.getEtsm();
+    if(isTempSensitive && StringUtils.isBlank(matStatus)) {
+      matStatus = msConfig.getDf();
     }
     if (StringUtils.isNotBlank(matStatus)) {
       matStatus = matStatus.split(CharacterConstants.COMMA, 2)[0];

@@ -350,6 +350,7 @@ public class OrderManagementServiceImpl implements OrderManagementService {
         pm.makePersistentAll(order.getItems());
       }
       order = uo.order = orderUpdateStatus.order;
+      pm.makePersistent(order);
       // Generate event
       if (orderUpdateStatus.paymentChanged || orderUpdateStatus.statusChanged) {
         if (orderUpdateStatus.paymentChanged) {
