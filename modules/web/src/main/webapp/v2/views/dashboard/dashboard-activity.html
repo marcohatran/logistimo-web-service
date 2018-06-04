@@ -27,6 +27,7 @@
         <li ng-if="iATD" ng-class="{active: subview == 'session'}"><a
                 href="#/dashboard/activity/session">By date of actual transaction</a></li>
     </ul>
+    <div ng-include="'loader-template.html'"></div>
     <div ng-switch="subview">
         <div class="tab-pane" ng-switch-when="session">
             <div ng-include="'views/dashboard/session.html'"></div>

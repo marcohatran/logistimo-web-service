@@ -68,6 +68,7 @@
         <!--<span class="pull-right" ng-class="{ enable: subview == 'push'}">
             <a href="#/configuration/push" class="btn btn-sm btn-primary pull-right">{{resourceBundle['push']}} {{resourceBundle['configuration']}}</a></span>-->
     </div>
+    <div ng-include="'loader-template.html'"></div>
     <div ng-if="configTabEnabled && (iSU || dp.cv)" ng-switch="subview">
         <div ng-switch-when="general">
             <div  ng-include="'views/configuration/general.html'"></div>

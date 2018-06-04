@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright © 2017 Logistimo.
+  ~ Copyright © 2018 Logistimo.
   ~
   ~ This file is part of Logistimo.
   ~
@@ -20,20 +20,28 @@
   ~ You can be released from the requirements of the license by purchasing a commercial license. To know more about
   ~ the commercial license, please contact us at opensource@logistimo.com
   -->
-
-<div ng-controller="SimpleMenuController" ng-init="init('orders.shipment')">
-    <ul class="nav nav-tabs subnav-tabs">
-        <li ng-class="{active: subview == 'list' || subview == 'shipmentdetail'}"><a href="#/orders/shipment/">
-            {{resourceBundle['shipments']}}
-        </a></li>
-    </ul>
-    <div ng-include="'loader-template.html'"></div>
-    <div ng-switch="subview">
-        <div class="tab-pane" ng-switch-when="list">
-            <div ng-include="'views/shipment/shipments-list.html'"></div>
-        </div>
-        <div class="tab-pane" ng-switch-when="shipmentdetail">
-            <div ng-include="'views/shipment/shipment-detail.html'"></div>
-        </div>
+<div style="position:relative;">
+<div ng-show="showLoadIcon" class="loader">
+</div>
+<div ng-show="showLoadIcon" class="loader-content">
+    <spinner></spinner>
+    <!-- span ng-bind="loadMessage"></span -->
+</div>
+<!-- @if (NODE_ENV == 'PRODUCTION' || NODE_ENV == 'DEVELOPMENT') && BULLETIN_BOARD == 'NA' -->
+<div class="splash" ng-cloak="">
+    <div  class="loader-content">
+        <spinner></spinner>
     </div>
+</div>
+<!-- @endif -->
+<!-- @if (NODE_ENV == 'PRODUCTION' || NODE_ENV == 'DEVELOPMENT') && BULLETIN_BOARD == 'BULLETIN_BOARD' -->
+<div class="splash" ng-cloak="" style="background-color: black">
+    <div class="loader-content">
+        <spinner></spinner>
+    </div>
+</div>
+<div class="network-overlay" ng-show="systemError">
+    <div class="network-text">{{resourceBundle['bulletin.system.error']}}</div>
+</div>
+<!-- @endif -->
 </div>

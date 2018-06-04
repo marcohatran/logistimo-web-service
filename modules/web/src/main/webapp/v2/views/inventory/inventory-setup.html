@@ -27,6 +27,7 @@
         <li ng-class="{active: subview == 'upload' }"><a
                 href="#/setup/inventory/upload/">{{resourceBundle['bulkupload.uploadinbulk']}}</a></li>
     </ul>
+    <div ng-include="'loader-template.html'"></div>
     <div ng-switch="subview">
         <div class="tab-pane" ng-switch-when="upload">
             <div ng-init="uploadType='inventory'" ng-include="'views/bulkupload.html'"></div>

@@ -34,6 +34,7 @@
 		<li ng-controller="CheckUploadController" ng-show="manualUpload" ng-class="{active: subview == 'viewupload' }"><a
 			href="#/inventory/transactions/viewupload/">{{resourceBundle['manualtransactions.uploadeddata']}}</a></li>
 	</ul>
+	<div ng-include="'loader-template.html'"></div>
 	<div ng-switch="subview">
 		<div class="tab-pane" ng-switch-when="view">
 			<div ng-include="'views/transactions/transactions-list.html'"></div>

@@ -32,7 +32,8 @@
             <li ng-class="{active: subview == 'move' }" ng-show="iSU"><a
 				href="#/setup/entities/all/move/">{{resourceBundle['move.add.entities']}}</a></li>
 		</ul>
-		<div ng-switch="subview">
+    <div ng-include="'loader-template.html'"></div>
+    <div ng-switch="subview">
 			<div class="tab-pane" ng-switch-when="list">
 				<div ng-if="iSU || dp.ev" ng-include="'views/entities/list-entities.html'"></div>
 			</div>

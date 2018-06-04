@@ -82,26 +82,6 @@
 -->
 <!-- endcomments -->
 <!-- @endif -->
-    <div ng-show="showLoadIcon" class="loader">
-    </div>
-    <div ng-show="showLoadIcon" class="loader-content">
-        <spinner></spinner>
-        <!-- span ng-bind="loadMessage"></span -->
-    </div>
-    <!-- @if (NODE_ENV == 'PRODUCTION' || NODE_ENV == 'DEVELOPMENT') && BULLETIN_BOARD == 'NA' -->
-    <div class="splash" ng-cloak="">
-        <div  class="loader-content">
-            <spinner></spinner>
-        </div>
-    </div>
-    <!-- @endif -->
-    <!-- @if (NODE_ENV == 'PRODUCTION' || NODE_ENV == 'DEVELOPMENT') && BULLETIN_BOARD == 'BULLETIN_BOARD' -->
-    <div class="splash" ng-cloak="" style="background-color: black">
-        <div class="loader-content">
-            <spinner></spinner>
-        </div>
-    </div>
-    <!-- @endif -->
 
     <!-- General 3rdparty inclusion(common for dev n prod) -->
     <script src="js/3rdparty/jquery.min.js"></script>
@@ -297,7 +277,8 @@
         <div class="container-fluid">
 		<div ng-include=" 'views/menu.html' "></div>
 			<div ng-switch="subview">
-				<div ng-switch-when="setup">
+                <div ng-inclde="'loader-template.html'"></div>
+                <div ng-switch-when="setup">
 					<div ng-include=" 'views/setup.html' "></div>
 				</div>
 				<div ng-switch-when="orders">

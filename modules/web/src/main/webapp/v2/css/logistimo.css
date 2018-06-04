@@ -2132,9 +2132,8 @@ h6{
     z-index: 1010;
     padding-bottom: 10000px;
     margin-bottom: -10000px;
-    padding-right: 10000px;
     margin-right: -10000px;
-    opacity: 0.2;
+    opacity: 0.1;
     background-color: black;
 }
 

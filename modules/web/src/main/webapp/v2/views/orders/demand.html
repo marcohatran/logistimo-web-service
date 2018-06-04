@@ -26,7 +26,8 @@
 		<li ng-class="{ active: subview == 'list'}"><a href="#/orders/demand/">{{resourceBundle.demand}}</a></li>
 		<li ng-hide="generalconfig.dcs" ng-class="{ active: subview == 'backorder'}"><a href="#/orders/backorder/">Backorder</a></li>
 	</ul>
-	<div ng-switch="subview">
+  <div ng-include="'loader-template.html'"></div>
+  <div ng-switch="subview">
 		<div ng-switch-when="list" class="tab-pane">
 			<div ng-init="showEntityFilter = true"
 				ng-include="'views/orders/demand-views.html'"></div>

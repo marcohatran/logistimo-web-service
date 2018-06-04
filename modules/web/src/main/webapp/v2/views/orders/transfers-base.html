@@ -32,6 +32,7 @@
             <span ng-show="transRelease">{{resourceBundle['create.release']}}</span>
         </a></li>
     </ul>
+    <div ng-include="'loader-template.html'"></div>
     <div ng-switch="subview">
         <div class="tab-pane" ng-switch-when="list">
             <div ng-if="!vt" ng-init="ordType='trn'"
