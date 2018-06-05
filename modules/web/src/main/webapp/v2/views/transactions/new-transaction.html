@@ -256,7 +256,7 @@
                         <th class="col-sm-1 text-center" ng-show="transaction.type == 'ri' || transaction.type == 'ro'">
                             {{resourceBundle['return.quantity']}}
                         </th>
-                        <th class="col-sm-1 text-center" ng-hide="transaction.type == 'ri' || transaction.type == 'ro'">
+                        <th class="col-sm-1 text-center" ng-class="{'required' : reasonMandatory}" ng-hide="transaction.type == 'ri' || transaction.type == 'ro'">
                             {{resourceBundle['reason']}}
                         </th>
                         <th class="col-sm-0-5 text-center"></th>
@@ -390,7 +390,8 @@
                         </td>
                         <td ng-hide="transaction.type == 'ri' || transaction.type == 'ro'">
                             <div ng-show="showMaterials && material.rsns && material.rsns.length > 0 && showReason && transaction.materials.length - 1 !== $index" >
-                                <select class="form-control" ng-model="material.reason" tabindex="{{$index+100}}">
+                                <select class="form-control" ng-model="material.reason" tabindex="{{$index+100}}" id="r{{material.name.mId}}{{$index}}"  ng-class="{'red-border':material.rinvalidPopup}" ng-blur="material.isVisitedReason = true; validate(material,$index)" uib-popover="{{material.rPopupMsg}}" popover-trigger="showpopup"
+                                        ng-focus="hidePopup(material,$index,'r')">
                                     <option ng-repeat="reason in material.rsns track by $index" value="{{reason}}" ng-selected="material.reason == reason">{{reason || resourceBundle['select'] + ' ' + resourceBundle['reason.lowercase']}}</option>
                                 </select>
                             </div>

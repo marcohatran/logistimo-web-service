@@ -24,7 +24,12 @@
 package com.logistimo.api.models.configuration;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Created by naveensnair on 19/11/14.
@@ -69,6 +74,13 @@ public class InventoryConfigModel {
   public List<MTagReason> dmt = new ArrayList<>(1);  // material tag reasons for discards
   public List<MTagReason> smt = new ArrayList<>(1);  //material tag reasons for stock count
   public List<MTagReason> tmt = new ArrayList<>(1); // material tag reasons for transfers
+  public List<MTagReason> rimt = new ArrayList<>(1); // material tag reasons for Returns-incoming
+  public List<MTagReason> romt = new ArrayList<>(1); // material tag reasons for Returns-outgoing
+
+  @Getter
+  @Setter
+  private Set<String> transactionTypesWithReasonMandatory = new HashSet<>(1);
+
   public String idf; //material status for issue
   public String iestm; // material status for issue of temperature sensitive materials
   public String rdf;  //material status for receipt
@@ -107,8 +119,6 @@ public class InventoryConfigModel {
   public LeadTimeAvgConfigModel ltacm; // Lead time average config model
   public boolean crimt; // Flag that indicates if Returns-incoming by material tags is configured or not
   public boolean cromt; // Flag that indicates if Returns-outgoing by material tags is configured or not
-  public List<MTagReason> rimt = new ArrayList<>(1); // material tag reasons for Returns-incoming
-  public List<MTagReason> romt = new ArrayList<>(1); // material tag reasons for Returns-outgoing
   public boolean rism; // Flag indicating if Returns-incoming material status is mandatory
   public boolean rosm; // Flag indicating if Returns-outgoing material status is mandatory
   public String ridf; //material status for Returns-incoming

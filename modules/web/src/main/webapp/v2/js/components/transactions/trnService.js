@@ -146,6 +146,10 @@ trnServices.factory('trnService', ['APIService', function (apiService) {
         },
         getStatusMandatory : function() {
             return apiService.get('/s2/api/transactions/statusmandatory');
+        },
+        getTransactionTypesWithReasonMandatory : function() {
+            return apiService.get('/s2/api/transactions/transaction-types-with-reason-mandatory')
         }
+
     }
 }]);

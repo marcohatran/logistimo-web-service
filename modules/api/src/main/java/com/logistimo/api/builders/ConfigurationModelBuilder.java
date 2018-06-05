@@ -1073,6 +1073,8 @@ public class ConfigurationModelBuilder {
       model.rri = buildReasonConfigModel(transReasons.get(ITransaction.TYPE_RETURNS_INCOMING));
       model.rro = buildReasonConfigModel(transReasons.get(ITransaction.TYPE_RETURNS_OUTGOING));
     }
+    model.setTransactionTypesWithReasonMandatory(ic.getTransactionTypesWithReasonMandatory());
+
     List<String> val = dc.getDomainData(ConfigConstants.INVENTORY);
     if (val != null) {
       model.createdBy = val.get(0);

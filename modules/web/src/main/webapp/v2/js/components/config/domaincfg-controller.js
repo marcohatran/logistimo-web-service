@@ -1017,8 +1017,8 @@ domainCfgControllers.controller('ApprovalConfigurationController', ['$scope', 'd
 
     }]);
 
-domainCfgControllers.controller('InventoryConfigurationController', ['$scope', 'domainCfgService', 'OPTIMIZER', 'configService', '$timeout',
-    function ($scope, domainCfgService, OPTIMIZER, configService, $timeout) {
+domainCfgControllers.controller('InventoryConfigurationController', ['$scope', 'domainCfgService', 'OPTIMIZER', 'configService', '$timeout', 'TRANSACTION_TYPES',
+    function ($scope, domainCfgService, OPTIMIZER, configService, $timeout, TRANSACTION_TYPES) {
         $scope.inv = {};
         $scope.fr = ["daily", "weekly", "monthly"];
         $scope.forecast = [{
@@ -1330,6 +1330,11 @@ domainCfgControllers.controller('InventoryConfigurationController', ['$scope', '
                     };
                 });
             });
+            angular.forEach(TRANSACTION_TYPES, function(transactionType) {
+                if (checkNotNullEmpty($scope.inv.transactionTypesWithReasonMandatory) && $scope.inv.transactionTypesWithReasonMandatory.indexOf(transactionType) != -1) {
+                    $scope.inv[transactionType + 'rm'] = true;
+                }
+            });
 
             if (checkNotNullEmpty($scope.inv.ersns)) {
                 $scope.inv.ersnsObj = [];
@@ -1601,6 +1606,19 @@ domainCfgControllers.controller('InventoryConfigurationController', ['$scope', '
                     }
                 });
             });
+            $scope.inv.transactionTypesWithReasonMandatory = [];
+            angular.forEach(TRANSACTION_TYPES, function(transactionType){
+                var type = transactionType;
+                if (transactionType == 'p') {
+                    type = 's';
+                } else if (transactionType == 'w') {
+                    type = 'd';
+                }
+                if ($scope.inv[transactionType+'rm'] && ($scope.inv['r' + type] && checkNotNullEmpty($scope.inv['r' + type].rsns) || $scope.inv['c' + type + 'mt'])) {
+                    $scope.inv.transactionTypesWithReasonMandatory.push(transactionType);
+                }
+            });
+
             $scope.inv.ersns = [];
             if ($scope.inv.irc && checkNotNullEmpty($scope.inv.ersnsObj)) {
                 for (var i = 0; i < $scope.inv.ersnsObj.length; i++) {

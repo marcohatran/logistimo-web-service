@@ -662,3 +662,4 @@ logistimoApp.constant('PATTERNS', {
 	'PRICE': '^(\\d{0,9}(\\.\\d{1,2})?|1000000000(\\.00?)?)$',
 	'TEMPERATURE' : '^-?(\\d{0,2})(\\.\\d{1,2})?$'
 });
+logistimoApp.constant('TRANSACTION_TYPES', ['i','r','p','w','t','ri','ro']);

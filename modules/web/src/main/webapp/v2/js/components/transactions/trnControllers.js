@@ -520,6 +520,12 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                     }
                 }
             }
+            if(material.isVisitedReason) {
+                if(checkNullEmpty(material.reason) && $scope.reasonMandatory) {
+                    showPopUP(material, $scope.resourceBundle['reason.required'], index, 'r');
+                    return false;
+                }
+            }
             return true;
         };
 
@@ -538,11 +544,20 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                 }, 0);
             } else {
                 $timeout(function () {
-                    mat.aPopupMsg = msg;
-                    if(!mat.ainvalidPopup) {
-                        mat.ainvalidPopup = true;
-                        $scope.invalidPopup += 1;
+                    if (source == 'r') {
+                        mat.rPopupMsg = msg;
+                        if (!mat.rinvalidPopup) {
+                            mat.rinvalidPopup = true;
+                            $scope.invalidPopup += 1;
+                        }
+                    } else {
+                        mat.aPopupMsg = msg;
+                        if(!mat.ainvalidPopup) {
+                            mat.ainvalidPopup = true;
+                            $scope.invalidPopup += 1;
+                        }
                     }
+
                     $timeout(function () {
                         $("[id='"+ source + mat.name.mId + index + "']").trigger('showpopup');
                     }, 0);
@@ -551,7 +566,7 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
         }
 
         $scope.hidePopup = function(material,index, source){
-            if (material.invalidPopup || material.ainvalidPopup) {
+            if (material.invalidPopup || material.ainvalidPopup || material.rinvalidPopup) {
                  $scope.invalidPopup = $scope.invalidPopup <= 0 ? 0 : $scope.invalidPopup - 1;
             }
             if(checkNullEmpty(source)) {
@@ -561,6 +576,8 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                 }, 0);
             } else if(source == 'm' || source == 'mt') {
                 hidePopup($scope, material, source + material.name.mId, index, $timeout, true);
+            } else if(source == 'r') {
+                hidePopup($scope, material, source + material.name.mId, index, $timeout, false, false, true);
             }
         };
 
@@ -767,6 +784,12 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                     if(!val) {
                         $scope.showWarning($scope.resourceBundle['invalid.quantity'] + " " + $scope.resourceBundle['of'] + " " + (mat.mnm || mat.name.mnm));
                         return true;
+                    }
+                    // Check reason for batch material
+                    if (checkNullEmpty(mat.reason) && $scope.reasonMandatory && !$scope.isTransactionTypeReturn()) {
+                        $scope.showWarning($scope.resourceBundle['reason.required'] + " " + $scope.resourceBundle['for'] + " " + (mat.mnm || mat.name.mnm));
+                        return true;
+
                     }
                 }
                 index+=1;
@@ -1003,9 +1026,10 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                 } else if (checkNotNull(mat.ind)) {
                     var items = {};
                     var trackingid = checkNotNullEmpty(mat.trkid) ? mat.trkid : undefined;
+                    var reason = ($scope.transaction.type == 'ri' || $scope.transaction.type == 'ro' ? mat.rsn : mat.reason);
                     items[mat.name.mId] = {
                         q: '' + mat.quantity,
-                        r: mat.reason, mst: mat.mst, trkid: trackingid
+                        r: reason, mst: mat.mst, trkid: trackingid
                     };
                     ft['materials'].push(items);
                 }
@@ -1064,6 +1088,7 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                 $scope.atd = $scope.tranDomainConfig.atdro;
                 $scope.msm = $scope.statusData.rosm;
             }
+            $scope.reasonMandatory = $scope.tranDomainConfig.transactionTypesWithReasonMandatory.indexOf(newVal) != -1;
             $scope.showMaterials = true;
             $scope.showLoading();
             trnService.getMatStatus($scope.transaction.type, false).then(function (data) {
@@ -1401,12 +1426,12 @@ trnControllers.controller('transactions.MaterialController', ['$scope', 'trnServ
                             $scope.material.rsns = data.data.rsns;
                             $scope.material.reason = data.data.defRsn;
                             if (checkNotNullEmpty($scope.material.rsns) && $scope.material.rsns.length > 0) {
-                                if (checkNullEmpty($scope.material.reason) && $scope.material.rsns.indexOf("") == -1) {
+                                if ($scope.material.rsns.indexOf("") == -1) {
                                     $scope.material.rsns.splice(0, 0, "");
                                 }
                                 $scope.$parent.showReason = true;
                             } else if (checkNotNullEmpty($scope.reasons) && $scope.reasons.length > 0) {
-                                if (checkNullEmpty($scope.defaultReason) && $scope.reasons.indexOf("") == -1) {
+                                if ($scope.reasons.indexOf("") == -1) {
                                     $scope.reasons.splice(0, 0, "");
                                 }
                                 $scope.material.rsns = $scope.reasons;
@@ -1417,7 +1442,7 @@ trnControllers.controller('transactions.MaterialController', ['$scope', 'trnServ
                             $scope.showErrorMsg(msg);
                         });
                     } else if (checkNotNullEmpty($scope.reasons) &&  $scope.reasons.length > 0) {
-                        if (checkNullEmpty($scope.defaultReason) && $scope.reasons.indexOf("") == -1) {
+                        if ($scope.reasons.indexOf("") == -1) {
                             $scope.reasons.splice(0, 0, "");
                         }
                         $scope.material.reason = $scope.defaultReason;
@@ -2317,8 +2342,8 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope', '$timeout', 'reque
                     $scope.showWarning($scope.resourceBundle['status.required'] + " " + $scope.resourceBundle['for'] + " " + $scope.mnm + ".");
                     return false;
                 }
-                if (checkNotNullEmpty($scope.reasons) && $scope.reasons.length > 0 && checkNullEmpty(transaction.rrsn)) {
-                    $scope.showWarning($scope.resourceBundle['reason.required']);
+                if (checkNullEmpty(transaction.rrsn) && $scope.reasonMandatory) {
+                    $scope.showWarning($scope.resourceBundle['reason.required'] + " " + $scope.resourceBundle['for'] + " " + $scope.mnm + ".");
                     return false;
                 }
 
@@ -2393,7 +2418,7 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope', '$timeout', 'reque
             }
 
             if (type == undefined || type == 'r') {
-                if (checkNotNullEmpty($scope.reasons) && $scope.reasons.length > 0 && checkNullEmpty(transaction.rrsn)) {
+                if ($scope.reasonMandatory && checkNullEmpty(transaction.rrsn)) {
                     showPopup($scope, transaction, idPrefix + transaction.id, $scope.resourceBundle['reason.required'],
                         index, $timeout, false, false, true);
                     isInvalid = true;

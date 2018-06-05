@@ -1149,12 +1149,13 @@ public class DomainConfigController {
         inventoryConfig.setCrimt(true);
         inventoryConfig.setMtagRetIncRsns(configurationModelBuilder.buildReasonConfigByTagMap(
             model.rimt));
-        }
+      }
       boolean cromt = model.cromt;
       if (cromt) {
         inventoryConfig.setCromt(true);
         inventoryConfig.setMtagRetOutRsns(configurationModelBuilder.buildReasonConfigByTagMap(model.romt));
       }
+      inventoryConfig.setTransactionTypesWithReasonMandatory(model.getTransactionTypesWithReasonMandatory());
       inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_ISSUE, configurationModelBuilder.buildMatStatusConfig(
           model.idf, model.iestm, model.ism));
       inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_RECEIPT, configurationModelBuilder.buildMatStatusConfig(

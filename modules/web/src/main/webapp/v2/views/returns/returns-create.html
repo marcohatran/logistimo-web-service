@@ -113,7 +113,7 @@
                                                 ng-focus="closePopup(item, $index, 's')"
                                                 id="s{{item.id}}{{$index}}"
                                                 popover-trigger="showpopup">
-                                            <option ng-repeat="status in matstatus" value="{{status}}">{{status|| resourceBundle['pleaseselect']}}
+                                            <option ng-repeat="status in matstatus" value="{{status}}">{{status|| resourceBundle['select'] + " " + resourceBundle['status.lower']}}
                                             </option>
                                         </select>
                                         <select ng-show="isDef(tempmatstatus) && item.tm" ng-model="item.returnMaterialStatus" class="form-control"
@@ -123,12 +123,12 @@
                                                 ng-focus="closePopup(item, $index, 'st')"
                                                 id="st{{item.id}}{{$index}}"
                                                 popover-trigger="showpopup">
-                                            <option ng-repeat="status in tempmatstatus" value="{{status}}">{{status|| resourceBundle['pleaseselect']}}
+                                            <option ng-repeat="status in tempmatstatus" value="{{status}}">{{status|| resourceBundle['select'] + " " + resourceBundle['status.lower']}}
                                             </option>
                                         </select>
 
                                         <div ng-show="item.reasons && item.reasons.length > 0">
-                                            <span class="litetext text-left required" >{{resourceBundle['reason']}}</span>
+                                            <span class="litetext text-left" ng-class="{'required' : returnOutgoingReasonMandatory}" >{{resourceBundle['reason']}}</span>
                                             <select class="form-control" ng-model="item.returnReason"
                                                     ng-class="{'red-border': item.rinvalidPopup}"
                                                     uib-popover="{{item.rPopupMsg}}"
@@ -136,7 +136,7 @@
                                                     ng-focus="closePopup(item, $index, 'r')"
                                                     id="r{{item.id}}{{$index}}"
                                                     popover-trigger="showpopup">
-                                                <option ng-repeat="reason in item.reasons track by $index" value="{{reason}}" ng-selected="item.returnReason == reason">{{reason || '--' + resourceBundle['select'] + ' ' + resourceBundle['reason'] + '--'}}</option>
+                                                <option ng-repeat="reason in item.reasons track by $index" value="{{reason}}" ng-selected="item.returnReason == reason">{{reason || resourceBundle['select'] + ' ' + resourceBundle['reason.lowercase']}}</option>
                                             </select>
                                         </div>
                                     </div>
@@ -175,7 +175,7 @@
                                                         ng-focus="closeBatchPopup(item, batch, $index,'s')"
                                                         id="s{{item.id}}{{batch.id}}{{$index}}"
                                                         popover-trigger="showpopup">
-                                                    <option ng-repeat="status in matstatus" value="{{status}}">{{status|| resourceBundle['pleaseselect']}}
+                                                    <option ng-repeat="status in matstatus" value="{{status}}">{{status|| resourceBundle['select'] + " " + resourceBundle['status.lower']}}
                                                     </option>
                                                 </select>
                                                 <select ng-show="isDef(tempmatstatus) && item.tm" ng-model="batch.returnMaterialStatus" class="form-control"
@@ -185,12 +185,12 @@
                                                         ng-focus="closeBatchPopup(item, batch, $index,'st')"
                                                         id="st{{item.id}}{{batch.id}}{{$index}}"
                                                         popover-trigger="showpopup">
-                                                    <option ng-repeat="status in tempmatstatus" value="{{status}}">{{status|| resourceBundle['pleaseselect']}}
+                                                    <option ng-repeat="status in tempmatstatus" value="{{status}}">{{status|| resourceBundle['select'] + " " + resourceBundle['status.lower']}}
                                                     </option>
                                                 </select>
 
                                                 <div ng-show="item.reasons && item.reasons.length > 0">
-                                                    <span class="litetext text-left required" >{{resourceBundle['reason']}}</span>
+                                                    <span class="litetext text-left required" ng-class="{'required' : returnOutgoingReasonMandatory}" >{{resourceBundle['reason']}}</span>
                                                     <select class="form-control" ng-model="batch.returnReason"
                                                             ng-class="{'red-border': batch.rinvalidPopup}"
                                                             uib-popover="{{batch.rPopupMsg}}"
@@ -198,7 +198,7 @@
                                                             ng-focus="closeBatchPopup(item, batch, $index,'r')"
                                                             id="r{{item.id}}{{batch.id}}{{$index}}"
                                                             popover-trigger="showpopup">
-                                                        <option ng-repeat="reason in item.reasons track by $index" value="{{reason}}" ng-selected="batch.returnReason == reason">{{reason || '--' + resourceBundle['select'] + ' ' + resourceBundle['reason'] + '--'}}</option>
+                                                        <option ng-repeat="reason in item.reasons track by $index" value="{{reason}}" ng-selected="batch.returnReason == reason">{{reason || resourceBundle['select'] + ' ' + resourceBundle['reason.lowercase']}}</option>
                                                     </select>
                                                 </div>
                                             </div>

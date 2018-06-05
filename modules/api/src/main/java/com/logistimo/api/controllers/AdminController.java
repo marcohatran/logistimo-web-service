@@ -27,6 +27,7 @@ import com.logistimo.AppFactory;
 import com.logistimo.api.migrators.ConfigReasonsMigrator;
 import com.logistimo.api.migrators.DomainLocIDConfigMigrator;
 import com.logistimo.api.migrators.EventsConfigMigrator;
+import com.logistimo.api.migrators.ReasonMandatoryConfigMigrator;
 import com.logistimo.api.migrators.UserDomainIdsMigrator;
 import com.logistimo.api.models.SimulateRequestModel;
 import com.logistimo.api.util.KioskDataSimulator;
@@ -240,6 +241,19 @@ public class AdminController {
       }
     } catch (Exception e) {
       xLogger.severe("Exception occurred during updating", e);
+      throw new InvalidServiceException(e);
+    }
+  }
+
+  @RequestMapping(value = "/migrate280", method = RequestMethod.GET)
+  public
+  @ResponseBody
+  void migrate280() {
+    ReasonMandatoryConfigMigrator migrator = new ReasonMandatoryConfigMigrator();
+    try {
+      migrator.migrateReasonMandatoryConfig();
+    } catch (Exception e) {
+      xLogger.severe("Exception occurred during reason mandatory configuration migration", e);
       throw new InvalidServiceException(e);
     }
   }

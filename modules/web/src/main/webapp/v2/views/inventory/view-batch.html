@@ -93,11 +93,11 @@
                                     </div>
                                     <div class="row" ng-show="isDef(reasons) ">
                                         <div class="col-sm-12">
-                                            <label class="ml10 control-label">Reason: </label>
+                                            <label class="ml10 control-label" ng-class="{'required' : reasonMandatory }">Reason: </label>
                                         </div>
                                         <div class="col-sm-8 ml10">
                                             <select ng-model="item.reason" class="form-control">
-                                                <option ng-repeat="reason in reasons track by $index" ng-selected="item.reason == reason" value="{{reason}}">{{reason  || '--' + resourceBundle['select'] + ' ' + resourceBundle['reason'] + '--'}}</option>
+                                                <option ng-repeat="reason in reasons track by $index" ng-selected="item.reason == reason" value="{{reason}}">{{reason  || resourceBundle['select'] + ' ' + resourceBundle['reason.lowercase']}}</option>
                                             </select>
                                         </div>
                                     </div>

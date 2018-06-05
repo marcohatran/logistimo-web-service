@@ -238,6 +238,7 @@ public class JsonTagsZ {
   public static final String RETURNS_INCOMING = "ri";
   public static final String RETURNS_OUTGOING = "ro";
   public static final String DEFAULT_REASONS = "default_reasons";
+  public static final String TRANSACTION_TYPES_WITH_REASON_MANDATORY = "transaction_types_with_reason_mandatory";
 
   //transporter for orders
   public static final String TRANSPORTER = "trsp";

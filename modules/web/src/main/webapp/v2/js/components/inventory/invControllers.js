@@ -1257,6 +1257,7 @@ invControllers.controller('BatchDetailCtrl', ['$scope', 'invService', 'trnServic
                 item.title = "Discard";
                 item.atdConfig = $scope.tranDomainConfig.atdw;
             }
+            $scope.reasonMandatory = $scope.tranDomainConfig.transactionTypesWithReasonMandatory;
             $scope.reasons = [];
             $scope.defaultReason = '';
             $scope.tagReasons = [];
@@ -1266,9 +1267,7 @@ invControllers.controller('BatchDetailCtrl', ['$scope', 'invService', 'trnServic
                     $scope.defaultReason = data.data.defRsn;
                     if (checkNotNullEmpty($scope.tagReasons)) {
                         $scope.reasons = $scope.tagReasons;
-                        if (checkNullEmpty($scope.defaultReason)) {
-                            $scope.reasons.splice(0, 0, "");
-                        }
+                        $scope.reasons.splice(0, 0, "");
                         $scope.expBatchDet[index].showReason = !$scope.expBatchDet[index].showReason;
                         $scope.expBatchDet[index].reason = $scope.expBatchDet[index].showReason ? $scope.defaultReason : undefined;
                     } else {
@@ -1294,7 +1293,7 @@ invControllers.controller('BatchDetailCtrl', ['$scope', 'invService', 'trnServic
                     });
 
                     if (checkNotNullEmpty($scope.reasons) && $scope.reasons.length > 0) {
-                        if (checkNullEmpty($scope.defaultReason) && $scope.reasons.indexOf("") == -1) {
+                        if ($scope.reasons.indexOf("") == -1) {
                             $scope.reasons.splice(0, 0, "");
                         }
                     }
@@ -1317,6 +1316,10 @@ invControllers.controller('BatchDetailCtrl', ['$scope', 'invService', 'trnServic
                     ft['transactual'] = '' + formatDate(atd);
                 } else if (checkNullEmpty(atd) && $scope.atd == 2) {
                     $scope.showWarning("Please select actual date of physical transaction.");
+                    return null;
+                }
+                if (checkNullEmpty(reason) && $scope.reasonMandatory) {
+                    $scope.showWarning("Please select a reason.");
                     return null;
                 }
             }

@@ -1521,6 +1521,10 @@ public class RESTUtil {
     if (MapUtils.isNotEmpty(defRsnsCfgByTransTypeMap)) {
       config.put(JsonTagsZ.DEFAULT_REASONS, defRsnsCfgByTransTypeMap);
     }
+    if (CollectionUtils.isNotEmpty(ic.getTransactionTypesWithReasonMandatory())) {
+      config.put(JsonTagsZ.TRANSACTION_TYPES_WITH_REASON_MANDATORY,
+          ic.getTransactionTypesWithReasonMandatory());
+    }
     // Material Status, if any
     Map<String,Map<String,String>> matStatusByType = getMaterialStatusByType(ic);
     if (MapUtils.isNotEmpty(matStatusByType)) {
