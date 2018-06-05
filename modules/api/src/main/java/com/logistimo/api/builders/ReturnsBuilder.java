@@ -69,6 +69,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -129,6 +130,7 @@ public class ReturnsBuilder {
           domainName = domainsService.getDomain(returnsModel.getSourceDomain()).getName();
           domainNames.put(returnsModel.getSourceDomain(), domainName);
         } catch (Exception ignored) {
+          xLogger.warn("Exception adding source domain name");
         }
       }
       returnsModel.setSourceDomainName(domainName);
@@ -203,7 +205,10 @@ public class ReturnsBuilder {
 
   private List<ReturnsItemVO> getItems(List<ReturnsItemModel> itemModels, Long vendorId,
                                        Long customerId) {
-    return itemModels.stream().map(itemModel -> getReturnsItemVO(vendorId, customerId, itemModel)).collect(Collectors.toList());
+    return itemModels.stream()
+        .filter(itemModel -> itemModel.getReturnQuantity().compareTo(BigDecimal.ZERO) > 0)
+        .map(itemModel -> getReturnsItemVO(vendorId, customerId, itemModel))
+        .collect(Collectors.toList());
   }
 
   private ReturnsItemVO getReturnsItemVO(Long vendorId, Long customerId,
@@ -230,7 +235,11 @@ public class ReturnsBuilder {
 
   private List<ReturnsItemBatchVO> getItemBatches(List<ReturnsItemBatchModel> itemBatchModels,
                                                   Long vendorId, Long customerId, Long materialId) {
-    return itemBatchModels.stream().map(itemBatchModel -> getReturnsItemBatchVO(vendorId, customerId, materialId, itemBatchModel)).collect(Collectors.toList());
+    return itemBatchModels.stream()
+        .filter(itemModel -> itemModel.getReturnQuantity().compareTo(BigDecimal.ZERO) > 0).map(
+            itemBatchModel -> getReturnsItemBatchVO(vendorId, customerId, materialId,
+                itemBatchModel))
+        .collect(Collectors.toList());
   }
 
   private ReturnsItemBatchVO getReturnsItemBatchVO(Long vendorId, Long customerId, Long materialId,
@@ -249,7 +258,7 @@ public class ReturnsBuilder {
   private BatchVO getBatch(ReturnsItemBatchModel itemBatchModel, Long vendorId, Long customerId,
                            Long materialId) {
     IInvntryBatch inventoryBatch = inventoryManagementService
-          .getInventoryBatch(vendorId, materialId, itemBatchModel.getBatchId(), null);
+        .getInventoryBatch(vendorId, materialId, itemBatchModel.getBatchId(), null);
 
     if (inventoryBatch == null) {
       inventoryBatch = inventoryManagementService
@@ -422,6 +431,7 @@ public class ReturnsBuilder {
       case "cancel":
         actualStatus = Status.CANCELLED;
         break;
+      default: break;
     }
     updateStatusModel.setStatus(actualStatus);
     updateStatusModel.setReturnId(returnId);

@@ -356,7 +356,7 @@ public class ReturnsBuilderTest {
 
   private ReturnsRequestModel getReturnsRequestModel() {
     String model = "{"
-        + "items:[{received:{},batches:[{received:{}}]}],"
+        + "items:[{received:{},return_quantity:50,batches:[{received:{},return_quantity:50}]}],"
         + "geo_location:{},"
         + "created_by:{},"
         + "updated_by:{}"
