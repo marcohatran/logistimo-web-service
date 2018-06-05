@@ -1257,7 +1257,7 @@ invControllers.controller('BatchDetailCtrl', ['$scope', 'invService', 'trnServic
                 item.title = "Discard";
                 item.atdConfig = $scope.tranDomainConfig.atdw;
             }
-            $scope.reasonMandatory = $scope.tranDomainConfig.transactionTypesWithReasonMandatory;
+            $scope.reasonMandatory = $scope.tranDomainConfig.transactionTypesWithReasonMandatory.indexOf('p') != -1 || $scope.tranDomainConfig.transactionTypesWithReasonMandatory.indexOf('w') != -1;
             $scope.reasons = [];
             $scope.defaultReason = '';
             $scope.tagReasons = [];
