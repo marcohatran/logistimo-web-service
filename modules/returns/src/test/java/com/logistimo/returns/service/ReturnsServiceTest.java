@@ -84,7 +84,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
  * Created by pratheeka on 21/05/18.
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({SecurityUtils.class, LockUtil.class, AppFactory.class, DomainConfig.class})
+@PrepareForTest({SecurityUtils.class, LockUtil.class, DomainConfig.class})
 public class ReturnsServiceTest {
 
   private static final String COMMENT = "Added comment";
