@@ -3814,6 +3814,10 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService', 'reques
                     });
                 }
 
+            }).catch(function error(msg) {
+                $scope.showErrorMsg(msg);
+            }).finally(function () {
+                $scope.hideLoading();
             });
         };
         $scope.getShipment();
