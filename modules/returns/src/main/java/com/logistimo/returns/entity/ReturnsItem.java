@@ -50,7 +50,10 @@ import lombok.Data;
 @Table(name="RETURNS_ITEM")
 @Data
 @NamedQueries(value = {
-    @NamedQuery(name = "ReturnsItem.findAllByReturnId", query = "SELECT r FROM ReturnsItem r where r.returnsId=:returnsId")})
+    @NamedQuery(name = "ReturnsItem.findAllByReturnId", query = "SELECT r FROM ReturnsItem r where r.returnsId=:returnsId"),
+    @NamedQuery(name = "ReturnsItem.removeAllByCustomerId",
+        query = "DELETE FROM ReturnsItem r where r.returnsId IN (SELECT r.id FROM Returns r where r.customerId=:customerId)")
+})
 public class ReturnsItem {
 
   @Id

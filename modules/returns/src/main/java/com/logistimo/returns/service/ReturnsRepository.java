@@ -38,6 +38,7 @@ import org.modelmapper.ModelMapper;
 
 import java.math.BigInteger;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -52,12 +53,10 @@ public class ReturnsRepository extends Repository {
 
   private ModelMapper modelMapper = new ModelMapper();
 
-  private static final String
-      KIOSK_DOMAIN_QUERY =
+  private static final String KIOSK_DOMAIN_QUERY =
       "(SELECT KD.KIOSKID_OID from KIOSK_DOMAINS KD WHERE DOMAIN_ID = :domainId)";
 
-  private static final String
-      USER_DOMAIN_QUERY =
+  private static final String USER_DOMAIN_QUERY =
       "(SELECT UD.KIOSKID FROM USERTOKIOSK UD,KIOSK K WHERE K.KIOSKID=UD.KIOSKID AND UD.USERID=:userId)";
 
 
@@ -71,6 +70,13 @@ public class ReturnsRepository extends Repository {
     Returns returns = modelMapper.map(returnsVO, Returns.class);
     returns = super.update(returns);
     returnsVO.setId(returns.getId());
+  }
+
+  public void deleteReturnsByCustomer(Long customerId) {
+    final Map<String, Object> filters = Collections.singletonMap("customerId", customerId);
+    super.deleteByQuery("ReturnsItemBatch.removeAllByCustomerId", filters);
+    super.deleteByQuery("ReturnsItem.removeAllByCustomerId", filters);
+    super.deleteByQuery("Returns.removeByCustomerId", filters);
   }
 
   public void saveReturnsItems(ReturnsItemVO returnsItemVO) {
@@ -91,17 +97,15 @@ public class ReturnsRepository extends Repository {
   }
 
   public List<ReturnsItemVO> getReturnedItems(Long returnId) {
-    Map<String, Object> filters = new HashMap<>(1);
-    filters.put("returnsId", returnId);
-    List<ReturnsItem> returnsItemList = super.findAll("ReturnsItem.findAllByReturnId", filters);
+    List<ReturnsItem> returnsItemList = super.findAll("ReturnsItem.findAllByReturnId",
+        Collections.singletonMap("returnsId", returnId));
     List<ReturnsItemVO> returnsItemVOList =
         returnsItemList.stream().map(i -> modelMapper.map(i, ReturnsItemVO.class))
             .collect(Collectors.toList());
     returnsItemVOList.forEach(returnsItem -> {
-      filters.clear();
-      filters.put("itemId", returnsItem.getId());
       List<ReturnsItemBatch> returnsItemBatchList =
-          super.findAll("ReturnsItemBatch.findByItemId", filters);
+          super.findAll("ReturnsItemBatch.findAllByItemId",
+              Collections.singletonMap("itemId", returnsItem.getId()));
       List<ReturnsItemBatchVO> returnsItemBatchVOList =
           returnsItemBatchList.stream().map(i -> modelMapper.map(i, ReturnsItemBatchVO.class))
               .collect(Collectors.toList());

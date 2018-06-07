@@ -47,7 +47,9 @@ import lombok.Data;
 @Table(name = "RETURNS_ITEM_BATCH")
 @Data
 @NamedQueries(value = {
-    @NamedQuery(name = "ReturnsItemBatch.findByItemId", query = "SELECT r FROM ReturnsItemBatch r where r.itemId=:itemId")
+    @NamedQuery(name = "ReturnsItemBatch.findAllByItemId", query = "SELECT r FROM ReturnsItemBatch r where r.itemId=:itemId"),
+    @NamedQuery(name = "ReturnsItemBatch.removeAllByCustomerId", query = "DELETE FROM ReturnsItemBatch r where r.itemId IN "
+            + "(SELECT r.id FROM ReturnsItem r where r.returnsId IN (SELECT r.id FROM Returns r where r.customerId=:customerId))")
 })
 public class ReturnsItemBatch {
 

@@ -26,7 +26,9 @@
  */
 package com.logistimo.domains.utils;
 
+import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.domains.processor.DeleteProcessor;
+import com.logistimo.entity.deletehandlers.EntityDeleteHandler;
 import com.logistimo.logger.XLog;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.PagedExec;
@@ -35,6 +37,7 @@ import com.logistimo.services.ServiceException;
 import com.logistimo.services.utils.ConfigUtil;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -71,6 +74,37 @@ public class EntityRemover {
   }
 
   public static void removeRelatedEntities(Long domainId, String entityClassName,
+                                           Object[] entityKeys, boolean skipCounting)
+      throws ServiceException {
+    removeJDORelatedEntities(domainId, entityClassName, entityKeys, skipCounting);
+    invokeDeleteHandlers(domainId, entityClassName, entityKeys);
+  }
+
+  private static void invokeDeleteHandlers(Long domainId, String entityClassName,
+                                           Object[] entityKeys) {
+    switch (entityClassName) {
+      case "com.logistimo.entities.entity.Kiosk":
+        invokeKioskDeleteHandlers(Arrays.copyOf(entityKeys, entityKeys.length, Long[].class));
+        break;
+      default:
+    }
+  }
+
+  private static void invokeKioskDeleteHandlers(Long[] entityKeys) {
+    Map<String, EntityDeleteHandler>
+        deleteHandlers =
+        StaticApplicationContext.getApplicationContext().getBeansOfType(EntityDeleteHandler.class);
+    for (Long entityId : entityKeys) {
+      deleteHandlers.values()
+          .forEach(entityDeleteHandler -> {
+            xLogger.info("Triggering delete for entity {0} using handler {1}", entityId,
+                entityDeleteHandler);
+            entityDeleteHandler.byEntity(entityId);
+          });
+    }
+  }
+
+  public static void removeJDORelatedEntities(Long domainId, String entityClassName,
                                            Object[] entityKeys, boolean skipCounting)
       throws ServiceException {
     xLogger.fine("Entered removeRelatedEntities  with entity: {0}", entityClassName);

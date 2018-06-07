@@ -34,6 +34,8 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
@@ -46,6 +48,9 @@ import lombok.Data;
 @Entity
 @Table(name="RETURNS")
 @Data
+@NamedQueries(value = {
+    @NamedQuery(name = "Returns.removeByCustomerId", query = "DELETE FROM Returns r where r.customerId=:customerId"),
+})
 public class Returns {
 
   @Id
