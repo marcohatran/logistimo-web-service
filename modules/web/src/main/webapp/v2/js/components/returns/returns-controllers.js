@@ -304,14 +304,14 @@ function CreateReturnsController($scope, $location, $timeout, returnsService, tr
     };
 
     $scope.validateReason = function (material, index) {
-        if (checkNullEmpty(material.returnReason)) {
+        if ($scope.returnOutgoingReasonMandatory && checkNullEmpty(material.returnReason)) {
             showPopup($scope, material, 'r' + material.id, "Reason is mandatory", index, $timeout, false, false, true);
             return true;
         }
     };
 
     $scope.validateBatchReason = function (material, batchMaterial, index) {
-        if (checkNullEmpty(batchMaterial.returnReason)) {
+        if ($scope.returnOutgoingReasonMandatory && checkNullEmpty(batchMaterial.returnReason)) {
             showPopup($scope, batchMaterial, 'r' + material.id + batchMaterial.id, "Reason is mandatory", index, $timeout, false, false, true);
             return true;
         }
