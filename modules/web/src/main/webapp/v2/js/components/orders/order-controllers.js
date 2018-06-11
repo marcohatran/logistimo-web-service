@@ -3100,6 +3100,7 @@ ordControllers.controller('ShipmentListingController', ['$scope', 'ordService', 
             ordService.getShipments($scope.offset, $scope.size, cust, vend, $scope.status, formatDate($scope.from), formatDate($scope.to), formatDate($scope.eftFrom), formatDate($scope.eftTo), $scope.trans, $scope.trackId).then(function (data) {
                 $scope.filtered = data.data.results;
                 $scope.setResults(data.data);
+                fixTable();
             }).catch(function error(msg) {
                 $scope.showErrorMsg(msg);
             }).finally(function () {
