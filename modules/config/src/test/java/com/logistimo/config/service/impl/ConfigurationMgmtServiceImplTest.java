@@ -21,18 +21,40 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.api.models;
+package com.logistimo.config.service.impl;
 
 
-import com.google.gson.annotations.SerializedName;
+import com.logistimo.config.entity.IConfig;
+import com.logistimo.config.models.ConfigurationException;
+import com.logistimo.services.ServiceException;
 
-public class LocationModel {
+import org.junit.Before;
+import org.junit.Test;
 
-  @SerializedName("country")
-  public String cntry;
+import javax.jdo.PersistenceManager;
 
-  public String district;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 
-  public String state;
 
+/**
+ * Created by smriti on 25/05/18.
+ */
+public class ConfigurationMgmtServiceImplTest {
+
+  ConfigurationMgmtServiceImpl configurationMgmtService = spy(ConfigurationMgmtServiceImpl.class);
+  PersistenceManager pm = mock(PersistenceManager.class);
+
+  @Before
+  public void setUp() throws ServiceException {
+    doNothing().when(configurationMgmtService).addConfiguration(any(), any(IConfig.class));
+  }
+
+
+  @Test
+  public void testAddDefaultDomainConfig() throws ServiceException, ConfigurationException {
+    configurationMgmtService.addDefaultDomainConfig(1l, "India", "Assam", null, "Asia/Kolkata", "testuser123", pm);
+  }
 }

@@ -27,6 +27,7 @@
 package com.logistimo.config.service.impl;
 
 import com.logistimo.AppFactory;
+import com.logistimo.config.entity.Config;
 import com.logistimo.config.entity.IConfig;
 import com.logistimo.config.models.ConfigurationException;
 import com.logistimo.config.models.DomainConfig;
@@ -44,7 +45,9 @@ import com.logistimo.services.impl.PMF;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.PersistenceManager;
@@ -76,9 +79,16 @@ public class ConfigurationMgmtServiceImpl implements ConfigurationMgmtService {
   }
 
   /**
-   * Add a domain-specific configuration, if domainId is not null
+   * Add a domain-specific configuration, if domainId is not null without persistence manager
    */
   public void addConfiguration(String key, Long domainId, IConfig config) throws ServiceException {
+    addConfiguration(key, domainId, config, null);
+  }
+
+  /**
+   * Add a domain-specific configuration, if domainId is not null with persistence manager
+   */
+  public void addConfiguration(String key, Long domainId, IConfig config, PersistenceManager pm) throws ServiceException {
     if (config == null || config.getConfig() == null) {
       throw new ServiceException("Invalid configuration object - the object or its value are null");
     }
@@ -89,14 +99,15 @@ public class ConfigurationMgmtServiceImpl implements ConfigurationMgmtService {
     }
 
     // Save the config object to data store
-    PersistenceManager pm = PMF.get().getPersistenceManager();
-    Transaction tx = pm.currentTransaction();
+    PersistenceManager localPM = pm;
+    if(localPM == null) {
+      localPM = PMF.get().getPersistenceManager();
+    }
     try {
       // Check if a config with this key already exists
-      tx.begin();
       try {
         String realKey = getRealKey(key, domainId);
-        JDOUtils.getObjectById(IConfig.class, realKey, pm);
+        JDOUtils.getObjectById(IConfig.class, realKey, localPM);
         // If it comes here, then this object is found, so throw an exception, given duplication
         throw new ServiceException("An entry with exists for key: " + key);
       } catch (JDOObjectNotFoundException e) {
@@ -107,17 +118,15 @@ public class ConfigurationMgmtServiceImpl implements ConfigurationMgmtService {
       config.setKey(key);
       config.setConfig(getCleanString(config.getConfig()));
       config.setLastUpdated(new Date());
-      pm.makePersistent(config);
-      pm.detachCopy(config);
-      tx.commit();
+      localPM.makePersistent(config);
+      localPM.detachCopy(config);
     } catch (Exception e) {
       xLogger.fine("Exception while adding configuation object: {0}", e.getMessage());
       throw new ServiceException(e.getMessage());
     } finally {
-      if (tx.isActive()) {
-        tx.rollback();
+      if(pm == null) {
+        localPM.close();
       }
-      pm.close();
     }
   }
 
@@ -129,7 +138,7 @@ public class ConfigurationMgmtServiceImpl implements ConfigurationMgmtService {
    * @throws ObjectNotFoundException If the config. object for the given key was not found
    * @throws ServiceException        Any invalid parameter or data retrieval exceptions
    */
-  public IConfig getConfiguration(String key) throws ObjectNotFoundException, ServiceException {
+  public IConfig getConfiguration(String key) throws ServiceException {
     return getConfiguration(key, null);
   }
 
@@ -137,7 +146,7 @@ public class ConfigurationMgmtServiceImpl implements ConfigurationMgmtService {
    * Get domain-specific configurtion, if domain is specified
    */
   public IConfig getConfiguration(String key, Long domainId)
-      throws ObjectNotFoundException, ServiceException {
+      throws ServiceException {
     if (key == null || key.isEmpty()) {
       throw new ServiceException("Invalid key: " + key);
     }
@@ -292,5 +301,33 @@ public class ConfigurationMgmtServiceImpl implements ConfigurationMgmtService {
     DomainConfig dc1 = new DomainConfig(d.getPrevConfig());
     DomainConfig dc2 = new DomainConfig(d.getConfig());
     return new LocationComparator().compare(dc1, dc2);
+  }
+
+  public void addDefaultDomainConfig(Long domainId, String country, String state, String district,
+                                     String timezone, String userId, PersistenceManager pm)
+      throws ConfigurationException, ServiceException {
+    try {
+      DomainConfig domainConfig = new DomainConfig();
+      List<String> list = new ArrayList<>(2);
+      list.add(userId);
+      list.add(String.valueOf(System.currentTimeMillis()));
+      domainConfig.addDomainData("General", list);
+      domainConfig.setCountry(country);
+      domainConfig.setState(state);
+      domainConfig.setDistrict(district);
+      domainConfig.setTimezone(timezone);
+
+      IConfig config = new Config();
+      config.setDomainId(domainId);
+      config.setConfig(domainConfig.toJSONSring());
+      config.setKey(IConfig.CONFIG_PREFIX + domainId);
+      config.setUserId(userId);
+      config.setLastUpdated(new Date());
+      addConfiguration(IConfig.CONFIG_PREFIX + domainId, config);
+      xLogger.info("Domain: {0} default config added successfully.",domainId);
+    } catch (Exception e) {
+      xLogger.warn("Error while saving default configuration for domain: {0}", domainId, e);
+      throw e;
+    }
   }
 }

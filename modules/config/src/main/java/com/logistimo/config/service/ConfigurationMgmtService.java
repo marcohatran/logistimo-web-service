@@ -27,8 +27,11 @@
 package com.logistimo.config.service;
 
 import com.logistimo.config.entity.IConfig;
+import com.logistimo.config.models.ConfigurationException;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
+
+import javax.jdo.PersistenceManager;
 
 /**
  * @author arun
@@ -47,9 +50,14 @@ public interface ConfigurationMgmtService {
   void addConfiguration(String key, IConfig config) throws ServiceException;
 
   /**
-   * Add domain-specific configuration
+   * Add domain-specific configuration without persistence manager
    */
   void addConfiguration(String key, Long domainId, IConfig config) throws ServiceException;
+
+  /**
+   * Add domain-specific configuration with persistence manager
+   */
+  void addConfiguration(String key, Long domainId, IConfig config, PersistenceManager pm) throws ServiceException;
 
   /**
    * Get the configuration object, given a key
@@ -59,13 +67,13 @@ public interface ConfigurationMgmtService {
    * @throws ObjectNotFoundException If the config. object for the given key was not found
    * @throws ServiceException        Any invalid parameter or data retrieval exceptions
    */
-  IConfig getConfiguration(String key) throws ObjectNotFoundException, ServiceException;
+  IConfig getConfiguration(String key) throws ServiceException;
 
   /**
    * Get a domain specific configuration
    */
   IConfig getConfiguration(String key, Long domainId)
-      throws ObjectNotFoundException, ServiceException;
+      throws ServiceException;
 
   /**
    * Update a given configuration object.
@@ -79,4 +87,8 @@ public interface ConfigurationMgmtService {
    * Copy configuration from one domain to another
    */
   void copyConfiguration(Long srcDomainId, Long destDomainId) throws ServiceException;
+
+  void addDefaultDomainConfig(Long domainId, String country, String state, String district,
+                              String timezone, String userId, PersistenceManager pm)
+      throws ConfigurationException, ServiceException;
 }

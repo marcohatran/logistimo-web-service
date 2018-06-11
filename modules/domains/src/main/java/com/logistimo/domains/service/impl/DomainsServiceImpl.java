@@ -26,6 +26,7 @@ package com.logistimo.domains.service.impl;
 import com.google.gson.Gson;
 
 import com.logistimo.AppFactory;
+import com.logistimo.config.service.ConfigurationMgmtService;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.domains.CopyConfigModel;
 import com.logistimo.domains.IMultiDomain;
@@ -48,6 +49,9 @@ import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.utils.QueryUtil;
 import com.logistimo.utils.ThreadLocalUtil;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -62,6 +66,7 @@ import java.util.ResourceBundle;
 import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
+import javax.jdo.Transaction;
 
 @org.springframework.stereotype.Service
 public class DomainsServiceImpl implements DomainsService {
@@ -74,11 +79,17 @@ public class DomainsServiceImpl implements DomainsService {
   private ITaskService getTaskService() {
     return AppFactory.get().getTaskService();
   }
+  private ConfigurationMgmtService configurationMgmtService;
+
+  @Autowired
+  private void setConfigurationMgmtService(ConfigurationMgmtService configurationMgmtService) {
+    this.configurationMgmtService = configurationMgmtService;
+  }
 
   /**
    * Get a domain, given a domain ID
    */
-  public IDomain getDomain(Long domainId) throws ServiceException, ObjectNotFoundException {
+  public IDomain getDomain(Long domainId) throws ServiceException {
     xLogger.fine("Entering getDomain");
 
     if (domainId == null) {
@@ -527,9 +538,18 @@ public class DomainsServiceImpl implements DomainsService {
   }
 
   /**
-   * Add a new domain
+   * Add a new domain without persistence manager
    */
   public Long addDomain(IDomain domain) throws ServiceException {
+    return addDomain(domain, null, null, null, null, null);
+  }
+
+  /**
+   * Add a new domain with Persistence Manager
+   */
+  public Long addDomain(IDomain domain, String country, String state, String district,
+                        String timezone, String userId)
+      throws ServiceException {
     xLogger.fine("Entering addDomain");
     if (domain == null) {
       throw new ServiceException("Invalid domain input");
@@ -538,14 +558,27 @@ public class DomainsServiceImpl implements DomainsService {
     // Update domain object
     domain.setCreatedOn(now);
     domain.setLastUpdatedOn(now);
-
-    PersistenceManager pm = PMF.get().getPersistenceManager();
+    PersistenceManager pm = null;
+    Transaction tx = null;
     try {
+      pm = PMF.get().getPersistenceManager();
+      tx = pm.currentTransaction();
+      tx.begin();
       pm.makePersistent(domain);
+      pm.detachCopy(domain);
+      createDefaultDomainPermissions(domain.getId(), pm);
+      configurationMgmtService
+          .addDefaultDomainConfig(domain.getId(), country, state, district, timezone, userId, pm);
+      tx.commit();
     } catch (Exception e) {
       throw new ServiceException(e.getMessage());
     } finally {
-      pm.close();
+      if(tx != null && tx.isActive()) {
+        tx.rollback();
+      }
+      if (pm != null) {
+        pm.close();
+      }
     }
 
     xLogger.fine("Exiting addDomain");
@@ -554,9 +587,9 @@ public class DomainsServiceImpl implements DomainsService {
   }
 
   /**
-   * Add domain permission
+   * Add domain permission with persistence manager
    */
-  public void createDefaultDomainPermissions(Long domainId) throws ServiceException {
+  public void createDefaultDomainPermissions(Long domainId, PersistenceManager pm) throws ServiceException {
 
     xLogger.fine("Entering domainpermission");
     if (domainId == null) {
@@ -564,19 +597,23 @@ public class DomainsServiceImpl implements DomainsService {
     }
 
     String errMsg = null;
-
-    PersistenceManager pm = PMF.get().getPersistenceManager();
+    PersistenceManager localPM = pm;
+    if(localPM == null) {
+      localPM = PMF.get().getPersistenceManager();
+    }
     IDomainPermission permission = JDOUtils.createInstance(IDomainPermission.class);
     if (permission != null) {
       permission.setdId(domainId);
     }
     try {
-      pm.makePersistent(permission);
+      localPM.makePersistent(permission);
     } catch (Exception e) {
       xLogger.severe("Error updating domainpermission: {0}", domainId, e);
       errMsg = e.getMessage();
     } finally {
-      pm.close();
+      if(pm == null) {
+        localPM.close();
+      }
     }
     if (errMsg != null) {
       throw new ServiceException(errMsg);
@@ -627,7 +664,7 @@ public class DomainsServiceImpl implements DomainsService {
    */
   public void deleteDomains(List<Long> domainIds) throws ServiceException {
     xLogger.fine("Entered deleteDomains");
-    if (domainIds == null || domainIds.size() == 0) {
+    if (CollectionUtils.isEmpty(domainIds)) {
       throw new ServiceException("Invalid domain ID list");
     }
 
@@ -653,7 +690,7 @@ public class DomainsServiceImpl implements DomainsService {
    * NOTE: This the object(s) to be removed MUST implement the IDomain interface
    */
   public void addObjectsToDomains(List<Object> objectIds, Class<?> clazz, List<Long> domainIds)
-      throws ObjectNotFoundException, ServiceException {
+      throws ServiceException {
     xLogger.fine("Entered addObjectsToDomain");
     if (clazz == null || objectIds == null || objectIds.isEmpty() || domainIds == null || domainIds
         .isEmpty()) {
@@ -683,7 +720,7 @@ public class DomainsServiceImpl implements DomainsService {
    * NOTE: This the object(s) to be removed MUST implement the IDomain interface
    */
   public void removeObjectsFromDomains(List<Object> objectIds, Class<?> clazz, List<Long> domainIds)
-      throws ObjectNotFoundException, ServiceException {
+      throws ServiceException {
     xLogger.fine("Entered removeObjectsFromDomain");
     if (clazz == null || objectIds == null || objectIds.isEmpty() || domainIds == null || domainIds
         .isEmpty()) {
@@ -738,7 +775,7 @@ public class DomainsServiceImpl implements DomainsService {
 
   // Post-commit tasks, after a domain link is added
   private void domainLinksPostCommitTasks(List<IDomainLink> links, IDomainPermission permission)
-      throws ServiceException, TaskSchedulingException {
+      throws TaskSchedulingException {
     xLogger.fine("Entered postCommitTasks");
 
     if (permission == null || links == null || links.isEmpty()) {
@@ -912,7 +949,7 @@ public class DomainsServiceImpl implements DomainsService {
   @SuppressWarnings("unchecked")
   @Override
   public List<IDomain> getDomains(String q, PageParams pageParams)
-      throws ServiceException, ObjectNotFoundException {
+      throws ServiceException {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     Query query = pm.newQuery(JDOUtils.getImplClass(IDomain.class));
     Map<String, Object> params = new HashMap<>();

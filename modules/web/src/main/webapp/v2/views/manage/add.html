@@ -55,7 +55,7 @@
                     <div class="row">
                         <div class="col-sm-6">
                             <div class="form-group">
-                                <label  class="col-sm-4 control-label">{{resourceBundle['description']}}</label>
+                                <label class="col-sm-4 control-label">{{resourceBundle['description']}}</label>
                                 <div class="col-sm-8">
                                     <input type="text" class="form-control" id="desc" ng-model="domainDesc" name="cid" maxlength="50"
                                            placeholder="{{resourceBundle['description']}}">
@@ -63,6 +63,81 @@
                             </div>
                         </div>
                     </div>
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label class="col-sm-4 control-label required">{{resourceBundle['country']}}</label>
+                                <div class="col-sm-8">
+                                    <select ng-model="domainLocation.country" class="form-control" id="cnt"
+                                            ng-change="setCountry(domainLocation.country)">
+                                        <option value="">-- {{resourceBundle['select']}}
+                                            {{resourceBundle['country']}} --
+                                        </option>
+                                        <option ng-repeat="(name,val) in sCountries"
+                                                value="{{val.code}}"
+                                                ng-selected="val.code === domainLocation.country">{{val.name}}
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label class="col-sm-4 control-label">{{resourceBundle['state']}}</label>
+                                <div class="col-sm-8">
+                                    <select ng-model="domainLocation.state" class="form-control" id="st"
+                                        ng-change="setState(domainLocation.state)">
+                                        <option value="">-- {{resourceBundle['select']}}
+                                            {{resourceBundle['state']}}
+                                             --
+                                        </option>
+                                    <option ng-repeat="(code,val) in states" value="{{code}}"
+                                            ng-selected="code === domainLocation.state">{{code}}
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label class="col-sm-4 control-label">{{resourceBundle['district']}}</label>
+                            <div class="col-sm-8">
+                                <select ng-model="domainLocation.district" class="form-control" id="dst"
+                                        ng-change="setDistrict(domainLocation.district)">
+                                    <option value="">-- {{resourceBundle['select']}}
+                                        {{resourceBundle['district']}}
+                                        --
+                                    </option>
+                                    <option ng-repeat="(code,val) in districts" value="{{code}}"
+                                            ng-selected="code === domainLocation.district">{{code}}
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label class="col-sm-4 control-label required">{{resourceBundle['timezone']}}</label>
+                            <div class="col-sm-8">
+                                <select ng-model="timezone" class="form-control" id="tz">
+                                    <option value="">-- {{resourceBundle['select']}}
+                                        {{resourceBundle['timezone.lower']}} --
+                                    </option>
+                                    <option ng-repeat="(key,value) in allTimezones"
+                                            value="{{value}}">
+                                        {{key}}
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                     <div class="row mt10">
                         <div class="col-sm-6">
                             <div class="pull-right">
