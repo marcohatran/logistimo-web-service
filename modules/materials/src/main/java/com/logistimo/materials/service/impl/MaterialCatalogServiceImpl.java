@@ -235,7 +235,6 @@ public class MaterialCatalogServiceImpl implements MaterialCatalogService {
         mat.setShortName(material.getShortName());
         mat.setInfo(material.getInfo());
         mat.setInfoDisplay(material.displayInfo());
-        mat.setType(material.getType());
         mat.setBatchEnabled(material.isBatchEnabled());
         mat.setBatchEnabledOnMobile(material.isBatchEnabled());
         mat.setTemperatureSensitive(material.isTemperatureSensitive());

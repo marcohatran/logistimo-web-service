@@ -495,7 +495,7 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
     function ($rootScope,$scope, $uibModal, trnService, invService, domainCfgService, entityService,$timeout) {
         $scope.invalidPopup = 0;
         $scope.validate = function (material, index, source) {
-            if(!material.isBatch && !material.isBinary) {
+            if(!material.isBatch) {
                 material.isVisited = material.isVisited || checkNotNullEmpty(source);
                 if(material.isVisited) {
                     if (checkNotNull(material.ind) && checkNullEmpty(material.quantity) || ($scope.transaction.type != 'p' && material.quantity <= 0)) {
@@ -771,7 +771,7 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                     $scope.showWarning($scope.resourceBundle['trn.batch.open'] + ' ' + $scope.transaction.modifiedmaterials[index].name.mnm + '. ' + $scope.resourceBundle['trn.batch.save.cancel']);
                     return true;
                 }
-                if (!mat.isBatch && !mat.isBinary) {
+                if (!mat.isBatch) {
                     if(!$scope.validate(mat,index,'b')) {
                         return true;
                     }
@@ -797,7 +797,7 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
             var isStatusEmpty = false;
             index = 0;
             $scope.transaction.modifiedmaterials.forEach(function (mat) {
-                if(checkNotNullEmpty(mat.name) && !mat.isBatch && !mat.isBinary && mat.quantity != "0") {
+                if(checkNotNullEmpty(mat.name) && !mat.isBatch && mat.quantity != "0") {
                     var status = mat.ts ? $scope.tempmatstatus : $scope.matstatus;
                     if (checkNotNullEmpty(status) && checkNullEmpty(mat.mst) && $scope.msm) {
                         mat.isVisitedStatus = true;
@@ -1021,8 +1021,6 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                             ft['bmaterials'].push(items);
                         }
                     });
-                } else if (mat.isBinary) {
-                    ft['materials'][mat.name.mId] = "1";
                 } else if (checkNotNull(mat.ind)) {
                     var items = {};
                     var trackingid = checkNotNullEmpty(mat.trkid) ? mat.trkid : undefined;
@@ -1418,7 +1416,6 @@ trnControllers.controller('transactions.MaterialController', ['$scope', 'trnServ
                     }
                 }
                 $scope.material.mm = "(" + name.reord.toFixed(0) + ',' + name.max.toFixed(0) + ")";
-                $scope.material.isBinary = name.b === 'bn';
                 $scope.material.reason = '';
                 if(checkNotNullEmpty($scope.transaction.type)){
                     if(checkNotNullEmpty(name.tgs)) {

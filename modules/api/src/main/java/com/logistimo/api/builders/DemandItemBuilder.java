@@ -152,7 +152,6 @@ public class DemandItemBuilder {
     itemModel.tx = item.getTax();
     itemModel.d = item.getDiscount();
     itemModel.a = CommonUtils.getFormattedPrice(item.computeTotalPrice(false));
-    itemModel.isBn = m.isBinaryValued();
     itemModel.isBa = m.isBatchEnabled();
     itemModel.oq = item.getOriginalQuantity();
     itemModel.uid = item.getUserId();

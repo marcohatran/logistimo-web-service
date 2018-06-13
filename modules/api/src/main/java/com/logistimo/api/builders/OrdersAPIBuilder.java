@@ -862,7 +862,6 @@ public class OrdersAPIBuilder {
         itemModel.t = item.getTax();
         itemModel.d = item.getDiscount();
         itemModel.a = CommonUtils.getFormattedPrice(item.computeTotalPrice(false));
-        itemModel.isBn = m.isBinaryValued();
         itemModel.isBa =
             (vendorKiosk == null || vendorKiosk.isBatchMgmtEnabled()) && m.isBatchEnabled();
         itemModel.oq = item.getOriginalQuantity();

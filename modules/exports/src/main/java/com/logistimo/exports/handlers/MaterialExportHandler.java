@@ -164,8 +164,6 @@ public class MaterialExportHandler implements IExportHandler {
             : CharacterConstants.EMPTY)).append(CharacterConstants.COMMA)
         .append(material.getCurrency() != null ? material.getCurrency() : CharacterConstants.EMPTY)
         .append(CharacterConstants.COMMA)
-        .append(IMaterial.TYPE_BINARY.equals(material.getType()) ? Constants.YES : Constants.NO)
-        .append(CharacterConstants.COMMA)
         .append(material.isSeasonal() ? Constants.YES : Constants.NO)
         .append(CharacterConstants.COMMA)
         .append(material.isBatchEnabled() ? Constants.YES : Constants.NO)

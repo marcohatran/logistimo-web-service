@@ -145,10 +145,6 @@ public interface IInvntry extends IOverlappedDomain {
 
   void setMaterialName(String materialName);
 
-  String getBinaryValued();
-
-  void setBinaryValued(String binaryValued);
-
   BigDecimal getReorderLevel();
 
   void setReorderLevel(BigDecimal reordLevel);

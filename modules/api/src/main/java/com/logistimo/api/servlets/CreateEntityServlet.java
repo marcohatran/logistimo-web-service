@@ -806,12 +806,6 @@ public class CreateEntityServlet extends SgServlet {
       m.setIdentifierValue(materialDetails.get("identifiervalue")[0]);
     }
 
-    if (materialDetails.containsKey("datatype")) {
-      m.setType(materialDetails.get("datatype")[0]);
-    } else {
-      m.setType(null);
-    }
-
     m.setSeasonal(materialDetails.containsKey("seasonal"));
     if (materialDetails.containsKey("additionalinfo")) {
       m.setInfo(materialDetails.get("additionalinfo")[0]);
@@ -970,11 +964,7 @@ public class CreateEntityServlet extends SgServlet {
     if (materialDetails.containsKey("identifiervalue")) {
       m.setIdentifierValue(materialDetails.get("identifiervalue")[0]);
     }
-    if (materialDetails.containsKey("datatype")) {
-      m.setType(materialDetails.get("datatype")[0]);
-    } else {
-      m.setType(null);
-    }
+
     m.setSeasonal(materialDetails.containsKey("seasonal"));
     if (materialDetails.containsKey("additionalinfo")) {
       m.setInfo(materialDetails.get("additionalinfo")[0]);

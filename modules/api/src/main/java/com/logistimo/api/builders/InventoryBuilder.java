@@ -314,8 +314,7 @@ public class InventoryBuilder {
       model.em.tlk = kiosk.getTaluk();
     }
     model.mnm = material.getName();
-    model.b = material.getType();
-    if (invntry.getTimestamp() != null) {
+    if(invntry.getTimestamp() != null) {
       model.t =
           LocalDateUtil.format(invntry.getTimestamp(), sUser.getLocale(), sUser.getTimezone());
     }
@@ -436,7 +435,6 @@ public class InventoryBuilder {
     in.setKioskName(kioskName);
     in.setMaterialId(invm.mId);
     in.setMaterialName(invm.mnm);
-    in.setBinaryValued(invm.b);
     in.setKioskName(invm.enm);
     if (isDurationOfStock) {
       in.setMinDuration(invm.minDur);

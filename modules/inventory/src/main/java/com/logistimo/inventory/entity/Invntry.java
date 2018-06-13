@@ -118,8 +118,6 @@ public class Invntry implements IInvntry {
   private String mnm;
   // material name - redundantly stored here to enable sorting Inventory by material
   @Persistent
-  private String b; //material binary valued
-  @Persistent
   @Extension(vendorName = "datanucleus", key = "gae.unindexed", value = "true")
   private BigDecimal reord = BigDecimal.ZERO; // re-order levels or MIN
   @Persistent
@@ -509,20 +507,6 @@ public class Invntry implements IInvntry {
       this.mnm = materialName.toLowerCase();
     } else {
       this.mnm = null;
-    }
-  }
-
-  @Override
-  public String getBinaryValued() {
-    return b;
-  }
-
-  @Override
-  public void setBinaryValued(String binaryValued) {
-    if (binaryValued != null) {
-      this.b = binaryValued.toLowerCase();
-    } else {
-      this.b = "no";
     }
   }
 

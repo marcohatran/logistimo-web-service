@@ -125,12 +125,6 @@ public interface IMaterial extends ISubDomain, ISuperDomain {
 
   void setInfo(String info);
 
-  String getType();
-
-  void setType(String ty);
-
-  boolean isBinaryValued();
-
   boolean displayInfo();
 
   void setInfoDisplay(boolean display);

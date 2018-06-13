@@ -47,8 +47,7 @@ public class MaterialsHeader implements IHeader {
             bundle.getString("description") + " (max. " + FieldLimits.MATERIAL_DESCRIPTION_MAX_LENGTH + " characters)," +
             bundle.getString("material.addinfo") + " (max. " + FieldLimits.MATERIAL_ADDITIONAL_INFO_MAX_LENGTH + " characters)," +
             bundle.getString("material.addinfocheck") + " (yes/no; defaults to 'yes')," +
-            bundle.getString("tags") + " (semi-colon separated tag names - e.g. tag1;tag2;tag3),"
-            + bundle.getString("isbinaryvalued") + " (yes/no; default is 'no')," +
+            bundle.getString("tags") + " (semi-colon separated tag names - e.g. tag1;tag2;tag3)," +
             bundle.getString("material.seasonal") + " (yes/no; default is 'no')," +
             bundle.getString("material.msrp") + " (valid number; max. 1 billion rounded to two decimal places maximum)," + bundle
             .getString("material.retailerprice") + " (valid number; max. 1 billion rounded to two decimal places maximum)," +

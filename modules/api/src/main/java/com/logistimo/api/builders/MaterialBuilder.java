@@ -205,8 +205,6 @@ public class MaterialBuilder {
           LocalDateUtil.format(material.getLastUpdated(), sUser.getLocale(), sUser.getTimezone());
     }
     model.b = material.isBatchEnabled() ? "yes" : "no";
-    model.ib = material.isBinaryValued() ? "yes" : "no";
-    model.dty = material.getType();
     model.snl = material.isSeasonal() ? "yes" : "no";
     model.cur = material.getCurrency();
     model.tm = material.isTemperatureSensitive() ? "yes" : "no";
@@ -262,9 +260,6 @@ public class MaterialBuilder {
     m.setTags(model.tgs);
     m.setBatchEnabled(Boolean.parseBoolean(toBoolean(model.b)));
     m.setBatchEnabledOnMobile(m.isBatchEnabled());
-    if ("yes".equalsIgnoreCase(model.dty)) {
-      m.setType(IMaterial.TYPE_BINARY);
-    }
     m.setSeasonal(Boolean.parseBoolean(toBoolean(model.snl)));
     if (StringUtils.isNotBlank(model.msrp)) {
       m.setMSRP(new BigDecimal(model.msrp));

@@ -2137,17 +2137,15 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
             $scope.entType = "customers";
         }
         $scope.validate = function (material, index, source) {
-            if (!material.isBinary) {
-                material.isVisited = material.isVisited || checkNotNullEmpty(source);
-                if (material.isVisited) {
-                    if (checkNotNull(material.ind) && (checkNullEmpty(material.quantity) || material.quantity <= 0)) {
-                        showPopup($scope, material, material.name.mId, $scope.resourceBundle['invalid.quantity'] + " " + $scope.resourceBundle['for'] + " " + (material.mnm || material.name.mnm), index, $timeout);
-                        return false;
-                    }
-                    if (checkNotNullEmpty(material.name.huName) && checkNotNullEmpty(material.name.huQty) && checkNotNullEmpty(material.quantity) && material.quantity % material.name.huQty != 0) {
-                        showPopup($scope, material, material.name.mId, material.quantity + " of " + material.name.mnm + " does not match the multiples of units expected in " + material.name.huName + ". It should be in multiples of " + material.name.huQty + " " + material.name.mnm + ".", index, $timeout);
-                        return false;
-                    }
+            material.isVisited = material.isVisited || checkNotNullEmpty(source);
+            if (material.isVisited) {
+                if (checkNotNull(material.ind) && (checkNullEmpty(material.quantity) || material.quantity <= 0)) {
+                    showPopup($scope, material, material.name.mId, $scope.resourceBundle['invalid.quantity'] + " " + $scope.resourceBundle['for'] + " " + (material.mnm || material.name.mnm), index, $timeout);
+                    return false;
+                }
+                if (checkNotNullEmpty(material.name.huName) && checkNotNullEmpty(material.name.huQty) && checkNotNullEmpty(material.quantity) && material.quantity % material.name.huQty != 0) {
+                    showPopup($scope, material, material.name.mId, material.quantity + " of " + material.name.mnm + " does not match the multiples of units expected in " + material.name.huName + ". It should be in multiples of " + material.name.huQty + " " + material.name.mnm + ".", index, $timeout);
+                    return false;
                 }
             }
             return true;
@@ -2364,10 +2362,8 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
                     if (!$scope.validate(mat, i, 's')) {
                         return;
                     }
-                    if (!mat.isBinary) {
-                        if (checkNotNull(mat.ind) && (checkNullEmpty(mat.quantity) || mat.quantity <= 0)) {
-                            invalidQMats = invalidQMats + mat.name.mnm + ", ";
-                        }
+                    if (checkNotNull(mat.ind) && (checkNullEmpty(mat.quantity) || mat.quantity <= 0)) {
+                        invalidQMats = invalidQMats + mat.name.mnm + ", ";
                     }
                     if (mat.showRecommended && mat.recomQ != '-1' && ($scope.oCfg.orrm || (checkNotNullEmpty(mat.rsn) && mat.rsn.toLowerCase() == 'others'))) {
                         if ((checkNullEmpty($scope.oCfg.orr) || checkNullEmpty(mat.rsn) || mat.rsn.toLowerCase() == 'others')
@@ -2513,9 +2509,7 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
             ft['status'] = $scope.status;
             ft['materials'] = {};
             $scope.order.materials.forEach(function (mat) {
-                if (mat.isBinary) {
-                    ft['materials'][mat.name.mId] = "1";
-                } else if (checkNotNull(mat.ind)) {
+                if (checkNotNull(mat.ind)) {
                     ft['materials'][mat.name.mId] = {q: '' + mat.quantity, r: mat.mrsn || mat.rsn || null};
                 }
             });
@@ -2811,7 +2805,6 @@ ordControllers.controller('order.MaterialController', ['$scope', 'invService',
                 $scope.material.cmm = "(" + $scope.cInvMap[name.mId].reord + "," + $scope.cInvMap[name.mId].max + ")";
                 $scope.material.rp = $scope.cInvMap[name.mId].rp;
             }
-            $scope.material.isBinary = name.b === 'bn';
             $scope.material.mrsn = null;
             if ($scope.type == "1") {
                 $scope.material.recomQ = $scope.recommendedQuantity(name);

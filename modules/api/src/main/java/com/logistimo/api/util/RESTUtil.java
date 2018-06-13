@@ -292,11 +292,6 @@ public class RESTUtil {
         if (tags != null && !tags.isEmpty()) {
           material.put(JsonTagsZ.TAGS, StringUtil.getCSV(tags)); // earlier using TagUtil.getCSVTags
         }
-        // Material type, if present
-        String type = m.getType();
-        if (type != null && !type.isEmpty()) {
-          material.put(JsonTagsZ.DATA_TYPE, type);
-        }
         /// Min/Max, if any
         BigDecimal min = inv.getReorderLevel();
         BigDecimal max = inv.getMaxStock();

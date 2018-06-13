@@ -1810,15 +1810,6 @@ public class BulkUploadMgr {
       if (++i < size) {
         processTags(tokens[i], domainId, ec, TagUtil.TYPE_MATERIAL, m);
       }
-      // Data type - e.g. Is binary
-      if (++i < size) {
-        if ("yes".equals(tokens[i].trim())) {
-          xLogger.info("Setting type for material to {0}", IMaterial.TYPE_BINARY);
-          m.setType(IMaterial.TYPE_BINARY);
-        } else {
-          m.setType(null);
-        }
-      }
       // Is seasonal?
       boolean seasonal = false;
       if (++i < size && ("yes".equals(tokens[i].trim()))) {
