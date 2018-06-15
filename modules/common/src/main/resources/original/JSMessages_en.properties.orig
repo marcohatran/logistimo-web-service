@@ -1395,3 +1395,6 @@ report.temperature.excursions=Temperature excursions
 report.up.time=Up time
 report.user.activity=User activity
 return.reason=Return reason
+domain.name.mandatory=Domain name cannot be blank.
+domain.country.mandatory=Country is mandatory. Please select a country.
+domain.timezone.mandatory=Timezone is mandatory. Please select a timezone.

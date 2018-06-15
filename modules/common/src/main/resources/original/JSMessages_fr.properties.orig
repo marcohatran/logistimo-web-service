@@ -1391,3 +1391,6 @@ report.temperature.excursions=Excursions de température
 report.up.time=Temps de disponibilité
 report.user.activity=Activité de l'utilisateur
 return.reason=Retour raison
+domain.name.mandatory=Le nom de domaine ne peut pas être vide.
+domain.country.mandatory=Le pays est obligatoire Veuillez sélectionner un pays
+domain.timezone.mandatory=Le fuseau horaire est obligatoire. Veuillez sélectionner un fuseau horaire
