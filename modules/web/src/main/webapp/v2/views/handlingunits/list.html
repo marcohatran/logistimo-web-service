@@ -24,29 +24,19 @@
 <div class="box topbox" ng-if="iAdm">
     <div ng-controller="HUListController">
         <div class="filter-box form-group">
-            <div class="row">
-                <div class="col-sm-3">
-                    <span class="filter-label">Handling units</span>
+            <div ng-controller="ResetController">
+                <div class="row">
+                    <div class="col-sm-3">
+                        <span class="filter-label">Handling units</span>
 
-                    <div class="input-group">
-                        <input type="text" class="form-control" ng-model="search.key" name="search.key" maxlength="50"
-                               placeholder="{{resourceBundle['filterby']}} handling units" ng-enter="searchHU()">
-							<span class="input-group-btn">
-							<button class="btn btn-default" ng-click="searchHU()" type="button"
-                                    ng-disabled="(search.key == null && search.key == '')"
-                                    uib-tooltip="{{resourceBundle['search']}}">
-                                <span class="glyphicons glyphicons-search"></span>
-                            </button>
-							</span>
+                        <div>
+                            <input type="text" class="form-control" ng-model="huname" name="search.key" maxlength="50"
+                                   placeholder="{{resourceBundle['filterby']}} handling units" ng-enter="searchHU()">
+                        </div>
                     </div>
+
                 </div>
-                <div class="mt18">
-                    <span class="pull-right">
-                    <button type="reset" ng-click="reset()" class="btn btn-sm btn-default">
-                        {{resourceBundle['reset']}}
-                    </button>
-                    </span>
-                </div>
+                <div ng-include="'views/common/reset-filters.html'"/>
             </div>
         </div>
         <!--<div class="row action-bar">

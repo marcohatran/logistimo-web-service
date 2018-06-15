@@ -24,113 +24,90 @@
 <div class="box topbox">
     <div ng-controller="UsersListController">
         <div class="filter-box form-group" ng-show="iAdm">
+            <div ng-controller="ResetController">
             <div class="row">
-                <div class="col-sm-3">
-                    <span class="filter-label">{{resourceBundle['user.firstname']}}</span>
-                    <div class="input-group">
-                        <input type="text" class="form-control" ng-model="search.key" name="search.key" maxlength="50"
-                               placeholder="{{resourceBundle['user.firstname.placeholder']}}" ng-enter="searchUser()">
-							<span class="input-group-btn">
-							<button class="btn btn-default" ng-click="searchUser()" type="button"
-                                    uib-tooltip="{{resourceBundle['search']}}">
-                                <span class="glyphicons glyphicons-search"></span>
-                            </button>
-							</span>
-                    </div>
-                </div>
-                <div class="col-sm-3">
-                    <span class="filter-label">{{resourceBundle['user.mobile.phone.number']}}</span>
-                    <div class="input-group">
-                        <input type="text" class="form-control" name="uphn" ng-model="uphn"  maxlength="50"
-                               placeholder="+&lt;{{resourceBundle['country']}}&gt;&lt;{{resourceBundle['user.number']}}&gt;"   ng-enter="searchPhone()">
-							<span class="input-group-btn">
-							<button class="btn btn-default" ng-click="searchPhone()" type="button"
-                                    uib-tooltip="{{resourceBundle['search']}}">
-                                <span class="glyphicons glyphicons-search"></span>
-                            </button>
-							</span>
-                    </div>
-                    <!--<span class="litetext">+&lt;{{resourceBundle['country']}}-{{resourceBundle['code']}}&gt; &lt;{{resourceBundle['user.mobile']}}&gt;<br/>{{resourceBundle['eg']}} +91 9844360948 [{{resourceBundle['india']}}], +1</span>-->
-                </div>
-                <div class="col-sm-2">
-                    <span class="filter-label">{{resourceBundle.role}}</span>
-                    <select class="form-control" ng-model="urole" name="type">
-                        <option value="">{{resourceBundle['all']}}</option>
-                        <option value="ROLE_ko">{{resourceBundle['role.kioskowner']}}</option>
-                        <option value="ROLE_sm">{{resourceBundle['role.servicemanager']}}</option>
-                        <option ng-show="iAdm" value="ROLE_do">{{resourceBundle['role.domainowner']}}</option>
-                        <option ng-show="iSU" value="ROLE_su">{{resourceBundle['role.superuser']}}</option>
-                    </select>
-                </div>
-                <div class="col-sm-3">
-                    <span class="filter-label">{{resourceBundle['user.user.id']}}</span>
-                    <div class="has-feedback">
-                        <input type="text" ng-model="userId"  name="userId"
-                               autocomplete="off"
-                               placeholder="{{resourceBundle['user.userid.placeholder']}}"
-                               typeahead-wait-ms="300"
-                               ng-class="{'c-visited' : submitted}"
-                               typeahead-on-select="goToUser(userId)"
-                               uib-typeahead="usr as usr for usr in  getFilteredElement('userId', $viewValue) | limitTo:8"
-                               class="form-control" typeahead-editable="false" />
-                        <span ng-show="loadinguserId" class="form-control-feedback typehead-loading" aria-hidden="true" >
-                            <span class="glyphicons glyphicons-cogwheel spin"></span>
-                        </span>
-                    </div>
-                </div>
-                <div class="col-sm-1 mt18">
-                    <span class="pull-right">
-                    <button type="reset" ng-click="reset()" class="btn btn-sm btn-default">
-                        {{resourceBundle['reset']}}
-                    </button>
-                    </span>
-                </div>
-            </div>
-
-            <div class="row mt18" ng-show="showMore">
-                <div class="col-sm-3">
-                    <span class="filter-label">{{resourceBundle['user.active']}}</span>
-                    <select class="form-control" ng-model="uactive" name="uactive">
-                        <option value="">{{resourceBundle['all']}}</option>
-                        <option value="true">{{resourceBundle['user.active']}} </option>
-                        <option value="false">{{resourceBundle['user.disabled']}}</option>
-                    </select>
-                </div>
-                <div class="col-sm-3">
-                    <span class="filter-label">{{resourceBundle['user.mobile.app.version']}}</span>
-                    <div class="input-group">
-                        <input type="text" ng-model="uversion" class="form-control" name="uversion" maxlength="50" placeholder="{{resourceBundle['user.mobile.app.placeholder']}}" ng-enter="searchVersion() || isDef(utag)"/>
-                    <span class="input-group-btn">
-                        <button class="btn btn-default" ng-click="searchVersion()" type="button"
-                                placeholder="{{resourceBundle['filterby']}} {{resourceBundle['user.mobile.app.version']}}">
-                            <span class="glyphicons glyphicons-search"></span>
-                        </button>
-                    </span>
-                    </div>
-                </div>
-                <div class="col-sm-5" ng-hide="isDef(nvrlogged)" >
-                    <div class="filter-label">{{resourceBundle['lastlogin']}}</div>
-                    <div class="row mgh0">
-                        <div class="col-sm-6" style="right:15px;" >
-                            <date-picker date-model="from" place-holder="From" max-date="today"></date-picker>
+                    <div class="col-sm-3">
+                        <span class="filter-label">{{resourceBundle['user.firstname']}}</span>
+                        <div>
+                            <input type="text" class="form-control" ng-model="fname" name="search.key" maxlength="50"
+                                   placeholder="{{resourceBundle['user.firstname.placeholder']}}" ng-enter="searchUser()">
                         </div>
-                        <!--<div class="col-sm-6" style="right:15px;" ng-hide="isDef(nvrlogged)">-->
-                        <div class="col-sm-6" style="right:15px;">
-                            <date-picker date-model="to" place-holder="To" min-date="from" max-date="today"></date-picker>
+                    </div>
+                    <div class="col-sm-3">
+                        <span class="filter-label">{{resourceBundle['user.mobile.phone.number']}}</span>
+                        <div>
+                            <input type="text" class="form-control" name="uphn" ng-model="uphn"  maxlength="50"
+                                   placeholder="+&lt;{{resourceBundle['country']}}&gt;&lt;{{resourceBundle['user.number']}}&gt;">
+                        </div>
+                        <!--<span class="litetext">+&lt;{{resourceBundle['country']}}-{{resourceBundle['code']}}&gt; &lt;{{resourceBundle['user.mobile']}}&gt;<br/>{{resourceBundle['eg']}} +91 9844360948 [{{resourceBundle['india']}}], +1</span>-->
+                    </div>
+                    <div class="col-sm-2">
+                        <span class="filter-label">{{resourceBundle.role}}</span>
+                        <select class="form-control" ng-model="urole" name="type">
+                            <option value="">{{resourceBundle['all']}}</option>
+                            <option value="ROLE_ko">{{resourceBundle['role.kioskowner']}}</option>
+                            <option value="ROLE_sm">{{resourceBundle['role.servicemanager']}}</option>
+                            <option ng-show="iAdm" value="ROLE_do">{{resourceBundle['role.domainowner']}}</option>
+                            <option ng-show="iSU" value="ROLE_su">{{resourceBundle['role.superuser']}}</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-3">
+                        <span class="filter-label">{{resourceBundle['user.user.id']}}</span>
+                        <div class="has-feedback">
+                            <input type="text" ng-model="userId"  name="userId"
+                                   autocomplete="off"
+                                   placeholder="{{resourceBundle['user.userid.placeholder']}}"
+                                   typeahead-wait-ms="300"
+                                   ng-class="{'c-visited' : submitted}"
+                                   typeahead-on-select="goToUser(userId)"
+                                   uib-typeahead="usr as usr for usr in  getFilteredElement('userId', $viewValue) | limitTo:8"
+                                   class="form-control" typeahead-editable="false" />
+                            <span ng-show="loadinguserId" class="form-control-feedback typehead-loading" aria-hidden="true" >
+                                <span class="glyphicons glyphicons-cogwheel spin"></span>
+                            </span>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="row mt18" ng-show="showMore">
-                <div class="col-sm-3">
-                    <input type="checkbox" ng-model="nvrlogged"
-                           ng-disabled="isDef(from) || isDef(to)" > {{resourceBundle['user.never.logged.in']}}
+                <div class="row mt18" ng-show="showMore">
+                    <div class="col-sm-3">
+                        <span class="filter-label">{{resourceBundle['user.active']}}</span>
+                        <select class="form-control" ng-model="uactive" name="uactive">
+                            <option value="">{{resourceBundle['all']}}</option>
+                            <option value="true">{{resourceBundle['user.active']}} </option>
+                            <option value="false">{{resourceBundle['user.disabled']}}</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-3">
+                        <span class="filter-label">{{resourceBundle['user.mobile.app.version']}}</span>
+                        <div class="input-group">
+                            <input type="text" ng-model="uversion" class="form-control" name="uversion" maxlength="50" placeholder="{{resourceBundle['user.mobile.app.placeholder']}}" ng-enter="searchVersion() || isDef(utag)"/>
+                        </div>
+                    </div>
+                    <div class="col-sm-5" ng-hide="isDef(nvrlogged)" >
+                        <div class="filter-label">{{resourceBundle['lastlogin']}}</div>
+                        <div class="row mgh0">
+                            <div class="col-sm-6" style="right:15px;" >
+                                <date-picker date-model="from" place-holder="From" max-date="today"></date-picker>
+                            </div>
+                            <!--<div class="col-sm-6" style="right:15px;" ng-hide="isDef(nvrlogged)">-->
+                            <div class="col-sm-6" style="right:15px;">
+                                <date-picker date-model="to" place-holder="To" min-date="from" max-date="today"></date-picker>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-sm-3">
-                    <span class="filter-label">{{resourceBundle['user']}} {{resourceBundle['tag.lower']}}:</span>
-                    <tag-filter ng-model="utag" tag-type="user" ></tag-filter>
+                <div class="row mt18" ng-show="showMore">
+                    <div class="col-sm-3">
+                        <input type="checkbox" ng-model="nvrlogged"
+                               ng-disabled="isDef(from) || isDef(to)" > {{resourceBundle['user.never.logged.in']}}
+                    </div>
+                    <div class="col-sm-3">
+                        <span class="filter-label">{{resourceBundle['user']}} {{resourceBundle['tag.lower']}}:</span>
+                        <tag-filter ng-model="utag" tag-type="user" ></tag-filter>
+                    </div>
                 </div>
-            </div>
+                <div ng-include="'views/common/reset-filters.html'"/>
+             </div>
         </div>
         <div ng-show="iAdm">
             <div class="row" ng-hide="showMore ">

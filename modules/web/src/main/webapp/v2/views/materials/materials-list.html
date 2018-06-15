@@ -24,32 +24,21 @@
 <div class="box topbox" ng-if="iAdm">
     <div ng-controller="MaterialListController">
         <div class="filter-box form-group">
-            <div class="row">
-                <div class="col-sm-3">
-                    <span class="filter-label">{{resourceBundle['material']}}</span>
+            <div ng-controller="ResetController">
+                <div class="row">
+                    <div class="col-sm-3">
+                        <span class="filter-label">{{resourceBundle['material']}}</span>
 
-                    <div class="input-group">
-                        <input type="text" class="form-control" ng-model="search.key" name="search.key" maxlength="50"
-                               placeholder="{{resourceBundle['filterby']}} {{resourceBundle['materials']}}" ng-enter="searchMaterial()">
-							<span class="input-group-btn">
-							<button class="btn btn-default" ng-click="searchMaterial()" type="button"
-                                    ng-disabled="(search.key == null && search.key == '')"
-                                    uib-tooltip="{{resourceBundle['search']}}">
-                                <span class="glyphicons glyphicons-search"></span>
-                            </button>
-							</span>
+                        <div>
+                            <input type="text" class="form-control" ng-model="mname" name="search.key" maxlength="50"
+                                   placeholder="{{resourceBundle['filterby']}} {{resourceBundle['materials']}}" ng-enter="searchMaterial()">
+                        </div>
                     </div>
-                </div>
-                <div class="col-sm-3 mt18 pt10" ng-show="(search.mnm == undefined || search.mnm == '')">
-                    <span class="filter-label">{{resourceBundle['filter.material.tag']}}:</span>
-                    <tag-filter ng-model="mtag" tag-type="material"></tag-filter>
-                </div>
-                <div class="mt18">
-                    <span class="pull-right">
-                    <button type="reset" ng-click="reset()" class="btn btn-sm btn-default">
-                        {{resourceBundle['reset']}}
-                    </button>
-                    </span>
+                    <div class="col-sm-3 mt18 pt10" ng-show="(mname == undefined || mname == '')">
+                        <span class="filter-label">{{resourceBundle['filter.material.tag']}}:</span>
+                        <tag-filter ng-model="mtag" tag-type="material"></tag-filter>
+                    </div>
+                    <div ng-include="'views/common/reset-filters.html'"/>
                 </div>
             </div>
         </div>

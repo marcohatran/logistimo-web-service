@@ -148,7 +148,8 @@ matControllers.controller('MaterialDetailMenuController', ['$scope', 'matService
 ]);
 matControllers.controller('MaterialListController', ['$scope', 'matService', 'domainCfgService', 'requestContext', '$location', 'exportService',
     function ($scope, matService, domainCfgService, requestContext, $location, exportService) {
-        $scope.wparams = [["mtag", "mtag"], ["search", "search.mnm"]];
+        $scope.wparams = [["mtag", "mtag"], ["mname", "mname"]];
+        $scope.localFilters = ['mname','mtag'];
         $scope.selectAll = function (newval) {
             for (var item in $scope.filtered) {
                 $scope.filtered[item]['selected'] = newval;
@@ -159,10 +160,8 @@ matControllers.controller('MaterialListController', ['$scope', 'matService', 'do
 
         $scope.init = function () {
             $scope.materials = {};
-            $scope.search = {};
             $scope.mtag = requestContext.getParam("mtag") || "";
-            $scope.search.mnm = requestContext.getParam("search") || "";
-            $scope.search.key = $scope.search.mnm;
+            $scope.mname = requestContext.getParam("mname") || "";
             $scope.selAll = false;
         };
         $scope.init();
@@ -186,7 +185,7 @@ matControllers.controller('MaterialListController', ['$scope', 'matService', 'do
             $scope.defaultCur = "";
             $scope.loading = true;
             $scope.showLoading();
-            matService.getDomainMaterials($scope.search.mnm, $scope.mtag, $scope.offset, $scope.size).then(function (data) {
+            matService.getDomainMaterials($scope.mname, $scope.mtag, $scope.offset, $scope.size).then(function (data) {
                 $scope.materials = data.data.results;
                 $scope.setResults(data.data);
                 if(checkNotNullEmpty($scope.defaultCurrency)){
@@ -231,15 +230,8 @@ matControllers.controller('MaterialListController', ['$scope', 'matService', 'do
                 });
             }
         };
-        $scope.searchMaterial = function () {
-            if($scope.search.mnm != $scope.search.key){
-                $scope.search.mnm = $scope.search.key;
-                $scope.mtag = "";
-            }
-        };
         $scope.reset = function() {
-            $scope.search = {};
-            $scope.search.key = $scope.search.mnm = "";
+            $scope.mname = "";
             $scope.mtag = "";
         };
 
@@ -252,7 +244,7 @@ matControllers.controller('MaterialListController', ['$scope', 'matService', 'do
             }
             $scope.showLoading();
             exportService.exportData({
-                mat_name: $scope.search.key || undefined,
+                mat_name: $scope.mname || undefined,
                 mtag: $scope.mtag || undefined,
                 titles: {
                     filters: getCaption()
@@ -269,7 +261,7 @@ matControllers.controller('MaterialListController', ['$scope', 'matService', 'do
         };
 
         function getCaption() {
-            var caption = getFilterTitle($scope.search.key, $scope.resourceBundle['material']);
+            var caption = getFilterTitle($scope.mname, $scope.resourceBundle['material']);
             caption += getFilterTitle($scope.mtag, $scope.resourceBundle['material'] + " " + $scope.resourceBundle['tag.lower']);
             return caption;
         }

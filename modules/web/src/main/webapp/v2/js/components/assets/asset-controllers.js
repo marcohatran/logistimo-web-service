@@ -460,8 +460,9 @@ assetControllers.controller("AddAssetController", ['$scope', '$route', 'assetSer
 
 assetControllers.controller("AssetListingController", ['$scope', '$route', 'assetService', 'requestContext', '$location', 'exportService',
     function($scope, $route, assetService, requestContext, $location, exportService){
-        $scope.wparams = [["etag", "etag"], ["search", "search.nm"], ["o", "offset"], ["s", "size"], ["at", "assetTypeFilter"]];
+        $scope.wparams = [["etag", "etag"], ["aname", "aname"], ["o", "offset"], ["s", "size"], ["at", "assetTypeFilter"]];
         $scope.filtered = [];
+        $scope.localFilters = ['aname','assetTypeFilter'];
         $scope.loading = false;
         $scope.assetTypeFilter = 0;
 
@@ -474,8 +475,7 @@ assetControllers.controller("AssetListingController", ['$scope', '$route', 'asse
 
         $scope.init = function(){
             $scope.etag = requestContext.getParam("etag") || "";
-            $scope.search = {nm:""};
-            $scope.search.key = $scope.search.nm = requestContext.getParam("search") || "";
+            $scope.aname = requestContext.getParam("aname") || "";
             $scope.vw = requestContext.getParam("vw") || 't';
             $scope.offset = requestContext.getParam("o") || 0;
             $scope.size = requestContext.getParam("s") || 50;
@@ -488,10 +488,10 @@ assetControllers.controller("AssetListingController", ['$scope', '$route', 'asse
             $scope.loading = true;
             $scope.showLoading();
             //Key search and type should be separate.
-            if(checkNotNullEmpty($scope.search.key)){
+            if(checkNotNullEmpty($scope.aname)){
                 $scope.assetTypeFilter = 0;
             }
-            assetService.getAssetsByKeyword($scope.search.key, $scope.assetTypeFilter, $scope.size, $scope.offset).then(function(data){
+            assetService.getAssetsByKeyword($scope.aname, $scope.assetTypeFilter, $scope.size, $scope.offset).then(function(data){
                 $scope.setResults(data.data);
                 $scope.filtered = data.data.results;
             }).finally(function(){
@@ -553,14 +553,10 @@ assetControllers.controller("AssetListingController", ['$scope', '$route', 'asse
 
         $scope.fetch();
 
-        $scope.searchAsset = function () {
-            if($scope.search.nm != $scope.search.key) {
-                $scope.search.nm = $scope.search.key;
-            }
-        };
+        
         $scope.reset = function() {
             $scope.etag = "";
-            $scope.search = {};
+            $scope.aname = "";
             $scope.assetTypeFilter = 0;
         };
     }

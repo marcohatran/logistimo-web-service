@@ -127,18 +127,17 @@ handlingUnitControllers.controller('AddHUController', ['$scope', 'handlingUnitSe
 
 handlingUnitControllers.controller('HUListController', ['$scope', 'handlingUnitService', 'requestContext', '$location',
     function ($scope, handlingUnitService, requestContext, $location) {
-        $scope.wparams = [["search", "search.mnm"]];
+        $scope.wparams = [["huname", "huname"]];
+        $scope.localFilters = ['huname'];
         ListingController.call(this, $scope, requestContext, $location);
         $scope.init = function () {
-            $scope.search = {};
-            $scope.search.mnm = requestContext.getParam("search") || "";
-            $scope.search.key = $scope.search.mnm;
+            $scope.huname = requestContext.getParam("huname") || "";
         };
         $scope.init();
         $scope.fetch = function () {
             $scope.loading = true;
             $scope.showLoading();
-            handlingUnitService.getAll($scope.offset, $scope.size, $scope.search.mnm).then(function (data) {
+            handlingUnitService.getAll($scope.offset, $scope.size, $scope.huname).then(function (data) {
                 $scope.huList = data.data;
                 $scope.setResults(data.data);
                 $scope.noData = checkNullEmpty(data.data.results);
@@ -151,14 +150,8 @@ handlingUnitControllers.controller('HUListController', ['$scope', 'handlingUnitS
             });
         };
         $scope.fetch();
-        $scope.searchHU = function () {
-            if ($scope.search.mnm != $scope.search.key) {
-                $scope.search.mnm = $scope.search.key;
-            }
-        };
         $scope.reset = function () {
-            $scope.search = {};
-            $scope.search.key = $scope.search.mnm = "";
+            $scope.huname = "";
         };
     }
 ]);

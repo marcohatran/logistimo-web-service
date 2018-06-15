@@ -24,20 +24,17 @@
 var userControllers = angular.module('userControllers', []);
 userControllers.controller('UsersListController', ['$scope', 'userService', 'requestContext', '$location', '$window', 'exportService',
     function ($scope, userService, requestContext, $location, $window, exportService) {
-        $scope.wparams = [["search", "search.nm"],["role","urole"],["phn","mphn"],["vsn","uvsn"],["act","uactive"],
+        $scope.wparams = [["fname", "fname"],["role","urole"],["phn","uphn"],["vsn","uversion"],["act","uactive"],
             ["fm","from","", formatDate2Url],["to","to","", formatDate2Url],["nvrlogged","nvrlogged"],["utag","utag"]];
         $scope.filtered = {};
+        $scope.localFilters = ['fname','uphn','urole','userId','uactive','uversion','from','to','nvrlogged','utag'];
         $scope.userId = '';
         $scope.today = formatDate2Url(new Date());
         $scope.init = function () {
-            $scope.search = {};
-            $scope.search.nm = requestContext.getParam("search") || "";
-            $scope.search.key = $scope.search.nm;
+            $scope.fname = requestContext.getParam("fname") || "";
             $scope.urole = requestContext.getParam("role") || "";
-            $scope.mphn = requestContext.getParam("phn") || "";
-            $scope.uphn = $scope.mphn;
-            $scope.uvsn = requestContext.getParam("vsn") || "";
-            $scope.uversion=$scope.uvsn;
+            $scope.uphn = requestContext.getParam("phn") || "";
+            $scope.uversion = requestContext.getParam("vsn") || "";
             $scope.active= requestContext.getParam("act") || "";
             $scope.from = parseUrlDate(requestContext.getParam("fm")) || "";
             $scope.to = parseUrlDate(requestContext.getParam("to")) || "";
@@ -53,8 +50,8 @@ userControllers.controller('UsersListController', ['$scope', 'userService', 'req
             var filters = {};
 
             $scope.showLoading();
-            if(checkNotNullEmpty($scope.search.key)){
-                filters.nName = $scope.search.key;
+            if(checkNotNullEmpty($scope.fname)){
+                filters.nName = $scope.fname;
             }
             if(checkNotNullEmpty($scope.uphn)){
                 filters.mobilePhoneNumber = $scope.uphn;
@@ -197,16 +194,6 @@ userControllers.controller('UsersListController', ['$scope', 'userService', 'req
             }
             $window.location.href = '#/setup/users/all/sendmessage?userIds=' + $scope.selectedUsers;
         };
-        $scope.searchUser = function () {
-            if($scope.search.nm != $scope.search.key){
-                $scope.search.nm = $scope.search.key;
-            }
-        };
-        $scope.searchPhone = function () {
-            if($scope.mphn != $scope.uphn){
-                $scope.mphn = $scope.uphn;
-            }
-        };
         $scope.searchVersion=function(){
             if($scope.uvsn != $scope.uversion){
                 $scope.uvsn = $scope.uversion;
@@ -218,12 +205,10 @@ userControllers.controller('UsersListController', ['$scope', 'userService', 'req
             }
         }
         $scope.reset = function() {
-            $scope.search = {};
-            $scope.search.nm = "";
-            $scope.search.key = $scope.search.nm;
+            $scope.fname = "";
             $scope.urole="";
             $scope.uvsn="";
-            $scope.uversion=$scope.uvsn;
+            $scope.uversion="";
             $scope.uactive="";
             $scope.from="";
             $scope.to="";
