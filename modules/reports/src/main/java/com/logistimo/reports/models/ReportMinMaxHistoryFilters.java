@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -21,22 +21,20 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.reports.plugins.models;
+package com.logistimo.reports.models;
 
-import com.logistimo.reports.models.ReportDataModel;
-
-import java.util.List;
-import java.util.Map;
-
+import lombok.Builder;
 import lombok.Data;
 
 /**
- * Created by mohan on 30/03/17.
+ * Created by vani on 14/06/18.
  */
 @Data
-public class ReportChartModel {
-  public String label;
-  public List<ReportDataModel> value;
-  public List<String> metrics;
-  public Map<String,List<String>> metricsMap;
+@Builder
+public class ReportMinMaxHistoryFilters {
+  Long entityId;
+  Long materialId;
+  String from;
+  String to;
+  String periodicity;
 }

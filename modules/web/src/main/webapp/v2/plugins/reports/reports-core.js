@@ -1162,7 +1162,10 @@ function reportCoreService() {
             },
             exportData: function (json) {
                 return apiService.post(json, '/s2/api/plugins/report/export');
-            }
+            },
+            getMinMaxHistoryData: function (json) {
+                return apiService.get('/s2/api/plugins/report/min-max-history?json=' + encodeURIComponent(json));
+            },
         }
     }]);
 }

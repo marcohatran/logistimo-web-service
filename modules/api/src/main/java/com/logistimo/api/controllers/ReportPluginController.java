@@ -23,12 +23,15 @@
 
 package com.logistimo.api.controllers;
 
+import com.logistimo.api.builders.ReportBuilder;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.exception.BadRequestException;
 import com.logistimo.exports.ExportService;
 import com.logistimo.logger.XLog;
+import com.logistimo.reports.models.ReportMinMaxHistoryFilters;
 import com.logistimo.reports.plugins.internal.ExportModel;
+import com.logistimo.reports.plugins.internal.QueryHelper;
 import com.logistimo.reports.plugins.models.ReportChartModel;
 import com.logistimo.reports.plugins.models.TableResponseModel;
 import com.logistimo.reports.plugins.service.ReportPluginService;
@@ -39,6 +42,7 @@ import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.utils.LocalDateUtil;
 
+import org.apache.commons.collections.ListUtils;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -65,10 +69,13 @@ public class ReportPluginController {
 
   private static final String JSON_REPORT_TYPE = "type";
   private static final String JSON_REPORT_VIEW_TYPE = "viewtype";
+  private static final String INVALID_REQUEST = "Invalid request";
+
 
   private ReportPluginService reportPluginService;
   private ExportService exportService;
   private UsersService usersService;
+  private ReportBuilder reportBuilder;
 
   @Autowired
   private void setReportPluginService(ReportPluginService reportPluginService) {
@@ -85,6 +92,11 @@ public class ReportPluginController {
     this.usersService = usersService;
   }
 
+  @Autowired
+  private void setReportBuilder(ReportBuilder reportBuilder) {
+    this.reportBuilder = reportBuilder;
+  }
+
   @RequestMapping(value = "/", method = RequestMethod.GET)
   public
   @ResponseBody
@@ -94,12 +106,12 @@ public class ReportPluginController {
       JSONObject jsonObject = new JSONObject(json);
       if (!jsonObject.has(JSON_REPORT_TYPE)) {
         xLogger.warn("Report type is mandatory.");
-        throw new BadRequestException("Invalid request");
+        throw new BadRequestException(INVALID_REQUEST);
       }
       return reportPluginService.getReportData(SecurityUtils.getCurrentDomainId(), json);
     } catch (Exception e) {
       xLogger.severe("Error while getting the report data", e);
-      return null;
+      return ListUtils.EMPTY_LIST;
     }
   }
 
@@ -112,7 +124,7 @@ public class ReportPluginController {
       JSONObject jsonObject = new JSONObject(json);
       if (!jsonObject.has(JSON_REPORT_TYPE) || !jsonObject.has(JSON_REPORT_VIEW_TYPE)) {
         xLogger.warn("Both report type and view type is mandatory.");
-        throw new BadRequestException("Invalid request");
+        throw new BadRequestException(INVALID_REQUEST);
       }
       return reportPluginService.getReportTableData(SecurityUtils.getCurrentDomainId(), json);
     } catch (Exception e) {
@@ -155,5 +167,24 @@ public class ReportPluginController {
         + backendMessages.getString("exportstatusinfo2") + " "
         + jobId + ". "
         + backendMessages.getString("exportstatusinfo1");
+  }
+
+  @RequestMapping(value ="/min-max-history", method = RequestMethod.GET)
+  @ResponseBody
+  List<ReportChartModel> getMinMaxHistory(@RequestParam String json) {
+    xLogger.fine("Entering getMinMaxHistory");
+    try {
+      JSONObject jsonObject = new JSONObject(json);
+      if (!jsonObject.has(JSON_REPORT_TYPE)) {
+        xLogger.warn("Report type is mandatory.");
+        throw new BadRequestException(INVALID_REQUEST);
+      }
+      ReportMinMaxHistoryFilters minMaxHistoryFilters = QueryHelper.parseMinMaxHistoryFilters(jsonObject);
+      return reportBuilder.buildMinMaxHistoryReportsData(
+          reportPluginService.getMinMaxHistoryReportData(minMaxHistoryFilters), minMaxHistoryFilters);
+    } catch (Exception e) {
+      xLogger.severe("Error while getting the report data", e);
+      return ListUtils.EMPTY_LIST;
+    }
   }
 }

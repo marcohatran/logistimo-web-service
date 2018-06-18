@@ -100,6 +100,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -4056,5 +4057,42 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
       xLogger.warn("Exception while getting entity with id: {0}", entityId, e);
     }
     return Optional.empty();
+  }
+
+  public List<IInventoryMinMaxLog> fetchMinMaxLogByInterval(Long entityId, Long materialId, Date fromDate, Date toDate) throws ServiceException {
+    if (entityId == null || materialId == null || fromDate == null || toDate == null) {
+      throw new IllegalArgumentException("Invalid arguments while fetching min max log");
+    }
+    PersistenceManager pm = getPM();
+    Query query = null;
+    List<IInventoryMinMaxLog> logs = null;
+    try {
+      String sqlQuery = "SELECT * FROM INVENTORYMINMAXLOG WHERE KID = :kidParam AND MID = :midParam AND T BETWEEN :fromParam AND :toParam UNION ALL (SELECT * FROM INVENTORYMINMAXLOG WHERE KID = :kidParam AND MID = :midParam AND T < :fromParam ORDER BY T DESC LIMIT 1) ORDER BY T DESC";
+      query = pm.newQuery("javax.jdo.query.SQL", sqlQuery);
+      query.setClass(JDOUtils.getImplClass(IInventoryMinMaxLog.class));
+      Map parameters = new HashMap<>(4);
+      parameters.put("kidParam", String.valueOf(entityId));
+      parameters.put("midParam", String.valueOf(materialId));
+      SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATETIME_CSV_FORMAT);
+      parameters.put("fromParam", sdf.format(fromDate));
+      parameters.put("toParam", sdf.format(toDate));
+      logs = (List) query.executeWithMap(parameters);
+      logs = (List<IInventoryMinMaxLog>) pm.detachCopyAll(logs);
+    } catch (Exception e) {
+      xLogger.warn("Exception {0} when getting InventoryMinMaxLog for entityId {1}, materialId {2}, fromDate: {3}, toDate: {4}. Message: {5}",
+          e.getClass().getName(), entityId, materialId, fromDate, toDate, e.getMessage(), e);
+      throw new ServiceException(e);
+    } finally {
+      if (query != null) {
+        query.closeAll();
+      }
+      pm.close();
+    }
+
+    return logs;
+  }
+
+  public PersistenceManager getPM() {
+    return PMF.get().getPersistenceManager();
   }
 }

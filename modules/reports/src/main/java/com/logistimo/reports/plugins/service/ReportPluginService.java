@@ -34,10 +34,13 @@ import com.logistimo.constants.Constants;
 import com.logistimo.domains.entity.IDomain;
 import com.logistimo.domains.service.DomainsService;
 import com.logistimo.exception.BadRequestException;
+import com.logistimo.inventory.entity.IInventoryMinMaxLog;
+import com.logistimo.inventory.service.InventoryManagementService;
 import com.logistimo.logger.XLog;
 import com.logistimo.reports.ReportsConstants;
 import com.logistimo.reports.constants.ReportCompareField;
 import com.logistimo.reports.constants.ReportViewType;
+import com.logistimo.reports.models.ReportMinMaxHistoryFilters;
 import com.logistimo.reports.plugins.IExternalServiceClient;
 import com.logistimo.reports.plugins.internal.ExportModel;
 import com.logistimo.reports.plugins.internal.ExternalServiceClient;
@@ -50,6 +53,7 @@ import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ServiceException;
 import com.logistimo.utils.LocalDateUtil;
 
+import org.apache.commons.collections.ListUtils;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
@@ -88,6 +92,7 @@ public class ReportPluginService {
 
   private DomainsService domainsService;
   private AssetManagementService assetManagementService;
+  private InventoryManagementService inventoryManagementService;
 
   @Autowired
   public void setDomainsService(DomainsService domainsService) {
@@ -97,6 +102,11 @@ public class ReportPluginService {
   @Autowired
   public void setAssetManagementService(AssetManagementService assetManagementService) {
     this.assetManagementService = assetManagementService;
+  }
+
+  @Autowired
+  public void setInventoryManagementService(InventoryManagementService inventoryManagementService) {
+    this.inventoryManagementService = inventoryManagementService;
   }
 
   public List<ReportChartModel> getReportData(Long domainId, String json) {
@@ -125,7 +135,7 @@ public class ReportPluginService {
           model.filters);
     } catch (Exception e) {
       xLogger.severe("Error while getting the report data", e);
-      return null;
+      return ListUtils.EMPTY_LIST;
     }
   }
 
@@ -329,6 +339,8 @@ public class ReportPluginService {
       case BY_CUSTOMER:
         finaliseFilterByCustomer(model);
         break;
+      default:
+        break;
     }
   }
 
@@ -384,7 +396,7 @@ public class ReportPluginService {
 
   private QueryRequestModel constructQueryRequestModel(Long domainId, JSONObject jsonObject,
                                                        ReportViewType viewType)
-      throws ParseException, ServiceException {
+      throws ParseException {
     QueryRequestModel model = new QueryRequestModel();
     model.filters = QueryHelper.parseFilters(domainId, jsonObject);
     if (model.filters.containsKey(QueryHelper.TOKEN + QueryHelper.QUERY_CITY)) {
@@ -447,12 +459,13 @@ public class ReportPluginService {
 
   private void finaliseFilterByCustomer(QueryRequestModel model) {
     model.filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_LKID);
-    model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_LKID + CharacterConstants.UNDERSCORE + QueryHelper.QUERY, QueryHelper.QUERY_LKID + CharacterConstants.UNDERSCORE + QueryHelper.QUERY);
+    model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_LKID + CharacterConstants.UNDERSCORE
+            + QueryHelper.QUERY,
+        QueryHelper.QUERY_LKID + CharacterConstants.UNDERSCORE + QueryHelper.QUERY);
   }
 
   private void prepareFilters(Long domainId, ReportViewType viewType,
-                              QueryRequestModel model, Map<String, String> retainFilters)
-      throws ServiceException {
+                              QueryRequestModel model, Map<String, String> retainFilters) {
     switch (viewType) {
       case BY_MATERIAL:
         prepareFiltersByMaterial(model, retainFilters);
@@ -494,6 +507,8 @@ public class ReportPluginService {
         break;
       case BY_CUSTOMER:
         prepareFiltersByCustomer(model);
+        break;
+      default:
         break;
     }
   }
@@ -596,6 +611,26 @@ public class ReportPluginService {
         mDateTimeFormatter = DateTimeFormat.forPattern(QueryHelper.DATE_FORMAT_DAILY);
         toTime = mDateTimeFormatter.parseDateTime(endTime);
         return mDateTimeFormatter.print(toTime.minusDays(QueryHelper.DAYS_LIMIT - 1));
+    }
+  }
+
+  /**
+   * Gets a list of IInventoryMinMaxLog objects for the entity ID and material ID, from and to dates specified in the filters
+   * @param minMaxHistoryFilters
+   * @return List of IInventoryMinMaxLog objects or empty list (in case an exception occurs)
+   */
+  public List<IInventoryMinMaxLog> getMinMaxHistoryReportData(ReportMinMaxHistoryFilters minMaxHistoryFilters) {
+    if (minMaxHistoryFilters == null) {
+      throw new IllegalArgumentException("Invalid filters while getting min max history report data");
+    }
+    String domainTimezone = DomainConfig.getInstance(SecurityUtils.getCurrentDomainId()).getTimezone();
+    try {
+      Date fromDate = LocalDateUtil.parseCustom(minMaxHistoryFilters.getFrom(),QueryHelper.DATE_FORMAT_DAILY, domainTimezone);
+      Date toDate = LocalDateUtil.parseCustom(minMaxHistoryFilters.getTo(),QueryHelper.DATE_FORMAT_DAILY, domainTimezone);
+      return inventoryManagementService.fetchMinMaxLogByInterval(minMaxHistoryFilters.getEntityId(), minMaxHistoryFilters.getMaterialId(), fromDate , toDate);
+    } catch (Exception e) {
+      xLogger.severe("Error while getting min max history report data", e);
+      return ListUtils.EMPTY_LIST;
     }
   }
 }

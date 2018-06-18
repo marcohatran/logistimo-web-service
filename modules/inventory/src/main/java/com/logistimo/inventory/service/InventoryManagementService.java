@@ -521,4 +521,15 @@ public interface InventoryManagementService {
                                    boolean ignoreLkid,
                                    PersistenceManager pm) throws ServiceException;
 
+  /**
+   * Get the list of IInventoryMinMaxLog for a given entity ID, material ID, from and to date
+   * @param entityId
+   * @param materialId
+   * @param fromDate
+   * @param toDate
+   * @return
+   * @throws ServiceException
+   */
+  List<IInventoryMinMaxLog> fetchMinMaxLogByInterval(Long entityId, Long materialId, Date fromDate, Date toDate) throws ServiceException;
+
 }
