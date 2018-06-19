@@ -174,7 +174,7 @@ public class ReportBuilder {
     String previousFrom = from;
     Calendar today = new GregorianCalendar();
     today = LocalDateUtil.resetTimeFields(today);
-    while (toDate.after(fromDate) && today.getTime().after(fromDate)) {
+    while (toDate.after(fromDate) && fromDate.compareTo(today.getTime()) <= 0) {
       if (!labelByReportChartModelMap.containsKey(from)) {
         ReportChartModel previousDateReportChartModel = labelByReportChartModelMap.get(previousFrom);
         labelByReportChartModelMap.put(from, buildReportChartModel(from, previousDateReportChartModel));
