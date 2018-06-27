@@ -26,6 +26,7 @@ package com.logistimo.social.provider;
 import com.google.gson.GsonBuilder;
 
 import com.logistimo.collaboration.core.models.ContextModel;
+import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.EventSummaryConfigModel;
 import com.logistimo.domains.service.impl.DomainsServiceImpl;
 import com.logistimo.entities.service.EntitiesServiceImpl;
@@ -75,7 +76,7 @@ public class ContentProvider {
   }
 
   public String generateContent(ContentQuerySpecs query) {
-    return generateContent(query,null);
+    return generateContent(query, null);
   }
 
   public String generateContent(ContentQuerySpecs query, String lang) {
@@ -90,25 +91,24 @@ public class ContentProvider {
       userAccount = usersService.getUserAccount(user);
       userName = userAccount.getFullName();
     } catch (ObjectNotFoundException oex) {
-      log.warn("User {0} not found in like context",user);
+      log.warn("User {0} not found in like context", user);
       userName = "Unknown";
     }
     Locale locale;
-    if(StringUtils.isEmpty(lang)){
-      locale = Locale.ENGLISH;
+    if (StringUtils.isEmpty(lang)) {
+      locale = getUserLocale(userAccount.getDomainId());
     } else {
       locale = new Locale(lang);
     }
-    ContextModel eventContext = new GsonBuilder().create().fromJson(query.getContextAttribute(),ContextModel.class);
-    String
-        mainContent =
-        CollaborationMessageUtil.constructMessage(
+    ContextModel
+        eventContext =
+        new GsonBuilder().create().fromJson(query.getContextAttribute(), ContextModel.class);
+    return CollaborationMessageUtil.constructMessage(
             eventContext.getCategory() + "." + eventContext.getEventType() + ".text"
             , locale
             , new Object[]{userName,
                 getObjectText(query.getObjectId(), query.getObjectType()),
                 getDuration(eventContext, locale)});
-    return mainContent;
   }
 
   private String getObjectText(String objectId, String objectType) {
@@ -179,4 +179,11 @@ public class ContentProvider {
     return "";
   }
 
+  private Locale getUserLocale(Long userSourceDomainId) {
+    String
+        domainNotificationLang =
+        DomainConfig.getInstance(userSourceDomainId).getLangPreference();
+    return StringUtils.isEmpty(domainNotificationLang) ? Locale.ENGLISH
+        : new Locale(domainNotificationLang);
+  }
 }
