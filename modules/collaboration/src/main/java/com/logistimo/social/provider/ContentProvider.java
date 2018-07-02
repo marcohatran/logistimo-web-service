@@ -179,7 +179,7 @@ public class ContentProvider {
     return "";
   }
 
-  private Locale getUserLocale(Long userSourceDomainId) {
+  protected Locale getUserLocale(Long userSourceDomainId) {
     String
         domainNotificationLang =
         DomainConfig.getInstance(userSourceDomainId).getLangPreference();
