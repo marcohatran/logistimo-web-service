@@ -27,15 +27,18 @@ package com.logistimo.utils;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.logger.XLog;
-import com.logistimo.services.ServiceException;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
  * @author Mohan Raja
  */
 public class PropertyUtil {
+
+  private PropertyUtil() {
+
+  }
   private static final XLog xLogger = XLog.getLog(PropertyUtil.class);
 
   /**
@@ -45,14 +48,14 @@ public class PropertyUtil {
    * @param relatedObjectsStr value of config property to be parsed
    * @return a map with table name as key and field names as value.
    */
-  public static Map<String, String[]> parseProperty(String relatedObjectsStr) throws ServiceException {
+  public static Map<String, String[]> parseProperty(String relatedObjectsStr) {
     xLogger.fine("Entering parseProperty");
     if (relatedObjectsStr == null || relatedObjectsStr.isEmpty()) {
       xLogger.warn("Error in reading property: {0}", relatedObjectsStr);
       throw new InvalidServiceException("Error in reading property :" + relatedObjectsStr);
     }
     String[] relObjectArr = relatedObjectsStr.split(CharacterConstants.COMMA);
-    Map<String, String[]> map = new HashMap<>(relObjectArr.length);
+    Map<String, String[]> map = new LinkedHashMap<>(relObjectArr.length);
     for (String aRelObjectArr : relObjectArr) {
       String[] relObject = aRelObjectArr.split(CharacterConstants.COLON);
       if (relObject[1].contains(CharacterConstants.AMPERSAND)) {
