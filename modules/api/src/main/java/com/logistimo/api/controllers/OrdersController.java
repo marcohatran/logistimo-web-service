@@ -258,7 +258,7 @@ public class OrdersController {
                           @RequestParam(required = false) String transferRefId,
                           HttpServletRequest request) {
     return getOrders(null, offset, size, status, from, until, otype, tgType, tag, oty, salesRefId,
-        approval_status, purchaseRefId, transferRefId, request);
+        approval_status, purchaseRefId, transferRefId, null, request);
   }
 
   @RequestMapping("/entity/{entityId}")
@@ -278,10 +278,11 @@ public class OrdersController {
                           @RequestParam(required = false) String approval_status,
                           @RequestParam(required = false) String purchaseRefId,
                           @RequestParam(required = false) String transferRefId,
+                          @RequestParam(required = false) Long linkedKioskId,
                           HttpServletRequest request) {
     return getOrders(entityId, offset, size, status, from, until, otype, tgType, tag, oty,
         salesRefId,
-        approval_status, purchaseRefId, transferRefId, request);
+        approval_status, purchaseRefId, transferRefId, linkedKioskId, request);
   }
 
 
@@ -676,7 +677,7 @@ public class OrdersController {
   public Results getOrders(Long entityId, int offset, int size,
                            String status, String from, String until, String otype, String tgType,
                            String tag, Integer oty, String salesRefId, String approvalStatus,
-                           String purchaseRefId, String transferRefId,
+                           String purchaseRefId, String transferRefId, Long linkedKioskId,
                            HttpServletRequest request) {
     SecureUserDetails user = SecurityUtils.getUserDetails();
     Locale locale = user.getLocale();
@@ -709,7 +710,7 @@ public class OrdersController {
       }
       Results or = orderManagementService.getOrders(domainId, entityId, status, startDate, endDate,
           otype, tgType, tag, kioskIds, pageParams, oty, salesRefId, approvalStatus, purchaseRefId,
-          transferRefId);
+          transferRefId, linkedKioskId);
       return orderAPIBuilder.buildOrders(or, SecurityUtils.getDomainId());
     } catch (Exception e) {
       xLogger.severe("Error in fetching orders for entity {0} of type {1}", entityId, otype, e);

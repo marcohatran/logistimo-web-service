@@ -644,14 +644,25 @@ public class OrderManagementServiceImpl implements OrderManagementService {
       throws ServiceException {
     return getOrders(domainId, kioskId, status, since, until, otype, tagType, tag, kioskIds,
         pageParams, orderType, salesReferenceId, approvalStatus, false, purchaseReferenceId,
-        transferReferenceId);
+        transferReferenceId, null);
   }
 
   public Results getOrders(Long domainId, Long kioskId, String status, Date since, Date until,
-      String otype, String tagType, String tag, List<Long> kioskIds,
+                           String otype, String tagType, String tag, List<Long> kioskIds,
+                           PageParams pageParams, Integer orderType, String salesReferenceId,
+                           String approvalStatus,
+                           String purchaseReferenceId, String transferReferenceId, Long linkedKioskId)
+      throws ServiceException {
+    return getOrders(domainId, kioskId, status, since, until, otype, tagType, tag, kioskIds,
+        pageParams, orderType, salesReferenceId, approvalStatus, false, purchaseReferenceId,
+        transferReferenceId, linkedKioskId);
+  }
+
+  public Results getOrders(Long domainId, Long kioskId, String status, Date since, Date until,
+                           String otype, String tagType, String tag, List<Long> kioskIds,
                            PageParams pageParams, Integer orderType, String salesReferenceId,
                            String approvalStatus, boolean withDemand, String purchaseReferenceId,
-                           String transferReferenceId) {
+                           String transferReferenceId, Long linkedKioskId) {
     OrderFilters filters = new OrderFilters().setDomainId(domainId)
         .setKioskId(kioskId)
         .setStatus(status)
@@ -666,7 +677,8 @@ public class OrderManagementServiceImpl implements OrderManagementService {
         .setApprovalStatus(approvalStatus)
         .setWithDemand(withDemand)
         .setPurchaseReferenceId(purchaseReferenceId)
-        .setTransferReferenceId(transferReferenceId);
+        .setTransferReferenceId(transferReferenceId)
+        .setLinkedKioskId(linkedKioskId);
     return getOrders(filters, pageParams);
   }
 
