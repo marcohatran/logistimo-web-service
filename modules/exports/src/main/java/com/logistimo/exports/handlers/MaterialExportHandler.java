@@ -75,7 +75,6 @@ public class MaterialExportHandler implements IExportHandler {
         .append(bundle.getString("material.msrp")).append(CharacterConstants.COMMA)
         .append(bundle.getString("material.retailerprice")).append(CharacterConstants.COMMA)
         .append(bundle.getString("currency")).append(CharacterConstants.COMMA)
-        .append(jsBundle.getString("binaryvalued")).append(CharacterConstants.COMMA)
         .append(bundle.getString("material.seasonal")).append(CharacterConstants.COMMA)
         .append(bundle.getString("batch.enable")).append(CharacterConstants.COMMA)
         .append(bundle.getString("temperature.sensitive")).append(CharacterConstants.COMMA)
