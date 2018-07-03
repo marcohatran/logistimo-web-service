@@ -32,6 +32,7 @@ import com.logistimo.reports.models.ReportMinMaxHistoryFilters;
 import com.logistimo.services.ServiceException;
 
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,6 +43,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -60,21 +62,14 @@ public class ReportPluginServiceTest {
   @InjectMocks
   ReportPluginService reportPluginService;
 
+  private static final String UTC = "UTC";
+  private static final String EST = "EST";
+  private static final String IST = "Asia/Kolkata";
+
   @Before
   public void setup() {
     mockStatic(SecurityUtils.class);
     mockStatic(DomainConfig.class);
-    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(1l);
-    PowerMockito.when(DomainConfig.getInstance(1l))
-        .thenReturn(getDomainConfig());
-    try {
-      when(inventoryManagementService
-          .fetchMinMaxLogByInterval(1l, 1l, new DateTime(2018,5,1,0,0,0,0).toDate(),
-              new DateTime(2018,5,8,0,0,0).toDate()))
-          .thenReturn(getInventoryMinMaxLogs());
-    } catch(ServiceException e) {
-      // ignored
-    }
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -83,14 +78,84 @@ public class ReportPluginServiceTest {
   }
 
   @Test
-  public void testGetMinMaxHistoryReportData() throws Exception {
+  public void testGetMinMaxHistoryReportDataWithDomainTimeUTC() throws Exception {
+    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(1l);
+    PowerMockito.when(DomainConfig.getInstance(1l))
+        .thenReturn(getDomainConfigWithUTCTimezone());
+    try {
+      Date fromDate = new DateTime(2018,5,1,0,0,0,
+          DateTimeZone.forID(UTC)).toDate();
+      Date toDate = new DateTime(2018,5,8,0,0,0,
+          DateTimeZone.forID(UTC)).toDate();
+      when(inventoryManagementService
+          .fetchMinMaxLogByInterval(1l, 1l, fromDate,
+              toDate))
+          .thenReturn(getInventoryMinMaxLogs());
+    } catch(ServiceException e) {
+      // ignored
+    }
     ReportMinMaxHistoryFilters minMaxHistoryFilters = ReportMinMaxHistoryFilters.builder().from("2018-05-1").to("2018-05-8").entityId(1l).materialId(1l).build();
     assertEquals(1, reportPluginService.getMinMaxHistoryReportData(minMaxHistoryFilters).size());
   }
 
-  private DomainConfig getDomainConfig() {
+  @Test
+  public void testGetMinMaxHistoryReportDataWithDomainTimeEST() throws Exception {
+    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(2l);
+    PowerMockito.when(DomainConfig.getInstance(2l))
+        .thenReturn(getDomainConfigWithESTTimezone());
+
+    try {
+      Date fromDate = new DateTime(2018,5,1,0,0,0,
+          DateTimeZone.forID(EST)).toDate();
+      Date toDate = new DateTime(2018,5,8,0,0,0,
+          DateTimeZone.forID(EST)).toDate();
+      when(inventoryManagementService
+          .fetchMinMaxLogByInterval(1l, 1l, fromDate,
+              toDate))
+          .thenReturn(getInventoryMinMaxLogs());
+    } catch(ServiceException e) {
+      // ignored
+    }
+    ReportMinMaxHistoryFilters minMaxHistoryFilters = ReportMinMaxHistoryFilters.builder().from("2018-05-1").to("2018-05-8").entityId(1l).materialId(1l).build();
+    assertEquals(1, reportPluginService.getMinMaxHistoryReportData(minMaxHistoryFilters).size());
+  }
+
+  @Test
+  public void testGetMinMaxHistoryReportDataWithDomainTimeIST() throws Exception {
+    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(3l);
+    PowerMockito.when(DomainConfig.getInstance(3l))
+        .thenReturn(getDomainConfigWithISTTimezone());
+    try {
+      Date fromDate = new DateTime(2018,5,1,0,0,0,
+          DateTimeZone.forID(IST)).toDate();
+      Date toDate = new DateTime(2018,5,8,0,0,0,
+          DateTimeZone.forID(IST)).toDate();
+      when(inventoryManagementService
+          .fetchMinMaxLogByInterval(1l, 1l, fromDate,
+              toDate))
+          .thenReturn(getInventoryMinMaxLogs());
+    } catch(ServiceException e) {
+      // ignored
+    }
+    ReportMinMaxHistoryFilters minMaxHistoryFilters = ReportMinMaxHistoryFilters.builder().from("2018-05-1").to("2018-05-8").entityId(1l).materialId(1l).build();
+    assertEquals(1, reportPluginService.getMinMaxHistoryReportData(minMaxHistoryFilters).size());
+  }
+
+  private DomainConfig getDomainConfigWithUTCTimezone() {
     DomainConfig domainConfig = new DomainConfig();
-    domainConfig.setTimezone("Asia/Kolkata");
+    domainConfig.setTimezone(UTC);
+    return domainConfig;
+  }
+
+  private DomainConfig getDomainConfigWithESTTimezone() {
+    DomainConfig domainConfig = new DomainConfig();
+    domainConfig.setTimezone(EST);
+    return domainConfig;
+  }
+
+  private DomainConfig getDomainConfigWithISTTimezone() {
+    DomainConfig domainConfig = new DomainConfig();
+    domainConfig.setTimezone(IST);
     return domainConfig;
   }
 

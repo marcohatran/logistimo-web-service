@@ -38,6 +38,7 @@ import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
+import org.joda.time.DateTimeZone;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -50,6 +51,7 @@ import java.util.GregorianCalendar;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.stream.Collectors;
 
 /**
@@ -90,20 +92,32 @@ public class ReportBuilder {
    * @throws ParseException
    */
   protected String getMinMaxHistoryReportLabel(Date minMaxLogCreatedTime, String periodicity, String from) throws ParseException{
-    DateTime createdTime = new DateTime(minMaxLogCreatedTime);
-    SimpleDateFormat labelDateFormat = new SimpleDateFormat(QueryHelper.DATE_FORMAT_DAILY);
+    String domainTimezone = DomainConfig
+        .getInstance(SecurityUtils.getCurrentDomainId()).getTimezone();
+    DateTime createdTime = new DateTime(minMaxLogCreatedTime).toDateTime(
+        DateTimeZone.forTimeZone(TimeZone.getTimeZone(domainTimezone)));
+    SimpleDateFormat labelDateFormat = getLabelDateFormat(QueryHelper.DATE_FORMAT_DAILY);
     Date fromDate = labelDateFormat.parse(from);
     if (minMaxLogCreatedTime.before(fromDate)) {
-      createdTime =  new DateTime(fromDate);
-    } else if (StringUtils.equals(periodicity, QueryHelper.MONTH)) {
+      createdTime =  new DateTime(fromDate).toDateTime(
+          DateTimeZone.forTimeZone(TimeZone.getTimeZone(domainTimezone)));
+    }
+    if (StringUtils.equals(periodicity, QueryHelper.MONTH)) {
       createdTime = createdTime.withDayOfMonth(1);
     } else if (StringUtils.equals(periodicity, QueryHelper.WEEK)) {
       createdTime = createdTime.withDayOfWeek(DateTimeConstants.MONDAY);
     }
-    String domainTimezone = DomainConfig
-        .getInstance(SecurityUtils.getCurrentDomainId()).getTimezone();
-    return LocalDateUtil.formatCustom(createdTime.toDate(), QueryHelper.DATE_FORMAT_DAILY,
-        domainTimezone);
+    labelDateFormat.setTimeZone(TimeZone.getTimeZone(domainTimezone));
+    return (labelDateFormat.format(createdTime.toDate()));
+  }
+
+  /**
+   * Returns a SimpleDateFormat object for the specified date format
+   * @param dateFormat
+   * @return
+   */
+  protected SimpleDateFormat getLabelDateFormat(String dateFormat) {
+    return new SimpleDateFormat(dateFormat);
   }
 
   /**

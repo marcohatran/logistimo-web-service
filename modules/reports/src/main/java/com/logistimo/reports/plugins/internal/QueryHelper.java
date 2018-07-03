@@ -367,6 +367,7 @@ public class QueryHelper {
         break;
       case DAY:
         date = date.plusDays(1);
+        break;
       default:
         break;
     }

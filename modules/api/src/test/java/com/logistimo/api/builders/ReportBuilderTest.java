@@ -33,6 +33,7 @@ import com.logistimo.reports.plugins.internal.QueryHelper;
 import com.logistimo.reports.plugins.models.ReportChartModel;
 
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,361 +43,447 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.math.BigDecimal;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
+import static org.powermock.api.mockito.PowerMockito.doReturn;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.spy;
 
 /**
- * Created by vani on 05/06/18.
+ * Created by vani on 29/06/18.
  */
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({SecurityUtils.class, DomainConfig.class})
 public class ReportBuilderTest {
-  ReportBuilder reportBuilder = new ReportBuilder();
+  private static final String EMPTY = "";
+  private static final String ZERO = "0";
+  private static final String HUNDRED = "100";
+  private static final String THOUSAND = "1000";
+  private static final String FIFTY = "50";
+  private static final String FIVE_HUNDRED = "500";
+  private static final String TWENTY_FIVE = "25";
+  private static final String TWO_HUNDRED_AND_FIFTY = "250";
+  private static final String FIFTEEN = "15";
+  private static final String ONE_HUNDRED_AND_FIFTY = "150";
+
+  private static final String UTC = "UTC";
+  private static final String EST = "EST";
+  private static final String IST = "Asia/Kolkata";
+
+  private SimpleDateFormat simpleDateFormat = new SimpleDateFormat(QueryHelper.DATE_FORMAT_DAILY);
+  private ReportBuilder reportBuilder = spy(new ReportBuilder());
 
   @Before
   public void setup() {
     mockStatic(SecurityUtils.class);
     mockStatic(DomainConfig.class);
+    simpleDateFormat.setTimeZone(TimeZone.getTimeZone(UTC));
+    doReturn(simpleDateFormat).when(reportBuilder).getLabelDateFormat(QueryHelper.DATE_FORMAT_DAILY);
+  }
+
+  @Test
+  public void testGetMinMaxHistoryReportLabelWithMonthlyPeriodicityWithMinMaxLogCreatedTimeLessThanFromDateWithDomainTimeUTC() throws ParseException {
     PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(1l);
     PowerMockito.when(DomainConfig.getInstance(1l))
-        .thenReturn(getDomainConfig());
-  }
-
-  @Test
-  public void testGetMinMaxHistoryReportLabelWithMonthlyPeriodicity() throws ParseException {
-    String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,5,20,0,0,0).toDate(), QueryHelper.MONTH, "2018-01-01");
+        .thenReturn(getDomainConfigWithUTCTimezone());
+    String actualResult = reportBuilder.getMinMaxHistoryReportLabel(
+        new DateTime(2018,4,30,1,0,0,DateTimeZone.forID(UTC)).toDate(), QueryHelper.MONTH,
+        "2018-05-01");
     assertEquals("2018-05-01", actualResult);
   }
 
   @Test
-  public void testGetMinMaxHistoryReportLabelWithWeeklyPeriodicity() throws ParseException {
-    String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,5,31,0,0,0).toDate(), QueryHelper.WEEK, "2018-01-01");
-    assertEquals("2018-05-28", actualResult);
+  public void testGetMinMaxHistoryReportLabelWithMonthlyPeriodicityWithMinMaxLogCreatedTimeLessThanFromDateWithDomainTimeEST() throws ParseException {
+    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(2l);
+    PowerMockito.when(DomainConfig.getInstance(2l))
+        .thenReturn(getDomainConfigWithESTTimezone());
+    String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,4,30,1,0,0,DateTimeZone.forID(UTC)).toDate(), QueryHelper.MONTH, "2018-05-01");
+    assertEquals("2018-04-01", actualResult);
   }
 
-  @Test (expected = ParseException.class)
-  public void testGetMinMaxHistoryReportLabelWithMonthlyPeriodicityAndInvalidFromDateFormat() throws ParseException{
-    String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,5,20,0,0,0).toDate(), QueryHelper.MONTH, "2018-01");
+  @Test
+  public void testGetMinMaxHistoryReportLabelWithMonthlyPeriodicityWithMinMaxLogCreatedTimeLessThanFromDateWithDomainTimeIST() throws ParseException {
+    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(3l);
+    PowerMockito.when(DomainConfig.getInstance(3l))
+        .thenReturn(getDomainConfigWithISTTimezone());
+    String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,4,30,23,0,0, DateTimeZone.forID(UTC)).toDate(), QueryHelper.MONTH, "2018-05-01");
     assertEquals("2018-05-01", actualResult);
   }
 
   @Test
-  public void testGetMinMaxHistoryReportLabelWithMonthlyPeriodicityAndCreatedTimeLessThanFromTime() throws ParseException{
-    String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2017,12,31,0,0,0).toDate(), QueryHelper.MONTH, "2018-01-01");
-    assertEquals("2018-01-01", actualResult);
+  public void testGetMinMaxHistoryReportLabelWithWeeklyPeriodicityWithMinMaxLogCreatedTimeLessThanFromDateWithDomainTimeUTC() throws ParseException {
+    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(1l);
+    PowerMockito.when(DomainConfig.getInstance(1l))
+        .thenReturn(getDomainConfigWithUTCTimezone());
+    String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,4,30,1,0,0,DateTimeZone.forID(UTC)).toDate(), QueryHelper.WEEK, "2018-05-07");
+    assertEquals("2018-05-07", actualResult);
   }
 
   @Test
-  public void testGetMinMaxHistoryReportLabelWithWeeklyPeriodicityAndCreatedTimeLessThanFromTime() throws ParseException{
-    String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2017,12,31,0,0,0).toDate(), QueryHelper.WEEK, "2018-01-01");
-    assertEquals("2018-01-01", actualResult);
+  public void testGetMinMaxHistoryReportLabelWithWeeklyPeriodicityWithMinMaxLogCreatedTimeLessThanFromDateDomainTimeEST() throws ParseException {
+    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(2l);
+    PowerMockito.when(DomainConfig.getInstance(2l))
+        .thenReturn(getDomainConfigWithESTTimezone());
+    String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,4,30,1,0,0,DateTimeZone.forID(UTC)).toDate(), QueryHelper.WEEK, "2018-05-07");
+    assertEquals("2018-04-30", actualResult);
+  }
+
+  @Test
+  public void testGetMinMaxHistoryReportLabelWithWeeklyPeriodicityWithMinMaxLogCreatedTimeLessThanFromDateWithDomainTimeIST() throws ParseException {
+    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(3l);
+    PowerMockito.when(DomainConfig.getInstance(3l))
+        .thenReturn(getDomainConfigWithISTTimezone());
+    String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,4,30,23,0,0,DateTimeZone.forID(UTC)).toDate(), QueryHelper.WEEK, "2018-05-07");
+    assertEquals("2018-05-07", actualResult);
+  }
+
+  @Test
+  public void testGetMinMaxHistoryReportLabelWithDailyPeriodicityWithCreatedTimeLessThanFromDateWithDomainTimeUTC() throws ParseException {
+    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(1l);
+    PowerMockito.when(DomainConfig.getInstance(1l))
+        .thenReturn(getDomainConfigWithUTCTimezone());
+    String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,5,6,1,0,0,DateTimeZone.forID(UTC)).toDate(), QueryHelper.DAY, "2018-05-24");
+    assertEquals("2018-05-24", actualResult);
+  }
+
+  @Test
+  public void testGetMinMaxHistoryReportLabelWithDailyPeriodicityWithCreatedTimeLessThanFromDateWithDomainTimeEST() throws ParseException {
+    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(2l);
+    PowerMockito.when(DomainConfig.getInstance(2l))
+        .thenReturn(getDomainConfigWithESTTimezone());
+    String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,5,6,1,0,0,DateTimeZone.forID(UTC)).toDate(), QueryHelper.DAY, "2018-05-24");
+    assertEquals("2018-05-23", actualResult);
+  }
+
+  @Test
+  public void testGetMinMaxHistoryReportLabelWithDailyPeriodicityWithCreatedTimeLessThanFromDateWithDomainTimeIST() throws ParseException {
+    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(3l);
+    PowerMockito.when(DomainConfig.getInstance(3l))
+        .thenReturn(getDomainConfigWithISTTimezone());
+    String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,5,6,23,0,0,DateTimeZone.forID(UTC)).toDate(), QueryHelper.DAY, "2018-05-24");
+    assertEquals("2018-05-24", actualResult);
   }
 
   @Test
   public void testGetMinMaxHistoryReportValuesWithNullMinMax() {
     List<ReportDataModel> actualResult = reportBuilder.getMinMaxHistoryReportValues(null,null);
-    assertEquals(3,actualResult.size());
-    assertEquals("",actualResult.get(0).value);
-    assertEquals("0",actualResult.get(1).value);
-    assertEquals("0",actualResult.get(2).value);
+    assertEquals(getReportDataModels(getListWithMinZeroMaxZero()),actualResult);
   }
 
   @Test
   public void testGetMinMaxHistoryReportValuesWithValidMinMax() {
-    List<ReportDataModel> reportDataModels = reportBuilder.getMinMaxHistoryReportValues(
-        BigDecimal.ONE, BigDecimal.TEN);
-    assertEquals(3,reportDataModels.size());
-    assertEquals("",reportDataModels.get(0).value);
-    assertEquals("1",reportDataModels.get(1).value);
-    assertEquals("10",reportDataModels.get(2).value);
+    List<ReportDataModel> actualResult = reportBuilder.getMinMaxHistoryReportValues(
+        new BigDecimal(HUNDRED), new BigDecimal(THOUSAND));
+    assertEquals(getReportDataModels(getListWithMinHundredMaxThousand()),actualResult);
   }
 
   @Test
-  public void testBuildMinMaxHistoryReportsDataForMonthlyPeriodicityWithUniqueCreatedDateList() throws ParseException{
-    List<IInventoryMinMaxLog> inventoryMinMaxLogs = getInventoryMinMaxLogsWithUniqueCreatedDate();
-    ReportMinMaxHistoryFilters reportMinMaxHistoryFilters = getReportMinMaxHistoryFiltersWithMonthlyPeriodicity();
+  public void testGetMinMaxHistoryReportLabelWithMonthlyPeriodicityWithDomainTimeUTC() throws ParseException {
+    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(1l);
+    PowerMockito.when(DomainConfig.getInstance(1l))
+        .thenReturn(getDomainConfigWithUTCTimezone());
+    String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,5,1,1,0,0,DateTimeZone.forID(UTC)).toDate(), QueryHelper.MONTH, "2018-01-01");
+    assertEquals("2018-05-01", actualResult);
+  }
+
+  @Test
+  public void testGetMinMaxHistoryReportLabelWithMonthlyPeriodicityWithDomainTimeEST() throws ParseException {
+    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(2l);
+    PowerMockito.when(DomainConfig.getInstance(2l))
+        .thenReturn(getDomainConfigWithESTTimezone());
+    String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,5,1,1,0,0,DateTimeZone.forID(UTC)).toDate(), QueryHelper.MONTH, "2018-01-01");
+    assertEquals("2018-04-01", actualResult);
+  }
+
+  @Test
+  public void testGetMinMaxHistoryReportLabelWithMonthlyPeriodicityWithDomainTimeIST() throws ParseException {
+    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(3l);
+    PowerMockito.when(DomainConfig.getInstance(3l))
+        .thenReturn(getDomainConfigWithISTTimezone());
+    String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,5,31,23,0,0,DateTimeZone.forID(UTC)).toDate(), QueryHelper.MONTH, "2018-01-01");
+    assertEquals("2018-06-01", actualResult);
+  }
+
+  @Test
+  public void testGetMinMaxHistoryReportLabelWithWeeklyPeriodicityWithDomainTimeUTC() throws ParseException {
+    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(1l);
+    PowerMockito.when(DomainConfig.getInstance(1l))
+        .thenReturn(getDomainConfigWithUTCTimezone());
+    String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,5,6,1,0,0,DateTimeZone.forID(UTC)).toDate(), QueryHelper.WEEK, "2018-01-01");
+    assertEquals("2018-04-30", actualResult);
+  }
+
+  @Test
+  public void testGetMinMaxHistoryReportLabelWithWeeklyPeriodicityWithDomainTimeEST() throws ParseException {
+    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(2l);
+    PowerMockito.when(DomainConfig.getInstance(2l))
+        .thenReturn(getDomainConfigWithESTTimezone());
+    String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,5,7,1,0,0,DateTimeZone.forID(UTC)).toDate(), QueryHelper.WEEK, "2018-01-01");
+    assertEquals("2018-04-30", actualResult);
+  }
+
+  @Test
+  public void testGetMinMaxHistoryReportLabelWithWeeklyPeriodicityWithDomainTimeIST() throws ParseException {
+    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(3l);
+    PowerMockito.when(DomainConfig.getInstance(3l))
+        .thenReturn(getDomainConfigWithISTTimezone());
+    String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,5,6,23,0,0,DateTimeZone.forID(UTC)).toDate(), QueryHelper.WEEK, "2018-01-01");
+    assertEquals("2018-05-07", actualResult);
+  }
+
+  @Test
+  public void testGetMinMaxHistoryReportLabelWithDailyPeriodicityWithDomainTimeUTC() throws ParseException {
+    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(1l);
+    PowerMockito.when(DomainConfig.getInstance(1l))
+        .thenReturn(getDomainConfigWithUTCTimezone());
+    String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,5,6,1,0,0,DateTimeZone.forID(UTC)).toDate(), QueryHelper.DAY, "2018-05-01");
+    assertEquals("2018-05-06", actualResult);
+  }
+
+  @Test
+  public void testGetMinMaxHistoryReportLabelWithDailyPeriodicityWithDomainTimeEST() throws ParseException {
+    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(2l);
+    PowerMockito.when(DomainConfig.getInstance(2l))
+        .thenReturn(getDomainConfigWithESTTimezone());
+    String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,5,6,1,0,0,DateTimeZone.forID(UTC)).toDate(), QueryHelper.DAY, "2018-05-01");
+    assertEquals("2018-05-05", actualResult);
+  }
+
+  @Test
+  public void testGetMinMaxHistoryReportLabelWithDailyPeriodicityWithDomainTimeIST() throws ParseException {
+    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(3l);
+    PowerMockito.when(DomainConfig.getInstance(3l))
+        .thenReturn(getDomainConfigWithISTTimezone());
+    String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,5,6,23,0,0,DateTimeZone.forID(UTC)).toDate(), QueryHelper.DAY, "2018-05-01");
+    assertEquals("2018-05-07", actualResult);
+  }
+
+
+  @Test
+  public void testFillMinMaxHistoryChartDataWithNullInputs() throws ParseException{
+    reportBuilder.fillMinMaxHistoryChartData(null,null);
+  }
+
+  @Test
+  public void testBuildMinMaxHistoryReportsDataForMonthlyPeriodicityWithDomainTimeUTC() throws
+      ParseException {
+    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(1l);
+    PowerMockito.when(DomainConfig.getInstance(1l))
+        .thenReturn(getDomainConfigWithUTCTimezone());
+    List<IInventoryMinMaxLog> inventoryMinMaxLogs = getInventoryMinMaxLogsForMonthlyPeriodicity();
+    ReportMinMaxHistoryFilters
+        reportMinMaxHistoryFilters = getReportMinMaxHistoryFiltersWithMonthlyPeriodicity();
     List<ReportChartModel> actualResult = reportBuilder.buildMinMaxHistoryReportsData(inventoryMinMaxLogs, reportMinMaxHistoryFilters);
     assertEquals(6, actualResult.size());
-    assertEquals("2018-05-01", actualResult.get(0).getLabel());
-    assertEquals("",actualResult.get(0).value.get(0).value);
-    assertEquals("100",actualResult.get(0).value.get(1).value);
-    assertEquals("1000",actualResult.get(0).value.get(2).value);
-
-    assertEquals("2018-04-01", actualResult.get(1).getLabel());
-    assertEquals("",actualResult.get(1).value.get(0).value);
-    assertEquals("50",actualResult.get(1).value.get(1).value);
-    assertEquals("500",actualResult.get(1).value.get(2).value);
-
-    assertEquals("2018-03-01", actualResult.get(2).getLabel());
-    assertEquals("",actualResult.get(2).value.get(0).value);
-    assertEquals("25",actualResult.get(2).value.get(1).value);
-    assertEquals("250",actualResult.get(2).value.get(2).value);
-
-    assertEquals("2018-02-01", actualResult.get(3).getLabel());
-    assertEquals("",actualResult.get(3).value.get(0).value);
-    assertEquals("15",actualResult.get(3).value.get(1).value);
-    assertEquals("150",actualResult.get(3).value.get(2).value);
-
-    assertEquals("2018-01-01", actualResult.get(4).getLabel());
-    assertEquals("",actualResult.get(4).value.get(0).value);
-    assertEquals("0",actualResult.get(4).value.get(1).value);
-    assertEquals("0",actualResult.get(4).value.get(2).value);
-
-    assertEquals("2017-12-01", actualResult.get(5).getLabel());
-    assertEquals("",actualResult.get(5).value.get(0).value);
-    assertEquals("",actualResult.get(5).value.get(1).value);
-    assertEquals("",actualResult.get(5).value.get(2).value);
+    assertEquals(getReportChartModel("2018-05-01", getListWithMinHundredMaxThousand()), actualResult.get(0));
+    assertEquals(getReportChartModel("2018-04-01", getListWithMinTwentyFiveMaxTwoHundredAndFifty()), actualResult.get(1));
+    assertEquals(getReportChartModel("2018-01-01", getListWithMinZeroMaxZero()), actualResult.get(2));
+    assertEquals(getReportChartModel("2017-12-01", getListWithMinEmptyMaxEmpty()), actualResult.get(3));
+    assertEquals(getReportChartModel("2018-02-01", getListWithMinZeroMaxZero()), actualResult.get(4));
+    assertEquals(getReportChartModel("2018-03-01", getListWithMinZeroMaxZero()), actualResult.get(5));
   }
 
   @Test
-  public void testBuildMinMaxHistoryReportsDataForMonthlyPeriodicityWithNonUniqueCreatedDateList() throws ParseException{
-    List<IInventoryMinMaxLog> inventoryMinMaxLogs = getInventoryMinMaxLogsWithNonUniqueCreatedDate();
-    ReportMinMaxHistoryFilters reportMinMaxHistoryFilters = getReportMinMaxHistoryFiltersWithMonthlyPeriodicity();
+  public void testBuildMinMaxHistoryReportsDataForMonthlyPeriodicityWithDomainTimeEST() throws
+      ParseException {
+    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(2l);
+    PowerMockito.when(DomainConfig.getInstance(2l))
+        .thenReturn(getDomainConfigWithESTTimezone());
+    List<IInventoryMinMaxLog> inventoryMinMaxLogs = getInventoryMinMaxLogsForMonthlyPeriodicity();
+    ReportMinMaxHistoryFilters
+        reportMinMaxHistoryFilters = getReportMinMaxHistoryFiltersWithMonthlyPeriodicity();
     List<ReportChartModel> actualResult = reportBuilder.buildMinMaxHistoryReportsData(inventoryMinMaxLogs, reportMinMaxHistoryFilters);
     assertEquals(6, actualResult.size());
-    assertEquals("2018-05-01", actualResult.get(0).getLabel());
-    assertEquals("",actualResult.get(0).value.get(0).value);
-    assertEquals("100",actualResult.get(0).value.get(1).value);
-    assertEquals("1000",actualResult.get(0).value.get(2).value);
-
-    assertEquals("2018-04-01", actualResult.get(1).getLabel());
-    assertEquals("",actualResult.get(1).value.get(0).value);
-    assertEquals("25",actualResult.get(1).value.get(1).value);
-    assertEquals("250",actualResult.get(1).value.get(2).value);
-
-    assertEquals("2018-01-01", actualResult.get(2).getLabel());
-    assertEquals("",actualResult.get(2).value.get(0).value);
-    assertEquals("0",actualResult.get(2).value.get(1).value);
-    assertEquals("0",actualResult.get(2).value.get(2).value);
-
-    assertEquals("2017-12-01", actualResult.get(3).getLabel());
-    assertEquals("",actualResult.get(3).value.get(0).value);
-    assertEquals("",actualResult.get(3).value.get(1).value);
-    assertEquals("",actualResult.get(3).value.get(2).value);
-
-    assertEquals("2018-02-01", actualResult.get(4).getLabel());
-    assertEquals("",actualResult.get(4).value.get(0).value);
-    assertEquals("0",actualResult.get(4).value.get(1).value);
-    assertEquals("0",actualResult.get(4).value.get(2).value);
-
-    assertEquals("2018-03-01", actualResult.get(5).getLabel());
-    assertEquals("",actualResult.get(5).value.get(0).value);
-    assertEquals("0",actualResult.get(5).value.get(1).value);
-    assertEquals("0",actualResult.get(5).value.get(2).value);
-
+    assertEquals(getReportChartModel("2018-05-01", getListWithMinHundredMaxThousand()), actualResult.get(0));
+    assertEquals(getReportChartModel("2018-04-01", getListWithMinTwentyFiveMaxTwoHundredAndFifty()), actualResult.get(1));
+    assertEquals(getReportChartModel("2017-12-01", getListWithMinZeroMaxZero()), actualResult.get(2));
+    assertEquals(getReportChartModel("2018-01-01", getListWithMinZeroMaxZero()), actualResult.get(3));
+    assertEquals(getReportChartModel("2018-02-01", getListWithMinZeroMaxZero()), actualResult.get(4));
+    assertEquals(getReportChartModel("2018-03-01", getListWithMinZeroMaxZero()), actualResult.get(5));
   }
 
   @Test
-  public void testBuildMinMaxHistoryReportsDataForWeeklyPeriodicityWithUniqueCreatedDateList() throws ParseException{
-    List<IInventoryMinMaxLog> inventoryMinMaxLogs = getInventoryMinMaxLogsWithUniqueCreatedDateForWeeklyPeriodicity();
-    ReportMinMaxHistoryFilters reportMinMaxHistoryFilters = getReportMinMaxHistoryFiltersWithWeeklyPeriodicity();
+  public void testBuildMinMaxHistoryReportsDataForMonthlyPeriodicityWithDomainTimeIST() throws
+      ParseException {
+    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(3l);
+    PowerMockito.when(DomainConfig.getInstance(3l))
+        .thenReturn(getDomainConfigWithISTTimezone());
+    List<IInventoryMinMaxLog> inventoryMinMaxLogs = getInventoryMinMaxLogsForMonthlyPeriodicity();
+    ReportMinMaxHistoryFilters
+        reportMinMaxHistoryFilters = getReportMinMaxHistoryFiltersWithMonthlyPeriodicity();
+    List<ReportChartModel> actualResult = reportBuilder.buildMinMaxHistoryReportsData(inventoryMinMaxLogs, reportMinMaxHistoryFilters);
+    assertEquals(7, actualResult.size());
+    assertEquals(getReportChartModel("2018-06-01", getListWithMinHundredMaxThousand()), actualResult.get(0));
+    assertEquals(getReportChartModel("2018-05-01", getListWithMinFiftyMaxFiveHundred()), actualResult.get(1));
+    assertEquals(getReportChartModel("2018-04-01", getListWithMinFifteenMaxOneHundredAndFifty()), actualResult.get(2));
+    assertEquals(getReportChartModel("2018-01-01", getListWithMinZeroMaxZero()), actualResult.get(3));
+    assertEquals(getReportChartModel("2017-12-01", getListWithMinEmptyMaxEmpty()), actualResult.get(4));
+    assertEquals(getReportChartModel("2018-02-01", getListWithMinZeroMaxZero()), actualResult.get(5));
+    assertEquals(getReportChartModel("2018-03-01", getListWithMinZeroMaxZero()), actualResult.get(6));
+  }
+
+  @Test
+  public void testBuildMinMaxHistoryReportsDataForWeeklyPeriodicityWithDomainTimeUTC() throws
+      ParseException {
+    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(1l);
+    PowerMockito.when(DomainConfig.getInstance(1l))
+        .thenReturn(getDomainConfigWithUTCTimezone());
+    List<IInventoryMinMaxLog> inventoryMinMaxLogs = getInventoryMinMaxLogsForWeeklyPeriodicity();
+    ReportMinMaxHistoryFilters
+        reportMinMaxHistoryFilters = getReportMinMaxHistoryFiltersWithWeeklyPeriodicity();
     List<ReportChartModel> actualResult = reportBuilder.buildMinMaxHistoryReportsData(inventoryMinMaxLogs, reportMinMaxHistoryFilters);
     assertEquals(6, actualResult.size());
-    assertEquals("2018-04-30", actualResult.get(0).getLabel());
-    assertEquals("",actualResult.get(0).value.get(0).value);
-    assertEquals("100",actualResult.get(0).value.get(1).value);
-    assertEquals("1000",actualResult.get(0).value.get(2).value);
-
-    assertEquals("2018-04-02", actualResult.get(1).getLabel());
-    assertEquals("",actualResult.get(1).value.get(0).value);
-    assertEquals("50",actualResult.get(1).value.get(1).value);
-    assertEquals("500",actualResult.get(1).value.get(2).value);
-
-    assertEquals("2018-04-09", actualResult.get(2).getLabel());
-    assertEquals("",actualResult.get(2).value.get(0).value);
-    assertEquals("50",actualResult.get(2).value.get(1).value);
-    assertEquals("500",actualResult.get(2).value.get(2).value);
-
-    assertEquals("2018-04-16", actualResult.get(3).getLabel());
-    assertEquals("",actualResult.get(3).value.get(0).value);
-    assertEquals("50",actualResult.get(3).value.get(1).value);
-    assertEquals("500",actualResult.get(3).value.get(2).value);
-
-    assertEquals("2018-04-23", actualResult.get(4).getLabel());
-    assertEquals("",actualResult.get(4).value.get(0).value);
-    assertEquals("50",actualResult.get(4).value.get(1).value);
-    assertEquals("500",actualResult.get(4).value.get(2).value);
-
-    assertEquals("2018-05-07", actualResult.get(5).getLabel());
-    assertEquals("",actualResult.get(5).value.get(0).value);
-    assertEquals("100",actualResult.get(5).value.get(1).value);
-    assertEquals("1000",actualResult.get(5).value.get(2).value);
+    assertEquals(getReportChartModel("2018-06-04", getListWithMinHundredMaxThousand()),
+        actualResult.get(0));
+    assertEquals(getReportChartModel("2018-05-28", getListWithMinFiftyMaxFiveHundred()), actualResult.get(1));
+    assertEquals(getReportChartModel("2018-05-14", getListWithMinTwentyFiveMaxTwoHundredAndFifty()), actualResult.get(2));
+    assertEquals(getReportChartModel("2018-04-30", getListWithMinFifteenMaxOneHundredAndFifty()), actualResult.get(3));
+    assertEquals(getReportChartModel("2018-05-07", getListWithMinFifteenMaxOneHundredAndFifty()), actualResult.get(4));
+    assertEquals(getReportChartModel("2018-05-21", getListWithMinTwentyFiveMaxTwoHundredAndFifty()), actualResult.get(5));
   }
 
   @Test
-  public void testBuildMinMaxHistoryReportsDataForWeeklyPeriodicityWithNonUniqueCreatedDateList() throws ParseException{
-    List<IInventoryMinMaxLog> inventoryMinMaxLogs = getInventoryMinMaxLogsWithNonUniqueCreatedDateForWeeklyPeriodicity();
-    ReportMinMaxHistoryFilters reportMinMaxHistoryFilters = getReportMinMaxHistoryFiltersWithWeeklyPeriodicity();
+  public void testBuildMinMaxHistoryReportsDataForWeeklyPeriodicityWithDomainTimeIST() throws
+      ParseException {
+    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(3l);
+    PowerMockito.when(DomainConfig.getInstance(3l))
+        .thenReturn(getDomainConfigWithISTTimezone());
+    List<IInventoryMinMaxLog> inventoryMinMaxLogs = getInventoryMinMaxLogsForWeeklyPeriodicity();
+    ReportMinMaxHistoryFilters
+        reportMinMaxHistoryFilters = getReportMinMaxHistoryFiltersWithWeeklyPeriodicity();
+    List<ReportChartModel> actualResult = reportBuilder.buildMinMaxHistoryReportsData(inventoryMinMaxLogs, reportMinMaxHistoryFilters);
+    assertEquals(7, actualResult.size());
+    assertEquals(getReportChartModel("2018-06-11", getListWithMinHundredMaxThousand()), actualResult.get(0));
+    assertEquals(getReportChartModel("2018-05-28", getListWithMinFiftyMaxFiveHundred()), actualResult.get(1));
+    assertEquals(getReportChartModel("2018-05-14", getListWithMinTwentyFiveMaxTwoHundredAndFifty()), actualResult.get(2));
+    assertEquals(getReportChartModel("2018-04-30", getListWithMinFifteenMaxOneHundredAndFifty()), actualResult.get(3));
+    assertEquals(getReportChartModel("2018-05-07", getListWithMinFifteenMaxOneHundredAndFifty()), actualResult.get(4));
+    assertEquals(getReportChartModel("2018-05-21", getListWithMinTwentyFiveMaxTwoHundredAndFifty()), actualResult.get(5));
+    assertEquals(getReportChartModel("2018-06-04", getListWithMinFiftyMaxFiveHundred()), actualResult.get(6));
+  }
+
+  @Test
+  public void testBuildMinMaxHistoryReportsDataForWeeklyPeriodicityWithDomainTimeEST() throws
+      ParseException {
+    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(2l);
+    PowerMockito.when(DomainConfig.getInstance(2l))
+        .thenReturn(getDomainConfigWithESTTimezone());
+    List<IInventoryMinMaxLog> inventoryMinMaxLogs = getInventoryMinMaxLogsForWeeklyPeriodicity();
+    ReportMinMaxHistoryFilters
+        reportMinMaxHistoryFilters = getReportMinMaxHistoryFiltersWithWeeklyPeriodicity();
     List<ReportChartModel> actualResult = reportBuilder.buildMinMaxHistoryReportsData(inventoryMinMaxLogs, reportMinMaxHistoryFilters);
     assertEquals(6, actualResult.size());
-    assertEquals("2018-04-30", actualResult.get(0).getLabel());
-    assertEquals("",actualResult.get(0).value.get(0).value);
-    assertEquals("100",actualResult.get(0).value.get(1).value);
-    assertEquals("1000",actualResult.get(0).value.get(2).value);
-
-    assertEquals("2018-04-02", actualResult.get(1).getLabel());
-    assertEquals("",actualResult.get(1).value.get(0).value);
-    assertEquals("0",actualResult.get(1).value.get(1).value);
-    assertEquals("0",actualResult.get(1).value.get(2).value);
-
-    assertEquals("2018-04-09", actualResult.get(2).getLabel());
-    assertEquals("",actualResult.get(2).value.get(0).value);
-    assertEquals("0",actualResult.get(2).value.get(1).value);
-    assertEquals("0",actualResult.get(2).value.get(2).value);
-
-    assertEquals("2018-04-16", actualResult.get(3).getLabel());
-    assertEquals("",actualResult.get(3).value.get(0).value);
-    assertEquals("0",actualResult.get(3).value.get(1).value);
-    assertEquals("0",actualResult.get(3).value.get(2).value);
-
-    assertEquals("2018-04-23", actualResult.get(4).getLabel());
-    assertEquals("",actualResult.get(4).value.get(0).value);
-    assertEquals("0",actualResult.get(4).value.get(1).value);
-    assertEquals("0",actualResult.get(4).value.get(2).value);
-
-    assertEquals("2018-05-07", actualResult.get(5).getLabel());
-    assertEquals("",actualResult.get(5).value.get(0).value);
-    assertEquals("100",actualResult.get(5).value.get(1).value);
-    assertEquals("1000",actualResult.get(5).value.get(2).value);
+    assertEquals(getReportChartModel("2018-06-04", getListWithMinHundredMaxThousand()), actualResult.get(0));
+    assertEquals(getReportChartModel("2018-05-28", getListWithMinFiftyMaxFiveHundred()), actualResult.get(1));
+    assertEquals(getReportChartModel("2018-05-14", getListWithMinTwentyFiveMaxTwoHundredAndFifty()), actualResult.get(2));
+    assertEquals(getReportChartModel("2018-04-30", getListWithMinFifteenMaxOneHundredAndFifty()), actualResult.get(3));
+    assertEquals(getReportChartModel("2018-05-07", getListWithMinFifteenMaxOneHundredAndFifty()), actualResult.get(4));
+    assertEquals(getReportChartModel("2018-05-21", getListWithMinTwentyFiveMaxTwoHundredAndFifty()), actualResult.get(5));
   }
 
   @Test
-  public void testBuildMinMaxHistoryReportsDataForDailyPeriodicityWithUniqueCreatedDateList() throws ParseException{
-    List<IInventoryMinMaxLog> inventoryMinMaxLogs = getInventoryMinMaxLogsWithUniqueCreatedDateForDailyPeriodicity();
-    ReportMinMaxHistoryFilters reportMinMaxHistoryFilters = getReportMinMaxHistoryFiltersWithDailyPeriodicity();
+  public void testBuildMinMaxHistoryReportsDataForDailyPeriodicityWithDomainTimeUTC() throws
+      ParseException {
+    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(1l);
+    PowerMockito.when(DomainConfig.getInstance(1l))
+        .thenReturn(getDomainConfigWithUTCTimezone());
+    List<IInventoryMinMaxLog> inventoryMinMaxLogs = getInventoryMinMaxLogsForDailyPeriodicity();
+    ReportMinMaxHistoryFilters
+        reportMinMaxHistoryFilters = getReportMinMaxHistoryFiltersWithDailyPeriodicity();
     List<ReportChartModel> actualResult = reportBuilder.buildMinMaxHistoryReportsData(inventoryMinMaxLogs, reportMinMaxHistoryFilters);
-    assertEquals(10, actualResult.size());
-    assertEquals("2018-05-05", actualResult.get(0).getLabel());
-    assertEquals("",actualResult.get(0).value.get(0).value);
-    assertEquals("100",actualResult.get(0).value.get(1).value);
-    assertEquals("1000",actualResult.get(0).value.get(2).value);
-
-    assertEquals("2018-05-01", actualResult.get(1).getLabel());
-    assertEquals("",actualResult.get(1).value.get(0).value);
-    assertEquals("50",actualResult.get(1).value.get(1).value);
-    assertEquals("500",actualResult.get(1).value.get(2).value);
-
-    assertEquals("2018-05-02", actualResult.get(2).getLabel());
-    assertEquals("",actualResult.get(2).value.get(0).value);
-    assertEquals("50",actualResult.get(2).value.get(1).value);
-    assertEquals("500",actualResult.get(2).value.get(2).value);
-
-    assertEquals("2018-05-03", actualResult.get(3).getLabel());
-    assertEquals("",actualResult.get(3).value.get(0).value);
-    assertEquals("50",actualResult.get(3).value.get(1).value);
-    assertEquals("500",actualResult.get(3).value.get(2).value);
-
-    assertEquals("2018-05-04", actualResult.get(4).getLabel());
-    assertEquals("",actualResult.get(4).value.get(0).value);
-    assertEquals("50",actualResult.get(4).value.get(1).value);
-    assertEquals("500",actualResult.get(4).value.get(2).value);
-
-    assertEquals("2018-05-06", actualResult.get(5).getLabel());
-    assertEquals("",actualResult.get(5).value.get(0).value);
-    assertEquals("100",actualResult.get(5).value.get(1).value);
-    assertEquals("1000",actualResult.get(5).value.get(2).value);
-
-    assertEquals("2018-05-07", actualResult.get(6).getLabel());
-    assertEquals("",actualResult.get(6).value.get(0).value);
-    assertEquals("100",actualResult.get(6).value.get(1).value);
-    assertEquals("1000",actualResult.get(6).value.get(2).value);
-
-    assertEquals("2018-05-08", actualResult.get(7).getLabel());
-    assertEquals("",actualResult.get(7).value.get(0).value);
-    assertEquals("100",actualResult.get(7).value.get(1).value);
-    assertEquals("1000",actualResult.get(7).value.get(2).value);
-
-    assertEquals("2018-05-09", actualResult.get(8).getLabel());
-    assertEquals("",actualResult.get(8).value.get(0).value);
-    assertEquals("100",actualResult.get(8).value.get(1).value);
-    assertEquals("1000",actualResult.get(8).value.get(2).value);
-
-    assertEquals("2018-05-10", actualResult.get(9).getLabel());
-    assertEquals("",actualResult.get(9).value.get(0).value);
-    assertEquals("100",actualResult.get(9).value.get(1).value);
-    assertEquals("1000",actualResult.get(9).value.get(2).value);
+    assertEquals(5, actualResult.size());
+    assertEquals(getReportChartModel("2018-05-31", getListWithMinHundredMaxThousand()), actualResult.get(0));
+    assertEquals(getReportChartModel("2018-05-29", getListWithMinFifteenMaxOneHundredAndFifty()), actualResult.get(1));
+    assertEquals(getReportChartModel("2018-05-28", getListWithMinZeroMaxZero()), actualResult.get(2));
+    assertEquals(getReportChartModel("2018-05-30", getListWithMinFifteenMaxOneHundredAndFifty()), actualResult.get(3));
+    assertEquals(getReportChartModel("2018-06-01", getListWithMinHundredMaxThousand()), actualResult.get(4));
   }
 
   @Test
-  public void testBuildMinMaxHistoryReportsDataForDailyPeriodicityWithNonUniqueCreatedDateList() throws ParseException{
-    List<IInventoryMinMaxLog> inventoryMinMaxLogs = getInventoryMinMaxLogsWithNonUniqueCreatedDateForDailyPeriodicity();
-    ReportMinMaxHistoryFilters reportMinMaxHistoryFilters = getReportMinMaxHistoryFiltersWithDailyPeriodicity();
+  public void testBuildMinMaxHistoryReportsDataForDailyPeriodicityWithDomainTimeEST() throws
+      ParseException {
+    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(2l);
+    PowerMockito.when(DomainConfig.getInstance(2l))
+        .thenReturn(getDomainConfigWithESTTimezone());
+    List<IInventoryMinMaxLog> inventoryMinMaxLogs = getInventoryMinMaxLogsForDailyPeriodicity();
+    ReportMinMaxHistoryFilters
+        reportMinMaxHistoryFilters = getReportMinMaxHistoryFiltersWithDailyPeriodicity();
     List<ReportChartModel> actualResult = reportBuilder.buildMinMaxHistoryReportsData(inventoryMinMaxLogs, reportMinMaxHistoryFilters);
-    assertEquals(10, actualResult.size());
-    assertEquals("2018-05-05", actualResult.get(0).getLabel());
-    assertEquals("",actualResult.get(0).value.get(0).value);
-    assertEquals("100",actualResult.get(0).value.get(1).value);
-    assertEquals("1000",actualResult.get(0).value.get(2).value);
-
-    assertEquals("2018-05-01", actualResult.get(1).getLabel());
-    assertEquals("",actualResult.get(1).value.get(0).value);
-    assertEquals("25",actualResult.get(1).value.get(1).value);
-    assertEquals("250",actualResult.get(1).value.get(2).value);
-
-    assertEquals("2018-05-02", actualResult.get(2).getLabel());
-    assertEquals("",actualResult.get(2).value.get(0).value);
-    assertEquals("25",actualResult.get(2).value.get(1).value);
-    assertEquals("250",actualResult.get(2).value.get(2).value);
-
-    assertEquals("2018-05-03", actualResult.get(3).getLabel());
-    assertEquals("",actualResult.get(3).value.get(0).value);
-    assertEquals("25",actualResult.get(3).value.get(1).value);
-    assertEquals("250",actualResult.get(3).value.get(2).value);
-
-    assertEquals("2018-05-04", actualResult.get(4).getLabel());
-    assertEquals("",actualResult.get(4).value.get(0).value);
-    assertEquals("25",actualResult.get(4).value.get(1).value);
-    assertEquals("250",actualResult.get(4).value.get(2).value);
-
-    assertEquals("2018-05-06", actualResult.get(5).getLabel());
-    assertEquals("",actualResult.get(5).value.get(0).value);
-    assertEquals("100",actualResult.get(5).value.get(1).value);
-    assertEquals("1000",actualResult.get(5).value.get(2).value);
-
-    assertEquals("2018-05-07", actualResult.get(6).getLabel());
-    assertEquals("",actualResult.get(6).value.get(0).value);
-    assertEquals("100",actualResult.get(6).value.get(1).value);
-    assertEquals("1000",actualResult.get(6).value.get(2).value);
-
-    assertEquals("2018-05-08", actualResult.get(7).getLabel());
-    assertEquals("",actualResult.get(7).value.get(0).value);
-    assertEquals("100",actualResult.get(7).value.get(1).value);
-    assertEquals("1000",actualResult.get(7).value.get(2).value);
-
-    assertEquals("2018-05-09", actualResult.get(8).getLabel());
-    assertEquals("",actualResult.get(8).value.get(0).value);
-    assertEquals("100",actualResult.get(8).value.get(1).value);
-    assertEquals("1000",actualResult.get(8).value.get(2).value);
-
-    assertEquals("2018-05-10", actualResult.get(9).getLabel());
-    assertEquals("",actualResult.get(9).value.get(0).value);
-    assertEquals("100",actualResult.get(9).value.get(1).value);
-    assertEquals("1000",actualResult.get(9).value.get(2).value);
+    assertEquals(5, actualResult.size());
+    assertEquals(getReportChartModel("2018-05-31", getListWithMinHundredMaxThousand()), actualResult.get(0));
+    assertEquals(getReportChartModel("2018-05-30", getListWithMinTwentyFiveMaxTwoHundredAndFifty()), actualResult.get(1));
+    assertEquals(getReportChartModel("2018-05-28", getListWithMinFifteenMaxOneHundredAndFifty()), actualResult.get(2));
+    assertEquals(getReportChartModel("2018-05-29", getListWithMinFifteenMaxOneHundredAndFifty()), actualResult.get(3));
+    assertEquals(getReportChartModel("2018-06-01", getListWithMinHundredMaxThousand()), actualResult.get(4));
   }
 
   @Test
-  public void testFillMinMaxHistoryChartData() throws ParseException{
-    reportBuilder.fillMinMaxHistoryChartData(null,getReportMinMaxHistoryFiltersWithDailyPeriodicity());
+  public void testBuildMinMaxHistoryReportsDataForDailyPeriodicityWithDomainTimeIST() throws
+      ParseException {
+    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(3l);
+    PowerMockito.when(DomainConfig.getInstance(3l))
+        .thenReturn(getDomainConfigWithISTTimezone());
+    List<IInventoryMinMaxLog> inventoryMinMaxLogs = getInventoryMinMaxLogsForDailyPeriodicity();
+    ReportMinMaxHistoryFilters
+        reportMinMaxHistoryFilters = getReportMinMaxHistoryFiltersWithDailyPeriodicity();
+    List<ReportChartModel> actualResult = reportBuilder.buildMinMaxHistoryReportsData(inventoryMinMaxLogs, reportMinMaxHistoryFilters);
+    assertEquals(5, actualResult.size());
+    assertEquals(getReportChartModel("2018-06-01", getListWithMinHundredMaxThousand()), actualResult.get(0));
+    assertEquals(getReportChartModel("2018-05-31", getListWithMinFiftyMaxFiveHundred()), actualResult.get(1));
+    assertEquals(getReportChartModel("2018-05-29", getListWithMinFifteenMaxOneHundredAndFifty()), actualResult.get(2));
+    assertEquals(getReportChartModel("2018-05-28", getListWithMinEmptyMaxEmpty()), actualResult.get(3));
+    assertEquals(getReportChartModel("2018-05-30", getListWithMinFifteenMaxOneHundredAndFifty()), actualResult.get(4));
+  }
+
+  @Test (expected = NullPointerException.class)
+  public void  testGetLabelDateFormatWithNullInput() {
+    reportBuilder.getLabelDateFormat(null);
+  }
+
+  @Test (expected = IllegalArgumentException.class)
+  public void testGetLabelDateFormatWithInvalidInput() {
+    reportBuilder.getLabelDateFormat("INVALID");
+  }
+
+  private DomainConfig getDomainConfigWithUTCTimezone() {
+    DomainConfig domainConfig = new DomainConfig();
+    domainConfig.setTimezone(UTC);
+    return domainConfig;
+  }
+
+  private DomainConfig getDomainConfigWithESTTimezone() {
+    DomainConfig domainConfig = new DomainConfig();
+    domainConfig.setTimezone(EST);
+    return domainConfig;
+  }
+
+  private DomainConfig getDomainConfigWithISTTimezone() {
+    DomainConfig domainConfig = new DomainConfig();
+    domainConfig.setTimezone(IST);
+    return domainConfig;
   }
 
   /**
-   * Returns a list of IInventoryMinMaxLog objects with the following values for date(format: yyyy-MM-dd HH:mm:ss)  and min-max
-   * 2018-05-05 100,1000; 2018-04-05 50,500; 2018-03-05 25,250; 2018-02-05 15,150; 2018-01-05 0,0; time fields set to 0
+   * Returns a list of IInventoryMinMaxLog objects with dates in UTC time zone
    * @return
    */
-  private List<IInventoryMinMaxLog> getInventoryMinMaxLogsWithUniqueCreatedDate() {
+  private List<IInventoryMinMaxLog> getInventoryMinMaxLogsForMonthlyPeriodicity() {
     List<IInventoryMinMaxLog> minMaxLogs = new ArrayList<>(5);
-    InventoryMinMaxLog minMaxLog1 = getInventoryMinMaxLog(1l, new DateTime(2018,5,5,0,0,0).toDate(),
+    InventoryMinMaxLog minMaxLog1 = getInventoryMinMaxLog(1l,
+        new DateTime(2018, 5, 31, 23, 0, 0, DateTimeZone.forID(UTC)).toDate(),
         BigDecimal.valueOf(100), BigDecimal.valueOf(1000));
     InventoryMinMaxLog minMaxLog2 = getInventoryMinMaxLog(2l,
-        new DateTime(2018,4,5,0,0,0).toDate(), BigDecimal.valueOf(50),BigDecimal.valueOf(500));
-    InventoryMinMaxLog minMaxLog3 = getInventoryMinMaxLog(3l,new DateTime(2018,3,5,0,0,0).toDate(), BigDecimal.valueOf(25), BigDecimal.valueOf(250));
-    InventoryMinMaxLog minMaxLog4 = getInventoryMinMaxLog(4l,new DateTime(2018,2,5,0,0,0).toDate(), BigDecimal.valueOf(15), BigDecimal.valueOf(150));
-    InventoryMinMaxLog minMaxLog5 = getInventoryMinMaxLog(5l,new DateTime(2018,1,5,0,0,0).toDate(), BigDecimal.ZERO, BigDecimal.ZERO);
+        new DateTime(2018,5,25,0,0,0,DateTimeZone.forID(UTC)).toDate(), BigDecimal.valueOf(50),BigDecimal.valueOf(500));
+    InventoryMinMaxLog minMaxLog3 = getInventoryMinMaxLog(3l,new DateTime(2018,4,30,23,0,0,DateTimeZone.forID(UTC)).toDate(), BigDecimal.valueOf(25), BigDecimal.valueOf(250));
+    InventoryMinMaxLog minMaxLog4 = getInventoryMinMaxLog(4l,new DateTime(2018,4,30,1,0,0,DateTimeZone.forID(UTC)).toDate(), BigDecimal.valueOf(15), BigDecimal.valueOf(150));
+    InventoryMinMaxLog minMaxLog5 = getInventoryMinMaxLog(5l,new DateTime(2018,1,1,0,0,0,DateTimeZone.forID(UTC)).toDate(), BigDecimal.ZERO, BigDecimal.ZERO);
     minMaxLogs.add(minMaxLog1);
     minMaxLogs.add(minMaxLog2);
     minMaxLogs.add(minMaxLog3);
@@ -406,22 +493,50 @@ public class ReportBuilderTest {
   }
 
   /**
-   * Returns a list of IInventoryMinMaxLog objects with the following values for date(format: yyyy-MM-dd HH:mm:ss) and min-max
-   * 2018-05-05 100,1000; 2018-04-05 50,500; 2018-03-05 25,250; time fields set to 0
+   * Returns a list of IInventoryMinMaxLog objects with dates in UTC time zone
    * @return
    */
-  private List<IInventoryMinMaxLog> getInventoryMinMaxLogsWithUniqueCreatedDateForWeeklyPeriodicity() {
+  private List<IInventoryMinMaxLog> getInventoryMinMaxLogsForWeeklyPeriodicity() {
     List<IInventoryMinMaxLog> minMaxLogs = new ArrayList<>(5);
-    InventoryMinMaxLog minMaxLog1 = getInventoryMinMaxLog(1l, new DateTime(2018,5,5,0,0,0,0).toDate(),
+    InventoryMinMaxLog minMaxLog1 = getInventoryMinMaxLog(1l, new DateTime(2018,6,10,23,0,0,DateTimeZone.forID(UTC)).toDate(),
         BigDecimal.valueOf(100), BigDecimal.valueOf(1000));
-    InventoryMinMaxLog minMaxLog2 = getInventoryMinMaxLog(2l,
-        new DateTime(2018,4,5,0,0,0,0).toDate(), BigDecimal.valueOf(50),BigDecimal.valueOf(500));
-    InventoryMinMaxLog minMaxLog3 = getInventoryMinMaxLog(3l,new DateTime(2018,3,5,0,0,0,0).toDate(), BigDecimal.valueOf(25), BigDecimal.valueOf(250));
-
+    InventoryMinMaxLog minMaxLog2 = getInventoryMinMaxLog(1l, new DateTime(2018,5,31,1,0,0,DateTimeZone.forID(UTC)).toDate(),
+        BigDecimal.valueOf(50), BigDecimal.valueOf(500));
+    InventoryMinMaxLog minMaxLog3 = getInventoryMinMaxLog(1l, new DateTime(2018,5,15,10,0,0,DateTimeZone.forID(UTC)).toDate(),
+        BigDecimal.valueOf(25), BigDecimal.valueOf(250));
+    InventoryMinMaxLog minMaxLog4 = getInventoryMinMaxLog(2l,
+        new DateTime(2018,5,1,0,0,0,DateTimeZone.forID(UTC)).toDate(), BigDecimal.valueOf(15),BigDecimal.valueOf(150));
+    InventoryMinMaxLog minMaxLog5 = getInventoryMinMaxLog(3l,new DateTime(2018,4,30,23,0,0,DateTimeZone.forID(UTC)).toDate(), BigDecimal.valueOf(0), BigDecimal.valueOf(0));
     minMaxLogs.add(minMaxLog1);
     minMaxLogs.add(minMaxLog2);
     minMaxLogs.add(minMaxLog3);
+    minMaxLogs.add(minMaxLog4);
+    minMaxLogs.add(minMaxLog5);
+    return minMaxLogs;
+  }
 
+
+  /**
+   * Returns a list of IInventoryMinMaxLog objects with dates in UTC time zone
+   * @return
+   */
+  private List<IInventoryMinMaxLog> getInventoryMinMaxLogsForDailyPeriodicity() {
+    List<IInventoryMinMaxLog> minMaxLogs = new ArrayList<>(5);
+    InventoryMinMaxLog minMaxLog1 = getInventoryMinMaxLog(1l,
+        new DateTime(2018, 5, 31, 23, 0, 0, DateTimeZone.forID(UTC)).toDate(),
+        BigDecimal.valueOf(100), BigDecimal.valueOf(1000));
+    InventoryMinMaxLog minMaxLog2 = getInventoryMinMaxLog(1l, new DateTime(2018,5,31,11,0,0,DateTimeZone.forID(UTC)).toDate(),
+        BigDecimal.valueOf(50), BigDecimal.valueOf(500));
+    InventoryMinMaxLog minMaxLog3 = getInventoryMinMaxLog(1l, new DateTime(2018,5,31,0,0,0,DateTimeZone.forID(UTC)).toDate(),
+        BigDecimal.valueOf(25), BigDecimal.valueOf(250));
+    InventoryMinMaxLog minMaxLog4 = getInventoryMinMaxLog(2l,
+        new DateTime(2018,5,29,1,0,0,DateTimeZone.forID(UTC)).toDate(), BigDecimal.valueOf(15),BigDecimal.valueOf(150));
+    InventoryMinMaxLog minMaxLog5 = getInventoryMinMaxLog(3l,new DateTime(2018,5,28,23,0,0,DateTimeZone.forID(UTC)).toDate(), BigDecimal.valueOf(0), BigDecimal.valueOf(0));
+    minMaxLogs.add(minMaxLog1);
+    minMaxLogs.add(minMaxLog2);
+    minMaxLogs.add(minMaxLog3);
+    minMaxLogs.add(minMaxLog4);
+    minMaxLogs.add(minMaxLog5);
     return minMaxLogs;
   }
 
@@ -434,115 +549,53 @@ public class ReportBuilderTest {
     return minMaxLog;
   }
 
-  /**
-   * Returns a list of IInventoryMinMaxLog objects with created date (yyyy-MM-dd HH:mm:ss) and min max.
-   * 2018-05-31 00:00:00 100,1000; 2018-05-25 00:00:00 50, 500; 2018-04-30 15:00:00 25,250; 2018-04-30 13:00:00 15, 150; 2018-01-01 00:00:00
-   * @return
-   */
-  private List<IInventoryMinMaxLog> getInventoryMinMaxLogsWithNonUniqueCreatedDate() {
-    List<IInventoryMinMaxLog> minMaxLogs = new ArrayList<>(5);
-    InventoryMinMaxLog minMaxLog1 = getInventoryMinMaxLog(1l, new DateTime(2018,5,31,0,0,0).toDate(), BigDecimal.valueOf(100), BigDecimal.valueOf(1000));
-    InventoryMinMaxLog minMaxLog2 = getInventoryMinMaxLog(2l, new DateTime(2018,5,25,0,0,0).toDate(), BigDecimal.valueOf(50), BigDecimal.valueOf(500));
-    InventoryMinMaxLog minMaxLog3 = getInventoryMinMaxLog(3l, new DateTime(2018,4,30,15,0,0).toDate(), BigDecimal.valueOf(25), BigDecimal.valueOf(250));
-    InventoryMinMaxLog minMaxLog4 = getInventoryMinMaxLog(4l, new DateTime(2018,4,30,13,0,0).toDate(), BigDecimal.valueOf(15), BigDecimal.valueOf(150));
-    InventoryMinMaxLog minMaxLog5 = getInventoryMinMaxLog(5l, new DateTime(2018,1,1,0,0,0).toDate(), BigDecimal.ZERO, BigDecimal.ZERO);
-    minMaxLogs.add(minMaxLog1);
-    minMaxLogs.add(minMaxLog2);
-    minMaxLogs.add(minMaxLog3);
-    minMaxLogs.add(minMaxLog4);
-    minMaxLogs.add(minMaxLog5);
-
-    return minMaxLogs;
-  }
-
-  /**
-   * Returns a list of IInventoryMinMaxLog objects with created date (format: yyyy-MM-dd HH:mm:ss) and min max.
-   * 2018-05-05 00:00:00 100,1000; 2018-05-01 00:00:00 50, 500; 2018-04-30 15:00:00 25,250; 2018-04-30 13:00:00 15, 150; 2018-03-01 00:00:00
-   * @return
-   */
-  private List<IInventoryMinMaxLog> getInventoryMinMaxLogsWithNonUniqueCreatedDateForWeeklyPeriodicity() {
-    List<IInventoryMinMaxLog> minMaxLogs = new ArrayList<>(5);
-    InventoryMinMaxLog minMaxLog1 = getInventoryMinMaxLog(1l, new DateTime(2018,5,5,0,0,0,0).toDate(), BigDecimal.valueOf(
-        100), BigDecimal.valueOf(1000));
-    InventoryMinMaxLog minMaxLog2 = getInventoryMinMaxLog(2l,
-        new DateTime(2018,5,1,0,0,0,0).toDate(), BigDecimal.valueOf(50), BigDecimal.valueOf(500));
-    InventoryMinMaxLog minMaxLog3 = getInventoryMinMaxLog(3l,
-        new DateTime(2018,4,30,15,0,0,0).toDate(), BigDecimal.valueOf(25), BigDecimal.valueOf(250));
-    InventoryMinMaxLog minMaxLog4 = getInventoryMinMaxLog(4l,new DateTime(2018,4,30,13,0,0,0).toDate(), BigDecimal.valueOf(15), BigDecimal.valueOf(150));
-    InventoryMinMaxLog minMaxLog5 = getInventoryMinMaxLog(5l,new DateTime(2018,3,1,0,0,0,0).toDate(), BigDecimal.ZERO, BigDecimal.ZERO);
-    minMaxLogs.add(minMaxLog1);
-    minMaxLogs.add(minMaxLog2);
-    minMaxLogs.add(minMaxLog3);
-    minMaxLogs.add(minMaxLog4);
-    minMaxLogs.add(minMaxLog5);
-
-    return minMaxLogs;
-  }
-
-  /**
-   * Returns a list of IInventoryMinMaxLog objects with the following values for date (format: yyyy-MM-dd HH:mm:ss) and min-max, with time feilds set to 0
-   * 2018-05-05 100,1000; 2018-04-05 50,500;
-   * @return
-   */
-  private List<IInventoryMinMaxLog> getInventoryMinMaxLogsWithUniqueCreatedDateForDailyPeriodicity() {
-    List<IInventoryMinMaxLog> minMaxLogs = new ArrayList<>(5);
-    DateTime createdTime = new DateTime(2018,5,5,0,0,0,0);
-    InventoryMinMaxLog minMaxLog1 = getInventoryMinMaxLog(1l, createdTime.toDate(),
-        BigDecimal.valueOf(100), BigDecimal.valueOf(1000));
-    InventoryMinMaxLog minMaxLog2 = getInventoryMinMaxLog(2l,
-        createdTime.minusMonths(1).toDate(), BigDecimal.valueOf(50),BigDecimal.valueOf(500));
-
-    minMaxLogs.add(minMaxLog1);
-    minMaxLogs.add(minMaxLog2);
-
-    return minMaxLogs;
-  }
-
-  /**
-   * Returns a list of IInventoryMinMaxLog objects with created date(format: yyyy-MM-dd HH:mm:ss) and min max.
-   * 2018-05-05 15:00:00 100,1000; 2018-05-05 10:00:00 50, 500; 2018-04-30 15:00:00 25,250;
-   * @return
-   */
-  private List<IInventoryMinMaxLog> getInventoryMinMaxLogsWithNonUniqueCreatedDateForDailyPeriodicity() {
-    List<IInventoryMinMaxLog> minMaxLogs = new ArrayList<>(5);
-    InventoryMinMaxLog minMaxLog1 = getInventoryMinMaxLog(1l, new DateTime(2018,5,5,15,0,0,0).toDate(), BigDecimal.valueOf(
-        100), BigDecimal.valueOf(1000));
-    InventoryMinMaxLog minMaxLog2 = getInventoryMinMaxLog(2l,
-        new DateTime(2018,5,5,10,0,0).toDate(), BigDecimal.valueOf(50), BigDecimal.valueOf(500));
-    InventoryMinMaxLog minMaxLog3 = getInventoryMinMaxLog(3l,
-        new DateTime(2018,4,30,15,0,0,0).toDate(), BigDecimal.valueOf(25), BigDecimal.valueOf(250));
-
-    minMaxLogs.add(minMaxLog1);
-    minMaxLogs.add(minMaxLog2);
-    minMaxLogs.add(minMaxLog3);
-
-    return minMaxLogs;
-  }
-
   private ReportMinMaxHistoryFilters getReportMinMaxHistoryFiltersWithMonthlyPeriodicity() {
-    return (ReportMinMaxHistoryFilters.builder()
-        .periodicity(QueryHelper.MONTH)
-        .from("2017-12-01")
-        .to("2018-05-01").build());
+    return (ReportMinMaxHistoryFilters.builder().periodicity(QueryHelper.MONTH).from("2017-12-01").to("2018-06-01").build());
   }
 
   private ReportMinMaxHistoryFilters getReportMinMaxHistoryFiltersWithWeeklyPeriodicity() {
-    return (ReportMinMaxHistoryFilters.builder()
-        .periodicity(QueryHelper.WEEK)
-        .from("2018-04-02")
-        .to("2018-05-13").build());
+    return (ReportMinMaxHistoryFilters.builder().periodicity(QueryHelper.WEEK).from("2018-04-30").to(
+        "2018-06-11").build());
   }
 
   private ReportMinMaxHistoryFilters getReportMinMaxHistoryFiltersWithDailyPeriodicity() {
-    return (ReportMinMaxHistoryFilters.builder()
-        .periodicity(QueryHelper.DAY)
-        .from("2018-05-01")
-        .to("2018-05-11").build());
+    return (ReportMinMaxHistoryFilters.builder().periodicity(QueryHelper.DAY).from("2018-05-28").to(
+        "2018-06-02").build());
   }
 
-  private DomainConfig getDomainConfig() {
-    DomainConfig domainConfig = new DomainConfig();
-    domainConfig.setTimezone("Asia/Kolkata");
-    return domainConfig;
+  private ReportChartModel getReportChartModel(String label, List<String> values) {
+    ReportChartModel reportChartModel = new ReportChartModel();
+    reportChartModel.setLabel(label);
+    List<ReportDataModel> reportDataModels = values.stream().map(value -> new ReportDataModel(value)).collect(Collectors.toList());
+    reportChartModel.setValue(reportDataModels);
+    return reportChartModel;
+  }
+
+  private List<String> getListWithMinZeroMaxZero() {
+    return Arrays.asList(EMPTY,ZERO,ZERO);
+  }
+
+  private List<String> getListWithMinHundredMaxThousand() {
+    return Arrays.asList(EMPTY,HUNDRED,THOUSAND);
+  }
+
+  private List<String> getListWithMinFiftyMaxFiveHundred() {
+    return Arrays.asList(EMPTY,FIFTY,FIVE_HUNDRED);
+  }
+
+  private List<String> getListWithMinFifteenMaxOneHundredAndFifty() {
+    return Arrays.asList(EMPTY,FIFTEEN,ONE_HUNDRED_AND_FIFTY);
+  }
+
+  private List<String> getListWithMinTwentyFiveMaxTwoHundredAndFifty() {
+    return Arrays.asList(EMPTY,TWENTY_FIVE,TWO_HUNDRED_AND_FIFTY);
+  }
+
+  private List<String> getListWithMinEmptyMaxEmpty() {
+    return Arrays.asList(EMPTY,EMPTY,EMPTY);
+  }
+
+  private List<ReportDataModel> getReportDataModels(List<String> values) {
+    return (values.stream().map(value -> new ReportDataModel(value)).collect(Collectors.toList()));
   }
 }
