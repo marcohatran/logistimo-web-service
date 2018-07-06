@@ -27,8 +27,8 @@
 var authServices = angular.module('authServices', []);
 authServices.factory('iAuthService', ['APIService', '$rootScope', '$q', '$cookies', function (apiService, $rootScope, $q, $cookies) {
     return {
-        login: function (userId,password,lang) {
-            var urlStr = '/s2/api/mauth/login';
+        login: function (userId,password,lang, otp) {
+            var urlStr = '/s2/api/mauth/login/v1';
             var credentials = {};
             if (checkNotNullEmpty(userId)) {
                 credentials.userId = userId;
@@ -38,6 +38,9 @@ authServices.factory('iAuthService', ['APIService', '$rootScope', '$q', '$cookie
             }
             if (checkNotNullEmpty(lang)) {
                 credentials.language = lang;
+            }
+            if( checkNotNullEmpty(otp)) {
+                credentials.otp = otp;
             }
             return apiService.post(credentials, urlStr);
         },
@@ -92,6 +95,13 @@ authServices.factory('iAuthService', ['APIService', '$rootScope', '$q', '$cookie
         },
         checkAccessKey: function (authKey) {
             return apiService.post(authKey, "/s2/api/auth/check-access-key");
+        },
+        setAuthenticationHeader: function (authKey, authValue, expires) {
+            localStorage.setItem(authKey, authValue);
+            $cookies.put(authKey, authValue, {path: "/"});
+            if (checkNotNullEmpty(expires)) {
+                localStorage.setItem("expires", expires);
+            }
         }
 
     }

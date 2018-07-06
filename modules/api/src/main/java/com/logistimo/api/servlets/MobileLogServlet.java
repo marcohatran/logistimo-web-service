@@ -57,7 +57,7 @@ public class MobileLogServlet extends HttpServlet {
       throws ServletException, java.io.IOException {
 
     String strUserId = request.getParameter(RestConstantsZ.USER_ID);
-    String password = request.getParameter(RestConstantsZ.PASSWORD);
+    String password = request.getParameter(RestConstantsZ.PASSWRD);
     InputStream inputStream;
     BufferedReader mobileLog = null;
     IUserAccount account = null;

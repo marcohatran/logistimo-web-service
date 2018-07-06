@@ -4364,3 +4364,7 @@ lg-uib-select .ui-select-multiple input.ui-select-search {
     position: relative;
     left:65px;
 }
+
+.otp-model {
+    padding: 35px 35px 35px;
+}

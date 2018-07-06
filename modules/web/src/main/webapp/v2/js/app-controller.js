@@ -185,8 +185,8 @@
                     }
                 }
             };
-            $scope.showLogin = function (action) {
-                if ($scope.lgModalInstance == undefined) {
+            $scope.showLogin = function (isOpen) {
+                if ($scope.lgModalInstance == undefined || isOpen) {
                     if ($scope.loaders > 0) {
                         $scope.hideLoading(true);
                     }

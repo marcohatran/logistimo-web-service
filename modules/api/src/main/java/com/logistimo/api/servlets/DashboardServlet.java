@@ -268,7 +268,7 @@ public class DashboardServlet extends JsonRestServlet {
     xLogger.fine("Entered getKiosks");
     // Get the parameters
     String userId = request.getParameter(RestConstantsZ.USER_ID);
-    String password = request.getParameter(RestConstantsZ.PASSWORD);
+    String password = request.getParameter(RestConstantsZ.PASSWRD);
     String sizeStr = request.getParameter(RestConstantsZ.SIZE);
     String cursor = request.getParameter(RestConstantsZ.CURSOR);
     // Get pagination params

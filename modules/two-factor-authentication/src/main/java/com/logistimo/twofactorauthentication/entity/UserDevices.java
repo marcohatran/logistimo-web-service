@@ -21,41 +21,44 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.api.models;
+package com.logistimo.twofactorauthentication.entity;
+
+import java.util.Date;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 
 import lombok.Data;
 
+
 /**
- * Created by naveensnair on 07/09/15.
+ * @author smriti
  */
+
+@Entity
+@Table(name="USER_DEVICES")
 @Data
-public class PasswordModel {
-  /**
-   * Masked phone number
-   */
-  private String mp;
-  /**
-   * Masked email Id
-   */
-  private String me;
-  /**
-   * User Id
-   */
-  private String uid;
-  /**
-   * Mode - SMS or Email
-   */
-  private int mode;
-  /**
-   * OTP received by SMS
-   */
-  private String otp;
-  /**
-   * User device type
-   */
-  private String udty;
-  /**
-   * OTP type
-   */
-  private String otpType;
+public class UserDevices {
+
+  @Id
+  @Column(name = "id", updatable = false, nullable = false)
+  private String id;
+
+  @Column(name = "user_id", updatable = false)
+  private String userId;
+
+  @Column(name = "application_name", updatable = false)
+  private Integer applicationName;
+
+  @Temporal(TemporalType.TIMESTAMP)
+  @Column(name = "created_on", updatable = false)
+  private Date createdOn;
+
+  @Temporal(TemporalType.TIMESTAMP)
+  @Column(name = "expires_on", updatable = false)
+  private Date expiresOn;
 }

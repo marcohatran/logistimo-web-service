@@ -273,7 +273,7 @@ public class MachineProtocolMessageHandler extends MessageHandler {
       Map<String, String> params = new HashMap<String, String>();
       params.put(RestConstantsZ.ACTION, RestConstantsZ.ACTION_LOGIN);
       params.put(RestConstantsZ.USER_ID, ai.getUserId());
-      params.put(RestConstantsZ.PASSWORD, ai.getPassword());
+      params.put(RestConstantsZ.PASSWRD, ai.getPassword());
       if (ai.isMinResponse()) {
         params.put(RestConstantsZ.MIN_RESPONSE, "1");
       }
@@ -330,7 +330,7 @@ public class MachineProtocolMessageHandler extends MessageHandler {
       Map<String, String> params = new HashMap<String, String>();
       params.put(RestConstantsZ.ACTION, RestConstantsZ.ACTION_GETINVENTORY);
       params.put(RestConstantsZ.USER_ID, userId);
-      params.put(RestConstantsZ.PASSWORD, password);
+      params.put(RestConstantsZ.PASSWRD, password);
       if (giIn.isOnlyStock()) {
         params.put(RestConstantsZ.FILTER, RestConstantsZ.FILTER_ONLYSTOCK);
       }
@@ -373,7 +373,7 @@ public class MachineProtocolMessageHandler extends MessageHandler {
       Map<String, String> params = new HashMap<String, String>();
       params.put(RestConstantsZ.ACTION, RestConstantsZ.ACTION_UPDINVENTORY);
       params.put(RestConstantsZ.TRANS_TYPE, uiIn.getType());
-      params.put(RestConstantsZ.PASSWORD, uiIn.getPassword());
+      params.put(RestConstantsZ.PASSWRD, uiIn.getPassword());
       String jsonString = uiIn.toJSONString();
       xLogger.fine("JSON String: {0}", jsonString);
       params.put(RestConstantsZ.JSON_STRING, jsonString);
@@ -427,7 +427,7 @@ public class MachineProtocolMessageHandler extends MessageHandler {
       Map<String, String> params = new HashMap<String, String>();
       params.put(RestConstantsZ.ACTION, RestConstantsZ.ACTION_UPDATEORDER);
       params.put(RestConstantsZ.TRANS_TYPE, uoIn.getType());
-      params.put(RestConstantsZ.PASSWORD, uoIn.getPassword());
+      params.put(RestConstantsZ.PASSWRD, uoIn.getPassword());
       String jsonString = uoIn.toJSONString();
       xLogger.fine("JSON String: {0}", jsonString);
       params.put(RestConstantsZ.JSON_STRING, jsonString);
@@ -476,7 +476,7 @@ public class MachineProtocolMessageHandler extends MessageHandler {
       Map<String, String> params = new HashMap<String, String>();
       params.put(RestConstantsZ.ACTION, RestConstantsZ.ACTION_GETORDERS);
       params.put(RestConstantsZ.USER_ID, gosIn.getUserId());
-      params.put(RestConstantsZ.PASSWORD, gosIn.getPassword());
+      params.put(RestConstantsZ.PASSWRD, gosIn.getPassword());
       params.put(RestConstantsZ.KIOSK_ID, gosIn.getKioskId());
       params.put(RestConstantsZ.NUM_RESULTS, String.valueOf(gosIn.getMaxResults()));
       params.put(RestConstantsZ.LOADALL, gosIn.getLoad());
@@ -531,7 +531,7 @@ public class MachineProtocolMessageHandler extends MessageHandler {
       Map<String, String> params = new HashMap<String, String>();
       params.put(RestConstantsZ.ACTION, cmd);
       params.put(RestConstantsZ.USER_ID, oIn.getUserId());
-      params.put(RestConstantsZ.PASSWORD, oIn.getPassword());
+      params.put(RestConstantsZ.PASSWRD, oIn.getPassword());
       params.put(RestConstantsZ.ORDER_ID, oIn.getOrderId());
       // Invoke REST API
       String response = invokeREST(url, params, false);
@@ -564,7 +564,7 @@ public class MachineProtocolMessageHandler extends MessageHandler {
       Map<String, String> params = new HashMap<String, String>();
       params.put(RestConstantsZ.ACTION, RestConstantsZ.ACTION_UPDATEORDERSTATUS);
       params.put(RestConstantsZ.USER_ID, uosIn.getUserId());
-      params.put(RestConstantsZ.PASSWORD, uosIn.getPassword());
+      params.put(RestConstantsZ.PASSWRD, uosIn.getPassword());
       params.put(RestConstantsZ.ORDER_ID, uosIn.getOrderId());
       params.put(RestConstantsZ.STATUS, uosIn.getStatus());
       // Invoke REST API

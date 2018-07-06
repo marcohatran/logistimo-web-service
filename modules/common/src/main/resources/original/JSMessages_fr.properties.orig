@@ -729,7 +729,7 @@ config.inventoryrefreshinterval=Inventaire intervalle de rafraîchissement
 config.applicationloguploadinterval=Demande intervalle journal de téléchargement
 config.smstransmissionwaitduration=SMS durée transmission d'attente
 config.security=Sécurité
-config.securityinfo=Spécifiez les informations de sécurité liés à l'application de téléphone mobile .
+config.securityinfo=Spécifiez les informations relatives à la sécurité pour les applications Web et mobiles ici.
 config.authenticationtokenexpiry=Authentification expiration jeton
 config.days=journées)
 config.local.login.req=Connexion locale nécessaire sur téléphone mobileconfig.smstransmissionwaitduration=SMS durée transmission d'attenteuser.permission.view=Voir seulement
@@ -1393,4 +1393,11 @@ report.user.activity=Activité de l'utilisateur
 return.reason=Retour raison
 domain.name.mandatory=Le nom de domaine ne peut pas être vide.
 domain.country.mandatory=Le pays est obligatoire Veuillez sélectionner un pays
-domain.timezone.mandatory=Le fuseau horaire est obligatoire. Veuillez sélectionner un fuseau horaire
+domain.timezone.mandatory=Le fuseau horaire est obligatoire. Veuillez sélectionner un fuseau horairereturn.reason=Retour raison
+two.step.authentication=Authentification en deux étapes
+one.time.password=Mot de passe à usage unique
+enable.two.step.authentication=Activer l'authentification en deux étapes
+two.step.authentication.description=L'authentification en deux étapes ajoute une couche supplémentaire de sécurité lors de la connexion aux applications Web et mobiles. Cela obligerait les utilisateurs à entrer un mot de passe unique (OTP) en plus de leur mot de passe habituel.
+otp.sent.message=Un message texte avec un code de vérification à 6 chiffres a été envoyé à ••••••••
+two.step.authentication.otp.enter=s'il vous plaît entrez la même chose ici pour vous connecter.
+two.step.authentication.otp.info=Le mot de passe à usage unique (OTP) peut prendre quelques minutes pour arriver par SMS. Si vous ne recevez pas l'OTP même après 15 minutes, veuillez cliquer sur le lien 'Regenerate OTP' ci-dessus.

@@ -23,6 +23,7 @@
 
 package com.logistimo.utils;
 
+
 import com.logistimo.auth.SecurityConstants;
 import com.logistimo.auth.SecurityUtil;
 import com.logistimo.constants.CharacterConstants;
@@ -41,10 +42,15 @@ import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.TimeZone;
 
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+
 /**
  * Created by charan on 21/05/15.
  */
 public class CommonUtils {
+
+  public static final String AUTHENTICATION_KEY = "di";
 
   public static String getFormattedPrice(float price) {
     return String.format("%.2f", price);
@@ -59,7 +65,7 @@ public class CommonUtils {
     if (role == null || role.isEmpty()) {
       return null;
     }
-    List<String> roles = new ArrayList<String>();
+    List<String> roles = new ArrayList<>();
     for (int i = 0; i < SecurityConstants.ROLES.length; i++) {
       if (SecurityUtil.compareRoles(SecurityConstants.ROLES[i], role)
           <= 0) {
@@ -127,5 +133,17 @@ public class CommonUtils {
     }
     address.setLength(address.length() - 2);
     return address.toString();
+  }
+
+  public static String getCookieByName(HttpServletRequest req,  String cookieName) {
+    Cookie[] cookies = req.getCookies();
+    if (cookies != null) {
+      for (Cookie cookie : cookies) {
+        if (cookieName.equals(cookie.getName())) {
+          return cookie.getValue();
+        }
+      }
+    }
+    return null;
   }
 }

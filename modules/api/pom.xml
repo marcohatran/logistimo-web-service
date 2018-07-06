@@ -168,6 +168,11 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.logistimo</groupId>
+            <artifactId>logistimo-two-factor-authentication</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.apache.velocity</groupId>
             <artifactId>velocity</artifactId>
             <version>1.7</version>
@@ -232,6 +237,11 @@
             <artifactId>powermock-module-junit4</artifactId>
             <version>1.5.1</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+            <version>2.5</version>
         </dependency>
     </dependencies>
     <build>

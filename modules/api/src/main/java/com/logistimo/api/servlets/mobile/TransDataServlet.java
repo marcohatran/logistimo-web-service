@@ -118,7 +118,7 @@ public class TransDataServlet extends JsonRestServlet {
 
     // Read the request parameters
     String userId = req.getParameter(RestConstantsZ.USER_ID);
-    String password = req.getParameter(RestConstantsZ.PASSWORD);
+    String password = req.getParameter(RestConstantsZ.PASSWRD);
     if (userId == null || userId.isEmpty() || password == null || password.isEmpty()) {
       errMsg = "Invalid user name or password";
       sendError(res, localeStr, errMsg);
@@ -324,7 +324,7 @@ public class TransDataServlet extends JsonRestServlet {
     // Get request parameters
     String strKioskId = req.getParameter(RestConstantsZ.KIOSK_ID);
     String strUserId = req.getParameter(RestConstantsZ.USER_ID);
-    String password = req.getParameter(RestConstantsZ.PASSWORD);
+    String password = req.getParameter(RestConstantsZ.PASSWRD);
     String sizeStr = req.getParameter(RestConstantsZ.SIZE);
     String endDateStr = req.getParameter(RestConstantsZ.ENDDATE);
     String tag = req.getParameter(JsonTagsZ.TAGS);
@@ -437,7 +437,7 @@ public class TransDataServlet extends JsonRestServlet {
     try {
       String kidStr = req.getParameter(RestConstantsZ.KIOSK_ID);
       String userIdStr = req.getParameter(RestConstantsZ.USER_ID);
-      String passwordStr = req.getParameter(RestConstantsZ.PASSWORD);
+      String passwordStr = req.getParameter(RestConstantsZ.PASSWRD);
       Long kioskId = null;
       // Authenticate the user - either with password or via the kioskId/session combination
       try {

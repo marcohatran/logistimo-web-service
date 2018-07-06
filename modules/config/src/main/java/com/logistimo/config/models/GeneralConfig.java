@@ -56,6 +56,12 @@ public class GeneralConfig {
   public static final String APP_UPGRADE = "aupg";
   public static final String DB_RFINT = "dboardrefreshinterval";
   public static final String ES_RFINT = "eventrefreshinterval";
+  public static final String REMEMBER_DEVICE_IN_MINUTES = "rememberdevice";
+
+  /**
+   * Remember device for 30 days - default
+   */
+  private static final Integer REMEMBER_DEVICE_DURATION_IN_MINUTES = 43200;
   // Logger
   private static final XLog xLogger = XLog.getLog(GeneralConfig.class);
   private String supportEmail;
@@ -64,13 +70,14 @@ public class GeneralConfig {
   private Integer smsMaxCountUser = 25;
   private Integer smsMaxCountDomain = 5000;
   private Integer smsDedupDuration = 10;
-  private JSONObject appUrls;
+  private JSONObject applicationUrls;
   private JSONObject aupg;
   private Integer dashboardRefreshIntervalInMinutes = 30;
   private Integer eventsRefreshIntervalInMinutes = 1440;
   private String inventoryPolicy = "AllowAllTransactionsPolicy";
   private String blockedAppVersion = "";
   private String upgradeToVersion = "";
+  private int rememberDeviceInMinutes;
 
 
   public GeneralConfig() {
@@ -97,29 +104,33 @@ public class GeneralConfig {
         } catch (Exception e) {
           this.supportPhone = ConfigUtil.get("support.phone", DEFAULT_SUPPORT_PHONE);
         }
-        this.appUrls = jsonObject.getJSONObject(APPURLS);
+        this.applicationUrls = jsonObject.getJSONObject(APPURLS);
         try {
           this.aupg = jsonObject.getJSONObject(APP_UPGRADE);
         } catch (Exception ignored) {
-
+          // do nothing
         }
         try {
           JSONObject smsLimit = jsonObject.getJSONObject(SMS_LIMITS);
           try {
             this.smsMaxCountUser = smsLimit.getInt(USER);
           } catch (Exception ignored) {
+            // do nothing
           }
 
           try {
             this.smsMaxCountDomain = smsLimit.getInt(DOMAIN);
           } catch (Exception ignored) {
+            // do nothing
           }
 
           try {
             this.smsDedupDuration = smsLimit.getInt(DEDUP_DUR);
           } catch (Exception ignored) {
+            // do nothing
           }
         } catch (Exception ignored) {
+          // do nothing
         }
         try {
           this.dashboardRefreshIntervalInMinutes = jsonObject.getInt(DB_RFINT);
@@ -146,13 +157,18 @@ public class GeneralConfig {
         } catch (Exception e) {
           this.upgradeToVersion = "";
         }
+        try {
+          this.rememberDeviceInMinutes = jsonObject.getInt(REMEMBER_DEVICE_IN_MINUTES);
+        } catch (Exception e) {
+          this.rememberDeviceInMinutes = REMEMBER_DEVICE_DURATION_IN_MINUTES;
+        }
       }
     } catch (Exception e) {
       throw new ConfigurationException("Invalid Json for general configuration. " + e.getMessage());
     }
     xLogger.fine(
         "Exiting GeneralConfig constructor, supportEmail: {0}, supportPhone: {1}, appUrls: {2}",
-        supportEmail, supportPhone, appUrls);
+        supportEmail, supportPhone, applicationUrls);
   }
 
   // Get an instance of the GeneralConfig
@@ -162,9 +178,7 @@ public class GeneralConfig {
           .getBean(ConfigurationMgmtServiceImpl.class);
       IConfig c = cms.getConfiguration(IConfig.GENERALCONFIG);
       return new GeneralConfig(c.getConfig());
-    } catch (ObjectNotFoundException e) {
-      throw new ConfigurationException(e.getMessage());
-    } catch (ServiceException e) {
+    } catch (ObjectNotFoundException | ServiceException e) {
       throw new ConfigurationException(e.getMessage());
     }
   }
@@ -186,11 +200,11 @@ public class GeneralConfig {
   }
 
   public JSONObject getAppUrls() {
-    return this.appUrls;
+    return applicationUrls;
   }
 
   public void setAppUrls(JSONObject appUrls) {
-    this.appUrls = appUrls;
+    applicationUrls = appUrls;
   }
 
   public JSONObject getAupg() {
@@ -260,4 +274,8 @@ public class GeneralConfig {
   public String getUpgradeToVersion() {
     return upgradeToVersion;
   }
+
+  public Integer getRememberDeviceInMinutes() { return rememberDeviceInMinutes; }
+
+  public void setRememberDeviceInMinutes(int rememberDeviceInMinutes) { this.rememberDeviceInMinutes = rememberDeviceInMinutes; }
 }

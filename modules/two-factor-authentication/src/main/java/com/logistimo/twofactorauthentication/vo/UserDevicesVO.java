@@ -21,41 +21,22 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.api.models;
+package com.logistimo.twofactorauthentication.vo;
+
+import java.util.Date;
 
 import lombok.Data;
 
 /**
- * Created by naveensnair on 07/09/15.
+ * @author smriti
  */
 @Data
-public class PasswordModel {
-  /**
-   * Masked phone number
-   */
-  private String mp;
-  /**
-   * Masked email Id
-   */
-  private String me;
-  /**
-   * User Id
-   */
-  private String uid;
-  /**
-   * Mode - SMS or Email
-   */
-  private int mode;
-  /**
-   * OTP received by SMS
-   */
-  private String otp;
-  /**
-   * User device type
-   */
-  private String udty;
-  /**
-   * OTP type
-   */
-  private String otpType;
+public class UserDevicesVO {
+
+  private String id;
+  private String userId;
+  private Date expiresOn;
+  private Integer applicationName;
+  private Date createdOn;
+
 }

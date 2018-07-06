@@ -69,6 +69,7 @@
         <module>modules/bulletin-board</module>
         <module>modules/returns</module>
         <module>modules/stock-rebalancing</module>
+        <module>modules/two-factor-authentication</module>
     </modules>
     <properties>
         <sonar.jacoco.reportPath>${project.basedir}/../target/jacoco.exec</sonar.jacoco.reportPath>
@@ -112,6 +113,11 @@
             <groupId>org.springframework</groupId>
             <artifactId>spring-orm</artifactId>
             <version>4.3.8.RELEASE</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.jdo</groupId>
+            <artifactId>jdo-api</artifactId>
+            <version>3.1</version>
         </dependency>
     </dependencies>
 

@@ -32,5 +32,7 @@ public class UserDetailModel extends UserModel {
 
   public UserConfigModel config;
 
+  public String mobileNo;
+
 
 }

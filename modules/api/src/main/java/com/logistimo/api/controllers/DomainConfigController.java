@@ -174,6 +174,13 @@ public class DomainConfigController {
   private static final String INVENTORY_CONFIG_FETCH_ERROR = "inventory.config.fetch.error";
   private static final String INVENTORY_CONFIG_UPDATE_ERROR = "inventory.config.update.error";
   private static final String CAPABILITIES_CONFIG_FETCH_ERROR = "capabilities.config.fetch.error";
+  private static final String ORDERS_CONFIG_UPDATE_ERROR = "orders.config.update.error";
+  private static final String NOTIFICATION_CONFIG_UPDATE_ERROR = "notif.config.update.error";
+  private static final String NOTIFICATION_CONFIG_FETCH_ERROR = "notif.config.fetch.error";
+  private static final String NOTIFICATION_CONFIG_DELETE_ERROR = "notif.delete.error";
+  private static final String BULLETIN_BOARD_CONFIG_UPDATE_ERROR = "bulletin.config.update.error";
+
+  private static final String ASSET_METADATA_FETCH_ERROR = "Error in reading asset meta data.";
 
 
   private UserMessageBuilder userMessageBuilder;
@@ -500,15 +507,16 @@ public class DomainConfigController {
     SecureUserDetails sUser = getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
+    String updateTagsConfigErrorMessage = "tags.config.update.error";
     if (model == null) {
-      throw new BadRequestException(backendMessages.getString("tags.config.update.error"));
+      throw new BadRequestException(backendMessages.getString(updateTagsConfigErrorMessage));
     }
     String userId = sUser.getUsername();
     Long domainId = SecurityUtils.getCurrentDomainId();
     try {
       if (domainId == null) {
         xLogger.severe("Error in updating tags configuration");
-        throw new InvalidServiceException(backendMessages.getString("tags.config.update.error"));
+        throw new InvalidServiceException(backendMessages.getString(updateTagsConfigErrorMessage));
       }
       ConfigContainer cc = getDomainConfig(domainId, userId);
       cc.dc.addDomainData(ConfigConstants.TAGS, generateUpdateList(userId));
@@ -569,7 +577,7 @@ public class DomainConfigController {
           "SET TAGS ", domainId, sUser.getUsername());
     } catch (ServiceException | ConfigurationException e) {
       xLogger.severe("Error in updating tags configuration", e);
-      throw new InvalidServiceException(backendMessages.getString("tags.config.update.error"));
+      throw new InvalidServiceException(backendMessages.getString(updateTagsConfigErrorMessage));
     }
     return backendMessages.getString("tags.config.update.success");
   }
@@ -633,7 +641,7 @@ public class DomainConfigController {
       return assets.getAssetsNameByType(Integer.valueOf(type));
     } catch (ConfigurationException e) {
       xLogger.severe("Error in reading Asset System Configuration", e);
-      throw new InvalidServiceException("Error in reading asset meta data.");
+      throw new InvalidServiceException(ASSET_METADATA_FETCH_ERROR);
     }
   }
 
@@ -646,7 +654,7 @@ public class DomainConfigController {
       return assets.getManufacturersByType(Integer.valueOf(type));
     } catch (ConfigurationException e) {
       xLogger.severe("Error in reading Asset System Configuration for manufacturers", e);
-      throw new InvalidServiceException("Error in reading asset meta data.");
+      throw new InvalidServiceException(ASSET_METADATA_FETCH_ERROR);
     }
   }
 
@@ -659,7 +667,7 @@ public class DomainConfigController {
       return assets.getAllWorkingStatus();
     } catch (ConfigurationException e) {
       xLogger.severe("Error in reading Asset System Configuration for manufacturers", e);
-      throw new InvalidServiceException("Error in reading asset meta data.");
+      throw new InvalidServiceException(ASSET_METADATA_FETCH_ERROR);
     }
   }
 
@@ -931,6 +939,7 @@ public class DomainConfigController {
           generateSyncConfig(
               model); // Generate SyncConfig from the model and set it in domain config object.
       cc.dc.setSyncConfig(syncCfg);
+      cc.dc.setTwoFactorAuthenticationEnabled(model.isTwoFactorAuthenticationEnabled());
       if (StringUtils.isNotEmpty(model.ro)) {
         CapabilityConfig cconf = new CapabilityConfig();
         cconf.setCapabilities(model.tm);
@@ -1010,13 +1019,13 @@ public class DomainConfigController {
     ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     try {
       if (domainId == null) {
-        xLogger.severe("Error in fetching Inventory configuration");
+        xLogger.severe(backendMessages.getString(INVENTORY_CONFIG_FETCH_ERROR));
         throw new InvalidServiceException(
             backendMessages.getString(INVENTORY_CONFIG_FETCH_ERROR));
       }
       return configurationModelBuilder.buildInventoryConfigModel(dc, locale, sUser.getTimezone());
     } catch (ConfigurationException | ObjectNotFoundException e) {
-      xLogger.severe("Error in fetching Inventory configuration", e);
+      xLogger.severe(backendMessages.getString(INVENTORY_CONFIG_FETCH_ERROR), e);
       throw new InvalidServiceException(backendMessages.getString(INVENTORY_CONFIG_FETCH_ERROR));
     }
   }
@@ -1098,7 +1107,7 @@ public class DomainConfigController {
     Long domainId = SecurityUtils.getCurrentDomainId();
     try {
       if (domainId == null) {
-        xLogger.severe("Error in updating Inventory configuration");
+        xLogger.severe(backendMessages.getString(INVENTORY_CONFIG_UPDATE_ERROR));
         throw new InvalidServiceException(
             backendMessages.getString(INVENTORY_CONFIG_UPDATE_ERROR));
       }
@@ -1325,10 +1334,10 @@ public class DomainConfigController {
           "UPDATE INVENTORY", domainId, sUser.getUsername());
       xLogger.info(cc.dc.toJSONSring());
     } catch (ServiceException | ObjectNotFoundException e) {
-      xLogger.severe("Error in updating Inventory configuration");
+      xLogger.severe(backendMessages.getString(INVENTORY_CONFIG_UPDATE_ERROR));
       throw new InvalidServiceException(backendMessages.getString(INVENTORY_CONFIG_UPDATE_ERROR));
     } catch (ConfigurationException e) {
-      xLogger.severe("Error in updating Inventory configuration");
+      xLogger.severe(backendMessages.getString(INVENTORY_CONFIG_UPDATE_ERROR));
     }
     return backendMessages.getString("inventory.config.update.success");
   }
@@ -1343,14 +1352,14 @@ public class DomainConfigController {
     Long domainId = SecurityUtils.getCurrentDomainId();
     try {
       if (domainId == null) {
-        xLogger.severe("Error in fetching Inventory configuration");
+        xLogger.severe(backendMessages.getString(INVENTORY_CONFIG_FETCH_ERROR));
         throw new InvalidServiceException(
-            backendMessages.getString("inventory.config.fetch.error"));
+            backendMessages.getString(INVENTORY_CONFIG_FETCH_ERROR));
       }
       return configurationModelBuilder.buildOrderConfigModel(request, domainId, locale, sUser.getTimezone());
     } catch (ConfigurationException | ObjectNotFoundException | UnsupportedEncodingException e) {
-      xLogger.severe("Error in fetching Inventory configuration", e);
-      throw new InvalidServiceException(backendMessages.getString("inventory.config.fetch.error"));
+      xLogger.severe(backendMessages.getString(INVENTORY_CONFIG_FETCH_ERROR), e);
+      throw new InvalidServiceException(backendMessages.getString(INVENTORY_CONFIG_FETCH_ERROR));
     }
   }
 
@@ -1369,8 +1378,8 @@ public class DomainConfigController {
     Long domainId = SecurityUtils.getCurrentDomainId();
     try {
       if (domainId == null) {
-        xLogger.severe("Error in updating Orders configuration");
-        throw new InvalidServiceException(backendMessages.getString("orders.config.update.error"));
+        xLogger.severe(backendMessages.getString(ORDERS_CONFIG_UPDATE_ERROR));
+        throw new InvalidServiceException(backendMessages.getString(ORDERS_CONFIG_UPDATE_ERROR));
       }
       ConfigContainer cc = getDomainConfig(domainId, userId);
       DemandBoardConfig dbc = cc.dc.getDemandBoardConfig();
@@ -1384,9 +1393,9 @@ public class DomainConfigController {
         cc.dc.setOrdersConfig(oc);
       }
       if (model == null) {
-        xLogger.severe("Error in updating Orders configuration");
+        xLogger.severe(backendMessages.getString(ORDERS_CONFIG_UPDATE_ERROR));
         throw new ConfigurationServiceException(
-            backendMessages.getString("orders.config.update.error"));
+            backendMessages.getString(ORDERS_CONFIG_UPDATE_ERROR));
       }
       cc.dc.addDomainData(ConfigConstants.ORDERS, generateUpdateList(userId));
       cc.dc.setOrderGeneration(model.og);
@@ -1502,7 +1511,7 @@ public class DomainConfigController {
       xLogger.info(cc.dc.toJSONSring());
     } catch (ServiceException | ConfigurationException e) {
       xLogger.severe("Error in updating Orders configuration", e);
-      throw new InvalidServiceException(backendMessages.getString("orders.config.update.error"));
+      throw new InvalidServiceException(backendMessages.getString(ORDERS_CONFIG_UPDATE_ERROR));
     }
     return backendMessages.getString("orders.config.update.success");
   }
@@ -1521,8 +1530,8 @@ public class DomainConfigController {
     Long domainId = SecurityUtils.getCurrentDomainId();
     try {
       if (domainId == null) {
-        xLogger.severe("Error in updating Notification configuration");
-        throw new InvalidServiceException(backendMessages.getString("notif.config.update.error"));
+        xLogger.severe(backendMessages.getString(NOTIFICATION_CONFIG_UPDATE_ERROR));
+        throw new InvalidServiceException(backendMessages.getString(NOTIFICATION_CONFIG_UPDATE_ERROR));
       }
       EventsConfig ec = getEventsConfig(model, domainId, backendMessages);
       ConfigContainer cc = getDomainConfig(domainId, userId);
@@ -1538,8 +1547,8 @@ public class DomainConfigController {
           "UPDATE NOTIFICATIONS", domainId, sUser.getUsername());
       xLogger.info(cc.dc.toJSONSring());
     } catch (ServiceException | ConfigurationException e) {
-      xLogger.severe("Error in updating Notification configuration", e);
-      throw new InvalidServiceException(backendMessages.getString("notif.config.update.error"));
+      xLogger.severe(backendMessages.getString(NOTIFICATION_CONFIG_UPDATE_ERROR), e);
+      throw new InvalidServiceException(backendMessages.getString(NOTIFICATION_CONFIG_UPDATE_ERROR));
     }
     if (model.add) {
       return backendMessages.getString("notif.config.create.success");
@@ -1561,16 +1570,16 @@ public class DomainConfigController {
     try {
       String json = notificationBuilder.buildModel(model, eventSpecJson);
       if (json == null || json.isEmpty()) {
-        xLogger.severe("Error in updating Notification configuration");
+        xLogger.severe(backendMessages.getString(NOTIFICATION_CONFIG_UPDATE_ERROR));
         throw new ConfigurationServiceException(
-            backendMessages.getString("notif.config.update.error"));
+            backendMessages.getString(NOTIFICATION_CONFIG_UPDATE_ERROR));
       }
 
       ec = new EventsConfig(json);
     } catch (JSONException e) {
-      xLogger.severe("Error in updating Notification configuration", e);
+      xLogger.severe(backendMessages.getString(NOTIFICATION_CONFIG_UPDATE_ERROR), e);
       throw new ConfigurationServiceException(
-          backendMessages.getString("notif.config.update.error"));
+          backendMessages.getString(NOTIFICATION_CONFIG_UPDATE_ERROR));
     }
     return ec;
   }
@@ -1585,22 +1594,22 @@ public class DomainConfigController {
     Long domainId = SecurityUtils.getCurrentDomainId();
     DomainConfig dc = DomainConfig.getInstance(domainId);
     if (dc == null) {
-      xLogger.severe("Error in fetching Notification configuration");
+      xLogger.severe(backendMessages.getString(NOTIFICATION_CONFIG_FETCH_ERROR));
       throw new ConfigurationServiceException(
-          backendMessages.getString("notif.config.fetch.error"));
+          backendMessages.getString(NOTIFICATION_CONFIG_FETCH_ERROR));
     }
     try {
       EventsConfig ec = dc.getEventsConfig();
       if (ec == null) {
-        xLogger.severe("Error in fetching Notification configuration");
+        xLogger.severe(backendMessages.getString(NOTIFICATION_CONFIG_FETCH_ERROR));
         throw new ConfigurationServiceException(
-            backendMessages.getString("notif.config.fetch.error"));
+            backendMessages.getString(NOTIFICATION_CONFIG_FETCH_ERROR));
       }
       return notificationBuilder.buildNotifConfigModel(ec.toJSONString(), t, domainId, locale, sUser.getTimezone());
     } catch (ServiceException | JSONException | ObjectNotFoundException e) {
-      xLogger.severe("Error in fetching Notification configuration", e);
+      xLogger.severe(backendMessages.getString(NOTIFICATION_CONFIG_FETCH_ERROR), e);
       throw new ConfigurationServiceException(
-          backendMessages.getString("notif.config.fetch.error"));
+          backendMessages.getString(NOTIFICATION_CONFIG_FETCH_ERROR));
     }
   }
 
@@ -1623,8 +1632,8 @@ public class DomainConfigController {
     String eventSpecJson = null;
     boolean delete = false;
     if (domainId == null) {
-      xLogger.severe("Error in deleting Notification");
-      throw new InvalidServiceException(backendMessages.getString("notif.delete.error"));
+      xLogger.severe(backendMessages.getString(NOTIFICATION_CONFIG_DELETE_ERROR));
+      throw new InvalidServiceException(backendMessages.getString(NOTIFICATION_CONFIG_DELETE_ERROR));
     }
     try {
       try {
@@ -1639,27 +1648,27 @@ public class DomainConfigController {
         c.setLastUpdated(new Date());
         delete = true;
       } catch (ConfigurationException e) {
-        xLogger.severe("Error in deleting Notification", e);
-        throw new InvalidServiceException(backendMessages.getString("notif.delete.error"));
+        xLogger.severe(backendMessages.getString(NOTIFICATION_CONFIG_DELETE_ERROR), e);
+        throw new InvalidServiceException(backendMessages.getString(NOTIFICATION_CONFIG_DELETE_ERROR));
       }
       try {
         dc = DomainConfig.getInstance(domainId);
         ec = dc.getEventsConfig();
         eventSpecJson = ec.toJSONString();
       } catch (JSONException e) {
-        xLogger.severe("Error in deleting Notification", e);
+        xLogger.severe(backendMessages.getString(NOTIFICATION_CONFIG_DELETE_ERROR), e);
       }
       String json = notificationBuilder.deleteModel(model, eventSpecJson);
 
       if (json == null || json.isEmpty()) {
-        xLogger.severe("Error in deleting Notification");
-        throw new InvalidServiceException(backendMessages.getString("notif.delete.error"));
+        xLogger.severe(backendMessages.getString(NOTIFICATION_CONFIG_DELETE_ERROR));
+        throw new InvalidServiceException(backendMessages.getString(NOTIFICATION_CONFIG_DELETE_ERROR));
       }
       try {
         ec = new EventsConfig(json);
       } catch (JSONException e) {
-        xLogger.severe("Error in deleting Notification", e);
-        throw new InvalidServiceException(backendMessages.getString("notif.delete.error"));
+        xLogger.severe(backendMessages.getString(NOTIFICATION_CONFIG_DELETE_ERROR), e);
+        throw new InvalidServiceException(backendMessages.getString(NOTIFICATION_CONFIG_DELETE_ERROR));
       }
       dc.setEventsConfig(ec);
       ConfigContainer cc = new ConfigContainer();
@@ -1670,8 +1679,8 @@ public class DomainConfigController {
       xLogger.info("AUDITLOG \t {0} \t {1} \t CONFIGURATION \t " +
           "DELETE NOTIFICATION", domainId, sUser.getUsername());
     } catch (ServiceException e) {
-      xLogger.severe("Error in deleting Notification", e);
-      throw new InvalidServiceException(backendMessages.getString("notif.delete.error"));
+      xLogger.severe(backendMessages.getString(NOTIFICATION_CONFIG_DELETE_ERROR), e);
+      throw new InvalidServiceException(backendMessages.getString(NOTIFICATION_CONFIG_DELETE_ERROR));
     }
     return backendMessages.getString("notif.delete.success");
   }
@@ -1751,14 +1760,14 @@ public class DomainConfigController {
       throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
     }
     if (model == null) {
-      xLogger.severe("Error in updating bulletin board configuration");
-      throw new BadRequestException(backendMessages.getString("bulletin.config.update.error"));
+      xLogger.severe(backendMessages.getString(BULLETIN_BOARD_CONFIG_UPDATE_ERROR));
+      throw new BadRequestException(backendMessages.getString(BULLETIN_BOARD_CONFIG_UPDATE_ERROR));
     }
     String userId = sUser.getUsername();
     Long domainId = SecurityUtils.getCurrentDomainId();
     if (domainId == null) {
-      xLogger.severe("Error in updating bulletin board configuration");
-      throw new InvalidServiceException(backendMessages.getString("bulletin.config.update.error"));
+      xLogger.severe(backendMessages.getString(BULLETIN_BOARD_CONFIG_UPDATE_ERROR));
+      throw new InvalidServiceException(backendMessages.getString(BULLETIN_BOARD_CONFIG_UPDATE_ERROR));
     }
     try {
       ConfigContainer cc = getDomainConfig(domainId, userId);
@@ -1772,8 +1781,8 @@ public class DomainConfigController {
           "UPDATE BULLETINBOARD", domainId, sUser.getUsername());
       xLogger.info(cc.dc.toJSONSring());
     } catch (ServiceException | ConfigurationException e) {
-      xLogger.severe("Error in updating bulletin board configuration", e);
-      throw new InvalidServiceException(backendMessages.getString("bulletin.config.update.error"));
+      xLogger.severe(backendMessages.getString(BULLETIN_BOARD_CONFIG_UPDATE_ERROR), e);
+      throw new InvalidServiceException(backendMessages.getString(BULLETIN_BOARD_CONFIG_UPDATE_ERROR));
     }
     return backendMessages.getString("bulletin.config.update.success");
   }

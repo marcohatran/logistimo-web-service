@@ -66,6 +66,8 @@ public class CapabilitiesConfigModel {
 
   private int theme; // Store App theme
 
+  private boolean twoFactorAuthenticationEnabled;
+
   public int getTheme() {
     return theme;
   }
@@ -73,4 +75,8 @@ public class CapabilitiesConfigModel {
   public void setTheme(int theme) {
     this.theme = theme;
   }
+
+  public boolean isTwoFactorAuthenticationEnabled() { return twoFactorAuthenticationEnabled; }
+
+  public void setTwoFactorAuthenticationEnabled(boolean twoFactorAuthenticationEnabled) { this.twoFactorAuthenticationEnabled = twoFactorAuthenticationEnabled; }
 }

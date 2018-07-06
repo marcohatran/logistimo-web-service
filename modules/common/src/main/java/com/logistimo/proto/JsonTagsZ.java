@@ -187,7 +187,7 @@ public class JsonTagsZ {
   public static final String ORIGINAL_ORDERED_QUANTITY = "oq";
   public static final String PACKAGE_SIZE = "pksz";
   public static final String PART_ID = "pid";
-  public static final String PASSWORD = "p";
+  public static final String PASSWRD = "p";
   public static final String PAYABLE = "pyb";
   public static final String PAYMENT = "pymt";
   public static final String PAYMENT_OPTION = "popt";
@@ -239,6 +239,7 @@ public class JsonTagsZ {
   public static final String RETURNS_OUTGOING = "ro";
   public static final String DEFAULT_REASONS = "default_reasons";
   public static final String TRANSACTION_TYPES_WITH_REASON_MANDATORY = "transaction_types_with_reason_mandatory";
+  public static final String ENABLE_TWO_FACTOR_AUTHENTICATION = "enable_two_factor_authentication";
 
   //transporter for orders
   public static final String TRANSPORTER = "trsp";

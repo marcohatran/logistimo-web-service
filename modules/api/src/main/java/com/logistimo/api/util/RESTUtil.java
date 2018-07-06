@@ -1201,11 +1201,11 @@ public class RESTUtil {
     Long domainId;
     Map<String, String> reqParamsMap = new HashMap<>(1);
     String userId = req.getParameter(RestConstantsZ.USER_ID);
-    String password = req.getParameter(RestConstantsZ.PASSWORD);
+    String password = req.getParameter(RestConstantsZ.PASSWRD);
     reqParamsMap.put(RestConstantsZ.TYPE, req.getParameter(RestConstantsZ.TYPE));
     reqParamsMap.put(RestConstantsZ.KIOSK_ID, req.getParameter(RestConstantsZ.KIOSK_ID));
     reqParamsMap.put(RestConstantsZ.USER_ID, userId);
-    reqParamsMap.put(RestConstantsZ.PASSWORD, password);
+    reqParamsMap.put(RestConstantsZ.PASSWRD, password);
     reqParamsMap.put(RestConstantsZ.EMAIL, req.getParameter(RestConstantsZ.EMAIL));
     reqParamsMap.put(RestConstantsZ.ORDER_TYPE, req.getParameter(RestConstantsZ.ORDER_TYPE));
     ParsedRequest parsedRequest = parseGeneralExportFilters(reqParamsMap, backendMessages);
@@ -1749,6 +1749,7 @@ public class RESTUtil {
     } catch (Exception e) {
       xLogger.warn("Error in getting system configuration: {0}", e);
     }
+    config.put(JsonTagsZ.ENABLE_TWO_FACTOR_AUTHENTICATION, dc.isTwoFactorAuthenticationEnabled());
     // Return config
     if (config.isEmpty()) {
       return null;

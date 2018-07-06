@@ -178,7 +178,7 @@ public class ConfigurationModelBuilder {
 
   public MenuStatsModel buildMenuStats(SecureUserDetails user, DomainConfig config, Locale locale,
                                        String timezone)
-      throws ServiceException, ObjectNotFoundException {
+      throws ServiceException {
     Long domainId = SecurityUtils.getCurrentDomainId();
     MenuStatsModel model = new MenuStatsModel();
     model.iAccTbEn = config.isAccountingEnabled();
@@ -430,8 +430,7 @@ public class ConfigurationModelBuilder {
     return null;
   }
 
-  public GeneralConfigModel buildDomainLocationModels(Long domainId, Locale locale, String timezone)
-      throws ObjectNotFoundException{
+  public GeneralConfigModel buildDomainLocationModels(Long domainId, Locale locale, String timezone) {
     DomainConfig dc = DomainConfig.getInstance(domainId);
     GeneralConfigModel model = new GeneralConfigModel();
 
@@ -469,8 +468,7 @@ public class ConfigurationModelBuilder {
   }
 
   public Map<String, AdminContactConfigModel> buildAllAdminContactConfigModel(
-      AdminContactConfig config)
-      throws ObjectNotFoundException {
+      AdminContactConfig config) {
     if(config == null) {
       return null;
     }
@@ -482,8 +480,7 @@ public class ConfigurationModelBuilder {
     return model;
   }
 
-  public AdminContactConfigModel buildAdminContactModel(String userId)
-      throws ObjectNotFoundException {
+  public AdminContactConfigModel buildAdminContactModel(String userId) {
     AdminContactConfigModel model = new AdminContactConfigModel();
     if (StringUtils.isNotEmpty(userId)) {
       IUserAccount userAccount = usersService.getUserAccount(userId);
@@ -561,8 +558,7 @@ public class ConfigurationModelBuilder {
   }
 
   public AccountingConfigModel buildAccountingConfigModel(Long domainId, Locale locale,
-                                                          String timezone)
-      throws ObjectNotFoundException, JSONException {
+                                                          String timezone) {
     DomainConfig dc = DomainConfig.getInstance(domainId);
     AccountingConfig ac = dc.getAccountingConfig();
     AccountingConfigModel model = new AccountingConfigModel();
@@ -594,8 +590,7 @@ public class ConfigurationModelBuilder {
     return null;
   }
 
-  public TagsConfigModel buildTagsConfigModel(DomainConfig dc, Locale locale, String timezone)
-      throws ObjectNotFoundException {
+  public TagsConfigModel buildTagsConfigModel(DomainConfig dc, Locale locale, String timezone) {
     TagsConfigModel model = new TagsConfigModel();
     List<String> val = dc.getDomainData(ConfigConstants.TAGS);
     if (val != null) {
@@ -627,8 +622,7 @@ public class ConfigurationModelBuilder {
   }
 
   public AssetSystemConfigModel buildAssetSystemConfigModel(AssetSystemConfig asc,
-                                                            AssetConfigModel assetConfigModel)
-      throws ConfigurationException {
+                                                            AssetConfigModel assetConfigModel) {
 
     AssetSystemConfigModel model = new AssetSystemConfigModel();
 
@@ -772,7 +766,7 @@ public class ConfigurationModelBuilder {
   }
 
   public AssetConfigModel buildAssetConfigModel(DomainConfig dc, Locale locale, String timezone)
-      throws ConfigurationException, ObjectNotFoundException {
+      throws ConfigurationException {
     AssetSystemConfig asc = AssetSystemConfig.getInstance();
     if (asc == null) {
       throw new ConfigurationException();
@@ -907,8 +901,7 @@ public class ConfigurationModelBuilder {
   }
 
   public CapabilitiesConfigModel buildCapabilitiesConfigModel(Locale locale,
-                                                              DomainConfig dc, String timezone)
-      throws ObjectNotFoundException {
+                                                              DomainConfig dc, String timezone) {
     Map<String, CapabilityConfig> map = dc.getCapabilityMapByRole();
     CapabilitiesConfigModel model = new CapabilitiesConfigModel();
 
@@ -979,13 +972,13 @@ public class ConfigurationModelBuilder {
       model.stwd = sc.getSmsTransmissionWaitDuration() / SyncConfig.HOURS_IN_A_DAY;
     }
     model.setTheme(dc.getStoreAppTheme());
+    model.setTwoFactorAuthenticationEnabled(dc.isTwoFactorAuthenticationEnabled());
     return model;
   }
 
   public CapabilitiesConfigModel buildRoleCapabilitiesConfigModel(String sRole,
                                                                   Locale locale, DomainConfig dc,
-                                                                  String timezone)
-      throws ObjectNotFoundException {
+                                                                  String timezone) {
     Map<String, CapabilityConfig> map = dc.getCapabilityMapByRole();
     CapabilitiesConfigModel model;
     CapabilityConfig roleCapabConfig = map.get(sRole);
@@ -1056,7 +1049,7 @@ public class ConfigurationModelBuilder {
 
   public InventoryConfigModel buildInventoryConfigModel(DomainConfig dc, Locale locale,
                                                         String timezone)
-      throws ConfigurationException, ObjectNotFoundException {
+      throws ConfigurationException {
     InventoryConfigModel model = new InventoryConfigModel();
     InventoryConfig ic = dc.getInventoryConfig();
     if (ic == null) {
@@ -1362,8 +1355,7 @@ public class ConfigurationModelBuilder {
   }
 
   public DashboardConfigModel buildDashboardConfigModel(DashboardConfig config, Long domainId,
-                                                        Locale locale, String timezone)
-      throws ObjectNotFoundException {
+                                                        Locale locale, String timezone) {
     DashboardConfigModel model = new DashboardConfigModel();
     if (config == null) {
       config = new DashboardConfig();
@@ -1408,7 +1400,7 @@ public class ConfigurationModelBuilder {
 
   public OrdersConfigModel buildOrderConfigModel(HttpServletRequest request, Long domainId,
                                                  Locale locale, String timezone)
-      throws ConfigurationException, ObjectNotFoundException,
+      throws ConfigurationException,
       UnsupportedEncodingException {
     DomainConfig dc = DomainConfig.getInstance(domainId);
     OrdersConfigModel model = new OrdersConfigModel();
@@ -1589,8 +1581,7 @@ public class ConfigurationModelBuilder {
     }
   }
 
-  public SupportConfigModel buildSCModelForWebDisplay()
-      throws ObjectNotFoundException{
+  public SupportConfigModel buildSCModelForWebDisplay() {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);

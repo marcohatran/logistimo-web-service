@@ -23,11 +23,16 @@
 
 package com.logistimo.api.models;
 
+import lombok.Data;
+
 /**
  * Created by kaniyarasu on 17/04/15.
  */
+@Data
 public class AuthLoginModel {
-  public String userId;
-  public String password;
-  public String language;
+  private String userId;
+  private String password;
+  private String language;
+  private String otp;
+  private boolean skipTwoFactorAuthentication;
 }

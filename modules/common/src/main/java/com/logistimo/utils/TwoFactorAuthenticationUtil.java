@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -21,41 +21,35 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.api.models;
+package com.logistimo.utils;
 
-import lombok.Data;
+import com.google.common.base.Charsets;
+import com.google.common.hash.Hashing;
+
+import com.logistimo.constants.CharacterConstants;
+
+import java.io.UnsupportedEncodingException;
+import java.security.NoSuchAlgorithmException;
+import java.util.Random;
 
 /**
- * Created by naveensnair on 07/09/15.
+ * @author Smriti
  */
-@Data
-public class PasswordModel {
-  /**
-   * Masked phone number
-   */
-  private String mp;
-  /**
-   * Masked email Id
-   */
-  private String me;
-  /**
-   * User Id
-   */
-  private String uid;
-  /**
-   * Mode - SMS or Email
-   */
-  private int mode;
-  /**
-   * OTP received by SMS
-   */
-  private String otp;
-  /**
-   * User device type
-   */
-  private String udty;
-  /**
-   * OTP type
-   */
-  private String otpType;
+public class TwoFactorAuthenticationUtil {
+
+  public static String generateUserDeviceCacheKey(String userId, long lastLoginTime)
+      throws UnsupportedEncodingException, NoSuchAlgorithmException {
+    String key = generateAuthKey(userId) + lastLoginTime + (new Random().longs(100000,999999));
+    return Hashing.murmur3_128().hashString(key, Charsets.UTF_16LE).toString();
+  }
+
+  public static String generateAuthKey(String userId)
+      throws UnsupportedEncodingException, NoSuchAlgorithmException {
+    return CharacterConstants.UNDERSCORE + CommonUtils.AUTHENTICATION_KEY + CommonUtils
+        .getMD5(userId);
+  }
+
+  public static String generateUserDeviceKey(String userId, String deviceKey) {
+    return userId.concat(CharacterConstants.UNDERSCORE).concat(deviceKey);
+  }
 }

@@ -239,6 +239,8 @@ public final class Constants {
 
   public static final String SYSTEM_USER_ID = "system";
 
+  public static final String WEB = "w";
+
   public static String getVerticalDisplay(String vertical) {
     String verticalDisplay = "Default";
     if (VERTICAL_PHARMACEUTICALS.equals(vertical)) {

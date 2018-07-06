@@ -40,7 +40,6 @@ import com.logistimo.constants.SourceConstants;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.events.entity.IEvent;
 import com.logistimo.events.processor.EventPublisher;
-import com.logistimo.exception.ValidationException;
 import com.logistimo.logger.XLog;
 import com.logistimo.security.BadCredentialsException;
 import com.logistimo.security.SecureUserDetails;
@@ -146,19 +145,17 @@ public class AuthController {
   AuthModel login(@RequestBody AuthLoginModel authLoginModel, HttpServletRequest request) {
     try {
       HttpSession session = request.getSession();
-      if (SecurityMgr.isLoggedInAsAnotherUser(session, authLoginModel.userId)) {
-        return constructAuthModel(ALREADY_LOGGED_IN, authLoginModel.language);
+      if (SecurityMgr.isLoggedInAsAnotherUser(session, authLoginModel.getUserId())) {
+        return constructAuthModel(ALREADY_LOGGED_IN, authLoginModel.getLanguage());
       }
       SecureUserDetails
           userDetails =
-          SecurityMgr.authenticate(authLoginModel.userId, authLoginModel.password);
+          SecurityMgr.authenticate(authLoginModel.getUserId(), authLoginModel.getPassword());
       //Recreates and initialize the session after successful login.
       SessionMgr.recreateSession(request, userDetails);
       Long domainId = SecurityUtils.getReqCookieDomain(request);
-      if (domainId != null) {
-        if (usersService.hasAccessToDomain(userDetails.getUsername(), domainId)) {
-          SessionMgr.setCurrentDomain(request.getSession(), domainId);
-        }
+      if (domainId != null && usersService.hasAccessToDomain(userDetails.getUsername(), domainId)) {
+        SessionMgr.setCurrentDomain(request.getSession(), domainId);
       }
       String ipAddress = isGAE ? request.getRemoteAddr() : request.getHeader("X-REAL-IP");
       updateUserDetails(userDetails, ipAddress, request.getHeader("User-Agent"));
@@ -168,22 +165,22 @@ public class AuthController {
       xLogger.info("ip: {0}, headers: {1}", ipAddress, request.getHeader("X-Forwarded-For"));
       if (SecurityConstants.ROLE_KIOSKOWNER.equals(userDetails.getRole())) {
         SessionMgr.cleanupSession(request.getSession());
-        return constructAuthModel(ACCESS_DENIED, authLoginModel.language);
+        return constructAuthModel(ACCESS_DENIED, authLoginModel.getLanguage());
       }
-      return constructAuthModel(0, authLoginModel.language);
+      return constructAuthModel(0, authLoginModel.getLanguage());
     } catch (BadCredentialsException e) {
-      xLogger.warn("Invalid user name or password: {0}", authLoginModel.userId, e);
-      return constructAuthModel(INVALID_USERNAME, authLoginModel.language);
+      xLogger.warn("Invalid user name or password: {0}", authLoginModel.getUserId(), e);
+      return constructAuthModel(INVALID_USERNAME, authLoginModel.getLanguage());
     } catch (UserDisabledException e) {
-      xLogger.warn("User disabled: {0}", authLoginModel.userId, e);
-      return constructAuthModel(ACCOUNT_DISABLED, authLoginModel.language);
+      xLogger.warn("User disabled: {0}", authLoginModel.getUserId(), e);
+      return constructAuthModel(ACCOUNT_DISABLED, authLoginModel.getLanguage());
     } catch (ObjectNotFoundException e) {
-      xLogger.warn("User not found: {0}", authLoginModel.userId, e);
-      return constructAuthModel(INVALID_USERNAME, authLoginModel.language);
+      xLogger.warn("User not found: {0}", authLoginModel.getUserId(), e);
+      return constructAuthModel(INVALID_USERNAME, authLoginModel.getLanguage());
     } catch (Exception e) {
       xLogger.severe("{0} when authenticating user {1}: {2}", e.getClass().getName(),
-          authLoginModel.userId, e.getMessage(), e);
-      return constructAuthModel(ACCESS_DENIED, authLoginModel.language);
+          authLoginModel.getUserId(), e.getMessage(), e);
+      return constructAuthModel(ACCESS_DENIED, authLoginModel.getLanguage());
     }
   }
 
@@ -244,11 +241,8 @@ public class AuthController {
                           HttpServletRequest request, HttpServletResponse response) {
 
     try {
-      String successMsg = resetAndRedirect(token, src, request, response);
+      String successMsg = resetAndRedirect(token, src, response);
       return new AuthModel(false, successMsg);
-    } catch (ServiceException | MessageHandlingException | IOException e) {
-      xLogger.warn("Error updating password ", e);
-      return constructAuthModel(SYSTEM_ERROR, null);
     } catch (ObjectNotFoundException e) {
       xLogger.warn("Error updating password for {0}", e);
       return constructAuthModel(USER_NOTFOUND, null);
@@ -262,10 +256,10 @@ public class AuthController {
   public
   @ResponseBody
   AuthModel generatePassword(@RequestBody PasswordModel model, HttpServletRequest request)
-      throws ValidationException, ServiceException, ObjectNotFoundException,
+      throws ServiceException,
       MessageHandlingException, IOException {
     if (model != null) {
-      String successMsg = authenticationService.resetPassword(model.uid, model.mode, model.otp, "w",
+      String successMsg = authenticationService.resetPassword(model.getUid(), model.getMode(), model.getOtp(), "w",
             request.getParameter("au"));
         return new AuthModel(false, successMsg);
     }
@@ -277,15 +271,15 @@ public class AuthController {
   public
   @ResponseBody
   AuthModel generateOtp(@RequestBody PasswordModel model, HttpServletRequest request)
-      throws ServiceException, ObjectNotFoundException, IOException, MessageHandlingException {
+      throws ServiceException, IOException, MessageHandlingException {
     if (model != null) {
-        //web client is not sending this variable
-        if (StringUtils.isEmpty(model.udty)) {
-          model.udty = "w";
-        }
-      String successMsg = authenticationService.generateOTP(model.uid, model.mode, model.udty,
-            request.getHeader("host"));
-        return new AuthModel(false, successMsg);
+      //web client is not sending this variable
+      if (StringUtils.isEmpty(model.getUdty())) {
+       model.setUdty(Constants.WEB);
+      }
+      String successMsg = authenticationService.generateOTP(model.getUid(), model.getMode(), model.getUdty(),
+          request.getHeader("host"));
+      return new AuthModel(false, successMsg);
     }
 
     return null;
@@ -299,9 +293,6 @@ public class AuthController {
       try {
         String successMsg = authenticationService.setNewPassword(model.key, model.npd, model.cpd);
         return new AuthModel(false, successMsg);
-      } catch (MessageHandlingException | ServiceException | IOException e) {
-        xLogger.severe("Exception: " + e);
-        return constructAuthModel(SYSTEM_ERROR, null);
       } catch (ObjectNotFoundException e) {
         xLogger.warn("Error updating password for {0}", model.uid, e);
         return constructAuthModel(USER_NOTFOUND, null);
@@ -327,7 +318,7 @@ public class AuthController {
   @RequestMapping(value = "/authorise-access-key", method = RequestMethod.POST)
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void authoriseAccessKey(@RequestBody String accessKey)
-      throws ValidationException, ServiceException {
+      throws ServiceException {
     authenticationService.authoriseAccessKey(accessKey);
   }
 
@@ -335,7 +326,7 @@ public class AuthController {
   public
   @ResponseBody
   Map<String, String> checkAccessKeyStatus(@RequestBody String accessKey)
-      throws ValidationException, ServiceException {
+      throws ServiceException {
     Optional<IUserToken>
         optionalToken =
         authenticationService.checkAccessKeyStatus(accessKey);
@@ -349,8 +340,9 @@ public class AuthController {
 
   }
 
-  public String resetAndRedirect(String token, String src, HttpServletRequest request,
-                                 HttpServletResponse response) throws Exception {
+  public String resetAndRedirect(String token, String src,
+                                 HttpServletResponse response) throws IOException,
+      ServiceException, MessageHandlingException {
     if (StringUtils.isNotEmpty(token)) {
       String decryptedToken = authenticationService.decryptJWT(token);
       String[] tokens = new String[2];
