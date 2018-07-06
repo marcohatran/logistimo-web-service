@@ -94,20 +94,21 @@ public class ReportBuilder {
   protected String getMinMaxHistoryReportLabel(Date minMaxLogCreatedTime, String periodicity, String from) throws ParseException{
     String domainTimezone = DomainConfig
         .getInstance(SecurityUtils.getCurrentDomainId()).getTimezone();
-    DateTime createdTime = new DateTime(minMaxLogCreatedTime).toDateTime(
-        DateTimeZone.forTimeZone(TimeZone.getTimeZone(domainTimezone)));
+    DateTime createdTime;
     SimpleDateFormat labelDateFormat = getLabelDateFormat(QueryHelper.DATE_FORMAT_DAILY);
     Date fromDate = labelDateFormat.parse(from);
     if (minMaxLogCreatedTime.before(fromDate)) {
-      createdTime =  new DateTime(fromDate).toDateTime(
-          DateTimeZone.forTimeZone(TimeZone.getTimeZone(domainTimezone)));
+      createdTime = new DateTime(fromDate);
+    } else {
+      createdTime = new DateTime(minMaxLogCreatedTime).toDateTime(
+      DateTimeZone.forTimeZone(TimeZone.getTimeZone(domainTimezone)));
+      labelDateFormat.setTimeZone(TimeZone.getTimeZone(domainTimezone));
     }
     if (StringUtils.equals(periodicity, QueryHelper.MONTH)) {
       createdTime = createdTime.withDayOfMonth(1);
     } else if (StringUtils.equals(periodicity, QueryHelper.WEEK)) {
       createdTime = createdTime.withDayOfWeek(DateTimeConstants.MONDAY);
     }
-    labelDateFormat.setTimeZone(TimeZone.getTimeZone(domainTimezone));
     return (labelDateFormat.format(createdTime.toDate()));
   }
 
