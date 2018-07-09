@@ -130,7 +130,7 @@
                                 <td>
                                     <input class="form-control" type = "text" ng-model="item.q"
                                            id = "newBatchq{{mid}}{{$index}}"
-                                           popover="{{item.popupMsg}}"
+                                           uib-popover="{{item.popupMsg}}"
                                            popover-trigger="showpopup"
                                            ng-blur="validateQuantity(item, $index)"
                                            ng-focus="hidePopBatch(item,$index,'q')"
