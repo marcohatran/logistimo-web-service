@@ -386,7 +386,6 @@
                                 <button type="button" ng-hide="exRow[$index] === 'add' || exRow[$index] === 'show'" class="btn btn-sm btn-primary">{{resourceBundle['batch.enter']}}</button>
                                 <p ng-show="exRow[$index] === 'add' || exRow[$index] === 'show'" class="btn btn-sm btn-default">{{resourceBundle['hideuppercase']}} {{resourceBundle['batch.lower']}}</p>
                             </div>
-                            <p class="text-center temp" ng-show="material.isBinary && showMaterials">1</p>
                         </td>
                         <td ng-hide="transaction.type == 'ri' || transaction.type == 'ro'">
                             <div ng-show="showMaterials && material.rsns && material.rsns.length > 0 && showReason && transaction.materials.length - 1 !== $index" >

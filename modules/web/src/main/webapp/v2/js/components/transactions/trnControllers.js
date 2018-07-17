@@ -520,12 +520,12 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                     }
                 }
             }
-            if(material.isVisitedReason) {
-                if(checkNullEmpty(material.reason) && $scope.reasonMandatory) {
-                    showPopUP(material, $scope.resourceBundle['reason.required'], index, 'r');
-                    return false;
-                }
+
+            if(!$scope.isTransactionTypeReturn() && checkNotNull(material.ind) && checkNullEmpty(material.reason) && $scope.reasonMandatory) {
+                showPopUP(material, $scope.resourceBundle['reason.required'], index, 'r');
+                return false;
             }
+
             return true;
         };
 
@@ -785,7 +785,6 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                         $scope.showWarning($scope.resourceBundle['invalid.quantity'] + " " + $scope.resourceBundle['of'] + " " + (mat.mnm || mat.name.mnm));
                         return true;
                     }
-                    // Check reason for batch material
                     if (checkNullEmpty(mat.reason) && $scope.reasonMandatory && !$scope.isTransactionTypeReturn()) {
                         $scope.showWarning($scope.resourceBundle['reason.required'] + " " + $scope.resourceBundle['for'] + " " + (mat.mnm || mat.name.mnm));
                         return true;
