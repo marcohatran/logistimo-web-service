@@ -43,14 +43,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 public class AssetSystemConfig {
   public static final Integer TYPE_TEMPERATURE_DEVICE = 1;
-  public static final String URL = "url";
-  public static final String USERNAME = "username";
-  public static final String PASSWORD = "password";
-  public static final String SECRETKEY = "secretkey";
-  public static final String ASSETS = "assets";
+  public static final String ASSET_URL = "url";
+  public static final String USER_NAME = "username";
+  public static final String PASSWRD = "password";
+  public static final String SECRET_KEY = "secretkey";
+  public static final String ASSET_LIST = "assets";
   public static final String WORKING_STATUSES = "workingStatuses";
   public static final int MONITORED_ASSET = 2;
   // Logger
@@ -72,11 +73,11 @@ public class AssetSystemConfig {
       if (jsonString != null && !jsonString.isEmpty()) {
         JSONObject jsonObject = new JSONObject(jsonString);
 
-        this.url = jsonObject.getString(URL);
-        this.username = jsonObject.getString(USERNAME);
-        this.password = jsonObject.getString(PASSWORD);
-        this.secretKey = jsonObject.getString(SECRETKEY);
-        JSONArray assetsJSONArray = jsonObject.getJSONArray(ASSETS);
+        this.url = jsonObject.getString(ASSET_URL);
+        this.username = jsonObject.getString(USER_NAME);
+        this.password = jsonObject.getString(PASSWRD);
+        this.secretKey = jsonObject.getString(SECRET_KEY);
+        JSONArray assetsJSONArray = jsonObject.getJSONArray(ASSET_LIST);
         if (!jsonObject.isNull(WORKING_STATUSES)) {
           this.workingStatuses =
               new Gson().fromJson(jsonObject.get(WORKING_STATUSES).toString(),
@@ -170,10 +171,11 @@ public class AssetSystemConfig {
   public String getManufacturerId(Integer type, String manuName) {
     if (StringUtils.isNotEmpty(manuName) && assets != null && assets.get(type) != null
         && assets.get(type).getManufacturers() != null) {
+
       Map<String, Manufacturer> manufacturers = assets.get(type).getManufacturers();
-      for (String manufacturerId : manufacturers.keySet()) {
-        if (manuName.equalsIgnoreCase(manufacturers.get(manufacturerId).name)) {
-          return manufacturerId;
+      for(Entry<String, Manufacturer> manufacturerEntry : manufacturers.entrySet()) {
+        if(manuName.equalsIgnoreCase(manufacturerEntry.getValue().name)) {
+          return manufacturerEntry.getKey();
         }
       }
     }
@@ -210,25 +212,13 @@ public class AssetSystemConfig {
   }
 
   public Map<Integer, Asset> getAssetsByType(Integer type) {
-    Map<Integer, Asset> ats = new HashMap<>();
-    for (Integer integer : assets.keySet()) {
-      Asset asset = assets.get(integer);
-      if (type.equals(asset.type)) {
-        ats.put(integer, asset);
-      }
-    }
-    return ats;
+    return assets.entrySet().stream().filter(assetEntry -> type.equals(assetEntry.getValue().type))
+        .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
   }
 
   public Map<Integer, String> getAssetsNameByType(Integer type) {
-    Map<Integer, String> ats = new HashMap<>();
-    for (Integer integer : assets.keySet()) {
-      Asset asset = assets.get(integer);
-      if (type.equals(asset.type)) {
-        ats.put(integer, asset.name);
-      }
-    }
-    return ats;
+    return assets.entrySet().stream().filter(assetEntry -> type.equals(assetEntry.getValue().type))
+        .collect(Collectors.toMap(Entry::getKey, entry -> entry.getValue().getName()));
   }
 
   public String getAssetsByMonitoringType(Integer type) {
@@ -245,17 +235,9 @@ public class AssetSystemConfig {
   }
 
   public Map<String, String> getManufacturersByType(Integer type) {
-    Map<String, String> manufacturers = new HashMap<>();
-    for (Integer integer : assets.keySet()) {
-      Asset asset = assets.get(integer);
-      if (type.equals(asset.type)) {
-        Map<String, Manufacturer> assetManufacturers = asset.getManufacturers();
-        for (String id : assetManufacturers.keySet()) {
-          manufacturers.put(id, assetManufacturers.get(id).name);
-        }
-      }
-    }
-    return manufacturers;
+    return assets.entrySet().stream().filter(assetEntry -> type.equals(assetEntry.getValue().type))
+        .flatMap(assetEntry -> assetEntry.getValue().getManufacturers().entrySet().stream())
+        .collect(Collectors.toMap(Entry::getKey, entry -> entry.getValue().name));
   }
 
   public Map<Integer, String> getAllWorkingStatus() {
@@ -346,19 +328,14 @@ public class AssetSystemConfig {
   }
 
   public static class Model {
-    public static final String NAME = "name";
-    public static final String TYPE = "type";
-    public static final String SENSORS = "sns";
-
     public String name;
     public String type;
     public Feature feature;
     public List<Sensor> sns;
+    public String capacity;
   }
 
   public static class Sensor {
-    public static final String NAME = "name";
-    public static final String LOCATION_ID = "mpId";
 
     public String name;
     public Integer mpId;

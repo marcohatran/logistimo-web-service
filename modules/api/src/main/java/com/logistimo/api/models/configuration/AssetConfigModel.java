@@ -80,6 +80,7 @@ public class AssetConfigModel {
     public String dS;
     public Map<String, Sensor> sns = new HashMap<>(1);
     public Feature fts;
+    public String capacity;
   }
 
   public static class Sensor {

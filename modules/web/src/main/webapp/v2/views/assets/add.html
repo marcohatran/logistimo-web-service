@@ -98,22 +98,14 @@
                                 <label for="asset-model" class="col-sm-4 control-label required">{{resourceBundle['asset.model']}}</label>
                                 <div class="col-sm-8">
                                     <select name="devMdl" ng-model="asset.meta.dev.mdl" id="asset-model" class="form-control"
-                                            ng-disabled="isUndef(currentAsset) && isUndef(asset.vId) || edit" ng-show="asset.typ == 1"
+                                            ng-change="updateCapacity(asset.meta.dev.mdl)"
+                                            ng-disabled="isUndef(currentAsset) && isUndef(asset.vId) || edit && isDef($scope.asset.meta.dev.mdl)"
                                             ng-blur="uVisited.devMdl = true; updateSensors();"
                                             ng-class="{'c-visited' : uVisited.devMdl}"
                                             required>
                                         <option value="">-- {{resourceBundle['select']}} {{resourceBundle['asset.model'] | lowercase}} --</option>
                                         <option ng-repeat="(key,value) in currentManu.model" value="{{key}}" ng-selected="asset.meta.dev.mdl == key">{{key}}</option>
                                     </select>
-                                    <input ng-hide="asset.typ == 1" name="devMdl" type="text"
-                                           ng-model="asset.meta.dev.mdl"
-                                           ng-blur="uVisited.devMdl = true; validateAssetMetaData();"
-                                           ng-class="{'c-visited' : uVisited.devMdl && asset.merror,'u-na': asset.merror}"
-                                           class="form-control"
-                                           ng-focus="uVisited.devMdl = false;"
-                                           placeholder="{{resourceBundle['asset.model']}}"
-                                           required
-                                           ng-disabled="isUndef(currentAsset) && isUndef(asset.vId)" />
                                 </div>
                             </div>
                         </div>
@@ -218,10 +210,11 @@
                     <div class="row">
                         <div class="col-sm-6">
                             <div class="form-group">
-                                <label  class="col-sm-4 control-label">{{resourceBundle['capacity']}}</label>
+                                <label  class="col-sm-4 control-label required">{{resourceBundle['capacity']}}</label>
                                 <div class="col-sm-8">
-                                    <input class="form-control" ng-model="asset.meta.cc.qty" type="text" only-digits min-value="1" placeholder="{{resourceBundle['capacity']}}"
+                                    <input class="form-control" ng-model="asset.meta.cc" type="text" only-digits min-value="1" placeholder="{{resourceBundle['capacity']}}"
                                            name="assetCapacity"
+                                           ng-disabled="true"
                                            ng-blur="uVisited.aCapacity = true"
                                            ng-required="isDef(asset.meta.cc.met)"
                                            ng-class="{'c-visited' : uVisited.aCapacity}"/>
@@ -232,32 +225,6 @@
                             <div class="form-group">
                                 <div class="has-error" ng-show="uVisited.aCapacity && addAssetForm.assetCapacity.$error.required">
                                     <span class="help-block">{{resourceBundle['capacity']}} {{resourceBundle['isrequired']}}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-sm-6">
-                            <div class="form-group">
-                                <label  class="col-sm-4 control-label">{{resourceBundle['capacity']}} {{resourceBundle['metric'] | lowercase}}</label>
-                                <div class="col-sm-8">
-                                    <select ng-model="asset.meta.cc.met"
-                                            class="form-control"
-                                            ng-options="metric.id as metric.value for metric in assetCapacityMetrics"
-                                            ng-selected="asset.meta.cc.met == metric"
-                                            name="assetCapacityMetric"
-                                            ng-blur="uVisited.aCapacityMetric = true"
-                                            ng-required="isDef(asset.meta.cc.qty)"
-                                            ng-class="{'c-visited' : uVisited.aCapacityMetric}">
-                                        <option value="">{{resourceBundle['select']}} {{resourceBundle['metric'] | lowercase}}</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-sm-6">
-                            <div class="form-group">
-                                <div class="has-error" ng-show="uVisited.aCapacityMetric && addAssetForm.assetCapacityMetric.$error.required">
-                                    <span class="help-block">{{resourceBundle['capacity']}} {{resourceBundle['metric'] | lowercase}} {{resourceBundle['isrequired']}}</span>
                                 </div>
                             </div>
                         </div>
@@ -396,56 +363,6 @@
                         </div>
                     </div>
                 </div>
-                <!--<div class="bgr" ng-if="currentAsset.iTs">
-                    <div class="title-heading">
-                        {{resourceBundle['asset.meta.temp.info']}}
-                    </div>
-                    <div class="row mgh0">
-                        <p class="litetext">{{resourceBundle['asset.meta.temp.info.desc']}}</p>
-                    </div>
-                    <div class="row">
-                        <div class="col-sm-6">
-                            <div class="form-group">
-                                <label class="col-sm-4 control-label required">{{resourceBundle['min.temp']}} (&deg;C)</label>
-                                <div class="col-sm-8">
-                                    <input name="tmin" type="text" ng-model="asset.meta.tmp.min"
-                                           ng-blur="uVisited.tmpMin = true"
-                                           ng-class="{'c-visited' : uVisited.tmpMin}"
-                                           class="form-control"
-                                           placeholder="Min. temperature in Celsius" required/>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-sm-6">
-                            <div class="form-group">
-                                <div class="has-error" ng-show="uVisited.tmpMin && addAssetForm.tmin.$error.required">
-                                    <span class="help-block">{{resourceBundle['min.temp']}} {{resourceBundle['isrequired']}}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-sm-6">
-                            <div class="form-group">
-                                <label class="col-sm-4 control-label required">{{resourceBundle['max.temp']}} (&deg;C)</label>
-                                <div class="col-sm-8">
-                                    <input name="tmax" type="text" ng-model="asset.meta.tmp.max"
-                                           ng-blur="uVisited.tmpMax = true"
-                                           class="form-control"
-                                           ng-class="{'c-visited' : uVisited.tmpMax}"
-                                           placeholder="Max. temperature in Celsius" required/>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-sm-6">
-                            <div class="form-group">
-                                <div class="has-error" ng-show="uVisited.tmpMax && addAssetForm.tmax.$error.required">
-                                    <span class="help-block">{{resourceBundle['max.temp']}} {{resourceBundle['isrequired']}}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>-->
                 <div class="bgr" ng-if="currentAsset.iGe && isDef(asset.vId) && !edit">
                     <div class="title-heading">
                         {{resourceBundle['asset.temperature.device']}} {{resourceBundle['configuration'] | lowercase}}

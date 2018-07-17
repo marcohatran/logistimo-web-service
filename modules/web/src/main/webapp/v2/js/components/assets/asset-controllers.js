@@ -49,6 +49,7 @@ assetControllers.controller("AddAssetController", ['$scope', '$route', 'assetSer
         $scope.edit = false;
         var errorCount = 0;
         $scope.currentYear = new Date().getFullYear();
+        const MONITORED_ASSET = 2;
 
         $scope.init = function(){
 
@@ -78,6 +79,10 @@ assetControllers.controller("AddAssetController", ['$scope', '$route', 'assetSer
                         }).finally(function () {
                             $scope.hideLoading();
                         })
+                    }
+                    if($scope.edit && Object.keys($scope.currentManu.model).indexOf($scope.asset.meta.dev.mdl) == -1) {
+                        $scope.asset.meta.dev.mdl = undefined;
+                        $scope.asset.meta.cc = undefined;
                     }
                 }).catch(function(msg){
                     $scope.showErrorMsg(msg);
@@ -140,6 +145,16 @@ assetControllers.controller("AddAssetController", ['$scope', '$route', 'assetSer
                     $scope.asset.meta.dev.mdl = undefined;
                 }else{
                     $scope.updateSensors();
+                }
+            }
+        };
+
+        $scope.updateCapacity = function(modelName) {
+            $scope.asset.meta.cc = undefined;
+            if(MONITORED_ASSET == $scope.asset.typ && checkNotNullEmpty(modelName)) {
+                var model = $scope.currentManu.model;
+                if(!checkNullEmptyObject(model)) {
+                    $scope.asset.meta.cc = model[modelName].capacity;
                 }
             }
         };

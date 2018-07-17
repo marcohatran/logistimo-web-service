@@ -840,6 +840,7 @@ public class ConfigurationModelBuilder {
             AssetConfigModel.Model configModel = new AssetConfigModel.Model();
             configModel.name = model.name;
             configModel.type = model.type;
+            configModel.capacity = model.capacity;
 
             if (acmManc.iC != null && acmManc.iC && assetModelList != null && assetModelList
                 .contains(

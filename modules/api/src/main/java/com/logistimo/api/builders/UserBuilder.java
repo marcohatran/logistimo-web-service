@@ -58,6 +58,7 @@ import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.StringUtil;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -123,6 +124,7 @@ public class UserBuilder {
       model.ct = user.getCity();
       model.cnt = user.getCountry();
       model.st = user.getState();
+      model.ds = user.getDistrict();
       model.ll = user.getLastLogin();
       model.lr = user.getLastMobileAccessed();
       if (model.ll != null) {
@@ -221,13 +223,17 @@ public class UserBuilder {
               AssetConfigModel.Model aModel = new AssetConfigModel.Model();
               aModel.name = assetModel.name;
               aModel.type = assetModel.type;
-              for (AssetSystemConfig.Sensor sensor : assetModel.sns) {
-                AssetConfigModel.Sensor assetSns = new AssetConfigModel.Sensor();
-                assetSns.name = sensor.name;
-                assetSns.mpId = sensor.mpId;
-                assetSns.cd = sensor.cd;
-                aModel.sns.put(assetSns.name, assetSns);
+
+              if(CollectionUtils.isNotEmpty(assetModel.sns)) {
+                for (AssetSystemConfig.Sensor sensor : assetModel.sns) {
+                  AssetConfigModel.Sensor assetSns = new AssetConfigModel.Sensor();
+                  assetSns.name = sensor.name;
+                  assetSns.mpId = sensor.mpId;
+                  assetSns.cd = sensor.cd;
+                  aModel.sns.put(assetSns.name, assetSns);
+                }
               }
+
               manc.model.put(aModel.name, aModel);
             }
           }
