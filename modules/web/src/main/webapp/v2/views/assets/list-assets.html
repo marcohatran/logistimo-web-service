@@ -41,7 +41,7 @@
                             </button>
                             <ul class="dropdown-menu" role="menu" ng-show="istypeopen">
                                 <li ng-repeat="assetFilter in assetFilters | orderBy: 'dV'">
-                                    <a ng-click="updateTypeFilter(assetFilter.value)">{{assetFilter.dV}}</a>
+                                    <a ng-click="$parent.assetTypeFilter = assetFilter.value">{{assetFilter.dV}}</a>
                                 </li>
                             </ul>
                         </div>

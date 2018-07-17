@@ -463,6 +463,7 @@ assetControllers.controller("AssetListingController", ['$scope', '$route', 'asse
         $scope.wparams = [["etag", "etag"], ["aname", "aname"], ["o", "offset"], ["s", "size"], ["at", "assetTypeFilter"]];
         $scope.filtered = [];
         $scope.localFilters = ['aname','assetTypeFilter'];
+        $scope.filterMethods = ['updateTypeFilter'];
         $scope.loading = false;
         $scope.assetTypeFilter = 0;
 
@@ -520,9 +521,8 @@ assetControllers.controller("AssetListingController", ['$scope', '$route', 'asse
                 $scope.hideLoading();
             });
         };
-        $scope.updateTypeFilter = function(value){
-            $scope.assetTypeFilter = value;
-            $scope.currentAsset = $scope.assetConfig.assets[value];
+        $scope.updateTypeFilter = function(){
+            $scope.currentAsset = $scope.assetConfig.assets[$scope.assetTypeFilter];
         };
 
         $scope.deleteAssets = function(){
