@@ -2317,7 +2317,7 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope', '$timeout', 'reque
                     }
                 }
                 if ($scope.transaction.type == 'ro') {
-                    if (checkNotNullEmpty(transaction.bid)) {
+                    if (transaction.rq > 0 && checkNotNullEmpty(transaction.bid)) {
                         if (checkNullEmpty($scope.material.bidbatchDetMap[transaction.bid])) {
                             $scope.showWarning($scope.resourceBundle['batch'] + " " + transaction.bid + " " + $scope.resourceBundle['return.not.allowed.non.existing.batch'] + " " + $scope.mnm + ".");
                             return false;
@@ -2380,7 +2380,7 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope', '$timeout', 'reque
                 }
 
                 if (!isInvalid && $scope.transaction.type == 'ro') {
-                    if (checkNotNullEmpty(transaction.bid)) {
+                    if (transaction.rq > 0 && checkNotNullEmpty(transaction.bid)) {
                         if (checkNullEmpty($scope.material.bidbatchDetMap[transaction.bid])) {
                             showPopup($scope, transaction, idPrefix + transaction.id,
                                 $scope.resourceBundle['batch'] + " " + transaction.bid + " " + $scope.resourceBundle['return.not.allowed.non.existing.batch'] + " " + $scope.mnm + ".",
