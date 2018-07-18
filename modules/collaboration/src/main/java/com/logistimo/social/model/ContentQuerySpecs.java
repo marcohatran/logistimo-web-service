@@ -23,6 +23,8 @@
 
 package com.logistimo.social.model;
 
+import java.util.Locale;
+
 /**
  * Created by kumargaurav on 26/11/17.
  */
@@ -33,6 +35,7 @@ public class ContentQuerySpecs {
   private String contextType;
   private String user;
   private String contextAttribute;
+  private Locale locale;
 
   public String getObjectId() {
     return objectId;
@@ -80,5 +83,16 @@ public class ContentQuerySpecs {
 
   public void setContextAttribute(String contextAttribute) {
     this.contextAttribute = contextAttribute;
+  }
+
+  public Locale getLocale() {
+    if (this.locale == null) {
+      return Locale.ENGLISH;
+    }
+    return locale;
+  }
+
+  public void setLocale(Locale locale) {
+    this.locale = locale;
   }
 }

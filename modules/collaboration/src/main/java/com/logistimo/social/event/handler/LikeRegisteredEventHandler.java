@@ -24,6 +24,7 @@
 package com.logistimo.social.event.handler;
 
 import com.logistimo.collaboration.core.events.LikeRegisteredEvent;
+import com.logistimo.config.models.DomainConfig;
 import com.logistimo.exception.SystemException;
 import com.logistimo.logger.XLog;
 import com.logistimo.services.ServiceException;
@@ -39,6 +40,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Created by kumargaurav on 13/11/17.
@@ -80,23 +82,27 @@ public class LikeRegisteredEventHandler implements Handler<LikeRegisteredEvent> 
       log.severe("Error occured during getting subscriber for event {0}", event, e);
       throw new SystemException(e, "CL001", event);
     }
+    if (users == null || users.isEmpty()) {
+      log.warn("No users found for notification for event {0}", event);
+      return;
+    }
     String content = null;
     try {
-      content = getNotificationContent(event);
+      content = getNotificationContent(event, users);
     } catch (ServiceException e) {
       log.warn("Error occured during content generation for event {0}", event, e);
       throw new SystemException(e, "CL002", event);
     }
-    if (!StringUtils.isEmpty(content) && users != null && users.size() > 0) {
-      try {
-        CollaborationNotificationUtil
-            .sendSMS(users, content, usersService.getUserAccount(event.getUser()));
-      } catch (Exception e) {
-        log.severe("Error occured while notifying users for collaboration event {0}", event, e);
-        throw new SystemException(e, "CL003", event);
-      }
-    } else {
-      log.warn("No users found for notification for event {0}", event);
+    if (StringUtils.isEmpty(content)) {
+      log.warn("No content found for notification for event {0}", event);
+      return;
+    }
+    try {
+      CollaborationNotificationUtil
+          .sendSMS(users, content, usersService.getUserAccount(event.getUser()));
+    } catch (Exception e) {
+      log.severe("Error occured while notifying users for collaboration event {0}", event, e);
+      throw new SystemException(e, "CL003", event);
     }
   }
 
@@ -104,7 +110,7 @@ public class LikeRegisteredEventHandler implements Handler<LikeRegisteredEvent> 
     return subscriberProvider.getSubscriber(event);
   }
 
-  private String getNotificationContent(LikeRegisteredEvent event) throws ServiceException {
+  private String getNotificationContent(LikeRegisteredEvent event, List<IUserAccount> receivers) throws ServiceException {
     ContentQuerySpecs querySpecs = new ContentQuerySpecs();
     querySpecs.setObjectId(event.getObjectId());
     querySpecs.setObjectType(event.getObjectType());
@@ -112,6 +118,15 @@ public class LikeRegisteredEventHandler implements Handler<LikeRegisteredEvent> 
     querySpecs.setContextType(event.getContextType());
     querySpecs.setContextAttribute(event.getContextAttributes());
     querySpecs.setUser(event.getUser());
+    querySpecs.setLocale(getReceiversLocale(receivers.get(0).getDomainId()));
     return contentProvider.generateContent(querySpecs);
+  }
+
+  protected Locale getReceiversLocale(Long userSourceDomainId) {
+    String
+        domainNotificationLang =
+        DomainConfig.getInstance(userSourceDomainId).getLangPreference();
+    return StringUtils.isEmpty(domainNotificationLang) ? null
+        : new Locale(domainNotificationLang);
   }
 }

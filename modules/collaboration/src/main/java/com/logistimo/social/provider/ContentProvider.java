@@ -26,7 +26,6 @@ package com.logistimo.social.provider;
 import com.google.gson.GsonBuilder;
 
 import com.logistimo.collaboration.core.models.ContextModel;
-import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.EventSummaryConfigModel;
 import com.logistimo.domains.service.impl.DomainsServiceImpl;
 import com.logistimo.entities.service.EntitiesServiceImpl;
@@ -85,7 +84,7 @@ public class ContentProvider {
       return "";
     }
     String user = query.getUser();
-    IUserAccount userAccount = null;
+    IUserAccount userAccount;
     String userName;
     try {
       userAccount = usersService.getUserAccount(user);
@@ -96,7 +95,7 @@ public class ContentProvider {
     }
     Locale locale;
     if (StringUtils.isEmpty(lang)) {
-      locale = getUserLocale(userAccount.getDomainId());
+      locale = query.getLocale();
     } else {
       locale = new Locale(lang);
     }
@@ -177,13 +176,5 @@ public class ContentProvider {
       }
     }
     return "";
-  }
-
-  protected Locale getUserLocale(Long userSourceDomainId) {
-    String
-        domainNotificationLang =
-        DomainConfig.getInstance(userSourceDomainId).getLangPreference();
-    return StringUtils.isEmpty(domainNotificationLang) ? Locale.ENGLISH
-        : new Locale(domainNotificationLang);
   }
 }
