@@ -97,9 +97,7 @@ public class ReportBuilderTest {
    */
   @Test
   public void testGetMinMaxHistoryReportLabel_1() throws ParseException {
-    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(1l);
-    PowerMockito.when(DomainConfig.getInstance(1l))
-        .thenReturn(getDomainConfigWithUTCTimezone());
+    setDomainTimezoneAsUTC();
     String actualResult = reportBuilder.getMinMaxHistoryReportLabel(
         new DateTime(2018,4,30,1,0,0,DateTimeZone.forID(UTC)).toDate(), QueryHelper.MONTH,
         "2018-05-01");
@@ -114,9 +112,7 @@ public class ReportBuilderTest {
    */
   @Test
   public void testGetMinMaxHistoryReportLabel_2() throws ParseException {
-    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(2l);
-    PowerMockito.when(DomainConfig.getInstance(2l))
-        .thenReturn(getDomainConfigWithESTTimezone());
+    setDomainTimezoneAsEST();
     String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,4,30,1,0,0,DateTimeZone.forID(UTC)).toDate(), QueryHelper.MONTH, "2018-05-01");
     assertEquals("2018-05-01", actualResult);
   }
@@ -129,24 +125,20 @@ public class ReportBuilderTest {
    */
   @Test
   public void testGetMinMaxHistoryReportLabel_3() throws ParseException {
-    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(3l);
-    PowerMockito.when(DomainConfig.getInstance(3l))
-        .thenReturn(getDomainConfigWithISTTimezone());
+    setDomainTimezoneAsIST();
     String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,4,30,23,0,0, DateTimeZone.forID(UTC)).toDate(), QueryHelper.MONTH, "2018-05-01");
     assertEquals("2018-05-01", actualResult);
   }
 
   /**
    * This test asserts that the label returned by the method under test is the same as the from date passed when created time is less than the from date.
-   * Domain timezone is ACWST and System time zone is UTC
+   * Domain timezone is ACWST (Australian Central Western Standard Timezone) and System time zone is UTC
    * Monthly periodicity
    * @throws ParseException
    */
   @Test
   public void testGetMinMaxHistoryReportLabel_4() throws ParseException {
-    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(4l);
-    PowerMockito.when(DomainConfig.getInstance(4l))
-        .thenReturn(getDomainConfigWithACWSTTimezone());
+    setDomainTimezoneAsACWST();
     String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,4,30,23,0,0, DateTimeZone.forID(UTC)).toDate(), QueryHelper.MONTH, "2018-05-01");
     assertEquals("2018-05-01", actualResult);
   }
@@ -159,9 +151,7 @@ public class ReportBuilderTest {
    */
   @Test
   public void testGetMinMaxHistoryReportLabel_5() throws ParseException {
-    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(1l);
-    PowerMockito.when(DomainConfig.getInstance(1l))
-        .thenReturn(getDomainConfigWithUTCTimezone());
+    setDomainTimezoneAsUTC();
     String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,4,30,1,0,0,DateTimeZone.forID(UTC)).toDate(), QueryHelper.WEEK,
         "2018-05-07");
     assertEquals("2018-05-07", actualResult);
@@ -175,9 +165,7 @@ public class ReportBuilderTest {
    */
   @Test
   public void testGetMinMaxHistoryReportLabel_6() throws ParseException {
-    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(2l);
-    PowerMockito.when(DomainConfig.getInstance(2l))
-        .thenReturn(getDomainConfigWithESTTimezone());
+    setDomainTimezoneAsEST();
     String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,4,30,1,0,0,DateTimeZone.forID(UTC)).toDate(), QueryHelper.WEEK, "2018-05-07");
     assertEquals("2018-05-07", actualResult);
   }
@@ -190,24 +178,20 @@ public class ReportBuilderTest {
    */
   @Test
   public void testGetMinMaxHistoryReportLabel_7() throws ParseException {
-    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(3l);
-    PowerMockito.when(DomainConfig.getInstance(3l))
-        .thenReturn(getDomainConfigWithISTTimezone());
+    setDomainTimezoneAsIST();
     String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,4,30,23,0,0,DateTimeZone.forID(UTC)).toDate(), QueryHelper.WEEK, "2018-05-07");
     assertEquals("2018-05-07", actualResult);
   }
 
   /**
    * This test asserts that the label returned by the method under test is the same as the from date passed when created time is less than the from date.
-   * Domain timezone is Australian Central Western Standard Timezone and System time zone is UTC
+   * Domain timezone is ACWST (Australian Central Western Standard Timezone) and System time zone is UTC
    * Weekly periodicity
    * @throws ParseException
    */
   @Test
   public void testGetMinMaxHistoryReportLabel_8() throws ParseException {
-    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(4l);
-    PowerMockito.when(DomainConfig.getInstance(4l))
-        .thenReturn(getDomainConfigWithACWSTTimezone());
+    setDomainTimezoneAsACWST();
     String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,4,30,23,0,0,DateTimeZone.forID(UTC)).toDate(), QueryHelper.WEEK, "2018-05-07");
     assertEquals("2018-05-07", actualResult);
   }
@@ -220,10 +204,10 @@ public class ReportBuilderTest {
    */
   @Test
   public void testGetMinMaxHistoryReportLabel_9() throws ParseException {
-    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(1l);
-    PowerMockito.when(DomainConfig.getInstance(1l))
-        .thenReturn(getDomainConfigWithUTCTimezone());
-    String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,5,6,1,0,0,DateTimeZone.forID(UTC)).toDate(), QueryHelper.DAY, "2018-05-24");
+    setDomainTimezoneAsUTC();
+    String actualResult = reportBuilder.getMinMaxHistoryReportLabel(
+        new DateTime(2018, 5, 6, 1, 0, 0, DateTimeZone.forID(UTC)).toDate(), QueryHelper.DAY,
+        "2018-05-24");
     assertEquals("2018-05-24", actualResult);
   }
 
@@ -235,55 +219,37 @@ public class ReportBuilderTest {
    */
   @Test
   public void testGetMinMaxHistoryReportLabel_10() throws ParseException {
-    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(2l);
-    PowerMockito.when(DomainConfig.getInstance(2l))
-        .thenReturn(getDomainConfigWithESTTimezone());
-    String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,5,6,1,0,0,DateTimeZone.forID(UTC)).toDate(), QueryHelper.DAY, "2018-05-24");
+    setDomainTimezoneAsEST();
+    String actualResult = reportBuilder.getMinMaxHistoryReportLabel(
+        new DateTime(2018, 5, 6, 1, 0, 0, DateTimeZone.forID(UTC)).toDate(), QueryHelper.DAY,
+        "2018-05-24");
     assertEquals("2018-05-24", actualResult);
   }
 
   /**
    * This test asserts that the label returned by the method under test is the same as the from date passed when created time is less than the from date.
-   * Domain timezone is UTC and System time zone is UTC
+   * Domain timezone is IST and System time zone is UTC
    * Daily periodicity
    * @throws ParseException
    */
   @Test
   public void testGetMinMaxHistoryReportLabel_11() throws ParseException {
-    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(3l);
-    PowerMockito.when(DomainConfig.getInstance(3l))
-        .thenReturn(getDomainConfigWithISTTimezone());
+    setDomainTimezoneAsIST();
     String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,5,6,23,0,0,DateTimeZone.forID(UTC)).toDate(), QueryHelper.DAY, "2018-05-24");
     assertEquals("2018-05-24", actualResult);
   }
 
   /**
-   * This test asserts that the label returned by the method under test is the same as the from date passed.
-   * Domain timezone is UTC and System time zone is ACWST
+   * This test asserts that the label returned by the method under test is the same as the from date passed when created time is the same as from date.
+   * Domain timezone is UTC and System time zone is UTC
    * Daily periodicity
    * @throws ParseException
    */
   @Test
   public void testGetMinMaxHistoryReportLabel_12() throws ParseException {
-    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(3l);
-    PowerMockito.when(DomainConfig.getInstance(3l))
-        .thenReturn(getDomainConfigWithISTTimezone());
-    String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,5,6,23,0,0,DateTimeZone.forID(UTC)).toDate(), QueryHelper.DAY, "2018-05-24");
+    setDomainTimezoneAsUTC();
+    String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,5,24,0,0,0,DateTimeZone.forID(UTC)).toDate(), QueryHelper.DAY, "2018-05-24");
     assertEquals("2018-05-24", actualResult);
-  }
-
-
-  @Test
-  public void testGetMinMaxHistoryReportValuesWithNullMinMax() {
-    List<ReportDataModel> actualResult = reportBuilder.getMinMaxHistoryReportValues(null,null);
-    assertEquals(getReportDataModels(getListWithMinZeroMaxZero()),actualResult);
-  }
-
-  @Test
-  public void testGetMinMaxHistoryReportValuesWithValidMinMax() {
-    List<ReportDataModel> actualResult = reportBuilder.getMinMaxHistoryReportValues(
-        new BigDecimal(HUNDRED), new BigDecimal(THOUSAND));
-    assertEquals(getReportDataModels(getListWithMinHundredMaxThousand()),actualResult);
   }
 
   /**
@@ -294,12 +260,12 @@ public class ReportBuilderTest {
    */
   @Test
   public void testGetMinMaxHistoryReportLabel_13() throws ParseException {
-    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(1l);
-    PowerMockito.when(DomainConfig.getInstance(1l))
-        .thenReturn(getDomainConfigWithUTCTimezone());
+    setDomainTimezoneAsUTC();
     String actualResult =
         reportBuilder
-            .getMinMaxHistoryReportLabel(new DateTime(2018, 5, 1, 1, 0, 0, DateTimeZone.forID(UTC)).toDate(), QueryHelper.MONTH, "2018-01-01");
+            .getMinMaxHistoryReportLabel(
+                new DateTime(2018, 5, 1, 1, 0, 0, DateTimeZone.forID(UTC)).toDate(),
+                QueryHelper.MONTH, "2018-01-01");
     assertEquals("2018-05-01", actualResult);
   }
 
@@ -311,12 +277,12 @@ public class ReportBuilderTest {
    */
   @Test
   public void testGetMinMaxHistoryReportLabel_14() throws ParseException {
-    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(2l);
-    PowerMockito.when(DomainConfig.getInstance(2l))
-        .thenReturn(getDomainConfigWithESTTimezone());
+    setDomainTimezoneAsEST();
     String actualResult =
         reportBuilder
-            .getMinMaxHistoryReportLabel(new DateTime(2018, 5, 1, 1, 0, 0, DateTimeZone.forID(UTC)).toDate(), QueryHelper.MONTH, "2018-01-01");
+            .getMinMaxHistoryReportLabel(
+                new DateTime(2018, 5, 1, 1, 0, 0, DateTimeZone.forID(UTC)).toDate(),
+                QueryHelper.MONTH, "2018-01-01");
     assertEquals("2018-04-01", actualResult);
   }
 
@@ -328,9 +294,7 @@ public class ReportBuilderTest {
    */
   @Test
   public void testGetMinMaxHistoryReportLabel_15() throws ParseException {
-    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(3l);
-    PowerMockito.when(DomainConfig.getInstance(3l))
-        .thenReturn(getDomainConfigWithISTTimezone());
+    setDomainTimezoneAsIST();
     String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,5,31,23,0,0,DateTimeZone.forID(UTC)).toDate(), QueryHelper.MONTH, "2018-01-01");
     assertEquals("2018-06-01", actualResult);
   }
@@ -343,10 +307,10 @@ public class ReportBuilderTest {
    */
   @Test
   public void testGetMinMaxHistoryReportLabel_16() throws ParseException {
-    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(1l);
-    PowerMockito.when(DomainConfig.getInstance(1l))
-        .thenReturn(getDomainConfigWithUTCTimezone());
-    String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,5,6,1,0,0,DateTimeZone.forID(UTC)).toDate(), QueryHelper.WEEK, "2018-01-01");
+    setDomainTimezoneAsUTC();
+    String actualResult = reportBuilder.getMinMaxHistoryReportLabel(
+        new DateTime(2018, 5, 6, 1, 0, 0, DateTimeZone.forID(UTC)).toDate(), QueryHelper.WEEK,
+        "2018-01-01");
     assertEquals("2018-04-30", actualResult);
   }
 
@@ -358,10 +322,10 @@ public class ReportBuilderTest {
    */
   @Test
   public void testGetMinMaxHistoryReportLabel_17() throws ParseException {
-    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(2l);
-    PowerMockito.when(DomainConfig.getInstance(2l))
-        .thenReturn(getDomainConfigWithESTTimezone());
-    String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,5,7,1,0,0,DateTimeZone.forID(UTC)).toDate(), QueryHelper.WEEK, "2018-01-01");
+    setDomainTimezoneAsEST();
+    String actualResult = reportBuilder.getMinMaxHistoryReportLabel(
+        new DateTime(2018, 5, 7, 1, 0, 0, DateTimeZone.forID(UTC)).toDate(), QueryHelper.WEEK,
+        "2018-01-01");
     assertEquals("2018-04-30", actualResult);
   }
 
@@ -373,9 +337,7 @@ public class ReportBuilderTest {
    */
   @Test
   public void testGetMinMaxHistoryReportLabel_18() throws ParseException {
-    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(3l);
-    PowerMockito.when(DomainConfig.getInstance(3l))
-        .thenReturn(getDomainConfigWithISTTimezone());
+    setDomainTimezoneAsIST();
     String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,5,6,23,0,0,DateTimeZone.forID(UTC)).toDate(), QueryHelper.WEEK, "2018-01-01");
     assertEquals("2018-05-07", actualResult);
   }
@@ -388,9 +350,7 @@ public class ReportBuilderTest {
    */
   @Test
   public void testGetMinMaxHistoryReportLabel_19() throws ParseException {
-    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(1l);
-    PowerMockito.when(DomainConfig.getInstance(1l))
-        .thenReturn(getDomainConfigWithUTCTimezone());
+    setDomainTimezoneAsUTC();
     String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,5,6,1,0,0,DateTimeZone.forID(UTC)).toDate(), QueryHelper.DAY, "2018-05-01");
     assertEquals("2018-05-06", actualResult);
   }
@@ -403,9 +363,7 @@ public class ReportBuilderTest {
    */
   @Test
   public void testGetMinMaxHistoryReportLabel_20() throws ParseException {
-    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(2l);
-    PowerMockito.when(DomainConfig.getInstance(2l))
-        .thenReturn(getDomainConfigWithESTTimezone());
+    setDomainTimezoneAsEST();
     String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,5,6,1,0,0,DateTimeZone.forID(UTC)).toDate(), QueryHelper.DAY, "2018-05-01");
     assertEquals("2018-05-05", actualResult);
   }
@@ -418,9 +376,7 @@ public class ReportBuilderTest {
    */
   @Test
   public void testGetMinMaxHistoryReportLabel_21() throws ParseException {
-    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(3l);
-    PowerMockito.when(DomainConfig.getInstance(3l))
-        .thenReturn(getDomainConfigWithISTTimezone());
+    setDomainTimezoneAsIST();
     String actualResult = reportBuilder.getMinMaxHistoryReportLabel(new DateTime(2018,5,6,23,0,0,DateTimeZone.forID(UTC)).toDate(), QueryHelper.DAY, "2018-05-01");
     assertEquals("2018-05-07", actualResult);
   }
@@ -429,6 +385,19 @@ public class ReportBuilderTest {
   @Test
   public void testFillMinMaxHistoryChartDataWithNullInputs() throws ParseException{
     reportBuilder.fillMinMaxHistoryChartData(null,null);
+  }
+
+  @Test
+  public void testGetMinMaxHistoryReportValuesWithNullMinMax() {
+    List<ReportDataModel> actualResult = reportBuilder.getMinMaxHistoryReportValues(null, null);
+    assertEquals(getReportDataModels(getListWithMinZeroMaxZero()),actualResult);
+  }
+
+  @Test
+  public void testGetMinMaxHistoryReportValuesWithValidMinMax() {
+    List<ReportDataModel> actualResult = reportBuilder.getMinMaxHistoryReportValues(
+        new BigDecimal(HUNDRED), new BigDecimal(THOUSAND));
+    assertEquals(getReportDataModels(getListWithMinHundredMaxThousand()),actualResult);
   }
 
   @Test
@@ -482,7 +451,8 @@ public class ReportBuilderTest {
         reportMinMaxHistoryFilters = getReportMinMaxHistoryFiltersWithMonthlyPeriodicity();
     List<ReportChartModel> actualResult = reportBuilder.buildMinMaxHistoryReportsData(inventoryMinMaxLogs, reportMinMaxHistoryFilters);
     assertEquals(7, actualResult.size());
-    assertEquals(getReportChartModel("2018-06-01", getListWithMinHundredMaxThousand()), actualResult.get(0));
+    assertEquals(getReportChartModel("2018-06-01", getListWithMinHundredMaxThousand()), actualResult.get(
+        0));
     assertEquals(getReportChartModel("2018-05-01", getListWithMinFiftyMaxFiveHundred()), actualResult.get(1));
     assertEquals(getReportChartModel("2018-04-01", getListWithMinFifteenMaxOneHundredAndFifty()), actualResult.get(2));
     assertEquals(getReportChartModel("2018-01-01", getListWithMinZeroMaxZero()), actualResult.get(3));
@@ -500,10 +470,12 @@ public class ReportBuilderTest {
     List<IInventoryMinMaxLog> inventoryMinMaxLogs = getInventoryMinMaxLogsForMonthlyPeriodicity();
     ReportMinMaxHistoryFilters
         reportMinMaxHistoryFilters = getReportMinMaxHistoryFiltersWithMonthlyPeriodicity();
-    List<ReportChartModel> actualResult = reportBuilder.buildMinMaxHistoryReportsData(inventoryMinMaxLogs, reportMinMaxHistoryFilters);
+    List<ReportChartModel> actualResult = reportBuilder.buildMinMaxHistoryReportsData(
+        inventoryMinMaxLogs, reportMinMaxHistoryFilters);
     assertEquals(7, actualResult.size());
     assertEquals(getReportChartModel("2018-06-01", getListWithMinHundredMaxThousand()), actualResult.get(0));
-    assertEquals(getReportChartModel("2018-05-01", getListWithMinFiftyMaxFiveHundred()), actualResult.get(1));
+    assertEquals(getReportChartModel("2018-05-01", getListWithMinFiftyMaxFiveHundred()), actualResult.get(
+        1));
     assertEquals(getReportChartModel("2018-04-01", getListWithMinFifteenMaxOneHundredAndFifty()), actualResult.get(2));
     assertEquals(getReportChartModel("2018-01-01", getListWithMinZeroMaxZero()), actualResult.get(3));
     assertEquals(getReportChartModel("2017-12-01", getListWithMinEmptyMaxEmpty()), actualResult.get(4));
@@ -540,10 +512,12 @@ public class ReportBuilderTest {
     List<IInventoryMinMaxLog> inventoryMinMaxLogs = getInventoryMinMaxLogsForWeeklyPeriodicity();
     ReportMinMaxHistoryFilters
         reportMinMaxHistoryFilters = getReportMinMaxHistoryFiltersWithWeeklyPeriodicity();
-    List<ReportChartModel> actualResult = reportBuilder.buildMinMaxHistoryReportsData(inventoryMinMaxLogs, reportMinMaxHistoryFilters);
+    List<ReportChartModel> actualResult = reportBuilder.buildMinMaxHistoryReportsData(
+        inventoryMinMaxLogs, reportMinMaxHistoryFilters);
     assertEquals(7, actualResult.size());
     assertEquals(getReportChartModel("2018-06-11", getListWithMinHundredMaxThousand()), actualResult.get(0));
-    assertEquals(getReportChartModel("2018-05-28", getListWithMinFiftyMaxFiveHundred()), actualResult.get(1));
+    assertEquals(getReportChartModel("2018-05-28", getListWithMinFiftyMaxFiveHundred()), actualResult.get(
+        1));
     assertEquals(getReportChartModel("2018-05-14", getListWithMinTwentyFiveMaxTwoHundredAndFifty()), actualResult.get(2));
     assertEquals(getReportChartModel("2018-04-30", getListWithMinFifteenMaxOneHundredAndFifty()), actualResult.get(3));
     assertEquals(getReportChartModel("2018-05-07", getListWithMinFifteenMaxOneHundredAndFifty()), actualResult.get(4));
@@ -585,7 +559,8 @@ public class ReportBuilderTest {
     assertEquals(getReportChartModel("2018-05-29", getListWithMinFifteenMaxOneHundredAndFifty()), actualResult.get(1));
     assertEquals(getReportChartModel("2018-05-28", getListWithMinZeroMaxZero()), actualResult.get(2));
     assertEquals(getReportChartModel("2018-05-30", getListWithMinFifteenMaxOneHundredAndFifty()), actualResult.get(3));
-    assertEquals(getReportChartModel("2018-06-01", getListWithMinHundredMaxThousand()), actualResult.get(4));
+    assertEquals(getReportChartModel("2018-06-01", getListWithMinHundredMaxThousand()),
+        actualResult.get(4));
   }
 
   @Test
@@ -603,7 +578,8 @@ public class ReportBuilderTest {
     assertEquals(getReportChartModel("2018-05-30", getListWithMinTwentyFiveMaxTwoHundredAndFifty()), actualResult.get(1));
     assertEquals(getReportChartModel("2018-05-28", getListWithMinFifteenMaxOneHundredAndFifty()), actualResult.get(2));
     assertEquals(getReportChartModel("2018-05-29", getListWithMinFifteenMaxOneHundredAndFifty()), actualResult.get(3));
-    assertEquals(getReportChartModel("2018-06-01", getListWithMinHundredMaxThousand()), actualResult.get(4));
+    assertEquals(getReportChartModel("2018-06-01", getListWithMinHundredMaxThousand()),
+        actualResult.get(4));
   }
 
   @Test
@@ -621,7 +597,8 @@ public class ReportBuilderTest {
     assertEquals(getReportChartModel("2018-05-31", getListWithMinFiftyMaxFiveHundred()), actualResult.get(1));
     assertEquals(getReportChartModel("2018-05-29", getListWithMinFifteenMaxOneHundredAndFifty()), actualResult.get(2));
     assertEquals(getReportChartModel("2018-05-28", getListWithMinEmptyMaxEmpty()), actualResult.get(3));
-    assertEquals(getReportChartModel("2018-05-30", getListWithMinFifteenMaxOneHundredAndFifty()), actualResult.get(4));
+    assertEquals(getReportChartModel("2018-05-30", getListWithMinFifteenMaxOneHundredAndFifty()),
+        actualResult.get(4));
   }
 
   @Test (expected = NullPointerException.class)
@@ -812,5 +789,29 @@ public class ReportBuilderTest {
 
   private List<ReportDataModel> getReportDataModels(List<String> values) {
     return (values.stream().map(value -> new ReportDataModel(value)).collect(Collectors.toList()));
+  }
+
+  private void setDomainTimezoneAsUTC() {
+    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(1l);
+    PowerMockito.when(DomainConfig.getInstance(1l))
+        .thenReturn(getDomainConfigWithUTCTimezone());
+  }
+
+  private void setDomainTimezoneAsEST() {
+    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(2l);
+    PowerMockito.when(DomainConfig.getInstance(2l))
+        .thenReturn(getDomainConfigWithESTTimezone());
+  }
+
+  private void setDomainTimezoneAsIST() {
+    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(3l);
+    PowerMockito.when(DomainConfig.getInstance(3l))
+        .thenReturn(getDomainConfigWithISTTimezone());
+  }
+
+  private void setDomainTimezoneAsACWST() {
+    PowerMockito.when(SecurityUtils.getCurrentDomainId()).thenReturn(4l);
+    PowerMockito.when(DomainConfig.getInstance(4l))
+        .thenReturn(getDomainConfigWithACWSTTimezone());
   }
 }

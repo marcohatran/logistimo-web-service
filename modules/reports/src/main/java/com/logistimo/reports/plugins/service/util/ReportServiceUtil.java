@@ -585,4 +585,13 @@ public class ReportServiceUtil {
   private float getTimeInDays(Long timeInMillis) {
     return (float) timeInMillis / ReportsConstants.MILLISECONDS_PER_DAY;
   }
+
+  /**
+   * Returns the timezone of the domain which the user is logged into.
+   * @return
+   */
+  protected DateTimeZone getDomainTimezone() {
+    String tz = DomainConfig.getInstance(SecurityUtils.getCurrentDomainId()).getTimezone();
+    return (StringUtils.isNotEmpty(tz) ? DateTimeZone.forID(tz) : DateTimeZone.UTC);
+  }
 }
