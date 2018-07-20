@@ -445,7 +445,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
   @Override
   public String generate2FAOTP(String userId)
       throws MessageHandlingException, IOException {
-    String msg, logMsg;
+    String msg, logMsg, otp;
     MemcacheService cache = AppFactory.get().getMemcacheService();
 
     IUserAccount userAccount = usersService.getUserAccount(userId);
@@ -453,18 +453,23 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         backendMessages =
         Resources.get().getBundle(BACKEND_MESSAGES, userAccount.getLocale());
 
-    String otp = generateMobileOTP();
-
-    if (cache != null) {
-      cache.put(TWO_FACTOR_AUTHENTICATION_OTP.concat(CharacterConstants.UNDERSCORE).concat(userId),
-          otp, 900);
+    String cacheKey = TWO_FACTOR_AUTHENTICATION_OTP.concat(CharacterConstants.UNDERSCORE).concat(userId);
+    if(cache != null && cache.get(cacheKey) != null) {
+      otp = (String) cache.get(cacheKey);
+    } else {
+      otp = generateMobileOTP();
+      if (cache != null) {
+        cache
+            .put(cacheKey, otp, 15*60);
+      }
     }
     msg = otp.concat(CharacterConstants.SPACE).concat(backendMessages.getString("otp.generation.msg"));
     logMsg =
         backendMessages.getString("otp.generation.success").concat(CharacterConstants.SPACE)
             .concat(userId);
-
-    return sendOTP(logMsg, msg, userAccount, backendMessages);
+    sendOTP(logMsg, msg, userAccount, backendMessages);
+    return backendMessages.getString("password.otp.success1") + " " + userAccount.getFirstName()
+        + backendMessages.getString("password.otp.success2");
   }
 
   private void generateResetPasswordOTP(String userId, MemcacheService cache)

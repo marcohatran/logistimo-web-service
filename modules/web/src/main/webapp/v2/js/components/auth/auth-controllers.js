@@ -71,6 +71,10 @@ authControllers.controller('LoginController', ['$scope', 'iAuthService', 'authSe
                     } else {
                         $scope.invalid = false;
                         $scope.errorMsg = undefined;
+                        if(checkNotNullEmpty($scope.modalInstance)) {
+                            $scope.modalInstance.close();
+                            $scope.modalInstance = undefined;
+                        }
                         $scope.setAuthentication(data);
                     }
                 }).catch(function err(response){
@@ -96,8 +100,8 @@ authControllers.controller('LoginController', ['$scope', 'iAuthService', 'authSe
 
        $scope.generateNewOTP = function() {
            $scope.nLoading = true;
-           var generateOTPRequest = {mode: "0", otpType: "twoFA_otp"};
-           iAuthService.generateOtp(generateOTPRequest).then(function(data){
+           var mode = "0";
+           iAuthService.generateAuthenticationOTP($scope.userId, mode).then(function(data){
                $scope.showSuccess(data.data.errorMsg);
            }).catch(function error(msg){
                $scope.showWarning(msg.data.message);
@@ -165,6 +169,10 @@ authControllers.controller('LoginController', ['$scope', 'iAuthService', 'authSe
         $scope.forgotPassword = function(){
             $scope.fp = true;
         };
+
+        $scope.reset = function(){
+            $scope.fp = false;
+        }
     }]);
 
 authControllers.controller('BulletinBoardAuthController', ['$scope', 'iAuthService', function ($scope, iAuthService) {

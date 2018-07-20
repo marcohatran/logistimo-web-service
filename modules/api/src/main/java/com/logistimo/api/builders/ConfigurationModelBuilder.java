@@ -1044,6 +1044,7 @@ public class ConfigurationModelBuilder {
             dc.getSyncConfig().getSmsTransmissionWaitDuration() / SyncConfig.HOURS_IN_A_DAY;
       }
       model.setTheme(dc.getStoreAppTheme());
+      model.setTwoFactorAuthenticationEnabled(dc.isTwoFactorAuthenticationEnabled());
     }
     return model;
   }

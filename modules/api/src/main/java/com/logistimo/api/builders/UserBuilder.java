@@ -223,6 +223,7 @@ public class UserBuilder {
               AssetConfigModel.Model aModel = new AssetConfigModel.Model();
               aModel.name = assetModel.name;
               aModel.type = assetModel.type;
+              aModel.capacity = assetModel.capacity;
 
               if(CollectionUtils.isNotEmpty(assetModel.sns)) {
                 for (AssetSystemConfig.Sensor sensor : assetModel.sns) {

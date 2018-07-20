@@ -54,8 +54,4 @@ public class PasswordModel {
    * User device type
    */
   private String udty;
-  /**
-   * OTP type
-   */
-  private String otpType;
 }

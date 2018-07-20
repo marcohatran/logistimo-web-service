@@ -102,6 +102,10 @@ authServices.factory('iAuthService', ['APIService', '$rootScope', '$q', '$cookie
             if (checkNotNullEmpty(expires)) {
                 localStorage.setItem("expires", expires);
             }
+        },
+        generateAuthenticationOTP: function(userId, mode) {
+            var request = {uid: userId, mode: mode};
+            return apiService.post(request, '/s2/api/mauth/generate-authentication-otp');
         }
 
     }

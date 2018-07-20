@@ -668,6 +668,7 @@ domainCfgControllers.controller('CapabilitiesConfigurationController', ['$scope'
                 $scope.uiCnf.stwd = $scope.cnf.stwd;
                 $scope.uiCnf.llr = $scope.cnf.llr;
                 $scope.uiCnf.theme = $scope.cnf.theme;
+                $scope.uiCnf.twoFactorAuthenticationEnabled = $scope.cnf.twoFactorAuthenticationEnabled;
             }
         };
         $scope.setCapabilitiesByRole = function (role, lu) {
@@ -694,6 +695,7 @@ domainCfgControllers.controller('CapabilitiesConfigurationController', ['$scope'
                 $scope.cnf.stwd = $scope.uiCnf.stwd;
                 $scope.cnf.llr = $scope.uiCnf.llr;
                 $scope.cnf.theme = $scope.uiCnf.theme;
+                $scope.cnf.twoFactorAuthenticationEnabled = $scope.uiCnf.twoFactorAuthenticationEnabled;
             }
         }
     }
