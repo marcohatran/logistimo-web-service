@@ -338,7 +338,7 @@ trnControllers.controller('TransactionsCtrl', ['$scope', 'trnService', 'domainCf
             $scope.atd=false;
             $scope.reason = undefined;
             $scope.tempReason = undefined;
-        }
+        };
     }
 ]);
 trnControllers.controller('TransMapCtrl', ['$scope','mapService','uiGmapGoogleMapApi',
@@ -494,6 +494,8 @@ trnControllers.controller('TransMapCtrl', ['$scope','mapService','uiGmapGoogleMa
 trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibModal','trnService', 'invService', 'domainCfgService', 'entityService','$timeout',
     function ($rootScope,$scope, $uibModal, trnService, invService, domainCfgService, entityService,$timeout) {
         $scope.invalidPopup = 0;
+        $scope.openFormCount = {};
+        $scope.openFormCount.returns = 0;
         $scope.validate = function (material, index, source) {
             if(!material.isBatch) {
                 material.isVisited = material.isVisited || checkNotNullEmpty(source);
@@ -905,10 +907,6 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
             }
 
             valid = !$scope.transaction.modifiedmaterials.some(function(material) {
-                if(checkNotNullEmpty(material.op)) {
-                    $scope.showWarning($scope.resourceBundle['edit.returns.form.open.message'] + " " + material.name.mnm + ". " + $scope.resourceBundle['edit.returns.save.cancel.message']);
-                    return true;
-                }
                 if (!$scope.isReturnTransactionsAtdValid(material)) {
                     var type = $scope.transaction.type == 'ri' ? 'issue' : 'receipt';
                     $scope.showWarning($scope.resourceBundle['return.transaction.atd.message'] + " " + type + " " + $scope.resourceBundle['for'] + " " + material.name.mnm + ".");
@@ -1181,6 +1179,8 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
             $scope.timestamp = undefined;
             $scope.invalidPopup = 0;
             $scope.transaction.type = $scope.transactions_arr[0].value;
+            $scope.openFormCount = {};
+            $scope.openFormCount.returns = 0;
             $scope.addRows();
             if($scope.isEnt) {
                 $scope.transaction.ent = $scope.entity;
@@ -1362,7 +1362,11 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
         });
         $scope.isTransactionTypeReturn = function () {
             return checkNotNullEmpty($scope.transaction.type) && ($scope.transaction.type == 'ri' || $scope.transaction.type == 'ro');
-        }
+        };
+        $scope.disableButtonsAndIncrementCount = function(material) {
+            material.disableButtons = true;
+            $scope.openFormCount.returns = $scope.openFormCount.returns + 1;
+        };
     }
 ]);
 trnControllers.controller('transactions.MaterialController', ['$scope', 'trnService', 'invService',
@@ -2268,6 +2272,8 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope', '$timeout', 'reque
 
         $scope.toggle = function (index) {
             $scope.material.op = undefined;
+            $scope.material.disableButtons = undefined;
+            $scope.openFormCount.returns -= 1;
             $scope.select(index);
         };
 
@@ -2477,6 +2483,6 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope', '$timeout', 'reque
                     }
                 }
             }
-        }
+        };
     }]);
 

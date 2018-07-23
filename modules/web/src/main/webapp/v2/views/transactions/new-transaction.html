@@ -332,14 +332,14 @@
                                     </tr>
                                     </tbody>
                                 </table>
-                                <button type="button" ng-disabled="material.op=='add'"
+                                <button type="button" ng-disabled="material.disableButtons == true"
                                         ng-hide="exRow[$index] === 'add' || exRow[$index] === 'show' ||  isUndef(material.returnitems) || material.returnitems.length == 0"
                                         class="btn btn-sm btn-primary"
-                                        ng-click="material.op='edit'; selectOnType($index)">{{resourceBundle['edit']}}
+                                        ng-click="material.op='edit'; disableButtonsAndIncrementCount(material); selectOnType($index)">{{resourceBundle['edit']}}
                                 </button>
-                                <button type="button" class="btn btn-sm btn-primary" ng-disabled="material.op=='edit'"
+                                <button type="button" class="btn btn-sm btn-primary" ng-disabled="material.disableButtons == true"
                                         ng-hide="exRow[$index] === 'add' || exRow[$index] === 'show'"
-                                        ng-click="material.op='add'; selectOnType($index)">
+                                        ng-click="material.op='add'; disableButtonsAndIncrementCount(material); selectOnType($index)">
                                     {{resourceBundle['enter.returns']}}
                                 </button>
                             </div>
@@ -434,7 +434,7 @@
                     </tr>
                     <tr data-ng-switch-when="return">
                         <td colspan=100% class="partialview">
-                            <div ng-init="view='views/transactions/return-transaction.html'; reasons = material.rsns; defReason = material.reason; showReason = material.showReason; op = material.op; huName = material.name.huName; huQty = material.name.huQty; mnm = material.name.mnm ; mid = material.name.mId ; kid = material.name.kId ; bdata = material.oquantity; bndata = material.bnquantity; type = transaction.type; index = $index"
+                            <div ng-init="view='views/transactions/return-transaction.html'; reasons = material.rsns; defReason = material.reason; showReason = material.showReason; op = material.op; huName = material.name.huName; huQty = material.name.huQty; mnm = material.name.mnm ; mid = material.name.mId ; kid = material.name.kId ; bdata = material.oquantity; bndata = material.bnquantity; type = transaction.type; index = $index;"
                                  ng-include="'views/transactions/return-transaction.html'"></div>
                         </td>
                     </tr>
@@ -444,7 +444,7 @@
                     <div class="col-sm-12">
                         <div class="pull-right">
                             <button type="button"
-                                    ng-disabled="invalidPopup != 0 || transaction.materials.length<=1 || !addTransaction.$valid"
+                                    ng-disabled="invalidPopup != 0 || transaction.materials.length<=1 || !addTransaction.$valid || openFormCount.returns > 0"
                                     ng-click="submitted=true; addTransaction.$valid && update()"
                                     class="btn btn-sm btn-primary">{{resourceBundle['submit']}}
                             </button>
