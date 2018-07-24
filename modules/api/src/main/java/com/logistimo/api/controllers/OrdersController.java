@@ -507,7 +507,8 @@ public class OrdersController {
       }
       DomainConfig dc = DomainConfig.getInstance(domainId);
       order.setItems(demandService.getDemandItems(orderId));
-      List<ITransaction> transactions = orderAPIBuilder.buildTransactionsForNewItems(order, model.items);
+      Date now = new Date();
+      List<ITransaction> transactions = orderAPIBuilder.buildTransactionsForNewItems(order, model.items, now, user.getUsername());
       if (transactions != null && !transactions.isEmpty()) {
         orderManagementService.
             modifyOrder(order, user.getUsername(), transactions, new Date(), domainId,
@@ -515,7 +516,7 @@ public class OrdersController {
                 dc.allowEmptyOrders(), order.getTags(TagUtil.TYPE_ORDER),
                 order.getSalesReferenceID(), pm, order.getPurchaseReferenceId(), order.getTransferReferenceId());
       }
-      order = orderAPIBuilder.buildOrderMaterials(order, model.items);
+      order = orderAPIBuilder.buildOrderMaterials(order, model.items, now, user.getUsername());
       //TODO use OrderManagementServiceImpl updateOrderWithAllocations
       String oIdStr = String.valueOf(order.getOrderId());
       if (dc.autoGI() && order.getServicingKiosk() != null) {

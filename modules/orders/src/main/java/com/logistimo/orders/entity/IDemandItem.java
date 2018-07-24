@@ -181,4 +181,14 @@ public interface IDemandItem extends IOverlappedDomain {
    * Transient non-persisted
    */
   void setAllocatedStock(BigDecimal quantity);
+
+  Date getCreatedOn();
+
+  void setCreatedOn(Date createdOn);
+
+  String getCreatedBy();
+
+  void setCreatedBy(String createdBy);
+
+
 }

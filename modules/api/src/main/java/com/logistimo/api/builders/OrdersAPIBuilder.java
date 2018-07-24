@@ -1123,11 +1123,9 @@ public class OrdersAPIBuilder {
   }
 
   public List<ITransaction> buildTransactionsForNewItems(IOrder order,
-                                                         List<DemandModel> demandItemModels) {
+                                                         List<DemandModel> demandItemModels, Date timestamp, String userId) {
     Long domainId = order.getDomainId();
     Long kioskId = order.getKioskId();
-    String userId = order.getUserId();
-    Date now = new Date();
     List<ITransaction> transactions = new ArrayList<>();
     for (DemandModel demandModel : demandItemModels) {
       IDemandItem item = order.getItem(demandModel.id);
@@ -1140,21 +1138,22 @@ public class OrdersAPIBuilder {
         trans.setType(ITransaction.TYPE_REORDER);
         trans.setTrackingId(String.valueOf(order.getOrderId()));
         trans.setSourceUserId(userId);
-        trans.setTimestamp(now);
+        trans.setTimestamp(timestamp);
         transactions.add(trans);
       }
-
     }
     return transactions;
   }
 
 
-  public IOrder buildOrderMaterials(IOrder order, List<DemandModel> items) {
+  public IOrder buildOrderMaterials(IOrder order, List<DemandModel> items, Date timestamp, String userId) {
     for (DemandModel model : items) {
       IDemandItem item = order.getItem(model.id);
       if (item != null) {
         if (BigUtil.notEquals(item.getQuantity(), model.q)) {
           item.setQuantity(model.q);
+          item.setTimestamp(timestamp);
+          item.setUserId(userId);
         }
         if (BigUtil.equals(model.q, model.oq)) {
           item.setOriginalQuantity(model.q);

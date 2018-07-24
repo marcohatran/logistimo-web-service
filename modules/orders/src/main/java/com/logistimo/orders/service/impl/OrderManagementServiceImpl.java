@@ -229,20 +229,6 @@ public class OrderManagementServiceImpl implements OrderManagementService {
     return AppFactory.get().getTaskService();
   }
 
-  // Get a demand item with same material ID
-  private static IDemandItem getDemandItemByMaterial(List<IDemandItem> demandList,
-      Long materialId) {
-    if (demandList == null || demandList.isEmpty()) {
-      return null;
-    }
-    for (IDemandItem di : demandList) {
-      if (di.getMaterialId().equals(materialId)) {
-        return di;
-      }
-    }
-    return null;
-  }
-
   public IOrder getOrder(Long orderId) throws ServiceException {
     return getOrder(orderId, false, null);
   }
@@ -1724,8 +1710,10 @@ public class OrderManagementServiceImpl implements OrderManagementService {
     di.setReason(trans.getReason());
 
     di.setStatus(IOrder.PENDING);
+    di.setCreatedOn(trans.getTimestamp());
     di.setTimestamp(trans.getTimestamp());
     di.setMessage(trans.getMessage());
+    di.setCreatedBy(trans.getSourceUserId());
     di.setUserId(trans.getSourceUserId());
     // Set tags
     di.setTgs(tagDao.getTagsByNames(inv.getTags(TagUtil.TYPE_ENTITY), ITag.KIOSK_TAG),
