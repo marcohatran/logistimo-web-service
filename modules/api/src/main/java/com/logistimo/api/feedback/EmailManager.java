@@ -35,7 +35,7 @@ public class EmailManager {
 
   private static final XLog xLogger = XLog.getLog(EmailManager.class);
 
-  private static ExecutorService executor = Executors.newFixedThreadPool(3);
+  private static final ExecutorService executor = Executors.newFixedThreadPool(3);
 
   private EmailManager () {
 

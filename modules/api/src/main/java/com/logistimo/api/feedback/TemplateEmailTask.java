@@ -105,7 +105,6 @@ public class TemplateEmailTask implements Callable<String> {
         vc.put(entry.getKey(),String.valueOf(val));
       } else {
         xLogger.warn("Unsupported attribute entry with key {0}",entry.getKey());
-        continue;
       }
     }
     return vc;
