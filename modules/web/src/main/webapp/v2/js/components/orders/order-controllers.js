@@ -2989,7 +2989,10 @@ ordControllers.controller('NewShipmentController', ['$scope', 'ordService', '$lo
 
         $scope.shipNewShipment = function () {
             if ($scope.shipment.ship == 0) {
-                if ($scope.oCfg.eadm && checkNullEmpty($scope.shipment.ead)) {
+                if ($scope.oCfg.tm && checkNullEmpty($scope.shipment.transporter)) {
+                    $scope.showWarning($scope.resourceBundle['transportermandatory']);
+                    return;
+                } else if ($scope.oCfg.eadm && checkNullEmpty($scope.shipment.ead)) {
                     $scope.showWarning($scope.resourceBundle['estimated.date.of.arrival.mandatory.error']);
                     return;
                 } else if ($scope.oCfg.ridm && (checkNullEmpty($scope.shipment.salesRefId) || checkNullEmpty($scope.shipment.salesRefId.trim()))) {
