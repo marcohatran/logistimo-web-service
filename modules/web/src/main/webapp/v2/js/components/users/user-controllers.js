@@ -233,7 +233,7 @@ userControllers.controller('UsersListController', ['$scope', 'userService', 'req
                 mobile = "+" + mobile
             }
             exportService.exportData({
-                first_name: $scope.search.key || undefined,
+                first_name: $scope.fname || undefined,
                 mobile_no: mobile || undefined,
                 role: $scope.urole || undefined,
                 user_active: $scope.uactive || undefined,
@@ -257,7 +257,7 @@ userControllers.controller('UsersListController', ['$scope', 'userService', 'req
         };
 
         function getCaption() {
-            var caption = getFilterTitle($scope.search.key, $scope.resourceBundle['user.firstname']);
+            var caption = getFilterTitle($scope.fname, $scope.resourceBundle['user.firstname']);
             caption += getFilterTitle($scope.uphn, $scope.resourceBundle['user.mobile.phone.number']);
             caption += getFilterTitle(getDisplayText('r', $scope.urole), $scope.resourceBundle['role']);
             caption += getFilterTitle(getDisplayText('a', $scope.uactive), $scope.resourceBundle['user.active']);
