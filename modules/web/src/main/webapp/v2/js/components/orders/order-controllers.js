@@ -3473,12 +3473,14 @@ ordControllers.controller('FulfilShipmentController', ['$scope', 'ordService', '
         if (type == 'show') {
             $scope.saveDisable = true;
             $scope.saveCounter++;
+            $scope.shipment.items[index].hideEdit = true;
         }
         if (checkNullEmpty(type)) {
             $scope.saveCounter--;
             if ($scope.saveCounter == 0) {
                 $scope.saveDisable = false;
             }
+            $scope.shipment.items[index].hideEdit = false;
         }
         $scope.exRow[index] = $scope.exRow[index] === type ? empty : type;
         redrawPopup($scope, $scope.shipment.items, 'hide', $timeout);

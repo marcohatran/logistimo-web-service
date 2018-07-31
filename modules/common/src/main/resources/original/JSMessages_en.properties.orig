@@ -1405,3 +1405,5 @@ two.step.authentication.description=Two-step authentication adds an extra layer 
 otp.sent.message=A one time password (OTP) has been sent to your mobile ••••••••
 two.step.authentication.otp.enter=please enter the same here to login.
 two.step.authentication.otp.info=It can take a few minutes for the one time password (OTP) to arrive over SMS. If you do not receive the OTP even after 15 minutes, please click on the "Regenerate OTP" link above.
+date.of.actual.receipt=Date of actual receipt
+shipment.fulfil.review.message=Please review and confirm the received quantities before fulfilling the order. If the received quantities are different from the shipped quantities indicated in the order, edit the corresponding received quantities before fulfilling the order.

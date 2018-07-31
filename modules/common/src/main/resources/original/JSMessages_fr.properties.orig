@@ -1401,3 +1401,5 @@ two.step.authentication.description=L'authentification en deux étapes ajoute un
 otp.sent.message=Un mot de passe à usage unique (OTP) a été envoyé à votre mobile ••••••••
 two.step.authentication.otp.enter=s'il vous plaît entrez la même chose ici pour vous connecter.
 two.step.authentication.otp.info=Le mot de passe à usage unique (OTP) peut prendre quelques minutes pour arriver par SMS. Si vous ne recevez pas l'OTP même après 15 minutes, veuillez cliquer sur le lien "Regenerate OTP" ci-dessus.
+date.of.actual.receipt=Date de réception effective
+shipment.fulfil.review.message=S'il vous plaît examiner et confirmer les quantités reçues avant de remplir la commande. Si les quantités reçues sont différentes des quantités expédiées indiquées dans la commande, modifiez les quantités reçues correspondantes avant d'exécuter la commande.
