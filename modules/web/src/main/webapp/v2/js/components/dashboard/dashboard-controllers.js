@@ -2397,7 +2397,7 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
                                 }
                             }
                             // generate link to stock views page
-                            var search;
+                            var search = undefined;
                             if(checkNotNullEmpty(data[n].mid) && (event == INVENTORY.stock.STOCKOUT ||
                                 event == INVENTORY.stock.UNDERSTOCK || event == INVENTORY.stock.OVERSTOCK)
                                 && data[n].value != 0) {
