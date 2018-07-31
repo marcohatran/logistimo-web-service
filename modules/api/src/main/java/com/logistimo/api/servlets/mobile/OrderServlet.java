@@ -817,7 +817,7 @@ public class OrderServlet extends JsonRestServlet {
               message = backendMessages.getString("transfer.reference.id.update.error.message");
             }
             if (StringUtils.isBlank(uoReq.getPurchaseReferenceId()) && StringUtils
-                .isNotBlank(o.getPurchaseReferenceId()) && dc.getOrdersConfig()
+                .isBlank(o.getPurchaseReferenceId()) && dc.getOrdersConfig()
                 .isPurchaseReferenceIdMandatory()) {
               status = false;
               message = backendMessages.getString("purchase.reference.id.mandatory.error");
