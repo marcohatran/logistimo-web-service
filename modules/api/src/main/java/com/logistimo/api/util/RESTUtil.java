@@ -1241,12 +1241,22 @@ public class RESTUtil {
       return getKioskDataExportJsonOutput(locale, false, message);
     }
     parsedRequest.parsedReqMap.putAll(parsedOrderExportFilters.parsedReqMap);
+
+    // Date filters
+    reqParamsMap.put(RestConstantsZ.STARTDATE, req.getParameter(RestConstantsZ.STARTDATE));
+    reqParamsMap.put(RestConstantsZ.ENDDATE, req.getParameter(RestConstantsZ.ENDDATE));
+    ParsedRequest parsedDateFilters = parseDateFilters(reqParamsMap, backendMessages);
+    if (StringUtils.isNotEmpty(parsedDateFilters.errMessage)) {
+      message = parsedDateFilters.errMessage;
+      return getKioskDataExportJsonOutput(locale, false, message);
+    }
+    parsedRequest.parsedReqMap.putAll(parsedDateFilters.parsedReqMap);
+
     // Transaction filters
     reqParamsMap
         .put(RestConstantsZ.TRANSACTION_TYPE, req.getParameter(RestConstantsZ.TRANSACTION_TYPE));
     reqParamsMap.put(RestConstantsZ.MATERIAL_ID, req.getParameter(RestConstantsZ.MATERIAL_ID));
-    reqParamsMap.put(RestConstantsZ.STARTDATE, req.getParameter(RestConstantsZ.STARTDATE));
-    reqParamsMap.put(RestConstantsZ.ENDDATE, req.getParameter(RestConstantsZ.ENDDATE));
+
     ParsedRequest parsedTransExportFilters =
         parseTransactionsExportFilters(reqParamsMap, backendMessages);
     if (StringUtils.isNotEmpty(parsedTransExportFilters.errMessage)) {
@@ -1254,15 +1264,15 @@ public class RESTUtil {
       return getKioskDataExportJsonOutput(locale, false, message);
     }
     parsedRequest.parsedReqMap.putAll(parsedTransExportFilters.parsedReqMap);
-    // Export, if still valid
+
     Map<String, String> params = new HashMap<>();
     params.put(MobileExportConstants.EXPORT_TYPE_KEY,
         (String) parsedRequest.parsedReqMap.get(RestConstantsZ.TYPE));
     params.put(MobileExportConstants.DOMAIN_ID_KEY, domainId.toString());
     params.put(MobileExportConstants.KIOSK_ID_KEY,
         parsedRequest.parsedReqMap.get(RestConstantsZ.KIOSK_ID).toString());
-    if (BulkExportMgr.TYPE_TRANSACTIONS
-        .equals(parsedRequest.parsedReqMap.get(RestConstantsZ.TYPE))) {
+    String exportType = (String) parsedRequest.parsedReqMap.get(RestConstantsZ.TYPE);
+    if (isExportTypeTransactions(exportType) || isExportTypeOrders(exportType) || isExportTypeTransfers(exportType)) {
       if (parsedRequest.parsedReqMap.get(RestConstantsZ.ENDDATE) != null) {
         params.put(MobileExportConstants.END_DATE_KEY, LocalDateUtil
             .formatCustom((Date) parsedRequest.parsedReqMap.get(RestConstantsZ.ENDDATE),
@@ -1279,6 +1289,8 @@ public class RESTUtil {
         params.put(MobileExportConstants.FROM_DATE_KEY,
             LocalDateUtil.formatCustom(cal.getTime(), Constants.DATE_FORMAT_CSV, null));
       }
+    }
+    if (isExportTypeTransactions(exportType)) {
       if (parsedRequest.parsedReqMap.get(RestConstantsZ.MATERIAL_ID) != null) {
         params.put(MobileExportConstants.MATERIAL_ID_KEY,
             parsedRequest.parsedReqMap.get(RestConstantsZ.MATERIAL_ID).toString());
@@ -1288,14 +1300,8 @@ public class RESTUtil {
             parsedRequest.parsedReqMap.get(RestConstantsZ.TRANSACTION_TYPE).toString());
       }
     }
-    if (BulkExportMgr.TYPE_ORDERS.equals(parsedRequest.parsedReqMap.get(RestConstantsZ.TYPE))
-        || TRANSFERS.equals(parsedRequest.parsedReqMap.get(RestConstantsZ.TYPE))) {
-      // Export a year's worth of transactions/orders
-      Calendar cal = GregorianCalendar.getInstance();
-      cal.add(Calendar.YEAR, -1);
-      params.put(MobileExportConstants.FROM_DATE_KEY,
-          LocalDateUtil.formatCustom(cal.getTime(), Constants.DATE_FORMAT_CSV, null));
-
+    if (isExportTypeOrders(exportType)
+        || isExportTypeTransfers(exportType)) {
       params.put(MobileExportConstants.ORDER_TYPE_KEY,
           (String) parsedRequest.parsedReqMap.get(MobileExportConstants.ORDERS_SUB_TYPE_KEY));
       params.put(MobileExportConstants.ORDERS_SUB_TYPE_KEY,
@@ -1308,18 +1314,15 @@ public class RESTUtil {
           exportAdapter =
           StaticApplicationContext.getBean(MobileExportAdapter.class);
       exportAdapter.buildExportRequest(params);
-      message =
-          "Successfully scheduled export, data will be sent to email address \""
-              + parsedRequest.parsedReqMap.get(RestConstantsZ.EMAIL)
-              + "\".";
+      message = backendMessages.getString("exports.successfully.scheduled.message") + CharacterConstants.DOUBLE_QUOTES + parsedRequest.parsedReqMap.get(RestConstantsZ.EMAIL)
+          + CharacterConstants.DOUBLE_QUOTES + CharacterConstants.DOT;
     } catch (Exception e) {
       xLogger.severe(
           "{0} when scheduling task for kiosk data export of type {1} for kiosk {2} in domain {3} by user {4}: ",
           e.getClass().getName(), parsedRequest.parsedReqMap.get(RestConstantsZ.TYPE),
           parsedRequest.parsedReqMap.get(RestConstantsZ.KIOSK_ID), domainId, userId, e
       );
-      message =
-          "A system error occurred. Please retry your export once again, or contact your Administrator.";
+      message = backendMessages.getString("exports.failure.message");
       return getKioskDataExportJsonOutput(locale, false, message);
     }
     return getKioskDataExportJsonOutput(locale, true, message);
@@ -2147,7 +2150,7 @@ public class RESTUtil {
     Map<String, ActualTransConfig> actualTransConfigByType = ic.getActualTransConfigMapByType();
     if (MapUtils.isNotEmpty(actualTransConfigByType)) {
       actualTransConfigByType.entrySet().forEach(entry -> {
-            Map<String,String> actualTransConfig = getActualTransConfigByType(entry.getValue());
+            Map<String, String> actualTransConfig = getActualTransConfigByType(entry.getValue());
             if (MapUtils.isNotEmpty(actualTransConfig)) {
               actualTransDateConfigByType
                   .put(entry.getKey(), actualTransConfig);
@@ -2328,7 +2331,7 @@ public class RESTUtil {
 
   private static ParsedRequest parseOrdersExportFilters(Map<String, String> reqParamsMap) {
     ParsedRequest parsedRequest = new ParsedRequest();
-    if (reqParamsMap == null || reqParamsMap.isEmpty()) {
+    if (MapUtils.isEmpty(reqParamsMap)) {
       return parsedRequest;
     }
     // Get the order type, if sent
@@ -2356,7 +2359,42 @@ public class RESTUtil {
       Map<String, String> reqParamsMap,
       ResourceBundle backendMessages) {
     ParsedRequest parsedRequest = new ParsedRequest();
-    if (reqParamsMap == null || reqParamsMap.isEmpty()) {
+    if (MapUtils.isEmpty(reqParamsMap)) {
+      return parsedRequest;
+    }
+
+    String transTypeStr = reqParamsMap.get(RestConstantsZ.TRANSACTION_TYPE);
+    if (StringUtils.isNotEmpty(transTypeStr)) {
+      if (ITransaction.TYPE_PHYSICALCOUNT.equals(transTypeStr) || ITransaction.TYPE_ISSUE
+          .equals(transTypeStr) || ITransaction.TYPE_RECEIPT.equals(transTypeStr)
+          || ITransaction.TYPE_TRANSFER.equals(transTypeStr) || ITransaction.TYPE_WASTAGE
+          .equals(transTypeStr)) {
+        parsedRequest.parsedReqMap.put(RestConstantsZ.TRANSACTION_TYPE, transTypeStr);
+      } else {
+        parsedRequest.errMessage = backendMessages.getString("error.invalidtransactiontype");
+        return parsedRequest;
+      }
+    }
+    String materialIdStr = reqParamsMap.get(RestConstantsZ.MATERIAL_ID);
+    if (StringUtils.isNotEmpty(materialIdStr)) {
+      try {
+        Long materialId = Long.parseLong(materialIdStr);
+        parsedRequest.parsedReqMap.put(RestConstantsZ.MATERIAL_ID, materialId);
+      } catch (NumberFormatException e) {
+        parsedRequest.errMessage = backendMessages.getString("error.invalidmaterialid");
+        xLogger.severe("Exception while parsing material id. {0}",
+            materialIdStr, e);
+        return parsedRequest;
+      }
+    }
+    return parsedRequest;
+  }
+
+  private static ParsedRequest parseDateFilters(
+      Map<String, String> reqParamsMap,
+      ResourceBundle backendMessages) {
+    ParsedRequest parsedRequest = new ParsedRequest();
+    if (MapUtils.isEmpty(reqParamsMap)) {
       return parsedRequest;
     }
     String endDateStr = reqParamsMap.get(RestConstantsZ.ENDDATE);
@@ -2391,34 +2429,6 @@ public class RESTUtil {
       parsedRequest.errMessage = backendMessages.getString("error.startdateisgreaterthanenddate");
       return parsedRequest;
     }
-
-    String transTypeStr = reqParamsMap.get(RestConstantsZ.TRANSACTION_TYPE);
-    if (StringUtils.isNotEmpty(transTypeStr)) {
-      if (ITransaction.TYPE_PHYSICALCOUNT.equals(transTypeStr) || ITransaction.TYPE_ISSUE
-          .equals(transTypeStr) || ITransaction.TYPE_RECEIPT.equals(transTypeStr)
-          || ITransaction.TYPE_TRANSFER.equals(transTypeStr) || ITransaction.TYPE_WASTAGE
-          .equals(transTypeStr)) {
-        parsedRequest.parsedReqMap.put(RestConstantsZ.TRANSACTION_TYPE, transTypeStr);
-      } else {
-        parsedRequest.errMessage = backendMessages.getString("error.invalidtransactiontype");
-        return parsedRequest;
-      }
-    }
-    String materialIdStr = null;
-    if (reqParamsMap.containsKey(RestConstantsZ.MATERIAL_ID)) {
-      materialIdStr = reqParamsMap.get(RestConstantsZ.MATERIAL_ID);
-    }
-    if (StringUtils.isNotEmpty(materialIdStr)) {
-      try {
-        Long materialId = Long.parseLong(materialIdStr);
-        parsedRequest.parsedReqMap.put(RestConstantsZ.MATERIAL_ID, materialId);
-      } catch (NumberFormatException e) {
-        parsedRequest.errMessage = backendMessages.getString("error.invalidmaterialid");
-        xLogger.severe("Exception while parsing material id. {0}",
-            materialIdStr, e);
-        return parsedRequest;
-      }
-    }
     return parsedRequest;
   }
 
@@ -2429,5 +2439,20 @@ public class RESTUtil {
     IConfig config = cms.getConfiguration(IConfig.CONFIG_PREFIX + domainId);
     return !modifiedSinceDate.isPresent() || !modifiedSinceDate.get()
         .after(config.getLastUpdated());
+  }
+
+  private static boolean isExportTypeTransactions(String exportType) {
+    return BulkExportMgr.TYPE_TRANSACTIONS
+        .equals(exportType);
+  }
+
+  private static boolean isExportTypeOrders(String exportType) {
+    return BulkExportMgr.TYPE_ORDERS
+        .equals(exportType);
+  }
+
+  private static boolean isExportTypeTransfers(String exportType) {
+    return BulkExportMgr.TYPE_TRANSFERS
+        .equals(exportType);
   }
 }
