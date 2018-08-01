@@ -279,8 +279,10 @@
                             name="gen"
                             ng-class="{'c-visited' : uVisited.gen}"
                             ng-blur="uVisited.gen = true">
-                        <option value="m" selected>{{resourceBundle['gender.male']}}</option>
+                        <option value=""> -- {{resourceBundle['select']}} {{resourceBundle['user.gender']}} -- </option>
+                        <option value="m">{{resourceBundle['gender.male']}}</option>
                         <option value="f">{{resourceBundle['gender.female']}}</option>
+                        <option value="o">{{resourceBundle['gender.other']}}</option>
                     </select>
                 </div>
             </div>

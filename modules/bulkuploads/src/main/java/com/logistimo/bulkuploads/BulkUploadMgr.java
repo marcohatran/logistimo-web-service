@@ -162,6 +162,9 @@ public class BulkUploadMgr {
   private static final String ERROR_COUNT_MSG = "Remaining number of errors: ";
   private static final String ERRORS_TRUNCATED_MSG = "... Message truncated due to too many errors. ";
 
+  private BulkUploadMgr() {
+
+  }
   // Get the display name of a given type
   public static String getDisplayName(String type, Locale locale) {
     ResourceBundle bundle = Resources.get().getBundle("Messages", locale);
@@ -1386,13 +1389,12 @@ public class BulkUploadMgr {
       String gender;
       if (++i < size && (!(gender = tokens[i]).isEmpty())) {
         gender = gender.trim();
-        if (!gender.isEmpty() && !IUserAccount.GENDER_MALE.equals(gender)
-            && !IUserAccount.GENDER_FEMALE.equals(gender)) {
+        if (!isGenderValid(gender)) {
           ec.messages.add("Gender: Invalid value '" + gender + "'. Value should be either "
               + IUserAccount.GENDER_MALE + " = Male or " + IUserAccount.GENDER_FEMALE
-              + " = Female");
+              + " = Female or " + IUserAccount.GENDER_OTHER + " = Other");
         } else {
-          u.setGender(gender);
+          u.setGender(gender.toLowerCase());
         }
       }
       // Age
@@ -3037,6 +3039,15 @@ public class BulkUploadMgr {
     int remainingErrorCount = errorCount - (StringUtils.countMatches(trimmedErrMsgSb.toString(), MESSAGE_DELIMITER) + 1);
     trimmedErrMsgSb.append(BulkUploadMgr.MESSAGE_DELIMITER).append(CharacterConstants.SPACE).append(ERRORS_TRUNCATED_MSG).append(CharacterConstants.O_BRACKET).append(ERROR_COUNT_MSG).append(remainingErrorCount).append(CharacterConstants.C_BRACKET);
     return trimmedErrMsgSb.toString();
+  }
+
+  /**
+   * This method ignores case and returns true if gender is IUserAccount.GENDER_MALE, IUserAccount.GENDER_FEMALE, IUserAccount.GENDER_OTHER or empty.
+   * It returns false otherwise.
+   */
+  protected static boolean isGenderValid(String gender) {
+    return (gender.isEmpty() || IUserAccount.GENDER_MALE.equalsIgnoreCase(gender)
+        || IUserAccount.GENDER_FEMALE.equalsIgnoreCase(gender) || IUserAccount.GENDER_OTHER.equalsIgnoreCase(gender));
   }
 
   public static class EntityContainer {

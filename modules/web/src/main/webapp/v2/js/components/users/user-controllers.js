@@ -336,7 +336,7 @@ userControllers.controller('AddUserController', ['$scope', 'userService', 'confi
                 if (checkNotNullEmpty($scope.dc.timezone)) {
                     $scope.user.tz = $scope.dc.timezone;
                 }
-                $scope.user.gen = "m";
+                $scope.user.gen = "";
                 $scope.user.per = "d";
                 if (checkNotNullEmpty($scope.dc.state)) {
                     $scope.setState($scope.dc.state);

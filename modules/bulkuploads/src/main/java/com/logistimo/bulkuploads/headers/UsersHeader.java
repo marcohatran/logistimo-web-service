@@ -62,7 +62,7 @@ public class UsersHeader implements IHeader {
             +
             bundle.getString("preferredtimezone")
             + "* (Timezones can be downloaded from the bulk upload page of LogiWeb)," +
-            bundle.getString("user.gender") + " (Male = m / Female = f)," + bundle
+            bundle.getString("user.gender") + " (Male = m / Female = f / Other = o)," + bundle
             .getString("user.age") + " (in years between " + FieldLimits.AGE_MIN + " and " + FieldLimits.AGE_MAX + " without decimals)," +
             bundle.getString("user.landline") + " (not more than " + FieldLimits.LAND_PHONE_MAX_LENGTH + " characters; format: [country-code][space][number-without-spacesORdashes])," +
             bundle.getString("state")

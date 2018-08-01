@@ -84,6 +84,8 @@ public class UserUtils {
       displayStr = messages.getString("gender.male");
     } else if (IUserAccount.GENDER_FEMALE.equals(constant)) {
       displayStr = messages.getString("gender.female");
+    } else if (IUserAccount.GENDER_OTHER.equals(constant)) {
+      displayStr = messages.getString("gender.other");
     }
 
     return displayStr;
