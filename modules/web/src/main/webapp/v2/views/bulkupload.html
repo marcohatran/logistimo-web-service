@@ -122,11 +122,7 @@
             <div class="col-sm-12">
                 <span class="glyphicons glyphicons-download uploadIcon"></span>
                 <span class="uploadBotSpace">
-                    <!-- a ng-href="/s2/api/export/uploadformat?type={{us.ty}}" target="_new">{{resourceBundle['bulkupload.downloaddatafile']}} {{us.tnm}}</a -->
                     <a ng-click="downloadDataFile('/s2/api/export/uploadformat?type='+us.ty,us.ty+'.csv')">{{resourceBundle['bulkupload.downloaddatafile']}} {{us.tnm}}</a>
-                </span>
-                <span class="uploadBotSpace" ng-show="helpFile != null">
-                    <a href="/s/help/index.html#!Documents/{{helpFile}}" target="_blank"><span class="glyphicons glyphicons-info-sign"></span></a>
                 </span>
             </div>
         </div>

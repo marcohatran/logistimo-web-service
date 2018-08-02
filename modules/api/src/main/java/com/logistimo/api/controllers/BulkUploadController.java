@@ -56,6 +56,7 @@ import com.logistimo.users.service.UsersService;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.NumberUtil;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -64,7 +65,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -227,7 +227,7 @@ public class BulkUploadController {
     String blobKeyStr = null;
     if (blobMap != null) {
       List<String> keys = blobMap.get("data");
-      if (keys != null && keys.size() > 0) {
+      if (!CollectionUtils.isEmpty(keys)) {
         blobKeyStr = keys.get(0);
       }
     }
@@ -296,7 +296,7 @@ public class BulkUploadController {
 
   @RequestMapping(value = "/")
   private String startBulkImport(String type, String blobKeyStr, String userId, Long domainId)
-      throws IOException, TaskSchedulingException {
+      throws TaskSchedulingException {
     xLogger
         .fine("Entered startBulkImport: type = {0}, blobKeyStr = {1}, userId = {2}, domainId = {3}",
             type, blobKeyStr, userId, domainId);

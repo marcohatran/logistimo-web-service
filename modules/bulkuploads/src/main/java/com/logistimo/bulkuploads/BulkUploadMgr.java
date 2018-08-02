@@ -92,6 +92,7 @@ import com.logistimo.utils.StringUtil;
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -168,25 +169,22 @@ public class BulkUploadMgr {
   // Get the display name of a given type
   public static String getDisplayName(String type, Locale locale) {
     ResourceBundle bundle = Resources.get().getBundle("Messages", locale);
-    ResourceBundle backendBundle = Resources.get().getBundle("BackendMessages", locale);
-    if (TYPE_USERS.equals(type)) {
-      return bundle.getString("users");
-    } else if (TYPE_MATERIALS.equals(type)) {
-      return bundle.getString("materials");
-    } else if (TYPE_KIOSKS.equals(type)) {
-      return backendBundle.getString("kiosks");
-    } else if (TYPE_TRANSACTIONS.equals(type) || TYPE_TRANSACTIONS_CUM_INVENTORY_METADATA
-        .equals(type)) {
-      return bundle.getString("transactions");
-    } else if (TYPE_INVENTORY.equals(type)) {
-      return bundle.getString("inventory");
-    } else if (TYPE_ASSETS.equals(type)) {
-      return backendBundle.getString("asset");
-    }
-                /*else if ( TYPE_TRANSACTIONS_CUM_INVENTORY_METADATA.equals( type ) )
-                        return bundle.getString( "transactionscuminventorymetadata" );*/
-    else {
-      return null;
+    switch(type) {
+      case TYPE_USERS:
+        return bundle.getString("users");
+      case TYPE_MATERIALS:
+        return bundle.getString("materials");
+      case TYPE_KIOSKS:
+        return bundle.getString("kiosks");
+      case TYPE_TRANSACTIONS:
+      case TYPE_TRANSACTIONS_CUM_INVENTORY_METADATA:
+        return bundle.getString("transactions");
+      case TYPE_INVENTORY:
+        return bundle.getString("inventory");
+      case TYPE_ASSETS:
+        return bundle.getString("assets");
+      default:
+        return null;
     }
   }
 
@@ -222,7 +220,6 @@ public class BulkUploadMgr {
     {
       key += "." + userId;
     }
-    ///return JDOUtils.createUploadedKey(domainId + "." + userId + "." + type, "0", Constants.LANG_DEFAULT);
     return JDOUtils.createUploadedKey(key, "0", Constants.LANG_DEFAULT);
   }
 
@@ -628,7 +625,7 @@ public class BulkUploadMgr {
 
   private static List<String> fetchVendorsForType(List<String> vendorIds, Integer type) {
     List<String> vendors = null;
-    if (vendorIds != null && vendorIds.size() > 0) {
+    if (!CollectionUtils.isEmpty(vendorIds)) {
       vendors = new ArrayList<>(1);
       for (String vendor : vendorIds) {
         if (type == 1 && !vendor.contains(Constants.KEY_SEPARATOR)) {
@@ -644,7 +641,7 @@ public class BulkUploadMgr {
   private static List<String> fetchAssetModelsForType(List<String> modelIds, Integer type,
                                                       String manufacturer) {
     List<String> assetModels = null;
-    if (modelIds != null && modelIds.size() > 0 && type != null && StringUtils
+    if (!CollectionUtils.isEmpty(modelIds) && type != null && StringUtils
         .isNotEmpty(manufacturer)) {
       assetModels = new ArrayList<>(1);
       for (String model : modelIds) {
@@ -2965,7 +2962,6 @@ public class BulkUploadMgr {
         // Else error message
         if (confTags.containsAll(tagsFromUser)) {
           // Get config tags equivalent
-          // List<String> tags = TagUtil.getConfTagsEquivalent(tagsFromUser, confTags, DomainConfig.getInstance(domainId));
           setUploadableObjTags(tagType, uploadable, tagsFromUser);
           update = true;
         } else {
