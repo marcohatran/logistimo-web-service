@@ -256,4 +256,5 @@ public final class Constants {
   public static final String MESSAGES = "Messages";
 
   public static final String BACKEND_MESSAGES = "BackendMessages";
+  public static final String SKIP_INVENTORY = "skip_inventory";
 }

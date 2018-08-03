@@ -181,6 +181,9 @@ public class LoginServlet extends JsonRestServlet {
       }
     }
 
+    boolean skipInventory =
+        Boolean.parseBoolean(req.getParameter(Constants.SKIP_INVENTORY));
+
     if (authToken != null) {
       try {
         user = AuthenticationUtil.authenticateToken(authToken, actionInitiator);
@@ -196,7 +199,7 @@ public class LoginServlet extends JsonRestServlet {
         try {
           jsonString =
               RESTUtil.getJsonOutputAuthenticate(status, user, message, null, null,
-                  false, false, null, Optional.<Date>empty(), null);
+                  false, false, null, Optional.<Date>empty(), null, true);
           resp.setStatus(401);
           resp.setContentType(JSON_UTF8);
           PrintWriter pw = resp.getWriter();
@@ -351,7 +354,7 @@ public class LoginServlet extends JsonRestServlet {
          if(!status){
            jsonString =
                RESTUtil.getJsonOutputAuthenticate(status, user, message, null, minResponseCode,
-                   onlyAuthenticate, forceIntegerForStock, start, null, pageParams);
+                   onlyAuthenticate, forceIntegerForStock, start, null, pageParams, true);
            if(isTwoFAInitiated) {
              sendJsonResponse(resp, HttpServletResponse.SC_OK, jsonString);
            } else {
@@ -406,7 +409,7 @@ public class LoginServlet extends JsonRestServlet {
         modifiedSinceDate = HttpUtil.getModifiedDate(req);
         jsonString =
             RESTUtil.getJsonOutputAuthenticate(status, user, message, dc, minResponseCode,
-                onlyAuthenticate, forceIntegerForStock, start, modifiedSinceDate, pageParams);
+                onlyAuthenticate, forceIntegerForStock, start, modifiedSinceDate, pageParams, skipInventory);
       } catch (Exception e2) {
         xLogger.warn("Protocol exception during login: {0}", e2);
         if (status) { // that is, login successful, but data formatting exception
@@ -416,7 +419,7 @@ public class LoginServlet extends JsonRestServlet {
             jsonString =
                 RESTUtil
                     .getJsonOutputAuthenticate(status, null, message, null, minResponseCode,
-                        onlyAuthenticate, forceIntegerForStock, start, modifiedSinceDate, null);
+                        onlyAuthenticate, forceIntegerForStock, start, modifiedSinceDate, null, true);
           } catch (Exception e) {
             xLogger.severe("Protocol exception after data formatting error (during login): {0}", e);
             resp.setStatus(500);

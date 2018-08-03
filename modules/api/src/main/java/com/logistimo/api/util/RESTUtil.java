@@ -897,7 +897,7 @@ public class RESTUtil {
                                                  boolean onlyAuthenticate,
                                                  boolean forceIntegerForStock, Date start,
                                                  Optional<Date> modifiedSinceDate,
-                                                 PageParams kioskPageParams)
+                                                 PageParams kioskPageParams, boolean skipInventory)
       throws ProtocolException, ServiceException {
     Hashtable<String, Object> config = null;
     String expiryTime = null;
@@ -916,7 +916,7 @@ public class RESTUtil {
         boolean getUsersForKiosk = (MINIMUM_RESPONSE_CODE_TWO.equals(minResponseCode));
         boolean
             getMaterials =
-            (isSingleKiosk || StringUtils.isEmpty(minResponseCode));
+            (isSingleKiosk || StringUtils.isEmpty(minResponseCode)) && !skipInventory;
         boolean
             getLinkedKiosks =
             (isSingleKiosk || !getUsersForKiosk);
