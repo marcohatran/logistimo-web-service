@@ -95,6 +95,11 @@ import org.json.JSONObject;
 import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -1394,19 +1399,21 @@ public class BulkUploadMgr {
           u.setGender(gender.toLowerCase());
         }
       }
-      // Age
-      String age;
-      if (++i < size && !(age = tokens[i].trim()).isEmpty()) {
+      // Date of birth
+      String dateOfBirth;
+      if (++i < size && !(dateOfBirth = tokens[i].trim()).isEmpty()) {
         try {
-          int iAge = Integer.parseInt(age);
-          if (iAge >= FieldLimits.AGE_MIN && iAge <= FieldLimits.AGE_MAX) {
-            u.setAge(iAge);
+          DateTimeFormatter formatter = DateTimeFormatter.ofPattern(Constants.DATE_FORMAT);
+          LocalDate birthDate = LocalDate.parse(dateOfBirth, formatter);
+          if (!isDateOfBirthValid(birthDate, LocalDate.now())) {
+            ec.messages
+                .add("Date of birth: " + dateOfBirth + " is not valid. A valid date of birth in the format dd/MM/yyyy between today and 100 years before today should be specified.");
           } else {
-            ec.messages.add("Age: " + age + " is not a valid number. Age should be between " + FieldLimits.AGE_MIN + " and " + FieldLimits.AGE_MAX + " without decimals.");
+            u.setBirthdate(Date.from(birthDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant()));
           }
-        } catch (NumberFormatException e) {
+        } catch (DateTimeParseException e) {
           ec.messages
-              .add("Age: " + age + " is not a valid number. A valid whole number should be specified");
+              .add("Date of birth: " + dateOfBirth + " is not valid. A valid date of birth in the format dd/MM/yyyy between today and 100 years before today should be specified.");
         }
       }
       // Land phone
@@ -3044,6 +3051,22 @@ public class BulkUploadMgr {
   protected static boolean isGenderValid(String gender) {
     return (gender.isEmpty() || IUserAccount.GENDER_MALE.equalsIgnoreCase(gender)
         || IUserAccount.GENDER_FEMALE.equalsIgnoreCase(gender) || IUserAccount.GENDER_OTHER.equalsIgnoreCase(gender));
+  }
+
+  /**
+   * This method returns true if the difference between dateOfBirth and currentDate is 100 years or less. Otherwise, returns false.
+   * If dateOfBirth is after currentDate then it returns false.
+   * @param dateOfBirth
+   * @param currentDate
+   * @return
+   */
+  protected static boolean isDateOfBirthValid(LocalDate dateOfBirth, LocalDate currentDate) {
+    if (dateOfBirth.isAfter(currentDate)) {
+      return false;
+    }
+    Period age = dateOfBirth.until(currentDate);
+    return (age.getYears() < FieldLimits.MAX_USER_AGE || age.equals(
+        Period.of(FieldLimits.MAX_USER_AGE, 0, 0)));
   }
 
   public static class EntityContainer {

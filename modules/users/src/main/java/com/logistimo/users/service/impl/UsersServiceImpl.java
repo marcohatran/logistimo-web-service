@@ -75,6 +75,7 @@ import com.logistimo.utils.StringUtil;
 import com.logistimo.utils.ThreadLocalUtil;
 import com.netflix.hystrix.exception.HystrixBadRequestException;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -565,13 +566,8 @@ public class UsersServiceImpl implements UsersService {
       user.setCountry(account.getCountry());
       user.setPinCode(account.getPinCode());
       user.setGender(account.getGender());
-      user.setAgeType(account.getAgeType());
       user.setAuthenticationTokenExpiry(account.getAuthenticationTokenExpiry());
-      if (IUserAccount.AGETYPE_BIRTHDATE.equals(account.getAgeType())) {
-        user.setBirthdate(account.getBirthdate());
-      } else {
-        user.setAge(account.getAge());
-      }
+      user.setBirthdate(account.getBirthdate());
       user.setLastLogin(account.getLastLogin());
       user.setEmail(account.getEmail());
       user.setLanguage(account.getLanguage());
@@ -1219,7 +1215,6 @@ public class UsersServiceImpl implements UsersService {
     try {
       List elements = (List) q.executeWithMap(params);
       if (elements != null) {
-        //elements = (List)pm.detachCopyAll(elements);
         for (Object o : elements) {
           elementSet.add((String) o);
         }
@@ -1268,7 +1263,7 @@ public class UsersServiceImpl implements UsersService {
    * Get the list of enabled userIds from the given userIds
    */
   public List<String> getEnabledUserIds(List<String> uIds) {
-    if (uIds != null && uIds.size() > 0) {
+    if (!CollectionUtils.isEmpty(uIds)) {
       PersistenceManager pm = PMF.get().getPersistenceManager();
       try {
         List<String> eUids = new ArrayList<>(1);
@@ -1295,7 +1290,7 @@ public class UsersServiceImpl implements UsersService {
    */
   public List<String> getEnabledUserIdsWithTags(List<String> tagNames, Long domainId) {
     List<String> uIds = null;
-    if (tagNames != null && tagNames.size() > 0) {
+    if (!CollectionUtils.isEmpty(tagNames)) {
       PersistenceManager pm = PMF.get().getPersistenceManager();
       String tagName = MessageUtil.getCSVWithEnclose(tagNames);
       String query = "SELECT UA.USERID FROM USERACCOUNT UA,USER_TAGS UT WHERE "
@@ -1486,7 +1481,6 @@ public class UsersServiceImpl implements UsersService {
       Query query = pm.newQuery(JDOUtils.getImplClass(IUserDevice.class));
       query.setFilter("userId == userIdParam && appname == appnameParam");
       query.declareParameters("String userIdParam, String appnameParam");
-      //Query query = pm.newQuery(Constants.QUERY_LANGUAGE",q);
       query.setUnique(true);
       IUserDevice userDevice = (IUserDevice) query.execute(userid, appname);
       return pm.detachCopy(userDevice);
@@ -1594,7 +1588,6 @@ public class UsersServiceImpl implements UsersService {
    * @return List<IUserAccount>
    */
   public List<IUserAccount> getUsersByIds(List<String> userIds) {
-
     if (userIds == null || userIds.isEmpty()) {
       return null;
     }

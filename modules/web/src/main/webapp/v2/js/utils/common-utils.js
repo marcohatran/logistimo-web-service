@@ -171,7 +171,7 @@ function toCSV(tags) {
 function formatDate(date) {
     return checkNotNullEmpty(date) ? date.getDate() + "/" + (date.getMonth() + 1) + "/" + date.getFullYear() : "";
 }
-function string2Date(dateString, format, delimiter, hasTime) {
+function string2Date(dateString, format, delimiter, hasTime, ignore1970) {
     if (checkNotNullEmpty(dateString) && checkNotNullEmpty(format) && checkNotNullEmpty(delimiter)) {
         if (hasTime) {
             dateString = dateString.substring(0,dateString.indexOf(" "));
@@ -188,7 +188,7 @@ function string2Date(dateString, format, delimiter, hasTime) {
         }
         var yInd = fFields.indexOf("yyyy");
         var date = new Date(dFields[yInd],(smr?getMonth(dFields[mInd]):dFields[mInd])-1,dFields[dInd]);
-        if (date.getFullYear() < 1970) {
+        if (date.getFullYear() < 1970 && !ignore1970) {
             date.setFullYear(date.getFullYear() + 100);
         }
         return date;

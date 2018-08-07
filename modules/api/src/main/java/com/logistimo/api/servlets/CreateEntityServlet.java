@@ -1394,18 +1394,6 @@ public class CreateEntityServlet extends SgServlet {
       u.setStreet(userDetails.get(LocationConstants.STREET_LITERAL)[0]);
     }
 
-    if (userDetails.containsKey("age")) {
-      String ageStr = userDetails.get("age")[0];
-      if (ageStr != null) {
-        int age = 0;
-        if (!ageStr.isEmpty()) {
-          age = Integer.parseInt(ageStr);
-        }
-        u.setAge(age);
-        u.setAgeType(IUserAccount.AGETYPE_YEARS);
-      }
-    }
-
     if (userDetails.containsKey("primaryentity")) {
       String pkIdStr = userDetails.get("primaryentity")[0];
       Long pkId = null;
@@ -1750,16 +1738,6 @@ public class CreateEntityServlet extends SgServlet {
 
     if (userDetails.containsKey(LocationConstants.STREET_LITERAL)) {
       u.setStreet(userDetails.get(LocationConstants.STREET_LITERAL)[0]);
-    }
-
-    // Deprecating birthdate for now
-    if (userDetails.containsKey("age")) {
-      String ageStr = userDetails.get("age")[0];
-      if (ageStr != null && !ageStr.equalsIgnoreCase("")) {
-        int age = Integer.parseInt(ageStr);
-        u.setAge(age);
-        u.setAgeType(IUserAccount.AGETYPE_YEARS);
-      }
     }
 
     // Get the user who registered this user

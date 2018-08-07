@@ -207,9 +207,6 @@ public class UsersController {
           .equals(SecurityConstants.ROLE_SUPERUSER)) {
         throw new UnauthorizedException(backendMessages.getString("user.unauthorized"));
       }
-/*            if (SecurityManager.compareRoles(rRole, role) <= 0) {
-                role = rRole;
-            }*/
       if (SecurityConstants.ROLE_SUPERUSER.equals(role)) {
         results = new Results<>(usersService.getSuperusers(), null);
       } else {
@@ -452,7 +449,8 @@ public class UsersController {
     Long domainId = sUser.getCurrentDomainId();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    int usrCnt, errCnt = 0;
+    int usrCnt;
+    int errCnt = 0;
     StringBuilder errMsg = new StringBuilder();
     List<String> errUsr = new ArrayList<>();
     try {
@@ -613,8 +611,8 @@ public class UsersController {
 
   private void setDisplayNames(Locale locale, String timezone, UserModel model) {
     model.lngn = new Locale(model.lng).getDisplayLanguage();
-    if (null != model.gen) {
-      model.genn = UserUtils.getGenderDisplay(model.gen, locale);
+    if (null != model.getGen()) {
+      model.setGenderLabel(UserUtils.getGenderDisplay(model.getGen(), locale));
     }
     if (null != model.ro) {
       model.ron = UserUtils.getRoleDisplay(model.ro, locale);
@@ -890,7 +888,6 @@ public class UsersController {
     } catch (ObjectNotFoundException e) {
       xLogger.severe("Error in getting General Config details");
       throw new InvalidServiceException("Error in getting General Config details");
-      // throw new InvalidServiceException(backendMessages.getString("account.error"));
     }
   }
 

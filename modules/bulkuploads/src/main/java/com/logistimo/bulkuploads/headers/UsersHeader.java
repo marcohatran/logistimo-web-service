@@ -41,8 +41,7 @@ public class UsersHeader implements IHeader {
     String
         format =
         "Operation* (a = add / e = edit / d = delete; if empty it is defaulted to add; all operations MUST include User ID),"
-            +
-            bundle.getString("user.id")
+            + bundle.getString("user.id")
             + "* (a unique username without any spaces; " + FieldLimits.USERID_MIN_LENGTH + CharacterConstants.HYPHEN + FieldLimits.USERID_MAX_LENGTH + " characters; Tip: prefix it with [say] your organization code or suffix it with [say] a number for uniqueness),"
             + bundle.getString("login.password") + "* (" + FieldLimits.PASSWORD_MIN_LENGTH + CharacterConstants.HYPHEN + FieldLimits.PASSWORD_MAX_LENGTH + " characters)" + "," + bundle
             .getString("user.confirmpassword") + "* (same as password)," +
@@ -63,7 +62,7 @@ public class UsersHeader implements IHeader {
             bundle.getString("preferredtimezone")
             + "* (Timezones can be downloaded from the bulk upload page of LogiWeb)," +
             bundle.getString("user.gender") + " (Male = m / Female = f / Other = o)," + bundle
-            .getString("user.age") + " (in years between " + FieldLimits.AGE_MIN + " and " + FieldLimits.AGE_MAX + " without decimals)," +
+            .getString("user.date.of.birth") + " (dd/MM/yyyy format)," +
             bundle.getString("user.landline") + " (not more than " + FieldLimits.LAND_PHONE_MAX_LENGTH + " characters; format: [country-code][space][number-without-spacesORdashes])," +
             bundle.getString("state")
             + "* (should be the same as in the corresponding LogiWeb drop-downs)," + bundle

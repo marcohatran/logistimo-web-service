@@ -308,6 +308,10 @@ userControllers.controller('AddUserController', ['$scope', 'userService', 'confi
         $scope.editUserId = requestContext.getParam("userId");
         $scope.uidLengthVerified = false;
         $scope.theme = 1;
+        var today = new Date();
+        $scope.dobMaxDate = angular.copy(today);
+        today.setYear(today.getYear() - 100);
+        $scope.dobMinDate = today;
         if (checkNotNullEmpty($scope.editUserId)) {
             $scope.edit = true;
         }
@@ -384,7 +388,7 @@ userControllers.controller('AddUserController', ['$scope', 'userService', 'confi
             $scope.showLoading();
             userService.getUser($scope.editUserId).then(function (data) {
                 $scope.user = data.data;
-                $scope.user.age = checkNullEmpty($scope.user.age)?'':$scope.user.age;
+                $scope.user.dobmodel = string2Date($scope.user.dob, 'dd/mm/yyyy', '/',false,true);
                 $scope.updateTags("fetch");
                 $scope.user.pw = " ";
                 $scope.user.cpw = $scope.user.pw;
@@ -468,7 +472,7 @@ userControllers.controller('AddUserController', ['$scope', 'userService', 'confi
         $scope.validate = function () {
             var valid = !($scope.uPasswordInvalid || checkNotNullEmpty($scope.invalidPhm)
             || checkNotNullEmpty($scope.invalidPhl) || $scope.uidStatus
-            || $scope.ucidStatus || !$scope.uidLengthVerified || ($scope.user.age == 0 && $scope.user.age != '') || checkNullEmpty($scope.user.ro)
+            || $scope.ucidStatus || !$scope.uidLengthVerified || checkNullEmpty($scope.user.ro)
             || checkNullEmpty($scope.user.fnm) || checkNullEmpty($scope.user.cnt) || checkNullEmpty($scope.user.st)
             || checkNullEmpty($scope.user.lng) || checkNullEmpty($scope.user.tz) || addUserForm.em.className.indexOf('ng-invalid-email') > -1);
             if (!valid) {
@@ -477,7 +481,7 @@ userControllers.controller('AddUserController', ['$scope', 'userService', 'confi
             return valid;
         };
         $scope.validateUpdate = function(){
-            var valid = !(checkNotNullEmpty($scope.invalidPhm) || checkNotNullEmpty($scope.invalidPhl) || $scope.ucidStatus || ($scope.user.age == 0 && $scope.user.age != ''));
+            var valid = !(checkNotNullEmpty($scope.invalidPhm) || checkNotNullEmpty($scope.invalidPhl) || $scope.ucidStatus);
             if(!valid) {
                 $scope.showErrorMsg($scope.resourceBundle['form.error']);
             }
@@ -487,9 +491,7 @@ userControllers.controller('AddUserController', ['$scope', 'userService', 'confi
             if ($scope.user != null) {
                 $scope.updateTags("add");
                 $scope.showLoading();
-                if(checkNullEmpty($scope.user.age)){
-                    $scope.user.age = 0;
-                }
+                $scope.user.dob = formatDate($scope.user.dobmodel);
                 userService.createUser($scope.user).then(function (data) {
                     $scope.resetForm();
                     $scope.showSuccess(data.data);
@@ -529,9 +531,7 @@ userControllers.controller('AddUserController', ['$scope', 'userService', 'confi
         };
         $scope.updateUser = function () {
             if ($scope.user != null) {
-                if(checkNullEmpty($scope.user.age)){
-                    $scope.user.age = 0;
-                }
+                $scope.user.dob = formatDate($scope.user.dobmodel);
                 $scope.updateTags("update");
                 $scope.loading = true;
                 $scope.showLoading();

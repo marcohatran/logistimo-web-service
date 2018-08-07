@@ -289,19 +289,13 @@
         </div>
     </div>
 
-    <div class="row"> <!--Age-->
+    <div class="row"> <!--Date Of Birth-->
         <div class="col-sm-6">
             <div class="form-group">
-                <label for="usrAge" class="col-sm-4 control-label">{{resourceBundle['user.age']}}</label>
+                <label class="col-sm-4 control-label">{{resourceBundle['user.date.of.birth']}}</label>
                 <div class="col-sm-8">
-                    <input type="text" class="form-control" id="usrAge"
-                           autocomplete="off"
-                           ng-model="user.age"
-                           name="age"
-                           only-digits
-                           min-value="1"
-                           maxlength="2"
-                           placeholder="{{resourceBundle['user.age']}}">
+                    <date-picker min-mode="day" date-model="user.dobmodel" min-date="dobMinDate" max-date="dobMaxDate"
+                                 mode="'year'"></date-picker>
                 </div>
             </div>
         </div>

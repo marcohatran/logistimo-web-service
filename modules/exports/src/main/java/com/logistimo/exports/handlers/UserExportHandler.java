@@ -62,9 +62,12 @@ public class UserExportHandler implements IExportHandler {
   @Override
   public String toCSV(Locale locale, String timezone, DomainConfig dc, String type) {
     StringBuilder csv = new StringBuilder();
-    String pkName = null, pkCustomId = null, cbUserName = null, cbUserCustomId = null,
-        ubUserName =
-            null, ubUserCustomId = null;
+    String pkName = null;
+    String pkCustomId = null;
+    String cbUserName = null;
+    String cbUserCustomId = null;
+    String ubUserName = null;
+    String ubUserCustomId = null;
 
     try {
       UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
@@ -107,7 +110,8 @@ public class UserExportHandler implements IExportHandler {
         .append(user.getMobilePhoneNumber()).append(CharacterConstants.COMMA)
         .append(user.getLandPhoneNumber() != null ? user.getLandPhoneNumber() : CharacterConstants.EMPTY)
         .append(CharacterConstants.COMMA)
-        .append(user.getEmail() != null ? user.getEmail() : CharacterConstants.EMPTY).append(CharacterConstants.COMMA)
+        .append(user.getEmail() != null ? user.getEmail() : CharacterConstants.EMPTY).append(
+        CharacterConstants.COMMA)
         .append(user.getCountry() != null ? StringEscapeUtils.escapeCsv(user.getCountry()) : CharacterConstants.EMPTY)
         .append(CharacterConstants.COMMA)
         .append(user.getState() != null ? StringEscapeUtils.escapeCsv(user.getState()) : CharacterConstants.EMPTY)
@@ -125,8 +129,10 @@ public class UserExportHandler implements IExportHandler {
         .append(user.getLanguage() != null ? StringEscapeUtils.escapeCsv(user.getLanguage()) : CharacterConstants.EMPTY)
         .append(CharacterConstants.COMMA)
         .append(StringEscapeUtils.escapeCsv(user.getTimezone())).append(CharacterConstants.COMMA)
-        .append(user.getGender() != null ? user.getGender() : CharacterConstants.EMPTY).append(CharacterConstants.COMMA)
-        .append(user.getAge()).append(CharacterConstants.COMMA)
+        .append(user.getGender() != null ? user.getGender() : CharacterConstants.EMPTY).append(
+        CharacterConstants.COMMA)
+        .append(user.getBirthdate() != null ? LocalDateUtil.formatCustom(user.getBirthdate(),
+            Constants.DATE_FORMAT, null) : CharacterConstants.EMPTY).append(CharacterConstants.COMMA)
         .append(
             tgs != null && !tgs.isEmpty() ? StringUtil.getCSV(tgs, CharacterConstants.SEMICOLON)
                 : CharacterConstants.EMPTY).append(CharacterConstants.COMMA)
@@ -175,7 +181,8 @@ public class UserExportHandler implements IExportHandler {
         .append(
             ubUserName != null ? StringEscapeUtils.escapeCsv(ubUserName) : CharacterConstants.EMPTY)
         .append(CharacterConstants.COMMA)
-        .append(user.getUpdatedOn() != null ? LocalDateUtil.formatCustom(user.getUpdatedOn(), Constants.DATETIME_CSV_FORMAT, timezone)
+        .append(user.getUpdatedOn() != null ? LocalDateUtil
+            .formatCustom(user.getUpdatedOn(), Constants.DATETIME_CSV_FORMAT, timezone)
             : CharacterConstants.EMPTY);
 
     return csv.toString();
@@ -190,18 +197,17 @@ public class UserExportHandler implements IExportHandler {
         .append(bundle.getString("customid.user")).append(CharacterConstants.COMMA)
         .append(bundle.getString("user.role")).append(CharacterConstants.SPACE)
         .append(CharacterConstants.O_BRACKET).append(bundle.getString("role.domainowner"))
-        .append(CharacterConstants.SPACE).append(CharacterConstants.EQUALS)
+        .append(CharacterConstants.SPACE).append(CharacterConstants.HYPHEN)
         .append(CharacterConstants.SPACE)
         .append(SecurityConstants.ROLE_DOMAINOWNER).append(CharacterConstants.SPACE)
         .append(CharacterConstants.F_SLASH).append(CharacterConstants.SPACE)
-        .append(bundle.getString("role.servicemana"
-            + "ger")).append(CharacterConstants.SPACE)
-        .append(CharacterConstants.EQUALS)
+        .append(bundle.getString("role.servicemanager")).append(CharacterConstants.SPACE)
+        .append(CharacterConstants.HYPHEN)
         .append(CharacterConstants.SPACE).append(SecurityConstants.ROLE_SERVICEMANAGER)
         .append(CharacterConstants.SPACE).append(CharacterConstants.F_SLASH)
         .append(CharacterConstants.SPACE).append(bundle.getString("role.kioskowner"))
         .append(CharacterConstants.SPACE)
-        .append(CharacterConstants.EQUALS).append(CharacterConstants.SPACE)
+        .append(CharacterConstants.HYPHEN).append(CharacterConstants.SPACE)
         .append(SecurityConstants.ROLE_KIOSKOWNER).append(CharacterConstants.C_BRACKET)
         .append(CharacterConstants.COMMA)
         .append(bundle.getString("user.firstname")).append(CharacterConstants.COMMA)
@@ -219,10 +225,20 @@ public class UserExportHandler implements IExportHandler {
         .append(bundle.getString("zipcode")).append(CharacterConstants.COMMA)
         .append(bundle.getString("language")).append(CharacterConstants.COMMA)
         .append(bundle.getString("preferredtimezone")).append(CharacterConstants.COMMA)
-        .append(bundle.getString("user.gender")).append(CharacterConstants.COMMA)
-        .append(bundle.getString("user.age")).append(CharacterConstants.SPACE)
-        .append(CharacterConstants.O_BRACKET).append(jsBundle.getString("years.lower"))
-        .append(CharacterConstants.C_BRACKET).append(CharacterConstants.COMMA)
+        .append(bundle.getString("user.gender")).append(CharacterConstants.SPACE)
+        .append(CharacterConstants.O_BRACKET).append(bundle.getString("gender.male"))
+        .append(CharacterConstants.SPACE).append(CharacterConstants.HYPHEN)
+        .append(CharacterConstants.SPACE).append("m").append(CharacterConstants.SPACE)
+        .append(CharacterConstants.F_SLASH).append(CharacterConstants.SPACE)
+        .append(bundle.getString("gender.female"))
+        .append(CharacterConstants.SPACE).append(CharacterConstants.HYPHEN)
+        .append(CharacterConstants.SPACE).append("f").append(CharacterConstants.SPACE)
+        .append(CharacterConstants.F_SLASH).append(CharacterConstants.SPACE)
+        .append(bundle.getString("gender.other")).append(CharacterConstants.SPACE).append(
+        CharacterConstants.HYPHEN)
+        .append(CharacterConstants.SPACE).append("o").append(CharacterConstants.C_BRACKET).append(CharacterConstants.COMMA)
+        .append(bundle.getString("user.date.of.birth")).append(" (dd/MM/yyyy format)").append(
+        CharacterConstants.COMMA)
         .append(bundle.getString("tags")).append(CharacterConstants.COMMA)
         .append(bundle.getString("user.mobilebrand")).append(CharacterConstants.COMMA)
         .append(bundle.getString("user.mobilemodel")).append(CharacterConstants.COMMA)

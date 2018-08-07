@@ -28,6 +28,8 @@ import com.logistimo.users.entity.IUserAccount;
 
 import org.junit.Test;
 
+import java.time.LocalDate;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -52,4 +54,20 @@ public class BulkUploadMgrTest {
     assertFalse(BulkUploadMgr.isGenderValid("invalid gender"));
   }
 
+  @Test
+  public void testIsDateOfBirthValidForTrue() throws Exception {
+    assertTrue(BulkUploadMgr.isDateOfBirthValid(LocalDate.of(2018, 8, 1), LocalDate.of(2018, 8, 1)));
+    assertTrue(BulkUploadMgr.isDateOfBirthValid(LocalDate.of(2018,7,1),LocalDate.of(2018,8,1)));
+    assertTrue(BulkUploadMgr.isDateOfBirthValid(LocalDate.of(2000,7,1),LocalDate.of(2018,8,1)));
+    assertTrue(BulkUploadMgr.isDateOfBirthValid(LocalDate.of(1918,8,1),LocalDate.of(2018,8,1)));
+    assertTrue(BulkUploadMgr.isDateOfBirthValid(LocalDate.of(1918,9,1),LocalDate.of(2018,8,1)));
+  }
+
+  @Test
+  public void testIsDateOfBirthValidForFalse() throws Exception {
+    assertFalse(BulkUploadMgr.isDateOfBirthValid(LocalDate.of(2018, 9, 1), LocalDate.of(2018, 8, 1)));
+    assertFalse(BulkUploadMgr.isDateOfBirthValid(LocalDate.of(1918,7,1),LocalDate.of(2018,8,1)));
+    assertFalse(BulkUploadMgr.isDateOfBirthValid(LocalDate.of(1918,7,31),LocalDate.of(2018,8,1)));
+    assertFalse(BulkUploadMgr.isDateOfBirthValid(LocalDate.of(1917,8,1),LocalDate.of(2018,8,1)));
+  }
 }

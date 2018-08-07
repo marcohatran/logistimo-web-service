@@ -142,7 +142,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="bgr" ng-if="isDef(user.fnm) || isDef(user.lnm) || isDef(user.genn) || isDef(user.age)">
+                        <div class="bgr" ng-if="isDef(user.fnm) || isDef(user.lnm) || isDef(user.genderLabel) || isDef(user.age)">
                             <div class="title-heading">
                                 {{resourceBundle['user.persdetailstitle']}}
                             </div>
@@ -162,20 +162,20 @@
                                     {{user.lnm}}
                                 </div>
                             </div>
-                            <div class="row" ng-if="isDef(user.genn)">
+                            <div class="row" ng-if="isDef(user.genderLabel)">
                                 <div class="col-sm-3">
                                     <label class="control-label">{{resourceBundle['user.gender']}}:</label>
                                 </div>
                                 <div class="col-sm-9 cbx">
-                                    {{user.genn}}
+                                    {{user.genderLabel}}
                                 </div>
                             </div>
-                            <div class="row" ng-if="isDef(user.age)">
+                            <div class="row" ng-if="isDef(user.dobLabel)">
                                 <div class="col-sm-3">
-                                    <label class="control-label">{{resourceBundle['user.age']}}:</label>
+                                    <label class="control-label">{{resourceBundle['user.date.of.birth']}}:</label>
                                 </div>
                                 <div class="col-sm-9 cbx">
-                                    {{user.age}}
+                                    {{user.dobLabel}}
                                 </div>
                             </div>
                         </div>

@@ -114,14 +114,6 @@ public interface IUserAccount extends ISuperDomain, ILocation {
 
   void setBirthdate(Date birthdate);
 
-  int getAge();
-
-  void setAge(int age);
-
-  String getAgeType();
-
-  void setAgeType(String ageType);
-
   String getStreet();
 
   void setStreet(String street);

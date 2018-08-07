@@ -38,7 +38,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
@@ -108,10 +107,6 @@ public class UserAccount implements IUserAccount, ILocation,Serializable {
   private String gender;
   @Persistent
   private Date birthdate;
-  @Persistent
-  private int age;
-  @Persistent
-  private String ageType;
   @Expose
   @SerializedName(JsonTagsZ.STREET_ADDRESS)
   @Persistent
@@ -255,32 +250,6 @@ public class UserAccount implements IUserAccount, ILocation,Serializable {
   @Persistent
   private Integer theme = Constants.GUI_THEME_DEFAULT;
 
-  // Get the difference of two user lists: a - b
-  public static List<IUserAccount> getDifference(List<IUserAccount> a, List<IUserAccount> b) {
-    if (a == null || a.isEmpty() || b == null || b.isEmpty()) {
-      return a;
-    }
-    List<IUserAccount> c = new ArrayList<IUserAccount>();
-    Iterator<IUserAccount> itA = a.iterator();
-    while (itA.hasNext()) {
-      IUserAccount uA = itA.next();
-      String userId = uA.getUserId();
-      Iterator<IUserAccount> itB = b.iterator();
-      boolean isInB = false;
-      while (itB.hasNext()) {
-        IUserAccount u = itB.next();
-        if (userId.equals(u.getUserId())) {
-          isInB = true;
-          break;
-        }
-      }
-      if (!isInB) {
-        c.add(uA);
-      }
-    }
-    return c;
-  }
-
   /**
    * Get the map in newer, compressed format
    */
@@ -343,7 +312,7 @@ public class UserAccount implements IUserAccount, ILocation,Serializable {
       userMap.put(JsonTagsZ.KIOSK_ID, pkId.toString());
     }
     if (cId != null && !cId.isEmpty()) {
-      userMap.put(JsonTagsZ.CUSTOM_USERID, cId.toString());
+      userMap.put(JsonTagsZ.CUSTOM_USERID, cId);
     }
     return userMap;
   }
@@ -497,26 +466,6 @@ public class UserAccount implements IUserAccount, ILocation,Serializable {
   @Override
   public void setBirthdate(Date birthdate) {
     this.birthdate = birthdate;
-  }
-
-  @Override
-  public int getAge() {
-    return age;
-  }
-
-  @Override
-  public void setAge(int age) {
-    this.age = age;
-  }
-
-  @Override
-  public String getAgeType() {
-    return ageType;
-  }
-
-  @Override
-  public void setAgeType(String ageType) {
-    this.ageType = ageType;
   }
 
   @Override
@@ -703,8 +652,6 @@ public class UserAccount implements IUserAccount, ILocation,Serializable {
   public String getUserAgent() {
     return usrAgnt;
   }
-
-  ;
 
   @Override
   public void setUserAgent(String userAgentStr) {
