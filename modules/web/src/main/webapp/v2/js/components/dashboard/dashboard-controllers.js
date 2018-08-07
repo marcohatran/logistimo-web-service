@@ -1985,7 +1985,7 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
             }
             if (requestContext.getParam("p")) {
                 var p = requestContext.getParam("p");
-                if (p == '0' || p == '1' || p == '2' || p == '3' || p == '7' || p == '30') {
+                if (p == '0' || p == '1' || p == '2' || p == '3' || p == '7' || p == '15' || p == '30') {
                     $scope.period = p;
                     mtReq = true;
                 }
