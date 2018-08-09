@@ -49,7 +49,7 @@ assetControllers.controller("AddAssetController", ['$scope', '$route', 'assetSer
         $scope.edit = false;
         var errorCount = 0;
         $scope.currentYear = new Date().getFullYear();
-        const MONITORED_ASSET = 2;
+        const MONITORING_ASSET = 1;
 
         $scope.init = function(){
 
@@ -151,7 +151,7 @@ assetControllers.controller("AddAssetController", ['$scope', '$route', 'assetSer
 
         $scope.updateCapacity = function(modelName) {
             $scope.asset.meta.cc = undefined;
-            if(MONITORED_ASSET == $scope.asset.typ && checkNotNullEmpty(modelName)) {
+            if(MONITORING_ASSET != $scope.asset.typ && checkNotNullEmpty(modelName)) {
                 var model = $scope.currentManu.model;
                 if(!checkNullEmptyObject(model)) {
                     $scope.asset.meta.cc = model[modelName].capacity;
