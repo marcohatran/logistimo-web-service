@@ -102,6 +102,7 @@ public class JPAConfig {
     properties.stringPropertyNames().stream()
         .filter(key -> !key.startsWith("database"))
         .forEach(key -> additionalProperties.setProperty(key, properties.getProperty(key)));
+    additionalProperties.setProperty("hibernate.enable_lazy_load_no_trans","true");
     return additionalProperties;
   }
 }

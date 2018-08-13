@@ -56,7 +56,6 @@ public class ReturnsItemModel {
   @SerializedName("material_status")
   private String materialStatus;
 
-
   private String reason;
 
   private ReceivedModel received;

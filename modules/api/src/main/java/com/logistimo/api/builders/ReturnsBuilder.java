@@ -43,33 +43,41 @@ import com.logistimo.returns.Status;
 import com.logistimo.returns.models.ReturnsItemBatchModel;
 import com.logistimo.returns.models.ReturnsItemModel;
 import com.logistimo.returns.models.ReturnsModel;
+import com.logistimo.returns.models.ReturnsQuantityModel;
 import com.logistimo.returns.models.ReturnsRequestModel;
+import com.logistimo.returns.models.ReturnsUpdateRequestModel;
 import com.logistimo.returns.models.ReturnsUpdateStatusModel;
-import com.logistimo.returns.models.ReturnsUpdateStatusRequestModel;
-import com.logistimo.returns.models.UpdateStatusModel;
 import com.logistimo.returns.models.submodels.EntityModel;
 import com.logistimo.returns.models.submodels.ReceivedModel;
+import com.logistimo.returns.models.submodels.ReturnsTrackingModel;
 import com.logistimo.returns.models.submodels.StatusModel;
 import com.logistimo.returns.models.submodels.UserModel;
 import com.logistimo.returns.vo.BatchVO;
 import com.logistimo.returns.vo.GeoLocationVO;
+import com.logistimo.returns.vo.ReturnsBatchQuantityVO;
 import com.logistimo.returns.vo.ReturnsItemBatchVO;
 import com.logistimo.returns.vo.ReturnsItemVO;
+import com.logistimo.returns.vo.ReturnsQuantityVO;
 import com.logistimo.returns.vo.ReturnsReceivedVO;
 import com.logistimo.returns.vo.ReturnsStatusVO;
+import com.logistimo.returns.vo.ReturnsTrackingDetailsVO;
 import com.logistimo.returns.vo.ReturnsVO;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.utils.LocalDateUtil;
+import com.logistimo.utils.ModelMapperUtil;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -112,7 +120,7 @@ public class ReturnsBuilder {
   InventoryManagementService inventoryManagementService;
 
   public List<ReturnsModel> buildReturnsModels(List<ReturnsVO> returnsVOs)
-      throws ServiceException {
+      throws ServiceException, ParseException {
     List<ReturnsModel> returnsModels = new ArrayList<>(returnsVOs.size());
     for (ReturnsVO returnsVO : returnsVOs) {
       returnsModels.add(buildReturnsModel(returnsVO));
@@ -137,7 +145,8 @@ public class ReturnsBuilder {
     }
   }
 
-  public ReturnsModel buildReturnsModel(ReturnsVO returnsVO) throws ServiceException {
+  public ReturnsModel buildReturnsModel(ReturnsVO returnsVO) throws ServiceException,
+      ParseException {
     ReturnsModel returnsModel = new ReturnsModel();
     returnsModel.setReturnId(returnsVO.getId());
     returnsModel.setOrderId(returnsVO.getOrderId());
@@ -158,14 +167,18 @@ public class ReturnsBuilder {
       returnsModel.setItems(getItemModels(returnsVO.getItems()));
     }
     returnsModel.setSourceDomain(returnsVO.getSourceDomain());
+    if (returnsVO.getReturnsTrackingDetailsVO() != null) {
+      returnsModel
+          .setReturnsTrackingModel(buildTrackingDetails(returnsVO.getReturnsTrackingDetailsVO()));
+    }
     return returnsModel;
   }
 
   public ReturnsVO buildReturns(ReturnsRequestModel returnRequestModel)
-      throws ServiceException {
+      throws ServiceException, ParseException {
     Date now = new Date();
     String username = SecurityUtils.getUsername();
-    putItemsMeta(returnRequestModel.getItems(), now, username);
+    setUserDetailsForItems(returnRequestModel.getItems(), now, username);
     ReturnsVO returnsVO = new ReturnsVO();
     returnsVO.setSourceDomain(SecurityUtils.getCurrentDomainId());
     returnsVO.setOrderId(returnRequestModel.getOrderId());
@@ -184,14 +197,62 @@ public class ReturnsBuilder {
     returnsVO.setItems(getItems(returnRequestModel.getItems(), returnsVO.getVendorId(),
         returnsVO.getCustomerId()));
     returnsVO.setComment(returnRequestModel.getComment());
+    if (returnRequestModel.getTrackingModel() != null) {
+      returnsVO.setReturnsTrackingDetailsVO(
+          buildTrackingDetailsVO(returnRequestModel.getTrackingModel()));
+    }
     return returnsVO;
+  }
+
+  public ReturnsTrackingDetailsVO buildTrackingDetailsVO(ReturnsTrackingModel model)
+      throws ParseException {
+    if (model == null) {
+      return null;
+    }
+    String username = SecurityUtils.getUsername();
+    SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATE_FORMAT);
+    Date now = new Date();
+    ReturnsTrackingDetailsVO transporterDetailsVO = new ReturnsTrackingDetailsVO();
+    if (model.getTransporter() != null) {
+      transporterDetailsVO.setTransporter(model.getTransporter());
+    }
+    if (model.getTrackingId() != null) {
+      transporterDetailsVO.setTrackingId(model.getTrackingId());
+    }
+    if (model.getEstimatedArrivalDate() != null) {
+      transporterDetailsVO.setEstimatedArrivalDate(sdf.parse(model.getEstimatedArrivalDate()));
+    }
+    transporterDetailsVO.setCreatedBy(username);
+    transporterDetailsVO.setUpdatedBy(username);
+    transporterDetailsVO.setCreatedAt(now);
+    transporterDetailsVO.setUpdatedAt(now);
+    return transporterDetailsVO;
+  }
+
+  public ReturnsTrackingModel buildTrackingDetails(
+      ReturnsTrackingDetailsVO returnsTrackingDetailsVO) throws ParseException {
+    final ReturnsTrackingModel returnsTrackingModel =
+        modelMapper.map(returnsTrackingDetailsVO, ReturnsTrackingModel.class);
+    if (returnsTrackingModel.getEstimatedArrivalDate() != null) {
+      final String dateString =
+          LocalDateUtil
+              .formatCustom(returnsTrackingDetailsVO.getEstimatedArrivalDate(),
+                  Constants.DATE_FORMAT, SecurityUtils.getTimezone());
+      returnsTrackingModel.setEstimatedArrivalDate(dateString);
+      final String label =
+          LocalDateUtil
+              .format(returnsTrackingDetailsVO.getEstimatedArrivalDate(), SecurityUtils.getLocale(),
+                  SecurityUtils.getTimezone(), true);
+      returnsTrackingModel.setEstimatedArrivalDateLabel(label);
+    }
+    return returnsTrackingModel;
   }
 
   private GeoLocationVO getGeoLocation(ReturnsRequestModel.Location location) {
     return modelMapper.map(location, GeoLocationVO.class);
   }
 
-  private void putItemsMeta(List<ReturnsItemModel> items, Date now, String username) {
+  private void setUserDetailsForItems(List<ReturnsItemModel> items, Date now, String username) {
     UserModel userModel = new UserModel();
     userModel.setUserId(username);
     items.forEach(item -> {
@@ -205,6 +266,9 @@ public class ReturnsBuilder {
 
   private List<ReturnsItemVO> getItems(List<ReturnsItemModel> itemModels, Long vendorId,
                                        Long customerId) {
+    if (itemModels == null) {
+      return null;
+    }
     return itemModels.stream()
         .filter(itemModel -> itemModel.getReturnQuantity().compareTo(BigDecimal.ZERO) > 0)
         .map(itemModel -> getReturnsItemVO(vendorId, customerId, itemModel))
@@ -218,13 +282,22 @@ public class ReturnsBuilder {
     returnsItem.setQuantity(itemModel.getReturnQuantity());
     returnsItem.setMaterialStatus(itemModel.getMaterialStatus());
     returnsItem.setReason(itemModel.getReason());
+    Date date=new Date();
+    returnsItem.setCreatedAt(date);
+    returnsItem.setUpdatedAt(date);
+    returnsItem.setCreatedBy(SecurityUtils.getUsername());
+    returnsItem.setUpdatedBy(SecurityUtils.getUsername());
     if (itemModel.getReceived() != null) {
       returnsItem.setReceived(getReturnsReceived(itemModel.getReceived()));
     }
     returnsItem.setCreatedAt(itemModel.getCreatedAt());
-    returnsItem.setCreatedBy(itemModel.getCreatedBy().getUserId());
+    if (itemModel.getCreatedBy() != null) {
+      returnsItem.setCreatedBy(itemModel.getCreatedBy().getUserId());
+    }
     returnsItem.setUpdatedAt(itemModel.getUpdatedAt());
-    returnsItem.setUpdatedBy(itemModel.getUpdatedBy().getUserId());
+    if (itemModel.getUpdatedBy() != null) {
+      returnsItem.setUpdatedBy(itemModel.getUpdatedBy().getUserId());
+    }
     if (itemModel.getBatches() != null) {
       returnsItem.setReturnItemBatches(
           getItemBatches(itemModel.getBatches(), vendorId, customerId,
@@ -236,9 +309,9 @@ public class ReturnsBuilder {
   private List<ReturnsItemBatchVO> getItemBatches(List<ReturnsItemBatchModel> itemBatchModels,
                                                   Long vendorId, Long customerId, Long materialId) {
     return itemBatchModels.stream()
-        .filter(itemModel -> itemModel.getReturnQuantity().compareTo(BigDecimal.ZERO) > 0).map(
-            itemBatchModel -> getReturnsItemBatchVO(vendorId, customerId, materialId,
-                itemBatchModel))
+        .filter(itemModel -> itemModel.getReturnQuantity().compareTo(BigDecimal.ZERO) > 0)
+        .map(itemBatchModel -> getReturnsItemBatchVO(vendorId, customerId, materialId,
+            itemBatchModel))
         .collect(Collectors.toList());
   }
 
@@ -284,8 +357,8 @@ public class ReturnsBuilder {
   }
 
   public ReturnsUpdateStatusModel buildMobileReturnsUpdateModel(
-      ReturnsVO returns, ReturnsUpdateStatusRequestModel updateStatusModel)
-      throws ServiceException {
+      ReturnsVO returns, ReturnsUpdateRequestModel updateStatusModel)
+      throws ServiceException, ParseException {
     ReturnsUpdateStatusModel returnsUpdateStatusModel = new ReturnsUpdateStatusModel();
     if (StringUtils.isNotBlank(updateStatusModel.getEmbed())) {
       String[] embedValues = updateStatusModel.getEmbed().split(CharacterConstants.COMMA);
@@ -406,38 +479,83 @@ public class ReturnsBuilder {
     DomainConfig dc = DomainConfig.getInstance(order.getDomainId());
     boolean isAccounting = dc.isAccountingEnabled();
     boolean isBatchEnabled;
-    if (entityId != null) {
-      IKiosk k = entitiesService.getKiosk(entityId, false);
-      isBatchEnabled = k.isBatchMgmtEnabled();
-    } else {
-      IKiosk k = entitiesService.getKiosk(order.getKioskId(), false);
-      isBatchEnabled = k.isBatchMgmtEnabled();
+    Long kioskId = entityId;
+    if (kioskId == null) {
+      kioskId = order.getKioskId();
     }
+    IKiosk k = entitiesService.getKiosk(kioskId, false);
+    isBatchEnabled = k.isBatchMgmtEnabled();
+
     return mobileOrderBuilder.build(order, SecurityUtils.getLocale(), SecurityUtils.getTimezone(),
         true, isAccounting, true, isBatchEnabled);
   }
 
-  public UpdateStatusModel buildUpdateStatusModel(Long returnId, String status,
-                                                  ReturnsUpdateStatusRequestModel returnsUpdateStatusRequestModel) {
-    UpdateStatusModel updateStatusModel = new UpdateStatusModel();
+  public ReturnsVO buildReturnsVO(Long returnId, String status,
+                                  ReturnsUpdateRequestModel returnsUpdateRequestModel)
+      throws ParseException {
+    ReturnsVO returnsVO = new ReturnsVO();
     Status actualStatus = null;
-    switch (status) {
-      case "ship":
-        actualStatus = Status.SHIPPED;
-        break;
-      case "receive":
-        actualStatus = Status.RECEIVED;
-        break;
-      case "cancel":
-        actualStatus = Status.CANCELLED;
-        break;
-      default: break;
+    final Date now = new Date();
+    if (StringUtils.isNotEmpty(status)) {
+      switch (status) {
+        case "ship":
+          actualStatus = Status.SHIPPED;
+          break;
+        case "receive":
+          actualStatus = Status.RECEIVED;
+          break;
+        case "cancel":
+          actualStatus = Status.CANCELLED;
+          break;
+        default:
+          break;
+      }
+
+      ReturnsStatusVO returnsStatusVO = new ReturnsStatusVO();
+      returnsStatusVO.setStatus(actualStatus);
+      returnsStatusVO.setUpdatedAt(now);
+      returnsStatusVO.setUpdatedBy(SecurityUtils.getUsername());
+      returnsVO.setStatus(returnsStatusVO);
     }
-    updateStatusModel.setStatus(actualStatus);
-    updateStatusModel.setReturnId(returnId);
-    updateStatusModel.setUserId(SecurityUtils.getUsername());
-    updateStatusModel.setComment(returnsUpdateStatusRequestModel.getComment());
-    updateStatusModel.setSource(returnsUpdateStatusRequestModel.getSource());
-    return updateStatusModel;
+    returnsVO.setId(returnId);
+    returnsVO.setSource(returnsUpdateRequestModel.getSource());
+    returnsVO.setComment(returnsUpdateRequestModel.getComment());
+    returnsVO.setItems(getItems(returnsUpdateRequestModel.getItems(), null, null));
+    returnsVO.setReturnsTrackingDetailsVO(
+        buildTrackingDetailsVO(returnsUpdateRequestModel.getTrackingModel()));
+    returnsVO.setUpdatedAt(now);
+    returnsVO.setUpdatedBy(SecurityUtils.getUsername());
+    returnsVO.setCreatedAt(now);
+    returnsVO.setCreatedBy(SecurityUtils.getUsername());
+    return returnsVO;
+  }
+
+  public List<ReturnsQuantityModel> buildReturnsQuantityModels(
+      List<ReturnsQuantityVO> returnsQuantityDetails) {
+    returnsQuantityDetails.stream().filter(x -> CollectionUtils.isNotEmpty(x.getBatchList()))
+        .forEach(returnsQuantityDetail -> {
+              returnsQuantityDetail.setRequestedReturnQuantity(
+                  returnsQuantityDetail.getBatchList().stream()
+                      .map(ReturnsBatchQuantityVO::getRequestedReturnQuantity)
+                      .reduce(BigDecimal.ZERO, BigDecimal::add)
+              );
+              returnsQuantityDetail.setTotalQuantityInReturns(
+                  returnsQuantityDetail.getBatchList().stream()
+                      .map(ReturnsBatchQuantityVO::getTotalQuantityInReturns)
+                      .reduce(BigDecimal.ZERO, BigDecimal::add)
+              );
+              returnsQuantityDetail.setReturnedQuantity(
+                  returnsQuantityDetail.getBatchList().stream()
+                      .map(ReturnsBatchQuantityVO::getReturnedQuantity)
+                      .reduce(BigDecimal.ZERO, BigDecimal::add)
+              );
+              returnsQuantityDetail.setFulfilledQuantity(
+                  returnsQuantityDetail.getBatchList().stream()
+                      .map(ReturnsBatchQuantityVO::getFulfilledQuantity)
+                      .reduce(BigDecimal.ZERO, BigDecimal::add)
+              );
+            }
+        );
+    return ModelMapperUtil.mapWithDateFormat(returnsQuantityDetails, ReturnsQuantityModel.class);
   }
 }

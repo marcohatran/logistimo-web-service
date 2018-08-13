@@ -1903,3 +1903,25 @@ CREATE TABLE `FEEDBACK` (
   `TEXT` varchar(2048) CHARACTER SET utf8 COLLATE utf8_bin DEFAULT NULL,
   PRIMARY KEY (`ID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `logistimo`.`USER_DEVICES` (
+  `id` VARCHAR(255) NOT NULL,
+  `user_id` VARCHAR(255) NOT NULL,
+  `application_name` INT NOT NULL,
+  `created_on` DATETIME NOT NULL,
+  `expires_on` DATETIME NOT NULL,
+  PRIMARY KEY (`id`)
+  ) ENGINE=INNODB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `RETURNS_TRACKING_DETAILS` (
+  `id` BIGINT(20) NOT NULL AUTO_INCREMENT,
+  `returns_id` BIGINT(20) NOT NULL,
+  `tracking_id` varchar(255) DEFAULT NULL,
+  `transporter` varchar(255) DEFAULT NULL,
+  `expected_on` DATE DEFAULT NULL,
+  `created_by` varchar(255) DEFAULT NULL,
+  `created_at` datetime NOT NULL,
+  `updated_by` varchar(255) DEFAULT NULL,
+  `updated_at` datetime NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8;

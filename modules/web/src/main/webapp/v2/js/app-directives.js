@@ -150,6 +150,33 @@ logistimoApp.directive('editableText', function () {
         }]
     }
 });
+logistimoApp.directive('onDemandEditableText', function () {
+    return {
+        restrict: 'E',
+        template: '<div style="position:relative;"><input placeholder="{{placeHolder}}" maxlength="{{maxLength}}" type="text" class="form-control input-sm" ng-model="editModel" sync-focus-with="setFocus"> <span class="fix-bot-right"> <span ng-click="ok()" class="glyphicons glyphicons-ok clickable editBtn"></span> <span ng-click="cancel()" class="glyphicons glyphicons-remove clickable editBtn"></span></span></div>',
+        scope: {
+            editModel: '=',
+            onOkCallback: '&onOk',
+            onCancelCallback: '&onCancel',
+            placeHolder: '@',
+            setFocus: '@',
+            maxLength:'@'
+        },
+        controller: ['$scope', function ($scope) {
+            $scope.originalValue = angular.copy($scope.editModel);
+            $scope.maxLength = $scope.maxLength || 255;
+            $scope.ok = function () {
+                $scope.originalValue = angular.copy($scope.editModel);
+                $scope.onOkCallback();
+            };
+
+            $scope.cancel = function () {
+                $scope.editModel = angular.copy($scope.originalValue);
+                $scope.onCancelCallback();
+            };
+        }]
+    }
+});
 logistimoApp.directive('syncFocusWith', function () {
     return {
         restrict: 'A',

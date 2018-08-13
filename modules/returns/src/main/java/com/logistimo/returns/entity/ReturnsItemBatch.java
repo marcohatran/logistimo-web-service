@@ -34,8 +34,6 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 
 import lombok.Data;
@@ -46,11 +44,6 @@ import lombok.Data;
 @Entity
 @Table(name = "RETURNS_ITEM_BATCH")
 @Data
-@NamedQueries(value = {
-    @NamedQuery(name = "ReturnsItemBatch.findAllByItemId", query = "SELECT r FROM ReturnsItemBatch r where r.itemId=:itemId"),
-    @NamedQuery(name = "ReturnsItemBatch.removeAllByCustomerId", query = "DELETE FROM ReturnsItemBatch r where r.itemId IN "
-            + "(SELECT r.id FROM ReturnsItem r where r.returnsId IN (SELECT r.id FROM Returns r where r.customerId=:customerId))")
-})
 public class ReturnsItemBatch {
 
   @Id
@@ -75,5 +68,4 @@ public class ReturnsItemBatch {
 
   @Embedded
   private ReturnsReceived received;
-
 }

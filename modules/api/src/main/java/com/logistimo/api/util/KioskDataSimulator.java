@@ -344,7 +344,7 @@ public class KioskDataSimulator {
         transDao.setKey(trans);
         // Store the transaction
         ims.updateInventoryTransaction(domainId, trans, true);
-        //xLogger.fine( "***** Received {0} on day {1} of {2} after {3} zero-stock days [{4}]", receivedQuantity, i, this.days, zeroStockDays, cal.getTime().toString() );
+        //xLogger.fine( "***** Received {0} on day {1} of {2} after {3} zero-stock days [{4}]", quantity, i, this.days, zeroStockDays, cal.getTime().toString() );
 
         // Reset stock-on-hand
         stockOnHand = receivedQuantity;

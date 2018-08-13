@@ -80,7 +80,7 @@
                                       uib-tooltip="{{displayStatusHistory ? 'Hide' : 'Show'}} status history"
                                       tooltip-append-to-body="true" ng-click="toggleStatusHistory()"></span>
                             </div>
-                            <div class="col-sm-3 btn-group">
+                            <div class="col-sm-3 btn-group" ng-show="!dp.vp">
                                 <div class="pull-right">
                                     <span class="lPad5">
                                         <button type="button" ng-show="hasStatus(RETURNS.status.SHIPPED)"
@@ -150,6 +150,99 @@
             </div>
             <div class="row">
                 <div class="col-sm-12">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            {{resourceBundle['tracking.details']}}
+                        </div>
+                        <div class="panel-body">
+                            <div class="row mb10">
+                                <div class="col-sm-6 noLRpad">
+                                    <label class="col-sm-4 control-label">{{resourceBundle['transporter']}} </label>
+
+                                    <div class="col-sm-6">
+                                        <p ng-hide="edit.transporter">
+                                            {{returns.tracking_details.transporter ?
+                                            returns.tracking_details.transporter : resourceBundle['none'] }}
+                                            <a class="ml15"
+                                               ng-show="!edit.transporter && !dp.vp && !(returns.status.status == RETURNS.status.CANCELLED) && !(returns.status.status == RETURNS.status.RECEIVED)"
+                                               ng-click="toggleEdit('transporter')"
+                                               uib-tooltip="{{resourceBundle['edit']}}" tooltip-append-to-body="true">
+                                                <span class="glyphicons glyphicons-edit alignBaseLine"></span>
+                                            </a>
+                                        </p>
+
+                                        <div ng-show="edit.transporter">
+                                            <on-demand-editable-text edit-model="returns.tracking_details.transporter"
+                                                                     on-ok="updateTrackingDetails('transporter')"
+                                                                     on-cancel="toggleEdit('transporter')"
+                                                                     set-focus="">
+                                            </on-demand-editable-text>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <label class="col-sm-4 control-label">{{resourceBundle['trackingid']}}</label>
+
+                                    <div class="col-sm-6">
+                                        <p ng-hide="edit.trackingId">
+                                            {{returns.tracking_details.tracking_id ?
+                                            returns.tracking_details.tracking_id : resourceBundle['none'] }}
+                                            <a class="ml15"
+                                               ng-show="!edit.trackingId && !dp.vp && !(returns.status.status == RETURNS.status.CANCELLED) && !(returns.status.status == RETURNS.status.RECEIVED)"
+                                               ng-click="toggleEdit('trackingId')"
+                                               uib-tooltip="{{resourceBundle['edit']}}" tooltip-append-to-body="true">
+                                                <span class="glyphicons glyphicons-edit alignBaseLine"></span>
+                                            </a>
+                                        </p>
+
+                                        <div ng-show="edit.trackingId">
+                                            <on-demand-editable-text edit-model="returns.tracking_details.tracking_id"
+                                                                     on-ok="updateTrackingDetails('trackingId')"
+                                                                     on-cancel="toggleEdit('trackingId')"
+                                                                     set-focus="">
+                                            </on-demand-editable-text>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mb10">
+                                <div class="col-sm-6 noLRpad">
+                                    <label class="col-sm-4 control-label">{{resourceBundle['eda']}} </label>
+
+                                    <div class="col-sm-7">
+                                        <p class="capitalize" ng-hide="edit.estimatedArrivalDate">
+                                            {{returns.tracking_details.estimated_arrival_date_label?
+                                            returns.tracking_details.estimated_arrival_date_label:resourceBundle['none']}}
+                                            <a class="ml15 alignBaseLine"
+                                               ng-show="!edit.estimatedArrivalDate && !dp.vp && !(returns.status.status == RETURNS.status.CANCELLED) && !(returns.status.status == RETURNS.status.RECEIVED)"
+                                               ng-click="toggleEdit('estimatedArrivalDate')"
+                                               uib-tooltip="{{resourceBundle['edit']}}" tooltip-append-to-body="true">
+                                                <span class="glyphicons glyphicons-edit alignBaseLine"></span>
+                                            </a>
+                                        </p>
+                                        <date-picker ng-show="edit.estimatedArrivalDate"
+                                                     date-model="returns.tracking_details.ead"
+                                                     min-date="today"
+                                                     place-holder="{{resourceBundle['eda']}}"></date-picker>
+                                        <div ng-show="edit.estimatedArrivalDate" class="mt10">
+                                            <button class="btn btn-sm btn-primary"
+                                                    ng-click="updateTrackingDetails('estimatedArrivalDate')">
+                                                {{resourceBundle['save']}}
+                                            </button>
+                                            <button class="btn btn-sm btn-default"
+                                                    ng-click="toggleEdit('estimatedArrivalDate', true)">
+                                                {{resourceBundle['cancel']}}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-12">
                     <ul class="nav nav-tabs subnav-tabs">
                         <li ng-class="{ active: subPage == 'consignment'}"><a
                                 ng-click="subPage='consignment'">{{resourceBundle['items']}} <span class="badge">{{returns.items ? returns.items.length : 0}}</span></a>
@@ -161,81 +254,309 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col-sm-12">
-                    <div class="tab-content">
-                        <div ng-switch="subPage">
-                            <div ng-switch-when="consignment" class="tab-pane">
-                                <div class="row">
-                                    <div class="col-sm-12 mt10">
-                                        <div class="row">
-                                            <div class="col-sm-6 mt10">
-                                                <table class="table table-condensed table-hover table-logistimo table-fixed">
-                                                    <tr>
-                                                        <th class="col-sm-2 text-center">
-                                                            {{resourceBundle['material']}}
-                                                        </th>
-                                                        <th class="col-sm-4 text-center">
-                                                            {{resourceBundle['quantity']}}
-                                                        </th>
-                                                    </tr>
-                                                    <tbody ng-repeat="item in returns.items">
-                                                    <tr>
-                                                        <td class="col-sm-2 text-left">
-                                                            <a href="#/setup/materials/all/detail/{{item.material_id}}"
-                                                               target="_blank">{{item.material_name}}</a>
-                                                        </td>
-                                                        <td class="text-center">
-                                                            {{item.return_quantity}}
-                                                            <span class="litetext text-center"
-                                                                  ng-show="isDef(item.material_status) && isUndef(item.batches)">{{resourceBundle['inventory.material.status']}}: {{item.material_status}}</span>
-                                                            <span class="litetext text-center"
-                                                                  ng-show="isDef(item.reason) && isUndef(item.batches)">{{resourceBundle['reason']}}: {{item.reason}}</span>
-                                                            <table class="table table-striped table-nobot-mar table-condensed table-fixed"
-                                                                   ng-if="item.batches && item.batches.length > 0"
-                                                                   style="margin-left: auto; margin-right: auto;">
-                                                                <thead>
-                                                                <tr>
-                                                                    <th class=" text-center col-sm-4">
-                                                                        {{resourceBundle['batch']}}
-                                                                    </th>
-                                                                    <th class=" text-center col-sm-3">
-                                                                        {{resourceBundle['expiry']}}
-                                                                    </th>
-                                                                    <th class=" text-center col-sm-5">
-                                                                        {{resourceBundle['quantity']}}
-                                                                    </th>
-                                                                </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                <tr ng-repeat="batch in item.batches">
-                                                                    <td class="text-center">{{batch.batch_id}}</td>
-                                                                    <td class="text-center">{{batch.expiry}}</td>
-                                                                    <td class="text-center">
-                                                                        {{batch.return_quantity}}
-                                                                        <span class="litetext text-center"
-                                                                              ng-show="isDef(batch.material_status)">{{resourceBundle['inventory.material.status']}}: {{batch.material_status}}</span>
-                                                                        <span class="litetext text-center"
-                                                                              ng-show="isDef(batch.reason)">{{resourceBundle['reason']}}: {{batch.reason}}</span>
-                                                                    </td>
-                                                                </tr>
-                                                                </tbody>
-                                                            </table>
-                                                        </td>
-                                                    </tr>
-                                                    </tbody>
-                                                </table>
+            <div class="col-sm-12">
+            <div class="tab-content">
+            <div ng-switch="subPage">
+                <div ng-switch-when="consignment" class="tab-pane">
+                <div class="row">
+                <div class="col-sm-12 mt10">
+                    <div class="row" ng-hide="editMode">
+                        <div class="col-sm-12">
+                            <button type="button" class="btn btn-sm btn-primary" ng-show="!dp.vp && returns.status.status == RETURNS.status.OPEN"
+                                    ng-click="editItems()">
+                                {{resourceBundle['edit']}}
+                            </button>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div ng-class="{'col-sm-12': returns.status.status == RETURNS.status.RECEIVED, 'col-sm-8': returns.status.status != RETURNS.status.RECEIVED}" class="mt10">
+                            <script type="text/ng-template" id="materialTemplate">
+                                <a>
+                                    <span ng-bind-html="match.label | uibTypeaheadHighlight:query"></span>
+                                    <span class="litetext">
+                                        {{$parent.$parent.$parent.resourceBundle['fulfilled']}}: {{match.model.fq}}
+                                    </span>
+                                </a>
+                            </script>
+                            <table class="table table-condensed table-hover table-logistimo table-fixed">
+                                <tr>
+                                    <th class="col-sm-3 text-center">
+                                        {{resourceBundle['material']}}
+                                    </th>
+                                    <th class="col-sm-1 text-center" ng-show="editMode">
+                                        {{resourceBundle['fulfilled']}}
+                                    </th>
+                                    <th class="col-sm-2 text-center" ng-show="editMode">
+                                        {{resourceBundle['returned']}}
+                                    </th>
+                                    <th class="col-sm-3 text-center">
+                                        {{resourceBundle['return']}}
+                                    </th>
+                                    <th class="col-sm-3 text-center" ng-show="returns.status.status == RETURNS.status.RECEIVED">
+                                        {{resourceBundle['received']}}
+                                    </th>
+                                    <th class="col-sm-0-1" ng-show="editMode"></th>
+                                </tr>
+                                <tbody ng-repeat="item in returnItems" data-ng-switch on="item.additionalRows">
+                                <tr>
+                                    <td class="col-sm-3 text-left">
+                                        <a href="#/setup/materials/all/detail/{{item.material_id}}"
+                                           target="_blank">{{item.material_name}}</a>
+                                    </td>
+                                    <td ng-show="editMode" class="text-center">{{item.fq}}</td>
+                                    <td ng-show="editMode" class="text-center">{{item.dispReturnedQuantity}}
+                                        <span ng-show="item.requested_return_quantity > 0" class="litetext text-center">
+                                            {{item.requested_return_quantity}} {{resourceBundle['pending.returns']}}
+                                        </span>
+                                    </td>
+                                    <td class="text-center" ng-hide="editMode">
+                                        {{item.return_quantity}}
+                                        <span class="litetext text-center" ng-show="isDef(item.material_status) && isUndef(item.batches)">
+                                            {{resourceBundle['inventory.material.status']}}: {{item.material_status}}
+                                        </span>
+                                        <span class="litetext text-center" ng-show="isDef(item.reason) && isUndef(item.batches)">
+                                            {{resourceBundle['reason']}}: {{item.reason}}
+                                        </span>
+                                        <span ng-show="item.batches && item.batches.length > 0"
+                                              class="glyphicons glyphicons-list-alt"
+                                              style="vertical-align:middle;"
+                                              ng-click="item.showBatches = !item.showBatches">
+                                        </span>
+                                        <table class="table table-bordered table-order-batch"
+                                               ng-if="item.batches && item.batches.length > 0 && item.showBatches"
+                                               style="margin-left: auto; margin-right: auto;">
+                                            <thead>
+                                            <tr style="font-size: x-small;">
+                                                <th class="text-center col-sm-4">
+                                                    {{resourceBundle['batch']}}
+                                                </th>
+                                                <th class=" text-center col-sm-3">
+                                                    {{resourceBundle['expiry']}}
+                                                </th>
+                                                <th class=" text-center col-sm-5">
+                                                    {{resourceBundle['return.quantity']}}
+                                                </th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            <tr ng-repeat="batch in item.batches" style="font-size: xx-small;">
+                                                <td class="text-center">{{batch.batch_id}}</td>
+                                                <td class="text-center">{{batch.expiry}}</td>
+                                                <td class="text-center">
+                                                    {{batch.return_quantity}}
+                                                    <span class="litetext small-font text-center" ng-show="isDef(batch.material_status)">
+                                                        {{resourceBundle['inventory.material.status']}}: {{batch.material_status}}
+                                                    </span>
+                                                    <span class="litetext small-font text-center" ng-show="isDef(batch.reason)">
+                                                        {{resourceBundle['reason']}}: {{batch.reason}}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+                                    </td>
+                                    <td ng-show="editMode" class="text-center">
+                                        <div ng-if="isUndef(item.batches) && !item.isBatch">
+                                            <input class="form-control" only-digits
+                                                   ng-model="item.new_return_quantity"
+                                                   id="{{item.material_id}}{{$index}}"
+                                                   ng-class="{'red-border':item.invalidPopup}"
+                                                   uib-popover="{{item.popupMsg}}"
+                                                   popover-trigger="showpopup"
+                                                   ng-focus="closePopup(item,$index)"
+                                                   ng-blur="validateQuantityReturn(item,$index)">
+
+                                            <div ng-show="item.displayMeta">
+                                                <span class="litetext text-left"
+                                                      ng-class="{'required' : statusMandatoryConfig.rosm}"
+                                                      ng-show="(!item.tm && isDef(matstatus)) || (item.tm && isDef(tempmatstatus))">
+                                                    {{resourceBundle['inventory.material.status']}}
+                                                </span>
+                                                <select ng-show="isDef(matstatus) && !item.tm"
+                                                        ng-model="item.material_status"
+                                                        class="form-control"
+                                                        ng-class="{'red-border': item.sinvalidPopup}"
+                                                        uib-popover="{{item.sPopupMsg}}"
+                                                        ng-blur="validateStatusReturn(item, $index)"
+                                                        ng-focus="closePopup(item, $index, 's')"
+                                                        id="s{{item.material_id}}{{$index}}"
+                                                        popover-trigger="showpopup">
+                                                    <option ng-repeat="status in matstatus" value="{{status}}">
+                                                        {{status|| resourceBundle['select'] + " " + resourceBundle['status.lower']}}
+                                                    </option>
+                                                </select>
+                                                <select ng-show="isDef(tempmatstatus) && item.tm"
+                                                        ng-model="item.material_status"
+                                                        class="form-control"
+                                                        ng-class="{'red-border': item.sinvalidPopup}"
+                                                        uib-popover="{{item.sPopupMsg}}"
+                                                        ng-blur="validateStatusReturn(item, $index, true)"
+                                                        ng-focus="closePopup(item, $index, 'st')"
+                                                        id="st{{item.material_id}}{{$index}}"
+                                                        popover-trigger="showpopup">
+                                                    <option ng-repeat="status in tempmatstatus" value="{{status}}">
+                                                        {{status|| resourceBundle['select'] + " " + resourceBundle['status.lower']}}
+                                                    </option>
+                                                </select>
+
+                                                <div ng-show="item.reasons && item.reasons.length > 1">
+                                                    <span class="litetext text-left" ng-class="{'required' : returnOutgoingReasonMandatory}">
+                                                        {{resourceBundle['reason']}}
+                                                    </span>
+                                                    <select class="form-control"
+                                                            ng-model="item.reason"
+                                                            ng-class="{'red-border': item.rinvalidPopup}"
+                                                            uib-popover="{{item.rPopupMsg}}"
+                                                            ng-blur="validateReasonReturn(item, $index, true)"
+                                                            ng-focus="closePopup(item, $index, 'r')"
+                                                            id="r{{item.material_id}}{{$index}}"
+                                                            popover-trigger="showpopup">
+                                                        <option ng-repeat="reason in item.reasons track by $index"
+                                                                value="{{reason}}"
+                                                                ng-selected="item.returnReason == reason">
+                                                            {{reason || resourceBundle['select'] + ' ' + resourceBundle['reason.lowercase']}}
+                                                        </option>
+                                                    </select>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div ng-switch-when="message" class="tab-pane">
-                                <div ng-include="'views/conversation/messages.html'"
-                                     ng-init="objId = returns.return_id; objType = 'RETURNS'"></div>
+                                        <table class="table table-bordered table-order-batch"
+                                               ng-if="item.batches && item.batches.length > 0"
+                                               style="margin-left: auto; margin-right: auto;">
+                                        <thead>
+                                        <tr style="font-size: x-small;">
+                                            <th class="text-center">
+                                                {{resourceBundle['batch']}}
+                                            </th>
+                                            <th class="text-center">
+                                                {{resourceBundle['expiry']}}
+                                            </th>
+                                            <th class="text-center">
+                                                {{resourceBundle['fulfilled']}}
+                                            </th>
+                                            <th class="text-center">
+                                                {{resourceBundle['return.quantity']}}
+                                            </th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr ng-repeat="batch in item.batches | orderBy:'batch_id'" style="font-size: xx-small;">
+                                            <td class=" text-center">{{batch.batch_id}}</td>
+                                            <td class=" text-center">{{batch.expiry}}</td>
+                                            <td class=" text-center">{{batch.fq}}</td>
+                                            <td class="text-center">
+                                                {{batch.return_quantity}}
+                                                <span class="litetext small-font text-center" ng-show="isDef(batch.material_status)">
+                                                    {{resourceBundle['inventory.material.status']}}: {{batch.material_status}}
+                                                </span>
+                                                <span class="litetext small-font text-center" ng-show="isDef(batch.reason)">
+                                                    {{resourceBundle['reason']}}: {{batch.reason}}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                        </table>
+                                        <div ng-if="item.isBatch">
+                                            <button type="button" class="btn btn-sm btn-primary"
+                                                    ng-click="editBatchItems(item)">
+                                                {{resourceBundle['batch.enter']}}
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td class="text-center" ng-show="returns.status.status == RETURNS.status.RECEIVED">
+                                        {{item.received.received_quantity}}
+                                        <span class="litetext text-center" ng-show="isDef(item.material_status) && isUndef(item.batches)">
+                                            {{resourceBundle['inventory.material.status']}}: {{item.received.material_status}}
+                                        </span>
+                                        <span ng-show="item.batches && item.batches.length > 0"
+                                              class="glyphicons glyphicons-list-alt"
+                                              style="vertical-align:middle;"
+                                              ng-click="item.showBatches = !item.showBatches">
+                                        </span>
+                                        <table class="table table-bordered table-order-batch"
+                                               ng-if="item.batches && item.batches.length > 0 && item.showBatches"
+                                               style="margin-left: auto; margin-right: auto;">
+                                            <thead>
+                                            <tr style="font-size: x-small;">
+                                                <th class=" text-center col-sm-4">
+                                                    {{resourceBundle['batch']}}
+                                                </th>
+                                                <th class=" text-center col-sm-3">
+                                                    {{resourceBundle['expiry']}}
+                                                </th>
+                                                <th class=" text-center col-sm-5">
+                                                    {{resourceBundle['received']}} {{resourceBundle['quantity']}}
+                                                </th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            <tr ng-repeat="batch in item.batches" style="font-size: xx-small;">
+                                                <td class="text-center">{{batch.batch_id}}</td>
+                                                <td class="text-center">{{batch.expiry}}</td>
+                                                <td class="text-center">
+                                                    {{batch.received.received_quantity}}
+                                                    <span class="litetext small-font text-center" ng-show="isDef(batch.material_status)">
+                                                        {{resourceBundle['inventory.material.status']}}: {{batch.received.material_status}}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+                                    </td>
+                                    <td ng-show="editMode">
+                                        <span class="glyphicons glyphicons-bin temp dummyLink" ng-click="deleteReturnItem($index)"></span>
+                                    </td>
+                                </tr>
+                                <tr data-ng-switch-when="true">
+                                    <td colspan=4 class="partialview">
+                                        <div ng-include="'views/returns/returns-all-batches-detail.html'"></div>
+                                    </td>
+                                </tr>
+                                </tbody>
+                                <tbody>
+                                <tr ng-hide="returnItems.length == orderItems.length || !editMode">
+                                    <td>
+                                        <input type="text"
+                                               value="{{newMaterial}}"
+                                               typeahead-template-url="materialTemplate"
+                                               ng-model="newMaterial"
+                                               class="form-control"
+                                               placeholder="Type material name to choose"
+                                               uib-typeahead="item as item.nm for item in availableReturnItems | filter:{nm:$viewValue} | limitTo:8"
+                                               typeahead-editable="false"
+                                               typeahead-on-select="addReturnItem($item, true); newMaterial = ''"
+                                               class="form-control"/>
+                                    </td>
+                                    <td colspan="3"></td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="row" ng-show="editMode">
+                        <div class="col-sm-8">
+                            <div class="pull-right">
+                                <button type="button" class="btn btn-sm btn-primary"
+                                        ng-click="doEdit()" ng-disabled="editCount || returnItems.length == 0">
+                                    {{resourceBundle['update']}}
+                                </button>
+                                <button type="button" class="btn btn-sm btn-default"
+                                        ng-click="cancelEdit()" ng-disabled="editCount">
+                                    {{resourceBundle['cancel']}}
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
+                </div>
+                </div>
+                <div ng-switch-when="message" class="tab-pane">
+                    <div ng-include="'views/conversation/messages.html'"
+                         ng-init="objId = returns.return_id; objType = 'RETURNS'"></div>
+                </div>
+            </div>
+            </div>
+            </div>
             </div>
         </div>
         <div ng-switch-when="receive">

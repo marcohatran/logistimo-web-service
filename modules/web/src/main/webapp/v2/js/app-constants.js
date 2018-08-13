@@ -663,3 +663,7 @@ logistimoApp.constant('PATTERNS', {
 	'TEMPERATURE' : '^-?(\\d{0,2})(\\.\\d{1,2})?$'
 });
 logistimoApp.constant('TRANSACTION_TYPES', ['i','r','p','w','t','ri','ro']);
+
+logistimoApp.constant('DATEFORMAT',{
+	'DATE_FORMAT': 'dd/mm/yyyy'
+});

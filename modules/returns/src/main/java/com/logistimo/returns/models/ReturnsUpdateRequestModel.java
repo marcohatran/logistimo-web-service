@@ -23,21 +23,32 @@
 
 package com.logistimo.returns.models;
 
-import com.logistimo.returns.Status;
+import com.google.gson.annotations.SerializedName;
+
+import com.logistimo.constants.SourceConstants;
+import com.logistimo.returns.models.submodels.ReturnsTrackingModel;
+
+import java.util.List;
 
 import lombok.Data;
 
 /**
- * Created by pratheeka on 14/03/18.
+ * @author Mohan Raja
  */
 @Data
-public class UpdateStatusModel {
+public class ReturnsUpdateRequestModel {
 
-  private Status status;
-  private Long returnId;
-  private String userId;
   private String comment;
-  private Integer source;
-  private boolean isTransferOrder;
 
+  private String embed;
+
+  @SerializedName("entity_id")
+  private Long entityId;
+
+  private Integer source = SourceConstants.MOBILE;
+
+  @SerializedName("tracking_details")
+  private ReturnsTrackingModel trackingModel;
+
+  private List<ReturnsItemModel> items;
 }

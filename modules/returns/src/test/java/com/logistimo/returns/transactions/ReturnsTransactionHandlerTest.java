@@ -29,7 +29,7 @@ import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.inventory.entity.Transaction;
 import com.logistimo.inventory.models.CreateTransactionsReturnModel;
 import com.logistimo.inventory.service.InventoryManagementService;
-import com.logistimo.returns.models.UpdateStatusModel;
+import com.logistimo.returns.models.ReturnsUpdateModel;
 import com.logistimo.returns.utility.ReturnsGsonMapper;
 import com.logistimo.returns.utility.ReturnsTestConstant;
 import com.logistimo.returns.utility.ReturnsTestUtility;
@@ -49,6 +49,7 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -104,22 +105,21 @@ public class ReturnsTransactionHandlerTest {
   }
 
   @Test(expected = SystemException.class)
-  public void testErrorPostingTransactions() throws ServiceException, DuplicationException {
+  public void testErrorPostingTransactions()
+      throws ServiceException, DuplicationException, IOException {
     ReturnsVO returnsVO = getReturnsVO();
-    UpdateStatusModel statusModel = getUpdateStatusModel();
-    handler.postTransactions(statusModel, returnsVO, 1L);
+    handler.postTransactions(true, returnsVO, 1L);
   }
 
   @Test
-  public void testPostingTransactions() throws ServiceException, DuplicationException {
+  public void testPostingTransactions() throws ServiceException, DuplicationException, IOException {
     ReturnsVO returnsVO = getReturnsVO();
-    UpdateStatusModel statusModel = getUpdateStatusModel();
-    handler.postTransactions(statusModel, returnsVO, 2L);
+    handler.postTransactions(true, returnsVO, 2L);
     returnsVO = getBatchReturnsVO();
-    handler.postTransactions(statusModel, returnsVO, 2L);
+    handler.postTransactions(true, returnsVO, 2L);
   }
 
-  private ReturnsVO getReturnsVO() {
+  private ReturnsVO getReturnsVO() throws IOException {
     ReturnsVO
         returnsVO =
         ReturnsTestUtility.getReturnsVO();
@@ -130,7 +130,7 @@ public class ReturnsTransactionHandlerTest {
     return returnsVO;
   }
 
-  private ReturnsVO getBatchReturnsVO() {
+  private ReturnsVO getBatchReturnsVO() throws IOException {
     ReturnsVO
         returnsVO =
         ReturnsTestUtility.getReturnsVO();
@@ -149,11 +149,6 @@ public class ReturnsTransactionHandlerTest {
   private ReturnsItemVO getBatchReturnsItemVO() {
     return ReturnsGsonMapper
         .getTestObject(ReturnsTestConstant.RETURNS_ITEM_BATCH_1, ReturnsItemVO.class);
-  }
-
-  private UpdateStatusModel getUpdateStatusModel() {
-    return ReturnsGsonMapper
-        .getTestObject(ReturnsTestConstant.STATUS_MODEL, UpdateStatusModel.class);
   }
 
   private List<ITransaction> getTransactionList() {

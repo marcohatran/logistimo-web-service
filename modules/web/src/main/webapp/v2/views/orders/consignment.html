@@ -42,7 +42,7 @@
                         ng-click="startEditMats(true)">{{resourceBundle['allocate']}}
                 </button>
                 <button type="button" class="btn btn-sm btn-primary ml10"
-                        ng-show="canReturn && !returnPolicyExpired" ng-disabled="sel.selectedRows.length<=0"
+                        ng-show="!dp.vp && canReturn && !returnPolicyExpired" ng-disabled="sel.selectedRows.length<=0"
                         ng-click="doReturn()">{{resourceBundle['return']}}
                 </button>
                 <span ng-if="returnPolicyExpired" class="litetext">

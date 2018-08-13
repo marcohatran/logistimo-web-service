@@ -76,6 +76,8 @@ public class ConversationController {
   private ConversationService conversationService;
   private ShipmentService shipmentService;
   private OrderManagementService orderManagementService;
+
+  @Autowired
   private ReturnsService returnsService;
 
   @Autowired
@@ -101,11 +103,6 @@ public class ConversationController {
   @Autowired
   public void setOrderManagementService(OrderManagementService orderManagementService) {
     this.orderManagementService = orderManagementService;
-  }
-
-  @Autowired
-  public void setReturnsService(ReturnsService returnsService) {
-    this.returnsService = returnsService;
   }
 
   @RequestMapping(value = "/", method = RequestMethod.POST)
@@ -274,7 +271,7 @@ public class ConversationController {
             Collections.singleton(objType + objId), user.getDomainId(), null);
       } else if ("RETURNS".equals(objType)) {
         String messageId =
-            returnsService.postComment(Long.parseLong(objId), message.data, user.getUsername(),
+            returnsService.addComment(Long.parseLong(objId), message.data, user.getUsername(),
                 user.getCurrentDomainId());
         iMessage=conversationService.getMessageById(messageId);
       } else {

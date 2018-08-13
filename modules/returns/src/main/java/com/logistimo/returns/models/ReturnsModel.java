@@ -26,6 +26,7 @@ package com.logistimo.returns.models;
 import com.google.gson.annotations.SerializedName;
 
 import com.logistimo.returns.models.submodels.EntityModel;
+import com.logistimo.returns.models.submodels.ReturnsTrackingModel;
 import com.logistimo.returns.models.submodels.StatusModel;
 import com.logistimo.returns.models.submodels.UserModel;
 
@@ -74,5 +75,7 @@ public class ReturnsModel {
   @SerializedName("source_domain_name")
   private String sourceDomainName;
 
+  @SerializedName("tracking_details")
+  private ReturnsTrackingModel returnsTrackingModel;
 
 }

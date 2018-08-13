@@ -95,6 +95,7 @@ import com.logistimo.utils.LockUtil;
 import com.logistimo.utils.MsgUtil;
 import com.logistimo.utils.StringUtil;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -2493,18 +2494,23 @@ public class ShipmentService implements IShipmentService {
 
       StringBuilder
           queryBuilder =
-          new StringBuilder("SELECT SI.MID, BID, SUM(SI.FQ),SUM(SIB.FQ), SI.SID FROM "
+          new StringBuilder("SELECT SI.MID, BID, SUM(SI.FQ),SUM(SIB.FQ), SI.SID,SIB.BEXP,SIB.BMFDT,SIB.BMFNM  FROM "
               + "SHIPMENT S,SHIPMENTITEM SI LEFT JOIN  SHIPMENTITEMBATCH SIB ON SIB.SIID = SI.ID "
-              + "WHERE S.ORDERID=").append(orderId).append(" AND S.ID = SI.SID AND SI.MID IN (");
-      materialIdList.forEach(materailId -> {
-        queryBuilder.append(materailId).append(CharacterConstants.COMMA);
-      });
+              + "WHERE S.ORDERID=").append(orderId).append(" AND S.ID = SI.SID ");
 
-      queryBuilder.setLength(queryBuilder.length() - 1);
+      if(CollectionUtils.isNotEmpty(materialIdList)) {
+        queryBuilder.append(" AND SI.MID IN (");
+        materialIdList.forEach(materailId -> {
+          queryBuilder.append(materailId).append(CharacterConstants.COMMA);
+        });
+
+        queryBuilder.setLength(queryBuilder.length() - 1);
+        queryBuilder.append(" )");
+      }
 
       Query q =
           pm.newQuery("javax.jdo.query.SQL",
-              queryBuilder.append(") GROUP BY SI.MID,BID").toString());
+              queryBuilder.append(" GROUP BY SI.MID,BID ORDER BY SI.MID,BID ASC").toString());
       List params = new ArrayList(2);
       params.add(orderId);
       params.add(materialIdList);
@@ -2520,6 +2526,9 @@ public class ShipmentService implements IShipmentService {
           fulfilledQuantityModel.setBatchId(batchId);
           fulfilledQuantity = (BigDecimal) objects[3];
           fulfilledQuantityModel.setFulfilledQuantity(fulfilledQuantity);
+          fulfilledQuantityModel.setExpiryDate((Date) objects[5]);
+          fulfilledQuantityModel.setManufacturedDate((Date) objects[6]);
+          fulfilledQuantityModel.setManufacturer((String) objects[7]);
         } else {
           fulfilledQuantity = (BigDecimal) objects[2];
         }

@@ -47,13 +47,14 @@ import com.logistimo.returns.models.ReturnsItemModel;
 import com.logistimo.returns.models.ReturnsModel;
 import com.logistimo.returns.models.ReturnsRequestModel;
 import com.logistimo.returns.models.ReturnsUpdateStatusModel;
-import com.logistimo.returns.models.ReturnsUpdateStatusRequestModel;
-import com.logistimo.returns.models.UpdateStatusModel;
+import com.logistimo.returns.models.ReturnsUpdateRequestModel;
+import com.logistimo.returns.models.submodels.ReturnsTrackingModel;
 import com.logistimo.returns.vo.BatchVO;
 import com.logistimo.returns.vo.ReturnsItemBatchVO;
 import com.logistimo.returns.vo.ReturnsItemVO;
 import com.logistimo.returns.vo.ReturnsReceivedVO;
 import com.logistimo.returns.vo.ReturnsStatusVO;
+import com.logistimo.returns.vo.ReturnsTrackingDetailsVO;
 import com.logistimo.returns.vo.ReturnsVO;
 import com.logistimo.services.ServiceException;
 import com.logistimo.users.entity.IUserAccount;
@@ -70,6 +71,7 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Collections;
@@ -130,7 +132,8 @@ public class ReturnsBuilderTest {
   public static final String TEST_DOMAIN = "test domain";
   public static final Long TEST_DOMAIN_ID = 1L;
   public static final String TEST_MATERIAL = "test material";
-
+  public static final String TEST_TRACKING_ID="1234";
+  public static final String TEST_TRANSPORTER="Transporter1";
   private Date today;
   private Date yesterday;
   private static final Locale TEST_LOCALE = new Locale("en", "IN");
@@ -158,7 +161,7 @@ public class ReturnsBuilderTest {
   }
 
   @Test
-  public void testBuildReturnsModels() throws ServiceException {
+  public void testBuildReturnsModels() throws ServiceException, ParseException {
     IDomain domain = new Domain();
     domain.setName(TEST_DOMAIN);
     when(domainsService.getDomain(isNull())).thenReturn(domain);
@@ -174,7 +177,7 @@ public class ReturnsBuilderTest {
   }
 
   @Test
-  public void testBuildReturnsModel() throws ServiceException {
+  public void testBuildReturnsModel() throws ServiceException, ParseException {
 
     when(orderManagementService.getOrder(isNull())).thenReturn(new Order());
 
@@ -217,7 +220,7 @@ public class ReturnsBuilderTest {
   }
 
   @Test
-  public void testBuildReturns() throws ServiceException {
+  public void testBuildReturns() throws ServiceException,ParseException {
     final Order order = new Order();
     order.setKioskId(1L);
     order.setServicingKiosk(2L);
@@ -254,7 +257,23 @@ public class ReturnsBuilderTest {
   }
 
   @Test
-  public void testBuildMobileReturnsUpdateModel() throws ServiceException {
+  public void testBuildTransporterDetails() throws ParseException{
+    ReturnsTrackingModel returnsTrackingModel=new ReturnsTrackingModel();
+    SimpleDateFormat sdf=new SimpleDateFormat("dd/MM/yyyy");
+    String estimatedDateOfArrival="07/07/2018";
+    String requiredOn="08/08/2018";
+    returnsTrackingModel.setTrackingId(TEST_TRACKING_ID);
+    returnsTrackingModel.setTransporter(TEST_TRANSPORTER);
+    returnsTrackingModel.setEstimatedArrivalDate(estimatedDateOfArrival);
+    ReturnsTrackingDetailsVO vo=builder.buildTrackingDetailsVO(returnsTrackingModel);
+    assertEquals(vo.getTrackingId(),returnsTrackingModel.getTrackingId());
+    assertEquals(vo.getTransporter(),returnsTrackingModel.getTransporter());
+    assertEquals(vo.getCreatedBy(),TEST_USER);
+    assertEquals(sdf.format(vo.getEstimatedArrivalDate()),estimatedDateOfArrival);
+  }
+
+  @Test
+  public void testBuildMobileReturnsUpdateModel() throws ServiceException, ParseException {
     when(orderManagementService.getOrder(isNull())).thenReturn(new Order());
 
     when(mobileOrderBuilder
@@ -305,19 +324,19 @@ public class ReturnsBuilderTest {
   }
 
   @Test
-  public void testBuildUpdateStatusModel() throws ServiceException {
-    final UpdateStatusModel shipReturnsModels =
-        builder.buildUpdateStatusModel(null, "ship", getReturnsUpdateStatusRequestModel());
-    final UpdateStatusModel receiveReturnsModels =
-        builder.buildUpdateStatusModel(null, "receive", getReturnsUpdateStatusRequestModel());
-    final UpdateStatusModel cancelReturnsModels =
-        builder.buildUpdateStatusModel(null, "cancel", getReturnsUpdateStatusRequestModel());
+  public void testBuildUpdateStatusModel() throws ServiceException,ParseException {
+    final ReturnsVO shipReturnsVO=
+        builder.buildReturnsVO(null, "ship", getReturnsUpdateStatusRequestModel());
+    final ReturnsVO receiveReturnsVO =
+        builder.buildReturnsVO(null, "receive", getReturnsUpdateStatusRequestModel());
+    final ReturnsVO cancelReturnsVO =
+        builder.buildReturnsVO(null, "cancel", getReturnsUpdateStatusRequestModel());
 
-    assertEquals(Status.SHIPPED, shipReturnsModels.getStatus());
-    assertEquals(Status.RECEIVED, receiveReturnsModels.getStatus());
-    assertEquals(Status.CANCELLED, cancelReturnsModels.getStatus());
+    assertEquals(Status.SHIPPED, shipReturnsVO.getStatusValue());
+    assertEquals(Status.RECEIVED, receiveReturnsVO.getStatusValue());
+    assertEquals(Status.CANCELLED, cancelReturnsVO.getStatusValue());
 
-    assertEquals(TEST_USER, shipReturnsModels.getUserId());
+    assertEquals(TEST_USER, shipReturnsVO.getUpdatedBy());
 
   }
 
@@ -359,14 +378,14 @@ public class ReturnsBuilderTest {
         + "items:[{received:{},return_quantity:50,batches:[{received:{},return_quantity:50}]}],"
         + "geo_location:{},"
         + "created_by:{},"
-        + "updated_by:{}"
+        + "updated_by:{},tracking_details:{tracking_id:3424242,transporter:sfsdfsfsf}"
         + "}";
     return new Gson().fromJson(model, ReturnsRequestModel.class);
   }
 
-  private ReturnsUpdateStatusRequestModel getReturnsUpdateStatusRequestModel()
+  private ReturnsUpdateRequestModel getReturnsUpdateStatusRequestModel()
       throws ServiceException {
-    ReturnsUpdateStatusRequestModel model = new ReturnsUpdateStatusRequestModel();
+    ReturnsUpdateRequestModel model = new ReturnsUpdateRequestModel();
     model.setEmbed("returns,order");
     model.setEntityId(1L);
     return model;

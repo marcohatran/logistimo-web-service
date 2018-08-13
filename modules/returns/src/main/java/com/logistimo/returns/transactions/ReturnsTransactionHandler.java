@@ -29,14 +29,15 @@ import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.inventory.models.CreateTransactionsReturnModel;
 import com.logistimo.inventory.service.InventoryManagementService;
 import com.logistimo.returns.Status;
-import com.logistimo.returns.models.UpdateStatusModel;
 import com.logistimo.returns.vo.BatchVO;
+import com.logistimo.returns.vo.ReturnsItemBatchVO;
 import com.logistimo.returns.vo.ReturnsItemVO;
 import com.logistimo.returns.vo.ReturnsVO;
 import com.logistimo.services.DuplicationException;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.utils.MsgUtil;
+import com.logistimo.utils.Stream;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,12 +48,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
+
 import javax.jdo.PersistenceManager;
 import javax.jdo.Transaction;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Builder;
+import lombok.Getter;
 
 /**
  * Created by pratheeka on 18/03/18.
@@ -63,31 +64,16 @@ public class ReturnsTransactionHandler {
   @Autowired
   private InventoryManagementService inventoryManagementService;
 
-  public void setInventoryManagementService(
-      InventoryManagementService inventoryManagementService) {
+  public void setInventoryManagementService(InventoryManagementService inventoryManagementService) {
     this.inventoryManagementService = inventoryManagementService;
   }
 
-  public void postTransactions(UpdateStatusModel statusModel, ReturnsVO returnsVO,
-                               Long domainId)
+  public void postTransactions(boolean isTransferOrder, ReturnsVO returnsVO, Long domainId)
       throws DuplicationException, ServiceException {
-
     List<ITransaction> transactionsList = new ArrayList<>();
-    Long customerId =
-        (statusModel.getStatus() == Status.RECEIVED) ? returnsVO.getVendorId()
-            : returnsVO.getCustomerId();
-    Long vendorId =
-        (statusModel.getStatus() == Status.RECEIVED) ? returnsVO.getCustomerId()
-            : returnsVO.getVendorId();
-    String
-        trackingObjectType =
-        statusModel.isTransferOrder() ? ITransaction.TRACKING_OBJECT_TYPE_TRANSFER
-            : ITransaction.TRACKING_OBJECT_TYPE_ORDER;
     returnsVO.getItems().forEach(returnsItemVO ->
         transactionsList.addAll(
-            getTransactions(statusModel.getUserId(), domainId, customerId,
-                vendorId, statusModel.getSource(), returnsItemVO, statusModel.getStatus(),
-                trackingObjectType)));
+            getTransactions(domainId, returnsItemVO, returnsVO, isTransferOrder)));
     PersistenceManager pm = getPersistenceManager();
     Transaction tx = pm.currentTransaction();
     try {
@@ -109,9 +95,8 @@ public class ReturnsTransactionHandler {
         tx.rollback();
       }
       throw e;
-
     } finally {
-     pm.close();
+      pm.close();
     }
   }
 
@@ -119,41 +104,86 @@ public class ReturnsTransactionHandler {
     return PMF.get().getPersistenceManager();
   }
 
-  private List<ITransaction> getTransactions(String userId, Long domainId, Long kioskId,
-                                             Long linkedKioskId, Integer source,
-                                             ReturnsItemVO returnsItemVo, Status status,
-                                             String trackingObjType) {
-    if (CollectionUtils.isNotEmpty(returnsItemVo.getReturnItemBatches())) {
-      return returnsItemVo.getReturnItemBatches().stream().map(returnsItemBatchVO -> {
+  private List<ITransaction> getTransactions(Long domainId, ReturnsItemVO returnsItemVo,
+                                             ReturnsVO returnsVO, boolean isTransferOrder) {
+    Long kioskId = (returnsVO.isReceived()) ? returnsVO.getVendorId()
+            : returnsVO.getCustomerId();
+    Long linkedKioskId = null;
+    if (!returnsVO.isCancelled()) {
+      linkedKioskId = (returnsVO.isReceived()) ? returnsVO.getCustomerId()
+              : returnsVO.getVendorId();
+    }
+    final Long vendorKioskId = linkedKioskId;
+    String trackingObjectType =
+        isTransferOrder ? ITransaction.TRACKING_OBJECT_TYPE_TRANSFER
+            : ITransaction.TRACKING_OBJECT_TYPE_ORDER;
+    Integer source = returnsVO.getSource();
+    String userId = returnsVO.getUpdatedBy();
+    Status status = returnsVO.getStatusValue();
+    Long returnId = returnsVO.getId();
+    if (returnsItemVo.hasBatches()) {
+      return Stream.toList(returnsItemVo.getReturnItemBatches(), returnsItemBatchVO -> {
         ITransaction transaction = JDOUtils.createInstance(ITransaction.class);
-        BatchVO batchVO = returnsItemBatchVO.getBatch();
-        transaction.setBatchId(batchVO.getBatchId());
-        transaction.setBatchExpiry(batchVO.getExpiryDate());
-        transaction.setBatchManufacturedDate(batchVO.getManufacturedDate());
-        transaction.setBatchManufacturer(batchVO.getManufacturer());
+        setBatch(returnsItemBatchVO, transaction);
         setType(status, transaction);
-        buildTransaction(new TransactionModel(userId, domainId, kioskId, linkedKioskId,
-            returnsItemBatchVO.getReason(),
-            returnsItemBatchVO.getMaterialStatus(),
-            returnsItemVo.getMaterialId(), returnsItemBatchVO.getQuantity(), source,
-            returnsItemVo.getReturnsId(), trackingObjType), transaction);
+        BigDecimal quantity = returnsItemBatchVO.getQuantity();
+        if (status == Status.RECEIVED) {
+          quantity = returnsItemBatchVO.getReceived().getQuantity();
+        }
+        TransactionModel transactionModel = TransactionModel.builder()
+            .userId(userId)
+            .domainId(domainId)
+            .kioskId(kioskId)
+            .linkedKioskId(vendorKioskId)
+            .reason(returnsItemBatchVO.getReason())
+            .matStatus(returnsItemBatchVO.getMaterialStatus())
+            .materialId(returnsItemVo.getMaterialId())
+            .quantity(quantity)
+            .source(source)
+            .returnId(returnId)
+            .trackingObjectType(trackingObjectType)
+            .build();
+        buildTransaction(transactionModel, transaction);
         return transaction;
-      }).collect(Collectors.toList());
+      });
     } else {
       ITransaction transaction = JDOUtils.createInstance(ITransaction.class);
       setType(status, transaction);
-      buildTransaction(
-          new TransactionModel(userId, domainId, kioskId, linkedKioskId, returnsItemVo.getReason(),
-              returnsItemVo.getMaterialStatus(),
-              returnsItemVo.getMaterialId(), returnsItemVo.getQuantity(), source,
-              returnsItemVo.getReturnsId(), trackingObjType), transaction);
+      BigDecimal quantity = returnsItemVo.getQuantity();
+      if (status == Status.RECEIVED) {
+        quantity = returnsItemVo.getReceived().getQuantity();
+      }
+      TransactionModel transactionModel = TransactionModel.builder()
+          .userId(userId)
+          .domainId(domainId)
+          .kioskId(kioskId)
+          .linkedKioskId(vendorKioskId)
+          .reason(returnsItemVo.getReason())
+          .matStatus(returnsItemVo.getMaterialStatus())
+          .materialId(returnsItemVo.getMaterialId())
+          .quantity(quantity)
+          .source(source)
+          .returnId(returnId)
+          .trackingObjectType(trackingObjectType)
+          .build();
+      buildTransaction(transactionModel, transaction);
       return Collections.singletonList(transaction);
     }
+  }
+
+  private void setBatch(ReturnsItemBatchVO returnsItemBatchVO, ITransaction transaction) {
+    BatchVO batchVO = returnsItemBatchVO.getBatch();
+    transaction.setBatchId(batchVO.getBatchId());
+    transaction.setBatchExpiry(batchVO.getExpiryDate());
+    transaction.setBatchManufacturedDate(batchVO.getManufacturedDate());
+    transaction.setBatchManufacturer(batchVO.getManufacturer());
   }
 
   private void setType(Status status, ITransaction transaction) {
     if (status == Status.RECEIVED) {
       transaction.setType(ITransaction.TYPE_RETURNS_INCOMING);
+    } else if (status == Status.CANCELLED) {
+      transaction.setType(ITransaction.TYPE_RECEIPT);
     } else {
       transaction.setType(ITransaction.TYPE_RETURNS_OUTGOING);
     }
@@ -173,20 +203,20 @@ public class ReturnsTransactionHandler {
     transaction.setTrackingId(transactionModel.getReturnId().toString());
     transaction.setTrackingObjectType(transactionModel.getTrackingObjectType());
   }
+}
 
-  @Data
-  @AllArgsConstructor
-  private class TransactionModel {
-    String userId;
-    Long domainId;
-    Long kioskId;
-    Long linkedKioskId;
-    String reason;
-    String matStatus;
-    Long materialId;
-    BigDecimal quantity;
-    Integer source;
-    Long returnId;
-    String trackingObjectType;
-  }
+@Getter
+@Builder
+class TransactionModel {
+  String userId;
+  Long domainId;
+  Long kioskId;
+  Long linkedKioskId;
+  String reason;
+  String matStatus;
+  Long materialId;
+  BigDecimal quantity;
+  Integer source;
+  Long returnId;
+  String trackingObjectType;
 }

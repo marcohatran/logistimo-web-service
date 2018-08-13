@@ -21,27 +21,26 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.returns.models;
+package com.logistimo.materials.service.jpa;
 
-import com.google.gson.annotations.SerializedName;
+import com.logistimo.materials.entity.jpa.Material;
+import com.logistimo.materials.repositories.MaterialRepository;
 
-import com.logistimo.constants.SourceConstants;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
-import lombok.Data;
+import java.util.List;
 
 /**
- * @author Mohan Raja
+ * Created by pratheeka on 27/07/18.
  */
-@Data
-public class ReturnsUpdateStatusRequestModel {
+@Service
+public class MaterialService {
 
-  private String comment;
+  @Autowired
+  private MaterialRepository materialRepository;
 
-  private String embed;
-
-  @SerializedName("entity_id")
-  private Long entityId;
-
-  private Integer source = SourceConstants.MOBILE;
-
+  public List<Material> getMaterialDetails(List<Long> materialIds){
+    return materialRepository.getAllMaterialsByIds(materialIds);
+  }
 }

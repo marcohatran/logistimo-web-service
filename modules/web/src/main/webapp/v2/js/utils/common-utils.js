@@ -553,3 +553,10 @@ isNotPastDate = function(date) {
 function getFilterTitle(field,title,fieldDisplay){
     return checkNotNullEmpty(field)?title + ": " + (fieldDisplay?field[fieldDisplay]:field) + "   ":"";
 }
+
+function messageFormat(text) {
+    var args = arguments;
+    return text.replace(/\{(\d+)\}/g, function () {
+        return args[arguments[1] * 1 + 1];
+    });
+}

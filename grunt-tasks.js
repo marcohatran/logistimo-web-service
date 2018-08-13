@@ -682,7 +682,7 @@ module.exports = function(grunt, ref) {
     grunt.loadNpmTasks('grunt-env');
     grunt.loadNpmTasks('grunt-properties-to-json');
     grunt.loadNpmTasks('grunt-ng-annotate');
-    grunt.loadNpmTasks('grunt-contrib-uglify');
+    grunt.loadNpmTasks('grunt-contrib-uglify-es');
     grunt.loadNpmTasks('grunt-contrib-clean');
     grunt.loadNpmTasks('grunt-string-replace');
     grunt.loadNpmTasks('grunt-preprocess');

@@ -4289,13 +4289,13 @@ ordControllers.controller('ConsignmentController', ['$scope', 'returnsService', 
             var selectedItems = (function () {
                 var items = [];
                 for (var i = 0; i < $scope.sel.selectedRows.length; i++) {
-                    items.push($scope.order.its[$scope.sel.selectedRows[i]]);
+                    items.push(angular.copy($scope.order.its[$scope.sel.selectedRows[i]]));
                 }
                 return items;
             })();
             if (isReturnValid(selectedItems)) {
-                returnsService.setItems(angular.copy(selectedItems));
-                returnsService.setOrder($scope.order);
+                returnsService.setItems(selectedItems);
+                returnsService.setOrder(angular.copy($scope.order));
                 $scope.setPageSelection('createReturns');
             } else {
                 $scope.showWarning("Please select the items which are partially/fully fulfilled to create Returns");

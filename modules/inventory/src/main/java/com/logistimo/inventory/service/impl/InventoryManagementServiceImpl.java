@@ -4095,4 +4095,8 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
   public PersistenceManager getPM() {
     return PMF.get().getPersistenceManager();
   }
+
+
+
+
 }

@@ -26,6 +26,7 @@ package com.logistimo.returns.models;
 import com.google.gson.annotations.SerializedName;
 
 import com.logistimo.constants.SourceConstants;
+import com.logistimo.returns.models.submodels.ReturnsTrackingModel;
 
 import java.util.List;
 
@@ -55,6 +56,9 @@ public class ReturnsRequestModel {
 
   @SerializedName("send_time")
   private Long sendTime;
+
+  @SerializedName("tracking_details")
+  private ReturnsTrackingModel trackingModel;
 
   @Getter
   public class Location {

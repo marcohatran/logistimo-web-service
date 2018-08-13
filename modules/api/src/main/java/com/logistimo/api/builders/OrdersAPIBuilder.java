@@ -72,12 +72,9 @@ import com.logistimo.orders.entity.approvals.IOrderApprovalMapping;
 import com.logistimo.orders.models.UpdatedOrder;
 import com.logistimo.orders.service.IDemandService;
 import com.logistimo.pagination.Results;
-import com.logistimo.returns.Status;
-import com.logistimo.returns.models.ReturnsFilters;
 import com.logistimo.returns.service.ReturnsService;
-import com.logistimo.returns.vo.ReturnsItemBatchVO;
-import com.logistimo.returns.vo.ReturnsItemVO;
-import com.logistimo.returns.vo.ReturnsVO;
+import com.logistimo.returns.vo.ReturnsBatchQuantityVO;
+import com.logistimo.returns.vo.ReturnsQuantityVO;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
@@ -93,7 +90,6 @@ import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.CommonUtils;
 import com.logistimo.utils.LocalDateUtil;
 
-import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -101,6 +97,7 @@ import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -837,7 +834,26 @@ public class OrdersAPIBuilder {
         }
       }
       if (isReturnsAllowed) {
-        receivedQuantityByBatches = getReceivedQuantityByBatches(order.getOrderId());
+        final List<ReturnsQuantityVO> returnsQuantityDetails =
+            returnsService.getReturnsQuantityDetails(order.getOrderId());
+        if(returnsQuantityDetails != null) {
+          receivedQuantityByBatches = returnsQuantityDetails.stream().collect(
+              Collectors.toMap(ReturnsQuantityVO::getItemId, returnsQuantityDetail -> {
+                if (returnsQuantityDetail.getBatchList() != null) {
+                  final Map<String, BigDecimal> batchMap =
+                      returnsQuantityDetail.getBatchList().stream().collect(Collectors.toMap(
+                          ReturnsBatchQuantityVO::getId,
+                          ReturnsBatchQuantityVO::getReturnedQuantity));
+                  final BigDecimal totalQuantity =
+                      batchMap.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+                  batchMap.put(null, totalQuantity);
+                  return batchMap;
+                } else {
+                  return Collections
+                      .singletonMap((String) null, returnsQuantityDetail.getReturnedQuantity());
+                }
+              }));
+        }
       }
     }
     List<IDemandItem> items = demandService.getDemandItems(order.getOrderId());
@@ -875,7 +891,14 @@ public class OrdersAPIBuilder {
         //itemModel.mst = item.getMaterialStatus();
         itemModel.rq = item.getRecommendedOrderQuantity();
         itemModel.fq = item.getFulfilledQuantity();
-        itemModel.returnedQuantity = item.getReturnedQuantity();
+        if(isReturnsAllowed) {
+          if(receivedQuantityByBatches.get(item.getMaterialId()) != null) {
+            itemModel.returnedQuantity =
+                receivedQuantityByBatches.get(item.getMaterialId()).get(null);
+          } else {
+            itemModel.returnedQuantity = BigDecimal.ZERO;
+          }
+        }
         itemModel.oastk = BigDecimal.ZERO;
         itemModel.astk = BigDecimal.ZERO;
         itemModel.tm = m.isTemperatureSensitive();
@@ -1056,44 +1079,6 @@ public class OrdersAPIBuilder {
       model.its = modelItems;
     }
     return model;
-  }
-
-  private Map<Long, Map<String, BigDecimal>> getReceivedQuantityByBatches(Long orderId) {
-    final ReturnsFilters
-        f =
-        ReturnsFilters.builder().orderId(orderId).domainId(SecurityUtils.getCurrentDomainId())
-            .build();
-    List<ReturnsVO> returnsVOs =
-        returnsService.getReturns(f);
-    Map<Long, Map<String, BigDecimal>> returnQuantityByBatches = new HashMap<>();
-    for (ReturnsVO returnsVO : returnsVOs) {
-      if(returnsVO.getStatus().getStatus()!= Status.CANCELLED) {
-        final List<ReturnsItemVO> returnsItemVOs = returnsService.getReturnsItem(returnsVO.getId());
-        returnsItemVOs.stream()
-          .filter(returnsItemVO -> CollectionUtils.isNotEmpty(returnsItemVO.getReturnItemBatches()))
-          .forEach(returnsItemVO -> {
-            Map<String, BigDecimal> returnQuantityByBatch = returnsItemVO.getReturnItemBatches()
-                .stream()
-                .collect(Collectors
-                    .toMap(b -> b.getBatch().getBatchId(), ReturnsItemBatchVO::getQuantity));
-            if (!returnQuantityByBatches.containsKey(returnsItemVO.getMaterialId())) {
-              returnQuantityByBatches.put(returnsItemVO.getMaterialId(), returnQuantityByBatch);
-            } else {
-              Map<String, BigDecimal> batchQuantityMap =
-                  returnQuantityByBatches.get(returnsItemVO.getMaterialId());
-              for (Map.Entry<String, BigDecimal> entry : returnQuantityByBatch.entrySet()) {
-                if (batchQuantityMap.containsKey(entry.getKey())) {
-                  batchQuantityMap.put(entry.getKey(),
-                      batchQuantityMap.get(entry.getKey()).add(entry.getValue()));
-                } else {
-                  batchQuantityMap.put(entry.getKey(), entry.getValue());
-                }
-              }
-            }
-          });
-      }
-    }
-    return returnQuantityByBatches;
   }
 
   private ShipmentItemBatchModel getShipmentItemBatchBD(String shipmentID,

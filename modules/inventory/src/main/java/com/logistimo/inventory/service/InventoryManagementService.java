@@ -532,4 +532,6 @@ public interface InventoryManagementService {
    */
   List<IInventoryMinMaxLog> fetchMinMaxLogByInterval(Long entityId, Long materialId, Date fromDate, Date toDate) throws ServiceException;
 
+
+
 }

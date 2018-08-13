@@ -86,6 +86,7 @@ import com.logistimo.users.service.impl.UsersServiceImpl;
 import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.FieldLimits;
 import com.logistimo.utils.LocalDateUtil;
+import com.logistimo.utils.PasswordEncoder;
 import com.logistimo.utils.PatternConstants;
 import com.logistimo.utils.StringUtil;
 
@@ -1568,7 +1569,7 @@ public class BulkUploadMgr {
           // Set password after encoding
           try {
             if (isPasswordValid && isAdd) {
-              u.setEncodedPassword(password);
+              u.setEncodedPassword(PasswordEncoder.MD5(password));
             } else if (isPasswordValid && isEdit && !oldPassword.isEmpty()) {
               as.changePassword(userId, oldPassword, password);
             }

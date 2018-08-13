@@ -47,7 +47,6 @@
                                    target="_blank">
                                     {{returns.customer.entity_name}}</a>
                             </p>
-
                             <p class="capitalize">{{returns.customer.entity_address}}</p>
                         </div>
                     </div>
@@ -86,32 +85,98 @@
                         <tr>
                             <th class="col-sm-0-1 text-center">SI.No.</th>
                             <th class="col-sm-2 text-left">{{resourceBundle['material']}}</th>
-                            <th class="col-sm-2 text-center">Shipped</th>
+                            <th class="col-sm-2 text-center">Fulfilled</th>
+                            <th class="col-sm-2 text-center">Return shipped</th>
+                            <th class="col-sm-2 text-center">Return received</th>
                         </tr>
-                        <tbody ng-repeat="item in returns.items">
+                        <tbody ng-repeat="item in returnItems" data-ng-switch on="item.additionalRows">
                         <tr>
                             <td class="text-center">{{$index + 1}}</td>
                             <td class="text-left">{{item.material_name}}</td>
+                            <td class="text-center">{{item.fq}}</td>
                             <td class="text-center">{{item.return_quantity}}
+                                <div ng-if="isUndef(item.batches)">
+                                    <span class="litetext text-center" ng-show="isDef(item.material_status)">
+                                        {{resourceBundle['inventory.material.status']}}: {{item.material_status}}
+                                    </span>
+                                    <span class="litetext text-center" ng-show="isDef(item.reason)">
+                                        {{resourceBundle['reason']}}: {{item.reason}}
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="text-center">
                                 <div ng-if="isDef(item.batches)" class="dummyLink">
                                     <table class="table table-striped table-nobot-mar table-condensed">
-                                        <tbody>
                                         <tr>
                                             <td>{{resourceBundle['batch']}}</td>
                                             <td>{{resourceBundle['expiry']}}</td>
                                             <td>Shipped</td>
+                                            <td>Received</td>
+                                            <td class="col-sm-0-1"></td>
                                         </tr>
-                                        <tr ng-repeat="batch in item.batches">
+                                        <tbody ng-repeat="batch in item.batches | orderBy:'batch_id'">
+                                        <tr>
                                             <td>{{batch.batch_id}}</td>
                                             <td>{{batch.expiry}}</td>
                                             <td>{{batch.return_quantity}}
-                                                <span class="litetext" ng-show="isDef(batch.material_status)">{{batch.material_status}}
+                                                <span class="litetext text-center" ng-show="isDef(batch.material_status)">
+                                                    {{resourceBundle['inventory.material.status']}}: {{batch.material_status}}
                                                 </span>
+                                                <span class="litetext text-center" ng-show="isDef(batch.reason)">
+                                                    {{resourceBundle['reason']}}: {{batch.reason}}
+                                                </span>
+                                            </td>
+                                            <td>{{batch.received.received_quantity}}
+                                                <span class="litetext" ng-show="isDef(batch.received.material_status)">
+                                                    {{resourceBundle['inventory.material.status']}}: {{batch.received.material_status}}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span ng-click="editBatchItems(item)" class="glyphicons glyphicons-edit alignBaseLine"></span>
                                             </td>
                                         </tr>
                                         </tbody>
                                     </table>
                                 </div>
+                                <div ng-if="isUndef(item.batches)">
+                                    <input class="form-control" only-digits ng-model="item.received.received_quantity"
+                                           id="{{item.material_id}}{{$index}}"
+                                           ng-class="{'red-border':item.invalidPopup}"
+                                           uib-popover="{{item.popupMsg}}" popover-trigger="showpopup"
+                                           ng-focus="closePopup(item,$index)"
+                                           ng-blur="validateQuantityReturn(item, $index, true)">
+                                    <div ng-show="item.displayMeta">
+                                        <span class="litetext text-left" ng-class="{'required' : statusMandatoryConfig.rism}"
+                                              ng-show="(!item.tm && isDef(matstatus)) || (item.tm && isDef(tempmatstatus))">
+                                            {{resourceBundle['inventory.material.status']}}
+                                        </span>
+                                        <select ng-show="isDef(incomingMatstatus) && !item.tm" ng-model="item.received.material_status" class="form-control"
+                                                ng-class="{'red-border': item.sinvalidPopup}"
+                                                uib-popover="{{item.sPopupMsg}}"
+                                                ng-blur="validateStatusReturn(item, $index, false, true)"
+                                                ng-focus="closePopup(item, $index, 's')"
+                                                id="s{{item.material_id}}{{$index}}"
+                                                popover-trigger="showpopup">
+                                            <option ng-repeat="status in incomingMatstatus" value="{{status}}">{{status|| resourceBundle['select'] + " " + resourceBundle['status.lower']}}
+                                            </option>
+                                        </select>
+                                        <select ng-show="isDef(incomingTempmatstatus) && item.tm" ng-model="item.received.material_status" class="form-control"
+                                                ng-class="{'red-border': item.sinvalidPopup}"
+                                                uib-popover="{{item.sPopupMsg}}"
+                                                ng-blur="validateStatusReturn(item, $index, true, true)"
+                                                ng-focus="closePopup(item, $index, 'st')"
+                                                id="st{{item.material_id}}{{$index}}"
+                                                popover-trigger="showpopup">
+                                            <option ng-repeat="status in incomingTempmatstatus" value="{{status}}">{{status|| resourceBundle['select'] + " " + resourceBundle['status.lower']}}
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr data-ng-switch-when="true">
+                            <td colspan=100% class="partialview">
+                                <div ng-include="'views/returns/returns-all-batches-receive.html'"></div>
                             </td>
                         </tr>
                         </tbody>
@@ -126,7 +191,6 @@
                 <div class="panel-body">
                     <div class="row mt10">
                         <label class="col-sm-2 control-label">Comment </label>
-
                         <div class="col-sm-5">
                             <textarea class="form-control" rows="4" ng-model="comment"></textarea>
                         </div>
@@ -139,7 +203,7 @@
         <div class="form-group">
             <div class="col-sm-12">
                 <div class="pull-right">
-                    <button type="button" class="btn btn-sm btn-primary" ng-click="doReceive()">
+                    <button type="button" class="btn btn-sm btn-primary" ng-click="doReceive()" ng-disabled="editCount">
                         {{resourceBundle['receive']}}
                     </button>
                     <button type="button" class="btn btn-sm btn-default" ng-click="toggleReceive(false)">

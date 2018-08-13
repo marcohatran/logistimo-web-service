@@ -157,10 +157,6 @@ public interface IDemandItem extends IOverlappedDomain {
 
   void setFulfilledQuantity(BigDecimal quantity);
 
-  BigDecimal getReturnedQuantity();
-
-  void setReturnedQuantity(BigDecimal rq);
-
   /**
    * @return time to order, timediff from min event generated time to order creation time.
    */
