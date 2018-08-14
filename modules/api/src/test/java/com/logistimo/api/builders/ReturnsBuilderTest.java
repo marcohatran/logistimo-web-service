@@ -45,13 +45,15 @@ import com.logistimo.returns.Status;
 import com.logistimo.returns.models.ReturnsItemBatchModel;
 import com.logistimo.returns.models.ReturnsItemModel;
 import com.logistimo.returns.models.ReturnsModel;
+import com.logistimo.returns.models.ReturnsQuantityModel;
 import com.logistimo.returns.models.ReturnsRequestModel;
-import com.logistimo.returns.models.ReturnsUpdateStatusModel;
 import com.logistimo.returns.models.ReturnsUpdateRequestModel;
+import com.logistimo.returns.models.ReturnsUpdateStatusModel;
 import com.logistimo.returns.models.submodels.ReturnsTrackingModel;
 import com.logistimo.returns.vo.BatchVO;
 import com.logistimo.returns.vo.ReturnsItemBatchVO;
 import com.logistimo.returns.vo.ReturnsItemVO;
+import com.logistimo.returns.vo.ReturnsQuantityVO;
 import com.logistimo.returns.vo.ReturnsReceivedVO;
 import com.logistimo.returns.vo.ReturnsStatusVO;
 import com.logistimo.returns.vo.ReturnsTrackingDetailsVO;
@@ -71,11 +73,11 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Locale;
@@ -134,17 +136,16 @@ public class ReturnsBuilderTest {
   public static final String TEST_MATERIAL = "test material";
   public static final String TEST_TRACKING_ID="1234";
   public static final String TEST_TRANSPORTER="Transporter1";
-  private Date today;
-  private Date yesterday;
+  private Calendar today;
+  private Calendar yesterday;
   private static final Locale TEST_LOCALE = new Locale("en", "IN");
 
   @Before
   public void setup() throws ClassNotFoundException, IllegalAccessException,
       InstantiationException, ServiceException {
-    GregorianCalendar calendar = new GregorianCalendar();
-    today = calendar.getTime();
-    calendar.add(Calendar.DAY_OF_MONTH, -1);
-    yesterday = calendar.getTime();
+    today = new GregorianCalendar();
+    yesterday = new GregorianCalendar();
+    yesterday.add(Calendar.DAY_OF_MONTH, -1);
 
     mockStatic(SecurityUtils.class);
     PowerMockito.when(SecurityUtils.getTimezone()).thenReturn(TEST_TIMEZONE);
@@ -157,7 +158,6 @@ public class ReturnsBuilderTest {
 
     mockStatic(EntityAuthoriser.class);
     PowerMockito.when(EntityAuthoriser.authoriseEntity(isNull())).thenReturn(true);
-
   }
 
   @Test
@@ -199,9 +199,9 @@ public class ReturnsBuilderTest {
     assertNotNull("User model not created", returnsModel.getStatus().getUpdatedBy());
 
     SimpleDateFormat sdf = new SimpleDateFormat("d/M/yy h:mm a");
-    assertEquals(sdf.format(today), returnsModel.getCreatedAt());
+    assertEquals(sdf.format(today.getTime()), returnsModel.getCreatedAt());
     assertEquals(TEST_USER, returnsModel.getCreatedBy().getFullName());
-    assertEquals(sdf.format(yesterday), returnsModel.getUpdatedAt());
+    assertEquals(sdf.format(yesterday.getTime()), returnsModel.getUpdatedAt());
     assertEquals(TEST_USER, returnsModel.getUpdatedBy().getFullName());
 
     assertEquals(1, returnsModel.getItems().size());
@@ -214,9 +214,14 @@ public class ReturnsBuilderTest {
     assertEquals(1, item.getBatches().size());
     final ReturnsItemBatchModel batch = item.getBatches().get(0);
     sdf = new SimpleDateFormat("dd/MM/yyyy");
-    assertEquals(sdf.format(today), batch.getExpiry());
-    assertEquals(sdf.format(yesterday), batch.getManufacturedDate());
+    assertEquals(sdf.format(today.getTime()), batch.getExpiry());
+    assertEquals(sdf.format(yesterday.getTime()), batch.getManufacturedDate());
     assertNotNull("Batch item's received model not created", batch.getReceived());
+
+    final ReturnsTrackingModel returnsTrackingModel = returnsModel.getReturnsTrackingModel();
+    assertEquals("A", returnsTrackingModel.getTrackingId());
+    assertEquals("A", returnsTrackingModel.getTransporter());
+    assertEquals(sdf.format(today.getTime()), returnsTrackingModel.getEstimatedArrivalDate());
   }
 
   @Test
@@ -237,23 +242,31 @@ public class ReturnsBuilderTest {
     assertNotNull("Location model not created", returnsModels.getLocation());
     assertNotNull(STATUS_MODEL_NOT_CREATED, returnsModels.getStatus());
 
-    assertEquals(today.getDate(), returnsModels.getCreatedAt().getDate());
+    Calendar c = new GregorianCalendar();
+
+    c.setTime(returnsModels.getCreatedAt());
+    assertEquals(today.get(Calendar.DAY_OF_MONTH), c.get(Calendar.DAY_OF_MONTH));
     assertEquals(TEST_USER, returnsModels.getCreatedBy());
-    assertEquals(today.getDate(), returnsModels.getUpdatedAt().getDate());
+
+    c.setTime(returnsModels.getUpdatedAt());
+    assertEquals(today.get(Calendar.DAY_OF_MONTH), c.get(Calendar.DAY_OF_MONTH));
     assertEquals(TEST_USER, returnsModels.getUpdatedBy());
 
     assertEquals(1, returnsModels.getItems().size());
     final ReturnsItemVO item = returnsModels.getItems().get(0);
     assertNotNull(ITEM_S_RECEIVED_MODEL_NOT_CREATED, item.getReceived());
+
     assertEquals(TEST_USER, item.getCreatedBy());
-    assertEquals(today.getDate(), item.getCreatedAt().getDate());
+    c.setTime(item.getCreatedAt());
+    assertEquals(today.get(Calendar.DAY_OF_MONTH), c.get(Calendar.DAY_OF_MONTH));
+
     assertEquals(TEST_USER, item.getUpdatedBy());
-    assertEquals(today.getDate(), item.getUpdatedAt().getDate());
+    c.setTime(item.getUpdatedAt());
+    assertEquals(today.get(Calendar.DAY_OF_MONTH), c.get(Calendar.DAY_OF_MONTH));
 
     assertEquals(1, item.getReturnItemBatches().size());
     final ReturnsItemBatchVO batchVO = item.getReturnItemBatches().get(0);
     assertNotNull("Batch item's Received model not created", batchVO.getReceived());
-
   }
 
   @Test
@@ -261,7 +274,6 @@ public class ReturnsBuilderTest {
     ReturnsTrackingModel returnsTrackingModel=new ReturnsTrackingModel();
     SimpleDateFormat sdf=new SimpleDateFormat("dd/MM/yyyy");
     String estimatedDateOfArrival="07/07/2018";
-    String requiredOn="08/08/2018";
     returnsTrackingModel.setTrackingId(TEST_TRACKING_ID);
     returnsTrackingModel.setTransporter(TEST_TRANSPORTER);
     returnsTrackingModel.setEstimatedArrivalDate(estimatedDateOfArrival);
@@ -300,9 +312,9 @@ public class ReturnsBuilderTest {
     assertNotNull("User model not created", returnsModel.getStatus().getUpdatedBy());
 
     SimpleDateFormat sdf = new SimpleDateFormat("d/M/yy h:mm a");
-    assertEquals(sdf.format(today), returnsModel.getCreatedAt());
+    assertEquals(sdf.format(today.getTime()), returnsModel.getCreatedAt());
     assertEquals(TEST_USER, returnsModel.getCreatedBy().getFullName());
-    assertEquals(sdf.format(yesterday), returnsModel.getUpdatedAt());
+    assertEquals(sdf.format(yesterday.getTime()), returnsModel.getUpdatedAt());
     assertEquals(TEST_USER, returnsModel.getUpdatedBy().getFullName());
 
     assertEquals(1, returnsModel.getItems().size());
@@ -315,36 +327,45 @@ public class ReturnsBuilderTest {
     assertEquals(1, item.getBatches().size());
     final ReturnsItemBatchModel batch = item.getBatches().get(0);
     sdf = new SimpleDateFormat("dd/MM/yyyy");
-    assertEquals(sdf.format(today), batch.getExpiry());
-    assertEquals(sdf.format(yesterday), batch.getManufacturedDate());
+    assertEquals(sdf.format(today.getTime()), batch.getExpiry());
+    assertEquals(sdf.format(yesterday.getTime()), batch.getManufacturedDate());
     assertNotNull("Batch item's received model not created", batch.getReceived());
 
     assertNotNull("Order model not created", returnsModels.getOrder());
-
   }
 
   @Test
   public void testBuildUpdateStatusModel() throws ServiceException,ParseException {
     final ReturnsVO shipReturnsVO=
-        builder.buildReturnsVO(null, "ship", getReturnsUpdateStatusRequestModel());
+        builder.buildReturnsVO(null, "ship", getReturnsUpdateStatusRequestModel(), null, null);
     final ReturnsVO receiveReturnsVO =
-        builder.buildReturnsVO(null, "receive", getReturnsUpdateStatusRequestModel());
+        builder.buildReturnsVO(null, "receive", getReturnsUpdateStatusRequestModel(), null, null);
     final ReturnsVO cancelReturnsVO =
-        builder.buildReturnsVO(null, "cancel", getReturnsUpdateStatusRequestModel());
+        builder.buildReturnsVO(null, "cancel", getReturnsUpdateStatusRequestModel(), null, null);
 
     assertEquals(Status.SHIPPED, shipReturnsVO.getStatusValue());
     assertEquals(Status.RECEIVED, receiveReturnsVO.getStatusValue());
     assertEquals(Status.CANCELLED, cancelReturnsVO.getStatusValue());
 
     assertEquals(TEST_USER, shipReturnsVO.getUpdatedBy());
+  }
 
+  @Test
+  public void testBuildReturnsQuantityModels() {
+    final List<ReturnsQuantityModel> returnsQuantityModels =
+        builder.buildReturnsQuantityModels(Collections.singletonList(getReturnsQuantityVO()));
+    final ReturnsQuantityModel returnsQuantityModel = returnsQuantityModels.get(0);
+    assertEquals(new BigDecimal("30"), returnsQuantityModel.getFulfilledQuantity());
+    assertEquals(new BigDecimal("7"), returnsQuantityModel.getReturnedQuantity());
+    assertEquals(new BigDecimal("20"), returnsQuantityModel.getTotalQuantityInReturns());
+    assertEquals(new BigDecimal("13"), returnsQuantityModel.getRequestedReturnQuantity());
   }
 
 
   private ReturnsVO getReturnVO() {
     ReturnsVO returnsVO = new ReturnsVO();
-    returnsVO.setCreatedAt(today);
-    returnsVO.setUpdatedAt(yesterday);
+    returnsVO.setCreatedAt(today.getTime());
+    returnsVO.setUpdatedAt(yesterday.getTime());
     returnsVO.setUpdatedBy(TEST_USER);
     returnsVO.setCreatedBy(TEST_USER);
 
@@ -356,8 +377,8 @@ public class ReturnsBuilderTest {
     returnsItemVO.setReceived(returnsReceivedVO);
 
     final BatchVO batch = new BatchVO();
-    batch.setExpiryDate(today);
-    batch.setManufacturedDate(yesterday);
+    batch.setExpiryDate(today.getTime());
+    batch.setManufacturedDate(yesterday.getTime());
 
     final ReturnsItemBatchVO returnsItemBatchVO = new ReturnsItemBatchVO();
     returnsItemBatchVO.setBatch(batch);
@@ -370,6 +391,13 @@ public class ReturnsBuilderTest {
     final ReturnsStatusVO returnsStatusVO = new ReturnsStatusVO();
     returnsStatusVO.setUpdatedBy(TEST_USER);
     returnsVO.setStatus(returnsStatusVO);
+
+    ReturnsTrackingDetailsVO returnsTrackingDetailsVO = new ReturnsTrackingDetailsVO();
+    returnsTrackingDetailsVO.setTrackingId("A");
+    returnsTrackingDetailsVO.setTransporter("A");
+    returnsTrackingDetailsVO.setEstimatedArrivalDate(today.getTime());
+    returnsTrackingDetailsVO.setEstimatedArrivalDate(today.getTime());
+    returnsVO.setReturnsTrackingDetailsVO(returnsTrackingDetailsVO);
     return returnsVO;
   }
 
@@ -378,9 +406,17 @@ public class ReturnsBuilderTest {
         + "items:[{received:{},return_quantity:50,batches:[{received:{},return_quantity:50}]}],"
         + "geo_location:{},"
         + "created_by:{},"
-        + "updated_by:{},tracking_details:{tracking_id:3424242,transporter:sfsdfsfsf}"
+        + "updated_by:{},tracking_details:{tracking_id:3424242,transporter:abcd, estimatedArrivalDate='01/01/2018'}"
         + "}";
     return new Gson().fromJson(model, ReturnsRequestModel.class);
+  }
+
+  private ReturnsQuantityVO getReturnsQuantityVO() {
+    String model = "{batchList:["
+        + "{fulfilledQuantity:10,returnedQuantity:2,totalQuantityInReturns:5,requestedReturnQuantity:3},"
+        + "{fulfilledQuantity:20,returnedQuantity:5,totalQuantityInReturns:15,requestedReturnQuantity:10}"
+        + "]}";
+    return new Gson().fromJson(model, ReturnsQuantityVO.class);
   }
 
   private ReturnsUpdateRequestModel getReturnsUpdateStatusRequestModel()

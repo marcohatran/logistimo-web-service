@@ -105,19 +105,22 @@ public class ReturnsValidationHandler {
     }
   }
 
-  public void validateQuantity(Long orderId,Long returnsId,List<ReturnsItemVO> returnsItemVOs)
-      throws ServiceException {
+  public void validateQuantity(Long orderId,Long returnsId,List<ReturnsItemVO> returnsItemVOs){
     if (CollectionUtils.isEmpty(returnsItemVOs)) {
       throw new ValidationException("RT001", (Object[]) null);
     }
-    List<Long> materialIds = Stream.toList(returnsItemVOs, ReturnsItemVO::getMaterialId);
-    List<FulfilledQuantityModel> shipmentList =
-        shipmentService.getFulfilledQuantityByOrderId(orderId, materialIds);
-    List<ReturnsQuantityDetailsVO> returnsQuantityDetailsVOs =
-        returnsRepository.getReturnsQuantityDetailsByOrderId(orderId, returnsId);
-    returnsValidator.validateReturnedQtyAgainstFulfilledQty(returnsQuantityDetailsVOs,
-        shipmentList, returnsItemVOs);
-    validateHandlingUnit(returnsItemVOs, materialIds);
+    try {
+      List<Long> materialIds = Stream.toList(returnsItemVOs, ReturnsItemVO::getMaterialId);
+      List<FulfilledQuantityModel> shipmentList =
+          shipmentService.getFulfilledQuantityByOrderId(orderId, materialIds);
+      List<ReturnsQuantityDetailsVO> returnsQuantityDetailsVOs =
+          returnsRepository.getReturnsQuantityDetailsByOrderId(orderId, returnsId);
+      returnsValidator.validateReturnedQtyAgainstFulfilledQty(returnsQuantityDetailsVOs,
+          shipmentList, returnsItemVOs);
+      validateHandlingUnit(returnsItemVOs, materialIds);
+    }catch (ServiceException e){
+      throw new SystemException(e.getMessage());
+    }
   }
 
   private void validateHandlingUnit(List<ReturnsItemVO> returnsItemVOList, List<Long> materialIds) {

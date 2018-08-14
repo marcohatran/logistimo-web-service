@@ -102,7 +102,7 @@ public class ReturnsService {
   private ReturnsQuantityBuilder returnsQuantityBuilder=new ReturnsQuantityBuilder();
 
   @Transactional(transactionManager = "transactionManager", rollbackFor = Exception.class)
-  public ReturnsVO createReturns(ReturnsVO returnsVO) throws ServiceException {
+  public ReturnsVO createReturns(ReturnsVO returnsVO) {
     LockUtil.LockStatus lockStatus = getLockStatus(returnsVO);
     isLocked(returnsVO, lockStatus);
     try {
@@ -151,7 +151,7 @@ public class ReturnsService {
           }
         } catch (Exception e) {
           xLogger.warn("Exception while updating returns status", e);
-          throw new SystemException(e);
+          throw e;
         }
       } else {
         throw new ValidationException("RT003", (Object[]) null);
@@ -164,7 +164,7 @@ public class ReturnsService {
   }
 
   @Transactional(transactionManager = "transactionManager", rollbackFor = Exception.class)
-  public ReturnsVO updateReturnItems(ReturnsVO updatedReturnsVO) throws ServiceException {
+  public ReturnsVO updateReturnItems(ReturnsVO updatedReturnsVO) {
     ReturnsVO returnsVO = getReturn(updatedReturnsVO.getId());
     LockUtil.LockStatus lockStatus = getLockStatus(returnsVO);
     isLocked(returnsVO, lockStatus);

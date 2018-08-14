@@ -150,7 +150,8 @@
                                            ng-class="{'red-border':item.invalidPopup}"
                                            uib-popover="{{item.popupMsg}}" popover-trigger="showpopup"
                                            ng-focus="closePopup(item,$index)"
-                                           ng-blur="validateQuantity(item,$index)">
+                                           autocomplete="off"
+                                           ng-blur="validateQuantityCreateReturn(item,$index)">
                                     <div ng-show="item.displayMeta">
                                                 <span class="litetext text-left" ng-class="{'required' : statusMandatoryConfig.rosm}"
                                                       ng-show="(!item.tm && isDef(matstatus)) || (item.tm && isDef(tempmatstatus))">{{resourceBundle['inventory.material.status']}}</span>
@@ -225,13 +226,13 @@
                                         </tr>
                                         </tbody>
                                     </table>
-                                    <button type="button" class="btn btn-sm btn-primary"
+                                    <button type="button" class="btn btn-sm btn-primary" ng-disabled="item.additionalRows"
                                             ng-click="toggleBatchItems(item)">{{resourceBundle['batch.enter']}}
                                     </button>
                                 </div>
                             </td>
                             <td class="text-center col-sm-0-1">
-                                <a ng-click="deleteReturnItem($index)">
+                                <a ng-click="deleteReturnItem($index)" ng-hide="item.additionalRows">
                                     <span class="glyphicons glyphicons-bin temp"></span>
                                 </a>
                             </td>
@@ -254,6 +255,7 @@
                                        uib-typeahead="item as item.nm for item in availableReturnItems | filter:{nm:$viewValue} | limitTo:8"
                                        typeahead-editable="false"
                                        typeahead-on-select="addReturnItem($item); newMaterial = ''"
+                                       autocomplete="off"
                                        class="form-control"/>
                             </td>
                             <td colspan="5"></td>
@@ -281,8 +283,10 @@
         <div class="form-group">
             <div class="col-sm-12">
                 <div class="pull-right">
-                    <button type="button" ng-disabled="invalidPopup > 0 || returnItems.length < 1" class="btn btn-sm btn-primary" ng-click="create()">{{resourceBundle['submit']}}</button>
-                    <button type="button" class="btn btn-sm btn-default" ng-click="cancel()">{{resourceBundle['cancel']}}</button>
+                    <button type="button" ng-disabled="editCount || invalidPopup > 0 || returnItems.length < 1" class="btn btn-sm btn-primary"
+                            ng-click="create()">{{resourceBundle['submit']}}</button>
+                    <button type="button" class="btn btn-sm btn-default" ng-disabled="editCount"
+                            ng-click="cancel()">{{resourceBundle['cancel']}}</button>
                 </div>
             </div>
         </div>

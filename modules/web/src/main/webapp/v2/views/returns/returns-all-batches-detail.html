@@ -55,8 +55,8 @@
                     <td><p class="cbx text-center">{{batch.fq}}</p></td>
                     <td>
                         <p class="cbx text-center noMargin">{{batch.dispReturnedQuantity}}</p>
-                        <span ng-show="batch.disp_requested_return_quantityy > 0" class="litetext text-center">
-                            {{batch.disp_requested_return_quantityy}} {{resourceBundle['pending.returns']}}
+                        <span ng-show="batch.disp_requested_return_quantity > 0" class="litetext text-center">
+                            {{batch.disp_requested_return_quantity}} {{resourceBundle['pending.returns']}}
                         </span>
                     </td>
                     <td>
@@ -65,6 +65,7 @@
                                ng-class="{'red-border':batch.invalidPopup}"
                                uib-popover="{{batch.popupMsg}}" popover-trigger="showpopup"
                                ng-focus="closeBatchPopup(item, batch, $index)"
+                               autocomplete="off"
                                ng-blur="validateBatchQuantityReturn(item, batch, $index)">
                         <div ng-show="batch.displayMeta">
                             <span class="litetext text-left" ng-class="{'required' : statusMandatoryConfig.rosm}"
