@@ -226,13 +226,13 @@
                                         </tr>
                                         </tbody>
                                     </table>
-                                    <button type="button" class="btn btn-sm btn-primary"
+                                    <button type="button" class="btn btn-sm btn-primary" ng-disabled="item.additionalRows"
                                             ng-click="toggleBatchItems(item)">{{resourceBundle['batch.enter']}}
                                     </button>
                                 </div>
                             </td>
                             <td class="text-center col-sm-0-1">
-                                <a ng-click="deleteReturnItem($index)">
+                                <a ng-click="deleteReturnItem($index)" ng-hide="item.additionalRows">
                                     <span class="glyphicons glyphicons-bin temp"></span>
                                 </a>
                             </td>
@@ -283,8 +283,10 @@
         <div class="form-group">
             <div class="col-sm-12">
                 <div class="pull-right">
-                    <button type="button" ng-disabled="invalidPopup > 0 || returnItems.length < 1" class="btn btn-sm btn-primary" ng-click="create()">{{resourceBundle['submit']}}</button>
-                    <button type="button" class="btn btn-sm btn-default" ng-click="cancel()">{{resourceBundle['cancel']}}</button>
+                    <button type="button" ng-disabled="editCount || invalidPopup > 0 || returnItems.length < 1" class="btn btn-sm btn-primary"
+                            ng-click="create()">{{resourceBundle['submit']}}</button>
+                    <button type="button" class="btn btn-sm btn-default" ng-disabled="editCount"
+                            ng-click="cancel()">{{resourceBundle['cancel']}}</button>
                 </div>
             </div>
         </div>

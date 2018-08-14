@@ -560,11 +560,13 @@ function CreateReturnsController($scope, $location, $timeout, $q, returnsService
         }
     };
 
+    $scope.editCount = 0;
     $scope.toggleBatchItems = item => {
         item.additionalRows = !item.additionalRows;
         if (!item.additionalRows) {
             item.returnBatchAvailable = isReturnBatchAvailable(item)
         }
+        $scope.editCount += (item.additionalRows ? 1 : -1);
     };
 }
 
