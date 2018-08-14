@@ -72,9 +72,15 @@ public class ReturnsTransactionHandler {
   public void postTransactions(boolean isTransferOrder, ReturnsVO returnsVO, Long domainId)
       throws DuplicationException, ServiceException {
     List<ITransaction> transactionsList = returnsVO.getItems().stream()
-        .filter(returnsItemVO -> BigUtil.greaterThanZero(returnsItemVO.getReceived().getQuantity()))
+        .filter(returnsItemVO -> {
+          if (returnsVO.isReceived()) {
+            return BigUtil.greaterThanZero(returnsItemVO.getReceived().getQuantity());
+          } else {
+            return BigUtil.greaterThanZero(returnsItemVO.getQuantity());
+          }
+        })
         .flatMap(returnsItemVO ->
-                getTransactions(domainId, returnsItemVO, returnsVO, isTransferOrder).stream())
+            getTransactions(domainId, returnsItemVO, returnsVO, isTransferOrder).stream())
         .collect(Collectors.toList());
 
     PersistenceManager pm = getPersistenceManager();
@@ -110,11 +116,11 @@ public class ReturnsTransactionHandler {
   private List<ITransaction> getTransactions(Long domainId, ReturnsItemVO returnsItemVo,
                                              ReturnsVO returnsVO, boolean isTransferOrder) {
     Long kioskId = (returnsVO.isReceived()) ? returnsVO.getVendorId()
-            : returnsVO.getCustomerId();
+        : returnsVO.getCustomerId();
     Long linkedKioskId = null;
     if (!returnsVO.isCancelled()) {
       linkedKioskId = (returnsVO.isReceived()) ? returnsVO.getCustomerId()
-              : returnsVO.getVendorId();
+          : returnsVO.getVendorId();
     }
     final Long vendorKioskId = linkedKioskId;
     String trackingObjectType =
