@@ -1397,7 +1397,8 @@ report.user.activity=User activity
 return.reason=Return reason
 domain.name.mandatory=Domain name cannot be blank.
 domain.country.mandatory=Country is mandatory. Please select a country.
-domain.timezone.mandatory=Timezone is mandatory. Please select a timezone.return.reason.required=Reason is required for all materials being returned
+domain.timezone.mandatory=Timezone is mandatory. Please select a timezone.
+return.reason.required=Reason is required for all materials being returned
 return.material.status.required=Material status is required for all materials being returned
 return.specify.quantity=Please specify return quantity for all materials
 return.creation.success=Return created successfully

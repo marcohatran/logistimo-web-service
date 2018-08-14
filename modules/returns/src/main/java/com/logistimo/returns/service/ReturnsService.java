@@ -151,7 +151,7 @@ public class ReturnsService {
           }
         } catch (Exception e) {
           xLogger.warn("Exception while updating returns status", e);
-          throw new SystemException(e);
+          throw e;
         }
       } else {
         throw new ValidationException("RT003", (Object[]) null);

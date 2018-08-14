@@ -233,7 +233,7 @@ public class ReturnsBuilder {
       ReturnsTrackingDetailsVO returnsTrackingDetailsVO) throws ParseException {
     final ReturnsTrackingModel returnsTrackingModel =
         modelMapper.map(returnsTrackingDetailsVO, ReturnsTrackingModel.class);
-    if (returnsTrackingModel.getEstimatedArrivalDate() != null) {
+    if (returnsTrackingDetailsVO.getEstimatedArrivalDate() != null) {
       final String dateString =
           LocalDateUtil
               .formatCustom(returnsTrackingDetailsVO.getEstimatedArrivalDate(),
@@ -491,7 +491,8 @@ public class ReturnsBuilder {
   }
 
   public ReturnsVO buildReturnsVO(Long returnId, String status,
-                                  ReturnsUpdateRequestModel returnsUpdateRequestModel)
+                                  ReturnsUpdateRequestModel returnsUpdateRequestModel,
+                                  Long customerId, Long vendorId)
       throws ParseException {
     ReturnsVO returnsVO = new ReturnsVO();
     Status actualStatus = null;
@@ -520,7 +521,7 @@ public class ReturnsBuilder {
     returnsVO.setId(returnId);
     returnsVO.setSource(returnsUpdateRequestModel.getSource());
     returnsVO.setComment(returnsUpdateRequestModel.getComment());
-    returnsVO.setItems(getItems(returnsUpdateRequestModel.getItems(), null, null));
+    returnsVO.setItems(getItems(returnsUpdateRequestModel.getItems(), vendorId, customerId));
     returnsVO.setReturnsTrackingDetailsVO(
         buildTrackingDetailsVO(returnsUpdateRequestModel.getTrackingModel()));
     returnsVO.setUpdatedAt(now);

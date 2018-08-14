@@ -64,7 +64,8 @@
                                                ng-class="{'red-border':batch.invalidPopup}"
                                                uib-popover="{{batch.popupMsg}}" popover-trigger="showpopup"
                                                ng-focus="closeBatchPopup(item, batch, $index)"
-                                               ng-blur="validateBatchQuantity(item, batch, $index)">
+                                               autocomplete="off"
+                                               ng-blur="validateBatchQuantityCreateReturn(item, batch, $index)">
                                         <div ng-show="batch.displayMeta">
                                                 <span class="litetext text-left" ng-class="{'required' : statusMandatoryConfig.rosm}"
                                                       ng-show="(!item.tm && isDef(matstatus)) || (item.tm && isDef(tempmatstatus))">{{resourceBundle['inventory.material.status']}}</span>

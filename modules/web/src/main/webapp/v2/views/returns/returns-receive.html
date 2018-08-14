@@ -144,6 +144,7 @@
                                            ng-class="{'red-border':item.invalidPopup}"
                                            uib-popover="{{item.popupMsg}}" popover-trigger="showpopup"
                                            ng-focus="closePopup(item,$index)"
+                                           autocomplete="off"
                                            ng-blur="validateQuantityReturn(item, $index, true)">
                                     <div ng-show="item.displayMeta">
                                         <span class="litetext text-left" ng-class="{'required' : statusMandatoryConfig.rism}"

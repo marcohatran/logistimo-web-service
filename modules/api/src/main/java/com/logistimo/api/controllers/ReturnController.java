@@ -50,7 +50,6 @@ import com.logistimo.utils.LocalDateUtil;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -96,7 +95,7 @@ public class ReturnController {
       throws ServiceException, DuplicationException, ParseException {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     ReturnsVO returnsVO =
-        returnsBuilder.buildReturnsVO(returnId, status, returnsUpdateRequestModel);
+        returnsBuilder.buildReturnsVO(returnId, status, returnsUpdateRequestModel, null, null);
     returnsVO = returnsService.updateReturnsStatus(returnsVO, sUser.getCurrentDomainId());
     xLogger.info("AUDITLOG\t{0}\t{1}\tRETURN\t " +
         "STATUS UPDATED\t{2}\t{3}", sUser.getCurrentDomainId(), sUser.getUsername(), returnsVO.getId(), status);
@@ -115,7 +114,7 @@ public class ReturnController {
       throws ServiceException, ParseException {
     final ReturnsVO returns = returnsService.getReturn(returnId);
     final ReturnsVO returnsVO =
-        returnsBuilder.buildReturnsVO(returnId, null, returnsUpdateRequestModel);
+        returnsBuilder.buildReturnsVO(returnId, null, returnsUpdateRequestModel, returns.getCustomerId(), returns.getVendorId());
     returnsVO.setStatus(returns.getStatus());
     returnsVO.setReturnsTrackingDetailsVO(returns.getReturnsTrackingDetailsVO());
     returnsService.updateReturnItems(returnsVO);

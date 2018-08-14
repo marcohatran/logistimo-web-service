@@ -150,7 +150,8 @@
                                            ng-class="{'red-border':item.invalidPopup}"
                                            uib-popover="{{item.popupMsg}}" popover-trigger="showpopup"
                                            ng-focus="closePopup(item,$index)"
-                                           ng-blur="validateQuantity(item,$index)">
+                                           autocomplete="off"
+                                           ng-blur="validateQuantityCreateReturn(item,$index)">
                                     <div ng-show="item.displayMeta">
                                                 <span class="litetext text-left" ng-class="{'required' : statusMandatoryConfig.rosm}"
                                                       ng-show="(!item.tm && isDef(matstatus)) || (item.tm && isDef(tempmatstatus))">{{resourceBundle['inventory.material.status']}}</span>
@@ -254,6 +255,7 @@
                                        uib-typeahead="item as item.nm for item in availableReturnItems | filter:{nm:$viewValue} | limitTo:8"
                                        typeahead-editable="false"
                                        typeahead-on-select="addReturnItem($item); newMaterial = ''"
+                                       autocomplete="off"
                                        class="form-control"/>
                             </td>
                             <td colspan="5"></td>
