@@ -301,4 +301,20 @@ public class ReturnsServiceTest {
 
   }
 
+  @Test
+  public void testUpdateReturnItems() throws IOException {
+    ReturnsVO returnsVO = getReturnsVO();
+    returnsVO.setOrderId(1L);
+    when(getReturnsAction.invoke(any())).thenReturn(returnsVO);
+    PowerMockito.when(LockUtil.lock(Constants.TX_O + 1L)).thenReturn(LockUtil.LockStatus.NEW_LOCK);
+    PowerMockito.when(LockUtil.isLocked(LockUtil.LockStatus.NEW_LOCK)).thenReturn(true);
+    ReturnsVO updatedReturnVO = ReturnsTestUtility.getUpdatedReturnsVO();
+    updatedReturnVO.setOrderId(1L);
+    doNothing().when(validationHandler).validateQuantity(any(),any(),anyList());
+    when(updateReturnAction.invoke(any())).thenReturn(updatedReturnVO);
+    ReturnsVO savedReturnsVO=returnsService.updateReturnItems(updatedReturnVO);
+    Assert.assertEquals(savedReturnsVO.getItems().size(),updatedReturnVO.getItems().size());
+    Assert.assertNotSame(savedReturnsVO,returnsVO);
+  }
+
 }
