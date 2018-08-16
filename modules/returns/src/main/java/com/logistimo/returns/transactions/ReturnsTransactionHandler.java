@@ -36,6 +36,7 @@ import com.logistimo.returns.vo.ReturnsVO;
 import com.logistimo.services.DuplicationException;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.impl.PMF;
+import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.MsgUtil;
 import com.logistimo.utils.Stream;
 
@@ -44,10 +45,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Transaction;
@@ -70,10 +71,18 @@ public class ReturnsTransactionHandler {
 
   public void postTransactions(boolean isTransferOrder, ReturnsVO returnsVO, Long domainId)
       throws DuplicationException, ServiceException {
-    List<ITransaction> transactionsList = new ArrayList<>();
-    returnsVO.getItems().forEach(returnsItemVO ->
-        transactionsList.addAll(
-            getTransactions(domainId, returnsItemVO, returnsVO, isTransferOrder)));
+    List<ITransaction> transactionsList = returnsVO.getItems().stream()
+        .filter(returnsItemVO -> {
+          if (returnsVO.isReceived()) {
+            return BigUtil.greaterThanZero(returnsItemVO.getReceived().getQuantity());
+          } else {
+            return BigUtil.greaterThanZero(returnsItemVO.getQuantity());
+          }
+        })
+        .flatMap(returnsItemVO ->
+            getTransactions(domainId, returnsItemVO, returnsVO, isTransferOrder).stream())
+        .collect(Collectors.toList());
+
     PersistenceManager pm = getPersistenceManager();
     Transaction tx = pm.currentTransaction();
     try {
@@ -85,7 +94,7 @@ public class ReturnsTransactionHandler {
       if (CollectionUtils.isNotEmpty(errorTransactions)) {
         StringBuilder errorMsg = new StringBuilder(MsgUtil.newLine());
         for (ITransaction error : errorTransactions) {
-          errorMsg.append("-").append(error.getMessage()).append(MsgUtil.newLine());
+          errorMsg.append("- ").append(error.getMessage()).append(MsgUtil.newLine());
         }
         throw new SystemException("RT008", errorMsg.toString());
       }
@@ -107,11 +116,11 @@ public class ReturnsTransactionHandler {
   private List<ITransaction> getTransactions(Long domainId, ReturnsItemVO returnsItemVo,
                                              ReturnsVO returnsVO, boolean isTransferOrder) {
     Long kioskId = (returnsVO.isReceived()) ? returnsVO.getVendorId()
-            : returnsVO.getCustomerId();
+        : returnsVO.getCustomerId();
     Long linkedKioskId = null;
     if (!returnsVO.isCancelled()) {
       linkedKioskId = (returnsVO.isReceived()) ? returnsVO.getCustomerId()
-              : returnsVO.getVendorId();
+          : returnsVO.getVendorId();
     }
     final Long vendorKioskId = linkedKioskId;
     String trackingObjectType =

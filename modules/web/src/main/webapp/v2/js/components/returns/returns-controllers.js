@@ -198,6 +198,15 @@ function ReturnsItemValidator($scope, $timeout) {
         material.returnQuantity = isReceive ? material.received.received_quantity : material.new_return_quantity;
         return $scope.validateQuantity(material, index, true, isReceive);
     };
+
+    $scope.validateQuantityCreateReturn = (material, index) => {
+        let originalQuantity = material.returnedQuantity;
+        material.returnedQuantity = (material.returnedQuantity || 0) * 1 + (material.requested_return_quantity || 0) * 1;
+        let status = $scope.validateQuantity(material, index, true);
+        material.returnedQuantity = originalQuantity;
+        return status;
+    };
+
     $scope.validateQuantity = (material, index, isReturn, isReceive) => {
         let redraw = material.displayMeta != material.returnQuantity > 0;
         material.displayMeta = material.returnQuantity > 0;
@@ -238,7 +247,15 @@ function ReturnsItemValidator($scope, $timeout) {
 
     $scope.validateBatchQuantityReturn = (material, batchMaterial, index, isReceive) => {
         batchMaterial.returnQuantity = isReceive ? batchMaterial.received.received_quantity : batchMaterial.new_return_quantity;
-        return $scope.validateBatchQuantity(material, batchMaterial, index, true);
+        return $scope.validateBatchQuantity(material, batchMaterial, index, true, isReceive);
+    };
+
+    $scope.validateBatchQuantityCreateReturn = (material, batchMaterial, index) => {
+        let originalQuantity = batchMaterial.returnedQuantity;
+        batchMaterial.returnedQuantity = (batchMaterial.returnedQuantity || 0) * 1 + (batchMaterial.requested_return_quantity || 0) * 1;
+        let status = $scope.validateBatchQuantity(material, batchMaterial, index, true);
+        batchMaterial.returnedQuantity = originalQuantity;
+        return status;
     };
 
     $scope.validateBatchQuantity = (material, batchMaterial, index, isReturn, isReceive) => {
@@ -254,7 +271,8 @@ function ReturnsItemValidator($scope, $timeout) {
                 isInvalid = true;
             } else if (batchMaterial.returnQuantity > batchMaterial.fq - batchMaterial.returnedQuantity && !isReceive) {
                 showPopup($scope, batchMaterial, material.id + batchMaterial.id, messageFormat(
-                        $scope.resourceBundle['return.quantity.cannot.exceed.remaining.return.quantity'], batchMaterial.returnQuantity, (batchMaterial.fq - batchMaterial.returnedQuantity)),
+                        $scope.resourceBundle['return.quantity.cannot.exceed.remaining.return.quantity'],
+                        batchMaterial.returnedQuantity, batchMaterial.fq, (batchMaterial.fq - batchMaterial.returnedQuantity)),
                     index, $timeout);
                 isInvalid = true;
             } else if (checkNotNullEmpty(material.huName) && checkNotNullEmpty(material.huQty) &&
@@ -313,7 +331,13 @@ function ReturnsItemValidator($scope, $timeout) {
 
     $scope.validateStatus = (material, index, isTempStatus, isIncoming) => {
         let mandatory = isIncoming ? $scope.statusMandatoryConfig.rism : $scope.statusMandatoryConfig.rosm;
-        if (mandatory && checkNullEmpty(material.returnMaterialStatus)) {
+        let isStatusDefined;
+        if (isTempStatus) {
+            isStatusDefined = checkNotNullEmpty($scope.tempmatstatus);
+        } else {
+            isStatusDefined = checkNotNullEmpty($scope.matstatus);
+        }
+        if (mandatory && isStatusDefined && checkNullEmpty(material.returnMaterialStatus)) {
             showPopup($scope, material, `s${isTempStatus ? 't' : ''}${material.id}`, $scope.resourceBundle['status.required'], index, $timeout, false, true, false);
             return true;
         }
@@ -370,15 +394,8 @@ function ReturnsItemManager($scope, $timeout) {
         }
     };
 
-    $scope.addReturnItem = (newItem, isReturnDetail) => {
-        let item = angular.copy(newItem);
-        if (isReturnDetail) {
-            item.material_id = item.id;
-            item.material_name = item.nm;
-            item.reason = item.defaultReturnReason;
-            item.batches = [];
-        }
-        $scope.returnItems.push(item);
+    $scope.addReturnItem = newItem => {
+        $scope.returnItems.push(angular.copy(newItem));
         updateAvailableReturnItems();
     };
 }
@@ -543,11 +560,13 @@ function CreateReturnsController($scope, $location, $timeout, $q, returnsService
         }
     };
 
+    $scope.editCount = 0;
     $scope.toggleBatchItems = item => {
         item.additionalRows = !item.additionalRows;
         if (!item.additionalRows) {
             item.returnBatchAvailable = isReturnBatchAvailable(item)
         }
+        $scope.editCount += (item.additionalRows ? 1 : -1);
     };
 }
 
@@ -726,6 +745,7 @@ function DetailReturnsController($scope, $uibModal, $timeout, $q, requestContext
                         const materialQuantity = quantityByMaterial.get(orderItem.id);
                         if (checkNotNullEmpty(materialQuantity)) {
                             orderItem.returnedQuantity = materialQuantity.returned_quantity;
+                            orderItem.dispReturnedQuantity = angular.copy(materialQuantity.returned_quantity);
                             orderItem.total_return_quantity = materialQuantity.total_return_quantity;
                             orderItem.requested_return_quantity = materialQuantity.requested_return_quantity;
                             if (checkNotNullEmpty(materialQuantity.batches)) {
@@ -733,8 +753,10 @@ function DetailReturnsController($scope, $uibModal, $timeout, $q, requestContext
                                 angular.forEach(orderItem.returnBatches, orderBatch => {
                                     const batchQuantity = quantityByBatch.get(orderBatch.id);
                                     orderBatch.returnedQuantity = batchQuantity.returned_quantity;
+                                    orderBatch.dispReturnedQuantity = angular.copy(batchQuantity.returned_quantity);
                                     orderBatch.total_return_quantity = batchQuantity.total_return_quantity;
                                     orderBatch.requested_return_quantity = batchQuantity.requested_return_quantity;
+                                    orderBatch.disp_requested_return_quantity = angular.copy(batchQuantity.requested_return_quantity);
                                 });
                             }
                         }
@@ -753,43 +775,79 @@ function DetailReturnsController($scope, $uibModal, $timeout, $q, requestContext
         let return_orderBatches = new Map(orderBatches.map(o => [o.id,o]));
         angular.forEach(returnBatches, returnBatch => {
             let return_orderBatch = return_orderBatches.get(returnBatch.batch_id);
-            returnBatch.dispReturnedQuantity = return_orderBatch.returnedQuantity;
+            returnBatch.dispReturnedQuantity = return_orderBatch.dispReturnedQuantity;
+            returnBatch.return_quantity = returnBatch.return_quantity || 0;
             returnBatch.requested_return_quantity = return_orderBatch.requested_return_quantity - returnBatch.return_quantity;
             return_orderBatch.returnedQuantity = return_orderBatch.total_return_quantity - returnBatch.return_quantity;
-            return_orderBatch.dispReturnedQuantity = returnBatch.dispReturnedQuantity;
-            return_orderBatch.disp_requested_return_quantityy = returnBatch.requested_return_quantity;
+            return_orderBatch.disp_requested_return_quantity = returnBatch.requested_return_quantity;
             returnBatch.returnedQuantity = return_orderBatch.returnedQuantity;
             returnBatch.returnReason = return_orderBatch.returnReason;
             returnBatch.defaultReturnReason = return_orderBatch.defaultReturnReason;
             returnBatch.fq = return_orderBatch.fq;
-            returnBatch.displayMeta = true;
+            returnBatch.displayMeta = returnBatch.return_quantity > 0;
         });
+    };
+
+    let updateReturnItemWithOrder = returnItem => {
+        let return_orderItem = $scope.orderByMaterial.get(returnItem.material_id);
+        if (checkNotNullEmpty(returnItem.batches)) {
+            updateBatchWithOrder(returnItem.batches, return_orderItem.returnBatches);
+            returnItem.isBatch = true;
+        }
+        returnItem.dispReturnedQuantity = return_orderItem.dispReturnedQuantity;
+        returnItem.return_quantity = returnItem.return_quantity || 0;
+        returnItem.requested_return_quantity = return_orderItem.requested_return_quantity - returnItem.return_quantity;
+        return_orderItem.returnedQuantity = return_orderItem.total_return_quantity - returnItem.return_quantity;
+        returnItem.returnedQuantity = return_orderItem.returnedQuantity;
+        returnItem.reasons = return_orderItem.reasons;
+        returnItem.returnReason = return_orderItem.returnReason;
+        returnItem.defaultReturnReason = return_orderItem.defaultReturnReason;
+        returnItem.fq = return_orderItem.fq;
+        returnItem.id = return_orderItem.id;
+        returnItem.nm = return_orderItem.nm;
+        returnItem.huName = return_orderItem.huName;
+        returnItem.huQty = return_orderItem.huQty;
+        returnItem.tm = return_orderItem.tm;
+        returnItem.displayMeta = returnItem.return_quantity > 0;
     };
 
     let updateReturnWithOrder = returnItems => {
         angular.forEach(returnItems, returnItem => {
-            let return_orderItem = $scope.orderByMaterial.get(returnItem.material_id);
-            if (returnItem.batches) {
-                updateBatchWithOrder(returnItem.batches, return_orderItem.returnBatches);
-                returnItem.isBatch = true;
-            }
-            returnItem.dispReturnedQuantity = return_orderItem.returnedQuantity;
-            returnItem.requested_return_quantity = return_orderItem.requested_return_quantity - returnItem.return_quantity;
-            return_orderItem.returnedQuantity = return_orderItem.total_return_quantity - returnItem.return_quantity;
-            returnItem.returnedQuantity = return_orderItem.returnedQuantity;
-            returnItem.reasons = return_orderItem.reasons;
-            returnItem.returnReason = return_orderItem.returnReason;
-            returnItem.defaultReturnReason = return_orderItem.defaultReturnReason;
-            returnItem.fq = return_orderItem.fq;
-            returnItem.id = return_orderItem.id;
-            returnItem.nm = return_orderItem.nm;
-            returnItem.huName = return_orderItem.huName;
-            returnItem.huQty = return_orderItem.huQty;
-            returnItem.tm = return_orderItem.tm;
-            returnItem.displayMeta = true;
+            updateReturnItemWithOrder(returnItem);
         });
     };
     $scope.updateReturnWithOrder = updateReturnWithOrder;
+
+    $scope.detailAddReturnItem = newItem => {
+        newItem.material_id = newItem.id;
+        newItem.material_name = newItem.nm;
+        newItem.reason = newItem.defaultReturnReason;
+        newItem.batches = [];
+        newItem.isNewItem = true;
+        $scope.addReturnItem(newItem);
+        updateReturnItemWithOrder($scope.returnItems[$scope.returnItems.length - 1]);
+    };
+
+    $scope.detailDeleteReturnItem = index => {
+        var returnItem = $scope.returnItems[index];
+        if(!returnItem.isNewItem) {
+            let return_orderItem = $scope.orderByMaterial.get(returnItem.material_id);
+            return_orderItem.total_return_quantity -= returnItem.return_quantity;
+            return_orderItem.requested_return_quantity -= returnItem.return_quantity;
+            return_orderItem.returnedQuantity = return_orderItem.dispReturnedQuantity;
+            if(returnItem.isBatch) {
+                let return_orderBatches = new Map(return_orderItem.returnBatches.map(o => [o.id,o]));
+                angular.forEach(returnItem.batches, returnBatch => {
+                    let return_orderBatch =  return_orderBatches.get(returnBatch.batch_id);
+                    return_orderBatch.total_return_quantity -= returnBatch.return_quantity;
+                    return_orderBatch.requested_return_quantity -= returnBatch.return_quantity;
+                    //return_orderBatch.returnedQuantity = return_orderBatch.dispReturnedQuantity;
+                    return_orderBatch.disp_requested_return_quantity = angular.copy(return_orderBatch.requested_return_quantity);
+                });
+            }
+        }
+        $scope.deleteReturnItem(index);
+    };
 
     $scope.initialiseEditing = () => {
         let deferred = $q.defer();
@@ -803,6 +861,7 @@ function DetailReturnsController($scope, $uibModal, $timeout, $q, requestContext
                 }).catch(msg => deferred.reject(msg));
             }).catch(msg => deferred.reject(msg));
         } else {
+            ReturnsItemManager($scope, $timeout);
             deferred.resolve();
         }
         return deferred.promise;
@@ -874,7 +933,7 @@ function DetailReturnsController($scope, $uibModal, $timeout, $q, requestContext
     $scope.toggleEdit = (field, close) => {
         if (close) {
             if (field == 'estimatedArrivalDate') {
-                $scope.returns.tracking_details.ead = string2Date($scope.returns.tracking_details.estimated_arrival_date, DATEFORMAT.DATE_FORMAT, '/');
+                updateDateModels();
             }
         }
         $scope.edit[field] = !$scope.edit[field];
@@ -883,6 +942,7 @@ function DetailReturnsController($scope, $uibModal, $timeout, $q, requestContext
     $scope.updateTrackingDetails = field => {
         returnsService.updateTrackingDetails(RETURN_ID, $scope.returns.tracking_details).then(data => {
             $scope.returns.tracking_details = data.data;
+            updateDateModels();
             $scope.toggleEdit(field);
         }).catch(msg => $scope.showErrorMsg(msg));
     };
@@ -1122,7 +1182,7 @@ function BatchDetailReturnsController($scope) {
                     returnedQuantity: batchItem.new_return_quantity,
                     material_status: batchItem.material_status,
                     reason: batchItem.reason,
-                    fulfilled_quantity: batchItem.fq,
+                    fq: batchItem.fq,
                     new_return_quantity: batchItem.new_return_quantity
                 });
                 totalReturned += batchItem.new_return_quantity * 1;

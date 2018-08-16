@@ -364,6 +364,7 @@
                                                    uib-popover="{{item.popupMsg}}"
                                                    popover-trigger="showpopup"
                                                    ng-focus="closePopup(item,$index)"
+                                                   autocomplete="off"
                                                    ng-blur="validateQuantityReturn(item,$index)">
 
                                             <div ng-show="item.displayMeta">
@@ -458,14 +459,14 @@
                                         </table>
                                         <div ng-if="item.isBatch">
                                             <button type="button" class="btn btn-sm btn-primary"
-                                                    ng-click="editBatchItems(item)">
+                                                    ng-click="editBatchItems(item)" ng-disabled="item.additionalRows">
                                                 {{resourceBundle['batch.enter']}}
                                             </button>
                                         </div>
                                     </td>
                                     <td class="text-center" ng-show="returns.status.status == RETURNS.status.RECEIVED">
                                         {{item.received.received_quantity}}
-                                        <span class="litetext text-center" ng-show="isDef(item.material_status) && isUndef(item.batches)">
+                                        <span class="litetext text-center" ng-show="isDef(item.received.material_status) && isUndef(item.batches)">
                                             {{resourceBundle['inventory.material.status']}}: {{item.received.material_status}}
                                         </span>
                                         <span ng-show="item.batches && item.batches.length > 0"
@@ -495,7 +496,7 @@
                                                 <td class="text-center">{{batch.expiry}}</td>
                                                 <td class="text-center">
                                                     {{batch.received.received_quantity}}
-                                                    <span class="litetext small-font text-center" ng-show="isDef(batch.material_status)">
+                                                    <span class="litetext small-font text-center" ng-show="isDef(batch.received.material_status)">
                                                         {{resourceBundle['inventory.material.status']}}: {{batch.received.material_status}}
                                                     </span>
                                                 </td>
@@ -504,7 +505,7 @@
                                         </table>
                                     </td>
                                     <td ng-show="editMode">
-                                        <span class="glyphicons glyphicons-bin temp dummyLink" ng-click="deleteReturnItem($index)"></span>
+                                        <span class="glyphicons glyphicons-bin temp dummyLink" ng-hide="item.additionalRows" ng-click="detailDeleteReturnItem($index)"></span>
                                     </td>
                                 </tr>
                                 <tr data-ng-switch-when="true">
@@ -524,10 +525,11 @@
                                                placeholder="Type material name to choose"
                                                uib-typeahead="item as item.nm for item in availableReturnItems | filter:{nm:$viewValue} | limitTo:8"
                                                typeahead-editable="false"
-                                               typeahead-on-select="addReturnItem($item, true); newMaterial = ''"
+                                               autocomplete="off"
+                                               typeahead-on-select="detailAddReturnItem($item); newMaterial = ''"
                                                class="form-control"/>
                                     </td>
-                                    <td colspan="3"></td>
+                                    <td colspan="4"></td>
                                 </tr>
                                 </tbody>
                             </table>
