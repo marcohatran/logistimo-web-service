@@ -24,6 +24,7 @@
 package com.logistimo.bulkuploads.headers;
 
 import com.logistimo.constants.CharacterConstants;
+import com.logistimo.constants.Constants;
 import com.logistimo.services.Resources;
 import com.logistimo.utils.FieldLimits;
 
@@ -62,7 +63,7 @@ public class UsersHeader implements IHeader {
             bundle.getString("preferredtimezone")
             + "* (Timezones can be downloaded from the bulk upload page of LogiWeb)," +
             bundle.getString("user.gender") + " (Male = m / Female = f / Other = o)," + bundle
-            .getString("user.date.of.birth") + " (dd/MM/yyyy format)," +
+            .getString("user.date.of.birth") + " (" + Constants.DATE_FORMAT_EXCEL + " format)," +
             bundle.getString("user.landline") + " (not more than " + FieldLimits.LAND_PHONE_MAX_LENGTH + " characters; format: [country-code][space][number-without-spacesORdashes])," +
             bundle.getString("state")
             + "* (should be the same as in the corresponding LogiWeb drop-downs)," + bundle

@@ -1404,17 +1404,17 @@ public class BulkUploadMgr {
       String dateOfBirth;
       if (++i < size && !(dateOfBirth = tokens[i].trim()).isEmpty()) {
         try {
-          DateTimeFormatter formatter = DateTimeFormatter.ofPattern(Constants.DATE_FORMAT);
+          DateTimeFormatter formatter = DateTimeFormatter.ofPattern(Constants.DATE_FORMAT_EXCEL);
           LocalDate birthDate = LocalDate.parse(dateOfBirth, formatter);
           if (!isDateOfBirthValid(birthDate, LocalDate.now())) {
             ec.messages
-                .add("Date of birth: " + dateOfBirth + " is not valid. A valid date of birth in the format dd/MM/yyyy between today and 100 years before today should be specified.");
+                .add("Date of birth: " + dateOfBirth + " is not valid. A valid date of birth in the format " + Constants.DATE_FORMAT_EXCEL + " between today and 100 years before today should be specified.");
           } else {
             u.setBirthdate(Date.from(birthDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant()));
           }
         } catch (DateTimeParseException e) {
           ec.messages
-              .add("Date of birth: " + dateOfBirth + " is not valid. A valid date of birth in the format dd/MM/yyyy between today and 100 years before today should be specified.");
+              .add("Date of birth: " + dateOfBirth + " is not valid. A valid date of birth in the format " + Constants.DATE_FORMAT_EXCEL + " between today and 100 years before today should be specified.");
         }
       }
       // Land phone

@@ -132,7 +132,7 @@ public class UserExportHandler implements IExportHandler {
         .append(user.getGender() != null ? user.getGender() : CharacterConstants.EMPTY).append(
         CharacterConstants.COMMA)
         .append(user.getBirthdate() != null ? LocalDateUtil.formatCustom(user.getBirthdate(),
-            Constants.DATE_FORMAT, null) : CharacterConstants.EMPTY).append(CharacterConstants.COMMA)
+            Constants.DATE_FORMAT_EXCEL, null) : CharacterConstants.EMPTY).append(CharacterConstants.COMMA)
         .append(
             tgs != null && !tgs.isEmpty() ? StringUtil.getCSV(tgs, CharacterConstants.SEMICOLON)
                 : CharacterConstants.EMPTY).append(CharacterConstants.COMMA)
@@ -237,7 +237,8 @@ public class UserExportHandler implements IExportHandler {
         .append(bundle.getString("gender.other")).append(CharacterConstants.SPACE).append(
         CharacterConstants.HYPHEN)
         .append(CharacterConstants.SPACE).append("o").append(CharacterConstants.C_BRACKET).append(CharacterConstants.COMMA)
-        .append(bundle.getString("user.date.of.birth")).append(" (dd/MM/yyyy format)").append(
+        .append(bundle.getString("user.date.of.birth")).append(" (").append(Constants.DATE_FORMAT_EXCEL).append(
+        " format)").append(
         CharacterConstants.COMMA)
         .append(bundle.getString("tags")).append(CharacterConstants.COMMA)
         .append(bundle.getString("user.mobilebrand")).append(CharacterConstants.COMMA)
