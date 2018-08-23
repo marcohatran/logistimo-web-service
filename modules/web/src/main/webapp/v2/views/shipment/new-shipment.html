@@ -70,7 +70,7 @@
                     <div class="row">
                         <div class="col-sm-6">
                             <div class="row mb10">
-                                <label class="col-sm-4 cbx control-label ml10">Transporter</label>
+                                <label class="col-sm-4 cbx control-label ml10" ng-class="{'required': oCfg.tm}">{{resourceBundle['transporter']}}</label>
 
                                 <div class="col-sm-7">
                                     <input class="form-control" ng-model="transporter" placeholder="Transporter">
@@ -142,8 +142,8 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row ml10" ng-show="oCfg.ridm || oCfg.eadm">
-                        <div class="litetext error-color cbx"> {{text}}
+                    <div class="row ml10" ng-show="oCfg.ridm || oCfg.eadm || oCfg.tm">
+                        <div class="litetext error-color cbx"> {{resourceBundle['mandatory.before.shipping.note']}}
                         </div>
                     </div>
 

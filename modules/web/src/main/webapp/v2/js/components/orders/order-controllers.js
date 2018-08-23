@@ -2870,7 +2870,6 @@ ordControllers.controller('NewShipmentController', ['$scope', 'ordService', '$lo
         }).catch(function error(msg) {
             $scope.showErrorMsg(msg);
         }).finally(function () {
-            getMandatoryConfigText();
             $scope.hideLoading();
         });
         $scope.showLoading();
@@ -2900,16 +2899,6 @@ ordControllers.controller('NewShipmentController', ['$scope', 'ordService', '$lo
                     item.nq = angular.copy(item.ytcs);
                 }
             });
-        }
-        function getMandatoryConfigText() {
-            $scope.text = "";
-            if ($scope.oCfg.eadm && $scope.oCfg.ridm) {
-                $scope.text = $scope.resourceBundle['estimated.date.of.arrival.reference.id.mandatory'];
-            } else if ($scope.oCfg.eadm) {
-                $scope.text += $scope.resourceBundle['estimated.date.of.arrival.mandatory'];
-            } else if ($scope.oCfg.ridm) {
-                $scope.text += $scope.resourceBundle['reference.id.mandatory'];
-            }
         }
 
         $scope.create = function (shipNow) {
