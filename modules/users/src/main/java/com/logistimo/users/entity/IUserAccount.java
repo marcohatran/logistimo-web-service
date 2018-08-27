@@ -40,9 +40,7 @@ public interface IUserAccount extends ISuperDomain, ILocation {
   String GENDER_MALE = "m";
   String GENDER_FEMALE = "f";
   String GENDER_OTHER = "o";
-  // Age
-  String AGETYPE_BIRTHDATE = "b";
-  String AGETYPE_YEARS = "y";
+
   // User attribute names (esp. used for searching)
   String REGISTERED_BY = "registeredBy";
 

@@ -262,17 +262,17 @@ public class BulkUploadMgr {
   public static List<ErrMessage> getErrorMessageObjects(String uploadedKey) {
     xLogger.fine("Entered getErrorMessageObjects: uploadedKey = {0}", uploadedKey);
     if (uploadedKey == null) {
-      return null;
+      return Collections.emptyList();
     }
     List<String> allMsgs = getUploadedMessages(uploadedKey);
     if (allMsgs == null || allMsgs.isEmpty()) {
-      return null;
+      return Collections.emptyList();
     }
     List<ErrMessage> errors = new ArrayList<>();
     for (String allMsg : allMsgs) {
       String[] array = allMsg.split(INTRALINE_DELIMITER);
       if (array.length < 4) {
-        return null;
+        return Collections.emptyList();
       }
       ErrMessage err = new ErrMessage();
       try {
@@ -319,7 +319,7 @@ public class BulkUploadMgr {
     } else if (TYPE_ASSETS.equals(type)) {
       header = new AssetsHeader();
     }
-    return header.getUploadableCSVHeader(locale, type);
+    return header != null ? header.getUploadableCSVHeader(locale, type) : null;
   }
 
   public static EntityContainer processEntity(String type, String csvLine, Long domainId,
@@ -1070,8 +1070,7 @@ public class BulkUploadMgr {
         ec.messages.add("No fields specified");
         return ec;
       }
-      if (!OP_ADD.equals(ec.operation) && !OP_EDIT.equals(ec.operation) && !OP_DELETE
-          .equals(ec.operation)) {
+      if (!isOperationValid(ec.operation)) {
         ec.messages.add("Invalid Operation. Please enter a = add / e = edit / d = delete.");
         return ec;
       }
@@ -1185,213 +1184,220 @@ public class BulkUploadMgr {
         ec.messages.add("No fields specified after password");
         return ec;
       }
-      boolean done = false;
+
       // Confirm password
       String confirmPassword = tokens[i].trim();
       if (++i == size) {
         ec.messages.add("No fields specified after Confirm Password");
-        done = true;
+        return ec;
       }
       // Role
-      String role = null;
-      if (!done) {
-        // Role
-        role = tokens[i].trim();
-        if (!SecurityConstants.ROLE_DOMAINOWNER.equals(role) && !SecurityConstants.ROLE_SERVICEMANAGER
-            .equals(role) && !SecurityConstants.ROLE_KIOSKOWNER.equals(role)) {
-          ec.messages.add("Role: Invalid role '" + role + "'. Role should be one of "
-              + SecurityConstants.ROLE_DOMAINOWNER + " (Administrator) or "
-              + SecurityConstants.ROLE_KIOSKOWNER + " (" + backendMessages.getString("kiosk")
-              + " Operator) or " + SecurityConstants.ROLE_SERVICEMANAGER + " (" + backendMessages
-              .getString("kiosk") + " Manager)");
-          return ec;
-        } else if ((su.getRole().equals(SecurityConstants.ROLE_SERVICEMANAGER) &&
-            ((!userId.equals(sourceUserId) && !role.equals(SecurityConstants.ROLE_KIOSKOWNER) || (
-                userId.equals(sourceUserId) && !role.equals(SecurityConstants.ROLE_SERVICEMANAGER)))))
-            || (su.getRole().equals(SecurityConstants.ROLE_DOMAINOWNER) && role
-            .equals(SecurityConstants.ROLE_SUPERUSER))) {
-          ec.messages.add("Cannot edit user '" + userId + "'. Permission denied.");
-          return ec;
+      String role = tokens[i].trim();
+      if (!SecurityConstants.ROLE_DOMAINOWNER.equals(role) && !SecurityConstants.ROLE_SERVICEMANAGER
+          .equals(role) && !SecurityConstants.ROLE_KIOSKOWNER.equals(role)) {
+        ec.messages.add("Role: Invalid role '" + role + "'. Role should be one of "
+            + SecurityConstants.ROLE_DOMAINOWNER + " (Administrator) or "
+            + SecurityConstants.ROLE_KIOSKOWNER + " (" + backendMessages.getString("kiosk")
+            + " Operator) or " + SecurityConstants.ROLE_SERVICEMANAGER + " (" + backendMessages
+            .getString("kiosk") + " Manager)");
+        return ec;
+      } else if ((su.getRole().equals(SecurityConstants.ROLE_SERVICEMANAGER) &&
+          ((!userId.equals(sourceUserId) && !role.equals(SecurityConstants.ROLE_KIOSKOWNER) || (
+              userId.equals(sourceUserId) && !role.equals(SecurityConstants.ROLE_SERVICEMANAGER)))))
+          || (su.getRole().equals(SecurityConstants.ROLE_DOMAINOWNER) && role
+          .equals(SecurityConstants.ROLE_SUPERUSER))) {
+        ec.messages.add("Cannot edit user '" + userId + "'. Permission denied.");
+        return ec;
+      } else {
+        u.setRole(role);
+      }
+      if (++i == size) {
+        ec.messages.add("No fields specified after Role");
+        return ec;
+      }
+
+      String permission = tokens[i].trim();
+      if (!isPermissionValid(permission)) {
+        ec.messages.add("Permission: Invalid value '" + permission + "'. Value should be either "
+            + IUserAccount.PERMISSION_DEFAULT + " (Default) or " + IUserAccount.PERMISSION_VIEW
+            + " (View only) or " + IUserAccount.PERMISSION_ASSET + " (Asset view only)");
+      } else {
+        u.setPermission(permission.isEmpty() ? IUserAccount.PERMISSION_DEFAULT : permission);
+      }
+      if (++i == size) {
+        ec.messages.add("No fields specified after Permission");
+        return ec;
+      }
+
+      String tokenExpiry = tokens[i].trim();
+      if (!isTokenExpiryValid(tokenExpiry)) {
+        ec.messages.add("Token expiry: Invalid value '" + tokenExpiry + "'. Value should be between "
+            + FieldLimits.TOKEN_EXPIRY_MIN + " and " + FieldLimits.TOKEN_EXPIRY_MAX + " days");
+      } else {
+        u.setAuthenticationTokenExpiry(tokenExpiry.isEmpty() ? 0 : Integer.parseInt(tokenExpiry));
+      }
+      if (++i == size) {
+        ec.messages.add("No fields specified after Token expiry");
+        return ec;
+      }
+
+      // First name
+      String firstName = tokens[i].trim();
+      if (firstName.length() < FieldLimits.FIRSTNAME_MIN_LENGTH || firstName.length() > FieldLimits.TEXT_FIELD_MAX_LENGTH) {
+        ec.messages.add("First name: '" + firstName + "' should be between " + FieldLimits.FIRSTNAME_MIN_LENGTH + "-" + FieldLimits.TEXT_FIELD_MAX_LENGTH + " characters");
+      } else {
+        boolean isAlpha = firstName.matches(PatternConstants.FIRSTNAME);
+        if (isAlpha) {
+          u.setFirstName(firstName);
         } else {
-          u.setRole(role);
+          ec.messages.add("First name can have only alphabets and space : " + firstName);
         }
-        if (++i == size) {
-          ec.messages.add("No fields specified after Role");
-          done = true;
-        }
+        //for auditlog
+        uname = firstName;
       }
-      if (!done) {
-        // First name
-        String firstName = tokens[i].trim();
-        if (firstName.length() < FieldLimits.FIRSTNAME_MIN_LENGTH || firstName.length() > FieldLimits.TEXT_FIELD_MAX_LENGTH) {
-          ec.messages.add("First name: '" + firstName + "' should be between " + FieldLimits.FIRSTNAME_MIN_LENGTH + "-" + FieldLimits.TEXT_FIELD_MAX_LENGTH + " characters");
+      if (++i == size) {
+        ec.messages.add("No fields specified after First Name");
+        return ec;
+      }
+      // Last name (optional)
+      String lastName = tokens[i].trim();
+      if (lastName.length() > FieldLimits.TEXT_FIELD_MAX_LENGTH) {
+        ec.messages.add("Last name: '" + lastName + CharacterConstants.S_QUOTE + TEXT_FIELD_MAX_LENGTH_MSG);
+      } else {
+        boolean isAlpha = lastName.matches(PatternConstants.LASTNAME);
+        uname += CharacterConstants.SPACE + lastName;
+        if (isAlpha) {
+          u.setLastName(lastName);
         } else {
-          boolean isAlpha = firstName.matches(PatternConstants.FIRSTNAME);
-          if (isAlpha) {
-            u.setFirstName(firstName);
-          } else {
-            ec.messages.add("First name can have only alphabets and space : " + firstName);
-          }
-          //for auditlog
-          uname = firstName;
-        }
-        if (++i == size) {
-          ec.messages.add("No fields specified after First Name");
-          done = true;
+          ec.messages.add("Last name can have only alphabets and space : " + lastName);
         }
       }
-      if (!done) {
-        // Last name (optional)
-        String lastName = tokens[i].trim();
-        if (lastName.length() > FieldLimits.TEXT_FIELD_MAX_LENGTH) {
-          ec.messages.add("Last name: '" + lastName + CharacterConstants.S_QUOTE + TEXT_FIELD_MAX_LENGTH_MSG);
+      if (++i == size) {
+        ec.messages.add("No fields specified after Last Name");
+        return ec;
+      }
+
+      // Mobile phone
+      String mobilePhone = tokens[i].trim();
+      if (StringUtils.isNotEmpty(mobilePhone) && mobilePhone.length() > FieldLimits.MOBILE_PHONE_MAX_LENGTH) {
+        ec.messages.add("Mobile phone: '" + mobilePhone + CharacterConstants.S_QUOTE + MOBILE_PHONE_MAX_LENGTH_MSG);
+      }
+      String validatedMobilePhone = validPhone(mobilePhone);
+      if (validatedMobilePhone != null) {
+        u.setMobilePhoneNumber(validatedMobilePhone);
+      } else {
+        ec.messages.add("Mobile phone: Number (" + mobilePhone
+            + ") format is invalid. It should be +[country-code][space][phone-number-without-spacesORdashes]; ensure space between country code and number.");
+      }
+      if (++i == size) {
+        ec.messages.add("No fields specified after Mobile Phone");
+        return ec;
+      }
+      // Email
+      String email = tokens[i].trim();
+      if (!SecurityConstants.ROLE_KIOSKOWNER.equals(role) && email.isEmpty()) {
+        ec.messages.add(
+            "Email: Email is mandatory for all roles other than Operator");
+      }
+      if (!email.isEmpty()) {
+        if (email.length() > FieldLimits.EMAIL_MAX_LENGTH) {
+          ec.messages.add("Email: '" + email + CharacterConstants.S_QUOTE + EMAIL_MAX_LENGTH_MSG);
+        } else if (!emailValid(email)){
+          ec.messages.add("Email: Email (" + email
+              + ") format is invalid. It should be in the format 'testuser@email.com'");
         } else {
-          boolean isAlpha = lastName.matches(PatternConstants.LASTNAME);
-          uname += CharacterConstants.SPACE + lastName;
-          if (isAlpha) {
-            u.setLastName(lastName);
-          } else {
-            ec.messages.add("Last name can have only alphabets and space : " + lastName);
-          }
-        }
-        if (++i == size) {
-          ec.messages.add("No fields specified after Last Name");
-          done = true;
+          u.setEmail(email);
         }
       }
-      if (!done) {
-        // Mobile phone
-        String mobilePhone = tokens[i].trim();
-        if (StringUtils.isNotEmpty(mobilePhone) && mobilePhone.length() > FieldLimits.MOBILE_PHONE_MAX_LENGTH) {
-          ec.messages.add("Mobile phone: '" + mobilePhone + CharacterConstants.S_QUOTE + MOBILE_PHONE_MAX_LENGTH_MSG);
-        }
-        String validatedMobilePhone = validPhone(mobilePhone);
-        if (validatedMobilePhone != null) {
-          u.setMobilePhoneNumber(validatedMobilePhone);
-        } else {
-          ec.messages.add("Mobile phone: Number (" + mobilePhone
-              + ") format is invalid. It should be +[country-code][space][phone-number-without-spacesORdashes]; ensure space between country code and number.");
-        }
-        if (++i == size) {
-          ec.messages.add("No fields specified after Mobile Phone");
-          done = true;
-        }
+      if (++i == size) {
+        ec.messages.add("No fields specified after Email");
+        return ec;
       }
-      if (!done) {
-        // Email
-        String email = tokens[i].trim();
-        if (!SecurityConstants.ROLE_KIOSKOWNER.equals(role) && email.isEmpty()) {
-          ec.messages.add(
-              "Email: Email is mandatory for all roles other than Operator");
-        }
-        if (!email.isEmpty()) {
-          if (email.length() > FieldLimits.EMAIL_MAX_LENGTH) {
-            ec.messages.add("Email: '" + email + CharacterConstants.S_QUOTE + EMAIL_MAX_LENGTH_MSG);
-          } else if (!emailValid(email)){
-            ec.messages.add("Email: Email (" + email
-                + ") format is invalid. It should be in the format 'testuser@email.com'");
-          } else {
-            u.setEmail(email);
-          }
-        }
-        if (++i == size) {
-          ec.messages.add("No fields specified after Email");
-          done = true;
-        }
-      }
-      String country = "";
-      if (!done) {
-        // Country
-        country = tokens[i].trim();
-        if (!country.isEmpty()) {
-          //validating country with system configuration
-          if (c != null && c.getConfig() != null) {
-            String jsonLocationString = c.getConfig();
-            if (jsonLocationString != null) {
-              jsonLocationObject = new JSONObject(jsonLocationString);
-              if (!jsonLocationObject.isNull("data")) {
-                intermediateJsonObject = jsonLocationObject.getJSONObject("data");
-                countryKey = intermediateJsonObject.keySet();
-              }
+
+      // Country
+      String country = tokens[i].trim();
+      if (!country.isEmpty()) {
+        //validating country with system configuration
+        if (c != null && c.getConfig() != null) {
+          String jsonLocationString = c.getConfig();
+          if (jsonLocationString != null) {
+            jsonLocationObject = new JSONObject(jsonLocationString);
+            if (!jsonLocationObject.isNull("data")) {
+              intermediateJsonObject = jsonLocationObject.getJSONObject("data");
+              countryKey = intermediateJsonObject.keySet();
             }
           }
-          if (countryKey.contains(country) && country.length() == 2) {
-            u.setCountry(country);
-            intermediateJsonObject = intermediateJsonObject.getJSONObject(country);
-          } else {
-            ec.messages.add("Country: Country code '" + country
-                + "' is not available in the configuration. Please enter the proper country code.");
-          }
+        }
+        if (countryKey.contains(country) && country.length() == 2) {
+          u.setCountry(country);
+          intermediateJsonObject = intermediateJsonObject.getJSONObject(country);
         } else {
-          ec.messages.add(
-              "Country code is mandatory. Please specify proper country code. It should be a valid 2-letter ISO-3166 code");
+          ec.messages.add("Country: Country code '" + country
+              + "' is not available in the configuration. Please enter the proper country code.");
         }
-        if (++i == size) {
-          ec.messages.add("No fields specified after Country");
-          done = true;
-        }
+      } else {
+        ec.messages.add(
+            "Country code is mandatory. Please specify proper country code. It should be a valid 2-letter ISO-3166 code");
       }
-      if (!done) {
-        String language = tokens[i].trim();
-        if (!language.isEmpty()) {
-          String jsonLanguageString;
-          //validating language with system configuration
-          if (ln != null && ln.getConfig() != null) {
-            jsonLanguageString = ln.getConfig();
-            if (jsonLanguageString != null) {
-              jsonLanguageObject = new JSONObject(jsonLanguageString);
-              languageKey = jsonLanguageObject.keySet();
-            }
+      if (++i == size) {
+        ec.messages.add("No fields specified after Country");
+        return ec;
+      }
+      String language = tokens[i].trim();
+      if (!language.isEmpty()) {
+        String jsonLanguageString;
+        //validating language with system configuration
+        if (ln != null && ln.getConfig() != null) {
+          jsonLanguageString = ln.getConfig();
+          if (jsonLanguageString != null) {
+            jsonLanguageObject = new JSONObject(jsonLanguageString);
+            languageKey = jsonLanguageObject.keySet();
           }
-          if (languageKey.contains(language) && language.length() == 2) {
-            u.setLanguage(language);
-          } else {
-            ec.messages.add("Language: Language code '" + language + CharacterConstants.S_QUOTE
-                + " is not available in the configuration. Please enter the proper language code.");
-          }
-        } else {
-          ec.messages.add(
-              "Language code is mandatory. Please specify proper language code. It should be a valid 2-letter ISO-630-1 code.");
         }
+        if (languageKey.contains(language) && language.length() == 2) {
+          u.setLanguage(language);
+        } else {
+          ec.messages.add("Language: Language code '" + language + CharacterConstants.S_QUOTE
+              + " is not available in the configuration. Please enter the proper language code.");
+        }
+      } else {
+        ec.messages.add(
+            "Language code is mandatory. Please specify proper language code. It should be a valid 2-letter ISO-630-1 code.");
+      }
 
-        if (++i == size) {
-          ec.messages.add("No fields specified after language");
-          done = true;
+      if (++i == size) {
+        ec.messages.add("No fields specified after language");
+        return ec;
+      }
+      // Timezone
+      String[] timezones = TimeZone.getAvailableIDs();
+      String
+          TIMEZONE_ID_PREFIXES =
+          "^(Africa|America|Asia|Atlantic|Australia|Europe|Indian|Pacific)/.*";
+      List<String> timezoneCode = new ArrayList<>();
+      for (String timezone1 : timezones) {
+        if (timezone1.matches(TIMEZONE_ID_PREFIXES)) {
+          timezoneCode.add(timezone1);
         }
       }
-      if (!done) {
-        // Timezone
-        String[] timezones = TimeZone.getAvailableIDs();
-        String
-            TIMEZONE_ID_PREFIXES =
-            "^(Africa|America|Asia|Atlantic|Australia|Europe|Indian|Pacific)/.*";
-        List<String> timezoneCode = new ArrayList<>();
-        for (String timezone1 : timezones) {
-          if (timezone1.matches(TIMEZONE_ID_PREFIXES)) {
-            timezoneCode.add(timezone1);
-          }
-        }
-        String timezone = tokens[i].trim();
-        if (timezone.isEmpty() || !timezone.contains("/")) {
-          ec.messages.add(
-              "Timezone: Timezone is not specified or is of incorrect format (i.e. missing a /). It should be an entry from the URL given in the header.");
+      String timezone = tokens[i].trim();
+      if (timezone.isEmpty() || !timezone.contains("/")) {
+        ec.messages.add(
+            "Timezone: Timezone is not specified or is of incorrect format (i.e. missing a /). It should be an entry from the URL given in the header.");
+      } else {
+        //Validating the timezone with the system configuration
+        if (timezoneCode.contains(timezone)) {
+          u.setTimezone(timezone);
         } else {
-          //Validating the timezone with the system configuration
-          if (timezoneCode.contains(timezone)) {
-            u.setTimezone(timezone);
-          } else {
-            ec.messages.add("Timezone:Timezone " + timezone
-                + " is not available in the given configuration. Please enter the proper timezone code."
-                +
-                " It should be an entry from the URL given in the header");
-          }
+          ec.messages.add("Timezone:Timezone " + timezone
+              + " is not available in the given configuration. Please enter the proper timezone code."
+              +
+              " It should be an entry from the URL given in the header");
         }
-
       }
-      // Gender
-      String gender;
-      if (++i < size && (!(gender = tokens[i]).isEmpty())) {
-        gender = gender.trim();
+
+      if (++i < size && !tokens[i].isEmpty()) {
+        String gender = tokens[i].trim();
         if (!isGenderValid(gender)) {
           ec.messages.add("Gender: Invalid value '" + gender + "'. Value should be either "
               + IUserAccount.GENDER_MALE + " = Male or " + IUserAccount.GENDER_FEMALE
@@ -1400,7 +1406,7 @@ public class BulkUploadMgr {
           u.setGender(gender.toLowerCase());
         }
       }
-      // Date of birth
+
       String dateOfBirth;
       if (++i < size && !(dateOfBirth = tokens[i].trim()).isEmpty()) {
         try {
@@ -1436,28 +1442,26 @@ public class BulkUploadMgr {
           u.setLandPhoneNumber(landPhone);
         }
       }
-      // State (made mandatory since gae 1.2.9 - April 29, 2013)
+
       String state = "";
-      if (!done) {
-        if (u.getCountry() != null) {
-          state = tokens[++i].trim();
-          if (state.isEmpty()) {
-            ec.messages.add("State is not specified. State is mandatory for the user");
+      if (u.getCountry() != null) {
+        state = tokens[++i].trim();
+        if (state.isEmpty()) {
+          ec.messages.add("State is not specified. State is mandatory for the user");
+        } else {
+          //validating state with system configuration
+          if (intermediateJsonObject.isNull("states")) {
+            ec.messages.add(
+                "States for the country" + country + " are not available in the configuration");
           } else {
-            //validating state with system configuration
-            if (intermediateJsonObject.isNull("states")) {
-              ec.messages.add(
-                  "States for the country" + country + " are not available in the configuration");
+            Set<String> stateCode = intermediateJsonObject.getJSONObject("states").keySet();
+            if (stateCode != null && stateCode.contains(state)) {
+              u.setState(state);
+              intermediateJsonObject =
+                  intermediateJsonObject.getJSONObject("states").getJSONObject(state);
             } else {
-              Set<String> stateCode = intermediateJsonObject.getJSONObject("states").keySet();
-              if (stateCode != null && stateCode.contains(state)) {
-                u.setState(state);
-                intermediateJsonObject =
-                    intermediateJsonObject.getJSONObject("states").getJSONObject(state);
-              } else {
-                ec.messages.add("State: " + state
-                    + " is not available in the configuration.Please enter the proper state name");
-              }
+              ec.messages.add("State: " + state
+                  + " is not available in the configuration.Please enter the proper state name");
             }
           }
         }
@@ -1547,7 +1551,7 @@ public class BulkUploadMgr {
             u.setPinCode(pinCode);
           } else {
             ec.messages.add("Invalid format: Zip/PIN code '" + pinCode
-                + CharacterConstants.S_QUOTE + TEXT_FIELD_MAX_LENGTH_MSG + " and can contain only uppercase, lowercase, digits, hypen and spaces.");
+                + CharacterConstants.S_QUOTE + TEXT_FIELD_MAX_LENGTH_MSG + " and can contain only uppercase, lowercase, digits, hyphen and spaces.");
           }
         } else {
           u.setPinCode(pinCode);
@@ -1583,59 +1587,52 @@ public class BulkUploadMgr {
         }
       }
 
-      // Custom ID
-      String customId;
       if (++i < size) {
-        customId = tokens[i].trim();
+        String customId = tokens[i].trim();
         if (customId.length() > FieldLimits.TEXT_FIELD_MAX_LENGTH) {
           ec.messages.add("Custom ID '" + customId + CharacterConstants.S_QUOTE + TEXT_FIELD_MAX_LENGTH_MSG);
         } else {
           u.setCustomId(customId);
         }
       }
-      //Phone Brand
-      String phoneBrand;
+
       if (++i < size) {
-        phoneBrand = tokens[i].trim();
+        String phoneBrand = tokens[i].trim();
         if (phoneBrand.length() > FieldLimits.TEXT_FIELD_MAX_LENGTH) {
           ec.messages.add("Mobile Phone Brand '" + phoneBrand + CharacterConstants.S_QUOTE + TEXT_FIELD_MAX_LENGTH_MSG);
         } else {
           u.setPhoneBrand(phoneBrand);
         }
       }
-      //Phone Model
-      String phoneModel;
+
       if (++i < size) {
-        phoneModel = tokens[i].trim();
+        String phoneModel = tokens[i].trim();
         if (phoneModel.length() > FieldLimits.TEXT_FIELD_MAX_LENGTH) {
           ec.messages.add("Mobile Phone Model '" + phoneModel + CharacterConstants.S_QUOTE + TEXT_FIELD_MAX_LENGTH_MSG);
         } else {
           u.setPhoneModelNumber(phoneModel);
         }
       }
-      //IMEI
-      String imei;
+
       if (++i < size) {
-        imei = tokens[i].trim();
+        String imei = tokens[i].trim();
         if (imei.length() > FieldLimits.TEXT_FIELD_MAX_LENGTH) {
           ec.messages.add("IMEI number '" + imei + CharacterConstants.S_QUOTE + TEXT_FIELD_MAX_LENGTH_MSG);
         }
         u.setImei(imei);
       }
-      //Service Provider
-      String serviceProvider;
+
       if (++i < size) {
-        serviceProvider = tokens[i].trim();
+        String serviceProvider = tokens[i].trim();
         if (serviceProvider.length() > FieldLimits.TEXT_FIELD_MAX_LENGTH) {
           ec.messages.add("SIM Provider '" + serviceProvider + CharacterConstants.S_QUOTE + TEXT_FIELD_MAX_LENGTH_MSG);
         } else {
           u.setPhoneServiceProvider(serviceProvider);
         }
       }
-      //Sim Id
-      String simId;
+
       if (++i < size) {
-        simId = tokens[i].trim();
+        String simId = tokens[i].trim();
         if (simId.length() > FieldLimits.TEXT_FIELD_MAX_LENGTH) {
           ec.messages.add("SIM ID '" + simId + CharacterConstants.S_QUOTE + TEXT_FIELD_MAX_LENGTH_MSG);
         } else {
@@ -1648,6 +1645,24 @@ public class BulkUploadMgr {
       } else if (u.getTags()
           != null) { // The user being updated had tags earlier but now being edited to remove tags
         u.setTags(new ArrayList<>());
+      }
+
+      if (++i < size) {
+        String guiTheme = tokens[i].trim();
+        if (!isGuiThemeValid(guiTheme)) {
+          ec.messages
+              .add("Store app GUI theme: Invalid value '" + guiTheme + "'. Value should be either "
+                  + FieldLimits.GUI_THEME_SAME_AS_IN_DOMAIN_CONFIGURATION
+                  + " (Same as in domain configuration) or " + FieldLimits.GUI_THEME_DEFAULT
+                  + " (Default) or " + FieldLimits.GUI_THEME_SIDEBAR_AND_LANDING_SCREEN
+                  + " (Sidebar & Landing screen)");
+        } else {
+          int actualGuiTheme = Constants.GUI_THEME_SAME_AS_IN_DOMAIN_CONFIGURATION;
+          if (!guiTheme.isEmpty()) {
+            actualGuiTheme = Integer.parseInt(guiTheme) - 1;
+          }
+          u.setStoreAppTheme(actualGuiTheme);
+        }
       }
       // If there are errors, return; do not add/update
       if (ec.hasErrors()) {
@@ -2879,7 +2894,7 @@ public class BulkUploadMgr {
       try {
         q.closeAll();
       } catch (Exception ignored) {
-
+        // ignore
       }
       if (pm == null) {
         pmLocal.close();
@@ -3068,6 +3083,59 @@ public class BulkUploadMgr {
     Period age = dateOfBirth.until(currentDate);
     return (age.getYears() < FieldLimits.MAX_USER_AGE || age.equals(
         Period.of(FieldLimits.MAX_USER_AGE, 0, 0)));
+  }
+
+  /**
+   * This method returns true if the operation is add or edit or delete. Otherwise it returns false
+   * @param operation
+   * @return
+   */
+  protected static boolean isOperationValid(String operation) {
+    return OP_ADD.equals(operation) || OP_EDIT.equals(operation) || OP_DELETE.equals(operation);
+  }
+
+  /**
+   * This method returns true if the permission is valid (empty or d - Default, v - View only, a - Asset user). Otherwise, it returns false.
+   * @param permission
+   * @return
+   */
+  protected static boolean isPermissionValid(String permission) {
+    return permission.isEmpty() || IUserAccount.PERMISSION_DEFAULT.equals(permission) || IUserAccount.PERMISSION_VIEW.equals(
+        permission) || IUserAccount.PERMISSION_ASSET.equals(permission);
+  }
+
+  /**
+   * This method returns true if the token expiry is valid (empty or a number between 0 and 999). Otherwise, it returns false.
+   * @param tokenExpiryStr
+   * @return
+   */
+  protected static boolean isTokenExpiryValid(String tokenExpiryStr) {
+    if (tokenExpiryStr.isEmpty()) {
+      return true;
+    }
+    try {
+      int tokenExpiry = Integer.parseInt(tokenExpiryStr);
+      return (tokenExpiry >= FieldLimits.TOKEN_EXPIRY_MIN && tokenExpiry <= FieldLimits.TOKEN_EXPIRY_MAX);
+    } catch (NumberFormatException e) {
+      return false;
+    }
+  }
+
+  /**
+   * This method returns true if the GUI theme is valid (empty or 0, 1 or 2). Otherwise, it returns false.
+   * @param guiThemeStr
+   * @return
+   */
+  protected static boolean isGuiThemeValid(String guiThemeStr) {
+    if (guiThemeStr.isEmpty()) {
+      return true;
+    }
+    try {
+      int guiTheme = Integer.parseInt(guiThemeStr);
+      return (guiTheme == FieldLimits.GUI_THEME_SAME_AS_IN_DOMAIN_CONFIGURATION || guiTheme == FieldLimits.GUI_THEME_DEFAULT || guiTheme == FieldLimits.GUI_THEME_SIDEBAR_AND_LANDING_SCREEN);
+    } catch (NumberFormatException e) {
+      return false;
+    }
   }
 
   public static class EntityContainer {

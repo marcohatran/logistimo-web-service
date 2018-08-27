@@ -1244,3 +1244,9 @@ release.reference.id=Numéro de référence du communiqué
 stockrebalancing.admin.notification=${inventoryCount} inventory items require stock transfers from other entities in domain ${domainName}. Please review the Stock rebalancing recommendations in the web console to create the relevant transfer orders.
 recommendations.none=Aucune recommandation disponible
 gender.other=Autreuser.date.of.birth=Date de naissance
+user.date.of.birth=Date de naissance
+user.permission=Autorisation
+user.token.expiry=expiration token
+format=format
+gui.theme.same.as.in.domain.configuration=Identique à la configuration du domaine
+gui.theme.default=Défaut

@@ -49,6 +49,10 @@ public class UsersHeader implements IHeader {
             bundle.getString("user.role") + "* (" + bundle.getString("role.domainowner")
             + " = ROLE_do / " + bundle.getString("role.kioskowner") + " = ROLE_ko / " + bundle
             .getString("role.servicemanager") + " = ROLE_sm)," +
+            bundle.getString("user.permission") + " (" + bundle.getString("default.caps")
+            + " = d / " + bundle.getString("user.permission.view") + " = v / " + bundle
+            .getString("user.permission.asset") + " = a; if empty it is considered as Default)," +
+            bundle.getString("user.token.expiry") + " (" + FieldLimits.TOKEN_EXPIRY_MIN + CharacterConstants.HYPHEN + FieldLimits.TOKEN_EXPIRY_MAX + CharacterConstants.SPACE + bundle.getString("days") + "; if empty it is considered as 0)," +
             bundle.getString("user.firstname") + "* (" + FieldLimits.FIRSTNAME_MIN_LENGTH + CharacterConstants.HYPHEN + FieldLimits.TEXT_FIELD_MAX_LENGTH + " characters)" +"," + bundle
             .getString("user.lastname") + " (not more than " + FieldLimits.TEXT_FIELD_MAX_LENGTH + " characters)" + "," +
             bundle.getString("user.mobile")
@@ -82,7 +86,9 @@ public class UsersHeader implements IHeader {
             bundle.getString("user.imei") + " (not more than " + FieldLimits.TEXT_FIELD_MAX_LENGTH + " characters)" + "," +
             bundle.getString("user.mobileoperator") + " (not more than " + FieldLimits.TEXT_FIELD_MAX_LENGTH + " characters)" + "," +
             bundle.getString("user.simId") + " (not more than " + FieldLimits.TEXT_FIELD_MAX_LENGTH + " characters)" + "," +
-            bundle.getString("tags") + " (semi-colon separate tags; e.g. tag1;tag2;tag3)";
+            bundle.getString("tags") + " (semi-colon separate tags; e.g. tag1;tag2;tag3)" + CharacterConstants.COMMA +
+            bundle.getString("mob") + CharacterConstants.SPACE + bundle.getString("gui.theme") + " (Same as in domain configuration = 0 / Default = 1 / Sidebar & Landing screen = 2)" + CharacterConstants.COMMA
+      ;
     return format;
   }
 }

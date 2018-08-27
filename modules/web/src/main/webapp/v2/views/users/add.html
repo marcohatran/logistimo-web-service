@@ -722,8 +722,8 @@
                     <p><input type="radio" ng-model="theme" ng-value="2"> {{resourceBundle['select.theme']}}</p>
                     <div ng-if="theme==2">
                         <select ng-model="user.theme" ng-init="user.theme == -1 ? user.theme = 0 : user.theme" class="form-control">
-                            <option ng-value="0">{{resourceBundle['theme.black']}}</option>
-                            <option ng-value="1">{{resourceBundle['theme.red']}}</option>
+                            <option ng-value="0">{{resourceBundle['gui.theme.default']}}</option>
+                            <option ng-value="1">{{resourceBundle['sidebar.landing.screen']}}</option>
                         </select>
                     </div>
                 </div>

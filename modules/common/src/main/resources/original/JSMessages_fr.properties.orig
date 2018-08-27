@@ -708,7 +708,6 @@ showallexportsindomain=Montrer toutes les exportations dans ce domaine
 scheduledbythesystem=Prévu par le système
 customreportsstatusinfo1=Vous pouvez suivre l'état de l'exportation en cliquant sur ​​le lien « Rapports personnalisés » sous la rubrique « Rapports ».
 user.permissions=autorisations
-user.token.expiry=expiration token
 config.statusmsg=Entrez une liste d'états séparés par des virgules pour les matériaux. Assurez-vous que chaque statut est inférieur à 15 caractères. Par exemple, les statuts de rejet peuvent être entrés comme suit: endommagé, expiré, perdu.
 config.status.title=Statut
 config.issue.status=Statut pour question
