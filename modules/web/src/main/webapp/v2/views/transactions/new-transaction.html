@@ -98,6 +98,10 @@
                                 <span ng-show="loadingDent" class="form-control-feedback typehead-loading" aria-hidden="true">
                                     <span class="glyphicons glyphicons-cogwheel spin"></span>
                                 </span>
+                                <div ng-show="showCustomerInventory(transaction)"
+                                     class="temp">
+                                    <span class="litetext"> <input type="checkbox" ng-model="showDestInv" ng-disabled="showDestInv"> {{resourceBundle['show.currentstock.at']}} {{transaction.dent.enm}}</span>
+                                </div>
                                 <span ng-show="isUndef(transaction.dent) && transaction.type == 'ri'" class="litetext"> {{resourceBundle['customer.not.selected.note']}}</span>
                             </div>
                         </div>
@@ -144,7 +148,7 @@
                             <div ng-show="transaction.ent.nm === transaction.dent.enm" class="has-error">
                                 <span class="help-block">{{resourceBundle['materials.transfer']}}</span>
                             </div>
-                            <div ng-show="tranDomainConfig.showCInv && (transaction.type == 't' || transaction.type == 'i' || transaction.type == 'ri') && transaction.dent.enm.length > 0 && transaction.ent.nm !== transaction.dent.enm && showDestInvPermission > 0"
+                            <div ng-show="showCustomerInventory(transaction)"
                                  class="temp">
                                 <span class="litetext"> <input type="checkbox" ng-model="showDestInv" ng-disabled="showDestInv"> {{resourceBundle['show.currentstock.at']}} {{transaction.dent.enm}}</span>
                             </div>
