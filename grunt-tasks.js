@@ -345,6 +345,9 @@ module.exports = function(grunt, ref) {
                         },{
                             pattern: "client=",
                             replacement: "client=<%= custom.googleid %>"
+                        },{
+                            pattern: "apikey=",
+                            replacement: "key=<%= custom.googlekey %>"
                         }, {
                             pattern: "http://www.logistimo.com/privacy-policy.html",
                             replacement: "<%= custom.privacylink %>"
