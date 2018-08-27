@@ -898,6 +898,7 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
     function ($scope, $timeout, $sce, dashboardService, configService, domainCfgService, requestContext, $location, $q) {
 
         var mapColors, mapRange, workingPieColors = 0;
+        const FILTERS = {'e':['eTag','excludeTag'],'a':['mtype','at','status','period']};
 
         $scope.loading = true;
         $scope.mloading = true;
@@ -1003,7 +1004,7 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
             }
             $scope.initDefaults();
         });
-        $scope.toggleFilter = function (type, force) {
+        $scope.toggleFilter = function (type, force, restore) {
             var show;
             if (force != undefined) {
                 if (type == 'a') {
@@ -1020,6 +1021,11 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
                     $scope.showEFilter = !$scope.showEFilter;
                     show = $scope.showEFilter;
                 }
+                if(restore != undefined) {
+                    $scope.restoreFilters(type);
+                } else {
+                    $scope.copyFilters(type);
+                }
             }
             var d = document.getElementById('filter_' + type);
             if (show) {
@@ -1031,6 +1037,23 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
                 d.style.opacity = '0';
                 d.style.zIndex = '-1';
             }
+        };
+
+        $scope.copyFilters = function(type) {
+            $scope.filtersCopy = {'e':{},'a':{}};
+            angular.forEach(FILTERS[type],function(filter) {
+                $scope.filtersCopy[type][filter] = angular.copy($scope[filter]);
+            });
+        };
+
+        $scope.restoreFilters = function(type) {
+            angular.forEach($scope.filtersCopy[type], function(value, filter) {
+                $scope[filter] = angular.copy(value);
+            });
+        };
+
+        $scope.cancelFilter = function(type) {
+            $scope.toggleFilter(type,undefined,true);
         };
 
         $scope.initDefaults = function (skipCache) {
@@ -1641,6 +1664,7 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
     function ($scope, $timeout, $sce, dashboardService, INVENTORY, configService, domainCfgService, requestContext, matService,$location,$window) {
 
         var mapColors, mapRange, invPieColors, invPieOrder, entPieColors, entPieOrder, tempPieColors, tempPieOrder;
+        const FILTERS = {'e':['eTag','excludeTag'],'i':['mtag','material','date','period'],'a':['asset','tperiod','exTempState']};
         $scope.mc = $scope.mr = undefined;
         $scope.predictiveDiv = false;
         $scope.openPred = function () {
@@ -2775,7 +2799,7 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
             }
             $scope.initDefaults();
         });
-        $scope.toggleFilter = function(type,force) {
+        $scope.toggleFilter = function(type,force,restore) {
             var show;
             if (force != undefined) {
                 if (type == 'i') {
@@ -2797,6 +2821,11 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
                     $scope.showEFilter = !$scope.showEFilter;
                     show = $scope.showEFilter;
                 }
+                if(restore != undefined) {
+                    $scope.restoreFilters(type);
+                } else {
+                    $scope.copyFilters(type);
+                }
             }
             var d = document.getElementById('filter_' + type);
             if (show) {
@@ -2811,7 +2840,24 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
         };
         $scope.setShowMap = function(value) {
             $scope.showMap = value;
-        }
+        };
+
+        $scope.copyFilters = function(type) {
+            $scope.filtersCopy = {'e':{},'i':{},'a':{}};
+            angular.forEach(FILTERS[type],function(filter) {
+               $scope.filtersCopy[type][filter] = angular.copy($scope[filter]);
+            });
+        };
+
+        $scope.restoreFilters = function(type) {
+            angular.forEach($scope.filtersCopy[type], function(value, filter) {
+                $scope[filter] = angular.copy(value);
+            });
+        };
+
+        $scope.cancelFilter = function(type) {
+            $scope.toggleFilter(type,undefined,true);
+        };
     }
 ]);
 
