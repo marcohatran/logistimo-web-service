@@ -2014,6 +2014,18 @@ logistimoApp.directive('fusionChart', function () {
                     if (checkNotNullEmpty(chartReference)) {
                         chartReference.dispose();
                     }
+
+                    let setActualMapType = type => {
+                        if($rootScope.mapDef) {
+                            let name = type.substr(type.indexOf("/") + 1);
+                            return "maps/" + ($rootScope.mapDef[name] ? $rootScope.mapDef[name] : name);
+                        }
+                        return type;
+                    };
+
+                    if($scope.type.startsWith("maps/")) {
+                        $scope.type = setActualMapType($scope.type);
+                    }
                     var revenueChart = new FusionCharts({
                         "type": $scope.type,
                         "renderAt": $scope.chartId,
