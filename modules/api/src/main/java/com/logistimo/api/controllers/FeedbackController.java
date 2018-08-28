@@ -57,8 +57,7 @@ public class FeedbackController {
   @RequestMapping(value = "", method = RequestMethod.POST)
   public
   @ResponseBody
-  void create(@RequestBody FeedbackModel model, HttpServletRequest request) throws ServiceException,
-      ConfigurationException {
+  void create(@RequestBody FeedbackModel model, HttpServletRequest request) throws ServiceException, ConfigurationException {
     String app = request.getHeader("X-app-name");
     String appVer = request.getHeader("X-app-ver");
     model.setApp(app);
