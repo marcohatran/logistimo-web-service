@@ -534,3 +534,4 @@ to.upper=À
 material=Matériel
 exports.successfully.scheduled.message=Exportation programmée avec succès, les données seront envoyées à l'adresse e-mail
 exports.failure.message=Une erreur système s'est produite. Veuillez réessayer votre exportation, ou contactez votre administrateur.
+error.fetching.returns.configuration=Erreur lors de la récupération de la configuration des retours

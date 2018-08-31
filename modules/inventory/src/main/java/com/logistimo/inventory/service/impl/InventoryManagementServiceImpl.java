@@ -4048,7 +4048,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
         xLogger.severe("Error while fetching Return configuration");
         throw new InvalidServiceException(
             backendMessages
-                .getString("Error while fetching return configuration for entity: " + entityId));
+                .getString("error.fetching.returns.configuration") + CharacterConstants.COLON + entityId);
       }
       DomainConfig dc = DomainConfig.getInstance(domainId);
       List<String> kioskTags = kiosk.getTags();
