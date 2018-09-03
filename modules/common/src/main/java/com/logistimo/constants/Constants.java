@@ -40,6 +40,8 @@ public final class Constants {
   public static final String X_ACCESS_USER = "x-access-user";
   public static final String GROUP_BY_NAME = "GROUP_BY_NAME";
   public static final String DOMAIN = "x-access-domain";
+  public static final String BACKEND_MESSAGES = "BackendMessages";
+  public static final String MESSAGES = "Messages";
 
   private Constants() {
   }
@@ -209,8 +211,5 @@ public final class Constants {
   public static final String USER_KEY = "user";
   public static final String KIOSK_KEY = "kiosk";
 
-  public static final String MESSAGES = "Messages";
-
-  public static final String BACKEND_MESSAGES = "BackendMessages";
   public static final String SKIP_INVENTORY = "skip_inventory";
 }
