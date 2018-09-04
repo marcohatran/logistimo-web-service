@@ -1311,7 +1311,7 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
                 }
                 o.showValue = o.value > 0 ? 1 : 0;
                 if(link != undefined) {
-                    o.link = "JavaScript: angular.element(document.getElementById('cid')).scope().constructMapData('" + link + "');";
+                    o.link = "JavaScript: callFunctionByName('constructMapData','" + link + "')";
                 }
                 d.push(o);
             }
@@ -1443,7 +1443,7 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
                                 if ($scope.dashboardView.level == "state") {
                                     filter = $scope.dashboardView.mTyNm + "_" + bd.label;
                                 }
-                                bd.link = "JavaScript: angular.element(document.getElementById('cid')).scope().addFilter('" + filter + "','" + level + "')";
+                                bd.link = "JavaScript: callFunctionByName('addFilter','" + filter + "','" + level + "')";
                             } else if($scope.mrValues.indexOf(event) != -1 && !$scope.iMan) {
                                 var ws = (parseInt(eventType, 10) + 1).toString();
                                 bd.link = "N-#/assets/all?ws=" + ws;
@@ -1544,7 +1544,7 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
                         o.toolText = o.label + ": " + value + " of " + den + " " + " assets";
                         o.showLabel = "1";
                         if (checkNotNullEmpty(value)) {
-                            o.link = "JavaScript: angular.element(document.getElementById('cid')).scope().addFilter('" + filter + "','" + level + "')";
+                            o.link = "JavaScript: callFunctionByName('addFilter','" + filter + "','" + level + "')";
                         }
                         mData.push(o);
                     }
@@ -1773,7 +1773,7 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
                     isOneDataAvailable = true;
                 }
                 o.showValue = o.value > 0 ? 1 : 0;
-                o.link = "JavaScript: angular.element(document.getElementById('cid')).scope().constructMapData('" + dd + "');";
+                o.link = "JavaScript: callFunctionByName('constructMapData','" + dd + "')";
                 d.push(o);
             }
             var subCaption = undefined;
@@ -1847,7 +1847,7 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
                 stackSeries.data[0].value = data;
                 stackSeries.data[0].color = barColor;
                 stackSeries.data[0].toolText = seriesName + ": " + ((data / denominator) * 100).toFixed(2) + "% (" + data + " of " + denominator + " " + $scope.resourceBundle['kiosks.lower'] + ")";
-                stackSeries.data[0].link = "JavaScript: angular.element(document.getElementById('cid')).scope().constructMapData('" + code + "');";
+                stackSeries.data[0].link = "JavaScript: callFunctionByName('constructMapData','" + code + "')";
             }
             return stackSeries;
         }
@@ -2331,7 +2331,7 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
                                 if ($scope.dashboardView.mLev == "state") {
                                     filter = $scope.dashboardView.mTyNm + "_" + bd.label;
                                 }
-                                bd.link = "JavaScript: angular.element(document.getElementById('cid')).scope().addFilter('" + filter + "','" + level + "')";
+                                bd.link = "JavaScript: callFunctionByName('addFilter','" + filter + "','" + level + "')";
                             } else if((event == '200' || event == '201' || event == '202' || event == 'n')) {
                                 var search = "?eid="+kid;
                                 if(checkNotNullEmpty($scope.mtag) && $scope.mtag instanceof Array) {
@@ -2343,7 +2343,7 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
                                         search += "&dur="+$scope.period;
                                     }
                                 }
-                                bd.link = "JavaScript: angular.element(document.getElementById('cid')).scope().drillDownInventory('" + search + "')";
+                                bd.link = "JavaScript: callFunctionByName('drillDownInventory','" + search + "')";
                             } else if(event == 'a' || event == 'i') {
                                 var fromDate = angular.copy($scope.date || $scope.today);
                                 fromDate.setDate(fromDate.getDate() - (($scope.period == "0" ? $scope.aper : $scope.period) || $scope.aper) + ($scope.date ? 1 : 0));
@@ -2442,7 +2442,7 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
                                         return val.text;}).join(',');
                             }
                             if(checkNotNullEmpty(search)){
-                                bd.link = "JavaScript: angular.element(document.getElementById('cid')).scope().drillDownInventory('" + search + "')";
+                                bd.link = "JavaScript: callFunctionByName('drillDownInventory','" + search + "')";
                             }
                             var found = false;
                             //Arrange data in descending order
@@ -2611,7 +2611,7 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
                         }
                         o.showLabel = "1";
                         if (checkNotNullEmpty(value)) {
-                            o.link = "JavaScript: angular.element(document.getElementById('cid')).scope().addFilter('" + filter + "','" + level + "')";
+                            o.link = "JavaScript: callFunctionByName('addFilter','" + filter + "','" + level + "')";
                         }
                         mData.push(o);
                     }
@@ -3814,7 +3814,7 @@ domainControllers.controller('PredictiveController', ['$scope', '$timeout', '$sc
                                 if ($scope.dashboardView.mLev == "state") {
                                     filter = $scope.dashboardView.mTyNm + "_" + bd.label;
                                 }
-                                bd.link = "JavaScript: angular.element(document.getElementById('cid')).scope().addFilter('" + filter + "','" + level + "')";
+                                bd.link = "JavaScript: callFunctionByName('addFilter','" + filter + "','" + level + "')";
                             } else if(event == 'so' || event == 'n') {
                                 bd.link = "N-#/inventory/?eid="+kid;
                                 if(checkNotNullEmpty($scope.mtag) && $scope.mtag.length == 1) {
@@ -3981,7 +3981,7 @@ domainControllers.controller('PredictiveController', ['$scope', '$timeout', '$sc
                         o.toolText = o.label + ": " + value + " of " + den + " " + " inventory items";
                         o.showLabel = "1";
                         if (checkNotNullEmpty(value)) {
-                            o.link = "JavaScript: angular.element(document.getElementById('cid')).scope().addFilter('" + filter + "','" + level + "')";
+                            o.link = "JavaScript: callFunctionByName('addFilter','" + filter + "','" + level + "')";
                         }
                         mData.push(o);
                     }

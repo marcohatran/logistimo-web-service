@@ -560,3 +560,9 @@ function messageFormat(text) {
         return args[arguments[1] * 1 + 1];
     });
 }
+
+var callFunctionByName = function(name) {
+    let args = Array.from(arguments);
+    args.shift();
+    angular.element(document.getElementById('cid')).scope()[name](...args);
+};
