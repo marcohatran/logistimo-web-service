@@ -254,7 +254,7 @@ config.transactions.dataexport.overview=Enable periodic export of transaction da
 config.transactions.dataexportschedule=Transaction data export schedule
 config.transactions.permissions=Permissions
 config.transactions.inventoryvisibility=Inventory visibility
-config.transactions.permissions.invvisibilitycustomer=Allow inventory of customers to be visible to vendors during a transaction
+config.transactions.permissions.invvisibilitycustomer=Allow inventory of customers to be visible to vendors during issue and transfer transaction
 config.transactions.permissions.overview=Specify global permissions for visibility or access to inventory.
 config.transferstock=Transfer stock
 config.transnaming=Naming of transactions
@@ -1261,4 +1261,10 @@ stockrebalancing.admin.notification=${inventoryCount} inventory items require st
 recommendations.none=No recommendations available
 gender.other=Other
 user.date.of.birth=Date of birth
+user.permission=Permission
+user.token.expiry=Token expiry
+format=format
+gui.theme.same.as.in.domain.configuration=Same as in domain configuration
+gui.theme.default=Default
+
 

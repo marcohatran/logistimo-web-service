@@ -716,6 +716,7 @@
                     if (checkNotNullEmpty(data.data)) {
                         var a = angular.fromJson(data.data);
                         $rootScope.entDef = a.entdef;
+                        $rootScope.mapDef = a.mapdef;
                     }
                 });
             };

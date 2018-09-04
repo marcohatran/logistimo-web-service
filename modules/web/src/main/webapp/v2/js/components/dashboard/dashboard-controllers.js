@@ -898,6 +898,7 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
     function ($scope, $timeout, $sce, dashboardService, configService, domainCfgService, requestContext, $location, $q) {
 
         var mapColors, mapRange, workingPieColors = 0;
+        const FILTERS = {'e':['eTag','excludeTag'],'a':['mtype','at','status','period']};
 
         $scope.loading = true;
         $scope.mloading = true;
@@ -1003,7 +1004,7 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
             }
             $scope.initDefaults();
         });
-        $scope.toggleFilter = function (type, force) {
+        $scope.toggleFilter = function (type, force, restore) {
             var show;
             if (force != undefined) {
                 if (type == 'a') {
@@ -1020,6 +1021,11 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
                     $scope.showEFilter = !$scope.showEFilter;
                     show = $scope.showEFilter;
                 }
+                if(restore != undefined) {
+                    $scope.restoreFilters(type);
+                } else {
+                    $scope.copyFilters(type);
+                }
             }
             var d = document.getElementById('filter_' + type);
             if (show) {
@@ -1031,6 +1037,23 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
                 d.style.opacity = '0';
                 d.style.zIndex = '-1';
             }
+        };
+
+        $scope.copyFilters = function(type) {
+            $scope.filtersCopy = {'e':{},'a':{}};
+            angular.forEach(FILTERS[type],function(filter) {
+                $scope.filtersCopy[type][filter] = angular.copy($scope[filter]);
+            });
+        };
+
+        $scope.restoreFilters = function(type) {
+            angular.forEach($scope.filtersCopy[type], function(value, filter) {
+                $scope[filter] = angular.copy(value);
+            });
+        };
+
+        $scope.cancelFilter = function(type) {
+            $scope.toggleFilter(type,undefined,true);
         };
 
         $scope.initDefaults = function (skipCache) {
@@ -1288,7 +1311,7 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
                 }
                 o.showValue = o.value > 0 ? 1 : 0;
                 if(link != undefined) {
-                    o.link = "JavaScript: angular.element(document.getElementById('cid')).scope().constructMapData('" + link + "');";
+                    o.link = "JavaScript: callFunctionByName('constructMapData','" + link + "')";
                 }
                 d.push(o);
             }
@@ -1420,7 +1443,7 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
                                 if ($scope.dashboardView.level == "state") {
                                     filter = $scope.dashboardView.mTyNm + "_" + bd.label;
                                 }
-                                bd.link = "JavaScript: angular.element(document.getElementById('cid')).scope().addFilter('" + filter + "','" + level + "')";
+                                bd.link = "JavaScript: callFunctionByName('addFilter','" + filter + "','" + level + "')";
                             } else if($scope.mrValues.indexOf(event) != -1 && !$scope.iMan) {
                                 var ws = (parseInt(eventType, 10) + 1).toString();
                                 bd.link = "N-#/assets/all?ws=" + ws;
@@ -1521,7 +1544,7 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
                         o.toolText = o.label + ": " + value + " of " + den + " " + " assets";
                         o.showLabel = "1";
                         if (checkNotNullEmpty(value)) {
-                            o.link = "JavaScript: angular.element(document.getElementById('cid')).scope().addFilter('" + filter + "','" + level + "')";
+                            o.link = "JavaScript: callFunctionByName('addFilter','" + filter + "','" + level + "')";
                         }
                         mData.push(o);
                     }
@@ -1641,6 +1664,7 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
     function ($scope, $timeout, $sce, dashboardService, INVENTORY, configService, domainCfgService, requestContext, matService,$location,$window) {
 
         var mapColors, mapRange, invPieColors, invPieOrder, entPieColors, entPieOrder, tempPieColors, tempPieOrder;
+        const FILTERS = {'e':['eTag','excludeTag'],'i':['mtag','material','date','period'],'a':['asset','tperiod','exTempState']};
         $scope.mc = $scope.mr = undefined;
         $scope.predictiveDiv = false;
         $scope.openPred = function () {
@@ -1749,7 +1773,7 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
                     isOneDataAvailable = true;
                 }
                 o.showValue = o.value > 0 ? 1 : 0;
-                o.link = "JavaScript: angular.element(document.getElementById('cid')).scope().constructMapData('" + dd + "');";
+                o.link = "JavaScript: callFunctionByName('constructMapData','" + dd + "')";
                 d.push(o);
             }
             var subCaption = undefined;
@@ -1823,7 +1847,7 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
                 stackSeries.data[0].value = data;
                 stackSeries.data[0].color = barColor;
                 stackSeries.data[0].toolText = seriesName + ": " + ((data / denominator) * 100).toFixed(2) + "% (" + data + " of " + denominator + " " + $scope.resourceBundle['kiosks.lower'] + ")";
-                stackSeries.data[0].link = "JavaScript: angular.element(document.getElementById('cid')).scope().constructMapData('" + code + "');";
+                stackSeries.data[0].link = "JavaScript: callFunctionByName('constructMapData','" + code + "')";
             }
             return stackSeries;
         }
@@ -2307,7 +2331,7 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
                                 if ($scope.dashboardView.mLev == "state") {
                                     filter = $scope.dashboardView.mTyNm + "_" + bd.label;
                                 }
-                                bd.link = "JavaScript: angular.element(document.getElementById('cid')).scope().addFilter('" + filter + "','" + level + "')";
+                                bd.link = "JavaScript: callFunctionByName('addFilter','" + filter + "','" + level + "')";
                             } else if((event == '200' || event == '201' || event == '202' || event == 'n')) {
                                 var search = "?eid="+kid;
                                 if(checkNotNullEmpty($scope.mtag) && $scope.mtag instanceof Array) {
@@ -2319,7 +2343,7 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
                                         search += "&dur="+$scope.period;
                                     }
                                 }
-                                bd.link = "JavaScript: angular.element(document.getElementById('cid')).scope().drillDownInventory('" + search + "')";
+                                bd.link = "JavaScript: callFunctionByName('drillDownInventory','" + search + "')";
                             } else if(event == 'a' || event == 'i') {
                                 var fromDate = angular.copy($scope.date || $scope.today);
                                 fromDate.setDate(fromDate.getDate() - (($scope.period == "0" ? $scope.aper : $scope.period) || $scope.aper) + ($scope.date ? 1 : 0));
@@ -2418,7 +2442,7 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
                                         return val.text;}).join(',');
                             }
                             if(checkNotNullEmpty(search)){
-                                bd.link = "JavaScript: angular.element(document.getElementById('cid')).scope().drillDownInventory('" + search + "')";
+                                bd.link = "JavaScript: callFunctionByName('drillDownInventory','" + search + "')";
                             }
                             var found = false;
                             //Arrange data in descending order
@@ -2587,7 +2611,7 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
                         }
                         o.showLabel = "1";
                         if (checkNotNullEmpty(value)) {
-                            o.link = "JavaScript: angular.element(document.getElementById('cid')).scope().addFilter('" + filter + "','" + level + "')";
+                            o.link = "JavaScript: callFunctionByName('addFilter','" + filter + "','" + level + "')";
                         }
                         mData.push(o);
                     }
@@ -2775,7 +2799,7 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
             }
             $scope.initDefaults();
         });
-        $scope.toggleFilter = function(type,force) {
+        $scope.toggleFilter = function(type,force,restore) {
             var show;
             if (force != undefined) {
                 if (type == 'i') {
@@ -2797,6 +2821,11 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
                     $scope.showEFilter = !$scope.showEFilter;
                     show = $scope.showEFilter;
                 }
+                if(restore != undefined) {
+                    $scope.restoreFilters(type);
+                } else {
+                    $scope.copyFilters(type);
+                }
             }
             var d = document.getElementById('filter_' + type);
             if (show) {
@@ -2811,7 +2840,24 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
         };
         $scope.setShowMap = function(value) {
             $scope.showMap = value;
-        }
+        };
+
+        $scope.copyFilters = function(type) {
+            $scope.filtersCopy = {'e':{},'i':{},'a':{}};
+            angular.forEach(FILTERS[type],function(filter) {
+               $scope.filtersCopy[type][filter] = angular.copy($scope[filter]);
+            });
+        };
+
+        $scope.restoreFilters = function(type) {
+            angular.forEach($scope.filtersCopy[type], function(value, filter) {
+                $scope[filter] = angular.copy(value);
+            });
+        };
+
+        $scope.cancelFilter = function(type) {
+            $scope.toggleFilter(type,undefined,true);
+        };
     }
 ]);
 
@@ -3768,7 +3814,7 @@ domainControllers.controller('PredictiveController', ['$scope', '$timeout', '$sc
                                 if ($scope.dashboardView.mLev == "state") {
                                     filter = $scope.dashboardView.mTyNm + "_" + bd.label;
                                 }
-                                bd.link = "JavaScript: angular.element(document.getElementById('cid')).scope().addFilter('" + filter + "','" + level + "')";
+                                bd.link = "JavaScript: callFunctionByName('addFilter','" + filter + "','" + level + "')";
                             } else if(event == 'so' || event == 'n') {
                                 bd.link = "N-#/inventory/?eid="+kid;
                                 if(checkNotNullEmpty($scope.mtag) && $scope.mtag.length == 1) {
@@ -3935,7 +3981,7 @@ domainControllers.controller('PredictiveController', ['$scope', '$timeout', '$sc
                         o.toolText = o.label + ": " + value + " of " + den + " " + " inventory items";
                         o.showLabel = "1";
                         if (checkNotNullEmpty(value)) {
-                            o.link = "JavaScript: angular.element(document.getElementById('cid')).scope().addFilter('" + filter + "','" + level + "')";
+                            o.link = "JavaScript: callFunctionByName('addFilter','" + filter + "','" + level + "')";
                         }
                         mData.push(o);
                     }

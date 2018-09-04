@@ -28,15 +28,14 @@ import com.logistimo.api.feedback.TemplateEmailTask;
 import com.logistimo.api.models.FeedbackModel;
 import com.logistimo.config.models.ConfigurationException;
 import com.logistimo.config.models.GeneralConfig;
+import com.logistimo.constants.Constants;
+import com.logistimo.constants.SourceConstants;
+import com.logistimo.domains.entity.IDomain;
 import com.logistimo.domains.service.DomainsService;
-import com.logistimo.entities.entity.IKiosk;
-import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entity.Feedback;
 import com.logistimo.exception.ValidationException;
 import com.logistimo.jpa.Repository;
 import com.logistimo.logger.XLog;
-import com.logistimo.pagination.PageParams;
-import com.logistimo.pagination.Results;
 import com.logistimo.services.ServiceException;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
@@ -62,11 +61,9 @@ public class SubmitFeedbackAction {
 
   private UsersService usersService;
 
-  private EntitiesService entitiesService;
+  private Repository repository;
 
   private DomainsService domainsService;
-
-  private Repository repository;
 
   @Autowired
   public void setUsersService(UsersService usersService) {
@@ -74,14 +71,10 @@ public class SubmitFeedbackAction {
   }
 
   @Autowired
-  public void setEntitiesService(EntitiesService entitiesService) {
-    this.entitiesService = entitiesService;
-  }
-
-  @Autowired
   public void setDomainsService(DomainsService domainsService) {
     this.domainsService = domainsService;
   }
+
 
   @Autowired
   public void setRepository(Repository repository) {
@@ -104,9 +97,11 @@ public class SubmitFeedbackAction {
     }
   }
 
-  protected void setDomain(FeedbackModel model) {
+  protected void setDomain(FeedbackModel model) throws ServiceException {
     IUserAccount account = usersService.getUserAccount(model.getUserId());
     model.setDomainId(account.getDomainId());
+    IDomain domain = domainsService.getDomain(model.getDomainId());
+    model.setDomain(domain.getName());
   }
 
   protected String getFeedbackAddress() throws ConfigurationException {
@@ -115,10 +110,8 @@ public class SubmitFeedbackAction {
     return gc.getFeedbackEmail();
   }
 
-  protected String getEmailSubject(FeedbackModel model) throws ServiceException {
-    IUserAccount account = usersService.getUserAccount(model.getUserId());
-    String domainName = domainsService.getDomain(account.getDomainId()).getName();
-    return  "[feedback]" + " From " + account.getFullName() + " in " + domainName;
+  protected String getEmailSubject(FeedbackModel model) throws ServiceException,ConfigurationException {
+    return "[".concat(getAppName(model.getApp())).concat(" - feedback]");
   }
 
   protected void saveFeedback(FeedbackModel model) {
@@ -133,33 +126,20 @@ public class SubmitFeedbackAction {
     repository.save(feedback);
   }
 
-  protected Map<String,Object> convertToMap(FeedbackModel model) throws ServiceException {
+  protected Map<String,Object> convertToMap(FeedbackModel model) throws ServiceException,ConfigurationException {
 
     Map<String,Object> attributes = new HashMap<>();
     IUserAccount account = usersService.getUserAccount(model.getUserId());
     attributes.put("userId", account.getUserId());
-    attributes.put("domain", account.getDomainId());
+    attributes.put("domain", model.getDomain());
     attributes.put("userName", account.getFullName());
     attributes.put("message", model.getText());
     attributes.put("mPhone", account.getMobilePhoneNumber());
-    attributes.put("title", model.getTitle());
     String eMail = account.getEmail();
     if (eMail != null && !eMail.isEmpty()) {
       attributes.put("eMail", eMail);
     }
-    IKiosk userKiosk = null;
-    Results results = entitiesService.getKiosksForUser(account, null, new PageParams(1));
-    if (results.getNumFound() > 0) {
-      userKiosk = (IKiosk) results.getResults().get(0);
-    }
-    if (userKiosk != null) {
-      attributes.put("eName", userKiosk.getName());
-      attributes.put("village", userKiosk.getCity());
-      attributes.put("state", userKiosk.getState());
-      if (userKiosk.getDistrict() != null) {
-        attributes.put("district", userKiosk.getDistrict());
-      }
-    }
+    attributes.put("appName", getAppName(model.getApp()));
     return attributes;
   }
 
@@ -173,6 +153,17 @@ public class SubmitFeedbackAction {
     //template email task
     TemplateEmailTask emailTask = new TemplateEmailTask(VELOCITY_TEMPLATE_PATH, attributes, subject, address, model.getDomainId());
     EmailManager.enqueueEmailTask(emailTask);
+  }
+
+  protected String getAppName(String appId) throws ConfigurationException {
+    String appNameDisplay;
+    GeneralConfig gc = GeneralConfig.getInstance();
+    if(Constants.MMA_NAME.equals(appId)) {
+      appNameDisplay = gc.getMonitoringAppFeedbackText();
+    } else {
+      appNameDisplay = gc.getStoreAppFeedbackText();
+    }
+    return appNameDisplay;
   }
 
 }

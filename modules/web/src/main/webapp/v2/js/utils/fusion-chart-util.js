@@ -131,7 +131,7 @@ function getFCSeries(data, seriesno, name, type, isLinkDisabled, showvalue, colo
                     t.value = t.value.substr(0,dec);
                 }
                 if (!isLinkDisabled) {
-                    t.link = "JavaScript: angular.element(document.getElementById('cid')).scope().getDFChartData('" + data[i].label + "');";
+                    t.link = "JavaScript: callFunctionByName('getDFChartData','" + data[i].label + "')";
                 }
                 if (color) {
                     t.color = color;

@@ -247,9 +247,6 @@ public class UserAccount implements IUserAccount, ILocation,Serializable {
   private String talukId;
   @Persistent(column = "CITY_ID")
   private String cityId;
-  @Persistent
-  private Integer theme = Constants.GUI_THEME_DEFAULT;
-
   /**
    * Get the map in newer, compressed format
    */
@@ -316,6 +313,9 @@ public class UserAccount implements IUserAccount, ILocation,Serializable {
     }
     return userMap;
   }
+
+  @Persistent
+  private Integer theme = Constants.GUI_THEME_SAME_AS_IN_DOMAIN_CONFIGURATION;
 
   @Override
   public boolean equals(Object o) {

@@ -294,7 +294,7 @@ public class DomainConfig implements ILocation, Serializable {
 
   private boolean localLoginRequired = true;
 
-  private int storeAppTheme = Constants.GUI_THEME_BLACK;
+  private int storeAppTheme = Constants.GUI_THEME_DEFAULT;
 
   private String user;
   private String langPreference = "en";
@@ -867,7 +867,7 @@ public class DomainConfig implements ILocation, Serializable {
   }
 
   public String toJSONSring() throws ConfigurationException {
-    String jsonStr = null;
+    String jsonStr;
     try {
       JSONObject json = new JSONObject();
       // Get the capabilities to be disabled
@@ -1106,11 +1106,11 @@ public class DomainConfig implements ILocation, Serializable {
         json.put(SYNCHRONIZATION_BY_MOBILE, syncConfig.toJSONObject());
       }
       json.put(ENABLE_TWO_FACTOR_AUTHENTICATION, enableTwoFactorAuthentication);
+      json.put(STORE_APP_THEME, storeAppTheme);
       jsonStr = json.toString();
     } catch (JSONException e) {
       throw new ConfigurationException(e.getMessage());
     }
-
     return jsonStr;
   }
 

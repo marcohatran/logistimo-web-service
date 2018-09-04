@@ -594,7 +594,7 @@ userControllers.controller('UserDetailsController', ['$scope', 'userService', 'c
         $scope.eRoute = 'false';
         $scope.imageData='';
         $scope.loadimage=true;
-        $scope.theme = [{key: 0, value: $scope.resourceBundle['theme.black']}, {key: 1, value:$scope.resourceBundle['theme.red']}];
+        $scope.theme = [{key: 0, value: $scope.resourceBundle['default.caps']}, {key: 1, value:$scope.resourceBundle['sidebar.landing.screen']}];
 
         var isSupport = false;
         $scope.editRoute = function (value) {

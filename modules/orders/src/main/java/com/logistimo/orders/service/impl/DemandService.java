@@ -46,7 +46,6 @@ import com.logistimo.pagination.Results;
 import com.logistimo.proto.JsonTagsZ;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.impl.PMF;
-import com.logistimo.shipments.entity.IShipmentItemBatch;
 import com.logistimo.shipments.service.impl.ShipmentService;
 import com.logistimo.tags.dao.ITagDao;
 import com.logistimo.tags.entity.ITag;
@@ -203,10 +202,11 @@ public class DemandService implements IDemandService {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     JDOConnection conn = null;
     PreparedStatement statement = null;
+    CachedRowSet rowSet = null;
     try {
       conn = pm.getDataStoreConnection();
       java.sql.Connection sqlConn = (java.sql.Connection) conn;
-      CachedRowSet rowSet = new CachedRowSetImpl();
+      rowSet = new CachedRowSetImpl();
       statement = sqlConn.prepareStatement(query.toString());
       int i = 1;
       for (String p : parameters) {
@@ -223,6 +223,15 @@ public class DemandService implements IDemandService {
       }
       return res;
     } finally {
+
+      try {
+        if (rowSet != null) {
+          rowSet.close();
+        }
+      } catch (Exception ignored) {
+        xLogger.warn("Exception while closing rowSet", ignored);
+      }
+
       try {
         if (statement != null) {
           statement.close();

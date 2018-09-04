@@ -63,9 +63,6 @@ public class SubmitFeedbackActionTest {
   UsersService usersService;
 
   @Mock
-  EntitiesService entitiesService;
-
-  @Mock
   DomainsService domainsService;
 
   @Mock
@@ -78,9 +75,11 @@ public class SubmitFeedbackActionTest {
       protected String getFeedbackAddress() {
         return "test@email.com";
       }
+      protected String getAppName(String appId) {
+        return "Pulse";
+      }
     };
     action.setDomainsService(domainsService);
-    action.setEntitiesService(entitiesService);
     action.setUsersService(usersService);
     action.setRepository(repository);
   }
@@ -105,16 +104,6 @@ public class SubmitFeedbackActionTest {
     domain.setId(1l);
     domain.setName("Default");
     when(domainsService.getDomain(1l)).thenReturn(domain);
-    //mock entity service call
-    List<IKiosk> list =new ArrayList<>();
-    IKiosk userKiosk = new Kiosk();
-    userKiosk.setName("test");
-    userKiosk.setDistrict("test");
-    userKiosk.setCity("test");
-    userKiosk.setState("test");
-    list.add(userKiosk);
-    Results results = new Results(list,1,1);
-    when(entitiesService.getKiosksForUser(Mockito.<IUserAccount>any(),Mockito.<String>any(),Mockito.<PageParams>any())).thenReturn(results);
     action.invoke(model);
   }
 
@@ -133,13 +122,7 @@ public class SubmitFeedbackActionTest {
     account.setEmail("kumar@logistimo.com");
     account.setMobilePhoneNumber("8750986526");
     when(usersService.getUserAccount("kumarg")).thenReturn(account);
-    //mock domain service call
-    IDomain domain = new Domain();
-    domain.setId(1l);
-    domain.setName("Default");
-    when(domainsService.getDomain(1l)).thenReturn(domain);
-    //mock entity service call
-    when(entitiesService.getKiosksForUser(Mockito.<IUserAccount>any(),Mockito.<String>any(),Mockito.<PageParams>any())).thenThrow(new ServiceException("runtime excepttion"));
+    when(domainsService.getDomain(1l)).thenThrow(ServiceException.class);
     action.invoke(model);
   }
 

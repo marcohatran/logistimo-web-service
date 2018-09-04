@@ -352,9 +352,7 @@ function constructMapData(event, init, scope, INVENTORY, $sce, mapRange, mapColo
                 }
                 o.showLabel = "1";
                 if (checkNotNullEmpty(value)) {
-                    o.link =
-                        "JavaScript: angular.element(document.getElementById('cid')).scope().addFilter('" + filter +
-                        "','" + level + "')";
+                    o.link = "JavaScript: callFunctionByName('addFilter','" + filter + "','" + level + "')";
                 }
                 mData.push(o);
             }
@@ -436,9 +434,7 @@ function constructBarData(data, allData, event, addLink, level, scope, mapRange,
                         if (scope.dashboardView.mLev == "state") {
                             filter = scope.dashboardView.mTyNm + "_" + bd.oLabel;
                         }
-                        bd.link =
-                            "JavaScript: angular.element(document.getElementById('cid')).scope().addFilter('" + filter +
-                            "','" + level + "')";
+                        bd.link = "JavaScript: callFunctionByName('addFilter','" + filter + "','" + level + "')";
                     } else if ((event == '200' || event == '201' || event == '202' || event == 'n')) {
                         var search = "?eid=" + kid;
                         if (checkNotNullEmpty(scope.mtag) && scope.mtag instanceof Array) {
@@ -452,9 +448,7 @@ function constructBarData(data, allData, event, addLink, level, scope, mapRange,
                                 search += "&dur=" + scope.period;
                             }
                         }
-                        bd.link =
-                            "JavaScript: angular.element(document.getElementById('cid')).scope().drillDownInventory('" +
-                            search + "')";
+                        bd.link = "JavaScript: callFunctionByName('drillDownInventory','" + search + "')";
                     } else if (event == 'a' || event == 'i') {
                         var fromDate = angular.copy(scope.date || scope.today);
                         fromDate.setDate(fromDate.getDate() - (scope.period || scope.aper) + (scope.date ? 1 : 0));
@@ -562,9 +556,7 @@ function constructMatBarData(data, allData, event, scope, mapRange, mapColors, I
                             }).join(',');
                     }
                     if (checkNotNullEmpty(search)) {
-                        bd.link =
-                            "JavaScript: angular.element(document.getElementById('cid')).scope().drillDownInventory('" +
-                            search + "')";
+                        bd.link = "JavaScript: callFunctionByName('drillDownInventory','" + search + "')";
                     }
                     var found = false;
                     //Arrange data in descending order
@@ -751,8 +743,7 @@ function getReportFCSeries(data, seriesno, name, type, isLinkDisabled, filterSer
                     t.displayValue = roundNumber(t.value);
                 }
                 if (!isLinkDisabled && !(t.value == "0" || t.value == "0.0")) {
-                    t.link = "JavaScript: angular.element(document.getElementById('cid')).scope().getDFChartData('" +
-                        lData.label + "');";
+                    t.link = "JavaScript: callFunctionByName('getDFChartData','" + lData.label + "');";
                 }
                 if (color) {
                     t.color = color;

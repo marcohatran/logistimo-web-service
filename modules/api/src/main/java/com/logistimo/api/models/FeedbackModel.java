@@ -48,4 +48,6 @@ public class FeedbackModel implements Serializable {
   private String appVersion;
 
   private Long domainId;
+
+  private String domain;
 }

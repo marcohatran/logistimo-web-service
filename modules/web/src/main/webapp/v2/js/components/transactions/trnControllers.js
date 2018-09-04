@@ -1367,6 +1367,9 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
             material.disableButtons = true;
             $scope.openFormCount.returns = $scope.openFormCount.returns + 1;
         };
+        $scope.showCustomerInventory = function(transaction) {
+            return $scope.tranDomainConfig.showCInv && (transaction.type == 'i' || transaction.type == 't') && checkNotNullEmpty(transaction.dent) && checkNotNullEmpty(transaction.dent.enm) && transaction.dent.enm.length > 0 && transaction.ent.nm !== transaction.dent.enm && $scope.showDestInvPermission > 0;
+        };
     }
 ]);
 trnControllers.controller('transactions.MaterialController', ['$scope', 'trnService', 'invService',

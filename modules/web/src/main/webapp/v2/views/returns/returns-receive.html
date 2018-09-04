@@ -148,7 +148,7 @@
                                            ng-blur="validateQuantityReturn(item, $index, true)">
                                     <div ng-show="item.displayMeta">
                                         <span class="litetext text-left" ng-class="{'required' : statusMandatoryConfig.rism}"
-                                              ng-show="(!item.tm && isDef(matstatus)) || (item.tm && isDef(tempmatstatus))">
+                                              ng-show="(!item.tm && isDef(incomingMatstatus)) || (item.tm && isDef(incomingTempmatstatus))">
                                             {{resourceBundle['inventory.material.status']}}
                                         </span>
                                         <select ng-show="isDef(incomingMatstatus) && !item.tm" ng-model="item.received.material_status" class="form-control"

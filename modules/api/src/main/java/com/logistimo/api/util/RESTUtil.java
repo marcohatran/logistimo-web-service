@@ -170,8 +170,6 @@ public class RESTUtil {
 
 
   private static final String MINIMUM_RESPONSE_CODE_TWO = "2";
-  private static final short GUI_THEME_FROM_DOMAIN_CONFIGURATION = -1;
-
 
   @SuppressWarnings("unchecked")
   public static Results getInventoryData(Long kioskId, Locale locale,
@@ -1722,7 +1720,7 @@ public class RESTUtil {
       }
       // Get user specific gui theme configuration and add it to config
       int storeAppTheme = user.getStoreAppTheme();
-      if (storeAppTheme != GUI_THEME_FROM_DOMAIN_CONFIGURATION) {
+      if (storeAppTheme != Constants.GUI_THEME_SAME_AS_IN_DOMAIN_CONFIGURATION) {
         config.put(JsonTagsZ.GUI_THEME, storeAppTheme);
       }
       // Add kiosk tags, if configured in the domain

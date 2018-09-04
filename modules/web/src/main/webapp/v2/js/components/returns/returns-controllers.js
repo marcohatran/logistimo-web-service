@@ -194,31 +194,36 @@ function ReturnsItemInitializer($scope, trnService, $q) {
 
 function ReturnsItemValidator($scope, $timeout) {
 
-    $scope.validateQuantityReturn = (material, index, isReceive) => {
-        material.returnQuantity = isReceive ? material.received.received_quantity : material.new_return_quantity;
-        return $scope.validateQuantity(material, index, true, isReceive);
+    let getMessage = (fulfilled, pending, total) => {
+        let pendingReturns = pending || 0;
+        let returned = (total || 0) - pendingReturns;
+        let bundleName = 'return.quantity';
+        let parameters = [fulfilled];
+        if(returned > 0) {
+            bundleName = bundleName.concat(".returned");
+            parameters.push(returned);
+        }
+        if(pendingReturns > 0) {
+            bundleName = bundleName.concat(".pending");
+            parameters.push(pendingReturns);
+            parameters.push(pendingReturns > 1 ? $scope.resourceBundle['are']:$scope.resourceBundle['is']);
+        }
+        parameters.push(fulfilled - total);
+        return messageFormat($scope.resourceBundle[bundleName],...parameters);
     };
 
-    $scope.validateQuantityCreateReturn = (material, index) => {
-        let originalQuantity = material.returnedQuantity;
-        material.returnedQuantity = (material.returnedQuantity || 0) * 1 + (material.requested_return_quantity || 0) * 1;
-        let status = $scope.validateQuantity(material, index, true);
-        material.returnedQuantity = originalQuantity;
-        return status;
-    };
-
-    $scope.validateQuantity = (material, index, isReturn, isReceive) => {
+    let validateQuantity = (material, index, isCreate, isReceive) => {
         let redraw = material.displayMeta != material.returnQuantity > 0;
         material.displayMeta = material.returnQuantity > 0;
         let isInvalid = false;
         if (material.returnQuantity > 0) {
             if (material.returnQuantity > material.fq && !isReceive) {
-                showPopup($scope, material, material.id, messageFormat($scope.resourceBundle['return.quantity.cannot.exceed.received.quantity'], material.returnQuantity, material.fq), index, $timeout);
+                showPopup($scope, material, material.id, messageFormat($scope.resourceBundle['return.quantity.cannot.exceed.fulfilled.quantity'], material.returnQuantity, material.fq), index, $timeout);
                 isInvalid = true;
             } else if (material.returnQuantity > material.fq - material.returnedQuantity && !isReceive) {
                 showPopup($scope, material, material.id,
-                    messageFormat($scope.resourceBundle['return.quantity.cannot.exceed.remaining.return.quantity'],
-                        material.returnedQuantity, material.fq, (material.fq - material.returnedQuantity)), index, $timeout);
+                    getMessage(material.fq, material.requested_return_quantity, material.returnedQuantity)
+                    , index, $timeout);
                 isInvalid = true;
             } else if (checkNotNullEmpty(material.huName) && checkNotNullEmpty(material.huQty) &&
                 material.returnQuantity % material.huQty != 0) {
@@ -235,30 +240,29 @@ function ReturnsItemValidator($scope, $timeout) {
             }
             material.sinvalidPopup = material.sPopupMsg = material.rinvalidPopup = material.rPopupMsg = undefined;
             material.returnReason = angular.copy(material.defaultReturnReason);
-            if (isReturn) {
-                material.reason = material.returnReason;
-            }
+            material.reason = material.returnReason;
         }
         if (redraw) {
-            ReturnsValidator.redrawAllPopup($scope, $timeout);
+            ReturnsValidator.redrawAllPopup($scope, $timeout, isCreate, isReceive);
         }
         return isInvalid;
     };
 
-    $scope.validateBatchQuantityReturn = (material, batchMaterial, index, isReceive) => {
-        batchMaterial.returnQuantity = isReceive ? batchMaterial.received.received_quantity : batchMaterial.new_return_quantity;
-        return $scope.validateBatchQuantity(material, batchMaterial, index, true, isReceive);
+    //Used in detail and receive
+    $scope.validateQuantityReturn = (material, index, isReceive) => {
+        material.returnQuantity = isReceive ? material.received.received_quantity : material.new_return_quantity;
+        return validateQuantity(material, index, false, isReceive);
     };
 
-    $scope.validateBatchQuantityCreateReturn = (material, batchMaterial, index) => {
-        let originalQuantity = batchMaterial.returnedQuantity;
-        batchMaterial.returnedQuantity = (batchMaterial.returnedQuantity || 0) * 1 + (batchMaterial.requested_return_quantity || 0) * 1;
-        let status = $scope.validateBatchQuantity(material, batchMaterial, index, true);
-        batchMaterial.returnedQuantity = originalQuantity;
+    $scope.validateQuantityCreateReturn = (material, index) => {
+        let originalQuantity = material.returnedQuantity;
+        material.returnedQuantity = (material.returnedQuantity || 0) * 1 + (material.requested_return_quantity || 0) * 1;
+        let status = validateQuantity(material, index, true);
+        material.returnedQuantity = originalQuantity;
         return status;
     };
 
-    $scope.validateBatchQuantity = (material, batchMaterial, index, isReturn, isReceive) => {
+    let validateBatchQuantity = (material, batchMaterial, index, isCreate, isReceive) => {
         let redraw = batchMaterial.displayMeta != batchMaterial.returnQuantity > 0;
 
         batchMaterial.displayMeta = batchMaterial.returnQuantity > 0;
@@ -266,13 +270,12 @@ function ReturnsItemValidator($scope, $timeout) {
         if (batchMaterial.returnQuantity > 0) {
             if (batchMaterial.returnQuantity > batchMaterial.fq && !isReceive) {
                 showPopup($scope, batchMaterial, material.id + batchMaterial.id, messageFormat(
-                        $scope.resourceBundle['return.quantity.cannot.exceed.received.quantity'], batchMaterial.returnQuantity, batchMaterial.fq),
+                        $scope.resourceBundle['return.quantity.cannot.exceed.fulfilled.quantity'], batchMaterial.returnQuantity, batchMaterial.fq),
                     index, $timeout);
                 isInvalid = true;
             } else if (batchMaterial.returnQuantity > batchMaterial.fq - batchMaterial.returnedQuantity && !isReceive) {
-                showPopup($scope, batchMaterial, material.id + batchMaterial.id, messageFormat(
-                        $scope.resourceBundle['return.quantity.cannot.exceed.remaining.return.quantity'],
-                        batchMaterial.returnedQuantity, batchMaterial.fq, (batchMaterial.fq - batchMaterial.returnedQuantity)),
+                showPopup($scope, batchMaterial, material.id + batchMaterial.id,
+                    getMessage(batchMaterial.fq, batchMaterial.disp_requested_return_quantity, batchMaterial.returnedQuantity),
                     index, $timeout);
                 isInvalid = true;
             } else if (checkNotNullEmpty(material.huName) && checkNotNullEmpty(material.huQty) &&
@@ -290,16 +293,30 @@ function ReturnsItemValidator($scope, $timeout) {
             }
             batchMaterial.sinvalidPopup = batchMaterial.sPopupMsg = batchMaterial.rinvalidPopup = batchMaterial.rPopupMsg = undefined;
             batchMaterial.returnReason = angular.copy(batchMaterial.defaultReturnReason);
-            if (isReturn) {
-                batchMaterial.reason = batchMaterial.returnReason;
-            }
+            batchMaterial.reason = batchMaterial.returnReason;
         }
         if (redraw) {
-            ReturnsValidator.redrawAllPopup($scope, $timeout);
+            ReturnsValidator.redrawAllPopup($scope, $timeout, isCreate, isReceive);
         }
         return isInvalid;
     };
 
+    //Used in detail and receive
+    $scope.validateBatchQuantityReturn = (material, batchMaterial, index, isReceive) => {
+        batchMaterial.returnQuantity = isReceive ? batchMaterial.received.received_quantity : batchMaterial.new_return_quantity;
+        return validateBatchQuantity(material, batchMaterial, index, false, isReceive);
+    };
+
+    $scope.validateBatchQuantityCreateReturn = (material, batchMaterial, index) => {
+        let originalQuantity = batchMaterial.returnedQuantity;
+        batchMaterial.returnedQuantity = (batchMaterial.returnedQuantity || 0) * 1 + (batchMaterial.requested_return_quantity || 0) * 1;
+        batchMaterial.disp_requested_return_quantity = batchMaterial.requested_return_quantity;
+        let status = validateBatchQuantity(material, batchMaterial, index, true);
+        batchMaterial.returnedQuantity = originalQuantity;
+        return status;
+    };
+
+    //Used in detail and receive
     $scope.validateReasonReturn = (material, index) => {
         material.returnReason = material.reason;
         return $scope.validateReason(material, index);
@@ -312,6 +329,7 @@ function ReturnsItemValidator($scope, $timeout) {
         }
     };
 
+    //Used in detail and receive
     $scope.validateBatchReasonReturn = (material, batchMaterial, index) => {
         batchMaterial.returnReason = batchMaterial.reason;
         return $scope.validateBatchReason(material, batchMaterial, index);
@@ -324,13 +342,14 @@ function ReturnsItemValidator($scope, $timeout) {
         }
     };
 
+    //Used in detail and receive
     $scope.validateStatusReturn = (material, index, isTempStatus, isReceive) => {
         material.returnMaterialStatus = isReceive ? material.received.material_status : material.material_status;
         return $scope.validateStatus(material, index, isTempStatus, isReceive);
     };
 
-    $scope.validateStatus = (material, index, isTempStatus, isIncoming) => {
-        let mandatory = isIncoming ? $scope.statusMandatoryConfig.rism : $scope.statusMandatoryConfig.rosm;
+    $scope.validateStatus = (material, index, isTempStatus, isReceive) => {
+        let mandatory = isReceive ? $scope.statusMandatoryConfig.rism : $scope.statusMandatoryConfig.rosm;
         let isStatusDefined;
         if (isTempStatus) {
             isStatusDefined = checkNotNullEmpty($scope.tempmatstatus);
@@ -343,14 +362,15 @@ function ReturnsItemValidator($scope, $timeout) {
         }
     };
 
+    //Used in detail and receive
     $scope.validateBatchStatusReturn = (material, batchMaterial, index, isTempStatus, isReceive) => {
         material.id = material.material_id;
         batchMaterial.returnMaterialStatus = isReceive ? batchMaterial.received.material_status : batchMaterial.material_status;
         return $scope.validateBatchStatus(material, batchMaterial, index, isTempStatus, isReceive);
     };
 
-    $scope.validateBatchStatus = (material, batchMaterial, index, isTempStatus, isIncoming) => {
-        let mandatory = isIncoming ? $scope.statusMandatoryConfig.rism : $scope.statusMandatoryConfig.rosm;
+    $scope.validateBatchStatus = (material, batchMaterial, index, isTempStatus, isReceive) => {
+        let mandatory = isReceive ? $scope.statusMandatoryConfig.rism : $scope.statusMandatoryConfig.rosm;
         if (mandatory && checkNullEmpty(batchMaterial.returnMaterialStatus)) {
             showPopup($scope, batchMaterial, `s${isTempStatus ? 't' : ''}${material.id}${batchMaterial.id}`, $scope.resourceBundle['status.required'], index, $timeout, false, true, false);
             return true;
@@ -401,21 +421,6 @@ function ReturnsItemManager($scope, $timeout) {
 }
 
 var ReturnsValidator = {};
-ReturnsValidator.isAllValid = $scope => {
-    if (ReturnsValidator.isReturnQuantityAdded($scope, false)) {
-        if (ReturnsValidator.isReturnValid($scope, 'returnReason')) {
-            if (!$scope.statusMandatoryConfig.rosm || ReturnsValidator.isReturnValid($scope, 'returnMaterialStatus')) {
-                return true;
-            } else {
-                $scope.showWarning($scope.resourceBundle['return.material.status.required']);
-            }
-        } else {
-            $scope.showWarning($scope.resourceBundle['return.reason.required']);
-        }
-    } else {
-        $scope.showWarning($scope.resourceBundle['return.specify.quantity']);
-    }
-};
 ReturnsValidator.isReturnQuantityAdded = ($scope, isReturn) => {
     return $scope.returnItems.every(returnItem => {
         let batches = isReturn ? returnItem.batches : returnItem.returnBatches;
@@ -428,79 +433,82 @@ ReturnsValidator.isReturnQuantityAdded = ($scope, isReturn) => {
         }
     });
 };
-ReturnsValidator.isReturnValid = ($scope, field) => {
-    return !$scope.returnItems.some((returnItem, index) => {
-        if (checkNotNullEmpty(returnItem.returnBatches)) {
-            return returnItem.returnBatches.some((returnBatch, index)  => {
-                if (returnBatch.returnQuantity > 0) {
-                    if (field == 'returnReason') {
-                        return checkNotNullEmpty(returnItem.reasons) && returnItem.reasons.length > 1 &&
-                            $scope.validateBatchReason(returnItem, returnBatch, index);
-                    } else if (field == 'returnMaterialStatus') {
-                        if (returnItem.tm) {
-                            return checkNotNullEmpty($scope.tempmatstatus) &&
-                                $scope.validateBatchStatus(returnItem, returnBatch, index, true);
-                        } else {
-                            return checkNotNullEmpty($scope.matstatus) &&
-                                $scope.validateBatchStatus(returnItem, returnBatch, index);
-                        }
-                    }
-                }
-            });
-        } else {
-            if (field == 'returnReason') {
-                return checkNotNullEmpty(returnItem.reasons) && returnItem.reasons.length > 1 &&
-                    $scope.validateReason(returnItem, index);
-            } else if (field == 'returnMaterialStatus') {
-                if (returnItem.tm) {
-                    return checkNotNullEmpty($scope.tempmatstatus) && $scope.validateStatus(returnItem, index, true);
-                } else {
-                    return checkNotNullEmpty($scope.matstatus) && $scope.validateStatus(returnItem, index);
-                }
-            }
-        }
-    });
-};
-ReturnsValidator.redrawAllPopup = ($scope, $timeout, type) => {
+ReturnsValidator.redrawAllPopup = ($scope, $timeout, isCreate, isReceive, type) => {
     $scope.returnItems.forEach((returnItem, index) => {
         if (checkNotNullEmpty(returnItem.returnBatches)) {
             returnItem.returnBatches.forEach((returnBatch, index) => {
                 if (returnBatch.popupMsg) {
-                    type == 'show' ?
-                        $scope.validateBatchQuantity(returnItem, returnBatch, index) :
+                    if(type == 'show') {
+                        if(isCreate) {
+                            $scope.validateBatchQuantityCreateReturn(returnItem, returnBatch, index)
+                        } else {
+                            $scope.validateBatchQuantityReturn(returnItem, returnBatch, index, isReceive);
+                        }
+                    } else {
                         hidePopup($scope, returnBatch, returnItem.id + returnBatch.id, index, $timeout);
+                    }
                 }
                 if (returnBatch.sPopupMsg) {
-                    type == 'show' ?
-                        $scope.validateBatchStatus(returnItem, returnBatch, index, returnItem.tm) :
+                    if(type == 'show'){
+                        if(isCreate) {
+                            $scope.validateBatchStatus(returnItem, returnBatch, index, returnItem.tm);
+                        } else {
+                            $scope.validateBatchStatusReturn(returnItem, returnBatch, index, returnItem.tm, isReceive);
+                        }
+                    } else {
                         hidePopup($scope, returnBatch, `s${returnItem.tm ? 't' : ''}${returnItem.id}${returnBatch.id}`, index, $timeout, false, true);
+                    }
                 }
                 if (returnBatch.rPopupMsg) {
-                    type == 'show' ?
-                        $scope.validateBatchReason(returnItem, returnBatch, index) :
+                    if(type == 'show') {
+                        if(isCreate) {
+                            $scope.validateBatchReason(returnItem, returnBatch, index);
+                        } else {
+                            $scope.validateBatchReasonReturn(returnItem, returnBatch, index);
+                        }
+                    } else {
                         hidePopup($scope, returnBatch, `r${returnItem.id}${returnBatch.id}`, index, $timeout, false, false, true);
+                    }
                 }
             });
         } else {
             if (returnItem.popupMsg) {
-                type == 'show' ?
-                    $scope.validateQuantity(returnItem, index) :
+                if(type == 'show') {
+                    if(isCreate) {
+                        $scope.validateQuantityCreateReturn(returnItem, index)
+                    } else {
+                        $scope.validateQuantityReturn(returnItem, index, isReceive)
+                    }
+                } else {
                     hidePopup($scope, returnItem, returnItem.id, index, $timeout);
+                }
             }
             if (returnItem.sPopupMsg) {
-                type == 'show' ?
-                    $scope.validateStatus(returnItem, index, returnItem.tm) :
+                if(type == 'show') {
+                    if(isCreate) {
+                        $scope.validateStatus(returnItem, index, returnItem.tm);
+                    } else {
+                        $scope.validateStatusReturn(returnItem, index, returnItem.tm, isReceive);
+                    }
+                } else {
                     hidePopup($scope, returnItem, `s${returnItem.tm ? 't' : ''}${returnItem.id}`, index, $timeout);
+                }
             }
             if (returnItem.rPopupMsg) {
-                type == 'show' ?
-                    $scope.validateReason(returnItem, index) :
+                if(type == 'show') {
+                    if(isCreate) {
+                        $scope.validateReason(returnItem, index);
+                    } else {
+                        $scope.validateReasonReturn(returnItem, index);
+                    }
+                } else {
                     hidePopup($scope, returnItem, `r${returnItem.id}`, index, $timeout);
+                }
             }
         }
     });
     if (type != 'show') {
-        $timeout(() => ReturnsValidator.redrawAllPopup($scope, $timeout, 'show'), 0);
+        $timeout(() => ReturnsValidator.redrawAllPopup($scope, $timeout, isCreate, isReceive, 'show'), 0);
     }
 };
 
@@ -543,8 +551,59 @@ function CreateReturnsController($scope, $location, $timeout, $q, returnsService
         $scope.enableScroll();
     };
 
+    let isReturnValid = ($scope, field) => {
+        return !$scope.returnItems.some((returnItem, index) => {
+            if (checkNotNullEmpty(returnItem.returnBatches)) {
+                return returnItem.returnBatches.some((returnBatch, index)  => {
+                    if (returnBatch.returnQuantity > 0) {
+                        if (field == 'returnReason') {
+                            return checkNotNullEmpty(returnItem.reasons) && returnItem.reasons.length > 1 &&
+                                $scope.validateBatchReason(returnItem, returnBatch, index);
+                        } else if (field == 'returnMaterialStatus') {
+                            if (returnItem.tm) {
+                                return checkNotNullEmpty($scope.tempmatstatus) &&
+                                    $scope.validateBatchStatus(returnItem, returnBatch, index, true);
+                            } else {
+                                return checkNotNullEmpty($scope.matstatus) &&
+                                    $scope.validateBatchStatus(returnItem, returnBatch, index);
+                            }
+                        }
+                    }
+                });
+            } else {
+                if (field == 'returnReason') {
+                    return checkNotNullEmpty(returnItem.reasons) && returnItem.reasons.length > 1 &&
+                        $scope.validateReason(returnItem, index);
+                } else if (field == 'returnMaterialStatus') {
+                    if (returnItem.tm) {
+                        return checkNotNullEmpty($scope.tempmatstatus) && $scope.validateStatus(returnItem, index, true);
+                    } else {
+                        return checkNotNullEmpty($scope.matstatus) && $scope.validateStatus(returnItem, index);
+                    }
+                }
+            }
+        });
+    };
+
+    let isAllValid = $scope => {
+        if (ReturnsValidator.isReturnQuantityAdded($scope, false)) {
+            if (isReturnValid($scope, 'returnReason')) {
+                if (!$scope.statusMandatoryConfig.rosm || isReturnValid($scope, 'returnMaterialStatus')) {
+                    return true;
+                } else {
+                    $scope.showWarning($scope.resourceBundle['return.material.status.required']);
+                }
+            } else {
+                $scope.showWarning($scope.resourceBundle['return.reason.required']);
+            }
+        } else {
+            $scope.showWarning($scope.resourceBundle['return.specify.quantity']);
+        }
+    };
+
+
     $scope.create = () => {
-        if (ReturnsValidator.isAllValid($scope)) {
+        if (isAllValid($scope)) {
             $scope.showLoading();
             let request = {
                 returnItems: $scope.returnItems,
@@ -576,7 +635,7 @@ function BatchCreateReturnsController($scope) {
     let isAllValid = () => {
         let isInvalid = $scope.returnBatches.some((batchItem, index) => {
             if (batchItem.returnQuantity > 0) {
-                if ($scope.validateBatchQuantity($scope.item, batchItem, index)) {
+                if ($scope.validateBatchQuantityCreateReturn($scope.item, batchItem, index)) {
                     return true;
                 }
                 if ($scope.item.tm) {
@@ -841,7 +900,6 @@ function DetailReturnsController($scope, $uibModal, $timeout, $q, requestContext
                     let return_orderBatch =  return_orderBatches.get(returnBatch.batch_id);
                     return_orderBatch.total_return_quantity -= returnBatch.return_quantity;
                     return_orderBatch.requested_return_quantity -= returnBatch.return_quantity;
-                    //return_orderBatch.returnedQuantity = return_orderBatch.dispReturnedQuantity;
                     return_orderBatch.disp_requested_return_quantity = angular.copy(return_orderBatch.requested_return_quantity);
                 });
             }
@@ -1172,7 +1230,7 @@ function BatchDetailReturnsController($scope) {
                 }
             });
 
-            if (!found && checkNotNullEmpty(batchItem.new_return_quantity)) {
+            if (!found && checkNotNullEmpty(batchItem.new_return_quantity * 1)) {
                 returnItemBatches.push({
                     batch_id: batchItem.id,
                     expiry: batchItem.e,
@@ -1264,7 +1322,7 @@ function BatchReceiveReturnsController($scope) {
                 }
             });
 
-            if (!found && checkNotNullEmpty(batchItem.received) && checkNotNullEmpty(batchItem.received.received_quantity)) {
+            if (!found && checkNotNullEmpty(batchItem.received) && checkNotNullEmpty(batchItem.received.received_quantity * 1)) {
                 returnItemBatches.push({
                     batch_id: batchItem.id,
                     expiry: batchItem.e,

@@ -292,10 +292,11 @@ public class DashboardService implements IDashboardService {
     PersistenceManager pm = PMF.getReadOnlyPM().getPersistenceManager();
     JDOConnection conn = pm.getDataStoreConnection();
     Statement statement = null;
+    CachedRowSet rowSet = null;
     try {
       java.sql.Connection sqlConn = (java.sql.Connection) conn;
       statement = sqlConn.createStatement();
-      CachedRowSet rowSet = new CachedRowSetImpl();
+      rowSet = new CachedRowSetImpl();
       String query = null;
       switch (type) {
         case "inv":
@@ -367,6 +368,13 @@ public class DashboardService implements IDashboardService {
     } catch (SQLException e) {
       throw new SystemException(e);
     } finally {
+      if (rowSet != null) {
+        try {
+          rowSet.close();
+        } catch (Exception ignored) {
+          xLogger.warn("Exception while closing statement", ignored);
+        }
+      }
       try {
         if (statement != null) {
           statement.close();

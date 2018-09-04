@@ -65,20 +65,15 @@ public class AppDomainHandler implements Watcher, ZkDataMonitor.ZkNodeDataListen
     init();
   }
 
-  public static void start() {
+  public synchronized static void start() {
     if (_instance == null) {
-      synchronized (AppDomainHandler.class) {
-        if (_instance == null) {
-          try {
-            _instance = new AppDomainHandler();
-          } catch (Exception e) {
-            _logger.severe("Unrecoverable startup failure.. Failed to connect to  Zoo Keeper {0}",
-                e.getLocalizedMessage(), e);
-          }
-        }
+      try {
+        _instance = new AppDomainHandler();
+      } catch (Exception e) {
+        _logger.severe("Unrecoverable startup failure.. Failed to connect to  Zoo Keeper {0}",
+            e.getLocalizedMessage(), e);
       }
     }
-
   }
 
   public static void stop() {

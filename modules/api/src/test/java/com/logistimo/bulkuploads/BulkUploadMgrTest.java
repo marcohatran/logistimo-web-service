@@ -25,6 +25,7 @@ package com.logistimo.bulkuploads;
 
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.users.entity.IUserAccount;
+import com.logistimo.utils.FieldLimits;
 
 import org.junit.Test;
 
@@ -55,7 +56,7 @@ public class BulkUploadMgrTest {
   }
 
   @Test
-  public void testIsDateOfBirthValidForTrue() throws Exception {
+  public void testIsDateOfBirthValidForValidInputs() throws Exception {
     assertTrue(BulkUploadMgr.isDateOfBirthValid(LocalDate.of(2018, 8, 1), LocalDate.of(2018, 8, 1)));
     assertTrue(BulkUploadMgr.isDateOfBirthValid(LocalDate.of(2018,7,1),LocalDate.of(2018,8,1)));
     assertTrue(BulkUploadMgr.isDateOfBirthValid(LocalDate.of(2000,7,1),LocalDate.of(2018,8,1)));
@@ -64,10 +65,64 @@ public class BulkUploadMgrTest {
   }
 
   @Test
-  public void testIsDateOfBirthValidForFalse() throws Exception {
+  public void testIsDateOfBirthValidForInvalidInputs() throws Exception {
     assertFalse(BulkUploadMgr.isDateOfBirthValid(LocalDate.of(2018, 9, 1), LocalDate.of(2018, 8, 1)));
     assertFalse(BulkUploadMgr.isDateOfBirthValid(LocalDate.of(1918,7,1),LocalDate.of(2018,8,1)));
     assertFalse(BulkUploadMgr.isDateOfBirthValid(LocalDate.of(1918,7,31),LocalDate.of(2018,8,1)));
     assertFalse(BulkUploadMgr.isDateOfBirthValid(LocalDate.of(1917,8,1),LocalDate.of(2018,8,1)));
+  }
+
+  @Test
+  public void testIsOperationValidForInvalidInputs() throws Exception {
+    assertFalse(BulkUploadMgr.isOperationValid(""));
+    assertFalse(BulkUploadMgr.isOperationValid(null));
+    assertFalse(BulkUploadMgr.isOperationValid("invalid"));
+  }
+
+  @Test
+  public void testIsOperationValidForValidInputs() throws Exception {
+    assertTrue(BulkUploadMgr.isOperationValid(BulkUploadMgr.OP_ADD));
+    assertTrue(BulkUploadMgr.isOperationValid(BulkUploadMgr.OP_EDIT));
+    assertTrue(BulkUploadMgr.isOperationValid(BulkUploadMgr.OP_DELETE));
+  }
+
+  @Test
+  public void testIsPermissionValidForInvalidInput() throws Exception {
+    assertFalse(BulkUploadMgr.isPermissionValid("invalid"));
+  }
+  @Test
+  public void testIsPermissionValidForValidInput() throws Exception {
+    assertTrue(BulkUploadMgr.isPermissionValid(""));
+    assertTrue(BulkUploadMgr.isPermissionValid(IUserAccount.PERMISSION_DEFAULT));
+    assertTrue(BulkUploadMgr.isPermissionValid(IUserAccount.PERMISSION_VIEW));
+    assertTrue(BulkUploadMgr.isPermissionValid(IUserAccount.PERMISSION_ASSET));
+  }
+
+  @Test
+  public void testIsTokenExpiryValidForInvalidInput() throws Exception {
+    assertFalse(BulkUploadMgr.isTokenExpiryValid("invalid"));
+    assertFalse(BulkUploadMgr.isTokenExpiryValid("1000"));
+    assertFalse(BulkUploadMgr.isTokenExpiryValid("-1"));
+  }
+  @Test
+  public void testIsTokenExpiryValidForValidInput() throws Exception {
+    assertTrue(BulkUploadMgr.isTokenExpiryValid(""));
+    assertTrue(BulkUploadMgr.isTokenExpiryValid("0"));
+    assertTrue(BulkUploadMgr.isTokenExpiryValid("999"));
+    assertTrue(BulkUploadMgr.isTokenExpiryValid("500"));
+  }
+
+  @Test
+  public void testIsGuiThemeValidForValidInput() throws Exception {
+    assertTrue(BulkUploadMgr.isGuiThemeValid(""));
+    assertTrue(BulkUploadMgr.isGuiThemeValid(String.valueOf(FieldLimits.GUI_THEME_SAME_AS_IN_DOMAIN_CONFIGURATION)));
+    assertTrue(BulkUploadMgr.isGuiThemeValid(String.valueOf(FieldLimits.GUI_THEME_DEFAULT)));
+    assertTrue(BulkUploadMgr.isGuiThemeValid(String.valueOf(
+        FieldLimits.GUI_THEME_SIDEBAR_AND_LANDING_SCREEN)));
+  }
+
+  @Test
+  public void testIsGuiThemeValidForInvalidInput() throws Exception {
+    assertFalse(BulkUploadMgr.isGuiThemeValid("invalid"));
   }
 }

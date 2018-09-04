@@ -39,6 +39,7 @@ import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.EventSpec;
 import com.logistimo.config.models.EventsConfig;
 import com.logistimo.constants.CharacterConstants;
+import com.logistimo.constants.Constants;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.domains.utils.DomainsUtil;
 import com.logistimo.events.entity.IEvent;
@@ -56,6 +57,7 @@ import org.apache.commons.lang.StringUtils;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Date;
@@ -145,7 +147,7 @@ public class AssetManagementServiceImpl implements AssetManagementService {
         asset = (IAsset) DomainsUtil.addToDomain(asset, domainId, pm);
       } else {
         final Locale locale = SecurityUtils.getLocale();
-        ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+        ResourceBundle backendMessages = Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
         throw new ServiceException(
             asset.getSerialId() + "(" + asset.getVendorId() + ") " + backendMessages
                 .getString("error.alreadyexists"));
@@ -176,8 +178,8 @@ public class AssetManagementServiceImpl implements AssetManagementService {
     } catch (JDOObjectNotFoundException e) {
       xLogger.warn("getAsset: Asset {0} does not exist", assetId);
       final Locale locale = SecurityUtils.getLocale();
-      ResourceBundle messages = Resources.get().getBundle("Messages", locale);
-      ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+      ResourceBundle messages = Resources.get().getBundle(Constants.MESSAGES, locale);
+      ResourceBundle backendMessages = Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
       errMsg =
           messages.getString("asset") + " " + assetId + " " + backendMessages
               .getString("error.notfound");
@@ -268,7 +270,7 @@ public class AssetManagementServiceImpl implements AssetManagementService {
           sqlQuery.append(" and TYPE = ").append(assetType);
         }
 
-        Query cntQuery = pm.newQuery("javax.jdo.query.SQL", sqlQuery.toString());
+        Query cntQuery = pm.newQuery(Constants.JAVAX_JDO_QUERY_SQL, sqlQuery.toString());
         numFound = ((Long) ((List) cntQuery.execute()).iterator().next()).intValue();
         cntQuery.closeAll();
       } finally {
@@ -316,7 +318,7 @@ public class AssetManagementServiceImpl implements AssetManagementService {
   public List<IAsset> getAssetsByKiosk(Long kioskId, Integer assetType) throws ServiceException {
     if (kioskId == null || assetType == null) {
       final Locale locale = SecurityUtils.getLocale();
-      ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+      ResourceBundle backendMessages = Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
       throw new ServiceException(
           backendMessages.getString("kiosk") + " and AssetType are mandatory");
     }
@@ -765,7 +767,7 @@ public class AssetManagementServiceImpl implements AssetManagementService {
       }
 
       sqlQuery.append(" ORDER BY nsId asc LIMIT 0, 10");
-      Query query = pm.newQuery("javax.jdo.query.SQL", sqlQuery.toString());
+      Query query = pm.newQuery(Constants.JAVAX_JDO_QUERY_SQL, sqlQuery.toString());
       query.setClass(JDOUtils.getImplClass(IAsset.class));
       try {
         assets = (List<IAsset>) query.execute();
@@ -798,7 +800,7 @@ public class AssetManagementServiceImpl implements AssetManagementService {
         if (StringUtils.isNotBlank(regex)) {
           if (!asset.getSerialId().matches(regex)) {
             final Locale locale = SecurityUtils.getLocale();
-            ResourceBundle messages = Resources.get().getBundle("Messages", locale);
+            ResourceBundle messages = Resources.get().getBundle(Constants.MESSAGES, locale);
             String errorMessage = messages.getString("serialno.format").concat("\n").concat(
                 manc.serialFormatDescription);
             throw new IllegalArgumentException(errorMessage);
@@ -808,7 +810,7 @@ public class AssetManagementServiceImpl implements AssetManagementService {
         if (StringUtils.isNotBlank(regex)) {
           if (!asset.getModel().matches(regex)) {
             final Locale locale = SecurityUtils.getLocale();
-            ResourceBundle messages = Resources.get().getBundle("Messages", locale);
+            ResourceBundle messages = Resources.get().getBundle(Constants.MESSAGES, locale);
             String errorMessage = messages.getString("modelno.format").concat("\n").concat(
                 manc.modelFormatDescription);
             throw new IllegalArgumentException(errorMessage);
@@ -828,6 +830,7 @@ public class AssetManagementServiceImpl implements AssetManagementService {
     PersistenceManager pm = null;
     JDOConnection conn = null;
     Statement statement = null;
+    CachedRowSet rowSet = null;
     try {
       AssetSystemConfig config = AssetSystemConfig.getInstance();
       Map<Integer, AssetSystemConfig.Asset>
@@ -840,7 +843,7 @@ public class AssetManagementServiceImpl implements AssetManagementService {
       conn = pm.getDataStoreConnection();
       java.sql.Connection sqlConn = (java.sql.Connection) conn;
       statement = sqlConn.createStatement();
-      CachedRowSet rowSet = new CachedRowSetImpl();
+      rowSet = new CachedRowSetImpl();
       String
           query =
           "SELECT STAT, COUNT(1) COUNT FROM (SELECT ID, IF(ASF.STAT = 'tu', 'tu',(SELECT IF(MAX(ABNSTATUS) = 2, 'th', "
@@ -862,12 +865,20 @@ public class AssetManagementServiceImpl implements AssetManagementService {
     } catch (Exception e) {
       xLogger.severe("Error in fetching Temperature status for assets of entity {0}", entityId, e);
     } finally {
+
+      try{
+        if (rowSet != null) {
+          rowSet.close();
+        }
+      }catch(Exception ignored) {
+        xLogger.warn("Exception while closing rowSet", ignored);
+      }
       try {
         if (statement != null) {
           statement.close();
         }
       } catch (Exception ignored) {
-        xLogger.warn("Exception while closing statement", statement);
+        xLogger.warn("Exception while closing statement", ignored);
       }
 
       try {
@@ -901,7 +912,7 @@ public class AssetManagementServiceImpl implements AssetManagementService {
         sqlQuery.append(" AND lower(MODEL) like '%").append(term.toLowerCase()).append("%'");
       }
       sqlQuery.append(" LIMIT 0, 10");
-      query = pm.newQuery("javax.jdo.query.SQL", sqlQuery.toString());
+      query = pm.newQuery(Constants.JAVAX_JDO_QUERY_SQL, sqlQuery.toString());
       List modelList = (List) query.execute();
       List<String> models = new ArrayList<>(modelList.size());
       for (Object o : modelList) {
@@ -993,9 +1004,10 @@ public class AssetManagementServiceImpl implements AssetManagementService {
           .append(CharacterConstants.COMMA)
           .append(filters.get("TOKEN_SIZE"));
     }
+    ResultSet rs = null;
     try {
       statement = conn.createStatement();
-      ResultSet rs = statement.executeQuery(assetQuery.toString());
+      rs = statement.executeQuery(assetQuery.toString());
       while (rs.next()) {
         if (StringUtils.isNotEmpty(assetIds.toString())) {
           assetIds.append(CharacterConstants.COMMA);
@@ -1008,15 +1020,26 @@ public class AssetManagementServiceImpl implements AssetManagementService {
     } catch (Exception e) {
       xLogger.warn("Error while fetching asset ids for reports", e);
     } finally {
+      if (rs != null) {
+        try {
+          rs.close();
+        } catch (SQLException e) {
+          xLogger.warn("Exception while closing resultset", e);
+        }
+      }
       try {
-        pm.close();
-        conn.close();
         if (statement != null) {
           statement.close();
         }
       } catch (Exception e) {
         xLogger.warn("Exception while closing connection", e);
       }
+      try {
+        conn.close();
+      } catch (SQLException e) {
+        xLogger.warn("Exception while closing connection", e);
+      }
+      pm.close();
     }
     return null;
   }
@@ -1034,7 +1057,7 @@ public class AssetManagementServiceImpl implements AssetManagementService {
           .append("K.KIOSKID = KD.KIOSKID_OID AND KD.DOMAIN_ID = ").append(did)
           .append(CharacterConstants.C_BRACKET);
     }
-    query = pm.newQuery("javax.jdo.query.SQL", vidQuery.toString());
+    query = pm.newQuery(Constants.JAVAX_JDO_QUERY_SQL, vidQuery.toString());
     try {
       List<String> result = (List) query.execute();
       for (int i = 0; i < result.size(); i++) {
@@ -1072,7 +1095,7 @@ public class AssetManagementServiceImpl implements AssetManagementService {
     if (StringUtils.isNotEmpty(exclude)) {
       q.append(" AND TYPE != ").append(exclude);
     }
-    query = pm.newQuery("javax.jdo.query.SQL", q.toString());
+    query = pm.newQuery(Constants.JAVAX_JDO_QUERY_SQL, q.toString());
     try {
       List<Integer> result = (List) query.execute();
       for (int i = 0; i < result.size(); i++) {

@@ -185,6 +185,14 @@ public class TransactionExportHandler implements IExportHandler {
           totStr = messages.getString("order.shipment");
         } else if (ITransaction.TRACKING_OBJECT_TYPE_TRANSFER_SHIPMENT.equalsIgnoreCase(totStr)) {
           totStr = messages.getString("transfer.shipment");
+        } else if (ITransaction.TRACKING_OBJECT_TYPE_ISSUE_TRANSACTION.equals(totStr)) {
+          totStr = messages.getString("transactions.issue.upper");
+        } else if (ITransaction.TRACKING_OBJECT_TYPE_RECEIPT_TRANSACTION.equals(totStr)) {
+          totStr = messages.getString("transactions.receipt.upper");
+        } else if (ITransaction.TRACKING_OBJECT_TYPE_TRANSFER.equals(totStr)) {
+          totStr = messages.getString("transfer.returns");
+        } else if (ITransaction.TRACKING_OBJECT_TYPE_ORDER.equals(totStr)) {
+          totStr = messages.getString("order.returns");
         }
       }
       // Related entity
@@ -328,8 +336,11 @@ public class TransactionExportHandler implements IExportHandler {
       name = messages.getString("transactions.wastage");
     } else if (ITransaction.TYPE_TRANSFER.equals(transType)) {
       name = messages.getString("transactions.transfer");
+    } else if (ITransaction.TYPE_RETURNS_INCOMING.equals(transType)) {
+      name = messages.getString("transactions.return.incoming");
+    } else if(ITransaction.TYPE_RETURNS_OUTGOING.equals(transType)) {
+      name = messages.getString("transactions.return.outgoing");
     }
     return name;
   }
-
 }

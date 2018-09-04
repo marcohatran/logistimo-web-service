@@ -35,8 +35,6 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
     }
     if (checkNullEmpty(reportWidgets[report])) {
         reportWidgets[report] = [];
-        //reportMenus.push({id: id, report: report});
-        //reportMenus = sortByKey(reportMenus, 'report');
     }
     reportWidgets[report].push({id: id, subReport: subReport, widget: widget, helpFile: helpFilePath});
     reportWidgets = sortObject(reportWidgets);
@@ -1254,7 +1252,7 @@ function reportCoreFunction() {
                             t.displayValue = reportCoreFunction().roundNumber(t.value);
                         }
                         if (!isLinkDisabled && !(t.value == "0" || t.value == "0.0")) {
-                            t.link = "JavaScript: angular.element(document.getElementById('cid')).scope().getDFChartData('" + lData.label + "');";
+                            t.link = "JavaScript: callFunctionByName('getDFChartData','" + lData.label + "')";
                         }
                         if (color) {
                             t.color = color;
