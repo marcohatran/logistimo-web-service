@@ -368,13 +368,6 @@ public class DashboardService implements IDashboardService {
     } catch (SQLException e) {
       throw new SystemException(e);
     } finally {
-      if (rowSet != null) {
-        try {
-          rowSet.close();
-        } catch (Exception ignored) {
-          xLogger.warn("Exception while closing statement", ignored);
-        }
-      }
       try {
         if (statement != null) {
           statement.close();

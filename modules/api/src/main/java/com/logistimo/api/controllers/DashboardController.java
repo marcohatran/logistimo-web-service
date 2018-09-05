@@ -268,26 +268,37 @@ public class DashboardController {
         }
       }
 
-      ResultSet eventRes = dashboardService.getMainDashboardResults(domainId, filters, "inv");
-      ResultSet invRes = dashboardService.getMainDashboardResults(domainId, filters, "all_inv");
-      ResultSet actRes = dashboardService.getMainDashboardResults(domainId, filters, "activity");
-      ResultSet entRes = dashboardService.getMainDashboardResults(domainId, filters, "all_activity");
-      ResultSet tempRes = dashboardService.getMainDashboardResults(domainId, filters, "temperature");
       ResultSet predRes = null;
-      if (dc.getInventoryConfig() != null && dc.getInventoryConfig().showPredictions()) {
-        predRes = dashboardService.getMainDashboardResults(domainId, filters, "all_predictive");
+      try (
+          ResultSet eventRes = dashboardService.getMainDashboardResults(domainId, filters, "inv");
+          ResultSet invRes = dashboardService.getMainDashboardResults(domainId, filters, "all_inv");
+          ResultSet actRes =
+              dashboardService.getMainDashboardResults(domainId, filters, "activity");
+          ResultSet entRes =
+              dashboardService.getMainDashboardResults(domainId, filters, "all_activity");
+          ResultSet tempRes =
+              dashboardService.getMainDashboardResults(domainId, filters, "temperature");
+      ) {
+        if (dc.getInventoryConfig() != null && dc.getInventoryConfig().showPredictions()) {
+          predRes = dashboardService.getMainDashboardResults(domainId, filters, "all_predictive");
+        }
+        String colFilter;
+        if ("district".equals(level) || districtFilter != null) {
+          colFilter = "NAME";
+        } else if ("state".equals(level) || stateFilter != null) {
+          colFilter = "DISTRICT";
+        } else {
+          colFilter = "STATE";
+        }
+        model =
+            dashboardBuilder
+                .getMainDashBoardData(eventRes, invRes, actRes, entRes, tempRes, predRes,
+                    colFilter);
+      } finally {
+        if (predRes != null) {
+          predRes.close();
+        }
       }
-      String colFilter;
-      if ("district".equals(level) || districtFilter != null) {
-        colFilter = "NAME";
-      } else if ("state".equals(level) || stateFilter != null) {
-        colFilter = "DISTRICT";
-      } else {
-        colFilter = "STATE";
-      }
-      model =
-          dashboardBuilder
-              .getMainDashBoardData(eventRes, invRes, actRes, entRes, tempRes, predRes, colFilter);
       if (StringUtils.isBlank(filter) && stateFilter == null) {
         model.mTy = dc.getCountry();
         model.mLev = "country";
@@ -410,18 +421,22 @@ public class DashboardController {
         filters.put("eeTag", excludeETag);
       }
 
-      ResultSet soRes = dashboardService.getMainDashboardResults(domainId, filters, "pdb_stock_out");
-      ResultSet invRes = dashboardService.getMainDashboardResults(domainId, filters, "all_inv");
-
-      String colFilter;
-      if ("district".equals(level) || districtFilter != null) {
-        colFilter = "NAME";
-      } else if ("state".equals(level) || stateFilter != null) {
-        colFilter = "DISTRICT";
-      } else {
-        colFilter = "STATE";
+      try (
+          ResultSet soRes =
+              dashboardService.getMainDashboardResults(domainId, filters, "pdb_stock_out");
+          ResultSet invRes =
+              dashboardService.getMainDashboardResults(domainId, filters, "all_inv");
+      ) {
+        String colFilter;
+        if ("district".equals(level) || districtFilter != null) {
+          colFilter = "NAME";
+        } else if ("state".equals(level) || stateFilter != null) {
+          colFilter = "DISTRICT";
+        } else {
+          colFilter = "STATE";
+        }
+        model = dashboardBuilder.getPredictiveDashBoardData(soRes, invRes, colFilter);
       }
-      model = dashboardBuilder.getPredictiveDashBoardData(soRes, invRes, colFilter);
       if (StringUtils.isBlank(filter) && stateFilter == null) {
         model.mTy = dc.getCountry();
         model.mLev = "country";
@@ -588,10 +603,14 @@ public class DashboardController {
       domainCal.add(Calendar.SECOND, -1);
       filters.put("eDate", df.format(domainCal.getTime()));
 
-      ResultSet sessionRes = dashboardService.getMainDashboardResults(domainId, filters, "sdb_session");
-      ResultSet allSessionRes = dashboardService.getMainDashboardResults(domainId, filters, "sdb_all_session");
-
-      model = dashboardBuilder.getSessionData(allSessionRes, sessionRes, pdf.parse(date));
+      try (
+          ResultSet sessionRes =
+              dashboardService.getMainDashboardResults(domainId, filters, "sdb_session");
+          ResultSet allSessionRes =
+              dashboardService.getMainDashboardResults(domainId, filters, "sdb_all_session");
+      ) {
+        model = dashboardBuilder.getSessionData(allSessionRes, sessionRes, pdf.parse(date));
+      }
       if (StringUtils.isBlank(filter) && stateFilter == null) {
         model.mTy = dc.getCountry();
         model.mLev = "country";
@@ -636,10 +655,15 @@ public class DashboardController {
       if(mTag != null) {
         filter.put(Constants.MATERIAL_TAG, mTag);
       }
-      ResultSet rs = dashboardService.getMainDashboardResults(domainId, filter, ENT_INV_DASHBOARD);
-      ResultSet tempRs = dashboardService.getMainDashboardResults(domainId, filter, ENT_TEMP_DASHBOARD);
-      Integer total = dashboardService.getInvTotalCount(filter);
-      model = dashboardBuilder.getEntityInvTempDashboard(rs, tempRs, total);
+      try (
+          ResultSet rs =
+              dashboardService.getMainDashboardResults(domainId, filter, ENT_INV_DASHBOARD);
+          ResultSet tempRs =
+              dashboardService.getMainDashboardResults(domainId, filter, ENT_TEMP_DASHBOARD);
+      ) {
+        Integer total = dashboardService.getInvTotalCount(filter);
+        model = dashboardBuilder.getEntityInvTempDashboard(rs, tempRs, total);
+      }
       return model;
     } catch (Exception e) {
       xLogger.warn("Error while getting dashboard for entity:{0} ",eid,e);
@@ -705,17 +729,25 @@ public class DashboardController {
       if (StringUtils.isNotEmpty(eTag)) {
         filters.put("eTag", eTag);
       }
-      ResultSet eventRes = dashboardService.getMainDashboardResults(domainId, filters, "idb_events");
-      ResultSet invRes = dashboardService.getMainDashboardResults(domainId, filters, "idb_inv");
-      if (filters.containsKey("eTag")) {
-        filters.put("eTag", "'" + filters.get("eTag") + "'");
+      ResultSet tempRes = null;
+      try (
+          ResultSet eventRes =
+              dashboardService.getMainDashboardResults(domainId, filters, "idb_events");
+          ResultSet invRes = dashboardService.getMainDashboardResults(domainId, filters, "idb_inv");
+      ) {
+        if (filters.containsKey("eTag")) {
+          filters.put("eTag", "'" + filters.get("eTag") + "'");
+        }
+        tempRes = dashboardService.getMainDashboardResults(domainId, filters, "temperature");
+        model = dashboardBuilder.getInvDashBoardData(eventRes, invRes, tempRes,
+                StringUtils.isEmpty(state) ? "STATE"
+                    : StringUtils.isEmpty(district) ? "DISTRICT" : "ENTITY", sUser.getLocale(),
+                sUser.getTimezone());
+      } finally {
+        if (tempRes != null) {
+          tempRes.close();
+        }
       }
-      ResultSet tempRes = dashboardService.getMainDashboardResults(domainId, filters, "temperature");
-      model =
-          dashboardBuilder.getInvDashBoardData(eventRes, invRes, tempRes,
-              StringUtils.isEmpty(state) ? "STATE"
-                  : StringUtils.isEmpty(district) ? "DISTRICT" : "ENTITY", sUser.getLocale(),
-              sUser.getTimezone());
       if (StringUtils.isBlank(state)) {
         model.mTy =
             StringUtils.isBlank(dc.getState()) ? countryFilter : dc.getState().replace(" ", "");
