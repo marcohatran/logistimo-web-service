@@ -23,6 +23,8 @@
 
 package com.logistimo.users.entity;
 
+import com.logistimo.models.users.LoginStatus;
+
 import java.util.Date;
 
 import javax.jdo.annotations.IdGeneratorStrategy;
@@ -59,6 +61,12 @@ public class UserLoginHistory implements IUserLoginHistory {
 
   @Persistent
   private String v;
+
+  @Persistent
+  private String status;
+
+  @Persistent
+  private String referer;
 
   @Override
   public Integer getId() {
@@ -135,4 +143,22 @@ public class UserLoginHistory implements IUserLoginHistory {
     return o instanceof IUserLoginHistory && ((IUserLoginHistory) o).getUserId().equals(userId);
   }
 
+  @Override
+  public LoginStatus getStatus() {
+    return LoginStatus.valueOf(status);
+  }
+
+  public void setStatus(LoginStatus status) {
+    this.status = status.name();
+  }
+
+  @Override
+  public String getReferer() {
+    return referer;
+  }
+
+  @Override
+  public void setReferer(String referer) {
+    this.referer = referer;
+  }
 }

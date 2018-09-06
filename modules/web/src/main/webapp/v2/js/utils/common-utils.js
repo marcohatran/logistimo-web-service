@@ -342,11 +342,15 @@ showPopup = function ($scope, mat, matId, msg, index, $timeout, isAllocate, isSt
                     $scope.invalidPopup += 1;
                 }
             }
-            $timeout(function () {
-                $("[id='"+ matId + index + "']").trigger('showpopup');
-            }, 0);
+            triggerShowPopup($timeout, ''+ matId + index);
         }, 0);
     }
+};
+
+triggerShowPopup = function($timeout, id) {
+    $timeout(function () {
+        $("[id='"+ id + "']").trigger('showpopup');
+    }, 0);
 };
 
 hidePopup = function ($scope, mat, matId, index, $timeout, isAllocate, isStatus, isReason) {
@@ -368,12 +372,15 @@ hidePopup = function ($scope, mat, matId, index, $timeout, isAllocate, isStatus,
         if (isInvalid) {
             $scope.invalidPopup = $scope.invalidPopup <= 0 ? 0 : $scope.invalidPopup - 1;
         }
-        $timeout(function () {
-            $("[id='"+ matId + index + "']").trigger('hidepopup');
-
-        }, 0);
+        triggerHidePopup($timeout, '' + matId + index);
     }
 };
+
+triggerHidePopup = function($timeout, id) {
+    $timeout(function () {
+        $("[id='"+ id + "']").trigger('hidepopup');
+    }, 0);
+} ;
 
 
 redrawPopup = function($scope,matList,type,$timeout) {
@@ -409,7 +416,7 @@ function encodeURIParam(value,noEncode){
 
     return value;
 }
-function encodeURI (value) {
+function encodeURL (value) {
     value = value.replace("/", "_lslash_");
     return  encodeURIComponent(value);
 }
@@ -552,6 +559,10 @@ isNotPastDate = function(date) {
 
 function getFilterTitle(field,title,fieldDisplay){
     return checkNotNullEmpty(field)?title + ": " + (fieldDisplay?field[fieldDisplay]:field) + "   ":"";
+}
+
+function isCaptchaValid(captchaResponse) {
+    return checkNotNullEmpty(captchaResponse);
 }
 
 function messageFormat(text) {

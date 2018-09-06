@@ -295,8 +295,8 @@ userControllers.controller('UsersListController', ['$scope', 'userService', 'req
     }
 ]);
 
-userControllers.controller('AddUserController', ['$scope', 'userService', 'configService', 'entityService','domainCfgService', 'requestContext', '$window',
-    function ($scope, userService, configService, entityService, domainCfgService, requestContext, $window) {
+userControllers.controller('AddUserController', ['$scope', 'userService', 'configService', 'entityService','domainCfgService', 'requestContext', '$timeout','$sce',
+    function ($scope, userService, configService, entityService, domainCfgService, requestContext, $timeout,$sce) {
         $scope.user = {lgr:-1, theme: -1};
         $scope.user.st = undefined;
         $scope.user.cnt = undefined;
@@ -448,20 +448,22 @@ userControllers.controller('AddUserController', ['$scope', 'userService', 'confi
             }
         };
         $scope.validatePassword = function () {
-            if(checkNotNullEmpty($scope.user.pw)) {
-                var lengthError = false;
-                $scope.uPasswordInvalidType = "";
-                if($scope.user.pw.length < 6 || $scope.user.pw.length > 18){
-                    lengthError = true;
-                    $scope.uPasswordInvalidType = "l";
-                }
-                var passwordMismatch = false;
-                if(!lengthError && $scope.user.pw !== $scope.user.cpw) {
-                    passwordMismatch = true;
-                    $scope.uPasswordInvalidType = "m";
-                }
-                $scope.uPasswordInvalid = lengthError || passwordMismatch;
+            var state = validatePassword($scope.user.pw, $scope.user.ro, $scope.user.id);
+            $scope.password_state = $sce.trustAsHtml(state);
+            if(state) {
+                $scope.uPasswordInvalid = true;
+                triggerShowPopup($timeout, 'usrPw')
+            } else {
+                triggerHidePopup($timeout, 'usrPw');
+                $scope.uPasswordInvalid = $scope.user.pw != $scope.user.cpw;
+                $scope.uPasswordInvalidPwd = $scope.user.pw != $scope.user.cpw;
             }
+        };
+
+        $scope.resetPassword = function() {
+            triggerHidePopup($timeout, 'usrPw');
+            $scope.uPasswordInvalid = $scope.password_state = $scope.user.pw = $scope.user.cpw =
+                $scope.uVisited.pw = $scope.uVisited.cpw = undefined;
         };
 
         $scope.validateMobilePhone = function () {
@@ -470,6 +472,7 @@ userControllers.controller('AddUserController', ['$scope', 'userService', 'confi
         };
 
         $scope.validate = function () {
+            $scope.validatePassword();
             var valid = !($scope.uPasswordInvalid || checkNotNullEmpty($scope.invalidPhm)
             || checkNotNullEmpty($scope.invalidPhl) || $scope.uidStatus
             || $scope.ucidStatus || !$scope.uidLengthVerified || checkNullEmpty($scope.user.ro)
@@ -712,7 +715,7 @@ userControllers.controller('UserDetailsController', ['$scope', 'userService', 'c
             }
 
             var size = $scope.imageData.filesize;
-            if(size > 5 * 1024 * 1024) {
+            if(size > 10 * 1024 * 1024) {
                 $scope.showWarning ($scope.resourceBundle['uploadsizemessage']);
                 return false;
             }
@@ -720,7 +723,7 @@ userControllers.controller('UserDetailsController', ['$scope', 'userService', 'c
         };
         $scope.uploadImage = function(){
             $scope.showLoading();
-            mediaService.uploadImage($scope.ext,$scope.userId,$scope.imageData.base64).then(function(){
+            mediaService.uploadImage($scope.ext,$scope.userId,$scope.imageData).then(function(){
                 $scope.showSuccess($scope.resourceBundle['image.upload.success']);
                 mediaService.getDomainkeyImages($scope.userId).then(function(data){
                     $scope.userImages = data.data;
@@ -797,35 +800,29 @@ userControllers.controller('UserDetailsController', ['$scope', 'userService', 'c
         }
     }
 ]);
-userControllers.controller('UserPasswordController', ['$scope', 'userService', 'requestContext', '$window',
-    function ($scope, userService, requestContext, $window) {
+userControllers.controller('UserPasswordController', ['$scope', 'userService', 'requestContext', '$window','$sce','$timeout',
+    function ($scope, userService, requestContext, $window, $sce, $timeout) {
         $scope.userId = requestContext.getParam("userId");
         $scope.pType = requestContext.getParam("type");
         $scope.reset = $scope.pType == "reset";
         $scope.upw = {};
         $scope.sendType = "sms";
         $scope.dpwd = false;
+
         $scope.validatePassword = function () {
-            if(checkNotNullEmpty($scope.upw.pw)) {
-                var lengthError = false;
-                $scope.uPasswordInvalidType = "";
-                if($scope.upw.pw.length < 6 || $scope.upw.pw.length > 18) {
-                    lengthError = true;
-                    $scope.uPasswordInvalidType = "l";
-                }
-                var samePassError = false;
-                if($scope.upw.opw == $scope.upw.pw) {
-                    samePassError = true;
-                    $scope.uPasswordInvalidType = "s";
-                }
-                var passMismatch = false;
-                if(!lengthError && !samePassError && checkNotNullEmpty($scope.upw.cpw) && $scope.upw.pw !== $scope.upw.cpw) {
-                    passMismatch = true;
-                    $scope.uPasswordInvalidType = "m";
-                }
-                $scope.uPasswordInvalid = lengthError || samePassError || passMismatch;
+            var state = validatePassword($scope.upw.pw, $scope.user.ro, $scope.userId);
+            $scope.password_state = $sce.trustAsHtml(state);
+            if(state) {
+                triggerShowPopup($timeout, 'usrPw');
+                $scope.uPasswordInvalid = true;
+            } else {
+                triggerHidePopup($timeout, 'usrPw');
+                $scope.uPasswordInvalid = $scope.upw.pw != $scope.upw.cpw;
+                $scope.uPasswordInvalidPwd = $scope.upw.pw != $scope.upw.cpw;
             }
+
         };
+
         $scope.user = {};
         $scope.getUserDetails = function(){
             $scope.showLoading();

@@ -26,12 +26,16 @@ package com.logistimo.api.servlets.mobile;
 import com.logistimo.api.servlets.SgServlet;
 import com.logistimo.auth.SecurityConstants;
 import com.logistimo.auth.SecurityUtil;
+import com.logistimo.auth.service.AuthenticationService;
+import com.logistimo.auth.service.impl.AuthenticationServiceImpl;
 import com.logistimo.config.entity.IConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
 import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
 import com.logistimo.constants.SourceConstants;
 import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.logger.XLog;
+import com.logistimo.models.AuthRequest;
+import com.logistimo.models.users.UserDetails;
 import com.logistimo.proto.RestConstantsZ;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
@@ -78,7 +82,13 @@ public class ConfigDataServlet extends SgServlet {
     String responseText = null;
     try {
       UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
-      IUserAccount user = as.authenticateUser(userId, password, SourceConstants.MOBILE);
+      AuthenticationService aus = StaticApplicationContext.getBean(AuthenticationServiceImpl.class);
+      // Authenticate user
+      AuthRequest authRequest = AuthRequest.builder()
+          .userId(userId)
+          .password(password)
+          .loginSource(SourceConstants.MOBILE).build();
+      UserDetails user = aus.authenticate(authRequest);
       if (user == null) {
         responseText = "Invalid user name or password";
       } else if (SecurityUtil.compareRoles(user.getRole(), SecurityConstants.ROLE_DOMAINOWNER) < 0) {

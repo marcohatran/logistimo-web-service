@@ -40,9 +40,13 @@ import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.exception.ValidationException;
 import com.logistimo.logger.XLog;
+import com.logistimo.models.AuthRequest;
+import com.logistimo.models.users.UserDetails;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.proto.ProtocolException;
 import com.logistimo.proto.RestConstantsZ;
+import com.logistimo.security.BadCredentialsException;
+import com.logistimo.security.UserDisabledException;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
@@ -50,7 +54,6 @@ import com.logistimo.services.utils.ConfigUtil;
 import com.logistimo.twofactorauthentication.service.TwoFactorAuthenticationService;
 import com.logistimo.twofactorauthentication.vo.UserDevicesVO;
 import com.logistimo.users.entity.IUserAccount;
-import com.logistimo.users.entity.IUserToken;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.users.service.impl.UsersServiceImpl;
 import com.logistimo.utils.HttpUtil;
@@ -87,6 +90,7 @@ public class LoginServlet extends JsonRestServlet {
   private static final String USER_AGENT = "User-Agent";
   private static final String DEVICE_DETAILS = "Device-Details";
   private static final String DEVICE_PROFILE = "Device-Profile";
+  private static final String REFERER = "referer";
   private static final String START = "start";
   private static final String FORGOT_PASSWRD = "fp";
   private static final String DEFAULT_VERSION = "01";
@@ -99,17 +103,6 @@ public class LoginServlet extends JsonRestServlet {
   private static final XLog xLogger = XLog.getLog(LoginServlet.class);
   private static boolean isGAE = ConfigUtil.getBoolean("gae.deployment", true);
 
-  // Set the user agent string in the user object, if it has changed; return true, if there is a change, else false if not change to user-agent string
-  private static boolean setUserAgent(IUserAccount user, String userAgentStr) {
-    String curUserAgent = user.getUserAgent();
-    if (curUserAgent != null && curUserAgent.equals(userAgentStr)) {
-      return false; // will not set it, given no change
-    } else {
-      user.setPreviousUserAgent(curUserAgent);
-      user.setUserAgent(userAgentStr);
-    }
-    return true; // implies userAgent changed
-  }
 
   public void processGet(HttpServletRequest req, HttpServletResponse resp,
                          ResourceBundle backendMessages, ResourceBundle messages)
@@ -148,11 +141,11 @@ public class LoginServlet extends JsonRestServlet {
     Long domainId = null;
     boolean forceIntegerForStock = false;
     String jsonString = null;
-    boolean onlyAuthenticate = false;
     Date start = null;
+    String locale;
+    boolean onlyAuthenticate = false;
     // whether min. data is to be sent back - "1" = only kiosk info., in case of multiple kiosks; "2" = same as "1", but also do NOT send related kiosks info. (for each kiosk); null implies send back everything (kiosk info., materials and related kiosk info.)
     String minResponseCode = req.getParameter(RestConstantsZ.MIN_RESPONSE);
-    String locale;
     // Getting authentication token for user
     String authToken = req.getHeader(Constants.TOKEN);
     int actionInitiator = getActionInitiator(req);
@@ -213,60 +206,37 @@ public class LoginServlet extends JsonRestServlet {
         }
       }
     } else {
-      // Get request parameters
-      String userId = req.getParameter(RestConstantsZ.USER_ID);
-      String password = req.getParameter(RestConstantsZ.PASSWRD);
-      String version = req.getParameter(RestConstantsZ.VERSION);
-      locale = req.getParameter(RestConstantsZ.LOCALE);
+      String appVersion = null;
       String onlyAuthenticateStr = req.getParameter(RestConstantsZ.ONLY_AUTHENTICATE);
       onlyAuthenticate = (onlyAuthenticateStr != null);
-
-      // Get the user-agent and device details from header, if available
-      String userAgentStr = req.getHeader(USER_AGENT);
-      String deviceDetails = req.getHeader(DEVICE_DETAILS);
-      String deviceProfile = req.getHeader(DEVICE_PROFILE);
-      if (userAgentStr == null) {
-        userAgentStr = "";
-      }
-      // Add device details to user-agent, if sent
-      if (deviceDetails != null && !deviceDetails.isEmpty()) {
-        userAgentStr += " [Device-details: " + deviceDetails + "]";
-      }
-      if (deviceProfile != null && !deviceProfile.isEmpty()) {
-        userAgentStr += " [Device-Profile: " + deviceProfile + "]";
-      }
+      locale = req.getParameter(RestConstantsZ.LOCALE);
       // Get locale
       if (locale == null || locale.isEmpty()) {
         locale = Constants.LANG_DEFAULT;
       }
-      // Get the user's IP address, if available
-      String ipAddress = isGAE ? req.getRemoteAddr() : req.getHeader("X-REAL-IP");
-      xLogger.fine("ip: {0}, headers: {1}", ipAddress, req.getHeader("X-Forwarded-For"));
-      // Init. flags
-      String appVersion = null;
       // Get the start date and time
       String startDateStr = req.getParameter(START);
+      AuthRequest authRequest = buildAuthRequest(req);
       try {
         usersService = StaticApplicationContext.getBean(UsersServiceImpl.class);
+        authenticationService = StaticApplicationContext.getBean(AuthenticationService.class);
         // Check if user ID and password is sent as Basic auth. header
-        SecurityMgr.Credentials creds = SecurityMgr.getUserCredentials(req);
-        if (creds != null) {
-          userId = creds.userId;
-          password = creds.password;
-        }
-        if (userId != null && password != null) { // no problems with userId/password so far
+        if (authRequest.getUserId() != null && authRequest.getPassword() != null) { // no problems with userId/password so far
           // Authenticate user
-          user = usersService.authenticateUser(userId, password, SourceConstants.MOBILE);
+          UserDetails userDetails = authenticationService.authenticate(authRequest);
           // Get user details
-          if (user != null) {
+          user = usersService.getUserAccount(authRequest.getUserId());
+          if (userDetails != null) {
+            //adding token and token expiry
+            setResponseHeaders(resp,userDetails);
             // Switch the user to another host, if that is enabled
             if (status && RESTUtil.checkIfLoginShouldNotBeAllowed(user, resp, req)) {
-              xLogger.warn("Switching user {0} to new host...", userId);
+              xLogger.warn("Switching user {0} to new host...", authRequest.getUserId());
               return;
             }
             String successMsg = null;
             if(!skipTwoFactorAuthentication) {
-               successMsg = authenticateUserByCredentials(user, authenticationService, req);
+              successMsg = authenticateUserByCredentials(user, authenticationService, req);
             }
             if(StringUtils.isNotBlank(successMsg)) {
               xLogger.info(successMsg);
@@ -274,38 +244,26 @@ public class LoginServlet extends JsonRestServlet {
               message = successMsg;
               isTwoFAInitiated = true;
             } else {
-              appVersion = user.getAppVersion();
-              domainId = user.getDomainId();
-              setUserAgent(user, userAgentStr);
-              user.setIPAddress(ipAddress);
-              user.setAppVersion(version);
-              // Set the last reconnected time for user (same as last login time)
-              user.setLastMobileAccessed(user.getLastLogin());
-              // Update with user's locale
-              locale = user.getLocale().toString();
-              //to store the history of user login's
-              usersService.updateUserLoginHistory(userId, SourceConstants.MOBILE, userAgentStr,
-                  ipAddress, new Date(), version);
-              // Get the resource bundle according to the user's login
+            domainId = user.getDomainId();
+            // Get the resource bundle according to the user's login
+            try {
+              backendMessages = Resources.get().getBundle("BackendMessages", user.getLocale());
+            } catch (MissingResourceException e) {
+              xLogger
+                  .severe("Unable to get resource bundles BackendMessages for locale {0}", locale);
+            }
+            if (startDateStr != null && !startDateStr.isEmpty()) {
+              // Convert the start string to a Date format.
               try {
+                start =
+                    LocalDateUtil
+                        .parseCustom(startDateStr, Constants.DATETIME_FORMAT, user.getTimezone());
+              } catch (ParseException pe) {
+                status = false;
                 backendMessages = Resources.get().getBundle("BackendMessages", user.getLocale());
-              } catch (MissingResourceException e) {
-                xLogger
-                    .severe("Unable to get resource bundles BackendMessages for locale {0}",
-                        locale);
-              }
-              if (startDateStr != null && !startDateStr.isEmpty()) {
-                // Convert the start string to a Date format.
-                try {
-                  start =
-                      LocalDateUtil
-                          .parseCustom(startDateStr, Constants.DATETIME_FORMAT, user.getTimezone());
-                } catch (ParseException pe) {
-                  status = false;
-                  backendMessages = Resources.get().getBundle("BackendMessages", user.getLocale());
-                  message = backendMessages.getString("error.invalidstartdate");
-                  xLogger.severe("Exception while parsing start date. Exception: {0}, Message: {1}",
-                      pe.getClass().getName(), pe.getMessage());
+                message = backendMessages.getString("error.invalidstartdate");
+                xLogger.severe("Exception while parsing start date. Exception: {0}, Message: {1}",
+                    pe.getClass().getName(), pe.getMessage());
                 }
               }
             }
@@ -319,18 +277,21 @@ public class LoginServlet extends JsonRestServlet {
               xLogger
                   .severe("Unable to get resource bundles BackendMessages for locale {0}", locale);
             }
-            xLogger.warn("Unable to authenticate user {0}: {1}", userId, message);
+            xLogger.warn("Unable to authenticate user {0}: {1}", authRequest.getUserId(), message);
           }
+          appVersion = authRequest.getSourceVersion();
+          // FOR BACKWARD COMPATIBILITY: check whether stock has to be sent back as integer (it is float beyond mobile app. version 1.2.0)
+          forceIntegerForStock = RESTUtil.forceIntegerForStock(appVersion);
         } else {
           status = false;
           message = backendMessages.getString("error.invalidusername");
         }
-      } catch (ObjectNotFoundException e) {
-        xLogger.warn("No user found with ID: {0}", userId);
+      } catch (BadCredentialsException | UserDisabledException e) {
+        xLogger.warn("Issue with login for user: {0}", authRequest.getUserId(),e);
         status = false;
         message = backendMessages.getString("error.invalidusername");
       } catch (ServiceException e) {
-        xLogger.severe("Service Exception during login: {0}", e.getMessage());
+        xLogger.severe("Service Exception during login: {0}", e.getMessage(),e);
         status = false;
         message = backendMessages.getString("error.systemerror");
       } catch (MessageHandlingException e) {
@@ -342,7 +303,7 @@ public class LoginServlet extends JsonRestServlet {
         status = false;
         message = "Error while generating authentication key for user: " + user.getDomainId();
       } catch (ValidationException e) {
-        String msg = "Invalid one time password entered for user " + userId;
+        String msg = "Invalid one time password entered for user " + user.getUserId();
         xLogger.severe(msg);
         status = false;
         message = msg;
@@ -351,25 +312,19 @@ public class LoginServlet extends JsonRestServlet {
       //Generate authentication token and update the UserTokens table with userId, Token and Expires
 
         try {
-         if(!status){
-           jsonString =
-               RESTUtil.getJsonOutputAuthenticate(status, user, message, null, minResponseCode,
-                   onlyAuthenticate, forceIntegerForStock, start, null, pageParams, true);
-           if(isTwoFAInitiated) {
-             sendJsonResponse(resp, HttpServletResponse.SC_OK, jsonString);
-           } else {
-             sendJsonResponse(resp, HttpServletResponse.SC_UNAUTHORIZED, jsonString);
-           }
+          if(!status){
+            jsonString =
+                RESTUtil.getJsonOutputAuthenticate(status, user, message, null, minResponseCode,
+                    onlyAuthenticate, forceIntegerForStock, start, null, pageParams, true);
+            if(isTwoFAInitiated) {
+              sendJsonResponse(resp, HttpServletResponse.SC_OK, jsonString);
+            } else {
+              sendJsonResponse(resp, HttpServletResponse.SC_UNAUTHORIZED, jsonString);
+            }
             return;
           }
-          authenticationService = StaticApplicationContext.getBean(AuthenticationService.class);
-          generateUserToken(resp, authenticationService, userId);
-        } catch (ObjectNotFoundException e) {
-          xLogger.warn("No user found with ID: {0}", userId);
-          status = false;
-          message = backendMessages.getString("error.invalidusername");
         } catch (ServiceException|ProtocolException e) {
-          xLogger.severe("Service Exception during login: {0}", userId, e);
+          xLogger.severe("Service Exception during login: {0}", e.getMessage(), e);
           status = false;
           message = backendMessages.getString("error.systemerror");
         }
@@ -380,23 +335,22 @@ public class LoginServlet extends JsonRestServlet {
         forceIntegerForStock = RESTUtil.forceIntegerForStock(appVersion);
         // Persist the user account object, to store the changes, esp. last reconnected time
         // NOTE: we are doing this post sending response, so that respone time is not impacted
-        if (user != null) {
-          try {
-            Date loginTime = user.getLastLogin();
-            usersService.updateMobileLoginFields(user);
-            if(!skipTwoFactorAuthentication) {
-              if (StringUtils.isNotBlank(req.getParameter(RestConstantsZ.OTP))) {
-                createUserDeviceInformation(SourceConstants.MOBILE, userId, loginTime, resp);
-              } else {
-                String key = TwoFactorAuthenticationUtil.generateAuthKey(userId);
-                resp.setHeader(key, req.getHeader(key));
-              }
+      if (user != null) {
+        try {
+          Date loginTime = user.getLastLogin();
+          if(!skipTwoFactorAuthentication) {
+            if (StringUtils.isNotBlank(req.getParameter(RestConstantsZ.OTP))) {
+              createUserDeviceInformation(SourceConstants.MOBILE, user.getUserId(), loginTime, resp);
+            } else {
+              String key = TwoFactorAuthenticationUtil.generateAuthKey(user.getUserId());
+              resp.setHeader(key, req.getHeader(key));
             }
-          } catch (Exception e) {
-            xLogger.severe("{0} when trying to store user account object {1} in domain {2}: {3}",
-                e.getClass().getName(), userId, domainId, e.getMessage());
           }
+        } catch (Exception e) {
+          xLogger.severe("{0} when trying to store user account object {1} in domain {2}: {3}",
+              e.getClass().getName(), user.getUserId(), domainId, e.getMessage());
         }
+      }
       }
       Date lastModified = new Date();
       Optional<Date> modifiedSinceDate = Optional.empty();
@@ -427,12 +381,66 @@ public class LoginServlet extends JsonRestServlet {
           }
         }
       }
-
       if (jsonString != null) {
         HttpUtil.setLastModifiedHeader(resp, lastModified);
         sendJsonResponse(resp, HttpServletResponse.SC_OK, jsonString);
       }
 
+  }
+
+  private AuthRequest buildAuthRequest (HttpServletRequest req) {
+
+    // Get request parameters
+    String userId = req.getParameter(RestConstantsZ.USER_ID);
+    String password = req.getParameter(RestConstantsZ.PASSWRD);
+    String version = req.getParameter(RestConstantsZ.VERSION);
+    // Get the user-agent and device details from header, if available
+    String userAgentStr = req.getHeader(USER_AGENT);
+    String deviceDetails = req.getHeader(DEVICE_DETAILS);
+    String deviceProfile = req.getHeader(DEVICE_PROFILE);
+    String referer = req.getHeader(REFERER);
+    if (userAgentStr == null) {
+      userAgentStr = "";
+    }
+    // Add device details to user-agent, if sent
+    if (deviceDetails != null && !deviceDetails.isEmpty()) {
+      userAgentStr += " [Device-details: " + deviceDetails + "]";
+    }
+    if (deviceProfile != null && !deviceProfile.isEmpty()) {
+      userAgentStr += " [Device-Profile: " + deviceProfile + "]";
+    }
+    // Get the user's IP address, if available
+    String ipAddress = isGAE ? req.getRemoteAddr() : req.getHeader("X-REAL-IP");
+    xLogger.fine("ip: {0}, headers: {1}", ipAddress, req.getHeader("X-Forwarded-For"));
+    // Init. flags
+    // Check if user ID and password is sent as Basic auth. header
+    SecurityMgr.Credentials creds = SecurityMgr.getUserCredentials(req);
+    if (creds != null) {
+      userId = creds.userId;
+      password = creds.password;
+    }
+
+    AuthRequest authRequest = AuthRequest.builder()
+        .userId(userId)
+        .password(password)
+        .ipAddress(ipAddress)
+        .loginSource(SourceConstants.MOBILE)
+        .referer(referer)
+        .sourceVersion(version)
+        .userAgent(userAgentStr).build();
+    return authRequest;
+  }
+
+  private void setResponseHeaders(HttpServletResponse response, UserDetails userDetails) {
+    if (userDetails.getToken() != null) {
+      response.addHeader(Constants.TOKEN, userDetails.getToken());
+      if (userDetails.getTokenExpiry() != null) {
+        response.addHeader(Constants.EXPIRES, String.valueOf(userDetails.getTokenExpiry()));
+      }
+    }
+    if (userDetails.getToken() != null) {
+      response.addHeader(Constants.REQ_ID, userDetails.getRequestId());
+    }
   }
 
   public void generateNewPassword(HttpServletRequest req, HttpServletResponse resp,
@@ -631,13 +639,5 @@ public class LoginServlet extends JsonRestServlet {
     response.setHeader(TwoFactorAuthenticationUtil.generateAuthKey(userId), key);
   }
 
-  private void generateUserToken(HttpServletResponse response,
-                                 AuthenticationService authenticationService, String userId)
-      throws ServiceException {
-    IUserToken token = authenticationService.generateUserToken(userId, SourceConstants.MOBILE);
-    if (token != null) {
-      response.setHeader(Constants.TOKEN, token.getRawToken());
-      response.setHeader(Constants.EXPIRES, String.valueOf(token.getExpires().getTime()));
-    }
-  }
+
 }

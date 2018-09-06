@@ -29,6 +29,7 @@ import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.SourceConstants;
 import com.logistimo.context.StaticApplicationContext;
+import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
@@ -40,6 +41,7 @@ import org.springframework.util.StringUtils;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * Created by charan on 09/03/17.
@@ -54,26 +56,33 @@ public class AuthenticationUtil {
     return usersService.getUserAccount(token.getUserId());
   }
 
-  public static void authenticateTokenAndSetSession(HttpServletRequest req)
+  public static void authenticateTokenAndSetSession(HttpServletRequest req,
+                                                    HttpServletResponse response)
       throws ServiceException {
     String authToken = getToken(req);
     AuthenticationService aus = StaticApplicationContext.getBean(AuthenticationService.class);
-    IUserToken token = aus.authenticateToken(authToken, getSource(req));
-    UsersService usersService = StaticApplicationContext.getBean(UsersService.class);
-    SecurityMgr.setSessionDetails(usersService.getUserAccount(token.getUserId()));
-    SecureUserDetails userDetails = SecurityUtils.getUserDetails();
-    if (!token.hasAccessKey()) {
-      Long requestDomainId = getRequestDomain(req);
-      if (requestDomainId != null && usersService
-          .hasAccessToDomain(userDetails.getUsername(), requestDomainId)) {
-        userDetails.setCurrentDomainId(requestDomainId);
+    try {
+      IUserToken token = aus.authenticateToken(authToken, getSource(req));
+
+      UsersService usersService = StaticApplicationContext.getBean(UsersService.class);
+      SecurityMgr.setSessionDetails(usersService.getUserAccount(token.getUserId()));
+      SecureUserDetails userDetails = SecurityUtils.getUserDetails();
+      if (!token.hasAccessKey()) {
+        Long requestDomainId = getRequestDomain(req);
+        if (requestDomainId != null && usersService
+            .hasAccessToDomain(userDetails.getUsername(), requestDomainId)) {
+          userDetails.setCurrentDomainId(requestDomainId);
+        } else {
+          userDetails.setCurrentDomainId(token.getDomainId());
+        }
       } else {
         userDetails.setCurrentDomainId(token.getDomainId());
       }
-    } else {
-      userDetails.setCurrentDomainId(token.getDomainId());
+      SecurityUtils.setUserDetails(userDetails);
+    } catch (UnauthorizedException e) {
+      SecurityUtils.clearTokenCookie(req, response);
+      throw e;
     }
-    SecurityUtils.setUserDetails(userDetails);
   }
 
   private static int getSource(HttpServletRequest req) {

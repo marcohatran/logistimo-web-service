@@ -23,6 +23,8 @@
 
 package com.logistimo.users.entity;
 
+import com.logistimo.models.users.LoginStatus;
+
 import java.util.Date;
 
 /**
@@ -57,5 +59,13 @@ public interface IUserLoginHistory {
   String getVersion();
 
   void setVersion(String v);
+
+  String getReferer();
+
+  void setReferer(String referer);
+
+  void setStatus(LoginStatus status);
+
+  LoginStatus getStatus();
 
 }

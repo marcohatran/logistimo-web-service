@@ -86,9 +86,10 @@ public class MediaSecurityFilter implements Filter {
         }
       } else if (AuthenticationUtil.hasAccessToken(req)) {
         try {
-          AuthenticationUtil.authenticateTokenAndSetSession(req);
-        } catch (UnauthorizedException | ObjectNotFoundException e) {
+          AuthenticationUtil.authenticateTokenAndSetSession(req,resp);
+        } catch (UnauthorizedException e) {
           xLogger.warn("Issue with api client authentication", e);
+          SecurityUtils.clearTokenCookie(req,resp);
           resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
           return;
         } catch (Exception e) {

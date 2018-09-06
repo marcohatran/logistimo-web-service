@@ -57,6 +57,7 @@ import com.logistimo.api.models.configuration.StockRebalancingConfigModel;
 import com.logistimo.api.models.configuration.SupportConfigModel;
 import com.logistimo.api.models.configuration.TagsConfigModel;
 import com.logistimo.api.request.AddCustomReportRequestObj;
+import com.logistimo.api.util.FileValidationUtil;
 import com.logistimo.auth.GenericAuthoriser;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.communications.MessageHandlingException;
@@ -2176,6 +2177,7 @@ public class DomainConfigController {
     if (model == null) {
       throw new BadRequestException("Error in updating Custom Report");
     }
+    FileValidationUtil.validateUploadFile(model.fn.substring(model.fn.lastIndexOf(".")+1));
     String userId = sUser.getUsername();
     Long domainId = SecurityUtils.getCurrentDomainId();
     if (domainId == null) {

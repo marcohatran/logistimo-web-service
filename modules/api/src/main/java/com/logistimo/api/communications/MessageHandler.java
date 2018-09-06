@@ -26,6 +26,8 @@
  */
 package com.logistimo.api.communications;
 
+import com.logistimo.auth.service.AuthenticationService;
+import com.logistimo.auth.service.impl.AuthenticationServiceImpl;
 import com.logistimo.communications.MessageHandlingException;
 import com.logistimo.communications.service.MessageService;
 import com.logistimo.constants.Constants;
@@ -54,10 +56,10 @@ import java.util.Vector;
 public abstract class MessageHandler {
 
   // Parameters
-  public static final String ADDRESS = "address";
-  public static final String MESSAGE = "message";
-  public static final String RECEIVEDON = "recdon";
-  public static final String WIRETYPE = "wiretype";
+  public static final String ADDRESS_PARAM = "address";
+  public static final String MESSAGE_PARAM = "message";
+  public static final String RECEIVED_ON = "recdon";
+  public static final String WIRE_TYPE = "wiretype";
   // Protocol types
   public static final String MACHINE = "m"; // machine-understandable protocol
   public static final String HUMAN = "h"; // human-understandable protocol
@@ -78,6 +80,7 @@ public abstract class MessageHandler {
   // Services
   protected UsersService as = null;
   protected MaterialCatalogService mcs = null;
+  AuthenticationService aus = null;
   // User details
   protected IUserAccount user = null;
   protected String countryCode = null;
@@ -95,7 +98,7 @@ public abstract class MessageHandler {
     this.recdOn = recdOn;
     as = StaticApplicationContext.getBean(UsersServiceImpl.class);
     mcs = StaticApplicationContext.getBean(MaterialCatalogServiceImpl.class);
-    ///delayBetweenCalls = msgservice.getMillisBetweenCalls();
+    aus = StaticApplicationContext.getBean(AuthenticationServiceImpl.class);
   }
 
 
@@ -186,8 +189,6 @@ public abstract class MessageHandler {
           xLogger.warn("MessageHandlingException when sending message: {0}", e.getMessage());
         }
       }
-      // Give a delay before sending the next message
-      ///delay( delayBetweenCalls );
     }
     xLogger.info("{0} messages, {1} sent", messages.size(), numSent);
   }
@@ -220,8 +221,7 @@ public abstract class MessageHandler {
           xLogger.warn("MessageHandlingException when sending message: {0}", e.getMessage());
         }
       }
-      // Give a delay before sending the next message
-      ///delay( delayBetweenCalls );
+
     }
     xLogger.info("{0} messages, {1} sent", messages.size(), numSent);
   }
@@ -246,16 +246,16 @@ public abstract class MessageHandler {
       countryCode = Constants.COUNTRY_DEFAULT;
     }
     // Get the message service
-    MessageService msgservice;
+    MessageService localMsgservice;
     if (domainId != null) {
-      msgservice =
+      localMsgservice =
           MessageService
               .getInstance(MessageService.SMS, countryCode, true, domainId, Constants.SYSTEM_ID,
                   null);
     } else {
-      msgservice = MessageService.getInstance(MessageService.SMS, countryCode);
+      localMsgservice = MessageService.getInstance(MessageService.SMS, countryCode);
     }
-    return msgservice;
+    return localMsgservice;
   }
 
   // Process the message and send response

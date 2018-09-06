@@ -26,16 +26,14 @@
  */
 package com.logistimo.security;
 
+import com.logistimo.exception.SystemException;
+
 /**
  * @author Arun
  */
-public class UserDisabledException extends Exception {
+public class UserDisabledException extends SystemException {
 
   private static final long serialVersionUID = 1L;
-
-  public UserDisabledException() {
-    super();
-  }
 
   public UserDisabledException(String message) {
     super(message);

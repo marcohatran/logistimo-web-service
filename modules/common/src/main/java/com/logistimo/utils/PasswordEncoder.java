@@ -26,14 +26,18 @@
  */
 package com.logistimo.utils;
 
-import java.io.UnsupportedEncodingException;
+import com.logistimo.exception.SystemException;
+
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 
 /**
  * @author juhee
  */
 public class PasswordEncoder {
+
+  private static BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder(10);
 
   private static String convertToHex(byte[] data) {
     StringBuffer buf = new StringBuffer();
@@ -52,11 +56,38 @@ public class PasswordEncoder {
     return buf.toString();
   }
 
-  public static String MD5(String text)
-      throws NoSuchAlgorithmException, UnsupportedEncodingException {
+  public static String MD5(String text){
     MessageDigest md;
-    md = MessageDigest.getInstance("MD5");
-    md.update(text.getBytes("iso-8859-1"), 0, text.length());
-    return convertToHex(md.digest());
+    try {
+      md = MessageDigest.getInstance("MD5");
+      md.update(text.getBytes("iso-8859-1"), 0, text.length());
+      return convertToHex(md.digest());
+    } catch (Exception e) {
+      throw new SystemException(e);
+    }
+  }
+
+  public static String bcrypt(String text) {
+    return bCryptPasswordEncoder.encode(text);
+  }
+
+  public static boolean bcryptMatches(String password, String dbPassword) {
+    return bCryptPasswordEncoder.matches(password, dbPassword);
+  }
+
+  /*public static String encode(String text) {
+    return bcrypt(text);
+  }*/
+
+  public static String sha512(String text, String salt) {
+    MessageDigest md;
+    try {
+      md = MessageDigest.getInstance("SHA-512");
+      md.update(salt.getBytes("UTF-8"));
+      md.update(text.getBytes("UTF-8"), 0, text.length());
+      return convertToHex(md.digest());
+    } catch (Exception e) {
+      throw new SystemException(e);
+    }
   }
 }

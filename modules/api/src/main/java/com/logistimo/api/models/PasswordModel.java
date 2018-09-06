@@ -35,11 +35,11 @@ public class PasswordModel {
    */
   private String mp;
   /**
-   * Masked email Id
+   * Masked email id
    */
   private String me;
   /**
-   * User Id
+   * User ID
    */
   private String uid;
   /**
@@ -47,11 +47,15 @@ public class PasswordModel {
    */
   private int mode;
   /**
-   * OTP received by SMS
+   * OTP received via sms
    */
   private String otp;
   /**
    * User device type
    */
   private String udty;
+  /**
+   * Captcha response
+   */
+  private String captcha;
 }

@@ -30,6 +30,8 @@ import com.logistimo.api.util.GsonUtil;
 import com.logistimo.api.util.RESTUtil;
 import com.logistimo.auth.SecurityConstants;
 import com.logistimo.auth.SecurityUtil;
+import com.logistimo.auth.service.AuthenticationService;
+import com.logistimo.auth.service.impl.AuthenticationServiceImpl;
 import com.logistimo.bulkuploads.BulkUploadMgr;
 import com.logistimo.communications.MessageHandlingException;
 import com.logistimo.communications.service.MessageService;
@@ -614,11 +616,10 @@ public class SetupDataServlet extends JsonRestServlet {
       sendBasicError(resp, locale.toString(), errMsg, null, HttpServletResponse.SC_OK);
       return;
     }
-
     // If the caller is authorized, proceed
-
     // Create AccountsService object
     UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
+    AuthenticationService aus = StaticApplicationContext.getBean(AuthenticationServiceImpl.class);
     String userId = req.getParameter(RestConstantsZ.ENDUSER_ID);
     String password = req.getParameter(RestConstantsZ.OLD_PASSWRD);
     String upPassword = req.getParameter(RestConstantsZ.UPDATED_PASSWRD);
@@ -651,7 +652,7 @@ public class SetupDataServlet extends JsonRestServlet {
     }
 
     try {
-      as.changePassword(userId, password, upPassword);
+      aus.changePassword(userId,null, password, upPassword,false);
     } catch (ServiceException e) {
       xLogger.severe("ServiceException while changing password for user {0}, Msg: {1}", userId,
           e.getMessage(), e);
@@ -718,6 +719,7 @@ public class SetupDataServlet extends JsonRestServlet {
 
     // Create AccountsService object
     UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
+    AuthenticationService aus = StaticApplicationContext.getBean(AuthenticationServiceImpl.class);
     if (as == null) {
       // Failed to create AccountsService. Set the status to false and set the errMsg appropriately. And return.
       errMsg = "Failed to create AccountsService";
@@ -761,7 +763,7 @@ public class SetupDataServlet extends JsonRestServlet {
     // Proceed to reset the password
     if (domainId == null || (domainId.equals(eu.getDomainId()))) {
       try {
-        as.changePassword(endUserId, null, newPassword);
+        aus.changePassword(endUserId,null, null, newPassword,false);
       } catch (ServiceException e) {
         xLogger
             .severe("ServiceException while resetting password for user {0}, Msg: {1}", endUserId,

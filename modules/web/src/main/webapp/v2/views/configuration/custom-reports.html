@@ -85,7 +85,7 @@
                                     <div class="form-group" ng-hide="edituf">
                                         <label class="col-sm-4 control-label required">{{resourceBundle['config.customreports.filename']}}</label>
                                         <div class="col-sm-8 pt5">
-                                                <input type="file" file-model="fileData" />
+                                                <input type="file" file-model="fileData" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"/>
                                                 <span class="litetext">{{resourceBundle['upload']}} <b>.xls .xlsx or .xlsm</b> {{resourceBundle['files.only']}}</span>
                                             <span ng-show = "showEdit" class="glyphicons glyphicons-remove lpad10" ng-click="stopEdit()" title="Cancel"></span>
                                         </div>

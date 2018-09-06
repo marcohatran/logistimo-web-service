@@ -25,11 +25,14 @@ package com.logistimo.api.controllers;
 
 import com.logistimo.AppFactory;
 import com.logistimo.api.models.MediaModels;
+import com.logistimo.api.util.FileValidationUtil;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.common.builder.MediaBuilder;
+import com.logistimo.constants.Constants;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.exception.InvalidDataException;
 import com.logistimo.exception.InvalidServiceException;
+import com.logistimo.exception.ValidationException;
 import com.logistimo.logger.XLog;
 import com.logistimo.media.SupportedMediaTypes;
 import com.logistimo.media.endpoints.IMediaEndPoint;
@@ -40,11 +43,13 @@ import com.logistimo.services.blobstore.BlobKey;
 import com.logistimo.services.blobstore.BlobstoreService;
 import com.logistimo.services.impl.PMF;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -96,8 +101,13 @@ public class MediaController {
 
   @RequestMapping(value = "/v1/media/", method = RequestMethod.POST)
   @ResponseBody
-  public MediaModels uploadMedia(@RequestBody MediaModel model) {
+  public MediaModels uploadMedia(@RequestBody MediaModel model,
+                                 @RequestHeader(value = "lg-cs", defaultValue = "0") long checksum) {
+    FileValidationUtil.validateMediaFile(model.mediaType);
+    FileValidationUtil.validateMediaFileSize(model.content.value);
     IMedia media = builder.constructMedia(model);
+    byte[] imageBytes = Base64.decodeBase64(media.getContent().getBytes());
+    FileValidationUtil.validateImageFile(imageBytes, checksum);
     IMediaEndPoint endPoint = JDOUtils.createInstance(IMediaEndPoint.class);
     IMedia m = endPoint.insertMedia(media);
     List<MediaModel> modelList = new ArrayList<>(1);
@@ -105,16 +115,18 @@ public class MediaController {
     if (mm != null) {
       modelList.add(mm);
     }
-    xLogger.info(SecurityUtils.getUsername() + " uploaded media successfully for key: " + model.domainKey);
+    xLogger.info(
+        SecurityUtils.getUsername() + " uploaded media successfully for key: " + model.domainKey);
     return new MediaModels(modelList);
   }
 
   @RequestMapping(value = "/v2/media/{domainId:.+}", method = RequestMethod.POST)
   @ResponseBody
   public MediaModels uploadFileMedia(@PathVariable String domainId, HttpServletRequest request,
-                                     HttpServletResponse response) throws IOException {
+                                     @RequestHeader(value = "lg-cs", defaultValue = "0") long checksum)
+      throws IOException {
     boolean isMultipart = ServletFileUpload.isMultipartContent(request);
-    MediaModels mediaResponse = new MediaModels(new ArrayList<MediaModel>(1));
+    MediaModels mediaResponse = new MediaModels(new ArrayList<>(1));
     if (!isMultipart) {
       throw new InvalidDataException("Media upload has to be a multi part file upload request");
     }
@@ -128,14 +140,17 @@ public class MediaController {
       for (String fieldName : fileMap.keySet()) {
         MultipartFile file = fileMap.getFirst(fieldName);
         String fileName = file.getOriginalFilename();
+        String contentType = file.getContentType();
+        long sizeInBytes = file.getSize();
+        validateFileType(fileName);
+        validateFileSize(sizeInBytes);
+        String
+            blobKey = null;
         try {
           String fileExt = fileName.substring(fileName.lastIndexOf('.') + 1);
-          String contentType = file.getContentType();
-          long sizeInBytes = file.getSize();
-          String
-              blobKey =
-              blobstoreService
-                  .store(domainId, contentType, sizeInBytes, file.getInputStream(), "/media");
+          blobKey = blobstoreService
+              .store(domainId, contentType, sizeInBytes, file.getInputStream(), "/media");
+          FileValidationUtil.validateImageFile(blobstoreService.read(blobKey), checksum);
           IMedia media = JDOUtils.createInstance(IMedia.class);
           media.setBlobKey(new BlobKey(blobKey));
           media.setServingUrl(blobKey);
@@ -148,6 +163,11 @@ public class MediaController {
         } catch (IllegalArgumentException e) {
           throw new InvalidDataException(
               "File type should be jpg/jpeg/png/giff but was " + fileName);
+        } catch (ValidationException e) {
+          if (blobKey != null && "ME006".equals(e.getCode())) {
+            blobstoreService.remove(blobKey);
+          }
+          throw e;
         }
       }
     } catch (Exception e) {
@@ -166,6 +186,23 @@ public class MediaController {
       AppFactory.get().getBlobstoreService().serve(url, response);
     } catch (IOException e) {
       xLogger.warn("Error in serving image with key:" + url, e);
+    }
+  }
+
+  private void validateFileType(String fileName) {
+    if (fileName.split("\\.").length > 2) {
+      throw new ValidationException("ME004", fileName);
+    }
+    String extension = fileName.substring(fileName.lastIndexOf(".") + 1);
+    FileValidationUtil.validateMediaFile(extension);
+  }
+
+  private void validateFileSize(long sizeInBytes) {
+    if (sizeInBytes > 0) {
+      long sizeinMb = sizeInBytes / (1024 * 1024);
+      if (sizeinMb > Constants.MEDIA_SIZE_IN_MB) {
+        throw new ValidationException("ME005", new Object[]{null});
+      }
     }
   }
 }

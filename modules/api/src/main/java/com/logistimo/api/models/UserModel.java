@@ -128,4 +128,5 @@ public class UserModel {
    * Store app theme
    */
   private int theme;
+
 }

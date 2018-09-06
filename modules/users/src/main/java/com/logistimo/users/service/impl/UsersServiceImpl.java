@@ -48,7 +48,6 @@ import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.locations.client.LocationClient;
 import com.logistimo.locations.model.LocationResponseModel;
 import com.logistimo.logger.XLog;
-import com.logistimo.models.users.UserLoginHistoryModel;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.QueryParams;
 import com.logistimo.pagination.Results;
@@ -57,7 +56,6 @@ import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.cache.MemcacheService;
 import com.logistimo.services.impl.PMF;
-import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.tags.dao.ITagDao;
 import com.logistimo.tags.entity.ITag;
 import com.logistimo.users.builders.UserDeviceBuilder;
@@ -67,7 +65,6 @@ import com.logistimo.users.entity.IUserDevice;
 import com.logistimo.users.entity.UserAccount;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.utils.Counter;
-import com.logistimo.utils.GsonUtils;
 import com.logistimo.utils.MessageUtil;
 import com.logistimo.utils.PasswordEncoder;
 import com.logistimo.utils.QueryUtil;
@@ -80,8 +77,6 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.UnsupportedEncodingException;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -105,7 +100,7 @@ import javax.jdo.Transaction;
 public class UsersServiceImpl implements UsersService {
 
   private static final XLog xLogger = XLog.getLog(UsersServiceImpl.class);
-  private static final String LOGUSER_TASK_URL = "/s2/api/users/update/loginhistory";
+  private static final String SALT_HASH_SEPARATOR = "####";
 
   private ITagDao tagDao;
   private IUserDao userDao;
@@ -243,9 +238,7 @@ public class UsersServiceImpl implements UsersService {
                   + messages.getString("customid") + " " + account.getCustomId() + " "
                   + backendMessages.getString("error.alreadyexists") + ".");
         }
-
-        String password = account.getEncodedPassword();
-        account.setEncodedPassword(PasswordEncoder.MD5(password));
+        setNewUserPassword(account);
         if (account.getTags() != null) {
           account.setTgs(tagDao.getTagsByNames(account.getTags(), ITag.USER_TAG));
         }
@@ -287,6 +280,22 @@ public class UsersServiceImpl implements UsersService {
     }
 
     return account;
+  }
+
+  /**
+   * TODO This method should be in authentication service
+   * @param account
+   */
+  private void setNewUserPassword(IUserAccount account) {
+    String password = account.getEncodedPassword();
+    if(password.contains(SALT_HASH_SEPARATOR)) {
+      String[] saltHash = password.split(SALT_HASH_SEPARATOR);
+      account.setEncodedPassword(PasswordEncoder.MD5(saltHash[1]));
+      account.setSalt(saltHash[0]);
+      account.setPassword(PasswordEncoder.bcrypt(password));
+    }else {
+      account.setEncodedPassword(PasswordEncoder.MD5(password));
+    }
   }
 
   @SuppressWarnings("unchecked")
@@ -735,7 +744,6 @@ public class UsersServiceImpl implements UsersService {
           Query query = pm.newQuery(JDOUtils.getImplClass(IUserToKiosk.class));
           query.setFilter("userId == userIdParam");
           query.declareParameters("String userIdParam");
-          AuthenticationService aus = AppFactory.get().getAuthenticationService();
           try {
             List<IUserToKiosk> results = (List<IUserToKiosk>) query.execute(accountId);
             if (!results.isEmpty()) {
@@ -756,7 +764,7 @@ public class UsersServiceImpl implements UsersService {
               xLogger.fine("deleteAccounts: deleting user {0} from the database", accountId);
               pm.deletePersistent(account);
               removeUserFromCache(accountId);
-              aus.clearUserTokens(accountId, true);
+              authenticationService.clearUserTokens(accountId, true);
               xLogger.info("AUDITLOG\t{0}\t{1}\tUSER\t " +
                   "DELETE\t{2}\t{3}", domainId, sUser, accountId, userName);
             }
@@ -773,176 +781,6 @@ public class UsersServiceImpl implements UsersService {
       xLogger.warn(e.getMessage(), e);
     } finally {
       xLogger.fine("Exiting deleteAccounts");
-      pm.close();
-    }
-    if (exception != null) {
-      throw new ServiceException(exception);
-    }
-  }
-
-  /**
-   * Authenticate a user in the context of a given domain; Returns user object if authenticated, otherwise null
-   */
-  public IUserAccount authenticateUser(String userId, String password, Integer lgSrc)
-      throws ServiceException, ObjectNotFoundException {
-    xLogger.fine("Entering authenticateUser");
-    PersistenceManager pm = PMF.get().getPersistenceManager();
-    Exception exception = null;
-    boolean isAuthenticated = false;
-    boolean userNotFound = false;
-    IUserAccount user = null;
-    try {
-      user = JDOUtils.getObjectById(IUserAccount.class, userId, pm);
-      if (user.isEnabled()) {
-        String encodedPassword = PasswordEncoder.MD5(password);
-        if (encodedPassword.equals(user.getEncodedPassword())) {
-          user.setLastLogin(new Date());
-          if (lgSrc != null) {
-            user.setLoginSource(lgSrc);
-          }
-          xLogger.info("User " + userId + " authenticated successfully");
-          isAuthenticated = true;
-        }
-      } else {
-        xLogger.warn("Authentication failed! User {0} is disabled", userId);
-      }
-      user = pm.detachCopy(user);
-    } catch (JDOObjectNotFoundException e) {
-      xLogger.warn("Authentication failed! User {0} does not exist", userId);
-      exception = e;
-      userNotFound = true;
-    } catch (Exception e) {
-      xLogger.warn("Exception while authentication user", e);
-      exception = e;
-    } finally {
-      pm.close();
-    }
-    if (userNotFound) {
-      throw new ObjectNotFoundException("USR001", userId);
-    } else if (exception != null) {
-      throw new ServiceException(exception);
-    }
-    xLogger.fine("Exiting authenticateUser: {0}", isAuthenticated);
-
-    if (isAuthenticated) {
-      return user;
-    } else {
-      return null;
-    }
-  }
-
-  /**
-   * Change the password of a given user.
-   *
-   * @param userId      The user whose password is to be changed.
-   * @param oldPassword The old password of this user
-   * @param newPassword The new password to which the change is tareted
-   * @throws ServiceException If there is an error in this process
-   */
-  public void changePassword(String userId, String oldPassword, String newPassword)
-      throws ServiceException {
-    xLogger.fine("Entering changePassword");
-    if (newPassword == null || newPassword.isEmpty()) {
-      throw new ServiceException("New password not specified");
-    }
-    PersistenceManager pm = PMF.get().getPersistenceManager();
-    Exception exception = null;
-    try {
-      IUserAccount user = JDOUtils.getObjectById(IUserAccount.class, userId, pm);
-      if (oldPassword != null) {
-        String encodedPassword = PasswordEncoder.MD5(oldPassword);
-        if (encodedPassword.equals(user.getEncodedPassword())) {
-          user.setEncodedPassword(PasswordEncoder.MD5(newPassword));
-        } else {
-          xLogger
-              .warn("changePassword: WARNING!! Failed to authenticate user {0} with old password",
-                  userId);
-        }
-      } else {
-        user.setEncodedPassword(PasswordEncoder.MD5(newPassword));
-      }
-    } catch (JDOObjectNotFoundException e) {
-      xLogger.warn("changePassword: FAILED!! User {0} does not exist", userId);
-      exception = e;
-    } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
-      xLogger.warn("Exception in changePassword", e);
-      exception = e;
-    } finally {
-      pm.close();
-    }
-    if (exception != null) {
-      throw new ServiceException(exception);
-    }
-
-    xLogger.fine("Exiting changePassword");
-  }
-
-  /**
-   * Disable the account of a given user - pass in a fully qualified user Id (i.e. domainId.userId)
-   */
-  public void disableAccount(String userId) throws ServiceException {
-    xLogger.fine("Entering disableAccount");
-    Exception exception = null;
-    PersistenceManager pm = PMF.get().getPersistenceManager();
-    //We use an atomic transaction here to check if the user exists and then update it
-    Transaction tx = pm.currentTransaction();
-    try {
-      tx.begin();
-      try {
-        //First check if the user already exists in the database
-        IUserAccount user = JDOUtils.getObjectById(IUserAccount.class, userId, pm);
-        xLogger.info("disableAccount: Disabling user account {0}", userId);
-        user.setEnabled(false);
-        authenticationService.clearUserTokens(userId, true);
-      } catch (JDOObjectNotFoundException e) {
-        xLogger.warn("disableAccount: FAILED!! user {0} does not exist", userId);
-        exception = e;
-      } catch (Exception e) {
-        xLogger.warn("Exception in disableAccount()", e);
-        exception = e;
-      }
-      tx.commit();
-      removeUserFromCache(userId);
-    } finally {
-      if (tx.isActive()) {
-        tx.rollback();
-      }
-      xLogger.fine("Exiting disableAccount");
-      pm.close();
-    }
-    if (exception != null) {
-      throw new ServiceException(exception);
-    }
-  }
-
-  /**
-   * Enable a user account (pass in fully qualified user Id - i.e. domainId.userId)
-   */
-  public void enableAccount(String userId) throws ServiceException {
-    xLogger.fine("Entering enableAccount");
-    Exception exception = null;
-    PersistenceManager pm = PMF.get().getPersistenceManager();
-    Transaction tx = pm.currentTransaction();
-    try {
-      tx.begin();
-      try {
-        IUserAccount user = JDOUtils.getObjectById(IUserAccount.class, userId, pm);
-        xLogger.info("enableAccount: Enabling user account {0}", userId);
-        user.setEnabled(true);
-      } catch (JDOObjectNotFoundException e) {
-        xLogger.warn("enableAccount: FAILED!! user {0} does not exist", userId);
-        exception = e;
-      } catch (Exception e) {
-        xLogger.warn("Exception in enableAccount()", e);
-        exception = e;
-      }
-      tx.commit();
-      removeUserFromCache(userId);
-    } finally {
-      if (tx.isActive()) {
-        tx.rollback();
-      }
-      xLogger.fine("Exiting enableAccount");
       pm.close();
     }
     if (exception != null) {
@@ -1104,33 +942,6 @@ public class UsersServiceImpl implements UsersService {
     return results;
   }
 
-  public void updateMobileLoginFields(IUserAccount account) {
-    PersistenceManager pm = null;
-    try {
-      pm = PMF.get().getPersistenceManager();
-      IUserAccount u = JDOUtils.getObjectById(IUserAccount.class, account.getUserId(), pm);
-      u.setLastMobileAccessed(account.getLastMobileAccessed());
-      u.setIPAddress(account.getIPAddress());
-      u.setUserAgent(account.getUserAgent());
-      u.setPreviousUserAgent(account.getPreviousUserAgent());
-      u.setAppVersion(account.getAppVersion());
-      //remove from cache
-      removeUserFromCache(account.getUserId());
-      Map<String, Object> params = new HashMap<>(1);
-      params.put("ipaddress", account.getIPAddress());
-      EventPublisher.generate(u.getDomainId(), IEvent.IP_ADDRESS_MATCHED, params,
-          UserAccount.class.getName(), u.getKeyString(),
-          null);
-    } catch (Exception e) {
-      xLogger.warn("Exception while updating mobile login related fields for user {0}",
-          account.getUserId(), e);
-    } finally {
-      if (pm != null) {
-        pm.close();
-      }
-    }
-  }
-
   @Override
   public boolean hasAccessToDomain(String username, Long domainId)
       throws ServiceException, ObjectNotFoundException {
@@ -1146,23 +957,6 @@ public class UsersServiceImpl implements UsersService {
   }
 
 
-  public void updateUserLoginHistory(String userId, Integer lgSrc, String usrAgnt, String ipAddr,
-                                     Date loginTime, String version) {
-    try {
-      xLogger.fine("Updating user login history");
-      if (StringUtils.isNotBlank(userId)) {
-        UserLoginHistoryModel
-            ulh =
-            new UserLoginHistoryModel(userId, lgSrc, usrAgnt, ipAddr, loginTime, version);
-        AppFactory.get().getTaskService()
-            .schedule(ITaskService.QUEUE_DEFAULT, LOGUSER_TASK_URL,
-                GsonUtils.toJson(ulh));
-      }
-    } catch (Exception e) {
-      xLogger.warn(" {0} while updating the user login history, {1}", e.getMessage(), userId, e);
-    }
-  }
-
   public Set<String> getElementSetByUserFilter(Long domainId, IUserAccount user, String paramName,
                                                String paramValue, PageParams pageParams)
       throws ServiceException {
@@ -1172,13 +966,9 @@ public class UsersServiceImpl implements UsersService {
     }
 
     boolean isSuperUsers = user.getRole().equals("ROLE_su");
-
     paramName = paramName.trim();
     PersistenceManager pm = PMF.get().getPersistenceManager();
-    Query
-        q =
-        pm.newQuery(" SELECT " + paramName + " FROM " + JDOUtils.getImplClass(IUserAccount.class)
-            .getName());
+    Query q = pm.newQuery(" SELECT " + paramName + " FROM " + JDOUtils.getImplClass(IUserAccount.class).getName());
     Set<String> elementSet = new HashSet<>();
     StringBuilder filter = new StringBuilder();
     StringBuilder declaration = new StringBuilder();

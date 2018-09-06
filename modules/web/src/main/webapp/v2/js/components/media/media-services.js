@@ -27,15 +27,15 @@
 var mediaServices = angular.module('mediaServices', []);
 mediaServices.factory('mediaService', ['APIService', function (apiService) {
     return {
-        uploadImage: function (type, domainKey, data) {
+        uploadImage: function (type, domainKey, image) {
             var media = {
                 "mediaType": type,
                 "domainKey": domainKey,
                 "content": {
-                    "value": data
+                    "value": image.base64
                 }
             };
-            return apiService.post(media, "/_ah/api/mediaendpoint/v1/media/");
+            return apiService.post(media, "/_ah/api/mediaendpoint/v1/media/", {'lg-cs': CRC32.buf(image.raw)>>>0});
         },
         removeImage: function (domainKey) {
             return apiService.delete("/_ah/api/mediaendpoint/v1/media/" + domainKey);

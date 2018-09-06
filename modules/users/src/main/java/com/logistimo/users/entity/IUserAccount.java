@@ -262,4 +262,8 @@ public interface IUserAccount extends ISuperDomain, ILocation {
   Integer getStoreAppTheme();
 
   void setStoreAppTheme(Integer theme);
+
+  void setSalt(String salt);
+
+  void setPassword(String password);
 }

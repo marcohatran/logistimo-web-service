@@ -83,13 +83,13 @@ logistimoApp.factory('APIService', function ($http, $q, $rootScope) {
             });
         },
         get: get,
-        post: function (data, urlStr) {
+        post: function (data, urlStr, headers) {
             if (checkDomainAndReject()) {
                 return $q(function (resolve, reject) {
                     reject();
                 });
             }
-            return $http({method: 'POST', data: data, url: urlStr});
+            return $http({method: 'POST', data: data, url: urlStr, headers : headers});
         },
         put: function (data, urlStr) {
             if (checkDomainAndReject()) {
@@ -127,7 +127,7 @@ logistimoApp.factory('APIService', function ($http, $q, $rootScope) {
                             angular.element(document.body).append(anchor); // Attach to document for FireFox
 
                             anchor.attr({
-                                href: 'data:attachment/csv;charset=utf-8,' + encodeURI(data),
+                                href: 'data:attachment/csv;charset=utf-8,' + encodeURL(data),
                                 target: '_blank',
                                 download: fileName
                             })[0].click();

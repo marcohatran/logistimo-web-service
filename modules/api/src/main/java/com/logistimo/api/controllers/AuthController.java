@@ -23,23 +23,24 @@
 
 package com.logistimo.api.controllers;
 
-import com.logistimo.AppFactory;
 import com.logistimo.api.models.AuthLoginModel;
 import com.logistimo.api.models.AuthModel;
 import com.logistimo.api.models.ChangePasswordModel;
 import com.logistimo.api.models.PasswordModel;
 import com.logistimo.auth.SecurityConstants;
 import com.logistimo.auth.SecurityMgr;
+import com.logistimo.auth.SecurityUtil;
 import com.logistimo.auth.service.AuthenticationService;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.auth.utils.SessionMgr;
 import com.logistimo.communications.MessageHandlingException;
 import com.logistimo.communications.service.MessageService;
 import com.logistimo.constants.Constants;
-import com.logistimo.constants.SourceConstants;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.events.entity.IEvent;
 import com.logistimo.events.processor.EventPublisher;
+import com.logistimo.exception.BadRequestException;
+import com.logistimo.exception.ValidationException;
 import com.logistimo.logger.XLog;
 import com.logistimo.security.BadCredentialsException;
 import com.logistimo.security.SecureUserDetails;
@@ -55,6 +56,7 @@ import com.logistimo.users.entity.IUserToken;
 import com.logistimo.users.entity.UserAccount;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.utils.MsgUtil;
+import com.logistimo.utils.RandomPasswordGenerator;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,14 +100,22 @@ public class AuthController {
   private static final Integer EMAIL_UNAVAILABLE = 7;
   private static final Integer OTP_EXPIRED = 8;
   private static final Integer PASSWORD_MISMATCH = 9;
+  private static final Integer LINK_EXPIRED = 10;
   private static boolean isGAE = ConfigUtil.getBoolean("gae.deployment", true);
+  private static final String WEB = "w";
 
   private AuthenticationService authenticationService;
   private UsersService usersService;
+  private MemcacheService memcacheService;
 
   @Autowired
   public void setAuthenticationService(AuthenticationService authenticationService) {
     this.authenticationService = authenticationService;
+  }
+
+  @Autowired
+  public void setMemcacheService(MemcacheService memcacheService) {
+    this.memcacheService = memcacheService;
   }
 
   @Autowired
@@ -155,12 +165,10 @@ public class AuthController {
       SessionMgr.recreateSession(request, userDetails);
       Long domainId = SecurityUtils.getReqCookieDomain(request);
       if (domainId != null && usersService.hasAccessToDomain(userDetails.getUsername(), domainId)) {
-        SessionMgr.setCurrentDomain(request.getSession(), domainId);
+          SessionMgr.setCurrentDomain(request.getSession(), domainId);
       }
       String ipAddress = isGAE ? request.getRemoteAddr() : request.getHeader("X-REAL-IP");
       updateUserDetails(userDetails, ipAddress, request.getHeader("User-Agent"));
-      usersService.updateUserLoginHistory(userDetails.getUsername(), SourceConstants.WEB,
-          request.getHeader("User-Agent"), request.getHeader("X-REAL-IP"), new Date(), "LogiWeb");
 
       xLogger.info("ip: {0}, headers: {1}", ipAddress, request.getHeader("X-Forwarded-For"));
       if (SecurityConstants.ROLE_KIOSKOWNER.equals(userDetails.getRole())) {
@@ -214,6 +222,8 @@ public class AuthController {
         model.errorMsg = backendMessages.getString("password.otp.invalid");
       } else if (status == PASSWORD_MISMATCH) {
         model.errorMsg = backendMessages.getString("password.confirm.mismatch");
+      } else if (status == LINK_EXPIRED) {
+        model.errorMsg = backendMessages.getString("password.otp.expired");
       } else {
         model.isError = false;
       }
@@ -226,11 +236,13 @@ public class AuthController {
   @RequestMapping(value = "/logout", method = RequestMethod.GET)
   public
   @ResponseBody
-  AuthModel logout(HttpServletRequest request) {
+  AuthModel logout(HttpServletRequest request, HttpServletResponse response) {
     HttpSession session = request.getSession(false);
     if (session != null) {
       SessionMgr.cleanupSession(session);
     }
+    //clear cookies
+    SecurityUtils.clearTokenCookie(request,response);
     return constructAuthModel(0, null);
   }
 
@@ -259,8 +271,9 @@ public class AuthController {
       throws ServiceException,
       MessageHandlingException, IOException {
     if (model != null) {
-      String successMsg = authenticationService.resetPassword(model.getUid(), model.getMode(), model.getOtp(), "w",
-            request.getParameter("au"));
+      String successMsg = authenticationService.resetPassword(model.getUid(), model.getMode(),
+          model.getOtp(), WEB,
+          request.getParameter("au"));
         return new AuthModel(false, successMsg);
     }
 
@@ -273,13 +286,21 @@ public class AuthController {
   AuthModel generateOtp(@RequestBody PasswordModel model, HttpServletRequest request)
       throws ServiceException, IOException, MessageHandlingException {
     if (model != null) {
-      //web client is not sending this variable
-      if (StringUtils.isEmpty(model.getUdty())) {
-       model.setUdty(Constants.WEB);
+        //web client is not sending this variable
+        if (StringUtils.isEmpty(model.getUdty())) {
+          model.setUdty(WEB);
+        }
+      if (WEB.equals(model.getUdty())) {
+        boolean
+            captchaVerified = authenticationService
+            .verifyCaptcha(model.getCaptcha());
+        if (!captchaVerified) {
+          throw new BadRequestException("G010", null);
+        }
       }
       String successMsg = authenticationService.generateOTP(model.getUid(), model.getMode(), model.getUdty(),
-          request.getHeader("host"));
-      return new AuthModel(false, successMsg);
+            request.getHeader("host"));
+        return new AuthModel(false, successMsg);
     }
 
     return null;
@@ -291,14 +312,17 @@ public class AuthController {
   AuthModel changePassword(@RequestBody ChangePasswordModel model) {
     if (model != null) {
       try {
-        String successMsg = authenticationService.setNewPassword(model.key, model.npd, model.cpd);
+        String successMsg = authenticationService.setNewPassword(model.getKey(), model.getNpd(), model.getCpd());
         return new AuthModel(false, successMsg);
       } catch (ObjectNotFoundException e) {
-        xLogger.warn("Error updating password for {0}", model.uid, e);
+        xLogger.warn("Error updating password for {0}", model.getUid(), e);
         return constructAuthModel(USER_NOTFOUND, null);
       } catch (InputMismatchException e) {
-        xLogger.warn("Mismatch in passwords entered for {0}", model.uid, e);
+        xLogger.warn("Mismatch in passwords entered for {0}", model.getUid(), e);
         return constructAuthModel(PASSWORD_MISMATCH, null);
+      } catch (ValidationException e) {
+        xLogger.warn("Exception: " + e);
+        return constructAuthModel(LINK_EXPIRED, null);
       } catch (Exception e) {
         xLogger.severe("Exception: " + e);
         return constructAuthModel(SYSTEM_ERROR, null);
@@ -340,69 +364,66 @@ public class AuthController {
 
   }
 
-  public String resetAndRedirect(String token, String src,
+  public String resetAndRedirect(String inputToken, String src,
                                  HttpServletResponse response) throws IOException,
       ServiceException, MessageHandlingException {
-    if (StringUtils.isNotEmpty(token)) {
-      String decryptedToken = authenticationService.decryptJWT(token);
-      String[] tokens = new String[2];
-      if (decryptedToken != null) {
-        tokens = decryptedToken.split("&&");
-      }
+    if (StringUtils.isNotEmpty(inputToken)) {
+      // last two character defines user role, being used by UI for validation
+      String role = inputToken.substring(inputToken.length() - 2);
+      String token = inputToken.substring(0, inputToken.length() - 2);
+      String[] tokens = authenticationService.decryptJWT(token);
       if (tokens.length > 0) {
         String userId = tokens[0];
-        Boolean tdiff = timeDiff(tokens[1]);
-        if (tdiff) {
-          MemcacheService cache = AppFactory.get().getMemcacheService();
-          String resetKey = userId + "&&" + tokens[1];
-          if (cache != null) {
-            if (resetKey.equals(cache.get("RESET_" + userId))) {
-              String newPassword;
-              String msg;
-              String logMsg;
-              String sendMode = null;
-              String sendType;
-              IUserAccount account = usersService.getUserAccount(userId);
-              Locale locale = account.getLocale();
-              ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-              if ("w".equalsIgnoreCase(src)) {
-                response.sendRedirect("/v2/password-request.html?key=" + token);
-              } else {
-                newPassword = authenticationService.generatePassword(userId);
-                msg = backendMessages.getString("password.reset.success") + ": " + newPassword;
-                logMsg = backendMessages.getString("password.reset.success.log");
-                sendMode = backendMessages.getString("password.mid");
-                sendType = "email";
-                usersService.changePassword(userId, null, newPassword);
-                MessageService
-                    ms =
-                    MessageService
-                        .getInstance(sendType, account.getCountry(), true, account.getDomainId(),
-                            account.getFirstName(), null);
-                ms.send(account, msg, MessageService.NORMAL,
-                    backendMessages.getString("password.reset.success"), null, logMsg);
-                response.sendRedirect("/v2/mobile-pwd-reset-success.html#/");
-                cache.delete("RESET_" + userId);
-              }
-              xLogger.info("AUDITLOG\t{0}\t{1}\tUSER\t " +
-                      "FORGOT PASSWORD\t{2}\t{3}", account.getDomainId(), account.getFullName(),
-                  userId,
-                  account.getFullName());
-              return backendMessages.getString("password.forgot.success") + " " + account
-                  .getFirstName() + "'s " + sendMode + ". " +
-                  MsgUtil.bold(backendMessages.getString("note") + ":") + " " + backendMessages
-                  .getString("password.login") + ".";
-            } else {
-              response.sendRedirect("/v2/password-reset-error.html#/");
-            }
+        Boolean isWithinTimeLimit = timeDiff(tokens[1]);
+        String resetKey = userId + "&&" + tokens[1];
+        if (isWithinTimeLimit && resetKey.equals(memcacheService.get("RESET_" + userId))) {
+          IUserAccount account = usersService.getUserAccount(userId);
+          Locale locale = account.getLocale();
+          ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+          if (WEB.equalsIgnoreCase(src)) {
+            response.sendRedirect(
+                "/v2/password-request.html?key=" + token + role + "&user=" + userId);
+          } else {
+            sendPasswordInEmail(response, userId, account, backendMessages);
           }
+          xLogger.info("AUDITLOG\t{0}\t{1}\tUSER\t " +
+                  "FORGOT PASSWORD\t{2}\t{3}", account.getDomainId(), account.getFullName(),
+              userId,
+              account.getFullName());
+          return backendMessages.getString("password.forgot.success") + " " + account
+              .getFirstName() + "'s " + backendMessages.getString("password.mid") + ". " +
+              MsgUtil.bold(backendMessages.getString("note") + ":") + " " + backendMessages
+              .getString("password.login") + ".";
         } else {
           response.sendRedirect("/v2/password-reset-error.html#/");
         }
-
       }
     }
     return null;
+  }
+
+  private void sendPasswordInEmail(HttpServletResponse response, String userId,
+                                     IUserAccount account, ResourceBundle backendMessages)
+      throws ServiceException, MessageHandlingException, IOException {
+    String newPassword;
+    String msg;
+    String logMsg;
+    String sendType;
+    newPassword = RandomPasswordGenerator.generate(
+        SecurityUtil.isUserAdmin(account.getRole()));
+    msg = backendMessages.getString("password.reset.success") + ": " + newPassword;
+    logMsg = backendMessages.getString("password.reset.success.log");
+    sendType = "email";
+    authenticationService.changePassword(userId, null, null, newPassword,false);
+    MessageService
+        ms =
+        MessageService
+            .getInstance(sendType, account.getCountry(), true, account.getDomainId(),
+                account.getFirstName(), null);
+    ms.send(account, msg, MessageService.NORMAL,
+        backendMessages.getString("password.reset.success"), null, logMsg);
+    response.sendRedirect("/v2/mobile-pwd-reset-success.html#/");
+    memcacheService.delete("RESET_" + userId);
   }
 
   /**

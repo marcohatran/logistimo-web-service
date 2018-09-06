@@ -55,4 +55,8 @@ public class SecurityUtil {
       return 0;
     }
   }
+
+  public static boolean isUserAdmin(String role){
+    return SecurityUtil.compareRoles(role, SecurityConstants.ROLE_DOMAINOWNER) >= 0;
+  }
 }

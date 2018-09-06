@@ -35,6 +35,7 @@ import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.service.InventoryManagementService;
 import com.logistimo.inventory.service.impl.InventoryManagementServiceImpl;
+import com.logistimo.models.AuthRequest;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
 import com.logistimo.users.entity.IUserAccount;
@@ -117,7 +118,11 @@ public class HumanProtocolMessageHandler extends MessageHandler {
       String password = tokens[2];
       // Authenticate the user
       try {
-        if (as.authenticateUser(userId, password, null) != null) {
+        // Authenticate user
+        AuthRequest authRequest = AuthRequest.builder()
+            .userId(userId)
+            .password(password).build();
+        if (aus.authenticate(authRequest) != null) {
           // Get the user object
           IUserAccount
               u =

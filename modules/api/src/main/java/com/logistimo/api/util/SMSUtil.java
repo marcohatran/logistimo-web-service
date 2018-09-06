@@ -60,7 +60,7 @@ public class SMSUtil {
   public static SMSRequestModel processMessage(HttpServletRequest request)
       throws UnsupportedEncodingException {
     SMSRequestModel smsReqModel = null;
-    String message = request.getParameter(MessageHandler.MESSAGE);
+    String message = request.getParameter(MessageHandler.MESSAGE_PARAM);
     if (StringUtils.isNotEmpty(message)) {
 
       message = URLDecoder.decode(message, "UTF-8");
@@ -70,10 +70,10 @@ public class SMSUtil {
       smsReqModel.setMessage(message);
     }
     if (smsReqModel != null) {
-      String mobilenumber = request.getParameter(MessageHandler.ADDRESS);
+      String mobilenumber = request.getParameter(MessageHandler.ADDRESS_PARAM);
 
       smsReqModel.setAddress(mobilenumber);
-      String receivedon = request.getParameter(MessageHandler.RECEIVEDON);
+      String receivedon = request.getParameter(MessageHandler.RECEIVED_ON);
       if (receivedon == null) {
         receivedon = request.getParameter("amp;receivedon");
       }
