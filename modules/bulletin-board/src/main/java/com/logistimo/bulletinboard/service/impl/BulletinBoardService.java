@@ -36,7 +36,6 @@ import java.util.Date;
 import java.util.List;
 
 import javax.jdo.PersistenceManager;
-import javax.jdo.Query;
 
 /**
  * Created by naveensnair on 14/11/17.
@@ -59,13 +58,13 @@ public class BulletinBoardService implements IBulletinBoardService {
 
   @Override
   public List<IBulletinBoard> getBulletinBoards(Long domainId) {
-    return getAll(domainId, IBulletinBoard.class);
+    return JDOUtils.getAll(domainId, IBulletinBoard.class);
   }
 
   @Override
   public IBulletinBoard getBulletinBoard(Long bbId) throws ServiceException {
     try {
-      return get(bbId, IBulletinBoard.class);
+      return JDOUtils.get(bbId, IBulletinBoard.class);
     } catch (Exception e) {
       xLogger.severe("Error in fetching bulletinBoard:", bbId, e);
       throw new ServiceException("Error in fetching bulletinBoard" + bbId, e);
@@ -125,36 +124,5 @@ public class BulletinBoardService implements IBulletinBoardService {
     }
   }
 
-  private <T> List<T> getAll(Long domainId, Class<T> clz) {
-    List<T> o = null;
-    PersistenceManager pm = PMF.get().getPersistenceManager();
-    Query q = pm.newQuery(JDOUtils.getImplClass(clz));
-    String declaration = " Long dIdParam";
-    q.setFilter("dId == dIdParam");
-    q.declareParameters(declaration);
-    try {
-      o = (List<T>) q.execute(domainId);
-      if (o != null) {
-        o.size();
-        o = (List<T>) pm.detachCopyAll(o);
-      }
-    } finally {
-      try {
-        q.closeAll();
-      } catch (Exception ignored) {
-        xLogger.warn("Exception while closing query", ignored);
-      }
-      pm.close();
-    }
-    return o;
-  }
 
-  private <T> T get(Long id, Class<T> clz) {
-    PersistenceManager pm = PMF.get().getPersistenceManager();
-    try {
-      return JDOUtils.getObjectById(clz, id, pm);
-    } finally {
-      pm.close();
-    }
-  }
 }

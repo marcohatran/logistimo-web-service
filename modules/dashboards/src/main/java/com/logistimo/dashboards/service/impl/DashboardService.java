@@ -26,6 +26,7 @@ package com.logistimo.dashboards.service.impl;
 import com.logistimo.assets.entity.IAsset;
 import com.logistimo.config.models.AssetSystemConfig;
 import com.logistimo.config.models.ConfigurationException;
+import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.dashboards.entity.IDashboard;
@@ -34,18 +35,19 @@ import com.logistimo.dashboards.querygenerators.AssetsDashboardQueryGenerator;
 import com.logistimo.dashboards.querygenerators.EntityActivityQueryGenerator;
 import com.logistimo.dashboards.service.IDashboardService;
 import com.logistimo.exception.SystemException;
+import com.logistimo.exception.ValidationException;
 import com.logistimo.logger.XLog;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.services.utils.ConfigUtil;
+import com.logistimo.sql.PreparedStatementExecutor;
+import com.logistimo.sql.PreparedStatementModel;
 import com.logistimo.tags.entity.ITag;
-import com.sun.rowset.CachedRowSetImpl;
 
 import org.apache.commons.lang.StringUtils;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -56,7 +58,6 @@ import java.util.Map;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import javax.jdo.datastore.JDOConnection;
-import javax.sql.rowset.CachedRowSet;
 
 /**
  * @author Mohan Raja
@@ -109,28 +110,10 @@ public class DashboardService implements IDashboardService {
 
   @SuppressWarnings("unchecked")
   private <T> List<T> getAll(Long domainId, Class<T> clz) {
-    List<T> o = null;
-    PersistenceManager pm = PMF.get().getPersistenceManager();
-    Query q = pm.newQuery(JDOUtils.getImplClass(clz));
-    String declaration = " Long dIdParam";
-    q.setFilter("dId == dIdParam");
-    q.declareParameters(declaration);
-    try {
-      o = (List<T>) q.execute(domainId);
-      if (o != null) {
-        o.size();
-        o = (List<T>) pm.detachCopyAll(o);
-      }
-    } finally {
-      try {
-        q.closeAll();
-      } catch (Exception ignored) {
-        xLogger.warn("Exception while closing query", ignored);
-      }
-      pm.close();
-    }
-    return o;
+    return JDOUtils.getAll(domainId, clz);
   }
+
+
 
   @Override
   public String deleteDashboard(Long id) throws ServiceException {
@@ -189,7 +172,7 @@ public class DashboardService implements IDashboardService {
   @Override
   public IDashboard getDashBoard(Long dbId) throws ServiceException {
     try {
-      return get(dbId, IDashboard.class);
+      return JDOUtils.get(dbId, IDashboard.class);
     } catch (Exception e) {
       xLogger.severe("Error in fetching Widget:", dbId, e);
       throw new ServiceException("Error in fetching Widget" + dbId, e);
@@ -199,21 +182,13 @@ public class DashboardService implements IDashboardService {
   @Override
   public IWidget getWidget(Long wId) throws ServiceException {
     try {
-      return get(wId, IWidget.class);
+      return JDOUtils.get(wId, IWidget.class);
     } catch (Exception e) {
       xLogger.severe("Error in fetching Widget:", wId, e);
       throw new ServiceException("Error in fetching Widget" + wId, e);
     }
   }
 
-  private <T> T get(Long id, Class<T> clz) {
-    PersistenceManager pm = PMF.get().getPersistenceManager();
-    try {
-      return JDOUtils.getObjectById(clz, id, pm);
-    } finally {
-      pm.close();
-    }
-  }
 
   @Override
   public String updateDashboard(Long id, String ty, String val) throws ServiceException {
@@ -291,13 +266,9 @@ public class DashboardService implements IDashboardService {
                                            boolean isCountOnly, String groupby) {
     PersistenceManager pm = PMF.getReadOnlyPM().getPersistenceManager();
     JDOConnection conn = pm.getDataStoreConnection();
-    Statement statement = null;
-    CachedRowSet rowSet = null;
     try {
       java.sql.Connection sqlConn = (java.sql.Connection) conn;
-      statement = sqlConn.createStatement();
-      rowSet = new CachedRowSetImpl();
-      String query = null;
+      PreparedStatementModel query;
       switch (type) {
         case "inv":
           if (isCountOnly) {
@@ -361,28 +332,14 @@ public class DashboardService implements IDashboardService {
         case "asset":
           query = getAssetStatusDashboardQuery(domainId, filters);
           break;
+        default:
+          throw new ValidationException("D001", type);
       }
-      xLogger.info("Dashboard type: {0} query: {1}", type, query);
-      rowSet.populate(statement.executeQuery(query));
-      return rowSet;
+      xLogger.fine("Dashboard type: {0} query: {1}", type, query);
+      return PreparedStatementExecutor.executeRowSet(sqlConn, query);
     } catch (SQLException e) {
       throw new SystemException(e);
     } finally {
-      if (rowSet != null) {
-        try {
-          rowSet.close();
-        } catch (Exception ignored) {
-          xLogger.warn("Exception while closing statement", ignored);
-        }
-      }
-      try {
-        if (statement != null) {
-          statement.close();
-        }
-      } catch (Exception ignored) {
-        xLogger.warn("Exception while closing statement", ignored);
-      }
-
       try {
         conn.close();
       } catch (Exception ignored) {
@@ -397,227 +354,255 @@ public class DashboardService implements IDashboardService {
 
   }
 
-  private String getPredictiveStockOutQuery(Long domainId, Map<String, String> filters) {
+  private PreparedStatementModel getPredictiveStockOutQuery(Long domainId, Map<String, String> filters) {
+    PreparedStatementModel model = new PreparedStatementModel();
     StringBuilder query = new StringBuilder();
     query.append("SELECT 'so' ty, (SELECT NAME from MATERIAL WHERE MATERIALID = MID) MATERIAL, MID,");
     StringBuilder groupBy = new StringBuilder(" GROUP BY MATERIAL,");
     StringBuilder where = new StringBuilder();
     where.append(" WHERE PDOS <= ").append(PREDICTIVE_PERIOD)
-        .append(" and `KEY` IN (SELECT KEY_OID FROM INVNTRY_DOMAINS WHERE DOMAIN_ID = ")
-        .append(domainId).append(")");
+        .append(" and `KEY` IN (SELECT KEY_OID FROM INVNTRY_DOMAINS WHERE DOMAIN_ID = ?)");
+    model.param(domainId);
     if (filters != null) {
       if (filters.get("district") != null) {
         query.append("(SELECT NAME FROM KIOSK WHERE KIOSKID = KID) NAME,KID,");
         groupBy.append("NAME, KID");
-        where.append(" AND KID IN(SELECT KIOSKID FROM KIOSK WHERE STATE = '")
-            .append(filters.get("state")).append("'")
-            .append(" AND COUNTRY = '").append(filters.get("country")).append("'");
+        where.append(" AND KID IN(SELECT KIOSKID FROM KIOSK WHERE STATE = ? AND COUNTRY = ?");
+        model.param(filters.get("state"));
+        model.param(filters.get("country"));
         if ("".equals(filters.get("district"))) {
           where.append("AND (DISTRICT = '' OR DISTRICT IS NULL))");
         } else {
-          where.append("AND DISTRICT = '").append(filters.get("district")).append("')");
+          where.append("AND DISTRICT = ?)");
+          model.param(filters.get("district"));
         }
-      } else if (filters.get("state") != null) {
-        query.append("(SELECT DISTRICT FROM KIOSK WHERE KIOSKID = KID) DISTRICT,");
-        groupBy.append("DISTRICT");
-        where.append(" AND KID IN(SELECT KIOSKID FROM KIOSK WHERE STATE = '")
-            .append(filters.get("state")).append("'")
-            .append(" AND COUNTRY = '").append(filters.get("country")).append("')");
       } else {
-        query.append("(SELECT STATE FROM KIOSK WHERE KIOSKID = KID) STATE,");
-        groupBy.append("STATE");
-        where.append(" AND KID IN (SELECT KIOSKID FROM KIOSK WHERE COUNTRY = '")
-            .append(filters.get("country")).append("')");
+        applyLocationsFilter(filters, model, query, groupBy, where);
       }
-      if (filters.get("mTag") != null) {
-        where.append(" AND MID IN(SELECT MATERIALID from MATERIAL_TAGS WHERE ID IN(")
-            .append("(SELECT ID FROM TAG WHERE NAME IN(").append(filters.get("mTag"))
-            .append(") AND TYPE=").append(ITag.MATERIAL_TAG).append("))")
-            .append(")");
-      } else if (filters.get("mId") != null) {
-        where.append(" AND MID = ").append(filters.get("mId"));
-      }
-      if (filters.get("eTag") != null) {
-        where.append(" AND KID IN(SELECT DISTINCT(KIOSKID) from KIOSK_TAGS WHERE ID IN(")
-            .append("(SELECT ID FROM TAG WHERE NAME IN(").append(filters.get("eTag"))
-            .append(") AND TYPE=").append(ITag.KIOSK_TAG).append("))")
-            .append(")");
-      } else if (filters.get("eeTag") != null) {
-        where.append(" AND KID NOT IN(SELECT DISTINCT(KIOSKID) from KIOSK_TAGS WHERE ID IN(")
-            .append("(SELECT ID FROM TAG WHERE NAME IN(").append(filters.get("eeTag"))
-            .append(") AND TYPE=").append(ITag.KIOSK_TAG).append("))")
-            .append(")");
-      }
+      applyMaterialFilters(filters, model, where);
+      applyEntityTagFilters(filters, model, where);
     }
     query.append("COUNT(1) COUNT FROM INVNTRY");
     query.append(where);
     query.append(groupBy);
-    return query.toString();
+    model.setQuery(query.toString());
+    return model;
   }
 
-  private String getAllPredictiveStockOutQuery(Long domainId, Map<String, String> filters) {
+  private void applyEntityTagFilters(Map<String, String> filters, PreparedStatementModel model,
+                                     StringBuilder where) {
+    if (filters.get("eTag") != null) {
+      where.append(" AND KID IN(SELECT DISTINCT(KIOSKID) from KIOSK_TAGS WHERE ID IN(")
+          .append("(SELECT ID FROM TAG WHERE NAME IN ");
+      model.inParams(filters.get("eTag"),where);
+      where.append(" AND TYPE=").append(ITag.KIOSK_TAG).append("))")
+          .append(")");
+    } else if (filters.get("eeTag") != null) {
+      where.append(" AND KID NOT IN(SELECT DISTINCT(KIOSKID) from KIOSK_TAGS WHERE ID IN(")
+          .append("(SELECT ID FROM TAG WHERE NAME IN ");
+      model.inParams(filters.get("eeTag"),where);
+      where.append(" AND TYPE=").append(ITag.KIOSK_TAG).append("))")
+          .append(")");
+    }
+  }
+
+  private void applyLocationsFilter(Map<String, String> filters, PreparedStatementModel model,
+                                    StringBuilder query, StringBuilder groupBy,
+                                    StringBuilder where) {
+    if (filters.get("state") != null) {
+      query.append("(SELECT DISTRICT FROM KIOSK WHERE KIOSKID = KID) DISTRICT,");
+      groupBy.append("DISTRICT");
+      where.append(" AND KID IN(SELECT KIOSKID FROM KIOSK WHERE STATE = ? AND COUNTRY = ?)");
+      model.param(filters.get("state"));
+      model.param(filters.get("country"));
+    } else {
+      query.append("(SELECT STATE FROM KIOSK WHERE KIOSKID = KID) STATE,");
+      groupBy.append("STATE");
+      where.append(" AND KID IN (SELECT KIOSKID FROM KIOSK WHERE COUNTRY = ?)");
+      model.param(filters.get("country"));
+    }
+  }
+
+  private PreparedStatementModel getAllPredictiveStockOutQuery(Long domainId, Map<String, String> filters) {
+    PreparedStatementModel model = new PreparedStatementModel();
     StringBuilder query = new StringBuilder();
     query.append(
         "select SUM(ALLCOUNT) ALLCOUNT, SUM(COUNT) COUNT FROM (SELECT 1 ALLCOUNT, IF(PDOS <= ")
         .append(PREDICTIVE_PERIOD).append(",1,0) COUNT");
     StringBuilder where = new StringBuilder();
-    where.append(" WHERE `KEY` IN (SELECT KEY_OID FROM INVNTRY_DOMAINS WHERE DOMAIN_ID = ")
-        .append(domainId).append(")");
+    where.append(" WHERE `KEY` IN (SELECT KEY_OID FROM INVNTRY_DOMAINS WHERE DOMAIN_ID = ?)");
+    model.param(domainId);
     if (filters != null) {
       if (filters.get("district") != null) {
-        where.append(" AND KID IN(SELECT KIOSKID FROM KIOSK WHERE STATE = '")
-            .append(filters.get("state")).append("'")
-            .append(" AND COUNTRY = '").append(filters.get("country")).append("'");
+        where.append(" AND KID IN(SELECT KIOSKID FROM KIOSK WHERE STATE = ? AND COUNTRY = ?");
+        model.param(filters.get("state"));
+        model.param(filters.get("country"));
+
         if ("".equals(filters.get("district"))) {
           where.append("AND (DISTRICT = '' OR DISTRICT IS NULL))");
         } else {
-          where.append("AND DISTRICT = '").append(filters.get("district")).append("')");
+          where.append("AND DISTRICT = ?)");
+          model.param(filters.get("district"));
         }
       } else if (filters.get("state") != null) {
-        where.append(" AND KID IN(SELECT KIOSKID FROM KIOSK WHERE STATE = '")
-            .append(filters.get("state")).append("'")
-            .append(" AND COUNTRY = '").append(filters.get("country")).append("')");
+        where.append(" AND KID IN(SELECT KIOSKID FROM KIOSK WHERE STATE = ? AND COUNTRY = ?)");
+        model.param(filters.get("state"));
+        model.param(filters.get("country"));
       } else {
-        where.append(" AND KID IN (SELECT KIOSKID FROM KIOSK WHERE COUNTRY = '")
-            .append(filters.get("country")).append("')");
+        where.append(" AND KID IN (SELECT KIOSKID FROM KIOSK WHERE COUNTRY = ?)");
+        model.param(filters.get("country"));
       }
-      if (filters.get("mTag") != null) {
-        where.append(" AND MID IN(SELECT MATERIALID from MATERIAL_TAGS WHERE ID IN(")
-            .append("(SELECT ID FROM TAG WHERE NAME IN(").append(filters.get("mTag"))
-            .append(") AND TYPE=").append(ITag.MATERIAL_TAG).append("))")
-            .append(")");
-      } else if (filters.get("mId") != null) {
-        where.append(" AND MID = ").append(filters.get("mId"));
-      }
-      if (filters.get("eTag") != null) {
-        where.append(" AND KID IN(SELECT DISTINCT(KIOSKID) from KIOSK_TAGS WHERE ID IN(")
-            .append("(SELECT ID FROM TAG WHERE NAME IN(").append(filters.get("eTag"))
-            .append(") AND TYPE=").append(ITag.KIOSK_TAG).append("))")
-            .append(")");
-      } else if (filters.get("eeTag") != null) {
-        where.append(" AND KID NOT IN(SELECT DISTINCT(KIOSKID) from KIOSK_TAGS WHERE ID IN(")
-            .append("(SELECT ID FROM TAG WHERE NAME IN(").append(filters.get("eeTag"))
-            .append(") AND TYPE=").append(ITag.KIOSK_TAG).append("))")
-            .append(")");
-      }
+      applyMaterialFilters(filters, model, where);
+
+      applyEntityTagFilters(filters, model, where);
     }
     where.append(")A");
     query.append(" FROM INVNTRY");
     query.append(where);
-    return query.toString();
+    model.setQuery(query.toString());
+    return model;
   }
 
-  private String getAllSessionQuery(Long domainId, Map<String, String> filters) {
+  private void applyMaterialFilters(Map<String, String> filters, PreparedStatementModel model,
+                                    StringBuilder where) {
+    if (filters.get("mTag") != null) {
+      where.append(" AND MID IN(SELECT MATERIALID from MATERIAL_TAGS WHERE ID IN(")
+          .append("(SELECT ID FROM TAG WHERE NAME IN ");
+      model.inParams(filters.get("mTag"),where);
+      where.append(" AND TYPE=").append(ITag.MATERIAL_TAG).append("))")
+          .append(")");
+    } else if (filters.get("mId") != null) {
+      where.append(" AND MID = ?");
+      model.param(Long.parseLong(filters.get("mId")));
+    }
+  }
+
+  private PreparedStatementModel getAllSessionQuery(Long domainId, Map<String, String> filters) {
+    PreparedStatementModel model = new PreparedStatementModel();
     StringBuilder query = new StringBuilder();
     query.append("SELECT COUNT(1) COUNT");
     StringBuilder where = new StringBuilder();
-    where.append(" WHERE K.KIOSKID = KD.KIOSKID_OID AND KD.DOMAIN_ID = ").append(domainId);
+    where.append(" WHERE K.KIOSKID = KD.KIOSKID_OID AND KD.DOMAIN_ID = ?");
+    model.param(domainId);
 
     if (filters.get("eTag") != null) {
       where
           .append(" AND EXISTS( SELECT 1 FROM KIOSK_TAGS KT WHERE KT.KIOSKID = K.KIOSKID AND ID = ")
-          .append("(SELECT ID FROM TAG WHERE NAME='").append(filters.get("eTag"))
-          .append("' AND TYPE=")
-          .append(ITag.KIOSK_TAG).append(" limit 1)").append(")");
+          .append("(SELECT ID FROM TAG WHERE NAME=? AND TYPE=")
+          .append(ITag.KIOSK_TAG).append(" limit 1))");
+      model.param(filters.get("eTag"));
     }
 
     if (filters.get("mTag") != null) {
       where.append(
           " AND EXISTS( SELECT 1 FROM MATERIAL_TAGS WHERE MATERIALID IN (SELECT MID FROM INVNTRY I WHERE I.KID=K.KIOSKID) AND ID IN ")
-          .append("(SELECT ID FROM TAG WHERE NAME IN(").append(filters.get("mTag"))
-          .append(") AND TYPE=")
+          .append("(SELECT ID FROM TAG WHERE NAME IN ");
+      model.inParams(filters.get("mTag"),where);
+      where.append(" AND TYPE=")
           .append(ITag.MATERIAL_TAG).append("))");
     } else if (filters.get("mId") != null) {
-      where.append(" AND EXISTS( SELECT 1 FROM INVNTRY I WHERE I.KID=K.KIOSKID AND MID = ")
-          .append(filters.get("mId")).append(")");
+      where.append(" AND EXISTS( SELECT 1 FROM INVNTRY I WHERE I.KID=K.KIOSKID AND MID = ? )");
+      model.param(Long.parseLong(filters.get("mId")));
     }
 
     if (filters.get("district") != null) {
-      where.append(" AND COUNTRY = '").append(filters.get("country"))
-          .append("' AND STATE = '").append(filters.get("state"));
+      where.append(" AND COUNTRY = ? AND STATE = ?");
+      model.param(filters.get("country"));
+      model.param(filters.get("state"));
       if ("No District".equals(filters.get("district"))) {
-        where.append("' AND (DISTRICT IS NULL OR DISTRICT = '')");
+        where.append(" AND (DISTRICT IS NULL OR DISTRICT = '')");
       } else {
-        where.append("' AND DISTRICT = '").append(filters.get("district")).append("'");
+        where.append(" AND DISTRICT = ?");
+        model.param(filters.get("district"));
       }
       query.append(", NAME LEVEL");
     } else if (filters.get("state") != null) {
-      where.append(" AND COUNTRY = '").append(filters.get("country"))
-          .append("' AND STATE = '").append(filters.get("state")).append("'");
+      where.append(" AND COUNTRY = ? AND STATE = ?");
+      model.param(filters.get("country"));
+      model.param(filters.get("state"));
       query.append(", DISTRICT LEVEL");
     } else {
-      where.append(" AND COUNTRY = '").append(filters.get("country")).append("'");
+      where.append(" AND COUNTRY = ?");
+      model.param(filters.get("country"));
       query.append(", STATE LEVEL");
     }
     query.append(" FROM KIOSK K, KIOSK_DOMAINS KD")
         .append(where).append(" GROUP BY LEVEL");
-    return query.toString();
+    model.setQuery(query.toString());
+    return model;
   }
 
-  private String getSessionQuery(Long domainId, Map<String, String> filters) {
+  private PreparedStatementModel getSessionQuery(Long domainId, Map<String, String> filters) {
+    PreparedStatementModel model = new PreparedStatementModel();
     StringBuilder query = new StringBuilder();
     query.append("SELECT COUNT(1) CNT,DF,ATD,SUM(TCNT) TCNT,GROUP_BY_NAME");
     String groupNameClause;
     StringBuilder where = new StringBuilder();
-    where.append(" WHERE ATD BETWEEN DATE_SUB('").append(filters.get("atd"))
-        .append("', INTERVAL 6 DAY) AND '")
-        .append(filters.get("atd")).append("' AND T.KID = K.KIOSKID AND T.KID = KD.KIOSKID_OID AND KD.DOMAIN_ID = ")
-        .append(domainId);
+    where.append(" WHERE ATD BETWEEN DATE_SUB(?, INTERVAL 6 DAY) AND ? AND T.KID = K.KIOSKID AND T.KID = KD.KIOSKID_OID AND KD.DOMAIN_ID = ?");
+    model.param(filters.get("atd"));
+    model.param(filters.get("atd"));
+    model.param(domainId);
 
     if (filters.get("type") != null) {
-      where.append(" AND T.TYPE = '").append(filters.get("type")).append("'");
+      where.append(" AND T.TYPE = ?");
+      model.param(filters.get("type"));
     }
     if (filters.get("eTag") != null) {
       where.append(" AND EXISTS( SELECT 1 FROM KIOSK_TAGS WHERE KIOSKID = KID AND ID = ")
-          .append("(SELECT ID FROM TAG WHERE NAME='").append(filters.get("eTag"))
-          .append("' AND TYPE=")
+          .append("(SELECT ID FROM TAG WHERE NAME=? AND TYPE=")
           .append(ITag.KIOSK_TAG).append(" limit 1)").append(")");
+      model.param(filters.get("eTag"));
     }
 
     if (filters.get("mTag") != null) {
       where.append(" AND EXISTS( SELECT 1 FROM MATERIAL_TAGS WHERE MATERIALID = MID AND ID IN ")
-          .append("(SELECT ID FROM TAG WHERE NAME IN (").append(filters.get("mTag"))
-          .append(") AND TYPE=")
+          .append("(SELECT ID FROM TAG WHERE NAME IN ");
+      model.inParams(filters.get("mTag"),where);
+      where.append(" AND TYPE=")
           .append(ITag.MATERIAL_TAG).append("))");
     } else if (filters.get("mId") != null) {
-      where.append(" AND MID = ").append(filters.get("mId"));
+      where.append(" AND MID = ?");
+      model.param(Long.parseLong(filters.get("mId")));
     }
 
     if (filters.get("district") != null) {
-      where.append(" AND K.COUNTRY = '")
-          .append(filters.get("country"))
-          .append("' AND K.STATE = '").append(filters.get("state"));
+      where.append(" AND K.COUNTRY = ? AND K.STATE = ?");
+      model.param(filters.get("country"));
+      model.param(filters.get("state"));
       if ("No District".equals(filters.get("district"))) {
-        where.append("' AND (K.DISTRICT IS NULL OR K.DISTRICT = '')");
+        where.append(" AND (K.DISTRICT IS NULL OR K.DISTRICT = '')");
       } else {
-        where.append("' AND K.DISTRICT = '").append(filters.get("district")).append("'");
+        where.append(" AND K.DISTRICT = ?");
+        model.param(filters.get("district"));
       }
       groupNameClause = "K.NAME AS GROUP_BY_NAME";
     } else if (filters.get("state") != null) {
-      where.append(" AND K.COUNTRY = '")
-          .append(filters.get("country"))
-          .append("' AND K.STATE = '").append(filters.get("state")).append("'");
+      where.append(" AND K.COUNTRY = ? AND K.STATE = ? ");
+      model.param(filters.get("country"));
+      model.param(filters.get("state"));
       groupNameClause = "K.DISTRICT AS GROUP_BY_NAME";
     } else {
-      where.append(" AND K.COUNTRY = '")
-          .append(filters.get("country")).append("'");
+      where.append(" AND K.COUNTRY = ?");
+      model.param(filters.get("country"));
       groupNameClause = "K.STATE AS GROUP_BY_NAME";
     }
     where.append(" GROUP BY CONCAT(KID, DF, ATD)");
     query.append(" FROM (SELECT KID,").append(groupNameClause)
-        .append(",CASE WHEN DATEDIFF(DATE(DATE_ADD(T, INTERVAL '")
-        .append(filters.get("diff"))
-        .append("' HOUR_SECOND)), ATD) <= 0 THEN '1' WHEN DATEDIFF(DATE(DATE_ADD(T, INTERVAL '")
-        .append(filters.get("diff"))
-        .append("' HOUR_SECOND)), ATD) >= 3 THEN '3' ELSE DATEDIFF(DATE(DATE_ADD(T, INTERVAL '")
-        .append(filters.get("diff"))
+        .append(",CASE WHEN DATEDIFF(DATE(DATE_ADD(T, INTERVAL ?")
+        .append(" HOUR_SECOND)), ATD) <= 0 THEN '1' WHEN DATEDIFF(DATE(DATE_ADD(T, INTERVAL ?")
+        .append(" HOUR_SECOND)), ATD) >= 3 THEN '3' ELSE DATEDIFF(DATE(DATE_ADD(T, INTERVAL ?")
         .append(
-            "' HOUR_SECOND)), ATD) END AS DF,ATD, COUNT(1) TCNT FROM TRANSACTION T, KIOSK_DOMAINS KD, KIOSK K")
+            " HOUR_SECOND)), ATD) END AS DF,ATD, COUNT(1) TCNT FROM TRANSACTION T, KIOSK_DOMAINS KD, KIOSK K")
         .append(where).append(") A").append(" GROUP BY ATD, DF, GROUP_BY_NAME");
-    return query.toString();
+    model.param(filters.get("diff"));
+    model.param(filters.get("diff"));
+    model.param(filters.get("diff"));
+    model.setQuery(query.toString());
+    return model;
   }
 
-  private String getMDTempQuery(Long domainId, Map<String, String> filters) {
+  private PreparedStatementModel getMDTempQuery(Long domainId, Map<String, String> filters) {
+    PreparedStatementModel model = new PreparedStatementModel();
     try {
       String csv = filters.get("type");
       if (csv == null) {
@@ -629,21 +614,27 @@ public class DashboardService implements IDashboardService {
         csv = csv.substring(1, csv.length() - 1);
       }
       String p = StringUtils.isEmpty(filters.get("tPeriod")) ? "M_0" : filters.get("tPeriod");
+      int periodValue;
       String period;
       if (p.startsWith("M")) {
-        period = "INTERVAL " + p.substring(2) + " MINUTE";
+        period = "INTERVAL ? MINUTE";
+        periodValue = Integer.parseInt(p.substring(2));
       } else if (p.startsWith("H")) {
-        period = "INTERVAL " + p.substring(2) + " HOUR";
+        period = "INTERVAL ? HOUR";
+        periodValue = Integer.parseInt(p.substring(2));
       } else if (p.startsWith("D")) {
-        period = "INTERVAL " + p.substring(2) + " DAY";
+        period = "INTERVAL ? DAY";
+        periodValue = Integer.parseInt(p.substring(2));
       } else { //From Inventory dashboard period filter
-        period = "INTERVAL " + p + " DAY";
+        period = "INTERVAL ? DAY";
+        periodValue = Integer.parseInt(p);
       }
       StringBuilder query = new StringBuilder();
       boolean isDistrict = filters.get("district") != null;
       boolean isState = filters.get("state") != null;
       String colName = isDistrict ? "NAME" : (isState ? "DISTRICT" : "STATE");
       String idHandle = isDistrict ? null : (isState ? "DISTRICT_ID" : "STATE_ID");
+
       query.append("SELECT ").append(colName).append(isDistrict ? ",KID" : "")
           .append((null == idHandle) ? "" : "," + idHandle)
           .append(", STAT, COUNT(1) COUNT FROM (SELECT A.")
@@ -661,31 +652,35 @@ public class DashboardService implements IDashboardService {
           .append(colName)
           .append((null == idHandle) ? ""
               : "," + "(SELECT " + idHandle + " FROM KIOSK WHERE KIOSKID = A.KID)" + idHandle)
-          .append(" FROM ASSET A, ASSET_DOMAINS AD WHERE A.TYPE IN (").append(csv)
-          .append(") AND (SELECT COUNTRY FROM KIOSK WHERE KIOSKID = A.KID) = '")
-          .append(filters.get("country")).append("'")
-          .append(" AND EXISTS(SELECT 1 FROM ASSETRELATION R WHERE A.ID = R.ASSETID AND R.TYPE=2)")
+          .append(" FROM ASSET A, ASSET_DOMAINS AD WHERE A.TYPE IN ");
+      model.param(periodValue);
+      model.inParams(csv,query);
+      query.append(" AND (SELECT COUNTRY FROM KIOSK WHERE KIOSKID = A.KID) = ? AND EXISTS(SELECT 1 FROM ASSETRELATION R WHERE A.ID = R.ASSETID AND R.TYPE=2)")
           .append(
               "AND 1 = (SELECT IFNULL(0 = (SELECT STATUS FROM ASSETSTATUS S WHERE TYPE = 7 and S.ASSETID = A.ID),1))");
+      model.param(filters.get("country"));
       if (isDistrict || isState) {
-        query.append(" AND (SELECT STATE FROM KIOSK WHERE KIOSKID = A.KID) = '")
-            .append(filters.get("state")).append("'");
+        query.append(" AND (SELECT STATE FROM KIOSK WHERE KIOSKID = A.KID) = ?");
+        model.param(filters.get("state"));
       }
       if (isDistrict) {
-        query.append(" AND (SELECT DISTRICT FROM KIOSK WHERE KIOSKID = A.KID) = '")
-            .append(filters.get("district")).append("'");
+        query.append(" AND (SELECT DISTRICT FROM KIOSK WHERE KIOSKID = A.KID) = ?");
+        model.param(filters.get("district"));
       }
 
-      query.append(" AND A.ID = AD.ID_OID AND AD.DOMAIN_ID=").append(domainId);
+      query.append(" AND A.ID = AD.ID_OID AND AD.DOMAIN_ID=?");
+      model.param(domainId);
       if (filters.get("eTag") != null) {
         query.append(" AND KID IN(SELECT DISTINCT(KIOSKID) from KIOSK_TAGS WHERE ID IN(")
-            .append("(SELECT ID FROM TAG WHERE NAME IN(").append(filters.get("eTag"))
-            .append(") AND TYPE=").append(ITag.KIOSK_TAG).append("))")
+            .append("(SELECT ID FROM TAG WHERE NAME IN");
+        model.inParams(filters.get("eTag"),query);
+        query.append(" AND TYPE=").append(ITag.KIOSK_TAG).append("))")
             .append(")");
       } else if (filters.get("eeTag") != null) {
         query.append(" AND KID NOT IN(SELECT DISTINCT(KIOSKID) from KIOSK_TAGS WHERE ID IN(")
-            .append("(SELECT ID FROM TAG WHERE NAME IN(").append(filters.get("eeTag"))
-            .append(") AND TYPE=").append(ITag.KIOSK_TAG).append("))")
+            .append("(SELECT ID FROM TAG WHERE NAME IN ");
+        model.inParams(filters.get("eeTag"),query);
+        query.append(" AND TYPE=").append(ITag.KIOSK_TAG).append("))")
             .append(")");
       } else {
         query.append(" AND KID IS NOT NULL");
@@ -693,24 +688,28 @@ public class DashboardService implements IDashboardService {
       query.append(
           ") A LEFT JOIN (SELECT ASSETID, IF(MIN(STATUS) = 0, 'tk', 'tu') STAT FROM ASSETSTATUS ASI, ")
           .append("ASSET_DOMAINS AD WHERE ASI.TYPE = 3 AND ")
-          .append("ASI.ASSETID=AD.ID_OID AND AD.DOMAIN_ID=")
-          .append(domainId).append(" AND TS <= DATE_SUB(NOW(), ").append(period)
+          .append("ASI.ASSETID=AD.ID_OID AND AD.DOMAIN_ID=?")
+          .append(" AND TS <= DATE_SUB(NOW(), ").append(period)
           .append(") GROUP BY ASI.ASSETID) ASF ON A.ID = ASF.ASSETID) T GROUP BY T.STAT, T.")
           .append(colName).append(isDistrict ? ",T.KID" : "");
-      return query.toString();
+      model.param(domainId);
+      model.param(periodValue);
+       model.setQuery(query.toString());
+       return model;
     } catch (ConfigurationException e) {
       xLogger.severe("Error in constructing data for dashboard (temperature)");
     }
     return null;
   }
 
-  private String getMDInvQuery(Long domainId, Map<String, String> filters) {
+  private PreparedStatementModel getMDInvQuery(Long domainId, Map<String, String> filters) {
     return getMDInvQuery(domainId, filters, false, null);
   }
 
-  private String getMDInvQuery(Long domainId, Map<String, String> filters, boolean isCountOnly,
-                               String grpby) {
+  private PreparedStatementModel getMDInvQuery(Long domainId, Map<String, String> filters, boolean isCountOnly,
+                                               String grpby) {
 
+    PreparedStatementModel preparedStatementModel = new PreparedStatementModel();
     boolean isGrpByLoc = false;
     boolean isGrpByMat = false;
     if (StringUtils.isEmpty(grpby)) {
@@ -730,7 +729,8 @@ public class DashboardService implements IDashboardService {
     }
     StringBuilder where = new StringBuilder();
     where.append(" WHERE `KID` IN (SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID = ")
-        .append(domainId).append(")");
+        .append(CharacterConstants.QUESTION).append(")");
+    preparedStatementModel.param(domainId);
 
     if (filters != null) {
       if (filters.get("district") != null) {
@@ -738,13 +738,15 @@ public class DashboardService implements IDashboardService {
           query.append("(SELECT NAME FROM KIOSK WHERE KIOSKID = KID) NAME, KID,");
           groupBy.append(",NAME, KID");
         }
-        where.append(" AND KID IN(SELECT KIOSKID FROM KIOSK WHERE STATE = '")
-            .append(filters.get("state")).append("'")
-            .append(" AND COUNTRY = '").append(filters.get("country")).append("'");
+        where.append(" AND KID IN(SELECT KIOSKID FROM KIOSK WHERE STATE = ?")
+            .append(" AND COUNTRY = ?");
+        preparedStatementModel.param(filters.get("state"));
+        preparedStatementModel.param(filters.get("country"));
         if ("".equals(filters.get("district"))) {
           where.append("AND (DISTRICT = '' OR DISTRICT IS NULL))");
         } else {
-          where.append("AND DISTRICT = '").append(filters.get("district")).append("')");
+          where.append("AND DISTRICT = ?)");
+          preparedStatementModel.param(filters.get("district"));
         }
       } else if (filters.get("state") != null) {
         if (!isCountOnly && isGrpByLoc) {
@@ -753,9 +755,10 @@ public class DashboardService implements IDashboardService {
           groupBy.append(",DISTRICT");
           groupBy.append(",DISTRICT_ID");
         }
-        where.append(" AND KID IN(SELECT KIOSKID FROM KIOSK WHERE STATE = '")
-            .append(filters.get("state")).append("'")
-            .append(" AND COUNTRY = '").append(filters.get("country")).append("')");
+        where.append(" AND KID IN(SELECT KIOSKID FROM KIOSK WHERE STATE = ? AND COUNTRY = ?)");
+        preparedStatementModel.param(filters.get("state"));
+        preparedStatementModel.param(filters.get("country"));
+
       } else {
         if (!isCountOnly && isGrpByLoc) {
           query.append("(SELECT STATE FROM KIOSK WHERE KIOSKID = KID) STATE,");
@@ -763,32 +766,37 @@ public class DashboardService implements IDashboardService {
           groupBy.append(",STATE");
           groupBy.append(",STATE_ID");
         }
-        where.append(" AND KID IN (SELECT KIOSKID FROM KIOSK WHERE COUNTRY = '")
-            .append(filters.get("country")).append("')");
+        where.append(" AND KID IN (SELECT KIOSKID FROM KIOSK WHERE COUNTRY = ?)");
+        preparedStatementModel.param(filters.get("country"));
       }
-      if (filters.get("mTag") != null) {
+      if (StringUtils.isNotEmpty(filters.get("mTag"))) {
         where.append(" AND MID IN(SELECT MATERIALID from MATERIAL_TAGS WHERE ID IN(")
-            .append("(SELECT ID FROM TAG WHERE NAME IN(").append(filters.get("mTag"))
-            .append(") AND TYPE=").append(ITag.MATERIAL_TAG).append("))")
+            .append("(SELECT ID FROM TAG WHERE NAME IN ");
+        preparedStatementModel.inParams(filters.get("mTag"), where);
+        where.append(" AND TYPE=").append(ITag.MATERIAL_TAG).append("))")
             .append(")");
       } else if (filters.get("mId") != null) {
-        where.append(" AND MID = ").append(filters.get("mId"));
+        where.append(" AND MID = ?");
+        preparedStatementModel.param(filters.get("mId"));
       }
-      if (filters.get("eTag") != null) {
+      if (StringUtils.isNotEmpty(filters.get("eTag"))) {
         where.append(" AND KID IN(SELECT DISTINCT(KIOSKID) from KIOSK_TAGS WHERE ID IN(")
-            .append("(SELECT ID FROM TAG WHERE NAME IN(").append(filters.get("eTag"))
-            .append(") AND TYPE=").append(ITag.KIOSK_TAG).append("))")
+            .append("(SELECT ID FROM TAG WHERE NAME IN ");
+        preparedStatementModel.inParams(filters.get("eTag"), where);
+        where.append(" AND TYPE=").append(ITag.KIOSK_TAG).append("))")
             .append(")");
-      } else if (filters.get("eeTag") != null) {
+      } else if (StringUtils.isNotEmpty(filters.get("eeTag"))) {
         where.append(" AND KID NOT IN(SELECT DISTINCT(KIOSKID) from KIOSK_TAGS WHERE ID IN(")
-            .append("(SELECT ID FROM TAG WHERE NAME IN(").append(filters.get("eeTag"))
-            .append(") AND TYPE=").append(ITag.KIOSK_TAG).append("))")
+            .append("(SELECT ID FROM TAG WHERE NAME IN ");
+        preparedStatementModel.inParams(filters.get("eeTag"), where);
+        where.append(" AND TYPE=").append(ITag.KIOSK_TAG).append("))")
             .append(")");
       }
       String date = null;
       if (filters.get("date") != null) {
         date = filters.get("date");
-        where.append(" AND ( ED IS NULL OR ED > '").append(date).append("')");
+        where.append(" AND ( ED IS NULL OR ED > ?)");
+        preparedStatementModel.param(date);
       } else {
         where.append(" AND ED IS NULL");
       }
@@ -808,7 +816,8 @@ public class DashboardService implements IDashboardService {
           }
         }
         cal.add(Calendar.DAY_OF_MONTH, -period);
-        where.append(" AND SD <= '").append(sdf.format(cal.getTime())).append("'");
+        where.append(" AND SD <= ?");
+        preparedStatementModel.param(sdf.format(cal.getTime()));
       }
 
     } else {
@@ -817,15 +826,18 @@ public class DashboardService implements IDashboardService {
     query.append("COUNT(1) COUNT FROM INVNTRYEVNTLOG");
     query.append(where);
     query.append(groupBy);
-    return query.toString();
+    preparedStatementModel.setQuery(query.toString());
+
+    return preparedStatementModel;
   }
 
-  private String getMDAllInvQuery(Long domainId, Map<String, String> filters) {
+  private PreparedStatementModel getMDAllInvQuery(Long domainId, Map<String, String> filters) {
     return getMDAllInvQuery(domainId, filters, false, null);
   }
 
-  private String getMDAllInvQuery(Long domainId, Map<String, String> filters, boolean isCountOnly,
-                                  String grpby) {
+  private PreparedStatementModel getMDAllInvQuery(Long domainId, Map<String, String> filters, boolean isCountOnly,
+                                                  String grpby) {
+    PreparedStatementModel preparedStatementModel = new PreparedStatementModel();
     boolean isGrpByLoc = false;
     boolean isGrpByMat = false;
     if (StringUtils.isEmpty(grpby)) {
@@ -846,7 +858,8 @@ public class DashboardService implements IDashboardService {
     }
     StringBuilder where = new StringBuilder();
     where.append(" WHERE `KEY` IN (SELECT KEY_OID FROM INVNTRY_DOMAINS WHERE DOMAIN_ID = ")
-        .append(domainId).append(")");
+        .append(CharacterConstants.QUESTION).append(")");
+    preparedStatementModel.param(domainId);
     if (filters != null) {
       if (filters.get("district") != null) {
         if (!isCountOnly && isGrpByLoc) {
@@ -854,13 +867,14 @@ public class DashboardService implements IDashboardService {
           groupBy.append("NAME, KID");
           groupBy.append(",");
         }
-        where.append(" AND KID IN(SELECT KIOSKID FROM KIOSK WHERE STATE = '")
-            .append(filters.get("state")).append("'")
-            .append(" AND COUNTRY = '").append(filters.get("country")).append("'");
+        where.append(" AND KID IN (SELECT KIOSKID FROM KIOSK WHERE STATE = ? AND COUNTRY = ?");
+        preparedStatementModel.param(filters.get("state"));
+        preparedStatementModel.param(filters.get("country"));
         if ("".equals(filters.get("district"))) {
-          where.append("AND (DISTRICT = '' OR DISTRICT IS NULL))");
+          where.append(" AND (DISTRICT = '' OR DISTRICT IS NULL))");
         } else {
-          where.append("AND DISTRICT = '").append(filters.get("district")).append("')");
+          where.append(" AND DISTRICT = ?)");
+          preparedStatementModel.param(filters.get("district"));
         }
       } else if (filters.get("state") != null) {
         if (!isCountOnly && isGrpByLoc) {
@@ -869,9 +883,9 @@ public class DashboardService implements IDashboardService {
           groupBy.append("DISTRICT,");
           groupBy.append("DISTRICT_ID,");
         }
-        where.append(" AND KID IN(SELECT KIOSKID FROM KIOSK WHERE STATE = '")
-            .append(filters.get("state")).append("'")
-            .append(" AND COUNTRY = '").append(filters.get("country")).append("')");
+        where.append(" AND KID IN (SELECT KIOSKID FROM KIOSK WHERE STATE = ? AND COUNTRY = ?)");
+        preparedStatementModel.param(filters.get("state"));
+        preparedStatementModel.param(filters.get("country"));
       } else {
         if (!isCountOnly && isGrpByLoc) {
           query.append("(SELECT STATE FROM KIOSK WHERE KIOSKID = KID) STATE,");
@@ -879,26 +893,29 @@ public class DashboardService implements IDashboardService {
           groupBy.append("STATE,");
           groupBy.append("STATE_ID,");
         }
-        where.append(" AND KID IN (SELECT KIOSKID FROM KIOSK WHERE COUNTRY = '")
-            .append(filters.get("country")).append("')");
+        where.append(" AND KID IN (SELECT KIOSKID FROM KIOSK WHERE COUNTRY = ?)");
+        preparedStatementModel.param(filters.get("country"));
       }
       if (filters.get("mTag") != null) {
         where.append(" AND MID IN(SELECT MATERIALID from MATERIAL_TAGS WHERE ID IN(")
-            .append("(SELECT ID FROM TAG WHERE NAME IN(").append(filters.get("mTag"))
-            .append(") AND TYPE=").append(ITag.MATERIAL_TAG).append("))")
+            .append("(SELECT ID FROM TAG WHERE NAME IN ");
+        preparedStatementModel.inParams(filters.get("mTag"), where);
+        where.append(" AND TYPE=").append(ITag.MATERIAL_TAG).append("))")
             .append(")");
       } else if (filters.get("mId") != null) {
         where.append(" AND MID = ").append(filters.get("mId"));
       }
       if (filters.get("eTag") != null) {
         where.append(" AND KID IN(SELECT DISTINCT(KIOSKID) from KIOSK_TAGS WHERE ID IN(")
-            .append("(SELECT ID FROM TAG WHERE NAME IN(").append(filters.get("eTag"))
-            .append(") AND TYPE=").append(ITag.KIOSK_TAG).append("))")
+            .append("(SELECT ID FROM TAG WHERE NAME IN");
+        preparedStatementModel.inParams(filters.get("eTag"), where);
+        where.append(" AND TYPE=").append(ITag.KIOSK_TAG).append("))")
             .append(")");
       } else if (filters.get("eeTag") != null) {
-        where.append(" AND KID NOT IN(SELECT DISTINCT(KIOSKID) from KIOSK_TAGS WHERE ID IN(")
-            .append("(SELECT ID FROM TAG WHERE NAME IN(").append(filters.get("eeTag"))
-            .append(") AND TYPE=").append(ITag.KIOSK_TAG).append("))")
+        where.append(" AND KID NOT IN(SELECT DISTINCT(KIOSKID) from KIOSK_TAGS WHERE ID IN (")
+            .append("(SELECT ID FROM TAG WHERE NAME IN ");
+        preparedStatementModel.inParams(filters.get("eeTag"), where);
+        where.append(" AND TYPE=").append(ITag.KIOSK_TAG).append("))")
             .append(")");
       }
     }
@@ -908,14 +925,15 @@ public class DashboardService implements IDashboardService {
       groupBy.setLength(groupBy.length() - 1);
       query.append(groupBy);
     }
-    return query.toString();
+    preparedStatementModel.setQuery(query.toString());
+    return preparedStatementModel;
   }
 
-  private String getMDEntQuery(Long domainId, Map<String, String> filters) {
+  private PreparedStatementModel getMDEntQuery(Long domainId, Map<String, String> filters) {
     return getMDEntQuery(domainId, filters, false);
   }
 
-  private String getMDEntQuery(Long domainId, Map<String, String> filters, boolean isCountOnly) {
+  private PreparedStatementModel getMDEntQuery(Long domainId, Map<String, String> filters, boolean isCountOnly) {
     EntityActivityQueryGenerator
         queryGenerator =
         EntityActivityQueryGenerator.getEntityActivityQueryGenerator()
@@ -950,31 +968,35 @@ public class DashboardService implements IDashboardService {
     return queryGenerator.generate();
   }
 
-  private String getMDAllEntQuery(Long domainId, Map<String, String> filters) {
+  private PreparedStatementModel getMDAllEntQuery(Long domainId, Map<String, String> filters) {
     return getMDAllEntQuery(domainId, filters, false);
   }
 
-  private String getMDAllEntQuery(Long domainId, Map<String, String> filters, boolean isCountOnly) {
+  private PreparedStatementModel getMDAllEntQuery(Long domainId, Map<String, String> filters, boolean isCountOnly) {
+    PreparedStatementModel preparedStatementModel = new PreparedStatementModel();
     StringBuilder query = new StringBuilder("SELECT ");
     StringBuilder groupBy = new StringBuilder();
     if (!isCountOnly) {
       groupBy.append(" GROUP BY ");
     }
     StringBuilder where = new StringBuilder();
-    where.append(" WHERE KIOSKID IN (SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID = ")
-        .append(domainId).append(")");
+    where.append(" WHERE KIOSKID IN (SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID = ? )");
+    preparedStatementModel.param(domainId);
     if (filters != null) {
       if (filters.get("district") != null) {
         if (!isCountOnly) {
           query.append("NAME,CAST(KIOSKID AS CHAR) AS KID,");
           groupBy.append("NAME,KID");
         }
-        where.append(" AND STATE = '").append(filters.get("state")).append("'")
-            .append(" AND COUNTRY = '").append(filters.get("country")).append("'");
+        where.append(" AND STATE = ? AND COUNTRY = ?");
+        preparedStatementModel.param(filters.get("state"));
+        preparedStatementModel.param(filters.get("country"));
+
         if ("".equals(filters.get("district"))) {
           where.append("AND (DISTRICT = '' OR DISTRICT IS NULL)");
         } else {
-          where.append("AND DISTRICT = '").append(filters.get("district")).append("'");
+          where.append("AND DISTRICT = ?");
+          preparedStatementModel.param(filters.get("district"));
         }
       } else if (filters.get("state") != null) {
         if (!isCountOnly) {
@@ -983,8 +1005,9 @@ public class DashboardService implements IDashboardService {
           groupBy.append("DISTRICT");
           groupBy.append(",DISTRICT_ID");
         }
-        where.append(" AND STATE = '").append(filters.get("state")).append("'")
-            .append(" AND COUNTRY = '").append(filters.get("country")).append("'");
+        where.append(" AND STATE = ? AND COUNTRY = ?");
+        preparedStatementModel.param(filters.get("state"));
+        preparedStatementModel.param(filters.get("country"));
       } else {
         if (!isCountOnly) {
           query.append(" STATE,");
@@ -992,36 +1015,40 @@ public class DashboardService implements IDashboardService {
           groupBy.append(" STATE");
           groupBy.append(", STATE_ID");
         }
-        where.append(" AND COUNTRY = '").append(filters.get("country")).append("'");
+        where.append(" AND COUNTRY = ?");
+        preparedStatementModel.param(filters.get("country"));
       }
 
       if (filters.get("mTag") != null) {
         where.append(
             " AND KIOSKID IN (SELECT DISTINCT(KID) FROM INVNTRY WHERE MID IN (SELECT MATERIALID from MATERIAL_TAGS WHERE ID IN(")
-            .append("(SELECT ID FROM TAG WHERE NAME IN(").append(filters.get("mTag"))
-            .append(") AND TYPE=").append(ITag.MATERIAL_TAG).append("))")
+            .append("(SELECT ID FROM TAG WHERE NAME IN");
+        preparedStatementModel.inParams(filters.get("mTag"),where);
+        where.append(" AND TYPE=").append(ITag.MATERIAL_TAG).append("))")
             .append("))");
       } else if (filters.get("mId") != null) {
-        where.append(" AND KIOSKID IN (SELECT DISTINCT(KID) FROM INVNTRY WHERE MID = ")
-            .append(filters.get("mId"))
-            .append(")");
+        where.append(" AND KIOSKID IN (SELECT DISTINCT(KID) FROM INVNTRY WHERE MID = ? )");
+        preparedStatementModel.param(filters.get("mId"));
       }
       if (filters.get("eTag") != null) {
         where.append(" AND KIOSKID IN(SELECT DISTINCT(KIOSKID) from KIOSK_TAGS WHERE ID IN(")
-            .append("(SELECT ID FROM TAG WHERE NAME IN(").append(filters.get("eTag"))
-            .append(") AND TYPE=").append(ITag.KIOSK_TAG).append("))")
+            .append("(SELECT ID FROM TAG WHERE NAME IN ");
+        preparedStatementModel.inParams(filters.get("eTag"),where);
+        where.append(" AND TYPE=").append(ITag.KIOSK_TAG).append("))")
             .append(")");
       } else if (filters.get("eeTag") != null) {
         where.append(" AND KIOSKID NOT IN(SELECT DISTINCT(KIOSKID) from KIOSK_TAGS WHERE ID IN(")
-            .append("(SELECT ID FROM TAG WHERE NAME IN(").append(filters.get("eeTag"))
-            .append(") AND TYPE=").append(ITag.KIOSK_TAG).append("))")
+            .append("(SELECT ID FROM TAG WHERE NAME IN ");
+        preparedStatementModel.inParams(filters.get("eeTag"),where);
+        where.append(" AND TYPE=").append(ITag.KIOSK_TAG).append("))")
             .append(")");
       }
     }
     query.append(" COUNT(1) COUNT FROM KIOSK");
     query.append(where);
     query.append(groupBy);
-    return query.toString();
+    preparedStatementModel.setQuery(query.toString());
+    return preparedStatementModel;
   }
 
   /**
@@ -1031,44 +1058,46 @@ public class DashboardService implements IDashboardService {
    * @param filters  -
    * @return -
    */
-  private String getIDEventsQuery(Long domainId, Map<String, String> filters) {
+  private PreparedStatementModel getIDEventsQuery(Long domainId, Map<String, String> filters) {
+    PreparedStatementModel model = new PreparedStatementModel();
     StringBuilder query = new StringBuilder();
     query.append("SELECT ty TYPE,");
     StringBuilder groupBy = new StringBuilder(" GROUP BY TY");
     StringBuilder where = new StringBuilder();
-    where.append(" WHERE `KID` IN (SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID = ")
-        .append(domainId).append(")");
+    where.append(" WHERE `KID` IN (SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID = ? )");
+    model.param(domainId);
     where.append(" AND ED IS NULL");
 
     if (filters != null) {
       if (filters.get("district") != null) {
         query.append("KID,(SELECT NAME FROM KIOSK WHERE KIOSKID = KID) ENTITY,");
         groupBy.append(",KID");
-        where.append(" AND KID IN(SELECT KIOSKID FROM KIOSK WHERE STATE = '")
-            .append(filters.get("state")).append("'")
-            .append(" AND COUNTRY = '").append(filters.get("country")).append("'");
+        where.append(" AND KID IN(SELECT KIOSKID FROM KIOSK WHERE STATE = ? AND COUNTRY = ?");
+        model.param(filters.get("state"));
+        model.param(filters.get("country"));
         if ("No district".equals(filters.get("district"))) {
           where.append(" AND (DISTRICT IS NULL OR DISTRICT = ''))");
         } else {
-          where.append(" AND DISTRICT = '").append(filters.get("district")).append("')");
+          where.append(" AND DISTRICT = ? )");
+          model.param(filters.get("district"));
         }
       } else if (filters.get("state") != null) {
         query.append("(SELECT DISTRICT FROM KIOSK WHERE KIOSKID = KID) DISTRICT,");
         groupBy.append(",DISTRICT");
-        where.append(" AND KID IN(SELECT KIOSKID FROM KIOSK WHERE STATE = '")
-            .append(filters.get("state")).append("'")
-            .append(" AND COUNTRY = '").append(filters.get("country")).append("')");
+        where.append(" AND KID IN(SELECT KIOSKID FROM KIOSK WHERE STATE = ? AND COUNTRY = ?)");
+        model.param(filters.get("state"));
+        model.param(filters.get("country"));
       } else {
         query.append("(SELECT STATE FROM KIOSK WHERE KIOSKID = KID) STATE,");
         groupBy.append(",STATE");
-        where.append(" AND KID IN (SELECT KIOSKID FROM KIOSK WHERE COUNTRY = '")
-            .append(filters.get("country")).append("')");
+        where.append(" AND KID IN (SELECT KIOSKID FROM KIOSK WHERE COUNTRY = ? )");
+        model.param(filters.get("country"));
       }
       if (filters.get("eTag") != null) {
         where.append(" AND KID IN(SELECT KIOSKID from KIOSK_TAGS WHERE ID =")
-            .append("(SELECT ID FROM TAG WHERE NAME='").append(filters.get("eTag"))
-            .append("' AND TYPE=").append(ITag.KIOSK_TAG).append(" limit 1)")
+            .append("(SELECT ID FROM TAG WHERE NAME=? AND TYPE=").append(ITag.KIOSK_TAG).append(" limit 1)")
             .append(")");
+        model.param(filters.get("eTag"));
       }
     }
 
@@ -1081,14 +1110,16 @@ public class DashboardService implements IDashboardService {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Calendar cal = new GregorianCalendar();
         cal.add(Calendar.DAY_OF_MONTH, -period);
-        where.append(" AND SD <= '").append(sdf.format(cal.getTime())).append("'");
+        where.append(" AND SD <= ?");
+        model.param(sdf.format(cal.getTime()));
       }
     }
 
     query.append("COUNT(1) COUNT FROM INVNTRYEVNTLOG");
     query.append(where);
     query.append(groupBy);
-    return query.toString();
+    model.setQuery(query.toString());
+    return model;
   }
 
 
@@ -1099,44 +1130,36 @@ public class DashboardService implements IDashboardService {
    * @param filters  -
    * @return -
    */
-  private String getIDInventoryQuery(Long domainId, Map<String, String> filters) {
+  private PreparedStatementModel getIDInventoryQuery(Long domainId, Map<String, String> filters) {
+    PreparedStatementModel model = new PreparedStatementModel();
     StringBuilder query = new StringBuilder();
     query.append("SELECT ");
     StringBuilder groupBy = new StringBuilder(" GROUP BY ");
     StringBuilder where = new StringBuilder();
-    where.append(" WHERE `KEY` IN (SELECT KEY_OID FROM INVNTRY_DOMAINS WHERE DOMAIN_ID = ")
-        .append(domainId).append(")");
+    where.append(" WHERE `KEY` IN (SELECT KEY_OID FROM INVNTRY_DOMAINS WHERE DOMAIN_ID = ?)");
+    model.param(domainId);
     boolean isEntity = false;
     if (filters != null) {
       if (filters.get("district") != null) {
         query.append("KID,(SELECT NAME FROM KIOSK WHERE KIOSKID = KID) ENTITY,");
         groupBy.append(",KID");
-        where.append(" AND KID IN(SELECT KIOSKID FROM KIOSK WHERE STATE = '")
-            .append(filters.get("state")).append("'")
-            .append(" AND COUNTRY = '").append(filters.get("country")).append("'");
+        where.append(" AND KID IN(SELECT KIOSKID FROM KIOSK WHERE STATE = ? AND COUNTRY = ?");
+        model.param(filters.get("state"));
+        model.param(filters.get("country"));
         if ("No district".equals(filters.get("district"))) {
           where.append(" AND (DISTRICT IS NULL OR DISTRICT = ''))");
         } else {
-          where.append(" AND DISTRICT = '").append(filters.get("district")).append("')");
+          where.append(" AND DISTRICT = ?)");
+          model.param(filters.get("district"));
         }
         isEntity = true;
-      } else if (filters.get("state") != null) {
-        query.append("(SELECT DISTRICT FROM KIOSK WHERE KIOSKID = KID) DISTRICT,");
-        groupBy.append("DISTRICT");
-        where.append(" AND KID IN(SELECT KIOSKID FROM KIOSK WHERE STATE = '")
-            .append(filters.get("state")).append("'")
-            .append(" AND COUNTRY = '").append(filters.get("country")).append("')");
-      } else {
-        query.append("(SELECT STATE FROM KIOSK WHERE KIOSKID = KID) STATE,");
-        groupBy.append("STATE");
-        where.append(" AND KID IN (SELECT KIOSKID FROM KIOSK WHERE COUNTRY = '")
-            .append(filters.get("country")).append("')");
-      }
+      } else
+        applyLocationsFilter(filters, model, query, groupBy, where);
       if (filters.get("eTag") != null) {
         where.append(" AND KID IN(SELECT KIOSKID from KIOSK_TAGS WHERE ID =")
-            .append("(SELECT ID FROM TAG WHERE NAME='").append(filters.get("eTag"))
-            .append("' AND TYPE=").append(ITag.KIOSK_TAG).append(" limit 1)")
+            .append("(SELECT ID FROM TAG WHERE NAME=? AND TYPE=").append(ITag.KIOSK_TAG).append(" limit 1)")
             .append(")");
+        model.param(filters.get("eTag"));
       }
     }
 
@@ -1152,45 +1175,53 @@ public class DashboardService implements IDashboardService {
     if (!isEntity) {
       query.append(groupBy);
     }
-    return query.toString();
+    model.setQuery(query.toString());
+    return model;
   }
 
-  private String getEntityTempDataQuery(Map<String, String> filter) {
+  private PreparedStatementModel getEntityTempDataQuery(Map<String, String> filter) {
+    PreparedStatementModel model = new PreparedStatementModel();
     Long dId = Long.parseLong(filter.get(Constants.PARAM_DOMAINID));
-    return
+    model.setQuery(
         "SELECT KID, STAT, COUNT(1) COUNT FROM(SELECT KID,IF(ASF.STAT = 'tu', 'tu',"
             + "(SELECT IF(MAX(ABNSTATUS) = 2, 'th', IF(MAX(ABNSTATUS) = 1, 'tl', 'tn'))"
             + "FROM ASSETSTATUS AST WHERE AST.ASSETID = A.ID AND AST.TYPE = 1 AND "
             + "AST.STATUS = 3 AND AST.TS <= DATE_SUB(NOW(), INTERVAL 0 MINUTE))) STAT "
             + "FROM(SELECT A.ID, A.KID FROM ASSET A, ASSET_DOMAINS AD "
-            + "WHERE A.TYPE IN (2 , 3, 5, 6, 7)AND A.KID = " + Long.parseLong(
-            filter.get(Constants.ENTITY)) + " AND EXISTS "
+            + "WHERE A.TYPE IN (2 , 3, 5, 6, 7)AND A.KID = ? AND EXISTS "
             + "(SELECT 1 FROM ASSETRELATION R WHERE A.ID = R.ASSETID AND R.TYPE = 2) "
             + "AND 1 = (SELECT IFNULL(0 = (SELECT STATUS FROM ASSETSTATUS S WHERE TYPE = 7 AND "
-            + "S.ASSETID = A.ID), 1))AND A.ID = AD.ID_OID AND AD.DOMAIN_ID = " + dId + ") A "
+            + "S.ASSETID = A.ID), 1))AND A.ID = AD.ID_OID AND AD.DOMAIN_ID = ?) A "
             + "LEFT JOIN (SELECT ASSETID, IF(MIN(STATUS) = 0, 'tk', 'tu') STAT "
             + "FROM ASSETSTATUS ASI, ASSET_DOMAINS AD WHERE ASI.TYPE = 3 AND ASI.ASSETID = AD.ID_OID "
-            + "AND AD.DOMAIN_ID = " + dId + " AND TS <= DATE_SUB(NOW(), INTERVAL 0 MINUTE) "
-            + "GROUP BY ASI.ASSETID) ASF ON A.ID = ASF.ASSETID) T GROUP BY T.STAT , T.KID";
+            + "AND AD.DOMAIN_ID = ? AND TS <= DATE_SUB(NOW(), INTERVAL 0 MINUTE) "
+            + "GROUP BY ASI.ASSETID) ASF ON A.ID = ASF.ASSETID) T GROUP BY T.STAT , T.KID");
+    model.param(Long.parseLong(filter.get(Constants.ENTITY)));
+    model.param(dId);
+    model.param(dId);
+    return model;
   }
 
-  private String getEntityInvDataQuery(Map<String, String> filter) {
+  private PreparedStatementModel getEntityInvDataQuery(Map<String, String> filter) {
+    PreparedStatementModel model = new PreparedStatementModel();
+
     StringBuilder
         sb =
         new StringBuilder(
-            "SELECT TY TYPE, COUNT(1) AS COUNT FROM INVNTRYEVNTLOG WHERE KID = " + Long.parseLong(
-                filter.get(Constants.ENTITY)));
+            "SELECT TY TYPE, COUNT(1) AS COUNT FROM INVNTRYEVNTLOG WHERE KID = ?");
+    model.param(Long.parseLong(filter.get(Constants.ENTITY)));
     if (filter.get(Constants.MATERIAL_TAG) != null) {
       sb.append(
-          " AND MID IN (SELECT MATERIALID FROM MATERIAL_TAGS WHERE ID IN (SELECT ID FROM TAG WHERE NAME IN (")
-          .
-              append(String.valueOf(filter.get(Constants.MATERIAL_TAG))).append(")))");
+          " AND MID IN (SELECT MATERIALID FROM MATERIAL_TAGS WHERE ID IN (SELECT ID FROM TAG WHERE NAME IN ");
+      model.inParams(String.valueOf(filter.get(Constants.MATERIAL_TAG)), sb);
+      sb.append("))");
     }
     sb.append(" AND ED IS NULL GROUP BY TY");
-    return sb.toString();
+    model.setQuery(sb.toString());
+    return model;
   }
 
-  public Integer getInvTotalCount(Map<String, String> filter) throws SQLException{
+  public Integer getInvTotalCount(Map<String, String> filter) {
     PersistenceManager pm = PMF.getReadOnlyPM().getPersistenceManager();
     StringBuilder
         sb =
@@ -1207,7 +1238,8 @@ public class DashboardService implements IDashboardService {
     return ((Long) object).intValue();
   }
 
-  public String getAssetStatusDashboardQuery(Long domainId, Map<String, String> filters) {
+  private PreparedStatementModel getAssetStatusDashboardQuery(Long domainId,
+                                                              Map<String, String> filters) {
     AssetsDashboardQueryGenerator dashboardQueryGenerator = new AssetsDashboardQueryGenerator();
 
     if (filters != null) {

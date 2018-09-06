@@ -307,4 +307,39 @@ public class JDOUtils {
     }
     return q;
   }
+
+
+  public static <T> List<T> getAll(Long domainId, Class<T> clz) {
+    List<T> o = null;
+    PersistenceManager pm = PMF.get().getPersistenceManager();
+    Query q = pm.newQuery(getImplClass(clz));
+    String declaration = " Long dIdParam";
+    q.setFilter("dId == dIdParam");
+    q.declareParameters(declaration);
+    try {
+      o = (List<T>) q.execute(domainId);
+      if (o != null) {
+        o.size();
+        o = (List<T>) pm.detachCopyAll(o);
+      }
+    } finally {
+      try {
+        q.closeAll();
+      } catch (Exception ignored) {
+        xLogger.warn("Exception while closing query", ignored);
+      }
+      pm.close();
+    }
+    return o;
+  }
+
+  public static <T> T get(Long id, Class<T> clz) {
+    PersistenceManager pm = PMF.get().getPersistenceManager();
+    try {
+      return getObjectById(clz, id, pm);
+    } finally {
+      pm.close();
+    }
+  }
+
 }
