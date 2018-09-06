@@ -24,6 +24,10 @@
 package com.logistimo.auth.service.impl;
 
 import com.logistimo.AppFactory;
+import com.logistimo.auth.SecurityUtil;
+import com.logistimo.auth.action.AuditAction;
+import com.logistimo.auth.command.VerifyCaptchaCommand;
+import com.logistimo.auth.service.AuthProvider;
 import com.logistimo.auth.service.AuthenticationService;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.communications.MessageHandlingException;
@@ -36,12 +40,19 @@ import com.logistimo.constants.Constants;
 import com.logistimo.constants.PropertyConstants;
 import com.logistimo.constants.SourceConstants;
 import com.logistimo.dao.JDOUtils;
+import com.logistimo.events.entity.IEvent;
+import com.logistimo.events.processor.EventPublisher;
 import com.logistimo.exception.InvalidDataException;
 import com.logistimo.exception.SystemException;
 import com.logistimo.exception.TaskSchedulingException;
 import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.exception.ValidationException;
 import com.logistimo.logger.XLog;
+import com.logistimo.models.AuthRequest;
+import com.logistimo.models.users.LoginStatus;
+import com.logistimo.models.users.UserDetails;
+import com.logistimo.security.BadCredentialsException;
+import com.logistimo.security.UserDisabledException;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
@@ -53,8 +64,10 @@ import com.logistimo.twofactorauthentication.entity.UserDevices;
 import com.logistimo.twofactorauthentication.service.TwoFactorAuthenticationService;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.entity.IUserToken;
+import com.logistimo.users.entity.UserAccount;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.utils.PasswordEncoder;
+import com.logistimo.utils.RandomPasswordGenerator;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -64,13 +77,13 @@ import org.jose4j.jwe.KeyManagementAlgorithmIdentifiers;
 import org.jose4j.keys.AesKey;
 import org.jose4j.lang.JoseException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.security.Key;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -98,19 +111,25 @@ public class AuthenticationServiceImpl implements AuthenticationService {
   private static final String DOMAIN_KEY_SEPARATOR = "_";
   private static final String TOKEN_ACCESS_PREFIX = "at_";
   private static final String BACKEND_MESSAGES = "BackendMessages";
-  public static final String RESET = "RESET_";
+  private static final String RESET_PREFIX = "RESET_";
+  private static final String NEW_LINE_HTML = "<br><br>";
   private static ITaskService taskService = AppFactory.get().getTaskService();
   private static final int
       WEB_TOKEN_INACTIVITY_MILLIS =
       ConfigUtil.getInt(PropertyConstants.TOKEN_EXPIRE_WEB, 30) * 60_000;
   private static final String TWO_FACTOR_AUTHENTICATION_OTP = "Auth_OTP";
   private static final String OTP = "OTP";
-  private static final String LINE_BREAK = "<br><br>";
   private static final String JWTKEY = "jwt.key";
 
   private MemcacheService memcacheService;
 
   private UsersService usersService;
+
+  @Autowired
+  public AuthProvider authProvider;
+
+  @Autowired
+  public AuditAction auditAction;
 
   private TwoFactorAuthenticationService twoFactorAuthenticationService;
 
@@ -123,6 +142,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
   public void setUsersService(UsersService usersService) {
     this.usersService = usersService;
   }
+
+  @Autowired
+  @Qualifier("authenticationRestTemplate")
+  private RestTemplate restTemplate;
 
   @Autowired
   public void setTwoFactorAuthenticationService(TwoFactorAuthenticationService twoFactorAuthenticationService) {
@@ -206,8 +229,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     return validityTimeInMinutes;
   }
 
-  public IUserToken authenticateToken(String token, Integer accessInitiator)
-      throws ServiceException {
+  public IUserToken authenticateToken(String token, Integer accessInitiator) throws UnauthorizedException {
     if (StringUtils.isEmpty(token)) {
       throw new UnauthorizedException("Token is empty or null");
     }
@@ -217,8 +239,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
       iUserToken = JDOUtils.getObjectById(IUserToken.class, PasswordEncoder.MD5(token), pm);
     } catch (JDOObjectNotFoundException e) {
       throw new UnauthorizedException("Invalid token");
-    } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
-      throw new UnauthorizedException("System error");
     } finally {
       pm.close();
     }
@@ -336,9 +356,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         pm = PMF.get().getPersistenceManager();
         q = pm.newQuery(JDOUtils.getImplClass(IUserToken.class));
         q.setResult("token");
-        q.setFilter("userId == '" + userId + "'");
+        q.setFilter("userId == ?");
         q.setUnique(true);
-        return (String) q.execute();
+        return (String) q.execute(userId);
       } catch (JDOObjectNotFoundException ignored) {
         //do nothing
       } finally {
@@ -403,28 +423,28 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         Long currentMilli = System.currentTimeMillis();
         String otp = createJWT(userId, currentMilli);
         String resetKey = userId + "&&" + currentMilli;
-        cache.put(RESET + userId, resetKey, 86400);
+        trackResetKey(userId, resetKey);
         if (src.equalsIgnoreCase(Constants.WEB)) {
           resetUrl =
-              hostUri.concat("/s2/api/auth/resetpassword/") + otp
+              hostUri.concat("/s2/api/auth/resetpassword/") + otp + account.getRole().substring(5)
                   .concat("?src=").concat(Constants.WEB);
         } else if (src.equalsIgnoreCase("m")) {
           resetUrl =
-              hostUri.concat("/s2/api/auth/resetpassword/") + otp
+              hostUri.concat("/s2/api/auth/resetpassword/") + otp + account.getRole().substring(5)
                   .concat("?src=m");
         }
 
         String
             msg =
             backendMessages.getString("password.reset.info.user.name") + " " + account.getFullName()
-                + "," + LINE_BREAK +
-                backendMessages.getString("password.reset.info.req.msg") + LINE_BREAK +
+                + "," + NEW_LINE_HTML +
+                backendMessages.getString("password.reset.info.req.msg") + NEW_LINE_HTML +
                 backendMessages.getString("password.reset.info.user.id") + ": " + account
-                .getFirstName() + LINE_BREAK +
+                .getFirstName() + NEW_LINE_HTML +
                 "<a href=http://" + resetUrl + ">" + backendMessages.getString("password.reset.now")
-                + "</a><br><br>" +
-                backendMessages.getString("password.reset.expiry") + LINE_BREAK +
-                backendMessages.getString("password.reset.retain") + LINE_BREAK +
+                + "</a>" + NEW_LINE_HTML +
+                backendMessages.getString("password.reset.expiry") + NEW_LINE_HTML +
+                backendMessages.getString("password.reset.retain") + NEW_LINE_HTML +
                 backendMessages.getString("password.reset.confidentiality.notice");
         EmailService svc = EmailService.getInstance();
         svc.sendHTML(account.getDomainId(), mails, backendMessages.getString("password.reset"), msg,
@@ -530,8 +550,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     if (mode == 0) {
       boolean checkOtp = true;
       if ("m".equalsIgnoreCase(src) && StringUtils.isEmpty(au)) {
-        checkOtp = false;
-        sendType = "sms";
+          checkOtp = false;
+          sendType = "sms";
       }
       if (checkOtp) {
         validateOtpMMode(userId, otp);
@@ -549,8 +569,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         throw new InvalidDataException("No email Id available.");
       }
     }
-    String newPassword = generatePassword(userId);
-    usersService.changePassword(userId, null, newPassword);
+    String newPassword = RandomPasswordGenerator.generate(
+        SecurityUtil.isUserAdmin(account.getRole()));
+    changePassword(userId, null,null, newPassword,false);
     xLogger.info("AUDITLOG\t{0}\t{1}\tUSER\t " +
             "FORGOT PASSWORD\t{2}\t{3}", account.getDomainId(), account.getFullName(), userId,
         account.getFullName());
@@ -678,7 +699,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
    * Decrypt the otp received via mail
    */
   @Override
-  public String decryptJWT(String token) {
+  public String[] decryptJWT(String token) {
+    String[] tokens = new String[0];
+
     JsonWebEncryption jwe = new JsonWebEncryption();
     Key key = new AesKey(ConfigUtil.get(JWTKEY).getBytes());
     jwe.setKey(key);
@@ -687,12 +710,15 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         ContentEncryptionAlgorithmIdentifiers.AES_128_CBC_HMAC_SHA_256);
     try {
       jwe.setCompactSerialization(token);
-      return jwe.getPayload();
+      String decryptedToken = jwe.getPayload();
+      if (decryptedToken != null) {
+        tokens = decryptedToken.split("&&");
+      }
+      return tokens;
     } catch (JoseException e) {
       xLogger.warn("Unable to get the jwt service: {0}", e.getMessage());
     }
-    jwe.setKey(key);
-    return null;
+    return tokens;
   }
 
 
@@ -700,30 +726,33 @@ public class AuthenticationServiceImpl implements AuthenticationService {
   public String setNewPassword(String token, String newPassword, String confirmPassword)
       throws ServiceException {
     if (StringUtils.isNotEmpty(token)) {
-      String decryptedToken = decryptJWT(token);
-      String[] tokens = new String[2];
-      if (decryptedToken != null) {
-        tokens = decryptedToken.split("&&");
-      }
+      String[] tokens = decryptJWT(token);
       if (tokens.length > 0) {
         String userId = tokens[0];
-        MemcacheService cache = AppFactory.get().getMemcacheService();
         String resetKey = userId + "&&" + tokens[1];
-        if (resetKey.equals(cache.get(RESET + userId)) && StringUtils.isNotEmpty(newPassword)
-            && StringUtils.isNotEmpty(confirmPassword)) {
-          if (newPassword.equals(confirmPassword)) {
-            usersService.changePassword(userId, null, newPassword);
-            cache.delete(RESET + userId);
-            ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES,
-                SecurityUtils.getLocale());
-            return backendMessages.getString("pwd.forgot.success");
-          } else {
-            throw new InputMismatchException("Password mismatch");
-          }
+        if (resetKeyMatches(userId, resetKey)) {
+          return validateAndChangePassword(newPassword, confirmPassword, userId);
+        } else {
+          throw new ValidationException("G015");
         }
       }
     }
+    return null;
+  }
 
+  private String validateAndChangePassword(String newPassword, String confirmPassword,
+                                           String userId) throws ServiceException {
+    if (StringUtils.isNotEmpty(newPassword) && StringUtils.isNotEmpty(confirmPassword)) {
+      if (newPassword.equals(confirmPassword)) {
+        changePassword(userId, null, null, newPassword, true);
+        clearResetKey(userId);
+        ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES,
+            Locale.ENGLISH);
+        return backendMessages.getString("pwd.forgot.success");
+      } else {
+        throw new InputMismatchException("Password mismatch");
+      }
+    }
     return null;
   }
 
@@ -733,7 +762,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     if (id == null || id.isEmpty()) {
       return null;
     }
-    String password = null;
+    String password;
     // Take the first 4 letters of id
     if (id.length() <= 4) {
       password = id;
@@ -746,6 +775,111 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     float f = r.nextFloat();
     password += String.valueOf((int) ((f * 1000.0f) % 1000));
     return password;
+  }
+
+  @Override
+  public UserDetails authenticate(AuthRequest authRequest) throws ServiceException {
+    String userId = authRequest.getUserId();
+    String password = authRequest.getPassword();
+    Integer lgSrc = authRequest.getLoginSource();
+    xLogger.info("Entering authentication for user {0}", userId);
+    try {
+      UserDetails details = authProvider.authenticate(userId, password);
+      IUserToken token = generateUserToken(userId, lgSrc);
+      if (token != null) {
+        details.setToken(token.getRawToken());
+        if (token.getExpires() != null) {
+          details.setTokenExpiry(String.valueOf(token.getExpires().getTime()));
+        }
+      }
+      //audit login request only when it is from external source
+      if (StringUtils.isNotBlank(authRequest.getIpAddress())) {
+        authRequest.setPrevUserAgent(details.getPrevUsrAgnt());
+        authRequest.setLoginTime(details.getLastLogin());
+        auditAction.invoke(authRequest, LoginStatus.SUCCESS);
+        generateSystemEvent(usersService.getUserAccount(userId));
+      }
+      removeUserFromCache(userId);
+      return details;
+    } catch (BadCredentialsException e) {
+      auditAction.invoke(authRequest, LoginStatus.INVALID_CREDENTIALS);
+      throw e;
+    } catch (UserDisabledException e) {
+      auditAction.invoke(authRequest, LoginStatus.DISABLED);
+      throw e;
+    }
+  }
+
+  private void generateSystemEvent(IUserAccount user) {
+    Map<String, Object> params = new HashMap<>(1);
+    params.put("ipaddress", user.getIPAddress());
+    try {
+      EventPublisher.generate(user.getDomainId(), IEvent.IP_ADDRESS_MATCHED, params,
+          UserAccount.class.getName(), user.getKeyString(),
+          null);
+    } catch (Exception e) {
+      xLogger.warn("Exception encountered during system generation for login for user {0}",user.getUserId());
+    }
+  }
+
+  @Override
+  public void changePassword(String userId, String otp, String oldPassword, String newPassword, boolean isEnhanced) throws ServiceException {
+    xLogger.info("Entering change password for user {0}",userId);
+    if (StringUtils.isNotEmpty(otp)) {
+      validateOtpMMode(userId, otp);
+    }
+    authProvider.changePassword(userId,oldPassword,newPassword,isEnhanced);
+  }
+
+  @Override
+  public void enableAccount(String userId) throws ServiceException {
+    authProvider.enableAccount(userId);
+    removeUserFromCache(userId);
+  }
+
+  @Override
+  public void disableAccount(String userId) throws ServiceException {
+    authProvider.disableAccount(userId);
+    removeUserFromCache(userId);
+  }
+
+  @Override
+  public void removeUserFromCache(String userId) {
+    memcacheService.delete(Constants.USER_KEY + CharacterConstants.HASH + userId);
+  }
+
+  @Override
+  public String getUserSalt(String userId) {
+    return authProvider.getUserSalt(userId);
+  }
+
+  @Override
+  public String generateRandomSalt() {
+    return SecurityUtils.salt();
+  }
+
+  @Override
+  public void logForbiddenAccess(AuthRequest authRequest) {
+    auditAction.invoke(authRequest, LoginStatus.FORBIDDEN);
+  }
+
+  public boolean verifyCaptcha(String captchaResponse) {
+    if(StringUtils.isNotEmpty(captchaResponse)) {
+      return new VerifyCaptchaCommand(restTemplate, captchaResponse).execute();
+    }
+    return false;
+  }
+
+  private void trackResetKey(String userId, String resetKey) {
+    memcacheService.put(RESET_PREFIX + userId, resetKey, 86400);
+  }
+
+  private void clearResetKey(String userId) {
+    memcacheService.delete(RESET_PREFIX + userId);
+  }
+
+  private boolean resetKeyMatches(String userId, String resetKey) {
+    return resetKey.equals(memcacheService.get(RESET_PREFIX + userId));
   }
 
   @Override

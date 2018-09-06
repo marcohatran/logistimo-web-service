@@ -39,7 +39,7 @@ public class TwoFactorAuthenticationUtil {
 
   public static String generateUserDeviceCacheKey(String userId, long lastLoginTime)
       throws UnsupportedEncodingException, NoSuchAlgorithmException {
-    String key = generateAuthKey(userId) + lastLoginTime + (new Random().longs(100000,999999));
+    String key = generateAuthKey(userId) + lastLoginTime + (new Random().longs(100000, 999999));
     return Hashing.murmur3_128().hashString(key, Charsets.UTF_16LE).toString();
   }
 

@@ -24,6 +24,9 @@
 package com.logistimo.auth.service;
 
 import com.logistimo.communications.MessageHandlingException;
+import com.logistimo.exception.UnauthorizedException;
+import com.logistimo.models.AuthRequest;
+import com.logistimo.models.users.UserDetails;
 import com.logistimo.services.ServiceException;
 import com.logistimo.users.entity.IUserToken;
 
@@ -39,8 +42,7 @@ public interface AuthenticationService {
   IUserToken generateUserToken(String userId, Integer accessInitiator)
       throws ServiceException;
 
-  IUserToken authenticateToken(String token, Integer accessInitiator)
-      throws ServiceException;
+  IUserToken authenticateToken(String token, Integer accessInitiator) throws UnauthorizedException;
 
   String getUserIdByToken(String token);
 
@@ -70,7 +72,7 @@ public interface AuthenticationService {
 
   String createJWT(String userid, long ttlMillis);
 
-  String decryptJWT(String token);
+  String[] decryptJWT(String token);
 
   String setNewPassword(String token, String newPassword, String confirmPassword)
       throws ServiceException;
@@ -82,6 +84,34 @@ public interface AuthenticationService {
   void validateOtpMMode(String userId, String otp, boolean isTwoFactorAuthenticationOTP);
 
   String generateAccessKey();
+
+  UserDetails authenticate(AuthRequest authRequest) throws ServiceException;
+
+  /**
+   *
+   * @param userId
+   * @param otp
+   * @param oldPassword
+   * @param newPassword
+   * @param isEnhanced -this flag indicates that client is sending sha512(salt+password) and compatibale with security chnages
+   * @throws ServiceException
+   */
+  void changePassword(String userId, String otp, String oldPassword, String newPassword, boolean isEnhanced) throws ServiceException;
+
+  void enableAccount(String userId) throws ServiceException;
+
+  void disableAccount(String userId) throws ServiceException;
+
+  void removeUserFromCache(String userId);
+
+  String getUserSalt(String userId);
+
+  String generateRandomSalt();
+
+  void logForbiddenAccess(AuthRequest authRequest);
+
+
+  boolean verifyCaptcha(String captchaResponse);
 
   /**
    * Generate 2FA OTP for mobile

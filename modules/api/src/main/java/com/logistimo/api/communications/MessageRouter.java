@@ -30,6 +30,7 @@ import com.logistimo.AppFactory;
 import com.logistimo.communications.MessageHandlingException;
 import com.logistimo.communications.service.MessageService;
 import com.logistimo.communications.service.SMSService;
+import com.logistimo.constants.Constants;
 import com.logistimo.exception.TaskSchedulingException;
 import com.logistimo.logger.XLog;
 import com.logistimo.services.taskqueue.ITaskService;
@@ -142,16 +143,16 @@ public class MessageRouter {
 
   // Get the parameter map for sending to DEV
   private Map<String, String> getSMSParameterMap() throws MessageHandlingException {
-    Map<String, String> params = new HashMap<String, String>();
+    Map<String, String> params = new HashMap<>();
     // Get the provider-specific parameter name mapping
     SMSService smsService = SMSService.getInstance();
     try {
       params.put(smsService.getParameterName(SMSService.PARAM_MOBILENO),
-          URLEncoder.encode(address, "UTF-8"));
+          URLEncoder.encode(address, Constants.UTF8));
       params.put(smsService.getParameterName(SMSService.PARAM_MESSAGE),
-          URLEncoder.encode(message, "UTF-8"));
+          URLEncoder.encode(message, Constants.UTF8));
       params.put(smsService.getParameterName(SMSService.PARAM_RECEIVEDON),
-          URLEncoder.encode(recdOn, "UTF-8"));
+          URLEncoder.encode(recdOn, Constants.UTF8));
     } catch (UnsupportedEncodingException e) {
       xLogger.severe("Unsupported Encoding: {0}", e.getMessage());
     }
@@ -161,14 +162,14 @@ public class MessageRouter {
 
   // Get the generic parameter map
   private Map<String, String> getGenericParameterMap() {
-    Map<String, String> paramMap = new HashMap<String, String>();
+    Map<String, String> paramMap = new HashMap<>();
     // Strip message of its routing keyword
     message = stripKeyword(message);
     try {
-      paramMap.put(MessageHandler.WIRETYPE, wireType);
-      paramMap.put(MessageHandler.ADDRESS, URLEncoder.encode(address, "UTF-8"));
-      paramMap.put(MessageHandler.MESSAGE, URLEncoder.encode(message, "UTF-8"));
-      paramMap.put(MessageHandler.RECEIVEDON, URLEncoder.encode(recdOn, "UTF-8"));
+      paramMap.put(MessageHandler.WIRE_TYPE, wireType);
+      paramMap.put(MessageHandler.ADDRESS_PARAM, URLEncoder.encode(address, Constants.UTF8));
+      paramMap.put(MessageHandler.MESSAGE_PARAM, URLEncoder.encode(message, Constants.UTF8));
+      paramMap.put(MessageHandler.RECEIVED_ON, URLEncoder.encode(recdOn, Constants.UTF8));
     } catch (UnsupportedEncodingException e) {
       xLogger.severe("Unsuppported Encoding: {0}", e.getMessage());
     }
@@ -181,7 +182,7 @@ public class MessageRouter {
     Map<String, String> paramMap = getGenericParameterMap();
     try {
       taskService
-          .schedule(taskService.QUEUE_DEFAULT, MSGHANDLER_URL, paramMap, taskService.METHOD_POST);
+          .schedule(ITaskService.QUEUE_DEFAULT, MSGHANDLER_URL, paramMap, ITaskService.METHOD_POST);
     } catch (TaskSchedulingException e) {
       xLogger.warn("Unable to schedule task for dev. sending: {0}", e.getMessage());
     }

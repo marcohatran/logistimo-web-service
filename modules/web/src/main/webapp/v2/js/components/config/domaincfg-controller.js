@@ -307,12 +307,12 @@ domainCfgControllers.controller('GeneralConfigurationController', ['$scope', 'do
             }
             var fileType = $scope.imageData.filetype.split("/");
             $scope.fileExt = fileType[fileType.length - 1];
-            if ($scope.fileExt != "png" && $scope.fileExt != "jpg" && $scope.fileExt != "jpeg") {
+            if ($scope.fileExt != "png" && $scope.fileExt != "jpg" && $scope.fileExt != "jpeg" && $scope.fileExt != 'gif') {
                 $scope.showWarning($scope.resourceBundle['image.upload.warning']);
                 return false;
             }
             var fileSize = $scope.imageData.filesize;
-            if (fileSize > 5 * 1024 * 1024) {
+            if (fileSize > 10 * 1024 * 1024) {
                 $scope.showWarning($scope.resourceBundle['uploadsizemessage']);
                 return false;
             }
@@ -322,7 +322,7 @@ domainCfgControllers.controller('GeneralConfigurationController', ['$scope', 'do
         $scope.uploadDomainImage = function () {
             $scope.showLoading();
             $scope.loadingImage = true;
-            mediaService.uploadImage($scope.fileExt, $scope.domainId, $scope.imageData.base64).then(function (data) {
+            mediaService.uploadImage($scope.fileExt, $scope.domainId, $scope.imageData).then(function (data) {
                 $scope.showSuccess($scope.resourceBundle['image.upload.success']);
                 getDomainImage();
                 $scope.addImage = false;
@@ -4521,6 +4521,11 @@ domainCfgControllers.controller('CustomReportConfigurationController', ['$scope'
         $scope.validateCustomReport = function () {
             $scope.cont = false;
             if ($scope.fileData != undefined) {
+                //validate fle size
+                if($scope.fileData.size > 20 * 1024 * 1024 ) { // Max file size to upload 10 MB
+                    $scope.showWarning("Maximum file size is 20MB.");
+                    return;
+                }
                 if (checkNullEmpty($scope.cr.tn)) {
                     $scope.showWarning($scope.resourceBundle['custom.templatenamedetail']);
                     return;

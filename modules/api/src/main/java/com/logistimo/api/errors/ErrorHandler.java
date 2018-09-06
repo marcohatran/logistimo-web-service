@@ -94,8 +94,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
     ErrorResource error = new ErrorResource("[Unauthorized]", message);
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
-    return handleExceptionInternal(e, error, headers,
-        ((UnauthorizedException) e).getHttpStatusCode(),
+    return handleExceptionInternal(e, error, headers,HttpStatus.UNAUTHORIZED,
         request);
   }
 
@@ -129,10 +128,20 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
     return handleBadRequest(e, request);
   }
 
-  @ExceptionHandler({BadRequestException.class, BadCredentialsException.class})
+  @ExceptionHandler({BadRequestException.class})
   protected ResponseEntity<Object> handleBadRequest(Exception e, WebRequest request) {
     logWarning(request, e);
     ErrorResource error = new ErrorResource("[Bad Request]", e.getMessage());
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    return handleExceptionInternal(e, error, headers, HttpStatus.BAD_REQUEST, request);
+  }
+
+
+  @ExceptionHandler({BadCredentialsException.class})
+  protected ResponseEntity<Object> handleBadCredentials(Exception e, WebRequest request) {
+    logWarning(request, e);
+    ErrorResource error = new ErrorResource(get400Code(e), get400Message(e));
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
     return handleExceptionInternal(e, error, headers, HttpStatus.BAD_REQUEST, request);
@@ -229,6 +238,23 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
       return ((ExceptionWithCodes) e).getCode();
     } else {
       return GENERAL_SYSTEM_ERROR;
+    }
+  }
+
+  private String get400Code(Exception e) {
+    if (e instanceof ExceptionWithCodes) {
+      return ((ExceptionWithCodes) e).getCode();
+    } else {
+      return "G009";
+    }
+  }
+
+  private String get400Message(Exception e) {
+    if (e instanceof ExceptionWithCodes) {
+      return ((ExceptionWithCodes) e).getLocalisedMessage(getLocale());
+    } else {
+      return ExceptionUtils.constructMessage("G009",
+          getLocale(), null);
     }
   }
 

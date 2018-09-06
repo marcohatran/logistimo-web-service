@@ -39,6 +39,8 @@ import com.logistimo.api.servlets.mobile.models.ParsedRequest;
 import com.logistimo.auth.SecurityConstants;
 import com.logistimo.auth.SecurityMgr;
 import com.logistimo.auth.SecurityUtil;
+import com.logistimo.auth.service.AuthenticationService;
+import com.logistimo.auth.service.impl.AuthenticationServiceImpl;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.communications.service.SMSService;
 import com.logistimo.config.entity.IConfig;
@@ -95,6 +97,8 @@ import com.logistimo.materials.service.IHandlingUnitService;
 import com.logistimo.materials.service.MaterialCatalogService;
 import com.logistimo.materials.service.impl.HandlingUnitServiceImpl;
 import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
+import com.logistimo.models.AuthRequest;
+import com.logistimo.models.users.UserDetails;
 import com.logistimo.orders.entity.IOrder;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
@@ -762,8 +766,10 @@ public class RESTUtil {
     // Get service
     UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
     EntitiesService entitiesService = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
+    AuthenticationService aus = StaticApplicationContext.getBean(AuthenticationServiceImpl.class);
     String errMsg = null;
     IUserAccount u = null;
+    UserDetails ud = null;
     ResourceBundle backendMessages;
     String uId = userId;
     String pwd = password;
@@ -794,9 +800,12 @@ public class RESTUtil {
         }
         // Authenticate using password (either from auth. header or parameters (for backward compatibility)
         if (uId != null && pwd != null) {
-          // Authenticate user
-          u = as.authenticateUser(uId, pwd, SourceConstants.MOBILE);
-          authenticated = (u != null);
+          AuthRequest authRequest = AuthRequest.builder()
+              .userId(uId)
+              .password(pwd)
+              .loginSource(SourceConstants.MOBILE).build();
+          ud = aus.authenticate(authRequest);
+          authenticated = (ud != null);
           if (!authenticated) {
             backendMessages =
                 Resources.get().getBundle("BackendMessages", new Locale(Constants.LANG_DEFAULT));

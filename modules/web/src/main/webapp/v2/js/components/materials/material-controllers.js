@@ -89,13 +89,13 @@ matControllers.controller('MaterialDetailMenuController', ['$scope', 'matService
             }
             var filetype = $scope.imageData.filetype.split("/");
             $scope.ext=filetype[filetype.length - 1];
-            if($scope.ext !='png' && $scope.ext !='jpg' && $scope.ext !='jpeg'){
+            if($scope.ext !='png' && $scope.ext !='jpg' && $scope.ext !='jpeg' && $scope.ext != 'gif'){
                 $scope.showWarning($scope.resourceBundle['image.upload.warning']);
                 return false;
             }
 
             var size = $scope.imageData.filesize;
-            if(size > 5000000){
+            if(size > 10 * 1024 * 1024){
                 $scope.showWarning ($scope.resourceBundle['uploadsizemessage']);
                 return false;
             }
@@ -103,7 +103,7 @@ matControllers.controller('MaterialDetailMenuController', ['$scope', 'matService
         };
         $scope.uploadImage = function(){
             $scope.showLoading();
-            mediaService.uploadImage($scope.ext,$scope.materialId,$scope.imageData.base64).then(function(){
+            mediaService.uploadImage($scope.ext,$scope.materialId,$scope.imageData).then(function(){
                     $scope.showSuccess($scope.resourceBundle['image.upload.success']);
                     $scope.getDomainKeyImages($scope.materialId);
                     angular.element('#matFileupload').val(null);

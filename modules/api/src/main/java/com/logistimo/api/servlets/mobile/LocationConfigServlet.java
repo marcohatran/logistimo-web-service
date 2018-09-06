@@ -75,7 +75,7 @@ public class LocationConfigServlet extends SgServlet {
       String userId = request.getParameter("userid");
       String password = request.getParameter("password");
       String key = request.getParameter("key");
-      ///String authenticateResponse = authenticateUser(userId, password);
+      ///String authenticateResponse = authenticate(userId, password);
       try {
         IUserAccount u = RESTUtil.authenticate(userId, password, null, request, response);
         if (userId == null) // will be the case if BasicAuth is used

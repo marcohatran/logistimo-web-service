@@ -73,10 +73,10 @@ assetServices.factory('assetService', ['APIService', function (apiService) {
             return apiService.post(json, '/s2/api/assets/export');
         },
         getAssetDetails: function(manufactureId, assetId){
-            return apiService.get("/s2/api/assets/" + manufactureId + "/" + encodeURI(assetId));
+            return apiService.get("/s2/api/assets/" + manufactureId + "/" + encodeURL(assetId));
         },
         getAssetRelations: function(manufactureId, assetId){
-            return apiService.get("/s2/api/assets/relation/" + manufactureId + "/" + encodeURI(assetId));
+            return apiService.get("/s2/api/assets/relation/" + manufactureId + "/" + encodeURL(assetId));
         },
         getFilteredAssets: function(text, entityId, at, all, ns){
             var urlStr = "/s2/api/assets/filter?q=" + text;
@@ -107,23 +107,23 @@ assetServices.factory('assetService', ['APIService', function (apiService) {
             return apiService.post(data, urlStr);
         },
         getTemperatures: function (vendorId, deviceId, mpId, at, size, sint, tdate) {
-            var url = '/s2/api/assets/temperature/' + vendorId + '/' + encodeURI(deviceId) + '/' + mpId + '?size=' + size + '&sint=' + sint + '&at=' + at;
+            var url = '/s2/api/assets/temperature/' + vendorId + '/' + encodeURL(deviceId) + '/' + mpId + '?size=' + size + '&sint=' + sint + '&at=' + at;
             if(checkNotNullEmpty(tdate)){
                 url += '&edate=' + formatDate2Url(tdate);
             }
             return apiService.get(url);
         },
         getRecentAlerts: function (vendorId, deviceId, page, size) {
-            return apiService.get('/s2/api/assets/alerts/recent/' + vendorId + '/' + encodeURI(deviceId) + '?page=' + page + '&size=' + size);
+            return apiService.get('/s2/api/assets/alerts/recent/' + vendorId + '/' + encodeURL(deviceId) + '?page=' + page + '&size=' + size);
         },
         getAssetConfig: function (vendorId, deviceId) {
-            return apiService.get('/s2/api/assets/config/' + vendorId + '/' + encodeURI(deviceId));
+            return apiService.get('/s2/api/assets/config/' + vendorId + '/' + encodeURL(deviceId));
         },
         updateDeviceConfig: function (deviceConfig, domainId, pushConfig) {
             return apiService.post(deviceConfig, '/s2/api/assets/config?pushConfig=' + pushConfig);
         },
         getAssetStats: function (vendorId, deviceId, from, to) {
-            return apiService.get('/s2/api/assets/stats/' + vendorId + '/' + encodeURI(deviceId) + '?from=' + from + '&to=' + to);
+            return apiService.get('/s2/api/assets/stats/' + vendorId + '/' + encodeURL(deviceId) + '?from=' + from + '&to=' + to);
         },
         getChildTagSummary: function (domainId) {
             return apiService.get('/s2/api/assets/tags/child?tagid=' + domainId);

@@ -2721,7 +2721,7 @@ logistimoApp.directive('exportData', function () {
                         extraParams += '&sensor=' + $scope.sensor;
                     }
                     if(checkNotNullEmpty($scope.deviceId)) {
-                        extraParams += '&deviceid=' + encodeURI($scope.deviceId);
+                        extraParams += '&deviceid=' + encodeURL($scope.deviceId);
                     }
                     if(checkNotNullEmpty($scope.to)) {
                         extraParams += '&to=' + $scope.to;

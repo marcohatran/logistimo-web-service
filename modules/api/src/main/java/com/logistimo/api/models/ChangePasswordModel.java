@@ -23,13 +23,42 @@
 
 package com.logistimo.api.models;
 
+import com.google.gson.annotations.SerializedName;
+
+import lombok.Getter;
+
 /**
  * Created by naveensnair on 28/10/15.
  */
+@Getter
 public class ChangePasswordModel {
-  public String uid;
-  public String npd;
-  public String cpd;
-  public String key;
-  public String otp;
+  /**
+   * User ID for which password has to be changed
+   */
+  private String uid;
+  /**
+   * New password
+   */
+  private String npd;
+  /**
+   * Confirm password
+   */
+  private String cpd;
+  private String key;
+  /**
+   * One time password
+   */
+  private String otp;
+  /**
+   * Old Password
+   */
+  @SerializedName("old_password")
+  private String oldPassword;
+  /**
+   * is enhanced flag
+   */
+  @SerializedName("is_enhanced")
+  private boolean isEnhanced = false;
+
+  private String salt;
 }

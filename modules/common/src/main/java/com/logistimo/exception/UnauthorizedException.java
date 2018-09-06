@@ -34,27 +34,37 @@ public class UnauthorizedException extends SystemException {
 
   private HttpStatus httpStatusCode = HttpStatus.UNAUTHORIZED;
 
+  private final String code;
+
   public UnauthorizedException(String message, HttpStatus httpStatusCode) {
     super(message);
     this.httpStatusCode = httpStatusCode;
+    this.code = "GA002";
   }
 
   public UnauthorizedException(String message) {
     super(message);
     this.httpStatusCode = HttpStatus.FORBIDDEN;
+    this.code = "GA002";
   }
 
   public UnauthorizedException(String code, Object... arguments) {
     super(code, arguments);
+    this.code = code;
   }
 
   public UnauthorizedException(String code, HttpStatus httpStatus, Object... arguments) {
     super(code, arguments);
     this.httpStatusCode = httpStatus;
+    this.code = code;
   }
 
   public HttpStatus getHttpStatusCode() {
     return httpStatusCode;
+  }
+
+  public String getCode() {
+    return code;
   }
 
 }

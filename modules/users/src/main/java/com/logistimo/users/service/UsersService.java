@@ -113,38 +113,9 @@ public interface UsersService {
    */
   void deleteAccounts(Long domainId, List<String> userIds, String suser) throws ServiceException;
 
-  /**
-   * Authenticate a user in the context of a given domain and password
-   */
-  IUserAccount authenticateUser(String userId, String password, Integer lgSrc)
-      throws ServiceException, ObjectNotFoundException;
-
-  /**
-   * Change the password of a given user
-   */
-  void changePassword(String userId, String oldPassword, String newPassword)
-      throws ServiceException;
-
-  /**
-   * Enable a previously disabled user account (pass in fully qualified user Id - i.e. domainId.userId)
-   */
-  void enableAccount(String userId) throws ServiceException;
-
-  /**
-   * Disable a user account (pass in fully qualified user Id - i.e. domainId.userId)
-   */
-  void disableAccount(String userId) throws ServiceException;
 
   boolean hasAccessToDomain(String username, Long domainId)
       throws ServiceException, ObjectNotFoundException;
-
-  void updateUserLoginHistory(String userId, Integer lgSrc, String usrAgnt, String ipAddr,
-                              Date loginTime, String version);
-
-  /**
-   * Update the mobile login related fields for the specified user account.
-   */
-  void updateMobileLoginFields(IUserAccount account);
 
   /**
    * updateKiosk

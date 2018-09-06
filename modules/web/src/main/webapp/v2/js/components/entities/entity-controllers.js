@@ -207,13 +207,13 @@ entityControllers.controller('EntityDetailMenuController', ['$scope', 'entitySer
             }
             var filetype = $scope.imageData.filetype.split("/");
             $scope.ext=filetype[filetype.length - 1];
-            if($scope.ext !='png' && $scope.ext !='jpg' && $scope.ext !='jpeg'){
+            if($scope.ext !='png' && $scope.ext !='jpg' && $scope.ext !='jpeg' && $scope.fileExt != 'gif'){
                 $scope.showWarning($scope.resourceBundle['image.upload.warning']);
                 return false;
             }
 
             var size = $scope.imageData.filesize;
-            if(size > 5000000){
+            if(size > 10 * 1024 * 1024){
                 $scope.showWarning ($scope.resourceBundle['uploadsizemessage']);
                 return false;
             }
@@ -221,7 +221,7 @@ entityControllers.controller('EntityDetailMenuController', ['$scope', 'entitySer
         };
         $scope.uploadImage = function(){
             $scope.showLoading();
-            mediaService.uploadImage($scope.ext,$scope.entityId,$scope.imageData.base64).then(function(){
+            mediaService.uploadImage($scope.ext,$scope.entityId,$scope.imageData).then(function(){
                 $scope.showSuccess($scope.resourceBundle['image.upload.success']);
                 $scope.getDomainKeyImages($scope.entityId);
                 angular.element('#entityFileupload').val(null);

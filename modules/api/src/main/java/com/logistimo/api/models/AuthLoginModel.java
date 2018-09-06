@@ -35,4 +35,8 @@ public class AuthLoginModel {
   private String language;
   private String otp;
   private boolean skipTwoFactorAuthentication;
+  /**
+   * Captcha response
+   */
+  private String captcha;
 }

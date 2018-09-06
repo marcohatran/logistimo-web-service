@@ -78,8 +78,8 @@ blkUpControllers.controller('BulkUploadController',['$scope','blkUpService','API
             });
         };*/
         $scope.uploadPostUrl = function(){
-            if($scope.fileData.size > 10 * 1024 * 1024 ) { // Max file size to upload 10 MB
-                $scope.showWarning("Maximum file size is 10MB.");
+            if($scope.fileData.size > 20 * 1024 * 1024 ) { // Max file size to upload 10 MB
+                $scope.showWarning("Maximum file size is 20MB.");
                 return;
             }
             var uploadName = "";

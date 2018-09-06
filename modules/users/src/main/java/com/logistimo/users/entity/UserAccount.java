@@ -247,6 +247,14 @@ public class UserAccount implements IUserAccount, ILocation,Serializable {
   private String talukId;
   @Persistent(column = "CITY_ID")
   private String cityId;
+  @Persistent(column = "SALT")
+  private String salt;
+  @Persistent(column = "PASSWORD")
+  private String password;
+  @Persistent
+  private Integer theme = Constants.GUI_THEME_SAME_AS_IN_DOMAIN_CONFIGURATION;
+
+
   /**
    * Get the map in newer, compressed format
    */
@@ -313,9 +321,6 @@ public class UserAccount implements IUserAccount, ILocation,Serializable {
     }
     return userMap;
   }
-
-  @Persistent
-  private Integer theme = Constants.GUI_THEME_SAME_AS_IN_DOMAIN_CONFIGURATION;
 
   @Override
   public boolean equals(Object o) {
@@ -988,6 +993,16 @@ public class UserAccount implements IUserAccount, ILocation,Serializable {
 
   @Override
   public void setStoreAppTheme(Integer theme) { this.theme = theme; }
+
+  @Override
+  public void setSalt(String salt) {
+    this.salt = salt;
+  }
+
+  @Override
+  public void setPassword(String password) {
+    this.password = password;
+  }
 
   @Override
   public String user() {

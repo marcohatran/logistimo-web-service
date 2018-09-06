@@ -212,4 +212,7 @@ public final class Constants {
   public static final String KIOSK_KEY = "kiosk";
 
   public static final String SKIP_INVENTORY = "skip_inventory";
+
+  public static final int FILE_SIZE_IN_MB = 20;
+  public static final int MEDIA_SIZE_IN_MB = 10;
 }

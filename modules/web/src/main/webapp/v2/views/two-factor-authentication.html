@@ -50,7 +50,7 @@
             <div class="row marginlr0 mt10">
                 <div class="col-sm-12">
                     <div class="form-group">
-                        <button ng-disabled="lLoading || isUndef(userId) || isUndef(otp)" ng-click="login()"
+                        <button ng-disabled="lLoading || isUndef(userId) || isUndef(otp)" ng-click="login(userId,password,otp)"
                                 name="login" class="btn btn-primary w100">
                             <span ng-show="lLoading" class="glyphicons glyphicons-cogwheel spin"></span>&nbsp;{{resourceBundle['submit']}}
                         </button>

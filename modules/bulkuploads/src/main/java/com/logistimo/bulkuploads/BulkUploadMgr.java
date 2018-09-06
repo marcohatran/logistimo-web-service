@@ -35,6 +35,8 @@ import com.logistimo.assets.service.impl.AssetManagementServiceImpl;
 import com.logistimo.auth.SecurityConstants;
 import com.logistimo.auth.SecurityMgr;
 import com.logistimo.auth.SecurityUtil;
+import com.logistimo.auth.service.AuthenticationService;
+import com.logistimo.auth.service.impl.AuthenticationServiceImpl;
 import com.logistimo.bulkuploads.headers.AssetsHeader;
 import com.logistimo.bulkuploads.headers.IHeader;
 import com.logistimo.bulkuploads.headers.InventoryHeader;
@@ -65,6 +67,7 @@ import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.entity.IUploaded;
 import com.logistimo.exception.TaskSchedulingException;
+import com.logistimo.exception.ValidationException;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.service.InventoryManagementService;
 import com.logistimo.inventory.service.impl.InventoryManagementServiceImpl;
@@ -89,6 +92,7 @@ import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.PasswordEncoder;
 import com.logistimo.utils.PatternConstants;
 import com.logistimo.utils.StringUtil;
+import com.logistimo.validations.PasswordValidator;
 
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONArray;
@@ -168,6 +172,7 @@ public class BulkUploadMgr {
   private static final String STREET_ADDRESS_MAX_LENGTH_MSG = MAX_LENGTH_MSG + FieldLimits.STREET_ADDRESS_MAX_LENGTH + CHARACTERS + CharacterConstants.DOT;
   private static final String ERROR_COUNT_MSG = "Remaining number of errors: ";
   private static final String ERRORS_TRUNCATED_MSG = "... Message truncated due to too many errors. ";
+  private static final String SALT_HASH_SEPARATOR = "####";
 
   private BulkUploadMgr() {
 
@@ -1043,6 +1048,7 @@ public class BulkUploadMgr {
     }
     try {
       UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
+      AuthenticationService aus = StaticApplicationContext.getBean(AuthenticationServiceImpl.class);
       IUserAccount u = null;
       IUserAccount su = as.getUserAccount(sourceUserId);
       DomainsService ds = StaticApplicationContext.getBean(DomainsServiceImpl.class);
@@ -1174,12 +1180,7 @@ public class BulkUploadMgr {
       }
       // Password - get the password fields now, and process them later depending on add/edit
       String password = tokens[i].trim();
-      if ((isAdd || isEdit && !password.isEmpty())) {
-        if (password.length() < FieldLimits.PASSWORD_MIN_LENGTH || password.length() > FieldLimits.PASSWORD_MAX_LENGTH) {
-          ec.messages.add("Password: '" + password
-              + "'  is empty, or not between " + FieldLimits.PASSWORD_MIN_LENGTH + "-" + FieldLimits.PASSWORD_MAX_LENGTH + " characters. None of these are allowed.");
-        }
-      }
+
       if (++i == size) {
         ec.messages.add("No fields specified after password");
         return ec;
@@ -1564,18 +1565,27 @@ public class BulkUploadMgr {
       }
       // Process password
       boolean processPassword = (isAdd || (isEdit && !oldPassword.isEmpty()));
-      boolean isPasswordValid = true;
+
       if (processPassword) {
-        if (password.length() < FieldLimits.PASSWORD_MIN_LENGTH || password.length() > FieldLimits.PASSWORD_MAX_LENGTH) {
-          isPasswordValid = false;
-        }
+
         if (password.equals(confirmPassword)) {
           // Set password after encoding
+
+          boolean isPasswordValid = true;
+          if (isClearTextPassword(password) && (isAdd || isEdit && !password.isEmpty())) {
+            try{
+              PasswordValidator.validate(userId,u.getRole(),password); }
+            catch (ValidationException e){
+              isPasswordValid=false;
+              ec.messages.add(e.getMessage());
+            }
+          }
           try {
             if (isPasswordValid && isAdd) {
               u.setEncodedPassword(PasswordEncoder.MD5(password));
             } else if (isPasswordValid && isEdit && !oldPassword.isEmpty()) {
-              as.changePassword(userId, oldPassword, password);
+              //Bulkupload edit password will always be clear text
+              aus.changePassword(userId, null, oldPassword, password, false);
             }
           } catch (Exception e) {
             ec.messages.add(
@@ -3172,4 +3182,15 @@ public class BulkUploadMgr {
     public String operation;
     public List<String> messages;
   }
+
+  /**
+   * This method determine call from old or new app
+   *
+   * @param password
+   * @return true or false
+   */
+  private static boolean isClearTextPassword(String password) {
+    return !password.contains(SALT_HASH_SEPARATOR);
+  }
+
 }
