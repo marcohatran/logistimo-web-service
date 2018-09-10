@@ -45,6 +45,7 @@ import com.logistimo.sql.PreparedStatementModel;
 import com.logistimo.tags.entity.ITag;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.stereotype.Service;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -62,7 +63,7 @@ import javax.jdo.datastore.JDOConnection;
 /**
  * @author Mohan Raja
  */
-@org.springframework.stereotype.Service
+@Service
 public class DashboardService implements IDashboardService {
   private static final XLog xLogger = XLog.getLog(DashboardService.class);
   private static final int PREDICTIVE_PERIOD = ConfigUtil.getInt("predictive.period", 7);

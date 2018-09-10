@@ -61,13 +61,6 @@ public class ConfigUtil {
     }
 
     try {
-      properties.load(Thread.currentThread().getContextClassLoader()
-          .getResourceAsStream("beans.properties"));
-    } catch (Exception e) {
-      throw new SystemException("Unable to load beans.properties", e);
-    }
-
-    try {
       InputStream in = Thread.currentThread().getContextClassLoader()
           .getResourceAsStream("custom-beans.properties");
       if (in != null) {

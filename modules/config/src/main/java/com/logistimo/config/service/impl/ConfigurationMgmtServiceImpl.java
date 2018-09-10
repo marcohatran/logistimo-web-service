@@ -44,6 +44,7 @@ import com.logistimo.services.cache.MemcacheService;
 import com.logistimo.services.impl.PMF;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -56,7 +57,7 @@ import javax.jdo.Transaction;
 /**
  * @author arun
  */
-@org.springframework.stereotype.Service
+@Service
 public class ConfigurationMgmtServiceImpl implements ConfigurationMgmtService {
 
   private static final XLog xLogger = XLog.getLog(ConfigurationMgmtServiceImpl.class);

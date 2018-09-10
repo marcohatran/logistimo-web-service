@@ -1220,7 +1220,9 @@ public class EntitiesServiceImpl implements EntitiesService {
 
     if (pageParams != null) {
       query +=
-          " LIMIT " + pageParams.getOffset() + CharacterConstants.COMMA + pageParams.getSize();
+          " LIMIT ?,?";
+      parameters.add(String.valueOf(pageParams.getOffset()));
+      parameters.add(String.valueOf(pageParams.getSize()));
     }
     // Execute
     Query jdoQuery = pm.newQuery("javax.jdo.query.SQL", query);
@@ -2481,23 +2483,24 @@ public class EntitiesServiceImpl implements EntitiesService {
     Query query = null;
     try {
       pm = PMF.get().getPersistenceManager();
+      List<Object> parameters=new ArrayList<>();
       StringBuilder
           sqlQuery =
           new StringBuilder(
-              "SELECT K.NAME,K.KIOSKID,KL.LINKTYPE,KL.LINKEDKIOSKID,KL.LKNM FROM KIOSK K LEFT JOIN KIOSKLINK KL ON K.KIOSKID = KL.KIOSKID WHERE K.KIOSKID IN(");
+              "SELECT K.NAME,K.KIOSKID,KL.LINKTYPE,KL.LINKEDKIOSKID,KL.LKNM FROM KIOSK K LEFT "
+                  + "JOIN KIOSKLINK KL ON K.KIOSKID = KL.KIOSKID WHERE K.KIOSKID IN(");
       if (SecurityConstants.ROLE_SERVICEMANAGER.equalsIgnoreCase(role)) {
-        sqlQuery.append("SELECT KIOSKID FROM USERTOKIOSK WHERE USERID=");
-        sqlQuery.append("'");
-        sqlQuery.append(user);
-        sqlQuery.append("' AND DID= ");
+        sqlQuery.append("SELECT KIOSKID FROM USERTOKIOSK WHERE USERID=?");
+        parameters.add(user);
+        sqlQuery.append(" AND DID= ?");
       } else {
-        sqlQuery.append("SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID=");
+        sqlQuery.append("SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID=?");
       }
-      sqlQuery.append(domainId);
+      parameters.add(domainId);
       sqlQuery.append(") AND IFNULL(KL.LINKTYPE,'c') = 'c'");
 
       query = pm.newQuery("javax.jdo.query.SQL", sqlQuery.toString());
-      List data = (List) query.execute();
+      List data = (List) query.executeWithArray(parameters.toArray());
       if (data != null && !data.isEmpty()) {
         List<EntityLinkModel> models = new ArrayList<>();
         for (Object aData : data) {
@@ -2541,8 +2544,8 @@ public class EntitiesServiceImpl implements EntitiesService {
       query =
           pm.newQuery("javax.jdo.query.SQL",
               "SELECT DISTINCT DISTRICT  FROM KIOSK WHERE KIOSKID IN " +
-                  "( SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID=" + domainId + ")");
-      List dsts = (List) query.execute();
+                  "( SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID=?)");
+      List dsts = (List) query.execute(domainId);
       for (Object dst : dsts) {
         String district = (String) dst;
         if (district != null) {
@@ -2574,8 +2577,8 @@ public class EntitiesServiceImpl implements EntitiesService {
     try {
       query =
           pm.newQuery("javax.jdo.query.SQL", "SELECT DISTINCT STATE  FROM KIOSK WHERE KIOSKID IN " +
-              "( SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID=" + domainId + ")");
-      List dsts = (List) query.execute();
+              "( SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID=?)");
+      List dsts = (List) query.execute(domainId);
       for (Object dst : dsts) {
         String district = (String) dst;
         if (district != null) {
@@ -2608,8 +2611,8 @@ public class EntitiesServiceImpl implements EntitiesService {
       query =
           pm.newQuery("javax.jdo.query.SQL",
               "SELECT DISTINCT COUNTRY  FROM KIOSK WHERE KIOSKID IN " +
-                  "( SELECT KIOSKID_OID IN  KIOSK_DOMAINS WHERE DOMAIN_ID=" + domainId + ")");
-      List dsts = (List) query.execute();
+                  "( SELECT KIOSKID_OID IN  KIOSK_DOMAINS WHERE DOMAIN_ID=?)");
+      List dsts = (List) query.execute(domainId);
       for (Object dst : dsts) {
         String district = (String) dst;
         if (district != null) {
@@ -2733,20 +2736,16 @@ public class EntitiesServiceImpl implements EntitiesService {
     return new Results(linkedKiosks, results.getCursor());
   }
 
-  private String getLocFilterSubQuery(LocationSuggestionModel parentLocation) {
+  private String getLocFilterSubQuery(LocationSuggestionModel parentLocation,List<Object> parameters) {
     StringBuilder filterQuery = new StringBuilder();
     if (parentLocation != null) {
       if (StringUtils.isNotEmpty(parentLocation.state)) {
-        filterQuery.append(" AND STATE ")
-            .append(CharacterConstants.EQUALS).append(CharacterConstants.S_QUOTE)
-            .append(parentLocation.state).append(CharacterConstants.S_QUOTE)
-            .append(CharacterConstants.SPACE);
+        filterQuery.append(" AND STATE =? ");
+        parameters.add(parentLocation.state);
       }
       if (StringUtils.isNotEmpty(parentLocation.district)) {
-        filterQuery.append(" AND DISTRICT ")
-            .append(CharacterConstants.EQUALS).append(CharacterConstants.S_QUOTE)
-            .append(parentLocation.district).append(CharacterConstants.S_QUOTE)
-            .append(CharacterConstants.SPACE);
+        filterQuery.append(" AND DISTRICT =? ");
+        parameters.add(parentLocation.district);
       }
     }
     return filterQuery.toString();
@@ -2758,13 +2757,15 @@ public class EntitiesServiceImpl implements EntitiesService {
     Query query = null;
     List<LocationSuggestionModel> states = new ArrayList<>(8);
     try {
+      List<Object> parameters=new ArrayList<>();
       query =
           pm.newQuery("javax.jdo.query.SQL",
-              "SELECT DISTINCT COUNTRY, STATE, DISTRICT, TALUK, CITY FROM KIOSK WHERE CITY COLLATE UTF8_GENERAL_CI LIKE '%"
-                  + text + "%' AND KIOSKID IN " +
-                  "( SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID=" + domainId
-                  + ") LIMIT 8");
-      List stateList = (List) query.execute();
+              "SELECT DISTINCT COUNTRY, STATE, DISTRICT, TALUK, CITY FROM KIOSK WHERE CITY COLLATE "
+                  + "UTF8_GENERAL_CI LIKE ? AND KIOSKID IN " +
+                  "( SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID=?) LIMIT 8");
+      parameters.add("%"+text+"%");
+      parameters.add(domainId);
+      List stateList = (List) query.executeWithArray(parameters.toArray());
       for (Object st : stateList) {
         String country = (String) ((Object[]) st)[0];
         String state = (String) ((Object[]) st)[1];
@@ -2810,18 +2811,20 @@ public class EntitiesServiceImpl implements EntitiesService {
     Query query = null;
     List<LocationSuggestionModel> states = new ArrayList<>(8);
     try {
+
+      List<Object> parameters=new ArrayList<>();
       query =
           pm.newQuery(
               "javax.jdo.query.SQL",
-              "SELECT DISTINCT COUNTRY, STATE, DISTRICT, TALUK FROM KIOSK WHERE TALUK COLLATE UTF8_GENERAL_CI LIKE '%"
-                  + text
-                  + "%' AND TALUK != '' AND TALUK IS NOT NULL AND KIOSKID IN "
-                  + "( SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID="
-                  + domainId
-                  + ") "
-                  + getLocFilterSubQuery(parentLocation)
+              "SELECT DISTINCT COUNTRY, STATE, DISTRICT, TALUK FROM KIOSK WHERE TALUK"
+                  + " COLLATE UTF8_GENERAL_CI LIKE ? AND TALUK != '' AND TALUK IS NOT NULL AND "
+                  + "KIOSKID IN "
+                  + "( SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID=?) "
+                  + getLocFilterSubQuery(parentLocation,parameters)
                   + "LIMIT 8");
-      List stateList = (List) query.execute();
+      parameters.add("%"+text+"%");
+      parameters.add(domainId);
+      List stateList = (List) query.executeWithArray(parameters.toArray());
       for (Object st : stateList) {
         String country = (String) ((Object[]) st)[0];
         String state = (String) ((Object[]) st)[1];
@@ -2862,18 +2865,18 @@ public class EntitiesServiceImpl implements EntitiesService {
     Query query = null;
     List<LocationSuggestionModel> states = new ArrayList<>(8);
     try {
+      List<Object> parameters=new ArrayList<>();
       query =
           pm.newQuery(
               "javax.jdo.query.SQL",
-              "SELECT DISTINCT COUNTRY, STATE, DISTRICT FROM KIOSK WHERE DISTRICT COLLATE UTF8_GENERAL_CI LIKE '%"
-                  + text
-                  + "%' AND DISTRICT != '' AND DISTRICT IS NOT NULL AND KIOSKID IN "
-                  + "( SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID="
-                  + domainId
-                  + ")"
-                  + getLocFilterSubQuery(parentLocation)
+              "SELECT DISTINCT COUNTRY, STATE, DISTRICT FROM KIOSK WHERE DISTRICT COLLATE UTF8_GENERAL_CI LIKE ?"
+                  + " AND DISTRICT != '' AND DISTRICT IS NOT NULL AND KIOSKID IN "
+                  + "( SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID=?)"
+                  + getLocFilterSubQuery(parentLocation,parameters)
                   + " LIMIT 8");
-      List stateList = (List) query.execute();
+      parameters.add("%"+text+"%");
+      parameters.add(domainId);
+      List stateList = (List) query.executeWithArray(parameters.toArray());
       for (Object st : stateList) {
         String country = (String) ((Object[]) st)[0];
         String state = (String) ((Object[]) st)[1];
@@ -2907,13 +2910,15 @@ public class EntitiesServiceImpl implements EntitiesService {
     Query query = null;
     List<LocationSuggestionModel> states = new ArrayList<>(8);
     try {
+      List<Object> parameters=new ArrayList<>();
       query =
           pm.newQuery("javax.jdo.query.SQL",
-              "SELECT DISTINCT COUNTRY,STATE  FROM KIOSK WHERE STATE COLLATE UTF8_GENERAL_CI LIKE '%"
-                  + text + "%' AND KIOSKID IN " +
-                  "( SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID=" + domainId
-                  + ") LIMIT 8");
-      List stateList = (List) query.execute();
+              "SELECT DISTINCT COUNTRY,STATE  FROM KIOSK WHERE STATE COLLATE UTF8_GENERAL_CI LIKE ?"
+                  + " AND KIOSKID IN " +
+                  "( SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID=?) LIMIT 8");
+      parameters.add("%"+text+"%");
+      parameters.add(domainId);
+      List stateList = (List) query.executeWithArray(parameters.toArray());
       for (Object st : stateList) {
         String country = (String) ((Object[]) st)[0];
         String state = (String) ((Object[]) st)[1];

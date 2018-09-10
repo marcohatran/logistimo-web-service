@@ -51,9 +51,12 @@ import com.logistimo.users.service.impl.UsersServiceImpl;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.QueryUtil;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -104,14 +107,24 @@ public class StockEventDataGenerator implements ReportDataGenerator {
     xLogger.fine("Query: {0}, QueryParams: {1}", q, queryParams.params);
     try {
       // results = (List<InvntryEvntLog>) q.executeWithMap( params );
+      if(MapUtils.isNotEmpty(queryParams.params)) {
         results = (List<IInvntryEvntLog>) q.executeWithMap(queryParams.params);
+      } else {
+        results = (List<IInvntryEvntLog>) q.executeWithArray(queryParams.listParams.toArray());
+      }
       if(isAbnormalStockReport) {
         queryParams =
             getReportQuery(
                 from, until, filters, pageParams, sourceUserId,
                 true);
         q = pm.newQuery("javax.jdo.query.SQL", queryParams.query);
-        count = ((Long) ((List) q.executeWithMap(queryParams.params)).iterator().next()).intValue();
+        if(MapUtils.isNotEmpty(queryParams.params)) {
+          count =
+              ((Long) ((List) q.executeWithMap(queryParams.params)).iterator().next()).intValue();
+        } else {
+          count = ((Long) ((List) q.executeWithArray(queryParams.listParams.toArray()))
+              .iterator().next()).intValue();
+        }
       }
       if (results != null) {
         results.size();
@@ -308,29 +321,28 @@ public class StockEventDataGenerator implements ReportDataGenerator {
     }
 
     StringBuilder queryStr = new StringBuilder();
-    Map<String, Object> params = new HashMap<>(1);
+    List<String> params = new ArrayList<>();
     queryStr.append("SELECT * FROM INVNTRY INV, INVNTRYEVNTLOG INVLOG WHERE INVLOG.KEY = INV.LSEV ");
     StringBuilder filterStr = new StringBuilder();
     String orderBy = " ORDER BY INVLOG.sd " + (ascendingOrder ? "ASC" : "DESC");
     if (eventType != null) {
-      filterStr.append(" AND INVLOG.TY = ").append(eventType);
+      filterStr.append(" AND INVLOG.TY = ?");
+      params.add(String.valueOf(eventType));
     }
     if (kioskId != null) {
-      filterStr.append(" AND INVLOG.kId = ").append(kioskId);
+      filterStr.append(" AND INVLOG.kId = ?");
+      params.add(String.valueOf(kioskId));
     } else if (hasKioskIds) {
-      filterStr
-          .append(" AND INV.KID IN (SELECT UK.KIOSKID FROM USERTOKIOSK UK WHERE USERID = '")
-          .append(sourceUserId)
-          .append("')");
+      filterStr.append(" AND INV.KID IN (SELECT UK.KIOSKID FROM USERTOKIOSK UK WHERE USERID = ?)");
+      params.add(sourceUserId);
     }
     if (materialId != null) {
-      filterStr.append(" AND INV.MID = ").append(materialId);
+      filterStr.append(" AND INV.MID = ?");
+      params.add(String.valueOf(materialId));
     }
     if (kioskId == null && !hasKioskIds && domainId != null) {
-      filterStr
-          .append(" AND ")
-          .append(domainId)
-          .append(" IN (SELECT DOMAIN_ID FROM INVNTRY_DOMAINS ID WHERE ID.KEY_OID = INV.KEY)");
+      filterStr.append( " AND ? IN (SELECT DOMAIN_ID FROM INVNTRY_DOMAINS ID WHERE ID.KEY_OID = INV.KEY)");
+      params.add(String.valueOf(domainId));
     }
     // Material tags, if any
     if (materialId == null && StringUtils.isNotEmpty(materialTags)) {
@@ -341,7 +353,8 @@ public class StockEventDataGenerator implements ReportDataGenerator {
         for (int i = 0; i < mTags.length; i++) {
           String mTag = mTags[i];
           filterStr.append(i > 0 ? CharacterConstants.COMMA : CharacterConstants.EMPTY)
-              .append(CharacterConstants.S_QUOTE).append(mTag).append(CharacterConstants.S_QUOTE);
+              .append(CharacterConstants.QUESTION);
+          params.add(mTag);
         }
         filterStr.append(CharacterConstants.C_BRACKET).append(CharacterConstants.C_BRACKET).append(
             CharacterConstants.C_BRACKET);
@@ -361,7 +374,8 @@ public class StockEventDataGenerator implements ReportDataGenerator {
         for (int i = 0; i < kTags.length; i++) {
           String kTag = kTags[i];
           filterStr.append(i > 0 ? CharacterConstants.COMMA : CharacterConstants.EMPTY)
-              .append(CharacterConstants.S_QUOTE).append(kTag).append(CharacterConstants.S_QUOTE);
+              .append(CharacterConstants.QUESTION);
+          params.add(kTag);
         }
         filterStr.append(CharacterConstants.C_BRACKET).append(CharacterConstants.C_BRACKET).append(
             CharacterConstants.C_BRACKET);
@@ -369,53 +383,38 @@ public class StockEventDataGenerator implements ReportDataGenerator {
     }
     // Add from date
     if (from != null) {
-      filterStr
-          .append(" AND DATE(INVLOG.SD) > ")
-          .append(CharacterConstants.SINGLE_QUOTES)
-          .append(new SimpleDateFormat(Constants.DATETIME_CSV_FORMAT).format(from))
-          .append(CharacterConstants.SINGLE_QUOTES);
+      filterStr.append(" AND DATE(INVLOG.SD) > ?");
+      params.add(new SimpleDateFormat(Constants.DATETIME_CSV_FORMAT).format(from));
     }
     // Add until date, if needed
     if (abnormalBeforeDate != null) {
       filterStr.append(" AND INVLOG.ED IS NULL");
-      filterStr
-          .append(" AND DATE(INVLOG.SD) < ")
-          .append(CharacterConstants.SINGLE_QUOTES)
-          .append(new SimpleDateFormat(Constants.DATETIME_CSV_FORMAT).format(abnormalBeforeDate))
-          .append(CharacterConstants.SINGLE_QUOTES);
+      filterStr.append(" AND DATE(INVLOG.SD) < ?");
+      params.add(new SimpleDateFormat(Constants.DATETIME_CSV_FORMAT).format(abnormalBeforeDate));
     } else if (outstandingEvents) {
       filterStr.append(" AND INVLOG.ED IS NULL");
     } else if (until != null) {
-      filterStr
-          .append(" AND DATE(INVLOG.SD) < ")
-          .append(CharacterConstants.SINGLE_QUOTES)
-          .append(new SimpleDateFormat(Constants.DATETIME_CSV_FORMAT).format(until))
-          .append(CharacterConstants.SINGLE_QUOTES);
+      filterStr.append(" AND DATE(INVLOG.SD) < ?");
+      params.add(new SimpleDateFormat(Constants.DATETIME_CSV_FORMAT).format(until));
     }
     if((location != null && location.isNotEmpty())){
       boolean isAnd = false;
-      filterStr
-          .append(" AND INV.KID IN (SELECT KIOSKID FROM KIOSK WHERE");
+      filterStr.append(" AND INV.KID IN (SELECT KIOSKID FROM KIOSK WHERE");
       if (StringUtils.isNotEmpty(location.state)) {
-        filterStr.append(" STATE = " + CharacterConstants.S_QUOTE)
-            .append(location.state)
-            .append(CharacterConstants.S_QUOTE);
+        filterStr.append(" STATE = ?");
+        params.add(location.state);
         isAnd = true;
       }
       if (StringUtils.isNotEmpty(location.district)) {
         filterStr.append(isAnd ? " AND " : CharacterConstants.EMPTY);
-        filterStr.append(" DISTRICT = ")
-            .append(CharacterConstants.S_QUOTE)
-            .append(location.district)
-            .append(CharacterConstants.S_QUOTE);
+        filterStr.append(" DISTRICT = ?");
+        params.add(location.district);
         isAnd = true;
       }
       if (StringUtils.isNotEmpty(location.taluk)) {
         filterStr.append(isAnd ? " AND " : CharacterConstants.EMPTY);
-        filterStr.append(" TALUK = ")
-            .append(CharacterConstants.S_QUOTE)
-            .append(location.taluk)
-            .append(CharacterConstants.S_QUOTE);
+        filterStr.append(" TALUK = ?");
+        params.add(location.taluk);
       }
       filterStr.append(")");
     }

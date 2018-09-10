@@ -104,8 +104,8 @@ public class MediaEndPoint implements IMediaEndPoint {
     PersistenceManager pm = null;
     try {
       pm = PMF.get().getPersistenceManager();
-      q = pm.newQuery(Media.class, "domainKey == '" + domainKey + "'");
-      List<IMedia> result = (List<IMedia>) q.execute();
+      q = pm.newQuery(Media.class, "domainKey == :domainKey");
+      List<IMedia> result = (List<IMedia>) q.execute(domainKey);
       return (List<IMedia>) pm.detachCopyAll(result);
     } finally {
       if (q != null) {

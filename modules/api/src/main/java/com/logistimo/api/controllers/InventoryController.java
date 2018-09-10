@@ -127,6 +127,9 @@ public class InventoryController {
   private OrderManagementService orderManagementService;
 
   @Autowired
+  private ReportsService reportsService;
+
+  @Autowired
   public void setInventoryBuilder(InventoryBuilder inventoryBuilder) {
     this.inventoryBuilder = inventoryBuilder;
   }
@@ -221,7 +224,6 @@ public class InventoryController {
           filters.put(ReportsConstants.FILTER_LATEST, true);
           filters.put(ReportsConstants.FILTER_ABNORMALSTOCKVIEW, true);
 
-          ReportsService reportsService = StaticApplicationContext.getBean(ConfigUtil.get("reports"), ReportsService.class);
           ReportData reportData = reportsService.getReportData(
               ReportsConstants.TYPE_STOCKEVENT, null, null,
               ReportsConstants.FREQ_DAILY, filters, locale, timezone, pageParams, dc, userId);
@@ -329,7 +331,6 @@ public class InventoryController {
         filters.put(ReportsConstants.FILTER_LATEST, true);
         filters.put(ReportsConstants.FILTER_ABNORMALSTOCKVIEW, true);
 
-        ReportsService reportsService = StaticApplicationContext.getBean(ConfigUtil.get("reports"), ReportsService.class);
         ReportData reportData = reportsService.getReportData(
             ReportsConstants.TYPE_STOCKEVENT, null, null, ReportsConstants.FREQ_DAILY, filters,
             locale, timezone, pageParams, dc, userId);
@@ -477,7 +478,6 @@ public class InventoryController {
 
       xLogger.fine("filters: {0}", filters);
       PageParams pageParams = new PageParams(null, size);
-      ReportsService reportsService = StaticApplicationContext.getBean(ConfigUtil.get("reports"), ReportsService.class);
       ReportData r = reportsService.getReportData(reportType, null, null, frequency,
           filters, locale, timezone, pageParams, dc, userId);
       if (r != null) {
@@ -596,7 +596,7 @@ public class InventoryController {
           filters.put(ReportsConstants.FILTER_ABNORMALSTOCKVIEW, true);
         }
 
-      ReportsService reportsService = StaticApplicationContext.getBean(ConfigUtil.get("reports"), ReportsService.class);
+      ReportsService reportsService = StaticApplicationContext.getBean(ReportsService.class);
       ReportData reportData = reportsService.getReportData(
             ReportsConstants.TYPE_STOCKEVENT, null, null, ReportsConstants.FREQ_DAILY, filters,
             locale, timezone, pageParams, dc, userId);
@@ -661,7 +661,7 @@ public class InventoryController {
   List<FChartModel> getInventoryPredictiveStk(@RequestParam Long kioskId,
                                               @RequestParam Long materialId) {
     try {
-      ReportsService reportsService = StaticApplicationContext.getBean(ConfigUtil.get("reports"), ReportsService.class);
+      ReportsService reportsService = StaticApplicationContext.getBean(ReportsService.class);
       Results ds = reportsService.getSlices(new Date(), ISlice.DAILY, ISlice.OTYPE_MATERIAL,
           String.valueOf(materialId), ISlice.KIOSK, String.valueOf(kioskId), true,
           new PageParams(PREDICTIVE_HISTORY_DAYS));
@@ -711,11 +711,10 @@ public class InventoryController {
                         @RequestParam(required = false) String invId) {
     try {
       if (orderId != null) {
-        PredictionService oms = StaticApplicationContext.getBean(ConfigUtil.get("predictions"), PredictionService.class);
+        PredictionService oms = StaticApplicationContext.getBean(PredictionService.class);
         oms.updateOrderPredictions(orderId);
       } else if (invId != null) {
-        PredictionService ps = StaticApplicationContext.getBean(ConfigUtil.get("predictions"),
-            PredictionService.class);
+        PredictionService ps = StaticApplicationContext.getBean(PredictionService.class);
         ps.updateInventoryPredictions(invId);
       }
     } catch (Exception e) {

@@ -414,7 +414,8 @@ public class InvntryDao implements IInvntryDao {
     }
     if (filters.getMatType() != IInvntry.ALL && (filters.getMatType() == IInvntry.BATCH_ENABLED
         || filters.getMatType() == IInvntry.BATCH_DISABLED)) {
-      queryBuilder.append(" AND MID IN (SELECT MATERIALID FROM MATERIAL WHERE BM = ").append(CharacterConstants.QUESTION);
+      queryBuilder.append(" AND MID IN (SELECT MATERIALID FROM MATERIAL WHERE BM = ")
+          .append(CharacterConstants.QUESTION);
       if (filters.getMatType() == IInvntry.BATCH_ENABLED) {
         params.add(String.valueOf(filters.getMatType()));
       } else {
@@ -493,7 +494,8 @@ public class InvntryDao implements IInvntryDao {
     //Added for if modified since changes
     if (filters.getUpdatedSince() != null) {
       queryBuilder.append(
-          " AND (I.UON >= ? OR M.MATERIALID IN (SELECT MAT.MATERIALID FROM MATERIAL MAT WHERE MAT.LASTUPDATED >=? )) ");
+          " AND (I.UON >= ? OR M.MATERIALID IN (SELECT MAT.MATERIALID FROM MATERIAL MAT WHERE"
+              + " MAT.LASTUPDATED >=? )) ");
       String updatedSinceStr = sdf.format(filters.getUpdatedSince());
       params.add(updatedSinceStr);
       params.add(updatedSinceStr);
@@ -582,7 +584,9 @@ public class InvntryDao implements IInvntryDao {
     Query query = null;
     List<String> parameters = new ArrayList<>(1);
     try {
-      StringBuilder sqlQuery = new StringBuilder("SELECT 1 FROM INVNTRY I, MATERIAL M WHERE I.MID = M.MATERIALID AND M.BM = 1 AND I.STK > 0 AND I.KID = ").append(CharacterConstants.QUESTION);
+      StringBuilder sqlQuery = new StringBuilder("SELECT 1 FROM INVNTRY I, MATERIAL M WHERE "
+          + "I.MID = M.MATERIALID AND M.BM = 1 AND I.STK > 0 AND I.KID = ")
+          .append(CharacterConstants.QUESTION);
       parameters.add(String.valueOf(kioskId));
       sqlQuery.append( " LIMIT 1");
       query = pm.newQuery("javax.jdo.query.SQL", sqlQuery.toString());
@@ -617,7 +621,8 @@ public class InvntryDao implements IInvntryDao {
     Query query = null;
     List<String> parameters = new ArrayList<>(1);
     try {
-      StringBuilder sqlQuery = new StringBuilder("SELECT 1 FROM INVNTRY I, MATERIAL M WHERE I.MID = M.MATERIALID AND M.MATERIALID = ").append(CharacterConstants.QUESTION);
+      StringBuilder sqlQuery = new StringBuilder("SELECT 1 FROM INVNTRY I, MATERIAL M WHERE I.MID ="
+          + " M.MATERIALID AND M.MATERIALID = ").append(CharacterConstants.QUESTION);
       parameters.add(String.valueOf(materialId));
       sqlQuery.append(" AND I.STK > 0 LIMIT 1");
       query = pm.newQuery("javax.jdo.query.SQL", sqlQuery.toString());

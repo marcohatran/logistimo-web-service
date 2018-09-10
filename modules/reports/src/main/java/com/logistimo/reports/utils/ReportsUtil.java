@@ -828,8 +828,7 @@ public class ReportsUtil {
 
   public static IReportDataGeneratorFactory getReportDataGeneratorFactory()
       throws ServiceException {
-    return StaticApplicationContext.getBean(ConfigUtil.get("reports"),
-        ReportsService.class).getReportDataGeneratorFactory();
+    return StaticApplicationContext.getBean(ReportsService.class).getReportDataGeneratorFactory();
   }
 
   /**

@@ -32,7 +32,6 @@ import com.logistimo.api.builders.NotificationBuilder;
 import com.logistimo.api.builders.UserBuilder;
 import com.logistimo.api.builders.UserMessageBuilder;
 import com.logistimo.api.constants.ConfigConstants;
-import com.logistimo.api.migrators.CRConfigMigrator;
 import com.logistimo.api.models.AccessLogModel;
 import com.logistimo.api.models.CurrentUserModel;
 import com.logistimo.api.models.MenuStatsModel;
@@ -241,44 +240,6 @@ public class DomainConfigController {
   @Autowired
   public void setUsersService(UsersService usersService) {
     this.usersService = usersService;
-  }
-
-  @RequestMapping(value = "/config/migrator/")
-  public
-  @ResponseBody
-  void updateConfig(@RequestParam(required = false) String key) {
-    boolean isSuccess;
-    if (key == null) {
-      isSuccess = CRConfigMigrator.update();
-    } else if (key.contains(CharacterConstants.COMMA)) {
-      isSuccess = CRConfigMigrator.update(Arrays.asList(key.split(CharacterConstants.COMMA)));
-    } else {
-      isSuccess = CRConfigMigrator.update(key);
-    }
-    if (isSuccess) {
-      xLogger.info("Migrating configuration completed succesfully.");
-    } else {
-      xLogger.info("Error in migrating configuration");
-    }
-  }
-
-  @RequestMapping(value = "/irmigrator/")
-  public
-  @ResponseBody
-  void updateAutoPostConfig(@RequestParam(required = false) String key) {
-    boolean isSuccess;
-    if (key == null) {
-      isSuccess = IRPostConfigMigrator.update();
-    } else if (key.contains(CharacterConstants.COMMA)) {
-      isSuccess = IRPostConfigMigrator.update(Arrays.asList(key.split(CharacterConstants.COMMA)));
-    } else {
-      isSuccess = IRPostConfigMigrator.update(key);
-    }
-    if (isSuccess) {
-      xLogger.info("Migrating configuration completed successfully.");
-    } else {
-      xLogger.info("Error in migrating configuration");
-    }
   }
 
   @RequestMapping(value = "/tags/materials", method = RequestMethod.GET)

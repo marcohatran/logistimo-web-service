@@ -98,6 +98,7 @@ import com.logistimo.utils.StringUtil;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -123,7 +124,7 @@ import javax.jdo.Transaction;
  * Created by Mohan Raja on 29/09/16
  */
 
-@org.springframework.stereotype.Service
+@Service
 public class ShipmentService implements IShipmentService {
 
   private static final XLog xLogger = XLog.getLog(ShipmentService.class);
@@ -1917,15 +1918,18 @@ public class ShipmentService implements IShipmentService {
   @Override
   public List<String> getTransporterSuggestions(Long domainId, String text) {
     List<String> filterIds = new ArrayList<>();
-    String domainFilterQuery = "SELECT ID_OID FROM SHIPMENT_DOMAINS WHERE DOMAIN_ID = " + domainId;
+    List<String> parameters = new ArrayList<>();
+    String domainFilterQuery = "SELECT ID_OID FROM SHIPMENT_DOMAINS WHERE DOMAIN_ID = ?";
+    parameters.add(String.valueOf(domainId));
     PersistenceManager pm = PMF.get().getPersistenceManager();
     Query
         query =
         pm.newQuery("javax.jdo.query.SQL",
             "SELECT DISTINCT TRANSPORTER FROM `SHIPMENT` WHERE ID IN (" +
-                domainFilterQuery + ") AND TRANSPORTER LIKE '" + text + "%' " + "LIMIT 0,8");
+                domainFilterQuery + ") AND TRANSPORTER LIKE ? LIMIT 0,8");
+    parameters.add(text.concat("%"));
     try {
-      List rs = (List) query.execute();
+      List rs = (List) query.executeWithArray(parameters.toArray());
       for (Object r : rs) {
         String a = String.valueOf(r);
         if (a != null) {
@@ -2441,6 +2445,7 @@ public class ShipmentService implements IShipmentService {
       return Collections.emptyList();
     }
     List<FulfilledQuantityModel> fulfilledQuantityModelList = new ArrayList<>();
+    List<Object> parameters = new ArrayList<>();
     PersistenceManager pm = PMF.get().getPersistenceManager();
     try {
 //      Query q =
@@ -2453,25 +2458,19 @@ public class ShipmentService implements IShipmentService {
           queryBuilder =
           new StringBuilder("SELECT SI.MID, BID, SUM(SI.FQ),SUM(SIB.FQ), SI.SID,SIB.BEXP,SIB.BMFDT,SIB.BMFNM  FROM "
               + "SHIPMENT S,SHIPMENTITEM SI LEFT JOIN  SHIPMENTITEMBATCH SIB ON SIB.SIID = SI.ID "
-              + "WHERE S.ORDERID=").append(orderId).append(" AND S.ID = SI.SID ");
+              + "WHERE S.ORDERID=? AND S.ID = SI.SID ");
+      parameters.add(orderId);
 
       if(CollectionUtils.isNotEmpty(materialIdList)) {
-        queryBuilder.append(" AND SI.MID IN (");
-        materialIdList.forEach(materailId -> {
-          queryBuilder.append(materailId).append(CharacterConstants.COMMA);
-        });
-
-        queryBuilder.setLength(queryBuilder.length() - 1);
-        queryBuilder.append(" )");
+        queryBuilder.append(" AND SI.MID IN (?)");
+       parameters.add(materialIdList);
       }
 
       Query q =
           pm.newQuery("javax.jdo.query.SQL",
               queryBuilder.append(" GROUP BY SI.MID,BID ORDER BY SI.MID,BID ASC").toString());
-      List params = new ArrayList(2);
-      params.add(orderId);
-      params.add(materialIdList);
-      List resultList = (List) q.executeWithArray(params.toArray());
+
+      List resultList = (List) q.executeWithArray(parameters.toArray());
       Iterator iterator = resultList.iterator();
       while (iterator.hasNext()) {
         FulfilledQuantityModel fulfilledQuantityModel = new FulfilledQuantityModel();

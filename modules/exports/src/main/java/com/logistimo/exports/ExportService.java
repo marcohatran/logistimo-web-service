@@ -39,13 +39,15 @@ import com.logistimo.utils.JobUtil;
 import org.apache.camel.ExchangePattern;
 import org.apache.camel.ProducerTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @author Mohan Raja
  */
-@org.springframework.stereotype.Service
+@Service
 public class ExportService {
 
   public static final String REPORT_VIEW_TYPE = "reportViewType";

@@ -25,6 +25,7 @@ package com.logistimo.social.provider;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Test;
 
 import java.util.List;
 
@@ -37,7 +38,7 @@ public class SubscriberProviderTest {
     subscriberProvider = new SubscriberProvider();
   }
 
-  @org.junit.Test
+  @Test
   public void testGetStoreUserTagForEventForNull () {
     String context = "{\"eventId\":\"120548104\",\"attribute\":\"{\\\"id\\\":\\\"120548104\\\",\\\"conditions\\\":[{\\\"name\\\":\\\"percentage_time_in_stock\\\",\\\"value\\\":\\\"30\\\",\\\"units\\\":\\\"%\\\",\\\"oper\\\":\\\"\\\\u003e\\\\u003d\\\"},{\\\"name\\\":\\\"percentage_time_no_excess_stock\\\",\\\"value\\\":\\\"30\\\",\\\"units\\\":\\\"%\\\",\\\"oper\\\":\\\"\\\\u003e\\\\u003d\\\"},{\\\"name\\\":\\\"percentage_of_materials\\\",\\\"value\\\":\\\"40\\\",\\\"units\\\":\\\"%\\\",\\\"oper\\\":\\\"\\\\u003e\\\\u003d\\\"},{\\\"name\\\":\\\"duration\\\",\\\"value\\\":\\\"1\\\",\\\"units\\\":\\\"months\\\",\\\"oper\\\":\\\"\\\"},{\\\"name\\\":\\\"include_entity_tags\\\",\\\"units\\\":\\\"\\\",\\\"values\\\":[\\\"GTAG\\\"],\\\"oper\\\":\\\"\\\"},{\\\"name\\\":\\\"exclude_entity_tags\\\",\\\"units\\\":\\\"\\\",\\\"values\\\":[\\\"SVS\\\"],\\\"oper\\\":\\\"\\\"},{\\\"name\\\":\\\"users_tags_responsible\\\",\\\"units\\\":\\\"\\\",\\\"values\\\":[\\\"CMO\\\"],\\\"oper\\\":\\\"\\\"}]}\",\"category\":\"inventory\",\"eventType\":\"inventory_performance_by_entity\"}";
     List<String> usertags = subscriberProvider.getStoreUserTagForEvent(context);
@@ -45,7 +46,7 @@ public class SubscriberProviderTest {
   }
 
 
-  @org.junit.Test
+  @Test
   public void testGetStoreUserTagForEventForNotNull () {
     String context = "{\"eventId\":\"120548104\",\"attribute\":\"{\\\"id\\\":\\\"120548104\\\",\\\"conditions\\\":[{\\\"name\\\":\\\"percentage_time_in_stock\\\",\\\"value\\\":\\\"30\\\",\\\"units\\\":\\\"%\\\",\\\"oper\\\":\\\"\\\\u003e\\\\u003d\\\"},{\\\"name\\\":\\\"percentage_time_no_excess_stock\\\",\\\"value\\\":\\\"30\\\",\\\"units\\\":\\\"%\\\",\\\"oper\\\":\\\"\\\\u003e\\\\u003d\\\"},{\\\"name\\\":\\\"percentage_of_materials\\\",\\\"value\\\":\\\"40\\\",\\\"units\\\":\\\"%\\\",\\\"oper\\\":\\\"\\\\u003e\\\\u003d\\\"},{\\\"name\\\":\\\"duration\\\",\\\"value\\\":\\\"1\\\",\\\"units\\\":\\\"months\\\",\\\"oper\\\":\\\"\\\"},{\\\"name\\\":\\\"include_entity_tags\\\",\\\"units\\\":\\\"\\\",\\\"values\\\":[\\\"GTAG\\\"],\\\"oper\\\":\\\"\\\"},{\\\"name\\\":\\\"exclude_entity_tags\\\",\\\"units\\\":\\\"\\\",\\\"values\\\":[\\\"SVS\\\"],\\\"oper\\\":\\\"\\\"},{\\\"name\\\":\\\"user_tags_responsible\\\",\\\"units\\\":\\\"\\\",\\\"values\\\":[\\\"CMO\\\"],\\\"oper\\\":\\\"\\\"}]}\",\"category\":\"inventory\",\"eventType\":\"inventory_performance_by_entity\"}";
     List<String> usertags = subscriberProvider.getStoreUserTagForEvent(context);

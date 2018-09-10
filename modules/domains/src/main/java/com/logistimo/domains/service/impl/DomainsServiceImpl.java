@@ -51,6 +51,7 @@ import com.logistimo.utils.ThreadLocalUtil;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -68,7 +69,7 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import javax.jdo.Transaction;
 
-@org.springframework.stereotype.Service
+@Service
 public class DomainsServiceImpl implements DomainsService {
 
   private static final XLog xLogger = XLog.getLog(DomainsServiceImpl.class);
@@ -259,7 +260,8 @@ public class DomainsServiceImpl implements DomainsService {
     String
         queryStr =
         "SELECT FROM " + JDOUtils.getImplClass(IDomainLink.class).getName()
-            + " WHERE dId == dIdParam && ty == tyParam PARAMETERS Long dIdParam, Integer tyParam ORDER BY nldnm ASC"; // sorted by linked domain name
+            + " WHERE dId == dIdParam && ty == tyParam PARAMETERS Long dIdParam, Integer "
+            + "tyParam ORDER BY nldnm ASC"; // sorted by linked domain name
     Query q = pm.newQuery(queryStr);
     if (pageParams != null) {
       QueryUtil.setPageParams(q, pageParams);

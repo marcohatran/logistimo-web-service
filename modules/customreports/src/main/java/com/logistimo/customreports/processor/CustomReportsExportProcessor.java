@@ -94,8 +94,7 @@ public class CustomReportsExportProcessor extends InstrumentedProcessor {
                                                  CustomReportsExportMgr.CustomReportsExportParams cstReportsExportParams,
                                                  Long domainId) throws ServiceException {
     if (invntry != null) {
-      ReportsService reportsService = StaticApplicationContext
-          .getBean(ConfigUtil.get("reports"), ReportsService.class);
+      ReportsService reportsService = StaticApplicationContext.getBean(ReportsService.class);
       return reportsService.getInventorySnapshot(invntry.getKioskId(), invntry.getMaterialId(),
           cstReportsExportParams.snapshotDate, domainId);
     }

@@ -84,8 +84,7 @@ public class InvOptimizationDQProcessor extends InstrumentedProcessor {
     }
     try {
       // Get service
-      InventoryOptimizerService ios = StaticApplicationContext.getBean(ConfigUtil.get("optimizer"),
-          InventoryOptimizerService.class);
+      InventoryOptimizerService ios = StaticApplicationContext.getBean(InventoryOptimizerService.class);
       xLogger.info("InvOptimizationDQProcessor: Computing DQ for domain = {0}...", domainId);
       // Optimize
       ios.optimize(domainId, filteredInventories, dc, false, true, locale, pm);
