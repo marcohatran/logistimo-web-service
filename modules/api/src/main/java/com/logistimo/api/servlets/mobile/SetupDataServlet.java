@@ -25,6 +25,7 @@ package com.logistimo.api.servlets.mobile;
 
 import com.logistimo.AppFactory;
 import com.logistimo.api.auth.AuthenticationUtil;
+import com.logistimo.api.constants.Status;
 import com.logistimo.api.servlets.JsonRestServlet;
 import com.logistimo.api.util.GsonUtil;
 import com.logistimo.api.util.RESTUtil;
@@ -37,6 +38,7 @@ import com.logistimo.communications.MessageHandlingException;
 import com.logistimo.communications.service.MessageService;
 import com.logistimo.config.models.CapabilityConfig;
 import com.logistimo.config.models.DomainConfig;
+import com.logistimo.config.models.FormsConfig;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.context.StaticApplicationContext;
@@ -302,10 +304,46 @@ public class SetupDataServlet extends JsonRestServlet {
       manageRelationship(req, resp, backendMessages, action);
     } else if (RestConstantsZ.ACTION_GETRELATEDENTITIES.equalsIgnoreCase(action)) {
       getRelatedEntities(req, resp);
+    } else if (RestConstantsZ.ACTION_GET_FORMSCONFIG.equalsIgnoreCase(action)) {
+      getFormsConfig(req, resp);
     } else {
       throw new ServiceException("Invalid action: " + action);
     }
     xLogger.fine("Out of processPost");
+  }
+
+  private void getFormsConfig(HttpServletRequest req, HttpServletResponse resp) {
+    xLogger.fine("Entered getFormsConfig");
+    // Get the request parameters
+    String userId = req.getParameter(RestConstantsZ.USER_ID);
+    String password = req.getParameter(RestConstantsZ.PASSWRD);
+    String kioskIdStr = req.getParameter(RestConstantsZ.KIOSK_ID);
+    String errMsg = null;
+    Status status = Status.SUCCESS;
+    int statusCode = HttpServletResponse.SC_OK;
+    FormsConfig formsConfig = null;
+    Long domainId = null;
+    if(StringUtils.isNotEmpty(kioskIdStr)) {
+      Long kioskId = Long.valueOf(kioskIdStr);
+      try {
+        IUserAccount u = RESTUtil.authenticate(userId, password, kioskId, req, resp);
+        domainId = u.getDomainId();
+        DomainConfig dc = DomainConfig.getInstance(domainId);
+        formsConfig = dc.getFormsConfig();
+      } catch (ServiceException e) {
+        errMsg = e.getMessage();
+        status = Status.FAILURE;
+      }
+      try {
+        sendJsonResponse(resp, statusCode, GsonUtil.getFormsAsJson(status, formsConfig.getForms(),
+            errMsg,
+            RESTUtil.VERSION_01));
+      } catch (IOException e) {
+        xLogger.severe("{0} when sending JSON response for getFormsConfiguration for domain {1}",
+            e.getClass().getName(), domainId);
+        resp.setStatus(500);
+      }
+    }
   }
 
   @SuppressWarnings("unchecked")
@@ -1592,7 +1630,7 @@ public class SetupDataServlet extends JsonRestServlet {
           try {
             // Authenticate user
             IUserAccount u = RESTUtil.authenticate(userId, password, kioskId, req, resp);
-            if (userId == null) {
+             if (userId == null) {
               userId = u.getUserId();
             }
             DomainConfig dc = DomainConfig.getInstance(u.getDomainId());
