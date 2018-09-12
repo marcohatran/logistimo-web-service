@@ -55,6 +55,7 @@ import com.logistimo.inventory.service.InventoryManagementService;
 import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IHandlingUnit;
 import com.logistimo.materials.entity.IMaterial;
+import com.logistimo.materials.model.HandlingUnitModel;
 import com.logistimo.materials.service.IHandlingUnitService;
 import com.logistimo.materials.service.MaterialCatalogService;
 import com.logistimo.media.endpoints.IMediaEndPoint;
@@ -70,6 +71,7 @@ import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.CommonUtils;
 import com.logistimo.utils.LocalDateUtil;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -80,54 +82,33 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 public class InventoryBuilder {
 
   private static final XLog xLogger = XLog.getLog(InventoryBuilder.class);
 
-  private IInvntryDao invDao;
-  private EntitiesService entitiesService;
-  private MaterialCatalogService materialCatalogService;
-  private UsersService usersService;
-  private InventoryManagementService inventoryManagementService;
-  private DomainsService domainsService;
-  private IHandlingUnitService handlingUnitService;
+  @Autowired
+  IInvntryDao invDao;
 
   @Autowired
-  public void setInvDao(IInvntryDao invDao) {
-    this.invDao = invDao;
-  }
+  EntitiesService entitiesService;
 
   @Autowired
-  public void setEntitiesService(EntitiesService entitiesService) {
-    this.entitiesService = entitiesService;
-  }
+  MaterialCatalogService materialCatalogService;
 
   @Autowired
-  public void setMaterialCatalogService(MaterialCatalogService materialCatalogService) {
-    this.materialCatalogService = materialCatalogService;
-  }
+  UsersService usersService;
 
   @Autowired
-  public void setUsersService(UsersService usersService) {
-    this.usersService = usersService;
-  }
+  InventoryManagementService inventoryManagementService;
 
   @Autowired
-  public void setInventoryManagementService(InventoryManagementService inventoryManagementService) {
-    this.inventoryManagementService = inventoryManagementService;
-  }
+  DomainsService domainsService;
 
   @Autowired
-  public void setDomainsService(DomainsService domainsService) {
-    this.domainsService = domainsService;
-  }
-
-  @Autowired
-  public void setHandlingUnitService(IHandlingUnitService handlingUnitService) {
-    this.handlingUnitService = handlingUnitService;
-  }
+  IHandlingUnitService handlingUnitService;
 
   public Results buildInventoryModelListAsResult(Results results,
                                                  Long domainId, Long entityId)
@@ -167,17 +148,18 @@ public class InventoryBuilder {
   }
 
   public InventoryDetailModel buildMInventoryDetail(IInvntry inventory,
-                                                    Long domainId, Long entityId)
+                                                    Long domainId, Long entityId, boolean embed)
       throws ServiceException {
     DomainConfig domainConfig = DomainConfig.getInstance(domainId);
-    IKiosk ki = entitiesService.getKiosk(entityId, false);
+    IKiosk kiosk = entitiesService.getKiosk(entityId, false);
     return buildMInventoryDetailModel(inventory,
-        domainConfig, ki);
+        domainConfig, kiosk, embed);
   }
 
   public InventoryDetailModel buildMInventoryDetailModel(IInvntry invntry,
                                                          DomainConfig domainConfig,
-                                                         IKiosk kiosk) {
+                                                         IKiosk kiosk, boolean embed)
+      throws ServiceException {
     InventoryDetailModel model = new InventoryDetailModel();
     model.mId = invntry.getMaterialId();
     model.eId = invntry.getKioskId();
@@ -213,23 +195,32 @@ public class InventoryBuilder {
         xLogger.warn("Kiosk associated with material in inventory not found", e);
         return null;
       }
+    } else {
+      model.enm = kiosk.getName();
     }
 
     model.loc = new EntityModel();
-    model.loc.ct = kiosk.getCity();
-    model.loc.ctid = kiosk.getCityId();
-    model.loc.st = kiosk.getState();
-    model.loc.stid = kiosk.getStateId();
-    model.loc.ctr = kiosk.getCountry();
-    model.loc.ctrid = kiosk.getCountryId();
-    model.loc.ds = kiosk.getDistrict();
-    model.loc.dsid = kiosk.getDistrictId();
-    model.loc.tlk = kiosk.getTaluk();
+    if(kiosk != null) {
+      model.loc.ct = kiosk.getCity();
+      model.loc.ctid = kiosk.getCityId();
+      model.loc.st = kiosk.getState();
+      model.loc.stid = kiosk.getStateId();
+      model.loc.ctr = kiosk.getCountry();
+      model.loc.ctrid = kiosk.getCountryId();
+      model.loc.ds = kiosk.getDistrict();
+      model.loc.dsid = kiosk.getDistrictId();
+      model.loc.tlk = kiosk.getTaluk();
+      model.setBatchEnabled(material.isBatchEnabled() && kiosk.isBatchMgmtEnabled());
+    }
 
     model.currentStock = new CurrentStock();
     model.currentStock.count = invntry.getStock();
     model.currentStock.date =
-        LocalDateUtil.format(invntry.getTimestamp(), SecurityUtils.getLocale(), SecurityUtils.getTimezone());
+        LocalDateUtil
+            .format(invntry.getTimestamp(), SecurityUtils.getLocale(), SecurityUtils.getTimezone());
+    model.currentStock.lastUpdatedTimeStamp =
+        LocalDateUtil.formatCustom(invntry.getTimestamp(), Constants.ISO_PATTERN,
+            SecurityUtils.getTimezone());
     model.min = invntry.getNormalizedSafetyStock();
     model.max = invntry.getMaxStock();
     model.it = invntry.getInTransitStock();
@@ -246,7 +237,66 @@ public class InventoryBuilder {
       }
       model.se = invntry.getStockEvent();
     }
+    if(embed) {
+      setBatchModel(invntry, model);
+      setHandlingUnits(invntry, model);
+    }
+    model.setTemperatureSensitive(material.isTemperatureSensitive());
+    model.setMinTemperature(material.getTemperatureMin());
+    model.setMaxTemperature(material.getTemperatureMax());
+    model.setShortMaterialId(material.getShortCode());
+    model.setAvailableStock(invntry.getAvailableStock());
+    model.setConsumptionRateDaily(invntry.getConsumptionRateDaily());
+    model.setConsumptionRateWeekly(invntry.getConsumptionRateWeekly());
+    model.setConsumptionRateMonthly(invntry.getConsumptionRateMonthly());
+    model.setLastUpdatedTimestamp(invntry.getTimestamp());
+    model.setManufacturerPrice(material.getMSRP());
+    model.setRetailerPrice(material.getRetailerPrice());
+    model.setCustomMaterialId(material.getCustomId());
+    model.setMinimumDurationStock(invntry.getMinDuration());
+    model.setMaximumDurationStock(invntry.getMaxDuration());
     return model;
+  }
+
+  protected void setBatchModel(IInvntry invntry, InventoryDetailModel model) throws ServiceException {
+    List<IInvntryBatch>
+        batches =
+        inventoryManagementService.getBatches(invntry.getMaterialId(), invntry.getKioskId(),
+            null).getResults();
+    if(batches != null && CollectionUtils.isNotEmpty(batches)) {
+      Map<Boolean, List<InvntryBatchModel>> batchModels = batches.stream().filter(
+          batch -> BigUtil.greaterThanZero(batch.getQuantity()))
+          .map(batch -> {
+            InvntryBatchModel batchModel = new InvntryBatchModel();
+            batchModel.bid = batch.getBatchId();
+            batchModel.bexp = batch.getBatchExpiry();
+            batchModel.bmfdt = batch.getBatchManufacturedDate();
+            batchModel.bmfnm = batch.getBatchManufacturer();
+            batchModel.q = batch.getQuantity();
+            batchModel.t = batch.getTimestamp();
+            batchModel.isExp = batch.isExpired();
+            batchModel.astk = batch.getAllocatedStock();
+            batchModel.atpstk = batch.getAvailableStock();
+            batchModel.q = batch.getQuantity();
+            return batchModel;
+          }).collect(Collectors.groupingBy(batchModel -> batchModel.isExp));
+      model.setBatches(batchModels.get(false));
+      model.setExpiredBatches(batchModels.get(true));
+    }
+  }
+
+  protected void setHandlingUnits(IInvntry invntry, InventoryDetailModel invntryModel) {
+    Map<String, String> handlingUnits = handlingUnitService.getHandlingUnitDataByMaterialId(invntry.getMaterialId());
+    if(handlingUnits != null) {
+      HandlingUnitModel model = new HandlingUnitModel();
+      model.setHandlingUnitId(handlingUnits.get(IHandlingUnit.HUID));
+      model.setName(handlingUnits.get(IHandlingUnit.NAME));
+      model.setQuantity(new BigDecimal(handlingUnits.get(IHandlingUnit.QUANTITY)));
+      invntryModel.setHandlingUnitModel(model);
+      invntryModel.setEnforceHandlingUnit(true);
+    } else {
+      invntryModel.setEnforceHandlingUnit(false);
+    }
   }
 
   public InventoryModel buildInventoryModel(IInvntry invntry, DomainConfig domainConfig,

@@ -25,9 +25,12 @@ package com.logistimo.materials.model;
 
 import java.math.BigDecimal;
 
+import lombok.Data;
+
 /**
  * Created by pratheeka on 13/03/18.
  */
+@Data
 public class HandlingUnitModel {
 
   private Long id;
@@ -35,45 +38,4 @@ public class HandlingUnitModel {
   private BigDecimal quantity;
   private String handlingUnitId;
   private Long materialId;
-
-
-  public Long getId() {
-    return id;
-  }
-
-  public Long getMaterialId() {
-    return materialId;
-  }
-
-  public void setMaterialId(Long materialId) {
-    this.materialId = materialId;
-  }
-
-  public void setId(Long id) {
-    this.id = id;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public void setName(String name) {
-    this.name = name;
-  }
-
-  public BigDecimal getQuantity() {
-    return quantity;
-  }
-
-  public void setQuantity(BigDecimal quantity) {
-    this.quantity = quantity;
-  }
-
-  public String getHandlingUnitId() {
-    return handlingUnitId;
-  }
-
-  public void setHandlingUnitId(String handlingUnitId) {
-    this.handlingUnitId = handlingUnitId;
-  }
 }

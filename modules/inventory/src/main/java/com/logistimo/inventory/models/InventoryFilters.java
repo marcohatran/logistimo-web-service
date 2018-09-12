@@ -53,6 +53,9 @@ public class InventoryFilters {
   private Set<Integer> eventTypes = new LinkedHashSet<>(1);
   private Long sourceDomainId;
   private boolean noInTransitStock;
+  private String materialQueryType;
+  private String materialQueryText;
+  private boolean includeMaterialDescriptionQuery;
 
   private Date updatedSince;
 
@@ -112,6 +115,12 @@ public class InventoryFilters {
     return updatedSince;
   }
 
+  public String getMaterialQueryType() { return materialQueryType; }
+
+  public String getMaterialQueryText() { return materialQueryText; }
+
+  public boolean includeMaterialDescriptionQuery() { return includeMaterialDescriptionQuery; }
+
   public InventoryFilters withUpdatedSince(Date updatedSince) {
     this.updatedSince = updatedSince;
     return this;
@@ -159,8 +168,8 @@ public class InventoryFilters {
     return this;
   }
 
-  public InventoryFilters withMaterialNameStartsWith(String materialNameStartsWith) {
-    this.materialNameStartsWith = materialNameStartsWith;
+  public InventoryFilters withMaterialQueryText(String materialQueryText) {
+    this.materialQueryText = materialQueryText;
     return this;
   }
 
@@ -229,5 +238,15 @@ public class InventoryFilters {
 
   public boolean hasMaterialIds() {
     return materialIds != null && !materialIds.isEmpty();
+  }
+
+  public InventoryFilters withMaterialQueryType(String materialQueryType) {
+    this.materialQueryType = materialQueryType;
+    return this;
+  }
+
+  public InventoryFilters withMaterialDescriptionQuery(boolean includeMaterialDescriptionQuery) {
+    this.includeMaterialDescriptionQuery = includeMaterialDescriptionQuery;
+    return this;
   }
 }

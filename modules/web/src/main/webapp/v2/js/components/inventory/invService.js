@@ -73,7 +73,7 @@ invServices.factory('invService', ['APIService', function (apiService) {
             var urlStr = '/s2/api/inventory/entity/' + entityId
                 + "?offset=" + offset + "&size=" + size;
             if(checkNotNullEmpty(q)){
-                urlStr = urlStr + '&startsWith='+q;
+                urlStr = urlStr + '&materialQueryText='+q;
             }
             if (checkNotNullEmpty(tag)) {
                 urlStr = urlStr + "&tag=" + tag;
