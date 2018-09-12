@@ -122,14 +122,16 @@ public class MaterialDao implements IMaterialDao {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     Query query = null;
     try {
+      List<Object> parameters=new ArrayList<>();
       query =
           pm.newQuery("javax.jdo.query.SQL",
-              "SELECT * FROM MATERIAL M, MATERIAL_DOMAINS MD WHERE MD.MATERIALID_OID = M.MATERIALID AND MD.DOMAIN_ID="
-                  + domainId +
-                  " AND UNAME LIKE '" + q.toLowerCase()
-                  + "%' AND NOT EXISTS(SELECT 1 FROM HANDLINGUNITCONTENT WHERE CNTID = MATERIALID AND TY=0) LIMIT 8");
+              "SELECT * FROM MATERIAL M, MATERIAL_DOMAINS MD WHERE MD.MATERIALID_OID = M.MATERIALID"
+                  + " AND MD.DOMAIN_ID=? AND UNAME LIKE ? AND NOT EXISTS(SELECT 1 FROM"
+                  + " HANDLINGUNITCONTENT WHERE CNTID = MATERIALID AND TY=0) LIMIT 8");
+      parameters.add(domainId);
+      parameters.add(q.toLowerCase()+"%");
       query.setClass(Material.class);
-      List<Material> data = (List<Material>) query.execute();
+      List<Material> data = (List<Material>) query.executeWithArray(parameters.toArray());
       if (data != null) {
         data = (List<Material>) pm.detachCopyAll(data);
         return new Results<>(data, null);
@@ -202,8 +204,8 @@ public class MaterialDao implements IMaterialDao {
       query =
           pm.newQuery("javax.jdo.query.SQL",
               "SELECT MATERIALID FROM MATERIAL M, MATERIAL_DOMAINS MD WHERE " +
-                  "MD.MATERIALID_OID = M.MATERIALID AND MD.DOMAIN_ID=" + domainId);
-      List matIds = (List) query.execute();
+                  "MD.MATERIALID_OID = M.MATERIALID AND MD.DOMAIN_ID=?");
+      List matIds = (List) query.execute(domainId);
       for (Object matId : matIds) {
         Long matIdL = (Long) matId;
         if (matIdL != null) {

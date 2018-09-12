@@ -57,6 +57,7 @@ import com.sun.rowset.CachedRowSetImpl;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
@@ -81,7 +82,7 @@ import javax.sql.rowset.CachedRowSet;
 /**
  * Created by smriti on 9/30/16.
  */
-@org.springframework.stereotype.Service
+@Service
 public class DemandService implements IDemandService {
   private static final XLog xLogger = XLog.getLog(DemandService.class);
   private ITagDao tagDao;
@@ -183,10 +184,11 @@ public class DemandService implements IDemandService {
       parameters.add(String.valueOf(mTag));
     }
 
-    query.append(" GROUP BY LKID, MID LIMIT ").append(offset).append(CharacterConstants.COMMA)
-        .append(size)
+    query.append(" GROUP BY LKID, MID LIMIT ?,?")
         .append(")D").append(CharacterConstants.SPACE)
         .append("LEFT JOIN INVNTRY I ON D.LKID = I.KID AND D.MID = I.MID");
+    parameters.add(String.valueOf(offset));
+    parameters.add(String.valueOf(size));
     try {
       return new Results(getResults(query, parameters), "", -1, offset);
     } catch (Exception e) {
@@ -483,7 +485,7 @@ public class DemandService implements IDemandService {
                 "(SELECT OX.STON from `ORDER` OX where OX.ID = OID) OSCT FROM DEMANDITEM D ");
     List<String> parameters = new ArrayList<>();
     if (orderId != null) {
-      sqlQuery.append("WHERE OID = ").append(CharacterConstants.QUESTION);
+      sqlQuery.append("WHERE OID = ?");
       parameters.add(String.valueOf(orderId));
     } else {
       StringBuilder orderQuery =
@@ -492,22 +494,20 @@ public class DemandService implements IDemandService {
         sqlQuery.append("WHERE OID IN (").append(orderQuery).append(")");
     }
     if (materialId != null) {
-      sqlQuery.append(" AND MID = ").append(CharacterConstants.QUESTION);
+      sqlQuery.append(" AND MID = ?");
       parameters.add(String.valueOf(materialId));
     } else if (materialTag != null && !materialTag.isEmpty()) {
-      sqlQuery.append(" AND MID IN (SELECT MATERIALID from MATERIAL_TAGS where ID = ")
-          .append(CharacterConstants.QUESTION)
-          .append(")");
+      sqlQuery.append(" AND MID IN (SELECT MATERIALID from MATERIAL_TAGS where ID = ?)");
       parameters.add(String.valueOf(tagDao.getTagFilter(materialTag, ITag.MATERIAL_TAG)));
     }
     SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATETIME_CSV_FORMAT);
     if (from != null) {
-      sqlQuery.append(" AND T >= TIMESTAMP(").append(CharacterConstants.QUESTION).append(")");
+      sqlQuery.append(" AND T >= TIMESTAMP(?)");
       parameters.add(sdf.format(from));
     }
     if (to != null) {
       to = LocalDateUtil.getOffsetDate(to, 1, java.util.Calendar.DAY_OF_MONTH);
-      sqlQuery.append(" AND T < TIMESTAMP(").append(CharacterConstants.QUESTION).append(")");
+      sqlQuery.append(" AND T < TIMESTAMP(?)");
       parameters.add(sdf.format(to));
     }
     if(StringUtils.isBlank(discType)) {
@@ -540,7 +540,7 @@ public class DemandService implements IDemandService {
                                           List<String> parameters) {
     StringBuilder orderQuery = new StringBuilder("SELECT ID FROM `ORDER` WHERE ");
     if (excludeTransfer) {
-      orderQuery.append("OTY != ").append(CharacterConstants.QUESTION);
+      orderQuery.append("OTY != ?");
       parameters.add(String.valueOf(IOrder.TRANSFER));
       orderQuery.append(" AND ");
     }
@@ -565,29 +565,25 @@ public class DemandService implements IDemandService {
 
       orderQuery.append("))");
     } else {
-      orderQuery.append("(KID IN (SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID = ")
-          .append(CharacterConstants.QUESTION).append(")");
+      orderQuery.append("(KID IN (SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID = ?)");
       parameters.add(String.valueOf(domainId));
       orderQuery.append(" OR ");
-      orderQuery.append("SKID IN (SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID = ")
-          .append(CharacterConstants.QUESTION).append("))");
+      orderQuery.append("SKID IN (SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID = ?))");
       parameters.add(String.valueOf(domainId));
 
     }
 
     if (kioskId != null) {
       String kidParam = IOrder.TYPE_PURCHASE.equals(oType) ? "KID" : "SKID";
-      orderQuery.append(" AND ").append(kidParam).append(" = ").append(CharacterConstants.QUESTION);
+      orderQuery.append(" AND ").append(kidParam).append(" = ?");
       parameters.add(String.valueOf(kioskId));
     } else if (StringUtils.isNotBlank(kioskTag)) {
       orderQuery.append(
-          " AND (KID IN (SELECT KIOSKID FROM KIOSK_TAGS WHERE ID IN(SELECT ID FROM TAG WHERE NAME=")
-          .append(CharacterConstants.QUESTION).append("))");
+          " AND (KID IN (SELECT KIOSKID FROM KIOSK_TAGS WHERE ID IN(SELECT ID FROM TAG WHERE NAME=?))");
       parameters.add(kioskTag);
       orderQuery.append(" OR ");
       orderQuery.append(
-          "SKID IN (SELECT KIOSKID FROM KIOSK_TAGS WHERE ID IN(SELECT ID FROM TAG WHERE NAME=")
-          .append(CharacterConstants.QUESTION).append(")))");
+          "SKID IN (SELECT KIOSKID FROM KIOSK_TAGS WHERE ID IN(SELECT ID FROM TAG WHERE NAME=?)))");
       parameters.add(kioskTag);
     }
 

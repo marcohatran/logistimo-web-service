@@ -213,10 +213,8 @@ public class ReportsServlet extends SgServlet {
       // Get the pagination parameters, if present
       PageParams pageParams = getPageParams(cursor, size);
       // Get the report data
-      ReportsService rs = StaticApplicationContext
-          .getBean(ConfigUtil.get("reports"), ReportsService.class);
-      ReportData
-          r =
+      ReportsService rs = StaticApplicationContext.getBean(ReportsService.class);
+      ReportData r =
           rs.getReportData(reportType, startDate, endDate, frequency, filters, locale, timezone,
               pageParams, dc, userId);
       // Update session with cursor, if necessary

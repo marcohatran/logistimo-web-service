@@ -251,6 +251,12 @@ domainCfgServices.factory('domainCfgService', ['APIService','$http', function (a
         },
         getReturnConfig: function (entityId) {
             return apiService.get('/s2/api/config/domain/return-config?entityId=' + entityId);
+        },
+        getFormsConfig: function () {
+            return apiService.get('/s2/api/config/domain/forms');
+        },
+        setFormsConfig: function (data) {
+            return apiService.post(data, '/s2/api/config/domain/forms')
         }
     }
 }]);

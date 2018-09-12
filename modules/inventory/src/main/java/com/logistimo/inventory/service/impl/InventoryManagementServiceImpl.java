@@ -96,6 +96,7 @@ import com.logistimo.utils.StringUtil;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
@@ -130,7 +131,7 @@ import javax.jdo.Transaction;
 /**
  * @author arun, juhee
  */
-@org.springframework.stereotype.Service
+@Service
 public class InventoryManagementServiceImpl implements InventoryManagementService {
 
   // Logger
@@ -441,7 +442,8 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     StringBuilder queryStr = new StringBuilder(
         "SELECT FROM "
             + JDOUtils.getImplClass(IInvntryBatch.class).getName()
-            + " WHERE dId.contains(dIdParam) && mId == mIdParam && bid == bidParam && vld == vldParam && bexp >= bexpParam"
+            + " WHERE dId.contains(dIdParam) && mId == mIdParam && bid == bidParam && "
+            + "vld == vldParam && bexp >= bexpParam"
             + locSubQuery.toString());
     String
         declaration =
@@ -694,7 +696,8 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     xLogger.fine("Entered getValidBatches");
     // Form query
     String queryStr = "SELECT FROM " + JDOUtils.getImplClass(IInvntryBatch.class).getName()
-        + " WHERE mId == mIdParam && kId == kIdParam && vld == vldParam PARAMETERS Long mIdParam, Long kIdParam, Boolean vldParam ORDER BY bexp ASC";
+        + " WHERE mId == mIdParam && kId == kIdParam && vld == vldParam PARAMETERS Long mIdParam, "
+        + "Long kIdParam, Boolean vldParam ORDER BY bexp ASC";
     Query q = pm.newQuery(queryStr);
     if (pageParams != null) {
       QueryUtil.setPageParams(q, pageParams);
@@ -3746,10 +3749,10 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     Query query = null;
     try {
       query = pm.newQuery("javax.jdo.query.SQL",
-          "SELECT * FROM INVNTRYEVNTLOG WHERE INVID = " + invId + " AND ED IS NULL");
+          "SELECT * FROM INVNTRYEVNTLOG WHERE INVID = ? AND ED IS NULL");
       query.setClass(JDOUtils.getImplClass(IInvntryEvntLog.class));
       query.setUnique(true);
-      IInvntryEvntLog invntryEvntLog = (IInvntryEvntLog) query.execute();
+      IInvntryEvntLog invntryEvntLog = (IInvntryEvntLog) query.execute(invId);
       if (invntryEvntLog != null) {
         // Update the end date to now
         invntryEvntLog.setEndDate(new Date());
@@ -3889,8 +3892,9 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     parameters.add(String.valueOf(kId));
     sqlQuery.append(" AND MID = ?");
     parameters.add(String.valueOf(mId));
-    sqlQuery.append(" AND BEXP <= '").append(nextOrderDateStr)
-        .append("' GROUP BY BEXP ORDER BY BEXP ASC");
+    sqlQuery.append(" AND BEXP <= ?");
+    parameters.add(nextOrderDateStr);
+    sqlQuery.append(" GROUP BY BEXP ORDER BY BEXP ASC");
     PersistenceManager pm = PMF.get().getPersistenceManager();
     Query query = pm.newQuery("javax.jdo.query.SQL", sqlQuery.toString());
     Map<Date, BigDecimal> expDateBatchQtyMap = null;
@@ -3977,7 +3981,8 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     StringBuilder
         queryBuilder =
         new StringBuilder(
-            "SELECT COUNT(DISTINCT(MID)) FROM INVNTRY WHERE KID IN (SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID=?)");
+            "SELECT COUNT(DISTINCT(MID)) FROM INVNTRY WHERE KID IN (SELECT KIOSKID_OID "
+                + "FROM KIOSK_DOMAINS WHERE DOMAIN_ID=?)");
     Long count;
     try {
       List<String> parameters = new ArrayList<>(2);
@@ -4059,7 +4064,8 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     return Optional.empty();
   }
 
-  public List<IInventoryMinMaxLog> fetchMinMaxLogByInterval(Long entityId, Long materialId, Date fromDate, Date toDate) throws ServiceException {
+  public List<IInventoryMinMaxLog> fetchMinMaxLogByInterval(Long entityId, Long materialId, Date
+      fromDate, Date toDate) throws ServiceException {
     if (entityId == null || materialId == null || fromDate == null || toDate == null) {
       throw new IllegalArgumentException("Invalid arguments while fetching min max log");
     }
@@ -4067,7 +4073,10 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     Query query = null;
     List<IInventoryMinMaxLog> logs = null;
     try {
-      String sqlQuery = "SELECT * FROM INVENTORYMINMAXLOG WHERE KID = :kidParam AND MID = :midParam AND T BETWEEN :fromParam AND :toParam UNION ALL (SELECT * FROM INVENTORYMINMAXLOG WHERE KID = :kidParam AND MID = :midParam AND T < :fromParam ORDER BY T DESC LIMIT 1) ORDER BY T DESC";
+      String sqlQuery = "SELECT * FROM INVENTORYMINMAXLOG WHERE KID = :kidParam AND "
+          + "MID = :midParam AND T BETWEEN :fromParam AND :toParam UNION ALL (SELECT * "
+          + "FROM INVENTORYMINMAXLOG WHERE KID = :kidParam AND MID = :midParam AND "
+          + "T < :fromParam ORDER BY T DESC LIMIT 1) ORDER BY T DESC";
       query = pm.newQuery("javax.jdo.query.SQL", sqlQuery);
       query.setClass(JDOUtils.getImplClass(IInventoryMinMaxLog.class));
       Map parameters = new HashMap<>(4);
@@ -4079,7 +4088,8 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
       logs = (List) query.executeWithMap(parameters);
       logs = (List<IInventoryMinMaxLog>) pm.detachCopyAll(logs);
     } catch (Exception e) {
-      xLogger.warn("Exception {0} when getting InventoryMinMaxLog for entityId {1}, materialId {2}, fromDate: {3}, toDate: {4}. Message: {5}",
+      xLogger.warn("Exception {0} when getting InventoryMinMaxLog for entityId {1}, materialId {2}, "
+              + "fromDate: {3}, toDate: {4}. Message: {5}",
           e.getClass().getName(), entityId, materialId, fromDate, toDate, e.getMessage(), e);
       throw new ServiceException(e);
     } finally {

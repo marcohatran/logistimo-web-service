@@ -5076,3 +5076,42 @@ domainCfgControllers.controller('DashboardConfigurationController', ['$scope', '
         };
     }
 ]);
+
+domainCfgControllers.controller('FormsConfigurationController', ['$scope', 'domainCfgService',
+    function($scope, domainCfgService) {
+        $scope.formsCfg = {formsList: ''};
+        $scope.loading = false;
+
+        $scope.setFormsConfiguration = function () {
+            $scope.loading = true;
+            $scope.showLoading();
+            domainCfgService.setFormsConfig($scope.formsCfg).then(function (data) {
+                if(checkNotNullEmpty(data.data)){
+                    $scope.showSuccess(data.data);
+                }
+            }).catch(function err(msg) {
+                $scope.showErrorMsg(msg, true);
+            }).finally(function () {
+                $scope.hideLoading();
+                $scope.loading = false;
+            })
+        };
+
+        $scope.getFormsConfiguration = function () {
+            $scope.loading = true;
+            $scope.showLoading();
+            domainCfgService.getFormsConfig().then(function (data) {
+                if(checkNotNullEmpty(data.data)) {
+                    $scope.formsCfg = data.data;
+                }
+            }).catch(function err(msg) {
+                $scope.showErrorMsg(msg, true);
+            }).finally(function () {
+                $scope.hideLoading();
+                $scope.loading = false;
+            })
+        };
+
+        $scope.getFormsConfiguration();
+    }
+]);

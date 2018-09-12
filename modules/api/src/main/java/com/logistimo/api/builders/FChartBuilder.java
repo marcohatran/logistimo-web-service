@@ -72,6 +72,9 @@ public class FChartBuilder {
   private IInvntryDao invDao;
 
   @Autowired
+  private ReportsService reportsService;
+
+  @Autowired
   public void setInvDao(IInvntryDao invDao) {
     this.invDao = invDao;
   }
@@ -334,7 +337,6 @@ public class FChartBuilder {
     } else {
       simpleDateFormat = new SimpleDateFormat("MMM dd, yyyy");
     }
-    ReportsService reportsService = StaticApplicationContext.getBean(ConfigUtil.get("reports"), ReportsService.class);
     Results r =
         reportsService.getSlices(new Date(), freq, "d", String.valueOf(did), "dmn", String.valueOf(did), true,
             new PageParams(period));

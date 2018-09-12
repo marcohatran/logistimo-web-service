@@ -24,11 +24,6 @@
 package com.logistimo.api.controllers;
 
 import com.logistimo.AppFactory;
-import com.logistimo.api.migrators.ConfigReasonsMigrator;
-import com.logistimo.api.migrators.DomainLocIDConfigMigrator;
-import com.logistimo.api.migrators.EventsConfigMigrator;
-import com.logistimo.api.migrators.ReasonMandatoryConfigMigrator;
-import com.logistimo.api.migrators.UserDomainIdsMigrator;
 import com.logistimo.api.models.SimulateRequestModel;
 import com.logistimo.api.util.KioskDataSimulator;
 import com.logistimo.auth.SecurityConstants;
@@ -38,7 +33,6 @@ import com.logistimo.config.service.ConfigurationMgmtService;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.events.handlers.EventHandler;
-import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exception.TaskSchedulingException;
 import com.logistimo.exception.ValidationException;
 import com.logistimo.inventory.entity.IInvntry;
@@ -201,73 +195,6 @@ public class AdminController {
       }
     } catch (ServiceException e) {
       xLogger.severe("Error while bursting cache", e);
-    }
-  }
-
-  @RequestMapping(value = "/migrateusers", method = RequestMethod.GET)
-  public
-  @ResponseBody
-  void migrateUsers() {
-    UserDomainIdsMigrator migrator = new UserDomainIdsMigrator();
-    try {
-      migrator.migrateUserDomainIds();
-    } catch (Exception e) {
-      xLogger.severe("Exception occurred during user domain ids migration", e);
-    }
-  }
-
-  @RequestMapping(value = "/migrate240", method = RequestMethod.GET)
-  public
-  @ResponseBody
-  void migrate240() {
-    EventsConfigMigrator migrator = new EventsConfigMigrator();
-    try {
-      migrator.migrateEventsConfig();
-    } catch (Exception e) {
-      xLogger.severe("Exception occurred during user domain ids migration", e);
-      throw new InvalidServiceException(e);
-    }
-  }
-
-  @RequestMapping(value = "/migrate270", method = RequestMethod.GET)
-  public
-  @ResponseBody
-  void migrate270(@RequestParam(required = false) String domainId, @RequestParam(required = false) Boolean json) {
-    try {
-      if(domainId == null) {
-        ConfigReasonsMigrator.update((List<String>) null, json == null ? false : json);
-      } else {
-        ConfigReasonsMigrator.update(domainId, json == null ? false : json);
-      }
-    } catch (Exception e) {
-      xLogger.severe("Exception occurred during updating", e);
-      throw new InvalidServiceException(e);
-    }
-  }
-
-  @RequestMapping(value = "/migrate280", method = RequestMethod.GET)
-  public
-  @ResponseBody
-  void migrate280() {
-    ReasonMandatoryConfigMigrator migrator = new ReasonMandatoryConfigMigrator();
-    try {
-      migrator.migrateReasonMandatoryConfig();
-    } catch (Exception e) {
-      xLogger.severe("Exception occurred during reason mandatory configuration migration", e);
-      throw new InvalidServiceException(e);
-    }
-  }
-
-  @RequestMapping(value = "/updatedomainlocids", method = RequestMethod.GET)
-  public
-  @ResponseBody
-  void updateDomainLocIds() {
-    DomainLocIDConfigMigrator migrator = new DomainLocIDConfigMigrator();
-    try {
-      migrator.updateDomainLocConfig();
-    } catch (Exception e) {
-      xLogger.severe("Exception occurred during user domain ids migration", e);
-      throw new InvalidServiceException(e);
     }
   }
 

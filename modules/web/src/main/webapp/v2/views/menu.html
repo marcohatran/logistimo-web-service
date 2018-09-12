@@ -225,6 +225,9 @@
                         <li ng-show="iAdm"><a
                                 href="#/configuration/rebalancing/">{{resourceBundle['stock.rebalancing']}}</a>
                         </li>
+                        <li ng-if="iSU"><a
+                                href="#/configuration/forms/">{{resourceBundle['forms']}}</a>
+                        </li>
                     </ul>
                 </li>
                 <li ng-class="{active:subview == 'setup'}"

@@ -25,9 +25,12 @@ package com.logistimo.api.util;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import com.logistimo.api.constants.Status;
+import com.logistimo.config.models.FormsConfig;
 import com.logistimo.constants.Constants;
 import com.logistimo.entities.entity.IKioskLink;
 import com.logistimo.entities.models.UserEntitiesModel;
@@ -632,5 +635,26 @@ public class GsonUtil {
     return gson.toJson(jsonObject);
   }
 
+  public static String getFormsAsJson(Status status, List<String> formConfigs, String
+      errMsg, String version) {
+    Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+    String output;
+    JsonObject obj = new JsonObject();
+    obj.addProperty(JsonTagsZ.VERSION, version);
+    obj.addProperty(JsonTagsZ.STATUS, status.toString());
+    if (status == Status.SUCCESS) {
+      if(formConfigs != null) {
+        JsonArray arr = new JsonArray();
+        formConfigs.forEach(arr::add);
+        obj.add(JsonTagsZ.FORMS, arr);
+      }
+    } else {
+      if (StringUtils.isNotEmpty(errMsg)) {
+        obj.addProperty(JsonTagsZ.MESSAGE, errMsg);
+      }
+    }
+    output = gson.toJson(obj);
+    return output;
+  }
 }
 

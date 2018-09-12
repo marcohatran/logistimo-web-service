@@ -148,6 +148,8 @@ public class EntityController {
   private ConfigurationMgmtService configurationMgmtService;
   private DomainsService domainsService;
 
+  @Autowired ReportsService reportsService;
+
   @Autowired
   public void setEntityBuilder(EntityBuilder entityBuilder) {
     this.entityBuilder = entityBuilder;
@@ -929,16 +931,14 @@ public class EntityController {
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     Long domainId = sUser.getCurrentDomainId();
-    ReportsService rs;
     Results results;
     Date startDate = new Date();
     List<EntitySummaryModel> summaryModelList;
     try {
-      rs = StaticApplicationContext.getBean(ConfigUtil.get("reports"), ReportsService.class);
       if (!EntityAuthoriser.authoriseEntity(entityId)) {
         throw new UnauthorizedException(backendMessages.getString("permission.denied"));
       }
-      results = rs.getMonthlyUsageStatsForKiosk(domainId, entityId, startDate);
+      results = reportsService.getMonthlyUsageStatsForKiosk(domainId, entityId, startDate);
       summaryModelList = entityBuilder.buildStatsMap(results.getResults());
     } catch (ServiceException se) {
       xLogger.warn("Error fetching monthly reports for entity" + entityId);

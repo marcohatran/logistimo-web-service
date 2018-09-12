@@ -63,6 +63,9 @@ public class HomeController {
   private FChartBuilder fChartBuilder;
 
   @Autowired
+  private ReportsService reportsService;
+
+  @Autowired
   public void setfChartBuilder(FChartBuilder fChartBuilder) {
     this.fChartBuilder = fChartBuilder;
   }
@@ -98,10 +101,8 @@ public class HomeController {
       }
       String repGenTime;
       DomainCounts domainCounts;
-      ReportsService rs = StaticApplicationContext
-          .getBean(ConfigUtil.get("reports"), ReportsService.class);
-      repGenTime = rs.getRepGenTime(domainId, locale, sUser.getTimezone());
-      domainCounts = rs.getDomainCounts(domainId, cal.getTime(), period, periodType, mTag, matId,
+      repGenTime = reportsService.getRepGenTime(domainId, locale, sUser.getTimezone());
+      domainCounts = reportsService.getDomainCounts(domainId, cal.getTime(), period, periodType, mTag, matId,
           reportType);
       boolean
           isCurrentMonth =

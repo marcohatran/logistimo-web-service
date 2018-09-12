@@ -28,11 +28,11 @@ import com.logistimo.api.builders.BulletinBoardBuilder;
 import com.logistimo.api.builders.ConfigurationModelBuilder;
 import com.logistimo.api.builders.CurrentUserBuilder;
 import com.logistimo.api.builders.CustomReportsBuilder;
+import com.logistimo.api.builders.FormsConfigBuilder;
 import com.logistimo.api.builders.NotificationBuilder;
 import com.logistimo.api.builders.UserBuilder;
 import com.logistimo.api.builders.UserMessageBuilder;
 import com.logistimo.api.constants.ConfigConstants;
-import com.logistimo.api.migrators.CRConfigMigrator;
 import com.logistimo.api.models.AccessLogModel;
 import com.logistimo.api.models.CurrentUserModel;
 import com.logistimo.api.models.MenuStatsModel;
@@ -47,6 +47,7 @@ import com.logistimo.api.models.configuration.BulletinBoardConfigModel;
 import com.logistimo.api.models.configuration.CapabilitiesConfigModel;
 import com.logistimo.api.models.configuration.CustomReportsConfigModel;
 import com.logistimo.api.models.configuration.DashboardConfigModel;
+import com.logistimo.api.models.configuration.FormsConfigModel;
 import com.logistimo.api.models.configuration.GeneralConfigModel;
 import com.logistimo.api.models.configuration.InventoryConfigModel;
 import com.logistimo.api.models.configuration.NotificationsConfigModel;
@@ -59,6 +60,7 @@ import com.logistimo.api.models.configuration.TagsConfigModel;
 import com.logistimo.api.request.AddCustomReportRequestObj;
 import com.logistimo.api.util.FileValidationUtil;
 import com.logistimo.auth.GenericAuthoriser;
+import com.logistimo.auth.SecurityConstants;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.communications.MessageHandlingException;
 import com.logistimo.config.entity.IConfig;
@@ -76,6 +78,7 @@ import com.logistimo.config.models.DemandBoardConfig;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.EventSummaryConfigModel;
 import com.logistimo.config.models.EventsConfig;
+import com.logistimo.config.models.FormsConfig;
 import com.logistimo.config.models.InventoryConfig;
 import com.logistimo.config.models.LeadTimeAvgConfig;
 import com.logistimo.config.models.OptimizerConfig;
@@ -131,6 +134,7 @@ import com.logistimo.utils.StringUtil;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -193,6 +197,7 @@ public class DomainConfigController {
   private NotificationBuilder notificationBuilder;
   private ConfigurationMgmtService configurationMgmtService;
   private UsersService usersService;
+  private FormsConfigBuilder formsConfigBuilder;
 
   @Autowired
   private InventoryManagementService inventoryManagementService;
@@ -237,48 +242,14 @@ public class DomainConfigController {
     this.configurationMgmtService = configurationMgmtService;
   }
 
+  @Autowired
+  public void setFormsConfigBuilder(FormsConfigBuilder formsConfigBuilder) {
+    this.formsConfigBuilder = formsConfigBuilder;
+  }
 
   @Autowired
   public void setUsersService(UsersService usersService) {
     this.usersService = usersService;
-  }
-
-  @RequestMapping(value = "/config/migrator/")
-  public
-  @ResponseBody
-  void updateConfig(@RequestParam(required = false) String key) {
-    boolean isSuccess;
-    if (key == null) {
-      isSuccess = CRConfigMigrator.update();
-    } else if (key.contains(CharacterConstants.COMMA)) {
-      isSuccess = CRConfigMigrator.update(Arrays.asList(key.split(CharacterConstants.COMMA)));
-    } else {
-      isSuccess = CRConfigMigrator.update(key);
-    }
-    if (isSuccess) {
-      xLogger.info("Migrating configuration completed succesfully.");
-    } else {
-      xLogger.info("Error in migrating configuration");
-    }
-  }
-
-  @RequestMapping(value = "/irmigrator/")
-  public
-  @ResponseBody
-  void updateAutoPostConfig(@RequestParam(required = false) String key) {
-    boolean isSuccess;
-    if (key == null) {
-      isSuccess = IRPostConfigMigrator.update();
-    } else if (key.contains(CharacterConstants.COMMA)) {
-      isSuccess = IRPostConfigMigrator.update(Arrays.asList(key.split(CharacterConstants.COMMA)));
-    } else {
-      isSuccess = IRPostConfigMigrator.update(key);
-    }
-    if (isSuccess) {
-      xLogger.info("Migrating configuration completed successfully.");
-    } else {
-      xLogger.info("Error in migrating configuration");
-    }
   }
 
   @RequestMapping(value = "/tags/materials", method = RequestMethod.GET)
@@ -2753,6 +2724,46 @@ public class DomainConfigController {
       xLogger.warn("Error in fetching reasons for transactions", e);
     }
     return null;
+  }
+
+  @RequestMapping(value = "/forms", method = RequestMethod.GET)
+  public
+  @ResponseBody
+  FormsConfigModel getFormsConfig() {
+    Long domainId = SecurityUtils.getCurrentDomainId();
+    DomainConfig dc = DomainConfig.getInstance(domainId);
+    FormsConfig formsConfig = dc.getFormsConfig();
+    return configurationModelBuilder.buildFormsConfigModel(formsConfig);
+  }
+
+  @RequestMapping(value = "/forms", method = RequestMethod.POST)
+  public
+  @ResponseBody
+  String updateFormsConfig(@RequestBody FormsConfigModel formsConfigModel) {
+    SecureUserDetails sUser = getUserDetails();
+    Locale locale = sUser.getLocale();
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
+    if(!sUser.getRole().equals(SecurityConstants.ROLE_SUPERUSER)) {
+      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
+    }
+    if(formsConfigModel == null) {
+      xLogger.warn("Error in updating Forms config");
+      throw new BadRequestException(backendMessages.getString("forms.config.update.error"));
+    }
+    String userId = sUser.getUsername();
+    Long domainId = SecurityUtils.getCurrentDomainId();
+    try {
+      ConfigContainer cc = getDomainConfig(domainId, userId);
+      FormsConfig formsConfig = formsConfigBuilder.buildFormsConfig(formsConfigModel);
+      cc.dc.addDomainData(ConfigConstants.FORMS, generateUpdateList(userId));
+      cc.dc.setFormsConfig(formsConfig);
+      saveDomainConfig(domainId, cc, backendMessages);
+      xLogger.info(cc.dc.toJSONSring());
+    } catch (ServiceException | ConfigurationException e) {
+      xLogger.severe(backendMessages.getString("Error in updating forms configuration"), e);
+      throw new InvalidServiceException(backendMessages.getString("forms.config.update.error"));
+    }
+    return backendMessages.getString("forms.config.update.success");
   }
 
   private SyncConfig generateSyncConfig(CapabilitiesConfigModel model) {

@@ -101,6 +101,7 @@ public class RestConstantsZ {
   public static final String ACTION_REMOVERELATIONSHIP = "rr";
   public static final String ACTION_UPDATERELATIONSHIP = "ur";
   public static final String ACTION_GETRELATEDENTITIES = "gre";
+  public static final String ACTION_GET_FORMSCONFIG = "gfc";
   public static final String ACTION_GETTRANSACTIONAGGREGATE = "gta";
   public static final String ACTION_RESETPASSWRD = "rp";
   public static final String ACTION_REMOVE = "rm";

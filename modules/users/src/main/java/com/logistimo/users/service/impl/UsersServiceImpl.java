@@ -73,6 +73,7 @@ import com.logistimo.utils.ThreadLocalUtil;
 import com.netflix.hystrix.exception.HystrixBadRequestException;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -1082,19 +1083,22 @@ public class UsersServiceImpl implements UsersService {
     List<String> uIds = null;
     if (!CollectionUtils.isEmpty(tagNames)) {
       PersistenceManager pm = PMF.get().getPersistenceManager();
-      String tagName = MessageUtil.getCSVWithEnclose(tagNames);
-      String query = "SELECT UA.USERID FROM USERACCOUNT UA,USER_TAGS UT WHERE "
-          + "UT.ID IN (SELECT ID FROM TAG WHERE NAME IN (" + tagName + ") AND TYPE=4)"
-          + " AND UT.USERID = UA.USERID AND UA.ISENABLED = 1 AND UA.SDID = ?";
-      Query q = pm.newQuery(Constants.JAVAX_JDO_QUERY_SQL, query);
+      List<Object> parameters=new ArrayList<>();
+      StringBuilder queryBuilder=new StringBuilder("SELECT UA.USERID FROM USERACCOUNT UA,USER_TAGS"
+          + " UT WHERE UT.ID IN (SELECT ID FROM TAG WHERE NAME IN (?) ");
+        parameters.add(tagNames);
+      queryBuilder.append(" AND TYPE=4) AND UT.USERID = UA.USERID AND UA.ISENABLED = 1 AND "
+          + "UA.SDID = ?");
+      parameters.add(domainId);
+      Query q = pm.newQuery(Constants.JAVAX_JDO_QUERY_SQL, queryBuilder.toString());
       try {
-        List l = (List) q.executeWithArray(domainId);
+        List l = (List) q.executeWithArray(parameters.toArray());
         uIds = new ArrayList<>(l.size());
         for (Object o : l) {
           uIds.add((String) o);
         }
       } catch (Exception e) {
-        xLogger.warn("Error while getting enabled user by tags {0}", tagName, e);
+        xLogger.warn("Error while getting enabled user by tags {0}", tagNames.toArray(), e);
       } finally {
         try {
           q.closeAll();
@@ -1131,7 +1135,11 @@ public class UsersServiceImpl implements UsersService {
     }
     try {
       List<IUserAccount> users;
-      users = (List<IUserAccount>) q.executeWithMap(qp.params);
+      if(MapUtils.isNotEmpty(qp.params)) {
+        users = (List<IUserAccount>) q.executeWithMap(qp.params);
+      } else {
+        users = (List<IUserAccount>) q.executeWithArray(qp.listParams);
+      }
       String cursor = null;
       if (users != null) {
         users.size();
@@ -1385,17 +1393,19 @@ public class UsersServiceImpl implements UsersService {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     Query query = null;
     try {
-
+      List<String> parameters = new ArrayList<>();
       StringBuilder queryBuilder = new StringBuilder("SELECT * FROM `USERACCOUNT` ");
       queryBuilder.append("WHERE USERID IN (");
       for (String userId : userIds) {
-        queryBuilder.append("'").append(userId).append("'").append(CharacterConstants.COMMA);
+        queryBuilder.append(CharacterConstants.QUESTION).append(CharacterConstants.COMMA);
+        parameters.add(userId);
+
       }
       queryBuilder.setLength(queryBuilder.length() - 1);
       queryBuilder.append(" )");
       query = pm.newQuery(Constants.JAVAX_JDO_QUERY_SQL, queryBuilder.toString());
       query.setClass(JDOUtils.getImplClass(IUserAccount.class));
-      results = (List<IUserAccount>) query.execute();
+      results = (List<IUserAccount>) query.executeWithArray(parameters.toArray());
       results = (List<IUserAccount>) pm.detachCopyAll(results);
     } catch (Exception e) {
       xLogger.warn("Exception while fetching approval status", e);

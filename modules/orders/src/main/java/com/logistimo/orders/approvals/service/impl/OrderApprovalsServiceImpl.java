@@ -45,6 +45,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -103,20 +104,20 @@ public class OrderApprovalsServiceImpl implements IOrderApprovalsService {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     Query query = null;
     List<IOrderApprovalMapping> results = null;
+    List<Object> parameters = new ArrayList<>();
     try {
 
       StringBuilder queryBuilder = new StringBuilder("SELECT * FROM `ORDER_APPROVAL_MAPPING`");
-      queryBuilder.append(" WHERE ORDER_ID IN (");
-      for (Long orderId : orderIds) {
-        queryBuilder.append(orderId).append(CharacterConstants.COMMA);
-      }
-      queryBuilder.setLength(queryBuilder.length() - 1);
-      queryBuilder.append(" )");
-      queryBuilder.append(" AND APPROVAL_TYPE=").append(orderAppprovalType);
+      queryBuilder.append(" WHERE ORDER_ID IN (?)");
+      parameters.add(orderIds);
+
+      queryBuilder.append(" AND APPROVAL_TYPE=?");
+      parameters.add(orderAppprovalType);
+
       queryBuilder.append(" AND LATEST=1 ORDER BY ORDER_ID ASC");
       query = pm.newQuery("javax.jdo.query.SQL", queryBuilder.toString());
       query.setClass(OrderApprovalMapping.class);
-      results = (List<IOrderApprovalMapping>) query.execute();
+      results = (List<IOrderApprovalMapping>) query.executeWithArray(parameters.toArray());
       results = (List<IOrderApprovalMapping>) pm.detachCopyAll(results);
     } catch (Exception e) {
       xLogger.warn("Exception while fetching approval status", e);

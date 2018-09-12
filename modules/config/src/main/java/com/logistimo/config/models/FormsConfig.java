@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -21,25 +21,43 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.api.constants;
+package com.logistimo.config.models;
 
-/**
- * Created by smriti on 8/7/15.
- */
-public class ConfigConstants {
-  public static final String GENERAL = "General";
-  public static final String ACCOUNTING = "Accounting";
-  public static final String TAGS = "Tags";
-  public static final String TEMPERATURE = "Temperature";
-  public static final String CAPABILITIES = "Capabilities";
-  public static final String INVENTORY = "Inventory";
-  public static final String DASHBOARD = "Dashboard";
-  public static final String ORDERS = "Orders";
-  public static final String CUSTOM_REPORTS = "Custom Reports";
-  public static final String NOTIFICATIONS = "Notifications";
-  public static final String BULLETIN_BOARD = "Bulletin Board";
-  public static final String APPROVALS = "Approvals";
-  public static final String EVENT_SUMMARY_INVENTORY = "Inventory Event Summary";
-  public static final String STOCK_REBALANCING = "Stock Rebalancing";
-  public static final String FORMS = "Forms";
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+
+import lombok.Data;
+
+@Data
+public class FormsConfig implements Serializable {
+
+  private static final String KEY_FORMS = "forms";
+  private List<String> forms;
+
+  public FormsConfig() {}
+
+  public FormsConfig(JSONObject jsonObject) {
+    JSONArray jsonArray = jsonObject.getJSONArray(KEY_FORMS);
+    forms = new ArrayList<>(jsonArray.length());
+    for (int i = 0; i < jsonArray.length(); i++) {
+      forms.add(jsonArray.getString(i));
+    }
+  }
+
+  public JSONObject toJSONObject() {
+    JSONObject jsonObject = new JSONObject();
+    if(forms != null) {
+      jsonObject.put(KEY_FORMS, forms);
+    }
+    return jsonObject;
+  }
+
+  public String toJSONString() {
+    JSONArray jsonArray = new JSONArray(forms);
+    return jsonArray.toString();
+  }
 }

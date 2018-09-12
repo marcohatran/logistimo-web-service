@@ -613,7 +613,7 @@ public class EventHandler {
       return;
     }
 
-    Map<String, Object> params = new HashMap<>(1);
+    List<String> params = new ArrayList<>();
 
     // Iterate on paramSpecs
     for (EventSpec.ParamSpec paramSpec : paramSpecs.values()) {
@@ -651,22 +651,25 @@ public class EventHandler {
           StringBuilder
               query =
               new StringBuilder(
-                  "select ID,A.* from ASSETSTATUS A where A.ASSETID in ( select AD.ID_OID from ASSET_DOMAINS AD where EXISTS(SELECT 1 FROM ASSETRELATION AR WHERE AD.ID_OID = AR.ASSETID AND R.TYPE=2) AND AD.DOMAIN_ID = ")
-                  .append(domainId)
-                  .append(" ) AND A.TYPE = 3 AND A.STATUS = 1");
+                  "select ID,A.* from ASSETSTATUS A where A.ASSETID in ( select AD.ID_OID from "
+                      + "ASSET_DOMAINS AD where EXISTS(SELECT 1 FROM ASSETRELATION AR WHERE AD.ID_OID = AR.ASSETID AND R.TYPE=2) "
+                      + "AND AD.DOMAIN_ID = ?) AND A.TYPE = 3 AND A.STATUS = 1");
+          params.add(String.valueOf(domainId));
           if (csv != null) {
             query =
                 new StringBuilder(
-                    "select ID,A.* from ASSETSTATUS A where A.ASSETID in ( select ID from ASSET where ID in (select AD.ID_OID from ASSET_DOMAINS AD where EXISTS(SELECT 1 FROM ASSETRELATION AR WHERE AD.ID_OID = AR.ASSETID AND AR.TYPE=2) AND AD.DOMAIN_ID = ")
-                    .append(domainId)
-                    .append(") and TYPE in (")
+                    "select ID,A.* from ASSETSTATUS A where A.ASSETID in ( select ID from ASSET where ID in "
+                        + "(select AD.ID_OID from ASSET_DOMAINS AD where EXISTS(SELECT 1 FROM ASSETRELATION AR "
+                        + "WHERE AD.ID_OID = AR.ASSETID AND AR.TYPE=2) AND AD.DOMAIN_ID = ?) and TYPE in (")
                     .append(csv)
                     .append(")) AND A.TYPE = 3 AND A.STATUS = 1");
+            params.add(String.valueOf(domainId));
           }
 
           Date startDate = LocalDateUtil.getOffsetDate(new Date(), -1 * inactiveDuration);
           SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-          query.append(" AND TS < TIMESTAMP('").append(sdf.format(startDate)).append("')");
+          query.append(" AND TS < TIMESTAMP(?)");
+          params.add(sdf.format(startDate));
           QueryParams
               qp =
               new QueryParams(query.toString(), params, QueryParams.QTYPE.SQL, IAssetStatus.class);

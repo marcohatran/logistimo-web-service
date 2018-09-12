@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -23,23 +23,18 @@
 
 package com.logistimo.api.constants;
 
-/**
- * Created by smriti on 8/7/15.
- */
-public class ConfigConstants {
-  public static final String GENERAL = "General";
-  public static final String ACCOUNTING = "Accounting";
-  public static final String TAGS = "Tags";
-  public static final String TEMPERATURE = "Temperature";
-  public static final String CAPABILITIES = "Capabilities";
-  public static final String INVENTORY = "Inventory";
-  public static final String DASHBOARD = "Dashboard";
-  public static final String ORDERS = "Orders";
-  public static final String CUSTOM_REPORTS = "Custom Reports";
-  public static final String NOTIFICATIONS = "Notifications";
-  public static final String BULLETIN_BOARD = "Bulletin Board";
-  public static final String APPROVALS = "Approvals";
-  public static final String EVENT_SUMMARY_INVENTORY = "Inventory Event Summary";
-  public static final String STOCK_REBALANCING = "Stock Rebalancing";
-  public static final String FORMS = "Forms";
+public enum Status {
+  SUCCESS("0"),
+  FAILURE("1");
+
+  private String value;
+
+  Status(String s) {
+    value = s;
+  }
+
+  @Override
+  public String toString() {
+    return value;
+  }
 }

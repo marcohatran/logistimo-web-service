@@ -343,4 +343,8 @@ public class JsonTagsZ {
 
   // Returns policy configuration
   public static final String RETURNS = "returns";
+
+  // Forms configuration
+  public static final String FORMS = "forms";
+
 }

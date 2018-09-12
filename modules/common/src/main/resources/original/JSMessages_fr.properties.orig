@@ -1417,4 +1417,5 @@ return.quantity.pending=Hors de {0}, {1} {2} en attente. Vous ne pouvez retourne
 return.quantity.returned.pending=Sur {0} satisfait, vous avez renvoyé {1} et {2} {3} en attente. Vous ne pouvez retourner que 5 autres.
 are=sont
 is=est
-captcha.error.response=Vous avez manqué le captcha. Veuillez sélectionner la case à cocher captcha pour continuer.
+captcha.error.response=Vous avez manqué le captcha. Veuillez sélectionner la case à cocher captcha pour continuer.forms=Formes
+schemas=Schémas

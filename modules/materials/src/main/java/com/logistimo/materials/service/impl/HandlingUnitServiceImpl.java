@@ -273,7 +273,8 @@ public class HandlingUnitServiceImpl implements IHandlingUnitService {
     try {
       query =
           pm.newQuery("javax.jdo.query.SQL",
-              "SELECT ID,(SELECT NAME FROM HANDLINGUNIT WHERE ID=HU_ID_OID) NAME, QUANTITY, HU_ID_OID FROM HANDLINGUNITCONTENT HUC WHERE HUC.TY = '0' AND HUC.CNTID = ?");
+              "SELECT ID,(SELECT NAME FROM HANDLINGUNIT WHERE ID=HU_ID_OID) NAME, QUANTITY,"
+                  + " HU_ID_OID FROM HANDLINGUNITCONTENT HUC WHERE HUC.TY = '0' AND HUC.CNTID = ?");
       List data = (List) query.executeWithArray(materialId);
       if (data == null || data.size() == 0) {
         return null;
@@ -304,7 +305,9 @@ public class HandlingUnitServiceImpl implements IHandlingUnitService {
     try {
       query =
           pm.newQuery("javax.jdo.query.SQL",
-              "SELECT ID,(SELECT NAME FROM HANDLINGUNIT WHERE ID=HU_ID_OID) NAME, QUANTITY, HU_ID_OID, HUC.CNTID  FROM HANDLINGUNITCONTENT HUC WHERE HUC.TY = '0' AND HUC.CNTID IN (?)");
+              "SELECT ID,(SELECT NAME FROM HANDLINGUNIT WHERE ID=HU_ID_OID) NAME, QUANTITY, "
+                  + "HU_ID_OID, HUC.CNTID  FROM HANDLINGUNITCONTENT HUC WHERE HUC.TY = '0'"
+                  + " AND HUC.CNTID IN (?)");
       List data = (List) query.execute(materialIdList);
       if (data == null || data.isEmpty()) {
         return null;

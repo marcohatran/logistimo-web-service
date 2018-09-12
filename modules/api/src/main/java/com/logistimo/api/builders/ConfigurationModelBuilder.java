@@ -35,6 +35,7 @@ import com.logistimo.api.models.configuration.AssetSystemConfigModel;
 import com.logistimo.api.models.configuration.AssetType;
 import com.logistimo.api.models.configuration.CapabilitiesConfigModel;
 import com.logistimo.api.models.configuration.DashboardConfigModel;
+import com.logistimo.api.models.configuration.FormsConfigModel;
 import com.logistimo.api.models.configuration.GeneralConfigModel;
 import com.logistimo.api.models.configuration.InventoryConfigModel;
 import com.logistimo.api.models.configuration.Manufacturer;
@@ -64,6 +65,7 @@ import com.logistimo.config.models.ConfigurationException;
 import com.logistimo.config.models.DashboardConfig;
 import com.logistimo.config.models.DemandBoardConfig;
 import com.logistimo.config.models.DomainConfig;
+import com.logistimo.config.models.FormsConfig;
 import com.logistimo.config.models.GeneralConfig;
 import com.logistimo.config.models.InventoryConfig;
 import com.logistimo.config.models.LeadTimeAvgConfig;
@@ -1354,6 +1356,14 @@ public class ConfigurationModelBuilder {
     model.ipae = dc.isPurchaseApprovalEnabled();
     model.isae = dc.isSalesApprovalEnabled();
     return model;
+  }
+
+  public FormsConfigModel buildFormsConfigModel(FormsConfig config) {
+    FormsConfigModel formsConfigModel = new FormsConfigModel();
+    if (config.getForms() != null) {
+      formsConfigModel.setFormsList(config.getForms().toString());
+    }
+    return formsConfigModel;
   }
 
   public DashboardConfigModel buildDashboardConfigModel(DashboardConfig config, Long domainId,

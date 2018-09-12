@@ -114,6 +114,7 @@ public class DomainConfig implements ILocation, Serializable {
   public static final String INVENTORY = "invntry";
   public static final String APPROVALS = "approvals";
   public static final String STOCK_REBALANCING = "stock_rebalancing";
+  public static final String FORMS = "forms";
   public static final String VENDOR_ID = "vid";
   public static final String EVENTS = "evnts";
   public static final String ORDERS = "orders";
@@ -250,6 +251,8 @@ public class DomainConfig implements ILocation, Serializable {
   private EventsConfig eventsConfig = null;
   // Bulletin board config.
   private BBoardConfig bbConfig = null;
+  // Forms config
+  private FormsConfig formsConfig = null;
   // Geo-coding strategy
   private String geoCodingStrategy = CapabilityConfig.GEOCODING_STRATEGY_OPTIMISTIC;
   // Creatable entities
@@ -312,6 +315,7 @@ public class DomainConfig implements ILocation, Serializable {
     inventoryConfig = new InventoryConfig();
     approvalsConfig = new ApprovalsConfig();
     stockRebalancingConfig = new StockRebalancingConfig();
+    formsConfig = new FormsConfig();
     ordersConfig = new OrdersConfig();
     capabilityMap = new HashMap<>();
     accountingConfig = new AccountingConfig();
@@ -621,6 +625,11 @@ public class DomainConfig implements ILocation, Serializable {
         stockRebalancingConfig = new StockRebalancingConfig(json.getJSONObject(STOCK_REBALANCING));
       } catch (JSONException e) {
         stockRebalancingConfig = new StockRebalancingConfig();
+      }
+      try{
+        formsConfig = new FormsConfig(json.getJSONObject(FORMS));
+      } catch (JSONException e) {
+        formsConfig = new FormsConfig();
       }
       // FOR BACKWARD COMPATIBILITY
       try {
@@ -1007,6 +1016,9 @@ public class DomainConfig implements ILocation, Serializable {
       }
       if (stockRebalancingConfig != null ) {
         json.put(STOCK_REBALANCING, stockRebalancingConfig.toJSONObject());
+      }
+      if(formsConfig != null) {
+        json.put(FORMS, formsConfig.toJSONObject());
       }
       // Events config.
       if (eventsConfig != null) {
@@ -2000,6 +2012,14 @@ public class DomainConfig implements ILocation, Serializable {
 
   public void setRFIDEnabled(boolean rfidEnabled) {
     this.rfidEnabled = rfidEnabled;
+  }
+
+  public FormsConfig getFormsConfig() {
+    return formsConfig;
+  }
+
+  public void setFormsConfig(FormsConfig formsConfig) {
+    this.formsConfig = formsConfig;
   }
 
   public boolean isTwoFactorAuthenticationEnabled() { return enableTwoFactorAuthentication; }

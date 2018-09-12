@@ -61,6 +61,7 @@ import org.joda.time.format.DateTimeFormatter;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Type;
 import java.text.ParseException;
@@ -78,7 +79,7 @@ import javax.ws.rs.core.Response;
 /**
  * @author Mohan Raja
  */
-@org.springframework.stereotype.Service
+@Service
 public class ReportPluginService {
 
   private static final XLog xLogger = XLog.getLog(ReportPluginService.class);

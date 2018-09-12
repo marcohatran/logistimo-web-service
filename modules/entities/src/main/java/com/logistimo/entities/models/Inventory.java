@@ -34,22 +34,25 @@ public class Inventory {
   @SerializedName("stock_on_hand")
   @Expose
   private BigDecimal stockOnHand;
-  @SerializedName("min")
+
   @Expose
   private BigDecimal min;
-  @SerializedName("max")
+
   @Expose
   private BigDecimal max;
+
   @SerializedName("allocated_stock")
   @Expose
   private BigDecimal allocatedStock;
+
   @SerializedName("available_stock")
   @Expose
   private BigDecimal availableStock;
+
   @SerializedName("duration_of_stock")
   @Expose
   private DurationOfStock durationOfStock;
-  @SerializedName("predictions")
+
   @Expose
   private Predictions predictions;
 
