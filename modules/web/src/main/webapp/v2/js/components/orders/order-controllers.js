@@ -2405,7 +2405,7 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
             if (checkNotNullEmpty(invalidQMats)) {
                 $scope.showWarning($scope.resourceBundle['quantity.invalid'] + ' ' + invalidQMats.slice(0, -2));
             } else {
-                $scope.showLoading();
+                $scope.showFullLoading();
                 if ($scope.timestamp == undefined) {
                     $scope.timestamp = new Date().getTime();
                 }
@@ -2443,7 +2443,7 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
                         $scope.showErrorMsg(msg);
                     }
                 }).finally(function () {
-                    $scope.hideLoading();
+                    $scope.hideFullLoading();
                 });
             }
         };
@@ -3002,14 +3002,14 @@ ordControllers.controller('NewShipmentController', ['$scope', 'ordService', '$lo
         }
 
         function createShipment(shipment) {
-            $scope.showLoading();
+            $scope.showFullLoading();
             ordService.createShipment(shipment).then(function (data) {
                 $scope.showSuccess(data.data.msg);
                 $location.path('/orders/shipment/detail/' + data.data.sId);
             }).catch(function error(msg) {
                 $scope.showErrorMsg(msg);
             }).finally(function () {
-                $scope.hideLoading();
+                $scope.hideFullLoading();
             });
         };
 

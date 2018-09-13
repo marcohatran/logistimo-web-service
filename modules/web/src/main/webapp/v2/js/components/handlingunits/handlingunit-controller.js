@@ -66,7 +66,7 @@ handlingUnitControllers.controller('AddHUController', ['$scope', 'handlingUnitSe
 
         $scope.createHandlingUnit = function () {
             if (validate()) {
-                $scope.showLoading();
+                $scope.showFullLoading();
                 $scope.populateContents();
                 handlingUnitService.create($scope.hu).then(function (data) {
                     $scope.showSuccess(data.data);
@@ -74,7 +74,7 @@ handlingUnitControllers.controller('AddHUController', ['$scope', 'handlingUnitSe
                 }).catch(function error(msg) {
                     $scope.showErrorMsg(msg);
                 }).finally(function () {
-                    $scope.hideLoading();
+                    $scope.hideFullLoading();
                 });
             }
         };
@@ -100,7 +100,7 @@ handlingUnitControllers.controller('AddHUController', ['$scope', 'handlingUnitSe
 
         $scope.updateHandlingUnit = function () {
             if (validate()) {
-                $scope.showLoading();
+                $scope.showFullLoading();
                 $scope.populateContents();
                 handlingUnitService.update($scope.hu).then(function (data) {
                     $scope.$back();
@@ -108,7 +108,7 @@ handlingUnitControllers.controller('AddHUController', ['$scope', 'handlingUnitSe
                 }).catch(function error(msg) {
                     $scope.showErrorMsg(msg);
                 }).finally(function () {
-                    $scope.hideLoading();
+                    $scope.hideFullLoading();
                 });
             }
         };

@@ -810,7 +810,7 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
             });
             if (!invalidQuantity && !isStatusEmpty) {
                 var fTransaction = constructFinalTransaction();
-                $scope.showLoading();
+                $scope.showFullLoading();
 
                 trnService.updateTransaction(fTransaction).then(function (data) {
                     resetNoConfirm(true);
@@ -829,7 +829,7 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                         $scope.showErrorMsg(msg);
                     }
                 }).finally(function(){
-                    $scope.hideLoading();
+                    $scope.hideFullLoading();
                 });
             }
         };

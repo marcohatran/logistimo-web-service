@@ -1033,7 +1033,7 @@ entityControllers.controller('AddEntController', ['$scope', '$uibModal','$route'
             if ($scope.entity != null) {
                 $scope.updateTags("add");
                 $scope.loading = true;
-                $scope.showLoading();
+                $scope.showFullLoading();
                 checkLatLong();
                 entityService.createEntity($scope.entity).then(function (data) {
                     $scope.resetEntity();
@@ -1042,7 +1042,7 @@ entityControllers.controller('AddEntController', ['$scope', '$uibModal','$route'
                     $scope.showErrorMsg(msg);
                 }).finally(function (){
                     $scope.loading = false;
-                    $scope.hideLoading();
+                    $scope.hideFullLoading();
                 });
             }
         };
@@ -1050,7 +1050,7 @@ entityControllers.controller('AddEntController', ['$scope', '$uibModal','$route'
             if ($scope.entity != null) {
                 $scope.updateTags("update");
                 $scope.loading = true;
-                $scope.showLoading();
+                $scope.showFullLoading();
                 checkLatLong();
                 entityService.update($scope.entity).then(function (data) {
                     if (checkNotNullEmpty(data.data)) {
@@ -1073,7 +1073,7 @@ entityControllers.controller('AddEntController', ['$scope', '$uibModal','$route'
                     $scope.showErrorMsg(msg);
                 }).finally(function (){
                     $scope.loading = false;
-                    $scope.hideLoading();
+                    $scope.hideFullLoading();
                 });
             }
         };

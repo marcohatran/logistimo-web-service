@@ -320,7 +320,7 @@ matControllers.controller('AddMatController', ['$scope', '$route', 'matService',
                 }
                 $scope.updateTags("add");
                 $scope.loading = true;
-                $scope.showLoading();
+                $scope.showFullLoading();
                 matService.createMaterial($scope.material).then(function (data) {
                     $scope.resetMaterial();
                     $scope.showSuccess(data.data);
@@ -328,7 +328,7 @@ matControllers.controller('AddMatController', ['$scope', '$route', 'matService',
                     $scope.showErrorMsg(msg);
                 }).finally(function (){
                     $scope.loading = false;
-                    $scope.hideLoading();
+                    $scope.hideFullLoading();
                 });
             }
         };
@@ -357,7 +357,7 @@ matControllers.controller('AddMatController', ['$scope', '$route', 'matService',
                 }
                 $scope.updateTags("update");
                 $scope.loading = true;
-                $scope.showLoading();
+                $scope.showFullLoading();
                 matService.update($scope.material).then(function (data) {
                     if (checkNotNullEmpty(data.data)) {
                         $scope.$back();
@@ -383,7 +383,7 @@ matControllers.controller('AddMatController', ['$scope', '$route', 'matService',
                     $scope.showErrorMsg(msg);
                 }).finally(function (){
                     $scope.loading = false;
-                    $scope.hideLoading();
+                    $scope.hideFullLoading();
                 });
                 $scope.showBatchMgmtUpdateWarning = function(errorMsg) {
                     var title;
