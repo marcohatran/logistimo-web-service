@@ -1266,5 +1266,4 @@ user.token.expiry=Token expiry
 format=format
 gui.theme.same.as.in.domain.configuration=Same as in domain configuration
 gui.theme.default=Default
-
-
+show.by=Show by

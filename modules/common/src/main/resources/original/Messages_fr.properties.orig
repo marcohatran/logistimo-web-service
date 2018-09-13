@@ -1250,3 +1250,4 @@ user.token.expiry=expiration token
 format=format
 gui.theme.same.as.in.domain.configuration=Identique à la configuration du domaine
 gui.theme.default=Défaut
+show.by=Présenter par

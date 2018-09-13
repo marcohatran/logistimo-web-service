@@ -66,17 +66,18 @@ public class QueryHelper {
   private static final String OTYPE = "otype";
   private static final String STATE = "st";
   private static final String COUNTRY = "cn";
-  private static final String DISTRICT = "dis";
-  private static final String CITY = "cty";
+  public static final String DISTRICT = "dis";
+  public static final String CITY = "cty";
   private static final String ATYPE = "at";
   private static final String MTYPE = "mt";
   private static final String VENDOR_ID = "mf";
   private static final String MYEAR = "myear";
   private static final String DMODEL = "mm";
-  private static final String TALUK = "tlk";
+  public static final String TALUK = "tlk";
   private static final String SIZE = "s";
   private static final String OFFSET = "o";
   private static final String LKID = "lkid";
+  public static final String LOCATION_BY = "location_by";
 
   /** Query Id */
   public static final String QUERY_DOMAIN = "DID";
@@ -115,6 +116,7 @@ public class QueryHelper {
   public static final String TOKEN_LOCATION = "TOKEN_LOCATION";
   public static final String TOKEN_RUN_TIME = "TOKEN_APP_NAME";
 
+  public static final String LOCATION_CITY = "CITY";
   public static final String LOCATION_TALUK = "TALUK";
   public static final String LOCATION_DISTRICT = "DISTRICT";
   public static final String LOCATION_STATE = "STATE";
@@ -235,7 +237,7 @@ public class QueryHelper {
           case MTYPE:
             if (jsonObject.has(filter) && StringUtils.isNotEmpty(jsonObject.getString(filter))) {
               filters.put(TOKEN + OPTIONAL_FILTER_MAP.get(filter),
-                      CharacterConstants.SINGLE_QUOTES+jsonObject.getString(filter)+CharacterConstants.SINGLE_QUOTES);
+                  CharacterConstants.SINGLE_QUOTES+jsonObject.getString(filter)+CharacterConstants.SINGLE_QUOTES);
             }
             break;
           default:
@@ -251,6 +253,9 @@ public class QueryHelper {
     }
     if(filters.containsKey(TOKEN+QUERY_ATYPE) && filters.containsKey(TOKEN+QUERY_MTYPE)){
       filters.remove(TOKEN+QUERY_MTYPE);
+    }
+    if(jsonObject.has(LOCATION_BY)) {
+      filters.put(LOCATION_BY, jsonObject.getString(LOCATION_BY));
     }
     return filters;
   }
