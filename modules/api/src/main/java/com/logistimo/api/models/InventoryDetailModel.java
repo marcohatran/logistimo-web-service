@@ -155,7 +155,7 @@ public class InventoryDetailModel {
   /**
    * Last updated timestamp
    */
-  private Date lastUpdatedTimestamp;
+  private String lastUpdatedTimestamp;
   /**
    * Manufacturer price
    */

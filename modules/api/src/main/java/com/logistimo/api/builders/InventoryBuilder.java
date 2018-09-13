@@ -249,7 +249,8 @@ public class InventoryBuilder {
     model.setConsumptionRateDaily(invntry.getConsumptionRateDaily());
     model.setConsumptionRateWeekly(invntry.getConsumptionRateWeekly());
     model.setConsumptionRateMonthly(invntry.getConsumptionRateMonthly());
-    model.setLastUpdatedTimestamp(invntry.getTimestamp());
+    model.setLastUpdatedTimestamp(LocalDateUtil
+        .formatCustom(invntry.getTimestamp(), Constants.ISO_PATTERN, SecurityUtils.getTimezone()));
     model.setManufacturerPrice(material.getMSRP());
     model.setRetailerPrice(material.getRetailerPrice());
     model.setCustomMaterialId(material.getCustomId());
