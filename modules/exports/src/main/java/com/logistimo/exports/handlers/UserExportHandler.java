@@ -205,19 +205,19 @@ public class UserExportHandler implements IExportHandler {
     header.append(bundle.getString("user.id")).append(CharacterConstants.COMMA)
           .append(bundle.getString("customid.user")).append(CharacterConstants.COMMA)
           .append(bundle.getString("user.role")).append(CharacterConstants.SPACE)
-          .append(CharacterConstants.O_BRACKET).append(bundle.getString("role.domainowner"))
+          .append(CharacterConstants.O_BRACKET).append(SecurityConstants.ROLE_DOMAINOWNER)
           .append(CharacterConstants.SPACE).append(CharacterConstants.HYPHEN)
-          .append(CharacterConstants.SPACE)
-          .append(SecurityConstants.ROLE_DOMAINOWNER).append(CharacterConstants.SPACE)
+          .append(CharacterConstants.SPACE).append(bundle.getString("role.domainowner")).append(
+        CharacterConstants.SPACE)
           .append(CharacterConstants.F_SLASH).append(CharacterConstants.SPACE)
-          .append(bundle.getString("role.servicemanager")).append(CharacterConstants.SPACE)
+          .append(SecurityConstants.ROLE_SERVICEMANAGER).append(CharacterConstants.SPACE)
           .append(CharacterConstants.HYPHEN)
-          .append(CharacterConstants.SPACE).append(SecurityConstants.ROLE_SERVICEMANAGER)
+          .append(CharacterConstants.SPACE).append(bundle.getString("role.servicemanager"))
           .append(CharacterConstants.SPACE).append(CharacterConstants.F_SLASH)
-          .append(CharacterConstants.SPACE).append(bundle.getString("role.kioskowner"))
+          .append(CharacterConstants.SPACE).append(SecurityConstants.ROLE_KIOSKOWNER)
           .append(CharacterConstants.SPACE)
           .append(CharacterConstants.HYPHEN).append(CharacterConstants.SPACE)
-          .append(SecurityConstants.ROLE_KIOSKOWNER).append(CharacterConstants.C_BRACKET)
+          .append(bundle.getString("role.kioskowner")).append(CharacterConstants.C_BRACKET)
           .append(CharacterConstants.COMMA)
           .append(bundle.getString("user.permission")).append(CharacterConstants.COMMA)
           .append(bundle.getString("user.token.expiry"))
@@ -242,19 +242,19 @@ public class UserExportHandler implements IExportHandler {
           .append(bundle.getString("language")).append(CharacterConstants.COMMA)
           .append(bundle.getString("preferredtimezone")).append(CharacterConstants.COMMA)
           .append(bundle.getString("user.gender")).append(CharacterConstants.SPACE)
-          .append(CharacterConstants.O_BRACKET).append(bundle.getString("gender.male"))
+          .append(CharacterConstants.O_BRACKET).append(IUserAccount.GENDER_MALE)
           .append(CharacterConstants.SPACE).append(CharacterConstants.HYPHEN)
-          .append(CharacterConstants.SPACE).append(IUserAccount.GENDER_MALE).append(
+          .append(CharacterConstants.SPACE).append(bundle.getString("gender.male")).append(
         CharacterConstants.SPACE)
           .append(CharacterConstants.F_SLASH).append(CharacterConstants.SPACE)
-          .append(bundle.getString("gender.female"))
+          .append(IUserAccount.GENDER_FEMALE)
           .append(CharacterConstants.SPACE).append(CharacterConstants.HYPHEN)
-          .append(CharacterConstants.SPACE).append(IUserAccount.GENDER_FEMALE).append(
+          .append(CharacterConstants.SPACE).append(bundle.getString("gender.female")).append(
         CharacterConstants.SPACE)
           .append(CharacterConstants.F_SLASH).append(CharacterConstants.SPACE)
-          .append(bundle.getString("gender.other")).append(CharacterConstants.SPACE).append(
+          .append(IUserAccount.GENDER_OTHER).append(CharacterConstants.SPACE).append(
         CharacterConstants.HYPHEN)
-        .append(CharacterConstants.SPACE).append("o").append(CharacterConstants.C_BRACKET).append(CharacterConstants.COMMA)
+        .append(CharacterConstants.SPACE).append(bundle.getString("gender.other")).append(CharacterConstants.C_BRACKET).append(CharacterConstants.COMMA)
         .append(bundle.getString("user.date.of.birth")).append(" (").append(
         Constants.DATE_FORMAT_EXCEL).append(
         " format)").append(
