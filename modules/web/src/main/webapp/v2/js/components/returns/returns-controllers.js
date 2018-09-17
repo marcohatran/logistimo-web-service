@@ -604,7 +604,7 @@ function CreateReturnsController($scope, $location, $timeout, $q, returnsService
 
     $scope.create = () => {
         if (isAllValid($scope)) {
-            $scope.showLoading();
+            $scope.showFullLoading();
             let request = {
                 returnItems: $scope.returnItems,
                 order_id: $scope.returnOrder.id,
@@ -615,7 +615,7 @@ function CreateReturnsController($scope, $location, $timeout, $q, returnsService
                 $scope.showSuccess($scope.resourceBundle['return.creation.success']);
                 $location.path(`/orders/returns/detail/${data.data.return_id}`);
             }).catch(msg => $scope.showErrorMsg(msg))
-                .finally(() => $scope.hideLoading());
+                .finally(() => $scope.hideFullLoading());
         }
     };
 

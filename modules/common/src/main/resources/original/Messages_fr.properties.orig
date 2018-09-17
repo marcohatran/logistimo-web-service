@@ -48,6 +48,9 @@ bulkupload.tiptitle=Conseils pour remplir le fichier de données
 bulkupload.tip1=Lisez les instructions dans l'en-tête du fichier de données pour garantir l'exactitude
 bulkupload.tip2=Étoile (*) implique les champs obligatoires
 bulkupload.tip3=Les valeurs ayant des virgules (,) doit être entre guillemets (") [PAS nécessaire si l'entrée dans Excel]
+bulkupload.tip.password1=Le mot de passe ne peut pas être le même que le nom d'utilisateur.
+bulkupload.tip.password2=Le mot de passe pour l'administrateur doit inclure au moins un caractère minuscule, un caractère majuscule, un chiffre et un caractère spécial et doit comporter au moins 8 caractères.
+bulkupload.tip.password3=Le mot de passe pour le gestionnaire et l'opérateur doit inclure au moins un caractère et un chiffre et doit comporter au moins 7 caractères.
 bulkupload.uploadinbulk=Téléchargez en vrac
 by=par
 cancel=Annuler
@@ -1250,3 +1253,6 @@ user.token.expiry=expiration token
 format=format
 gui.theme.same.as.in.domain.configuration=Identique à la configuration du domaine
 gui.theme.default=Défaut
+show.by=Présenter pargui.theme.default=Défaut
+and=et
+bulkupload.users.password.header.tip=Pour connaître les règles de mot de passe reportez-vous à la section 'Conseils pour remplir le fichier de données' de la page de téléchargement groupé.

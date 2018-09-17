@@ -118,7 +118,7 @@ public class AbnormalStockReportService extends ReportServiceUtil implements IRe
       for (int i = 0; i < dimensions.length(); i++) {
         JSONArray period = results.getJSONArray(dimensions.getString(i));
         String key = getTableKeyByViewType(viewType, dimensions.getString(i));
-        tables.put(key, new ArrayList<List<ReportDataModel>>(period.length()));
+        tables.put(key, new ArrayList<>(period.length()));
         List<Report> reports = new ArrayList<>();
         for (int j = 0; j < period.length(); j++) {
           JSONArray row = period.getJSONArray(j);

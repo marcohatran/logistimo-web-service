@@ -181,11 +181,13 @@ public class InventoryController {
                        @RequestParam(defaultValue = PageParams.DEFAULT_OFFSET_STR) int offset,
                        @RequestParam(defaultValue = PageParams.DEFAULT_SIZE_STR) int size,
                        @RequestParam(required = false) Integer abType,
-                       @RequestParam(required = false) String startsWith,
+                       @RequestParam(required = false) String materialQueryText,
                        @RequestParam(required = false) String fetchTemp,
                        @RequestParam(defaultValue = ALL) int matType,
                        @RequestParam(required = false) boolean onlyNZStk,
                        @RequestParam(required = false) String pdos,
+                       @RequestParam(required = false) String materialQueryType,
+                       @RequestParam(required = false) boolean includeMaterialDescriptionQuery,
                        HttpServletRequest request) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
@@ -200,7 +202,7 @@ public class InventoryController {
       }
       int numTotalInv = Counter.getMaterialCounter(domainId, entityId, tag).getCount();
       Navigator navigator;
-      if (startsWith == null) {
+      if (materialQueryText == null) {
         navigator =
             new Navigator(request.getSession(), "InventoryController.getInventory", offset, size,
                 "base/test", numTotalInv);
@@ -211,7 +213,7 @@ public class InventoryController {
       }
       PageParams pageParams = new PageParams(navigator.getCursor(offset), offset, size);
       Results results;
-      if (startsWith == null) {
+      if (materialQueryText == null) {
         if (abType != null) {
 
           Map<String, Object> filters = new HashMap<>();
@@ -234,8 +236,11 @@ public class InventoryController {
               null, tag, matType, onlyNZStk, pdos, null, pageParams);
         }
       } else {
-        results = inventoryManagementService.searchKioskInventory(entityId, tag, startsWith, pageParams);
-        results.setNumFound(-1);
+        results =
+            inventoryManagementService
+                .searchKioskInventory(entityId, tag, materialQueryText, pageParams,
+                    materialQueryType, includeMaterialDescriptionQuery);
+        results.setNumFound(results.getNumFound());
       }
       navigator.setResultParams(results);
       results.setOffset(offset);
@@ -738,7 +743,8 @@ public class InventoryController {
   @ResponseBody
   InventoryDetailModel getInvDetail(
       @PathVariable Long entityId,
-      @PathVariable Long materialId) throws ServiceException, ObjectNotFoundException {
+      @PathVariable Long materialId, @RequestParam(required = false) boolean embed)
+      throws ServiceException, ObjectNotFoundException {
 
     Long domainId = SecurityUtils.getCurrentDomainId();
     Results results = inventoryManagementService.getInventory(domainId, entityId, null, null, null,
@@ -747,6 +753,6 @@ public class InventoryController {
       throw new ObjectNotFoundException("Inventory not found");
     }
     return inventoryBuilder
-        .buildMInventoryDetail((IInvntry) results.getResults().get(0), domainId, entityId);
+        .buildMInventoryDetail((IInvntry) results.getResults().get(0), domainId, entityId, embed);
   }
 }

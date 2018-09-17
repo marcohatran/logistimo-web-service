@@ -926,7 +926,7 @@ public class RESTUtil {
             (isSingleKiosk || StringUtils.isEmpty(minResponseCode)) && !skipInventory;
         boolean
             getLinkedKiosks =
-            (isSingleKiosk || !getUsersForKiosk);
+            (!getUsersForKiosk);
         for (IKiosk k : kiosks) {
           // set users if minResponseCode is 2 (local editing of kiosks/users is now possible)
           if (getUsersForKiosk) {

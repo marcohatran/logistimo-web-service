@@ -53,6 +53,12 @@ function AssetReportController(s, timeout, getData, reportsServiceCore) {
 
     s.activeMetric = "ot";
 
+    s.locationOptions = [
+        {text: s.resourceBundle['show.by'] + ' ' + s.resourceBundle['district'], value: "dis"},
+        {text: s.resourceBundle['show.by'] + ' ' + s.resourceBundle['taluk'], value: "tlk"},
+        {text: s.resourceBundle['show.by'] + ' ' + s.resourceBundle['city'], value: "cty"}
+    ];
+
     s.vw = "c";
 
     s.hideFilter = false;
@@ -281,8 +287,7 @@ function AssetReportController(s, timeout, getData, reportsServiceCore) {
                 s.activeMetric = 'ot';
             }
         }
-        if(checkNotNullEmpty(s.filter['entity']) || checkNotNullEmpty(s.filter['st'])
-            || checkNotNullEmpty(s.filter['dis']) ||
+        if(checkNotNullEmpty(s.filter['entity']) ||
             checkNotNullEmpty(s.filter['tlk']) || checkNotNullEmpty(s.filter['cty'])) {
             s.hideMetricHeadings['rt'] = true;
             if(s.activeMetric == 'rt'){
@@ -507,6 +512,20 @@ function AssetReportController(s, timeout, getData, reportsServiceCore) {
             setToDate(toDate);
         }
         s.skipDateWarn = false;
+    });
+
+    s.$watchGroup(["filter.st", "filter.dis"], function (newVal) {
+        let isState = s.cards.lc == undefined;
+        let value = isState ? newVal[0] : newVal[1];
+        if (value == undefined) {
+            s.filter.location_by = undefined;
+        } else {
+            if (isState) {
+                s.filter.location_by = s.locationOptions[0].value;
+            } else {
+                s.filter.location_by = s.locationOptions[1].value;
+            }
+        }
     });
 
     function copyFilters() {

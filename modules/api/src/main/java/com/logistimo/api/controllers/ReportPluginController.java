@@ -42,7 +42,6 @@ import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.utils.LocalDateUtil;
 
-import org.apache.commons.collections.ListUtils;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -53,6 +52,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.text.ParseException;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -111,7 +111,7 @@ public class ReportPluginController {
       return reportPluginService.getReportData(SecurityUtils.getCurrentDomainId(), json);
     } catch (Exception e) {
       xLogger.severe("Error while getting the report data", e);
-      return ListUtils.EMPTY_LIST;
+      return Collections.emptyList();
     }
   }
 
@@ -184,7 +184,7 @@ public class ReportPluginController {
           reportPluginService.getMinMaxHistoryReportData(minMaxHistoryFilters), minMaxHistoryFilters);
     } catch (Exception e) {
       xLogger.severe("Error while getting the report data", e);
-      return ListUtils.EMPTY_LIST;
+      return Collections.emptyList();
     }
   }
 }

@@ -442,10 +442,24 @@ public class InvntryDao implements IInvntryDao {
         }
         queryBuilder.append(CharacterConstants.C_BRACKET).append(CharacterConstants.C_BRACKET);
       }
-      if (!StringUtils.isEmpty(filters.getMaterialNameStartsWith())) {
-        queryBuilder.append(" AND M.UNAME LIKE ?");
-        params.add(filters.getMaterialNameStartsWith() + CharacterConstants.PERCENT);
+
+      if (StringUtils.isNotEmpty(filters.getMaterialQueryText())) {
+        StringBuilder materialSearchText = new StringBuilder("");
+        if (QueryConstants.CONTAINS.equals(filters.getMaterialQueryType())) {
+          materialSearchText.append(CharacterConstants.PERCENT);
+        }
+        materialSearchText.append(filters.getMaterialQueryText())
+            .append(CharacterConstants.PERCENT);
+
+        queryBuilder.append(" AND (M.UNAME LIKE ?");
+        params.add(materialSearchText.toString());
+        if (StringUtils.isNotEmpty(String.valueOf(filters.includeMaterialDescriptionQuery()))) {
+          queryBuilder.append(" OR M.DESCRIPTION LIKE ?");
+          params.add(materialSearchText.toString());
+        }
+        queryBuilder.append(")");
       }
+
     }
 
     if (filters.getDomainId() != null) {

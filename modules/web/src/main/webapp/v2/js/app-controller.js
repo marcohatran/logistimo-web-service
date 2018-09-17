@@ -175,11 +175,27 @@
                 }
                 $scope.loadMessage = message;
             };
+            $scope.showFullLoading = function (restore, message) {
+                if (restore || $scope.loaders++ == 0) {
+                    $scope.showFullLoadIcon = true;
+                }
+                $scope.loadMessage = message;
+            };
             $scope.hideLoading = function (forceClose) {
                 if (forceClose) {
                     $scope.showLoadIcon = false;
                 } else if (--$scope.loaders <= 0) {
                     $scope.showLoadIcon = false;
+                    if ($scope.loaders < 0) {
+                        $scope.loaders = 0;
+                    }
+                }
+            };
+            $scope.hideFullLoading = function (forceClose) {
+                if (forceClose) {
+                    $scope.showFullLoadIcon = false;
+                } else if (--$scope.loaders <= 0) {
+                    $scope.showFullLoadIcon = false;
                     if ($scope.loaders < 0) {
                         $scope.loaders = 0;
                     }

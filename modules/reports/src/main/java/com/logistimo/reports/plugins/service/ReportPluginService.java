@@ -53,7 +53,6 @@ import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ServiceException;
 import com.logistimo.utils.LocalDateUtil;
 
-import org.apache.commons.collections.ListUtils;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
@@ -68,6 +67,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -136,7 +136,7 @@ public class ReportPluginService {
           model.filters);
     } catch (Exception e) {
       xLogger.severe("Error while getting the report data", e);
-      return ListUtils.EMPTY_LIST;
+      return Collections.emptyList();
     }
   }
 
@@ -329,10 +329,7 @@ public class ReportPluginService {
         model.filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_ENTITY_TAG);
         break;
       case BY_REGION:
-        model.filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_COUNTRY);
-        model.filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_STATE);
-        model.filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_DISTRICT);
-        model.filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_TALUK);
+        finaliseFilterByRegion(model);
         break;
       case BY_MODEL:
         model.filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_DMODEL);
@@ -342,6 +339,24 @@ public class ReportPluginService {
         break;
       default:
         break;
+    }
+  }
+
+  private void finaliseFilterByRegion(QueryRequestModel model) {
+    if(model.filters.get(QueryHelper.TOKEN + QueryHelper.QUERY_COUNTRY) == null ) {
+      model.filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_COUNTRY);
+    }
+    if(model.filters.get(QueryHelper.TOKEN + QueryHelper.QUERY_STATE) == null ) {
+      model.filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_STATE);
+    }
+    if(model.filters.get(QueryHelper.TOKEN + QueryHelper.QUERY_DISTRICT) == null ) {
+      model.filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_DISTRICT);
+    }
+    if(model.filters.get(QueryHelper.TOKEN + QueryHelper.QUERY_TALUK) == null ) {
+      model.filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_TALUK);
+    }
+    if(model.filters.get(QueryHelper.TOKEN + QueryHelper.QUERY_CITY) == null ) {
+      model.filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_CITY);
     }
   }
 
@@ -436,6 +451,13 @@ public class ReportPluginService {
       model.rowHeadings = Arrays.asList(arr);
     }
     finaliseFilters(viewType, model, retainFilters);
+    if(model.filters.containsKey(QueryHelper.LOCATION_BY)) {
+      if(model.filters.containsKey(QueryHelper.DISTRICT)) {
+        model.queryId = model.queryId.replace("RT", "RT_D");
+      } else {
+        model.queryId = model.queryId.replace("RT", "RT_D_ALL");
+      }
+    }
     return model;
   }
 
@@ -514,35 +536,67 @@ public class ReportPluginService {
     }
   }
 
+  private String getLocationReportBy(String locationBy) {
+    switch (locationBy) {
+      case QueryHelper.DISTRICT:
+        return QueryHelper.LOCATION_DISTRICT;
+      case QueryHelper.TALUK:
+        return QueryHelper.LOCATION_TALUK;
+      case QueryHelper.CITY:
+      default:
+        return QueryHelper.LOCATION_CITY;
+    }
+  }
+
   private void prepareFiltersByRegion(Long domainId, QueryRequestModel model) {
     try {
-      DomainConfig dc = DomainConfig.getInstance(domainId);
-      if (StringUtils.isNotEmpty(dc.getCountry())) {
-        if (StringUtils.isNotEmpty(dc.getState())) {
-          if (StringUtils.isNotEmpty(dc.getDistrict())) {
-            model.filters.put(QueryHelper.TOKEN_LOCATION, QueryHelper.LOCATION_TALUK);
-            model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_TALUK, null);
-            model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_DISTRICT, null);
-            model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_STATE, null);
-            model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_COUNTRY, null);
+      if(model.filters.containsKey(QueryHelper.TOKEN + QueryHelper.QUERY_COUNTRY)) {
+        if (model.filters.containsKey(QueryHelper.TOKEN + QueryHelper.QUERY_DISTRICT)) {
+          model.filters.put(QueryHelper.TOKEN_LOCATION, QueryHelper.LOCATION_TALUK);
+          model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_TALUK, null);
+        } else { // with state filter
+          String locationBy = getLocationReportBy(model.filters.get(QueryHelper.LOCATION_BY));
+          model.filters.put(QueryHelper.TOKEN_LOCATION, locationBy);
+          switch (locationBy) {
+            case QueryHelper.LOCATION_CITY:
+              model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_CITY, null);
+              break;
+            case QueryHelper.LOCATION_TALUK:
+              model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_TALUK, null);
+            default:
+              model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_DISTRICT, null);
+          }
+        }
+      } else {
+        DomainConfig dc = DomainConfig.getInstance(domainId);
+        if (StringUtils.isNotEmpty(dc.getCountry())) {
+          if (StringUtils.isNotEmpty(dc.getState())) {
+            if (StringUtils.isNotEmpty(dc.getDistrict())) {
+              model.filters.put(QueryHelper.TOKEN_LOCATION, QueryHelper.LOCATION_TALUK);
+              model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_TALUK, null);
+              model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_DISTRICT, null);
+              model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_STATE, null);
+              model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_COUNTRY, null);
+            } else {
+              model.filters.put(QueryHelper.TOKEN_LOCATION, QueryHelper.LOCATION_DISTRICT);
+              model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_DISTRICT, null);
+              model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_STATE, null);
+              model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_COUNTRY, null);
+            }
           } else {
-            model.filters.put(QueryHelper.TOKEN_LOCATION, QueryHelper.LOCATION_DISTRICT);
-            model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_DISTRICT, null);
+            model.filters.put(QueryHelper.TOKEN_LOCATION, QueryHelper.LOCATION_STATE);
             model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_STATE, null);
             model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_COUNTRY, null);
           }
         } else {
-          model.filters.put(QueryHelper.TOKEN_LOCATION, QueryHelper.LOCATION_STATE);
-          model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_STATE, null);
+          model.filters.put(QueryHelper.TOKEN_LOCATION, QueryHelper.LOCATION_COUNTRY);
           model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_COUNTRY, null);
         }
-      } else {
-        model.filters.put(QueryHelper.TOKEN_LOCATION, QueryHelper.LOCATION_COUNTRY);
-        model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_COUNTRY, null);
       }
     } catch (Exception e) {
       xLogger.warn("Exception in replacing location token", e);
     }
+
   }
 
   private void perpareFiltersByEntity(QueryRequestModel model, Map<String, String> retainFilters) {
@@ -617,7 +671,7 @@ public class ReportPluginService {
 
   /**
    * Gets a list of IInventoryMinMaxLog objects for the entity ID and material ID, from and to dates specified in the filters
-   * @param minMaxHistoryFilters
+   * @param minMaxHistoryFilters -
    * @return List of IInventoryMinMaxLog objects or empty list (in case an exception occurs)
    */
   public List<IInventoryMinMaxLog> getMinMaxHistoryReportData(ReportMinMaxHistoryFilters minMaxHistoryFilters) {
@@ -631,7 +685,7 @@ public class ReportPluginService {
       return inventoryManagementService.fetchMinMaxLogByInterval(minMaxHistoryFilters.getEntityId(), minMaxHistoryFilters.getMaterialId(), fromDate , toDate);
     } catch (Exception e) {
       xLogger.severe("Error while getting min max history report data", e);
-      return ListUtils.EMPTY_LIST;
+      return Collections.emptyList();
     }
   }
 }

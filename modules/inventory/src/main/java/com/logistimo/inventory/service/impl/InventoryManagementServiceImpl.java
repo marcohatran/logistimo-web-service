@@ -357,8 +357,10 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
   }
 
   @Override
-  public Results searchKioskInventory(Long kioskId, String materialTag, String nameStartsWith,
-                                      PageParams params) throws ServiceException {
+  public Results searchKioskInventory(Long kioskId, String materialTag, String materialQueryText,
+                                      PageParams params, String materialQueryType,
+                                      boolean includeMaterialDescriptionQuery)
+      throws ServiceException {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     Results results = null;
     try {
@@ -366,7 +368,9 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
           invntryDao.getInventory(
               new InventoryFilters().withKioskId(kioskId)
                   .withMaterialTags(materialTag)
-                  .withMaterialNameStartsWith(nameStartsWith)
+                  .withMaterialQueryType(materialQueryType)
+                  .withMaterialQueryText(materialQueryText)
+                  .withMaterialDescriptionQuery(includeMaterialDescriptionQuery)
               , params, pm);
     } finally {
       pm.close();

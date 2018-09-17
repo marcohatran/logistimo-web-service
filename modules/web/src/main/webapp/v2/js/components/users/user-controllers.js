@@ -493,7 +493,7 @@ userControllers.controller('AddUserController', ['$scope', 'userService', 'confi
         $scope.createUser = function () {
             if ($scope.user != null) {
                 $scope.updateTags("add");
-                $scope.showLoading();
+                $scope.showFullLoading();
                 $scope.user.dob = formatDate($scope.user.dobmodel);
                 userService.createUser($scope.user).then(function (data) {
                     $scope.resetForm();
@@ -501,7 +501,7 @@ userControllers.controller('AddUserController', ['$scope', 'userService', 'confi
                 }).catch(function error(msg) {
                     $scope.showErrorMsg(msg);
                 }).finally(function(){
-                    $scope.hideLoading();
+                    $scope.hideFullLoading();
                 });
             }
         };
@@ -537,7 +537,7 @@ userControllers.controller('AddUserController', ['$scope', 'userService', 'confi
                 $scope.user.dob = formatDate($scope.user.dobmodel);
                 $scope.updateTags("update");
                 $scope.loading = true;
-                $scope.showLoading();
+                $scope.showFullLoading();
                 $scope.updatePrimaryEntityId();
                 userService.updateUser($scope.user, $scope.user.id).then(function (data) {
                     $scope.$back();
@@ -546,7 +546,7 @@ userControllers.controller('AddUserController', ['$scope', 'userService', 'confi
                     $scope.showErrorMsg(msg);
                 }).finally(function (){
                     $scope.loading = false;
-                    $scope.hideLoading();
+                    $scope.hideFullLoading();
                 });
             }
         };

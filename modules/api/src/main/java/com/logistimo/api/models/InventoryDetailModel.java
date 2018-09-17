@@ -25,13 +25,18 @@ package com.logistimo.api.models;
 
 import com.logistimo.api.models.mobile.CurrentStock;
 import com.logistimo.events.entity.IEvent;
+import com.logistimo.materials.model.HandlingUnitModel;
 
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.List;
+
+import lombok.Data;
 
 /**
  * Created by yuvaraj on 04/05/17.
  */
+@Data
 public class InventoryDetailModel {
 
   /**
@@ -87,7 +92,7 @@ public class InventoryDetailModel {
    */
   public BigDecimal as;
   /**
-   * Intransit stock
+   * In transit stock
    */
   public BigDecimal it;
   /**
@@ -103,4 +108,80 @@ public class InventoryDetailModel {
    */
   public String sap;
   public EntityModel loc;
+  /**
+   * Valid batches meta information
+   */
+  private List<InvntryBatchModel> batches;
+  /**
+   * Expired batches meta information
+   */
+  private List<InvntryBatchModel> expiredBatches;
+  /**
+   * Handling unit
+   */
+  private HandlingUnitModel handlingUnitModel;
+  /**
+   * Material is temperature sensitive or not
+   */
+  private boolean isTemperatureSensitive;
+  /**
+   * Min temperature
+   */
+  private float minTemperature;
+  /**
+   * Max temperature
+   */
+  private float maxTemperature;
+  /**
+   * Short material Id
+   */
+  private String shortMaterialId;
+  /**
+   * Available stock
+   */
+  private BigDecimal availableStock;
+  /**
+   * Consumption rate - daily
+   */
+  private BigDecimal consumptionRateDaily;
+  /**
+   * Consumption rate - weekly
+   */
+  private BigDecimal consumptionRateWeekly;
+  /**
+   * Consumption rate - monthly
+   */
+  private BigDecimal consumptionRateMonthly;
+  /**
+   * Last updated timestamp
+   */
+  private String lastUpdatedTimestamp;
+  /**
+   * Manufacturer price
+   */
+  private BigDecimal manufacturerPrice;
+  /**
+   * Retailer price
+   */
+  private BigDecimal retailerPrice;
+  /**
+   * Custom material Id
+   */
+  private String customMaterialId;
+  /**
+   * Batch enabled - true/false
+   */
+  private boolean isBatchEnabled;
+  /**
+   * Enforce handling unit
+   */
+  private boolean enforceHandlingUnit;
+  /**
+   * Minimum duration stock
+   */
+  private BigDecimal minimumDurationStock;
+  /**
+   * Maximum duration stock
+   */
+  private BigDecimal maximumDurationStock;
 }

@@ -91,8 +91,9 @@ public interface InventoryManagementService {
   /**
    * Search Inventory starts with by kiosk and material tag (optional)
    */
-  Results searchKioskInventory(Long kioskId, String materialTag, String nameStartsWith,
-                               PageParams params) throws ServiceException;
+  Results searchKioskInventory(Long kioskId, String materialTag, String materialQueryText,
+                               PageParams params, String materialQueryType,
+                               boolean includeMaterialDescriptionQuery) throws ServiceException;
 
   /**
    * Get all inventory items associated with a given material, across kiosks

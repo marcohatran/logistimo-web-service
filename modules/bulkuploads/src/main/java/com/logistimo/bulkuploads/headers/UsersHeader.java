@@ -44,15 +44,15 @@ public class UsersHeader implements IHeader {
         "Operation* (a = add / e = edit / d = delete; if empty it is defaulted to add; all operations MUST include User ID),"
             + bundle.getString("user.id")
             + "* (a unique username without any spaces; " + FieldLimits.USERID_MIN_LENGTH + CharacterConstants.HYPHEN + FieldLimits.USERID_MAX_LENGTH + " characters; Tip: prefix it with [say] your organization code or suffix it with [say] a number for uniqueness),"
-            + bundle.getString("login.password") + "* (" + FieldLimits.PASSWORD_MIN_LENGTH + CharacterConstants.HYPHEN + FieldLimits.PASSWORD_MAX_LENGTH + " characters)" + "," + bundle
-            .getString("user.confirmpassword") + "* (same as password)," +
-            bundle.getString("user.role") + "* (" + bundle.getString("role.domainowner")
-            + " = ROLE_do / " + bundle.getString("role.kioskowner") + " = ROLE_ko / " + bundle
-            .getString("role.servicemanager") + " = ROLE_sm)," +
-            bundle.getString("user.permission") + " (" + bundle.getString("default.caps")
-            + " = d / " + bundle.getString("user.permission.view") + " = v / " + bundle
-            .getString("user.permission.asset") + " = a; if empty it is considered as Default)," +
-            bundle.getString("user.token.expiry") + " (" + FieldLimits.TOKEN_EXPIRY_MIN + CharacterConstants.HYPHEN + FieldLimits.TOKEN_EXPIRY_MAX + CharacterConstants.SPACE + bundle.getString("days") + "; if empty it is considered as 0)," +
+            + bundle.getString("login.password") + "* (" + bundle.getString("bulkupload.users.password.header.tip") + ")," + bundle
+                .getString("user.confirmpassword") + "* (same as password)," +
+            bundle.getString("user.role") + "* (ROLE_do = " + bundle.getString("role.domainowner")
+            + " / ROLE_ko = " + bundle.getString("role.kioskowner") + " / ROLE_sm = " + bundle
+            .getString("role.servicemanager") + "," +
+            bundle.getString("user.permission") + " (d = " + bundle.getString("default.caps")
+            + " / v = " + bundle.getString("user.permission.view") + " / a = " + bundle
+            .getString("user.permission.asset") + "; if empty it is considered as Default)," +
+            bundle.getString("user.token.expiry") + " (" + FieldLimits.TOKEN_EXPIRY_MIN + CharacterConstants.HYPHEN + FieldLimits.TOKEN_EXPIRY_MAX + CharacterConstants.SPACE + bundle.getString("days") + "; if empty or 0 domain's default is taken)," +
             bundle.getString("user.firstname") + "* (" + FieldLimits.FIRSTNAME_MIN_LENGTH + CharacterConstants.HYPHEN + FieldLimits.TEXT_FIELD_MAX_LENGTH + " characters)" +"," + bundle
             .getString("user.lastname") + " (not more than " + FieldLimits.TEXT_FIELD_MAX_LENGTH + " characters)" + "," +
             bundle.getString("user.mobile")
@@ -66,7 +66,7 @@ public class UsersHeader implements IHeader {
             +
             bundle.getString("preferredtimezone")
             + "* (Timezones can be downloaded from the bulk upload page of LogiWeb)," +
-            bundle.getString("user.gender") + " (Male = m / Female = f / Other = o)," + bundle
+            bundle.getString("user.gender") + " (m = Male / f = Female / o = Other)," + bundle
             .getString("user.date.of.birth") + " (" + Constants.DATE_FORMAT_EXCEL + " format)," +
             bundle.getString("user.landline") + " (not more than " + FieldLimits.LAND_PHONE_MAX_LENGTH + " characters; format: [country-code][space][number-without-spacesORdashes])," +
             bundle.getString("state")
@@ -87,7 +87,7 @@ public class UsersHeader implements IHeader {
             bundle.getString("user.mobileoperator") + " (not more than " + FieldLimits.TEXT_FIELD_MAX_LENGTH + " characters)" + "," +
             bundle.getString("user.simId") + " (not more than " + FieldLimits.TEXT_FIELD_MAX_LENGTH + " characters)" + "," +
             bundle.getString("tags") + " (semi-colon separate tags; e.g. tag1;tag2;tag3)" + CharacterConstants.COMMA +
-            bundle.getString("mob") + CharacterConstants.SPACE + bundle.getString("gui.theme") + " (Same as in domain configuration = 0 / Default = 1 / Sidebar & Landing screen = 2)" + CharacterConstants.COMMA
+            bundle.getString("mob") + CharacterConstants.SPACE + bundle.getString("gui.theme") + " (0 = Same as in domain configuration / 1 = Default / 2 = Sidebar & Landing screen)" + CharacterConstants.COMMA
       ;
     return format;
   }
