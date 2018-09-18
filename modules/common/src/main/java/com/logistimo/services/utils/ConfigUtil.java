@@ -30,7 +30,6 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.InputStream;
 import java.util.Properties;
 
 /**
@@ -45,32 +44,27 @@ public class ConfigUtil {
   static {
 
     readOnlyDBproperties = new Properties();
-    try {
-      readOnlyDBproperties.load(Thread.currentThread().getContextClassLoader()
-          .getResourceAsStream("readonlyDB.properties"));
-    } catch (Exception e) {
-      throw new SystemException("Unable to load readonlyDB.properties", e);
-    }
+    loadPropertiesFile(readOnlyDBproperties, "readonlyDB.properties", false);
 
     properties = new Properties();
-    try {
-      properties.load(Thread.currentThread().getContextClassLoader()
-          .getResourceAsStream("samaanguru.properties"));
-    } catch (Exception e) {
-      throw new SystemException("Unable to load samaanguru.properties", e);
-    }
+    loadPropertiesFile(properties, "samaanguru.properties", false);
 
-    try {
-      InputStream in = Thread.currentThread().getContextClassLoader()
-          .getResourceAsStream("custom-beans.properties");
-      if (in != null) {
-        properties.load(in);
-      }
-    } catch (Exception ignored) {
-      xLogger.info("Unable to load custom-beans.properties", ignored);
-    }
+    loadPropertiesFile(properties, "custom-beans.properties", true);
+
+    loadPropertiesFile(properties, "locale-override.properties", false);
 
     properties.putAll(System.getProperties());
+  }
+
+  private static void loadPropertiesFile(Properties properties, String filename, boolean optional) {
+    try {
+      properties.load(Thread.currentThread().getContextClassLoader()
+          .getResourceAsStream(filename));
+    } catch (Exception e) {
+      if(!optional) {
+        throw new SystemException("Unable to load " + filename, e);
+      }
+    }
   }
 
   public static String get(String name) {
