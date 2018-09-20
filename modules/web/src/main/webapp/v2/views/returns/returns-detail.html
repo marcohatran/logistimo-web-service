@@ -515,7 +515,7 @@
                                 </tr>
                                 </tbody>
                                 <tbody>
-                                <tr ng-hide="returnItems.length == orderItems.length || !editMode">
+                                <tr ng-hide="returnItems.length == orderItems.length || !editMode || availableReturnItems.length == 0">
                                     <td>
                                         <input type="text"
                                                value="{{newMaterial}}"

@@ -184,8 +184,10 @@
             $scope.hideLoading = function (forceClose) {
                 if (forceClose) {
                     $scope.showLoadIcon = false;
+                    $scope.showFullLoadIcon = false;
                 } else if (--$scope.loaders <= 0) {
                     $scope.showLoadIcon = false;
+                    $scope.showFullLoadIcon = false;
                     if ($scope.loaders < 0) {
                         $scope.loaders = 0;
                     }
@@ -193,8 +195,10 @@
             };
             $scope.hideFullLoading = function (forceClose) {
                 if (forceClose) {
+                    $scope.showLoadIcon = false;
                     $scope.showFullLoadIcon = false;
                 } else if (--$scope.loaders <= 0) {
+                    $scope.showLoadIcon = false;
                     $scope.showFullLoadIcon = false;
                     if ($scope.loaders < 0) {
                         $scope.loaders = 0;

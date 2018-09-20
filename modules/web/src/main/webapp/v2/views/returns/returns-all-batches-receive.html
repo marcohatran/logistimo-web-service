@@ -52,7 +52,7 @@
                     <td><p class="cbx">{{batch.id}}</p></td>
                     <td><p class="cbx text-center">{{batch.e}}</p></td>
                     <td><p class="cbx text-center">{{batch.fq}}</p></td>
-                    <td><p class="cbx text-center">{{batch.return_quantity}}</p>
+                    <td><p class="cbx text-center">{{batch.return_quantity || 0}}</p>
                         <span class="litetext text-center" ng-show="isDef(batch.material_status)">
                             {{resourceBundle['inventory.material.status']}}: {{batch.material_status}}
                         </span>
@@ -69,7 +69,7 @@
                                autocomplete="off"
                                ng-blur="validateBatchQuantityReturn(item, batch, $index, true)">
                         <div ng-show="batch.displayMeta">
-                            <span class="litetext text-left" ng-class="{'required' : statusMandatoryConfig.rosm}"
+                            <span class="litetext text-left" ng-class="{'required' : statusMandatoryConfig.rism}"
                                   ng-show="(!item.tm && isDef(matstatus)) || (item.tm && isDef(tempmatstatus))">{{resourceBundle['inventory.material.status']}}</span>
                             <select ng-show="isDef(matstatus) && !item.tm" ng-model="batch.received.material_status" class="form-control"
                                     ng-class="{'red-border': batch.sinvalidPopup}"

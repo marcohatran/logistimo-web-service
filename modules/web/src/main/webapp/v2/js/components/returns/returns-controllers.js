@@ -239,8 +239,10 @@ function ReturnsItemValidator($scope, $timeout) {
                 hidePopup($scope, material, `s${material.id}`, index, $timeout, false, true);
             }
             material.sinvalidPopup = material.sPopupMsg = material.rinvalidPopup = material.rPopupMsg = undefined;
-            material.returnReason = angular.copy(material.defaultReturnReason);
-            material.reason = material.returnReason;
+            if(!isReceive) {
+                material.returnReason = angular.copy(material.defaultReturnReason);
+                material.reason = material.returnReason;
+            }
         }
         if (redraw) {
             ReturnsValidator.redrawAllPopup($scope, $timeout, isCreate, isReceive);
@@ -292,8 +294,10 @@ function ReturnsItemValidator($scope, $timeout) {
                 hidePopup($scope, batchMaterial, `s${material.id}${batchMaterial.id}`, index, $timeout, false, true);
             }
             batchMaterial.sinvalidPopup = batchMaterial.sPopupMsg = batchMaterial.rinvalidPopup = batchMaterial.rPopupMsg = undefined;
-            batchMaterial.returnReason = angular.copy(batchMaterial.defaultReturnReason);
-            batchMaterial.reason = batchMaterial.returnReason;
+            if(!isReceive) {
+                batchMaterial.returnReason = angular.copy(batchMaterial.defaultReturnReason);
+                batchMaterial.reason = batchMaterial.returnReason;
+            }
         }
         if (redraw) {
             ReturnsValidator.redrawAllPopup($scope, $timeout, isCreate, isReceive);
@@ -532,13 +536,15 @@ function CreateReturnsController($scope, $location, $timeout, $q, returnsService
         let quantityByMaterial = new Map(data.data.map(d=>[d.material_id, d]));
         angular.forEach($scope.orderItems, function (orderItem) {
             let materialQuantity = quantityByMaterial.get(orderItem.id);
-            orderItem.requested_return_quantity = materialQuantity.requested_return_quantity;
-            if (checkNotNullEmpty(materialQuantity.batches)) {
-                let quantityByBatch = new Map(materialQuantity.batches.map(b=>[b.batch_id, b]));
-                angular.forEach(orderItem.returnBatches, orderBatch => {
-                    let batchQuantity = quantityByBatch.get(orderBatch.id);
-                    orderBatch.requested_return_quantity = batchQuantity.requested_return_quantity;
-                });
+            if(checkNotNullEmpty(materialQuantity)) {
+                orderItem.requested_return_quantity = materialQuantity.requested_return_quantity;
+                if (checkNotNullEmpty(materialQuantity.batches)) {
+                    let quantityByBatch = new Map(materialQuantity.batches.map(b=>[b.batch_id, b]));
+                    angular.forEach(orderItem.returnBatches, orderBatch => {
+                        let batchQuantity = quantityByBatch.get(orderBatch.id);
+                        orderBatch.requested_return_quantity = batchQuantity.requested_return_quantity;
+                    });
+                }
             }
         });
         updateReturnItems();
@@ -639,13 +645,16 @@ function BatchCreateReturnsController($scope) {
                     return true;
                 }
                 if ($scope.item.tm) {
-                    if (checkNotNullEmpty($scope.tempmatstatus)) {
-                        return $scope.validateBatchStatus($scope.item, batchItem, index, true);
+                    if (checkNotNullEmpty($scope.tempmatstatus) && $scope.validateBatchStatus($scope.item, batchItem, index, true)) {
+                        return true;
                     }
                 } else {
-                    if (checkNotNullEmpty($scope.matstatus)) {
-                        return $scope.validateBatchStatus($scope.item, batchItem, index);
+                    if (checkNotNullEmpty($scope.matstatus) && $scope.validateBatchStatus($scope.item, batchItem, index)) {
+                        return true;
                     }
+                }
+                if($scope.validateBatchReason($scope.item, batchItem, index)) {
+                    return true;
                 }
             }
         });
@@ -1198,11 +1207,16 @@ function BatchDetailReturnsController($scope) {
                     return true;
                 }
                 if ($scope.returnItem.tm) {
-                    return checkNotNullEmpty($scope.tempmatstatus) &&
-                        $scope.validateBatchStatusReturn($scope.returnItem, batchItem, index, true);
+                    if(checkNotNullEmpty($scope.tempmatstatus) && $scope.validateBatchStatusReturn($scope.returnItem, batchItem, index, true)) {
+                        return true;
+                    }
                 } else {
-                    return checkNotNullEmpty($scope.matstatus) &&
-                        $scope.validateBatchStatusReturn($scope.returnItem, batchItem, index);
+                    if(checkNotNullEmpty($scope.matstatus) && $scope.validateBatchStatusReturn($scope.returnItem, batchItem, index)) {
+                        return true;
+                    }
+                }
+                if($scope.validateBatchReason($scope.item, batchItem, index)) {
+                    return true;
                 }
             }
         });
@@ -1214,9 +1228,10 @@ function BatchDetailReturnsController($scope) {
         let totalReturned = 0;
         angular.forEach($scope.orderReturnBatches, batchItem => {
             batchItem.return_quantity = batchItem.return_quantity * 1 || 0;
+            batchItem.new_return_quantity = batchItem.new_return_quantity * 1 || 0;
             let found = returnItemBatches.some((returnBatch, index) => {
                 if (returnBatch.batch_id == batchItem.id) {
-                    if (checkNullEmpty(batchItem.new_return_quantity * 1)) {
+                    if (checkNullEmpty(batchItem.new_return_quantity)) {
                         returnItemBatches.splice(index, 1);
                     } else {
                         returnBatch.returnedQuantity += (batchItem.new_return_quantity * 1 - batchItem.return_quantity * 1);
@@ -1224,13 +1239,13 @@ function BatchDetailReturnsController($scope) {
                         returnBatch.return_quantity = batchItem.new_return_quantity;
                         returnBatch.material_status = batchItem.material_status;
                         returnBatch.reason = batchItem.reason;
-                        totalReturned += returnBatch.return_quantity * 1;
+                        totalReturned += returnBatch.return_quantity;
                     }
                     return true;
                 }
             });
 
-            if (!found && checkNotNullEmpty(batchItem.new_return_quantity * 1)) {
+            if (!found && checkNotNullEmpty(batchItem.new_return_quantity)) {
                 returnItemBatches.push({
                     batch_id: batchItem.id,
                     expiry: batchItem.e,
@@ -1243,7 +1258,7 @@ function BatchDetailReturnsController($scope) {
                     fq: batchItem.fq,
                     new_return_quantity: batchItem.new_return_quantity
                 });
-                totalReturned += batchItem.new_return_quantity * 1;
+                totalReturned += batchItem.new_return_quantity;
             }
         });
         if (!isAllValid()) {
@@ -1348,14 +1363,15 @@ function ListReturnsController($scope, $location, requestContext, RETURNS, retur
 
     $scope.RETURNS = RETURNS;
     $scope.wparams = [["eid", "entity.id"], ["status", "status"], ["from", "from", "", formatDate2Url],
-        ["type", "returnsType", OUTGOING], ["to", "to", "", formatDate2Url], ["oid", "orderId"], ["o", "offset"], ["s", "size"]];
+        ["type", "returnsType", INCOMING], ["to", "to", "", formatDate2Url], ["oid", "orderId"], ["o", "offset"], ["s", "size"]];
 
     ListingController.call(this, $scope, requestContext, $location);
 
     $scope.localFilters = ['entity', 'status', 'from', 'to', 'orderId'];
     $scope.initLocalFilters = [];
-    $scope.returnsType = OUTGOING;
+    $scope.returnsType = INCOMING;
     $scope.today = new Date();
+    $scope.initLoad = true;
 
     let getCustomerVendor = () => {
         let customer = undefined;
@@ -1369,6 +1385,20 @@ function ListReturnsController($scope, $location, requestContext, RETURNS, retur
         }
         return {customer, vendor};
     };
+
+    let toggleReturnsType = () => {
+        if ($scope.returnsType == OUTGOING) {
+            $scope.returnsType = INCOMING;
+            $scope.initLoad = false;
+        } else if ($scope.returnsType == INCOMING) {
+            $scope.returnsType = OUTGOING;
+        }
+    };
+
+    $scope.$watch('entity', () => {
+        $scope.initLoad = true;
+        $scope.returnsType = INCOMING;
+    });
 
     $scope.fetch = () => {
         let {customer, vendor} = getCustomerVendor();
@@ -1388,6 +1418,11 @@ function ListReturnsController($scope, $location, requestContext, RETURNS, retur
                 results: data.data.returns,
                 numFound: data.data.total_count
             });
+            if(checkNullEmpty($scope.filtered) && $scope.initLoad) {
+                toggleReturnsType();
+            } else {
+                $scope.initLoad = false;
+            }
         }).catch(msg => $scope.showErrorMsg(msg))
             .finally(() => {
                 $scope.loading = false;
