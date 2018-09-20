@@ -215,6 +215,7 @@ public class ConfigurationModelBuilder {
         model.ufn = userAccount.getFirstName();
       }
       model.unm = userAccount.getUserId();
+      model.utgs = userAccount.getTags() != null ? userAccount.getTags() : Collections.EMPTY_LIST;
       model.dnm = domain.getName();
       model.dId = domain.getId();
       model.lng = userAccount.getLanguage();

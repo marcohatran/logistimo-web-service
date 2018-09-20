@@ -155,7 +155,7 @@ authControllers.controller('LoginController', ['$scope', 'iAuthService', 'authSe
                 iAuthService.setAuthenticationHeader(cookie.key, cookie.value, data.headers()['expires']);
             }
             //log analytics
-            $scope.initAnalytics(data.data.fnm,data.data.dmn.nm);
+            $scope.initAnalytics(data.data.fnm,data.data.dmn.nm, data.data.tgs);
 
             if(checkNotNullEmpty($scope.curUser)){
                 if($scope.curUser != $scope.userId){

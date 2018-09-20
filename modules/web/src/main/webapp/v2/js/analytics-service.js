@@ -27,18 +27,23 @@
  */
 logistimoApp.factory('AnalyticsService', function ($window) {
     return {
-        logAnalytics : function (path,user,domain) {
-            if (typeof user != 'undefined') {
+        logAnalytics : function (path, user, domain, userTags) {
+            if (checkNotNullEmpty(user)) {
                 $window.ga('set', 'userId',user);;
                 $window.ga('set', 'dimension3', user);
             }
-            if (typeof domain != 'undefined') {
+            if (checkNotNullEmpty(domain)) {
                 $window.ga('set', 'dimension1', domain);
+            }
+            if (checkNotNullEmptyArray(userTags)) {
+                userTags.forEach(function (utag) {
+                    $window.ga('set', 'dimension4', utag);
+                });
             }
             if (path != "" && path != "/") {
                 $window.ga('set', 'page',path);
                 $window.ga('send', 'pageview');
             }
-       }
+        }
     }
 });

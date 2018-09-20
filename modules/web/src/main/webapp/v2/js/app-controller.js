@@ -491,6 +491,7 @@
                     $scope.iSoae = data.data.soae;
                     $scope.iToae = data.data.toae;
                     $rootScope.curUser = $scope.curUser = data.data.unm;
+                    $scope.curUserTag = data.data.utgs;
                     $scope.i18n.language = {"locale": data.data.lng};
                     $scope.mailId = data.data.em;
                     $scope.defaultEntityId = data.data.eid;
@@ -621,7 +622,7 @@
                 }
             );
             $scope.$on("$routeChangeSuccess", function (event,current) {
-                AnalyticsService.logAnalytics(current.$$route.originalPath,$scope.curUserName,$scope.domainName);
+                AnalyticsService.logAnalytics(current.$$route.originalPath,$scope.curUserName,$scope.domainName,$scope.curUserTag);
                 if (isRouteRedirect($route)) {
                     return;
                 }
@@ -629,8 +630,8 @@
                 $scope.$broadcast("requestContextChanged", requestContext);
             });
 
-            $scope.initAnalytics = function (user,domain) {
-                AnalyticsService.logAnalytics(window.location.pathname,user,domain);
+            $scope.initAnalytics = function (user,domain,userTags) {
+                AnalyticsService.logAnalytics(window.location.pathname,user,domain,userTags);
             }
 
             function isRouteRedirect(route) {

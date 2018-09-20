@@ -36,7 +36,8 @@ bulletinBoardControllers.controller('BulletinBoardRenderController', ['bulletinB
         var dimensionDomain = $scope.domainName;
         var dimensionUser = $scope.curUserName;
         var path = window.location.pathname;
-        analyticsService.logAnalytics(path,dimensionUser,dimensionDomain);
+        var userTags = $scope.curUserTag;
+        analyticsService.logAnalytics(path,dimensionUser,dimensionDomain,userTags);
     }
 
     init();
