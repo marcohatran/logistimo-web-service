@@ -85,6 +85,14 @@ domainCfgControllers.controller('GeneralConfigurationController', ['$scope', 'do
                 $scope.showWarning($scope.resourceBundle['same.admincontacts.warning']);
                 return;
             }
+            if(checkNullEmpty($scope.cnf.cnt)) {
+                $scope.showWarning($scope.resourceBundle['domain.country.mandatory']);
+                return;
+            }
+            if(checkNullEmpty($scope.cnf.tz)) {
+                $scope.showWarning($scope.resourceBundle['domain.timezone.mandatory']);
+                return;
+            }
             if ($scope.pUser)
                 $scope.continue = true;
             if ($scope.cnf.snh && checkNullEmpty($scope.cnf.nhn)) {

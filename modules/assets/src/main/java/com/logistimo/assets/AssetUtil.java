@@ -121,6 +121,8 @@ public class AssetUtil {
   public static final String TAGS = "tags";
   public static final String ASSET_YOM = "yom";
   public static final String CAPACITY = "cc";
+  public static final String OWNERS = "ons";
+  public static final String MAINTAINERS = "mts";
   private static URLFetchService urlFetchService;
   private static Gson gson = new Gson();
 
@@ -271,8 +273,18 @@ public class AssetUtil {
           metaDataMap.put(CAPACITY, getAssetCapacity(asset));
         }
         AssetModel assetModel = AssetUtil.buildAssetModel(domainId, asset, metaDataMap);
-        if (variableMap.get(AssetUtil.TAGS) != null) {
-          assetModel.tags = (List<String>) variableMap.get(AssetUtil.TAGS);
+        if (variableMap.get(TAGS) != null) {
+          assetModel.tags = (List<String>) variableMap.get(TAGS);
+        }
+        if(variableMap.get(OWNERS) != null){
+          List<String> ons = (List<String>) variableMap.get(OWNERS);
+          asset.setOwners(ons);
+          assetModel.ons = ons;
+        }
+        if(variableMap.get(MAINTAINERS) != null){
+          List<String> mts = (List<String>) variableMap.get(MAINTAINERS);
+          asset.setMaintainers(mts);
+          assetModel.mts = mts;
         }
         //Registering in LS
         ams.createAsset(domainId, asset, assetModel);
@@ -330,6 +342,16 @@ public class AssetUtil {
         AssetModel assetModel = AssetUtil.buildAssetModel(domainId, asset, metaDataMap);
         if (variableMap.get(AssetUtil.TAGS) != null) {
           assetModel.tags = (List<String>) variableMap.get(AssetUtil.TAGS);
+        }
+        if(variableMap.get(OWNERS) != null){
+          List<String> ons = (List<String>) variableMap.get(OWNERS);
+          asset.setOwners(ons);
+          assetModel.ons = ons;
+        }
+        if(variableMap.get(MAINTAINERS) != null){
+          List<String> mts = (List<String>) variableMap.get(MAINTAINERS);
+          asset.setMaintainers(mts);
+          assetModel.mts = mts;
         }
         //Updating asset in LS
         ams.updateAsset(domainId, asset, assetModel);

@@ -43,12 +43,12 @@ public class PaymentProvidersConfig {
   public static final String PROVIDERS = "providers";
   // Logger
   private static final XLog xLogger = XLog.getLog(PaymentProvidersConfig.class);
-  public JSONObject providers = null;
+  public JSONObject providersConfig = null;
 
   public PaymentProvidersConfig(String jsonString) throws ConfigurationException {
     try {
       JSONObject jsonPaymentProvidersConfig = new JSONObject(jsonString);
-      providers = (JSONObject) jsonPaymentProvidersConfig.get("providers");
+      providersConfig = (JSONObject) jsonPaymentProvidersConfig.get("providers");
     } catch (JSONException e) {
       throw new ConfigurationException(e.getMessage());
     }
@@ -70,11 +70,11 @@ public class PaymentProvidersConfig {
 
   // Get a given providers config
   public ProviderConfig getProviderConfig(String providerName) {
-    if (providers == null) {
+    if (providersConfig == null) {
       return null;
     }
     try {
-      return new ProviderConfig(providers.getJSONObject(providerName));
+      return new ProviderConfig(providersConfig.getJSONObject(providerName));
     } catch (JSONException e) {
       return null;
     }
@@ -84,14 +84,14 @@ public class PaymentProvidersConfig {
   public List<ProviderConfig> getProviders() {
     xLogger.fine("Entering getProviders");
     List<ProviderConfig> providerConfigList = null;
-    if (providers != null) {
-      JSONArray keys = providers.names();
+    if (providersConfig != null) {
+      JSONArray keys = providersConfig.names();
       if (keys != null && keys.length() > 0) {
         providerConfigList = new ArrayList<>();
         for (int i = 0; i < keys.length(); i++) {
           try {
             String pn = keys.getString(i);
-            ProviderConfig pc = new ProviderConfig(providers.getJSONObject(pn));
+            ProviderConfig pc = new ProviderConfig(providersConfig.getJSONObject(pn));
             providerConfigList.add(pc);
           } catch (JSONException je) {
             xLogger.info("json exception: Message: ", je.getMessage());
@@ -113,7 +113,7 @@ public class PaymentProvidersConfig {
     public static final String PROVIDER_ID = "pid";
     public static final String PROVIDER_NAME = "pname";
     public static final String USER_NAME = "uname";
-    public static final String PASSWORD = "pwd";
+    public static final String PASSCODE = "pwd";
     public static final String URL = "url";
     public static final String SERVER_URI = "serveruri";
 

@@ -68,7 +68,8 @@ public class BulkImportMapper
       String line = new String(segment, "UTF-8");
       if (line.isEmpty() || line.startsWith("Operation") || (BulkUploadMgr.TYPE_ASSETS.equals(type)
           && (line.startsWith("Entity") || line.startsWith("Store"))
-          && line.endsWith("Year of manufacture of monitoring asset"))) {
+          && (line.endsWith("Maintainers of Monitoring asset (comma-separated user IDs)")
+          || line.endsWith("Maintainers of Monitoring asset (ID utilisateur séparé par des virgules)")))) {
         // Empty or Header lines; ignore
         return;
       }

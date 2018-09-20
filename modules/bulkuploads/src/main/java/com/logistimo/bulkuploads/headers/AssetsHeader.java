@@ -37,27 +37,32 @@ public class AssetsHeader implements IHeader {
   @Override
   public String getUploadableCSVHeader(Locale locale, String type) {
     ResourceBundle bundle = Resources.get().getBundle("BackendMessages", locale);
-    String format = bundle.getString("kiosk") + CharacterConstants.COMMA +
-        bundle.getString("custom.entity") + CharacterConstants.COMMA +
-        bundle.getString("city") + CharacterConstants.COMMA +
-        bundle.getString("district") + CharacterConstants.COMMA +
-        bundle.getString("state") + CharacterConstants.COMMA +
-        bundle.getString("asset.type") + CharacterConstants.COMMA +
-        bundle.getString("bulk.asset.id") + CharacterConstants.COMMA +
-        bundle.getString("manufacturer") + CharacterConstants.COMMA +
-        bundle.getString("model") + CharacterConstants.COMMA +
-        bundle.getString("monitored.asset.manufacture.year") + CharacterConstants.COMMA +
-        bundle.getString("sensor.device.id") + CharacterConstants.COMMA +
-        bundle.getString("sim1") + CharacterConstants.COMMA +
-        bundle.getString("sim1.id") + CharacterConstants.COMMA +
-        bundle.getString("sim1.ntw.provider") + CharacterConstants.COMMA +
-        bundle.getString("sim2") + CharacterConstants.COMMA +
-        bundle.getString("sim2.id") + CharacterConstants.COMMA +
-        bundle.getString("sim2.ntw.provider") + CharacterConstants.COMMA +
-        bundle.getString("imei") + CharacterConstants.COMMA +
-        bundle.getString("manufacturer.name") + CharacterConstants.COMMA +
-        bundle.getString("asset.model") + CharacterConstants.COMMA +
-        bundle.getString("monitoring.asset.manufacture.year");
-    return format;
+    StringBuilder builder = new StringBuilder();
+    builder.append(bundle.getString("kiosk")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("custom.entity")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("city")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("district")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("state")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("asset.type")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("bulk.asset.id")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("manufacturer")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("model")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("monitored.asset.manufacture.year")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("asset.monitored.owners")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("asset.monitored.maintainers")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("sensor.device.id")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("sim1")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("sim1.id")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("sim1.ntw.provider")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("sim2")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("sim2.id")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("sim2.ntw.provider")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("imei")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("manufacturer.name")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("asset.model")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("monitoring.asset.manufacture.year")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("asset.monitoring.owners")).append(CharacterConstants.COMMA)
+        .append(bundle.getString("asset.monitoring.maintainers"));
+    return builder.toString();
   }
 }

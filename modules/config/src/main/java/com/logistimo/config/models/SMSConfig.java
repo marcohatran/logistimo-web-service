@@ -52,13 +52,13 @@ public class SMSConfig {
   // Logger
   private static final XLog xLogger = XLog.getLog(SMSConfig.class);
   public JSONObject countryConfig = null;
-  public JSONObject providers = null;
+  public JSONObject providersConfig = null;
 
   public SMSConfig(String jsonString) throws ConfigurationException {
     try {
       JSONObject jsonSMSConfig = new JSONObject(jsonString);
       countryConfig = jsonSMSConfig.getJSONObject(COUNTRY_CONFIG);
-      providers = jsonSMSConfig.getJSONObject(PROVIDERS);
+      providersConfig = jsonSMSConfig.getJSONObject(PROVIDERS);
     } catch (JSONException e) {
       throw new ConfigurationException(e.getMessage());
     }
@@ -80,11 +80,11 @@ public class SMSConfig {
 
   // Get a given providers config
   public ProviderConfig getProviderConfig(String providerId) {
-    if (providers == null) {
+    if (providersConfig == null) {
       return null;
     }
     try {
-      return new ProviderConfig(providers.getJSONObject(providerId));
+      return new ProviderConfig(providersConfig.getJSONObject(providerId));
     } catch (JSONException e) {
       return null;
     }
@@ -110,7 +110,7 @@ public class SMSConfig {
 
     public static final String PROVIDER_ID = "pid";
     public static final String USER_ID = "uid";
-    public static final String PASSWORD = "pwd";
+    public static final String PASSCODE = "pwd";
     public static final String SENDER_ID = "sid";
     public static final String KEYWORD = "keyword";
     public static final String LONGCODE = "longcode";
