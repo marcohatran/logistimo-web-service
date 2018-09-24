@@ -111,12 +111,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
   private static final String DOMAIN_KEY_SEPARATOR = "_";
   private static final String TOKEN_ACCESS_PREFIX = "at_";
   private static final String BACKEND_MESSAGES = "BackendMessages";
+  private static final String OTP_SUCCESS_MSG1 = "password.otp.success1";
+  private static final String OTP_SUCCESS_MSG2 = "password.otp.success2";
   private static final String RESET_PREFIX = "RESET_";
   private static final String NEW_LINE_HTML = "<br><br>";
   private static ITaskService taskService = AppFactory.get().getTaskService();
   private static final int
       WEB_TOKEN_INACTIVITY_MILLIS =
-      ConfigUtil.getInt(PropertyConstants.TOKEN_EXPIRE_WEB, 30) * 60_000;
+      ConfigUtil.getInt(PropertyConstants.TOKEN_EXPIRE_WEB, 720) * 60_000;
   private static final String TWO_FACTOR_AUTHENTICATION_OTP = "Auth_OTP";
   private static final String OTP = "OTP";
   private static final String JWTKEY = "jwt.key";
@@ -457,8 +459,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
       }
     } else {
       generateResetPasswordOTP(userId, cache);
-      return backendMessages.getString("password.otp.success1") + " " + account.getFirstName()
-          + backendMessages.getString("password.otp.success2");
+      return backendMessages.getString(OTP_SUCCESS_MSG1) + " " + account.getFirstName()
+          + backendMessages.getString(OTP_SUCCESS_MSG2);
     }
   }
 
@@ -488,8 +490,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         backendMessages.getString("otp.generation.success").concat(CharacterConstants.SPACE)
             .concat(userId);
     sendOTP(logMsg, msg, userAccount, backendMessages);
-    return backendMessages.getString("password.otp.success1") + " " + userAccount.getFirstName()
-        + backendMessages.getString("password.otp.success2");
+    return backendMessages.getString(OTP_SUCCESS_MSG1) + " " + userAccount.getFirstName()
+        + backendMessages.getString(OTP_SUCCESS_MSG2);
   }
 
   private void generateResetPasswordOTP(String userId, MemcacheService cache)
@@ -510,8 +512,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         backendMessages.getString("password.otp.info") + " " + otp + " " + backendMessages
             .getString("password.otp.validity");
     String logMsg =
-        backendMessages.getString("password.otp.success1") + " " + userAccount.getFirstName()
-            + backendMessages.getString("password.otp.success2");
+        backendMessages.getString(OTP_SUCCESS_MSG1) + " " + userAccount.getFirstName()
+            + backendMessages.getString(OTP_SUCCESS_MSG2);
     sendOTP(logMsg, msg, userAccount, backendMessages);
   }
 
