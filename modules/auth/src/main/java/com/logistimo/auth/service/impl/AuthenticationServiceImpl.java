@@ -725,7 +725,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
 
   @Override
-  public String setNewPassword(String token, String newPassword, String confirmPassword)
+  public String setNewPassword(String token, String newPassword, String confirmPassword, boolean isEnhanced)
       throws ServiceException {
     if (StringUtils.isNotEmpty(token)) {
       String[] tokens = decryptJWT(token);
@@ -733,7 +733,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         String userId = tokens[0];
         String resetKey = userId + "&&" + tokens[1];
         if (resetKeyMatches(userId, resetKey)) {
-          return validateAndChangePassword(newPassword, confirmPassword, userId);
+          return validateAndChangePassword(newPassword, confirmPassword, userId, isEnhanced);
         } else {
           throw new ValidationException("G015");
         }
@@ -743,10 +743,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
   }
 
   private String validateAndChangePassword(String newPassword, String confirmPassword,
-                                           String userId) throws ServiceException {
+                                           String userId, boolean isEnhanced) throws ServiceException {
     if (StringUtils.isNotEmpty(newPassword) && StringUtils.isNotEmpty(confirmPassword)) {
       if (newPassword.equals(confirmPassword)) {
-        changePassword(userId, null, null, newPassword, true);
+        changePassword(userId, null, null, newPassword, isEnhanced);
         clearResetKey(userId);
         ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES,
             Locale.ENGLISH);

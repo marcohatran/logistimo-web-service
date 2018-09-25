@@ -74,7 +74,7 @@ public interface AuthenticationService {
 
   String[] decryptJWT(String token);
 
-  String setNewPassword(String token, String newPassword, String confirmPassword)
+  String setNewPassword(String token, String newPassword, String confirmPassword, boolean isEnhanced)
       throws ServiceException;
 
   String generatePassword(String id);
