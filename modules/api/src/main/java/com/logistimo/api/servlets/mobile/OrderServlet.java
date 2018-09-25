@@ -1440,7 +1440,11 @@ public class OrderServlet extends JsonRestServlet {
           xLogger.severe("Service exception when getting order with ID {0}: {1}",
               uosReq.tid, e.getMessage());
           status = false;
-          message = backendMessages.getString(SYSTEM_ERROR);
+          if(StringUtils.isEmpty(e.getCode())) {
+            message = backendMessages.getString(SYSTEM_ERROR);
+          } else {
+            message = e.getMessage();
+          }
           setSignatureAndStatus(cache, signature, IJobStatus.FAILED);
         } catch (LogiException e) {
           xLogger.severe("Logi exception when updating shipment with ID {0}: {1}",
