@@ -146,8 +146,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
   }
 
   @Autowired
-  @Qualifier("authenticationRestTemplate")
-  private RestTemplate restTemplate;
+  private RestTemplate authenticationRestTemplate;
 
   @Autowired
   public void setTwoFactorAuthenticationService(TwoFactorAuthenticationService twoFactorAuthenticationService) {
@@ -867,7 +866,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
   public boolean verifyCaptcha(String captchaResponse) {
     if(StringUtils.isNotEmpty(captchaResponse)) {
-      return new VerifyCaptchaCommand(restTemplate, captchaResponse).execute();
+      return new VerifyCaptchaCommand(authenticationRestTemplate, captchaResponse).execute();
     }
     return false;
   }

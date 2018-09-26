@@ -35,7 +35,7 @@ import org.springframework.web.client.RestTemplate;
 @Configuration
 public class AuthenticationRestConfig {
 
-  @Bean(name = "authenticationRestTemplate")
+  @Bean
   public RestTemplate authenticationRestTemplate() {
     return RestConfig.restTemplate();
   }

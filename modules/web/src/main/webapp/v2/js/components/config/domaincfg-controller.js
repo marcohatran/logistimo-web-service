@@ -4406,8 +4406,9 @@ domainCfgControllers.controller('CustomReportConfigurationController', ['$scope'
                 $scope.hideLoading();
             });
         };
-        $scope.getGeneralConfiguration();
-
+        $scope.finished = function() {
+            $scope.getGeneralConfiguration();
+        };
         $scope.openReport = function () {
             $scope.open = true;
         };

@@ -13,7 +13,7 @@
 
     <artifactId>logistimo-location-client</artifactId>
     <properties>
-        <build.version>2.7.0</build.version>
+        <build.version>2.8.0</build.version>
     </properties>
     <dependencies>
         <dependency>

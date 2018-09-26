@@ -67,6 +67,8 @@ import com.logistimo.utils.JobUtil;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.StringUtil;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -77,10 +79,8 @@ import java.net.URLEncoder;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -88,20 +88,33 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 
 public class CustomReportsExportMgr {
   public static final String CUSTOMREPORTS_BUCKETNAME = "customreports";
   private static final XLog xLogger = XLog.getLog(CustomReportsExportMgr.class);
-  private static ITaskService taskService = AppFactory.get().getTaskService();
-  private static BlobstoreService blobstoreService = AppFactory.get().getBlobstoreService();
+  private static ITaskService taskService = null;
+  private static BlobstoreService blobstoreService = null;
+
+  private static ITaskService getTaskService() {
+    if(taskService == null) {
+      taskService = AppFactory.get().getTaskService();
+    }
+    return taskService;
+  }
+
+  private static BlobstoreService getBlobstoreService() {
+    if(blobstoreService == null) {
+      blobstoreService = AppFactory.get().getBlobstoreService();
+    }
+    return blobstoreService;
+  }
 
   public static void handleCustomReportsExport(Long domainId, String reportName, Long jobId) {
     xLogger.fine("Entering handleCustomReportsExport, domainId: {0}, reportName: {1}", domainId,
         reportName);
-    // Get the DomainConfig instance
     DomainConfig dc = DomainConfig.getInstance(domainId);
     boolean scheduleExportNow = false;
-    // Get the Custom Reports Configuration from domain config
     CustomReportsConfig crc = dc.getCustomReportsConfig();
     String fileName = null;
     String exportedFileName;
@@ -116,30 +129,21 @@ public class CustomReportsExportMgr {
           scheduleExportNow = true;
         }
       } else {
-        // Get the list of Custom report Config objects
         customReportsConfig = crc.getCustomReportsConfig();
       }
-      if (customReportsConfig == null || customReportsConfig.isEmpty()
-          || customReportsConfig.size() == 0) {
+      if (CollectionUtils.isEmpty(customReportsConfig)) {
         xLogger.info("No custom report templates configured for domain {0}", domainId);
         return;
       }
 
-      // If custom reports are configured, iterate through them.
       for (Config config : customReportsConfig) {
         if (config != null) {
-          // Get the reporting template.
           String templateKey = config.templateKey;
           String templateName = config.templateName;
-          if (templateKey == null || templateKey.isEmpty() || templateName == null || templateName
-              .isEmpty()) {
-            xLogger.warn(
-                "Invalid or null templateName and templateKey in domain {0}. templateName: {1}, templateKey: {2}",
-                domainId, templateName, templateKey);
+          if (StringUtils.isEmpty(templateKey) || StringUtils.isEmpty(templateName)) {
+            xLogger.warn("Empty templateName / templateKey in domain {0}.", domainId);
             continue;
           }
-
-          // Get the uploaded object using templateKey
           try {
             UploadService us = StaticApplicationContext.getBean(UploadServiceImpl.class);
             IUploaded uploaded = us.getUploaded(templateKey);
@@ -150,18 +154,15 @@ public class CustomReportsExportMgr {
               continue;
             }
 
-            // Get the blob key string
             BlobKey blobKeyStr = new BlobKey(uploaded.getBlobKey());
-            if (blobKeyStr == null || blobKeyStr.isEmpty()) {
+            if (blobKeyStr.isEmpty()) {
               xLogger.severe(
                   "Failed to get blobKeyStr for templateName {0} with templateKey {1} in domain {2}",
                   templateName, templateKey, domainId);
               continue;
             }
 
-            // Get the blobKey from the blobKeyStr
-
-            BlobInfo blobInfo = blobstoreService.getBlobInfo(blobKeyStr.getKeyString());
+            BlobInfo blobInfo = getBlobstoreService().getBlobInfo(blobKeyStr.getKeyString());
             if (blobInfo == null) {
               xLogger.severe(
                   "Failed to create BlobInfo object from blobKey {0} for templateName {1} with templateKey {2} in domain {3}",
@@ -171,38 +172,33 @@ public class CustomReportsExportMgr {
 
             String blobFileName = blobInfo.getFilename();
             String fileExtension = getBlobFileExtension(blobFileName);
-            if (fileExtension == null || fileExtension.isEmpty()) {
+            if (StringUtils.isEmpty(fileExtension)) {
               xLogger
                   .severe("Invalid blobFileName {0} for template {1} in domain {2}", blobFileName,
                       templateName, domainId);
-              continue; // Continue the while loop to iterate through the list of customReportsConfig objects
+              continue;
             }
-            // If the template has any other extension other than xls or xlsx, then log an error message and continue the loop.
             if (!(CustomReportConstants.EXTENSION_XLSX.equalsIgnoreCase(fileExtension)
                 || CustomReportConstants.EXTENSION_XLS.equalsIgnoreCase(fileExtension)
                 || CustomReportConstants.EXTENSION_XLSM.equalsIgnoreCase(fileExtension))) {
               xLogger
                   .severe("Invalid blobFileName {0} for template {1} in domain {2}", blobFileName,
                       templateName, domainId);
-              continue; // Continue the while loop to iterate through the list of customReportsConfig objects
+              continue;
             }
-            // Get a BlobstoreInputStream using blobKey
-            InputStream
-                bis =
+            InputStream bis =
                 AppFactory.get().getStorageUtil().readAsBlobstoreInputStream(blobKeyStr);
             if (bis == null) {
               xLogger.severe("Failed to get BlobstoreInputStream for template {0} in domain {1}",
-                  templateName, domainId); // Log a message for that template and continue the loop
-              continue; // Continue the loop
+                  templateName, domainId);
+              continue;
             }
 
             boolean scheduleExport = false;
-            DateRange dateRange;
-            // For every template, get a map of the type to the sheetdata
             Map<String, Map<String, String>> typeSheetdataMap = getTypeSheetdataMap(config);
             xLogger.info("typeSheetdataMap for domain {0} for template {1} is {2}", domainId,
                 templateName, typeSheetdataMap);
-            if (typeSheetdataMap == null || typeSheetdataMap.isEmpty()) {
+            if (MapUtils.isEmpty(typeSheetdataMap)) {
               // This usually does not occur because during upload of a template, at least one type and the corresponding sheet data
               // has to be specified.
               xLogger.severe(
@@ -210,11 +206,11 @@ public class CustomReportsExportMgr {
                   templateName, domainId);
               continue;
             }
-            // Get the typeSheetnameMap from the typeSheetdataMap. This is used by SpreadsheetUtil.clearSheets method
+            // This is used by SpreadsheetUtil.clearSheets method
             Map<String, String> typeSheetnameMap = getTypeSheetnameMap(typeSheetdataMap);
             xLogger.fine("typeSheetnameMap for domain {0} for template {1} is {2}", domainId,
                 templateName, typeSheetnameMap);
-            if (typeSheetnameMap == null || typeSheetnameMap.isEmpty()) {
+            if (MapUtils.isEmpty(typeSheetnameMap)) {
               // This usually does not occur because during upload of a template, at least one type and the corresponding sheet name
               // has to be specified.
               xLogger.severe(
@@ -223,80 +219,51 @@ public class CustomReportsExportMgr {
               continue;
             }
 
-            String
-                fileNameWithDomainName =
-                getFileNameWithDomainName(templateName, domainId);
-            String notificationSubject = null;
-            String body = "";
-            xLogger.fine("fileNameWithDomainName: {0}", fileNameWithDomainName);
-            // ExportType
             String exportType = null;
             String exportTime = null;
 
             // Daily Export
             String dailyTime = config.dailyTime;
-            if (dailyTime != null && !dailyTime.isEmpty()) {
-              // Daily reporting is set.
+            if (StringUtils.isNotEmpty(dailyTime)) {
               exportType = CustomReportConstants.FREQUENCY_DAILY;
-              exportTime = config.dailyTime;
+              exportTime = dailyTime;
             }
             // Weekly Export
             int dayOfTheWeek = config.dayOfWeek;
             if (dayOfTheWeek != 0) {
-              // Weekly reporting is set.
               exportType = CustomReportConstants.FREQUENCY_WEEKLY;
               exportTime = config.weeklyRepGenTime;
             }
-            xLogger.fine("dayOfTheWeek: {0}", dayOfTheWeek);
             // Monthly Export
             int dayOfTheMonth = config.dayOfMonth;
-            xLogger.fine("dayOfTheMonth: {0}", dayOfTheMonth);
             if (dayOfTheMonth != 0) {
-              // Monthly export is set.
               exportType = CustomReportConstants.FREQUENCY_MONTHLY;
               exportTime = config.monthlyRepGenTime;
             }
 
-            // Get the typeDateRangeMap from typeSheetdataMap.
-            Map<String, DateRange>
-                typeDateRangeMap =
+            Map<String, DateRange> typeDateRangeMap =
                 getTypeDateRangeMap(exportType, typeSheetdataMap, dc);
             xLogger.fine("typeDateRangeMap: {0}", typeDateRangeMap);
-            if (typeDateRangeMap == null || typeDateRangeMap.isEmpty()) {
-              // This usually does not occur.
+            if (MapUtils.isEmpty(typeDateRangeMap)) {
               xLogger.severe("Invalid or null typeDateRangeMap for template {0} in domain {1}",
                   templateName, domainId);
               continue;
             }
 
-            // Get the DateRange for the first element in the map.
-            Collection<DateRange> dateRanges = typeDateRangeMap.values();
-            Iterator<DateRange> dateRangesIter = dateRanges.iterator();
-            dateRange = dateRangesIter.next(); // Get the first element in the collection
+            DateRange dateRange = typeDateRangeMap.values().iterator().next();
 
+            String notificationSubject = null;
+            String body = CharacterConstants.EMPTY;
+            String fileNameWithDomainName = getFileNameWithDomainName(templateName, domainId);
             if (dateRange != null) {
               Calendar toDate = dateRange.to;
               if (toDate != null) {
-                if (CustomReportConstants.FREQUENCY_DAILY.equals(exportType)) {
-                  scheduleExport = true;
-                } else if (CustomReportConstants.FREQUENCY_WEEKLY.equals(exportType)) {
-                  // dayOfWeek in config matches with toDate's day of the week then schedule export
-                  if (toDate.get(Calendar.DAY_OF_WEEK) == dayOfTheWeek) {
-                    scheduleExport = true;
-                  }
-                } else if (CustomReportConstants.FREQUENCY_MONTHLY.equals(exportType)) {
-                  if (dayOfTheMonth == toDate.get(Calendar.DAY_OF_MONTH)) {
-                    scheduleExport = true;
-                  }
-                } // end if export type is monthly
-
+                scheduleExport = isScheduleExport(exportType, dayOfTheWeek,
+                    dayOfTheMonth, toDate.getTimeZone(), Calendar.getInstance(), exportTime);
                 if (scheduleExport || scheduleExportNow) {
-//									SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATE_FORMAT_CUSTOMREPORT);
-                  String
-                      formattedToDate =
-                      LocalDateUtil
-                          .formatCustom(toDate.getTime(), Constants.DATE_FORMAT_CUSTOMREPORT,
-                              dc.getTimezone());
+                  String formattedToDate = LocalDateUtil
+                      .formatCustom(toDate.getTime(), Constants.DATE_FORMAT_CUSTOMREPORT,
+                          dc.getTimezone());
                   fileName = fileNameWithDomainName + "_" + formattedToDate;
                   notificationSubject =
                       getNotificationSubject(exportType, templateName, dateRange,
@@ -311,10 +278,9 @@ public class CustomReportsExportMgr {
             if (scheduleExport || scheduleExportNow) {
               // Before scheduling an export, clear the sheets.
               // Empty the relevant sheets from the template. Return the file name of the gcs file which is config.fileName + time stamp at which the sheets were cleared.
-              exportedFileName =
-                  SpreadsheetUtil
-                      .clearSheets(templateName, fileName, fileExtension, typeSheetnameMap, bis,
-                          dc.getLocale(), dc.getTimezone());
+              exportedFileName = SpreadsheetUtil
+                  .clearSheets(templateName, fileName, fileExtension, typeSheetnameMap, bis,
+                      dc.getLocale(), dc.getTimezone());
               xLogger.fine("exportedFileName: {0}", exportedFileName);
               if (exportedFileName != null && !exportedFileName.isEmpty()
                   && notificationSubject != null && !notificationSubject.isEmpty()) {
@@ -348,6 +314,43 @@ public class CustomReportsExportMgr {
     xLogger.fine("Exiting handleCustomReportsExport");
   }
 
+  protected static boolean isScheduleExport(String exportType, int dayOfTheWeek, int dayOfTheMonth,
+                                            TimeZone timezone, Calendar date, String exportTime) {
+    Calendar calendar = (Calendar) date.clone();
+    setCalendarWithExportTime(calendar, exportTime);
+    //WARN: This logger line is required to compute the updateTime in calendar object
+    xLogger.info("Schedule time check: {0}", calendar.getTime());
+    calendar.setTimeZone(timezone);
+    if (CustomReportConstants.FREQUENCY_DAILY.equals(exportType)) {
+      return true;
+    } else if (CustomReportConstants.FREQUENCY_WEEKLY.equals(exportType)) {
+      if (calendar.get(Calendar.DAY_OF_WEEK) == dayOfTheWeek) {
+        return true;
+      }
+    } else if (CustomReportConstants.FREQUENCY_MONTHLY.equals(exportType)) {
+      if (dayOfTheMonth == calendar.get(Calendar.DAY_OF_MONTH)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static void setCalendarWithExportTime(Calendar calendar, String exportTime) {
+    String[] timeOfDay = exportTime.split(":");
+    try {
+      calendar.set(Calendar.SECOND, 0);
+      calendar.set(Calendar.MILLISECOND, 0);
+      if (timeOfDay.length >= 1) {
+        calendar.set(Calendar.HOUR_OF_DAY, Integer.parseInt(timeOfDay[0]));
+      }
+      if (timeOfDay.length == 2) {
+        calendar.set(Calendar.MINUTE, Integer.parseInt(timeOfDay[1]));
+      }
+    } catch (NumberFormatException e) {
+      xLogger.warn("Invalid number for hour or minute in {0}", exportTime);
+    }
+  }
+
   // Private function to get the extension of the blob file.
   private static String getBlobFileExtension(String blobFileName) {
     xLogger.fine("Entering getBlobFileExtension");
@@ -365,42 +368,32 @@ public class CustomReportsExportMgr {
 
   // Private method to get a copy of the config.typeSheetdataMap
   private static Map<String, Map<String, String>> getTypeSheetdataMap(Config config) {
-    xLogger.fine("Entering getTypeSheetdataMap");
     Map<String, Map<String, String>> configTypeSheetDataMap = config.typeSheetDataMap;
-    Map<String, Map<String, String>> typeSheetdataMap = null;
-    if (configTypeSheetDataMap != null && !configTypeSheetDataMap.isEmpty()
-        && configTypeSheetDataMap.size() != 0) {
-      typeSheetdataMap = new LinkedHashMap<>();
-      typeSheetdataMap.putAll(configTypeSheetDataMap);
+    if (MapUtils.isNotEmpty(configTypeSheetDataMap)) {
+      return new LinkedHashMap<>(configTypeSheetDataMap);
     }
-    xLogger.fine("Exiting getTypeSheetdataMap");
-    return typeSheetdataMap;
+    return null;
   }
 
   // Private function to get a map of the type to the sheet name, given a map of type to the sheet data
   private static Map<String, String> getTypeSheetnameMap(
       Map<String, Map<String, String>> typeSheetdataMap) {
     xLogger.fine("Entering typeSheetnameMap");
-    if (typeSheetdataMap == null || typeSheetdataMap.isEmpty() || typeSheetdataMap.size() == 0) {
+    if (MapUtils.isEmpty(typeSheetdataMap)) {
       xLogger.severe("Invalid or null typeSheetdataMap");
       return null;
     }
     Map<String, String> typeSheetnameMap = new LinkedHashMap<>();
     // Get the keys in the typeSheetdataMap and iterate over the keys
-    Set<String> typeSheetdataMapKeys = typeSheetdataMap.keySet();
-    for (String type : typeSheetdataMapKeys) {
-      Map<String, String> sheetData = typeSheetdataMap.get(type);
-      String sheetName = null;
+    for (Map.Entry<String, Map<String, String>> typeSheetdata : typeSheetdataMap.entrySet()) {
+      Map<String, String> sheetData = typeSheetdata.getValue();
       if (sheetData != null) {
-        if (sheetData.containsKey(CustomReportsConfig.SHEETNAME)) {
-          sheetName = sheetData.get(CustomReportsConfig.SHEETNAME);
+        String sheetName = sheetData.get(CustomReportsConfig.SHEETNAME);
+        if (StringUtils.isNotEmpty(sheetName)) {
+          typeSheetnameMap.put(typeSheetdata.getKey(), sheetName);
         }
       }
-      if (sheetName != null && !sheetName.isEmpty()) {
-        typeSheetnameMap.put(type, sheetName);
-      }
     }
-    xLogger.fine("Exiting typeSheetnameMap");
     return typeSheetnameMap;
   }
 
@@ -409,54 +402,45 @@ public class CustomReportsExportMgr {
                                                             Map<String, Map<String, String>> typeSheetdataMap,
                                                             DomainConfig dc) {
     xLogger.fine("Entering getTypeDateRangeMap");
-    if (typeSheetdataMap == null || typeSheetdataMap.isEmpty() || typeSheetdataMap.size() == 0) {
+    if (MapUtils.isEmpty(typeSheetdataMap)) {
       xLogger.severe("Invalid or null typeSheetdataMap");
       return null;
     }
-
     Map<String, DateRange> typeDateRangeMap = new LinkedHashMap<>();
-    // Get the keys in the typeSheetdataMap and iterate over the keys
-    Set<String> typeSheetdataMapKeys = typeSheetdataMap.keySet();
-
-    for (String type : typeSheetdataMapKeys) {
+    for (String type : typeSheetdataMap.keySet()) {
       Map<String, String> sheetData = typeSheetdataMap.get(type);
-      DateRange dateRange = null;
       // If type is inventory/users/entities/materials, get Date Range with default values. Because from date does not matter here.
       // If type is orders/transactions/mnltransactions/transactioncounts/inventorytrends/historicalinventorysnapshot get Date Range based on the sheet data keys
       if (sheetData != null) {
+        DateRange dateRange = null;
         int dataDuration = 0;
         if (CustomReportConstants.TYPE_INVENTORY.equals(type)
             || CustomReportConstants.TYPE_INVENTORYBATCH.equals(type)
-            || CustomReportConstants.TYPE_USERS
-            .equals(type) || CustomReportConstants.TYPE_ENTITIES.equals(type)
+            || CustomReportConstants.TYPE_USERS.equals(type)
+            || CustomReportConstants.TYPE_ENTITIES.equals(type)
             || CustomReportConstants.TYPE_MATERIALS.equals(type)) {
           dateRange =
               getDateRange(exportType, true, dataDuration, CustomReportConstants.FREQUENCY_DAILY,
                   dc);
-        } else if (
-            CustomReportConstants.TYPE_ORDERS.equalsIgnoreCase(type)
+        } else if (CustomReportConstants.TYPE_ORDERS.equalsIgnoreCase(type)
                 || CustomReportConstants.TYPE_TRANSACTIONS.equals(type)
                 || CustomReportConstants.TYPE_MANUALTRANSACTIONS.equals(type)
                 || CustomReportConstants.TYPE_TRANSACTIONCOUNTS.equals(type)
                 || CustomReportConstants.TYPE_INVENTORYTRENDS.equals(type)) {
-          String
-              dataDurationSameAsRepGen =
-              sheetData.get(CustomReportsConfig.DATA_DURATION_SAMEAS_REPGENFREQ);
-          if (CustomReportsConfig.FALSE.equals(dataDurationSameAsRepGen)) {
+          Boolean dataDurationSameAsRepGen =
+              Boolean.parseBoolean(sheetData.get(CustomReportsConfig.DATA_DURATION_SAMEAS_REPGENFREQ));
+          if (!dataDurationSameAsRepGen) {
             dataDuration = Integer.parseInt(sheetData.get(CustomReportsConfig.DATA_DURATION));
           }
           if (CustomReportConstants.TYPE_ORDERS.equalsIgnoreCase(type)
               || CustomReportConstants.TYPE_TRANSACTIONS.equals(type)
               || CustomReportConstants.TYPE_MANUALTRANSACTIONS.equals(type)) {
-            dateRange =
-                getDateRange(exportType, Boolean.parseBoolean(dataDurationSameAsRepGen),
+            dateRange = getDateRange(exportType, dataDurationSameAsRepGen,
                     dataDuration, CustomReportConstants.FREQUENCY_DAILY, dc);
-          } else if (
-              CustomReportConstants.TYPE_TRANSACTIONCOUNTS.equals(type)
+          } else if (CustomReportConstants.TYPE_TRANSACTIONCOUNTS.equals(type)
                   || CustomReportConstants.TYPE_INVENTORYTRENDS.equals(type)) {
             String aggregateFreq = sheetData.get(CustomReportsConfig.AGGREGATEFREQ);
-            dateRange =
-                getDateRange(exportType, Boolean.parseBoolean(dataDurationSameAsRepGen),
+            dateRange = getDateRange(exportType, dataDurationSameAsRepGen,
                     dataDuration, aggregateFreq, dc);
           }
         } else if (CustomReportConstants.TYPE_HISTORICAL_INVENTORYSNAPSHOT.equals(type)) {
@@ -465,12 +449,11 @@ public class CustomReportsExportMgr {
               getDateRange(exportType, false, dataDuration, CustomReportConstants.FREQUENCY_DAILY,
                   dc);
         }
-      }
-      if (dateRange != null) {
-        typeDateRangeMap.put(type, dateRange);
+        if (dateRange != null) {
+          typeDateRangeMap.put(type, dateRange);
+        }
       }
     }
-
     return typeDateRangeMap;
   }
 
@@ -601,7 +584,9 @@ public class CustomReportsExportMgr {
     if (dateRange != null && dateRange.to != null) {
       to = LocalDateUtil.formatCustom(dateRange.to.getTime(), Constants.DATETIME_FORMAT, null);
       params.put("to", to);
-      etaMillis = getScheduleETA(exportTime);
+      final Calendar calendar = Calendar.getInstance();
+      setCalendarWithExportTime(calendar, exportTime);
+      etaMillis = calendar.getTimeInMillis();
       if (etaMillis < (new Date()).getTime()
           || scheduleExportNow) // if schedule time is lesser than current time, run task now
       {
@@ -645,7 +630,7 @@ public class CustomReportsExportMgr {
       xLogger.fine("Before calling TaskScheduler.schedule: params:{0}", params.toString());
       // DEBUG
       // TaskScheduler.schedule( TaskScheduler.QUEUE_EXPORTER, url, params, TaskScheduler.METHOD_POST );
-      taskService
+      getTaskService()
           .schedule(ITaskService.QUEUE_EXPORTER, url, params, null, null, ITaskService.METHOD_POST,
               etaMillis, domainId, null, "CUSTOMREPORT_EXPORT");
     } catch (Exception e) {
@@ -656,28 +641,6 @@ public class CustomReportsExportMgr {
     xLogger.fine("Exiting scheduleExportTask");
   }
 
-  private static long getScheduleETA(String exportTime) {
-    Calendar toCal = GregorianCalendar.getInstance();
-    toCal.setTime(new Date());
-    LocalDateUtil.resetTimeFields(toCal);
-    // Get hour/min.
-    String[] timeOfDay = exportTime.split(":");
-    try {
-      toCal.set(Calendar.SECOND, 0);
-      toCal.set(Calendar.MILLISECOND, 0);
-      if (timeOfDay.length >= 1) {
-        toCal.set(Calendar.HOUR_OF_DAY, Integer.parseInt(timeOfDay[0]));
-      }
-      if (timeOfDay.length == 2) {
-        toCal.set(Calendar.MINUTE, Integer.parseInt(timeOfDay[1]));
-      }
-      xLogger.fine("toCal: {0}", toCal.toString());
-    } catch (NumberFormatException e) {
-      xLogger.warn("Invalid number for hour or minute in {0}", exportTime);
-    }
-    return toCal.getTimeInMillis();
-  }
-
   // Private method to get the date range i.e from and to dates, given the hourOffset in UTC and export type
   private static DateRange getDateRange(String exportType,
                                         boolean dataDurationSameAsRepGenFreq, int dataDuration,
@@ -685,17 +648,12 @@ public class CustomReportsExportMgr {
     DateRange dr = null;
     // Get the date given the hour of the day in hh:mm format
     Calendar toCal = LocalDateUtil.getZeroTime(dc.getTimezone());
-    if (exportType != null && !exportType.isEmpty()) {
+    if (StringUtils.isNotEmpty(exportType)) {
       Calendar fromCal = (Calendar) toCal.clone();
       if (dataDurationSameAsRepGenFreq) {
         if (CustomReportConstants.FREQUENCY_DAILY.equals(exportType)) {
           fromCal.add(Calendar.DATE, -1);
         }
-                                /*
-                                if ( CustomReportsExportMgr.FREQUENCY_WEEKLY.equals( exportType ) ) {
-					fromCal.add( Calendar.DATE, -1 * 7 );
-				}
-				*/
         if (CustomReportConstants.FREQUENCY_WEEKLY.equals(exportType)) {
           if (aggregateFreq != null && !aggregateFreq.isEmpty()) {
             if (CustomReportConstants.FREQUENCY_DAILY.equals(aggregateFreq)) {
@@ -1149,22 +1107,22 @@ public class CustomReportsExportMgr {
   }
 
   public static class CustomReportsExportParams {
-    private static final String TYPE = "ty";
-    private static final String DOMAINID = "dm";
-    private static final String COUNTRY = "cn";
-    private static final String FILENAME = "fn";
-    private static final String LANGUAGE = "ln";
-    private static final String TIMEZONE = "tz";
-    private static final String USERIDS = "uids";
-    private static final String TEMPLATENAME = "tn";
-    private static final String SHEETNAME = "sn";
-    private static final String SIZE = "sz";
-    private static final String SUBJECT = "sbj";
-    private static final String SNAPSHOTDATE = "ssdt";
-    private static final String BODY = "bdy";
+    private static final String TYPE_KEY = "ty";
+    private static final String DOMAINID_KEY = "dm";
+    private static final String COUNTRY_KEY = "cn";
+    private static final String FILENAME_KEY = "fn";
+    private static final String LANGUAGE_KEY = "ln";
+    private static final String TIMEZONE_KEY = "tz";
+    private static final String USERIDS_KEY = "uids";
+    private static final String TEMPLATENAME_KEY = "tn";
+    private static final String SHEETNAME_KEY = "sn";
+    private static final String SIZE_KEY = "sz";
+    private static final String SUBJECT_KEY = "sbj";
+    private static final String SNAPSHOTDATE_KEY = "ssdt";
+    private static final String BODY_KEY = "bdy";
 
-    private static final String JOBID = "jid";
-    private static final String EMAILIDS = "emids";
+    private static final String JOBID_KEY = "jid";
+    private static final String EMAILIDS_KEY = "emids";
 
 
     // All the parameters are mandatory
@@ -1191,79 +1149,78 @@ public class CustomReportsExportMgr {
 
     public CustomReportsExportParams(String customReportsExportParamsJSON) throws JSONException {
       JSONObject json = new JSONObject(customReportsExportParamsJSON);
-      type = json.getString(TYPE);
-      domainId = json.getLong(DOMAINID);
-      locale = new Locale(json.getString(LANGUAGE), json.getString(COUNTRY));
-      timezone = json.getString(TIMEZONE);
+      type = json.getString(TYPE_KEY);
+      domainId = json.getLong(DOMAINID_KEY);
+      locale = new Locale(json.getString(LANGUAGE_KEY), json.getString(COUNTRY_KEY));
+      timezone = json.getString(TIMEZONE_KEY);
       try {
-        userIds = json.getString(USERIDS);
+        userIds = json.getString(USERIDS_KEY);
       } catch (JSONException e) {
         // ignore
       }
-      templateName = json.getString(TEMPLATENAME);
-      sheetName = json.getString(SHEETNAME);
-      fileName = json.getString(FILENAME);
-      subject = json.getString(SUBJECT);
-      size = json.getInt(SIZE);
+      templateName = json.getString(TEMPLATENAME_KEY);
+      sheetName = json.getString(SHEETNAME_KEY);
+      fileName = json.getString(FILENAME_KEY);
+      subject = json.getString(SUBJECT_KEY);
+      size = json.getInt(SIZE_KEY);
       try {
-        snapshotDate = new Date(json.getLong(SNAPSHOTDATE));
-      } catch (JSONException e) {
-        // ignore
-      }
-      try {
-        body = json.getString(BODY);
+        snapshotDate = new Date(json.getLong(SNAPSHOTDATE_KEY));
       } catch (JSONException e) {
         // ignore
       }
       try {
-        emIds = json.getString(EMAILIDS);
+        body = json.getString(BODY_KEY);
       } catch (JSONException e) {
         // ignore
       }
-      jobId = json.getLong(JOBID);
+      try {
+        emIds = json.getString(EMAILIDS_KEY);
+      } catch (JSONException e) {
+        // ignore
+      }
+      jobId = json.getLong(JOBID_KEY);
     }
 
     public String toJSONString() throws JSONException {
       xLogger.fine("Entering CustomReportsExportJson.toJSONString");
       // All attributes are mandatory
       JSONObject json = new JSONObject();
-      json.put(TYPE, type);
-      json.put(DOMAINID, domainId);
-      json.put(LANGUAGE, locale.getLanguage());
-      json.put(COUNTRY, locale.getCountry());
-      json.put(TIMEZONE, timezone);
-      json.put(USERIDS, userIds);
+      json.put(TYPE_KEY, type);
+      json.put(DOMAINID_KEY, domainId);
+      json.put(LANGUAGE_KEY, locale.getLanguage());
+      json.put(COUNTRY_KEY, locale.getCountry());
+      json.put(TIMEZONE_KEY, timezone);
+      json.put(USERIDS_KEY, userIds);
       if (emIds != null) {
-        json.put(EMAILIDS, emIds);
+        json.put(EMAILIDS_KEY, emIds);
       }
-      json.put(TEMPLATENAME, templateName);
-      json.put(SHEETNAME, sheetName);
-      json.put(FILENAME, fileName);
-      json.put(SUBJECT, subject);
-      json.put(SIZE, size);
+      json.put(TEMPLATENAME_KEY, templateName);
+      json.put(SHEETNAME_KEY, sheetName);
+      json.put(FILENAME_KEY, fileName);
+      json.put(SUBJECT_KEY, subject);
+      json.put(SIZE_KEY, size);
       if (body != null) {
-        json.put(BODY, body);
+        json.put(BODY_KEY, body);
       }
       if (snapshotDate != null) {
-        json.put(SNAPSHOTDATE, snapshotDate.getTime());
+        json.put(SNAPSHOTDATE_KEY, snapshotDate.getTime());
       }
-      json.put(JOBID, jobId);
+      json.put(JOBID_KEY, jobId);
       return json.toString();
     }
   }
 
   public static String getFileNameWithDomainName(String fileName, Long domainId) {
-    xLogger.fine("Entering getFileNameWithDomainName");
-    String newFileName = "";
-    DomainsService ds;
-    if (fileName != null && !fileName.isEmpty() && domainId != null) {
+    String newFileName = CharacterConstants.EMPTY;
+    if (StringUtils.isNotEmpty(fileName) && domainId != null) {
       try {
-        ds = StaticApplicationContext.getBean(DomainsServiceImpl.class);
+        DomainsService ds = StaticApplicationContext.getBean(DomainsServiceImpl.class);
         IDomain d = ds.getDomain(domainId);
         String domainName = d.getName();
         if (domainName != null && !domainName.isEmpty()) {
-          domainName = domainName.replace("\"", "_");
-          domainName = domainName.replace("\'", "_");
+          domainName = domainName
+              .replace(CharacterConstants.DOUBLE_QUOTES, CharacterConstants.UNDERSCORE)
+              .replace(CharacterConstants.S_QUOTE, CharacterConstants.UNDERSCORE);
           newFileName += domainName + CustomReportsConfig.SEPARATOR + fileName;
         }
       } catch (Exception e) {
@@ -1272,7 +1229,6 @@ public class CustomReportsExportMgr {
             e.getClass().getName(), fileName, domainId, e.getMessage());
       }
     }
-    xLogger.fine("Exiting getFileNameWithDomainName, newFileName: {0}", newFileName);
     return newFileName;
   }
 

@@ -12,7 +12,7 @@ import org.springframework.web.client.RestTemplate;
 @Configuration
 public class ApprovalsRestClientConfiguration {
 
-  @Bean(name = "approvalsRestTemplate")
+  @Bean
   public RestTemplate approvalsRestTemplate() {
     return RestConfig.restTemplate();
   }

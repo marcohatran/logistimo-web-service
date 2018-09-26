@@ -12,7 +12,7 @@ import org.springframework.web.client.RestTemplate;
 @Configuration
 public class StockRebalancingRestClientConfiguration {
 
-  @Bean(name = "stockRebalancingRestTemplate")
+  @Bean
   public RestTemplate stockRebalancingRestTemplate() {
     return RestConfig.restTemplate();
   }
