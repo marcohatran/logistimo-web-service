@@ -180,9 +180,8 @@ function ReturnsItemInitializer($scope, trnService, $q) {
         trnService.getReasons('ro').then(data => {
             $scope.defaultReason = data.data.defRsn;
             $scope.reasons = [""].concat(data.data.rsns);
-        }).then(
             initItemReasons().then(() => deferred.resolve()).catch(msg => deferred.reject(msg))
-        ).catch(msg => deferred.reject(msg))
+        }).catch(msg => deferred.reject(msg))
             .finally(() => $scope.hideLoading());
         return deferred.promise;
     };
@@ -252,7 +251,8 @@ function ReturnsItemValidator($scope, $timeout) {
 
     //Used in detail and receive
     $scope.validateQuantityReturn = (material, index, isReceive) => {
-        material.returnQuantity = isReceive ? material.received.received_quantity : material.new_return_quantity;
+        material.returnQuantity = isReceive ? (material.received.received_quantity || 0) * 1 :
+        (material.new_return_quantity || 0) * 1;
         return validateQuantity(material, index, false, isReceive);
     };
 
@@ -307,7 +307,8 @@ function ReturnsItemValidator($scope, $timeout) {
 
     //Used in detail and receive
     $scope.validateBatchQuantityReturn = (material, batchMaterial, index, isReceive) => {
-        batchMaterial.returnQuantity = isReceive ? batchMaterial.received.received_quantity : batchMaterial.new_return_quantity;
+        batchMaterial.returnQuantity = isReceive ? (batchMaterial.received.received_quantity || 0) * 1 :
+        (batchMaterial.new_return_quantity || 0) * 1;
         return validateBatchQuantity(material, batchMaterial, index, false, isReceive);
     };
 
@@ -1138,6 +1139,7 @@ function ReceiveReturnsController($scope, returnsService, requestContext) {
 
     let isAllValid = () => {
         let isInvalid = $scope.returnItems.some((returnItem, index) => {
+            returnItem.received.received_quantity = returnItem.received.received_quantity || 0;
             if (returnItem.received.received_quantity > 0) {
                 let isBatch = checkNotNullEmpty(returnItem.batches);
                 if (!isBatch && $scope.validateQuantityReturn(returnItem, index, true)) {
@@ -1202,7 +1204,7 @@ function BatchDetailReturnsController($scope) {
 
     let isAllValid = () => {
         let isInvalid = $scope.orderReturnBatches.some((batchItem, index) => {
-            if (batchItem.return_quantity > 0) {
+            if (batchItem.new_return_quantity > 0) {
                 if ($scope.validateBatchQuantityReturn($scope.returnItem, batchItem, index)) {
                     return true;
                 }

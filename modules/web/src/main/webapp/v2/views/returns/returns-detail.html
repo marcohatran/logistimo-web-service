@@ -414,7 +414,7 @@
                                                             popover-trigger="showpopup">
                                                         <option ng-repeat="reason in item.reasons track by $index"
                                                                 value="{{reason}}"
-                                                                ng-selected="item.returnReason == reason">
+                                                                ng-selected="item.reason == reason">
                                                             {{reason || resourceBundle['select'] + ' ' + resourceBundle['reason.lowercase']}}
                                                         </option>
                                                     </select>

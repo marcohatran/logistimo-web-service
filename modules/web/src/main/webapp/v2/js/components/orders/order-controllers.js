@@ -172,7 +172,18 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
             caption += getFilterTitle(getApprovalStatusLabel($scope.approval_status), $scope.resourceBundle['approval.status']);
             caption += getFilterTitle(checkNullEmpty($scope.entity) ? $scope.etag : "", $scope.resourceBundle['kiosk'] + " " + $scope.resourceBundle['tag.lower']);
             caption += getFilterTitle($scope.otag, $scope.resourceBundle['order'] + " " + $scope.resourceBundle['tag.lower']);
+            if(checkNotNullEmpty($scope.entity)) {
+                caption += getFilterTitle(getTypeLabel($scope.otype), $scope.resourceBundle['order'] + " " + $scope.resourceBundle['type']);
+            }
             return caption;
+        }
+
+        function getTypeLabel(type) {
+            if (type == "sle") {
+                return $scope.resourceBundle['sales.orders'];
+            } else if (type == "prc") {
+                return $scope.resourceBundle['purchase.orders'];
+            }
         }
 
         function getApprovalStatusLabel(status) {
