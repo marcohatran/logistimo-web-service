@@ -1105,7 +1105,7 @@ public class AssetManagementServiceImpl implements AssetManagementService {
     }
     query = pm.newQuery(Constants.JAVAX_JDO_QUERY_SQL, q.toString());
     try {
-      List<Integer> result = (List) query.execute(params.toArray());
+      List<Integer> result = (List) query.executeWithArray(params.toArray());
       for (int i = 0; i < result.size(); i++) {
         if (i != 0) {
           types.append(CharacterConstants.COMMA);
