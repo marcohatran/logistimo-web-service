@@ -537,6 +537,11 @@ material=Matériel
 exports.successfully.scheduled.message=Exportation programmée avec succès, les données seront envoyées à l'adresse e-mail
 exports.failure.message=Une erreur système s'est produite. Veuillez réessayer votre exportation, ou contactez votre administrateur.
 error.fetching.returns.configuration=Erreur lors de la récupération de la configuration des retours
+two.factor.authentication.email.subject={0} - OTP pour la connexion
+two.factor.authentication.email.body=Utilisation {0} comme mot de passe unique (OTP) pour vous connecter à votre compte. Cet OTP est valable 15 minutes.<br/><br/>\
+    Vous recevez cet email car vous (ou quelqu'un d’autre) avez demandé au bureau du Procureur de vous connecter à votre compte. S'il vous plaît ne partagez pas l'OTP avec quelqu'un pour des raisons de sécurité.<br/><br/>\
+    Si le OTP ci-dessus a expiré, vous pouvez renvoyer la demande OTP.<br/><br/>\
+    Si vous n'avez pas soumis cette demande mais que vous recevez encore cet e-mail, veuillez en informer votre superviseur.
 asset.monitored.owners=Propriétaires des actifs surveillés (ID utilisateur séparés par des virgules)
 asset.monitored.maintainers=Mainteneurs des actifs surveillés (ID utilisateur séparés par des virgules)
 asset.monitoring.owners=Propriétaires des actifs de surveillance (ID utilisateur séparés par des virgules)

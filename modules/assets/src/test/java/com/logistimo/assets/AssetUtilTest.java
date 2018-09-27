@@ -25,6 +25,7 @@ package com.logistimo.assets;
 
 import com.logistimo.assets.entity.Asset;
 import com.logistimo.assets.entity.IAsset;
+import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.config.models.AssetSystemConfig;
 import com.logistimo.config.models.ConfigurationException;
 
@@ -36,6 +37,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import static org.junit.Assert.*;
@@ -62,17 +64,19 @@ public class AssetUtilTest {
   public void testGetAssetCapacityForMonitoringAsset() throws ConfigurationException {
     IAsset asset = setAsset("TL001", "nexleaf", "CT5", IAsset.MONITORING_ASSET);
     setAssetSystemConfigData("nexleaf", null, IAsset.MONITORING_ASSET);
-    String assetCapacity = AssetUtil.getAssetCapacity(asset);
-    assertNull(assetCapacity);
+    AssetUtil.Capacity assetCapacity = AssetUtil.getAssetCapacity(asset);
+    assertNull(assetCapacity.qty);
+    assertNull(assetCapacity.met);
   }
 
   @Test
   public void testGetAssetCapacityForMonitoredAsset() throws ConfigurationException {
     IAsset asset = setAsset("ILR-001", "haier", "HBC-200", IAsset.MONITORED_ASSET);
-    setAssetSystemConfigData("HBC-200", "112 Litres", IAsset.MONITORED_ASSET);
-    String assetCapacity = AssetUtil.getAssetCapacity(asset);
+    setAssetSystemConfigData("HBC-200", "112", IAsset.MONITORED_ASSET);
+    AssetUtil.Capacity assetCapacity = AssetUtil.getAssetCapacity(asset);
     assertNotNull(assetCapacity);
-    assertEquals("112 Litres", assetCapacity);
+    assertEquals("112", assetCapacity.qty);
+    assertEquals("Litres", assetCapacity.met);
   }
 
   private IAsset setAsset(String serialId, String vendorId, String model, int monitoringAsset) {
@@ -88,7 +92,7 @@ public class AssetUtilTest {
 
     AssetSystemConfig.Model model = new AssetSystemConfig.Model();
     model.name = modelName;
-    model.capacity = capacity;
+    model.capacityInLitres = capacity;
 
     AssetSystemConfig.Manufacturer manufacturer = new AssetSystemConfig.Manufacturer();
     manufacturer.model = new ArrayList<>(1);

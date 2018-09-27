@@ -23,13 +23,12 @@
 
 package com.logistimo.api.action;
 
-import com.logistimo.api.feedback.EmailManager;
-import com.logistimo.api.feedback.TemplateEmailTask;
+import com.logistimo.communications.service.EmailManager;
+import com.logistimo.communications.service.TemplateEmailTask;
 import com.logistimo.api.models.FeedbackModel;
 import com.logistimo.config.models.ConfigurationException;
 import com.logistimo.config.models.GeneralConfig;
 import com.logistimo.constants.Constants;
-import com.logistimo.constants.SourceConstants;
 import com.logistimo.domains.entity.IDomain;
 import com.logistimo.domains.service.DomainsService;
 import com.logistimo.entity.Feedback;
@@ -143,15 +142,18 @@ public class SubmitFeedbackAction {
     return attributes;
   }
 
-  protected void sendEmail (FeedbackModel model) throws ServiceException,ConfigurationException {
+  protected void sendEmail(FeedbackModel model) throws ServiceException, ConfigurationException {
     //feedback receiver's email address
     String address = getFeedbackAddress();
     //email subject
     String subject = getEmailSubject(model);
     //building email's message body
-    Map<String,Object> attributes = convertToMap(model);
+    Map<String, Object> attributes = convertToMap(model);
     //template email task
-    TemplateEmailTask emailTask = new TemplateEmailTask(VELOCITY_TEMPLATE_PATH, attributes, subject, address, model.getDomainId());
+    TemplateEmailTask
+        emailTask =
+        new TemplateEmailTask(VELOCITY_TEMPLATE_PATH, attributes, subject, address,
+            model.getDomainId());
     EmailManager.enqueueEmailTask(emailTask);
   }
 

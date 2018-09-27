@@ -40,6 +40,7 @@ import com.logistimo.assets.models.DeviceConfigPushPullModel;
 import com.logistimo.assets.models.TemperatureResponse;
 import com.logistimo.assets.service.AssetManagementService;
 import com.logistimo.assets.service.impl.AssetManagementServiceImpl;
+import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.config.models.AssetConfig;
 import com.logistimo.config.models.AssetSystemConfig;
 import com.logistimo.config.models.ConfigurationException;
@@ -56,6 +57,7 @@ import com.logistimo.events.entity.IEvent;
 import com.logistimo.events.exceptions.EventGenerationException;
 import com.logistimo.events.processor.EventPublisher;
 import com.logistimo.logger.XLog;
+import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.http.HttpResponse;
 import com.logistimo.services.http.URLFetchService;
@@ -76,6 +78,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -121,10 +124,25 @@ public class AssetUtil {
   public static final String TAGS = "tags";
   public static final String ASSET_YOM = "yom";
   public static final String CAPACITY = "cc";
+  public static final String QUANTITY = "qty";
+  public static final String METRIC = "met";
   public static final String OWNERS = "ons";
   public static final String MAINTAINERS = "mts";
   private static URLFetchService urlFetchService;
   private static Gson gson = new Gson();
+  private static final String CAPACITY_IN_LITRES = "Litres";
+
+  public static class Capacity {
+    public String qty;
+    public String met;
+
+    public JSONObject getJSONObject() {
+      JSONObject jsonObject = new JSONObject();
+      jsonObject.put(QUANTITY, qty);
+      jsonObject.put(METRIC, met);
+      return jsonObject;
+    }
+  }
 
   private static URLFetchService getURLFetchService() {
     if(urlFetchService == null) {
@@ -269,8 +287,9 @@ public class AssetUtil {
         if (kioskId != null) {
           asset.setKioskId(kioskId);
         }
+        Capacity capacityDetails = getAssetCapacity(asset);
         if(StringUtils.isNotBlank(asset.getModel())) {
-          metaDataMap.put(CAPACITY, getAssetCapacity(asset));
+          metaDataMap.put(CAPACITY, capacityDetails.getJSONObject());
         }
         AssetModel assetModel = AssetUtil.buildAssetModel(domainId, asset, metaDataMap);
         if (variableMap.get(TAGS) != null) {
@@ -1017,7 +1036,9 @@ public class AssetUtil {
     JSONObject jsonObject = new JSONObject();
     try {
       for (String key : metaDataMap.keySet()) {
-        if (metaDataMap.get(key) != null && !((String) metaDataMap.get(key)).isEmpty()) {
+        final Object keyObject = metaDataMap.get(key);
+        final boolean isKeyString = keyObject instanceof String;
+        if (keyObject != null && (!isKeyString || !((String)keyObject).isEmpty())) {
           String keys[] = key.split("\\.");
           JSONObject jsonObjectTmp = jsonObject;
           for (int i = 0; i < keys.length; i++) {
@@ -1238,18 +1259,19 @@ public class AssetUtil {
     return value;
   }
 
-  public static String getAssetCapacity(IAsset asset) throws ConfigurationException {
+  public static Capacity getAssetCapacity(IAsset asset) throws ConfigurationException {
     AssetSystemConfig assetSystemConfig = AssetSystemConfig.getInstance();
     AssetSystemConfig.Asset assetData = assetSystemConfig.assets.get(asset.getType());
+    Capacity capacity = new Capacity();
     if (assetData.type == Asset.MONITORED_ASSET) {
       List<AssetSystemConfig.Model>
           modelList = assetData.getManufacturers().get(asset.getVendorId()).model;
-      for (AssetSystemConfig.Model assetModel : modelList) {
-        if (assetModel.name.equalsIgnoreCase(asset.getModel())) {
-          return assetModel.capacity;
-        }
-      }
+      modelList.stream().filter(model -> model.name.equalsIgnoreCase(asset.getModel())).findFirst()
+          .ifPresent(model1 -> {
+            capacity.qty = model1.capacityInLitres;
+            capacity.met = CAPACITY_IN_LITRES;
+          });
     }
-    return null;
+    return capacity;
   }
 }

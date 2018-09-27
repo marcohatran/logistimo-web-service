@@ -25,6 +25,7 @@ package com.logistimo.api.builders;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
 import com.google.gson.reflect.TypeToken;
 
 import com.logistimo.api.models.AssetBaseModel;
@@ -92,6 +93,7 @@ public class AssetBuilder {
   private static final String DEV = "dev";
   private static final String YOM = "yom";
   private static final String MDL = "mdl";
+  private static final String CAPACITY = "cc";
   private static final Integer MPID_OALL = 99;
 
   GsonBuilder gsonBuilder = new GsonBuilder();
@@ -128,11 +130,13 @@ public class AssetBuilder {
     this.domainsService = domainsService;
   }
 
-  public IAsset buildAsset(AssetModel assetModel, String userId, Boolean isCreate) {
+  public IAsset buildAsset(AssetModel assetModel, String userId, Boolean isCreate)
+      throws ConfigurationException {
     return buildAsset(JDOUtils.createInstance(IAsset.class), assetModel, userId, isCreate);
   }
 
-  public IAsset buildAsset(IAsset asset, AssetModel assetModel, String userId, Boolean isCreate) {
+  public IAsset buildAsset(IAsset asset, AssetModel assetModel, String userId, Boolean isCreate)
+      throws ConfigurationException {
     asset.setSerialId(assetModel.dId);
     asset.setVendorId(assetModel.vId);
     asset.setKioskId(assetModel.kId);
@@ -144,6 +148,9 @@ public class AssetBuilder {
       }
       if(assetModel.meta.getAsJsonObject().getAsJsonObject(DEV).get(MDL) != null) {
         asset.setModel(assetModel.meta.getAsJsonObject().getAsJsonObject(DEV).get(MDL).getAsString());
+          JsonElement jsonElement = AssetUtil.constructDeviceMetaJsonFromMap(
+              Collections.singletonMap(CAPACITY, AssetUtil.getAssetCapacity(asset)));
+          assetModel.meta.getAsJsonObject().add(CAPACITY, jsonElement.getAsJsonObject().get(CAPACITY));
       }
     }
     asset.setNsId(assetModel.dId.toLowerCase().trim());
