@@ -149,7 +149,7 @@ public class AssetBuilder {
       if(assetModel.meta.getAsJsonObject().getAsJsonObject(DEV).get(MDL) != null) {
         asset.setModel(assetModel.meta.getAsJsonObject().getAsJsonObject(DEV).get(MDL).getAsString());
           JsonElement jsonElement = AssetUtil.constructDeviceMetaJsonFromMap(
-              Collections.singletonMap(CAPACITY, AssetUtil.getAssetCapacity(asset)));
+              Collections.singletonMap(CAPACITY, AssetUtil.getAssetCapacity(asset).getJSONObject()));
           assetModel.meta.getAsJsonObject().add(CAPACITY, jsonElement.getAsJsonObject().get(CAPACITY));
       }
     }
