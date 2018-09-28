@@ -1433,7 +1433,7 @@ function ListReturnsController($scope, $location, requestContext, RETURNS, retur
             });
     };
 
-    $scope.init = () => {
+    $scope.init = (initCall) => {
         let entityId = requestContext.getParam("eid");
         if (checkNotNullEmpty(entityId)) {
             if (checkNullEmpty($scope.entity) || $scope.entity.id != parseInt(entityId)) {
@@ -1445,9 +1445,11 @@ function ListReturnsController($scope, $location, requestContext, RETURNS, retur
         $scope.from = parseUrlDate(requestContext.getParam("from"));
         $scope.to = parseUrlDate(requestContext.getParam("to"));
         $scope.orderId = requestContext.getParam("oid");
-        $scope.fetch();
+        if(initCall) {
+            $scope.fetch();
+        }
     };
-    $scope.init();
+    $scope.init(true);
 
     $scope.goToReturn = returnId => $location.path(`/orders/returns/detail/${returnId}`);
 

@@ -223,7 +223,7 @@ public class AssetSystemConfig {
   public Map<String, String> getManufacturersByType(Integer type) {
     return assets.entrySet().stream().filter(assetEntry -> type.equals(assetEntry.getValue().type))
         .flatMap(assetEntry -> assetEntry.getValue().getManufacturers().entrySet().stream())
-        .collect(Collectors.toMap(Entry::getKey, entry -> entry.getValue().name));
+        .collect(Collectors.toMap(Entry::getKey, entry -> entry.getValue().name, (x, y) -> x));
   }
 
   public Map<Integer, String> getAllWorkingStatus() {
