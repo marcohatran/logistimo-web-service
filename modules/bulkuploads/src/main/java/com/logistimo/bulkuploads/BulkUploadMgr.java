@@ -635,7 +635,7 @@ public class BulkUploadMgr {
   private static void checkUsersExistInDomain(String users, Long domainId) {
 
     Set<String> errors = new HashSet<>();
-    Set<String> userIdsSet = getUniqueUserIds(users,CharacterConstants.SEMICOLON);
+    Set<String> userIdsSet = getUniqueUserIds(users,CharacterConstants.COMMA);
     UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
     for (String userId : userIdsSet) {
       try {
