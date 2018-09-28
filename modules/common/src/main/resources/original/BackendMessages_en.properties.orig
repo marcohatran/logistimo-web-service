@@ -549,3 +549,4 @@ asset.monitored.owners=Owners of Monitored asset (comma-separated user IDs)
 asset.monitored.maintainers=Maintainers of Monitored asset (comma-separated user IDs)
 asset.monitoring.owners=Owners of Monitoring asset (comma-separated user IDs)
 asset.monitoring.maintainers=Maintainers of Monitoring asset (comma-separated user IDs)
+metric.litres=Litres

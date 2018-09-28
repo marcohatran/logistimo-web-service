@@ -546,3 +546,4 @@ asset.monitored.owners=Propriétaires des actifs surveillés (ID utilisateur sé
 asset.monitored.maintainers=Mainteneurs des actifs surveillés (ID utilisateur séparés par des virgules)
 asset.monitoring.owners=Propriétaires des actifs de surveillance (ID utilisateur séparés par des virgules)
 asset.monitoring.maintainers=Maintainers of Monitoring asset (ID utilisateur séparé par des virgules)
+metric.litres=Litres
