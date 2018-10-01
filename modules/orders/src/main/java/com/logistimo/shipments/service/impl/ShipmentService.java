@@ -972,7 +972,7 @@ public class ShipmentService implements IShipmentService {
       if (CollectionUtils.isNotEmpty(errors)) {
         StringBuilder errorMsg = new StringBuilder();
         for (ITransaction error : errors) {
-          errorMsg.append("-").append(error.getMessage()).append(MsgUtil.newLine());
+          errorMsg.append("-").append(error.getMessage());
         }
         xLogger.warn("Inventory posting failed {0}", errorMsg.toString());
         throw new ServiceException("T002", errorMsg.toString());
