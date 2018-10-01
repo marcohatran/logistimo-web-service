@@ -1476,8 +1476,8 @@ function ListReturnsController($scope, $location, requestContext, RETURNS, retur
         let {customer, vendor} = getCustomerVendor();
         $scope.showLoading();
         exportService.exportData({
-            customer_id: customer,
-            vendor_id: vendor,
+            entity_id: customer,
+            linked_kid: vendor,
             status: $scope.status,
             from_date: checkNotNullEmpty($scope.from) ? formatDate2Url($scope.from) : undefined,
             end_date: checkNotNullEmpty($scope.to) ? formatDate2Url($scope.to) : undefined,
