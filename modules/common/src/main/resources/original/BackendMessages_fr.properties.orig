@@ -387,14 +387,14 @@ bulk.asset.id=Numéro de série de l'actif surveillé (Obligatoire si le type d'
 manufacturer=Fabricant de l'actif surveillé (obligatoire si le type d'actif et le numéro de série sont fournis)
 model=Modèle de l'actif contrôlé (obligatoire si le numéro de série de l'actif et le fabricant sont fournis)
 asset.type=Type d'actif de l'actif surveillé
-sensor.device.id=Numéro de série de l'enregistreur de température
-sim1=SIM-1 Numéro de téléphone de l'enregistreur de température (+91 <numéro de téléphone>)
-sim1.id=SIM-1 ID de l'enregistreur de température
+sensor.device.id=Numéro de série de l'actif de surveillance
+sim1=Numéro de téléphone SIM-1 de l'actif de surveillance (+91 <numéro de téléphone>)
+sim1.id=SIM-1 ID de l'actif de surveillance
 sim1.ntw.provider=SIM-1 Fournisseur de réseau d'enregistreur de température
-sim2=SIM-2 Numéro de téléphone de l'enregistreur de température (+91 <numéro de téléphone>)
-sim2.id=SIM-2 ID de l'enregistreur de température
+sim2=SIM-2 Numéro de téléphone de l'actif de surveillance (+91 <numéro de téléphone>)
+sim2.id=SIM-2 ID de l'actif de surveillance
 sim2.ntw.provider=SIM-2 Fournisseur de réseau d'enregistreur de température
-imei=IMEI de l'enregistreur de température
+imei=IMEI de l'actif de surveillance
 asset.create.error=Erreur de création actif
 error.doesnotexistindestinationentity=ne pas exister dans l'entité de destination.
 error.adt=date effective de la transaction ne peut être ultérieurement.
@@ -537,3 +537,13 @@ material=Matériel
 exports.successfully.scheduled.message=Exportation programmée avec succès, les données seront envoyées à l'adresse e-mail
 exports.failure.message=Une erreur système s'est produite. Veuillez réessayer votre exportation, ou contactez votre administrateur.
 error.fetching.returns.configuration=Erreur lors de la récupération de la configuration des retours
+two.factor.authentication.email.subject={0} - OTP pour la connexion
+two.factor.authentication.email.body=Utilisation {0} comme mot de passe unique (OTP) pour vous connecter à votre compte. Cet OTP est valable 15 minutes.<br/><br/>\
+    Vous recevez cet email car vous (ou quelqu'un d’autre) avez demandé au bureau du Procureur de vous connecter à votre compte. S'il vous plaît ne partagez pas l'OTP avec quelqu'un pour des raisons de sécurité.<br/><br/>\
+    Si le OTP ci-dessus a expiré, vous pouvez renvoyer la demande OTP.<br/><br/>\
+    Si vous n'avez pas soumis cette demande mais que vous recevez encore cet e-mail, veuillez en informer votre superviseur.
+asset.monitored.owners=Propriétaires des actifs surveillés (ID utilisateur séparés par des virgules)
+asset.monitored.maintainers=Mainteneurs des actifs surveillés (ID utilisateur séparés par des virgules)
+asset.monitoring.owners=Propriétaires des actifs de surveillance (ID utilisateur séparés par des virgules)
+asset.monitoring.maintainers=Maintainers of Monitoring asset (ID utilisateur séparé par des virgules)
+metric.litres=Litres

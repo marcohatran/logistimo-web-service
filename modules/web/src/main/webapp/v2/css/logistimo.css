@@ -3957,11 +3957,6 @@ div[uib-tooltip-html-popup] > .tooltip-arrow {
     align-items: center; /* align vertical */
 }
 
-lg-uib-select .ui-select-multiple input.ui-select-search {
-    width: 100% !important;
-    position: absolute;
-}
-
 .uploadImage{
     height: 191px;
     width: 100%;

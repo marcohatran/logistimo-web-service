@@ -172,7 +172,18 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
             caption += getFilterTitle(getApprovalStatusLabel($scope.approval_status), $scope.resourceBundle['approval.status']);
             caption += getFilterTitle(checkNullEmpty($scope.entity) ? $scope.etag : "", $scope.resourceBundle['kiosk'] + " " + $scope.resourceBundle['tag.lower']);
             caption += getFilterTitle($scope.otag, $scope.resourceBundle['order'] + " " + $scope.resourceBundle['tag.lower']);
+            if(checkNotNullEmpty($scope.entity)) {
+                caption += getFilterTitle(getTypeLabel($scope.otype), $scope.resourceBundle['order'] + " " + $scope.resourceBundle['type']);
+            }
             return caption;
+        }
+
+        function getTypeLabel(type) {
+            if (type == "sle") {
+                return $scope.resourceBundle['sales.orders'];
+            } else if (type == "prc") {
+                return $scope.resourceBundle['purchase.orders'];
+            }
         }
 
         function getApprovalStatusLabel(status) {
@@ -489,8 +500,8 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
 ]);
 
 ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', 'userService', 'domainCfgService',
-    'invService', 'entityService', '$timeout', 'requestContext', '$uibModal', 'trnService', 'conversationService', '$window', 'ORDERSTATUSTEXT', 'approvalService', 'RETURNS', 'returnsService',
-    function ($scope, ordService, ORDER, userService, domainCfgService, invService, entityService, $timeout, requestContext, $uibModal, trnService, conversationService, $window, ORDERSTATUSTEXT, approvalService, RETURNS, returnsService) {
+    'invService', 'entityService', '$timeout', 'requestContext', '$uibModal', 'trnService', 'conversationService', '$window', 'ORDERSTATUSTEXT', 'approvalService', 'RETURNS', 'returnsService', '$q',
+    function ($scope, ordService, ORDER, userService, domainCfgService, invService, entityService, $timeout, requestContext, $uibModal, trnService, conversationService, $window, ORDERSTATUSTEXT, approvalService, RETURNS, returnsService, $q) {
         $scope.ORDER = ORDER;
         $scope.RETURNS = RETURNS;
         $scope.ORDERSTATUSTEXT = ORDERSTATUSTEXT;
@@ -1548,13 +1559,14 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                                 $scope.showWarning("Cannot add " + material.mnm + ". It is not available to customer.");
                                 return;
                             }
-                            continueAddRow(data[0]);
-                            var nr = $scope.order.its[$scope.order.its.length - 1];
-                            nr.vmin = material.reord;
-                            nr.vmax = material.max;
-                            nr.vevent = material.event;
-                            nr.isBa = material.be;
-                            nr.itstk = material.tstk;
+                            continueAddRow(data[0]).then(function(data) {
+                                var nr = $scope.order.its[$scope.order.its.length - 1];
+                                nr.vmin = material.reord;
+                                nr.vmax = material.max;
+                                nr.vevent = material.event;
+                                nr.isBa = material.be;
+                                nr.itstk = material.tstk;
+                            });
                         }
                     );
                     material.dInv = {"stk": material.stk};
@@ -1564,13 +1576,18 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                 }
             }
         };
-        function continueAddRow(material) {
+        var continueAddRow = (material) =>  {
+            let deferred = $q.defer();
             $scope.validBatchStock = undefined;
             if (material.be) {
-                setValidBatchQuantity($scope.order.eid, material);
+                $scope.setValidBatchQuantity($scope.order.eid, material).then(function() {
+                    deferred.resolve();
+                });
             } else {
                 addMaterial(material);
+                deferred.resolve();
             }
+            return deferred.promise;
         };
 
         function addMaterial(material) {
@@ -1634,7 +1651,8 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
             return opoq.toFixed(0);
         }
 
-        function setValidBatchQuantity(eid, material) {
+        $scope.setValidBatchQuantity = (eid, material)  => {
+            let deferred = $q.defer();
             $scope.showLoading();
             invService.getBatchDetail(material.mId, eid, false).then(function (data) {
                 var batchDet = data.data;
@@ -1648,12 +1666,14 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                 }
                 material.validBatchStock = totalStock;
                 addMaterial(material);
+                deferred.resolve();
             }).catch(function error(msg) {
                 $scope.showErrorMsg(msg);
             }).finally(function () {
                 $scope.hideLoading();
             });
-        }
+            return deferred.promise;
+        };
 
         $scope.removeRow = function (index) {
             $scope.exRow.splice(index, 1);

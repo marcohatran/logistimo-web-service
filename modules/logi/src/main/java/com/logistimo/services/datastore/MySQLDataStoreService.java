@@ -188,24 +188,15 @@ public class MySQLDataStoreService extends DataStoreService {
     EntityCursor entityCursor = null;
     if (entityType != null) {
       List<String> columns = getColumns(entityType);
-      Statement statement = null;
-      ResultSet resultSet = null;
-      try {
-        statement = getConnection(entityType).createStatement();
+      // This connection will be closed by calling close in EntityCursor
+      Statement statement = getConnection(entityType).createStatement();
         statement.setFetchSize(20);
-            resultSet =
-            statement.executeQuery(
-                new StringBuilder().append(QueryConstants.SELECT_STAR_FROM).append(CharacterConstants.ACUTE).append(entityType).append(CharacterConstants.ACUTE).toString());
+      // This connection will be closed by calling close in EntityCursor
+      ResultSet resultSet = statement.executeQuery(
+                QueryConstants.SELECT_STAR_FROM + CharacterConstants.ACUTE + entityType
+                    + CharacterConstants.ACUTE);
         entityCursor =
             new EntityCursor(statement, resultSet, columns, getPrimaryKey(entityType), entityType);
-      }finally{
-        if (resultSet != null) {
-          resultSet.close();
-        }
-        if (statement != null) {
-          statement.close();
-        }
-      }
     }
     return entityCursor;
   }

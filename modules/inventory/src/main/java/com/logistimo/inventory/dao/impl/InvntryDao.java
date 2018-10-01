@@ -444,18 +444,18 @@ public class InvntryDao implements IInvntryDao {
       }
 
       if (StringUtils.isNotEmpty(filters.getMaterialQueryText())) {
-        StringBuilder materialSearchText = new StringBuilder("");
+        StringBuilder materialSearchText = new StringBuilder();
         if (QueryConstants.CONTAINS.equals(filters.getMaterialQueryType())) {
           materialSearchText.append(CharacterConstants.PERCENT);
         }
         materialSearchText.append(filters.getMaterialQueryText())
             .append(CharacterConstants.PERCENT);
 
-        queryBuilder.append(" AND (M.UNAME LIKE ?");
-        params.add(materialSearchText.toString());
+        queryBuilder.append(" AND (LOWER(M.NAME) LIKE ?");
+        params.add(materialSearchText.toString().toLowerCase());
         if (StringUtils.isNotEmpty(String.valueOf(filters.includeMaterialDescriptionQuery()))) {
-          queryBuilder.append(" OR M.DESCRIPTION LIKE ?");
-          params.add(materialSearchText.toString());
+          queryBuilder.append(" OR LOWER(M.DESCRIPTION) LIKE ?");
+          params.add(materialSearchText.toString().toLowerCase());
         }
         queryBuilder.append(")");
       }

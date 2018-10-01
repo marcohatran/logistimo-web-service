@@ -417,7 +417,7 @@ public class BulkUploadMgr {
       //Skipping entity details, moving to Fridge details
       i += 5;
       IAsset monitoredAsset = null;
-      Map<String, Object> variableMap = new HashMap<>(5), metaDataMap = new HashMap<>(1);
+      Map<String, Object> variableMap = new HashMap<>(7), metaDataMap = new HashMap<>(1);
       if (i < size) {
         variableMap.put(AssetUtil.ASSET_NAME, tokens[i].trim());
         if (++i < size) {
@@ -429,12 +429,13 @@ public class BulkUploadMgr {
               metaDataMap.put(AssetUtil.DEV_MODEL, tokens[i].trim());
               variableMap.put(AssetUtil.TAGS, tags);
               if(++i < size) {
-                String yom = tokens[i].trim();
-                if(StringUtils.isNotEmpty(yom)){
-                  validateYearOfManufacture(yom, backendMessages);
-                  variableMap.put(ASSET_YOM, yom);
-                  metaDataMap.put(DEV_YOM, yom);
-                }
+                addYearOfManufacture(variableMap,metaDataMap,tokens[i].trim(),backendMessages);
+              }
+              if (++i < size) {
+                addUsersToVariableMap(variableMap,tokens[i].trim(),domainId,AssetUtil.OWNERS);
+              }
+              if (++i < size) {
+                addUsersToVariableMap(variableMap,tokens[i].trim(),domainId,AssetUtil.MAINTAINERS);
               }
               monitoredAsset = AssetUtil.verifyAndRegisterAsset(domainId, sourceUserId, kioskId,
                   variableMap, metaDataMap);
@@ -452,7 +453,7 @@ public class BulkUploadMgr {
       //Processing sensor devices
       IAsset sensorAsset = null;
       if (++i < size) {
-        variableMap = new HashMap<>(5);
+        variableMap = new HashMap<>(7);
         metaDataMap = new HashMap<>(5);
         String serialNumber = tokens[i].trim();
         if (!serialNumber.isEmpty()) {
@@ -501,20 +502,18 @@ public class BulkUploadMgr {
           if (++i < size) {
             manufacturer = tokens[i].trim();
           }
-
           if (++i < size) {
             model = tokens[i].trim();
           }
-
           if (++i < size) {
-            String yom = tokens[i].trim();
-            if(StringUtils.isNotEmpty(yom)){
-              validateYearOfManufacture(yom, backendMessages);
-              variableMap.put(ASSET_YOM, yom);
-              metaDataMap.put(DEV_YOM, yom);
-            }
+            addYearOfManufacture(variableMap,metaDataMap,tokens[i].trim(),backendMessages);
           }
-
+          if (++i < size) {
+            addUsersToVariableMap(variableMap,tokens[i].trim(),domainId,AssetUtil.OWNERS);
+          }
+          if (++i < size) {
+            addUsersToVariableMap(variableMap,tokens[i].trim(),domainId,AssetUtil.MAINTAINERS);
+          }
           if ((StringUtils.isEmpty(manufacturer) && StringUtils.isEmpty(model)) || (
               StringUtils.isNotEmpty(manufacturer) && StringUtils.isNotEmpty(model))) {
             AssetConfig ac = DomainConfig.getInstance(domainId).getAssetConfig();
@@ -610,6 +609,49 @@ public class BulkUploadMgr {
     }
 
     return ec;
+  }
+
+  private static void addYearOfManufacture(Map<String,Object> variableMap,
+                                           Map<String,Object> metaDataMap, String yom, ResourceBundle backendMessages) throws ServiceException {
+    if(StringUtils.isNotEmpty(yom)){
+      validateYearOfManufacture(yom, backendMessages);
+      variableMap.put(ASSET_YOM, yom);
+      metaDataMap.put(DEV_YOM, yom);
+    }
+  }
+
+  private static void addUsersToVariableMap(Map<String,Object> variableMap, String users,Long domainId,String type) throws ServiceException {
+    if (StringUtils.isNotEmpty(users)) {
+      try {
+        checkUsersExistInDomain(users, domainId);
+        variableMap.put(type,
+            new ArrayList<>(getUniqueUserIds(users, CharacterConstants.COMMA)));
+      } catch (Exception e) {
+        throw new ServiceException("Issue with asset users of type : " + (type.equals(AssetUtil.MAINTAINERS) ? "maintainers": "owners"));
+      }
+    }
+  }
+
+  private static void checkUsersExistInDomain(String users, Long domainId) {
+
+    Set<String> errors = new HashSet<>();
+    Set<String> userIdsSet = getUniqueUserIds(users,CharacterConstants.COMMA);
+    UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
+    for (String userId : userIdsSet) {
+      try {
+        if (!as.getUserAccount(userId).getDomainId().equals(domainId)) {
+          errors.add("User with ID " + userId + " does not belong to this domain");
+          continue;
+        }
+      } catch (ObjectNotFoundException e) {
+        errors.add("User with ID '" + userId + "' not found.");
+      }
+    }
+    if (errors.size() > 0) {
+      StringBuilder builder = new StringBuilder();
+      errors.stream().forEach(error ->builder.append(error).append(CharacterConstants.NEWLINE));
+      throw new RuntimeException(builder.toString());
+    }
   }
 
   private static Boolean validateYearOfManufacture(String yearOfManufactureString, ResourceBundle backendMessages)

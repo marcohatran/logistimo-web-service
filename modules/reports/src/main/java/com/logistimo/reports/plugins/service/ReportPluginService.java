@@ -452,7 +452,7 @@ public class ReportPluginService {
     }
     finaliseFilters(viewType, model, retainFilters);
     if(model.filters.containsKey(QueryHelper.LOCATION_BY)) {
-      if(model.filters.containsKey(QueryHelper.DISTRICT)) {
+      if(model.filters.containsKey(QueryHelper.TOKEN + QueryHelper.QUERY_DISTRICT)) {
         model.queryId = model.queryId.replace("RT", "RT_D");
       } else {
         model.queryId = model.queryId.replace("RT", "RT_D_ALL");

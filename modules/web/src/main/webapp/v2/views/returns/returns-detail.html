@@ -414,7 +414,7 @@
                                                             popover-trigger="showpopup">
                                                         <option ng-repeat="reason in item.reasons track by $index"
                                                                 value="{{reason}}"
-                                                                ng-selected="item.returnReason == reason">
+                                                                ng-selected="item.reason == reason">
                                                             {{reason || resourceBundle['select'] + ' ' + resourceBundle['reason.lowercase']}}
                                                         </option>
                                                     </select>
@@ -515,7 +515,7 @@
                                 </tr>
                                 </tbody>
                                 <tbody>
-                                <tr ng-hide="returnItems.length == orderItems.length || !editMode">
+                                <tr ng-hide="returnItems.length == orderItems.length || !editMode || availableReturnItems.length == 0">
                                     <td>
                                         <input type="text"
                                                value="{{newMaterial}}"

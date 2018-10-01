@@ -127,7 +127,6 @@ public class AssetManagementServiceImpl implements AssetManagementService {
       throw new ServiceException("Invalid details for the asset");
     }
     try {
-      validateAssets(asset);
       Query query = pm.newQuery(JDOUtils.getImplClass(IAsset.class));
       query.setFilter("vId == vendorIdParam && nsId == serialIdParam");
       query.declareParameters("String vendorIdParam, String serialIdParam");
@@ -790,47 +789,6 @@ public class AssetManagementServiceImpl implements AssetManagementService {
     return assets;
   }
 
-  /**
-   * Checks whether the serial/model number of monitored asset matches with the format provided in
-   * the configuration
-   */
-  private void validateAssets(IAsset asset) throws ServiceException, IllegalArgumentException {
-    try {
-      AssetSystemConfig asc = AssetSystemConfig.getInstance();
-      AssetSystemConfig.Asset assetData = asc.assets.get(asset.getType());
-      Integer assetType = assetData.type;
-      if (assetType == IAsset.MONITORED_ASSET) {
-        AssetSystemConfig.Manufacturer manc =
-            assetData.getManufacturers().get(asset.getVendorId().toLowerCase());
-        String regex = manc.serialFormat;
-        if (StringUtils.isNotBlank(regex)) {
-          if (!asset.getSerialId().matches(regex)) {
-            final Locale locale = SecurityUtils.getLocale();
-            ResourceBundle messages = Resources.get().getBundle(Constants.MESSAGES, locale);
-            String errorMessage = messages.getString("serialno.format").concat("\n").concat(
-                manc.serialFormatDescription);
-            throw new IllegalArgumentException(errorMessage);
-          }
-        }
-        regex = manc.modelFormat;
-        if (StringUtils.isNotBlank(regex)) {
-          if (!asset.getModel().matches(regex)) {
-            final Locale locale = SecurityUtils.getLocale();
-            ResourceBundle messages = Resources.get().getBundle(Constants.MESSAGES, locale);
-            String errorMessage = messages.getString("modelno.format").concat("\n").concat(
-                manc.modelFormatDescription);
-            throw new IllegalArgumentException(errorMessage);
-          }
-        }
-      }
-    } catch (ConfigurationException e) {
-      xLogger.warn("Error while getting asset system config", e);
-    } catch (IllegalArgumentException e) {
-      xLogger.warn(e.getMessage(), e);
-      throw e;
-    }
-  }
-
   @Override
   public Map<String, Integer> getTemperatureStatus(Long entityId) {
     PersistenceManager pm = null;
@@ -1105,7 +1063,7 @@ public class AssetManagementServiceImpl implements AssetManagementService {
     }
     query = pm.newQuery(Constants.JAVAX_JDO_QUERY_SQL, q.toString());
     try {
-      List<Integer> result = (List) query.execute(params.toArray());
+      List<Integer> result = (List) query.executeWithArray(params.toArray());
       for (int i = 0; i < result.size(); i++) {
         if (i != 0) {
           types.append(CharacterConstants.COMMA);

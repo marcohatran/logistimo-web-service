@@ -113,4 +113,8 @@ public class InventoryModel {
   public int matType = 0; // All
   public boolean onlyNZStk = false;
   public EntityModel em;
+  /**
+   * Tags associated with material
+   */
+  public String materialTags;
 }

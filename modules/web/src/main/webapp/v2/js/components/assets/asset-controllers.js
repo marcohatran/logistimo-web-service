@@ -82,7 +82,7 @@ assetControllers.controller("AddAssetController", ['$scope', '$route', 'assetSer
                     }
                     if($scope.edit && Object.keys($scope.currentManu.model).indexOf($scope.asset.meta.dev.mdl) == -1) {
                         $scope.asset.meta.dev.mdl = undefined;
-                        $scope.asset.meta.cc = undefined;
+                        $scope.asset.meta.cc = {};
                     }
                 }).catch(function(msg){
                     $scope.showErrorMsg(msg);
@@ -150,11 +150,12 @@ assetControllers.controller("AddAssetController", ['$scope', '$route', 'assetSer
         };
 
         $scope.updateCapacity = function(modelName) {
-            $scope.asset.meta.cc = undefined;
+            $scope.asset.meta.cc = {};
             if(MONITORING_ASSET != $scope.asset.typ && checkNotNullEmpty(modelName)) {
                 var model = $scope.currentManu.model;
                 if(!checkNullEmptyObject(model)) {
-                    $scope.asset.meta.cc = model[modelName].capacity;
+                    $scope.asset.meta.cc.qty = model[modelName].capacity;
+                    $scope.asset.meta.cc.met = $scope.resourceBundle['metric.litres'];
                 }
             }
         };
@@ -271,50 +272,11 @@ assetControllers.controller("AddAssetController", ['$scope', '$route', 'assetSer
                 });
             }
         };
-        var errorMsg;
-        $scope.validateAssetMetaData = function(isSerialValidation, isEdit) {
-            if(isSerialValidation && isEdit) {
-                return true;
-            }
-            setAssetData(isSerialValidation);
-            var isMonitoredAsset = ($scope.currentAsset.at == 2);
-            if(isMonitoredAsset && checkNotNullEmpty($scope.assetData.dataFormat)) {
-                var regex = new RegExp($scope.assetData.dataFormat);
-                if (!regex.test($scope.assetData.deviceId)) {
-                    errorMsg = $scope.resourceBundle[$scope.assetData.message].concat("\n").concat($scope.assetData.messageDescription);
-                    if(isSerialValidation) {
-                        $scope.asset.serror = errorMsg;
-                    } else {
-                        $scope.asset.merror = errorMsg;
-                    }
-                    return false;
-                }
-            }
-            return true;
-        };
-        function setAssetData(isSerialValidation) {
-            if(isSerialValidation) {
-                $scope.asset.serror = '';
-                $scope.assetData.dataFormat = $scope.currentManu.serialFormat;
-                $scope.assetData.deviceId = $scope.asset.dId;
-                $scope.assetData.message = 'serialno.format';
-                $scope.assetData.messageDescription = $scope.currentManu.serialFormatDescription;
-            } else {
-                $scope.asset.merror = '';
-                $scope.assetData.dataFormat = $scope.currentManu.modelFormat;
-                $scope.assetData.deviceId = $scope.asset.meta.dev.mdl;
-                $scope.assetData.message = 'modelno.format';
-                $scope.assetData.messageDescription = $scope.currentManu.modelFormatDescription;
-            }
-        }
 
         $scope.constructAsset = function(){
             $scope.serror = false;
             $scope.merror = false;
             errorCount = 0;
-            if(!($scope.validateAssetMetaData(true,$scope.edit) && $scope.validateAssetMetaData())){
-                return false;
-            }
             if(checkNotNullEmpty($scope.asset.kiosk) && checkNotNullEmpty($scope.asset.kiosk.id)){
                 $scope.asset.kId = $scope.asset.kiosk.id;
             }/*else{

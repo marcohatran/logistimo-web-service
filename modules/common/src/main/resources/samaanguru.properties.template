@@ -184,3 +184,5 @@ datanucleus.cache.level2.redis.expirySeconds=86400
 #Authentication Captcha secret key
 captcha.url=https://www.google.com/recaptcha/api/siteverify
 captcha.key=6Le9aWoUAAAAAOyIQiJiSXBvakuwMV0UyTKpPYcL
+
+token.expiry.web.minutes=720

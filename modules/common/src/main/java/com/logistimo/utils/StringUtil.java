@@ -78,7 +78,7 @@ public class StringUtil {
   }
 
   public static String getCSV(Collection<String> list) {
-    return getCSV(list, ",");
+    return getCSV(list, ", ");
   }
 
   public static String getCSV(Collection<String> list, String separator) {

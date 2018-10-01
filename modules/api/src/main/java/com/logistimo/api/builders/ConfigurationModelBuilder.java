@@ -215,6 +215,7 @@ public class ConfigurationModelBuilder {
         model.ufn = userAccount.getFirstName();
       }
       model.unm = userAccount.getUserId();
+      model.utgs = userAccount.getTags() != null ? userAccount.getTags() : Collections.EMPTY_LIST;
       model.dnm = domain.getName();
       model.dId = domain.getId();
       model.lng = userAccount.getLanguage();
@@ -842,7 +843,7 @@ public class ConfigurationModelBuilder {
             AssetConfigModel.Model configModel = new AssetConfigModel.Model();
             configModel.name = model.name;
             configModel.type = model.type;
-            configModel.capacity = model.capacity;
+            configModel.capacity = model.capacityInLitres;
 
             if (acmManc.iC != null && acmManc.iC && assetModelList != null && assetModelList
                 .contains(

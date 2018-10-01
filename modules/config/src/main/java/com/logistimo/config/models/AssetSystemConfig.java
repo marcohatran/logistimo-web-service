@@ -119,20 +119,6 @@ public class AssetSystemConfig {
                       new TypeToken<List<Model>>() {
                       }.getType());
             }
-            if(asset.type == MONITORED_ASSET) {
-              if(mancJSONOBject.has(Manufacturer.MANC_SERIAL_FORMAT)) {
-                manufacturer.serialFormat = mancJSONOBject.getString(Manufacturer.MANC_SERIAL_FORMAT);
-              }
-              if(mancJSONOBject.has(Manufacturer.MANC_MODEL_FORMAT)) {
-                manufacturer.modelFormat = mancJSONOBject.getString(Manufacturer.MANC_MODEL_FORMAT);
-              }
-              if(mancJSONOBject.has(Manufacturer.MANC_SERIAL_FORMAT_DESCRIPTION)) {
-                manufacturer.serialFormatDescription = mancJSONOBject.getString(Manufacturer.MANC_SERIAL_FORMAT_DESCRIPTION);
-              }
-              if(mancJSONOBject.has(Manufacturer.MANC_MODEL_FORMAT_DESCRIPTION)) {
-                manufacturer.modelFormatDescription = mancJSONOBject.getString(Manufacturer.MANC_MODEL_FORMAT_DESCRIPTION);
-              }
-            }
             asset.getManufacturers()
                 .put(mancJSONOBject.getString(Manufacturer.MANC_ID), manufacturer);
           }
@@ -237,7 +223,7 @@ public class AssetSystemConfig {
   public Map<String, String> getManufacturersByType(Integer type) {
     return assets.entrySet().stream().filter(assetEntry -> type.equals(assetEntry.getValue().type))
         .flatMap(assetEntry -> assetEntry.getValue().getManufacturers().entrySet().stream())
-        .collect(Collectors.toMap(Entry::getKey, entry -> entry.getValue().name));
+        .collect(Collectors.toMap(Entry::getKey, entry -> entry.getValue().name, (x, y) -> x));
   }
 
   public Map<Integer, String> getAllWorkingStatus() {
@@ -314,10 +300,6 @@ public class AssetSystemConfig {
     public static final String MANC_NAME = "name";
     public static final String MANC_ID = "id";
     public static final String MANC_MODEL = "model";
-    public static final String MANC_SERIAL_FORMAT = "serialFormat";
-    public static final String MANC_MODEL_FORMAT = "modelFormat";
-    public static final String MANC_SERIAL_FORMAT_DESCRIPTION = "serialFormatDescription";
-    public static final String MANC_MODEL_FORMAT_DESCRIPTION = "modelFormatDescription";
 
     public String name;
     public List<Model> model;
@@ -332,7 +314,7 @@ public class AssetSystemConfig {
     public String type;
     public Feature feature;
     public List<Sensor> sns;
-    public String capacity;
+    public String capacityInLitres;
   }
 
   public static class Sensor {

@@ -70,6 +70,7 @@ import com.logistimo.users.service.UsersService;
 import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.CommonUtils;
 import com.logistimo.utils.LocalDateUtil;
+import com.logistimo.utils.StringUtil;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -474,6 +475,7 @@ public class InventoryBuilder {
     model.atpstk = invntry.getAvailableStock();
     model.tstk = invntry.getInTransitStock();
     model.astk = invntry.getAllocatedStock();
+    model.materialTags = StringUtil.getCSV(material.getTags());
 
     return model;
   }

@@ -312,7 +312,7 @@ public class AuthController {
   AuthModel changePassword(@RequestBody ChangePasswordModel model) {
     if (model != null) {
       try {
-        String successMsg = authenticationService.setNewPassword(model.getKey(), model.getNpd(), model.getCpd());
+        String successMsg = authenticationService.setNewPassword(model.getKey(), model.getNpd(), model.getCpd(), model.isEnhanced());
         return new AuthModel(false, successMsg);
       } catch (ObjectNotFoundException e) {
         xLogger.warn("Error updating password for {0}", model.getUid(), e);

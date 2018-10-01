@@ -127,7 +127,7 @@ logistimoApp.factory('APIService', function ($http, $q, $rootScope) {
                             angular.element(document.body).append(anchor); // Attach to document for FireFox
 
                             anchor.attr({
-                                href: 'data:attachment/csv;charset=utf-8,' + encodeURL(data),
+                                href: 'data:attachment/csv;charset=utf-8,' + encodeURI(data),
                                 target: '_blank',
                                 download: fileName
                             })[0].click();

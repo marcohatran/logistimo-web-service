@@ -1,0 +1,14 @@
+<html>
+<body>
+<p> ${dear} ${user}, <br/> <br/>
+</p>
+
+<p>
+    ${body} <br/> <br/>
+</p>
+
+<p>
+    ${confidentialityNotice}
+</p>
+</body>
+</html>

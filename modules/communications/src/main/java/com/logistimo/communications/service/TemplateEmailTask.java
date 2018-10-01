@@ -21,9 +21,8 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-package com.logistimo.api.feedback;
+package com.logistimo.communications.service;
 
-import com.logistimo.communications.service.EmailService;
 import com.logistimo.logger.XLog;
 
 import org.apache.velocity.Template;

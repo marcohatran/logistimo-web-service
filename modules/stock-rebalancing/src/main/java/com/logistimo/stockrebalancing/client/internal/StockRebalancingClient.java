@@ -5,7 +5,6 @@ import com.logistimo.stockrebalancing.client.config.StockRebalancingClientConfig
 import com.logistimo.stockrebalancing.client.internal.actions.TriggerStockRebalancingCommand;
 import com.logistimo.stockrebalancing.client.internal.models.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -17,15 +16,15 @@ import org.springframework.web.client.RestTemplate;
 public class StockRebalancingClient implements IStockRebalancingClient {
 
   @Autowired
-  @Qualifier("stockRebalancingRestTemplate")
-  private RestTemplate restTemplate;
+  private RestTemplate stockRebalancingRestTemplate;
 
   @Autowired
   private StockRebalancingClientConfiguration configuration;
 
   @Override
   public void triggerStockRebalancing(String domainId, Configuration request) {
-    TriggerStockRebalancingCommand command = new TriggerStockRebalancingCommand(restTemplate,
+    TriggerStockRebalancingCommand command = new TriggerStockRebalancingCommand(
+        stockRebalancingRestTemplate,
         configuration.getPath(), request, domainId);
     command.execute();
   }

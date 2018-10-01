@@ -31,8 +31,10 @@ import com.logistimo.auth.service.AuthProvider;
 import com.logistimo.auth.service.AuthenticationService;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.communications.MessageHandlingException;
+import com.logistimo.communications.service.EmailManager;
 import com.logistimo.communications.service.EmailService;
 import com.logistimo.communications.service.MessageService;
+import com.logistimo.communications.service.TemplateEmailTask;
 import com.logistimo.config.models.BBoardConfig;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.CharacterConstants;
@@ -66,6 +68,7 @@ import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.entity.IUserToken;
 import com.logistimo.users.entity.UserAccount;
 import com.logistimo.users.service.UsersService;
+import com.logistimo.utils.MsgUtil;
 import com.logistimo.utils.PasswordEncoder;
 import com.logistimo.utils.RandomPasswordGenerator;
 
@@ -84,8 +87,11 @@ import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.security.Key;
+import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.InputMismatchException;
@@ -111,15 +117,18 @@ public class AuthenticationServiceImpl implements AuthenticationService {
   private static final String DOMAIN_KEY_SEPARATOR = "_";
   private static final String TOKEN_ACCESS_PREFIX = "at_";
   private static final String BACKEND_MESSAGES = "BackendMessages";
+  private static final String OTP_SUCCESS_MSG1 = "password.otp.success1";
+  private static final String OTP_SUCCESS_MSG2 = "password.otp.success2";
   private static final String RESET_PREFIX = "RESET_";
   private static final String NEW_LINE_HTML = "<br><br>";
   private static ITaskService taskService = AppFactory.get().getTaskService();
   private static final int
       WEB_TOKEN_INACTIVITY_MILLIS =
-      ConfigUtil.getInt(PropertyConstants.TOKEN_EXPIRE_WEB, 30) * 60_000;
+      ConfigUtil.getInt(PropertyConstants.TOKEN_EXPIRE_WEB, 720) * 60_000;
   private static final String TWO_FACTOR_AUTHENTICATION_OTP = "Auth_OTP";
   private static final String OTP = "OTP";
   private static final String JWTKEY = "jwt.key";
+  private static final String TWO_FACTOR_AUTHENTICATION_MAIL_TEMPLATE_PATH = "TwoFactorAuthentication.vm";
 
   private MemcacheService memcacheService;
 
@@ -144,8 +153,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
   }
 
   @Autowired
-  @Qualifier("authenticationRestTemplate")
-  private RestTemplate restTemplate;
+  private RestTemplate authenticationRestTemplate;
 
   @Autowired
   public void setTwoFactorAuthenticationService(TwoFactorAuthenticationService twoFactorAuthenticationService) {
@@ -457,8 +465,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
       }
     } else {
       generateResetPasswordOTP(userId, cache);
-      return backendMessages.getString("password.otp.success1") + " " + account.getFirstName()
-          + backendMessages.getString("password.otp.success2");
+      return backendMessages.getString(OTP_SUCCESS_MSG1) + " " + account.getFirstName()
+          + backendMessages.getString(OTP_SUCCESS_MSG2);
     }
   }
 
@@ -488,8 +496,33 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         backendMessages.getString("otp.generation.success").concat(CharacterConstants.SPACE)
             .concat(userId);
     sendOTP(logMsg, msg, userAccount, backendMessages);
-    return backendMessages.getString("password.otp.success1") + " " + userAccount.getFirstName()
-        + backendMessages.getString("password.otp.success2");
+    send2FAOTPViaEmail(otp, userAccount, backendMessages);
+    return backendMessages.getString(OTP_SUCCESS_MSG1) + " " + userAccount.getFirstName()
+        + backendMessages.getString(OTP_SUCCESS_MSG2);
+  }
+
+  private void send2FAOTPViaEmail(String otp, IUserAccount userAccount,
+                                  ResourceBundle backendMessages)
+      throws MessageHandlingException, IOException {
+    if (StringUtils.isNotBlank(userAccount.getEmail())) {
+
+      String emailSubject = MessageFormat.format(backendMessages.getString(
+          "two.factor.authentication.email.subject"), otp);
+
+      Map<String, Object> emailBodyAttributes = new HashMap<>();
+      emailBodyAttributes.put("dear", backendMessages.getString("password.reset.info.user.name"));
+      emailBodyAttributes.put("user", userAccount.getFirstName());
+      emailBodyAttributes.put("body", MessageFormat
+          .format(backendMessages.getString("two.factor.authentication.email.body"), otp));
+      emailBodyAttributes.put("confidentialityNotice",
+          backendMessages.getString("password.reset.confidentiality.notice"));
+
+      TemplateEmailTask emailTask =
+          new TemplateEmailTask(TWO_FACTOR_AUTHENTICATION_MAIL_TEMPLATE_PATH, emailBodyAttributes,
+              emailSubject, userAccount.getEmail(), userAccount.getDomainId());
+
+      EmailManager.enqueueEmailTask(emailTask);
+    }
   }
 
   private void generateResetPasswordOTP(String userId, MemcacheService cache)
@@ -510,8 +543,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         backendMessages.getString("password.otp.info") + " " + otp + " " + backendMessages
             .getString("password.otp.validity");
     String logMsg =
-        backendMessages.getString("password.otp.success1") + " " + userAccount.getFirstName()
-            + backendMessages.getString("password.otp.success2");
+        backendMessages.getString(OTP_SUCCESS_MSG1) + " " + userAccount.getFirstName()
+            + backendMessages.getString(OTP_SUCCESS_MSG2);
     sendOTP(logMsg, msg, userAccount, backendMessages);
   }
 
@@ -723,7 +756,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
 
   @Override
-  public String setNewPassword(String token, String newPassword, String confirmPassword)
+  public String setNewPassword(String token, String newPassword, String confirmPassword, boolean isEnhanced)
       throws ServiceException {
     if (StringUtils.isNotEmpty(token)) {
       String[] tokens = decryptJWT(token);
@@ -731,7 +764,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         String userId = tokens[0];
         String resetKey = userId + "&&" + tokens[1];
         if (resetKeyMatches(userId, resetKey)) {
-          return validateAndChangePassword(newPassword, confirmPassword, userId);
+          return validateAndChangePassword(newPassword, confirmPassword, userId, isEnhanced);
         } else {
           throw new ValidationException("G015");
         }
@@ -741,10 +774,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
   }
 
   private String validateAndChangePassword(String newPassword, String confirmPassword,
-                                           String userId) throws ServiceException {
+                                           String userId, boolean isEnhanced) throws ServiceException {
     if (StringUtils.isNotEmpty(newPassword) && StringUtils.isNotEmpty(confirmPassword)) {
       if (newPassword.equals(confirmPassword)) {
-        changePassword(userId, null, null, newPassword, true);
+        changePassword(userId, null, null, newPassword, isEnhanced);
         clearResetKey(userId);
         ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES,
             Locale.ENGLISH);
@@ -865,7 +898,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
   public boolean verifyCaptcha(String captchaResponse) {
     if(StringUtils.isNotEmpty(captchaResponse)) {
-      return new VerifyCaptchaCommand(restTemplate, captchaResponse).execute();
+      return new VerifyCaptchaCommand(authenticationRestTemplate, captchaResponse).execute();
     }
     return false;
   }
