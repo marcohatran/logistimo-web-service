@@ -180,9 +180,9 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
 
         function getTypeLabel(type) {
             if (type == "sle") {
-                return $scope.resourceBundle['sales.orders'];
+                return $scope.type == "2" ? $scope.resourceBundle['outgoing']: $scope.resourceBundle['sales.orders'];
             } else if (type == "prc") {
-                return $scope.resourceBundle['purchase.orders'];
+                return $scope.type == "2" ? $scope.resourceBundle['incoming'] : $scope.resourceBundle['purchase.orders'];
             }
         }
 

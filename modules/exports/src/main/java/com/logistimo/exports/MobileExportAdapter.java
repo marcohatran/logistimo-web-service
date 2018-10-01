@@ -72,8 +72,8 @@ public class MobileExportAdapter {
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     requestModel.setDomainId(params.get(MobileExportConstants.DOMAIN_ID_KEY));
-    setEndDate(params, caption, requestModel, backendMessages);
     setFromDate(params, caption, requestModel, backendMessages);
+    setEndDate(params, caption, requestModel, backendMessages);
     setEntityDetails(params, requestModel, caption, backendMessages);
     setMaterialDetails(params, caption, requestModel, backendMessages);
     setExportType(requestModel, params, caption, backendMessages);
