@@ -32,6 +32,7 @@ import com.logistimo.auth.service.AuthorizationService;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.QueryConstants;
+import com.logistimo.constants.SourceConstants;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.domains.entity.IDomainLink;
 import com.logistimo.domains.service.DomainsService;
@@ -63,9 +64,9 @@ import com.logistimo.users.dao.IUserDao;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.entity.IUserDevice;
 import com.logistimo.users.entity.UserAccount;
+import com.logistimo.users.models.ExtUserAccount;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.utils.Counter;
-import com.logistimo.utils.MessageUtil;
 import com.logistimo.utils.PasswordEncoder;
 import com.logistimo.utils.QueryUtil;
 import com.logistimo.utils.StringUtil;
@@ -102,6 +103,8 @@ public class UsersServiceImpl implements UsersService {
 
   private static final XLog xLogger = XLog.getLog(UsersServiceImpl.class);
   private static final String SALT_HASH_SEPARATOR = "####";
+  private static final String MMA = "MMA";
+  private static final String SUCCESS = "SUCCESS";
 
   private ITagDao tagDao;
   private IUserDao userDao;
@@ -1256,15 +1259,14 @@ public class UsersServiceImpl implements UsersService {
   @Override
   public void addEditUserDevice(UserDeviceModel ud) throws ServiceException {
     UserDeviceBuilder builder = new UserDeviceBuilder();
-    IUserDevice userDevice = getUserDevice(ud.userid, ud.appname);
+    IUserDevice userDevice = getUserDevice(ud.getUserId(), ud.getAppName());
     userDevice = builder.buildUserDevice(userDevice, ud);
-    xLogger.fine("Entering createUserDevice");
     PersistenceManager pm = PMF.get().getPersistenceManager();
     try {
       pm.makePersistent(userDevice);
     } catch (Exception e) {
-      xLogger.warn("Issue with add edit user device {}", e.getMessage());
-      throw new ServiceException(e.getMessage(), e);
+      xLogger.warn("Issue with adding user firebase token {0}", e.getMessage(),e);
+      throw new ServiceException("UD002", ud.getUserId());
     } finally {
       pm.close();
     }
@@ -1283,8 +1285,8 @@ public class UsersServiceImpl implements UsersService {
       IUserDevice userDevice = (IUserDevice) query.execute(userid, appname);
       return pm.detachCopy(userDevice);
     } catch (Exception e) {
-      xLogger.severe("{0} while getting user device {1}", e.getMessage(), userid, e);
-      throw new ServiceException("Issue with getting user device for user :" + userid);
+      xLogger.severe("Issue while getting firebase token for user {0}", userid, e);
+      throw new ServiceException("UD001",userid);
     } finally {
       if (pm != null) {
         pm.close();
@@ -1460,6 +1462,41 @@ public class UsersServiceImpl implements UsersService {
       xLogger
           .warn("Error while fetching users for kiosk: {0} for user tag: {1}", objectId, userTags,
               e);
+      throw e;
+    } finally {
+      query.closeAll();
+      pm.close();
+    }
+  }
+
+  public List<ExtUserAccount> eligibleUsersForEventNotification(Long domainId) {
+
+    List<String> parameters = new ArrayList<>();
+    List<ExtUserAccount> users = new ArrayList<>();
+    String querystr = "SELECT U.USERID, U.SDID, U.MOBILEPHONENUMBER, U.EMAIL, UD.TOKEN FROM USERACCOUNT U,"
+        + " USERDEVICE UD WHERE U.USERID = UD.USERID AND U.SDID = ? AND UD.APPNAME = ? AND U.USERID IN "
+        + " (SELECT USERID FROM USERLOGINHISTORY WHERE LGSRC = ? AND STATUS = ?)";
+    parameters.add(String.valueOf(domainId));
+    parameters.add(MMA);
+    parameters.add(String.valueOf(SourceConstants.MMA));
+    parameters.add(SUCCESS);
+    PersistenceManager pm = getPM();
+    Query query = pm.newQuery(Constants.JAVAX_JDO_QUERY_SQL, querystr);
+    try {
+      List list = (List) query.executeWithArray(parameters.toArray());
+      for (Object st : list) {
+        ExtUserAccount model = new ExtUserAccount();
+        model.setUserId((String) ((Object[]) st)[0]);
+        model.setSdId((Long)((Object[]) st)[1]);
+        model.setMobilePhoneNumber((String)((Object[]) st)[2]);
+        model.setEmail((String) ((Object[]) st)[3]);
+        model.setToken((String) ((Object[]) st)[4]);
+        users.add(model);
+      }
+      return users;
+    } catch (Exception e) {
+      xLogger
+          .warn("Error while fetching eligible users for event notification for domain: {0}", domainId, e);
       throw e;
     } finally {
       query.closeAll();

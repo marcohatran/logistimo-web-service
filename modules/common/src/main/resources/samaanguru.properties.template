@@ -153,6 +153,10 @@ stock-rebalancing.schedule.hour=4
 stockrebalancing.url=$STOCKREBALANCING_URL
 stockrebalancing.path=/v1/stock-rebalancing
 
+#notification
+eventnotification.schedule.hour=7
+eventnotification.schedule.minute=30
+eventsummary-service.url=$EVENTSUMMARYSERVICE_URL
 
 #JDO properties
 javax.jdo.PersistenceManagerFactoryClass=org.datanucleus.api.jdo.JDOPersistenceManagerFactory

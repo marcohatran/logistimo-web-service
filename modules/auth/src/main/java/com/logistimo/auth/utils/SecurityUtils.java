@@ -30,6 +30,7 @@ import com.logistimo.config.models.AssetSystemConfig;
 import com.logistimo.config.models.ConfigurationException;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
+import com.logistimo.exception.ForbiddenAccessException;
 import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.logger.XLog;
 import com.logistimo.security.SecureUserDetails;
@@ -213,6 +214,16 @@ public class SecurityUtils {
         cookies[i].setPath("/");
         response.addCookie(cookies[i]);
       }
+    }
+  }
+
+  public static void authorizeAdminTask () {
+    try {
+      if (!isSuperUser()) {
+        throw new ForbiddenAccessException("Forbidden");
+      }
+    } catch (UnauthorizedException ux) {
+      //ignore
     }
   }
 }

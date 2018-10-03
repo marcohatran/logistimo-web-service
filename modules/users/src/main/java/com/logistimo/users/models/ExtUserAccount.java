@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -21,24 +21,23 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
-
-package com.logistimo.api.models;
+package com.logistimo.users.models;
 
 import lombok.Data;
 
+/**
+ * Created by kumargaurav on 18/09/18.
+ */
 @Data
-public class UserDeviceModel {
-  private String userId;
-  private String fcmToken;
-  private String appName;
-  private String createdOn;
-  private String updatedOn;
+public class ExtUserAccount {
 
-  @Override
-  public String toString() {
-    return "UserDeviceModel{" +
-        "userId='" + userId + '\'' +
-        ", appName='" + appName + '\'' +
-        '}';
-  }
+  private String userId;
+
+  private Long sdId;
+
+  private String mobilePhoneNumber;
+
+  private String email;
+
+  private String token;
 }

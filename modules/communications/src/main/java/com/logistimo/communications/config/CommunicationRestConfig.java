@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -21,24 +21,23 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
+package com.logistimo.communications.config;
 
-package com.logistimo.api.models;
+import com.logistimo.rest.client.RestConfig;
 
-import lombok.Data;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestTemplate;
 
-@Data
-public class UserDeviceModel {
-  private String userId;
-  private String fcmToken;
-  private String appName;
-  private String createdOn;
-  private String updatedOn;
+/**
+ * Created by kumargaurav on 13/07/17.
+ */
+@Configuration
+public class CommunicationRestConfig {
 
-  @Override
-  public String toString() {
-    return "UserDeviceModel{" +
-        "userId='" + userId + '\'' +
-        ", appName='" + appName + '\'' +
-        '}';
+  @Bean(name = "commRestTemplate")
+  public RestTemplate locationsRestTemplate() {
+    return RestConfig.restTemplate();
   }
+
 }

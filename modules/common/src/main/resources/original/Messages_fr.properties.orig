@@ -1256,3 +1256,6 @@ gui.theme.default=Défaut
 show.by=Présenter pargui.theme.default=Défaut
 and=et
 bulkupload.users.password.header.tip=Pour connaître les règles de mot de passe reportez-vous à la section 'Conseils pour remplir le fichier de données' de la page de téléchargement groupé.
+event.summary=event_summary
+critical.events=Événements critiques
+good.indicators=Bons indicateurs

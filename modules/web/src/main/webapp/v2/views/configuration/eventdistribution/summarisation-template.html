@@ -26,6 +26,31 @@
     <div class="bizinfo bizinfo-last noMargin">
         <div ng-controller="SummarisationConfigurationController">
             <form class="form-horizontal" role="form">
+                <div class="bgr">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="title-heading">
+                                <div class="capitalize">{{resourceBundle['notification.event.title']}}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-11">
+                            <p class="litetext">
+                                {{resourceBundle['notification.event.description']}}
+                            </p>
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">{{resourceBundle['notification.event.enabletext']}}</label>
+                                <div class="col-sm-9 cbx">
+                                    <div ng-repeat="type in config[subview]['type']">
+                                      <input type="checkbox" checklist-model="config[subview]['notifications']" checklist-value="type" />
+                                        {{resourceBundle['notification.'+subview+'.'+type]}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div class="panel-container bgr mh200" ng-repeat="type in config[subview]['type']">
                     <div class="row">
                         <div class="col-sm-12">

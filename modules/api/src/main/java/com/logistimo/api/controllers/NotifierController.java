@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -23,46 +23,54 @@
 
 package com.logistimo.api.controllers;
 
-import com.logistimo.api.models.UserDeviceModel;
 import com.logistimo.auth.utils.SecurityUtils;
-import com.logistimo.exception.ValidationException;
-import com.logistimo.logger.XLog;
+import com.logistimo.communications.actions.NotifyEventUpdateAction;
+import com.logistimo.communications.actions.ScheduleEventUpdateAction;
 import com.logistimo.services.ServiceException;
-import com.logistimo.users.service.UsersService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 /**
- * Created by yuvaraj on 23/05/17.
+ * Created by kumargaurav on 05/09/18.
  */
 @Controller
-@RequestMapping("/user-device")
-public class UserDeviceController {
+@RequestMapping("/notifications")
+public class NotifierController {
 
-  private static final XLog xLogger = XLog.getLog(UserDeviceController.class);
+  private ScheduleEventUpdateAction scheduleEventUpdateAction;
+
+  private NotifyEventUpdateAction notifyEventUpdateAction;
 
   @Autowired
-  UsersService usersService;
-
-  @RequestMapping(value = "/", method = RequestMethod.POST)
-  public
-  @ResponseBody
-  void addEditUserDevice(@RequestBody UserDeviceModel udModel) throws ServiceException {
-    validate(udModel, SecurityUtils.getUserDetails().getUsername());
-    usersService.addEditUserDevice(udModel);
-    xLogger.info("USER DEVICE for user: {0} STORED SUCCESSFULLY", udModel);
+  public void setScheduleEventUpdateAction(
+      ScheduleEventUpdateAction scheduleEventUpdateAction) {
+    this.scheduleEventUpdateAction = scheduleEventUpdateAction;
   }
 
-  private void validate(UserDeviceModel udModel, String userId) {
-    if ((udModel.getUserId() == null || udModel.getAppName() == null || udModel.getFcmToken() == null)
-        || !userId.equals(udModel.getUserId())) {
-      throw new ValidationException("UD003",new Object[]{null});
-    }
+  @Autowired
+  public void setNotifyEventUpdateAction(
+      NotifyEventUpdateAction notifyEventUpdateAction) {
+    this.notifyEventUpdateAction = notifyEventUpdateAction;
+  }
+
+  @RequestMapping(value = "/schedule-eventupdate", method = RequestMethod.GET)
+  public
+  @ResponseBody
+  void scheduleEventUpdate() throws ServiceException {
+    scheduleEventUpdateAction.invoke();
+  }
+
+  @RequestMapping(value = "/execute-eventupdate", method = RequestMethod.GET)
+  public
+  @ResponseBody
+  void executeEventUpdate(@RequestParam(value = "domain_id") Long domainId) throws ServiceException {
+    SecurityUtils.authorizeAdminTask();
+    notifyEventUpdateAction.invoke(domainId);
   }
 
 }

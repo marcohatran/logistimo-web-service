@@ -116,6 +116,7 @@ public class EventSummaryConfigModel implements Serializable {
     private String type;
     private String category;
     private List<Threshold> thresholds;
+    private Boolean notification = Boolean.FALSE;
 
     public String getType() {
       return type;
@@ -140,6 +141,14 @@ public class EventSummaryConfigModel implements Serializable {
     public void setThresholds(
         List<Threshold> thresholds) {
       this.thresholds = thresholds;
+    }
+
+    public Boolean getNotification() {
+      return notification;
+    }
+
+    public void setNotification(Boolean notification) {
+      this.notification = notification;
     }
   }
 

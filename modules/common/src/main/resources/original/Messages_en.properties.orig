@@ -1272,5 +1272,8 @@ gui.theme.default=Default
 show.by=Show by
 and=and
 bulkupload.users.password.header.tip=For password rules please refer to the 'Tips for filling data file' section on the bulk upload page
+event.summary=event_summary
+critical.events=Critical events
+good.indicators=Good indicators
 
 

@@ -100,6 +100,7 @@ public class StockRebalancingController {
   public
   @ResponseBody
   void automateOrders(@RequestParam(value = "domain_id") Long domainId) throws ServiceException {
+    SecurityUtils.authorizeAdminTask();
     stockRebalancingAction.invoke(domainId);
   }
 

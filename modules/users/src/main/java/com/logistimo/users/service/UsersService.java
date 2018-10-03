@@ -30,6 +30,7 @@ import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.entity.IUserDevice;
+import com.logistimo.users.models.ExtUserAccount;
 
 import java.util.Date;
 import java.util.List;
@@ -146,5 +147,7 @@ public interface UsersService {
   List<IUserAccount> getUsersByIds(List<String> userIds);
 
   List<IUserAccount> getUsersByTag(Long objectId, String objectType, List<String> userTags) throws ServiceException;
+
+  List<ExtUserAccount> eligibleUsersForEventNotification(Long domainId);
 
 }

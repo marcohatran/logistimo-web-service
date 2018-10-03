@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -21,24 +21,18 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
+package com.logistimo.communications.models;
 
-package com.logistimo.api.models;
+import java.io.Serializable;
+import java.util.List;
 
 import lombok.Data;
 
+/**
+ * Created by kumargaurav on 17/09/18.
+ */
 @Data
-public class UserDeviceModel {
-  private String userId;
-  private String fcmToken;
-  private String appName;
-  private String createdOn;
-  private String updatedOn;
+public class EventSummaryResponse implements Serializable {
 
-  @Override
-  public String toString() {
-    return "UserDeviceModel{" +
-        "userId='" + userId + '\'' +
-        ", appName='" + appName + '\'' +
-        '}';
-  }
+  private List<EventSummary> summaries;
 }

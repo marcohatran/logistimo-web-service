@@ -40,9 +40,9 @@ public class UserDeviceBuilder {
     } else {
       userDevice.setUpdatedOn(currentDate);
     }
-    userDevice.setUserId(model.userid);
-    userDevice.setAppname(model.appname);
-    userDevice.setToken(model.token);
+    userDevice.setUserId(model.getUserId());
+    userDevice.setAppname(model.getAppName());
+    userDevice.setToken(model.getFcmToken());
     return userDevice;
   }
 }

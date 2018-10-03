@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Logistimo.
+ * Copyright © 2018 Logistimo.
  *
  * This file is part of Logistimo.
  *
@@ -21,24 +21,36 @@
  * the commercial license, please contact us at opensource@logistimo.com
  */
 
+package com.logistimo.communications.models;
 
-package com.logistimo.api.models;
+import com.google.gson.annotations.SerializedName;
+
+import java.io.Serializable;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
+/**
+ * Created by kumargaurav on 06/09/18.
+ */
 @Data
-public class UserDeviceModel {
-  private String userId;
-  private String fcmToken;
-  private String appName;
-  private String createdOn;
-  private String updatedOn;
+public class EventSummary implements Serializable {
 
-  @Override
-  public String toString() {
-    return "UserDeviceModel{" +
-        "userId='" + userId + '\'' +
-        ", appName='" + appName + '\'' +
-        '}';
-  }
+  private String category;
+  @SerializedName(value = "event_type")
+  private String eventType;
+  @SerializedName(value = "event_id")
+  private String eventId;
+  private String tag;
+  private String name;
+  private String title;
+  private String subtitle;
+  private String text;
+  private String next;
+  private String timestamp;
+  private String type;
+  @SerializedName(value = "object_id")
+  private String objectId;
+  @SerializedName(value = "object_type")
+  private String objectType;
 }

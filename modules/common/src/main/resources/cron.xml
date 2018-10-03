@@ -67,5 +67,11 @@
         <schedule>every day 01:00</schedule>
         <!-- 06:30 AM IST -->
     </cron>
+    <cron>
+        <url>/s2/api/notifications/schedule-eventupdate</url>
+        <description>Event notification update automation</description>
+        <schedule>every day 02:00</schedule>
+        <!-- 07:30 AM IST -->
+    </cron>
 
 </cronentries>

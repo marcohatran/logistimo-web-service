@@ -132,8 +132,12 @@ domainCfgControllers.controller('SummarisationMenuController', ['$scope', 'domai
             if (checkNullEmpty($scope.config[category])) {
                 $scope.config[category] = {};
                 $scope.config[category]['type'] = [];
+                $scope.config[category]['notifications'] = [];
             }
             $scope.config[category]['type'].push(c.event_type);
+            if (c.notification) {
+                $scope.config[category]['notifications'].push(c.event_type);
+            }
             $scope.config[category][c.event_type] = {};
             $scope.config[category][c.event_type]['rows'] = [];
             $scope.config[category][c.event_type]['heading'] = [];
@@ -246,7 +250,15 @@ domainCfgControllers.controller('SummarisationConfigurationController', ['$scope
             event.category = $scope.subview;
             event.event_type = th;
             event.thresholds = thresholds;
+            event.notification = notification(th);
             events.push(event);
+        }
+
+        function notification(type) {
+            var notifications = $scope.config[$scope.subview]['notifications'];
+            return notifications.some(function (notification) {
+                return type == notification;
+            });
         }
 
         $scope.updateConfig = function () {

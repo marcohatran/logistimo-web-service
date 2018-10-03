@@ -45,6 +45,12 @@
         </onException>
 
 
+        <route id="notificationRoute">
+            <from uri="direct:notification"/>
+            <log message="Routing message to notification queue with data ${body}"/>
+            <to uri="activemq:queue:notification"/>
+        </route>
+
         <route id="directRoute">
             <from uri="direct:tasks"/>
             <!--<log message="direct route with ${body.params[action]}"/>-->
