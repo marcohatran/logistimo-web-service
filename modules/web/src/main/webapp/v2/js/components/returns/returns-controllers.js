@@ -1397,9 +1397,11 @@ function ListReturnsController($scope, $location, requestContext, RETURNS, retur
         }
     };
 
-    $scope.$watch('entity', () => {
+    $scope.$watch('entity', (newValue, oldValue) => {
         $scope.initLoad = true;
-        $scope.returnsType = INCOMING;
+        if(!newValue || !oldValue || newValue.id != oldValue.id) {
+            $scope.returnsType = INCOMING;
+        }
     });
 
     $scope.fetch = () => {
@@ -1445,6 +1447,7 @@ function ListReturnsController($scope, $location, requestContext, RETURNS, retur
         $scope.from = parseUrlDate(requestContext.getParam("from"));
         $scope.to = parseUrlDate(requestContext.getParam("to"));
         $scope.orderId = requestContext.getParam("oid");
+        $scope.returnsType = requestContext.getParam("type") || INCOMING;
         if(initCall) {
             $scope.fetch();
         }
@@ -1467,26 +1470,54 @@ function ListReturnsController($scope, $location, requestContext, RETURNS, retur
         $scope.from = undefined;
         $scope.to = undefined;
         $scope.orderId = undefined;
-        $scope.returnsType = OUTGOING;
+        $scope.returnsType = INCOMING;
         $scope.showMore = undefined;
     };
 
-    //This is not used/implemented in export service
-    $scope.exportData = () => {
+    let getFilterStatus = (status) => {
+        switch (status) {
+            case 'op':
+                return 'OPEN';
+            case 'sp':
+                return 'SHIPPED';
+            case 'rd':
+                return 'RECEIVED';
+            case 'cn':
+                return 'CANCELLED';
+        }
+    };
+
+    let getCaption = () => {
+        var caption = getFilterTitle($scope.entity, $scope.resourceBundle['kiosk'], 'nm');
+        caption += getFilterTitle(getFilterStatus($scope.status), $scope.resourceBundle['status']);
+        caption += getFilterTitle(formatDate2Url($scope.from), $scope.resourceBundle['from']);
+        caption += getFilterTitle(formatDate2Url($scope.to), $scope.resourceBundle['to']);
+        caption += getFilterTitle($scope.orderId, $scope.resourceBundle['order.id']);
+        return caption;
+    };
+
+    $scope.exportData = (isInfo) => {
+        if (isInfo) {
+            return {
+                filters: getCaption(),
+                type: $scope.resourceBundle['exports.returns']
+            };
+        }
         let {customer, vendor} = getCustomerVendor();
         $scope.showLoading();
         exportService.exportData({
             entity_id: customer,
             linked_kid: vendor,
-            status: $scope.status,
+            status: getFilterStatus($scope.status),
             from_date: checkNotNullEmpty($scope.from) ? formatDate2Url($scope.from) : undefined,
             end_date: checkNotNullEmpty($scope.to) ? formatDate2Url($scope.to) : undefined,
             order_id: $scope.orderId,
+            type: $scope.orderId,
             titles: {
                 filters: getCaption()
             },
-            module: '',
-            templateId: ''
+            module: 'returns',
+            templateId: 'returns'
         }).then(data => $scope.showSuccess(data.data))
             .catch(msg => $scope.showErrorMsg(msg))
             .finally(() => $scope.hideLoading());

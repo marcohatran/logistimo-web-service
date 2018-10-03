@@ -1227,6 +1227,7 @@ exports.stev=Stock anormal
 exports.transactions=Transactions
 exports.users=Utilisateurs
 exports.manualtransactions=Transactions transférées
+exports.returns=Résultats
 temperature.states.default.exclude=Etats de température à exclure par défaut
 dashboard.overview=Tableau de bord de synthèse
 activity.default.period=Période par défaut pour l'activité
