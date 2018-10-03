@@ -1259,3 +1259,4 @@ bulkupload.users.password.header.tip=Pour connaître les règles de mot de passe
 event.summary=event_summary
 critical.events=Événements critiques
 good.indicators=Bons indicateurs
+return.type=Type de retour

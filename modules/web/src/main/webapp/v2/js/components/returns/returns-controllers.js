@@ -1493,6 +1493,7 @@ function ListReturnsController($scope, $location, requestContext, RETURNS, retur
         caption += getFilterTitle(formatDate2Url($scope.from), $scope.resourceBundle['from']);
         caption += getFilterTitle(formatDate2Url($scope.to), $scope.resourceBundle['to']);
         caption += getFilterTitle($scope.orderId, $scope.resourceBundle['order.id']);
+        caption += getFilterTitle($scope.returnsType, $scope.resourceBundle['return.type']);
         return caption;
     };
 
@@ -1512,7 +1513,7 @@ function ListReturnsController($scope, $location, requestContext, RETURNS, retur
             from_date: checkNotNullEmpty($scope.from) ? formatDate2Url($scope.from) : undefined,
             end_date: checkNotNullEmpty($scope.to) ? formatDate2Url($scope.to) : undefined,
             order_id: $scope.orderId,
-            type: $scope.orderId,
+            type: $scope.returnsType,
             titles: {
                 filters: getCaption()
             },
