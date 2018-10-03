@@ -1493,7 +1493,9 @@ function ListReturnsController($scope, $location, requestContext, RETURNS, retur
         caption += getFilterTitle(formatDate2Url($scope.from), $scope.resourceBundle['from']);
         caption += getFilterTitle(formatDate2Url($scope.to), $scope.resourceBundle['to']);
         caption += getFilterTitle($scope.orderId, $scope.resourceBundle['order.id']);
-        caption += getFilterTitle($scope.returnsType, $scope.resourceBundle['return.type']);
+        if(checkNotNullEmpty($scope.entity)) {
+            caption += getFilterTitle($scope.returnsType, $scope.resourceBundle['return.type']);
+        }
         return caption;
     };
 
