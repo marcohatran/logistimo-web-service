@@ -1044,7 +1044,7 @@ public class SetupDataServlet extends JsonRestServlet {
       passwrd = "";
     }
     csv +=
-        "," + passwrd + "," + passwrd + "," + ht.get(JsonTagsZ.ROLE) + ",\"" + ht
+        "," + passwrd + "," + passwrd + "," + ht.get(JsonTagsZ.ROLE) + "," + CharacterConstants.COMMA + CharacterConstants.COMMA + "\""  + ht
             .get(JsonTagsZ.FIRST_NAME) + "\",";
     // Last name is optional
     if ((value = ht.get(JsonTagsZ.LAST_NAME)) != null && (!value.isEmpty())) {
