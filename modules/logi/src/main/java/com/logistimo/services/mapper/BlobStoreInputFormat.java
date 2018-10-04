@@ -33,6 +33,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Created by charan on 29/09/14.
@@ -50,7 +51,7 @@ public class BlobStoreInputFormat extends InputFormat<BlobstoreRecordKey, byte[]
     InputStream
         stream =
         blobstoreService.getInputStream(getConfiguration().get(IMapredService.PARAM_BLOBKEY));
-    in = new BufferedReader(new InputStreamReader(stream));
+    in = new BufferedReader(new InputStreamReader(stream, StandardCharsets.ISO_8859_1));
   }
 
   @Override
