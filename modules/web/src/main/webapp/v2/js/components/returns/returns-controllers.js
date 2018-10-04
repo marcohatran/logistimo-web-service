@@ -1487,9 +1487,22 @@ function ListReturnsController($scope, $location, requestContext, RETURNS, retur
         }
     };
 
+    let getFilterStatusLabel = (status) => {
+        switch (status) {
+            case 'op':
+                return 'Pending';
+            case 'sp':
+                return 'Shipped';
+            case 'rd':
+                return 'Received';
+            case 'cn':
+                return 'Cancelled';
+        }
+    };
+
     let getCaption = () => {
         var caption = getFilterTitle($scope.entity, $scope.resourceBundle['kiosk'], 'nm');
-        caption += getFilterTitle(getFilterStatus($scope.status), $scope.resourceBundle['status']);
+        caption += getFilterTitle(getFilterStatusLabel($scope.status), $scope.resourceBundle['status']);
         caption += getFilterTitle(formatDate2Url($scope.from), $scope.resourceBundle['from']);
         caption += getFilterTitle(formatDate2Url($scope.to), $scope.resourceBundle['to']);
         caption += getFilterTitle($scope.orderId, $scope.resourceBundle['order.id']);
