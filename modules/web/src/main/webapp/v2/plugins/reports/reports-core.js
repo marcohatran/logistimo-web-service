@@ -43,6 +43,16 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
     }
 }
 
+function getReportWidgetById(id) {
+    for (let widget in reportWidgets) {
+        for (let report of reportWidgets[widget]) {
+            if (report.id == id) {
+                return report;
+            }
+        }
+    }
+}
+
 (function () {
     reportCoreService();
     var DEFAULT_COMPARE_LIMIT = 3;
@@ -322,7 +332,7 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
     ModelFilterController.$inject = ['$scope', '$q', 'assetService'];
     AggregationLastRunTimeController.$inject = ['$scope', 'reportsServiceCore'];
     OrderTypeFilterController.$inject = ['$scope'];
-    ExportController.$inject = ['$scope','$uibModal'];
+    ExportController.$inject = ['$scope','$uibModal','AnalyticsService'];
 
     function ageFilter() {
         function getYears(offset) {
@@ -385,10 +395,11 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
         };
     }
 
-    function ExportController($scope,$uibModal) {
+    function ExportController($scope,$uibModal,AnalyticsService) {
         $scope.mailId = $scope.$parent.$parent.$parent.$parent.mailId;
         $scope.doExport = function() {
             $scope.close();
+            AnalyticsService.logEventAnalytics('Export',getReportWidgetById($scope.reportType).subReport + " Report");
             $scope.callback({reportType: $scope.reportType});
         };
         $scope.close = function () {
