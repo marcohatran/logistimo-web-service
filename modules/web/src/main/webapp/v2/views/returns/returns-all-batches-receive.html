@@ -70,8 +70,8 @@
                                ng-blur="validateBatchQuantityReturn(item, batch, $index, true)">
                         <div ng-show="batch.displayMeta">
                             <span class="litetext text-left" ng-class="{'required' : statusMandatoryConfig.rism}"
-                                  ng-show="(!item.tm && isDef(matstatus)) || (item.tm && isDef(tempmatstatus))">{{resourceBundle['inventory.material.status']}}</span>
-                            <select ng-show="isDef(matstatus) && !item.tm" ng-model="batch.received.material_status" class="form-control"
+                                  ng-show="(!item.tm && isDef(incomingMatstatus)) || (item.tm && isDef(incomingTempmatstatus))">{{resourceBundle['inventory.material.status']}}</span>
+                            <select ng-show="isDef(incomingMatstatus) && !item.tm" ng-model="batch.received.material_status" class="form-control"
                                     ng-class="{'red-border': batch.sinvalidPopup}"
                                     uib-popover="{{batch.sPopupMsg}}"
                                     ng-blur="validateBatchStatusReturn(item, batch, $index, false, true)"
@@ -82,7 +82,7 @@
                                     {{status|| resourceBundle['select'] + " " + resourceBundle['status.lower']}}
                                 </option>
                             </select>
-                            <select ng-show="isDef(tempmatstatus) && item.tm" ng-model="batch.received.material_status" class="form-control"
+                            <select ng-show="isDef(incomingTempmatstatus) && item.tm" ng-model="batch.received.material_status" class="form-control"
                                     ng-class="{'red-border': batch.sinvalidPopup}"
                                     uib-popover="{{batch.sPopupMsg}}"
                                     ng-blur="validateBatchStatusReturn(item, batch, $index, true, true)"
