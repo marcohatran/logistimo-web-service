@@ -38,11 +38,16 @@ public final class RandomPasswordGenerator {
   private static final String LOWERCASE_CHARACTERS = "abcdefghijklmnopqrstuvwxyz";
   private static final String NUMERIC_CHARACTERS = "1234567890";
   private static final String SPECIAL_CHARACTERS = "!#$%&*@_";
-  private static SecureRandom secureRandom = new SecureRandom();
+  private static final SecureRandom secureRandom = new SecureRandom();
 
   /**
-   * Method creates a Random password with 3 lowercase characters,2 uppercase characters,
-   * 1 special character and 2 numbers
+   * Method creates a Random password with
+   * 1 uppercase characters,
+   * 4 lowercase characters,
+   * 2 numbers and
+   * 1 special character (in case {@code isAdmin} is true)
+   *
+   * @param isAdmin - if password is generating for admin or non-admin
    */
   public static String generate(boolean isAdmin) {
     StringBuilder passwordBuilder = new StringBuilder();
