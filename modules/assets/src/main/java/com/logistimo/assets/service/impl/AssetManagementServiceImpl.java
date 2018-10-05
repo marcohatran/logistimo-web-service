@@ -968,7 +968,7 @@ public class AssetManagementServiceImpl implements AssetManagementService {
     ResultSet rs = null;
     try {
       statement = conn.prepareStatement(assetQuery.toString());
-      int i = 0;
+      int i = 1;
       for (Object param : params) {
         statement.setObject(i++, param);
       }
