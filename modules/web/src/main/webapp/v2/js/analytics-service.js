@@ -44,6 +44,13 @@ logistimoApp.factory('AnalyticsService', function ($window) {
                 $window.ga('set', 'page',path);
                 $window.ga('send', 'pageview');
             }
+        },
+        logEventAnalytics : function (category, action, label) {
+            if(checkNotNullEmpty(label)) {
+                $window.ga('send', 'event', category, action,label);
+            } else {
+                $window.ga('send', 'event', category, action);
+            }
         }
     }
 });

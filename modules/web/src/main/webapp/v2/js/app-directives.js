@@ -2400,7 +2400,7 @@ logistimoApp.directive('export', function () {
     };
 });
 
-function ExportController($scope, $uibModal) {
+function ExportController($scope, $uibModal,AnalyticsService) {
 
     const NO_FILTER_TEMPLATE = "You have chosen to export all '{0}'. If needed, please filter the data before you export to ensure faster delivery of the export file. " +
         "Exported data will be emailed to {1}. Continue?";
@@ -2447,6 +2447,7 @@ function ExportController($scope, $uibModal) {
                 $scope.startExport = function () {
                     $scope.$parent.exportIncludeBatch = $scope.exportIncludeBatch;
                     $scope.$parent.fullInventoryExport = $scope.fullInventoryExport;
+                    AnalyticsService.logEventAnalytics('Export',info.type);
                     $scope.doExport();
                 }
             }]
@@ -2524,7 +2525,7 @@ logistimoApp.directive('exportData', function () {
             approvalStatus: '='
 
         },
-        controller: ['$scope', '$uibModal', 'exportService', function ($scope, $uibModal, exportService) {
+        controller: ['$scope', '$uibModal', 'exportService', 'AnalyticsService', function ($scope, $uibModal, exportService, AnalyticsService) {
             $scope.modalInstance = "";
             $scope.ibd = false;
             $scope.constructMsg = function () {
@@ -2858,6 +2859,7 @@ logistimoApp.directive('exportData', function () {
                     });
                 }
                 $scope.ibd = false;
+                AnalyticsService.logEventAnalytics('Export',$scope.exportType)
             };
         }]
     }

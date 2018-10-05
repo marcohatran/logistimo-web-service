@@ -626,7 +626,7 @@
                 }
             );
             $scope.$on("$routeChangeSuccess", function (event,current) {
-                AnalyticsService.logAnalytics(current.$$route.originalPath,$scope.curUserName,$scope.domainName,$scope.curUserTag);
+                AnalyticsService.logAnalytics(pathString(current),$scope.curUserName,$scope.domainName,$scope.curUserTag);
                 if (isRouteRedirect($route)) {
                     return;
                 }
@@ -636,6 +636,15 @@
 
             $scope.initAnalytics = function (user,domain,userTags) {
                 AnalyticsService.logAnalytics(window.location.pathname,user,domain,userTags);
+            }
+
+            function pathString(current) {
+                var path = current.$$route.originalPath;
+                var reportId = current.params.rptid
+                if(path.includes(":rptid") && checkNotNullEmpty(reportId)) {
+                    path = path.replace(":rptid",reportId);
+                }
+                return path;
             }
 
             function isRouteRedirect(route) {
