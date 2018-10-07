@@ -34,7 +34,6 @@ import com.logistimo.assets.models.AssetModels;
 import com.logistimo.assets.service.AssetManagementService;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.config.models.AssetSystemConfig;
-import com.logistimo.config.models.ConfigurationException;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.EventSpec;
 import com.logistimo.config.models.EventsConfig;
@@ -946,7 +945,11 @@ public class AssetManagementServiceImpl implements AssetManagementService {
     }
     if (filters.containsKey("TOKEN_ATYPE")) {
       assetQuery.append(" AND type = ?");
-      params.add(filters.get("TOKEN_ATYPE"));
+      String token_atype = filters.get("TOKEN_ATYPE");
+      if (token_atype.startsWith(CharacterConstants.S_QUOTE)) {
+        token_atype = token_atype.replace(CharacterConstants.S_QUOTE, CharacterConstants.EMPTY);
+      }
+      params.add(token_atype);
     }
     if (filters.containsKey("TOKEN_VID")) {
       assetQuery.append(" AND VID = ?");
