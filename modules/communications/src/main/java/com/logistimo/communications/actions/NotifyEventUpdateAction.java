@@ -57,6 +57,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -68,6 +69,10 @@ public class NotifyEventUpdateAction {
   private static final XLog log = XLog.getLog(NotifyEventUpdateAction.class);
 
   private static final String SYSTEM_USER = "system";
+
+  private static final String CRITICAL_INDICATORS = "critical";
+
+  private static final String PERFORMANCE_INDICATORS = "performance";
 
   private RestTemplate restTemplate;
 
@@ -103,7 +108,7 @@ public class NotifyEventUpdateAction {
     Locale locale = getLocale(getDomainLang(domainId));
     Date today = todayDate();
     List<EventSummary> summaries = response.getSummaries().stream()
-        .filter(summary1 -> isNewEvent(eventDate(summary1.getTimestamp()),today))
+        .filter(summary1 -> isNewEvent(eventDate(summary1.getTimestamp()), today, summary1.getType()))
         .filter(summary -> allowedEvents.contains(summary.getEventId()))
         .collect(Collectors.toList());
     enqueueNotification(summaries,users,locale);
@@ -114,19 +119,27 @@ public class NotifyEventUpdateAction {
     return new GetEventSummaryCommand(restTemplate,domainId, SYSTEM_USER, getDomainLang(domainId)).execute();
   }
 
-  protected boolean isNewEvent(Date dateOfEvent,Date today) {
+  protected boolean isNewEvent(Date dateOfEvent, Date today, String type) {
     if(dateOfEvent == null) {
       return Boolean.FALSE;
     }
-    if(dateOfEvent.compareTo(today) == 0) {
+    if(type.equals(CRITICAL_INDICATORS) && dateOfEvent.compareTo(today) == 0) {
       return Boolean.TRUE;
+    }
+    if(type.equals(PERFORMANCE_INDICATORS)) {
+      long diffInMillis = Math.abs(today.getTime() - dateOfEvent.getTime());
+      long diff = TimeUnit.DAYS.convert(diffInMillis, TimeUnit.MILLISECONDS);
+      if(diff <= 2l) {
+        return Boolean.TRUE;
+      }
+      return Boolean.FALSE;
     }
     return Boolean.FALSE;
   }
 
   protected Date todayDate() {
     Calendar c = Calendar.getInstance();
-    c.set(Calendar.HOUR,0);
+    c.set(Calendar.HOUR_OF_DAY,0);
     c.set(Calendar.MINUTE,0);
     c.set(Calendar.SECOND,0);
     c.set(Calendar.MILLISECOND,0);
