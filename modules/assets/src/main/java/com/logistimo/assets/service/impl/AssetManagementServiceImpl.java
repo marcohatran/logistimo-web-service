@@ -896,6 +896,14 @@ public class AssetManagementServiceImpl implements AssetManagementService {
     return null;
   }
 
+  private String stripTrailingAndLeadingQuotes(String input){
+    if(input.length()>2 && input.charAt(0)=='\'' && input.charAt(input.length()-1)=='\''){
+    return input.substring(1,input.length()-1);
+    }
+    return input;
+  }
+
+
   @Override
   public String getMonitoredAssetIdsForReport(Map<String, String> filters) {
     PersistenceManager pm = PMF.get().getPersistenceManager();
@@ -916,26 +924,26 @@ public class AssetManagementServiceImpl implements AssetManagementService {
       params.add(filters.get("TOKEN_DID"));
       if (filters.containsKey("TOKEN_CN")) {
         kioskQuery.append(" AND K.COUNTRY = ?");
-        params.add(filters.get("TOKEN_CN"));
+        params.add(stripTrailingAndLeadingQuotes(filters.get("TOKEN_CN")));
       }
       if (filters.containsKey("TOKEN_ST")) {
         kioskQuery.append(" AND K.STATE = ?");
-        params.add(filters.get("TOKEN_ST"));
+        params.add(stripTrailingAndLeadingQuotes(filters.get("TOKEN_ST")));
       }
       if (filters.containsKey("TOKEN_DIS")) {
         kioskQuery.append(" AND K.DISTRICT = ?");
-        params.add(filters.get("TOKEN_DIS"));
+        params.add(stripTrailingAndLeadingQuotes(filters.get("TOKEN_DIS")));
       }
       if (filters.containsKey("TOKEN_TALUK")) {
         kioskQuery.append(" AND K.TALUK = ?");
-        params.add(filters.get("TOKEN_TALUK"));
+        params.add(stripTrailingAndLeadingQuotes(filters.get("TOKEN_TALUK")));
       }
       if (filters.containsKey("TOKEN_KID")) {
         kioskQuery.append(" AND K.KIOSKID = ?");
         params.add(filters.get("TOKEN_KID"));
       } else if (filters.containsKey("TOKEN_KTAG")) {
         kioskQuery.append(" AND K.KIOSKID IN (SELECT KT.KIOSKID FROM KIOSK_TAGS KT,TAG T WHERE T.ID = KT.ID AND T.NAME = ?)");
-        params.add(filters.get("TOKEN_KTAG"));
+        params.add(stripTrailingAndLeadingQuotes(filters.get("TOKEN_KTAG")));
       }
       assetQuery.append(kioskQuery);
       assetQuery.append(")");
@@ -946,22 +954,19 @@ public class AssetManagementServiceImpl implements AssetManagementService {
     if (filters.containsKey("TOKEN_ATYPE")) {
       assetQuery.append(" AND type = ?");
       String token_atype = filters.get("TOKEN_ATYPE");
-      if (token_atype.startsWith(CharacterConstants.S_QUOTE)) {
-        token_atype = token_atype.replace(CharacterConstants.S_QUOTE, CharacterConstants.EMPTY);
-      }
-      params.add(token_atype);
+      params.add(stripTrailingAndLeadingQuotes(token_atype));
     }
     if (filters.containsKey("TOKEN_VID")) {
       assetQuery.append(" AND VID = ?");
-      params.add(filters.get("TOKEN_VID"));
+      params.add(stripTrailingAndLeadingQuotes(filters.get("TOKEN_VID")));
     }
     if (filters.containsKey("TOKEN_DMODEL")) {
       assetQuery.append(" AND model = ?");
-      params.add(filters.get("TOKEN_DMODEL"));
+      params.add(stripTrailingAndLeadingQuotes(filters.get("TOKEN_DMODEL")));
     }
     if (filters.containsKey("TOKEN_MYEAR")) {
       assetQuery.append(" AND yom = ?");
-      params.add(filters.get("TOKEN_MYEAR"));
+      params.add(stripTrailingAndLeadingQuotes(filters.get("TOKEN_MYEAR")));
     }
     if (filters.containsKey("TOKEN_SIZE") && filters.containsKey("TOKEN_OFFSET")) {
       assetQuery.append(" LIMIT ? , ?");

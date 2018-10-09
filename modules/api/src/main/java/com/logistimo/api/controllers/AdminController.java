@@ -24,6 +24,7 @@
 package com.logistimo.api.controllers;
 
 import com.logistimo.AppFactory;
+import com.logistimo.api.migrators.ReasonMandatoryConfigMigrator;
 import com.logistimo.api.models.SimulateRequestModel;
 import com.logistimo.api.util.KioskDataSimulator;
 import com.logistimo.auth.SecurityConstants;
@@ -33,6 +34,7 @@ import com.logistimo.config.service.ConfigurationMgmtService;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.events.handlers.EventHandler;
+import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exception.TaskSchedulingException;
 import com.logistimo.exception.ValidationException;
 import com.logistimo.inventory.entity.IInvntry;
@@ -293,6 +295,19 @@ public class AdminController {
       }
     }
     return message;
+  }
+
+  @RequestMapping(value = "/migrate280", method = RequestMethod.GET)
+  public
+  @ResponseBody
+  void migrate280() {
+    ReasonMandatoryConfigMigrator migrator = new ReasonMandatoryConfigMigrator();
+    try {
+      migrator.migrateReasonMandatoryConfig();
+    } catch (Exception e) {
+      xLogger.severe("Exception occurred during reason mandatory configuration migration", e);
+      throw new InvalidServiceException(e);
+    }
   }
 
 
