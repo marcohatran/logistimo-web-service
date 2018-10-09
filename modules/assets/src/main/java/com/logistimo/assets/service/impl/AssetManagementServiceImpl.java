@@ -915,6 +915,7 @@ public class AssetManagementServiceImpl implements AssetManagementService {
         || filters.containsKey("TOKEN_ST")
         || filters.containsKey("TOKEN_DIS")
         || filters.containsKey("TOKEN_TALUK")
+        || filters.containsKey("TOKEN_CITY")
         || filters.containsKey("TOKEN_KID")
         || filters.containsKey("TOKEN_KTAG")) {
       assetQuery.append("AND KID IN (");
@@ -937,6 +938,10 @@ public class AssetManagementServiceImpl implements AssetManagementService {
       if (filters.containsKey("TOKEN_TALUK")) {
         kioskQuery.append(" AND K.TALUK = ?");
         params.add(stripTrailingAndLeadingQuotes(filters.get("TOKEN_TALUK")));
+      }
+      if (filters.containsKey("TOKEN_CITY")) {
+        kioskQuery.append(" AND K.CITY = ?");
+        params.add(stripTrailingAndLeadingQuotes(filters.get("TOKEN_CITY")));
       }
       if (filters.containsKey("TOKEN_KID")) {
         kioskQuery.append(" AND K.KIOSKID = ?");
