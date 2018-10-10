@@ -35,6 +35,7 @@ public enum ReportCompareField {
   STATE("st"),
   DISTRICT("dis"),
   TALUK("tlk"),
+  CITY("cty"),
   ORDER_TAG("otag");
 
   private String value;

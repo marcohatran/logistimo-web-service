@@ -257,6 +257,7 @@ public class QueryHelper {
     if(jsonObject.has(LOCATION_BY)) {
       filters.put(LOCATION_BY, jsonObject.getString(LOCATION_BY));
     }
+
     return filters;
   }
 
@@ -270,7 +271,9 @@ public class QueryHelper {
             .append(CharacterConstants.S_QUOTE)
             .append(CharacterConstants.COMMA);
       }
-      val.setLength(val.length() - 1);
+      if (val.length() != 0) {
+        val.setLength(val.length() - 1);
+      }
       return val.toString();
     } else {
       return CharacterConstants.S_QUOTE + values + CharacterConstants.S_QUOTE;
