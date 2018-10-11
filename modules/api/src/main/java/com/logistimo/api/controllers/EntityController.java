@@ -60,7 +60,6 @@ import com.logistimo.config.models.StockboardConfig;
 import com.logistimo.config.service.ConfigurationMgmtService;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
-import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.domains.entity.IDomain;
 import com.logistimo.domains.service.DomainsService;
@@ -75,9 +74,9 @@ import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.utils.EntityDomainUpdater;
 import com.logistimo.entities.utils.EntityMover;
 import com.logistimo.exception.BadRequestException;
+import com.logistimo.exception.ForbiddenAccessException;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exception.TaskSchedulingException;
-import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.service.InventoryManagementService;
 import com.logistimo.logger.XLog;
@@ -94,7 +93,6 @@ import com.logistimo.services.ServiceException;
 import com.logistimo.services.cache.MemcacheService;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.services.taskqueue.ITaskService;
-import com.logistimo.services.utils.ConfigUtil;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.utils.Counter;
@@ -315,7 +313,7 @@ public class EntityController {
 
       if (k.getName() != null) {
         if (!EntityAuthoriser.authoriseEntity(k.getKioskId())) {
-          throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+          throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
         }
         entitiesService.updateKiosk(k, domainId);
         xLogger.info("AUDITLOG\t{0}\t{1}\tENTITY\t " +
@@ -343,7 +341,7 @@ public class EntityController {
     try {
       Integer permission = EntityAuthoriser.authoriseEntityPerm(entityId);
       if ((skipAuthCheck == null || !skipAuthCheck) && GenericAuthoriser.NO_ACCESS.equals(permission)) {
-        throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+        throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
       }
       IKiosk k = entitiesService.getKiosk(entityId);
       IUserAccount u = null;
@@ -423,7 +421,7 @@ public class EntityController {
     int vendorsCount;
     try {
       if (!EntityAuthoriser.authoriseEntity(entityId)) {
-        throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+        throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
       }
       PageParams pageParams = new PageParams(1);
       customerCount =
@@ -454,10 +452,10 @@ public class EntityController {
         try {
           if (srcEntityId == null || (!EntityAuthoriser.authoriseEntityDomain(sUser, srcEntityId, SecurityUtils.getDomainId())
               && entitiesService.getKioskLink(srcEntityId, IKioskLink.TYPE_VENDOR, entityId) == null)) {
-            throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+            throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
           }
         } catch (ObjectNotFoundException e) {
-          throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+          throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
         }
       }
       IKiosk k = entitiesService.getKiosk(entityId);
@@ -485,7 +483,7 @@ public class EntityController {
     String timezone = sUser.getTimezone();
     try {
       if (!EntityAuthoriser.authoriseEntity(entityId)) {
-        throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+        throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
       }
       PageParams pageParams = null;
       int o = offset == null ? 0 : Integer.parseInt(offset);
@@ -548,7 +546,7 @@ public class EntityController {
       //TODO: Temporary fix. Required for Order listing on a sales order.
       if (!EntityAuthoriser
           .authoriseEntityDomain(sUser, entityId, SecurityUtils.getDomainId())) {
-        throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+        throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
       }
 
       PageParams pageParams = null;
@@ -802,7 +800,7 @@ public class EntityController {
           Permissions perm = k.getPermissions();
           if (perm != null && !perm
               .hasAccess(model.linkType, Permissions.MASTER, Permissions.OP_MANAGE)) {
-            throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+            throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
           }
         }
       }
@@ -879,7 +877,7 @@ public class EntityController {
       PageParams pageParams = new PageParams(navigator.getCursor(offset), offset, size);
       Results results;
       if (!EntityAuthoriser.authoriseEntity(entityId)) {
-        throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+        throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
       }
       if (tag != null) {
         results = inventoryManagementService.getInventoryByKiosk(entityId, tag, pageParams);
@@ -909,7 +907,7 @@ public class EntityController {
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     try {
       if (!EntityAuthoriser.authoriseEntity(entityId)) {
-        throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+        throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
       }
       counts.put("oos", inventoryManagementService.getOutOfStockCounts(entityId));
       counts.put("invSz",
@@ -936,7 +934,7 @@ public class EntityController {
     List<EntitySummaryModel> summaryModelList;
     try {
       if (!EntityAuthoriser.authoriseEntity(entityId)) {
-        throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+        throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
       }
       results = reportsService.getMonthlyUsageStatsForKiosk(domainId, entityId, startDate);
       summaryModelList = entityBuilder.buildStatsMap(results.getResults());
@@ -1193,7 +1191,7 @@ public class EntityController {
     String kioskName;
     try {
       if (!EntityAuthoriser.authoriseEntity(entityId)) {
-        throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+        throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
       }
       kioskName = entitiesService.getKiosk(entityId).getName();
       List<IInvntry> inventories = inventoryManagementService.getInventoryByKiosk(entityId, null).getResults();
@@ -1419,7 +1417,7 @@ public class EntityController {
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     try {
       if (!GenericAuthoriser.authoriseUser(userId)) {
-        throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+        throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
       }
       IUserAccount u = usersService.getUserAccount(userId);
       PageParams pageParams = null;
@@ -1692,7 +1690,7 @@ public class EntityController {
     try {
       if (!EntityAuthoriser.authoriseEntity(eId)) {
         ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-        throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+        throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
       }
       IKiosk k = entitiesService.getKiosk(eId);
       return entityBuilder.buildEntityDomainData(k);
@@ -1818,7 +1816,7 @@ public class EntityController {
     try {
       if (!EntityAuthoriser.authoriseEntity(eId)) {
         ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-        throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+        throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
       }
       IKiosk k = entitiesService.getKiosk(eId);
       if (text == null) {

@@ -48,8 +48,8 @@ import com.logistimo.entities.auth.EntityAuthoriser;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.models.LocationSuggestionModel;
 import com.logistimo.entities.service.EntitiesService;
+import com.logistimo.exception.ForbiddenAccessException;
 import com.logistimo.exception.InvalidServiceException;
-import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.inventory.entity.IInventoryMinMaxLog;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.IInvntryBatch;
@@ -198,7 +198,7 @@ public class InventoryController {
     String timezone = dc.getTimezone();
     try {
       if (!EntityAuthoriser.authoriseInventoryAccess(sUser, entityId)) {
-        throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+        throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
       }
       int numTotalInv = Counter.getMaterialCounter(domainId, entityId, tag).getCount();
       Navigator navigator;

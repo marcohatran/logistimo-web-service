@@ -42,6 +42,7 @@ import com.logistimo.entity.comparator.LocationComparator;
 import com.logistimo.events.entity.IEvent;
 import com.logistimo.events.exceptions.EventGenerationException;
 import com.logistimo.events.processor.EventPublisher;
+import com.logistimo.exception.ForbiddenAccessException;
 import com.logistimo.exception.HttpBadRequestException;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exception.SystemException;
@@ -216,12 +217,12 @@ public class UsersServiceImpl implements UsersService {
       try {
         if (!authorizationService.authoriseUpdateKiosk(
             account.getRegisteredBy(), domainId)) {
-          throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+          throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
         }
         tx.begin();
         IUserAccount registeringUser = getUserAccount(account.getRegisteredBy());
         if(SecurityUtil.compareRoles(registeringUser.getRole(),account.getRole()) < 0){
-          throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+          throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
         }
         @SuppressWarnings("unused")
         IUserAccount user = JDOUtils.getObjectById(IUserAccount.class, accountId, pm);
@@ -554,14 +555,14 @@ public class UsersServiceImpl implements UsersService {
     ResourceBundle backendMessages = Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
     try {
       if (!authorizationService.authoriseUpdateKiosk(updatedBy, account.getDomainId())) {
-        throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+        throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
       }
       tx.begin();
       //First check if the user already exists in the database
       IUserAccount user = JDOUtils.getObjectById(IUserAccount.class, account.getUserId(), pm);
       IUserAccount registeringUser = getUserAccount(updatedBy);
       if(SecurityUtil.compareRoles(registeringUser.getRole(),user.getRole()) < 0){
-        throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+        throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
       }
       //location check
       int locindex = new LocationComparator().compare(user, account);
@@ -637,7 +638,7 @@ public class UsersServiceImpl implements UsersService {
       xLogger.warn("updateAccount: FAILED!! User {0} does not exist in the database",
           account.getUserId());
       exception = e;
-    } catch(UnauthorizedException e){
+    } catch(UnauthorizedException | ForbiddenAccessException e){
       throw e;
     }catch (Exception e) {
       exception = e;
@@ -738,7 +739,7 @@ public class UsersServiceImpl implements UsersService {
         ResourceBundle
             backendMessages =
             Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
-        throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+        throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
       }
       for (String accountId : accountIds) {
         try {

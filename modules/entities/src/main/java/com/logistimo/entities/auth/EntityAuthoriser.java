@@ -31,7 +31,7 @@ import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.entity.IKioskLink;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
-import com.logistimo.exception.UnauthorizedException;
+import com.logistimo.exception.ForbiddenAccessException;
 import com.logistimo.pagination.Results;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
@@ -146,7 +146,7 @@ public class EntityAuthoriser {
     try {
       return authoriseEntity(entityId);
     } catch (ServiceException e) {
-      throw new UnauthorizedException("G002");
+      throw new ForbiddenAccessException("G002");
     }
   }
 }

@@ -51,10 +51,10 @@ import com.logistimo.entities.models.UserEntitiesModel;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entity.IMessageLog;
 import com.logistimo.exception.BadRequestException;
+import com.logistimo.exception.ForbiddenAccessException;
 import com.logistimo.exception.InvalidDataException;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exception.SystemException;
-import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.logger.XLog;
 import com.logistimo.models.AuthRequest;
 import com.logistimo.models.ICounter;
@@ -208,7 +208,7 @@ public class UsersController {
       PageParams pageParams = new PageParams(navigator.getCursor(offset), offset, size);
       if (SecurityConstants.ROLE_SUPERUSER.equals(role) && !sUser.getRole()
           .equals(SecurityConstants.ROLE_SUPERUSER)) {
-        throw new UnauthorizedException(backendMessages.getString("user.unauthorized"));
+        throw new ForbiddenAccessException(backendMessages.getString("user.unauthorized"));
       }
       if (SecurityConstants.ROLE_SUPERUSER.equals(role)) {
         results = new Results<>(usersService.getSuperusers(), null);
@@ -523,7 +523,7 @@ public class UsersController {
     UserModel model;
     try {
       if (!GenericAuthoriser.authoriseUser(userId)) {
-        throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+        throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
       }
       UserEntitiesModel userEntitiesModel = entitiesService.getUserWithKiosks(userId);
       IUserAccount ua = userEntitiesModel.getUserAccount();
@@ -647,7 +647,7 @@ public class UsersController {
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     try {
       if (!GenericAuthoriser.authoriseUser(userModel.id)) {
-        throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+        throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
       }
       IUserAccount user = usersService.getUserAccount(userModel.id);
       user.setUpdatedBy(sUser.getUsername());
@@ -686,7 +686,7 @@ public class UsersController {
     try {
       IUserAccount user = usersService.getUserAccount(userId);
       if (!GenericAuthoriser.authoriseUser(userId)) {
-        throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+        throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
       }
       // Authenticate user
       AuthRequest authRequest = AuthRequest.builder()
@@ -772,7 +772,7 @@ public class UsersController {
           return backendMessages.getString("user.account.disabled") + " " + MsgUtil.bold(userId);
         }
       } else {
-        throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+        throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
       }
     } catch (ServiceException | ObjectNotFoundException se) {
       xLogger.warn("Error Updating User password for " + userId, se);

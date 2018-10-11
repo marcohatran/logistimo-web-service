@@ -36,7 +36,6 @@ import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.entities.auth.EntityAuthoriser;
 import com.logistimo.exception.ForbiddenAccessException;
 import com.logistimo.exception.LogiException;
-import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.orders.builders.OrderBuilder;
 import com.logistimo.orders.entity.IOrder;
 import com.logistimo.orders.models.OrderModel;
@@ -124,10 +123,10 @@ public class StockRebalancingController {
       @RequestParam(value = "size", defaultValue = "50") Integer size) throws ServiceException {
 
     if (!SecurityUtils.isAdmin()) {
-      throw new UnauthorizedException("G002");
+      throw new ForbiddenAccessException("G002");
     }
     if (entityId != null && !EntityAuthoriser.authoriseEntity(entityId)) {
-      throw new UnauthorizedException("G002");
+      throw new ForbiddenAccessException("G002");
     }
 
     Page<StockRebalancingEventModel>
@@ -155,7 +154,7 @@ public class StockRebalancingController {
       @PathVariable String eventId) {
 
     if (!SecurityUtils.isAdmin()) {
-      throw new UnauthorizedException("G002");
+      throw new ForbiddenAccessException("G002");
     }
 
     List<RecommendedTransfer> recommendedTransfers = getRecommendedTransfersAction.invoke(

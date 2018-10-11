@@ -66,8 +66,8 @@ import com.logistimo.entity.comparator.LocationComparator;
 import com.logistimo.events.entity.IEvent;
 import com.logistimo.events.exceptions.EventGenerationException;
 import com.logistimo.events.processor.EventPublisher;
+import com.logistimo.exception.ForbiddenAccessException;
 import com.logistimo.exception.HttpBadRequestException;
-import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.locations.client.LocationClient;
 import com.logistimo.locations.model.LocationResponseModel;
 import com.logistimo.logger.XLog;
@@ -641,7 +641,7 @@ public class EntitiesServiceImpl implements EntitiesService {
       ResourceBundle messages = Resources.get().getMessageBundle(locale);
       ResourceBundle backendMessages = Resources.get().getBackendMessageBundle(locale);
       if (!authorizationService.authoriseUpdateKiosk(sUserId, domainId)) {
-        throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+        throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
       }
       //First check if the kiosk already exists in the database
       IKiosk k = JDOUtils.getObjectById(IKiosk.class, kiosk.getKioskId(), pm);
@@ -897,7 +897,7 @@ public class EntitiesServiceImpl implements EntitiesService {
         ResourceBundle
             backendMessages =
             Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
-        throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+        throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
       }
       List<IKiosk> kiosks = new ArrayList<>(kioskIds.size());
       List<String> sdFailedKiosks = new ArrayList<>(1);

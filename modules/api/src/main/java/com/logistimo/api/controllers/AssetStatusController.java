@@ -35,13 +35,12 @@ import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.constants.Constants;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.entities.service.EntitiesService;
-import com.logistimo.exception.UnauthorizedException;
+import com.logistimo.exception.ForbiddenAccessException;
 import com.logistimo.logger.XLog;
 import com.logistimo.services.ServiceException;
 
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -91,7 +90,7 @@ public class AssetStatusController {
           assetManagementService.updateAssetStatus(build(assetStatusModelList));
         }
       } else {
-        throw new UnauthorizedException("Unauthorized request", HttpStatus.UNAUTHORIZED);
+        throw new ForbiddenAccessException("Forbidden");
       }
     } catch (ServiceException e) {
       xLogger.severe("Failed to authenticate asset status request", e);

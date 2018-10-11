@@ -40,7 +40,7 @@ import com.logistimo.config.models.ConfigurationException;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.SourceConstants;
 import com.logistimo.exception.BadRequestException;
-import com.logistimo.exception.UnauthorizedException;
+import com.logistimo.exception.ForbiddenAccessException;
 import com.logistimo.exception.ValidationException;
 import com.logistimo.logger.XLog;
 import com.logistimo.models.AuthRequest;
@@ -283,7 +283,7 @@ public class AuthControllerMV1 {
       ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages",
           Locale.getDefault());
       authenticationService.logForbiddenAccess(authRequest);
-      throw new UnauthorizedException(backendMessages.getString("user.access.denied"), HttpStatus.FORBIDDEN);
+      throw new ForbiddenAccessException(backendMessages.getString("user.access.denied"));
     }
   }
 

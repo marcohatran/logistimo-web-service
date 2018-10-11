@@ -28,9 +28,9 @@ import com.logistimo.api.models.HUModel;
 import com.logistimo.api.util.SearchUtil;
 import com.logistimo.auth.GenericAuthoriser;
 import com.logistimo.auth.utils.SecurityUtils;
+import com.logistimo.exception.ForbiddenAccessException;
 import com.logistimo.exception.InvalidDataException;
 import com.logistimo.exception.InvalidServiceException;
-import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IHandlingUnit;
 import com.logistimo.materials.service.IHandlingUnitService;
@@ -100,7 +100,7 @@ public class HandlingUnitController {
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     if (!GenericAuthoriser.authoriseAdmin()) {
-      throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+      throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
     }
     IHandlingUnit hu = huBuilder.buildHandlingUnit(huModel);
     hu.setCreatedBy(sUser.getUsername());
@@ -206,7 +206,7 @@ public class HandlingUnitController {
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     if (!GenericAuthoriser.authoriseAdmin()) {
-      throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+      throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
     }
     IHandlingUnit hu = huBuilder.buildHandlingUnit(huModel);
     hu.setUpdatedBy(sUser.getUsername());

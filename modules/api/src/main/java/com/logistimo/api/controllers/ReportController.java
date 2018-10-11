@@ -36,8 +36,8 @@ import com.logistimo.constants.Constants;
 import com.logistimo.domains.entity.IDomainLink;
 import com.logistimo.domains.service.DomainsService;
 import com.logistimo.exception.BadRequestException;
+import com.logistimo.exception.ForbiddenAccessException;
 import com.logistimo.exception.InvalidServiceException;
-import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.logger.XLog;
 import com.logistimo.reports.ReportsConstants;
 import com.logistimo.reports.entity.slices.IDomainStats;
@@ -223,7 +223,7 @@ public class ReportController {
     DomainStatisticsModel domainStatisticsModel = null;
     try {
       if (!GenericAuthoriser.authoriseUser(userId)) {
-        throw new UnauthorizedException("Permission denied of the user to access this domain");
+        throw new ForbiddenAccessException("Permission denied of the user to access this domain");
       }
       domainId = (domainId != null ? domainId : sUser.getCurrentDomainId());
       List<IDomainLink> linkedDomains;
@@ -277,7 +277,7 @@ public class ReportController {
     Map<String, String> results;
     try {
       if (!GenericAuthoriser.authoriseUser(userId)) {
-        throw new UnauthorizedException("Permission denied of the user to access this domain");
+        throw new ForbiddenAccessException("Permission denied of the user to access this domain");
       }
       domainId = (domainId != null ? domainId : sUser.getCurrentDomainId());
       if (StringUtils.isBlank(tag)) {

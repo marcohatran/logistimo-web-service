@@ -52,10 +52,10 @@ import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.events.generators.EventGeneratorFactory;
 import com.logistimo.events.generators.OrdersEventGenerator;
 import com.logistimo.exception.BadRequestException;
+import com.logistimo.exception.ForbiddenAccessException;
 import com.logistimo.exception.InvalidDataException;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exception.LogiException;
-import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.exception.ValidationException;
 import com.logistimo.inventory.entity.IInvAllocation;
 import com.logistimo.inventory.entity.ITransaction;
@@ -97,7 +97,6 @@ import com.logistimo.utils.StringUtil;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -224,7 +223,7 @@ public class OrdersController {
     }
     List<Long> domainIds = order.getDomainIds();
     if (domainIds != null && !domainIds.contains(domainId)) {
-      throw new UnauthorizedException(CharacterConstants.EMPTY, HttpStatus.FORBIDDEN);
+      throw new ForbiddenAccessException("Forbidden");
     }
     model = orderAPIBuilder.buildFullOrderModel(order, domainId, embed);
     return model;

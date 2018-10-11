@@ -84,9 +84,9 @@ import com.logistimo.dao.JDOUtils;
 import com.logistimo.domains.entity.IDomain;
 import com.logistimo.domains.service.DomainsService;
 import com.logistimo.entities.service.EntitiesService;
+import com.logistimo.exception.ForbiddenAccessException;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exception.SystemException;
-import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.logger.XLog;
 import com.logistimo.media.endpoints.IMediaEndPoint;
@@ -1713,7 +1713,7 @@ public class ConfigurationModelBuilder {
     for(String dId: domainIds) {
       if (!userService.hasAccessToDomain(userName, Long.valueOf(dId))) {
         xLogger.warn("User {0} does not have access to domain id {1}", userName, dId);
-        throw new UnauthorizedException("User does not have access to domain");
+        throw new ForbiddenAccessException("User does not have access to domain");
       }
       configModel.add(buildDomainLocationModel(Long.valueOf(dId)));
     }

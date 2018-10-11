@@ -31,9 +31,9 @@ import com.logistimo.auth.GenericAuthoriser;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
+import com.logistimo.exception.ForbiddenAccessException;
 import com.logistimo.exception.InvalidDataException;
 import com.logistimo.exception.InvalidServiceException;
-import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.inventory.service.InventoryManagementService;
 import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IMaterial;
@@ -117,7 +117,7 @@ public class MaterialsController {
       throw new InvalidServiceException(backendMessages.getString("materials.delete.none"));
     }
     if (!GenericAuthoriser.authoriseAdmin()) {
-      throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+      throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
     }
     Long domainId = sUser.getCurrentDomainId();
 
@@ -271,7 +271,7 @@ public class MaterialsController {
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     if (!GenericAuthoriser.authoriseAdmin()) {
-      throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+      throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
     }
     IMaterial m = mBuilder.buildMaterial(materialModel);
     m.setCreatedBy(sUser.getUsername());
@@ -310,7 +310,7 @@ public class MaterialsController {
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     if (!GenericAuthoriser.authoriseAdmin()) {
-      throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+      throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
     }
     IMaterial m = mBuilder.buildMaterial(materialModel);
     m.setLastUpdatedBy(sUser.getUsername());

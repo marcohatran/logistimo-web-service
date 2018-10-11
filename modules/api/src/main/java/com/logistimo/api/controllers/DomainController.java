@@ -39,9 +39,9 @@ import com.logistimo.domains.entity.IDomainPermission;
 import com.logistimo.domains.service.DomainsService;
 import com.logistimo.domains.utils.DomainDeleter;
 import com.logistimo.exception.BadRequestException;
+import com.logistimo.exception.ForbiddenAccessException;
 import com.logistimo.exception.InvalidDataException;
 import com.logistimo.exception.InvalidServiceException;
-import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.logger.XLog;
 import com.logistimo.pagination.Navigator;
 import com.logistimo.pagination.PageParams;
@@ -316,7 +316,7 @@ public class DomainController {
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     if (!GenericAuthoriser.authoriseAdmin()) {
-      throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+      throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
     }
     if (StringUtils.isBlank(domainIdStr)) {
       xLogger.severe("Error in switching domain");
@@ -342,7 +342,7 @@ public class DomainController {
               sUser.getUsername(), e);
     }
     if (!authorisedUser) {
-      throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+      throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
     }
   }
 }
