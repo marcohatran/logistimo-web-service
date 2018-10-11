@@ -1197,6 +1197,7 @@ filter.disable.location=Vous ne pouvez pas sélectionner un emplacement, étant 
 filter.state.missing=Aucune information d'état n'était disponible
 filter.district.missing=Aucune information du district n'était disponible
 filter.taluk.missing=Aucune information de taluk / block disponible
+filter.city.missing=Aucune information sur la ville / village n'était disponible
 approver.expiry.message=L'approbation $ {approvalType} demandée par $ {requestorName} ($ {requestorPhone}) à partir de $ {eName}, $ {eCity} sur la commande $ {orderId} a expiré à $ {expiryTime}
 approver.expiry.next.message=L'approbation $ {approvalType} demandée par $ {requestorName} ($ {requestorPhone}) à partir de $ {eName}, $ {eCity} sur la commande $ {orderId} a expiré à $ {expiryTime}. Cette demande a maintenant été transmise à $ {secondaryApproversCSV}, avec $ {expiryInHours} heures à partir de maintenant pour traiter la demande.
 approver.activation.message=Une approbation $ {approvalType} a été demandée pour la commande $ {orderId} par $ {requestorName} ($ {requestorPhone}) à partir de $ {eName}, $ {eCity} à $ {requestedAt}. Vous avez $ {expiryInHours} heures pour traiter cette demande.

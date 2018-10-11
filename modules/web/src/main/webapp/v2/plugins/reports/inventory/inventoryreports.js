@@ -379,6 +379,7 @@ function InventoryReportController(s, timeout, getData, reportsServiceCore) {
         s.offset = 0;
         getData();
         updateLabels();
+        getDataNotAvailableText();
         s.openFilters();
         setHeight();
     };
@@ -743,12 +744,26 @@ function InventoryReportController(s, timeout, getData, reportsServiceCore) {
     updateLabels();
 
     function getDataNotAvailableText() {
-        if (checkNullEmpty(s.dstate)) {
-            s.noDataText = s.resourceBundle['filter.state.missing'];
-        } else if (checkNullEmpty(s.ddist)) {
-            s.noDataText = s.resourceBundle['filter.district.missing'];
+        if(!s.filter.st && !s.filter.dis) {
+            if (checkNullEmpty(s.dstate)) {
+                s.noDataText = s.resourceBundle['filter.state.missing'];
+            } else if (checkNullEmpty(s.ddist)) {
+                s.noDataText = s.resourceBundle['filter.district.missing'];
+            } else {
+                s.noDataText = s.resourceBundle['filter.taluk.missing'];
+            }
         } else {
-            s.noDataText = s.resourceBundle['filter.taluk.missing'];
+            if(s.filter.dis) {
+                s.noDataText = s.resourceBundle['filter.taluk.missing'];
+            } else if(s.filter.st) {
+                if(s.filter.location_by == 'dis') {
+                    s.noDataText = s.resourceBundle['filter.district.missing'];
+                } else if (s.filter.location_by == 'tlk') {
+                    s.noDataText = s.resourceBundle['filter.taluk.missing'];
+                } else {
+                    s.noDataText = s.resourceBundle['filter.city.missing'];
+                }
+            }
         }
     }
 
