@@ -122,6 +122,7 @@ public class UserBuilder {
     model.tgs = user.getTags();
     if (!isPartial) {
       model.ro = UserUtils.getRoleDisplay(user.getRole(), locale);
+      model.role =  user.getRole();
       model.phl = user.getLandPhoneNumber();
       model.ct = user.getCity();
       model.cnt = user.getCountry();

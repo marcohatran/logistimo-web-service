@@ -35,7 +35,8 @@ import lombok.Data;
 public class UserModel {
   public String id; //User ID
   public String pw; //Password
-  public String ro; //Role
+  public String ro; //Localized Role text
+  public String role; //Role text in english
   public String cid; //Custom ID
   public List<String> tgs; // Tags
 
