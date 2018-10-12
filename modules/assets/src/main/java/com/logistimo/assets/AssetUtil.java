@@ -56,8 +56,8 @@ import com.logistimo.events.EventConstants;
 import com.logistimo.events.entity.IEvent;
 import com.logistimo.events.exceptions.EventGenerationException;
 import com.logistimo.events.processor.EventPublisher;
+import com.logistimo.exception.BadRequestException;
 import com.logistimo.logger.XLog;
-import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.http.HttpResponse;
 import com.logistimo.services.http.URLFetchService;
@@ -228,10 +228,10 @@ public class AssetUtil {
           if (StringUtils.isNotBlank(assetName)) {
             assetType = getAssetType(assetName);
             if (assetType == null) {
-              throw new ServiceException("Asset type is invalid.");
+              throw new BadRequestException("AST001", null);
             }
           } else {
-            throw new ServiceException("Asset type is empty.");
+            throw new BadRequestException("AST002", null);
           }
         } else {
           assetType = (Integer) variableMap.get(ASSET_TYPE);
@@ -258,13 +258,14 @@ public class AssetUtil {
 
       if (StringUtils.isEmpty(manufacturerId) || !isManufacturerConfigured(assetType,
           manufacturerId, domainId)) {
-        throw new ServiceException("Manufacturer is invalid or not configured.");
+        throw new BadRequestException("AST003", null);
       }
-
-      if (StringUtils.isEmpty((String) variableMap.get(ASSET_MODEL)) || (getAssetModel(assetType,
+      AssetSystemConfig.Model manufacturerModel = getAssetModel(assetType,
           manufacturerId, (String) variableMap.get(ASSET_MODEL),
-          domainId) == null)) {
-        throw new ServiceException("Asset model is invalid or not configured.");
+          domainId);
+
+      if (StringUtils.isEmpty((String) variableMap.get(ASSET_MODEL)) || manufacturerModel == null) {
+        throw new BadRequestException("AST004", null);
       }
 
       AssetManagementService ams = StaticApplicationContext
@@ -276,7 +277,7 @@ public class AssetUtil {
         asset = JDOUtils.createInstance(IAsset.class);
         asset.setSerialId((String) variableMap.get(SERIAL_NUMBER));
         asset.setVendorId(manufacturerId);
-        asset.setModel((String) variableMap.get(ASSET_MODEL));
+        asset.setModel(manufacturerModel.name);
         if (variableMap.get(ASSET_YOM) != null) {
           asset.setYom(Integer.valueOf((String) variableMap.get(ASSET_YOM)));
         }
@@ -287,10 +288,7 @@ public class AssetUtil {
         if (kioskId != null) {
           asset.setKioskId(kioskId);
         }
-        Capacity capacityDetails = getAssetCapacity(asset);
-        if(StringUtils.isNotBlank(asset.getModel())) {
-          metaDataMap.put(CAPACITY, capacityDetails.getJSONObject());
-        }
+        setAssetModelMetaData(metaDataMap, asset);
         AssetModel assetModel = AssetUtil.buildAssetModel(domainId, asset, metaDataMap);
         if (variableMap.get(TAGS) != null) {
           assetModel.tags = (List<String>) variableMap.get(TAGS);
@@ -328,8 +326,9 @@ public class AssetUtil {
 
         if (variableMap.get(ASSET_MODEL) != null && !((String) variableMap.get(ASSET_MODEL))
             .isEmpty()) {
-          asset.setModel((String) variableMap.get(ASSET_MODEL));
+          asset.setModel(manufacturerModel.name);
         }
+        setAssetModelMetaData(metaDataMap, asset);
 
         if (!Objects.equals(asset.getType(), assetType)) {
           try {
@@ -372,6 +371,8 @@ public class AssetUtil {
           asset.setMaintainers(mts);
           assetModel.mts = mts;
         }
+        asset.setUpdatedBy(userId);
+        asset.setUpdatedOn(new Date());
         //Updating asset in LS
         ams.updateAsset(domainId, asset, assetModel);
 
@@ -403,6 +404,16 @@ public class AssetUtil {
     }
 
     return null;
+  }
+
+  protected static void setAssetModelMetaData(Map<String, Object> metaDataMap, IAsset asset)
+      throws ConfigurationException {
+    if(StringUtils.isNotBlank(asset.getModel())) {
+      metaDataMap.remove(DEV_MODEL);
+      metaDataMap.put(DEV_MODEL, asset.getModel());
+      Capacity capacityDetails = getAssetCapacity(asset);
+      metaDataMap.put(CAPACITY, capacityDetails.getJSONObject());
+    }
   }
 
   public static Boolean isManufacturerConfigured(Integer assetType, String manufacturerId,
@@ -1185,7 +1196,7 @@ public class AssetUtil {
             metaDataMap.put(AssetUtil.DEV_MODEL, AssetUtil.SENSOR_DEVICE_MODEL);
             relationAsset = AssetUtil.verifyAndRegisterAsset(asset.getDomainId(), userId,
                 asset.getKioskId(), variableMap, metaDataMap);
-          } catch (ServiceException se) {
+          } catch (ServiceException | BadRequestException se) {
             xLogger.warn("{0} while register asset {1}, {2}", se.getMessage(), relation.vId,
                 relation.dId, se);
             throw new ServiceException(

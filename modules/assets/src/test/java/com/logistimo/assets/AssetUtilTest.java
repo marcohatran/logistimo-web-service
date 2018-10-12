@@ -25,10 +25,10 @@ package com.logistimo.assets;
 
 import com.logistimo.assets.entity.Asset;
 import com.logistimo.assets.entity.IAsset;
-import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.config.models.AssetSystemConfig;
 import com.logistimo.config.models.ConfigurationException;
 
+import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,7 +37,6 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 
 import static org.junit.Assert.*;
@@ -52,6 +51,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 public class AssetUtilTest {
 
   AssetSystemConfig assetSystemConfig;
+  private static final String YEAR_OF_MANUFACTURE = "dev.yom";
 
   @Before
   public void setUp() throws ConfigurationException {
@@ -79,6 +79,49 @@ public class AssetUtilTest {
     assertEquals("Litres", assetCapacity.met);
   }
 
+
+  /**
+   * Tests the method when the model number entered by user and the configured model numbers are same.
+   */
+  @Test
+  public void testSetAssetModelMetaData() throws ConfigurationException {
+    Map<String, Object> metaDataMap = new HashMap<>();
+    metaDataMap.put(AssetUtil.DEV_MODEL, "MF115");
+    metaDataMap.put(YEAR_OF_MANUFACTURE, "2018");
+
+    IAsset asset = setAsset("H1234A", "haier", "MF115", IAsset.MONITORED_ASSET);
+    setAssetSystemConfigData("MF115", "94", IAsset.MONITORED_ASSET);
+
+    AssetUtil.setAssetModelMetaData(metaDataMap, asset);
+    JSONObject capacity = (JSONObject) metaDataMap.get("cc");
+    assertNotNull(metaDataMap);
+    assertEquals("MF115", metaDataMap.get(AssetUtil.DEV_MODEL));
+    assertEquals("2018", metaDataMap.get(YEAR_OF_MANUFACTURE));
+    assertEquals("94", capacity.get("qty"));
+    assertEquals("Litres", capacity.get("met"));
+  }
+
+  /**
+   * Tests the method when the model number entered by the user and the configured model numbers are different in cases.
+   */
+  @Test
+  public void testSetAssetModelMetaDataForDifferentModels() throws ConfigurationException {
+    Map<String, Object> metaDataMap = new HashMap<>();
+    metaDataMap.put(AssetUtil.DEV_MODEL, "mf115");
+    metaDataMap.put(YEAR_OF_MANUFACTURE, "2018");
+
+    IAsset asset = setAsset("H1234A", "haier", "MF115", IAsset.MONITORED_ASSET);
+    setAssetSystemConfigData("MF115", "94", IAsset.MONITORED_ASSET);
+
+    AssetUtil.setAssetModelMetaData(metaDataMap, asset);
+    JSONObject capacity = (JSONObject) metaDataMap.get("cc");
+    assertNotNull(metaDataMap);
+    assertEquals("MF115", metaDataMap.get(AssetUtil.DEV_MODEL));
+    assertEquals("2018", metaDataMap.get(YEAR_OF_MANUFACTURE));
+    assertEquals("94", capacity.get("qty"));
+    assertEquals("Litres", capacity.get("met"));
+  }
+
   private IAsset setAsset(String serialId, String vendorId, String model, int monitoringAsset) {
     IAsset asset = new Asset();
     asset.setSerialId(serialId);
@@ -89,6 +132,11 @@ public class AssetUtilTest {
   }
 
   private void setAssetSystemConfigData(String modelName, String capacity, Integer assetType) {
+    setAssetSystemConfigData(modelName, capacity, assetType, null);
+  }
+
+  private void setAssetSystemConfigData(String modelName, String capacity, Integer assetType,
+                                        String assetName) {
 
     AssetSystemConfig.Model model = new AssetSystemConfig.Model();
     model.name = modelName;
@@ -104,6 +152,7 @@ public class AssetUtilTest {
     AssetSystemConfig.Asset asset = new AssetSystemConfig.Asset();
     asset.setManufacturers(manufacturerMap);
     asset.type = assetType;
+    asset.setName(assetName);
 
     Map<Integer, AssetSystemConfig.Asset> assetMap = new HashMap<>();
     assetMap.put(assetType, asset);

@@ -66,6 +66,7 @@ import com.logistimo.entities.entity.IKioskLink;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.entity.IUploaded;
+import com.logistimo.exception.BadRequestException;
 import com.logistimo.exception.TaskSchedulingException;
 import com.logistimo.exception.ValidationException;
 import com.logistimo.inventory.entity.IInvntry;
@@ -599,7 +600,7 @@ public class BulkUploadMgr {
         AssetUtil.createAssetRelationship(domainId, monitoredAsset, sensorAsset,
             (List<String>) variableMap.get(AssetUtil.TAGS));
       }
-    } catch (ServiceException e) {
+    } catch (ServiceException | BadRequestException e) {
       ec.messages.add(e.getMessage());
     } catch (Exception e) {
       ec.messages.add("Error: " + e.getMessage());
