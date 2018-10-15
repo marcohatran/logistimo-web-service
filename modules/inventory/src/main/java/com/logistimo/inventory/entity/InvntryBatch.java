@@ -52,7 +52,7 @@ import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 
-@PersistenceCapable(identityType = IdentityType.APPLICATION, detachable = "true")
+@PersistenceCapable(identityType = IdentityType.APPLICATION, detachable = "true", cacheable = "false")
 public class InvntryBatch implements IInvntryBatch {
   private static final XLog xLogger = XLog.getLog(InvntryBatch.class);
 

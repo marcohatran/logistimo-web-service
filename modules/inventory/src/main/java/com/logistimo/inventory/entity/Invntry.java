@@ -65,7 +65,7 @@ import javax.jdo.annotations.PrimaryKey;
 /**
  * @author arun
  */
-@PersistenceCapable(identityType = IdentityType.APPLICATION, detachable = "true")
+@PersistenceCapable(identityType = IdentityType.APPLICATION, detachable = "true", cacheable = "false")
 public class Invntry implements IInvntry {
 
   private static final XLog xLogger = XLog.getLog(Invntry.class);
