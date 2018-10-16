@@ -98,9 +98,11 @@ public class ReturnsRepository extends Repository {
   }
 
   public void deleteReturnsByCustomer(Long customerId) {
-    returnsItemBatchRepository.deleteByCustomerId(customerId);
-    returnsItemRepository.deleteByCustomerId(customerId);
-    returnsRepository.deleteReturnsByCustomerId(customerId);
+    if(customerId!=null) {
+      returnsItemBatchRepository.deleteByCustomerId(customerId);
+      returnsItemRepository.deleteByCustomerId(customerId);
+      returnsRepository.deleteReturnsByCustomerId(customerId);
+    }
   }
 
   public ReturnsTrackingDetailsVO getReturnTrackingDetails(Long returnId) {
