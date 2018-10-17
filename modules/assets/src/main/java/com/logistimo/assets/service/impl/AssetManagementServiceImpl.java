@@ -820,7 +820,7 @@ public class AssetManagementServiceImpl implements AssetManagementService {
       statement = sqlConn.prepareStatement(query);
       statement.setLong(1,entityId);
       statement.setLong(2,entityId);
-      rowSet.populate(statement.executeQuery(query));
+      rowSet.populate(statement.executeQuery());
       Map<String, Integer> stats = new HashMap<>(4);
       while (rowSet.next()) {
         stats.put(rowSet.getString("STAT"), rowSet.getInt("COUNT"));
