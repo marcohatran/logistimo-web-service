@@ -28,6 +28,7 @@ import com.logistimo.returns.vo.ReturnsQuantityDetailsVO;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
@@ -69,6 +70,7 @@ public interface ReturnsRepository extends
 
   Returns findById(Long id);
 
+  @Modifying
   @Query(value = "DELETE FROM Returns r where r.customerId=?1")
   void deleteReturnsByCustomerId(Long customerId);
 }

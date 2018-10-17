@@ -27,6 +27,7 @@ import com.logistimo.returns.entity.ReturnsItemBatch;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
@@ -38,7 +39,8 @@ public interface ReturnsItemBatchRepository extends
     JpaRepository<ReturnsItemBatch, String>,
     JpaSpecificationExecutor<ReturnsItemBatch> {
 
+  @Modifying
   @Query(value = "DELETE FROM ReturnsItemBatch r where r.itemId IN "
-      + "(SELECT r.id FROM ReturnsItem r where r.returnsId IN (SELECT r.id FROM Returns r where r.customerId=:customerId))")
+      + "(SELECT r.id FROM ReturnsItem r where r.returnsId IN (SELECT r.id FROM Returns r where r.customerId=?1))")
   void deleteByCustomerId(Long customerId);
 }
