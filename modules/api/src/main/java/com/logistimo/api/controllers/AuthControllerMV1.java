@@ -171,7 +171,7 @@ public class AuthControllerMV1 {
   }
 
 
-  private UserDetailModel processLoginRequest(@RequestBody AuthLoginModel loginModel,
+  private UserDetailModel processLoginRequest(AuthLoginModel loginModel,
                                               HttpServletRequest req, HttpServletResponse res)
       throws ServiceException, NoSuchAlgorithmException, IOException, MessageHandlingException,
       ConfigurationException {
@@ -209,10 +209,9 @@ public class AuthControllerMV1 {
         return model;
       }
 
-      Date loginTime = user.getLastLogin();
       if(!loginModel.isSkipTwoFactorAuthentication()) {
         if (StringUtils.isNotEmpty(loginModel.getOtp())) {
-          createUserDeviceInformation(res, loginSource, user.getUserId(), loginTime);
+          createUserDeviceInformation(res, loginSource, user.getUserId());
         } else {
           String key = TwoFactorAuthenticationUtil.generateAuthKey(loginModel.getUserId());
           updateHeaderForUserDevice(res, CommonUtils.getCookieByName(req, key), user.getUserId());
@@ -388,22 +387,22 @@ public class AuthControllerMV1 {
     return new SaltModel(authenticationService.generateRandomSalt());
   }
 
-  private void createUserDeviceInformation(HttpServletResponse response, Integer src, String userId,
-                                           Date lastLogin)
+  protected void createUserDeviceInformation(HttpServletResponse response, Integer src, String userId)
       throws ServiceException, ConfigurationException, UnsupportedEncodingException,
       NoSuchAlgorithmException {
-    String key = TwoFactorAuthenticationUtil.generateUserDeviceCacheKey(userId, lastLogin.getTime());
+    Date twoFactorTokenGenerationTime = new Date();
+    String cookieValue = TwoFactorAuthenticationUtil.generateUserDeviceCacheKey(userId, twoFactorTokenGenerationTime.getTime());
     UserDevicesVO
         userDevicesVO =
-        userDevicesBuilder.buildUserDevicesVO(key, userId, src, lastLogin);
+        userDevicesBuilder.buildUserDevicesVO(cookieValue, userId, src, twoFactorTokenGenerationTime);
     twoFactorAuthenticationService.createUserDevices(userDevicesVO);
-    updateHeaderForUserDevice(response, key, userDevicesVO.getUserId());
+    updateHeaderForUserDevice(response, cookieValue, userDevicesVO.getUserId());
   }
 
-  private void updateHeaderForUserDevice(HttpServletResponse response, String key, String userId)
+  protected void updateHeaderForUserDevice(HttpServletResponse response, String cookieValue, String userId)
       throws UnsupportedEncodingException, NoSuchAlgorithmException {
     response.addHeader("Set-Cookie",
-        TwoFactorAuthenticationUtil.generateAuthKey(userId) + "=" + key + ";Path=/; HttpOnly");
+        TwoFactorAuthenticationUtil.generateAuthKey(userId) + "=" + cookieValue + ";Path=/; HttpOnly");
   }
 
 }

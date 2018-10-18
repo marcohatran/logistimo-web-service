@@ -50,7 +50,7 @@ public class UserDevicesBuilder {
   }
 
   public UserDevicesVO buildUserDevicesVO(String deviceId, String userId, Integer applicationName,
-                                          Date usersLastLoginTime)
+                                          Date twoFactorTokenGenerationTime)
       throws ServiceException, ConfigurationException {
     IConfig c = configurationMgmtService.getConfiguration(IConfig.GENERALCONFIG);
     GeneralConfig config = new GeneralConfig(c.getConfig());
@@ -59,11 +59,16 @@ public class UserDevicesBuilder {
     userDevicesVO.setId(key);
     userDevicesVO.setUserId(userId);
     userDevicesVO.setApplicationName(applicationName);
-    Calendar calendar = Calendar.getInstance();
-    calendar.setTime(usersLastLoginTime);
-    calendar.add(Calendar.MINUTE, config.getRememberDeviceInMinutes());
-    userDevicesVO.setExpiresOn(calendar.getTime());
-    userDevicesVO.setCreatedOn(new Date());
+    Date expiryTime = computeExpiryTime(twoFactorTokenGenerationTime, config.getRememberDeviceInMinutes());
+    userDevicesVO.setExpiresOn(expiryTime);
+    userDevicesVO.setCreatedOn(twoFactorTokenGenerationTime);
     return userDevicesVO;
+  }
+
+  protected Date computeExpiryTime(Date twoFactorTokenGenerationTime, Integer rememberDeviceDuration) {
+    Calendar calendar = Calendar.getInstance();
+    calendar.setTime(twoFactorTokenGenerationTime);
+    calendar.add(Calendar.MINUTE, rememberDeviceDuration);
+    return calendar.getTime();
   }
 }

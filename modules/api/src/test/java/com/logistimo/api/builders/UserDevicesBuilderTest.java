@@ -73,6 +73,15 @@ public class UserDevicesBuilderTest {
     assertEquals("testUser", userDevicesVO.getUserId());
     assertEquals("testUser_01bc2719vdb1882bdf83029wn82", userDevicesVO.getId());
     assertEquals(SourceConstants.WEB, userDevicesVO.getApplicationName());
-    assertEquals(userDevicesVO.getExpiresOn(), date);
+    assertEquals(date, userDevicesVO.getExpiresOn());
+    assertEquals(date, userDevicesVO.getCreatedOn());
+  }
+
+  @Test
+  public void testComputeExpiryTime() {
+    Date date = new Date(1539770400000l);
+    Date expiryTime = builder.computeExpiryTime(date, 30);
+    assertNotNull(expiryTime);
+    assertEquals(1539772200000l, expiryTime.getTime());
   }
 }

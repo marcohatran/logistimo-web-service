@@ -50,7 +50,7 @@ import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 
-@PersistenceCapable(identityType = IdentityType.APPLICATION, detachable = "true")
+@PersistenceCapable(identityType = IdentityType.APPLICATION, detachable = "true", cacheable = "false")
 public class UserAccount implements IUserAccount, ILocation,Serializable {
 
   // NOTE: All constants are represented as String with 3-5 chars, given that it minimizes GAE storage cost and is readable
