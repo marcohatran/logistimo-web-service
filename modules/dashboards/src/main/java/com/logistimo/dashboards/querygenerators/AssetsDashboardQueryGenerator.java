@@ -100,15 +100,12 @@ public class AssetsDashboardQueryGenerator {
         + "ASSET A ON ASI.ASSETID = A.ID LEFT JOIN "
         + "ASSET_DOMAINS AD ON ASI.ASSETID = AD.ID_OID ");
 
-    StringBuilder
-        whereClause =
-        new StringBuilder(" WHERE ASI.TYPE = 7 AND AD.DOMAIN_ID = ?");
-    model.param(domainId);
+
     applyEntityTagsFilter(fromClause, model);
     StringBuilder groupBy = new StringBuilder(" GROUP BY STATUS");
     applyLocations(fromClause, query, groupBy, model);
+    StringBuilder whereClause = new StringBuilder();
     applyAssetFilters(whereClause, model);
-
     model.setQuery(query.append(", COUNT(1) AS COUNT").append(fromClause.toString()).append(whereClause)
         .append(groupBy).toString());
     return model;
@@ -142,6 +139,8 @@ public class AssetsDashboardQueryGenerator {
 
   private void applyAssetFilters(StringBuilder whereClause,
                                  PreparedStatementModel model) {
+    whereClause.append(" WHERE ASI.TYPE = 7 AND AD.DOMAIN_ID = ?");
+    model.param(domainId);
     whereClause.append(" AND K.KIOSKID IS NOT NULL");
     if (StringUtils.isNotEmpty(assetTypes)) {
       whereClause.append(" AND A.TYPE IN ");
