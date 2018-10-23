@@ -535,9 +535,15 @@ public class DashboardService implements IDashboardService {
 
   private PreparedStatementModel getSessionQuery(Long domainId, Map<String, String> filters) {
     PreparedStatementModel model = new PreparedStatementModel();
-    StringBuilder query = new StringBuilder();
-    query.append("SELECT COUNT(1) CNT,DF,ATD,SUM(TCNT) TCNT,GROUP_BY_NAME");
-    String groupNameClause;
+    StringBuilder fromQuery = new StringBuilder();
+    fromQuery.append(",CASE WHEN DATEDIFF(DATE(DATE_ADD(T, INTERVAL ?")
+        .append(" HOUR_SECOND)), ATD) <= 0 THEN '1' WHEN DATEDIFF(DATE(DATE_ADD(T, INTERVAL ?")
+        .append(" HOUR_SECOND)), ATD) >= 3 THEN '3' ELSE DATEDIFF(DATE(DATE_ADD(T, INTERVAL ?")
+        .append(" HOUR_SECOND)), ATD) END AS DF,ATD, COUNT(1) TCNT FROM TRANSACTION T, KIOSK_DOMAINS KD, KIOSK K");
+    model.param(filters.get("diff"));
+    model.param(filters.get("diff"));
+    model.param(filters.get("diff"));
+
     StringBuilder where = new StringBuilder();
     where.append(" WHERE ATD BETWEEN DATE_SUB(?, INTERVAL 6 DAY) AND ? AND T.KID = K.KIOSKID AND T.KID = KD.KIOSKID_OID AND KD.DOMAIN_ID = ?");
     model.param(filters.get("atd"));
@@ -566,6 +572,7 @@ public class DashboardService implements IDashboardService {
       model.param(Long.parseLong(filters.get("mId")));
     }
 
+    String groupNameClause;
     if (filters.get("district") != null) {
       where.append(" AND K.COUNTRY = ? AND K.STATE = ?");
       model.param(filters.get("country"));
@@ -588,17 +595,12 @@ public class DashboardService implements IDashboardService {
       groupNameClause = "K.STATE AS GROUP_BY_NAME";
     }
     where.append(" GROUP BY CONCAT(KID, DF, ATD)");
-    query.append(" FROM (SELECT KID,").append(groupNameClause)
-        .append(",CASE WHEN DATEDIFF(DATE(DATE_ADD(T, INTERVAL ?")
-        .append(" HOUR_SECOND)), ATD) <= 0 THEN '1' WHEN DATEDIFF(DATE(DATE_ADD(T, INTERVAL ?")
-        .append(" HOUR_SECOND)), ATD) >= 3 THEN '3' ELSE DATEDIFF(DATE(DATE_ADD(T, INTERVAL ?")
-        .append(
-            " HOUR_SECOND)), ATD) END AS DF,ATD, COUNT(1) TCNT FROM TRANSACTION T, KIOSK_DOMAINS KD, KIOSK K")
-        .append(where).append(") A").append(" GROUP BY ATD, DF, GROUP_BY_NAME");
-    model.param(filters.get("diff"));
-    model.param(filters.get("diff"));
-    model.param(filters.get("diff"));
-    model.setQuery(query.toString());
+    String query = "SELECT COUNT(1) CNT,DF,ATD,SUM(TCNT) TCNT,GROUP_BY_NAME FROM (SELECT KID,"
+        + groupNameClause
+        + fromQuery
+        + where
+        + ") A GROUP BY ATD, DF, GROUP_BY_NAME";
+    model.setQuery(query);
     return model;
   }
 
