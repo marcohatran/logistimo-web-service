@@ -25,6 +25,7 @@ package com.logistimo.api.controllers;
 
 import com.logistimo.AppFactory;
 import com.logistimo.api.migrators.ReasonMandatoryConfigMigrator;
+import com.logistimo.api.migrators.UpdateNotificationConfigAction;
 import com.logistimo.api.models.SimulateRequestModel;
 import com.logistimo.api.util.KioskDataSimulator;
 import com.logistimo.auth.SecurityConstants;
@@ -98,6 +99,7 @@ public class AdminController {
   private ConfigurationMgmtService configurationMgmtService;
   private UsersService usersService;
   private InventoryManagementService inventoryManagementService;
+  private UpdateNotificationConfigAction notificationConfigAction;
 
   @Autowired
   public void setLocationClient(LocationClient locationClient) {
@@ -117,6 +119,12 @@ public class AdminController {
   @Autowired
   public void setInventoryManagementService(InventoryManagementService inventoryManagementService) {
     this.inventoryManagementService = inventoryManagementService;
+  }
+
+  @Autowired
+  public void setNotificationConfigAction(
+      UpdateNotificationConfigAction notificationConfigAction) {
+    this.notificationConfigAction = notificationConfigAction;
   }
 
   @RequestMapping(value = "/dailyevents", method = RequestMethod.GET)
@@ -310,6 +318,10 @@ public class AdminController {
     }
   }
 
+  @RequestMapping(value = "/update-notification-config", method = RequestMethod.GET)
+  public @ResponseBody void updateNotificationConfig() {
+    notificationConfigAction.invoke();
+  }
 
   public ITaskService getTaskService() {
     return AppFactory.get().getTaskService();
