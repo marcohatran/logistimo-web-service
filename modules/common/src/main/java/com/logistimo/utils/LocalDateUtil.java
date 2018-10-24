@@ -71,6 +71,8 @@ public class LocalDateUtil {
 
   //private static final XLog xLogger = XLog.getLog(LocalDateUtil.class);
 
+  private LocalDateUtil () {}
+
   public static String format(String strTimestamp, Locale locale, String timezone)
       throws ParseException {
     // Convert to Date object
@@ -94,10 +96,18 @@ public class LocalDateUtil {
   private static DateFormat getDateFormat(Locale locale, boolean dateOnly) {
     DateFormat dateFormat;
     Locale localeOverride = overrideLocale(locale);
-    if (dateOnly) {
-      dateFormat = DateFormat.getDateInstance(DateFormat.SHORT, localeOverride);
+    if (localeOverride != null) {
+      if (dateOnly) {
+        dateFormat = DateFormat.getDateInstance(DateFormat.SHORT, localeOverride);
+      } else {
+        dateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, localeOverride);
+      }
     } else {
-      dateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, localeOverride);
+      if (dateOnly) {
+        dateFormat = DateFormat.getDateInstance(DateFormat.SHORT);
+      } else {
+        dateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
+      }
     }
     return dateFormat;
   }

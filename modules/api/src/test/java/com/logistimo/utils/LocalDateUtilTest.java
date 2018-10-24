@@ -33,6 +33,7 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * Created by mohan on 20/02/17.
@@ -59,6 +60,16 @@ public class LocalDateUtilTest {
     assertEquals("1/12/18 12:00 AM",date);
   }
 
+  @Test
+  public void testDateTimeShortFormatWithoutLocale(){
+    Calendar calendar = Calendar.getInstance();
+    calendar.set(Calendar.YEAR, 2018);
+    calendar.set(Calendar.MONTH, 11);
+    calendar.set(Calendar.DAY_OF_MONTH,1);
+    String date = LocalDateUtil.format(calendar.getTime(),null,null, true);
+    assertNotNull(date);
+  }
+
   private Date getDate() {
     Calendar calendar = GregorianCalendar.getInstance();
     calendar.setTimeZone(TimeZone.getTimeZone("CAT"));
@@ -68,4 +79,5 @@ public class LocalDateUtilTest {
     LocalDateUtil.resetTimeFields(calendar);
     return calendar.getTime();
   }
+
 }
