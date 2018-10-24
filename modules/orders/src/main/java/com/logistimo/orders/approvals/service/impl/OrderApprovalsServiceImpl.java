@@ -108,10 +108,13 @@ public class OrderApprovalsServiceImpl implements IOrderApprovalsService {
     try {
 
       StringBuilder queryBuilder = new StringBuilder("SELECT * FROM `ORDER_APPROVAL_MAPPING`");
-      queryBuilder.append(" WHERE ORDER_ID IN (?)");
-      parameters.add(orderIds);
-
-      queryBuilder.append(" AND APPROVAL_TYPE=?");
+      queryBuilder.append(" WHERE ORDER_ID IN (");
+      for (Long orderId : orderIds) {
+        queryBuilder.append(CharacterConstants.QUESTION).append(CharacterConstants.COMMA);
+        parameters.add(orderId);
+      }
+      queryBuilder.setLength(queryBuilder.length() - 1);
+      queryBuilder.append(") AND APPROVAL_TYPE=?");
       parameters.add(orderAppprovalType);
 
       queryBuilder.append(" AND LATEST=1 ORDER BY ORDER_ID ASC");

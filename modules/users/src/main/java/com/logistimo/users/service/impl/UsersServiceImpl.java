@@ -68,6 +68,7 @@ import com.logistimo.users.entity.UserAccount;
 import com.logistimo.users.models.ExtUserAccount;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.utils.Counter;
+import com.logistimo.utils.MessageUtil;
 import com.logistimo.utils.PasswordEncoder;
 import com.logistimo.utils.QueryUtil;
 import com.logistimo.utils.StringUtil;
@@ -1088,13 +1089,16 @@ public class UsersServiceImpl implements UsersService {
     if (!CollectionUtils.isEmpty(tagNames)) {
       PersistenceManager pm = PMF.get().getPersistenceManager();
       List<Object> parameters=new ArrayList<>();
-      StringBuilder queryBuilder=new StringBuilder("SELECT UA.USERID FROM USERACCOUNT UA,USER_TAGS"
-          + " UT WHERE UT.ID IN (SELECT ID FROM TAG WHERE NAME IN (?) ");
-        parameters.add(tagNames);
-      queryBuilder.append(" AND TYPE=4) AND UT.USERID = UA.USERID AND UA.ISENABLED = 1 AND "
-          + "UA.SDID = ?");
+      StringBuilder query = new StringBuilder("SELECT UA.USERID FROM USERACCOUNT UA,USER_TAGS UT WHERE "
+          + "UT.ID IN (SELECT ID FROM TAG WHERE NAME IN (");
+      for (String name : tagNames) {
+        query.append(CharacterConstants.QUESTION).append(CharacterConstants.COMMA);
+        parameters.add(name);
+      }
+      query.setLength(query.length() - 1);
+      query.append(") AND TYPE=4) AND UT.USERID = UA.USERID AND UA.ISENABLED = 1 AND UA.SDID = ?");
       parameters.add(domainId);
-      Query q = pm.newQuery(Constants.JAVAX_JDO_QUERY_SQL, queryBuilder.toString());
+      Query q = pm.newQuery(Constants.JAVAX_JDO_QUERY_SQL, query.toString());
       try {
         List l = (List) q.executeWithArray(parameters.toArray());
         uIds = new ArrayList<>(l.size());
@@ -1102,7 +1106,7 @@ public class UsersServiceImpl implements UsersService {
           uIds.add((String) o);
         }
       } catch (Exception e) {
-        xLogger.warn("Error while getting enabled user by tags {0}", tagNames.toArray(), e);
+        xLogger.warn("Error while getting enabled user by tags {0}", tagNames.toString(), e);
       } finally {
         try {
           q.closeAll();

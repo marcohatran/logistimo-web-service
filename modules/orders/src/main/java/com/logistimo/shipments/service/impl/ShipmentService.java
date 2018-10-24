@@ -1918,15 +1918,13 @@ public class ShipmentService implements IShipmentService {
   @Override
   public List<String> getTransporterSuggestions(Long domainId, String text) {
     List<String> filterIds = new ArrayList<>();
-    List<String> parameters = new ArrayList<>();
-    String domainFilterQuery = "SELECT ID_OID FROM SHIPMENT_DOMAINS WHERE DOMAIN_ID = ?";
-    parameters.add(String.valueOf(domainId));
+    List<Object> parameters = new ArrayList<>();
     PersistenceManager pm = PMF.get().getPersistenceManager();
-    Query
-        query =
-        pm.newQuery("javax.jdo.query.SQL",
-            "SELECT DISTINCT TRANSPORTER FROM `SHIPMENT` WHERE ID IN (" +
-                domainFilterQuery + ") AND TRANSPORTER LIKE ? LIMIT 0,8");
+    Query query = pm.newQuery("javax.jdo.query.SQL",
+            "SELECT DISTINCT TRANSPORTER FROM `SHIPMENT` WHERE ID IN "
+                + "(SELECT ID_OID FROM SHIPMENT_DOMAINS WHERE DOMAIN_ID = ?) AND "
+                + "TRANSPORTER LIKE ? LIMIT 0,8");
+    parameters.add(domainId);
     parameters.add(text.concat("%"));
     try {
       List rs = (List) query.executeWithArray(parameters.toArray());
@@ -2462,8 +2460,13 @@ public class ShipmentService implements IShipmentService {
       parameters.add(orderId);
 
       if(CollectionUtils.isNotEmpty(materialIdList)) {
-        queryBuilder.append(" AND SI.MID IN (?)");
-       parameters.add(materialIdList);
+        queryBuilder.append(" AND SI.MID IN (");
+        for (Long matId : materialIdList) {
+          queryBuilder.append(CharacterConstants.QUESTION).append(CharacterConstants.COMMA);
+          parameters.add(matId);
+        }
+        queryBuilder.setLength(queryBuilder.length() - 1);
+        queryBuilder.append(")");
       }
 
       Query q =

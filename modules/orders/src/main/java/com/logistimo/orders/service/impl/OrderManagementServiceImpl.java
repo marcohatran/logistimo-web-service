@@ -1828,17 +1828,22 @@ public class OrderManagementServiceImpl implements OrderManagementService {
       }
     }
     if (kioskIds != null && !kioskIds.isEmpty()) {
-      sqlQuery.append(" AND ((KID IN(?");
-      parameters.add(kioskIds);
-
-      sqlQuery.append(") AND VTC = 1) OR (SKID IN(?");
-      parameters.add(kioskIds);
-
-      sqlQuery.append(") AND VTV = 1))");
+      List<Object> kidParams = new ArrayList<>(kioskIds.size());
+      StringBuilder kids = new StringBuilder();
+      for (Long kid : kioskIds) {
+        kids.append(CharacterConstants.QUESTION).append(CharacterConstants.COMMA);
+        kidParams.add(kid);
+      }
+      kids.setLength(kids.length() - 1);
+      sqlQuery.append(" AND ((KID IN(")
+          .append(kids.toString())
+          .append(") AND VTC = 1) OR (SKID IN(")
+          .append(kids.toString())
+          .append(") AND VTV = 1))");
+      parameters.addAll(kidParams); // for KID
+      parameters.addAll(kidParams); // for SKID
     }
-    sqlQuery.append(CharacterConstants.SPACE);
-
-    sqlQuery.append("LIMIT 0,8");
+    sqlQuery.append(" LIMIT 0,8");
     PersistenceManager pm = PMF.get().getPersistenceManager();
     Query query = pm.newQuery(Constants.JAVAX_JDO_QUERY_SQL, sqlQuery.toString());
     try {
