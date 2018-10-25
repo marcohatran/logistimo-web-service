@@ -85,7 +85,7 @@ public class UpdateNotificationConfigAction {
     long domainId = domain.getId();
     DomainConfig domainConfig = domainConfig(domainId);
     EventSummaryConfigModel eventsConfig = domainConfig.getEventSummaryConfig();
-    if(eventsConfig.getEvents() == null || eventsConfig.getEvents().isEmpty()) {
+    if(eventsConfig == null || eventsConfig.getEvents() == null || eventsConfig.getEvents().isEmpty()) {
       return;
     } else {
       eventsConfig.getEvents().stream().forEach(events -> events.setNotification(Boolean.TRUE));
