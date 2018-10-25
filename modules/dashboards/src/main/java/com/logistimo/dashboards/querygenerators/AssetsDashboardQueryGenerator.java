@@ -147,7 +147,7 @@ public class AssetsDashboardQueryGenerator {
       model.inParams(assetTypes, whereClause);
     }
     if (workingStatus != null && period != null) {
-      whereClause.append(" AND ASI.STATUS = ? AND ASI.TS <= SUBDATE(CURDATE(), INTERVAL ? DAY)");
+      whereClause.append(" AND ASI.STATUS = ? AND ASI.TS <= SUBDATE(NOW(), INTERVAL ? DAY)");
       model.param(workingStatus);
       model.param(period);
     }
