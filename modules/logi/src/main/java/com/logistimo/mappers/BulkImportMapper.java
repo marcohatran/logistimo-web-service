@@ -37,6 +37,7 @@ import com.logistimo.services.mapper.Entity;
 import com.logistimo.services.mapper.GenericMapper;
 import com.logistimo.services.mapper.Key;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 /**
@@ -65,7 +66,7 @@ public class BulkImportMapper
       if (domainIdStr != null && !domainIdStr.isEmpty()) {
         domainId = Long.valueOf(domainIdStr);
       }
-      String line = new String(segment, "UTF-8");
+      String line = new String(segment, StandardCharsets.UTF_8);
       if (line.isEmpty() || line.startsWith("Operation") || (BulkUploadMgr.TYPE_ASSETS.equals(type)
           && (line.startsWith("Entity") || line.startsWith("Store"))
           && (line.endsWith("Maintainers of Monitoring asset (comma-separated user IDs)")

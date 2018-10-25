@@ -76,6 +76,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -536,7 +537,7 @@ public class MnlTransactionUtil {
 
   private static BufferedReader getReader(String blobKeyStr) throws IOException {
     BlobstoreService blobstoreService = AppFactory.get().getBlobstoreService();
-    return new BufferedReader(new InputStreamReader(blobstoreService.getInputStream(blobKeyStr)));
+    return new BufferedReader(new InputStreamReader(blobstoreService.getInputStream(blobKeyStr), StandardCharsets.UTF_8));
   }
 
   private static int byteCountUTF8(String input) {

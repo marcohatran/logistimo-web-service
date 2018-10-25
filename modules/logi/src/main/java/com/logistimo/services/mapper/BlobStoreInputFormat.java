@@ -51,7 +51,7 @@ public class BlobStoreInputFormat extends InputFormat<BlobstoreRecordKey, byte[]
     InputStream
         stream =
         blobstoreService.getInputStream(getConfiguration().get(IMapredService.PARAM_BLOBKEY));
-    in = new BufferedReader(new InputStreamReader(stream, StandardCharsets.ISO_8859_1));
+    in = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
   }
 
   @Override
@@ -60,8 +60,8 @@ public class BlobStoreInputFormat extends InputFormat<BlobstoreRecordKey, byte[]
     try {
       String line = in.readLine();
       if (line != null) {
-        byte bytes[] = line.getBytes();
-        retVal = new KeyVal<BlobstoreRecordKey, byte[]>(new BlobstoreRecordKey(offset), bytes);
+        byte[] bytes = line.getBytes(StandardCharsets.UTF_8);
+        retVal = new KeyVal<>(new BlobstoreRecordKey(offset), bytes);
         offset += bytes.length;
       }
     } catch (IOException e) {
