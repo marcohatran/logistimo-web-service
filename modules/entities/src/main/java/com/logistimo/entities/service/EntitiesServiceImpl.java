@@ -1205,7 +1205,7 @@ public class EntitiesServiceImpl implements EntitiesService {
     String
         query = "select UK.UserToKioskId as UserToKioskId, UK.* FROM USERTOKIOSK UK, KIOSK K where "
         + "UK.USERID = ? AND K.KIOSKID = UK.KIOSKID";
-    List<String> parameters = new ArrayList<>(1);
+    List<Object> parameters = new ArrayList<>(1);
     parameters.add(user.getUserId());
     if (StringUtils.isNotEmpty(routeTag)) {
       query += " AND UK.TG = ?";
@@ -1219,10 +1219,9 @@ public class EntitiesServiceImpl implements EntitiesService {
     }
 
     if (pageParams != null) {
-      query +=
-          " LIMIT ?,?";
-      parameters.add(String.valueOf(pageParams.getOffset()));
-      parameters.add(String.valueOf(pageParams.getSize()));
+      query += " LIMIT ?,?";
+      parameters.add(pageParams.getOffset());
+      parameters.add(pageParams.getSize());
     }
     // Execute
     Query jdoQuery = pm.newQuery("javax.jdo.query.SQL", query);
