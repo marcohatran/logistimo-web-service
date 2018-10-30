@@ -974,9 +974,10 @@ public class AssetManagementServiceImpl implements AssetManagementService {
       params.add(stripTrailingAndLeadingQuotes(filters.get("TOKEN_MYEAR")));
     }
     if (filters.containsKey("TOKEN_SIZE") && filters.containsKey("TOKEN_OFFSET")) {
-      assetQuery.append(" LIMIT ? , ?");
-      params.add(filters.get("TOKEN_OFFSET"));
-      params.add(filters.get("TOKEN_SIZE"));
+      assetQuery.append(" LIMIT ")
+      .append(Integer.parseInt(filters.get("TOKEN_OFFSET")))
+      .append(CharacterConstants.COMMA)
+      .append(Integer.parseInt(filters.get("TOKEN_SIZE")));
     }
     ResultSet rs = null;
     try {

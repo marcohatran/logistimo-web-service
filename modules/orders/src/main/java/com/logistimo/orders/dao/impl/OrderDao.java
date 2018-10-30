@@ -117,10 +117,8 @@ public class OrderDao implements IOrderDao {
               +
               " WHERE ord.CON <= ? AND ojs.STATUS NOT IN ('COMPLETED','FAILED') OR ojs.STATUS is null "
               +
-              " ORDER BY ord.ID ASC limit ?,?";
+              " ORDER BY ord.ID ASC limit " + offset + "," + size;
       params.add(cutoffDate);
-      params.add(String.valueOf(offset));
-      params.add(String.valueOf(size));
       pm = PMF.get().getPersistenceManager();
       query = pm.newQuery("javax.jdo.query.SQL", squery);
       query.setClass(Order.class);

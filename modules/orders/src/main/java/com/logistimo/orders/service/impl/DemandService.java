@@ -184,11 +184,12 @@ public class DemandService implements IDemandService {
       parameters.add(String.valueOf(mTag));
     }
 
-    query.append(" GROUP BY LKID, MID LIMIT ?,?")
+    query.append(" GROUP BY LKID, MID LIMIT ")
+        .append(offset)
+        .append(CharacterConstants.COMMA)
+        .append(size)
         .append(")D").append(CharacterConstants.SPACE)
         .append("LEFT JOIN INVNTRY I ON D.LKID = I.KID AND D.MID = I.MID");
-    parameters.add(String.valueOf(offset));
-    parameters.add(String.valueOf(size));
     try {
       return new Results(getResults(query, parameters), "", -1, offset);
     } catch (Exception e) {

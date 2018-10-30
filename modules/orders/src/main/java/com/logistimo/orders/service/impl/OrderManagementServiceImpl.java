@@ -713,9 +713,10 @@ public class OrderManagementServiceImpl implements OrderManagementService {
       }
 
       queryBuilder.append(" ORDER BY UON DESC");
-      queryBuilder.append(" LIMIT ?,?");
-      parameters.add(String.valueOf(pageParams.getOffset()));
-      parameters.add(String.valueOf(pageParams.getSize()));
+      queryBuilder.append(" LIMIT ")
+          .append(pageParams.getOffset())
+          .append(CharacterConstants.COMMA)
+          .append(pageParams.getSize());
       query = pm.newQuery(Constants.JAVAX_JDO_QUERY_SQL, queryBuilder.toString());
       query.setClass(Order.class);
       results = (List<IOrder>) query.executeWithArray(parameters.toArray());
