@@ -1625,7 +1625,7 @@ public class BulkUploadMgr {
           }
           try {
             if (isPasswordValid && isAdd) {
-              u.setEncodedPassword(PasswordEncoder.MD5(password));
+              u.setEncodedPassword(password);
             } else if (isPasswordValid && isEdit && !oldPassword.isEmpty()) {
               //Bulkupload edit password will always be clear text
               aus.changePassword(userId, null, oldPassword, password, false);
