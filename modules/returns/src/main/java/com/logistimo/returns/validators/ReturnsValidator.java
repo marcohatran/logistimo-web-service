@@ -75,16 +75,18 @@ public class ReturnsValidator {
         Stream.toMap(handlingUnitModels,
             HandlingUnitModel::getMaterialId, HandlingUnitModel::getQuantity);
 
-    returnItemList.forEach(returnsItemVO -> {
-      final BigDecimal handlingUnitQuantity = handlingUnits.get(returnsItemVO.getMaterialId());
-      if (!returnsItemVO.hasBatches()) {
-        validateHandlingUnit(handlingUnitQuantity, returnsItemVO.getQuantity());
-      } else {
-        returnsItemVO.getReturnItemBatches().forEach(returnsItemBatchVO ->
+    returnItemList.stream()
+        .filter(returnsItemVO -> handlingUnits.containsKey(returnsItemVO.getMaterialId()))
+        .forEach(returnsItemVO -> {
+          final BigDecimal handlingUnitQuantity = handlingUnits.get(returnsItemVO.getMaterialId());
+          if (!returnsItemVO.hasBatches()) {
+            validateHandlingUnit(handlingUnitQuantity, returnsItemVO.getQuantity());
+          } else {
+            returnsItemVO.getReturnItemBatches().forEach(returnsItemBatchVO ->
                 validateHandlingUnit(handlingUnitQuantity, returnsItemBatchVO.getQuantity())
-        );
-      }
-    });
+            );
+          }
+        });
   }
 
   /**
