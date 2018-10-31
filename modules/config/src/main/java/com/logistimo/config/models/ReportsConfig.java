@@ -236,7 +236,7 @@ public class ReportsConfig {
         cms.addConfiguration(key, domainId, config);
       }
     } catch (Exception e) {
-      xLogger.severe("Service exception:",  e);
+      xLogger.warn("Service exception: {0}",  e.getMessage());
     }
   }
 

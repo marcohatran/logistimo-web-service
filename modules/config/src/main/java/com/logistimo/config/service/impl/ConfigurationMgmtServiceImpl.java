@@ -123,7 +123,7 @@ public class ConfigurationMgmtServiceImpl implements ConfigurationMgmtService {
       localPM.detachCopy(config);
     } catch (Exception e) {
       xLogger.fine("Exception while adding configuation object: {0}", e.getMessage());
-      throw new ServiceException(e.getMessage());
+      throw new ServiceException(e);
     } finally {
       if(pm == null) {
         localPM.close();
