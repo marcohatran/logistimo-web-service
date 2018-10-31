@@ -114,6 +114,9 @@ public class UserAuth {
   @Column(name = "ROLE")
   private String role;
 
+  @Column(name = "V")
+  private String version;
+
   public boolean hasSalt() {
     return !StringUtils.isEmpty(getSalt());
   }

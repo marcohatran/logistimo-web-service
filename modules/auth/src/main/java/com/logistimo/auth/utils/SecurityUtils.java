@@ -208,11 +208,13 @@ public class SecurityUtils {
 
   public static void clearTokenCookie(HttpServletRequest request, HttpServletResponse response) {
     Cookie[] cookies = request.getCookies();
-    for(int i=0;i < cookies.length;i++) {
-      if(cookies[i].getName().equals(Constants.TOKEN)) {
-        cookies[i].setMaxAge(0);
-        cookies[i].setPath("/");
-        response.addCookie(cookies[i]);
+    if( cookies != null) {
+      for (int i = 0; i < cookies.length; i++) {
+        if (cookies[i].getName().equals(Constants.TOKEN)) {
+          cookies[i].setMaxAge(0);
+          cookies[i].setPath("/");
+          response.addCookie(cookies[i]);
+        }
       }
     }
   }

@@ -123,16 +123,17 @@ public class NotifyEventUpdateAction {
     if(dateOfEvent == null) {
       return Boolean.FALSE;
     }
+    long diffInMillis = Math.abs(today.getTime() - dateOfEvent.getTime());
+    long diff = TimeUnit.DAYS.convert(diffInMillis, TimeUnit.MILLISECONDS);
     if(type.equals(CRITICAL_INDICATORS) && dateOfEvent.compareTo(today) == 0) {
-      return Boolean.TRUE;
+      if(diff <= 1l) {
+        return Boolean.TRUE;
+      }
     }
     if(type.equals(PERFORMANCE_INDICATORS)) {
-      long diffInMillis = Math.abs(today.getTime() - dateOfEvent.getTime());
-      long diff = TimeUnit.DAYS.convert(diffInMillis, TimeUnit.MILLISECONDS);
       if(diff <= 2l) {
         return Boolean.TRUE;
       }
-      return Boolean.FALSE;
     }
     return Boolean.FALSE;
   }

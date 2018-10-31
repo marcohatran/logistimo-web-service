@@ -81,6 +81,7 @@ public class AuditAction {
     userAuth.setUserAgent(auditModel.getUserAgent());
     userAuth.setLoginSource(auditModel.getLoginSource());
     userAuth.setIpAddress(auditModel.getIpAddress());
+    userAuth.setVersion(auditModel.getSourceVersion());
     userAuthRepository.save(userAuth);
   }
 }

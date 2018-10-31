@@ -2624,7 +2624,7 @@ public class BulkUploadMgr {
         }
       }
       // Add tags, if any
-      xLogger.info("Adding tags: error messages so far: {0}", ec.messages);
+      xLogger.info("Adding tags: issues so far: {0}", ec.messages);
       xLogger.info("i = {0}, size = {1}, isEdit = {2}, isAdd = {3}", i, size, isEdit, isAdd);
 
       if ((isAdd && ++i < size) || (isEdit && (i = i + 6) < size)) {
