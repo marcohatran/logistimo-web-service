@@ -784,8 +784,7 @@ public class RESTUtil {
       }
     }
     // Get default backendMessages
-    backendMessages =
-        Resources.get().getBundle("BackendMessages", new Locale(Constants.LANG_DEFAULT));
+    backendMessages = Resources.get().getBundle("BackendMessages", new Locale(Constants.LANG_DEFAULT));
     try {
       boolean authenticated = false;
       // Check if Basic auth. header exists
@@ -807,21 +806,22 @@ public class RESTUtil {
           ud = aus.authenticate(authRequest);
           authenticated = (ud != null);
           if (!authenticated) {
-            backendMessages =
-                Resources.get().getBundle("BackendMessages", new Locale(Constants.LANG_DEFAULT));
+            backendMessages = Resources.get().getBundle("BackendMessages", new Locale(Constants.LANG_DEFAULT));
             errMsg = backendMessages.getString("error.invalidusername");
+          } else {
+            u = as.getUserAccount(uId);
           }
-        } else if (uId == null) { // no proper credentials
-          backendMessages =
-              Resources.get().getBundle("BackendMessages", new Locale(Constants.LANG_DEFAULT));
+        } else if (uId == null) {
+          // no proper credentials
+          backendMessages = Resources.get().getBundle("BackendMessages", new Locale(Constants.LANG_DEFAULT));
           errMsg = backendMessages.getString("error.invalidusername");
         } else {
           // Brought this back, without this few pages in old UI break. ( Stock view dashboard)
           // DEPRECATED
           // No password - check whether an authenticated session exists
           SecureUserDetails sUser = SecurityMgr.getUserDetailsIfPresent();
-          if (sUser != null && sUser.getUsername()
-              .equals(uId)) { // authenticated via web login session
+          if (sUser != null && sUser.getUsername().equals(uId)) {
+            // authenticated via web login session
             u = as.getUserAccount(uId);
             authenticated = true;
           } else { // no authenticated session either
@@ -1831,10 +1831,8 @@ public class RESTUtil {
 
   // Method to switch to new host if configured in the Domain configuration for a user's domain
   public static boolean checkIfLoginShouldNotBeAllowed(IUserAccount u, HttpServletResponse resp,
-                                                       HttpServletRequest req)
-      throws ServiceException {
+                                                       HttpServletRequest req) throws ServiceException {
     // Get the configuration. Check if switch to new host is enabled. If yes, get the new host name and return 409 response.
-
     return checkAppVersion(u,resp,req) || checkDomainSwith(u,resp);
   }
 

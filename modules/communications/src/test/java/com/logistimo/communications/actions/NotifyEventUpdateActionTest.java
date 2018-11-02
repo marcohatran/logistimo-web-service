@@ -84,9 +84,16 @@ public class NotifyEventUpdateActionTest {
   }
 
   @Test
-  public void testIsNewEvent () {
+  public void testIsPerformanceNewEvent () {
     String timestamp = "2018-10-02T00:00:00.000+01:00";
     boolean res = action.isNewEvent(action.eventDate(timestamp),action.todayDate(),"performance");
+    Assert.assertEquals(false,res);
+  }
+
+  @Test
+  public void testIsNewCriticalEvent () {
+    String timestamp = "2018-10-31T00:00:00.000";
+    boolean res = action.isNewEvent(action.eventDate(timestamp),action.todayDate(),"critical");
     Assert.assertEquals(false,res);
   }
 }
