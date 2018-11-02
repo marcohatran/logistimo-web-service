@@ -125,15 +125,11 @@ public class NotifyEventUpdateAction {
     }
     long diffInMillis = Math.abs(today.getTime() - dateOfEvent.getTime());
     long diff = TimeUnit.DAYS.convert(diffInMillis, TimeUnit.MILLISECONDS);
-    if(type.equals(CRITICAL_INDICATORS) && dateOfEvent.compareTo(today) == 0) {
-      if(diff <= 1l) {
-        return Boolean.TRUE;
-      }
+    if(type.equals(CRITICAL_INDICATORS) && diff <= 1l) {
+      return Boolean.TRUE;
     }
-    if(type.equals(PERFORMANCE_INDICATORS)) {
-      if(diff <= 2l) {
-        return Boolean.TRUE;
-      }
+    if(type.equals(PERFORMANCE_INDICATORS) && diff <= 2l) {
+      return Boolean.TRUE;
     }
     return Boolean.FALSE;
   }
