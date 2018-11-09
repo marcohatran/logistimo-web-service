@@ -1099,7 +1099,7 @@ tempControllers.controller('DeviceSummaryController', ['$scope', 'requestContext
                                 "data": $scope.tempJson
                             }
                         ],
-                        "trendlines": {
+                        "trendlines": [{
                             "line": [
                                 {
                                     "startvalue": $scope.deviceDetails[0].min,
@@ -1111,7 +1111,7 @@ tempControllers.controller('DeviceSummaryController', ['$scope', 'requestContext
                                     "valueOnRight": "1"
                                 }
                             ]
-                        }
+                        }]
                     };
 
                     var noDataMessage = checkNullEmpty(tdate) ? "No data available" : "No data available for " + formatDate(tdate);

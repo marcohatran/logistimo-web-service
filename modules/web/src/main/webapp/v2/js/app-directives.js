@@ -1997,8 +1997,9 @@ logistimoApp.directive('fusionChart', function () {
 
                         }
                         if ($scope.trend) {
-                            dataSource.trendlines = {};
-                            dataSource.trendlines.line = $scope.trend;
+                            dataSource.trendlines = [{
+                                line : $scope.trend
+                            }];
                         }
                         if ($scope.colorRange) {
                             dataSource.colorrange = $scope.colorRange;

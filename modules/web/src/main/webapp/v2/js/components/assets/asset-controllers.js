@@ -1586,7 +1586,7 @@ assetControllers.controller('AssetSummaryController', ['$scope', 'requestContext
                     name: "Unknown"
                 }
             ],
-            "trendlines": {
+            "trendlines": [{
                 "line": [
                     {
                         "startvalue": "1",
@@ -1601,7 +1601,7 @@ assetControllers.controller('AssetSummaryController', ['$scope', 'requestContext
                         "valueOnRight" : "0"
                     }
                 ]
-            }
+            }]
         };
         ListingController.call(this, $scope, requestContext, $location);
         $scope.init = function(){};
@@ -1787,7 +1787,7 @@ assetControllers.controller('AssetSummaryController', ['$scope', 'requestContext
                                     "data": $scope.tempJson
                                 }
                             ],
-                            "trendlines": {
+                            "trendlines": [{
                                 "line": [
                                     {
                                         "startvalue": minTmp,
@@ -1799,7 +1799,7 @@ assetControllers.controller('AssetSummaryController', ['$scope', 'requestContext
                                         "valueOnRight": "1"
                                     }
                                 ]
-                            }
+                            }]
                         };
 
                         var noDataMessage = checkNullEmpty(tdate) ? "No data available" : "No data available for " + formatDate(tdate);
