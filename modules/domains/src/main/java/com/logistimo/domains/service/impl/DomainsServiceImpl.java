@@ -97,7 +97,7 @@ public class DomainsServiceImpl implements DomainsService {
       throw new ServiceException("Invalid domain ID");
     }
 
-    PersistenceManager pm = PMF.get().getPersistenceManager();
+    PersistenceManager pm = getPersistenceManager();
     IDomain domain = null;
     String errMsg = null;
     boolean notFound = false;
@@ -123,11 +123,15 @@ public class DomainsServiceImpl implements DomainsService {
     return domain;
   }
 
+  public PersistenceManager getPersistenceManager() {
+    return PMF.get().getPersistenceManager();
+  }
+
   @SuppressWarnings("unchecked")
   public Results getAllDomains(PageParams pageParams) throws ServiceException {
     xLogger.fine("Entering getAllDomains");
 
-    PersistenceManager pm = PMF.get().getPersistenceManager();
+    PersistenceManager pm = getPersistenceManager();
     String errMsg = null;
     Query query = pm.newQuery(JDOUtils.getImplClass(IDomain.class));
     query.setOrdering("nNm asc");
@@ -206,7 +210,7 @@ public class DomainsServiceImpl implements DomainsService {
         queryStr =
         "SELECT FROM " + JDOUtils.getImplClass(IDomainLink.class).getName()
             + " WHERE dId == dIdParam && ty == tyParam PARAMETERS Long dIdParam, Integer tyParam"; // sorted by linked domain name
-    PersistenceManager pm = PMF.get().getPersistenceManager();
+    PersistenceManager pm = getPersistenceManager();
     try {
       IDomainLink parentLink;
       int count = 1;
@@ -256,7 +260,7 @@ public class DomainsServiceImpl implements DomainsService {
     }
     String cursor = null;
     List<IDomainLink> links = null;
-    PersistenceManager pm = PMF.get().getPersistenceManager();
+    PersistenceManager pm = getPersistenceManager();
     String
         queryStr =
         "SELECT FROM " + JDOUtils.getImplClass(IDomainLink.class).getName()
@@ -297,7 +301,7 @@ public class DomainsServiceImpl implements DomainsService {
       throw new IllegalArgumentException("Invalid domain ID");
     }
     boolean has = false;
-    PersistenceManager pm = PMF.get().getPersistenceManager();
+    PersistenceManager pm = getPersistenceManager();
     String
         queryStr =
         "SELECT key FROM " + JDOUtils.getImplClass(IDomainLink.class).getName()
@@ -333,7 +337,7 @@ public class DomainsServiceImpl implements DomainsService {
     // Check if key and date are set, if not set those
     Date now = new Date();
     Iterator<IDomainLink> it = domainLinks.iterator();
-    PersistenceManager pm = PMF.get().getPersistenceManager();
+    PersistenceManager pm = getPersistenceManager();
     try {
       while (it.hasNext()) {
         IDomainLink link = it.next();
@@ -429,7 +433,7 @@ public class DomainsServiceImpl implements DomainsService {
       throw new IllegalArgumentException("Invalid keys to delete");
     }
 
-    PersistenceManager pm = PMF.get().getPersistenceManager();
+    PersistenceManager pm = getPersistenceManager();
     Iterator<String> it = keys.iterator();
     List<IDomainLink> links = new ArrayList<>(keys.size());
     String key = null;
@@ -468,7 +472,7 @@ public class DomainsServiceImpl implements DomainsService {
     if (domainLink == null) {
       throw new IllegalArgumentException("Invalid link to delete");
     }
-    PersistenceManager pm = PMF.get().getPersistenceManager();
+    PersistenceManager pm = getPersistenceManager();
     try {
       String reverseKey = domainLink.getLinkedDomainId() + ".0." + domainLink.getDomainId();
       IDomainLink link = JDOUtils.getObjectById(IDomainLink.class, domainLink.getKey(), pm);
@@ -563,7 +567,7 @@ public class DomainsServiceImpl implements DomainsService {
     PersistenceManager pm = null;
     Transaction tx = null;
     try {
-      pm = PMF.get().getPersistenceManager();
+      pm = getPersistenceManager();
       tx = pm.currentTransaction();
       tx.begin();
       pm.makePersistent(domain);
@@ -601,7 +605,7 @@ public class DomainsServiceImpl implements DomainsService {
     String errMsg = null;
     PersistenceManager localPM = pm;
     if(localPM == null) {
-      localPM = PMF.get().getPersistenceManager();
+      localPM = getPersistenceManager();
     }
     IDomainPermission permission = JDOUtils.createInstance(IDomainPermission.class);
     if (permission != null) {
@@ -637,7 +641,7 @@ public class DomainsServiceImpl implements DomainsService {
 
     String errMsg = null;
 
-    PersistenceManager pm = PMF.get().getPersistenceManager();
+    PersistenceManager pm = getPersistenceManager();
     try {
       IDomain d = JDOUtils.getObjectById(IDomain.class, domain.getId(), pm);
       d.setName(domain.getName());
@@ -670,7 +674,7 @@ public class DomainsServiceImpl implements DomainsService {
       throw new ServiceException("Invalid domain ID list");
     }
 
-    PersistenceManager pm = PMF.get().getPersistenceManager();
+    PersistenceManager pm = getPersistenceManager();
     try {
       for (Long dId : domainIds) {
         IDomain d = JDOUtils.getObjectById(IDomain.class, dId);
@@ -699,7 +703,7 @@ public class DomainsServiceImpl implements DomainsService {
       throw new IllegalArgumentException("Invalid input parameters - one or more of them is null");
     }
     // Retrieve the object
-    PersistenceManager pm = PMF.get().getPersistenceManager();
+    PersistenceManager pm = getPersistenceManager();
     try {
       for (Object objectId : objectIds) {
         try {
@@ -729,7 +733,7 @@ public class DomainsServiceImpl implements DomainsService {
       throw new IllegalArgumentException("Invalid input parameters - one or more of them is null");
     }
     // Retrieve the object
-    PersistenceManager pm = PMF.get().getPersistenceManager();
+    PersistenceManager pm = getPersistenceManager();
     try {
       for (Object objectId : objectIds) {
         try {
@@ -753,7 +757,7 @@ public class DomainsServiceImpl implements DomainsService {
   @Override
   public List<Long> getAllChildDomains() throws ServiceException {
     xLogger.fine("Entered getAllChildDomains");
-    PersistenceManager pm = PMF.get().getPersistenceManager();
+    PersistenceManager pm = getPersistenceManager();
     String
         queryStr =
         "SELECT ldId FROM " + JDOUtils.getImplClass(IDomainLink.class).getName()
@@ -893,7 +897,7 @@ public class DomainsServiceImpl implements DomainsService {
     if (permission == null) {
       return;
     }
-    PersistenceManager pm = PMF.get().getPersistenceManager();
+    PersistenceManager pm = getPersistenceManager();
     IDomainPermission prm = null;
     try {
       prm = JDOUtils.getObjectById(IDomainPermission.class, domainId, pm);
@@ -952,7 +956,7 @@ public class DomainsServiceImpl implements DomainsService {
   @Override
   public List<IDomain> getDomains(String q, PageParams pageParams)
       throws ServiceException {
-    PersistenceManager pm = PMF.get().getPersistenceManager();
+    PersistenceManager pm = getPersistenceManager();
     Query query = pm.newQuery(JDOUtils.getImplClass(IDomain.class));
     Map<String, Object> params = new HashMap<>();
     if (!q.isEmpty()) {
@@ -986,7 +990,7 @@ public class DomainsServiceImpl implements DomainsService {
 
   @Override
   public List<IDomain> getAllRootDomains() {
-    PersistenceManager pm = PMF.get().getPersistenceManager();
+    PersistenceManager pm = getPersistenceManager();
     Query query = pm.newQuery(JDOUtils.getImplClass(IDomain.class));
     query.setFilter("hasParent == false");
     query.setOrdering("nNm asc");
@@ -1017,7 +1021,7 @@ public class DomainsServiceImpl implements DomainsService {
     }
     IDomain d = null;
     // Form query
-    PersistenceManager pm = PMF.get().getPersistenceManager();
+    PersistenceManager pm = getPersistenceManager();
 
     try {
       // Form the query

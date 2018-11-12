@@ -40,7 +40,6 @@ import com.logistimo.assets.models.DeviceConfigPushPullModel;
 import com.logistimo.assets.models.TemperatureResponse;
 import com.logistimo.assets.service.AssetManagementService;
 import com.logistimo.assets.service.impl.AssetManagementServiceImpl;
-import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.config.models.AssetConfig;
 import com.logistimo.config.models.AssetSystemConfig;
 import com.logistimo.config.models.ConfigurationException;
@@ -78,7 +77,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -309,15 +307,13 @@ public class AssetUtil {
       } else {
         //Validating domain association
         if (!Objects.equals(asset.getDomainId(), domainId)) {
-          throw new ServiceException(
-              "Given asset " + asset.getSerialId() + " is mapped to another domain.");
+          throw new ServiceException("AST005", asset.getSerialId(), domainId);
         }
-
         //Validating kiosk association
         if (kioskId != null && asset.getKioskId() != null && !Objects
             .equals(asset.getKioskId(), kioskId)) {
-          throw new ServiceException(
-              "Given asset " + asset.getSerialId() + " is mapped to another store.");
+
+          throw new ServiceException("AST006", asset.getSerialId(), kioskId);
         }
 
         if (kioskId != null && asset.getKioskId() == null) {

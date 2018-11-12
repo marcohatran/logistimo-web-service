@@ -24,20 +24,50 @@
 package com.logistimo.bulkuploads;
 
 import com.logistimo.constants.CharacterConstants;
+import com.logistimo.context.StaticApplicationContext;
+import com.logistimo.domains.entity.Domain;
+import com.logistimo.domains.entity.IDomain;
+import com.logistimo.domains.service.impl.DomainsServiceImpl;
+import com.logistimo.services.ServiceException;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.utils.FieldLimits;
 
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.powermock.modules.junit4.PowerMockRunner;
+import org.springframework.context.ApplicationContext;
 
 import java.time.LocalDate;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Created by vani on 31/07/18.
  */
+@RunWith(PowerMockRunner.class)
 public class BulkUploadMgrTest {
+
+  @Mock
+  DomainsServiceImpl domainsService;
+
+  @Before
+  public void setUp() {
+    doReturn(null).when(domainsService).getPersistenceManager();
+
+    ApplicationContext mockApplicationContext = mock(ApplicationContext.class);
+    when(mockApplicationContext.getBean(DomainsServiceImpl.class)).thenReturn(domainsService);
+    StaticApplicationContext applicationContext = new StaticApplicationContext();
+    applicationContext.setApplicationContext(mockApplicationContext);
+  }
 
   @Test
   public void testIsGenderValidWithValidInputs() throws Exception {
@@ -124,5 +154,25 @@ public class BulkUploadMgrTest {
   @Test
   public void testIsGuiThemeValidForInvalidInput() throws Exception {
     assertFalse(BulkUploadMgr.isGuiThemeValid("invalid"));
+  }
+
+  @Test
+   public void testGetErrorMessageForAssetRelation() throws Exception {
+    ServiceException exception = new ServiceException("AST005", "ILR001", 1l);
+    IDomain domain = new Domain();
+    domain.setName("India");
+    when(BulkUploadMgr.getDomainService().getDomain(any())).thenReturn(domain);
+    String errorMessage = BulkUploadMgr.getErrorMessage(exception.getCode(), exception.getMessage(), 1l, null);
+    assertNotSame(exception.getMessage(), errorMessage);
+    assertEquals("Given asset ILR001 is mapped to India domain.", errorMessage);
+
+  }
+
+  @Test
+  public void testGetErrorMessage() {
+    String code = "AST001";
+    ServiceException exception = new ServiceException(code);
+    String errorMessage = BulkUploadMgr.getErrorMessage(code, exception.getMessage(), null, 1l);
+    assertEquals(exception.getMessage(), errorMessage);
   }
 }

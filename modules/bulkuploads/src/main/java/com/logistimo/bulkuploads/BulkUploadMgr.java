@@ -90,7 +90,6 @@ import com.logistimo.users.service.impl.UsersServiceImpl;
 import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.FieldLimits;
 import com.logistimo.utils.LocalDateUtil;
-import com.logistimo.utils.PasswordEncoder;
 import com.logistimo.utils.PatternConstants;
 import com.logistimo.utils.StringUtil;
 import com.logistimo.validations.PasswordValidator;
@@ -159,7 +158,6 @@ public class BulkUploadMgr {
   public static final int LOWER_BOUND_FOR_YOM = 1980;
   public static final String TEMP_MIN = "Temperature Min.";
   public static final String TEMP_MAX = "Temperature Max.";
-  private static ITaskService taskService = AppFactory.get().getTaskService();
 
   private static final String MAX_LENGTH_MSG = " cannot be greater than ";
   private static final String CHARACTERS = " characters";
@@ -174,6 +172,55 @@ public class BulkUploadMgr {
   private static final String ERROR_COUNT_MSG = "Remaining number of errors: ";
   private static final String ERRORS_TRUNCATED_MSG = "... Message truncated due to too many errors. ";
   private static final String SALT_HASH_SEPARATOR = "####";
+
+  private static DomainsService domainsService;
+  private static EntitiesService entitiesService;
+  private static UsersService usersService;
+  private static AssetManagementService assetManagementService;
+  private static MaterialCatalogService materialCatalogService;
+  private static ITaskService taskService;
+
+  private static ITaskService getTaskService() {
+    if(taskService == null) {
+      taskService = AppFactory.get().getTaskService();
+    }
+    return taskService;
+  }
+
+  protected static DomainsService getDomainService() {
+    if(domainsService == null) {
+      domainsService = StaticApplicationContext.getBean(DomainsServiceImpl.class);
+    }
+    return domainsService;
+  }
+
+  protected static EntitiesService getEntitiesService() {
+    if(entitiesService == null) {
+      entitiesService = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
+    }
+    return entitiesService;
+  }
+
+  protected static UsersService getUsersService() {
+    if(usersService == null) {
+      usersService = StaticApplicationContext.getBean(UsersServiceImpl.class);
+    }
+    return usersService;
+  }
+
+  protected static AssetManagementService getAssetManagementService() {
+    if(assetManagementService ==  null) {
+      assetManagementService = StaticApplicationContext.getBean(AssetManagementServiceImpl.class);
+    }
+    return assetManagementService;
+  }
+
+  protected static MaterialCatalogService getMaterialCatalogService() {
+    if(materialCatalogService == null) {
+      materialCatalogService = StaticApplicationContext.getBean(MaterialCatalogServiceImpl.class);
+    }
+    return materialCatalogService;
+  }
 
   private BulkUploadMgr() {
 
@@ -218,8 +265,7 @@ public class BulkUploadMgr {
     // Get the user's role
     String role = null;
     try {
-      UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
-      role = as.getUserAccount(userId).getRole();
+      role = getUsersService().getUserAccount(userId).getRole();
     } catch (Exception e) {
       xLogger.warn(
           "{0} when getting user's role for uploaded type {1} from user {2} in domain {3}: {4}",
@@ -336,8 +382,7 @@ public class BulkUploadMgr {
     }
     EntityContainer entityContainer = null;
     String[] tokens = StringUtil.getCSVTokens(csvLine);
-    UsersService usersService = StaticApplicationContext.getBean(UsersService.class);
-    SecurityMgr.setSessionDetails(usersService.getUserAccount(sourceUserId));
+    SecurityMgr.setSessionDetails(getUsersService().getUserAccount(sourceUserId));
     if (TYPE_USERS.equals(type)) {
       entityContainer = processUserEntity(tokens, domainId, sourceUserId);
     } else if (TYPE_MATERIALS.equals(type)) {
@@ -368,16 +413,14 @@ public class BulkUploadMgr {
     xLogger.fine("Entered processAssetEntity");
     ResourceBundle backendMessages;
     EntityContainer ec = new EntityContainer();
+    Long kioskId = null;
 
     try {
       if (tokens == null || tokens.length == 0) {
         throw new ServiceException("No fields specified");
       }
 
-      UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
-      AssetManagementService ams = StaticApplicationContext.getBean(
-          AssetManagementServiceImpl.class);
-      IUserAccount su = as.getUserAccount(sourceUserId);
+      IUserAccount su = getUsersService().getUserAccount(sourceUserId);
       backendMessages = Resources.get().getBundle("BackendMessages", su.getLocale());
       //Entity Name
       int i = 0;
@@ -388,8 +431,6 @@ public class BulkUploadMgr {
             + " name: Name is greater than 50 characters. Please specify a valid " + backendMessages
             .getString("kiosks.lowercase") + " name.");
       }
-
-      Long kioskId = null;
       PersistenceManager pm = PMF.get().getPersistenceManager();
       List<String> tags = new ArrayList<>(1);
       Query q = pm.newQuery("select kioskId from " + JDOUtils.getImplClass(IKiosk.class).getName()
@@ -399,9 +440,7 @@ public class BulkUploadMgr {
         List<Long> list = (List<Long>) q.execute(domainId, eName.toLowerCase());
         if (list != null && !list.isEmpty()) {
           kioskId = list.get(0);
-            EntitiesService entitiesService = StaticApplicationContext.getBean(
-                EntitiesServiceImpl.class);
-            tags = entitiesService.getAssetTagsToRegister(kioskId);
+            tags = getEntitiesService().getAssetTagsToRegister(kioskId);
         }
         xLogger.fine(
             "BulkUploadMgr.processAssetEntity: resolved kiosk {0} to {1}; list returned {2} items",
@@ -582,14 +621,14 @@ public class BulkUploadMgr {
       }
 
       if (monitoredAsset != null && sensorAsset != null) {
-        IAssetRelation assetRelation = ams.getAssetRelationByRelatedAsset(sensorAsset.getId());
+        IAssetRelation assetRelation = getAssetManagementService().getAssetRelationByRelatedAsset(sensorAsset.getId());
         if (assetRelation != null && !Objects
             .equals(assetRelation.getAssetId(), monitoredAsset.getId())) {
           throw new ServiceException("Given monitoring asset " + sensorAsset.getSerialId()
               + " is related to another asset, before adding new relationship, remove existing relationship.");
         }
 
-        assetRelation = ams.getAssetRelationByAsset(monitoredAsset.getId());
+        assetRelation = getAssetManagementService().getAssetRelationByAsset(monitoredAsset.getId());
         if (assetRelation != null && !Objects
             .equals(assetRelation.getRelatedAssetId(), sensorAsset.getId())) {
           throw new ServiceException("Given monitored asset " + monitoredAsset.getSerialId()
@@ -601,7 +640,8 @@ public class BulkUploadMgr {
             (List<String>) variableMap.get(AssetUtil.TAGS));
       }
     } catch (ServiceException | BadRequestException e) {
-      ec.messages.add(e.getMessage());
+      String message = getErrorMessage(e.getCode(), e.getMessage(), domainId, kioskId);
+      ec.messages.add(message);
     } catch (Exception e) {
       ec.messages.add("Error: " + e.getMessage());
       xLogger.warn("Exception: {0}, Message: {1}", e.getClass().getName(), e.getMessage(), e);
@@ -637,10 +677,9 @@ public class BulkUploadMgr {
 
     Set<String> errors = new HashSet<>();
     Set<String> userIdsSet = getUniqueUserIds(users,CharacterConstants.COMMA);
-    UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
     for (String userId : userIdsSet) {
       try {
-        if (!as.getUserAccount(userId).getDomainId().equals(domainId)) {
+        if (!getUsersService().getUserAccount(userId).getDomainId().equals(domainId)) {
           errors.add("User with ID " + userId + " does not belong to this domain");
           continue;
         }
@@ -718,13 +757,11 @@ public class BulkUploadMgr {
       return ec;
     }
     try {
-      UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
-      DomainsService ds = StaticApplicationContext.getBean(DomainsServiceImpl.class);
-      IUserAccount su = as.getUserAccount(sourceUserId);
+      IUserAccount su = getUsersService().getUserAccount(sourceUserId);
       backendMessages = Resources.get().getBundle("BackendMessages", su.getLocale());
       IDomainPermission
           permission =
-          ds.getLinkedDomainPermission(
+          getDomainService().getLinkedDomainPermission(
               su.getRole().equalsIgnoreCase(SecurityConstants.ROLE_DOMAINOWNER) ? su.getDomainId()
                   : domainId);
       int i = 0;
@@ -2093,13 +2130,11 @@ public class BulkUploadMgr {
     // Process material fields
     try {
       UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
-      EntitiesService es = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
-      DomainsService ds = StaticApplicationContext.getBean(DomainsServiceImpl.class);
       IUserAccount su = as.getUserAccount(sourceUserId);
       backendMessages = Resources.get().getBundle("BackendMessages", su.getLocale());
       IDomainPermission
           permission =
-          ds.getLinkedDomainPermission(
+          getDomainService().getLinkedDomainPermission(
               su.getRole().equalsIgnoreCase(SecurityConstants.ROLE_DOMAINOWNER) ? su.getDomainId()
                   : domainId);
       ConfigurationMgmtService cms =
@@ -2193,7 +2228,7 @@ public class BulkUploadMgr {
         }
         List<Long> kioskIds = new ArrayList<>();
         kioskIds.add(kioskId);
-        es.deleteKiosks(domainId, kioskIds, sourceUserId);
+        getEntitiesService().deleteKiosks(domainId, kioskIds, sourceUserId);
         xLogger.info("AUDITLOG\t{0}\t{1}\tENTITY\t " +
             "DELETE\t{3}\t{4}", domainId, sourceUserId, ec.operation, kioskId, name);
         return ec;
@@ -2218,7 +2253,7 @@ public class BulkUploadMgr {
           return ec;
         }
         // Get existing entity
-        k = es.getKiosk(kioskId);
+        k = getEntitiesService().getKiosk(kioskId);
       }
       k.setUpdatedBy(sourceUserId);
       // Set other entity parameters, if any
@@ -2677,9 +2712,9 @@ public class BulkUploadMgr {
       }
       // Add/edit
       if (isAdd) {
-        kioskId = es.addKiosk(domainId, k);
+        kioskId = getEntitiesService().addKiosk(domainId, k);
       } else {
-        es.updateKiosk(k, domainId);
+        getEntitiesService().updateKiosk(k, domainId);
       }
       // Set object id
       ec.entityId = kioskId;
@@ -2693,12 +2728,12 @@ public class BulkUploadMgr {
         }
       }
       if (addVendorLinks) {
-        addKioskLinks(domainId, kioskId, vendorNamesStr, IKioskLink.TYPE_VENDOR, sourceUserId, es,
+        addKioskLinks(domainId, kioskId, vendorNamesStr, IKioskLink.TYPE_VENDOR, sourceUserId, getEntitiesService(),
             ec, backendMessages);
       }
       if (addCustomerLinks) {
         addKioskLinks(domainId, kioskId, customerNamesStr, IKioskLink.TYPE_CUSTOMER, sourceUserId,
-            es, ec, backendMessages);
+            getEntitiesService(), ec, backendMessages);
       }
 
       xLogger.info("AUDITLOG\t{0}\t{1}\tENTITY\t " +
@@ -2866,7 +2901,7 @@ public class BulkUploadMgr {
     List<String> multiValueParams = new ArrayList<>();
     multiValueParams.add("materialid");
     // Schedule task immediately to add materials to kiosk
-    taskService.schedule(ITaskService.QUEUE_DEFAULT, url, params, multiValueParams, null,
+    getTaskService().schedule(ITaskService.QUEUE_DEFAULT, url, params, multiValueParams, null,
         ITaskService.METHOD_POST, -1, domainId, sourceUserId, "MATERIALS_TO_KIOSK");
     xLogger.fine("Exiting addMaterialsToKiosk");
   }
@@ -3234,6 +3269,33 @@ public class BulkUploadMgr {
    */
   private static boolean isClearTextPassword(String password) {
     return !password.contains(SALT_HASH_SEPARATOR);
+  }
+
+  protected static String getErrorMessage(String errorCode, String errorMessage, Long domainId,
+                                          Long kioskId) {
+    String name;
+    try {
+      switch (errorCode) {
+        case "AST005":
+          name = getDomainService().getDomain(domainId).getName();
+          break;
+        case "AST006":
+          name = getEntitiesService().getKiosk(kioskId).getName();
+          break;
+        default:
+          return errorMessage;
+      }
+    } catch (ServiceException e) {
+      name = "another";
+    }
+    return constructErrorMessage(errorMessage, name);
+  }
+
+  /**
+   * Replaces ID(domain/kiosk) with their name.
+   */
+  private static String constructErrorMessage(String errorMessage, String name) {
+    return errorMessage.replaceAll("(to )([\\d,]+)( )", "$1" + name + "$3");
   }
 
 }

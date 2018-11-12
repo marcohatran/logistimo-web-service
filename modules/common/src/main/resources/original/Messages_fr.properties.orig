@@ -1051,7 +1051,7 @@ mob=Iota app
 mob.mma=Pulse app
 upl=Ajouter vrac
 sms=Mobile SMS
-config.customreports.maxrowmsg=NOTE: Maximum de 60,000 lignes peut être exporté par feuille dans le fichier Excel. S'il vous plaît choisir la durée de données en conséquence.config.customreports.maxrowmsg=NOTE: Maximum de 60,000 lignes peut être exporté par feuille dans le fichier Excel. S'il vous plaît choisir la durée de données en conséquence.
+config.customreports.maxrowmsg=NOTE: Maximum de 60,000 lignes peut être exporté par feuille dans le fichier Excel. S'il vous plaît choisir la durée de données en conséquence.
 inprogress=dans pogress
 completed=Terminé
 failed=Échoué
@@ -1181,7 +1181,8 @@ material.status.required=Sélectionner l'état du matériau du lot
 serialno.format=Le numéro de série saisi n'est pas valide. Il devrait suivre la convention donnée ci-dessous.
 modelno.format=Vous avez entré un modèle d'actif non valide.
 material.status.required=Sélectionner l'état du matériau du lot
-profile=Profilmaterial.status.required=Sélectionner l'état du matériau du lot
+profile=Profil
+material.status.required=Sélectionner l'état du matériau du lot
 config.customreports.inventorytrendsheetname=Nom de la feuille d'évolution des stocks
 config.customreports.historicaleventsheetname=Nom de l'instantané de l'inventaire historique
 domain.lowercase=domaine
@@ -1247,14 +1248,16 @@ transactions.return.outgoing=retour sortant
 release.reference.id=Numéro de référence du communiqué
 stockrebalancing.admin.notification=${inventoryCount} inventory items require stock transfers from other entities in domain ${domainName}. Please review the Stock rebalancing recommendations in the web console to create the relevant transfer orders.
 recommendations.none=Aucune recommandation disponible
-gender.other=Autreuser.date.of.birth=Date de naissance
+gender.other=Autre
+user.date.of.birth=Date de naissance
 user.date.of.birth=Date de naissance
 user.permission=Autorisation
 user.token.expiry=expiration token
 format=format
 gui.theme.same.as.in.domain.configuration=Identique à la configuration du domaine
 gui.theme.default=Défaut
-show.by=Présenter pargui.theme.default=Défaut
+show.by=Présenter par
+gui.theme.default=Défaut
 and=et
 bulkupload.users.password.header.tip=Pour connaître les règles de mot de passe reportez-vous à la section 'Conseils pour remplir le fichier de données' de la page de téléchargement groupé.
 event.summary=Résumé de l'événement

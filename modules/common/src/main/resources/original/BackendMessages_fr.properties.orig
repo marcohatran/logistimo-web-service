@@ -75,7 +75,8 @@ resetordering.managedentities.success=Réinitialisé avec succès la commande de
 resetordering.linkedkiosks.success=Réinitialisé avec succès l'ordonnancement des entités liées
 transactions.duplicates=Inventaire a été mis à jour avec succès. Ne pas envoyer à nouveau. Rebranchez / rafraîchir, et vérifier si le stock est correcte.
 transactions.notundone=opération (s) ne pouvait pas être non-fait. Seules les questions et reçus peuvent être non fait
-transactions.omitted=Ces transactions ont été omises, mais d'autres pourraient avoir été commis. Passez en revue les transactions et ne re-soumettre les transactions errorneous après corrections, si nécessaire transactions.notundone=transactions ne pouvait pas être non-fait. Seule l'émission et reçus peuvent être non fait
+transactions.omitted=Ces transactions ont été omises, mais d'autres pourraient avoir été commis. Passez en revue les transactions et ne re-soumettre les transactions errorneous après corrections, si nécessaire
+transactions.notundone=transactions ne pouvait pas être non-fait. Seule l'émission et reçus peuvent être non fait
 transactions.posted=opérations ont été affichés
 transactions.posterror=Une erreur s'est produite lors de la publication des transactions sur le changement du statut de l'ordre
 transactions.postmanually=S'il vous plaît envoyer les transactions manuellement en utilisant l'interface web/mobile.

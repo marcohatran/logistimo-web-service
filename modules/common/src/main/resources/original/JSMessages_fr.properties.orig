@@ -721,7 +721,8 @@ config.material.status.heading=Situation matérielle
 transactions.viatransfer=par virement
 transactions.id=Id
 user.pwd.mismatch=Confirmer mot de passe doit correspondre à un mot de passe
-inventory.material.status=Situation matérielleuser.pwd.mismatch=Confirmer mot de passe doit correspondre à un mot de passe
+inventory.material.status=Situation matérielle
+user.pwd.mismatch=Confirmer mot de passe doit correspondre à un mot de passe
 config.syncbymobile=Synchronisation avec application mobile
 config.syncbymobileinfo=Spécifiez des intervalles de rafraîchissement pour l'application mobile ici .
 config.masterdatarefreshinterval=Maître intervalle d'actualisation de données
@@ -732,7 +733,9 @@ config.security=Sécurité
 config.securityinfo=Spécifiez les informations relatives à la sécurité pour les applications Web et mobiles ici.
 config.authenticationtokenexpiry=Authentification expiration jeton
 config.days=journées)
-config.local.login.req=Connexion locale nécessaire sur téléphone mobileconfig.smstransmissionwaitduration=SMS durée transmission d'attenteuser.permission.view=Voir seulement
+config.local.login.req=Connexion locale nécessaire sur téléphone mobile
+config.smstransmissionwaitduration=SMS durée transmission d'attente
+user.permission.view=Voir seulement
 assets=Des atouts
 asset=Astout
 asset.unique.id=Unique Device Id
@@ -833,7 +836,8 @@ enter.histperiod=Entrez période historique pour le calcul du taux de consommati
 enter.manualcr=Entrez le taux de consommation manuellement pour l'inventaire.
 enter.automatic=Premier calcul ensemble de taux de consommation comme automatique.
 set.automatic=Cette valeur est pris dans le champ correspondant dans le calcul du taux de consommation.
-as.sent.device=Comme envoyé par le dispositifenter.automatic=Premier calcul ensemble de taux de consommation comme automatique.
+as.sent.device=Comme envoyé par le dispositif
+enter.automatic=Premier calcul ensemble de taux de consommation comme automatique.
 paid.upper=Payé
 history.lower=histoire
 price.lower=prix
@@ -884,8 +888,10 @@ trn.batch.save.cancel=S'il vous plaît enregistrer ou annuler la forme de procé
 support.config.useridphonerequired.msg=ID de l'utilisateur ou le numéro de téléphone est nécessaire pour
 support.config.useridvalidphonerequired.msg=ID de l'utilisateur ou le numéro de téléphone valide est nécessaire pour
 support.config.useridvalidphonevalidoptemailrequired.msg=ID de l'utilisateur ou le numéro de téléphone valide et éventuellement un email ID valide est nécessaire pour
-support.config.validemailrequired.msg=Un email ID valide est nécessaire pourtrn.batch.save.cancel=S'il vous plaît enregistrer ou annuler la forme de procéder .
-questions=Les questionstrn.batch.save.cancel=S'il vous plaît enregistrer ou annuler la forme de procéder .
+support.config.validemailrequired.msg=Un email ID valide est nécessaire pour
+trn.batch.save.cancel=S'il vous plaît enregistrer ou annuler la forme de procéder .
+questions=Les questions
+trn.batch.save.cancel=S'il vous plaît enregistrer ou annuler la forme de procéder .
 data.missing=Aucune donnée disponible
 min.label=Min
 max.label=Max
@@ -916,7 +922,8 @@ export.all.discrepancies=Vous avez choisi d'exporter tous les écarts dans ce do
 yet.to.ship=Pourtant, pour l'expédition
 yet.to.allocate=Pourtant, d'allouer
 allow.managers.dashb=Permettre aux gestionnaires de visualiser les tableaux de bord
-allow.managers.dashb.label=la visibilité du tableau de bordallow.managers.dashb=Permettre aux gestionnaires de visualiser les tableaux de bord
+allow.managers.dashb.label=la visibilité du tableau de bord
+allow.managers.dashb=Permettre aux gestionnaires de visualiser les tableaux de bord
 hierarchy.view=Vue réseau
 hierarchy.view.unavailable=données de réseau non disponible
 download.svg=Télécharger en tant que svg
@@ -979,7 +986,8 @@ entity.group.lowercase=Groupe d'entités
 asset.lower=atout
 timezone.lower=fuseau horaire
 currency.lower=devise
-transactions.stockcount.lower=Nombre de stocksabnormality.type=Type d'anomalie
+transactions.stockcount.lower=Nombre de stocks
+abnormality.type=Type d'anomalie
 abnormality.duration=Durée de l'anomalie
 no.longer.available.at=N'est plus disponible à
 asset.manufacture.year=Année de fabrication
@@ -1083,7 +1091,8 @@ automate.order.likely.stockout=Créer une commande lorsque l'article est suscept
 enable.purchase.order.automation=Activer l'automatisation du bon de commande
 automate.purchase.order=Automatiser la création d'un ordre d'achat
 automate.purchase.order.desc=Spécifiez la configuration pour automatiser la création de bons de commande
-days.of.stockout.mandatory=Entrez le nombre de jours de stockout, avant que le bon de commande ne soit créé.same.admincontacts.warning=Les contacts administratifs primaires et secondaires ne doivent pas être identiques
+days.of.stockout.mandatory=Entrez le nombre de jours de stockout, avant que le bon de commande ne soit créé.
+same.admincontacts.warning=Les contacts administratifs primaires et secondaires ne doivent pas être identiques
 primary.admincontact.mandatory=Le contact administratif principal ne peut pas être vide
 approval.invalid.transition.cancel=Cette commande ne peut pas être annulée car son statut a été modifié.
 approval.invalid.transition.reject=Cette commande ne peut pas être rejetée car son statut a été modifié.
@@ -1292,7 +1301,8 @@ return.transaction.atd.message=La date réelle de la transaction de retour ne pe
 total.return.quantity=Quantité totale de retour
 in.batch=en lot
 customer.not.selected.note=Si le client n'est pas sélectionné, les retours peuvent être saisis uniquement pour des problèmes sans client.
-vendor.not.selected.note=Si le fournisseur n'est pas sélectionné, les retours peuvent être entrés uniquement sur les reçus sans fournisseur.config.enter.returns.issues=Entrez les retours avec des problèmes
+vendor.not.selected.note=Si le fournisseur n'est pas sélectionné, les retours peuvent être entrés uniquement sur les reçus sans fournisseur.
+config.enter.returns.issues=Entrez les retours avec des problèmes
 stock.rebalancing=Rééquilibrage des stocks
 stock.rebalancing.info=
 triggers.upper=Déclencheurs
@@ -1392,7 +1402,8 @@ report.user.activity=Activité de l'utilisateur
 return.reason=Retour raison
 domain.name.mandatory=Le nom de domaine ne peut pas être vide.
 domain.country.mandatory=Le pays est obligatoire Veuillez sélectionner un pays
-domain.timezone.mandatory=Le fuseau horaire est obligatoire. Veuillez sélectionner un fuseau horairereturn.reason=Retour raison
+domain.timezone.mandatory=Le fuseau horaire est obligatoire. Veuillez sélectionner un fuseau horaire
+return.reason=Retour raison
 return.reason.required=La raison est obligatoire pour tous les matériaux retournés
 return.material.status.required=Le statut du matériel est obligatoire pour tous les articles retournés
 return.specify.quantity=S'il vous plaît spécifier la quantité de retour pour tous les matériaux
@@ -1418,5 +1429,6 @@ return.quantity.pending=Hors de {0}, {1} {2} en attente. Vous ne pouvez retourne
 return.quantity.returned.pending=Sur {0} satisfait, vous avez renvoyé {1} et {2} {3} en attente. Vous ne pouvez retourner que 5 autres.
 are=sont
 is=est
-captcha.error.response=Vous avez manqué le captcha. Veuillez sélectionner la case à cocher captcha pour continuer.forms=Formes
+captcha.error.response=Vous avez manqué le captcha. Veuillez sélectionner la case à cocher captcha pour continuer.
+forms=Formes
 schemas=Schémas
