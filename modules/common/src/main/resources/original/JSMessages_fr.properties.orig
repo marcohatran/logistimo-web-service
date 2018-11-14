@@ -1432,3 +1432,6 @@ is=est
 captcha.error.response=Vous avez manqué le captcha. Veuillez sélectionner la case à cocher captcha pour continuer.
 forms=Formes
 schemas=Schémas
+download.asset.model=Télécharger les modèles d'actifs
+model.name=modèle nom
+model.capacity.metric=en litres

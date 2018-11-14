@@ -198,6 +198,7 @@ public class BulkUploadController {
     if (BulkUploadMgr.TYPE_USERS.equals(type) || BulkUploadMgr.TYPE_MATERIALS.equals(type)
         || BulkUploadMgr.TYPE_INVENTORY.equals(type) || BulkUploadMgr.TYPE_ASSETS.equals(type)) {
       model.iut = BulkUploadMgr.TYPE_USERS.equals(type);
+      model.isAssetType = BulkUploadMgr.TYPE_ASSETS.equals(type);
       model.mp = "#/setup/" + type;
     } else if (BulkUploadMgr.TYPE_KIOSKS.equals(type)) {
       model.mp = "#/setup/entities";

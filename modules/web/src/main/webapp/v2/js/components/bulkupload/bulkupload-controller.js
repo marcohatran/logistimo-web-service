@@ -27,8 +27,8 @@
 
 var blkUpControllers = angular.module('blkUpControllers', []);
 
-blkUpControllers.controller('BulkUploadController',['$scope','blkUpService','APIService',
-    function($scope,blkUpService,apiService){
+blkUpControllers.controller('BulkUploadController',['$scope','blkUpService','APIService','$timeout',
+    function($scope,blkUpService,apiService,$timeout){
         $scope.fileData = '';
         if($scope.uploadType == 'users'){
             $scope.helpFile = 'uploadusersinbulk.htm';
@@ -122,6 +122,26 @@ blkUpControllers.controller('BulkUploadController',['$scope','blkUpService','API
             }
             return true;
         };
+
+        $scope.downloadAssetModels = function () {
+            if (!checkNullEmptyObject($scope.assetConfig) && !checkNullEmptyObject($scope.assetConfig.assets)) {
+                let assetModelData = '';
+                Object.values($scope.assetConfig.assets).forEach(asset => {
+                    if (asset.id != 1 && !checkNullEmptyObject(asset.mcs)) {
+                        Object.values(asset.mcs).forEach(manufacturer => {
+                            if (!checkNullEmptyObject(manufacturer.model)) {
+                                Object.values(manufacturer.model).forEach(model => {
+                                    assetModelData += `${asset.an},${manufacturer.name},${model.name},${model.capacity}\r\n`;
+                                });
+                            }
+                        });
+                    }
+                });
+                assetModelData = `${$scope.resourceBundle['asset.type']}, ${$scope.resourceBundle['manufacturer']} ${$scope.resourceBundle['name.lower']}` +
+                `, ${$scope.resourceBundle['model.name']}, ${$scope.resourceBundle['capacity']}(${$scope.resourceBundle['model.capacity.metric']}) \r\n ${assetModelData}`;
+                exportCSV(assetModelData, "Asset_Model", $timeout);
+            }
+        }
 
     }
 ]);

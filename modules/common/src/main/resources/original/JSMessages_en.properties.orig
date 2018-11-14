@@ -1426,3 +1426,6 @@ return.quantity.returned.pending=Out of {0} fulfilled, you have returned {1} and
 are=are
 is=is
 captcha.error.response=You've missed the captcha. Please select the captcha checkbox to proceed further.
+download.asset.model=Download asset models
+model.name=Model name
+model.capacity.metric=in litres
