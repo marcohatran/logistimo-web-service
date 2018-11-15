@@ -27,6 +27,8 @@ package com.logistimo.utils;
 import com.logistimo.auth.SecurityConstants;
 import com.logistimo.auth.SecurityUtil;
 import com.logistimo.constants.CharacterConstants;
+import com.logistimo.constants.SourceConstants;
+import com.logistimo.services.Resources;
 
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang.StringUtils;
@@ -40,6 +42,9 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.ResourceBundle;
 import java.util.TimeZone;
 
 import javax.servlet.http.Cookie;
@@ -145,5 +150,15 @@ public class CommonUtils {
       }
     }
     return null;
+  }
+
+  public static String getAppName(Integer loginSource, Locale locale) {
+    ResourceBundle resourceBundle = Resources.get().getBundle("Messages", locale);
+    if(Objects.equals(SourceConstants.MMA, loginSource)) {
+      return resourceBundle.getString("pulse");
+    } else if(Objects.equals(SourceConstants.MOBILE, loginSource)) {
+      return resourceBundle.getString("iota");
+    }
+    return resourceBundle.getString("web");
   }
 }

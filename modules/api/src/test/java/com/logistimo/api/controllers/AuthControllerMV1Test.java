@@ -4,7 +4,6 @@ import com.logistimo.api.builders.UserDevicesBuilder;
 import com.logistimo.config.entity.Config;
 import com.logistimo.config.service.ConfigurationMgmtService;
 import com.logistimo.constants.SourceConstants;
-import com.logistimo.services.ServiceException;
 import com.logistimo.twofactorauthentication.service.TwoFactorAuthenticationService;
 import com.logistimo.twofactorauthentication.vo.UserDevicesVO;
 import com.logistimo.utils.CommonUtils;
@@ -37,7 +36,7 @@ public class AuthControllerMV1Test extends TestCase {
       twoFactorAuthenticationService;
 
   @Before
-  public void setUp() throws ServiceException {
+  public void setUp() throws Exception {
     response = new MockHttpServletResponse();
 
     ConfigurationMgmtService configurationMgmtService = mock(ConfigurationMgmtService.class);

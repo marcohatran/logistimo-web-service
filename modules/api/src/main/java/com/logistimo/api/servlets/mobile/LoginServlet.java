@@ -32,7 +32,6 @@ import com.logistimo.auth.SecurityMgr;
 import com.logistimo.auth.service.AuthenticationService;
 import com.logistimo.auth.service.impl.AuthenticationServiceImpl;
 import com.logistimo.communications.MessageHandlingException;
-import com.logistimo.config.models.ConfigurationException;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.SourceConstants;
@@ -615,8 +614,7 @@ public class LoginServlet extends JsonRestServlet {
 
   private void createUserDeviceInformation(Integer src, String userId,
                                            Date lastLogin, HttpServletResponse response)
-      throws ServiceException, ConfigurationException, UnsupportedEncodingException,
-      NoSuchAlgorithmException {
+      throws Exception {
     String
         key =
         TwoFactorAuthenticationUtil.generateUserDeviceCacheKey(userId, lastLogin.getTime());

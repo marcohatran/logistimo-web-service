@@ -36,6 +36,16 @@
             <version>1.16.20</version>
         </dependency>
         <dependency>
+            <groupId>com.logistimo</groupId>
+            <artifactId>logistimo-users</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.logistimo</groupId>
+            <artifactId>logistimo-communications</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.modelmapper</groupId>
             <artifactId>modelmapper</artifactId>
             <version>1.1.0</version>

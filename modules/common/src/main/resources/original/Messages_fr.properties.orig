@@ -1264,3 +1264,5 @@ event.summary=Résumé de l'événement
 critical.events=Événements critiques
 good.indicators=Bons indicateurs
 return.type=Type de retour
+pulse=Pulse
+iota=Iota

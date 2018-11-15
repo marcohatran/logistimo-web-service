@@ -36,7 +36,6 @@ import com.logistimo.api.models.mobile.ValidateOtpModel;
 import com.logistimo.auth.SecurityConstants;
 import com.logistimo.auth.service.AuthenticationService;
 import com.logistimo.communications.MessageHandlingException;
-import com.logistimo.config.models.ConfigurationException;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.SourceConstants;
 import com.logistimo.exception.BadRequestException;
@@ -173,8 +172,7 @@ public class AuthControllerMV1 {
 
   private UserDetailModel processLoginRequest(AuthLoginModel loginModel,
                                               HttpServletRequest req, HttpServletResponse res)
-      throws ServiceException, NoSuchAlgorithmException, IOException, MessageHandlingException,
-      ConfigurationException {
+      throws Exception {
     IUserAccount user;
     String authToken = req.getHeader(Constants.TOKEN);
     String initiator = req.getHeader(Constants.ACCESS_INITIATOR);
@@ -388,8 +386,7 @@ public class AuthControllerMV1 {
   }
 
   protected void createUserDeviceInformation(HttpServletResponse response, Integer src, String userId)
-      throws ServiceException, ConfigurationException, UnsupportedEncodingException,
-      NoSuchAlgorithmException {
+      throws Exception {
     Date twoFactorTokenGenerationTime = new Date();
     String cookieValue = TwoFactorAuthenticationUtil.generateUserDeviceCacheKey(userId, twoFactorTokenGenerationTime.getTime());
     UserDevicesVO

@@ -1277,4 +1277,6 @@ event.summary=Event summary
 critical.events=Critical events
 good.indicators=Good indicators
 return.type=Returns type
+pulse=Pulse
+iota=Iota
 

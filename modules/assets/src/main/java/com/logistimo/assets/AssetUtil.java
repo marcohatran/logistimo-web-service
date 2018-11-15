@@ -307,13 +307,13 @@ public class AssetUtil {
       } else {
         //Validating domain association
         if (!Objects.equals(asset.getDomainId(), domainId)) {
-          throw new ServiceException("AST005", asset.getSerialId(), domainId);
+          throw new ServiceException("AST005", asset.getSerialId(), asset.getDomainId());
         }
         //Validating kiosk association
         if (kioskId != null && asset.getKioskId() != null && !Objects
             .equals(asset.getKioskId(), kioskId)) {
 
-          throw new ServiceException("AST006", asset.getSerialId(), kioskId);
+          throw new ServiceException("AST006", asset.getSerialId(), asset.getKioskId());
         }
 
         if (kioskId != null && asset.getKioskId() == null) {

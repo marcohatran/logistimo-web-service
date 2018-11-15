@@ -545,3 +545,5 @@ asset.monitored.maintainers=Mainteneurs des actifs surveillés (ID utilisateur s
 asset.monitoring.owners=Propriétaires des actifs de surveillance (ID utilisateur séparés par des virgules)
 asset.monitoring.maintainers=Maintainers of Monitoring asset (ID utilisateur séparé par des virgules)
 metric.litres=Litres
+login.from.new.device.message=Une tentative de connexion a été enregistrée pour votre compte $ {appName} à partir d'un nouveau device. Si vous n'avez pas essayé cette connexion, veuillez changer votre mot de passe immédiatement.
+new.device.login.info.email.subject=Alerte de sécurité - Connexion à partir d'un nouvel appareil
