@@ -56,14 +56,16 @@ function DashboardRepository(apiService, $q) {
             return deferred.promise;
         },
         save: function (dashboard, $scope) {
+            var deferred = $q.defer();
             if ($scope.isUndef(dashboard.name)) {
                 $scope.showWarning("Name is mandatory");
-                return;
+                deferred.reject();
+                return deferred.promise;
             } else if ($scope.isUndef(dashboard.widgets) || checkNullEmptyObject(dashboard.widgets)) {
                 $scope.showWarning("Please configure widgets");
-                return;
+                deferred.reject();
+                return deferred.promise;
             }
-            var deferred = $q.defer();
             $scope.showLoading();
             dashboard.widgets = JSON.stringify(dashboard.widgets);
             apiService.post(dashboard, "/s2/api/dashboards/").then(function (data) {
