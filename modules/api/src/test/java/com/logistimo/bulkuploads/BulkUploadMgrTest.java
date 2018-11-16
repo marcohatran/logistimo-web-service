@@ -23,6 +23,8 @@
 
 package com.logistimo.bulkuploads;
 
+import com.logistimo.assets.entity.Asset;
+import com.logistimo.assets.entity.IAsset;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.domains.entity.Domain;
@@ -162,7 +164,9 @@ public class BulkUploadMgrTest {
     IDomain domain = new Domain();
     domain.setName("India");
     when(BulkUploadMgr.getDomainService().getDomain(any())).thenReturn(domain);
-    String errorMessage = BulkUploadMgr.getErrorMessage(exception.getCode(), exception.getMessage(), 1l, null);
+    IAsset asset = new Asset();
+    asset.setDomainId(1l);
+    String errorMessage = BulkUploadMgr.getErrorMessage(exception.getCode(), exception.getMessage(), asset);
     assertNotSame(exception.getMessage(), errorMessage);
     assertEquals("Given asset ILR001 is mapped to India domain.", errorMessage);
 
@@ -172,7 +176,9 @@ public class BulkUploadMgrTest {
   public void testGetErrorMessage() {
     String code = "AST001";
     ServiceException exception = new ServiceException(code);
-    String errorMessage = BulkUploadMgr.getErrorMessage(code, exception.getMessage(), null, 1l);
+    IAsset asset = new Asset();
+    asset.setDomainId(1l);
+    String errorMessage = BulkUploadMgr.getErrorMessage(code, exception.getMessage(), asset);
     assertEquals(exception.getMessage(), errorMessage);
   }
 }

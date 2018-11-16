@@ -414,6 +414,8 @@ public class BulkUploadMgr {
     ResourceBundle backendMessages;
     EntityContainer ec = new EntityContainer();
     Long kioskId = null;
+    IAsset monitoredAsset = null;
+    IAsset sensorAsset = null;
 
     try {
       if (tokens == null || tokens.length == 0) {
@@ -456,7 +458,6 @@ public class BulkUploadMgr {
 
       //Skipping entity details, moving to Fridge details
       i += 5;
-      IAsset monitoredAsset = null;
       Map<String, Object> variableMap = new HashMap<>(7), metaDataMap = new HashMap<>(1);
       if (i < size) {
         variableMap.put(AssetUtil.ASSET_NAME, tokens[i].trim());
@@ -477,6 +478,10 @@ public class BulkUploadMgr {
               if (++i < size) {
                 addUsersToVariableMap(variableMap,tokens[i].trim(),domainId,AssetUtil.MAINTAINERS);
               }
+              monitoredAsset =
+                  getAssetManagementService()
+                      .getAsset((String) variableMap.get(AssetUtil.MANUFACTURER_NAME),
+                          (String) variableMap.get(AssetUtil.SERIAL_NUMBER));
               monitoredAsset = AssetUtil.verifyAndRegisterAsset(domainId, sourceUserId, kioskId,
                   variableMap, metaDataMap);
             } else {
@@ -491,7 +496,6 @@ public class BulkUploadMgr {
       }
 
       //Processing sensor devices
-      IAsset sensorAsset = null;
       if (++i < size) {
         variableMap = new HashMap<>(7);
         metaDataMap = new HashMap<>(5);
@@ -615,6 +619,10 @@ public class BulkUploadMgr {
           }
           variableMap.put(AssetUtil.TAGS, tags);
           sensorAsset =
+              getAssetManagementService()
+                  .getAsset((String) variableMap.get(AssetUtil.MANUFACTURER_NAME),
+                      (String) variableMap.get(AssetUtil.SERIAL_NUMBER));
+          sensorAsset =
               AssetUtil.verifyAndRegisterAsset(domainId, sourceUserId, kioskId, variableMap,
                   metaDataMap);
         }
@@ -640,7 +648,8 @@ public class BulkUploadMgr {
             (List<String>) variableMap.get(AssetUtil.TAGS));
       }
     } catch (ServiceException | BadRequestException e) {
-      String message = getErrorMessage(e.getCode(), e.getMessage(), domainId, kioskId);
+      IAsset asset = sensorAsset!= null ? sensorAsset : monitoredAsset;
+      String message = getErrorMessage(e.getCode(), e.getMessage(), asset);
       ec.messages.add(message);
     } catch (Exception e) {
       ec.messages.add("Error: " + e.getMessage());
@@ -3271,16 +3280,16 @@ public class BulkUploadMgr {
     return !password.contains(SALT_HASH_SEPARATOR);
   }
 
-  protected static String getErrorMessage(String errorCode, String errorMessage, Long domainId,
-                                          Long kioskId) {
+  protected static String getErrorMessage(String errorCode, String errorMessage, IAsset asset) {
+
     String name;
     try {
       switch (errorCode) {
         case "AST005":
-          name = getDomainService().getDomain(domainId).getName();
+          name = asset != null ? getDomainService().getDomain(asset.getDomainId()).getName() : "another";
           break;
         case "AST006":
-          name = getEntitiesService().getKiosk(kioskId).getName();
+          name = asset != null ? getEntitiesService().getKiosk(asset.getKioskId()).getName() : "another";
           break;
         default:
           return errorMessage;

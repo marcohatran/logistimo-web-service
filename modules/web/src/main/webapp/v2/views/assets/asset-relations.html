@@ -43,7 +43,9 @@
                                 <label class="col-sm-4 control-label">{{resourceBundle['asset.related']}}</label>
                                 <div class="col-sm-8">
                                     <div class="form-group has-feedback">
-                                        <input name="relAssetId" type="text" ng-model="arModel.relAsset"
+                                        <input name="relAssetId" type="text"
+                                               ng-disabled="edit"
+                                               ng-model="arModel.relAsset"
                                                typeahead-template-url="assetTemplate"
                                                autocomplete="off"
                                                placeholder="{{resourceBundle['asset.serial.number']}}"
@@ -94,7 +96,7 @@
                                     <td ng-show="edit && !arModel.useDefault && isDef(currentAsset) && currentAsset.at == 2 && !iMan">
                                         <select ng-model="value.sId" id="asset-model" class="form-control">
                                             <option value="">-- {{resourceBundle['select'] | lowercase}} {{resourceBundle['sensor'] | lowercase}} --</option>
-                                            <option ng-repeat="sensor in sns" value="{{sensor.name}}" ng-selected="value.sId == sensor.name">{{sensor.name}}</option>
+                                            <option ng-repeat="sensor in sns" value="{{sensor.name}}" ng-selected="value.sId == sensor.name" ng-disabled="sensor.sId != value.mpId">{{sensor.name}}</option>
                                         </select>
                                     </td>
                                     <td ng-show="isDef(currentAsset) && currentAsset.at == 2"><a href="#/assets/detail/{{value.vId}}/{{encodeURIParam(value.dId)}}" target="_blank">{{value.dId}} ({{assetVendorMapping[value.vId]}})</a></td>
