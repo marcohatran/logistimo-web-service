@@ -166,7 +166,7 @@ angular.module('logistimo.storyboard.temperatureStatusDonutWidget', [])
                     showToolTip: "0",
                     centerLabelFontSize: 19,
                     centerLabelFont : 'Lato',
-                    centerLabelFontColor: "#d2d2d2",
+                    centerLabelColor: "#d2d2d2",
                     chartTopMargin: -30,
                     bgColor: "#272727",
                     bgAlpha : 100,

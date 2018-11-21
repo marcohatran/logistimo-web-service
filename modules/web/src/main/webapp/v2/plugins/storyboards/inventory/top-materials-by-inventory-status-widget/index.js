@@ -177,7 +177,6 @@ angular.module('logistimo.storyboard.topMaterialsByInventoryStatusWidget', [])
 
             $scope.barOpt = {
                 "showAxisLines": "0",
-                "valueFontColor": "#000000",
                 "theme": "fint",
                 "exportEnabled": 0,
                 "yAxisMaxValue": 100,
