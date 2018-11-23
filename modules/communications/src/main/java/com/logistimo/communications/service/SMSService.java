@@ -26,6 +26,7 @@ package com.logistimo.communications.service;
 import com.logistimo.AppFactory;
 import com.logistimo.communications.MessageHandlingException;
 import com.logistimo.communications.ServiceResponse;
+import com.logistimo.communications.utils.TwilioUtils;
 import com.logistimo.config.entity.IConfig;
 import com.logistimo.config.models.ConfigurationException;
 import com.logistimo.config.models.GeneralConfig;
@@ -40,7 +41,7 @@ import com.logistimo.services.Resources;
 import com.logistimo.services.cache.MemcacheService;
 import com.logistimo.utils.HttpUtil;
 import com.logistimo.utils.MessageUtil;
-
+import com.twilio.rest.api.v2010.account.Message;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang.StringUtils;
 
@@ -49,14 +50,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.ResourceBundle;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -184,34 +178,47 @@ public class SMSService extends MessageService {
     if (address.containsKey(SMS_DUPLICATE_KEY)) {
       skippedResponse.put(SMS_DUPLICATE_KEY, address.get(SMS_DUPLICATE_KEY).get(UNFORMATTED));
     }
-    ServiceResponse
-        svcResp =
-        new ServiceResponse(provider.getString(ProviderConfig.PROVIDER_ID), isJobIdUnique,
-            skippedResponse);
-
-    // Split addresses by max. limit on number of addresses
-    List<List<String>> addressLists = splitByMaxLimit(address.get(SMS_VALID_KEY).get(FORMATTED));
-    List<List<String>>
-        unfAddressLists =
-        splitByMaxLimit(address.get(SMS_VALID_KEY).get(UNFORMATTED));
-
-    for (int i = 0; i < addressLists.size(); i++) {
-      List<String> addressList = addressLists.get(i);
-      // Get addresses in CSV format
-      String addressesCSV = MessageUtil.getCSV(addressList);
-      // Replace variables in the URL
-      url =
-          replaceVariables(url, userId, password, senderId, addressesCSV, messageType, message,
-              wapUrl, port);
-      // Invoke URL and get the response
-      invokeService(url, unfAddressLists.get(i), svcResp);
-      incrementCounters(domainId, message, addressList);
+    String providerString = provider.getString(ProviderConfig.PROVIDER_ID);
+    ServiceResponse svcResp = new ServiceResponse(providerString, isJobIdUnique, skippedResponse);
+    if (TwilioUtils.TWILIO.equalsIgnoreCase(providerString)) {
+      sendSMSByTwilio(message, address, domainId, svcResp);
+    } else {
+      sendSMS(message, messageType, wapUrl, port, domainId, userId, password, senderId, url, address, svcResp);
     }
     xLogger.fine("Exiting sendMessage");
     return svcResp;
   }
 
-  /**
+  private void sendSMSByTwilio(String message, Map<String, Map<String, List<String>>> address,
+                               Long domainId, ServiceResponse svcResp) {
+    List<String> formattedNumbers = address.get(SMS_VALID_KEY).get(FORMATTED);
+    List<Message> messages = TwilioUtils.send(provider, formattedNumbers, message);
+    if (messages == null) {
+      return;
+    }
+    svcResp.setMethod(ServiceResponse.METHOD_ID);
+    List<String> addresses = address.get(SMS_VALID_KEY).get(UNFORMATTED);
+    for (int i = 0; i < messages.size(); i++) {
+      svcResp.addResponse(messages.get(i).getSid(), Collections.singletonList(addresses.get(i)));
+    }
+    incrementCounters(domainId, message, formattedNumbers);
+  }
+
+  private void sendSMS(String message, int messageType, String wapUrl, String port, Long domainId, String userId,
+                       String password, String senderId, String url, Map<String, Map<String, List<String>>> address,
+                       ServiceResponse svcResp) throws IOException {
+    List<List<String>> addressLists = splitByMaxLimit(address.get(SMS_VALID_KEY).get(FORMATTED));
+    List<List<String>> unfAddressLists = splitByMaxLimit(address.get(SMS_VALID_KEY).get(UNFORMATTED));
+    for (int i = 0; i < addressLists.size(); i++) {
+      List<String> addressList = addressLists.get(i);
+      String addressesCSV = MessageUtil.getCSV(addressList);
+      url = replaceVariables(url, userId, password, senderId, addressesCSV, messageType, message, wapUrl, port);
+      invokeService(url, unfAddressLists.get(i), svcResp);
+      incrementCounters(domainId, message, addressList);
+    }
+  }
+
+    /**
    * Enforces SMS daily limits by user and domain, along with de-duplication.
    *
    * @return <ResponseCode: Map< Formatted and Unformatted addresses > >
