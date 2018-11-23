@@ -44,7 +44,7 @@ import java.util.stream.Collectors;
 public final class TwilioUtils {
   private static final XLog xLogger = XLog.getLog(TwilioUtils.class);
   public static final String TWILIO = "twilio";
-  private static final String TWILIO_CALLBACK_API = "/s2/api/sms/twilio/updateStatus";
+  private static final String TWILIO_CALLBACK_API = "/s2/api/sms/twilio/update-status";
 
   public static void send(
       SMSConfig.ProviderConfig providerConfig, String phoneNumber, String message) {
