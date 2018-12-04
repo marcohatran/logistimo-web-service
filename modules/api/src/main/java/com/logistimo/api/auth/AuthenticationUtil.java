@@ -49,6 +49,8 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class AuthenticationUtil {
 
+  private AuthenticationUtil() {}
+
   public static IUserAccount authenticateToken(String authtoken, Integer actionInitiator)
       throws ServiceException, ObjectNotFoundException {
     AuthenticationService aus = StaticApplicationContext.getBean(AuthenticationService.class);

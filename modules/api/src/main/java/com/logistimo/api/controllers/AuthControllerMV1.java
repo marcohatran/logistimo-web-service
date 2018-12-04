@@ -184,24 +184,13 @@ public class AuthControllerMV1 {
       if (StringUtils.isEmpty(loginModel.getUserId()) && StringUtils.isEmpty(loginModel.getPassword())) {
         throw new BadRequestException("G011", null);
       }
-
       AuthRequest authRequest = buildAuthRequest(loginModel,req);
-      if (StringUtils.isEmpty(loginModel.getOtp())
-          && Objects.equals(SourceConstants.WEB, authRequest.getLoginSource())
-          && AuthenticationUtil.isCaptchaEnabled()) {
-        boolean isCaptchaVerified = authenticationService.verifyCaptcha(loginModel.getCaptcha());
-        if (!isCaptchaVerified) {
-          xLogger.warn("Captcha verification failed for user {0}", authRequest.getUserId());
-          throw new BadRequestException("G010", null);
-        }
-      }
+      verifyCaptcha(loginModel.getOtp(), loginModel.getCaptcha(), authRequest);
 
       UserDetails userDetails = authenticationService.authenticate(authRequest);
       user = usersService.getUserAccount(authRequest.getUserId());
-
       //authorize login req from source like Bulletin Board
       authorizeLoginBySource(user, actionInitiator, authRequest);
-
       String mobileNumber = authoriseDevice(loginModel, user, loginSource, req);
       if(StringUtils.isNotBlank(mobileNumber)) {
         UserDetailModel model = new UserDetailModel();
@@ -210,18 +199,36 @@ public class AuthControllerMV1 {
       }
 
       if(!loginModel.isSkipTwoFactorAuthentication()) {
-        if (StringUtils.isNotEmpty(loginModel.getOtp())) {
-          createUserDeviceInformation(res, loginSource, user.getUserId());
-        } else {
-          String key = TwoFactorAuthenticationUtil.generateAuthKey(loginModel.getUserId());
-          updateHeaderForUserDevice(res, CommonUtils.getCookieByName(req, key), user.getUserId());
-        }
+        handleTwoFactorAuth(loginModel, req, res, user.getUserId(), loginSource);
       }
       //setting response headers
       userDetails.setRequestId(req.getHeader(Constants.REQ_ID));
       setResponseHeaders(res, userDetails);//
     }
     return userBuilder.buildMobileAuthResponseModel(user);
+  }
+
+  private void handleTwoFactorAuth(AuthLoginModel loginModel, HttpServletRequest req,
+                                   HttpServletResponse res, String userId, Integer loginSource)
+      throws Exception {
+    if (StringUtils.isNotEmpty(loginModel.getOtp())) {
+      createUserDeviceInformation(res, loginSource, userId);
+    } else {
+      String key = TwoFactorAuthenticationUtil.generateAuthKey(loginModel.getUserId());
+      updateHeaderForUserDevice(res, CommonUtils.getCookieByName(req, key), userId);
+    }
+  }
+
+  private void verifyCaptcha(String otp, String captchaResponse, AuthRequest authRequest) {
+    if (StringUtils.isEmpty(otp)
+        && Objects.equals(SourceConstants.WEB, authRequest.getLoginSource())
+        && AuthenticationUtil.isCaptchaEnabled()) {
+      boolean isCaptchaVerified = authenticationService.verifyCaptcha(captchaResponse);
+      if (!isCaptchaVerified) {
+        xLogger.warn("Captcha verification failed for user {0}", authRequest.getUserId());
+        throw new BadRequestException("G010", null);
+      }
+    }
   }
 
   private int getAppName(Integer actionInitiator, HttpServletRequest req) {
