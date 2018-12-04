@@ -186,9 +186,11 @@ public class AuthControllerMV1 {
       }
 
       AuthRequest authRequest = buildAuthRequest(loginModel,req);
-      if(StringUtils.isEmpty(loginModel.getOtp()) && Objects.equals(SourceConstants.WEB, authRequest.getLoginSource())) {
+      if (StringUtils.isEmpty(loginModel.getOtp())
+          && Objects.equals(SourceConstants.WEB, authRequest.getLoginSource())
+          && AuthenticationUtil.isCaptchaEnabled()) {
         boolean isCaptchaVerified = authenticationService.verifyCaptcha(loginModel.getCaptcha());
-        if(!isCaptchaVerified) {
+        if (!isCaptchaVerified) {
           xLogger.warn("Captcha verification failed for user {0}", authRequest.getUserId());
           throw new BadRequestException("G010", null);
         }

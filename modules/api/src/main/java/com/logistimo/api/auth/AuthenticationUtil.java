@@ -33,6 +33,7 @@ import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
+import com.logistimo.services.utils.ConfigUtil;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.entity.IUserToken;
 import com.logistimo.users.service.UsersService;
@@ -127,5 +128,9 @@ public class AuthenticationUtil {
       }
     }
     return null;
+  }
+
+  public static boolean isCaptchaEnabled() {
+    return ConfigUtil.getBoolean("captcha.enable", true);
   }
 }
