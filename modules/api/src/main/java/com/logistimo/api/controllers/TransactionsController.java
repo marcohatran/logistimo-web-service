@@ -94,6 +94,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -331,6 +332,7 @@ public class TransactionsController {
     Map<String, ReasonConfig> reasons = ic.getTransReasons();
     model.showCInv = ic.getPermissions() != null && ic.getPermissions().invCustomersVisible;
     reasons.entrySet().forEach(entry -> model.addReason(entry.getKey(),configurationModelBuilder.buildReasonConfigModel(entry.getValue())));
+    model.transactionTypesWithReasonMandatory = ic.getTransactionTypesWithReasonMandatory();
     try {
       List cust = entitiesService.getKioskLinks(kioskId, IKioskLink.TYPE_CUSTOMER, null, null, null).getResults();
       model.customers = constructKioskMap(cust);
@@ -493,6 +495,15 @@ public class TransactionsController {
       statusList.add(0, CharacterConstants.EMPTY);
     }
     return statusList;
+  }
+
+  @RequestMapping(value = "/transaction-types-with-reason-mandatory", method = RequestMethod.GET)
+  public
+  @ResponseBody
+  Set<String> getTransactionTypesWithReasonMandatory() {
+    DomainConfig dc = DomainConfig.getInstance(SecurityUtils.getCurrentDomainId());
+    InventoryConfig ic = dc.getInventoryConfig();
+    return (ic.getTransactionTypesWithReasonMandatory());
   }
 
   private TransactionModel constructKioskTModel(IKiosk kiosk) {

@@ -75,7 +75,7 @@ public class ContentProvider {
   }
 
   public String generateContent(ContentQuerySpecs query) {
-    return generateContent(query,null);
+    return generateContent(query, null);
   }
 
   public String generateContent(ContentQuerySpecs query, String lang) {
@@ -84,31 +84,30 @@ public class ContentProvider {
       return "";
     }
     String user = query.getUser();
-    IUserAccount userAccount = null;
+    IUserAccount userAccount;
     String userName;
     try {
       userAccount = usersService.getUserAccount(user);
       userName = userAccount.getFullName();
     } catch (ObjectNotFoundException oex) {
-      log.warn("User {0} not found in like context",user);
+      log.warn("User {0} not found in like context", user);
       userName = "Unknown";
     }
     Locale locale;
-    if(StringUtils.isEmpty(lang)){
-      locale = Locale.ENGLISH;
+    if (StringUtils.isEmpty(lang)) {
+      locale = query.getLocale();
     } else {
       locale = new Locale(lang);
     }
-    ContextModel eventContext = new GsonBuilder().create().fromJson(query.getContextAttribute(),ContextModel.class);
-    String
-        mainContent =
-        CollaborationMessageUtil.constructMessage(
+    ContextModel
+        eventContext =
+        new GsonBuilder().create().fromJson(query.getContextAttribute(), ContextModel.class);
+    return CollaborationMessageUtil.constructMessage(
             eventContext.getCategory() + "." + eventContext.getEventType() + ".text"
             , locale
             , new Object[]{userName,
                 getObjectText(query.getObjectId(), query.getObjectType()),
                 getDuration(eventContext, locale)});
-    return mainContent;
   }
 
   private String getObjectText(String objectId, String objectType) {
@@ -178,5 +177,4 @@ public class ContentProvider {
     }
     return "";
   }
-
 }

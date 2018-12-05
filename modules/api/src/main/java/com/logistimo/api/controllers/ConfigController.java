@@ -32,8 +32,8 @@ import com.logistimo.config.entity.IConfig;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.service.impl.ConfigurationMgmtServiceImpl;
 import com.logistimo.dao.JDOUtils;
+import com.logistimo.exception.ForbiddenAccessException;
 import com.logistimo.exception.InvalidServiceException;
-import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.logger.XLog;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
@@ -44,7 +44,6 @@ import com.logistimo.utils.LocalDateUtil;
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -193,7 +192,7 @@ public class ConfigController {
   String getConfigJson(@RequestParam(name = "config_type") String configType)
       throws ServiceException {
     if (!SecurityUtils.isSuperUser()) {
-      throw new UnauthorizedException("Forbidden", HttpStatus.FORBIDDEN);
+      throw new ForbiddenAccessException("Forbidden");
     }
     IConfig config = configurationMgmtService.getConfiguration(configType);
     if (config != null && StringUtils.isNotEmpty(config.getConfig())) {
@@ -209,7 +208,7 @@ public class ConfigController {
       throws ServiceException {
     SecureUserDetails user = SecurityUtils.getUserDetails();
     if (!SecurityUtils.isSuperUser()) {
-      throw new UnauthorizedException("Forbidden", HttpStatus.FORBIDDEN);
+      throw new ForbiddenAccessException("Forbidden");
     }
     IConfig config = JDOUtils.createInstance(IConfig.class);
     config.setKey(configJSONModel.type);

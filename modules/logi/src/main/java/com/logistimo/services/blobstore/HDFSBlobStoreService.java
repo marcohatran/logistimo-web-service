@@ -47,6 +47,7 @@ import org.springframework.stereotype.Component;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.util.Calendar;
@@ -62,9 +63,10 @@ import javax.servlet.http.HttpServletResponse;
 public class HDFSBlobStoreService extends CommonBlobStoreService {
 
   public static final String
-      rootPath =
+      ROOT_PATH =
       ConfigUtil.get("blobstore.upload.root.path", "/user/logistimoapp/uploads/");
   private static final XLog LOGGER = XLog.getLog(HDFSBlobStoreService.class);
+  public static final String META = ".meta";
   private Configuration configuration;
   private FileSystem fileSystem;
 
@@ -76,26 +78,28 @@ public class HDFSBlobStoreService extends CommonBlobStoreService {
   private synchronized void init() {
     if (fileSystem == null) {
 
-      LOGGER.info("HDFS Root path {0}", rootPath);
+      LOGGER.info("HDFS Root path {0}", ROOT_PATH);
       try {
         fileSystem = FileSystem.get(configuration);
-        if (!fileSystem.exists(new Path(rootPath))) {
-          fileSystem.mkdirs(new Path(rootPath));
+        if (!fileSystem.exists(new Path(ROOT_PATH))) {
+          fileSystem.mkdirs(new Path(ROOT_PATH));
         }
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-          public void run() {
-            try {
-              fileSystem.close();
-            } catch (IOException e) {
-              LOGGER.warn("Exception while closing fileSystem", e);
-            }
-          }
-        });
+        registerShutdownhook();
       } catch (Exception e) {
         LOGGER.severe("Failed to initialize HDFS filesystem ", e);
         throw new BlobStoreServiceException(e);
       }
     }
+  }
+
+  private void registerShutdownhook() {
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+      try {
+        fileSystem.close();
+      } catch (IOException e) {
+        LOGGER.warn("Exception while closing fileSystem", e);
+      }
+    }));
   }
 
   public byte[] fetchFull(String blobKey) {
@@ -168,11 +172,11 @@ public class HDFSBlobStoreService extends CommonBlobStoreService {
   }
 
   private String getFullPath(String blobKey) {
-    return rootPath + blobKey;
+    return ROOT_PATH + blobKey;
   }
 
   private String getMetaPath(String blobKey) {
-    return rootPath + blobKey + ".meta";
+    return ROOT_PATH + blobKey + META;
   }
 
   @Override
@@ -222,7 +226,7 @@ public class HDFSBlobStoreService extends CommonBlobStoreService {
         subPath =
         (StringUtils.isNotBlank(pathPrefix) ? pathPrefix : "") + "/" + calendar.get(Calendar.YEAR)
             + "/" + calendar.get(Calendar.MONTH) + "/";
-    String filePath = rootPath + subPath;
+    String filePath = ROOT_PATH + subPath;
     long size = 0;
     FSDataOutputStream stream = null;
     FSDataOutputStream metaStream = null;
@@ -237,7 +241,7 @@ public class HDFSBlobStoreService extends CommonBlobStoreService {
       stream = fileSystem.create(fsPath);
       size = ByteStreams.copy(inputStream, stream);
 
-      Path metaFile = new Path(path, blobKey + ".meta");
+      Path metaFile = new Path(path, blobKey + META);
       Properties properties = new Properties();
       properties.setProperty("contentType", contentType);
       properties.setProperty("fileName", fileName);
@@ -263,7 +267,7 @@ public class HDFSBlobStoreService extends CommonBlobStoreService {
         }
       } catch (IOException e) {
         LOGGER.severe("Failed to close meta stream for file {0} , hdfs file {1}", fileName,
-            blobKey + ".meta", e);
+            blobKey + META, e);
       }
 
     }
@@ -280,16 +284,18 @@ public class HDFSBlobStoreService extends CommonBlobStoreService {
     BlobHandle handle = new BlobHandle();
     // Get a file service
     FileService fileService = FileServiceFactory.getFileService();
+    DataOutputStream out = null;
+    OutputStream outputStream = null;
     try {
       // Create a new Blob file with mime-type
       AppEngineFile file = fileService.createNewBlobFile(mimeType, fileName);
       // Open a channel to write to it
       boolean lock = finalize;
       FileChannel writeChannel = fileService.openWriteChannel(file, lock);
-      DataOutputStream out = new DataOutputStream(Channels.newOutputStream(writeChannel));
+      outputStream = Channels.newOutputStream(writeChannel);
+      out = new DataOutputStream(outputStream);
       // This time we write to the channel using standard Java
       out.write(data);
-      out.close();
       // Now read from the file using the Blobstore API
       handle.filePath = file.getFullPath();
       // Now finalize, if needed
@@ -305,6 +311,17 @@ public class HDFSBlobStoreService extends CommonBlobStoreService {
       LOGGER.severe(
           "Exception while trying to write to blobstore: file = {0}, mimeType = {1}: {2} : {3}",
           fileName, mimeType, e.getClass().getName(), e.getMessage());
+    } finally {
+      try {
+        if (out != null) {
+          out.close();
+        }
+        if (outputStream != null) {
+          outputStream.close();
+        }
+      } catch (IOException e) {
+        LOGGER.warn("Failed to close output stream", e);
+      }
     }
     LOGGER.fine("Exiting uploadToBlobStore");
     return handle;
@@ -313,7 +330,6 @@ public class HDFSBlobStoreService extends CommonBlobStoreService {
   // Remove a blob from the blob store
   public void remove(String blobKeyStr) {
     LOGGER.fine("Entering remove");
-    //BlobKey blobKey = new BlobKey(blobKeyStr);
     try {
       delete(blobKeyStr);
     } catch (Exception e) {

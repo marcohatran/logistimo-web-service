@@ -42,7 +42,7 @@
                         ng-click="startEditMats(true)">{{resourceBundle['allocate']}}
                 </button>
                 <button type="button" class="btn btn-sm btn-primary ml10"
-                        ng-show="canReturn && !returnPolicyExpired" ng-disabled="sel.selectedRows.length<=0"
+                        ng-show="!dp.vp && canReturn && !returnPolicyExpired" ng-disabled="sel.selectedRows.length<=0"
                         ng-click="doReturn()">{{resourceBundle['return']}}
                 </button>
                 <span ng-if="returnPolicyExpired" class="litetext">
@@ -327,7 +327,7 @@
                         <td ng-class=" {'alert-danger' : item.event == 200,
 												 'alert-info alert-info-dark' : item.event == 202,
 												 'alert-warning alert-warning-dark' : item.event == 201} " class="text-center" ng-hide="!showStock || !order.atvc">{{item.stk}}
-                            <span class="litetext"><span uib-tooltip="(min,max)">({{item.min}},{{item.max}})</span></span>
+                            <span ng-show="isDef(item.min) && isDef(item.max)" class="litetext"><span uib-tooltip="(min,max)">({{item.min}},{{item.max}})</span></span>
                             <span class="litetext" ng-show="item.csavibper > 0 && isDef(mmdt)">{{item.csavibper | roundNoTrailZeros:2}} {{mmdt}}</span>
                         </td>
                         <td ng-class=" {'alert-danger' : item.vevent == 200,

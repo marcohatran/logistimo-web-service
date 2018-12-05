@@ -55,6 +55,11 @@ function InventoryReportController(s, timeout, getData, reportsServiceCore) {
     s.metricHeadings.push({name: 'By ' + s.resourceBundle['kiosks.lower'], code: "kt"});
     s.metricHeadings.push({name: 'By locations', code: "rt"});
 
+    s.locationOptions = [
+        {text: s.resourceBundle['show.by'] + ' ' + s.resourceBundle['district'], value: "dis"},
+        {text: s.resourceBundle['show.by'] + ' ' + s.resourceBundle['taluk'], value: "tlk"},
+        {text: s.resourceBundle['show.by'] + ' ' + s.resourceBundle['city'], value: "cty"}
+    ];
     s.vw = "c";
 
     s.hideFilter = false;
@@ -374,6 +379,7 @@ function InventoryReportController(s, timeout, getData, reportsServiceCore) {
         s.offset = 0;
         getData();
         updateLabels();
+        getDataNotAvailableText();
         s.openFilters();
         setHeight();
     };
@@ -448,7 +454,7 @@ function InventoryReportController(s, timeout, getData, reportsServiceCore) {
     };
 
     function getReportType(reportType) {
-        switch(reportType) {
+        switch (reportType) {
             case 'ias':
                 return s.resourceBundle['report.abnormal.stock'];
             case 'ic':
@@ -472,7 +478,7 @@ function InventoryReportController(s, timeout, getData, reportsServiceCore) {
         }
     }
 
-    s.exportData = function(reportType,isInfo) {
+    s.exportData = function (reportType, isInfo) {
         var selectedFilters = s.populateFilters();
         selectedFilters['type'] = reportType;
         selectedFilters['viewtype'] = s.activeMetric;
@@ -489,7 +495,7 @@ function InventoryReportController(s, timeout, getData, reportsServiceCore) {
         selectedFilters['primaryMetricIndex'] = s.metrics.primary;
         selectedFilters['secondaryMetricIndex'] = s.metrics.secondary;
         selectedFilters['tertiaryMetricIndex'] = s.metrics.tertiary;
-        if(isInfo) {
+        if (isInfo) {
             return {
                 filters: filterTitles,
                 type: getReportType(reportType)
@@ -500,7 +506,7 @@ function InventoryReportController(s, timeout, getData, reportsServiceCore) {
             s.showSuccess(data.data);
         }).catch(function error(msg) {
             s.showErrorMsg(msg);
-        }).finally(function(){
+        }).finally(function () {
             s.hideLoading();
         });
     };
@@ -604,6 +610,19 @@ function InventoryReportController(s, timeout, getData, reportsServiceCore) {
         s.skipDateWarn = false;
     });
 
+    s.$watchGroup(["filter.st", "filter.dis"], function (newVal) {
+        let isState = s.cards.lc == undefined;
+        let value = isState ? newVal[0] : newVal[1];
+        if (value == undefined) {
+            s.filter.location_by = undefined;
+        } else {
+            if (isState) {
+                s.filter.location_by = s.locationOptions[0].value;
+            } else {
+                s.filter.location_by = s.locationOptions[1].value;
+            }
+        }
+    });
     function copyFilters() {
         s.tempFilters = {};
         s.tempFilters['filter'] = angular.copy(s.filter);
@@ -649,8 +668,7 @@ function InventoryReportController(s, timeout, getData, reportsServiceCore) {
                 s.activeMetric = s.metricHeadings[0].code;
             }
         }
-        if (checkNotNullEmpty(s.filter['st']) || checkNotNullEmpty(s.filter['dis']) ||
-            checkNotNullEmpty(s.filter['tlk']) || checkNotNullEmpty(s.filter['cty'])) {
+        if (checkNotNullEmpty(s.filter['tlk']) || checkNotNullEmpty(s.filter['cty'])) {
             s.metricHeadings[3].hide = "true";
             if (s.activeMetric == s.metricHeadings[3].code) {
                 s.activeMetric = s.metricHeadings[0].code;
@@ -726,12 +744,26 @@ function InventoryReportController(s, timeout, getData, reportsServiceCore) {
     updateLabels();
 
     function getDataNotAvailableText() {
-        if (checkNullEmpty(s.dstate)) {
-            s.noDataText = s.resourceBundle['filter.state.missing'];
-        } else if (checkNullEmpty(s.ddist)) {
-            s.noDataText = s.resourceBundle['filter.district.missing'];
+        if(!s.filter.st && !s.filter.dis) {
+            if (checkNullEmpty(s.dstate)) {
+                s.noDataText = s.resourceBundle['filter.state.missing'];
+            } else if (checkNullEmpty(s.ddist)) {
+                s.noDataText = s.resourceBundle['filter.district.missing'];
+            } else {
+                s.noDataText = s.resourceBundle['filter.taluk.missing'];
+            }
         } else {
-            s.noDataText = s.resourceBundle['filter.taluk.missing'];
+            if(s.filter.dis) {
+                s.noDataText = s.resourceBundle['filter.taluk.missing'];
+            } else if(s.filter.st) {
+                if(s.filter.location_by == 'dis') {
+                    s.noDataText = s.resourceBundle['filter.district.missing'];
+                } else if (s.filter.location_by == 'tlk') {
+                    s.noDataText = s.resourceBundle['filter.taluk.missing'];
+                } else {
+                    s.noDataText = s.resourceBundle['filter.city.missing'];
+                }
+            }
         }
     }
 

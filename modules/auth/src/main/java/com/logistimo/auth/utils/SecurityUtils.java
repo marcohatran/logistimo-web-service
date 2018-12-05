@@ -29,6 +29,8 @@ import com.logistimo.auth.SecurityUtil;
 import com.logistimo.config.models.AssetSystemConfig;
 import com.logistimo.config.models.ConfigurationException;
 import com.logistimo.constants.CharacterConstants;
+import com.logistimo.constants.Constants;
+import com.logistimo.exception.ForbiddenAccessException;
 import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.logger.XLog;
 import com.logistimo.security.SecureUserDetails;
@@ -39,12 +41,15 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
 
 import java.security.GeneralSecurityException;
+import java.security.SecureRandom;
 import java.util.Locale;
 import java.util.Objects;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 public class SecurityUtils {
 
@@ -192,5 +197,35 @@ public class SecurityUtils {
     return SecurityUtil
         .compareRoles(SecurityUtils.getUserDetails().getRole(), SecurityConstants.ROLE_SUPERUSER)
         >= 0;
+  }
+
+  public static String salt() {
+    SecureRandom random = new SecureRandom();
+    byte bytes[] = new byte[32];
+    random.nextBytes(bytes);
+    return org.apache.commons.codec.binary.Base64.encodeBase64String(bytes);
+  }
+
+  public static void clearTokenCookie(HttpServletRequest request, HttpServletResponse response) {
+    Cookie[] cookies = request.getCookies();
+    if( cookies != null) {
+      for (int i = 0; i < cookies.length; i++) {
+        if (cookies[i].getName().equals(Constants.TOKEN)) {
+          cookies[i].setMaxAge(0);
+          cookies[i].setPath("/");
+          response.addCookie(cookies[i]);
+        }
+      }
+    }
+  }
+
+  public static void authorizeAdminTask () {
+    try {
+      if (!isSuperUser()) {
+        throw new ForbiddenAccessException("Forbidden");
+      }
+    } catch (UnauthorizedException ux) {
+      //ignore
+    }
   }
 }

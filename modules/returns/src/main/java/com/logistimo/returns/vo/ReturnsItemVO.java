@@ -23,6 +23,8 @@
 
 package com.logistimo.returns.vo;
 
+import org.apache.commons.collections.CollectionUtils;
+
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
@@ -59,5 +61,7 @@ public class ReturnsItemVO {
 
   private Date createdAt;
 
-
+  public boolean hasBatches(){
+    return CollectionUtils.isNotEmpty(returnItemBatches);
+  }
 }

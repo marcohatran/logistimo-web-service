@@ -95,8 +95,10 @@ import com.logistimo.utils.LockUtil;
 import com.logistimo.utils.MsgUtil;
 import com.logistimo.utils.StringUtil;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -122,7 +124,7 @@ import javax.jdo.Transaction;
  * Created by Mohan Raja on 29/09/16
  */
 
-@org.springframework.stereotype.Service
+@Service
 public class ShipmentService implements IShipmentService {
 
   private static final XLog xLogger = XLog.getLog(ShipmentService.class);
@@ -502,17 +504,10 @@ public class ShipmentService implements IShipmentService {
 
   private boolean validate(ShipmentModel model) throws ParseException {
     Date now = new Date();
-
     if ((StringUtils.isNotEmpty(model.ead) && sdf.parse(model.ead).before(now))
         || model.items == null) {
       return false;
     }
-//        for (ShipmentItemModel item : model.items) {
-//            if (item.mId == null || (item.q != null && item.bq != null) ||
-//                    (item.q == null && item.bq == null)) {
-//                return false;
-//            }
-//        }
     return true;
   }
 
@@ -715,7 +710,7 @@ public class ShipmentService implements IShipmentService {
           IDemandItem demandItem = demandItems.get(shipmentItem.getMaterialId());
           List<IShipmentItemBatch> batch =
               (List<IShipmentItemBatch>) shipmentItem.getShipmentItemBatch();
-          if (batch != null && batch.size() > 0) {
+          if (CollectionUtils.isNotEmpty(batch)) {
             Results<IInvntryBatch>
                 rs =
                 inventoryManagementService.getBatches(shipmentItem.getMaterialId(),
@@ -877,6 +872,7 @@ public class ShipmentService implements IShipmentService {
         t.setLinkedKioskId(shipment.getServicingKiosk());
         t.setReason(shipmentItem.getFulfilledDiscrepancyReason());
         t.setDomainId(shipment.getKioskDomainId());
+        t.setAtd(shipment.getActualFulfilmentDate());
         //Reduce quantity (instead of fulfilled quantity) , since in-transit is updated based on issue.
         BigDecimal inTransStock = inv.getInTransitStock().subtract(shipmentItem.getQuantity());
         inv.setInTransitStock(
@@ -973,10 +969,10 @@ public class ShipmentService implements IShipmentService {
             Resources.get().getBundle("BackendMessages", SecurityUtils.getLocale());
         throw new ServiceException(backendMessages.getString("order.post.exception"), e);
       }
-      if (errors != null && errors.size() > 0) {
+      if (CollectionUtils.isNotEmpty(errors)) {
         StringBuilder errorMsg = new StringBuilder();
         for (ITransaction error : errors) {
-          errorMsg.append("-").append(error.getMessage()).append(MsgUtil.newLine());
+          errorMsg.append("-").append(error.getMessage());
         }
         xLogger.warn("Inventory posting failed {0}", errorMsg.toString());
         throw new ServiceException("T002", errorMsg.toString());
@@ -1115,7 +1111,7 @@ public class ShipmentService implements IShipmentService {
     Results res = activityService.getActivity(String.valueOf(orderId), IActivity.TYPE.ORDER.name(),
         null, null, null, null, null);
     List<ActivityModel> activityList = res.getResults();
-    if (activityList != null && activityList.size() > 0) {
+    if (CollectionUtils.isNotEmpty(activityList)) {
       for (ActivityModel activity : activityList) {
         if (IOrder.CONFIRMED.equals(activity.newValue) || IOrder.PENDING
             .equals(activity.newValue)) {
@@ -1208,7 +1204,7 @@ public class ShipmentService implements IShipmentService {
             pm.makePersistentAll(shipmentItem.getShipmentItemBatch());
           }
         }
-        if (delShipmentItemBatches.size() > 0) {
+        if (CollectionUtils.isNotEmpty(delShipmentItemBatches)) {
           pm.deletePersistentAll(delShipmentItemBatches);
         }
         pm.makePersistentAll(shipment.getShipmentItems());
@@ -1515,7 +1511,7 @@ public class ShipmentService implements IShipmentService {
         for (IShipmentItem shipmentItem : shipment.getShipmentItems()) {
           List<IShipmentItemBatch> batches = (List<IShipmentItemBatch>) shipmentItem
               .getShipmentItemBatch();
-          if (batches != null && batches.size() > 0) {
+          if (CollectionUtils.isNotEmpty(batches)) {
             pm.makePersistentAll(batches);
           }
         }
@@ -1695,19 +1691,6 @@ public class ShipmentService implements IShipmentService {
     return null;
   }
 
-//    /**
-//     * Cancel the shipment given shipment id with message
-//     *
-//     * @param shipmentId Shipment Id
-//     * @param message    Message to post against this cancellation
-//     * @param userId     Id of user who made this change
-//     * @return -
-//     */
-//    @Override
-//    public boolean cancelShipment(String shipmentId, String message, String userId) {
-//        return cancelShipment(shipmentId, message, userId, null);
-//    }
-
   @Override
   public IShipment getShipment(String shipId) {
     PersistenceManager pm = PMF.get().getPersistenceManager();
@@ -1772,7 +1755,7 @@ public class ShipmentService implements IShipmentService {
                     IInvAllocation.Type.ORDER, String.valueOf(orderId), q, null, userId, null, pm,
                     null, false);
           }
-          if (bq.size() > 0) {
+          if (CollectionUtils.isNotEmpty(bq)) {
             inventoryManagementService
                 .transferAllocation(shipment.getServicingKiosk(), shipmentItem.getMaterialId(),
                     IInvAllocation.Type.SHIPMENT, shipmentId,
@@ -1839,30 +1822,6 @@ public class ShipmentService implements IShipmentService {
     }
   }
 
-  @Override
-  public List<IShipmentItemBatch> getShipmentsBatchByOrderId(Long orderId) {
-    PersistenceManager pm = PMF.get().getPersistenceManager();
-    Query q = null;
-    try {
-      q = pm.newQuery("javax.jdo.query.SQL",
-          "SELECT * FROM SHIPMENTITEMBATCH SIB, SHIPMENTITEM SI, SHIPMENT S WHERE SIB.SIID = SI.ID AND SI.SID = S.ID AND S.ORDERID=?");
-      q.setClass(JDOUtils.getImplClass(IShipmentItemBatch.class));
-      List<IShipmentItemBatch> items = (List<IShipmentItemBatch>) q.execute(orderId);
-      if (items != null) {
-        items = (List<IShipmentItemBatch>) pm.detachCopyAll(items);
-      }
-      return items;
-    } catch (Exception e) {
-      xLogger.severe("Error while fetching demand items for order {0}", orderId, e);
-    } finally {
-      if (q != null) {
-        q.closeAll();
-      }
-      pm.close();
-    }
-    return null;
-  }
-
   /**
    * Get all shipment for a specific order
    *
@@ -1889,7 +1848,7 @@ public class ShipmentService implements IShipmentService {
         query.closeAll();
       }
     }
-    return null;
+    return Collections.emptyList();
   }
 
   private IShipment getShipmentById(String shipmentId) {
@@ -1959,15 +1918,16 @@ public class ShipmentService implements IShipmentService {
   @Override
   public List<String> getTransporterSuggestions(Long domainId, String text) {
     List<String> filterIds = new ArrayList<>();
-    String domainFilterQuery = "SELECT ID_OID FROM SHIPMENT_DOMAINS WHERE DOMAIN_ID = " + domainId;
+    List<Object> parameters = new ArrayList<>();
     PersistenceManager pm = PMF.get().getPersistenceManager();
-    Query
-        query =
-        pm.newQuery("javax.jdo.query.SQL",
-            "SELECT DISTINCT TRANSPORTER FROM `SHIPMENT` WHERE ID IN (" +
-                domainFilterQuery + ") AND TRANSPORTER LIKE '" + text + "%' " + "LIMIT 0,8");
+    Query query = pm.newQuery("javax.jdo.query.SQL",
+            "SELECT DISTINCT TRANSPORTER FROM `SHIPMENT` WHERE ID IN "
+                + "(SELECT ID_OID FROM SHIPMENT_DOMAINS WHERE DOMAIN_ID = ?) AND "
+                + "TRANSPORTER LIKE ? LIMIT 0,8");
+    parameters.add(domainId);
+    parameters.add(text.concat("%"));
     try {
-      List rs = (List) query.execute();
+      List rs = (List) query.executeWithArray(parameters.toArray());
       for (Object r : rs) {
         String a = String.valueOf(r);
         if (a != null) {
@@ -2480,9 +2440,10 @@ public class ShipmentService implements IShipmentService {
                                                                     List<Long> materialIdList)
       throws ServiceException {
     if (orderId == null) {
-      return null;
+      return Collections.emptyList();
     }
     List<FulfilledQuantityModel> fulfilledQuantityModelList = new ArrayList<>();
+    List<Object> parameters = new ArrayList<>();
     PersistenceManager pm = PMF.get().getPersistenceManager();
     try {
 //      Query q =
@@ -2493,22 +2454,26 @@ public class ShipmentService implements IShipmentService {
 
       StringBuilder
           queryBuilder =
-          new StringBuilder("SELECT SI.MID, BID, SUM(SI.FQ),SUM(SIB.FQ), SI.SID FROM "
+          new StringBuilder("SELECT SI.MID, BID, SUM(SI.FQ),SUM(SIB.FQ), SI.SID,SIB.BEXP,SIB.BMFDT,SIB.BMFNM  FROM "
               + "SHIPMENT S,SHIPMENTITEM SI LEFT JOIN  SHIPMENTITEMBATCH SIB ON SIB.SIID = SI.ID "
-              + "WHERE S.ORDERID=").append(orderId).append(" AND S.ID = SI.SID AND SI.MID IN (");
-      materialIdList.forEach(materailId -> {
-        queryBuilder.append(materailId).append(CharacterConstants.COMMA);
-      });
+              + "WHERE S.ORDERID=? AND S.ID = SI.SID ");
+      parameters.add(orderId);
 
-      queryBuilder.setLength(queryBuilder.length() - 1);
+      if(CollectionUtils.isNotEmpty(materialIdList)) {
+        queryBuilder.append(" AND SI.MID IN (");
+        for (Long matId : materialIdList) {
+          queryBuilder.append(CharacterConstants.QUESTION).append(CharacterConstants.COMMA);
+          parameters.add(matId);
+        }
+        queryBuilder.setLength(queryBuilder.length() - 1);
+        queryBuilder.append(")");
+      }
 
       Query q =
           pm.newQuery("javax.jdo.query.SQL",
-              queryBuilder.append(") GROUP BY SI.MID,BID").toString());
-      List params = new ArrayList(2);
-      params.add(orderId);
-      params.add(materialIdList);
-      List resultList = (List) q.executeWithArray(params.toArray());
+              queryBuilder.append(" GROUP BY SI.MID,BID ORDER BY SI.MID,BID ASC").toString());
+
+      List resultList = (List) q.executeWithArray(parameters.toArray());
       Iterator iterator = resultList.iterator();
       while (iterator.hasNext()) {
         FulfilledQuantityModel fulfilledQuantityModel = new FulfilledQuantityModel();
@@ -2520,6 +2485,9 @@ public class ShipmentService implements IShipmentService {
           fulfilledQuantityModel.setBatchId(batchId);
           fulfilledQuantity = (BigDecimal) objects[3];
           fulfilledQuantityModel.setFulfilledQuantity(fulfilledQuantity);
+          fulfilledQuantityModel.setExpiryDate((Date) objects[5]);
+          fulfilledQuantityModel.setManufacturedDate((Date) objects[6]);
+          fulfilledQuantityModel.setManufacturer((String) objects[7]);
         } else {
           fulfilledQuantity = (BigDecimal) objects[2];
         }

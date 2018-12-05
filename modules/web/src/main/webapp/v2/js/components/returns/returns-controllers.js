@@ -25,404 +25,689 @@
  * Created by Mohan Raja on 11/03/18.
  */
 
-
 logistimoApp.controller('CreateReturnsController', CreateReturnsController);
 logistimoApp.controller('DetailReturnsController', DetailReturnsController);
 logistimoApp.controller('ReceiveReturnsController', ReceiveReturnsController);
 logistimoApp.controller('ListReturnsController', ListReturnsController);
+logistimoApp.controller('BatchReceiveReturnsController', BatchReceiveReturnsController);
+logistimoApp.controller('BatchDetailReturnsController', BatchDetailReturnsController);
+logistimoApp.controller('BatchCreateReturnsController', BatchCreateReturnsController);
 
-CreateReturnsController.$inject = ['$scope', '$location', '$timeout', 'returnsService', 'trnService'];
-DetailReturnsController.$inject = ['$scope', '$uibModal', 'requestContext', 'RETURNS', 'returnsService', 'conversationService', 'activityService'];
-ListReturnsController.$inject = ['$scope', '$location', 'requestContext', 'RETURNS', 'returnsService', 'ordService', 'exportService'];
+function ReturnsItemInitializer($scope, trnService, $q) {
 
-function CreateReturnsController($scope, $location, $timeout, returnsService, trnService) {
+    $scope.orderByMaterial = new Map($scope.orderItems.map(d=>[d.id, d]));
 
-    $scope.returnItems = returnsService.getItems();
-    $scope.returnOrder = returnsService.getOrder();
+    let allPromiseCollection = [];
+
     $scope.invalidPopup = 0;
 
-    $scope.showLoading();
-    trnService.getReasons('ro')
-        .then(function (data) {
-            $scope.defaultReason = data.data.defRsn;
-            $scope.reasons = (checkNullEmpty($scope.defaultReason) && checkNotNullEmpty(data.data.rsns)) ? [""].concat(data.data.rsns) : data.data.rsns;
-        })
-        .then(function () {
-            angular.forEach($scope.returnItems, function (returnItem) {
-                if (returnItem.materialTags) {
-                    trnService.getReasons('ro', returnItem.materialTags).then(function (data) {
-                        if (checkNotNullEmpty(data.data) && checkNotNullEmpty(data.data.rsns)) {
-                            returnItem.returnReason = angular.copy(data.data.defRsn);
-                            returnItem.defaultReturnReason = angular.copy(data.data.defRsn);
-                            returnItem.reasons = checkNullEmpty(returnItem.defaultReturnReason)? [""].concat(data.data.rsns) : data.data.rsns;
-                            angular.forEach(returnItem.returnBatches, function (returnBatch) {
-                                returnBatch.returnReason = angular.copy(returnItem.returnReason);
-                                returnBatch.defaultReturnReason = angular.copy(returnItem.returnReason);
-                            });
-                        } else {
-                            setCommonReasons(returnItem);
-                        }
-                    });
-                } else {
-                    setCommonReasons(returnItem);
-                }
-            })
-        }).catch(function error(msg) {
-            $scope.showErrorMsg(msg);
-        }).finally(function () {
-            $scope.hideLoading();
+    let getReasonMandatoryPromise = () => {
+        let deferred = $q.defer();
+        $scope.showLoading();
+        trnService.getTransactionTypesWithReasonMandatory().then(data => {
+            $scope.returnOutgoingReasonMandatory = data.data.includes('ro');
+            deferred.resolve();
+        }).catch(msg => deferred.reject(msg))
+            .finally(() => $scope.hideLoading());
+        return deferred.promise;
+    };
+
+    allPromiseCollection.push(getReasonMandatoryPromise());
+
+    let getMaterialStatusPromise = () => {
+        let deferred = $q.defer();
+        $scope.showLoading();
+        trnService.getMatStatus("ro", false).then(data => {
+            $scope.matstatus = data.data;
+            deferred.resolve();
+        }).catch(msg => deferred.reject(msg))
+            .finally(() => $scope.hideLoading());
+        return deferred.promise;
+    };
+
+    allPromiseCollection.push(getMaterialStatusPromise());
+
+    let getTemperatureMaterialStatusPromise = () => {
+        let deferred = $q.defer();
+        $scope.showLoading();
+        trnService.getMatStatus("ro", true).then(data => {
+            $scope.tempmatstatus = data.data;
+            deferred.resolve();
+        }).catch(msg => deferred.reject(msg))
+            .finally(() => $scope.hideLoading());
+        return deferred.promise;
+    };
+
+    allPromiseCollection.push(getTemperatureMaterialStatusPromise());
+
+    let getMaterialStatusIncomingPromise = () => {
+        let deferred = $q.defer();
+        $scope.showLoading();
+        trnService.getMatStatus("ri", false).then(data => {
+            $scope.incomingMatstatus = data.data;
+            deferred.resolve();
+        }).catch(msg => deferred.reject(msg))
+            .finally(() => $scope.hideLoading());
+        return deferred.promise;
+    };
+
+    allPromiseCollection.push(getMaterialStatusIncomingPromise());
+
+    let getTemperatureMaterialStatusIncomingPromise = () => {
+        let deferred = $q.defer();
+        $scope.showLoading();
+        trnService.getMatStatus("ri", true).then(data => {
+            $scope.incomingTempmatstatus = data.data;
+            deferred.resolve();
+        }).catch(msg => deferred.reject(msg))
+            .finally(() => $scope.hideLoading());
+        return deferred.promise;
+    };
+
+    allPromiseCollection.push(getTemperatureMaterialStatusIncomingPromise());
+
+    let getStatusMandatoryPromise = () => {
+        let deferred = $q.defer();
+        $scope.showLoading();
+        trnService.getStatusMandatory().then(data => {
+            $scope.statusMandatoryConfig = data.data;
+            deferred.resolve();
+        }).catch(msg => deferred.reject(msg))
+            .finally(() => $scope.hideLoading());
+        return deferred.promise;
+    };
+
+    allPromiseCollection.push(getStatusMandatoryPromise());
+
+    //During create return, replace the return item, with the order item updated with reasons
+    let updateReturnItemWithReasons = (orderItem) => {
+        $scope.returnItems.some((returnItem, index) => {
+            if(returnItem.nm == orderItem.nm) {
+                $scope.returnItems.splice(index, 1, angular.copy(orderItem));
+                return true;
+            }
         });
+    };
 
-    $scope.showLoading();
-    trnService.getMatStatus("ro", false).then(function (data) {
-        $scope.matstatus = data.data;
-    }).catch(function error(msg) {
-        $scope.showErrorMsg(msg);
-    }).finally(function () {
-        $scope.hideLoading();
-    });
-
-    $scope.showLoading();
-    trnService.getMatStatus("ro", true).then(function (data) {
-        $scope.tempmatstatus = data.data;
-    }).catch(function error(msg) {
-        $scope.showErrorMsg(msg);
-    }).finally(function () {
-        $scope.hideLoading();
-    });
-
-    $scope.showLoading();
-    trnService.getStatusMandatory().then(function (data) {
-        $scope.statusMandatoryConfig = data.data;
-    }).catch(function error(msg) {
-        $scope.showErrorMsg(msg);
-    }).finally(function () {
-        $scope.hideLoading();
-    });
-
-    function setCommonReasons(item) {
+    let setCommonReasons = item => {
         item.reasons = angular.copy($scope.reasons);
         item.returnReason = angular.copy($scope.defaultReason);
         item.defaultReturnReason = angular.copy($scope.defaultReason);
-        angular.forEach(item.returnBatches, function (returnBatch) {
+        angular.forEach(item.returnBatches, returnBatch => {
             returnBatch.returnReason = angular.copy(item.returnReason);
             returnBatch.defaultReturnReason = angular.copy(item.returnReason);
         });
-    }
-
-    $scope.cancel = function () {
-        $scope.setPageSelection('orderDetail');
-        $scope.enableScroll();
     };
 
-    $scope.create = function () {
-        if (isAllValid()) {
+    let initItemReasons = () => {
+        let getReasonPromise = (orderItem) => {
+            let reasonDeferred = $q.defer();
             $scope.showLoading();
-            var request = {
-                returnItems: $scope.returnItems,
-                order_id: $scope.order.id,
-                comment: $scope.comment
-            };
-            returnsService.create(request).then(function (data) {
-                $scope.showSuccess("Returns created successfully");
-                $location.path('/orders/returns/detail/' + data.data.return_id);
-            }).catch(function error(msg) {
-                $scope.showErrorMsg(msg);
-            }).finally(function () {
-                $scope.hideLoading();
-            });
-        }
+            trnService.getReasons('ro', orderItem.materialTags).then(data => {
+                if (checkNotNullEmpty(data.data) && checkNotNullEmpty(data.data.rsns)) {
+                    orderItem.returnReason = angular.copy(data.data.defRsn);
+                    orderItem.defaultReturnReason = angular.copy(data.data.defRsn);
+                    orderItem.reasons = [""].concat(data.data.rsns);
+                    angular.forEach(orderItem.returnBatches, returnBatch => {
+                        returnBatch.returnReason = angular.copy(orderItem.returnReason);
+                        returnBatch.defaultReturnReason = angular.copy(orderItem.returnReason);
+                    });
+                } else {
+                    setCommonReasons(orderItem);
+                }
+                updateReturnItemWithReasons(orderItem);
+                reasonDeferred.resolve();
+            }).catch(msg => reasonDeferred.reject(msg))
+                .finally(() => $scope.hideLoading());
+            return reasonDeferred.promise;
+        };
+
+        let reasonPromises = [];
+        angular.forEach($scope.orderItems, orderItem => {
+            if (orderItem.materialTags) {
+                reasonPromises.push(getReasonPromise(orderItem))
+            } else {
+                setCommonReasons(orderItem);
+                updateReturnItemWithReasons(orderItem);
+            }
+        });
+        return $q.all(reasonPromises)
     };
 
-    function isAllValid() {
-        if (isReturnQuantityAdded()) {
-            if (isReturnValid('returnReason')) {
-                if (!$scope.statusMandatoryConfig.rosm || isReturnValid('returnMaterialStatus')) {
-                    return true;
-                } else {
-                    $scope.showWarning("Material status is mandatory for all materials being returned");
-                }
-            } else {
-                $scope.showWarning("Reason is mandatory for all materials being returned")
-            }
-        } else {
-            $scope.showWarning("Please specify return quantity for all materials")
-        }
-    }
+    let getReasonsPromise = () => {
+        let deferred = $q.defer();
+        $scope.showLoading();
+        trnService.getReasons('ro').then(data => {
+            $scope.defaultReason = data.data.defRsn;
+            $scope.reasons = [""].concat(data.data.rsns);
+            initItemReasons().then(() => deferred.resolve()).catch(msg => deferred.reject(msg))
+        }).catch(msg => deferred.reject(msg))
+            .finally(() => $scope.hideLoading());
+        return deferred.promise;
+    };
 
-    function isReturnQuantityAdded() {
-        return $scope.returnItems.every(function (returnItem) {
-            if (checkNotNullEmpty(returnItem.returnBatches)) {
-                return returnItem.returnBatches.some(function (returnBatch) {
-                    return checkNotNullEmpty(returnBatch.returnQuantity) && returnBatch.returnQuantity > 0;
-                });
-            } else {
-                return checkNotNullEmpty(returnItem.returnQuantity) && returnItem.returnQuantity > 0;
-            }
-        });
-    }
+    allPromiseCollection.push(getReasonsPromise());
 
-    function redrawAllPopup(type) {
-        var index = -1;
-        $scope.returnItems.forEach(function (returnItem) {
-            index += 1;
-            if (checkNotNullEmpty(returnItem.returnBatches)) {
-                var batchIndex = -1;
-                returnItem.returnBatches.forEach(function (returnBatch) {
-                    batchIndex += 1;
-                    if (returnBatch.popupMsg) {
-                        type == 'show' ?
-                            $scope.validateBatchQuantity(returnItem, returnBatch, batchIndex) :
-                            hidePopup($scope, returnBatch, returnItem.id + returnBatch.id, batchIndex, $timeout);
-                    }
-                    if (returnBatch.sPopupMsg) {
-                        type == 'show' ?
-                            $scope.validateBatchStatus(returnItem, returnBatch, batchIndex, returnItem.tm) :
-                            hidePopup($scope, returnBatch, 's' + (returnItem.tm ? 't' : '') + returnItem.id + returnBatch.id, batchIndex, $timeout);
-                    }
-                    if (returnBatch.rPopupMsg) {
-                        type == 'show' ?
-                            $scope.validateBatchReason(returnItem, returnBatch, batchIndex) :
-                            hidePopup($scope, returnBatch, 'r' + returnItem.id + returnBatch.id, batchIndex, $timeout);
-                    }
-                });
-            } else {
-                if (returnItem.popupMsg) {
-                    type == 'show' ?
-                        $scope.validateQuantity(returnItem, index) :
-                        hidePopup($scope, returnItem, returnItem.id, index, $timeout);
-                }
-                if (returnItem.sPopupMsg) {
-                    type == 'show' ?
-                        $scope.validateStatus(returnItem, index, returnItem.tm) :
-                        hidePopup($scope, returnItem, 's' + (returnItem.tm ? 't' : '') + returnItem.id, index, $timeout);
-                }
-                if (returnItem.rPopupMsg) {
-                    type == 'show' ?
-                        $scope.validateReason(returnItem, index) :
-                        hidePopup($scope, returnItem, 'r' + returnItem.id, index, $timeout);
-                }
-            }
-        });
-        if (type != 'show') {
-            $timeout(function () {
-                redrawAllPopup('show');
-            }, 0);
-        }
-    }
+    return $q.all(allPromiseCollection);
+}
 
-    $scope.validateQuantity = function (material, index) {
-        var redraw = false;
-        if (material.displayMeta != material.returnQuantity > 0) {
-            redraw = true;
+function ReturnsItemValidator($scope, $timeout) {
+
+    let getMessage = (fulfilled, pending, total) => {
+        let pendingReturns = pending || 0;
+        let returned = (total || 0) - pendingReturns;
+        let bundleName = 'return.quantity';
+        let parameters = [fulfilled];
+        if(returned > 0) {
+            bundleName = bundleName.concat(".returned");
+            parameters.push(returned);
         }
+        if(pendingReturns > 0) {
+            bundleName = bundleName.concat(".pending");
+            parameters.push(pendingReturns);
+            parameters.push(pendingReturns > 1 ? $scope.resourceBundle['are']:$scope.resourceBundle['is']);
+        }
+        parameters.push(fulfilled - total);
+        return messageFormat($scope.resourceBundle[bundleName],...parameters);
+    };
+
+    let validateQuantity = (material, index, isCreate, isReceive) => {
+        let redraw = material.displayMeta != material.returnQuantity > 0;
         material.displayMeta = material.returnQuantity > 0;
-        var isInvalid = false;
-        if (checkNotNullEmpty(material.returnQuantity)) {
-            if (material.returnQuantity > material.fq) {
-                showPopup($scope, material, material.id,
-                    "The quantity to be returned " + material.returnQuantity + " cannot exceed the original receipt quantity " + material.fq + ".",
-                    index, $timeout);
+        let isInvalid = false;
+        if (material.returnQuantity > 0) {
+            if (material.returnQuantity > material.fq && !isReceive) {
+                showPopup($scope, material, material.id, messageFormat($scope.resourceBundle['return.quantity.cannot.exceed.fulfilled.quantity'], material.returnQuantity, material.fq), index, $timeout);
                 isInvalid = true;
-            } else if (material.returnQuantity > material.fq - material.returnedQuantity) {
+            } else if (material.returnQuantity > material.fq - material.returnedQuantity && !isReceive) {
                 showPopup($scope, material, material.id,
-                    "The quantity to be returned " + material.returnQuantity + " cannot exceed the remaining return quantity " + (material.fq - material.returnedQuantity) + ".",
-                    index, $timeout);
+                    getMessage(material.fq, material.requested_return_quantity, material.returnedQuantity)
+                    , index, $timeout);
                 isInvalid = true;
             } else if (checkNotNullEmpty(material.huName) && checkNotNullEmpty(material.huQty) &&
                 material.returnQuantity % material.huQty != 0) {
-                showPopup($scope, material, material.id,
-                    material.returnQuantity + " of " + material.nm + " does not match the multiples of units expected in " +
-                    material.huName + ". It should be in multiples of " + material.huQty + " " + material.nm + ".",
-                    index, $timeout);
-                isInvalid = true;
-            } else if (material.returnQuantity > material.atpstk) {
-                showPopup($scope, material, material.id,
-                    "The quantity to be returned " + material.returnQuantity+ " cannot exceed the available stock "+ material.atpstk + ".",
+                showPopup($scope, material, material.id, messageFormat($scope.resourceBundle['return.quantity.handling.units.mismatch'], material.returnQuantity, material.nm, material.huName, material.huQty, material.nm),
                     index, $timeout);
                 isInvalid = true;
             }
         } else {
+            if (material.rinvalidPopup) {
+                hidePopup($scope, material, `r${material.id}`, index, $timeout, false, false, true);
+            }
+            if (material.sinvalidPopup) {
+                hidePopup($scope, material, `s${material.id}`, index, $timeout, false, true);
+            }
             material.sinvalidPopup = material.sPopupMsg = material.rinvalidPopup = material.rPopupMsg = undefined;
-            material.returnReason = angular.copy(material.defaultReturnReason);
+            if(!isReceive) {
+                material.returnReason = angular.copy(material.defaultReturnReason);
+                material.reason = material.returnReason;
+            }
         }
         if (redraw) {
-            redrawAllPopup();
+            ReturnsValidator.redrawAllPopup($scope, $timeout, isCreate, isReceive);
         }
         return isInvalid;
     };
 
-    $scope.validateBatchQuantity = function (material, batchMaterial, index) {
+    //Used in detail and receive
+    $scope.validateQuantityReturn = (material, index, isReceive) => {
+        material.returnQuantity = isReceive ? (material.received.received_quantity || 0) * 1 :
+        (material.new_return_quantity || 0) * 1;
+        return validateQuantity(material, index, false, isReceive);
+    };
 
-        var redraw = false;
-        if (batchMaterial.displayMeta != batchMaterial.returnQuantity > 0) {
-            redraw = true;
-        }
+    $scope.validateQuantityCreateReturn = (material, index) => {
+        let originalQuantity = material.returnedQuantity;
+        material.returnedQuantity = (material.returnedQuantity || 0) * 1 + (material.requested_return_quantity || 0) * 1;
+        let status = validateQuantity(material, index, true);
+        material.returnedQuantity = originalQuantity;
+        return status;
+    };
+
+    let validateBatchQuantity = (material, batchMaterial, index, isCreate, isReceive) => {
+        let redraw = batchMaterial.displayMeta != batchMaterial.returnQuantity > 0;
+
         batchMaterial.displayMeta = batchMaterial.returnQuantity > 0;
-        var isInvalid = false;
-        if (checkNotNullEmpty(batchMaterial.returnQuantity)) {
-            if (batchMaterial.returnQuantity > batchMaterial.fq) {
-                showPopup($scope, batchMaterial, material.id + batchMaterial.id,
-                    "The quantity to be returned " + batchMaterial.returnQuantity + " cannot exceed the original receipt quantity " + batchMaterial.fq + ".",
+        let isInvalid = false;
+        if (batchMaterial.returnQuantity > 0) {
+            if (batchMaterial.returnQuantity > batchMaterial.fq && !isReceive) {
+                showPopup($scope, batchMaterial, material.id + batchMaterial.id, messageFormat(
+                        $scope.resourceBundle['return.quantity.cannot.exceed.fulfilled.quantity'], batchMaterial.returnQuantity, batchMaterial.fq),
                     index, $timeout);
                 isInvalid = true;
-            } else if (batchMaterial.returnQuantity > batchMaterial.fq - batchMaterial.returnedQuantity) {
+            } else if (batchMaterial.returnQuantity > batchMaterial.fq - batchMaterial.returnedQuantity && !isReceive) {
                 showPopup($scope, batchMaterial, material.id + batchMaterial.id,
-                    "The quantity to be returned " + batchMaterial.returnQuantity + " cannot exceed the remaining return quantity " + (batchMaterial.fq - batchMaterial.returnedQuantity) + ".",
+                    getMessage(batchMaterial.fq, batchMaterial.disp_requested_return_quantity, batchMaterial.returnedQuantity),
                     index, $timeout);
                 isInvalid = true;
             } else if (checkNotNullEmpty(material.huName) && checkNotNullEmpty(material.huQty) &&
                 batchMaterial.returnQuantity % material.huQty != 0) {
-                showPopup($scope, batchMaterial, material.id + batchMaterial.id,
-                    batchMaterial.returnQuantity + " of " + material.nm + " does not match the multiples of units expected in " +
-                    material.huName + ". It should be in multiples of " + material.huQty + " " + material.nm + ".",
-                    index, $timeout);
-                isInvalid = true;
-            } else if (batchMaterial.returnQuantity > batchMaterial.atpstk) {
-                showPopup($scope, batchMaterial, material.id + batchMaterial.id,
-                    "The quantity to be returned " + batchMaterial.returnQuantity + " cannot exceed the available stock " + batchMaterial.atpstk + ".",
+                showPopup($scope, batchMaterial, material.id + batchMaterial.id, messageFormat($scope.resourceBundle['return.quantity.handling.units.mismatch'], batchMaterial.returnQuantity, material.nm, material.huName, material.huQty, material.nm),
                     index, $timeout);
                 isInvalid = true;
             }
         } else {
+            if (batchMaterial.rinvalidPopup) {
+                hidePopup($scope, batchMaterial, `r${material.id}${batchMaterial.id}`, index, $timeout, false, false, true);
+            }
+            if (batchMaterial.sinvalidPopup) {
+                hidePopup($scope, batchMaterial, `s${material.id}${batchMaterial.id}`, index, $timeout, false, true);
+            }
             batchMaterial.sinvalidPopup = batchMaterial.sPopupMsg = batchMaterial.rinvalidPopup = batchMaterial.rPopupMsg = undefined;
-            batchMaterial.returnReason = angular.copy(batchMaterial.defaultReturnReason);
+            if(!isReceive) {
+                batchMaterial.returnReason = angular.copy(batchMaterial.defaultReturnReason);
+                batchMaterial.reason = batchMaterial.returnReason;
+            }
         }
         if (redraw) {
-            redrawAllPopup();
+            ReturnsValidator.redrawAllPopup($scope, $timeout, isCreate, isReceive);
         }
         return isInvalid;
     };
 
-    $scope.validateReason = function (material, index) {
-        if (checkNullEmpty(material.returnReason)) {
-            showPopup($scope, material, 'r' + material.id, "Reason is mandatory", index, $timeout, false, false, true);
+    //Used in detail and receive
+    $scope.validateBatchQuantityReturn = (material, batchMaterial, index, isReceive) => {
+        batchMaterial.returnQuantity = isReceive ? (batchMaterial.received.received_quantity || 0) * 1 :
+        (batchMaterial.new_return_quantity || 0) * 1;
+        return validateBatchQuantity(material, batchMaterial, index, false, isReceive);
+    };
+
+    $scope.validateBatchQuantityCreateReturn = (material, batchMaterial, index) => {
+        let originalQuantity = batchMaterial.returnedQuantity;
+        batchMaterial.returnedQuantity = (batchMaterial.returnedQuantity || 0) * 1 + (batchMaterial.requested_return_quantity || 0) * 1;
+        batchMaterial.disp_requested_return_quantity = batchMaterial.requested_return_quantity;
+        let status = validateBatchQuantity(material, batchMaterial, index, true);
+        batchMaterial.returnedQuantity = originalQuantity;
+        return status;
+    };
+
+    //Used in detail and receive
+    $scope.validateReasonReturn = (material, index) => {
+        material.returnReason = material.reason;
+        return $scope.validateReason(material, index);
+    };
+
+    $scope.validateReason = (material, index) => {
+        if ($scope.returnOutgoingReasonMandatory && checkNullEmpty(material.returnReason)) {
+            showPopup($scope, material, `r${material.id}`, $scope.resourceBundle['reason.required'], index, $timeout, false, false, true);
             return true;
         }
     };
 
-    $scope.validateBatchReason = function (material, batchMaterial, index) {
-        if (checkNullEmpty(batchMaterial.returnReason)) {
-            showPopup($scope, batchMaterial, 'r' + material.id + batchMaterial.id, "Reason is mandatory", index, $timeout, false, false, true);
+    //Used in detail and receive
+    $scope.validateBatchReasonReturn = (material, batchMaterial, index) => {
+        batchMaterial.returnReason = batchMaterial.reason;
+        return $scope.validateBatchReason(material, batchMaterial, index);
+    };
+
+    $scope.validateBatchReason = (material, batchMaterial, index) => {
+        if ($scope.returnOutgoingReasonMandatory && checkNullEmpty(batchMaterial.returnReason)) {
+            showPopup($scope, batchMaterial, `r${material.id}${batchMaterial.id}`, $scope.resourceBundle['reason.required'], index, $timeout, false, false, true);
             return true;
         }
     };
 
-    $scope.validateStatus = function (material, index, isTempStatus) {
-        if ($scope.statusMandatoryConfig.rosm && checkNullEmpty(material.returnMaterialStatus)) {
-            showPopup($scope, material, 's' + (isTempStatus ? 't' : '') + material.id, "Material status is mandatory", index, $timeout,false,true,false);
+    //Used in detail and receive
+    $scope.validateStatusReturn = (material, index, isTempStatus, isReceive) => {
+        material.returnMaterialStatus = isReceive ? material.received.material_status : material.material_status;
+        return $scope.validateStatus(material, index, isTempStatus, isReceive);
+    };
+
+    $scope.validateStatus = (material, index, isTempStatus, isReceive) => {
+        let mandatory = isReceive ? $scope.statusMandatoryConfig.rism : $scope.statusMandatoryConfig.rosm;
+        let isStatusDefined;
+        if (isTempStatus) {
+            isStatusDefined = checkNotNullEmpty($scope.tempmatstatus);
+        } else {
+            isStatusDefined = checkNotNullEmpty($scope.matstatus);
+        }
+        if (mandatory && isStatusDefined && checkNullEmpty(material.returnMaterialStatus)) {
+            showPopup($scope, material, `s${isTempStatus ? 't' : ''}${material.id}`, $scope.resourceBundle['status.required'], index, $timeout, false, true, false);
             return true;
         }
     };
 
-    $scope.validateBatchStatus = function (material, batchMaterial, index, isTempStatus) {
-        if ($scope.statusMandatoryConfig.rosm && checkNullEmpty(batchMaterial.returnMaterialStatus)) {
-            showPopup($scope, batchMaterial, 's' + (isTempStatus ? 't' : '') + material.id + batchMaterial.id, "Material status is mandatory", index, $timeout,false,true,false);
+    //Used in detail and receive
+    $scope.validateBatchStatusReturn = (material, batchMaterial, index, isTempStatus, isReceive) => {
+        material.id = material.material_id;
+        batchMaterial.returnMaterialStatus = isReceive ? batchMaterial.received.material_status : batchMaterial.material_status;
+        return $scope.validateBatchStatus(material, batchMaterial, index, isTempStatus, isReceive);
+    };
+
+    $scope.validateBatchStatus = (material, batchMaterial, index, isTempStatus, isReceive) => {
+        let mandatory = isReceive ? $scope.statusMandatoryConfig.rism : $scope.statusMandatoryConfig.rosm;
+        if (mandatory && checkNullEmpty(batchMaterial.returnMaterialStatus)) {
+            showPopup($scope, batchMaterial, `s${isTempStatus ? 't' : ''}${material.id}${batchMaterial.id}`, $scope.resourceBundle['status.required'], index, $timeout, false, true, false);
             return true;
         }
     };
 
-    $scope.closePopup = function (material, index, prefix) {
+    $scope.closePopup = (material, index, prefix) =>
         hidePopup($scope, material, (prefix ? prefix : '') + material.id, index, $timeout, false, prefix == 's' || prefix == 'st', prefix == 'r');
-    };
 
-    $scope.closeBatchPopup = function (material, batchMaterial, index, prefix) {
+    $scope.closeBatchPopup = (material, batchMaterial, index, prefix) =>
         hidePopup($scope, batchMaterial, (prefix ? prefix : '') + material.id + batchMaterial.id, index, $timeout, false, prefix == 's' || prefix == 'st', prefix == 'r');
+}
+
+function ReturnsItemManager($scope, $timeout) {
+
+    ReturnsItemValidator($scope, $timeout);
+
+    let updateAvailableReturnItems = () => {
+        $scope.availableReturnItems = [];
+        if ($scope.orderItems.length == $scope.returnItems.length) {
+            return;
+        }
+        angular.forEach($scope.orderItems, orderItem => {
+            let found = $scope.returnItems.some(
+                    returnItem => orderItem.id == returnItem.id || orderItem.id == returnItem.material_id
+            );
+            if (!found) {
+                if (orderItem.fq > (orderItem.returnedQuantity || 0)) {
+                    $scope.availableReturnItems.push(orderItem);
+                }
+            }
+        });
+    };
+    updateAvailableReturnItems();
+
+    $scope.deleteReturnItem = index => {
+        $scope.returnItems.splice(index, 1);
+        updateAvailableReturnItems();
+        if ($scope.invalidPopup > 0) {
+            ReturnsValidator.redrawAllPopup($scope, $timeout);
+        }
     };
 
-    function isReturnValid(field) {
-        var index = -1;
-        return !$scope.returnItems.some(function (returnItem) {
-            index += 1;
-            var batchIndex = -1;
+    $scope.addReturnItem = newItem => {
+        $scope.returnItems.push(angular.copy(newItem));
+        updateAvailableReturnItems();
+    };
+}
+
+var ReturnsValidator = {};
+ReturnsValidator.isReturnQuantityAdded = ($scope, isReturn) => {
+    return $scope.returnItems.every(returnItem => {
+        let batches = isReturn ? returnItem.batches : returnItem.returnBatches;
+        if (checkNotNullEmpty(batches)) {
+            return batches.some(returnBatch =>
+                (isReturn ? returnBatch.new_return_quantity : returnBatch.returnQuantity) > 0
+            );
+        } else {
+            return (isReturn ? returnItem.new_return_quantity : returnItem.returnQuantity) > 0;
+        }
+    });
+};
+ReturnsValidator.redrawAllPopup = ($scope, $timeout, isCreate, isReceive, type) => {
+    $scope.returnItems.forEach((returnItem, index) => {
+        if (checkNotNullEmpty(returnItem.returnBatches)) {
+            returnItem.returnBatches.forEach((returnBatch, index) => {
+                if (returnBatch.popupMsg) {
+                    if(type == 'show') {
+                        if(isCreate) {
+                            $scope.validateBatchQuantityCreateReturn(returnItem, returnBatch, index)
+                        } else {
+                            $scope.validateBatchQuantityReturn(returnItem, returnBatch, index, isReceive);
+                        }
+                    } else {
+                        hidePopup($scope, returnBatch, returnItem.id + returnBatch.id, index, $timeout);
+                    }
+                }
+                if (returnBatch.sPopupMsg) {
+                    if(type == 'show'){
+                        if(isCreate) {
+                            $scope.validateBatchStatus(returnItem, returnBatch, index, returnItem.tm);
+                        } else {
+                            $scope.validateBatchStatusReturn(returnItem, returnBatch, index, returnItem.tm, isReceive);
+                        }
+                    } else {
+                        hidePopup($scope, returnBatch, `s${returnItem.tm ? 't' : ''}${returnItem.id}${returnBatch.id}`, index, $timeout, false, true);
+                    }
+                }
+                if (returnBatch.rPopupMsg) {
+                    if(type == 'show') {
+                        if(isCreate) {
+                            $scope.validateBatchReason(returnItem, returnBatch, index);
+                        } else {
+                            $scope.validateBatchReasonReturn(returnItem, returnBatch, index);
+                        }
+                    } else {
+                        hidePopup($scope, returnBatch, `r${returnItem.id}${returnBatch.id}`, index, $timeout, false, false, true);
+                    }
+                }
+            });
+        } else {
+            if (returnItem.popupMsg) {
+                if(type == 'show') {
+                    if(isCreate) {
+                        $scope.validateQuantityCreateReturn(returnItem, index)
+                    } else {
+                        $scope.validateQuantityReturn(returnItem, index, isReceive)
+                    }
+                } else {
+                    hidePopup($scope, returnItem, returnItem.id, index, $timeout);
+                }
+            }
+            if (returnItem.sPopupMsg) {
+                if(type == 'show') {
+                    if(isCreate) {
+                        $scope.validateStatus(returnItem, index, returnItem.tm);
+                    } else {
+                        $scope.validateStatusReturn(returnItem, index, returnItem.tm, isReceive);
+                    }
+                } else {
+                    hidePopup($scope, returnItem, `s${returnItem.tm ? 't' : ''}${returnItem.id}`, index, $timeout);
+                }
+            }
+            if (returnItem.rPopupMsg) {
+                if(type == 'show') {
+                    if(isCreate) {
+                        $scope.validateReason(returnItem, index);
+                    } else {
+                        $scope.validateReasonReturn(returnItem, index);
+                    }
+                } else {
+                    hidePopup($scope, returnItem, `r${returnItem.id}`, index, $timeout);
+                }
+            }
+        }
+    });
+    if (type != 'show') {
+        $timeout(() => ReturnsValidator.redrawAllPopup($scope, $timeout, isCreate, isReceive, 'show'), 0);
+    }
+};
+
+function CreateReturnsController($scope, $location, $timeout, $q, returnsService, trnService) {
+
+    $scope.returnItems = returnsService.getItems();
+    $scope.returnOrder = returnsService.getOrder();
+    $scope.orderItems = angular.copy($scope.returnOrder.its);
+    $scope.trackingDetails = {};
+
+    let isReturnBatchAvailable = item =>
+        item.returnBatches && item.returnBatches.length > 0 && item.returnBatches.some(b => b.returnQuantity > 0);
+
+    let updateReturnItems = () => {
+        let orderItemByMaterial = new Map($scope.orderItems.map(d=>[d.id, d]));
+        $scope.returnItems = $scope.returnItems.map(i => orderItemByMaterial.get(i.id));
+        $scope.returnItems.forEach(returnItem => returnItem.returnBatchAvailable = isReturnBatchAvailable(returnItem));
+    };
+
+    returnsService.getQuantityByOrder($scope.returnOrder.id).then(data=> {
+        let quantityByMaterial = new Map(data.data.map(d=>[d.material_id, d]));
+        angular.forEach($scope.orderItems, function (orderItem) {
+            let materialQuantity = quantityByMaterial.get(orderItem.id);
+            if(checkNotNullEmpty(materialQuantity)) {
+                orderItem.requested_return_quantity = materialQuantity.requested_return_quantity;
+                if (checkNotNullEmpty(materialQuantity.batches)) {
+                    let quantityByBatch = new Map(materialQuantity.batches.map(b=>[b.batch_id, b]));
+                    angular.forEach(orderItem.returnBatches, orderBatch => {
+                        let batchQuantity = quantityByBatch.get(orderBatch.id);
+                        orderBatch.requested_return_quantity = batchQuantity.requested_return_quantity;
+                    });
+                }
+            }
+        });
+        updateReturnItems();
+        ReturnsItemInitializer($scope, trnService, $q).catch(msg => $scope.showErrorMsg(msg));
+        ReturnsItemManager($scope, $timeout);
+    });
+
+    $scope.cancel = () => {
+        $scope.setPageSelection('orderDetail');
+        $scope.enableScroll();
+    };
+
+    let isReturnValid = ($scope, field) => {
+        return !$scope.returnItems.some((returnItem, index) => {
             if (checkNotNullEmpty(returnItem.returnBatches)) {
-                return returnItem.returnBatches.some(function (returnBatch) {
-                    batchIndex += 1;
-                    if (checkNotNullEmpty(returnBatch.returnQuantity)) {
+                return returnItem.returnBatches.some((returnBatch, index)  => {
+                    if (returnBatch.returnQuantity > 0) {
                         if (field == 'returnReason') {
-                            if(checkNotNullEmpty(returnItem.reasons) && returnItem.reasons.length > 1) {
-                                return $scope.validateBatchReason(returnItem, returnBatch, batchIndex);
-                            }
+                            return checkNotNullEmpty(returnItem.reasons) && returnItem.reasons.length > 1 &&
+                                $scope.validateBatchReason(returnItem, returnBatch, index);
                         } else if (field == 'returnMaterialStatus') {
                             if (returnItem.tm) {
-                                if (checkNotNullEmpty($scope.tempmatstatus)) {
-                                    return $scope.validateBatchStatus(returnItem, returnBatch, batchIndex, true);
-                                }
+                                return checkNotNullEmpty($scope.tempmatstatus) &&
+                                    $scope.validateBatchStatus(returnItem, returnBatch, index, true);
                             } else {
-                                if (checkNotNullEmpty($scope.matstatus)) {
-                                    return $scope.validateBatchStatus(returnItem, returnBatch, batchIndex);
-                                }
+                                return checkNotNullEmpty($scope.matstatus) &&
+                                    $scope.validateBatchStatus(returnItem, returnBatch, index);
                             }
                         }
                     }
                 });
             } else {
                 if (field == 'returnReason') {
-                    if(checkNotNullEmpty(returnItem.reasons) && returnItem.reasons.length > 1) {
-                        return $scope.validateReason(returnItem, index);
-                    }
+                    return checkNotNullEmpty(returnItem.reasons) && returnItem.reasons.length > 1 &&
+                        $scope.validateReason(returnItem, index);
                 } else if (field == 'returnMaterialStatus') {
                     if (returnItem.tm) {
-                        if (checkNotNullEmpty($scope.tempmatstatus)) {
-                            return $scope.validateStatus(returnItem, index, true);
-                        }
+                        return checkNotNullEmpty($scope.tempmatstatus) && $scope.validateStatus(returnItem, index, true);
                     } else {
-                        if (checkNotNullEmpty($scope.matstatus)) {
-                            return $scope.validateStatus(returnItem, index);
-                        }
+                        return checkNotNullEmpty($scope.matstatus) && $scope.validateStatus(returnItem, index);
                     }
                 }
             }
         });
+    };
+
+    let isAllValid = $scope => {
+        if (ReturnsValidator.isReturnQuantityAdded($scope, false)) {
+            if (isReturnValid($scope, 'returnReason')) {
+                if (!$scope.statusMandatoryConfig.rosm || isReturnValid($scope, 'returnMaterialStatus')) {
+                    return true;
+                } else {
+                    $scope.showWarning($scope.resourceBundle['return.material.status.required']);
+                }
+            } else {
+                $scope.showWarning($scope.resourceBundle['return.reason.required']);
+            }
+        } else {
+            $scope.showWarning($scope.resourceBundle['return.specify.quantity']);
+        }
+    };
+
+
+    $scope.create = () => {
+        if (isAllValid($scope)) {
+            $scope.showFullLoading();
+            let request = {
+                returnItems: $scope.returnItems,
+                order_id: $scope.returnOrder.id,
+                comment: $scope.comment,
+                tracking_details: $scope.trackingDetails
+            };
+            returnsService.create(request).then(data => {
+                $scope.showSuccess($scope.resourceBundle['return.creation.success']);
+                $location.path(`/orders/returns/detail/${data.data.return_id}`);
+            }).catch(msg => $scope.showErrorMsg(msg))
+                .finally(() => $scope.hideFullLoading());
+        }
+    };
+
+    $scope.editCount = 0;
+    $scope.toggleBatchItems = item => {
+        item.additionalRows = !item.additionalRows;
+        if (!item.additionalRows) {
+            item.returnBatchAvailable = isReturnBatchAvailable(item)
+        }
+        $scope.editCount += (item.additionalRows ? 1 : -1);
+    };
+}
+
+function BatchCreateReturnsController($scope) {
+    $scope.returnBatches = angular.copy($scope.item.returnBatches);
+    sortByKey($scope.returnBatches, 'id');
+    let isAllValid = () => {
+        let isInvalid = $scope.returnBatches.some((batchItem, index) => {
+            if (batchItem.returnQuantity > 0) {
+                if ($scope.validateBatchQuantityCreateReturn($scope.item, batchItem, index)) {
+                    return true;
+                }
+                if ($scope.item.tm) {
+                    if (checkNotNullEmpty($scope.tempmatstatus) && $scope.validateBatchStatus($scope.item, batchItem, index, true)) {
+                        return true;
+                    }
+                } else {
+                    if (checkNotNullEmpty($scope.matstatus) && $scope.validateBatchStatus($scope.item, batchItem, index)) {
+                        return true;
+                    }
+                }
+                if($scope.validateBatchReason($scope.item, batchItem, index)) {
+                    return true;
+                }
+            }
+        });
+        return !isInvalid;
+    };
+
+    $scope.save = () => {
+        if (!isAllValid()) {
+            return;
+        }
+        $scope.item.returnBatches = $scope.returnBatches;
+        $scope.toggleBatchItems($scope.item);
+    };
+
+    $scope.cancel = () => {
+        $scope.toggleBatchItems($scope.item);
     }
 }
 
-function DetailReturnsController($scope, $uibModal, requestContext, RETURNS, returnsService, conversationService, activityService) {
+function DetailReturnsController($scope, $uibModal, $timeout, $q, requestContext, RETURNS, returnsService, conversationService,
+                                 activityService, trnService, ordService, DATEFORMAT) {
     $scope.RETURNS = RETURNS;
     $scope.page = 'detail';
     $scope.subPage = 'consignment';
+    $scope.today = new Date();
 
-    var returnId = requestContext.getParam("returnId");
+    const RETURN_ID = requestContext.getParam("returnId");
 
-    function getReturn() {
+    let updateDateModels = () => {
+        if (checkNotNullEmpty($scope.returns.tracking_details)) {
+            $scope.returns.tracking_details.ead = string2Date($scope.returns.tracking_details.estimated_arrival_date, DATEFORMAT.DATE_FORMAT, '/');
+        }
+    };
+
+    let getMessageCount = () => {
         $scope.showLoading();
-        returnsService.get(returnId)
-            .then(function (data) {
-                $scope.returns = data.data;
-            })
-            .then(function () {
-                getMessageCount();
-                getStatusHistory();
-                checkStatusList();
-            })
-            .catch(function error(msg) {
-                $scope.showErrorMsg(msg);
-            }).finally(function () {
-                $scope.hideLoading();
-            });
-    }
-
-    getReturn();
-
-    function getMessageCount() {
-        conversationService.getMessagesByObj('RETURNS', returnId, 0, 1, true).then(function (data) {
+        conversationService.getMessagesByObj('RETURNS', RETURN_ID, 0, 1, true).then(data => {
             if (checkNotNullEmpty(data.data)) {
                 $scope.messageCount = data.data.numFound;
             }
-        })
-    }
-
-    $scope.setMessageCount = function (count) {
-        $scope.messageCount = count;
+        }).catch(msg => $scope.showErrorMsg(msg))
+            .finally(() => $scope.hideLoading());
     };
 
-    function getStatusHistory() {
-        activityService.getStatusHistory(returnId, 'RETURNS', null).then(function (data) {
+    let getStatusHistory = () => {
+        $scope.showLoading();
+        activityService.getStatusHistory(RETURN_ID, 'RETURNS', null).then(data => {
             if (checkNotNullEmpty(data.data) && checkNotNullEmpty(data.data.results)) {
                 $scope.history = data.data.results;
-                var hMap = {};
-                var pVal;
-                $scope.history.forEach(function (data) {
+                let hMap = {};
+                let pVal;
+                $scope.history.forEach(data => {
                     if (checkNullEmpty(hMap[data.newValue])) {
                         hMap[data.newValue] = {
                             "status": RETURNS.statusLabel[data.newValue],
@@ -436,10 +721,10 @@ function DetailReturnsController($scope, $uibModal, requestContext, RETURNS, ret
                     }
                 });
                 $scope.si = [];
-                var end = false;
-                var siInd = 0;
+                let end = false;
+                let siInd = 0;
 
-                function constructStatus(stCode, stText) {
+                let constructStatus = (stCode, stText) => {
                     if ($scope.returns.status.status != RETURNS.status.CANCELLED || !end) {
                         $scope.si[siInd] = (!end && hMap[stCode]) ? hMap[stCode] : {
                             "status": stText,
@@ -452,7 +737,7 @@ function DetailReturnsController($scope, $uibModal, requestContext, RETURNS, ret
                     if (!end) {
                         end = $scope.returns.status.status == stCode || ($scope.returns.status.status == RETURNS.status.CANCELLED && pVal == stCode);
                     }
-                }
+                };
 
                 constructStatus(RETURNS.status.OPEN, RETURNS.statusLabel[RETURNS.status.OPEN]);
                 constructStatus(RETURNS.status.SHIPPED, RETURNS.statusLabel[RETURNS.status.SHIPPED]);
@@ -462,14 +747,11 @@ function DetailReturnsController($scope, $uibModal, requestContext, RETURNS, ret
                     $scope.si[siInd].completed = "cancel";
                 }
             }
-        });
-    }
-
-    $scope.toggleStatusHistory = function () {
-        $scope.displayStatusHistory = !$scope.displayStatusHistory;
+        }).catch(msg => $scope.showErrorMsg(msg))
+            .finally(()  => $scope.hideLoading())
     };
 
-    function checkStatusList() {
+    let checkStatusList = () => {
         if ($scope.dp.vp) {
             $scope.statusList = [];
             return;
@@ -486,17 +768,180 @@ function DetailReturnsController($scope, $uibModal, requestContext, RETURNS, ret
                 $scope.statusList = [];
                 if ($scope.returns.vendor.has_access) {
                     $scope.statusList.push(RETURNS.status.RECEIVED);
+                }
+                if ($scope.returns.customer.has_access) {
                     $scope.statusList.push(RETURNS.status.CANCELLED);
                 }
                 break;
             default:
                 $scope.statusList = [];
         }
-    }
+    };
 
-    $scope.changeStatus = function (value) {
+    let getReturn = () => {
+        $scope.showLoading();
+        returnsService.get(RETURN_ID)
+            .then(data => {
+                $scope.returns = data.data;
+                $scope.returnItems = $scope.returns.items;
+                if (checkNullEmpty($scope.returns.tracking_details)) {
+                    $scope.returns.tracking_details = {};
+                }
+                $scope.isItemInitialised = false;
+                $scope.orderItems = undefined;
+            })
+            .then(() => {
+                updateDateModels();
+                getMessageCount();
+                getStatusHistory();
+                checkStatusList();
+            })
+            .catch(msg => $scope.showErrorMsg(msg))
+            .finally(() => $scope.hideLoading());
+    };
+    getReturn();
+
+    $scope.initOrderItems = () => {
+        let deferred = $q.defer();
+        if (checkNullEmpty($scope.orderItems)) {
+            $scope.showLoading();
+            ordService.getOrder($scope.returns.order_id).then(data => {
+                $scope.orderItems = data.data.its;
+                returnsService.getQuantityByOrder($scope.returns.order_id).then(data=> {
+                    let quantityByMaterial = new Map(data.data.map(d=>[d.material_id, d]));
+                    angular.forEach($scope.orderItems, orderItem => {
+                        orderItem.isBatch = checkNotNullEmpty(orderItem.returnBatches);
+                        const materialQuantity = quantityByMaterial.get(orderItem.id);
+                        if (checkNotNullEmpty(materialQuantity)) {
+                            orderItem.returnedQuantity = materialQuantity.returned_quantity;
+                            orderItem.dispReturnedQuantity = angular.copy(materialQuantity.returned_quantity);
+                            orderItem.total_return_quantity = materialQuantity.total_return_quantity;
+                            orderItem.requested_return_quantity = materialQuantity.requested_return_quantity;
+                            if (checkNotNullEmpty(materialQuantity.batches)) {
+                                let quantityByBatch = new Map(materialQuantity.batches.map(b=>[b.batch_id, b]));
+                                angular.forEach(orderItem.returnBatches, orderBatch => {
+                                    const batchQuantity = quantityByBatch.get(orderBatch.id);
+                                    orderBatch.returnedQuantity = batchQuantity.returned_quantity;
+                                    orderBatch.dispReturnedQuantity = angular.copy(batchQuantity.returned_quantity);
+                                    orderBatch.total_return_quantity = batchQuantity.total_return_quantity;
+                                    orderBatch.requested_return_quantity = batchQuantity.requested_return_quantity;
+                                    orderBatch.disp_requested_return_quantity = angular.copy(batchQuantity.requested_return_quantity);
+                                });
+                            }
+                        }
+                    });
+                    deferred.resolve();
+                });
+            }).catch(msg => deferred.reject(msg))
+                .finally(() => $scope.hideLoading());
+        } else {
+            deferred.resolve();
+        }
+        return deferred.promise;
+    };
+
+    let updateBatchWithOrder = (returnBatches, orderBatches) => {
+        let return_orderBatches = new Map(orderBatches.map(o => [o.id,o]));
+        angular.forEach(returnBatches, returnBatch => {
+            let return_orderBatch = return_orderBatches.get(returnBatch.batch_id);
+            returnBatch.dispReturnedQuantity = return_orderBatch.dispReturnedQuantity;
+            returnBatch.return_quantity = returnBatch.return_quantity || 0;
+            returnBatch.requested_return_quantity = return_orderBatch.requested_return_quantity - returnBatch.return_quantity;
+            return_orderBatch.returnedQuantity = return_orderBatch.total_return_quantity - returnBatch.return_quantity;
+            return_orderBatch.disp_requested_return_quantity = returnBatch.requested_return_quantity;
+            returnBatch.returnedQuantity = return_orderBatch.returnedQuantity;
+            returnBatch.returnReason = return_orderBatch.returnReason;
+            returnBatch.defaultReturnReason = return_orderBatch.defaultReturnReason;
+            returnBatch.fq = return_orderBatch.fq;
+            returnBatch.displayMeta = returnBatch.return_quantity > 0;
+        });
+    };
+
+    let updateReturnItemWithOrder = returnItem => {
+        let return_orderItem = $scope.orderByMaterial.get(returnItem.material_id);
+        if (checkNotNullEmpty(returnItem.batches)) {
+            updateBatchWithOrder(returnItem.batches, return_orderItem.returnBatches);
+            returnItem.isBatch = true;
+        }
+        returnItem.dispReturnedQuantity = return_orderItem.dispReturnedQuantity;
+        returnItem.return_quantity = returnItem.return_quantity || 0;
+        returnItem.requested_return_quantity = return_orderItem.requested_return_quantity - returnItem.return_quantity;
+        return_orderItem.returnedQuantity = return_orderItem.total_return_quantity - returnItem.return_quantity;
+        returnItem.returnedQuantity = return_orderItem.returnedQuantity;
+        returnItem.reasons = return_orderItem.reasons;
+        returnItem.returnReason = return_orderItem.returnReason;
+        returnItem.defaultReturnReason = return_orderItem.defaultReturnReason;
+        returnItem.fq = return_orderItem.fq;
+        returnItem.id = return_orderItem.id;
+        returnItem.nm = return_orderItem.nm;
+        returnItem.huName = return_orderItem.huName;
+        returnItem.huQty = return_orderItem.huQty;
+        returnItem.tm = return_orderItem.tm;
+        returnItem.displayMeta = returnItem.return_quantity > 0;
+    };
+
+    let updateReturnWithOrder = returnItems => {
+        angular.forEach(returnItems, returnItem => {
+            updateReturnItemWithOrder(returnItem);
+        });
+    };
+    $scope.updateReturnWithOrder = updateReturnWithOrder;
+
+    $scope.detailAddReturnItem = newItem => {
+        newItem.material_id = newItem.id;
+        newItem.material_name = newItem.nm;
+        newItem.reason = newItem.defaultReturnReason;
+        newItem.batches = [];
+        newItem.isNewItem = true;
+        $scope.addReturnItem(newItem);
+        updateReturnItemWithOrder($scope.returnItems[$scope.returnItems.length - 1]);
+    };
+
+    $scope.detailDeleteReturnItem = index => {
+        var returnItem = $scope.returnItems[index];
+        if(!returnItem.isNewItem) {
+            let return_orderItem = $scope.orderByMaterial.get(returnItem.material_id);
+            return_orderItem.total_return_quantity -= returnItem.return_quantity;
+            return_orderItem.requested_return_quantity -= returnItem.return_quantity;
+            return_orderItem.returnedQuantity = return_orderItem.dispReturnedQuantity;
+            if(returnItem.isBatch) {
+                let return_orderBatches = new Map(return_orderItem.returnBatches.map(o => [o.id,o]));
+                angular.forEach(returnItem.batches, returnBatch => {
+                    let return_orderBatch =  return_orderBatches.get(returnBatch.batch_id);
+                    return_orderBatch.total_return_quantity -= returnBatch.return_quantity;
+                    return_orderBatch.requested_return_quantity -= returnBatch.return_quantity;
+                    return_orderBatch.disp_requested_return_quantity = angular.copy(return_orderBatch.requested_return_quantity);
+                });
+            }
+        }
+        $scope.deleteReturnItem(index);
+    };
+
+    $scope.initialiseEditing = () => {
+        let deferred = $q.defer();
+        if (!$scope.isItemInitialised && ($scope.returns.status.status == RETURNS.status.OPEN || $scope.returns.status.status == RETURNS.status.SHIPPED)) {
+            $scope.initOrderItems().then(() => {
+                ReturnsItemInitializer($scope, trnService, $q).then(() => {
+                    updateReturnWithOrder($scope.returnItems);
+                    ReturnsItemManager($scope, $timeout);
+                    $scope.isItemInitialised = true;
+                    deferred.resolve();
+                }).catch(msg => deferred.reject(msg));
+            }).catch(msg => deferred.reject(msg));
+        } else {
+            ReturnsItemManager($scope, $timeout);
+            deferred.resolve();
+        }
+        return deferred.promise;
+    };
+
+    $scope.setMessageCount = count => $scope.messageCount = count;
+
+    $scope.toggleStatusHistory = () => $scope.displayStatusHistory = !$scope.displayStatusHistory;
+
+    $scope.changeStatus = value => {
         $scope.new_status = value;
-        $scope.newStatus = {};
+        $scope.newStatus = {trackingDetails: {}};
         if (value == RETURNS.status.RECEIVED) {
             $scope.toggleReceive();
             return;
@@ -509,7 +954,7 @@ function DetailReturnsController($scope, $uibModal, requestContext, RETURNS, ret
         });
     };
 
-    $scope.toggleReceive = function (update) {
+    $scope.toggleReceive = update => {
         if ($scope.page == 'detail') {
             $scope.page = "receive";
         } else {
@@ -520,78 +965,419 @@ function DetailReturnsController($scope, $uibModal, requestContext, RETURNS, ret
         }
     };
 
-    $scope.doShip = function () {
+    let closeStatusModal = () => $scope.modalInstance.dismiss('cancel');
+
+    $scope.doShip = () => {
         $scope.showLoading();
-        returnsService.ship(returnId, {comment: $scope.newStatus.comment}).then(function (data) {
+        let request = {
+            comment: $scope.newStatus.comment,
+            tracking_details: $scope.newStatus.trackingDetails
+        };
+        returnsService.ship(RETURN_ID, request).then(() => {
             closeStatusModal();
             getReturn();
-        }).catch(function error(msg) {
-            $scope.showErrorMsg(msg);
-        }).finally(function () {
-            $scope.hideLoading();
-        });
+        }).catch(msg =>
+            $scope.showErrorMsg(msg)
+        )
+            .finally(() => $scope.hideLoading());
     };
 
-    $scope.doCancel = function () {
+    $scope.doCancel = () => {
         $scope.showLoading();
-        returnsService.cancel(returnId, {comment: $scope.newStatus.comment}).then(function (data) {
+        returnsService.cancel(RETURN_ID, {comment: $scope.newStatus.comment}).then(() => {
             closeStatusModal();
             getReturn();
-        }).catch(function error(msg) {
-            $scope.showErrorMsg(msg);
-        }).finally(function () {
-            $scope.hideLoading();
-        });
+        }).catch(msg => $scope.showErrorMsg(msg))
+            .finally(() => $scope.hideLoading());
     };
 
-    function closeStatusModal() {
-        $scope.modalInstance.dismiss('cancel');
-    }
+    $scope.closeStatus = () => closeStatusModal();
 
-    $scope.closeStatus = function () {
-        closeStatusModal();
+    $scope.hasStatus = status => {
+        return (checkNotNullEmpty($scope.statusList) && $scope.statusList.includes(status));
     };
 
-    $scope.hasStatus = function (status) {
-        return (checkNotNullEmpty($scope.statusList) && $scope.statusList.indexOf(status) > -1);
+    $scope.edit = {};
+    $scope.toggleEdit = (field, close) => {
+        if (close) {
+            if (field == 'estimatedArrivalDate') {
+                updateDateModels();
+            }
+        }
+        $scope.edit[field] = !$scope.edit[field];
+    };
+
+    $scope.updateTrackingDetails = field => {
+        returnsService.updateTrackingDetails(RETURN_ID, $scope.returns.tracking_details).then(data => {
+            $scope.returns.tracking_details = data.data;
+            updateDateModels();
+            $scope.toggleEdit(field);
+        }).catch(msg => $scope.showErrorMsg(msg));
+    };
+
+    let initReturnQuantity = () => {
+        angular.forEach($scope.returnItems, returnItem => {
+            returnItem.new_return_quantity = returnItem.return_quantity;
+            if (returnItem.batches) {
+                angular.forEach(returnItem.batches, returnBatch =>
+                        returnBatch.new_return_quantity = returnBatch.return_quantity
+                );
+            }
+        })
+    };
+
+    let toggleEdit = () => $scope.editMode = !$scope.editMode;
+
+    $scope.editItems = () => {
+        $scope.initialiseEditing().then(() => {
+            $scope.originalReturnItems = angular.copy($scope.returnItems);
+            $scope.originalOrderItems = angular.copy($scope.orderItems);
+            initReturnQuantity();
+            toggleEdit();
+        }).catch(msg => $scope.showErrorMsg(msg));
+    };
+
+    $scope.doEdit = () => {
+        if (ReturnsValidator.isReturnQuantityAdded($scope, true)) {
+            let isInvalid = $scope.returnItems.some((returnItem, index) =>
+                checkNullEmpty(returnItem.batches) && $scope.validateQuantityReturn(returnItem, index)
+            );
+            if (!isInvalid) {
+                isInvalid = $scope.returnItems.some((returnItem, index) =>
+                    checkNullEmpty(returnItem.batches) && $scope.validateStatusReturn(returnItem, index, returnItem.tm)
+                );
+            }
+            if (!isInvalid) {
+                isInvalid = $scope.returnItems.some((returnItem, index) =>
+                    checkNullEmpty(returnItem.batches) && $scope.validateReasonReturn(returnItem, index)
+                );
+            }
+            if (!isInvalid) {
+                $scope.showLoading();
+                returnsService.updateItems(RETURN_ID, angular.copy($scope.returnItems))
+                    .then(()=>getReturn())
+                    .catch(msg => $scope.showErrorMsg(msg))
+                    .finally(() => $scope.hideLoading());
+                toggleEdit();
+            }
+        } else {
+            $scope.showWarning($scope.resourceBundle['return.specify.quantity']);
+        }
+    };
+
+    $scope.cancelEdit = () => {
+        $scope.returnItems = $scope.originalReturnItems;
+        $scope.orderItems = $scope.originalOrderItems;
+        toggleEdit();
+    };
+
+    $scope.additionalRows = [];
+    $scope.editCount = 0;
+    $scope.editBatchItems = item => {
+        item.additionalRows = !item.additionalRows;
+        $scope.editCount += (item.additionalRows ? 1 : -1);
     };
 }
 
+/**
+ * This is child controller of DetailReturnsController
+ *
+ * All variables from DetailReturnsController are available to use directly
+ */
 function ReceiveReturnsController($scope, returnsService, requestContext) {
 
-    var returnId = requestContext.getParam("returnId");
+    const RETURN_ID = requestContext.getParam("returnId");
     $scope.comment = undefined;
+    $scope.additionalRows = [];
+    $scope.returnItems = angular.copy($scope.returns.items);
 
-    $scope.doReceive = function () {
-        $scope.showLoading();
-        returnsService.receive(returnId, {comment: $scope.comment}).then(function (data) {
-            $scope.toggleReceive(true);
-        }).catch(function error(msg) {
-            $scope.showErrorMsg(msg);
-        }).finally(function () {
-            $scope.hideLoading();
+    let fillReceiveItem = () => {
+
+        let getReceiveData = (item) => {
+            let received = {received_quantity: item.return_quantity};
+            let statuses = item.tm ? $scope.incomingTempmatstatus : $scope.incomingMatstatus;
+            if (statuses.length > 0 && statuses.includes(item.material_status)) {
+                received.material_status = item.material_status;
+            }
+            return received;
+        };
+
+        angular.forEach($scope.returnItems, returnItem => {
+            if (checkNotNullEmpty(returnItem.batches)) {
+                let totalReceivedQuantity = returnItem.batches.reduce((currentTotal, returnBatch) => {
+                    returnBatch.received = getReceiveData(returnBatch);
+                    return currentTotal + returnBatch.received.received_quantity * 1;
+                }, 0);
+                returnItem.received = {received_quantity: totalReceivedQuantity};
+            } else {
+                returnItem.received = getReceiveData(returnItem);
+                returnItem.displayMeta = true;
+            }
         });
+    };
+
+    $scope.initialiseEditing().then(() => {
+        $scope.updateReturnWithOrder($scope.returnItems);
+        fillReceiveItem()
+    }).catch(msg => $scope.showErrorMsg(msg));
+
+    let isBatchesInvalid = (returnItem) => {
+        if (returnItem.tm) {
+            if (checkNotNullEmpty($scope.incomingTempmatstatus)) {
+                return returnItem.batches.some((returnItemBatch, index) =>
+                    $scope.validateBatchStatusReturn(returnItem, returnItemBatch, index, true, true)
+                );
+            }
+        } else {
+            if (checkNotNullEmpty($scope.incomingMatstatus)) {
+                return returnItem.batches.some((returnItemBatch, index) =>
+                    $scope.validateBatchStatusReturn(returnItem, returnItemBatch, index, false, true)
+                );
+            }
+        }
+    };
+
+    let isAllValid = () => {
+        let isInvalid = $scope.returnItems.some((returnItem, index) => {
+            returnItem.received.received_quantity = returnItem.received.received_quantity || 0;
+            if (returnItem.received.received_quantity > 0) {
+                let isBatch = checkNotNullEmpty(returnItem.batches);
+                if (!isBatch && $scope.validateQuantityReturn(returnItem, index, true)) {
+                    return true;
+                }
+                if (!isBatch) {
+                    if (returnItem.tm) {
+                        return checkNotNullEmpty($scope.incomingTempmatstatus) &&
+                            $scope.validateStatusReturn(returnItem, index, true, true);
+                    } else {
+                        return checkNotNullEmpty($scope.incomingMatstatus) &&
+                            $scope.validateStatusReturn(returnItem, index, false, true);
+                    }
+                } else {
+                    if (isBatchesInvalid(returnItem)) {
+                        $scope.showWarning("Material status is mandatory. Please specify for all batches as well.");
+                        return true;
+                    }
+                }
+            }
+        });
+        return !isInvalid;
+    };
+
+    $scope.doReceive = () => {
+        if (isAllValid()) {
+            $scope.showLoading();
+            returnsService.receive(RETURN_ID, {
+                comment: $scope.comment,
+                items: $scope.returnItems
+            }).then(() => $scope.toggleReceive(true))
+                .catch(msg => $scope.showErrorMsg(msg))
+                .finally(() => $scope.hideLoading());
+        }
+    };
+
+    $scope.editCount = 0;
+    $scope.editBatchItems = item => {
+        item.additionalRows = !item.additionalRows;
+        $scope.editCount += (item.additionalRows ? 1 : -1);
+    };
+}
+
+function BatchDetailReturnsController($scope) {
+    $scope.returnItem = angular.copy($scope.item);
+    let orderItem = $scope.orderByMaterial.get($scope.returnItem.material_id);
+    $scope.originalOrderReturnBatches = angular.copy(orderItem.returnBatches);
+    $scope.orderReturnBatches = orderItem.returnBatches;
+    let orderReturnBatchMap = new Map($scope.orderReturnBatches.map(b => {
+        b.reason = b.defaultReturnReason;
+        return [b.id, b];
+    }));
+    angular.forEach($scope.returnItem.batches, returnBatch => {
+        let orderReturnBatch = orderReturnBatchMap.get(returnBatch.batch_id);
+        orderReturnBatch.new_return_quantity = returnBatch.return_quantity;
+        orderReturnBatch.return_quantity = returnBatch.return_quantity;
+        orderReturnBatch.material_status = returnBatch.material_status;
+        orderReturnBatch.reason = returnBatch.reason;
+        orderReturnBatch.displayMeta = true;
+    });
+    sortByKey($scope.orderReturnBatches, 'id');
+
+    let isAllValid = () => {
+        let isInvalid = $scope.orderReturnBatches.some((batchItem, index) => {
+            if (batchItem.new_return_quantity > 0) {
+                if ($scope.validateBatchQuantityReturn($scope.returnItem, batchItem, index)) {
+                    return true;
+                }
+                if ($scope.returnItem.tm) {
+                    if(checkNotNullEmpty($scope.tempmatstatus) && $scope.validateBatchStatusReturn($scope.returnItem, batchItem, index, true)) {
+                        return true;
+                    }
+                } else {
+                    if(checkNotNullEmpty($scope.matstatus) && $scope.validateBatchStatusReturn($scope.returnItem, batchItem, index)) {
+                        return true;
+                    }
+                }
+                if($scope.validateBatchReason($scope.item, batchItem, index)) {
+                    return true;
+                }
+            }
+        });
+        return !isInvalid;
+    };
+
+    $scope.save = () => {
+        let returnItemBatches = angular.copy($scope.returnItem.batches);
+        let totalReturned = 0;
+        angular.forEach($scope.orderReturnBatches, batchItem => {
+            batchItem.return_quantity = batchItem.return_quantity * 1 || 0;
+            batchItem.new_return_quantity = batchItem.new_return_quantity * 1 || 0;
+            let found = returnItemBatches.some((returnBatch, index) => {
+                if (returnBatch.batch_id == batchItem.id) {
+                    if (checkNullEmpty(batchItem.new_return_quantity)) {
+                        returnItemBatches.splice(index, 1);
+                    } else {
+                        returnBatch.returnedQuantity += (batchItem.new_return_quantity * 1 - batchItem.return_quantity * 1);
+                        returnBatch.new_return_quantity = batchItem.new_return_quantity;
+                        returnBatch.return_quantity = batchItem.new_return_quantity;
+                        returnBatch.material_status = batchItem.material_status;
+                        returnBatch.reason = batchItem.reason;
+                        totalReturned += returnBatch.return_quantity;
+                    }
+                    return true;
+                }
+            });
+
+            if (!found && checkNotNullEmpty(batchItem.new_return_quantity)) {
+                returnItemBatches.push({
+                    batch_id: batchItem.id,
+                    expiry: batchItem.e,
+                    manufacturer: batchItem.bmfnm,
+                    manufactured_date: batchItem.bmfdt,
+                    return_quantity: batchItem.new_return_quantity,
+                    returnedQuantity: batchItem.new_return_quantity,
+                    material_status: batchItem.material_status,
+                    reason: batchItem.reason,
+                    fq: batchItem.fq,
+                    new_return_quantity: batchItem.new_return_quantity
+                });
+                totalReturned += batchItem.new_return_quantity;
+            }
+        });
+        if (!isAllValid()) {
+            return;
+        }
+        $scope.item.batches = returnItemBatches;
+        $scope.item.return_quantity = $scope.item.new_return_quantity = totalReturned;
+        orderItem.returnBatches = angular.copy($scope.originalOrderReturnBatches);
+
+        $scope.editBatchItems($scope.item);
+    };
+
+    $scope.cancel = () => {
+        orderItem.returnBatches = $scope.originalOrderReturnBatches;
+        $scope.editBatchItems($scope.item);
     }
 }
 
-function ListReturnsController($scope, $location, requestContext, RETURNS, returnsService, orderService, exportService) {
+function BatchReceiveReturnsController($scope) {
+    $scope.returnItem = angular.copy($scope.item);
+    $scope.orderItems.some(orderItem => {
+        if (orderItem.id == $scope.returnItem.material_id) {
+            $scope.orderReturnBatches = angular.copy(orderItem.returnBatches);
+            let orderBatchById = new Map($scope.orderReturnBatches.map(b => {
+                b.received = {};
+                return [b.id, b]
+            }));
+            angular.forEach($scope.returnItem.batches, returnBatch => {
+                let orderBatch = orderBatchById.get(returnBatch.batch_id);
+                orderBatch.received = returnBatch.received;
+                orderBatch.return_quantity = returnBatch.return_quantity;
+                orderBatch.material_status = returnBatch.material_status;
+                orderBatch.reason = returnBatch.reason;
+                orderBatch.displayMeta = true;
+            });
+            sortByKey($scope.orderReturnBatches, 'id');
+            return true;
+        }
+    });
+
+    let isAllValid = () => {
+        let isInvalid = $scope.orderReturnBatches.some((batchItem, index) => {
+            if (batchItem.received.received_quantity > 0) {
+                if ($scope.validateBatchQuantityReturn($scope.returnItem, batchItem, index, true)) {
+                    return true;
+                }
+                if ($scope.returnItem.tm) {
+                    return checkNotNullEmpty($scope.tempmatstatus) &&
+                        $scope.validateBatchStatusReturn($scope.returnItem, batchItem, index, true, true);
+                } else {
+                    return checkNotNullEmpty($scope.matstatus) &&
+                        $scope.validateBatchStatusReturn($scope.returnItem, batchItem, index, false, true);
+                }
+            }
+        });
+        return !isInvalid;
+    };
+
+    $scope.save = () => {
+        if (!isAllValid()) {
+            return;
+        }
+        let returnItemBatches = $scope.item.batches;
+        let totalReceived = 0;
+        angular.forEach($scope.orderReturnBatches, batchItem => {
+            batchItem.received.received_quantity = batchItem.received.received_quantity * 1 || 0;
+            let found = returnItemBatches.some((returnBatch, index) => {
+                if (returnBatch.batch_id == batchItem.id) {
+                    if (checkNullEmpty(returnBatch.return_quantity) && checkNullEmpty(batchItem.received.received_quantity)) {
+                        returnItemBatches.splice(index, 1);
+                    } else {
+                        returnBatch.received = batchItem.received;
+                        totalReceived += returnBatch.received.received_quantity;
+                    }
+                    return true;
+                }
+            });
+
+            if (!found && checkNotNullEmpty(batchItem.received) && checkNotNullEmpty(batchItem.received.received_quantity * 1)) {
+                returnItemBatches.push({
+                    batch_id: batchItem.id,
+                    expiry: batchItem.e,
+                    manufacturer: batchItem.bmfnm,
+                    manufactured_date: batchItem.bmfdt,
+                    return_quantity: 0,
+                    received: batchItem.received
+                });
+                totalReceived += batchItem.received.received_quantity;
+            }
+        });
+        $scope.item.received.received_quantity = totalReceived;
+        $scope.editBatchItems($scope.item);
+    };
+
+    $scope.cancel = () => $scope.editBatchItems($scope.itemIndex);
+}
+
+function ListReturnsController($scope, $location, requestContext, RETURNS, returnsService, ordService, exportService) {
 
     const OUTGOING = 'outgoing';
     const INCOMING = 'incoming';
 
     $scope.RETURNS = RETURNS;
-    $scope.wparams = [["eid", "entity.id"], ["status", "status"], ["from", "from", "", formatDate2Url], ["type", "returnsType", OUTGOING], ["to", "to", "", formatDate2Url], ["oid", "orderId"], ["o", "offset"], ["s", "size"]];
+    $scope.wparams = [["eid", "entity.id"], ["status", "status"], ["from", "from", "", formatDate2Url],
+        ["type", "returnsType", INCOMING], ["to", "to", "", formatDate2Url], ["oid", "orderId"], ["o", "offset"], ["s", "size"]];
 
     ListingController.call(this, $scope, requestContext, $location);
 
     $scope.localFilters = ['entity', 'status', 'from', 'to', 'orderId'];
     $scope.initLocalFilters = [];
-    $scope.returnsType = OUTGOING;
+    $scope.returnsType = INCOMING;
     $scope.today = new Date();
+    $scope.initLoad = true;
 
-    function getCustomerVendor() {
-        var customer = undefined;
-        var vendor = undefined;
+    let getCustomerVendor = () => {
+        let customer = undefined;
+        let vendor = undefined;
         if (checkNotNullEmpty($scope.entity)) {
             if ($scope.returnsType == OUTGOING) {
                 customer = $scope.entity.id;
@@ -599,40 +1385,58 @@ function ListReturnsController($scope, $location, requestContext, RETURNS, retur
                 vendor = $scope.entity.id;
             }
         }
-        return {customer: customer, vendor: vendor};
-    }
+        return {customer, vendor};
+    };
 
-    $scope.fetch = function () {
-        var kiosks = getCustomerVendor();
+    let toggleReturnsType = () => {
+        if ($scope.returnsType == OUTGOING) {
+            $scope.returnsType = INCOMING;
+            $scope.initLoad = false;
+        } else if ($scope.returnsType == INCOMING) {
+            $scope.returnsType = OUTGOING;
+        }
+    };
+
+    $scope.$watch('entity', (newValue, oldValue) => {
+        $scope.initLoad = true;
+        if(!newValue || !oldValue || newValue.id != oldValue.id) {
+            $scope.returnsType = INCOMING;
+        }
+    });
+
+    $scope.fetch = () => {
+        let {customer, vendor} = getCustomerVendor();
         $scope.showLoading();
         returnsService.getAll({
-            customerId: kiosks.customer,
-            vendorId: kiosks.vendor,
+            customerId: customer,
+            vendorId: vendor,
             status: $scope.status,
             startDate: formatDate($scope.from),
             endDate: formatDate($scope.to),
             orderId: $scope.orderId,
             offset: $scope.offset,
             size: $scope.size
-        }).then(function (data) {
+        }).then(data => {
             $scope.filtered = data.data.returns;
             $scope.setResults({
                 results: data.data.returns,
                 numFound: data.data.total_count
             });
-        }).catch(function error(msg) {
-            $scope.showErrorMsg(msg);
-        }).finally(function () {
-            $scope.loading = false;
-            $scope.hideLoading();
-            setTimeout(function () {
-                fixTable();
-            }, 200);
-        });
+            if(checkNullEmpty($scope.filtered) && $scope.initLoad) {
+                toggleReturnsType();
+            } else {
+                $scope.initLoad = false;
+            }
+        }).catch(msg => $scope.showErrorMsg(msg))
+            .finally(() => {
+                $scope.loading = false;
+                $scope.hideLoading();
+                setTimeout(() => fixTable(), 200);
+            });
     };
 
-    $scope.init = function () {
-        var entityId = requestContext.getParam("eid");
+    $scope.init = (initCall) => {
+        let entityId = requestContext.getParam("eid");
         if (checkNotNullEmpty(entityId)) {
             if (checkNullEmpty($scope.entity) || $scope.entity.id != parseInt(entityId)) {
                 $scope.entity = {id: parseInt(entityId), nm: ""};
@@ -643,57 +1447,94 @@ function ListReturnsController($scope, $location, requestContext, RETURNS, retur
         $scope.from = parseUrlDate(requestContext.getParam("from"));
         $scope.to = parseUrlDate(requestContext.getParam("to"));
         $scope.orderId = requestContext.getParam("oid");
-        $scope.fetch();
+        $scope.returnsType = requestContext.getParam("type") || INCOMING;
+        if(initCall) {
+            $scope.fetch();
+        }
     };
-    $scope.init();
+    $scope.init(true);
 
-    $scope.goToReturn = function (returnId) {
-        $location.path('/orders/returns/detail/' + returnId);
-    };
+    $scope.goToReturn = returnId => $location.path(`/orders/returns/detail/${returnId}`);
 
-    $scope.getSuggestions = function (text) {
+    $scope.getSuggestions = text => {
         if (checkNotNullEmpty(text)) {
-            return orderService.getIdSuggestions(text, 'oid').then(function (data) {
+            return ordService.getIdSuggestions(text, 'oid').then(data => {
                 return data.data;
-            }).catch(function (errorMsg) {
-                $scope.showErrorMsg(errorMsg);
-            });
+            }).catch(errorMsg => $scope.showErrorMsg(errorMsg));
         }
     };
 
-    $scope.resetFilters = function () {
+    $scope.resetFilters = () => {
         $scope.entity = null;
         $scope.status = "";
         $scope.from = undefined;
         $scope.to = undefined;
         $scope.orderId = undefined;
-        $scope.returnsType = OUTGOING;
+        $scope.returnsType = INCOMING;
         $scope.showMore = undefined;
     };
 
-    $scope.exportData = function () {
-        var kiosks = getCustomerVendor();
+    let getFilterStatus = (status) => {
+        switch (status) {
+            case 'op':
+                return 'OPEN';
+            case 'sp':
+                return 'SHIPPED';
+            case 'rd':
+                return 'RECEIVED';
+            case 'cn':
+                return 'CANCELLED';
+        }
+    };
+
+    let getFilterStatusLabel = (status) => {
+        switch (status) {
+            case 'op':
+                return 'Pending';
+            case 'sp':
+                return 'Shipped';
+            case 'rd':
+                return 'Received';
+            case 'cn':
+                return 'Cancelled';
+        }
+    };
+
+    let getCaption = () => {
+        var caption = getFilterTitle($scope.entity, $scope.resourceBundle['kiosk'], 'nm');
+        caption += getFilterTitle(getFilterStatusLabel($scope.status), $scope.resourceBundle['status']);
+        caption += getFilterTitle(formatDate2Url($scope.from), $scope.resourceBundle['from']);
+        caption += getFilterTitle(formatDate2Url($scope.to), $scope.resourceBundle['to']);
+        caption += getFilterTitle($scope.orderId, $scope.resourceBundle['order.id']);
+        if(checkNotNullEmpty($scope.entity)) {
+            caption += getFilterTitle($scope.returnsType, $scope.resourceBundle['return.type']);
+        }
+        return caption;
+    };
+
+    $scope.exportData = (isInfo) => {
+        if (isInfo) {
+            return {
+                filters: getCaption(),
+                type: $scope.resourceBundle['exports.returns']
+            };
+        }
+        let {customer, vendor} = getCustomerVendor();
         $scope.showLoading();
         exportService.exportData({
-            customer_id: kiosks.customer,
-            vendor_id: kiosks.vendor,
-            status: $scope.status,
+            entity_id: customer || vendor,
+            status: getFilterStatus($scope.status),
             from_date: checkNotNullEmpty($scope.from) ? formatDate2Url($scope.from) : undefined,
             end_date: checkNotNullEmpty($scope.to) ? formatDate2Url($scope.to) : undefined,
             order_id: $scope.orderId,
+            type: $scope.returnsType,
             titles: {
                 filters: getCaption()
             },
-            module: '',
-            templateId: ''
-        }).then(function (data) {
-            $scope.showSuccess(data.data);
-        }).catch(function error(msg) {
-            $scope.showErrorMsg(msg);
-        }).finally(function () {
-            $scope.hideLoading();
-        });
+            module: 'returns',
+            templateId: 'returns'
+        }).then(data => $scope.showSuccess(data.data))
+            .catch(msg => $scope.showErrorMsg(msg))
+            .finally(() => $scope.hideLoading());
     }
 }
-
-

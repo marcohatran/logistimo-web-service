@@ -27,6 +27,7 @@
                 href="#/orders/returns/">{{resourceBundle.returns}}</a>
         </li>
     </ul>
+    <div ng-include="'loader-template.html'"></div>
     <div ng-switch="subview">
         <div class="tab-pane" ng-switch-when="list">
             <div ng-include="'views/returns/returns-list.html'"></div>

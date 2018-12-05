@@ -88,7 +88,7 @@
         </div>
         <div class="row action-bar">
             <div class="col-sm-8 noLRpad">
-                <!--<export ng-show="filtered.length > 0" callback="exportData()"></export>-->
+                <export ng-show="filtered.length > 0" callback="exportData()"></export>
             </div>
 
             <div class="col-sm-4 noLRpad" ng-show="entity!= null && entity.id != null && entity.id != ''">
@@ -139,7 +139,10 @@
                         </td>
                         <td class="text-center">{{offset + $index + 1}}</td>
                         <td class="text-center">{{return.return_id}}</td>
-                        <td class="text-center">{{return.order_id}}</td>
+                        <td class="text-center"><a
+                                href="#/orders/detail/{{return.order_id}}/"
+                                ng-click="$event.stopPropagation();"
+                                target="_blank">{{return.order_id}}</a></td>
                         <td>{{RETURNS.statusLabel[return.status.status]}}</td>
                         <td><a href="#/setup/entities/detail/{{return.customer.entity_id}}"
                                ng-click="$event.stopPropagation();"

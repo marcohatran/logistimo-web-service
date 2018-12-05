@@ -31,6 +31,8 @@ import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.UploadService;
 
+import org.springframework.stereotype.Service;
+
 import java.util.Date;
 import java.util.List;
 
@@ -38,7 +40,7 @@ import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 
-@org.springframework.stereotype.Service
+@Service
 public class UploadServiceImpl implements UploadService {
 
   private static final XLog xLogger = XLog.getLog(UploadServiceImpl.class);

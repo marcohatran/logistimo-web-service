@@ -91,8 +91,9 @@ public interface InventoryManagementService {
   /**
    * Search Inventory starts with by kiosk and material tag (optional)
    */
-  Results searchKioskInventory(Long kioskId, String materialTag, String nameStartsWith,
-                               PageParams params) throws ServiceException;
+  Results searchKioskInventory(Long kioskId, String materialTag, String materialQueryText,
+                               PageParams params, String materialQueryType,
+                               boolean includeMaterialDescriptionQuery) throws ServiceException;
 
   /**
    * Get all inventory items associated with a given material, across kiosks
@@ -520,5 +521,18 @@ public interface InventoryManagementService {
                                    boolean atd, String reason, List<String> reasons,
                                    boolean ignoreLkid,
                                    PersistenceManager pm) throws ServiceException;
+
+  /**
+   * Get the list of IInventoryMinMaxLog for a given entity ID, material ID, from and to date
+   * @param entityId
+   * @param materialId
+   * @param fromDate
+   * @param toDate
+   * @return
+   * @throws ServiceException
+   */
+  List<IInventoryMinMaxLog> fetchMinMaxLogByInterval(Long entityId, Long materialId, Date fromDate, Date toDate) throws ServiceException;
+
+
 
 }

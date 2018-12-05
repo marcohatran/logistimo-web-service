@@ -106,3 +106,16 @@ es.supply.supply_performance.exclude_material_tags=Exclure les matériaux avec d
 es.supply.supply_performance.include_entity_tags=Inclure des entités avec des tags
 es.supply.supply_performance.exclude_entity_tags=Exclure les entités avec des tags
 es.supply.supply_performance.user_tags_responsible=Utilisateurs (tags) responsables du maintien de bonnes performances
+
+notification.event.title=Push Notifications
+notification.event.enabletext=Enable push notifications
+notification.event.description=Specify the push notifications to be enabled or disabled for each event
+notification.activity.login=Enable notification for no login events
+notification.activity.data_entry_performance_by_entity=Enable notification for good data entry performance events
+notification.supply.supply_performance=Enable notification for supply performance events
+notification.inventory.stock_outs=Enable notification for stock out events
+notification.inventory.stock_expiry=Enable notification for stock expiry events
+notification.inventory.inventory_performance_by_entity=Enable notification for inventory performance events
+notification.assets.heating=Enable notification for asset heating events
+notification.assets.freezing=Enable notification for asset freezing events
+notification.assets.asset_performance_by_entity=Enable notification for asset performance events

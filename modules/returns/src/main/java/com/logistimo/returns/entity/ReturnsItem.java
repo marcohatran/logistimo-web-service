@@ -26,17 +26,23 @@ package com.logistimo.returns.entity;
 
 import com.logistimo.returns.entity.values.ReturnsReceived;
 
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
+
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
@@ -49,8 +55,6 @@ import lombok.Data;
 @Entity
 @Table(name="RETURNS_ITEM")
 @Data
-@NamedQueries(value = {
-    @NamedQuery(name = "ReturnsItem.findAllByReturnId", query = "SELECT r FROM ReturnsItem r where r.returnsId=:returnsId")})
 public class ReturnsItem {
 
   @Id
@@ -90,6 +94,9 @@ public class ReturnsItem {
   @Column(name="updated_by")
   private String updatedBy;
 
-
+  @OneToMany(fetch = FetchType.LAZY,cascade = CascadeType.ALL)
+  @JoinColumn(name = "item_id", referencedColumnName = "id")
+  @NotFound(action= NotFoundAction.IGNORE)
+  private List<ReturnsItemBatch> batchItems;
 
 }

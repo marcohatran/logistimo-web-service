@@ -31,7 +31,6 @@ import com.logistimo.logger.XLog;
 import com.logistimo.proto.RestConstantsZ;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.cache.MemcacheService;
-import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.utils.PasswordEncoder;
 
 import org.apache.commons.lang.StringUtils;
@@ -51,18 +50,17 @@ import javax.servlet.http.HttpServletResponse;
 public class MobileLogServlet extends HttpServlet {
   private static final XLog _LOGGER = XLog.getLog(MobileLogServlet.class);
   private static final XLog _LOGGER_SERVER = XLog.getLog(XLog.class);
-  private static final Integer _CACHE_TIME_OUT = 1200000;
+  private static final Integer TIME_OUT = 1200000;
 
   public void doPost(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, java.io.IOException {
 
     String strUserId = request.getParameter(RestConstantsZ.USER_ID);
-    String password = request.getParameter(RestConstantsZ.PASSWORD);
+    String password = request.getParameter(RestConstantsZ.PASSWRD);
     InputStream inputStream;
     BufferedReader mobileLog = null;
-    IUserAccount account = null;
     try {
-      account = RESTUtil.authenticate(strUserId, password, null, request, response);
+      RESTUtil.authenticate(strUserId, password, null, request, response);
     } catch (ServiceException | UnauthorizedException e) {
       _LOGGER_SERVER.warn("Authentication failed : Invalid token");
       response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -91,23 +89,24 @@ public class MobileLogServlet extends HttpServlet {
         if (cache.get("LOG_" + PasswordEncoder.MD5(duplicateIdentify)) != null) {
           // skip this file as it is a duplicate log
         } else {
-          cache.put("LOG_" + PasswordEncoder.MD5(duplicateIdentify), duplicateIdentify,
-              _CACHE_TIME_OUT);
+          cache.put("LOG_" + PasswordEncoder.MD5(duplicateIdentify), duplicateIdentify, TIME_OUT);
           _LOGGER.info(duplicateIdentify);
           while ((dataRow = mobileLog.readLine()) != null) {
-            _LOGGER.info(dataRow);
+            if(StringUtils.isNotBlank(dataRow)) {
+              _LOGGER.info(dataRow);
+            }
           }
         }
       }
-
 
     } catch (Exception ex) {
       _LOGGER_SERVER.severe("Mobile log read failed", ex);
       response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
     } finally {
-      mobileLog.close();
+      if(mobileLog != null) {
+        mobileLog.close();
+      }
     }
-
   }
 
   public void doGet(HttpServletRequest request, HttpServletResponse response)

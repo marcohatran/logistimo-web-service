@@ -26,6 +26,7 @@
         <li ng-class="{active: subview == 'children'}"><a
                 href="#/setup/domains/all/children/">{{resourceBundle['domain.linked']}}</a></li>
     </ul>
+    <div ng-include="'loader-template.html'"></div>
     <div ng-switch="subview">
         <div class="tab-pane" ng-switch-when="children">
             <div ng-include="'views/domains/linked-domains.html'" ng-init="openDomains=true"></div>

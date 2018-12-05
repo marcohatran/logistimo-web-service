@@ -116,14 +116,6 @@
                                             <span class="capbold">{{batchEnabled}}</span>
                                         </div>
                                     </div>
-                                    <div class="row" ng-if="isDef(material.ib)">
-                                        <div class="col-sm-4">
-                                            <label class="control-label">{{resourceBundle['isbinaryvalued']}}:</label>
-                                        </div>
-                                        <div class="col-sm-8 cbx capbold">
-                                            {{material.ib}}
-                                        </div>
-                                    </div>
                                     <div class="row" ng-if="isDef(material.snl)">
                                         <div class="col-sm-4">
                                             <label class="control-label">{{resourceBundle['material.seasonal']}}:</label>
@@ -228,7 +220,7 @@
                         </div>
                         <div ng-show="doAddImage" style="padding:5px">
                             <div class="form-group mgh0" >
-                                <input type="file" id="matFileupload" ng-model="imageData" class="form-control" accept=".png,.jpg,.jpeg" base-sixty-four-input/>
+                                <input type="file" id="matFileupload" ng-model="imageData" class="form-control" accept=".png,.jpg,.jpeg,.gif" base-sixty-four-input/>
                             </div>
                             <span class="litetext">{{resourceBundle['uploadmessage']}}</span>
                             <div class="mt10">

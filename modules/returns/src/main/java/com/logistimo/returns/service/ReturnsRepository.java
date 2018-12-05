@@ -28,13 +28,22 @@ import com.logistimo.jpa.Repository;
 import com.logistimo.returns.entity.Returns;
 import com.logistimo.returns.entity.ReturnsItem;
 import com.logistimo.returns.entity.ReturnsItemBatch;
+import com.logistimo.returns.entity.ReturnsTrackingDetails;
 import com.logistimo.returns.models.ReturnsFilters;
+import com.logistimo.returns.repositories.ReturnsItemBatchRepository;
+import com.logistimo.returns.repositories.ReturnsItemRepository;
+import com.logistimo.returns.repositories.ReturnsTrackingRepository;
 import com.logistimo.returns.vo.ReturnsItemBatchVO;
 import com.logistimo.returns.vo.ReturnsItemVO;
+import com.logistimo.returns.vo.ReturnsQuantityDetailsVO;
+import com.logistimo.returns.vo.ReturnsTrackingDetailsVO;
 import com.logistimo.returns.vo.ReturnsVO;
 import com.logistimo.utils.LocalDateUtil;
+import com.logistimo.utils.ModelMapperUtil;
+import com.logistimo.utils.Stream;
 
-import org.modelmapper.ModelMapper;
+import org.apache.commons.collections.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.math.BigInteger;
 import java.util.Calendar;
@@ -50,68 +59,99 @@ import java.util.stream.Collectors;
 @org.springframework.stereotype.Repository
 public class ReturnsRepository extends Repository {
 
-  private ModelMapper modelMapper = new ModelMapper();
+  @Autowired
+  ReturnsTrackingRepository returnsTrackingRepository;
 
-  private static final String
-      KIOSK_DOMAIN_QUERY =
+  @Autowired
+  ReturnsItemRepository returnsItemRepository;
+
+  @Autowired
+  ReturnsItemBatchRepository returnsItemBatchRepository;
+
+  @Autowired
+  com.logistimo.returns.repositories.ReturnsRepository returnsRepository;
+
+  private static final String KIOSK_DOMAIN_QUERY =
       "(SELECT KD.KIOSKID_OID from KIOSK_DOMAINS KD WHERE DOMAIN_ID = :domainId)";
 
-  private static final String
-      USER_DOMAIN_QUERY =
+  private static final String USER_DOMAIN_QUERY =
       "(SELECT UD.KIOSKID FROM USERTOKIOSK UD,KIOSK K WHERE K.KIOSKID=UD.KIOSKID AND UD.USERID=:userId)";
 
 
   public void saveReturns(ReturnsVO returnsVO) {
-    Returns returns = modelMapper.map(returnsVO, Returns.class);
-    returns = super.save(returns);
+    Returns returns = ModelMapperUtil.map(returnsVO, Returns.class);
+    List<ReturnsItem> returnsItems=returnsVO.getItems().stream().map(returnsItemVO -> {
+      ReturnsItem returnsItem = ModelMapperUtil.map(returnsItemVO, ReturnsItem.class);
+      if(returnsItemVO.hasBatches()) {
+        List<ReturnsItemBatch>
+            returnsItemBatches =
+            ModelMapperUtil.map(returnsItemVO.getReturnItemBatches(), ReturnsItemBatch.class);
+        returnsItem.setBatchItems(returnsItemBatches);
+      }
+      return returnsItem;
+    }).collect(Collectors.toList());
+
+    returns.setItemList(returnsItems);
+    returns = returnsRepository.save(returns);
+
     returnsVO.setId(returns.getId());
   }
 
-  public void updateReturns(ReturnsVO returnsVO) {
-    Returns returns = modelMapper.map(returnsVO, Returns.class);
-    returns = super.update(returns);
-    returnsVO.setId(returns.getId());
+  public void deleteReturnsByCustomer(Long customerId) {
+    if(customerId!=null) {
+      returnsItemBatchRepository.deleteByCustomerId(customerId);
+      returnsItemRepository.deleteByCustomerId(customerId);
+      returnsRepository.deleteReturnsByCustomerId(customerId);
+    }
   }
 
-  public void saveReturnsItems(ReturnsItemVO returnsItemVO) {
-    ReturnsItem returnsItem = modelMapper.map(returnsItemVO, ReturnsItem.class);
-    returnsItem = super.save(returnsItem);
-    returnsItemVO.setId(returnsItem.getId());
+  public ReturnsTrackingDetailsVO getReturnTrackingDetails(Long returnId) {
+    ReturnsTrackingDetails returnsTrackingDetails =
+        returnsTrackingRepository.findTrackingDetailsByReturnsId(returnId);
+    if (returnsTrackingDetails != null) {
+      return ModelMapperUtil.map(returnsTrackingDetails, ReturnsTrackingDetailsVO.class);
+    }
+    return null;
   }
 
-  public void saveReturnBatchItems(ReturnsItemBatchVO returnsItemBatchVO) {
-    ReturnsItemBatch returnsItemBatch = modelMapper.map(returnsItemBatchVO, ReturnsItemBatch.class);
-    returnsItemBatch = super.save(returnsItemBatch);
-    returnsItemBatchVO.setId(returnsItemBatch.getId());
+  public ReturnsTrackingDetailsVO saveReturnsTrackingDetails(
+      ReturnsTrackingDetailsVO returnsTrackingDetailsVO) {
+    ReturnsTrackingDetails returnsTrackingDetails =
+        ModelMapperUtil.map(returnsTrackingDetailsVO, ReturnsTrackingDetails.class);
+    returnsTrackingDetails = returnsTrackingRepository.save(returnsTrackingDetails);
+    returnsTrackingDetailsVO.setId(returnsTrackingDetails.getId());
+    return returnsTrackingDetailsVO;
   }
+
 
   public ReturnsVO getReturnsById(Long returnId) {
-    Returns returns = super.findById(Returns.class, returnId);
-    return modelMapper.map(returns, ReturnsVO.class);
+    Returns returns = returnsRepository.findById(returnId);
+    List<ReturnsItem> returnsItems = returns.getItemList();
+    List<ReturnsItemVO> returnsItemVOList = getReturnsItemVOList(returnsItems);
+    ReturnsVO vo = ModelMapperUtil.map(returns, ReturnsVO.class);
+    vo.setItems(returnsItemVOList);
+    ReturnsTrackingDetails returnsTrackingDetails = returns.getTrackingDetails();
+    if (returnsTrackingDetails != null) {
+      ReturnsTrackingDetailsVO trackingDetailsVO =
+          ModelMapperUtil.map(returnsTrackingDetails, ReturnsTrackingDetailsVO.class);
+      vo.setReturnsTrackingDetailsVO(trackingDetailsVO);
+    }
+    return vo;
   }
 
-  public List<ReturnsItemVO> getReturnedItems(Long returnId) {
-    Map<String, Object> filters = new HashMap<>(1);
-    filters.put("returnsId", returnId);
-    List<ReturnsItem> returnsItemList = super.findAll("ReturnsItem.findAllByReturnId", filters);
-    List<ReturnsItemVO> returnsItemVOList =
-        returnsItemList.stream().map(i -> modelMapper.map(i, ReturnsItemVO.class))
-            .collect(Collectors.toList());
-    returnsItemVOList.forEach(returnsItem -> {
-      filters.clear();
-      filters.put("itemId", returnsItem.getId());
-      List<ReturnsItemBatch> returnsItemBatchList =
-          super.findAll("ReturnsItemBatch.findByItemId", filters);
-      List<ReturnsItemBatchVO> returnsItemBatchVOList =
-          returnsItemBatchList.stream().map(i -> modelMapper.map(i, ReturnsItemBatchVO.class))
-              .collect(Collectors.toList());
-      returnsItem.setReturnItemBatches(returnsItemBatchVOList);
+  private List<ReturnsItemVO> getReturnsItemVOList(List<ReturnsItem> returnsItemList) {
+    return Stream.toList(returnsItemList, returnItem -> {
+      ReturnsItemVO returnsItemVO = ModelMapperUtil.map(returnItem, ReturnsItemVO.class);
+      if (CollectionUtils.isNotEmpty(returnItem.getBatchItems())) {
+        List<ReturnsItemBatchVO> returnsItemBatchVOList =
+            Stream.toListUsingMapper(returnItem.getBatchItems(), ReturnsItemBatchVO.class);
+        returnsItemVO.setReturnItemBatches(returnsItemBatchVOList);
+      }
+      return returnsItemVO;
     });
-
-    return returnsItemVOList;
   }
 
-  public List<ReturnsVO> getReturns(ReturnsFilters returnsFilters) {
+  public List<ReturnsVO> getReturns(ReturnsFilters returnsFilters, boolean includeItems) {
     Map<String, Object> filters = new HashMap<>();
     StringBuilder query = new StringBuilder("select * from `RETURNS` r where ");
     buildQuery(returnsFilters, filters, query);
@@ -119,8 +159,13 @@ public class ReturnsRepository extends Repository {
         super.findAllByNativeQuery(query.toString(), filters, Returns.class,
             returnsFilters.getSize(),
             returnsFilters.getOffset());
-    return returnsList.stream().map(returns ->
-        modelMapper.map(returns, ReturnsVO.class)).collect(Collectors.toList());
+    return Stream.toList(returnsList, returns -> {
+      ReturnsVO vo = ModelMapperUtil.map(returns, ReturnsVO.class);
+      if (includeItems) {
+        vo.setItems(getReturnsItemVOList(returns.getItemList()));
+      }
+      return vo;
+    });
   }
 
   public Long getReturnsCount(ReturnsFilters returnsFilters) {
@@ -156,7 +201,7 @@ public class ReturnsRepository extends Repository {
       filters.put("orderId", returnsFilters.getOrderId());
     }
     if (returnsFilters.hasStatus()) {
-      query.append("  and  r.status=:status");
+      query.append(" and r.status=:status");
       filters.put("status", returnsFilters.getStatus().name());
     }
     if (returnsFilters.hasStartDate()) {
@@ -171,8 +216,21 @@ public class ReturnsRepository extends Repository {
       filters.put("endDate", LocalDateUtil.formatCustom(untilDate, Constants.DATETIME_CSV_FORMAT,
           null));
     }
-
     query.append(" order by r.id desc");
+  }
+
+
+  public List<ReturnsQuantityDetailsVO> getReturnsQuantityDetailsByOrderId(Long orderId,
+                                                                           Long excludeReturnId) {
+    if (excludeReturnId == null) {
+      return returnsRepository.findReturnQuantityByOrderId(orderId);
+    } else {
+      return returnsRepository.findQuantityInOtherReturns(orderId, excludeReturnId);
+    }
+  }
+
+  public List<ReturnsQuantityDetailsVO> getAllReturnsQuantityByOrderId(Long orderId) {
+    return returnsRepository.findReturnQuantityByOrderId(orderId);
   }
 
 }

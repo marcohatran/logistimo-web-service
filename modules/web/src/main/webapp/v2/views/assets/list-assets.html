@@ -24,45 +24,30 @@
 <div class="box topbox">
     <div ng-controller="AssetListingController">
         <div class="filter-box form-group" ng-show="iAdm">
-            <div class="row">
-                <div class="col-sm-3">
-                    <span class="filter-label">{{resourceBundle['assets']}}</span>
-                    <div class="input-group">
-                        <input type="text" class="form-control" ng-model="search.key" name="search.key" maxlength="50"
-                               placeholder="{{resourceBundle['filterby']}} {{resourceBundle['asset.serial.number'] | lowercase}}" ng-enter="searchAsset()">
-                        <span class="input-group-btn">
-							<button class="btn btn-default" ng-click="searchAsset()" type="button"
-                                    ng-disabled="(search.key == null && search.key == '')"
-                                    uib-tooltip="{{resourceBundle['search']}}">
-                                <span class="glyphicons glyphicons-search"></span>
+            <div ng-controller="ResetController">
+                <div class="row">
+                    <div class="col-sm-3">
+                        <span class="filter-label">{{resourceBundle['assets']}}</span>
+                        <div>
+                            <input type="text" class="form-control" ng-model="aname" name="search.key" maxlength="50"
+                                   placeholder="{{resourceBundle['filterby']}} {{resourceBundle['asset.serial.number'] | lowercase}}">
+                        </div>
+                    </div>
+                    <div class="col-sm-3 mt18 pt10" ng-show="(aname == undefined || aname == '')">
+                        <span class="lPad5 filter-label">{{resourceBundle['type']}}:</span>
+                        <div class="btn-group btn-group-blk btn-group-top" uib-dropdown is-open="istypeopen">
+                            <button type="button" class="btn btn-outline dropdown-toggle" uib-dropdown-toggle>
+                                {{assetFilters[assetTypeFilter].dV}} <span class="caret"></span>
                             </button>
-                        </span>
+                            <ul class="dropdown-menu" role="menu" ng-show="istypeopen">
+                                <li ng-repeat="assetFilter in assetFilters | orderBy: 'dV'">
+                                    <a ng-click="$parent.assetTypeFilter = assetFilter.value">{{assetFilter.dV}}</a>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
-                <!--<div class="col-sm-3 mt18 pt10" ng-show="(search.nm == undefined || search.nm == '')">
-                    <span class="filter-label">{{resourceBundle['kiosk']}} {{resourceBundle['tags']}}:</span>
-                    <tag-filter ng-model="etag" tag-type="entity"></tag-filter>
-                </div>-->
-                <div class="col-sm-3 mt18 pt10" ng-show="(search.nm == undefined || search.nm == '')">
-                    <span class="lPad5 filter-label">{{resourceBundle['type']}}:</span>
-                    <div class="btn-group btn-group-blk btn-group-top" uib-dropdown is-open="istypeopen">
-                        <button type="button" class="btn btn-outline dropdown-toggle" uib-dropdown-toggle>
-                            {{assetFilters[assetTypeFilter].dV}} <span class="caret"></span>
-                        </button>
-                        <ul class="dropdown-menu" role="menu" ng-show="istypeopen">
-                            <li ng-repeat="assetFilter in assetFilters | orderBy: 'dV'">
-                                <a ng-click="updateTypeFilter(assetFilter.value)">{{assetFilter.dV}}</a>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="mt18" ng-class="{'col-sm-6':(search.nm == undefined || search.nm == ''),'col-sm-9':(search.nm != undefined && search.nm != '')}">
-                    <span class="pull-right" >
-                    <button type="reset" ng-click="reset()" class="btn btn-sm btn-default">
-                        {{resourceBundle['reset']}}
-                    </button>
-                    </span>
-                </div>
+                <div ng-include="'views/common/reset-filters.html'"/>
             </div>
         </div>
         <div class="row action-bar" ng-show="!loading && filtered.length > 0">

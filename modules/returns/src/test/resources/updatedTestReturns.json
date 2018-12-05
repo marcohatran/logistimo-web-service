@@ -1,0 +1,108 @@
+{
+  "src": 1,
+  "sourceDomain": 1,
+  "id": 1,
+  "customerId": 1,
+  "vendorId": 1,
+  "q": 10,
+  "uId": "TEST",
+  "rs": "reason1",
+  "mst": "materialStatus1",
+  "tid": "1",
+  "tot": "tr",
+  "status": {
+    "status": "op"
+  },
+  "transporterDetailsVO": {
+    "trackingId": "12356",
+    "transporter": "fafsfsfs"
+  },
+  "items": [{
+    "materialId": 1,
+    "quantity": 13,
+    "returnsId": 1,
+    "id":1,
+    "received": {"quantity":10,"reason": "received","materialStatus":"status1"},
+    "returnItemBatches": [
+      {
+        "itemId": 1,
+        "quantity": 20,
+        "batch": {
+          "batchId": "BATCH1",
+          "manufacturer": "MANUFACTURER1"
+        },
+        "received": {"quantity":10,"reason": "received","materialStatus":"status1"}
+      },
+      {
+        "itemId": 1,
+        "quantity": 5,
+        "batch": {
+          "batchId": "BATCH2",
+          "manufacturer": "MANUFACTURER2"
+        },
+        "received": {"quantity":0,"reason": "received","materialStatus":"status1"}
+      }
+    ]
+  },
+    {
+      "materialId": 2,
+      "quantity": 50,
+      "returnsId": 1,
+      "id":2,
+      "received": {"quantity":10,"reason": "received","materialStatus":"status1"},
+      "returnItemBatches": [
+        {
+          "itemId": 3,
+          "quantity": 10,
+          "batch": {
+            "batchId": "BATCH3",
+            "manufacturer": "MANUFACTURER1"
+          },
+          "received": {"quantity":0,"reason": "received","materialStatus":"status1"}
+        },
+        {
+          "itemId": 3,
+          "quantity": 10,
+          "batch": {
+            "batchId": "BATCH4",
+            "manufacturer": "MANUFACTURER1"
+          },
+          "received": {"quantity":10,"reason": "received","materialStatus":"status1"}
+        }]
+    },
+    {
+      "materialId": 4,
+      "quantity": 50,
+      "returnsId": 1,
+      "id":4,
+      "received": {"quantity":10,"reason": "received","materialStatus":"status1"}
+    }
+  ,
+    {
+      "materialId": 5,
+      "quantity": 50,
+      "returnsId": 1,
+      "id":5,
+      "received": {"quantity":20,"reason": "received","materialStatus":"status1"},
+      "returnItemBatches": [
+        {
+          "itemId": 5,
+          "quantity": 10,
+          "received": {"quantity":10,"reason": "received","materialStatus":"status1"},
+          "batch": {
+            "batchId": "BATCH5",
+            "manufacturer": "MANUFACTURER5"
+          }
+        },
+        {
+          "itemId": 5,
+          "quantity": 10,
+          "batch": {
+            "batchId": "BATCH6",
+            "manufacturer": "MANUFACTURER6"
+          },
+          "received": {"quantity":10,"reason": "received","materialStatus":"status1"}
+        }]
+    }
+  ]
+}

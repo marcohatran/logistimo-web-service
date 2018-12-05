@@ -299,6 +299,17 @@
                             </div>
                         </div>
                     </div>
+                    <div class="row"> <!-- Enable two factor authentication -->
+                        <div class="col-sm-11">
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">{{resourceBundle['two.step.authentication']}}</label>
+                                <div class="col-sm-9 cbx">
+                                    <input type="checkbox" ng-model="uiCnf.twoFactorAuthenticationEnabled">&nbsp;{{resourceBundle['enable.two.step.authentication']}}
+                                    <p class="litetext">{{resourceBundle['two.step.authentication.description']}}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="bgr">
                     <div class="row">

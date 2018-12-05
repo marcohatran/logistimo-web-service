@@ -20,7 +20,7 @@
   ~ You can be released from the requirements of the license by purchasing a commercial license. To know more about
   ~ the commercial license, please contact us at opensource@logistimo.com
   -->
-
+<div ng-include="'loader-template.html'"></div>
 <div ng-if="isDef(dcntry)">
     <div  ng-controller="MainDashboardController" id="cid">
         <div ng-click="openPred()" ng-target="_blank" ng-hide="tempOnlyAU">
@@ -85,7 +85,7 @@
                                     <span class="pull-right">
                                         <input type="button" class="btn btn-sm btn-primary" ng-click="applyFilters()"
                                                value="Filter">
-                                        <input type="button" class="btn btn-sm btn-default" ng-click="toggleFilter('e')"
+                                        <input type="button" class="btn btn-sm btn-default" ng-click="cancelFilter('e')"
                                                value="Cancel">
                                     </span>
                                 </div>
@@ -163,6 +163,7 @@
                                             <option value="2">2 days</option>
                                             <option value="3">3 days</option>
                                             <option value="7">7 days</option>
+                                            <option value="15">15 days</option>
                                             <option value="30">30 days</option>
                                         </select>
                                     </div>
@@ -173,7 +174,7 @@
                                 <div class="col-sm-12">
                                 <span class="pull-right">
                                     <input type="button" class="btn btn-sm btn-primary" ng-click="applyFilters()" value="Filter">
-                                    <input type="button" class="btn btn-sm btn-default" ng-click="toggleFilter('i')" value="Cancel">
+                                    <input type="button" class="btn btn-sm btn-default" ng-click="cancelFilter('i')" value="Cancel">
                                 </span>
                                 </div>
                             </div>
@@ -244,7 +245,7 @@
                                 <div class="col-sm-12">
                                 <span class="pull-right">
                                     <input type="button" class="btn btn-sm btn-primary" ng-click="applyFilters()" value="Filter">
-                                    <input type="button" class="btn btn-sm btn-default" ng-click="toggleFilter('a')" value="Cancel">
+                                    <input type="button" class="btn btn-sm btn-default" ng-click="cancelFilter('a')" value="Cancel">
                                 </span>
                                 </div>
                             </div>

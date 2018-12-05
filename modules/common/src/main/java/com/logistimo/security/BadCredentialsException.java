@@ -26,18 +26,16 @@
  */
 package com.logistimo.security;
 
+import com.logistimo.exception.SystemException;
+
 /**
  * @author Arun
  */
-public class BadCredentialsException extends Exception {
+public class BadCredentialsException extends SystemException {
 
   private static final long serialVersionUID = 1L;
 
-  public BadCredentialsException() {
-    super();
-  }
-
-  public BadCredentialsException(String message) {
-    super(message);
+  public BadCredentialsException(String code) {
+    super(code,new Object[1]);
   }
 }

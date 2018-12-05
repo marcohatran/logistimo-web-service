@@ -25,6 +25,7 @@ package com.logistimo.dashboards.querygenerators;
 
 import com.logistimo.config.models.DashboardConfig;
 import com.logistimo.config.models.DomainConfig;
+import com.logistimo.sql.PreparedStatementModel;
 import com.logistimo.tags.entity.ITag;
 
 import org.apache.commons.lang.StringUtils;
@@ -41,8 +42,8 @@ public class EntityActivityQueryGenerator {
 
   private static final String
       SELECT_ID_FROM_TAG_WHERE_NAME_IN =
-      "(SELECT ID FROM TAG WHERE NAME IN(";
-  private static final String AND_TYPE = ") AND TYPE=";
+      "(SELECT ID FROM TAG WHERE NAME IN ";
+  private static final String AND_TYPE = " AND TYPE=";
   private Long domainId;
   private Integer period = -1;
   private String district;
@@ -117,12 +118,14 @@ public class EntityActivityQueryGenerator {
     return this;
   }
 
-  public String generate() {
+  public PreparedStatementModel generate() {
+    PreparedStatementModel preparedStatementModel = new PreparedStatementModel();
     StringBuilder query = new StringBuilder("SELECT ");
     StringBuilder fromClause = new StringBuilder(" FROM ")
-        .append(getDistinctEntityMaterialsWithPeriodQuery())
+        .append(getDistinctEntityMaterialsWithPeriodQuery(preparedStatementModel))
         .append(",KIOSK K, KIOSK_DOMAINS KD WHERE A.KID = K.KIOSKID AND K.KIOSKID = KD.KIOSKID_OID "
-            + "AND KD.DOMAIN_ID = ").append(domainId).append(" ");
+            + "AND KD.DOMAIN_ID = ? ");
+    preparedStatementModel.param(domainId);
     StringBuilder groupByClause = new StringBuilder();
     if(!isCount) {
       groupByClause.append(" GROUP BY ");
@@ -130,58 +133,69 @@ public class EntityActivityQueryGenerator {
 
     StringBuilder whereClause = new StringBuilder();
     if (district != null) {
-      applyDistrict(query, groupByClause, whereClause);
+      applyDistrict(query, groupByClause, whereClause, preparedStatementModel);
     } else if (state != null) {
-      applyState(query, groupByClause, whereClause);
+      applyState(query, groupByClause, whereClause, preparedStatementModel);
     } else if (country != null) {
-      applyCountry(query, groupByClause, whereClause);
+      applyCountry(query, groupByClause, whereClause, preparedStatementModel);
     } else {
       throw new IllegalArgumentException(
           "One of Country, State, District should be defined to generate activity query");
     }
 
-    applyMaterialFilters(whereClause);
+    applyMaterialFilters(whereClause, preparedStatementModel);
 
-    applyEntityFilters(whereClause);
+    applyEntityFilters(whereClause, preparedStatementModel);
 
-    return query.append(" COUNT(DISTINCT KID) COUNT ").append(fromClause).append(whereClause)
-        .append(groupByClause).toString();
+    query.append(" COUNT(DISTINCT KID) COUNT ").append(fromClause).append(whereClause)
+        .append(groupByClause);
+
+    preparedStatementModel.setQuery(query.toString());
+    return preparedStatementModel;
   }
 
-  private void applyMaterialFilters(StringBuilder whereClause) {
+  private void applyMaterialFilters(StringBuilder whereClause,
+                                    PreparedStatementModel preparedStatementModel) {
     if (StringUtils.isNotBlank(materialTags)) {
       whereClause.append(" AND A.MID IN (SELECT MATERIALID from MATERIAL_TAGS WHERE ID IN(")
-          .append(SELECT_ID_FROM_TAG_WHERE_NAME_IN).append(materialTags)
-          .append(AND_TYPE).append(ITag.MATERIAL_TAG).append("))")
+          .append(SELECT_ID_FROM_TAG_WHERE_NAME_IN);
+      preparedStatementModel.inParams(materialTags, whereClause);
+      whereClause.append(AND_TYPE).append(ITag.MATERIAL_TAG).append("))")
           .append(")");
     } else if (materialId != null) {
-      whereClause.append(" AND A.MID = ").append(materialId);
+      whereClause.append(" AND A.MID = ?");
+      preparedStatementModel.param(materialId);
     }
   }
 
-  private void applyEntityFilters(StringBuilder whereClause) {
+  private void applyEntityFilters(StringBuilder whereClause,
+                                  PreparedStatementModel preparedStatementModel) {
     if (StringUtils.isNotBlank(entityTags)) {
       whereClause.append(" AND A.KID IN(SELECT KIOSKID from KIOSK_TAGS WHERE ID IN(")
-          .append(SELECT_ID_FROM_TAG_WHERE_NAME_IN).append(entityTags)
-          .append(AND_TYPE).append(ITag.KIOSK_TAG).append(")))");
+          .append(SELECT_ID_FROM_TAG_WHERE_NAME_IN);
+      preparedStatementModel.inParams(entityTags, whereClause);
+      whereClause.append(AND_TYPE).append(ITag.KIOSK_TAG).append(")))");
     } else if (StringUtils.isNotBlank(excludeEntityTags)) {
       whereClause.append(" AND KID NOT IN(SELECT KIOSKID from KIOSK_TAGS WHERE ID IN(")
-          .append(SELECT_ID_FROM_TAG_WHERE_NAME_IN).append(excludeEntityTags)
-          .append(AND_TYPE).append(ITag.KIOSK_TAG).append(")))");
+          .append(SELECT_ID_FROM_TAG_WHERE_NAME_IN);
+      preparedStatementModel.inParams(excludeEntityTags, whereClause);
+      whereClause.append(AND_TYPE).append(ITag.KIOSK_TAG).append(")))");
     }
   }
 
   private void applyCountry(StringBuilder query, StringBuilder groupByClause,
-                            StringBuilder whereClause) {
+                            StringBuilder whereClause,
+                            PreparedStatementModel preparedStatementModel) {
     if (!isCount) {
       query.append("K.STATE STATE,K.STATE_ID STATE_ID,");
       groupByClause.append("STATE, STATE_ID");
     }
-    appendCountryFilter(whereClause);
+    appendCountryFilter(whereClause, preparedStatementModel);
   }
 
   private void applyState(StringBuilder query, StringBuilder groupByClause,
-                          StringBuilder whereClause) {
+                          StringBuilder whereClause,
+                          PreparedStatementModel preparedStatementModel) {
     if (country == null) {
       throw new IllegalArgumentException("Country is mandatory when state is provided");
     }
@@ -189,12 +203,14 @@ public class EntityActivityQueryGenerator {
       query.append("K.DISTRICT DISTRICT,K.DISTRICT_ID DISTRICT_ID,");
       groupByClause.append("DISTRICT, DISTRICT_ID");
     }
-    appendCountryFilter(whereClause)
-        .append(" AND K.STATE = '").append(state).append("'");
+    appendCountryFilter(whereClause, preparedStatementModel)
+        .append(" AND K.STATE = ?");
+    preparedStatementModel.param(state);
   }
 
   private void applyDistrict(StringBuilder query, StringBuilder groupByClause,
-                             StringBuilder whereClause) {
+                             StringBuilder whereClause,
+                             PreparedStatementModel preparedStatementModel) {
     if (country == null || state == null) {
       throw new IllegalArgumentException(
           "Country and State are mandatory when district is provided");
@@ -203,17 +219,21 @@ public class EntityActivityQueryGenerator {
       query.append("K.NAME NAME,A.KID,");
       groupByClause.append("NAME,A.KID");
     }
-    appendCountryFilter(whereClause)
-        .append(" AND K.STATE = '").append(state).append("'");
+    appendCountryFilter(whereClause, preparedStatementModel)
+        .append(" AND K.STATE = ?");
+    preparedStatementModel.param(state);
     if ("".equals(district)) {
       whereClause.append("AND (DISTRICT = '' OR DISTRICT IS NULL)");
     } else {
-      whereClause.append("AND DISTRICT = '").append(district).append("'");
+      whereClause.append("AND DISTRICT = ?");
+      preparedStatementModel.param(district);
     }
   }
 
-  private StringBuilder appendCountryFilter(StringBuilder whereClause) {
-    return whereClause.append(" AND K.COUNTRY = '").append(country).append("'");
+  private StringBuilder appendCountryFilter(StringBuilder whereClause,
+                                            PreparedStatementModel preparedStatementModel) {
+    preparedStatementModel.param(country);
+    return whereClause.append(" AND K.COUNTRY = ?");
   }
 
   /**
@@ -221,8 +241,10 @@ public class EntityActivityQueryGenerator {
    * (select KID,MID,COUNT(1) from TRANSACTION T where T >= '2018-01-04 10:34:52' group by KID, MID) A
    *
    * @return query
+   * @param preparedStatementModel
    */
-  private String getDistinctEntityMaterialsWithPeriodQuery() {
+  private String getDistinctEntityMaterialsWithPeriodQuery(
+      PreparedStatementModel preparedStatementModel) {
     StringBuilder query = new StringBuilder("(SELECT KID,MID,COUNT(1) ");
     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     Calendar cal = new GregorianCalendar();
@@ -232,10 +254,12 @@ public class EntityActivityQueryGenerator {
     cal.add(Calendar.DAY_OF_MONTH, -getPeriod());
     cal.add(Calendar.SECOND, 1);
     if (asOf == null) {
-      query.append("FROM INVNTRY WHERE IAT IS NOT NULL AND T >= '").append(sdf.format(cal.getTime())).append("'");
+      query.append("FROM INVNTRY WHERE IAT IS NOT NULL AND T >= ?");
+      preparedStatementModel.param(sdf.format(cal.getTime()));
     } else {
-      query.append("FROM TRANSACTION WHERE T BETWEEN '").append(sdf.format(cal.getTime())).append("' AND '")
-          .append(sdf.format(asOf)).append("'");
+      query.append("FROM TRANSACTION WHERE T BETWEEN ? AND ?");
+      preparedStatementModel.param(sdf.format(cal.getTime()));
+      preparedStatementModel.param(sdf.format(asOf));
     }
     query.append(" GROUP BY KID,MID) A");
     return query.toString();

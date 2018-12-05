@@ -56,6 +56,13 @@ public class GeneralConfig {
   public static final String APP_UPGRADE = "aupg";
   public static final String DB_RFINT = "dboardrefreshinterval";
   public static final String ES_RFINT = "eventrefreshinterval";
+  public static final String REMEMBER_DEVICE_IN_MINUTES = "rememberdevice";
+  public static final String FB_STORE_APP = "feedbackstoreapp";
+  public static final String FB_MONITORING_APP = "feedbackmonitoringapp";
+  /**
+   * Remember device for 30 days - default
+   */
+  private static final Integer REMEMBER_DEVICE_DURATION_IN_MINUTES = 43200;
   // Logger
   private static final XLog xLogger = XLog.getLog(GeneralConfig.class);
   private String supportEmail;
@@ -64,13 +71,16 @@ public class GeneralConfig {
   private Integer smsMaxCountUser = 25;
   private Integer smsMaxCountDomain = 5000;
   private Integer smsDedupDuration = 10;
-  private JSONObject appUrls;
+  private JSONObject applicationUrls;
   private JSONObject aupg;
   private Integer dashboardRefreshIntervalInMinutes = 30;
   private Integer eventsRefreshIntervalInMinutes = 1440;
   private String inventoryPolicy = "AllowAllTransactionsPolicy";
   private String blockedAppVersion = "";
   private String upgradeToVersion = "";
+  private int rememberDeviceInMinutes;
+  private String storeAppFeedbackText;
+  private String monitoringAppFeedbackText;
 
 
   public GeneralConfig() {
@@ -97,29 +107,33 @@ public class GeneralConfig {
         } catch (Exception e) {
           this.supportPhone = ConfigUtil.get("support.phone", DEFAULT_SUPPORT_PHONE);
         }
-        this.appUrls = jsonObject.getJSONObject(APPURLS);
+        this.applicationUrls = jsonObject.getJSONObject(APPURLS);
         try {
           this.aupg = jsonObject.getJSONObject(APP_UPGRADE);
         } catch (Exception ignored) {
-
+          // do nothing
         }
         try {
           JSONObject smsLimit = jsonObject.getJSONObject(SMS_LIMITS);
           try {
             this.smsMaxCountUser = smsLimit.getInt(USER);
           } catch (Exception ignored) {
+            // do nothing
           }
 
           try {
             this.smsMaxCountDomain = smsLimit.getInt(DOMAIN);
           } catch (Exception ignored) {
+            // do nothing
           }
 
           try {
             this.smsDedupDuration = smsLimit.getInt(DEDUP_DUR);
           } catch (Exception ignored) {
+            // do nothing
           }
         } catch (Exception ignored) {
+          // do nothing
         }
         try {
           this.dashboardRefreshIntervalInMinutes = jsonObject.getInt(DB_RFINT);
@@ -146,13 +160,29 @@ public class GeneralConfig {
         } catch (Exception e) {
           this.upgradeToVersion = "";
         }
+        try {
+          this.rememberDeviceInMinutes = jsonObject.getInt(REMEMBER_DEVICE_IN_MINUTES);
+        } catch (Exception e) {
+          this.rememberDeviceInMinutes = REMEMBER_DEVICE_DURATION_IN_MINUTES;
+        }
+        try {
+          this.storeAppFeedbackText = jsonObject.getString(FB_STORE_APP);
+        } catch (Exception e) {
+          this.storeAppFeedbackText = "";
+        }
+        try {
+          this.monitoringAppFeedbackText = jsonObject.getString(FB_MONITORING_APP);
+        } catch (Exception e) {
+          this.monitoringAppFeedbackText = "";
+        }
+
       }
     } catch (Exception e) {
       throw new ConfigurationException("Invalid Json for general configuration. " + e.getMessage());
     }
     xLogger.fine(
         "Exiting GeneralConfig constructor, supportEmail: {0}, supportPhone: {1}, appUrls: {2}",
-        supportEmail, supportPhone, appUrls);
+        supportEmail, supportPhone, applicationUrls);
   }
 
   // Get an instance of the GeneralConfig
@@ -162,9 +192,7 @@ public class GeneralConfig {
           .getBean(ConfigurationMgmtServiceImpl.class);
       IConfig c = cms.getConfiguration(IConfig.GENERALCONFIG);
       return new GeneralConfig(c.getConfig());
-    } catch (ObjectNotFoundException e) {
-      throw new ConfigurationException(e.getMessage());
-    } catch (ServiceException e) {
+    } catch (ObjectNotFoundException | ServiceException e) {
       throw new ConfigurationException(e.getMessage());
     }
   }
@@ -173,81 +201,42 @@ public class GeneralConfig {
     return this.supportEmail;
   }
 
-  public void setSupportEmail(String supportEmail) {
-    this.supportEmail = supportEmail;
-  }
-
   public String getSupportPhone() {
     return this.supportPhone;
   }
 
-  public void setSupportPhone(String supportPhone) {
-    this.supportPhone = supportPhone;
-  }
-
   public JSONObject getAppUrls() {
-    return this.appUrls;
-  }
-
-  public void setAppUrls(JSONObject appUrls) {
-    this.appUrls = appUrls;
+    return applicationUrls;
   }
 
   public JSONObject getAupg() {
     return aupg;
   }
 
-  public void setAupg(JSONObject aupg) {
-    this.aupg = aupg;
-  }
-
   public String getFeedbackEmail() {
     return feedbackEmail;
-  }
-
-  public void setFeedbackEmail(String feedbackEmail) {
-    this.feedbackEmail = feedbackEmail;
   }
 
   public Integer getSmsMaxCountUser() {
     return smsMaxCountUser;
   }
 
-  public void setSmsMaxCountUser(Integer smsMaxCountUser) {
-    this.smsMaxCountUser = smsMaxCountUser;
-  }
-
   public Integer getSmsMaxCountDomain() {
     return smsMaxCountDomain;
-  }
-
-  public void setSmsMaxCountDomain(Integer smsMaxCountDomain) {
-    this.smsMaxCountDomain = smsMaxCountDomain;
   }
 
   public Integer getSmsDedupDuration() {
     return smsDedupDuration;
   }
 
-  public void setSmsDedupDuration(Integer smsDedupDuration) {
-    this.smsDedupDuration = smsDedupDuration;
-  }
-
   public Integer getDashboardRefreshIntervalInMinutes() {
     return dashboardRefreshIntervalInMinutes;
-  }
-
-  public void setDashboardRefreshIntervalInMinutes(Integer dashboardRefreshIntervalInMinutes) {
-    this.dashboardRefreshIntervalInMinutes = dashboardRefreshIntervalInMinutes;
   }
 
   public Integer getEventsRefreshIntervalInMinutes() {
     return eventsRefreshIntervalInMinutes;
   }
 
-  public void setEventsRefreshIntervalInMinutes(Integer eventsRefreshIntervalInMinutes) {
-    this.eventsRefreshIntervalInMinutes = eventsRefreshIntervalInMinutes;
-  }
 
   public String getInventoryPolicy() {
     return inventoryPolicy;
@@ -259,5 +248,15 @@ public class GeneralConfig {
 
   public String getUpgradeToVersion() {
     return upgradeToVersion;
+  }
+
+  public Integer getRememberDeviceInMinutes() { return rememberDeviceInMinutes; }
+
+  public String getStoreAppFeedbackText() {
+    return storeAppFeedbackText;
+  }
+
+  public String getMonitoringAppFeedbackText() {
+    return monitoringAppFeedbackText;
   }
 }

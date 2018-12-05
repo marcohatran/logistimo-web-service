@@ -30,12 +30,30 @@
             <div class="form-group">
                 <label class="col-sm-4 control-label">{{resourceBundle['order.new.status']}}</label>
 
-                <div class="col-sm-8 cbx">
+                <div class="col-sm-7 cbx">
                     {{RETURNS.statusLabel[new_status]}}
                 </div>
             </div>
+            <div ng-hide="!(new_status == RETURNS.status.SHIPPED)" class="form-group">
+                <label class="col-sm-4 control-label">{{resourceBundle['transporter']}}</label>
+                <div class="col-sm-7">
+                    <input class="form-control" ng-init="newStatus.trackingDetails.transporter = returns.tracking_details.transporter" ng-model="newStatus.trackingDetails.transporter">
+                </div>
+            </div>
+            <div ng-show="new_status == RETURNS.status.SHIPPED" class="form-group">
+                <label class="col-sm-4 control-label">{{resourceBundle['trackingid']}}</label>
+                <div class="col-sm-7">
+                    <input class="form-control" ng-init="newStatus.trackingDetails.trackingId = returns.tracking_details.tracking_id" ng-model="newStatus.trackingDetails.trackingId">
+                </div>
+            </div>
+            <div ng-show="new_status == RETURNS.status.SHIPPED" class="form-group">
+                <label class="col-sm-4 control-label">{{resourceBundle['eda']}}</label>
+                <div class="col-sm-7">
+                    <date-picker ng-init="newStatus.trackingDetails.estimatedArrivalDate = returns.tracking_details.ead" date-model="newStatus.trackingDetails.estimatedArrivalDate" min-date="today"></date-picker>
+                </div>
+            </div>
             <div class="row mt10">
-                <label class="col-sm-4 control-label cbx"> Comment </label>
+                <label class="col-sm-4 control-label cbx">{{resourceBundle['comment']}}</label>
 
                 <div class="col-sm-7">
                     <textarea class="form-control" maxlength="2048" rows="4" ng-model="newStatus.comment"></textarea>

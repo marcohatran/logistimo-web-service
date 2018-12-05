@@ -26,7 +26,14 @@ package com.logistimo.utils;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.Locale;
+import java.util.TimeZone;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * Created by mohan on 20/02/17.
@@ -39,6 +46,38 @@ public class LocalDateUtilTest {
         "Date pattern does not match");
     Assert.assertEquals(LocalDateUtil.getDateTimePattern(Locale.ENGLISH, false), "M/d/yy h:mm a",
         "Date time pattern does not match");
+  }
+
+  @Test
+  public void testZambiaDateShortFormat(){
+    String date = LocalDateUtil.format(getDate(),new Locale("en","ZM"),"CAT", true);
+    assertEquals("1/12/18",date);
+  }
+
+  @Test
+  public void testZambiaDateTimeShortFormat(){
+    String date = LocalDateUtil.format(getDate(),new Locale("en","ZM"),"CAT", false);
+    assertEquals("1/12/18 12:00 AM",date);
+  }
+
+  @Test
+  public void testDateTimeShortFormatWithoutLocale(){
+    Calendar calendar = Calendar.getInstance();
+    calendar.set(Calendar.YEAR, 2018);
+    calendar.set(Calendar.MONTH, 11);
+    calendar.set(Calendar.DAY_OF_MONTH,1);
+    String date = LocalDateUtil.format(calendar.getTime(),null,null, true);
+    assertNotNull(date);
+  }
+
+  private Date getDate() {
+    Calendar calendar = GregorianCalendar.getInstance();
+    calendar.setTimeZone(TimeZone.getTimeZone("CAT"));
+    calendar.set(Calendar.YEAR, 2018);
+    calendar.set(Calendar.MONTH, 11);
+    calendar.set(Calendar.DAY_OF_MONTH,1);
+    LocalDateUtil.resetTimeFields(calendar);
+    return calendar.getTime();
   }
 
 }

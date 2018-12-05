@@ -175,18 +175,38 @@
                 }
                 $scope.loadMessage = message;
             };
+            $scope.showFullLoading = function (restore, message) {
+                if (restore || $scope.loaders++ == 0) {
+                    $scope.showFullLoadIcon = true;
+                }
+                $scope.loadMessage = message;
+            };
             $scope.hideLoading = function (forceClose) {
                 if (forceClose) {
                     $scope.showLoadIcon = false;
+                    $scope.showFullLoadIcon = false;
                 } else if (--$scope.loaders <= 0) {
                     $scope.showLoadIcon = false;
+                    $scope.showFullLoadIcon = false;
                     if ($scope.loaders < 0) {
                         $scope.loaders = 0;
                     }
                 }
             };
-            $scope.showLogin = function (action) {
-                if ($scope.lgModalInstance == undefined) {
+            $scope.hideFullLoading = function (forceClose) {
+                if (forceClose) {
+                    $scope.showLoadIcon = false;
+                    $scope.showFullLoadIcon = false;
+                } else if (--$scope.loaders <= 0) {
+                    $scope.showLoadIcon = false;
+                    $scope.showFullLoadIcon = false;
+                    if ($scope.loaders < 0) {
+                        $scope.loaders = 0;
+                    }
+                }
+            };
+            $scope.showLogin = function (isOpen) {
+                if ($scope.lgModalInstance == undefined || isOpen) {
                     if ($scope.loaders > 0) {
                         $scope.hideLoading(true);
                     }
@@ -475,6 +495,7 @@
                     $scope.iSoae = data.data.soae;
                     $scope.iToae = data.data.toae;
                     $rootScope.curUser = $scope.curUser = data.data.unm;
+                    $scope.curUserTag = data.data.utgs;
                     $scope.i18n.language = {"locale": data.data.lng};
                     $scope.mailId = data.data.em;
                     $scope.defaultEntityId = data.data.eid;
@@ -605,7 +626,7 @@
                 }
             );
             $scope.$on("$routeChangeSuccess", function (event,current) {
-                AnalyticsService.logAnalytics(current.$$route.originalPath,$scope.curUserName,$scope.domainName);
+                AnalyticsService.logAnalytics(pathString(current),$scope.curUserName,$scope.domainName,$scope.curUserTag);
                 if (isRouteRedirect($route)) {
                     return;
                 }
@@ -613,8 +634,17 @@
                 $scope.$broadcast("requestContextChanged", requestContext);
             });
 
-            $scope.initAnalytics = function (user,domain) {
-                AnalyticsService.logAnalytics(window.location.pathname,user,domain);
+            $scope.initAnalytics = function (user,domain,userTags) {
+                AnalyticsService.logAnalytics(window.location.pathname,user,domain,userTags);
+            }
+
+            function pathString(current) {
+                var path = current.$$route.originalPath;
+                var reportId = current.params.rptid
+                if(path.includes(":rptid") && checkNotNullEmpty(reportId)) {
+                    path = path.replace(":rptid",reportId);
+                }
+                return path;
             }
 
             function isRouteRedirect(route) {
@@ -716,6 +746,7 @@
                     if (checkNotNullEmpty(data.data)) {
                         var a = angular.fromJson(data.data);
                         $rootScope.entDef = a.entdef;
+                        $rootScope.mapDef = a.mapdef;
                     }
                 });
             };

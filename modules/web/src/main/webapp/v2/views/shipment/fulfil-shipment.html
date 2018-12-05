@@ -32,7 +32,7 @@
     </h3>
     <hr/>
     <span class="litetext">
-        Please review and confirm the received quantities before fulfilling the order. If the received quantities are different from the shipped quantities indicated in the order, edit the corresponding received quantities before fulfilling the order.
+        {{resourceBundle['shipment.fulfil.review.message']}}
     </span>
     <div class="row mt10">
         <div class="col-sm-6">
@@ -77,10 +77,10 @@
                 <div class="panel-body">
                         <table class="table table-condensed table-hover table-logistimo">
                             <tr>
-                                <th class="col-sm-0-1 text-center">SI.No.</th>
+                                <th class="col-sm-0-1 text-center">{{resourceBundle['serialnum']}}</th>
                                 <th class="col-sm-2 text-left">{{resourceBundle['material']}}</th>
-                                <th class="col-sm-2 text-center">Shipped</th>
-                                <th class="col-sm-3 text-center" ng-show="allocate">Received</th>
+                                <th class="col-sm-2 text-center">{{resourceBundle['shipped']}}</th>
+                                <th class="col-sm-3 text-center" ng-show="allocate">{{resourceBundle['received']}}</th>
                             </tr>
                             <tbody ng-repeat="item in shipment.items" ng-controller="DemandItemController" data-ng-switch on="exRow[$index]">
                             <tr>
@@ -95,8 +95,8 @@
                                                 <tr>
                                                     <td>{{resourceBundle['batch']}}</td>
                                                     <td>{{resourceBundle['expiry']}}</td>
-                                                    <td>Shipped</td>
-                                                    <td>Received</td>
+                                                    <td>{{resourceBundle['shipped']}}</td>
+                                                    <td>{{resourceBundle['received']}}</td>
                                                     <td></td>
                                                 </tr>
                                                 <tr ng-repeat="bi in item.bts">
@@ -116,7 +116,7 @@
 
                                                     </td>
                                                     <td>
-                                                        <span ng-click="select($parent.$index,'show')" class="glyphicons glyphicons-edit alignBaseLine"></span>
+                                                        <span ng-show="!item.hideEdit" ng-click="select($parent.$index,'show');" class="glyphicons glyphicons-edit alignBaseLine"></span>
                                                     </td>
                                                 </tr>
                                                 </tbody>
@@ -196,14 +196,14 @@
             <div class="panel panel-default">
                 <div class="panel-body">
                     <div class="row">
-                        <label class="col-sm-2 control-label required cbx">Date of actual receipt</label>
+                        <label class="col-sm-2 control-label required cbx">{{resourceBundle['date.of.actual.receipt']}}</label>
 
                         <div class="col-sm-3">
                             <date-picker date-model="shipData.afd" max-date="today" min-date="shipDate"></date-picker>
                         </div>
                     </div>
                     <div class="row mt10">
-                        <label class="col-sm-2 control-label">Comment </label>
+                        <label class="col-sm-2 control-label">{{resourceBundle['comment']}}</label>
                         <div class="col-sm-5">
                             <textarea class="form-control" rows="4" ng-model="shipData.msg"></textarea>
                         </div>
@@ -216,7 +216,7 @@
         <div class="form-group">
             <div class="col-sm-12">
                 <div class="pull-right">
-                    <button type="button" class="btn btn-sm btn-primary" ng-disabled="saveDisable" ng-click="fulfil(shipment.items)">Fulfill</button>
+                    <button type="button" class="btn btn-sm btn-primary" ng-disabled="saveDisable" ng-click="fulfil(shipment.items)">{{resourceBundle['fulfill']}}</button>
                     <button type="button" class="btn btn-sm btn-default" ng-click="toggleFulfil(false,masterIts)">{{resourceBundle['cancel']}}</button>
                 </div>
             </div>

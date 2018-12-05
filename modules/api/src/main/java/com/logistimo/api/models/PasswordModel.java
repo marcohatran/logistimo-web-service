@@ -23,14 +23,39 @@
 
 package com.logistimo.api.models;
 
+import lombok.Data;
+
 /**
  * Created by naveensnair on 07/09/15.
  */
+@Data
 public class PasswordModel {
-  public String mp; // masked phone number
-  public String me; // masked email id
-  public String uid; // userId
-  public int mode; // mode sms or email
-  public String otp; // otp received via sms
-  public String udty;// user device type
+  /**
+   * Masked phone number
+   */
+  private String mp;
+  /**
+   * Masked email id
+   */
+  private String me;
+  /**
+   * User ID
+   */
+  private String uid;
+  /**
+   * Mode - SMS or Email
+   */
+  private int mode;
+  /**
+   * OTP received via sms
+   */
+  private String otp;
+  /**
+   * User device type
+   */
+  private String udty;
+  /**
+   * Captcha response
+   */
+  private String captcha;
 }

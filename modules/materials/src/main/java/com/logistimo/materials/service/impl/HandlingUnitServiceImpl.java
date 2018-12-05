@@ -24,6 +24,7 @@
 package com.logistimo.materials.service.impl;
 
 import com.logistimo.auth.utils.SecurityUtils;
+import com.logistimo.constants.CharacterConstants;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.domains.utils.DomainsUtil;
 import com.logistimo.exception.InvalidDataException;
@@ -273,7 +274,8 @@ public class HandlingUnitServiceImpl implements IHandlingUnitService {
     try {
       query =
           pm.newQuery("javax.jdo.query.SQL",
-              "SELECT ID,(SELECT NAME FROM HANDLINGUNIT WHERE ID=HU_ID_OID) NAME, QUANTITY, HU_ID_OID FROM HANDLINGUNITCONTENT HUC WHERE HUC.TY = '0' AND HUC.CNTID = ?");
+              "SELECT ID,(SELECT NAME FROM HANDLINGUNIT WHERE ID=HU_ID_OID) NAME, QUANTITY,"
+                  + " HU_ID_OID FROM HANDLINGUNITCONTENT HUC WHERE HUC.TY = '0' AND HUC.CNTID = ?");
       List data = (List) query.executeWithArray(materialId);
       if (data == null || data.size() == 0) {
         return null;
@@ -302,10 +304,17 @@ public class HandlingUnitServiceImpl implements IHandlingUnitService {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     Query query = null;
     try {
-      query =
-          pm.newQuery("javax.jdo.query.SQL",
-              "SELECT ID,(SELECT NAME FROM HANDLINGUNIT WHERE ID=HU_ID_OID) NAME, QUANTITY, HU_ID_OID, HUC.CNTID  FROM HANDLINGUNITCONTENT HUC WHERE HUC.TY = '0' AND HUC.CNTID IN (?)");
-      List data = (List) query.execute(materialIdList);
+      StringBuilder queryBuilder = new StringBuilder(
+          "SELECT ID,(SELECT NAME FROM HANDLINGUNIT WHERE ID=HU_ID_OID) NAME, QUANTITY, "
+              + "HU_ID_OID, HUC.CNTID  FROM HANDLINGUNITCONTENT HUC WHERE HUC.TY = '0'"
+              + " AND HUC.CNTID IN (");
+      for (int i = 0; i < materialIdList.size(); i++) {
+        queryBuilder.append(CharacterConstants.QUESTION).append(CharacterConstants.COMMA);
+      }
+      queryBuilder.setLength(queryBuilder.length() - 1);
+      queryBuilder.append(")");
+      query = pm.newQuery("javax.jdo.query.SQL", queryBuilder.toString());
+      List data = (List) query.executeWithArray(materialIdList.toArray());
       if (data == null || data.isEmpty()) {
         return null;
       }

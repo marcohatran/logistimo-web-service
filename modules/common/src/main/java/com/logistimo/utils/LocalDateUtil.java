@@ -34,6 +34,7 @@ import com.logistimo.proto.JsonTagsZ;
 import com.logistimo.reports.ReportsConstants;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
+import com.logistimo.services.utils.ConfigUtil;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -70,6 +71,8 @@ public class LocalDateUtil {
 
   //private static final XLog xLogger = XLog.getLog(LocalDateUtil.class);
 
+  private LocalDateUtil () {}
+
   public static String format(String strTimestamp, Locale locale, String timezone)
       throws ParseException {
     // Convert to Date object
@@ -83,12 +86,21 @@ public class LocalDateUtil {
 
   public static String format(Date timestamp, Locale locale, String timezone, boolean dateOnly) {
     // Get the date formatter according to style and locale
-    DateFormat dateFormat = null;
-    if (locale != null) {
+    DateFormat dateFormat = getDateFormat(locale, dateOnly);
+    if (timezone != null) {
+      dateFormat.setTimeZone(TimeZone.getTimeZone(timezone));
+    }
+    return dateFormat.format(timestamp);
+  }
+
+  private static DateFormat getDateFormat(Locale locale, boolean dateOnly) {
+    DateFormat dateFormat;
+    Locale localeOverride = overrideLocale(locale);
+    if (localeOverride != null) {
       if (dateOnly) {
-        dateFormat = DateFormat.getDateInstance(DateFormat.SHORT, locale);
+        dateFormat = DateFormat.getDateInstance(DateFormat.SHORT, localeOverride);
       } else {
-        dateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, locale);
+        dateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, localeOverride);
       }
     } else {
       if (dateOnly) {
@@ -97,26 +109,28 @@ public class LocalDateUtil {
         dateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
       }
     }
-    if (timezone != null) {
-      dateFormat.setTimeZone(TimeZone.getTimeZone(timezone));
+    return dateFormat;
+  }
+
+  private static Locale overrideLocale(Locale locale) {
+    if(locale != null){
+      String overridingLanguageTag = ConfigUtil.get(locale.toLanguageTag());
+      if(StringUtils.isNotEmpty(overridingLanguageTag)){
+        return Locale.forLanguageTag(overridingLanguageTag);
+      }
     }
-    return dateFormat.format(timestamp);
+    return locale;
   }
 
   /**
    * Gets the date time short format for the given locale.
    *
-   * @param locale
+   * @param locale Locale
    * @param dateOnly  If true, sends only date ignoring time field
    * @return          a short date format
    */
   public static String getDateTimePattern(Locale locale, boolean dateOnly) {
-    DateFormat formatter;
-    if(dateOnly) {
-      formatter = DateFormat.getDateInstance(DateFormat.SHORT,locale);
-    } else {
-      formatter = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, locale);
-    }
+    DateFormat formatter = getDateFormat(locale, dateOnly);
     return ((SimpleDateFormat)formatter).toLocalizedPattern();
   }
 
@@ -162,12 +176,7 @@ public class LocalDateUtil {
 
   public static Date parse(String timestampStr, Locale locale, String timezone)
       throws ParseException {
-    DateFormat dateFormat = null;
-    if (locale != null) {
-      dateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, locale);
-    } else {
-      dateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
-    }
+    DateFormat dateFormat = getDateFormat(locale,false);
     if (timezone != null) {
       dateFormat.setTimeZone(TimeZone.getTimeZone(timezone));
     }

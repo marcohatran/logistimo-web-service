@@ -24,26 +24,37 @@
 package com.logistimo.models.users;
 
 import java.util.Date;
+import lombok.Getter;
 
 /**
  * Created by mohansrinivas on 10/18/16.
  */
+@Getter
 public class UserLoginHistoryModel {
 
-  public String userId;
-  public Integer lgSrc;
-  public String usrAgnt;
-  public String ipAddr;
-  public Date loginTime;
-  public String version;
+  private final String referer;
+  private final String userId;
+  private final Integer lgSrc;
+  private final String usrAgnt;
+  private final String ipAddr;
+  private final Date loginTime;
+  private final String version;
+  private final LoginStatus status;
 
   public UserLoginHistoryModel(String userId, Integer lgSrc, String usrAgnt, String ipAddr,
                                Date loginTime, String version) {
+    this(userId,lgSrc,usrAgnt,ipAddr,loginTime,version,null, null);
+  }
+
+  public UserLoginHistoryModel(String userId, Integer lgSrc, String usrAgnt, String ipAddr,
+                               Date loginTime, String version, LoginStatus status, String referer) {
     this.userId = userId;
     this.lgSrc = lgSrc;
     this.usrAgnt = usrAgnt;
     this.ipAddr = ipAddr;
     this.loginTime = loginTime;
     this.version = version;
+    this.status = status;
+    this.referer = referer;
   }
 }

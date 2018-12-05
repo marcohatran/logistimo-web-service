@@ -49,6 +49,7 @@ assetControllers.controller("AddAssetController", ['$scope', '$route', 'assetSer
         $scope.edit = false;
         var errorCount = 0;
         $scope.currentYear = new Date().getFullYear();
+        const MONITORING_ASSET = 1;
 
         $scope.init = function(){
 
@@ -78,6 +79,10 @@ assetControllers.controller("AddAssetController", ['$scope', '$route', 'assetSer
                         }).finally(function () {
                             $scope.hideLoading();
                         })
+                    }
+                    if($scope.edit && Object.keys($scope.currentManu.model).indexOf($scope.asset.meta.dev.mdl) == -1) {
+                        $scope.asset.meta.dev.mdl = undefined;
+                        $scope.asset.meta.cc = {};
                     }
                 }).catch(function(msg){
                     $scope.showErrorMsg(msg);
@@ -140,6 +145,17 @@ assetControllers.controller("AddAssetController", ['$scope', '$route', 'assetSer
                     $scope.asset.meta.dev.mdl = undefined;
                 }else{
                     $scope.updateSensors();
+                }
+            }
+        };
+
+        $scope.updateCapacity = function(modelName) {
+            $scope.asset.meta.cc = {};
+            if(MONITORING_ASSET != $scope.asset.typ && checkNotNullEmpty(modelName)) {
+                var model = $scope.currentManu.model;
+                if(!checkNullEmptyObject(model)) {
+                    $scope.asset.meta.cc.qty = model[modelName].capacity;
+                    $scope.asset.meta.cc.met = $scope.resourceBundle['metric.litres'];
                 }
             }
         };
@@ -256,50 +272,11 @@ assetControllers.controller("AddAssetController", ['$scope', '$route', 'assetSer
                 });
             }
         };
-        var errorMsg;
-        $scope.validateAssetMetaData = function(isSerialValidation, isEdit) {
-            if(isSerialValidation && isEdit) {
-                return true;
-            }
-            setAssetData(isSerialValidation);
-            var isMonitoredAsset = ($scope.currentAsset.at == 2);
-            if(isMonitoredAsset && checkNotNullEmpty($scope.assetData.dataFormat)) {
-                var regex = new RegExp($scope.assetData.dataFormat);
-                if (!regex.test($scope.assetData.deviceId)) {
-                    errorMsg = $scope.resourceBundle[$scope.assetData.message].concat("\n").concat($scope.assetData.messageDescription);
-                    if(isSerialValidation) {
-                        $scope.asset.serror = errorMsg;
-                    } else {
-                        $scope.asset.merror = errorMsg;
-                    }
-                    return false;
-                }
-            }
-            return true;
-        };
-        function setAssetData(isSerialValidation) {
-            if(isSerialValidation) {
-                $scope.asset.serror = '';
-                $scope.assetData.dataFormat = $scope.currentManu.serialFormat;
-                $scope.assetData.deviceId = $scope.asset.dId;
-                $scope.assetData.message = 'serialno.format';
-                $scope.assetData.messageDescription = $scope.currentManu.serialFormatDescription;
-            } else {
-                $scope.asset.merror = '';
-                $scope.assetData.dataFormat = $scope.currentManu.modelFormat;
-                $scope.assetData.deviceId = $scope.asset.meta.dev.mdl;
-                $scope.assetData.message = 'modelno.format';
-                $scope.assetData.messageDescription = $scope.currentManu.modelFormatDescription;
-            }
-        }
 
         $scope.constructAsset = function(){
             $scope.serror = false;
             $scope.merror = false;
             errorCount = 0;
-            if(!($scope.validateAssetMetaData(true,$scope.edit) && $scope.validateAssetMetaData())){
-                return false;
-            }
             if(checkNotNullEmpty($scope.asset.kiosk) && checkNotNullEmpty($scope.asset.kiosk.id)){
                 $scope.asset.kId = $scope.asset.kiosk.id;
             }/*else{
@@ -460,8 +437,10 @@ assetControllers.controller("AddAssetController", ['$scope', '$route', 'assetSer
 
 assetControllers.controller("AssetListingController", ['$scope', '$route', 'assetService', 'requestContext', '$location', 'exportService',
     function($scope, $route, assetService, requestContext, $location, exportService){
-        $scope.wparams = [["etag", "etag"], ["search", "search.nm"], ["o", "offset"], ["s", "size"], ["at", "assetTypeFilter"]];
+        $scope.wparams = [["etag", "etag"], ["aname", "aname"], ["o", "offset"], ["s", "size"], ["at", "assetTypeFilter"]];
         $scope.filtered = [];
+        $scope.localFilters = ['aname','assetTypeFilter'];
+        $scope.filterMethods = ['updateTypeFilter'];
         $scope.loading = false;
         $scope.assetTypeFilter = 0;
 
@@ -474,8 +453,7 @@ assetControllers.controller("AssetListingController", ['$scope', '$route', 'asse
 
         $scope.init = function(){
             $scope.etag = requestContext.getParam("etag") || "";
-            $scope.search = {nm:""};
-            $scope.search.key = $scope.search.nm = requestContext.getParam("search") || "";
+            $scope.aname = requestContext.getParam("aname") || "";
             $scope.vw = requestContext.getParam("vw") || 't';
             $scope.offset = requestContext.getParam("o") || 0;
             $scope.size = requestContext.getParam("s") || 50;
@@ -488,10 +466,10 @@ assetControllers.controller("AssetListingController", ['$scope', '$route', 'asse
             $scope.loading = true;
             $scope.showLoading();
             //Key search and type should be separate.
-            if(checkNotNullEmpty($scope.search.key)){
+            if(checkNotNullEmpty($scope.aname)){
                 $scope.assetTypeFilter = 0;
             }
-            assetService.getAssetsByKeyword($scope.search.key, $scope.assetTypeFilter, $scope.size, $scope.offset).then(function(data){
+            assetService.getAssetsByKeyword($scope.aname, $scope.assetTypeFilter, $scope.size, $scope.offset).then(function(data){
                 $scope.setResults(data.data);
                 $scope.filtered = data.data.results;
             }).finally(function(){
@@ -520,9 +498,8 @@ assetControllers.controller("AssetListingController", ['$scope', '$route', 'asse
                 $scope.hideLoading();
             });
         };
-        $scope.updateTypeFilter = function(value){
-            $scope.assetTypeFilter = value;
-            $scope.currentAsset = $scope.assetConfig.assets[value];
+        $scope.updateTypeFilter = function(){
+            $scope.currentAsset = $scope.assetConfig.assets[$scope.assetTypeFilter];
         };
 
         $scope.deleteAssets = function(){
@@ -553,14 +530,10 @@ assetControllers.controller("AssetListingController", ['$scope', '$route', 'asse
 
         $scope.fetch();
 
-        $scope.searchAsset = function () {
-            if($scope.search.nm != $scope.search.key) {
-                $scope.search.nm = $scope.search.key;
-            }
-        };
+        
         $scope.reset = function() {
             $scope.etag = "";
-            $scope.search = {};
+            $scope.aname = "";
             $scope.assetTypeFilter = 0;
         };
     }
@@ -1613,7 +1586,7 @@ assetControllers.controller('AssetSummaryController', ['$scope', 'requestContext
                     name: "Unknown"
                 }
             ],
-            "trendlines": {
+            "trendlines": [{
                 "line": [
                     {
                         "startvalue": "1",
@@ -1628,7 +1601,7 @@ assetControllers.controller('AssetSummaryController', ['$scope', 'requestContext
                         "valueOnRight" : "0"
                     }
                 ]
-            }
+            }]
         };
         ListingController.call(this, $scope, requestContext, $location);
         $scope.init = function(){};
@@ -1814,7 +1787,7 @@ assetControllers.controller('AssetSummaryController', ['$scope', 'requestContext
                                     "data": $scope.tempJson
                                 }
                             ],
-                            "trendlines": {
+                            "trendlines": [{
                                 "line": [
                                     {
                                         "startvalue": minTmp,
@@ -1826,7 +1799,7 @@ assetControllers.controller('AssetSummaryController', ['$scope', 'requestContext
                                         "valueOnRight": "1"
                                     }
                                 ]
-                            }
+                            }]
                         };
 
                         var noDataMessage = checkNullEmpty(tdate) ? "No data available" : "No data available for " + formatDate(tdate);

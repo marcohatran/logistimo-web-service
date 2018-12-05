@@ -26,14 +26,23 @@ package com.logistimo.returns.entity;
 import com.logistimo.returns.entity.values.GeoLocation;
 import com.logistimo.returns.entity.values.ReturnsStatus;
 
-import java.util.Date;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 
+import java.util.Date;
+import java.util.List;
+
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
@@ -88,5 +97,11 @@ public class Returns {
   @Column(name = "source")
   private Integer source;
 
+  @OneToMany(fetch = FetchType.LAZY,cascade = CascadeType.ALL)
+  @JoinColumn(name = "returns_id", referencedColumnName = "id")
+  private List<ReturnsItem> itemList;
 
+  @OneToOne(fetch = FetchType.LAZY,mappedBy = "returns")
+  @NotFound(action = NotFoundAction.IGNORE)
+  private ReturnsTrackingDetails trackingDetails;
 }

@@ -105,6 +105,20 @@
         <div ng-hide="us.ipc">
             <p class=" alert alert-warning">{{resourceBundle['bulkupload.previousuploadnotcomplete']}}</p>
         </div>
+        <div class="row pt15">
+            <div class="col-sm-12">
+                <h4>{{resourceBundle['bulkupload.tiptitle']}}</h4>
+                <hr/>
+                <ul class="text-justify" style="padding-left: 15px;">
+                    <li> {{resourceBundle['bulkupload.tip1']}}</li>
+                    <li> {{resourceBundle['bulkupload.tip2']}}</li>
+                    <li> {{resourceBundle['bulkupload.tip3']}}</li>
+                    <li ng-if="us.ty == 'users'">{{resourceBundle['bulkupload.tip.password1']}}</li>
+                    <li ng-if="us.ty == 'users'">{{resourceBundle['bulkupload.tip.password2']}}</li>
+                    <li ng-if="us.ty == 'users'">{{resourceBundle['bulkupload.tip.password3']}}</li>
+                </ul>
+            </div>
+        </div>
     </div>
     <div class="col-sm-4 noleftpad">
         <h4>{{resourceBundle['instructions']}}</h4><hr/>
@@ -122,11 +136,7 @@
             <div class="col-sm-12">
                 <span class="glyphicons glyphicons-download uploadIcon"></span>
                 <span class="uploadBotSpace">
-                    <!-- a ng-href="/s2/api/export/uploadformat?type={{us.ty}}" target="_new">{{resourceBundle['bulkupload.downloaddatafile']}} {{us.tnm}}</a -->
                     <a ng-click="downloadDataFile('/s2/api/export/uploadformat?type='+us.ty,us.ty+'.csv')">{{resourceBundle['bulkupload.downloaddatafile']}} {{us.tnm}}</a>
-                </span>
-                <span class="uploadBotSpace" ng-show="helpFile != null">
-                    <a href="/s/help/index.html#!Documents/{{helpFile}}" target="_blank"><span class="glyphicons glyphicons-info-sign"></span></a>
                 </span>
             </div>
         </div>
@@ -138,15 +148,12 @@
                 </span>
             </div>
         </div>
-        <div class="row">
-            <div class="col-sm-12">
-                <h4>{{resourceBundle['bulkupload.tiptitle']}}</h4>
-                <hr/>
-                <ul class="text-justify" style="padding-left: 15px;">
-                    <li> {{resourceBundle['bulkupload.tip1']}}</li>
-                    <li> {{resourceBundle['bulkupload.tip2']}}</li>
-                    <li> {{resourceBundle['bulkupload.tip3']}}</li>
-                </ul>
+        <div class="row enclose">
+            <div class="col-sm-12" ng-show="us.isAssetType">
+                <span class="glyphicons glyphicons-download uploadIcon"></span>
+                <span class="uploadBotSpace">
+                    <a ng-click="downloadAssetModels()" target="_new">{{resourceBundle['download.asset.model']}}</a>
+                </span>
             </div>
         </div>
     </div>

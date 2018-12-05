@@ -127,7 +127,8 @@ public class DashboardControllerMV1 {
       @RequestParam(value = "locty", required = false) String locty,
       @RequestParam(value = "p", required = false) Integer p,
       @RequestParam(value = "date", required = false) String date,
-      @RequestParam(value = "refresh", required = false, defaultValue = "false") Boolean refresh) {
+      @RequestParam(value = "refresh", required = false, defaultValue = "false") Boolean refresh)
+      throws SQLException {
 
     long domainId = SecurityUtils.getCurrentDomainId();
     DomainConfig dc = DomainConfig.getInstance(domainId);
@@ -162,16 +163,23 @@ public class DashboardControllerMV1 {
     Map<String, String>
         filters =
         buildQueryFilters(paramModel);
-    ResultSet invTyRes = dashboardService.getMainDashboardResults(domainId, filters, INV, true, null);
-    ResultSet invAlRes = dashboardService.getMainDashboardResults(domainId, filters, ALL_INV, true, null);
-    ResultSet acstRes = dashboardService.getMainDashboardResults(domainId, filters, ACTIVITY, true, null);
-    ResultSet alstRes = dashboardService.getMainDashboardResults(domainId, filters, ALL_ACTIVITY, true, null);
-    //preparing the model
-    dashboardModel =
-        MobileInvDashboardBuilder.buildInvDashboard(invTyRes, invAlRes, acstRes, alstRes);
-    dashboardModel.setGeneratedTime(getGeneratedTime());
-    if (cache != null) {
-      cache.put(cachekey, dashboardModel, 1800); // 30 min expiry
+    try (
+        ResultSet invTyRes =
+            dashboardService.getMainDashboardResults(domainId, filters, INV, true, null);
+        ResultSet invAlRes =
+            dashboardService.getMainDashboardResults(domainId, filters, ALL_INV, true, null);
+        ResultSet acstRes =
+            dashboardService.getMainDashboardResults(domainId, filters, ACTIVITY, true, null);
+        ResultSet alstRes =
+            dashboardService.getMainDashboardResults(domainId, filters, ALL_ACTIVITY, true, null);
+    ) {
+      //preparing the model
+      dashboardModel =
+          MobileInvDashboardBuilder.buildInvDashboard(invTyRes, invAlRes, acstRes, alstRes);
+      dashboardModel.setGeneratedTime(getGeneratedTime());
+      if (cache != null) {
+        cache.put(cachekey, dashboardModel, 1800); // 30 min expiry
+      }
     }
 
     return dashboardModel;
@@ -191,7 +199,8 @@ public class DashboardControllerMV1 {
       @RequestParam(value = "p", required = false) Integer p,
       @RequestParam(value = "date", required = false) String date,
       @RequestParam(value = "groupby", required = true) String groupby,
-      @RequestParam(value = "refresh", required = false, defaultValue = "false") Boolean refresh) {
+      @RequestParam(value = "refresh", required = false, defaultValue = "false") Boolean refresh)
+      throws SQLException {
 
     long domainId = SecurityUtils.getCurrentDomainId();
     DomainConfig dc = DomainConfig.getInstance(domainId);
@@ -223,14 +232,19 @@ public class DashboardControllerMV1 {
     Map<String, String>
         filters =
         buildQueryFilters(paramModel);
-    ResultSet invTyRes = dashboardService.getMainDashboardResults(domainId, filters, INV, false, groupby);
-    ResultSet invAlRes = dashboardService.getMainDashboardResults(domainId, filters, ALL_INV, false, groupby);
-    ResultSet alstRes =
-        dashboardService.getMainDashboardResults(domainId, filters, ALL_ACTIVITY, false, null);
-    //preparing the model
-    details =
-        MobileInvDashboardBuilder
-            .buildInvDetailDashboard(invTyRes, invAlRes, alstRes, paramModel.locty, groupby);
+    try (
+        ResultSet invTyRes =
+            dashboardService.getMainDashboardResults(domainId, filters, INV, false, groupby);
+        ResultSet invAlRes =
+            dashboardService.getMainDashboardResults(domainId, filters, ALL_INV, false, groupby);
+        ResultSet alstRes =
+            dashboardService.getMainDashboardResults(domainId, filters, ALL_ACTIVITY, false, null);
+    ) {
+      //preparing the model
+      details =
+          MobileInvDashboardBuilder
+              .buildInvDetailDashboard(invTyRes, invAlRes, alstRes, paramModel.locty, groupby);
+    }
     //adding loc level in response
     if (StringUtils.isBlank(loc) && paramModel.state == null) {
       details.level = COUNTRY_LOWER;

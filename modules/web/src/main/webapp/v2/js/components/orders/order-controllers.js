@@ -172,7 +172,18 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
             caption += getFilterTitle(getApprovalStatusLabel($scope.approval_status), $scope.resourceBundle['approval.status']);
             caption += getFilterTitle(checkNullEmpty($scope.entity) ? $scope.etag : "", $scope.resourceBundle['kiosk'] + " " + $scope.resourceBundle['tag.lower']);
             caption += getFilterTitle($scope.otag, $scope.resourceBundle['order'] + " " + $scope.resourceBundle['tag.lower']);
+            if(checkNotNullEmpty($scope.entity)) {
+                caption += getFilterTitle(getTypeLabel($scope.otype), $scope.resourceBundle['order'] + " " + $scope.resourceBundle['type']);
+            }
             return caption;
+        }
+
+        function getTypeLabel(type) {
+            if (type == "sle") {
+                return $scope.type == "2" ? $scope.resourceBundle['outgoing']: $scope.resourceBundle['sales.orders'];
+            } else if (type == "prc") {
+                return $scope.type == "2" ? $scope.resourceBundle['incoming'] : $scope.resourceBundle['purchase.orders'];
+            }
         }
 
         function getApprovalStatusLabel(status) {
@@ -489,8 +500,8 @@ ordControllers.controller('OrdersCtrl', ['$scope', 'ordService', 'domainCfgServi
 ]);
 
 ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', 'userService', 'domainCfgService',
-    'invService', 'entityService', '$timeout', 'requestContext', '$uibModal', 'trnService', 'conversationService', '$window', 'ORDERSTATUSTEXT', 'approvalService', 'RETURNS', 'returnsService',
-    function ($scope, ordService, ORDER, userService, domainCfgService, invService, entityService, $timeout, requestContext, $uibModal, trnService, conversationService, $window, ORDERSTATUSTEXT, approvalService, RETURNS, returnsService) {
+    'invService', 'entityService', '$timeout', 'requestContext', '$uibModal', 'trnService', 'conversationService', '$window', 'ORDERSTATUSTEXT', 'approvalService', 'RETURNS', 'returnsService', '$q',
+    function ($scope, ordService, ORDER, userService, domainCfgService, invService, entityService, $timeout, requestContext, $uibModal, trnService, conversationService, $window, ORDERSTATUSTEXT, approvalService, RETURNS, returnsService, $q) {
         $scope.ORDER = ORDER;
         $scope.RETURNS = RETURNS;
         $scope.ORDERSTATUSTEXT = ORDERSTATUSTEXT;
@@ -1548,13 +1559,14 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                                 $scope.showWarning("Cannot add " + material.mnm + ". It is not available to customer.");
                                 return;
                             }
-                            continueAddRow(data[0]);
-                            var nr = $scope.order.its[$scope.order.its.length - 1];
-                            nr.vmin = material.reord;
-                            nr.vmax = material.max;
-                            nr.vevent = material.event;
-                            nr.isBa = material.be;
-                            nr.itstk = material.tstk;
+                            continueAddRow(data[0]).then(function(data) {
+                                var nr = $scope.order.its[$scope.order.its.length - 1];
+                                nr.vmin = material.reord;
+                                nr.vmax = material.max;
+                                nr.vevent = material.event;
+                                nr.isBa = material.be;
+                                nr.itstk = material.tstk;
+                            });
                         }
                     );
                     material.dInv = {"stk": material.stk};
@@ -1564,13 +1576,18 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                 }
             }
         };
-        function continueAddRow(material) {
+        var continueAddRow = (material) =>  {
+            let deferred = $q.defer();
             $scope.validBatchStock = undefined;
             if (material.be) {
-                setValidBatchQuantity($scope.order.eid, material);
+                $scope.setValidBatchQuantity($scope.order.eid, material).then(function() {
+                    deferred.resolve();
+                });
             } else {
                 addMaterial(material);
+                deferred.resolve();
             }
+            return deferred.promise;
         };
 
         function addMaterial(material) {
@@ -1634,7 +1651,8 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
             return opoq.toFixed(0);
         }
 
-        function setValidBatchQuantity(eid, material) {
+        $scope.setValidBatchQuantity = (eid, material)  => {
+            let deferred = $q.defer();
             $scope.showLoading();
             invService.getBatchDetail(material.mId, eid, false).then(function (data) {
                 var batchDet = data.data;
@@ -1648,12 +1666,14 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
                 }
                 material.validBatchStock = totalStock;
                 addMaterial(material);
+                deferred.resolve();
             }).catch(function error(msg) {
                 $scope.showErrorMsg(msg);
             }).finally(function () {
                 $scope.hideLoading();
             });
-        }
+            return deferred.promise;
+        };
 
         $scope.removeRow = function (index) {
             $scope.exRow.splice(index, 1);
@@ -1924,7 +1944,7 @@ ordControllers.controller('OrderDetailCtrl', ['$scope', 'ordService', 'ORDER', '
             return true;
         };
         $scope.validateStatus = function (material, index, source) {
-            if (material.nastk > 0 && material.isVisitedStatus) {
+            if (material.nastk > 0 && material.isVisitedStatus && $scope.isAllocating) {
                 var dispStatus = material.tm ? $scope.tempmatstatus : $scope.matstatus;
                 if (checkNotNullEmpty(dispStatus) && checkNullEmpty(material.mst) && $scope.transConfig.ism) {
                     showPopup($scope, material, source + material.id, $scope.resourceBundle['status.required'], index, $timeout, false, true);
@@ -2137,17 +2157,15 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
             $scope.entType = "customers";
         }
         $scope.validate = function (material, index, source) {
-            if (!material.isBinary) {
-                material.isVisited = material.isVisited || checkNotNullEmpty(source);
-                if (material.isVisited) {
-                    if (checkNotNull(material.ind) && (checkNullEmpty(material.quantity) || material.quantity <= 0)) {
-                        showPopup($scope, material, material.name.mId, $scope.resourceBundle['invalid.quantity'] + " " + $scope.resourceBundle['for'] + " " + (material.mnm || material.name.mnm), index, $timeout);
-                        return false;
-                    }
-                    if (checkNotNullEmpty(material.name.huName) && checkNotNullEmpty(material.name.huQty) && checkNotNullEmpty(material.quantity) && material.quantity % material.name.huQty != 0) {
-                        showPopup($scope, material, material.name.mId, material.quantity + " of " + material.name.mnm + " does not match the multiples of units expected in " + material.name.huName + ". It should be in multiples of " + material.name.huQty + " " + material.name.mnm + ".", index, $timeout);
-                        return false;
-                    }
+            material.isVisited = material.isVisited || checkNotNullEmpty(source);
+            if (material.isVisited) {
+                if (checkNotNull(material.ind) && (checkNullEmpty(material.quantity) || material.quantity <= 0)) {
+                    showPopup($scope, material, material.name.mId, $scope.resourceBundle['invalid.quantity'] + " " + $scope.resourceBundle['for'] + " " + (material.mnm || material.name.mnm), index, $timeout);
+                    return false;
+                }
+                if (checkNotNullEmpty(material.name.huName) && checkNotNullEmpty(material.name.huQty) && checkNotNullEmpty(material.quantity) && material.quantity % material.name.huQty != 0) {
+                    showPopup($scope, material, material.name.mId, material.quantity + " of " + material.name.mnm + " does not match the multiples of units expected in " + material.name.huName + ". It should be in multiples of " + material.name.huQty + " " + material.name.mnm + ".", index, $timeout);
+                    return false;
                 }
             }
             return true;
@@ -2364,10 +2382,8 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
                     if (!$scope.validate(mat, i, 's')) {
                         return;
                     }
-                    if (!mat.isBinary) {
-                        if (checkNotNull(mat.ind) && (checkNullEmpty(mat.quantity) || mat.quantity <= 0)) {
-                            invalidQMats = invalidQMats + mat.name.mnm + ", ";
-                        }
+                    if (checkNotNull(mat.ind) && (checkNullEmpty(mat.quantity) || mat.quantity <= 0)) {
+                        invalidQMats = invalidQMats + mat.name.mnm + ", ";
                     }
                     if (mat.showRecommended && mat.recomQ != '-1' && ($scope.oCfg.orrm || (checkNotNullEmpty(mat.rsn) && mat.rsn.toLowerCase() == 'others'))) {
                         if ((checkNullEmpty($scope.oCfg.orr) || checkNullEmpty(mat.rsn) || mat.rsn.toLowerCase() == 'others')
@@ -2409,7 +2425,7 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
             if (checkNotNullEmpty(invalidQMats)) {
                 $scope.showWarning($scope.resourceBundle['quantity.invalid'] + ' ' + invalidQMats.slice(0, -2));
             } else {
-                $scope.showLoading();
+                $scope.showFullLoading();
                 if ($scope.timestamp == undefined) {
                     $scope.timestamp = new Date().getTime();
                 }
@@ -2447,7 +2463,7 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
                         $scope.showErrorMsg(msg);
                     }
                 }).finally(function () {
-                    $scope.hideLoading();
+                    $scope.hideFullLoading();
                 });
             }
         };
@@ -2513,9 +2529,7 @@ ordControllers.controller('OrdersFormCtrl', ['$scope', 'ordService', 'invService
             ft['status'] = $scope.status;
             ft['materials'] = {};
             $scope.order.materials.forEach(function (mat) {
-                if (mat.isBinary) {
-                    ft['materials'][mat.name.mId] = "1";
-                } else if (checkNotNull(mat.ind)) {
+                if (checkNotNull(mat.ind)) {
                     ft['materials'][mat.name.mId] = {q: '' + mat.quantity, r: mat.mrsn || mat.rsn || null};
                 }
             });
@@ -2811,7 +2825,6 @@ ordControllers.controller('order.MaterialController', ['$scope', 'invService',
                 $scope.material.cmm = "(" + $scope.cInvMap[name.mId].reord + "," + $scope.cInvMap[name.mId].max + ")";
                 $scope.material.rp = $scope.cInvMap[name.mId].rp;
             }
-            $scope.material.isBinary = name.b === 'bn';
             $scope.material.mrsn = null;
             if ($scope.type == "1") {
                 $scope.material.recomQ = $scope.recommendedQuantity(name);
@@ -2877,7 +2890,6 @@ ordControllers.controller('NewShipmentController', ['$scope', 'ordService', '$lo
         }).catch(function error(msg) {
             $scope.showErrorMsg(msg);
         }).finally(function () {
-            getMandatoryConfigText();
             $scope.hideLoading();
         });
         $scope.showLoading();
@@ -2907,16 +2919,6 @@ ordControllers.controller('NewShipmentController', ['$scope', 'ordService', '$lo
                     item.nq = angular.copy(item.ytcs);
                 }
             });
-        }
-        function getMandatoryConfigText() {
-            $scope.text = "";
-            if ($scope.oCfg.eadm && $scope.oCfg.ridm) {
-                $scope.text = $scope.resourceBundle['estimated.date.of.arrival.reference.id.mandatory'];
-            } else if ($scope.oCfg.eadm) {
-                $scope.text += $scope.resourceBundle['estimated.date.of.arrival.mandatory'];
-            } else if ($scope.oCfg.ridm) {
-                $scope.text += $scope.resourceBundle['reference.id.mandatory'];
-            }
         }
 
         $scope.create = function (shipNow) {
@@ -2996,7 +2998,10 @@ ordControllers.controller('NewShipmentController', ['$scope', 'ordService', '$lo
 
         $scope.shipNewShipment = function () {
             if ($scope.shipment.ship == 0) {
-                if ($scope.oCfg.eadm && checkNullEmpty($scope.shipment.ead)) {
+                if ($scope.oCfg.tm && checkNullEmpty($scope.shipment.transporter)) {
+                    $scope.showWarning($scope.resourceBundle['transportermandatory']);
+                    return;
+                } else if ($scope.oCfg.eadm && checkNullEmpty($scope.shipment.ead)) {
                     $scope.showWarning($scope.resourceBundle['estimated.date.of.arrival.mandatory.error']);
                     return;
                 } else if ($scope.oCfg.ridm && (checkNullEmpty($scope.shipment.salesRefId) || checkNullEmpty($scope.shipment.salesRefId.trim()))) {
@@ -3017,14 +3022,14 @@ ordControllers.controller('NewShipmentController', ['$scope', 'ordService', '$lo
         }
 
         function createShipment(shipment) {
-            $scope.showLoading();
+            $scope.showFullLoading();
             ordService.createShipment(shipment).then(function (data) {
                 $scope.showSuccess(data.data.msg);
                 $location.path('/orders/shipment/detail/' + data.data.sId);
             }).catch(function error(msg) {
                 $scope.showErrorMsg(msg);
             }).finally(function () {
-                $scope.hideLoading();
+                $scope.hideFullLoading();
             });
         };
 
@@ -3100,6 +3105,7 @@ ordControllers.controller('ShipmentListingController', ['$scope', 'ordService', 
             ordService.getShipments($scope.offset, $scope.size, cust, vend, $scope.status, formatDate($scope.from), formatDate($scope.to), formatDate($scope.eftFrom), formatDate($scope.eftTo), $scope.trans, $scope.trackId).then(function (data) {
                 $scope.filtered = data.data.results;
                 $scope.setResults(data.data);
+                fixTable();
             }).catch(function error(msg) {
                 $scope.showErrorMsg(msg);
             }).finally(function () {
@@ -3476,12 +3482,14 @@ ordControllers.controller('FulfilShipmentController', ['$scope', 'ordService', '
         if (type == 'show') {
             $scope.saveDisable = true;
             $scope.saveCounter++;
+            $scope.shipment.items[index].hideEdit = true;
         }
         if (checkNullEmpty(type)) {
             $scope.saveCounter--;
             if ($scope.saveCounter == 0) {
                 $scope.saveDisable = false;
             }
+            $scope.shipment.items[index].hideEdit = false;
         }
         $scope.exRow[index] = $scope.exRow[index] === type ? empty : type;
         redrawPopup($scope, $scope.shipment.items, 'hide', $timeout);
@@ -3814,6 +3822,10 @@ ordControllers.controller('ShipmentDetailCtrl', ['$scope', 'ordService', 'reques
                     });
                 }
 
+            }).catch(function error(msg) {
+                $scope.showErrorMsg(msg);
+            }).finally(function () {
+                $scope.hideLoading();
             });
         };
         $scope.getShipment();
@@ -4286,13 +4298,13 @@ ordControllers.controller('ConsignmentController', ['$scope', 'returnsService', 
             var selectedItems = (function () {
                 var items = [];
                 for (var i = 0; i < $scope.sel.selectedRows.length; i++) {
-                    items.push($scope.order.its[$scope.sel.selectedRows[i]]);
+                    items.push(angular.copy($scope.order.its[$scope.sel.selectedRows[i]]));
                 }
                 return items;
             })();
             if (isReturnValid(selectedItems)) {
-                returnsService.setItems(angular.copy(selectedItems));
-                returnsService.setOrder($scope.order);
+                returnsService.setItems(selectedItems);
+                returnsService.setOrder(angular.copy($scope.order));
                 $scope.setPageSelection('createReturns');
             } else {
                 $scope.showWarning("Please select the items which are partially/fully fulfilled to create Returns");

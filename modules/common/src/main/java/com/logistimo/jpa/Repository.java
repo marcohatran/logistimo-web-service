@@ -59,6 +59,16 @@ public class Repository {
     return entity;
   }
 
+  public <T> int deleteByQuery(String query, Map<String, Object> filters) {
+    final Query q = entityManager.createNamedQuery(query);
+    filters.forEach(q::setParameter);
+    return q.executeUpdate();
+  }
+
+  public <T> void delete(T entity) {
+    entityManager.remove(entity);
+  }
+
   @SuppressWarnings("unchecked")
   public <T> List<T> findAll(String query, Map<String, Object> filters) {
     Query q = entityManager.createNamedQuery(query);

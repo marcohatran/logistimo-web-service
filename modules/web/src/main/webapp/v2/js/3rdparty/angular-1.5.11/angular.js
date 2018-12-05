@@ -2571,7 +2571,7 @@ function toDebugString(obj) {
 var version = {
   // These placeholder strings will be replaced by grunt's `build` task.
   // They need to be double- or single-quoted.
-  full: '1.5.11',
+  full: '',
   major: 1,
   minor: 5,
   dot: 11,

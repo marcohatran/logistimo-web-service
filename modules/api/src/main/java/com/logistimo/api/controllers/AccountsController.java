@@ -29,8 +29,8 @@ import com.logistimo.api.builders.AccountBuilder;
 import com.logistimo.api.models.AccountModel;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.entities.auth.EntityAuthoriser;
+import com.logistimo.exception.ForbiddenAccessException;
 import com.logistimo.exception.InvalidServiceException;
-import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.logger.XLog;
 import com.logistimo.pagination.Navigator;
 import com.logistimo.pagination.PageParams;
@@ -102,7 +102,7 @@ public class AccountsController {
               accountingService.getAccounts(null, Long.valueOf(kioskId), Integer.valueOf(yr), sb, pageParams);
         }
       } else {
-        throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+        throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
       }
       navigator.setResultParams(results);
       results.setNumFound(-1);

@@ -22,24 +22,56 @@
  */
 
 var domainControllers = angular.module('domainControllers', []);
-domainControllers.controller('AddDomainController', ['$scope', 'domainService',
-    function ($scope, domainService) {
-        $scope.domainDesc = '';
+domainControllers.controller('AddDomainController', ['$scope', 'domainService','configService',
+    function ($scope, domainService, configService) {
+
+        $scope.init = function () {
+            $scope.dName = '';
+            $scope.domainDesc = '';
+            $scope.domainLocation = {country: "", state: "", district: ""};
+            $scope.timezone = '';
+        };
+
+        LocationController.call(this, $scope, configService);
+        TimezonesController.call(this,$scope, configService);
+
+        $scope.$watchCollection('domainLocation', function(newValue, oldValue) {
+            if(newValue.country != oldValue.country) {
+                $scope.domainLocation.state = "";
+                $scope.domainLocation.district = "";
+            } else if(newValue.state != oldValue.state) {
+                $scope.domainLocation.district = "";
+            }
+        });
+
+        $scope.init();
+
         $scope.createDomain = function () {
+            if(validateDomainParams()) {
+                $scope.showLoading();
+                domainService.createDomain($scope.dName, $scope.domainDesc, $scope.domainLocation, $scope.timezone).then(function (data) {
+                    $scope.showSuccess(data.data);
+                    $scope.init();
+                }).catch(function error(msg) {
+                    $scope.showErrorMsg(msg);
+                }).finally(function () {
+                    $scope.hideLoading();
+                });
+            }
+        };
+
+        function validateDomainParams() {
             if (checkNullEmpty($scope.dName)) {
-                $scope.showWarning("Domain Name cannot be blank.");
+                $scope.showWarning($scope.resourceBundle['domain.name.mandatory']);
+                return;
+            } else if(checkNullEmpty($scope.domainLocation.country)) {
+                $scope.showWarning($scope.resourceBundle['domain.country.mandatory']);
+                return;
+            } else if(checkNullEmpty($scope.timezone)) {
+                $scope.showWarning($scope.resourceBundle['domain.timezone.mandatory']);
                 return;
             }
-            $scope.showLoading();
-            domainService.createDomain($scope.dName, $scope.domainDesc).then(function (data) {
-                $scope.showSuccess(data.data);
-                $scope.dName = '';
-                $scope.domainDesc = '';
-            }).catch(function error(msg) {
-                $scope.showErrorMsg(msg);
-            }).finally(function () {
-                $scope.hideLoading();
-            });
-        };
+            return true;
+        }
     }
 ]);

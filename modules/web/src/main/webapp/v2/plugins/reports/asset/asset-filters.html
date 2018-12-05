@@ -103,22 +103,26 @@
                                          filter-model="filter.st" filter-type="state"
                                          ng-disabled="filter.mst || filter.entity"
                                          ng-if="cards.lc == undefined"></rpt-location-filter>
-                    <span ng-show="cards.lc == undefined && filter.entity" class="limit">{{resourceBundle['filter.disable.location']}}</span>
                     <rpt-location-filter place-holder="{{resourceBundle['select']}} district/county"
                                          filter-model="filter.dis" filter-type="district"
                                          ng-disabled="filter.mdis || filter.entity"
                                          ng-if="cards.lc == 'd'"></rpt-location-filter>
-                    <span ng-show="cards.lc == 'd' && filter.entity" class="limit">{{resourceBundle['filter.disable.location']}}</span>
                     <rpt-location-filter place-holder="{{resourceBundle['select']}} taluk"
                                          filter-model="filter.tlk" filter-type="taluk"
                                          ng-disabled="filter.mtlk || filter.entity"
                                          ng-if="cards.lc == 't'"></rpt-location-filter>
-                    <span ng-show="cards.lc == 't' && filter.entity" class="limit">{{resourceBundle['filter.disable.location']}}</span>
                     <rpt-location-filter place-holder="{{resourceBundle['select']}} city/village"
                                          filter-model="filter.cty" filter-type="city"
                                          ng-disabled="filter.mcty || filter.entity"
                                          ng-if="cards.lc == 'c'"></rpt-location-filter>
-                    <span ng-show="cards.lc == 'c' && filter.entity" class="limit">{{resourceBundle['filter.disable.location']}}</span>
+                    <span ng-show="filter.entity" class="limit">{{resourceBundle['filter.disable.location']}}</span>
+                    <select class="form-control mt10"
+                            ng-if="filter.st"
+                            ng-model="filter.location_by">
+                        <option ng-repeat="option in locationOptions"
+                                value="{{option.value}}">{{option.text}}
+                        </option>
+                    </select>
                 </div>
             </div>
         </div>

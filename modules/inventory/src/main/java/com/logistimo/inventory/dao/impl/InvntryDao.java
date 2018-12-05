@@ -414,7 +414,8 @@ public class InvntryDao implements IInvntryDao {
     }
     if (filters.getMatType() != IInvntry.ALL && (filters.getMatType() == IInvntry.BATCH_ENABLED
         || filters.getMatType() == IInvntry.BATCH_DISABLED)) {
-      queryBuilder.append(" AND MID IN (SELECT MATERIALID FROM MATERIAL WHERE BM = ").append(CharacterConstants.QUESTION);
+      queryBuilder.append(" AND MID IN (SELECT MATERIALID FROM MATERIAL WHERE BM = ")
+          .append(CharacterConstants.QUESTION);
       if (filters.getMatType() == IInvntry.BATCH_ENABLED) {
         params.add(String.valueOf(filters.getMatType()));
       } else {
@@ -441,10 +442,24 @@ public class InvntryDao implements IInvntryDao {
         }
         queryBuilder.append(CharacterConstants.C_BRACKET).append(CharacterConstants.C_BRACKET);
       }
-      if (!StringUtils.isEmpty(filters.getMaterialNameStartsWith())) {
-        queryBuilder.append(" AND M.UNAME LIKE ?");
-        params.add(filters.getMaterialNameStartsWith() + CharacterConstants.PERCENT);
+
+      if (StringUtils.isNotEmpty(filters.getMaterialQueryText())) {
+        StringBuilder materialSearchText = new StringBuilder();
+        if (QueryConstants.CONTAINS.equals(filters.getMaterialQueryType())) {
+          materialSearchText.append(CharacterConstants.PERCENT);
+        }
+        materialSearchText.append(filters.getMaterialQueryText())
+            .append(CharacterConstants.PERCENT);
+
+        queryBuilder.append(" AND (LOWER(M.NAME) LIKE ?");
+        params.add(materialSearchText.toString().toLowerCase());
+        if (StringUtils.isNotEmpty(String.valueOf(filters.includeMaterialDescriptionQuery()))) {
+          queryBuilder.append(" OR LOWER(M.DESCRIPTION) LIKE ?");
+          params.add(materialSearchText.toString().toLowerCase());
+        }
+        queryBuilder.append(")");
       }
+
     }
 
     if (filters.getDomainId() != null) {
@@ -493,7 +508,8 @@ public class InvntryDao implements IInvntryDao {
     //Added for if modified since changes
     if (filters.getUpdatedSince() != null) {
       queryBuilder.append(
-          " AND (I.UON >= ? OR M.MATERIALID IN (SELECT MAT.MATERIALID FROM MATERIAL MAT WHERE MAT.LASTUPDATED >=? )) ");
+          " AND (I.UON >= ? OR M.MATERIALID IN (SELECT MAT.MATERIALID FROM MATERIAL MAT WHERE"
+              + " MAT.LASTUPDATED >=? )) ");
       String updatedSinceStr = sdf.format(filters.getUpdatedSince());
       params.add(updatedSinceStr);
       params.add(updatedSinceStr);
@@ -582,7 +598,9 @@ public class InvntryDao implements IInvntryDao {
     Query query = null;
     List<String> parameters = new ArrayList<>(1);
     try {
-      StringBuilder sqlQuery = new StringBuilder("SELECT 1 FROM INVNTRY I, MATERIAL M WHERE I.MID = M.MATERIALID AND M.BM = 1 AND I.STK > 0 AND I.KID = ").append(CharacterConstants.QUESTION);
+      StringBuilder sqlQuery = new StringBuilder("SELECT 1 FROM INVNTRY I, MATERIAL M WHERE "
+          + "I.MID = M.MATERIALID AND M.BM = 1 AND I.STK > 0 AND I.KID = ")
+          .append(CharacterConstants.QUESTION);
       parameters.add(String.valueOf(kioskId));
       sqlQuery.append( " LIMIT 1");
       query = pm.newQuery("javax.jdo.query.SQL", sqlQuery.toString());
@@ -617,7 +635,8 @@ public class InvntryDao implements IInvntryDao {
     Query query = null;
     List<String> parameters = new ArrayList<>(1);
     try {
-      StringBuilder sqlQuery = new StringBuilder("SELECT 1 FROM INVNTRY I, MATERIAL M WHERE I.MID = M.MATERIALID AND M.MATERIALID = ").append(CharacterConstants.QUESTION);
+      StringBuilder sqlQuery = new StringBuilder("SELECT 1 FROM INVNTRY I, MATERIAL M WHERE I.MID ="
+          + " M.MATERIALID AND M.MATERIALID = ").append(CharacterConstants.QUESTION);
       parameters.add(String.valueOf(materialId));
       sqlQuery.append(" AND I.STK > 0 LIMIT 1");
       query = pm.newQuery("javax.jdo.query.SQL", sqlQuery.toString());

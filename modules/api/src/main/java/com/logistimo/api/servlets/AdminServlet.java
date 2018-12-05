@@ -42,9 +42,6 @@ import com.logistimo.domains.processor.DeleteProcessor;
 import com.logistimo.domains.service.DomainsService;
 import com.logistimo.domains.service.impl.DomainsServiceImpl;
 import com.logistimo.entity.IBBoard;
-import com.logistimo.entity.IDownloaded;
-import com.logistimo.entity.IUploaded;
-import com.logistimo.entity.IUploadedMsgLog;
 import com.logistimo.events.entity.IEvent;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.IInvntryBatch;
@@ -61,8 +58,6 @@ import com.logistimo.orders.entity.IOrder;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.PagedExec;
 import com.logistimo.pagination.QueryParams;
-import com.logistimo.reports.entity.slices.IDaySlice;
-import com.logistimo.reports.entity.slices.IMonthSlice;
 import com.logistimo.services.impl.PMF;
 import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.users.entity.IUserAccount;
@@ -116,18 +111,6 @@ public class AdminServlet extends HttpServlet {
 
   // URLs
   private static final String URL_PROD = "https://logistimo-web.appspot.com";
-  private static final String URL_BACKUPDATA = "/_ah/datastore_admin/backup.create";
-
-  private static final String PROD_APP_NAME = "logistimo-web";
-
-  // Classes not be backed up
-  private static final String[]
-      DO_NOT_BACKUP_LIST =
-      {"ShardState", "MapReduceState", JDOUtils.getImplClass(IDaySlice.class).getSimpleName(),
-          JDOUtils.getImplClass(IMonthSlice.class).getSimpleName(),
-          JDOUtils.getImplClass(IDownloaded.class).getSimpleName(),
-          JDOUtils.getImplClass(IUploaded.class).getSimpleName(),
-          JDOUtils.getImplClass(IUploadedMsgLog.class).getSimpleName()};
 
   private static final long serialVersionUID = 1L;
 
@@ -248,7 +231,7 @@ public class AdminServlet extends HttpServlet {
     try {
       queryStr = URLDecoder.decode(queryStr, "UTF-8");
     } catch (UnsupportedEncodingException e) {
-      e.printStackTrace();
+      xLogger.warn("Error while deleting the entities based on query and its params", e);
       return;
     }
     xLogger.info("queryStr: {0}, paramsCSV: {1}", queryStr, paramsCSV);
@@ -363,7 +346,7 @@ public class AdminServlet extends HttpServlet {
         paramsStr += "  import java.util.Date;";
         xLogger.info("paramsStr: {0}", paramsStr);
       } catch (ParseException e) {
-        e.printStackTrace();
+        xLogger.warn("Error while deleting the entities by date", e);
         return;
       }
     }
@@ -379,8 +362,7 @@ public class AdminServlet extends HttpServlet {
           DeleteProcessor.class.getName(), null, null);
     } catch (Exception e) {
       xLogger.severe("{0} when doing paged-exec to delete BBoard entries in domain {1}: {2}",
-          e.getClass().getName(), domainId, e.getMessage());
-      e.printStackTrace();
+          e.getClass().getName(), domainId, e.getMessage(), e);
     }
     xLogger.fine("Exiting deleteEntitiesByDate");
   }
@@ -437,7 +419,7 @@ public class AdminServlet extends HttpServlet {
         pw.write("Invalid name or password");
         pw.close();
       } catch (IOException e) {
-        e.printStackTrace();
+        xLogger.warn("Invalid name or password", e);
       }
       return;
     }
@@ -449,7 +431,7 @@ public class AdminServlet extends HttpServlet {
         pw.write("Invalid email. Please provide an email");
         pw.close();
       } catch (IOException e) {
-        e.printStackTrace();
+        xLogger.warn("Error while getting email", e);
       }
       return;
     }
@@ -525,7 +507,6 @@ public class AdminServlet extends HttpServlet {
           d.setOwnerId(userId);
           d.setReportEnabled(true);
           dId = ds.addDomain(d);
-          ds.createDefaultDomainPermissions(dId);
           pw.append("Create a Default domain with ID ").append(String.valueOf(dId)).append("\n\n\n");
         }
         // Create user

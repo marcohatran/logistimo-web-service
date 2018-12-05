@@ -28,11 +28,11 @@ import com.logistimo.api.builders.BulletinBoardBuilder;
 import com.logistimo.api.builders.ConfigurationModelBuilder;
 import com.logistimo.api.builders.CurrentUserBuilder;
 import com.logistimo.api.builders.CustomReportsBuilder;
+import com.logistimo.api.builders.FormsConfigBuilder;
 import com.logistimo.api.builders.NotificationBuilder;
 import com.logistimo.api.builders.UserBuilder;
 import com.logistimo.api.builders.UserMessageBuilder;
 import com.logistimo.api.constants.ConfigConstants;
-import com.logistimo.api.migrators.CRConfigMigrator;
 import com.logistimo.api.models.AccessLogModel;
 import com.logistimo.api.models.CurrentUserModel;
 import com.logistimo.api.models.MenuStatsModel;
@@ -47,6 +47,7 @@ import com.logistimo.api.models.configuration.BulletinBoardConfigModel;
 import com.logistimo.api.models.configuration.CapabilitiesConfigModel;
 import com.logistimo.api.models.configuration.CustomReportsConfigModel;
 import com.logistimo.api.models.configuration.DashboardConfigModel;
+import com.logistimo.api.models.configuration.FormsConfigModel;
 import com.logistimo.api.models.configuration.GeneralConfigModel;
 import com.logistimo.api.models.configuration.InventoryConfigModel;
 import com.logistimo.api.models.configuration.NotificationsConfigModel;
@@ -57,7 +58,9 @@ import com.logistimo.api.models.configuration.StockRebalancingConfigModel;
 import com.logistimo.api.models.configuration.SupportConfigModel;
 import com.logistimo.api.models.configuration.TagsConfigModel;
 import com.logistimo.api.request.AddCustomReportRequestObj;
+import com.logistimo.api.util.FileValidationUtil;
 import com.logistimo.auth.GenericAuthoriser;
+import com.logistimo.auth.SecurityConstants;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.communications.MessageHandlingException;
 import com.logistimo.config.entity.IConfig;
@@ -75,6 +78,7 @@ import com.logistimo.config.models.DemandBoardConfig;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.EventSummaryConfigModel;
 import com.logistimo.config.models.EventsConfig;
+import com.logistimo.config.models.FormsConfig;
 import com.logistimo.config.models.InventoryConfig;
 import com.logistimo.config.models.LeadTimeAvgConfig;
 import com.logistimo.config.models.OptimizerConfig;
@@ -103,7 +107,6 @@ import com.logistimo.exception.InvalidDataException;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exception.InvalidTaskException;
 import com.logistimo.exception.TaskSchedulingException;
-import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.inventory.service.InventoryManagementService;
 import com.logistimo.logger.XLog;
@@ -174,6 +177,13 @@ public class DomainConfigController {
   private static final String INVENTORY_CONFIG_FETCH_ERROR = "inventory.config.fetch.error";
   private static final String INVENTORY_CONFIG_UPDATE_ERROR = "inventory.config.update.error";
   private static final String CAPABILITIES_CONFIG_FETCH_ERROR = "capabilities.config.fetch.error";
+  private static final String ORDERS_CONFIG_UPDATE_ERROR = "orders.config.update.error";
+  private static final String NOTIFICATION_CONFIG_UPDATE_ERROR = "notif.config.update.error";
+  private static final String NOTIFICATION_CONFIG_FETCH_ERROR = "notif.config.fetch.error";
+  private static final String NOTIFICATION_CONFIG_DELETE_ERROR = "notif.delete.error";
+  private static final String BULLETIN_BOARD_CONFIG_UPDATE_ERROR = "bulletin.config.update.error";
+
+  private static final String ASSET_METADATA_FETCH_ERROR = "Error in reading asset meta data.";
 
 
   private UserMessageBuilder userMessageBuilder;
@@ -185,6 +195,7 @@ public class DomainConfigController {
   private NotificationBuilder notificationBuilder;
   private ConfigurationMgmtService configurationMgmtService;
   private UsersService usersService;
+  private FormsConfigBuilder formsConfigBuilder;
 
   @Autowired
   private InventoryManagementService inventoryManagementService;
@@ -229,48 +240,14 @@ public class DomainConfigController {
     this.configurationMgmtService = configurationMgmtService;
   }
 
+  @Autowired
+  public void setFormsConfigBuilder(FormsConfigBuilder formsConfigBuilder) {
+    this.formsConfigBuilder = formsConfigBuilder;
+  }
 
   @Autowired
   public void setUsersService(UsersService usersService) {
     this.usersService = usersService;
-  }
-
-  @RequestMapping(value = "/config/migrator/")
-  public
-  @ResponseBody
-  void updateConfig(@RequestParam(required = false) String key) {
-    boolean isSuccess;
-    if (key == null) {
-      isSuccess = CRConfigMigrator.update();
-    } else if (key.contains(CharacterConstants.COMMA)) {
-      isSuccess = CRConfigMigrator.update(Arrays.asList(key.split(CharacterConstants.COMMA)));
-    } else {
-      isSuccess = CRConfigMigrator.update(key);
-    }
-    if (isSuccess) {
-      xLogger.info("Migrating configuration completed succesfully.");
-    } else {
-      xLogger.info("Error in migrating configuration");
-    }
-  }
-
-  @RequestMapping(value = "/irmigrator/")
-  public
-  @ResponseBody
-  void updateAutoPostConfig(@RequestParam(required = false) String key) {
-    boolean isSuccess;
-    if (key == null) {
-      isSuccess = IRPostConfigMigrator.update();
-    } else if (key.contains(CharacterConstants.COMMA)) {
-      isSuccess = IRPostConfigMigrator.update(Arrays.asList(key.split(CharacterConstants.COMMA)));
-    } else {
-      isSuccess = IRPostConfigMigrator.update(key);
-    }
-    if (isSuccess) {
-      xLogger.info("Migrating configuration completed successfully.");
-    } else {
-      xLogger.info("Error in migrating configuration");
-    }
   }
 
   @RequestMapping(value = "/tags/materials", method = RequestMethod.GET)
@@ -500,15 +477,16 @@ public class DomainConfigController {
     SecureUserDetails sUser = getUserDetails();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
+    String updateTagsConfigErrorMessage = "tags.config.update.error";
     if (model == null) {
-      throw new BadRequestException(backendMessages.getString("tags.config.update.error"));
+      throw new BadRequestException(backendMessages.getString(updateTagsConfigErrorMessage));
     }
     String userId = sUser.getUsername();
     Long domainId = SecurityUtils.getCurrentDomainId();
     try {
       if (domainId == null) {
         xLogger.severe("Error in updating tags configuration");
-        throw new InvalidServiceException(backendMessages.getString("tags.config.update.error"));
+        throw new InvalidServiceException(backendMessages.getString(updateTagsConfigErrorMessage));
       }
       ConfigContainer cc = getDomainConfig(domainId, userId);
       cc.dc.addDomainData(ConfigConstants.TAGS, generateUpdateList(userId));
@@ -569,7 +547,7 @@ public class DomainConfigController {
           "SET TAGS ", domainId, sUser.getUsername());
     } catch (ServiceException | ConfigurationException e) {
       xLogger.severe("Error in updating tags configuration", e);
-      throw new InvalidServiceException(backendMessages.getString("tags.config.update.error"));
+      throw new InvalidServiceException(backendMessages.getString(updateTagsConfigErrorMessage));
     }
     return backendMessages.getString("tags.config.update.success");
   }
@@ -633,7 +611,7 @@ public class DomainConfigController {
       return assets.getAssetsNameByType(Integer.valueOf(type));
     } catch (ConfigurationException e) {
       xLogger.severe("Error in reading Asset System Configuration", e);
-      throw new InvalidServiceException("Error in reading asset meta data.");
+      throw new InvalidServiceException(ASSET_METADATA_FETCH_ERROR);
     }
   }
 
@@ -646,7 +624,7 @@ public class DomainConfigController {
       return assets.getManufacturersByType(Integer.valueOf(type));
     } catch (ConfigurationException e) {
       xLogger.severe("Error in reading Asset System Configuration for manufacturers", e);
-      throw new InvalidServiceException("Error in reading asset meta data.");
+      throw new InvalidServiceException(ASSET_METADATA_FETCH_ERROR);
     }
   }
 
@@ -659,7 +637,7 @@ public class DomainConfigController {
       return assets.getAllWorkingStatus();
     } catch (ConfigurationException e) {
       xLogger.severe("Error in reading Asset System Configuration for manufacturers", e);
-      throw new InvalidServiceException("Error in reading asset meta data.");
+      throw new InvalidServiceException(ASSET_METADATA_FETCH_ERROR);
     }
   }
 
@@ -671,7 +649,7 @@ public class DomainConfigController {
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (!GenericAuthoriser.authoriseAdmin()) {
-      throw new UnauthorizedException(
+      throw new ForbiddenAccessException(
           backendMessages.getString(backendMessages.getString(PERMISSION_DENIED)));
     }
     if (assetConfigModel == null) {
@@ -759,7 +737,7 @@ public class DomainConfigController {
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (!GenericAuthoriser.authoriseAdmin()) {
-      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
+      throw new ForbiddenAccessException(backendMessages.getString(PERMISSION_DENIED));
     }
     if (model == null) {
       xLogger.severe("Error in updating Accounting configuration");
@@ -800,7 +778,7 @@ public class DomainConfigController {
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (!GenericAuthoriser.authoriseAdmin()) {
-      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
+      throw new ForbiddenAccessException(backendMessages.getString(PERMISSION_DENIED));
     }
     String userId = sUser.getUsername();
     Long domainId = SecurityUtils.getCurrentDomainId();
@@ -917,7 +895,7 @@ public class DomainConfigController {
     String timezone = sUser.getTimezone();
     ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (!GenericAuthoriser.authoriseAdmin()) {
-      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
+      throw new ForbiddenAccessException(backendMessages.getString(PERMISSION_DENIED));
     }
     String userId = sUser.getUsername();
     Long domainId = SecurityUtils.getCurrentDomainId();
@@ -931,6 +909,7 @@ public class DomainConfigController {
           generateSyncConfig(
               model); // Generate SyncConfig from the model and set it in domain config object.
       cc.dc.setSyncConfig(syncCfg);
+      cc.dc.setTwoFactorAuthenticationEnabled(model.isTwoFactorAuthenticationEnabled());
       if (StringUtils.isNotEmpty(model.ro)) {
         CapabilityConfig cconf = new CapabilityConfig();
         cconf.setCapabilities(model.tm);
@@ -1010,13 +989,13 @@ public class DomainConfigController {
     ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     try {
       if (domainId == null) {
-        xLogger.severe("Error in fetching Inventory configuration");
+        xLogger.severe(backendMessages.getString(INVENTORY_CONFIG_FETCH_ERROR));
         throw new InvalidServiceException(
             backendMessages.getString(INVENTORY_CONFIG_FETCH_ERROR));
       }
       return configurationModelBuilder.buildInventoryConfigModel(dc, locale, sUser.getTimezone());
     } catch (ConfigurationException | ObjectNotFoundException e) {
-      xLogger.severe("Error in fetching Inventory configuration", e);
+      xLogger.severe(backendMessages.getString(INVENTORY_CONFIG_FETCH_ERROR), e);
       throw new InvalidServiceException(backendMessages.getString(INVENTORY_CONFIG_FETCH_ERROR));
     }
   }
@@ -1092,13 +1071,13 @@ public class DomainConfigController {
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (!GenericAuthoriser.authoriseAdmin()) {
-      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
+      throw new ForbiddenAccessException(backendMessages.getString(PERMISSION_DENIED));
     }
     String userId = sUser.getUsername();
     Long domainId = SecurityUtils.getCurrentDomainId();
     try {
       if (domainId == null) {
-        xLogger.severe("Error in updating Inventory configuration");
+        xLogger.severe(backendMessages.getString(INVENTORY_CONFIG_UPDATE_ERROR));
         throw new InvalidServiceException(
             backendMessages.getString(INVENTORY_CONFIG_UPDATE_ERROR));
       }
@@ -1149,12 +1128,13 @@ public class DomainConfigController {
         inventoryConfig.setCrimt(true);
         inventoryConfig.setMtagRetIncRsns(configurationModelBuilder.buildReasonConfigByTagMap(
             model.rimt));
-        }
+      }
       boolean cromt = model.cromt;
       if (cromt) {
         inventoryConfig.setCromt(true);
         inventoryConfig.setMtagRetOutRsns(configurationModelBuilder.buildReasonConfigByTagMap(model.romt));
       }
+      inventoryConfig.setTransactionTypesWithReasonMandatory(model.getTransactionTypesWithReasonMandatory());
       inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_ISSUE, configurationModelBuilder.buildMatStatusConfig(
           model.idf, model.iestm, model.ism));
       inventoryConfig.setMatStatusConfigByType(ITransaction.TYPE_RECEIPT, configurationModelBuilder.buildMatStatusConfig(
@@ -1324,10 +1304,10 @@ public class DomainConfigController {
           "UPDATE INVENTORY", domainId, sUser.getUsername());
       xLogger.info(cc.dc.toJSONSring());
     } catch (ServiceException | ObjectNotFoundException e) {
-      xLogger.severe("Error in updating Inventory configuration");
+      xLogger.severe(backendMessages.getString(INVENTORY_CONFIG_UPDATE_ERROR));
       throw new InvalidServiceException(backendMessages.getString(INVENTORY_CONFIG_UPDATE_ERROR));
     } catch (ConfigurationException e) {
-      xLogger.severe("Error in updating Inventory configuration");
+      xLogger.severe(backendMessages.getString(INVENTORY_CONFIG_UPDATE_ERROR));
     }
     return backendMessages.getString("inventory.config.update.success");
   }
@@ -1342,14 +1322,14 @@ public class DomainConfigController {
     Long domainId = SecurityUtils.getCurrentDomainId();
     try {
       if (domainId == null) {
-        xLogger.severe("Error in fetching Inventory configuration");
+        xLogger.severe(backendMessages.getString(INVENTORY_CONFIG_FETCH_ERROR));
         throw new InvalidServiceException(
-            backendMessages.getString("inventory.config.fetch.error"));
+            backendMessages.getString(INVENTORY_CONFIG_FETCH_ERROR));
       }
       return configurationModelBuilder.buildOrderConfigModel(request, domainId, locale, sUser.getTimezone());
     } catch (ConfigurationException | ObjectNotFoundException | UnsupportedEncodingException e) {
-      xLogger.severe("Error in fetching Inventory configuration", e);
-      throw new InvalidServiceException(backendMessages.getString("inventory.config.fetch.error"));
+      xLogger.severe(backendMessages.getString(INVENTORY_CONFIG_FETCH_ERROR), e);
+      throw new InvalidServiceException(backendMessages.getString(INVENTORY_CONFIG_FETCH_ERROR));
     }
   }
 
@@ -1362,14 +1342,14 @@ public class DomainConfigController {
     BlobstoreService blobstoreService = AppFactory.get().getBlobstoreService();
     ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (!GenericAuthoriser.authoriseAdmin()) {
-      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
+      throw new ForbiddenAccessException(backendMessages.getString(PERMISSION_DENIED));
     }
     String userId = sUser.getUsername();
     Long domainId = SecurityUtils.getCurrentDomainId();
     try {
       if (domainId == null) {
-        xLogger.severe("Error in updating Orders configuration");
-        throw new InvalidServiceException(backendMessages.getString("orders.config.update.error"));
+        xLogger.severe(backendMessages.getString(ORDERS_CONFIG_UPDATE_ERROR));
+        throw new InvalidServiceException(backendMessages.getString(ORDERS_CONFIG_UPDATE_ERROR));
       }
       ConfigContainer cc = getDomainConfig(domainId, userId);
       DemandBoardConfig dbc = cc.dc.getDemandBoardConfig();
@@ -1383,9 +1363,9 @@ public class DomainConfigController {
         cc.dc.setOrdersConfig(oc);
       }
       if (model == null) {
-        xLogger.severe("Error in updating Orders configuration");
+        xLogger.severe(backendMessages.getString(ORDERS_CONFIG_UPDATE_ERROR));
         throw new ConfigurationServiceException(
-            backendMessages.getString("orders.config.update.error"));
+            backendMessages.getString(ORDERS_CONFIG_UPDATE_ERROR));
       }
       cc.dc.addDomainData(ConfigConstants.ORDERS, generateUpdateList(userId));
       cc.dc.setOrderGeneration(model.og);
@@ -1501,7 +1481,7 @@ public class DomainConfigController {
       xLogger.info(cc.dc.toJSONSring());
     } catch (ServiceException | ConfigurationException e) {
       xLogger.severe("Error in updating Orders configuration", e);
-      throw new InvalidServiceException(backendMessages.getString("orders.config.update.error"));
+      throw new InvalidServiceException(backendMessages.getString(ORDERS_CONFIG_UPDATE_ERROR));
     }
     return backendMessages.getString("orders.config.update.success");
   }
@@ -1514,14 +1494,14 @@ public class DomainConfigController {
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (!GenericAuthoriser.authoriseAdmin()) {
-      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
+      throw new ForbiddenAccessException(backendMessages.getString(PERMISSION_DENIED));
     }
     String userId = sUser.getUsername();
     Long domainId = SecurityUtils.getCurrentDomainId();
     try {
       if (domainId == null) {
-        xLogger.severe("Error in updating Notification configuration");
-        throw new InvalidServiceException(backendMessages.getString("notif.config.update.error"));
+        xLogger.severe(backendMessages.getString(NOTIFICATION_CONFIG_UPDATE_ERROR));
+        throw new InvalidServiceException(backendMessages.getString(NOTIFICATION_CONFIG_UPDATE_ERROR));
       }
       EventsConfig ec = getEventsConfig(model, domainId, backendMessages);
       ConfigContainer cc = getDomainConfig(domainId, userId);
@@ -1537,8 +1517,8 @@ public class DomainConfigController {
           "UPDATE NOTIFICATIONS", domainId, sUser.getUsername());
       xLogger.info(cc.dc.toJSONSring());
     } catch (ServiceException | ConfigurationException e) {
-      xLogger.severe("Error in updating Notification configuration", e);
-      throw new InvalidServiceException(backendMessages.getString("notif.config.update.error"));
+      xLogger.severe(backendMessages.getString(NOTIFICATION_CONFIG_UPDATE_ERROR), e);
+      throw new InvalidServiceException(backendMessages.getString(NOTIFICATION_CONFIG_UPDATE_ERROR));
     }
     if (model.add) {
       return backendMessages.getString("notif.config.create.success");
@@ -1560,16 +1540,16 @@ public class DomainConfigController {
     try {
       String json = notificationBuilder.buildModel(model, eventSpecJson);
       if (json == null || json.isEmpty()) {
-        xLogger.severe("Error in updating Notification configuration");
+        xLogger.severe(backendMessages.getString(NOTIFICATION_CONFIG_UPDATE_ERROR));
         throw new ConfigurationServiceException(
-            backendMessages.getString("notif.config.update.error"));
+            backendMessages.getString(NOTIFICATION_CONFIG_UPDATE_ERROR));
       }
 
       ec = new EventsConfig(json);
     } catch (JSONException e) {
-      xLogger.severe("Error in updating Notification configuration", e);
+      xLogger.severe(backendMessages.getString(NOTIFICATION_CONFIG_UPDATE_ERROR), e);
       throw new ConfigurationServiceException(
-          backendMessages.getString("notif.config.update.error"));
+          backendMessages.getString(NOTIFICATION_CONFIG_UPDATE_ERROR));
     }
     return ec;
   }
@@ -1584,22 +1564,22 @@ public class DomainConfigController {
     Long domainId = SecurityUtils.getCurrentDomainId();
     DomainConfig dc = DomainConfig.getInstance(domainId);
     if (dc == null) {
-      xLogger.severe("Error in fetching Notification configuration");
+      xLogger.severe(backendMessages.getString(NOTIFICATION_CONFIG_FETCH_ERROR));
       throw new ConfigurationServiceException(
-          backendMessages.getString("notif.config.fetch.error"));
+          backendMessages.getString(NOTIFICATION_CONFIG_FETCH_ERROR));
     }
     try {
       EventsConfig ec = dc.getEventsConfig();
       if (ec == null) {
-        xLogger.severe("Error in fetching Notification configuration");
+        xLogger.severe(backendMessages.getString(NOTIFICATION_CONFIG_FETCH_ERROR));
         throw new ConfigurationServiceException(
-            backendMessages.getString("notif.config.fetch.error"));
+            backendMessages.getString(NOTIFICATION_CONFIG_FETCH_ERROR));
       }
       return notificationBuilder.buildNotifConfigModel(ec.toJSONString(), t, domainId, locale, sUser.getTimezone());
     } catch (ServiceException | JSONException | ObjectNotFoundException e) {
-      xLogger.severe("Error in fetching Notification configuration", e);
+      xLogger.severe(backendMessages.getString(NOTIFICATION_CONFIG_FETCH_ERROR), e);
       throw new ConfigurationServiceException(
-          backendMessages.getString("notif.config.fetch.error"));
+          backendMessages.getString(NOTIFICATION_CONFIG_FETCH_ERROR));
     }
   }
 
@@ -1611,7 +1591,7 @@ public class DomainConfigController {
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (!GenericAuthoriser.authoriseAdmin()) {
-      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
+      throw new ForbiddenAccessException(backendMessages.getString(PERMISSION_DENIED));
     }
     String userId = sUser.getUsername();
     Long domainId = SecurityUtils.getCurrentDomainId();
@@ -1622,8 +1602,8 @@ public class DomainConfigController {
     String eventSpecJson = null;
     boolean delete = false;
     if (domainId == null) {
-      xLogger.severe("Error in deleting Notification");
-      throw new InvalidServiceException(backendMessages.getString("notif.delete.error"));
+      xLogger.severe(backendMessages.getString(NOTIFICATION_CONFIG_DELETE_ERROR));
+      throw new InvalidServiceException(backendMessages.getString(NOTIFICATION_CONFIG_DELETE_ERROR));
     }
     try {
       try {
@@ -1638,27 +1618,27 @@ public class DomainConfigController {
         c.setLastUpdated(new Date());
         delete = true;
       } catch (ConfigurationException e) {
-        xLogger.severe("Error in deleting Notification", e);
-        throw new InvalidServiceException(backendMessages.getString("notif.delete.error"));
+        xLogger.severe(backendMessages.getString(NOTIFICATION_CONFIG_DELETE_ERROR), e);
+        throw new InvalidServiceException(backendMessages.getString(NOTIFICATION_CONFIG_DELETE_ERROR));
       }
       try {
         dc = DomainConfig.getInstance(domainId);
         ec = dc.getEventsConfig();
         eventSpecJson = ec.toJSONString();
       } catch (JSONException e) {
-        xLogger.severe("Error in deleting Notification", e);
+        xLogger.severe(backendMessages.getString(NOTIFICATION_CONFIG_DELETE_ERROR), e);
       }
       String json = notificationBuilder.deleteModel(model, eventSpecJson);
 
       if (json == null || json.isEmpty()) {
-        xLogger.severe("Error in deleting Notification");
-        throw new InvalidServiceException(backendMessages.getString("notif.delete.error"));
+        xLogger.severe(backendMessages.getString(NOTIFICATION_CONFIG_DELETE_ERROR));
+        throw new InvalidServiceException(backendMessages.getString(NOTIFICATION_CONFIG_DELETE_ERROR));
       }
       try {
         ec = new EventsConfig(json);
       } catch (JSONException e) {
-        xLogger.severe("Error in deleting Notification", e);
-        throw new InvalidServiceException(backendMessages.getString("notif.delete.error"));
+        xLogger.severe(backendMessages.getString(NOTIFICATION_CONFIG_DELETE_ERROR), e);
+        throw new InvalidServiceException(backendMessages.getString(NOTIFICATION_CONFIG_DELETE_ERROR));
       }
       dc.setEventsConfig(ec);
       ConfigContainer cc = new ConfigContainer();
@@ -1669,8 +1649,8 @@ public class DomainConfigController {
       xLogger.info("AUDITLOG \t {0} \t {1} \t CONFIGURATION \t " +
           "DELETE NOTIFICATION", domainId, sUser.getUsername());
     } catch (ServiceException e) {
-      xLogger.severe("Error in deleting Notification", e);
-      throw new InvalidServiceException(backendMessages.getString("notif.delete.error"));
+      xLogger.severe(backendMessages.getString(NOTIFICATION_CONFIG_DELETE_ERROR), e);
+      throw new InvalidServiceException(backendMessages.getString(NOTIFICATION_CONFIG_DELETE_ERROR));
     }
     return backendMessages.getString("notif.delete.success");
   }
@@ -1697,7 +1677,7 @@ public class DomainConfigController {
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (!GenericAuthoriser.authoriseAdmin()) {
-      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
+      throw new ForbiddenAccessException(backendMessages.getString(PERMISSION_DENIED));
     }
     try {
       Date startDate = null;
@@ -1747,17 +1727,17 @@ public class DomainConfigController {
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (!GenericAuthoriser.authoriseAdmin()) {
-      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
+      throw new ForbiddenAccessException(backendMessages.getString(PERMISSION_DENIED));
     }
     if (model == null) {
-      xLogger.severe("Error in updating bulletin board configuration");
-      throw new BadRequestException(backendMessages.getString("bulletin.config.update.error"));
+      xLogger.severe(backendMessages.getString(BULLETIN_BOARD_CONFIG_UPDATE_ERROR));
+      throw new BadRequestException(backendMessages.getString(BULLETIN_BOARD_CONFIG_UPDATE_ERROR));
     }
     String userId = sUser.getUsername();
     Long domainId = SecurityUtils.getCurrentDomainId();
     if (domainId == null) {
-      xLogger.severe("Error in updating bulletin board configuration");
-      throw new InvalidServiceException(backendMessages.getString("bulletin.config.update.error"));
+      xLogger.severe(backendMessages.getString(BULLETIN_BOARD_CONFIG_UPDATE_ERROR));
+      throw new InvalidServiceException(backendMessages.getString(BULLETIN_BOARD_CONFIG_UPDATE_ERROR));
     }
     try {
       ConfigContainer cc = getDomainConfig(domainId, userId);
@@ -1771,8 +1751,8 @@ public class DomainConfigController {
           "UPDATE BULLETINBOARD", domainId, sUser.getUsername());
       xLogger.info(cc.dc.toJSONSring());
     } catch (ServiceException | ConfigurationException e) {
-      xLogger.severe("Error in updating bulletin board configuration", e);
-      throw new InvalidServiceException(backendMessages.getString("bulletin.config.update.error"));
+      xLogger.severe(backendMessages.getString(BULLETIN_BOARD_CONFIG_UPDATE_ERROR), e);
+      throw new InvalidServiceException(backendMessages.getString(BULLETIN_BOARD_CONFIG_UPDATE_ERROR));
     }
     return backendMessages.getString("bulletin.config.update.success");
   }
@@ -1819,7 +1799,7 @@ public class DomainConfigController {
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (!GenericAuthoriser.authoriseAdmin()) {
-      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
+      throw new ForbiddenAccessException(backendMessages.getString(PERMISSION_DENIED));
     }
     String userId = sUser.getUsername();
     Long domainId = SecurityUtils.getCurrentDomainId();
@@ -1852,7 +1832,7 @@ public class DomainConfigController {
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (!GenericAuthoriser.authoriseAdmin()) {
-      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
+      throw new ForbiddenAccessException(backendMessages.getString(PERMISSION_DENIED));
     }
     Long domainId = SecurityUtils.getCurrentDomainId();
     if (domainId == null) {
@@ -1911,7 +1891,7 @@ public class DomainConfigController {
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (!GenericAuthoriser.authoriseAdmin()) {
-      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
+      throw new ForbiddenAccessException(backendMessages.getString(PERMISSION_DENIED));
     }
     BlobstoreService blobstoreService = AppFactory.get().getBlobstoreService();
     String fullURL = request.getServletPath() + request.getPathInfo();
@@ -1963,7 +1943,7 @@ public class DomainConfigController {
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (!GenericAuthoriser.authoriseAdmin()) {
-      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
+      throw new ForbiddenAccessException(backendMessages.getString(PERMISSION_DENIED));
     }
     if (addCustomReportRequestObj == null || addCustomReportRequestObj.customReport == null
         || addCustomReportRequestObj.config == null) {
@@ -2041,7 +2021,7 @@ public class DomainConfigController {
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (!GenericAuthoriser.authoriseAdmin()) {
-      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
+      throw new ForbiddenAccessException(backendMessages.getString(PERMISSION_DENIED));
     }
     String userId = sUser.getUsername();
     Long domainId = SecurityUtils.getCurrentDomainId();
@@ -2161,11 +2141,12 @@ public class DomainConfigController {
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (!GenericAuthoriser.authoriseAdmin()) {
-      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
+      throw new ForbiddenAccessException(backendMessages.getString(PERMISSION_DENIED));
     }
     if (model == null) {
       throw new BadRequestException("Error in updating Custom Report");
     }
+    FileValidationUtil.validateUploadFile(model.fn.substring(model.fn.lastIndexOf(".")+1));
     String userId = sUser.getUsername();
     Long domainId = SecurityUtils.getCurrentDomainId();
     if (domainId == null) {
@@ -2327,7 +2308,7 @@ public class DomainConfigController {
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (!GenericAuthoriser.authoriseAdmin()) {
-      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
+      throw new ForbiddenAccessException(backendMessages.getString(PERMISSION_DENIED));
     }
     String userId = sUser.getUsername();
     Long domainId = SecurityUtils.getCurrentDomainId();
@@ -2348,7 +2329,7 @@ public class DomainConfigController {
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (!GenericAuthoriser.authoriseAdmin()) {
-      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
+      throw new ForbiddenAccessException(backendMessages.getString(PERMISSION_DENIED));
     }
     String userId = sUser.getUsername();
     Long domainId = SecurityUtils.getCurrentDomainId();
@@ -2565,7 +2546,7 @@ public class DomainConfigController {
     SecureUserDetails sUser = getUserDetails();
     ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, sUser.getLocale());
     if(!GenericAuthoriser.authoriseAdmin()) {
-      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
+      throw new ForbiddenAccessException(backendMessages.getString(PERMISSION_DENIED));
     }
     Long domainId = SecurityUtils.getCurrentDomainId();
     ConfigContainer cc = getDomainConfig(domainId, sUser.getUsername());
@@ -2583,7 +2564,7 @@ public class DomainConfigController {
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     if (!GenericAuthoriser.authoriseAdmin()) {
-      throw new UnauthorizedException(backendMessages.getString(PERMISSION_DENIED));
+      throw new ForbiddenAccessException(backendMessages.getString(PERMISSION_DENIED));
     }
     try {
       String userId = sUser.getUsername();
@@ -2741,6 +2722,46 @@ public class DomainConfigController {
       xLogger.warn("Error in fetching reasons for transactions", e);
     }
     return null;
+  }
+
+  @RequestMapping(value = "/forms", method = RequestMethod.GET)
+  public
+  @ResponseBody
+  FormsConfigModel getFormsConfig() {
+    Long domainId = SecurityUtils.getCurrentDomainId();
+    DomainConfig dc = DomainConfig.getInstance(domainId);
+    FormsConfig formsConfig = dc.getFormsConfig();
+    return configurationModelBuilder.buildFormsConfigModel(formsConfig);
+  }
+
+  @RequestMapping(value = "/forms", method = RequestMethod.POST)
+  public
+  @ResponseBody
+  String updateFormsConfig(@RequestBody FormsConfigModel formsConfigModel) {
+    SecureUserDetails sUser = getUserDetails();
+    Locale locale = sUser.getLocale();
+    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
+    if(!sUser.getRole().equals(SecurityConstants.ROLE_SUPERUSER)) {
+      throw new ForbiddenAccessException(backendMessages.getString(PERMISSION_DENIED));
+    }
+    if(formsConfigModel == null) {
+      xLogger.warn("Error in updating Forms config");
+      throw new BadRequestException(backendMessages.getString("forms.config.update.error"));
+    }
+    String userId = sUser.getUsername();
+    Long domainId = SecurityUtils.getCurrentDomainId();
+    try {
+      ConfigContainer cc = getDomainConfig(domainId, userId);
+      FormsConfig formsConfig = formsConfigBuilder.buildFormsConfig(formsConfigModel);
+      cc.dc.addDomainData(ConfigConstants.FORMS, generateUpdateList(userId));
+      cc.dc.setFormsConfig(formsConfig);
+      saveDomainConfig(domainId, cc, backendMessages);
+      xLogger.info(cc.dc.toJSONSring());
+    } catch (ServiceException | ConfigurationException e) {
+      xLogger.severe(backendMessages.getString("Error in updating forms configuration"), e);
+      throw new InvalidServiceException(backendMessages.getString("forms.config.update.error"));
+    }
+    return backendMessages.getString("forms.config.update.success");
   }
 
   private SyncConfig generateSyncConfig(CapabilitiesConfigModel model) {

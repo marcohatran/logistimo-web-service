@@ -63,4 +63,6 @@ public class QueryConstants {
   public static final String FROM = " FROM ";
   public static final String LIMIT_1 = " LIMIT 1 ";
 
+  public static final String SELECT_STAR_FROM = " SELECT * FROM ";
+
 }

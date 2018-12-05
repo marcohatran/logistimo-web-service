@@ -110,7 +110,7 @@
                                                 </select>
                                                 <span ng-hide="isUndef(reasons) || reasons.length == 0"
                                                       class="litetext float-left"
-                                                      ng-class="{'required' : reasons.length > 0}">{{resourceBundle['reason']}}</span>
+                                                      ng-class="{'required' : rm }">{{resourceBundle['reason']}}</span>
                                                 <select ng-hide="isUndef(reasons) || reasons.length == 0"
                                                         ng-model="returnitem.rrsn" class="form-control"
                                                         uib-popover="{{returnitem.rPopupMsg}}"
@@ -260,7 +260,7 @@
                                                 </select>
                                                 <span ng-hide="isUndef(reasons) || reasons.length == 0"
                                                       class="litetext float-left"
-                                                      ng-class="{'required' : reasons.length > 0}">{{resourceBundle['reason']}}</span>
+                                                      ng-class="{'required' : reasonMandatory}">{{resourceBundle['reason']}}</span>
                                                 <select ng-hide="isUndef(reasons) || reasons.length == 0"
                                                         ng-model="trans.rrsn" class="form-control"
                                                         uib-popover="{{trans.rPopupMsg}}"

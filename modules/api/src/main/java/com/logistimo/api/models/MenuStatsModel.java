@@ -97,6 +97,7 @@ public class MenuStatsModel {
 
   public String dnm; //Domain name
   public String unm; //User name
+  public List<String> utgs; // user tags
   public String lng; //Language
   public Long eid; //Default entity Id.
   public String em; //email id.

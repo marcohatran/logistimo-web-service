@@ -32,6 +32,7 @@ sed -ri "$ a logi.host.server=$LOGI_HOST" $TOMCAT_HOME/webapps/ROOT/WEB-INF/clas
         && sed -ri "/cors.allowed.origins/{n;s/.*/\t    <param-value>$ORIGINS<\/param-value>/}" $TOMCAT_HOME/webapps/ROOT/WEB-INF/web.xml \
         && sed -ri "$ a tomcat.util.http.parser.HttpParser.requestTargetAllow=|{}" $TOMCAT_HOME/conf/catalina.properties \
         && sed -ri "s/8080/$TASK_PORT/g" $TOMCAT_HOME/conf/server.xml \
+        && sed -ri '/Connector port="8082"/a URIEncoding="UTF-8" useBodyEncodingForURI="true"' $TOMCAT_HOME/conf/server.xml \
         && sed -ri "s~http:\/\/localhost:8080~$MAPI_URL~g" $TOMCAT_HOME/webapps/ROOT/v2/index.html \
         && sed -ri "s~http:\/\/localhost:8080~$MAPI_URL~g" $TOMCAT_HOME/webapps/ROOT/v2/bulletinboard.html \
         && sed -ri "s~tracker-id~$GOOGLE_ANALYTICS_CLIENT_ID~g" $TOMCAT_HOME/webapps/ROOT/v2/js/3rdparty/analytics/analytics.js

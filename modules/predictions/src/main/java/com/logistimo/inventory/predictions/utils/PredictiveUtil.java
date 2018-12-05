@@ -40,6 +40,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
@@ -55,7 +56,7 @@ public class PredictiveUtil {
   private static final int PREDICTIVE_RT = ConfigUtil.getInt("predictive.response.time", 2);
   private static final int PREDICTIVE_LT = ConfigUtil.getInt("predictive.lead.time", 5);
   private static final int PREDICTIVE_BLT = ConfigUtil.getInt("predictive.buffer.lead.time", 3);
-  private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+  private static final String SDF_PATTERN = "yyyyMMddHHmmss";
 
   /**
    * Fetches all demand items for given inventory with status {@code IOrder.COMPLETED and IOrder.CONFIRMED}
@@ -91,8 +92,9 @@ public class PredictiveUtil {
       throws ServiceException, ObjectNotFoundException, ParseException {
     Map<String, IDemandItem> demandItems = getDemandItems(inv);
     Map<String, BigDecimal> orders = new HashMap<>(demandItems.size());
+    SimpleDateFormat sdf = new SimpleDateFormat(SDF_PATTERN);
     for (String s : demandItems.keySet()) {
-      Calendar resDate = getPredictiveDate(demandItems.get(s).getStatus(), s);
+      Calendar resDate = getPredictiveDate(demandItems.get(s).getStatus(), sdf.parse(s));
       orders.put(sdf.format(resDate.getTime()), demandItems.get(s).getQuantity());
     }
     return orders;
@@ -108,7 +110,7 @@ public class PredictiveUtil {
       throws ServiceException, ObjectNotFoundException {
     OrderManagementService oms = StaticApplicationContext.getBean(OrderManagementServiceImpl.class);
     IOrder order = oms.getOrder(dm.getOrderId());
-    return sdf.format(
+    return new SimpleDateFormat(SDF_PATTERN).format(
         order.getStatusUpdatedOn() != null ? order.getStatusUpdatedOn() : order.getCreatedOn());
   }
 
@@ -141,14 +143,14 @@ public class PredictiveUtil {
    * @param statusUpdatedOn Last status updated date
    * @return Date
    */
-  private static Calendar getPredictiveDate(String status, String statusUpdatedOn)
+  private static Calendar getPredictiveDate(String status, Date statusUpdatedOn)
       throws ParseException {
     int time = PREDICTIVE_LT;
     if (IOrder.CONFIRMED.equals(status)) {
       time += PREDICTIVE_RT;
     }
     Calendar resDate = new GregorianCalendar();
-    resDate.setTime(sdf.parse(statusUpdatedOn));
+    resDate.setTime(statusUpdatedOn);
     resDate.add(Calendar.DAY_OF_MONTH, time);
     return resDate;
   }

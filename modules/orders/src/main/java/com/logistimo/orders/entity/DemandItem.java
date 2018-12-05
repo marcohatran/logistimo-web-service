@@ -96,11 +96,6 @@ public class DemandItem implements IDemandItem {
   private BigDecimal isq = BigDecimal.ZERO;
   @Persistent
   private BigDecimal dq = BigDecimal.ZERO;
-  /**
-   * Returned quantity
-   */
-  @Persistent
-  private BigDecimal rq = BigDecimal.ZERO;
   @Persistent
   private String st = Order.PENDING; // status
   @Persistent
@@ -160,6 +155,18 @@ public class DemandItem implements IDemandItem {
 
   @Persistent
   private String sdrsn; // Shipped discrepancy reason
+
+  /**
+   * ID of the user who created this demand item
+   */
+  @Persistent
+  private String createdBy;
+
+  /**
+   * Time of creation of this demand item
+   */
+  @Persistent
+  private Date createdOn;
 
   @NotPersistent
   private BigDecimal aq;
@@ -577,16 +584,6 @@ public class DemandItem implements IDemandItem {
   }
 
   @Override
-  public BigDecimal getReturnedQuantity() {
-    return BigUtil.getZeroIfNull(rq);
-  }
-
-  @Override
-  public void setReturnedQuantity(BigDecimal rq) {
-    this.rq = rq;
-  }
-
-  @Override
   public Long getTimeToOrder() {
     return tto;
   }
@@ -616,4 +613,23 @@ public class DemandItem implements IDemandItem {
     this.aq = quantity;
   }
 
+  @Override
+  public Date getCreatedOn() {
+    return createdOn;
+  }
+
+  @Override
+  public void setCreatedOn(Date createdOn) {
+    this.createdOn = createdOn;
+  }
+
+  @Override
+  public String getCreatedBy() {
+    return createdBy;
+  }
+
+  @Override
+  public void setCreatedBy(String createdBy) {
+    this.createdBy = createdBy;
+  }
 }

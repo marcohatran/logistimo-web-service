@@ -207,13 +207,13 @@ entityControllers.controller('EntityDetailMenuController', ['$scope', 'entitySer
             }
             var filetype = $scope.imageData.filetype.split("/");
             $scope.ext=filetype[filetype.length - 1];
-            if($scope.ext !='png' && $scope.ext !='jpg' && $scope.ext !='jpeg'){
+            if($scope.ext !='png' && $scope.ext !='jpg' && $scope.ext !='jpeg' && $scope.fileExt != 'gif'){
                 $scope.showWarning($scope.resourceBundle['image.upload.warning']);
                 return false;
             }
 
             var size = $scope.imageData.filesize;
-            if(size > 5000000){
+            if(size > 10 * 1024 * 1024){
                 $scope.showWarning ($scope.resourceBundle['uploadsizemessage']);
                 return false;
             }
@@ -221,7 +221,7 @@ entityControllers.controller('EntityDetailMenuController', ['$scope', 'entitySer
         };
         $scope.uploadImage = function(){
             $scope.showLoading();
-            mediaService.uploadImage($scope.ext,$scope.entityId,$scope.imageData.base64).then(function(){
+            mediaService.uploadImage($scope.ext,$scope.entityId,$scope.imageData).then(function(){
                 $scope.showSuccess($scope.resourceBundle['image.upload.success']);
                 $scope.getDomainKeyImages($scope.entityId);
                 angular.element('#entityFileupload').val(null);
@@ -451,7 +451,8 @@ entityControllers.controller('EntityDetailMenuController', ['$scope', 'entitySer
 ]);
 entityControllers.controller('EntityListController', ['$scope', 'entityService', 'domainCfgService', 'mapService', 'requestContext', '$location', 'exportService',
     function ($scope, entityService, domainCfgService, mapService, requestContext, $location, exportService) {
-        $scope.wparams = [["etag", "etag"], ["search", "search.nm"], ["o", "offset"], ["s", "size"]];
+        $scope.wparams = [["etag", "etag"], ["ename", "ename"], ["o", "offset"], ["s", "size"]];
+        $scope.localFilters = ['ename','etag'];
         $scope.edit = false;
         $scope.success = false;
         $scope.loading = false;
@@ -464,8 +465,7 @@ entityControllers.controller('EntityListController', ['$scope', 'entityService',
         $scope.entities=undefined;
         $scope.init = function () {
             $scope.etag = requestContext.getParam("etag") || "";
-            $scope.search = {nm:""};
-            $scope.search.key = $scope.search.nm = requestContext.getParam("search") || "";
+            $scope.ename = requestContext.getParam("ename") || "";
             $scope.vw = requestContext.getParam("vw") || 't';
             $scope.offset = requestContext.getParam("o") || 0;
             $scope.size = requestContext.getParam("s") || 50;
@@ -475,13 +475,13 @@ entityControllers.controller('EntityListController', ['$scope', 'entityService',
         ListingController.call(this, $scope, requestContext, $location);
         $scope.$watch("vw",function(){
             if($scope.vw == 'm'){
-                $scope.search = {nm:""};
+                $scope.ename = "";
             }
         });
         $scope.fetch = function () {
             $scope.loading = true;
             $scope.showLoading();
-            entityService.getAll($scope.offset, $scope.size,$scope.etag, $scope.search.nm).then(function (data) {
+            entityService.getAll($scope.offset, $scope.size,$scope.etag, $scope.ename).then(function (data) {
                 $scope.entities = data.data;
                 $scope.setResults($scope.entities);
                 $scope.getFiltered();
@@ -536,7 +536,7 @@ entityControllers.controller('EntityListController', ['$scope', 'entityService',
             if ($scope.entities != null) {
                 for (var item in $scope.entities.results) {
                     var entity = $scope.entities.results[item];
-                    if (checkNotNullEmpty($scope.search.nm) && entity.nm.toLowerCase().indexOf($scope.search.nm.toLowerCase()) == -1) {
+                    if (checkNotNullEmpty($scope.ename) && entity.nm.toLowerCase().indexOf($scope.ename.toLowerCase()) == -1) {
                         continue;
                     }
                     list.push(entity);
@@ -567,15 +567,9 @@ entityControllers.controller('EntityListController', ['$scope', 'entityService',
                 $location.path('/setup/entities/all/materials').search({eids: selectedEntities});
             }
         };
-        $scope.searchEntity = function () {
-            if($scope.search.nm != $scope.search.key) {
-                $scope.search.nm = $scope.search.key;
-                $scope.eTag = "";
-            }
-        };
         $scope.reset = function() {
             $scope.etag = "";
-            $scope.search = {};
+            $scope.ename = "";
         };
 
         $scope.exportData = function (isInfo) {
@@ -587,7 +581,7 @@ entityControllers.controller('EntityListController', ['$scope', 'entityService',
             }
             $scope.showLoading();
             exportService.exportData({
-                ent_name: $scope.search.key || undefined,
+                ent_name: $scope.ename || undefined,
                 ktag: $scope.etag || undefined,
                 titles: {
                     filters: getCaption()
@@ -604,7 +598,7 @@ entityControllers.controller('EntityListController', ['$scope', 'entityService',
         };
 
         function getCaption() {
-            var caption = getFilterTitle($scope.search.key, $scope.resourceBundle['kiosks']);
+            var caption = getFilterTitle($scope.ename, $scope.resourceBundle['kiosks']);
             caption += getFilterTitle($scope.etag, $scope.resourceBundle['kiosk'] + " " + $scope.resourceBundle['tag.lower']);
             return caption;
         }
@@ -1039,7 +1033,7 @@ entityControllers.controller('AddEntController', ['$scope', '$uibModal','$route'
             if ($scope.entity != null) {
                 $scope.updateTags("add");
                 $scope.loading = true;
-                $scope.showLoading();
+                $scope.showFullLoading();
                 checkLatLong();
                 entityService.createEntity($scope.entity).then(function (data) {
                     $scope.resetEntity();
@@ -1048,7 +1042,7 @@ entityControllers.controller('AddEntController', ['$scope', '$uibModal','$route'
                     $scope.showErrorMsg(msg);
                 }).finally(function (){
                     $scope.loading = false;
-                    $scope.hideLoading();
+                    $scope.hideFullLoading();
                 });
             }
         };
@@ -1056,7 +1050,7 @@ entityControllers.controller('AddEntController', ['$scope', '$uibModal','$route'
             if ($scope.entity != null) {
                 $scope.updateTags("update");
                 $scope.loading = true;
-                $scope.showLoading();
+                $scope.showFullLoading();
                 checkLatLong();
                 entityService.update($scope.entity).then(function (data) {
                     if (checkNotNullEmpty(data.data)) {
@@ -1079,7 +1073,7 @@ entityControllers.controller('AddEntController', ['$scope', '$uibModal','$route'
                     $scope.showErrorMsg(msg);
                 }).finally(function (){
                     $scope.loading = false;
-                    $scope.hideLoading();
+                    $scope.hideFullLoading();
                 });
             }
         };

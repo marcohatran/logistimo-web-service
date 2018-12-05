@@ -52,11 +52,11 @@ public class RestConstantsZ {
   public static final String NOTIFICATION = "n";
   public static final String NUM_RESULTS = "r";
   // DEPRECATED: used only when fetching orders; user SIZE instead
-  public static final String OLD_PASSWORD = "opwd";
+  public static final String OLD_PASSWRD = "opwd";
   public static final String ONLY_AUTHENTICATE = "oa";
   public static final String ORDER_ID = "oid";
   public static final String ORDER_TYPE = "oty"; // order type - sale, purchase
-  public static final String PASSWORD = "p";
+  public static final String PASSWRD = "p";
   public static final String PERIOD = "pr";
   public static final String SHIPMENT_ID = "sid"; // shipment ID
   public static final String SIZE = "s";
@@ -70,7 +70,7 @@ public class RestConstantsZ {
       "ty";
   // NOTE: same as TRANS_TYPE, but just a generic type representation
   public static final String USER_ID = "uid";
-  public static final String UPDATED_PASSWORD = "upwd";
+  public static final String UPDATED_PASSWRD = "upwd";
   public static final String VERSION = "v";
   public static final String USER_AGENT = "User-Agent";
   public static final String IP_ADDRESS = "X-REAL-IP";
@@ -79,6 +79,8 @@ public class RestConstantsZ {
   public static final String TRANSFERS = "transfers";
   public static final String OFFSET = "o";
   public static final String MINIMUM_RESP_VALUE = "1";
+  public static final String OTP = "otp";
+  public static final String TWO_FACTOR_ENABLED_APP = "tFAEnabled";
 
 
   // Action values
@@ -94,13 +96,14 @@ public class RestConstantsZ {
   public static final String ACTION_UPDATEORDERSTATUS_OLD = "uos";
   public static final String ACTION_CREATEUSERKIOSK = "cuk";
   public static final String ACTION_UPDATEUSERKIOSK = "uuk";
-  public static final String ACTION_UPDATEPASSWORD = "up";
+  public static final String ACTION_UPDATEPASSWRD = "up";
   public static final String ACTION_CREATERELATIONSHIP = "cr";
   public static final String ACTION_REMOVERELATIONSHIP = "rr";
   public static final String ACTION_UPDATERELATIONSHIP = "ur";
   public static final String ACTION_GETRELATEDENTITIES = "gre";
+  public static final String ACTION_GET_FORMSCONFIG = "gfc";
   public static final String ACTION_GETTRANSACTIONAGGREGATE = "gta";
-  public static final String ACTION_RESETPASSWORD = "rp";
+  public static final String ACTION_RESETPASSWRD = "rp";
   public static final String ACTION_REMOVE = "rm";
   public static final String ACTION_GETTRANSACTIONS_OLD = "gtrn";
   public static final String ACTION_GETSHPIPMENTS = "gs";
@@ -109,6 +112,7 @@ public class RestConstantsZ {
   public static final String TAGS = "tg";
   public static final String ACTION_UPDATEORDER = "updo";
   public static final String ACTION_UPDATEORDERSTATUS = "updos";
+  public static final String ACTION_NEW_LOGIN = "login";
 
   // Filter types
   public static final String FILTER_ONLYSTOCK = "onlystck";

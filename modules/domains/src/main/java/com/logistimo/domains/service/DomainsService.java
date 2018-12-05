@@ -29,11 +29,12 @@ import com.logistimo.domains.entity.IDomainPermission;
 import com.logistimo.exception.TaskSchedulingException;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
-import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
 
 import java.util.Collection;
 import java.util.List;
+
+import javax.jdo.PersistenceManager;
 
 public interface DomainsService {
 
@@ -42,17 +43,19 @@ public interface DomainsService {
   /**
    * Get a domain, given its ID
    */
-  IDomain getDomain(Long domainId) throws ServiceException, ObjectNotFoundException;
+  IDomain getDomain(Long domainId) throws ServiceException;
 
   /**
    * Get all domains in the system
    */
   Results getAllDomains(PageParams pageParams) throws ServiceException;
 
+  Long addDomain(IDomain domain) throws ServiceException;
+
   /**
    * Create a new domain
    */
-  Long addDomain(IDomain domain) throws ServiceException;
+  Long addDomain(IDomain domain, String country, String state, String district, String timezone, String userId) throws ServiceException;
 
   /**
    * Remove a list of domains, given their domain IDs
@@ -116,14 +119,14 @@ public interface DomainsService {
    * NOTE: The object(s) to be removed MUST implement the IDomain interface
    */
   void addObjectsToDomains(List<Object> objectIds, Class<?> clazz, List<Long> domainIds)
-      throws ObjectNotFoundException, ServiceException;
+      throws ServiceException;
 
   /**
    * Remove objects from the given domains
    * NOTE: This the object(s) to be removed MUST implement the IDomain interface
    */
   void removeObjectsFromDomains(List<Object> objectIds, Class<?> clazz, List<Long> domainId)
-      throws ObjectNotFoundException, ServiceException;
+      throws ServiceException;
 
   /**
    * Get all domains with type 0 i.e domains which are already added as children.
@@ -151,12 +154,12 @@ public interface DomainsService {
   void copyConfiguration(Long domainId, Long linkedDomainId) throws TaskSchedulingException;
 
   /**
-   * Set the default domain permissions
+   * Set the default domain permissions with persistence manager
    */
-  void createDefaultDomainPermissions(Long domainId) throws ServiceException;
+  void createDefaultDomainPermissions(Long domainId, PersistenceManager pm) throws ServiceException;
 
   List<IDomain> getDomains(String query, PageParams pageParams)
-      throws ServiceException, ObjectNotFoundException;
+      throws ServiceException;
 
   /**
    * Get all root domains , i.e., domains without parents

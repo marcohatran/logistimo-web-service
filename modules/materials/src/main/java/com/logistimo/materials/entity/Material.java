@@ -121,8 +121,6 @@ public class Material implements IMaterial {
   @Persistent
   private Boolean dispInfo = true; // display information or not on mobile
   @Persistent
-  private String dty; // data type, e.g. Binary
-  @Persistent
   private Boolean bm; // enable batch management
   @Persistent
   @Extension(vendorName = "datanucleus", key = "gae.unindexed", value = "true")
@@ -473,21 +471,6 @@ public class Material implements IMaterial {
   @Override
   public void setInfo(String info) {
     this.info = info;
-  }
-
-  @Override
-  public String getType() {
-    return dty;
-  }
-
-  @Override
-  public void setType(String ty) {
-    this.dty = ty;
-  }
-
-  @Override
-  public boolean isBinaryValued() {
-    return TYPE_BINARY.equals(dty);
   }
 
   @Override

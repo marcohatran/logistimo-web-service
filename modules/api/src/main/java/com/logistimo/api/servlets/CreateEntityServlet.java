@@ -26,6 +26,7 @@ package com.logistimo.api.servlets;
 import com.logistimo.AppFactory;
 import com.logistimo.api.filters.SecurityFilter;
 import com.logistimo.auth.SecurityMgr;
+import com.logistimo.auth.SecurityUtil;
 import com.logistimo.auth.service.AuthenticationService;
 import com.logistimo.auth.service.impl.AuthenticationServiceImpl;
 import com.logistimo.auth.utils.SecurityUtils;
@@ -65,6 +66,7 @@ import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.materials.service.MaterialCatalogService;
 import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
+import com.logistimo.models.AuthRequest;
 import com.logistimo.orders.OrderResults;
 import com.logistimo.orders.OrderUtils;
 import com.logistimo.orders.entity.IOrder;
@@ -82,6 +84,7 @@ import com.logistimo.users.service.UsersService;
 import com.logistimo.users.service.impl.UsersServiceImpl;
 import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.MsgUtil;
+import com.logistimo.utils.RandomPasswordGenerator;
 import com.logistimo.utils.StringUtil;
 
 import org.apache.commons.lang.StringUtils;
@@ -121,7 +124,7 @@ public class CreateEntityServlet extends SgServlet {
   private static final String POOLGROUP = "poolgroup";
   private static final String MODIFY = "modify";
   private static final String KIOSK_OWNER = "kioskowner";
-  private static final String PASSWORD = "password";
+  private static final String PASSWRD = "password";
   private static final String MATERIAL = "material";
   private static final String MATERIALS = "materials";
   private static final String MATERIALTOKIOSK = "materialtokiosk";
@@ -220,6 +223,7 @@ public class CreateEntityServlet extends SgServlet {
         InventoryManagementServiceImpl.class);
     OrderManagementService oms = StaticApplicationContext.getBean(OrderManagementServiceImpl.class);
     MaterialCatalogService mcs = StaticApplicationContext.getBean(MaterialCatalogServiceImpl.class);
+    AuthenticationService aus = StaticApplicationContext.getBean(AuthenticationServiceImpl.class);
     try {
       // Process operation
       if (entityAction.equalsIgnoreCase(CREATE)
@@ -247,17 +251,17 @@ public class CreateEntityServlet extends SgServlet {
           && entityType.equalsIgnoreCase(KIOSK_OWNER)) {
         modifyKioskOwner(req, resp, as, backendMessages);
       } else if ((entityAction.equalsIgnoreCase(MODIFY) || entityAction.equalsIgnoreCase("reset"))
-          && entityType.equalsIgnoreCase(PASSWORD)) {
+          && entityType.equalsIgnoreCase(PASSWRD)) {
         modifyKioskOwnerPassword(req, resp, as, backendMessages);
       } else if (entityAction.equalsIgnoreCase(REMOVE)
           && entityType.equalsIgnoreCase(KIOSK_OWNER)) {
         removeKioskOwner(req, resp, as, backendMessages);
       } else if (entityAction.equalsIgnoreCase("disable")
           && entityType.equalsIgnoreCase(KIOSK_OWNER)) {
-        disableOrEnableKioskOwner(req, resp, as, false, backendMessages, messages);
+        disableOrEnableKioskOwner(req, resp, aus, false, backendMessages, messages);
       } else if (entityAction.equalsIgnoreCase("enable")
           && entityType.equalsIgnoreCase(KIOSK_OWNER)) {
-        disableOrEnableKioskOwner(req, resp, as, true, backendMessages, messages);
+        disableOrEnableKioskOwner(req, resp, aus, true, backendMessages, messages);
       } else if (entityAction.equalsIgnoreCase(CREATE)
           && entityType.equalsIgnoreCase(MATERIAL)) {
         addMaterial(req, resp, mcs, backendMessages, messages);
@@ -806,12 +810,6 @@ public class CreateEntityServlet extends SgServlet {
       m.setIdentifierValue(materialDetails.get("identifiervalue")[0]);
     }
 
-    if (materialDetails.containsKey("datatype")) {
-      m.setType(materialDetails.get("datatype")[0]);
-    } else {
-      m.setType(null);
-    }
-
     m.setSeasonal(materialDetails.containsKey("seasonal"));
     if (materialDetails.containsKey("additionalinfo")) {
       m.setInfo(materialDetails.get("additionalinfo")[0]);
@@ -970,11 +968,7 @@ public class CreateEntityServlet extends SgServlet {
     if (materialDetails.containsKey("identifiervalue")) {
       m.setIdentifierValue(materialDetails.get("identifiervalue")[0]);
     }
-    if (materialDetails.containsKey("datatype")) {
-      m.setType(materialDetails.get("datatype")[0]);
-    } else {
-      m.setType(null);
-    }
+
     m.setSeasonal(materialDetails.containsKey("seasonal"));
     if (materialDetails.containsKey("additionalinfo")) {
       m.setInfo(materialDetails.get("additionalinfo")[0]);
@@ -1236,7 +1230,7 @@ public class CreateEntityServlet extends SgServlet {
   // Enable or disable kiosk owner
   @SuppressWarnings("unchecked")
   private void disableOrEnableKioskOwner(HttpServletRequest req,
-                                         HttpServletResponse resp, UsersService as,
+                                         HttpServletResponse resp, AuthenticationService as,
                                          boolean enable, ResourceBundle backendMessages,
                                          ResourceBundle messages)
       throws ServiceException, IOException {
@@ -1404,18 +1398,6 @@ public class CreateEntityServlet extends SgServlet {
       u.setStreet(userDetails.get(LocationConstants.STREET_LITERAL)[0]);
     }
 
-    if (userDetails.containsKey("age")) {
-      String ageStr = userDetails.get("age")[0];
-      if (ageStr != null) {
-        int age = 0;
-        if (!ageStr.isEmpty()) {
-          age = Integer.parseInt(ageStr);
-        }
-        u.setAge(age);
-        u.setAgeType(IUserAccount.AGETYPE_YEARS);
-      }
-    }
-
     if (userDetails.containsKey("primaryentity")) {
       String pkIdStr = userDetails.get("primaryentity")[0];
       Long pkId = null;
@@ -1480,6 +1462,7 @@ public class CreateEntityServlet extends SgServlet {
       action = userDetails.get(SecurityFilter.ACTION)[0];
       resetPassword = "reset".equals(action);
     }
+    AuthenticationService authenticationService = StaticApplicationContext.getBean(AuthenticationServiceImpl.class);
     // Reset or change password
     if (resetPassword) {
       // Get the send type
@@ -1498,14 +1481,12 @@ public class CreateEntityServlet extends SgServlet {
 				}
 			}
 			*/
-      AuthenticationService authenticationService = StaticApplicationContext.getBean(
-          AuthenticationServiceImpl.class);
-      String newPassword = authenticationService.generatePassword(u.getUserId());
+      String newPassword = RandomPasswordGenerator.generate(SecurityUtil.isUserAdmin(u.getRole()));
       String msg = "Your password has been reset. Your new password is: " + newPassword;
       String logMsg = backendMessages.getString("password.reset.success.log");
       try {
         // Reset the user password
-        as.changePassword(userId, null, newPassword);
+        authenticationService.changePassword(userId, null, null, newPassword,false);
         xLogger.info("Password for user " + userId + " reset to "
             + newPassword);
         // Send message to user
@@ -1538,20 +1519,23 @@ public class CreateEntityServlet extends SgServlet {
         }
       }
       // Check if the old password is valid
+      AuthRequest authRequest = AuthRequest.builder()
+          .userId(userId)
+          .password(oldpassword).build();
       try {
-        if (as.authenticateUser(userId, oldpassword, null) == null) {
+        if (authenticationService.authenticate(authRequest) == null) {
           writeToScreen(req, resp, backendMessages.getString("user.passwordinvalid") + ".",
               Constants.VIEW_USERS);
           return;
         }
       } catch (ServiceException e) {
-        xLogger.severe("Exception in modifyKioskOwnerPassword when calling authenticateUser: {0}",
+        xLogger.severe("Exception in modifyKioskOwnerPassword when calling authenticate: {0}",
             e.getMessage());
         writeToScreen(req, resp, backendMessages.getString("error") + ": " + e.getMessage(),
             Constants.VIEW_USERS);
         return;
       } catch (ObjectNotFoundException e) {
-        xLogger.severe("Object Not found exception in authenticateUser: {0}", e.getMessage());
+        xLogger.severe("Object Not found exception in authenticate: {0}", e.getMessage());
         writeToScreen(req, resp, backendMessages.getString("error") + ": " + e.getMessage(),
             Constants.VIEW_USERS);
         return;
@@ -1599,7 +1583,7 @@ public class CreateEntityServlet extends SgServlet {
 
       // Change the password
       try {
-        as.changePassword(userId, oldpassword, newpassword);
+        authenticationService.changePassword(userId, null,oldpassword, newpassword,false);
         message =
             backendMessages.getString("user.passwordchanged")
                 + ". &nbsp; [<a href=\"/s/setup/setup.jsp?subview=users&form=userdetails&id="
@@ -1633,9 +1617,9 @@ public class CreateEntityServlet extends SgServlet {
       }
     }
 
-    if (userDetails.containsKey(PASSWORD)) {
+    if (userDetails.containsKey(PASSWRD)) {
       // NOTE: password is encoded by the AccountsService's addAccount API
-      String pwd = userDetails.get(PASSWORD)[0];
+      String pwd = userDetails.get(PASSWRD)[0];
       if (pwd.equalsIgnoreCase("")) {
         message += " - Password is missing. Please specify password.<br/>";
       } else {
@@ -1760,16 +1744,6 @@ public class CreateEntityServlet extends SgServlet {
 
     if (userDetails.containsKey(LocationConstants.STREET_LITERAL)) {
       u.setStreet(userDetails.get(LocationConstants.STREET_LITERAL)[0]);
-    }
-
-    // Deprecating birthdate for now
-    if (userDetails.containsKey("age")) {
-      String ageStr = userDetails.get("age")[0];
-      if (ageStr != null && !ageStr.equalsIgnoreCase("")) {
-        int age = Integer.parseInt(ageStr);
-        u.setAge(age);
-        u.setAgeType(IUserAccount.AGETYPE_YEARS);
-      }
     }
 
     // Get the user who registered this user

@@ -23,19 +23,25 @@
 
 package com.logistimo.entities.utils;
 
+import com.logistimo.assets.entity.IAsset;
+import com.logistimo.assets.entity.IAssetRelation;
+import com.logistimo.assets.service.AssetManagementService;
+import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
+import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.utils.MsgUtil;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
+
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -95,5 +101,54 @@ public class EntityMoveHelper {
           kiosk.getUsers().stream().map(IUserAccount::getUserId).collect(Collectors.toList()));
     }
     return userIds;
+  }
+
+  public static List<String> isAssetsMovePossible(List<IKiosk> kioskList) throws ServiceException {
+    List<String> errors = new ArrayList<>();
+    AssetManagementService assetManagementService = StaticApplicationContext.getBean(AssetManagementService.class);
+    for (IKiosk kiosk : kioskList) {
+      List<IAsset> kioskAssets = assetManagementService.getAssetsByKiosk(kiosk.getKioskId());
+      if (CollectionUtils.isNotEmpty(kioskAssets)) {
+        for (IAsset asset : kioskAssets) {
+          IAssetRelation assetRelation;
+          Long relatedAssetId = null;
+          if (IAsset.MONITORING_ASSET == asset.getType()) {
+            assetRelation = assetManagementService.getAssetRelationByRelatedAsset(asset.getId());
+            if(assetRelation != null) {
+              relatedAssetId = assetRelation.getAssetId();
+            }
+          } else {
+            assetRelation = assetManagementService.getAssetRelationByAsset(asset.getId());
+            if(assetRelation != null) {
+              relatedAssetId = assetRelation.getRelatedAssetId();
+            }
+          }
+         if(assetRelation != null) {
+           String errorMsg = validateRelatedAssetsBelongsToMovedEntities(assetManagementService, relatedAssetId, kiosk, asset.getSerialId());
+           if(StringUtils.isNotBlank(errorMsg)) {
+             errors.add(errorMsg);
+           }
+         }
+        }
+      }
+    }
+    return errors;
+  }
+
+  private static String validateRelatedAssetsBelongsToMovedEntities(AssetManagementService assetManagementService, Long relatedAssetId, IKiosk kiosk, String assetSerialNumber)
+      throws ServiceException {
+    StringBuilder errorMsg = new StringBuilder();
+    IAsset relatedAsset = assetManagementService.getAsset(relatedAssetId);
+    if (relatedAsset.getKioskId() != null && !kiosk.getKioskId().equals(relatedAsset.getKioskId())) {
+      ResourceBundle
+          backendMessages =
+          Resources.get().getBundle("BackendMessages", SecurityUtils.getLocale());
+      errorMsg.append(MsgUtil.newLine()).append(backendMessages.getString("kiosk"))
+          .append(": ")
+          .append(kiosk.getName()).append(MsgUtil.newLine())
+          .append(backendMessages.getString("assets")).append(": ").append(assetSerialNumber);
+
+    }
+    return errorMsg.toString();
   }
 }

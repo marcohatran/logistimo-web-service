@@ -144,8 +144,15 @@ public interface OrderManagementService {
   Results getOrders(Long domainId, Long kioskId, String status, Date since, Date untilDate,
       String otype, String tagType, String tag, List<Long> kioskIds,
                     PageParams pageParams, Integer orderType, String salesReferenceId,
+                    String approvalStatus, String purchaseRefId, String transferRefId, Long linkedKioskId)
+      throws ServiceException;
+
+  Results getOrders(Long domainId, Long kioskId, String status, Date since, Date untilDate,
+                    String otype, String tagType, String tag, List<Long> kioskIds,
+                    PageParams pageParams, Integer orderType, String salesReferenceId,
                     String approvalStatus,
-                    boolean withDemand, String purchaseRefId, String transferRefId);
+                    boolean withDemand, String purchaseRefId, String transferRefId,
+                    Long linkedKioskId);
 
   /**
    * Get orders placed by a certain user

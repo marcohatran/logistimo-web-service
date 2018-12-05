@@ -50,6 +50,7 @@ public class UploadModel {
   public int errcnt; // Error Count
 
   public List<Error> errs; //Errors
+  public boolean isAssetType;
 
   public void addError(long off, String onm, List<String> msgs, String ln) {
     if (errs == null) {

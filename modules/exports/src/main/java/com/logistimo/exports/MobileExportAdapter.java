@@ -72,8 +72,8 @@ public class MobileExportAdapter {
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
     requestModel.setDomainId(params.get(MobileExportConstants.DOMAIN_ID_KEY));
-    setEndDate(params, caption, requestModel, backendMessages);
     setFromDate(params, caption, requestModel, backendMessages);
+    setEndDate(params, caption, requestModel, backendMessages);
     setEntityDetails(params, requestModel, caption, backendMessages);
     setMaterialDetails(params, caption, requestModel, backendMessages);
     setExportType(requestModel, params, caption, backendMessages);
@@ -82,7 +82,6 @@ public class MobileExportAdapter {
     requestModel.setTitles(titles);
     requestModel.setEmail(params.get(MobileExportConstants.EMAIL_ID_KEY));
     exportService.scheduleExportJob(requestModel);
-
   }
 
   private void setFromDate(Map<String, String> params, StringBuilder caption,
@@ -90,7 +89,7 @@ public class MobileExportAdapter {
     if (params.containsKey(MobileExportConstants.FROM_DATE_KEY)) {
       String fromDate = params.get(MobileExportConstants.FROM_DATE_KEY);
       requestModel.setFromDate(fromDate);
-      caption.append(backendMessages.getString("from")).append(": ").append(fromDate)
+      caption.append(backendMessages.getString("from.upper")).append(": ").append(fromDate)
           .append("   ");
     }
   }
@@ -100,7 +99,7 @@ public class MobileExportAdapter {
     if (params.containsKey(MobileExportConstants.END_DATE_KEY)) {
       String endDate = params.get(MobileExportConstants.END_DATE_KEY);
       requestModel.setEndDate(endDate);
-      caption.append(backendMessages.getString("to")).append(": ").append(endDate)
+      caption.append(backendMessages.getString("to.upper")).append(": ").append(endDate)
           .append("   ");
     }
   }

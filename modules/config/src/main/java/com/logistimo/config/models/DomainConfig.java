@@ -66,10 +66,10 @@ public class DomainConfig implements ILocation, Serializable {
   public static final String ALLOW_EMPTY_ORDERS = "empords";
   public static final String ALLOW_MARK_ORDER_AS_FULFILLED = "mrkordfl";
   public static final String BULLETIN_BOARD = "bboard";
-  public static final String CAPABILITIES = "cpb";
+  public static final String CAPABILITIES_CONFIG = "cpb";
   public static final String CAPABILITIES_BY_ROLE = "cpbrole";
-  public static final String TRANSMENU = "trn";
-  public static final String TRANSNAMING = "tnm";
+  public static final String TRANS_MENU = "trn";
+  public static final String TRANS_NAMING = "tnm";
   public static final String TRANSPORTER_MANDATORY = "tspm";
   public static final String TRANSPORTER_IN_SMS = "tspsms";
   public static final String ORDER_AUTOGI = "ogi"; // auto goods issued (GI) on order shipped
@@ -82,7 +82,7 @@ public class DomainConfig implements ILocation, Serializable {
       ORDER_STATUS_SMS_ROLES =
       "ostrls";
   // DEPRECATED (as of 30/4/2012) CSV roles to which order status notification can be sent
-  public static final String ORDERGEN = "ogn";
+  public static final String ORDER_GENERATION = "ogn";
   public static final String PAYMENT_OPTIONS = "popts";
   public static final String PACKAGE_SIZES = "pkszs";
   public static final String COUNTRY = "cnt";
@@ -114,6 +114,7 @@ public class DomainConfig implements ILocation, Serializable {
   public static final String INVENTORY = "invntry";
   public static final String APPROVALS = "approvals";
   public static final String STOCK_REBALANCING = "stock_rebalancing";
+  public static final String FORMS = "forms";
   public static final String VENDOR_ID = "vid";
   public static final String EVENTS = "evnts";
   public static final String ORDERS = "orders";
@@ -122,7 +123,7 @@ public class DomainConfig implements ILocation, Serializable {
   public static final String TEMPERATURE = "temperature";
   public static final String DASHBOARD = "dashboard";
   public static final String UIPREFERENCE = "uipref";
-  public static final String ONLYNEWUI = "onlynewui";
+  public static final String ONLY_NEW_UI = "onlynewui";
   public static final String SUPPORT_BY_ROLE = "supbyrole";
   public static final String ADMIN_CONTACT = "admincontact";
   public static final String PRIMARY = "primary";
@@ -164,6 +165,8 @@ public class DomainConfig implements ILocation, Serializable {
   //Mobile GUI Theme
   public static final String STORE_APP_THEME = "storeAppTheme";
   public static final String LANGUAGE_PREFERENCE = "lp";
+  //Two factor authentication enabled
+  public static final String ENABLE_TWO_FACTOR_AUTHENTICATION = "enableTwoFactorAuthentication";
 
   private static final String NOT_SUPPORTED = "Not supported";
 
@@ -173,16 +176,16 @@ public class DomainConfig implements ILocation, Serializable {
   private List<String> capabilities = null;
   private String transNaming = TRANSNAMING_DEFAULT;
   private String orderGen = ORDERGEN_DEFAULT;
-  private String country = null;
-  private String state = null;
-  private String district = null;
+  private String cntry = null;
+  private String st = null;
+  private String dstrict = null;
   private String countryId = null;
   private String stateId = null;
   private String districtId = null;
-  private String language = Constants.LANG_DEFAULT;
-  private String timezone = null;
-  private String currency = null;
-  private float tax = 0;
+  private String lang = Constants.LANG_DEFAULT;
+  private String tz = null;
+  private String curr = null;
+  private float tx = 0;
   private DemandBoardConfig dbc = null;
   private String tags = null; // material tags (CSV)
   private String ktags = null; // kiosk tags (CSV)
@@ -199,7 +202,6 @@ public class DomainConfig implements ILocation, Serializable {
   private boolean forceUTags = true; // force tags for users
   private String pageHeader = null; // custom header for web service, encapsulated as a div tag
   private boolean autoGI = true;
-  @Deprecated
   private boolean autoGR = true;
   private OptimizerConfig optimizerConfig = null;
   private MessageConfig
@@ -249,6 +251,8 @@ public class DomainConfig implements ILocation, Serializable {
   private EventsConfig eventsConfig = null;
   // Bulletin board config.
   private BBoardConfig bbConfig = null;
+  // Forms config
+  private FormsConfig formsConfig = null;
   // Geo-coding strategy
   private String geoCodingStrategy = CapabilityConfig.GEOCODING_STRATEGY_OPTIMISTIC;
   // Creatable entities
@@ -293,7 +297,7 @@ public class DomainConfig implements ILocation, Serializable {
 
   private boolean localLoginRequired = true;
 
-  private int storeAppTheme = Constants.GUI_THEME_BLACK;
+  private int storeAppTheme = Constants.GUI_THEME_DEFAULT;
 
   private String user;
   private String langPreference = "en";
@@ -304,11 +308,14 @@ public class DomainConfig implements ILocation, Serializable {
   private boolean barcodingEnabled = false;
   private boolean rfidEnabled = false;
 
+  private boolean enableTwoFactorAuthentication = false;
+
   public DomainConfig() {
     optimizerConfig = new OptimizerConfig();
     inventoryConfig = new InventoryConfig();
     approvalsConfig = new ApprovalsConfig();
     stockRebalancingConfig = new StockRebalancingConfig();
+    formsConfig = new FormsConfig();
     ordersConfig = new OrdersConfig();
     capabilityMap = new HashMap<>();
     accountingConfig = new AccountingConfig();
@@ -334,14 +341,14 @@ public class DomainConfig implements ILocation, Serializable {
       JSONObject json = new JSONObject(configString);
       // Get capabilities for disablement
       try {
-        String commaSepCapabilities = (String) json.get(CAPABILITIES);
+        String commaSepCapabilities = (String) json.get(CAPABILITIES_CONFIG);
         this.capabilities = StringUtil.getList(commaSepCapabilities);
       } catch (JSONException e) {
         // do nothing
       }
       // Get the transaction menus (for disablement)
       try {
-        String commaSepMenuItems = (String) json.get(TRANSMENU);
+        String commaSepMenuItems = (String) json.get(TRANS_MENU);
         this.transMenu = StringUtil.getList(commaSepMenuItems);
       } catch (JSONException e) {
         // do nothing
@@ -356,31 +363,31 @@ public class DomainConfig implements ILocation, Serializable {
       }
       // Get transaction naming
       try {
-        this.transNaming = (String) json.get(TRANSNAMING);
+        this.transNaming = (String) json.get(TRANS_NAMING);
       } catch (JSONException e) {
         // do nothing
       }
       // Get order generation configuration
       try {
-        this.orderGen = (String) json.get(ORDERGEN);
+        this.orderGen = (String) json.get(ORDER_GENERATION);
       } catch (JSONException e) {
         // do nothing
       }
       // Get the country
       try {
-        this.country = (String) json.get(COUNTRY);
+        this.cntry = (String) json.get(COUNTRY);
       } catch (JSONException e) {
         // do nothing
       }
       // Get the state
       try {
-        this.state = (String) json.get(STATE);
+        this.st = (String) json.get(STATE);
       } catch (JSONException e) {
         // do nothing
       }
       // Get the district
       try {
-        this.district = (String) json.get(DISTRICT);
+        this.dstrict = (String) json.get(DISTRICT);
       } catch (JSONException e) {
         // do nothing
       }
@@ -405,25 +412,25 @@ public class DomainConfig implements ILocation, Serializable {
 
       // Get the language
       try {
-        this.language = (String) json.get(LANGUAGE);
+        this.lang = (String) json.get(LANGUAGE);
       } catch (JSONException e) {
         // do nothing
       }
       // Get the timezone
       try {
-        this.timezone = (String) json.get(TIMEZONE);
+        this.tz = (String) json.get(TIMEZONE);
       } catch (JSONException e) {
         // do nothing
       }
       // Get the currency
       try {
-        this.currency = (String) json.get(CURRENCY);
+        this.curr = (String) json.get(CURRENCY);
       } catch (JSONException e) {
         // do nothing
       }
       // Get the tax
       try {
-        this.tax = Float.parseFloat((String) json.get(TAX));
+        this.tx = Float.parseFloat((String) json.get(TAX));
       } catch (JSONException | NumberFormatException e) {
         // do nothing
       }
@@ -459,7 +466,7 @@ public class DomainConfig implements ILocation, Serializable {
       }
       // Get the order tags
       try {
-        this.otags = (String) json.getString(TAGS_ORDER);
+        this.otags = json.getString(TAGS_ORDER);
       } catch (JSONException e) {
         // do nothing
       }
@@ -582,7 +589,7 @@ public class DomainConfig implements ILocation, Serializable {
         this.capabilityMap =
             CapabilityConfig.getCapabilitiesMap(json.getJSONObject(CAPABILITIES_BY_ROLE));
       } catch (JSONException e) {
-        this.capabilityMap = new HashMap<String, CapabilityConfig>();
+        this.capabilityMap = new HashMap<>();
       }
       try {
         this.orderFields = new FieldsConfig(json.getJSONArray(ORDER_FIELDS));
@@ -618,6 +625,11 @@ public class DomainConfig implements ILocation, Serializable {
         stockRebalancingConfig = new StockRebalancingConfig(json.getJSONObject(STOCK_REBALANCING));
       } catch (JSONException e) {
         stockRebalancingConfig = new StockRebalancingConfig();
+      }
+      try{
+        formsConfig = new FormsConfig(json.getJSONObject(FORMS));
+      } catch (JSONException e) {
+        formsConfig = new FormsConfig();
       }
       // FOR BACKWARD COMPATIBILITY
       try {
@@ -671,7 +683,7 @@ public class DomainConfig implements ILocation, Serializable {
       // Custom Reports Config.
       try {
         this.customReportsConfig =
-            new CustomReportsConfig(json.getJSONObject(CUSTOMREPORTS), getLocale(), timezone);
+            new CustomReportsConfig(json.getJSONObject(CUSTOMREPORTS), getLocale(), tz);
       } catch (Exception e) {
         // ignore
         this.customReportsConfig = new CustomReportsConfig();
@@ -680,7 +692,7 @@ public class DomainConfig implements ILocation, Serializable {
       // Payments Config
       try {
         this.paymentsConfig =
-            new PaymentsConfig(json.getJSONObject(PAYMENTS), getLocale(), timezone);
+            new PaymentsConfig(json.getJSONObject(PAYMENTS), getLocale(), tz);
       } catch (Exception e) {
         // ignore
         this.paymentsConfig = new PaymentsConfig();
@@ -688,7 +700,7 @@ public class DomainConfig implements ILocation, Serializable {
 
       // Temperature Monitoring Config
       try {
-        this.assetConfig = new AssetConfig(json.getJSONObject(TEMPERATURE), getLocale(), timezone);
+        this.assetConfig = new AssetConfig(json.getJSONObject(TEMPERATURE), getLocale(), tz);
       } catch (Exception e) {
         // ignore
         this.assetConfig = new AssetConfig();
@@ -697,7 +709,7 @@ public class DomainConfig implements ILocation, Serializable {
       // Dashboard Config
       try {
         this.dashboardConfig =
-            new DashboardConfig(json.getJSONObject(DASHBOARD), getLocale(), timezone);
+            new DashboardConfig(json.getJSONObject(DASHBOARD), getLocale(), tz);
       } catch (Exception e) {
         // ignore
         this.dashboardConfig = new DashboardConfig();
@@ -712,7 +724,7 @@ public class DomainConfig implements ILocation, Serializable {
 
       // Only New UI
       try {
-        this.onlyNewUI = json.getBoolean(ONLYNEWUI);
+        this.onlyNewUI = json.getBoolean(ONLY_NEW_UI);
       } catch (JSONException e) {
         // do nothing
       }
@@ -720,7 +732,7 @@ public class DomainConfig implements ILocation, Serializable {
       try {
         this.supportConfigMap = SupportConfig.getSupportMap(json.getJSONObject(SUPPORT_BY_ROLE));
       } catch (JSONException e) {
-        this.supportConfigMap = new HashMap<String, SupportConfig>();
+        this.supportConfigMap = new HashMap<>();
       }
       //administrative contacts
       try {
@@ -808,6 +820,11 @@ public class DomainConfig implements ILocation, Serializable {
       } catch (JSONException e) {
         //do nothing
       }
+      try {
+        this.enableTwoFactorAuthentication = json.optBoolean(ENABLE_TWO_FACTOR_AUTHENTICATION);
+      } catch(JSONException e) {
+        //do nothing
+      }
     } catch (JSONException e) {
       throw new ConfigurationException(e.getMessage());
     }
@@ -859,37 +876,37 @@ public class DomainConfig implements ILocation, Serializable {
   }
 
   public String toJSONSring() throws ConfigurationException {
-    String jsonStr = null;
+    String jsonStr;
     try {
       JSONObject json = new JSONObject();
       // Get the capabilities to be disabled
       String capabilitiesStr = StringUtil.getCSV(this.capabilities);
       if (capabilitiesStr != null) {
-        json.put(CAPABILITIES, capabilitiesStr);
+        json.put(CAPABILITIES_CONFIG, capabilitiesStr);
       }
       // Add transaction menu (to be disabled)
       // Get a comma-separated string of trans. menu
       String transMenuStr = StringUtil.getCSV(this.transMenu);
       if (transMenuStr != null) {
-        json.put(TRANSMENU, transMenuStr);
+        json.put(TRANS_MENU, transMenuStr);
       }
       // Add transaction naming
       if (transNaming != null) {
-        json.put(TRANSNAMING, transNaming);
+        json.put(TRANS_NAMING, transNaming);
       }
       // Add order generation config.
       if (orderGen != null) {
-        json.put(ORDERGEN, orderGen);
+        json.put(ORDER_GENERATION, orderGen);
       }
       // Add entity property defaults
-      if (country != null) {
-        json.put(COUNTRY, country);
+      if (cntry != null) {
+        json.put(COUNTRY, cntry);
       }
-      if (state != null) {
-        json.put(STATE, state);
+      if (st != null) {
+        json.put(STATE, st);
       }
-      if (district != null) {
-        json.put(DISTRICT, district);
+      if (dstrict != null) {
+        json.put(DISTRICT, dstrict);
       }
       //loc ids
       if (countryId != null) {
@@ -901,17 +918,17 @@ public class DomainConfig implements ILocation, Serializable {
       if (districtId != null) {
         json.put(DISTRICT_ID, districtId);
       }
-      if (language != null) {
-        json.put(LANGUAGE, language);
+      if (lang != null) {
+        json.put(LANGUAGE, lang);
       }
-      if (timezone != null) {
-        json.put(TIMEZONE, timezone);
+      if (tz != null) {
+        json.put(TIMEZONE, tz);
       }
-      if (currency != null) {
-        json.put(CURRENCY, currency);
+      if (curr != null) {
+        json.put(CURRENCY, curr);
       }
-      if (tax > 0) {
-        json.put(TAX, String.valueOf(tax));
+      if (tx > 0) {
+        json.put(TAX, String.valueOf(tx));
       }
       if (dbc != null) {
         json.put(DEMANDBOARD, dbc.toJSONString());
@@ -1000,6 +1017,9 @@ public class DomainConfig implements ILocation, Serializable {
       if (stockRebalancingConfig != null ) {
         json.put(STOCK_REBALANCING, stockRebalancingConfig.toJSONObject());
       }
+      if(formsConfig != null) {
+        json.put(FORMS, formsConfig.toJSONObject());
+      }
       // Events config.
       if (eventsConfig != null) {
         json.put(EVENTS, eventsConfig.toJSONObject());
@@ -1041,7 +1061,7 @@ public class DomainConfig implements ILocation, Serializable {
       // UI Preference
       json.put(UIPREFERENCE, uiPref);
       // Only New UI
-      json.put(ONLYNEWUI, onlyNewUI);
+      json.put(ONLY_NEW_UI, onlyNewUI);
       json.put(AUTHENTICATION_TOKEN_EXPIRY, authenticationTokenExpiry);
       json.put(ACCESS_KEY_AUTHENTICATION_TOKEN_EXPIRY, accessKeyAuthTokenExpiry);
       json.put(LOCAL_LOGIN_REQUIRED, localLoginRequired);
@@ -1087,7 +1107,7 @@ public class DomainConfig implements ILocation, Serializable {
         Iterator<String> it = tagsInvByOperation.keySet().iterator();
         while (it.hasNext()) {
           String transType = it.next();
-          String tagsCsv = (String) tagsInvByOperation.get(transType);
+          String tagsCsv = tagsInvByOperation.get(transType);
           if (tagsCsv != null && !tagsCsv.isEmpty()) {
             invTags.put(transType, tagsCsv);
           }
@@ -1097,11 +1117,12 @@ public class DomainConfig implements ILocation, Serializable {
       if (syncConfig != null) {
         json.put(SYNCHRONIZATION_BY_MOBILE, syncConfig.toJSONObject());
       }
+      json.put(ENABLE_TWO_FACTOR_AUTHENTICATION, enableTwoFactorAuthentication);
+      json.put(STORE_APP_THEME, storeAppTheme);
       jsonStr = json.toString();
     } catch (JSONException e) {
       throw new ConfigurationException(e.getMessage());
     }
-
     return jsonStr;
   }
 
@@ -1138,7 +1159,7 @@ public class DomainConfig implements ILocation, Serializable {
 
   public void setCapabilityByRole(String role, CapabilityConfig cc) {
     if (capabilityMap == null) {
-      capabilityMap = new HashMap<String, CapabilityConfig>();
+      capabilityMap = new HashMap<>();
     }
     capabilityMap.put(role, cc);
   }
@@ -1211,27 +1232,27 @@ public class DomainConfig implements ILocation, Serializable {
   }
 
   public String getCountry() {
-    return country;
+    return cntry;
   }
 
   public void setCountry(String country) {
-    this.country = country;
+    cntry = country;
   }
 
   public String getState() {
-    return state;
+    return st;
   }
 
   public void setState(String state) {
-    this.state = state;
+    st = state;
   }
 
   public String getDistrict() {
-    return district;
+    return dstrict;
   }
 
   public void setDistrict(String district) {
-    this.district = district;
+    dstrict = district;
   }
 
   public List<String> getDomainData(String key) {
@@ -1246,35 +1267,35 @@ public class DomainConfig implements ILocation, Serializable {
   }
 
   public String getLanguage() {
-    return language;
+    return lang;
   }
 
   public void setLanguage(String language) {
-    this.language = language;
+    lang = language;
   }
 
   public String getTimezone() {
-    return timezone;
+    return tz;
   }
 
   public void setTimezone(String timezone) {
-    this.timezone = timezone;
+    this.tz = timezone;
   }
 
   public String getCurrency() {
-    return currency;
+    return curr;
   }
 
   public void setCurrency(String currency) {
-    this.currency = currency;
+    curr = currency;
   }
 
   public float getTax() {
-    return tax;
+    return tx;
   }
 
   public void setTax(float tax) {
-    this.tax = tax;
+    this.tx = tax;
   }
 
   public DemandBoardConfig getDemandBoardConfig() {
@@ -1401,10 +1422,11 @@ public class DomainConfig implements ILocation, Serializable {
     this.autoGI = autoGI;
   }
 
-  @Deprecated
   /**
-   * Use autoGI instead, this returns the same as autoGI.
+   * @deprecated
+   * @return
    */
+  @Deprecated
   public boolean autoGR() {
     return autoGI;
   }
@@ -1413,6 +1435,7 @@ public class DomainConfig implements ILocation, Serializable {
    * No longer supported.
    *
    * @param autoGR - auto generate receipts
+   * @deprecated
    */
   @Deprecated
   public void setAutoGR(boolean autoGR) {
@@ -1451,11 +1474,20 @@ public class DomainConfig implements ILocation, Serializable {
     this.allowEmptyOrders = allowEmptyOrders;
   }
 
+  /**
+   * @deprecated
+   * @return
+   */
   @Deprecated
   public boolean allowMarkOrderAsFulfilled() {
     return false;
   }
 
+  /**
+   *
+   * @param allowMarkOrderAsFulfilled
+   * @deprecated
+   */
   @Deprecated
   public void setAllowMarkOrderAsFulfilled(boolean allowMarkOrderAsFulfilled) {
     this.allowMarkOrderAsFulfilled = allowMarkOrderAsFulfilled;
@@ -1555,10 +1587,10 @@ public class DomainConfig implements ILocation, Serializable {
   }
 
   public Locale getLocale() {
-    if (country == null) {
-      return new Locale(language, "");
+    if (cntry == null) {
+      return new Locale(lang, "");
     } else {
-      return new Locale(language, country);
+      return new Locale(lang, cntry);
     }
   }
 
@@ -1934,9 +1966,9 @@ public class DomainConfig implements ILocation, Serializable {
       List<ApprovalsConfig.PurchaseSalesOrderConfig>
           purchaseSalesOrderConfigs =
           approvalsConfig.getOrderConfig().getPurchaseSalesOrderApproval();
-      return (purchaseSalesOrderConfigs.stream()
+      return purchaseSalesOrderConfigs.stream()
           .anyMatch(
-              purchaseSalesOrderConfig -> purchaseSalesOrderConfig.isPurchaseOrderApproval()));
+              ApprovalsConfig.PurchaseSalesOrderConfig::isPurchaseOrderApproval);
 
     }
     return false;
@@ -1947,8 +1979,8 @@ public class DomainConfig implements ILocation, Serializable {
       List<ApprovalsConfig.PurchaseSalesOrderConfig>
           purchaseSalesOrderConfigs =
           approvalsConfig.getOrderConfig().getPurchaseSalesOrderApproval();
-      return (purchaseSalesOrderConfigs.stream()
-          .anyMatch(purchaseSalesOrderConfig -> purchaseSalesOrderConfig.isSalesOrderApproval()));
+      return purchaseSalesOrderConfigs.stream()
+          .anyMatch(ApprovalsConfig.PurchaseSalesOrderConfig::isSalesOrderApproval);
     }
     return false;
   }
@@ -1981,4 +2013,16 @@ public class DomainConfig implements ILocation, Serializable {
   public void setRFIDEnabled(boolean rfidEnabled) {
     this.rfidEnabled = rfidEnabled;
   }
+
+  public FormsConfig getFormsConfig() {
+    return formsConfig;
+  }
+
+  public void setFormsConfig(FormsConfig formsConfig) {
+    this.formsConfig = formsConfig;
+  }
+
+  public boolean isTwoFactorAuthenticationEnabled() { return enableTwoFactorAuthentication; }
+
+  public void setTwoFactorAuthenticationEnabled(boolean enableTwoFactorAuthentication) { this.enableTwoFactorAuthentication = enableTwoFactorAuthentication; }
 }

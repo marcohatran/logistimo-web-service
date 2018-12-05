@@ -36,8 +36,7 @@ public class FieldLimits {
   public static final int FIRSTNAME_MIN_LENGTH = 1;
   public static final int MOBILE_PHONE_MAX_LENGTH = 20;
   public static final int LAND_PHONE_MAX_LENGTH = 20;
-  public static final int AGE_MIN = 1;
-  public static final int AGE_MAX = 99;
+  public static final int MAX_USER_AGE = 100;
   public static final int STREET_ADDRESS_MAX_LENGTH = 200;
   public static final int TEXT_FIELD_MAX_LENGTH = 50;
   public static final int PASSWORD_MIN_LENGTH = 6;
@@ -59,4 +58,9 @@ public class FieldLimits {
   public static final int MATERIAL_ADDITIONAL_INFO_MAX_LENGTH = 400;
   public static final int MIN_SERVICE_LEVEL = 65;
   public static final int MAX_SERVICE_LEVEL = 99;
+  public static final int TOKEN_EXPIRY_MIN = 0;
+  public static final int TOKEN_EXPIRY_MAX = 999;
+  public static final int GUI_THEME_SAME_AS_IN_DOMAIN_CONFIGURATION = 0;
+  public static final int GUI_THEME_DEFAULT = 1;
+  public static final int GUI_THEME_SIDEBAR_AND_LANDING_SCREEN = 2;
 }

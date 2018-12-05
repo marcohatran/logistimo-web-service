@@ -81,15 +81,6 @@ public class MaterialModel {
   * Batch
   * */
   public String b;
-
-  /*
-  * Does material exist or not
-  * */
-  public String dty;
-  /*
-   * Is Binary
-   */
-  public String ib;
   /*
   * Seasonal
   * */

@@ -33,12 +33,11 @@ import com.logistimo.auth.GenericAuthoriser;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.constants.Constants;
-import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.domains.entity.IDomainLink;
 import com.logistimo.domains.service.DomainsService;
 import com.logistimo.exception.BadRequestException;
+import com.logistimo.exception.ForbiddenAccessException;
 import com.logistimo.exception.InvalidServiceException;
-import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.logger.XLog;
 import com.logistimo.reports.ReportsConstants;
 import com.logistimo.reports.entity.slices.IDomainStats;
@@ -87,6 +86,9 @@ public class ReportController {
   private FChartBuilder fChartBuilder;
 
   @Autowired
+  private ReportsService reportsService;
+
+  @Autowired
   public void setDomainsService(DomainsService domainsService) {
     this.domainsService = domainsService;
   }
@@ -118,9 +120,7 @@ public class ReportController {
     Long domainId = sUser.getCurrentDomainId();
     Map<String, Object> filters = getFilters(fcRequest, domainId);
     DomainConfig dc = DomainConfig.getInstance(domainId);
-    ReportsService rs;
     try {
-      rs = StaticApplicationContext.getBean(ConfigUtil.get("reports"), ReportsService.class);
       SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
       if (fcRequest.daily) {
         // The fcRequest.stDate is set to the the first day of the month for which the report is being drilled down.
@@ -149,11 +149,10 @@ public class ReportController {
         fcRequest.enDate = sdf.format(d.getTime());
       }
 
-      ReportData
-          r =
-          rs.getReportData(fcRequest.rty, sdf.parse(fcRequest.stDate), sdf.parse(fcRequest.enDate),
+      ReportData r =
+          reportsService.getReportData(fcRequest.rty, sdf.parse(fcRequest.stDate), sdf.parse(fcRequest.enDate),
               fcRequest.freq, filters, locale, timezone, null, dc, userId);
-      String repGenTime = rs.getRepGenTime(domainId, locale, timezone);
+      String repGenTime = reportsService.getRepGenTime(domainId, locale, timezone);
       if (r.getResults() == null) {
         return new ArrayList<>(0);
       }
@@ -224,21 +223,19 @@ public class ReportController {
     DomainStatisticsModel domainStatisticsModel = null;
     try {
       if (!GenericAuthoriser.authoriseUser(userId)) {
-        throw new UnauthorizedException("Permission denied of the user to access this domain");
+        throw new ForbiddenAccessException("Permission denied of the user to access this domain");
       }
       domainId = (domainId != null ? domainId : sUser.getCurrentDomainId());
-      ReportsService rs = StaticApplicationContext
-          .getBean(ConfigUtil.get("reports"), ReportsService.class);
       List<IDomainLink> linkedDomains;
       Set<Long> domains;
       List<? extends IDomainStats> parentData;
       List<IDomainStats> childrenData = new ArrayList<>();
       String domainStatsApp = ConfigUtil.get(ReportsConstants.MASTER_DATA_APP_NAME);
-      parentData = rs.getDomainStatistics(domainId);
+      parentData = reportsService.getDomainStatistics(domainId);
       if (parentData != null && parentData.size() > 0) {
         domainStatisticsModel = domainStatisticsBuilder.buildParentModel(parentData.get(0));
         Date date = LocalDateUtil.parseCustom(
-            rs.getReportLastRunTime(domainStatsApp), Constants.ANALYTICS_DATE_FORMAT, null);
+            reportsService.getReportLastRunTime(domainStatsApp), Constants.ANALYTICS_DATE_FORMAT, null);
         domainStatisticsModel.lrt = LocalDateUtil.format(date, sUser.getLocale(),
             sUser.getTimezone());
       }
@@ -246,9 +243,9 @@ public class ReportController {
       domains = domainBuilder.buildChildDomainsList(linkedDomains);
       if (domains != null) {
         for (Long d : domains) {
-          List<IDomainStats> domainStats = (List<IDomainStats>) rs.getDomainStatistics(d);
+          List<IDomainStats> domainStats = (List<IDomainStats>) reportsService.getDomainStatistics(d);
           if (domainStats != null && domainStats.size() > 0) {
-            childrenData.add(rs.getDomainStatistics(d).get(0));
+            childrenData.add(reportsService.getDomainStatistics(d).get(0));
           }
         }
         if (childrenData.size() > 0) {
@@ -280,16 +277,13 @@ public class ReportController {
     Map<String, String> results;
     try {
       if (!GenericAuthoriser.authoriseUser(userId)) {
-        throw new UnauthorizedException("Permission denied of the user to access this domain");
+        throw new ForbiddenAccessException("Permission denied of the user to access this domain");
       }
       domainId = (domainId != null ? domainId : sUser.getCurrentDomainId());
       if (StringUtils.isBlank(tag)) {
         return null;
       }
-
-      ReportsService rs = StaticApplicationContext.getBean(ConfigUtil.get("reports"),
-          ReportsService.class);
-      results = rs.getDomainStatisticsByTag(domainId, tag, c);
+      results = reportsService.getDomainStatisticsByTag(domainId, tag, c);
     } catch (ServiceException e) {
       xLogger
           .severe(

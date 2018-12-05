@@ -294,7 +294,7 @@ public class OrderServlet extends JsonRestServlet {
     String
         loadAllStr =
         req.getParameter(RestConstantsZ.LOADALL); // load order items along with order metadata
-    String password = req.getParameter(RestConstantsZ.PASSWORD); // sent when SMS message is sent
+    String password = req.getParameter(RestConstantsZ.PASSWRD); // sent when SMS message is sent
     String
         exShpItemsStr =
         req.getParameter(
@@ -517,7 +517,7 @@ public class OrderServlet extends JsonRestServlet {
     // Get request parameters
     String userId = req.getParameter(RestConstantsZ.USER_ID);
     String oidStr = req.getParameter(RestConstantsZ.ORDER_ID);
-    String password = req.getParameter(RestConstantsZ.PASSWORD);
+    String password = req.getParameter(RestConstantsZ.PASSWRD);
     String kioskIdStr = req.getParameter(RestConstantsZ.KIOSK_ID);
     String
         exShpItemsStr =
@@ -698,7 +698,7 @@ public class OrderServlet extends JsonRestServlet {
     // Get JSON input
     String jsonInput = req.getParameter(RestConstantsZ.JSON_STRING);
     // Get password (in case of SMS)
-    String password = req.getParameter(RestConstantsZ.PASSWORD);
+    String password = req.getParameter(RestConstantsZ.PASSWRD);
     String errorCode = null;
     OrderResults or = null;
     MobileOrderModel mom = null;
@@ -817,7 +817,7 @@ public class OrderServlet extends JsonRestServlet {
               message = backendMessages.getString("transfer.reference.id.update.error.message");
             }
             if (StringUtils.isBlank(uoReq.getPurchaseReferenceId()) && StringUtils
-                .isNotBlank(o.getPurchaseReferenceId()) && dc.getOrdersConfig()
+                .isBlank(o.getPurchaseReferenceId()) && dc.getOrdersConfig()
                 .isPurchaseReferenceIdMandatory()) {
               status = false;
               message = backendMessages.getString("purchase.reference.id.mandatory.error");
@@ -1097,7 +1097,7 @@ public class OrderServlet extends JsonRestServlet {
     // Get request parameters
     String userId = req.getParameter(RestConstantsZ.USER_ID);
     String oidStr = req.getParameter(RestConstantsZ.ORDER_ID);
-    String password = req.getParameter(RestConstantsZ.PASSWORD);
+    String password = req.getParameter(RestConstantsZ.PASSWRD);
     String newStatus = req.getParameter(RestConstantsZ.STATUS);
     String
         kioskIdStr =
@@ -1286,7 +1286,7 @@ public class OrderServlet extends JsonRestServlet {
                                  boolean doApprovalConfigCheck)
       throws IOException, ServiceException {
     xLogger.fine("Entered updateOrderStatus");
-    String password = req.getParameter(RestConstantsZ.PASSWORD); // sent when SMS message is sent
+    String password = req.getParameter(RestConstantsZ.PASSWRD); // sent when SMS message is sent
     // Get JSON input
     String jsonInput = req.getParameter(RestConstantsZ.JSON_STRING);
     UpdateOrderStatusRequest uosReq = GsonUtil.buildUpdateOrderStatusRequestFromJson(jsonInput);
@@ -1440,7 +1440,11 @@ public class OrderServlet extends JsonRestServlet {
           xLogger.severe("Service exception when getting order with ID {0}: {1}",
               uosReq.tid, e.getMessage());
           status = false;
-          message = backendMessages.getString(SYSTEM_ERROR);
+          if(StringUtils.isEmpty(e.getCode())) {
+            message = backendMessages.getString(SYSTEM_ERROR);
+          } else {
+            message = e.getMessage();
+          }
           setSignatureAndStatus(cache, signature, IJobStatus.FAILED);
         } catch (LogiException e) {
           xLogger.severe("Logi exception when updating shipment with ID {0}: {1}",

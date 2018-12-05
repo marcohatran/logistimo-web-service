@@ -24,36 +24,19 @@
 package com.logistimo.shipments;
 
 import java.math.BigDecimal;
+import java.util.Date;
+
+import lombok.Data;
 
 /**
  * Created by pratheeka on 16/03/18.
  */
+@Data
 public class FulfilledQuantityModel {
   private Long materialId;
   private String batchId;
   private BigDecimal fulfilledQuantity;
-
-  public Long getMaterialId() {
-    return materialId;
-  }
-
-  public void setMaterialId(Long materialId) {
-    this.materialId = materialId;
-  }
-
-  public String getBatchId() {
-    return batchId;
-  }
-
-  public void setBatchId(String batchId) {
-    this.batchId = batchId;
-  }
-
-  public BigDecimal getFulfilledQuantity() {
-    return fulfilledQuantity;
-  }
-
-  public void setFulfilledQuantity(BigDecimal fulfilledQuantity) {
-    this.fulfilledQuantity = fulfilledQuantity;
-  }
+  private String manufacturer;
+  private Date expiryDate;
+  private Date manufacturedDate;
 }

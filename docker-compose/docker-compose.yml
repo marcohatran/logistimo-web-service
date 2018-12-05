@@ -37,9 +37,7 @@ services:
       restart: always
       hostname: zoo
       network_mode: "host"
-      environment:
-        ZOO_MY_ID: 1
-        ZOO_SERVERS: server.1=0.0.0.0:2888:3888
+
 
   zoo1:
     image: zookeeper
@@ -81,16 +79,33 @@ services:
 
   hadoop:
     image: logistimo/hadoop:2.3.0-cdh5.1.3-3
-    container_name: hadoop    
-    network_mode: "host"
+    container_name: hadoop
     restart: always
     environment:
       - RUN_NN=y
       - RUN_DN=y
       - RUN_HTTPFS=y
+    ports:
+      - "50010:50010"
+      - "50020:50020"
+      - "50070:50070"
+      - "50075:50075"
+      - "50090:50090"
+      - "8020:8020"
+      - "9000:9000"
+      - "19888:19888"
+      - "8030:8030"
+      - "8031:8031"
+      - "8032:8032"
+      - "8033:8033"
+      - "8040:8040"
+      - "8042:8042"
+      - "8088:8088"
+      - "49707:49707"
+      - "2122:2122"
+      - "14000:14000"
     volumes:
-      - /data/hadoop/datanode:/usr/local/hadoop-2.3.0-cdh5.1.3/data/datanode
-      - /data/hadoop/namenode:/usr/local/hadoop-2.3.0-cdh5.1.3/data/namenode
+      - /data/hadoop/data:/usr/local/hadoop-2.3.0-cdh5.1.3/data
       - /data/hadoop/logs:/usr/local/hadoop-2.3.0-cdh5.1.3/logs
       - /etc/docker-compose/hadoop-conf:/usr/local/hadoop-2.3.0-cdh5.1.3/etc/hadoop
 
@@ -115,15 +130,22 @@ services:
 
   locations:
     image: logistimo/locations-service:latest
+    container_name: locations
     ports:
       - "9090:9090"
     environment:
-      - MYSQL_LOC_HOST="jdbc:mariadb://localhost:3306/locations?useUnicode=true&amp;characterEncoding=UTF-8"
-      - MYSQL_LOC_USER="logistimo"
-      - MYSQL_LOC_PASS="logistimo"
-      - MYSQL_LOGI_HOST="jdbc:mariadb://localhost:3306/logistimo?useUnicode=true&amp;characterEncoding=UTF-8"
-      - MYSQL_LOGI_USER="logistimo"
-      - MYSQL_LOGI_PASS="logistimo"
+      - MYSQL_LOC_HOST=jdbc:mariadb://localhost:3306/locations
+      - MYSQL_LOC_USER=logistimo
+      - MYSQL_LOC_PASS=logistimo
+      - MYSQL_LOGI_HOST=jdbc:mariadb://localhost:3306/logistimo
+      - MYSQL_LOGI_USER=logistimo
+      - MYSQL_LOGI_PASS=logistimo
+      - REDIS_HOST=localhost
+      - SPRING_PROFILES_ACTIVE=dev
+      - SENTINEL_HOST=
+      - APP_START=true
+      - ISSENTINEL=
+
 
   approvals:
     image: logistimo/approvals-service:latest
@@ -131,13 +153,13 @@ services:
     ports:
       - "6400:6400"
     environment:
-      - SERVER_PORT="6400"
-      - MYSQL_HOST="jdbc:mariadb://localhost:3306/approval_service"
-      - MYSQL_USER="logistimo"
-      - MYSQL_PASSWORD="logistimo"
-      - CONVERSATION_SERVICE_URL="http://localhost:8080"
-      - ACTIVEMQ_BROKER_URL="failover:(tcp://localhost:61616)?randomize=false"
-      - TASK_MACHINE="true"
+      - SERVER_PORT=6400
+      - MYSQL_HOST=jdbc:mariadb://localhost:3306/approval_service
+      - MYSQL_USER=logistimo
+      - MYSQL_PASSWORD=logistimo
+      - CONVERSATION_SERVICE_URL=http://localhost:8080
+      - ACTIVEMQ_BROKER_URL=failover:(tcp://localhost:61616)?randomize=false
+      - TASK_MACHINE=true
 
   mapi:
     image: logistimo/ls-mobile-api:latest
@@ -166,34 +188,34 @@ services:
     network_mode: "host"
     restart: always
     environment:
-      - MYSQL_HOST_URL="jdbc:mariadb://localhost/logistimo?useUnicode=true&characterEncoding=UTF-8"
-      - MYSQL_RO_HOST_URL="jdbc:mariadb://localhost/logistimo?useUnicode=true&amp;characterEncoding=UTF-8"
-      - MYSQL_USER="logistimo"
-      - MYSQL_PASS="logistimo"
-      - REDIS_HOST="localhost"
-      - SENTINEL_HOST=""
-      - SENTINEL_MASTER=""
-      - HADOOP_HOST="localhost"
-      - MEDIA_HOST_URL="http://localhost:50070/webhdfs/v1"
-      - ACTIVEMQ_HOST="tcp://localhost:61616"
-      - ZKR_HOST="localhost:2181"
-      - LOGI_HOST="mydomain.com"
-      - TASK_SERVER="true"
-      - TASK_URL="http://localhost:8082"
-      - TASK_QUEUE_TYPE="jms"
-      - TASK_EXPORT="true"
-      - TASK_PORT="8080"
-      - EMAIL_HOST="localhost"
+      - MYSQL_HOST_URL=jdbc:mariadb://localhost/logistimo?useUnicode=true&characterEncoding=UTF-8
+      - MYSQL_RO_HOST_URL=jdbc:mariadb://localhost/logistimo?useUnicode=true&amp;characterEncoding=UTF-8
+      - MYSQL_USER=logistimo
+      - MYSQL_PASS=logistimo
+      - REDIS_HOST=localhost
+      - SENTINEL_HOST=
+      - SENTINEL_MASTER=
+      - HADOOP_HOST=localhost
+      - MEDIA_HOST_URL=http://localhost:50070/webhdfs/v1
+      - ACTIVEMQ_HOST=(tcp://localhost:61616)
+      - ZKR_HOST=localhost:2181
+      - LOGI_HOST=mydomain.com
+      - TASK_SERVER=true
+      - TASK_URL=http://localhost:8080
+      - TASK_QUEUE_TYPE=jms
+      - TASK_EXPORT=true
+      - TASK_PORT=8080
+      - EMAIL_HOST=localhost
       - EMAIL_PORT=25
-      - EMAIL_FROMADDRESS="service@mydomain.com"
-      - EMAIL_FROMNAME="No-reply"
-      - CALLISTO_HOST_URL="http://localhost:9080"
-      - LOC_URL="http://localhost:9090"
-      - APPROVAL_URL="http://localhost:6400"
-      - COLLABORATION_URL="http://localhost:9070/v1/collaboration/likes"
-      - STOCKREBALANCING_URL="http://localhost:8700"
-      - ORIGINS="*"
-      - MAPI_URL="http://localhost:8080"
+      - EMAIL_FROMADDRESS=service@mydomain.com
+      - EMAIL_FROMNAME=No-reply
+      - CALLISTO_HOST_URL=http://localhost:9080
+      - LOC_URL=http://localhost:9090
+      - APPROVAL_URL=http://localhost:6400
+      - COLLABORATION_URL=http://localhost:9070/v1/collaboration/likes
+      - STOCKREBALANCING_URL=http://localhost:8700
+      - ORIGINS=*
+      - MAPI_URL=http://localhost:3000
       - GOOGLE_ANALYTICS_CLIENT_ID=
     volumes:
       - /data/logi-app/logs:/usr/local/tomcat/logs

@@ -25,6 +25,7 @@ package com.logistimo.reports.plugins.internal;
 
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
+import com.logistimo.reports.models.ReportMinMaxHistoryFilters;
 import com.logistimo.services.utils.ConfigUtil;
 
 import org.apache.commons.lang.StringUtils;
@@ -51,31 +52,32 @@ public class QueryHelper {
    */
   public static final String PERIODICITY = "periodicity";
 
-  private static final String LEVEL = "level";
-  private static final String LEVEL_PERIODICITY = "levelPeriodicity";
-  private static final String FROM = "from";
-  private static final String TO = "to";
+  public static final String LEVEL = "level";
+  public static final String LEVEL_PERIODICITY = "levelPeriodicity";
+  public static final String FROM = "from";
+  public static final String TO = "to";
   private static final String MATERIAL_TAG = "mtag";
   private static final String ENTITY_TAG = "etag";
   private static final String USER = "user";
   private static final String USER_TAG = "utag";
   private static final String ORDER_TAG = "otag";
-  private static final String MATERIAL = "mat";
-  private static final String ENTITY = "entity";
+  public static final String MATERIAL = "mat";
+  public static final String ENTITY = "entity";
   private static final String OTYPE = "otype";
   private static final String STATE = "st";
   private static final String COUNTRY = "cn";
-  private static final String DISTRICT = "dis";
-  private static final String CITY = "cty";
+  public static final String DISTRICT = "dis";
+  public static final String CITY = "cty";
   private static final String ATYPE = "at";
   private static final String MTYPE = "mt";
   private static final String VENDOR_ID = "mf";
   private static final String MYEAR = "myear";
   private static final String DMODEL = "mm";
-  private static final String TALUK = "tlk";
+  public static final String TALUK = "tlk";
   private static final String SIZE = "s";
   private static final String OFFSET = "o";
   private static final String LKID = "lkid";
+  public static final String LOCATION_BY = "location_by";
 
   /** Query Id */
   public static final String QUERY_DOMAIN = "DID";
@@ -114,6 +116,7 @@ public class QueryHelper {
   public static final String TOKEN_LOCATION = "TOKEN_LOCATION";
   public static final String TOKEN_RUN_TIME = "TOKEN_APP_NAME";
 
+  public static final String LOCATION_CITY = "CITY";
   public static final String LOCATION_TALUK = "TALUK";
   public static final String LOCATION_DISTRICT = "DISTRICT";
   public static final String LOCATION_STATE = "STATE";
@@ -234,7 +237,7 @@ public class QueryHelper {
           case MTYPE:
             if (jsonObject.has(filter) && StringUtils.isNotEmpty(jsonObject.getString(filter))) {
               filters.put(TOKEN + OPTIONAL_FILTER_MAP.get(filter),
-                      CharacterConstants.SINGLE_QUOTES+jsonObject.getString(filter)+CharacterConstants.SINGLE_QUOTES);
+                  CharacterConstants.SINGLE_QUOTES+jsonObject.getString(filter)+CharacterConstants.SINGLE_QUOTES);
             }
             break;
           default:
@@ -251,6 +254,10 @@ public class QueryHelper {
     if(filters.containsKey(TOKEN+QUERY_ATYPE) && filters.containsKey(TOKEN+QUERY_MTYPE)){
       filters.remove(TOKEN+QUERY_MTYPE);
     }
+    if(jsonObject.has(LOCATION_BY)) {
+      filters.put(LOCATION_BY, jsonObject.getString(LOCATION_BY));
+    }
+
     return filters;
   }
 
@@ -264,7 +271,9 @@ public class QueryHelper {
             .append(CharacterConstants.S_QUOTE)
             .append(CharacterConstants.COMMA);
       }
-      val.setLength(val.length() - 1);
+      if (val.length() != 0) {
+        val.setLength(val.length() - 1);
+      }
       return val.toString();
     } else {
       return CharacterConstants.S_QUOTE + values + CharacterConstants.S_QUOTE;
@@ -286,5 +295,90 @@ public class QueryHelper {
     }
     queryId.setLength(queryId.length() - 1);
     return queryId.toString() + suffix;
+  }
+
+  /**
+   * Parses the filters in the input json into a ReportMinMaxHistoryFilters object
+   * @param jsonObject
+   * @return ReportMinMaxHistoryFilters object
+   */
+  public static ReportMinMaxHistoryFilters parseMinMaxHistoryFilters(JSONObject jsonObject) {
+    if (jsonObject == null) {
+      throw new IllegalArgumentException("Invalid filters while parsing min max history filters");
+    }
+    String periodicity = getPeriodicity(jsonObject.getString(PERIODICITY));
+    DateTimeFormatter dateTimeFormatter = DateTimeFormat.forPattern(Constants.DATE_FORMAT_CSV);
+    String toDate;
+    if (jsonObject.has(LEVEL) && LEVEL_DAY.equals(jsonObject.getString(LEVEL))) {
+      DateTime toDateTime = dateTimeFormatter.parseDateTime(jsonObject.getString(FROM));
+      if(PERIODICITY_WEEK.equals(jsonObject.getString(LEVEL_PERIODICITY))) {
+        toDateTime = toDateTime.plusWeeks(1);
+      } else {
+        toDateTime = toDateTime.plusMonths(1);
+      }
+      toDate = dateTimeFormatter.print(toDateTime);
+    } else {
+      toDate = jsonObject.getString(TO);
+      toDate =
+          getToDateBasedOnPeriodicity(toDate, periodicity);
+    }
+    String from = dateTimeFormatter.print(dateTimeFormatter.parseDateTime(jsonObject.getString(FROM)));
+    String to = dateTimeFormatter.print(dateTimeFormatter.parseDateTime(toDate));
+
+    return (ReportMinMaxHistoryFilters.builder()
+        .entityId((((Integer)jsonObject.get(ENTITY)).longValue()))
+        .materialId(((Integer)jsonObject.get(MATERIAL)).longValue())
+        .periodicity(periodicity)
+        .from(from)
+        .to(to)
+        .build());
+  }
+
+  /**
+   * Get the periodicity string
+   */
+  private static String getPeriodicity(String periodicity) {
+    String periodicityStr;
+    switch (periodicity) {
+      case PERIODICITY_MONTH:
+        periodicityStr = MONTH;
+        break;
+      case PERIODICITY_WEEK:
+        periodicityStr = WEEK;
+        break;
+      default:
+        periodicityStr = DAY;
+        break;
+    }
+    return periodicityStr;
+  }
+
+  /**
+   * Get the to date string based on periodicity. For monthly periodicity, to date is set as beginning of next month.
+   * For weekly periodicity to date is set as beginning of the next week. For daily periodicity, to date is set as next day.
+   * @param dateStr
+   * @param periodicity
+   * @return the modified to date string
+   */
+  protected static String getToDateBasedOnPeriodicity(String dateStr, String periodicity) {
+    if (StringUtils.isEmpty(dateStr) || StringUtils.isEmpty(periodicity)) {
+      throw new IllegalArgumentException("Invalid input parameters while getting to date");
+    }
+    DateTimeFormatter dateTimeFormatter = DateTimeFormat.forPattern(DATE_FORMAT_DAILY);
+    DateTime date = dateTimeFormatter.parseDateTime(dateStr);
+    switch(periodicity) {
+      case MONTH:
+        date = date.plusMonths(1);
+        break;
+      case WEEK:
+        date = date.plusWeeks(1);
+        break;
+      case DAY:
+        date = date.plusDays(1);
+        break;
+      default:
+        break;
+    }
+    return dateTimeFormatter.print(date);
   }
 }

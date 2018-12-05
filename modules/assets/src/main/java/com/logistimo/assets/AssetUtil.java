@@ -29,6 +29,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.internal.LinkedTreeMap;
 
 import com.logistimo.AppFactory;
+import com.logistimo.assets.entity.Asset;
 import com.logistimo.assets.entity.IAsset;
 import com.logistimo.assets.entity.IAssetRelation;
 import com.logistimo.assets.entity.IAssetStatus;
@@ -54,6 +55,7 @@ import com.logistimo.events.EventConstants;
 import com.logistimo.events.entity.IEvent;
 import com.logistimo.events.exceptions.EventGenerationException;
 import com.logistimo.events.processor.EventPublisher;
+import com.logistimo.exception.BadRequestException;
 import com.logistimo.logger.XLog;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.http.HttpResponse;
@@ -62,6 +64,7 @@ import com.logistimo.services.impl.PMF;
 import com.logistimo.utils.MsgUtil;
 import com.logistimo.utils.StringUtil;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONObject;
 
@@ -75,6 +78,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.jdo.PersistenceManager;
 
@@ -117,26 +121,55 @@ public class AssetUtil {
   private static final XLog xLogger = XLog.getLog(AssetUtil.class);
   public static final String TAGS = "tags";
   public static final String ASSET_YOM = "yom";
-  private static URLFetchService urlFetchService = AppFactory.get().getURLFetchService();
+  public static final String CAPACITY = "cc";
+  public static final String QUANTITY = "qty";
+  public static final String METRIC = "met";
+  public static final String OWNERS = "ons";
+  public static final String MAINTAINERS = "mts";
+  private static URLFetchService urlFetchService;
   private static Gson gson = new Gson();
+  private static final String CAPACITY_IN_LITRES = "Litres";
+
+  public static class Capacity {
+    public String qty;
+    public String met;
+
+    public JSONObject getJSONObject() {
+      JSONObject jsonObject = new JSONObject();
+      jsonObject.put(QUANTITY, qty);
+      jsonObject.put(METRIC, met);
+      return jsonObject;
+    }
+  }
+
+  private static URLFetchService getURLFetchService() {
+    if(urlFetchService == null) {
+      urlFetchService = AppFactory.get().getURLFetchService();
+    }
+    return urlFetchService;
+  }
+
+  private AssetUtil() {
+
+  }
 
   private static String post(String path, String data) throws ServiceException {
     try {
       AssetSystemConfig tempConfig = AssetSystemConfig.getInstance();
       String url = tempConfig.getUrl();
       if (url != null && !url.isEmpty()) {
-        url += (url.endsWith("/") ? "" : "/") + path;
+        url += (url.endsWith(CharacterConstants.F_SLASH) ? CharacterConstants.EMPTY : CharacterConstants.F_SLASH) + path;
         xLogger.info("URL: {0}", url);
         HttpResponse
             response =
-            urlFetchService.post(new URL(url), data.getBytes(), tempConfig.getUserName(),
+            getURLFetchService().post(new URL(url), data.getBytes(), tempConfig.getUserName(),
                 tempConfig.getPassword(), 60);
         int status = response.getResponseCode();
         if (status == HTTP_STATUS_CREATED || status == HTTP_STATUS_OK) {
-          return new String(response.getContent(), "UTF-8");
+          return new String(response.getContent(), Constants.UTF8);
         } else {
           xLogger.warn("Asset. server returned a status of {0} for req. {1}", status, url);
-          throw new ServiceException(new String(response.getContent(), "UTF-8"));
+          throw new ServiceException(new String(response.getContent(), Constants.UTF8));
         }
       } else {
         xLogger.severe("Invalid asset. service URL: null or empty");
@@ -154,15 +187,15 @@ public class AssetUtil {
       AssetSystemConfig tempConfig = AssetSystemConfig.getInstance();
       String url = tempConfig.getUrl();
       if (url != null && !url.isEmpty()) {
-        url += (url.endsWith("/") ? "" : "/") + path;
+        url += (url.endsWith(CharacterConstants.F_SLASH) ? CharacterConstants.EMPTY : CharacterConstants.F_SLASH) + path;
         xLogger.info("URL: {0}", url);
         HttpResponse
             response =
-            urlFetchService
+            getURLFetchService()
                 .get(new URL(url), tempConfig.getUserName(), tempConfig.getPassword(), 60);
         int status = response.getResponseCode();
         if (status == HTTP_STATUS_OK) {
-          return new String(response.getContent(), "UTF-8");
+          return new String(response.getContent(), Constants.UTF8);
         } else {
           xLogger.warn("Asset. server returned a status of {0} for req. {1}", status, url);
         }
@@ -177,7 +210,9 @@ public class AssetUtil {
   }
 
   public static IAsset verifyAndRegisterAsset(Long domainId, String userId, Long kioskId,
-      Map<String, Object> variableMap, Map<String, Object> metaDataMap) throws ServiceException {
+                                              Map<String, Object> variableMap,
+                                              Map<String, Object> metaDataMap)
+      throws ServiceException, ConfigurationException {
     String assetName = ((String) variableMap.get(ASSET_NAME));
     if (!((String) variableMap.get(SERIAL_NUMBER)).isEmpty()
         && !((String) variableMap.get(MANUFACTURER_NAME)).isEmpty()
@@ -191,10 +226,10 @@ public class AssetUtil {
           if (StringUtils.isNotBlank(assetName)) {
             assetType = getAssetType(assetName);
             if (assetType == null) {
-              throw new ServiceException("Asset type is invalid.");
+              throw new BadRequestException("AST001", null);
             }
           } else {
-            throw new ServiceException("Asset type is empty.");
+            throw new BadRequestException("AST002", null);
           }
         } else {
           assetType = (Integer) variableMap.get(ASSET_TYPE);
@@ -221,14 +256,14 @@ public class AssetUtil {
 
       if (StringUtils.isEmpty(manufacturerId) || !isManufacturerConfigured(assetType,
           manufacturerId, domainId)) {
-        throw new ServiceException("Manufacturer is invalid or not configured.");
+        throw new BadRequestException("AST003", null);
       }
+      AssetSystemConfig.Model manufacturerModel = getAssetModel(assetType,
+          manufacturerId, (String) variableMap.get(ASSET_MODEL),
+          domainId);
 
-      if (StringUtils.isEmpty((String) variableMap.get(ASSET_MODEL)) || (
-          Objects.equals(assetType, IAsset.TEMP_DEVICE)
-              && getAssetModel(assetType, manufacturerId, (String) variableMap.get(ASSET_MODEL),
-              domainId) == null)) {
-        throw new ServiceException("Asset model is invalid or not configured.");
+      if (StringUtils.isEmpty((String) variableMap.get(ASSET_MODEL)) || manufacturerModel == null) {
+        throw new BadRequestException("AST004", null);
       }
 
       AssetManagementService ams = StaticApplicationContext
@@ -240,7 +275,7 @@ public class AssetUtil {
         asset = JDOUtils.createInstance(IAsset.class);
         asset.setSerialId((String) variableMap.get(SERIAL_NUMBER));
         asset.setVendorId(manufacturerId);
-        asset.setModel((String) variableMap.get(ASSET_MODEL));
+        asset.setModel(manufacturerModel.name);
         if (variableMap.get(ASSET_YOM) != null) {
           asset.setYom(Integer.valueOf((String) variableMap.get(ASSET_YOM)));
         }
@@ -251,10 +286,20 @@ public class AssetUtil {
         if (kioskId != null) {
           asset.setKioskId(kioskId);
         }
-
+        setAssetModelMetaData(metaDataMap, asset);
         AssetModel assetModel = AssetUtil.buildAssetModel(domainId, asset, metaDataMap);
-        if (variableMap.get(AssetUtil.TAGS) != null) {
-          assetModel.tags = (List<String>) variableMap.get(AssetUtil.TAGS);
+        if (variableMap.get(TAGS) != null) {
+          assetModel.tags = (List<String>) variableMap.get(TAGS);
+        }
+        if(variableMap.get(OWNERS) != null){
+          List<String> ons = (List<String>) variableMap.get(OWNERS);
+          asset.setOwners(ons);
+          assetModel.ons = ons;
+        }
+        if(variableMap.get(MAINTAINERS) != null){
+          List<String> mts = (List<String>) variableMap.get(MAINTAINERS);
+          asset.setMaintainers(mts);
+          assetModel.mts = mts;
         }
         //Registering in LS
         ams.createAsset(domainId, asset, assetModel);
@@ -262,15 +307,13 @@ public class AssetUtil {
       } else {
         //Validating domain association
         if (!Objects.equals(asset.getDomainId(), domainId)) {
-          throw new ServiceException(
-              "Given asset " + asset.getSerialId() + " is mapped to another domain.");
+          throw new ServiceException("AST005", asset.getSerialId(), asset.getDomainId());
         }
-
         //Validating kiosk association
         if (kioskId != null && asset.getKioskId() != null && !Objects
             .equals(asset.getKioskId(), kioskId)) {
-          throw new ServiceException(
-              "Given asset " + asset.getSerialId() + " is mapped to another store.");
+
+          throw new ServiceException("AST006", asset.getSerialId(), asset.getKioskId());
         }
 
         if (kioskId != null && asset.getKioskId() == null) {
@@ -279,8 +322,9 @@ public class AssetUtil {
 
         if (variableMap.get(ASSET_MODEL) != null && !((String) variableMap.get(ASSET_MODEL))
             .isEmpty()) {
-          asset.setModel((String) variableMap.get(ASSET_MODEL));
+          asset.setModel(manufacturerModel.name);
         }
+        setAssetModelMetaData(metaDataMap, asset);
 
         if (!Objects.equals(asset.getType(), assetType)) {
           try {
@@ -313,6 +357,18 @@ public class AssetUtil {
         if (variableMap.get(AssetUtil.TAGS) != null) {
           assetModel.tags = (List<String>) variableMap.get(AssetUtil.TAGS);
         }
+        if(variableMap.get(OWNERS) != null){
+          List<String> ons = (List<String>) variableMap.get(OWNERS);
+          asset.setOwners(ons);
+          assetModel.ons = ons;
+        }
+        if(variableMap.get(MAINTAINERS) != null){
+          List<String> mts = (List<String>) variableMap.get(MAINTAINERS);
+          asset.setMaintainers(mts);
+          assetModel.mts = mts;
+        }
+        asset.setUpdatedBy(userId);
+        asset.setUpdatedOn(new Date());
         //Updating asset in LS
         ams.updateAsset(domainId, asset, assetModel);
 
@@ -344,6 +400,16 @@ public class AssetUtil {
     }
 
     return null;
+  }
+
+  protected static void setAssetModelMetaData(Map<String, Object> metaDataMap, IAsset asset)
+      throws ConfigurationException {
+    if(StringUtils.isNotBlank(asset.getModel())) {
+      metaDataMap.remove(DEV_MODEL);
+      metaDataMap.put(DEV_MODEL, asset.getModel());
+      Capacity capacityDetails = getAssetCapacity(asset);
+      metaDataMap.put(CAPACITY, capacityDetails.getJSONObject());
+    }
   }
 
   public static Boolean isManufacturerConfigured(Integer assetType, String manufacturerId,
@@ -392,14 +458,13 @@ public class AssetUtil {
   }
 
   public static List<Integer> getAssetsByType(Integer assetType) {
-    List<Integer> filteredAsset = new ArrayList<>(1);
+    List<Integer> filteredAsset = new ArrayList<>();
     try {
       Map<Integer, AssetSystemConfig.Asset> assets = getAssets();
-      for (Integer assetId : assets.keySet()) {
-        if (Objects.equals(assetType, assets.get(assetId).type)) {
-          filteredAsset.add(assetId);
-        }
-      }
+      filteredAsset = assets.entrySet().stream()
+          .filter(asset -> Objects.equals(assetType, asset.getValue().type))
+          .map(Map.Entry::getKey)
+          .collect(Collectors.toList());
     } catch (Exception e) {
       xLogger.warn("{0} while getting asset {1} information from config", e.getMessage(), assetType,
           e);
@@ -412,9 +477,10 @@ public class AssetUtil {
     if (assetName != null && !assetName.isEmpty()) {
       try {
         Map<Integer, AssetSystemConfig.Asset> assets = getAssets();
-        for (Integer assetId : assets.keySet()) {
-          if (assets.get(assetId).getName().equalsIgnoreCase(assetName)) {
-            return assetId;
+
+        for(Map.Entry<Integer, AssetSystemConfig.Asset> assetEntry : assets.entrySet()) {
+          if(assetEntry.getValue().getName().equalsIgnoreCase(assetName)) {
+            return assetEntry.getKey();
           }
         }
       } catch (Exception e) {
@@ -453,7 +519,7 @@ public class AssetUtil {
       if (dc != null) {
         AssetConfig ac = dc.getAssetConfig();
         if (ac != null && ac.getVendorIds() != null && (
-            (Objects.equals(assetType, IAsset.TEMP_DEVICE) && ac.getVendorIds()
+            (ac.getVendorIds()
                 .contains(manufacturerId.toLowerCase()))
                 || ac.getVendorIds()
                 .contains(assetType + Constants.KEY_SEPARATOR + manufacturerId.toLowerCase()))) {
@@ -608,7 +674,7 @@ public class AssetUtil {
     // URLFetch Implementation
     try {
       if (url != null && !url.isEmpty()) {
-        if (!url.endsWith("/")) {
+        if (!url.endsWith(CharacterConstants.F_SLASH)) {
           url += "/v2/devices";
         } else {
           url += "v2/devices";
@@ -618,7 +684,7 @@ public class AssetUtil {
       URL urlObj = new URL(url);
       HttpResponse
           response =
-          urlFetchService.post(urlObj, devicesToAddJsonStr.getBytes(), userName, password, 15);
+          getURLFetchService().post(urlObj, devicesToAddJsonStr.getBytes(), userName, password, 15);
 
       if (response.getResponseCode() != HTTP_STATUS_CREATED) {
         xLogger.severe(
@@ -687,7 +753,7 @@ public class AssetUtil {
    */
   public static String getAssetDetails(String manufacturerId, String serialNumber) {
     try {
-      return get("v2/devices/" + manufacturerId + "/" + encodeURLParameters(serialNumber));
+      return get("v2/devices/" + manufacturerId + CharacterConstants.F_SLASH + encodeURLParameters(serialNumber));
     } catch (Exception e) {
       xLogger.severe("{0} when getting asset details: {1}, {2}", e.getMessage(), manufacturerId,
           serialNumber, e);
@@ -706,7 +772,7 @@ public class AssetUtil {
 
   public static String getAssetRelations(String manufacturerId, String assetId) {
     try {
-      return get("v2/devices/relation/" + manufacturerId + "/" + encodeURLParameters(assetId));
+      return get("v2/devices/relation/" + manufacturerId + CharacterConstants.F_SLASH + encodeURLParameters(assetId));
     } catch (Exception e) {
       xLogger.severe("{0} when getting asset relation: {1}, {2}", e.getMessage(), manufacturerId,
           assetId, e);
@@ -735,13 +801,13 @@ public class AssetUtil {
     try {
       String
           path =
-          "v3/temp/" + vendorId + "/" + encodeURLParameters(deviceId) + "/" + mpOrSensorId;
+          "v3/temp/" + vendorId + CharacterConstants.F_SLASH + encodeURLParameters(deviceId) + CharacterConstants.F_SLASH + mpOrSensorId;
       if (Objects.equals(IAsset.MONITORING_ASSET, assetType)) {
-        path = "v2/temp/" + vendorId + "/" + encodeURLParameters(deviceId) + "/" + mpOrSensorId;
+        path = "v2/temp/" + vendorId + CharacterConstants.F_SLASH + encodeURLParameters(deviceId) + CharacterConstants.F_SLASH + mpOrSensorId;
       }
 
       if (startTime > 0 && endTime > 0) {
-        path += "/" + startTime + "/" + endTime;
+        path += CharacterConstants.F_SLASH + startTime + CharacterConstants.F_SLASH + endTime;
       }
       path += "?page=" + pageNum;
       path += "&size=" + size;
@@ -766,17 +832,17 @@ public class AssetUtil {
   }
 
   public static String getConfig(String vendorId, String deviceId) {
-    return get("v2/apps/config/" + vendorId + "/" + encodeURLParameters(deviceId));
+    return get("v2/apps/config/" + vendorId + CharacterConstants.F_SLASH + encodeURLParameters(deviceId));
   }
 
   public static String getAssetStats(String vendorId, String deviceId, String from, String to) {
     return get(
-        "v2/stats/" + vendorId + "/" + encodeURLParameters(deviceId) + "/" + from + "/" + to);
+        "v2/stats/" + vendorId + CharacterConstants.F_SLASH + encodeURLParameters(deviceId) + CharacterConstants.F_SLASH + from + CharacterConstants.F_SLASH + to);
   }
 
   public static String getRecentAlerts(String vendorId, String deviceId, String page, String size) {
     return get(
-        "v2/alarms/recent/" + vendorId + "/" + encodeURLParameters(deviceId) + "?page=" + page
+        "v2/alarms/recent/" + vendorId + CharacterConstants.F_SLASH + encodeURLParameters(deviceId) + "?page=" + page
             + "&size=" + size);
   }
 
@@ -977,7 +1043,9 @@ public class AssetUtil {
     JSONObject jsonObject = new JSONObject();
     try {
       for (String key : metaDataMap.keySet()) {
-        if (metaDataMap.get(key) != null && !((String) metaDataMap.get(key)).isEmpty()) {
+        final Object keyObject = metaDataMap.get(key);
+        final boolean isKeyString = keyObject instanceof String;
+        if (keyObject != null && (!isKeyString || !((String)keyObject).isEmpty())) {
           String keys[] = key.split("\\.");
           JSONObject jsonObjectTmp = jsonObject;
           for (int i = 0; i < keys.length; i++) {
@@ -1003,18 +1071,17 @@ public class AssetUtil {
   public static Map<String, String> constructDeviceMetaDataFromJSON(String parentKey,
       Map<String, Object> result) {
     Map<String, String> metaDataMap = new HashMap<>(1);
-    String currentKey;
-    for (String key : result.keySet()) {
-      Object object = result.get(key);
-      currentKey = key;
-      if (parentKey != null) {
-        currentKey = parentKey + "." + key;
+    for (Map.Entry<String,Object> entry : result.entrySet()) {
+      String key = entry.getKey();
+      Object object = entry.getValue();
+      if (StringUtils.isNotBlank(parentKey)) {
+        key = parentKey + "." + key;
       }
       if (object != null) {
         if (object instanceof LinkedTreeMap) {
-          metaDataMap.putAll(constructDeviceMetaDataFromJSON(currentKey, (LinkedTreeMap) object));
+          metaDataMap.putAll(constructDeviceMetaDataFromJSON(key, (LinkedTreeMap) object));
         } else {
-          metaDataMap.put(currentKey, object.toString());
+          metaDataMap.put(key, object.toString());
         }
       }
     }
@@ -1091,7 +1158,7 @@ public class AssetUtil {
       String userId, List<String> tags) throws ServiceException {
     IAssetRelation assetRelation = JDOUtils.createInstance(IAssetRelation.class);
     // We support only on relation at this time.
-    if (assetRelations.ras != null && assetRelations.ras.size() > 0) {
+    if (CollectionUtils.isNotEmpty(assetRelations.ras)) {
       AssetRelationModel.Relation relation = assetRelations.ras.get(0);
 
       try {
@@ -1125,7 +1192,7 @@ public class AssetUtil {
             metaDataMap.put(AssetUtil.DEV_MODEL, AssetUtil.SENSOR_DEVICE_MODEL);
             relationAsset = AssetUtil.verifyAndRegisterAsset(asset.getDomainId(), userId,
                 asset.getKioskId(), variableMap, metaDataMap);
-          } catch (ServiceException se) {
+          } catch (ServiceException | BadRequestException se) {
             xLogger.warn("{0} while register asset {1}, {2}", se.getMessage(), relation.vId,
                 relation.dId, se);
             throw new ServiceException(
@@ -1153,8 +1220,10 @@ public class AssetUtil {
 
   public static AssetModels.AssetPowerTransitions getAssetPowerTransition(String vendorId,
       String deviceId, Integer from, Integer to) {
-    String json = get("v2/devices/power/" + vendorId + "/" + encodeURLParameters(deviceId) + "/"
-        + from + "/" + to);
+    String json = get(
+        "v2/devices/power/" + vendorId + CharacterConstants.F_SLASH + encodeURLParameters(deviceId)
+            + CharacterConstants.F_SLASH
+            + from + CharacterConstants.F_SLASH + to);
 
     if (json != null) {
       return gson.fromJson(json, AssetModels.AssetPowerTransitions.class);
@@ -1169,7 +1238,7 @@ public class AssetUtil {
 
     try {
       value =
-          URLEncoder.encode(URLEncoder.encode(value, "UTF-8").replaceAll("\\+", "%20"), "UTF-8");
+          URLEncoder.encode(URLEncoder.encode(value, Constants.UTF8).replaceAll("\\+", "%20"), Constants.UTF8);
     } catch (UnsupportedEncodingException e) {
       //do nothing
     }
@@ -1195,5 +1264,21 @@ public class AssetUtil {
     }
 
     return value;
+  }
+
+  public static Capacity getAssetCapacity(IAsset asset) throws ConfigurationException {
+    AssetSystemConfig assetSystemConfig = AssetSystemConfig.getInstance();
+    AssetSystemConfig.Asset assetData = assetSystemConfig.assets.get(asset.getType());
+    Capacity capacity = new Capacity();
+    if (assetData.type == Asset.MONITORED_ASSET) {
+      List<AssetSystemConfig.Model>
+          modelList = assetData.getManufacturers().get(asset.getVendorId()).model;
+      modelList.stream().filter(model -> model.name.equalsIgnoreCase(asset.getModel())).findFirst()
+          .ifPresent(model1 -> {
+            capacity.qty = model1.capacityInLitres;
+            capacity.met = CAPACITY_IN_LITRES;
+          });
+    }
+    return capacity;
   }
 }

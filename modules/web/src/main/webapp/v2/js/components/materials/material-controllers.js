@@ -89,13 +89,13 @@ matControllers.controller('MaterialDetailMenuController', ['$scope', 'matService
             }
             var filetype = $scope.imageData.filetype.split("/");
             $scope.ext=filetype[filetype.length - 1];
-            if($scope.ext !='png' && $scope.ext !='jpg' && $scope.ext !='jpeg'){
+            if($scope.ext !='png' && $scope.ext !='jpg' && $scope.ext !='jpeg' && $scope.ext != 'gif'){
                 $scope.showWarning($scope.resourceBundle['image.upload.warning']);
                 return false;
             }
 
             var size = $scope.imageData.filesize;
-            if(size > 5000000){
+            if(size > 10 * 1024 * 1024){
                 $scope.showWarning ($scope.resourceBundle['uploadsizemessage']);
                 return false;
             }
@@ -103,7 +103,7 @@ matControllers.controller('MaterialDetailMenuController', ['$scope', 'matService
         };
         $scope.uploadImage = function(){
             $scope.showLoading();
-            mediaService.uploadImage($scope.ext,$scope.materialId,$scope.imageData.base64).then(function(){
+            mediaService.uploadImage($scope.ext,$scope.materialId,$scope.imageData).then(function(){
                     $scope.showSuccess($scope.resourceBundle['image.upload.success']);
                     $scope.getDomainKeyImages($scope.materialId);
                     angular.element('#matFileupload').val(null);
@@ -148,7 +148,8 @@ matControllers.controller('MaterialDetailMenuController', ['$scope', 'matService
 ]);
 matControllers.controller('MaterialListController', ['$scope', 'matService', 'domainCfgService', 'requestContext', '$location', 'exportService',
     function ($scope, matService, domainCfgService, requestContext, $location, exportService) {
-        $scope.wparams = [["mtag", "mtag"], ["search", "search.mnm"]];
+        $scope.wparams = [["mtag", "mtag"], ["mname", "mname"]];
+        $scope.localFilters = ['mname','mtag'];
         $scope.selectAll = function (newval) {
             for (var item in $scope.filtered) {
                 $scope.filtered[item]['selected'] = newval;
@@ -159,10 +160,8 @@ matControllers.controller('MaterialListController', ['$scope', 'matService', 'do
 
         $scope.init = function () {
             $scope.materials = {};
-            $scope.search = {};
             $scope.mtag = requestContext.getParam("mtag") || "";
-            $scope.search.mnm = requestContext.getParam("search") || "";
-            $scope.search.key = $scope.search.mnm;
+            $scope.mname = requestContext.getParam("mname") || "";
             $scope.selAll = false;
         };
         $scope.init();
@@ -186,7 +185,7 @@ matControllers.controller('MaterialListController', ['$scope', 'matService', 'do
             $scope.defaultCur = "";
             $scope.loading = true;
             $scope.showLoading();
-            matService.getDomainMaterials($scope.search.mnm, $scope.mtag, $scope.offset, $scope.size).then(function (data) {
+            matService.getDomainMaterials($scope.mname, $scope.mtag, $scope.offset, $scope.size).then(function (data) {
                 $scope.materials = data.data.results;
                 $scope.setResults(data.data);
                 if(checkNotNullEmpty($scope.defaultCurrency)){
@@ -231,15 +230,8 @@ matControllers.controller('MaterialListController', ['$scope', 'matService', 'do
                 });
             }
         };
-        $scope.searchMaterial = function () {
-            if($scope.search.mnm != $scope.search.key){
-                $scope.search.mnm = $scope.search.key;
-                $scope.mtag = "";
-            }
-        };
         $scope.reset = function() {
-            $scope.search = {};
-            $scope.search.key = $scope.search.mnm = "";
+            $scope.mname = "";
             $scope.mtag = "";
         };
 
@@ -252,7 +244,7 @@ matControllers.controller('MaterialListController', ['$scope', 'matService', 'do
             }
             $scope.showLoading();
             exportService.exportData({
-                mat_name: $scope.search.key || undefined,
+                mat_name: $scope.mname || undefined,
                 mtag: $scope.mtag || undefined,
                 titles: {
                     filters: getCaption()
@@ -269,7 +261,7 @@ matControllers.controller('MaterialListController', ['$scope', 'matService', 'do
         };
 
         function getCaption() {
-            var caption = getFilterTitle($scope.search.key, $scope.resourceBundle['material']);
+            var caption = getFilterTitle($scope.mname, $scope.resourceBundle['material']);
             caption += getFilterTitle($scope.mtag, $scope.resourceBundle['material'] + " " + $scope.resourceBundle['tag.lower']);
             return caption;
         }
@@ -328,7 +320,7 @@ matControllers.controller('AddMatController', ['$scope', '$route', 'matService',
                 }
                 $scope.updateTags("add");
                 $scope.loading = true;
-                $scope.showLoading();
+                $scope.showFullLoading();
                 matService.createMaterial($scope.material).then(function (data) {
                     $scope.resetMaterial();
                     $scope.showSuccess(data.data);
@@ -336,7 +328,7 @@ matControllers.controller('AddMatController', ['$scope', '$route', 'matService',
                     $scope.showErrorMsg(msg);
                 }).finally(function (){
                     $scope.loading = false;
-                    $scope.hideLoading();
+                    $scope.hideFullLoading();
                 });
             }
         };
@@ -365,7 +357,7 @@ matControllers.controller('AddMatController', ['$scope', '$route', 'matService',
                 }
                 $scope.updateTags("update");
                 $scope.loading = true;
-                $scope.showLoading();
+                $scope.showFullLoading();
                 matService.update($scope.material).then(function (data) {
                     if (checkNotNullEmpty(data.data)) {
                         $scope.$back();
@@ -391,7 +383,7 @@ matControllers.controller('AddMatController', ['$scope', '$route', 'matService',
                     $scope.showErrorMsg(msg);
                 }).finally(function (){
                     $scope.loading = false;
-                    $scope.hideLoading();
+                    $scope.hideFullLoading();
                 });
                 $scope.showBatchMgmtUpdateWarning = function(errorMsg) {
                     var title;

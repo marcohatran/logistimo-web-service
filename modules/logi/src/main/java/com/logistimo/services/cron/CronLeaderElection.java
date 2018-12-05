@@ -37,46 +37,43 @@ import java.io.IOException;
  */
 public class CronLeaderElection extends ZooElectableClient {
 
-  private static final XLog _logger = XLog.getLog(CronLeaderElection.class);
+  private static final XLog LOGGER = XLog.getLog(CronLeaderElection.class);
 
   public static CronJobScheduler scheduler = null;
 
   private static CronLeaderElection _instance;
   private boolean shutDown = false;
 
-  protected CronLeaderElection() throws InterruptedException, IOException, KeeperException {
+  private CronLeaderElection() throws InterruptedException, IOException, KeeperException {
     super(ConfigUtil.get("cron.zoo.path", "/logisticsCronLeader"));
   }
 
-  public static void start() {
+  public synchronized static void start() {
     if (_instance == null) {
-      synchronized (CronLeaderElection.class) {
-        if (_instance == null) {
-          try {
-            _instance = new CronLeaderElection();
-          } catch (Exception e) {
-            _logger.severe("Failed to start Zoo Keeper Leader Election for Cron scheduler {0}",
-                e.getLocalizedMessage(), e);
-          }
-        }
+      try {
+        _instance = new CronLeaderElection();
+      } catch (Exception e) {
+        LOGGER.severe("Failed to start Zoo Keeper Leader Election for Cron scheduler {0}",
+            e.getLocalizedMessage(), e);
       }
     }
   }
+
 
   public static void stop() {
     if (null != _instance) {
       _instance.shutDown = true;
       if (scheduler != null) {
-        _logger.info("Shutting down Cron scheduler");
+        LOGGER.info("Shutting down Cron scheduler");
         scheduler.shutdown();
         scheduler = null;
       }
       if (null != _instance.hZooKeeper) {
         try {
-          _logger.info("Shutting down Zookeeper client");
+          LOGGER.info("Shutting down Zookeeper client");
           _instance.hZooKeeper.close();
         } catch (Exception e) {
-          _logger.warn("Failed to close zookeeper on shutdown", e);
+          LOGGER.warn("Failed to close zookeeper on shutdown", e);
         }
       }
       _instance = null;
@@ -91,11 +88,11 @@ public class CronLeaderElection extends ZooElectableClient {
         scheduler.shutdown();
       }
       scheduler = new CronJobScheduler();
-      _logger.info(
+      LOGGER.info(
           "We are chosen as leader .. started Cron scheduler" + this + " scheduler" + scheduler
               + " instance sched" + _instance.scheduler);
       if (!ConfigUtil.isLocal()) {
-        _logger.info("We are leader, Move any tasks from current domain queue to default queue {0}",
+        LOGGER.info("We are leader, Move any tasks from current domain queue to default queue {0}",
             ConfigUtil.getDomain());
         DelayScheduler.getInstance().moveScheduledTasksToDefault(ConfigUtil.getDomain());
       }
@@ -105,9 +102,9 @@ public class CronLeaderElection extends ZooElectableClient {
 
   @Override
   public void onZooKeeperDisconnected() {
-    _logger.info("Zookeeper disconnected event");
+    LOGGER.info("Zookeeper disconnected event");
     if (scheduler != null) {
-      _logger.info("Zookeeper Disconnected: Shutting down Cron scheduler");
+      LOGGER.info("Zookeeper Disconnected: Shutting down Cron scheduler");
       scheduler.shutdown();
       scheduler = null;
     }
@@ -116,10 +113,10 @@ public class CronLeaderElection extends ZooElectableClient {
   @Override
   public void onZooKeeperSessionClosed() {
     if (!shutDown) {
-      _logger.info("Session closed.. Re init connections");
+      LOGGER.info("Session closed.. Re init connections");
 
       if (scheduler != null) {
-        _logger.info("Zookeeper session closed: Shutting down Cron scheduler");
+        LOGGER.info("Zookeeper session closed: Shutting down Cron scheduler");
         scheduler.shutdown();
         scheduler = null;
       }
@@ -128,13 +125,13 @@ public class CronLeaderElection extends ZooElectableClient {
         try {
           hZooKeeper.close();
         } catch (InterruptedException e) {
-          _logger.warn("Exception while closing session {0}", e.getMessage());
+          LOGGER.warn("Exception while closing session {0}", e.getMessage());
         }
       }
       try {
         init();
       } catch (Exception e) {
-        _logger.severe("Fatal error while initializing zoo keeper connections ", e);
+        LOGGER.severe("Fatal error while initializing zoo keeper connections ", e);
       }
     }
   }

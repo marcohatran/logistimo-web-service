@@ -172,7 +172,8 @@ angular.module('logistimo.storyboard.storesActivityWidget', [])
             "bgColor": "#272727",
             "bgAlpha" : "100",
             "canvasBgAlpha": "100",
-            "canvasBgColor" : "#272727"
+            "canvasBgColor" : "#272727",
+            "baseFontColor" : "#d2d2d2"
         };
         $scope.pieOpt = [];
         $scope.pieOpt[0] = angular.copy($scope.pOpt);

@@ -275,7 +275,8 @@ module.exports = function(grunt, ref) {
                         'target/grunt/webapp/v2/plugins/reports/**/*.js',
                         'target/grunt/webapp/v2/plugins/storyboards/*.js',
                         'target/grunt/webapp/v2/plugins/storyboards/**/*.js',
-                        'target/grunt/webapp/v2/js/analytics-service.js'
+                        'target/grunt/webapp/v2/js/analytics-service.js',
+                        'target/grunt/webapp/v2/js/password-validator.js'
                     ]
                 }
             },
@@ -343,8 +344,11 @@ module.exports = function(grunt, ref) {
                             pattern: "<title>Logistimo</title>",
                             replacement: "<title><%= custom.title %></title>"
                         },{
-                            pattern: "client=",
+                            pattern: "client=&key=",
                             replacement: "client=<%= custom.googleid %>"
+                        },{
+                            pattern: "client=&",
+                            replacement: "key=<%= custom.googlekey %>&"
                         }, {
                             pattern: "http://www.logistimo.com/privacy-policy.html",
                             replacement: "<%= custom.privacylink %>"
@@ -357,6 +361,9 @@ module.exports = function(grunt, ref) {
                         },{
                             pattern: "google-key",
                             replacement: "<%= custom.googlekey %>"
+                        },{
+                            pattern: "6Le9aWoUAAAAAHLTsF33wMqSvppWReTDi2marGvi",
+                            replacement: "<%= custom.captchakey %>"
                         }
                     ]
                 }
@@ -682,7 +689,7 @@ module.exports = function(grunt, ref) {
     grunt.loadNpmTasks('grunt-env');
     grunt.loadNpmTasks('grunt-properties-to-json');
     grunt.loadNpmTasks('grunt-ng-annotate');
-    grunt.loadNpmTasks('grunt-contrib-uglify');
+    grunt.loadNpmTasks('grunt-contrib-uglify-es');
     grunt.loadNpmTasks('grunt-contrib-clean');
     grunt.loadNpmTasks('grunt-string-replace');
     grunt.loadNpmTasks('grunt-preprocess');

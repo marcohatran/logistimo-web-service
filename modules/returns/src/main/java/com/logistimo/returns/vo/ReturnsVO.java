@@ -24,6 +24,10 @@
 package com.logistimo.returns.vo;
 
 
+import com.logistimo.returns.Status;
+
+import org.apache.commons.collections.CollectionUtils;
+
 import java.util.Date;
 import java.util.List;
 
@@ -51,5 +55,37 @@ public class ReturnsVO {
   private List<ReturnsItemVO> items;
   private String comment;
   private String orderType;
+  private ReturnsTrackingDetailsVO returnsTrackingDetailsVO;
 
+  public Status getStatusValue() {
+    return status.getStatus();
+  }
+
+  public void setStatusValue(Status status) {
+    this.status.setStatus(status);
+  }
+
+  public boolean isShipped() {
+    return status.getStatus() == Status.SHIPPED;
+  }
+
+  public boolean isReceived() {
+    return status.getStatus() == Status.RECEIVED;
+  }
+
+  public boolean isOpen() {
+    return status.getStatus() == Status.OPEN;
+  }
+
+  public boolean isCancelled() {
+    return status.getStatus() == Status.CANCELLED;
+  }
+
+  public boolean hasItems() {
+    return CollectionUtils.isNotEmpty(items);
+  }
+
+  public boolean hasTrackingDetails() {
+    return returnsTrackingDetailsVO != null;
+  }
 }

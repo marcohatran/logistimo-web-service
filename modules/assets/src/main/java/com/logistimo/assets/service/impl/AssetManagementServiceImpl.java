@@ -34,11 +34,11 @@ import com.logistimo.assets.models.AssetModels;
 import com.logistimo.assets.service.AssetManagementService;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.config.models.AssetSystemConfig;
-import com.logistimo.config.models.ConfigurationException;
 import com.logistimo.config.models.DomainConfig;
 import com.logistimo.config.models.EventSpec;
 import com.logistimo.config.models.EventsConfig;
 import com.logistimo.constants.CharacterConstants;
+import com.logistimo.constants.Constants;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.domains.utils.DomainsUtil;
 import com.logistimo.events.entity.IEvent;
@@ -53,10 +53,12 @@ import com.logistimo.utils.QueryUtil;
 import com.sun.rowset.CachedRowSetImpl;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.stereotype.Service;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Statement;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -77,7 +79,7 @@ import javax.sql.rowset.CachedRowSet;
  * Created by kaniyarasu on 02/11/15.
  */
 
-@org.springframework.stereotype.Service
+@Service
 public class AssetManagementServiceImpl implements AssetManagementService {
 
   private static final XLog xLogger = XLog.getLog(AssetManagementServiceImpl.class);
@@ -124,7 +126,6 @@ public class AssetManagementServiceImpl implements AssetManagementService {
       throw new ServiceException("Invalid details for the asset");
     }
     try {
-      validateAssets(asset);
       Query query = pm.newQuery(JDOUtils.getImplClass(IAsset.class));
       query.setFilter("vId == vendorIdParam && nsId == serialIdParam");
       query.declareParameters("String vendorIdParam, String serialIdParam");
@@ -145,7 +146,7 @@ public class AssetManagementServiceImpl implements AssetManagementService {
         asset = (IAsset) DomainsUtil.addToDomain(asset, domainId, pm);
       } else {
         final Locale locale = SecurityUtils.getLocale();
-        ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+        ResourceBundle backendMessages = Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
         throw new ServiceException(
             asset.getSerialId() + "(" + asset.getVendorId() + ") " + backendMessages
                 .getString("error.alreadyexists"));
@@ -176,8 +177,8 @@ public class AssetManagementServiceImpl implements AssetManagementService {
     } catch (JDOObjectNotFoundException e) {
       xLogger.warn("getAsset: Asset {0} does not exist", assetId);
       final Locale locale = SecurityUtils.getLocale();
-      ResourceBundle messages = Resources.get().getBundle("Messages", locale);
-      ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+      ResourceBundle messages = Resources.get().getBundle(Constants.MESSAGES, locale);
+      ResourceBundle backendMessages = Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
       errMsg =
           messages.getString("asset") + " " + assetId + " " + backendMessages
               .getString("error.notfound");
@@ -261,15 +262,16 @@ public class AssetManagementServiceImpl implements AssetManagementService {
 
         //Count query
         StringBuilder sqlQuery = new StringBuilder(
-            "SELECT COUNT(1) FROM ASSET WHERE ID in (SELECT ID_OID from ASSET_DOMAINS where DOMAIN_ID = ");
-        sqlQuery.append(domainId);
-        sqlQuery.append(")");
+            "SELECT COUNT(1) FROM ASSET WHERE ID in (SELECT ID_OID from ASSET_DOMAINS where DOMAIN_ID = ?)");
+        List<Object> params = new ArrayList<>();
+        params.add(domainId);
         if (assetType != null && assetType != 0) {
-          sqlQuery.append(" and TYPE = ").append(assetType);
+          sqlQuery.append(" and TYPE = ?");
+          params.add(assetType);
         }
 
-        Query cntQuery = pm.newQuery("javax.jdo.query.SQL", sqlQuery.toString());
-        numFound = ((Long) ((List) cntQuery.execute()).iterator().next()).intValue();
+        Query cntQuery = pm.newQuery(Constants.JAVAX_JDO_QUERY_SQL, sqlQuery.toString());
+        numFound = ((Long) ((List) cntQuery.executeWithArray(params.toArray())).iterator().next()).intValue();
         cntQuery.closeAll();
       } finally {
         query.closeAll();
@@ -316,7 +318,7 @@ public class AssetManagementServiceImpl implements AssetManagementService {
   public List<IAsset> getAssetsByKiosk(Long kioskId, Integer assetType) throws ServiceException {
     if (kioskId == null || assetType == null) {
       final Locale locale = SecurityUtils.getLocale();
-      ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+      ResourceBundle backendMessages = Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
       throw new ServiceException(
           backendMessages.getString("kiosk") + " and AssetType are mandatory");
     }
@@ -740,35 +742,39 @@ public class AssetManagementServiceImpl implements AssetManagementService {
       throws ServiceException {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     List<IAsset> assets = new ArrayList<>();
+    List<Object> params = new ArrayList<>();
     try {
       StringBuilder sqlQuery = new StringBuilder("SELECT * FROM ASSET WHERE");
 
       if (all) {
-        sqlQuery.append(" ID IN (SELECT ID_OID FROM ASSET_DOMAINS WHERE DOMAIN_ID = ")
-            .append(domainId).append(")");
+        sqlQuery.append(" ID IN (SELECT ID_OID FROM ASSET_DOMAINS WHERE DOMAIN_ID = ?)");
+        params.add(domainId);
       } else {
         sqlQuery.append(
-            " ID NOT IN (SELECT RELATEDASSETID FROM ASSETRELATION where RELATEDASSETID is not NULL) AND SDID = ")
-            .append(domainId);
+            " ID NOT IN (SELECT RELATEDASSETID FROM ASSETRELATION where RELATEDASSETID is not NULL) AND SDID = ?");
+        params.add(domainId);
       }
 
       if (kId != null) {
-        sqlQuery.append(" AND KID = ").append(kId);
+        sqlQuery.append(" AND KID = ?");
+        params.add(kId);
       }
 
       if (!q.isEmpty()) {
-        sqlQuery.append(" AND nsId like '").append(q).append("%'");
+        sqlQuery.append(" AND nsId like ?");
+        params.add(q + "%");
       }
 
       if (assetType != null) {
-        sqlQuery.append(" AND type = ").append(assetType);
+        sqlQuery.append(" AND type = ? ");
+        params.add(assetType);
       }
 
       sqlQuery.append(" ORDER BY nsId asc LIMIT 0, 10");
-      Query query = pm.newQuery("javax.jdo.query.SQL", sqlQuery.toString());
+      Query query = pm.newQuery(Constants.JAVAX_JDO_QUERY_SQL, sqlQuery.toString());
       query.setClass(JDOUtils.getImplClass(IAsset.class));
       try {
-        assets = (List<IAsset>) query.execute();
+        assets = (List<IAsset>) query.executeWithArray(params.toArray());
         assets = (List<IAsset>) pm.detachCopyAll(assets);
       } finally {
         query.closeAll();
@@ -782,52 +788,12 @@ public class AssetManagementServiceImpl implements AssetManagementService {
     return assets;
   }
 
-  /**
-   * Checks whether the serial/model number of monitored asset matches with the format provided in
-   * the configuration
-   */
-  private void validateAssets(IAsset asset) throws ServiceException, IllegalArgumentException {
-    try {
-      AssetSystemConfig asc = AssetSystemConfig.getInstance();
-      AssetSystemConfig.Asset assetData = asc.assets.get(asset.getType());
-      Integer assetType = assetData.type;
-      if (assetType == IAsset.MONITORED_ASSET) {
-        AssetSystemConfig.Manufacturer manc =
-            assetData.getManufacturers().get(asset.getVendorId().toLowerCase());
-        String regex = manc.serialFormat;
-        if (StringUtils.isNotBlank(regex)) {
-          if (!asset.getSerialId().matches(regex)) {
-            final Locale locale = SecurityUtils.getLocale();
-            ResourceBundle messages = Resources.get().getBundle("Messages", locale);
-            String errorMessage = messages.getString("serialno.format").concat("\n").concat(
-                manc.serialFormatDescription);
-            throw new IllegalArgumentException(errorMessage);
-          }
-        }
-        regex = manc.modelFormat;
-        if (StringUtils.isNotBlank(regex)) {
-          if (!asset.getModel().matches(regex)) {
-            final Locale locale = SecurityUtils.getLocale();
-            ResourceBundle messages = Resources.get().getBundle("Messages", locale);
-            String errorMessage = messages.getString("modelno.format").concat("\n").concat(
-                manc.modelFormatDescription);
-            throw new IllegalArgumentException(errorMessage);
-          }
-        }
-      }
-    } catch (ConfigurationException e) {
-      xLogger.warn("Error while getting asset system config", e);
-    } catch (IllegalArgumentException e) {
-      xLogger.warn(e.getMessage(), e);
-      throw e;
-    }
-  }
-
   @Override
   public Map<String, Integer> getTemperatureStatus(Long entityId) {
     PersistenceManager pm = null;
     JDOConnection conn = null;
-    Statement statement = null;
+    PreparedStatement statement = null;
+    CachedRowSet rowSet = null;
     try {
       AssetSystemConfig config = AssetSystemConfig.getInstance();
       Map<Integer, AssetSystemConfig.Asset>
@@ -839,21 +805,22 @@ public class AssetManagementServiceImpl implements AssetManagementService {
       pm = PMF.get().getPersistenceManager();
       conn = pm.getDataStoreConnection();
       java.sql.Connection sqlConn = (java.sql.Connection) conn;
-      statement = sqlConn.createStatement();
-      CachedRowSet rowSet = new CachedRowSetImpl();
-      String
-          query =
+      rowSet = new CachedRowSetImpl();
+      String query =
           "SELECT STAT, COUNT(1) COUNT FROM (SELECT ID, IF(ASF.STAT = 'tu', 'tu',(SELECT IF(MAX(ABNSTATUS) = 2, 'th', "
               + "IF(MAX(ABNSTATUS) = 1, 'tl', 'tn')) FROM ASSETSTATUS AO WHERE AO.ASSETID = ASF.ASSETID AND AO.TYPE = 1 AND AO.STATUS = 3 "
-              + ")) STAT FROM (SELECT A.ID FROM ASSET A WHERE TYPE IN (TOKEN_TYPE) AND KID = TOKEN_KID AND "
+              + ")) STAT FROM (SELECT A.ID FROM ASSET A WHERE TYPE IN (TOKEN_TYPE) AND KID = ? AND "
               + "EXISTS(SELECT 1 FROM ASSETRELATION R WHERE A.ID = R.ASSETID AND R.TYPE = 2) AND EXISTS"
               + "(SELECT 1 FROM ASSETSTATUS S WHERE S.ASSETID = A.ID AND S.TYPE = 7 AND S.STATUS = 0)"
               + ") A "
               + "LEFT JOIN (SELECT ASSETID, IF(MIN(STATUS) = 0, 'tk', 'tu') STAT FROM ASSETSTATUS ASI WHERE ASI.TYPE = 3 AND "
-              + "ASI.ASSETID IN (SELECT ID FROM ASSET WHERE TYPE IN (TOKEN_TYPE) AND KID = TOKEN_KID) GROUP BY ASI.ASSETID) ASF "
+              + "ASI.ASSETID IN (SELECT ID FROM ASSET WHERE TYPE IN (TOKEN_TYPE) AND KID = ?) GROUP BY ASI.ASSETID) ASF "
               + "ON A.ID = ASF.ASSETID) T GROUP BY T.STAT";
-      query = query.replace("TOKEN_TYPE", csv).replace("TOKEN_KID", String.valueOf(entityId));
-      rowSet.populate(statement.executeQuery(query));
+      query = query.replace("TOKEN_TYPE", csv);
+      statement = sqlConn.prepareStatement(query);
+      statement.setLong(1,entityId);
+      statement.setLong(2,entityId);
+      rowSet.populate(statement.executeQuery());
       Map<String, Integer> stats = new HashMap<>(4);
       while (rowSet.next()) {
         stats.put(rowSet.getString("STAT"), rowSet.getInt("COUNT"));
@@ -862,12 +829,20 @@ public class AssetManagementServiceImpl implements AssetManagementService {
     } catch (Exception e) {
       xLogger.severe("Error in fetching Temperature status for assets of entity {0}", entityId, e);
     } finally {
+
+      try{
+        if (rowSet != null) {
+          rowSet.close();
+        }
+      }catch(Exception ignored) {
+        xLogger.warn("Exception while closing rowSet", ignored);
+      }
       try {
         if (statement != null) {
           statement.close();
         }
       } catch (Exception ignored) {
-        xLogger.warn("Exception while closing statement", statement);
+        xLogger.warn("Exception while closing statement", ignored);
       }
 
       try {
@@ -894,15 +869,17 @@ public class AssetManagementServiceImpl implements AssetManagementService {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     Query query = null;
     try {
+      List<Object> params = new ArrayList<>();
       StringBuilder sqlQuery = new StringBuilder("SELECT DISTINCT MODEL FROM ASSET WHERE");
-      sqlQuery.append(" ID IN (SELECT ID_OID FROM ASSET_DOMAINS WHERE DOMAIN_ID = ")
-          .append(domainId).append(")");
+      sqlQuery.append(" ID IN (SELECT ID_OID FROM ASSET_DOMAINS WHERE DOMAIN_ID = ?)");
+      params.add(domainId);
       if (StringUtils.isNotEmpty(term)) {
-        sqlQuery.append(" AND lower(MODEL) like '%").append(term.toLowerCase()).append("%'");
+        sqlQuery.append(" AND lower(MODEL) like ? ");
+        params.add("%" + term.toLowerCase() + "%");
       }
       sqlQuery.append(" LIMIT 0, 10");
-      query = pm.newQuery("javax.jdo.query.SQL", sqlQuery.toString());
-      List modelList = (List) query.execute();
+      query = pm.newQuery(Constants.JAVAX_JDO_QUERY_SQL, sqlQuery.toString());
+      List modelList = (List) query.executeWithArray(params.toArray());
       List<String> models = new ArrayList<>(modelList.size());
       for (Object o : modelList) {
         models.add((String) o);
@@ -919,104 +896,130 @@ public class AssetManagementServiceImpl implements AssetManagementService {
     return null;
   }
 
+  private String stripTrailingAndLeadingQuotes(String input){
+    if(input.length()>2 && input.charAt(0)=='\'' && input.charAt(input.length()-1)=='\''){
+    return input.substring(1,input.length()-1);
+    }
+    return input;
+  }
+
+
   @Override
   public String getMonitoredAssetIdsForReport(Map<String, String> filters) {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     Connection conn = (java.sql.Connection) pm.getDataStoreConnection();
-    Statement statement = null;
-    StringBuilder assetIds = new StringBuilder("");
+    PreparedStatement statement = null;
     StringBuilder assetQuery = new StringBuilder("SELECT SID,VID FROM ASSET WHERE TYPE != 1 ");
+    List<Object> params = new ArrayList<>();
     if (filters.containsKey("TOKEN_CN")
         || filters.containsKey("TOKEN_ST")
         || filters.containsKey("TOKEN_DIS")
         || filters.containsKey("TOKEN_TALUK")
+        || filters.containsKey("TOKEN_CITY")
         || filters.containsKey("TOKEN_KID")
         || filters.containsKey("TOKEN_KTAG")) {
       assetQuery.append("AND KID IN (");
       StringBuilder kioskQuery =
           new StringBuilder("SELECT KIOSKID FROM KIOSK K ,KIOSK_DOMAINS KD WHERE ");
-      kioskQuery
-          .append(" K.KIOSKID = KD.KIOSKID_OID AND KD.DOMAIN_ID = ")
-          .append(filters.get("TOKEN_DID"));
+      kioskQuery.append(" K.KIOSKID = KD.KIOSKID_OID AND KD.DOMAIN_ID = ?");
+      params.add(filters.get("TOKEN_DID"));
       if (filters.containsKey("TOKEN_CN")) {
-        kioskQuery.append(" AND K.COUNTRY = ").append(filters.get("TOKEN_CN"));
+        kioskQuery.append(" AND K.COUNTRY = ?");
+        params.add(stripTrailingAndLeadingQuotes(filters.get("TOKEN_CN")));
       }
       if (filters.containsKey("TOKEN_ST")) {
-        kioskQuery.append(" AND K.STATE = ").append(filters.get("TOKEN_ST"));
+        kioskQuery.append(" AND K.STATE = ?");
+        params.add(stripTrailingAndLeadingQuotes(filters.get("TOKEN_ST")));
       }
       if (filters.containsKey("TOKEN_DIS")) {
-        kioskQuery.append(" AND K.DISTRICT = ").append(filters.get("TOKEN_DIS"));
+        kioskQuery.append(" AND K.DISTRICT = ?");
+        params.add(stripTrailingAndLeadingQuotes(filters.get("TOKEN_DIS")));
       }
       if (filters.containsKey("TOKEN_TALUK")) {
-        kioskQuery.append(" AND K.TALUK = ").append(filters.get("TOKEN_TALUK"));
+        kioskQuery.append(" AND K.TALUK = ?");
+        params.add(stripTrailingAndLeadingQuotes(filters.get("TOKEN_TALUK")));
+      }
+      if (filters.containsKey("TOKEN_CITY")) {
+        kioskQuery.append(" AND K.CITY = ?");
+        params.add(stripTrailingAndLeadingQuotes(filters.get("TOKEN_CITY")));
       }
       if (filters.containsKey("TOKEN_KID")) {
-        kioskQuery.append(" AND K.KIOSKID = ").append(filters.get("TOKEN_KID"));
+        kioskQuery.append(" AND K.KIOSKID = ?");
+        params.add(filters.get("TOKEN_KID"));
       } else if (filters.containsKey("TOKEN_KTAG")) {
-        kioskQuery.append(" AND K.KIOSKID IN (");
-        StringBuilder ktagQuery =
-            new StringBuilder(
-                "SELECT KT.KIOSKID FROM "
-                    + "KIOSK_TAGS KT,TAG T WHERE T.ID = KT.ID AND T.NAME = "
-                    + filters.get("TOKEN_KTAG"));
-        kioskQuery.append(ktagQuery).append(") ");
+        kioskQuery.append(" AND K.KIOSKID IN (SELECT KT.KIOSKID FROM KIOSK_TAGS KT,TAG T WHERE T.ID = KT.ID AND T.NAME = ?)");
+        params.add(stripTrailingAndLeadingQuotes(filters.get("TOKEN_KTAG")));
       }
       assetQuery.append(kioskQuery);
       assetQuery.append(")");
     } else {
-      assetQuery.append("AND KID IN (");
-      assetQuery
-          .append("SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID = ")
-          .append(filters.get("TOKEN_DID"))
-          .append(")");
+      assetQuery.append("AND KID IN (SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID = ?)");
+      params.add(filters.get("TOKEN_DID"));
     }
     if (filters.containsKey("TOKEN_ATYPE")) {
-      assetQuery.append(" AND ");
-      assetQuery.append("type = ").append(filters.get("TOKEN_ATYPE"));
+      assetQuery.append(" AND type = ?");
+      String token_atype = filters.get("TOKEN_ATYPE");
+      params.add(stripTrailingAndLeadingQuotes(token_atype));
     }
     if (filters.containsKey("TOKEN_VID")) {
-      assetQuery.append(" AND ");
-      assetQuery.append(" VID = ").append(filters.get("TOKEN_VID"));
+      assetQuery.append(" AND VID = ?");
+      params.add(stripTrailingAndLeadingQuotes(filters.get("TOKEN_VID")));
     }
     if (filters.containsKey("TOKEN_DMODEL")) {
-      assetQuery.append(" AND ");
-      assetQuery.append("model = ").append(filters.get("TOKEN_DMODEL"));
+      assetQuery.append(" AND model = ?");
+      params.add(stripTrailingAndLeadingQuotes(filters.get("TOKEN_DMODEL")));
     }
     if (filters.containsKey("TOKEN_MYEAR")) {
-      assetQuery.append(" AND ");
-      assetQuery.append("yom = ").append(filters.get("TOKEN_MYEAR"));
+      assetQuery.append(" AND yom = ?");
+      params.add(stripTrailingAndLeadingQuotes(filters.get("TOKEN_MYEAR")));
     }
     if (filters.containsKey("TOKEN_SIZE") && filters.containsKey("TOKEN_OFFSET")) {
-      assetQuery
-          .append(" LIMIT ")
-          .append(filters.get("TOKEN_OFFSET"))
-          .append(CharacterConstants.COMMA)
-          .append(filters.get("TOKEN_SIZE"));
+      assetQuery.append(" LIMIT ")
+      .append(Integer.parseInt(filters.get("TOKEN_OFFSET")))
+      .append(CharacterConstants.COMMA)
+      .append(Integer.parseInt(filters.get("TOKEN_SIZE")));
     }
+    ResultSet rs = null;
     try {
-      statement = conn.createStatement();
-      ResultSet rs = statement.executeQuery(assetQuery.toString());
+      statement = conn.prepareStatement(assetQuery.toString());
+      int i = 1;
+      for (Object param : params) {
+        statement.setObject(i++, param);
+      }
+      rs = statement.executeQuery();
+      StringBuilder assetIds = new StringBuilder();
       while (rs.next()) {
-        if (StringUtils.isNotEmpty(assetIds.toString())) {
-          assetIds.append(CharacterConstants.COMMA);
-        }
         assetIds.append(CharacterConstants.S_QUOTE).append(rs.getString("VID"))
             .append(CharacterConstants.UNDERSCORE).append(rs.getString("SID"))
-            .append(CharacterConstants.S_QUOTE);
+            .append(CharacterConstants.S_QUOTE).append(CharacterConstants.COMMA);
+      }
+      if(assetIds.length() > 0) {
+        assetIds.setLength(assetIds.length() - 1);
       }
       return assetIds.toString();
     } catch (Exception e) {
       xLogger.warn("Error while fetching asset ids for reports", e);
     } finally {
+      if (rs != null) {
+        try {
+          rs.close();
+        } catch (SQLException e) {
+          xLogger.warn("Exception while closing resultset", e);
+        }
+      }
       try {
-        pm.close();
-        conn.close();
         if (statement != null) {
           statement.close();
         }
       } catch (Exception e) {
         xLogger.warn("Exception while closing connection", e);
       }
+      try {
+        conn.close();
+      } catch (SQLException e) {
+        xLogger.warn("Exception while closing connection", e);
+      }
+      pm.close();
     }
     return null;
   }
@@ -1031,12 +1034,11 @@ public class AssetManagementServiceImpl implements AssetManagementService {
       vidQuery
           .append("SELECT DISTINCT VID FROM ASSET WHERE KID IN (")
           .append("SELECT KIOSKID FROM KIOSK K ,KIOSK_DOMAINS KD WHERE ")
-          .append("K.KIOSKID = KD.KIOSKID_OID AND KD.DOMAIN_ID = ").append(did)
-          .append(CharacterConstants.C_BRACKET);
+          .append("K.KIOSKID = KD.KIOSKID_OID AND KD.DOMAIN_ID = ?)");
     }
-    query = pm.newQuery("javax.jdo.query.SQL", vidQuery.toString());
+    query = pm.newQuery(Constants.JAVAX_JDO_QUERY_SQL, vidQuery.toString());
     try {
-      List<String> result = (List) query.execute();
+      List<String> result = (List) query.execute(did);
       for (int i = 0; i < result.size(); i++) {
         if (i != 0) {
           vids.append(CharacterConstants.COMMA);
@@ -1061,20 +1063,21 @@ public class AssetManagementServiceImpl implements AssetManagementService {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     Query query;
     StringBuilder q = new StringBuilder();
-    StringBuilder types = new StringBuilder("");
+    StringBuilder types = new StringBuilder();
+    List<String> params = new ArrayList<>();
     if (StringUtils.isNotEmpty(did)) {
       q.append("SELECT DISTINCT TYPE FROM ASSET WHERE KID IN (")
           .append("SELECT KIOSKID FROM KIOSK K ,KIOSK_DOMAINS KD WHERE ")
-          .append("K.KIOSKID = KD.KIOSKID_OID AND KD.DOMAIN_ID = ")
-          .append(did)
-          .append(CharacterConstants.C_BRACKET);
+          .append("K.KIOSKID = KD.KIOSKID_OID AND KD.DOMAIN_ID = ?)");
+      params.add(did);
     }
     if (StringUtils.isNotEmpty(exclude)) {
-      q.append(" AND TYPE != ").append(exclude);
+      q.append(" AND TYPE != ?");
+      params.add(exclude);
     }
-    query = pm.newQuery("javax.jdo.query.SQL", q.toString());
+    query = pm.newQuery(Constants.JAVAX_JDO_QUERY_SQL, q.toString());
     try {
-      List<Integer> result = (List) query.execute();
+      List<Integer> result = (List) query.executeWithArray(params.toArray());
       for (int i = 0; i < result.size(); i++) {
         if (i != 0) {
           types.append(CharacterConstants.COMMA);

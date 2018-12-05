@@ -91,8 +91,7 @@ public class InvOptimizationPSProcessor extends InstrumentedProcessor {
     }
     try {
       // Get service
-      InventoryOptimizerService ios = StaticApplicationContext.getBean(ConfigUtil.get("optimizer"),
-              InventoryOptimizerService.class);
+      InventoryOptimizerService ios = StaticApplicationContext.getBean(InventoryOptimizerService.class);
       xLogger.info("InvOptimizationPSProcessor: Computing PS for domain = {0}", domainId);
       // Optimize
       ios.optimize(domainId, inventories, dc, true, true, locale, pm);

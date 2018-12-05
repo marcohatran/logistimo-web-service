@@ -37,7 +37,6 @@ import com.logistimo.shipments.FulfilledQuantityModel;
 import com.logistimo.shipments.ShipmentStatus;
 import com.logistimo.shipments.entity.IShipment;
 import com.logistimo.shipments.entity.IShipmentItem;
-import com.logistimo.shipments.entity.IShipmentItemBatch;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -99,23 +98,21 @@ public interface IShipmentService {
 
   List<IShipment> getShipmentsByOrderId(Long orderId);
 
-  List<IShipmentItemBatch> getShipmentsBatchByOrderId(Long orderId);
-
-    /**
-     * Get list of shipments according to permissions of user
-     *
-     * @param userId      Session User Id
-     * @param domainId    Domain Id
-     * @param custId      Customer Id
-     * @param vendId      Vendor Id
-     * @param from        From date
-     * @param to          To date
-     * @param etaFrom     Expected time of arrival from
-     * @param etaTo       Expected time of arrival to
-     * @param transporter Name of transporter
-     * @param trackingId  Tracking id of shipment
-     * @return -
-     */
+  /**
+   * Get list of shipments according to permissions of user
+   *
+   * @param userId      Session User Id
+   * @param domainId    Domain Id
+   * @param custId      Customer Id
+   * @param vendId      Vendor Id
+   * @param from        From date
+   * @param to          To date
+   * @param etaFrom     Expected time of arrival from
+   * @param etaTo       Expected time of arrival to
+   * @param transporter Name of transporter
+   * @param trackingId  Tracking id of shipment
+   * @return -
+   */
   Results getShipments(String userId, Long domainId, Long custId, Long vendId, Date from, Date to, Date etaFrom,
                        Date etaTo, String transporter, String trackingId, ShipmentStatus status,
                        int size, int offset);

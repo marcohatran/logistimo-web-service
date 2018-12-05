@@ -109,7 +109,7 @@ public class ReportsConfig {
           .getBean(ConfigurationMgmtServiceImpl.class);
       return cms.getConfiguration(IConfig.REPORTS).getConfig();
     } catch (Exception e) {
-      xLogger.severe("Service exception: {0}", e.getMessage());
+      xLogger.warn("Service exception: {0}", e.getMessage());
       return DEFAULT;
     }
   }
@@ -236,7 +236,7 @@ public class ReportsConfig {
         cms.addConfiguration(key, domainId, config);
       }
     } catch (Exception e) {
-      xLogger.severe("Service exception: {0}", e.getMessage());
+      xLogger.warn("Service exception: {0}",  e.getMessage());
     }
   }
 

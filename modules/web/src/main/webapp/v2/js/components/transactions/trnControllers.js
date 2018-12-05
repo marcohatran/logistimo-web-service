@@ -338,7 +338,7 @@ trnControllers.controller('TransactionsCtrl', ['$scope', 'trnService', 'domainCf
             $scope.atd=false;
             $scope.reason = undefined;
             $scope.tempReason = undefined;
-        }
+        };
     }
 ]);
 trnControllers.controller('TransMapCtrl', ['$scope','mapService','uiGmapGoogleMapApi',
@@ -494,8 +494,10 @@ trnControllers.controller('TransMapCtrl', ['$scope','mapService','uiGmapGoogleMa
 trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibModal','trnService', 'invService', 'domainCfgService', 'entityService','$timeout',
     function ($rootScope,$scope, $uibModal, trnService, invService, domainCfgService, entityService,$timeout) {
         $scope.invalidPopup = 0;
+        $scope.openFormCount = {};
+        $scope.openFormCount.returns = 0;
         $scope.validate = function (material, index, source) {
-            if(!material.isBatch && !material.isBinary) {
+            if(!material.isBatch) {
                 material.isVisited = material.isVisited || checkNotNullEmpty(source);
                 if(material.isVisited) {
                     if (checkNotNull(material.ind) && checkNullEmpty(material.quantity) || ($scope.transaction.type != 'p' && material.quantity <= 0)) {
@@ -520,6 +522,12 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                     }
                 }
             }
+
+            if(!$scope.isTransactionTypeReturn() && checkNotNull(material.ind) && checkNullEmpty(material.reason) && $scope.reasonMandatory) {
+                showPopUP(material, $scope.resourceBundle['reason.required'], index, 'r');
+                return false;
+            }
+
             return true;
         };
 
@@ -538,11 +546,20 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                 }, 0);
             } else {
                 $timeout(function () {
-                    mat.aPopupMsg = msg;
-                    if(!mat.ainvalidPopup) {
-                        mat.ainvalidPopup = true;
-                        $scope.invalidPopup += 1;
+                    if (source == 'r') {
+                        mat.rPopupMsg = msg;
+                        if (!mat.rinvalidPopup) {
+                            mat.rinvalidPopup = true;
+                            $scope.invalidPopup += 1;
+                        }
+                    } else {
+                        mat.aPopupMsg = msg;
+                        if(!mat.ainvalidPopup) {
+                            mat.ainvalidPopup = true;
+                            $scope.invalidPopup += 1;
+                        }
                     }
+
                     $timeout(function () {
                         $("[id='"+ source + mat.name.mId + index + "']").trigger('showpopup');
                     }, 0);
@@ -551,7 +568,7 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
         }
 
         $scope.hidePopup = function(material,index, source){
-            if (material.invalidPopup || material.ainvalidPopup) {
+            if (material.invalidPopup || material.ainvalidPopup || material.rinvalidPopup) {
                  $scope.invalidPopup = $scope.invalidPopup <= 0 ? 0 : $scope.invalidPopup - 1;
             }
             if(checkNullEmpty(source)) {
@@ -561,6 +578,8 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                 }, 0);
             } else if(source == 'm' || source == 'mt') {
                 hidePopup($scope, material, source + material.name.mId, index, $timeout, true);
+            } else if(source == 'r') {
+                hidePopup($scope, material, source + material.name.mId, index, $timeout, false, false, true);
             }
         };
 
@@ -754,7 +773,7 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                     $scope.showWarning($scope.resourceBundle['trn.batch.open'] + ' ' + $scope.transaction.modifiedmaterials[index].name.mnm + '. ' + $scope.resourceBundle['trn.batch.save.cancel']);
                     return true;
                 }
-                if (!mat.isBatch && !mat.isBinary) {
+                if (!mat.isBatch) {
                     if(!$scope.validate(mat,index,'b')) {
                         return true;
                     }
@@ -768,13 +787,18 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                         $scope.showWarning($scope.resourceBundle['invalid.quantity'] + " " + $scope.resourceBundle['of'] + " " + (mat.mnm || mat.name.mnm));
                         return true;
                     }
+                    if (checkNullEmpty(mat.reason) && $scope.reasonMandatory && !$scope.isTransactionTypeReturn()) {
+                        $scope.showWarning($scope.resourceBundle['reason.required'] + " " + $scope.resourceBundle['for'] + " " + (mat.mnm || mat.name.mnm));
+                        return true;
+
+                    }
                 }
                 index+=1;
             });
             var isStatusEmpty = false;
             index = 0;
             $scope.transaction.modifiedmaterials.forEach(function (mat) {
-                if(checkNotNullEmpty(mat.name) && !mat.isBatch && !mat.isBinary && mat.quantity != "0") {
+                if(checkNotNullEmpty(mat.name) && !mat.isBatch && mat.quantity != "0") {
                     var status = mat.ts ? $scope.tempmatstatus : $scope.matstatus;
                     if (checkNotNullEmpty(status) && checkNullEmpty(mat.mst) && $scope.msm) {
                         mat.isVisitedStatus = true;
@@ -786,7 +810,7 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
             });
             if (!invalidQuantity && !isStatusEmpty) {
                 var fTransaction = constructFinalTransaction();
-                $scope.showLoading();
+                $scope.showFullLoading();
 
                 trnService.updateTransaction(fTransaction).then(function (data) {
                     resetNoConfirm(true);
@@ -805,7 +829,7 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                         $scope.showErrorMsg(msg);
                     }
                 }).finally(function(){
-                    $scope.hideLoading();
+                    $scope.hideFullLoading();
                 });
             }
         };
@@ -883,10 +907,6 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
             }
 
             valid = !$scope.transaction.modifiedmaterials.some(function(material) {
-                if(checkNotNullEmpty(material.op)) {
-                    $scope.showWarning($scope.resourceBundle['edit.returns.form.open.message'] + " " + material.name.mnm + ". " + $scope.resourceBundle['edit.returns.save.cancel.message']);
-                    return true;
-                }
                 if (!$scope.isReturnTransactionsAtdValid(material)) {
                     var type = $scope.transaction.type == 'ri' ? 'issue' : 'receipt';
                     $scope.showWarning($scope.resourceBundle['return.transaction.atd.message'] + " " + type + " " + $scope.resourceBundle['for'] + " " + material.name.mnm + ".");
@@ -998,14 +1018,13 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                             ft['bmaterials'].push(items);
                         }
                     });
-                } else if (mat.isBinary) {
-                    ft['materials'][mat.name.mId] = "1";
                 } else if (checkNotNull(mat.ind)) {
                     var items = {};
                     var trackingid = checkNotNullEmpty(mat.trkid) ? mat.trkid : undefined;
+                    var reason = ($scope.transaction.type == 'ri' || $scope.transaction.type == 'ro' ? mat.rsn : mat.reason);
                     items[mat.name.mId] = {
                         q: '' + mat.quantity,
-                        r: mat.reason, mst: mat.mst, trkid: trackingid
+                        r: reason, mst: mat.mst, trkid: trackingid
                     };
                     ft['materials'].push(items);
                 }
@@ -1064,6 +1083,7 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
                 $scope.atd = $scope.tranDomainConfig.atdro;
                 $scope.msm = $scope.statusData.rosm;
             }
+            $scope.reasonMandatory = $scope.tranDomainConfig.transactionTypesWithReasonMandatory.indexOf(newVal) != -1;
             $scope.showMaterials = true;
             $scope.showLoading();
             trnService.getMatStatus($scope.transaction.type, false).then(function (data) {
@@ -1159,6 +1179,8 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
             $scope.timestamp = undefined;
             $scope.invalidPopup = 0;
             $scope.transaction.type = $scope.transactions_arr[0].value;
+            $scope.openFormCount = {};
+            $scope.openFormCount.returns = 0;
             $scope.addRows();
             if($scope.isEnt) {
                 $scope.transaction.ent = $scope.entity;
@@ -1340,7 +1362,14 @@ trnControllers.controller('TransactionsFormCtrl', ['$rootScope','$scope', '$uibM
         });
         $scope.isTransactionTypeReturn = function () {
             return checkNotNullEmpty($scope.transaction.type) && ($scope.transaction.type == 'ri' || $scope.transaction.type == 'ro');
-        }
+        };
+        $scope.disableButtonsAndIncrementCount = function(material) {
+            material.disableButtons = true;
+            $scope.openFormCount.returns = $scope.openFormCount.returns + 1;
+        };
+        $scope.showCustomerInventory = function(transaction) {
+            return $scope.tranDomainConfig.showCInv && (transaction.type == 'i' || transaction.type == 't') && checkNotNullEmpty(transaction.dent) && checkNotNullEmpty(transaction.dent.enm) && transaction.dent.enm.length > 0 && transaction.ent.nm !== transaction.dent.enm && $scope.showDestInvPermission > 0;
+        };
     }
 ]);
 trnControllers.controller('transactions.MaterialController', ['$scope', 'trnService', 'invService',
@@ -1393,7 +1422,6 @@ trnControllers.controller('transactions.MaterialController', ['$scope', 'trnServ
                     }
                 }
                 $scope.material.mm = "(" + name.reord.toFixed(0) + ',' + name.max.toFixed(0) + ")";
-                $scope.material.isBinary = name.b === 'bn';
                 $scope.material.reason = '';
                 if(checkNotNullEmpty($scope.transaction.type)){
                     if(checkNotNullEmpty(name.tgs)) {
@@ -1401,12 +1429,12 @@ trnControllers.controller('transactions.MaterialController', ['$scope', 'trnServ
                             $scope.material.rsns = data.data.rsns;
                             $scope.material.reason = data.data.defRsn;
                             if (checkNotNullEmpty($scope.material.rsns) && $scope.material.rsns.length > 0) {
-                                if (checkNullEmpty($scope.material.reason) && $scope.material.rsns.indexOf("") == -1) {
+                                if ($scope.material.rsns.indexOf("") == -1) {
                                     $scope.material.rsns.splice(0, 0, "");
                                 }
                                 $scope.$parent.showReason = true;
                             } else if (checkNotNullEmpty($scope.reasons) && $scope.reasons.length > 0) {
-                                if (checkNullEmpty($scope.defaultReason) && $scope.reasons.indexOf("") == -1) {
+                                if ($scope.reasons.indexOf("") == -1) {
                                     $scope.reasons.splice(0, 0, "");
                                 }
                                 $scope.material.rsns = $scope.reasons;
@@ -1417,7 +1445,7 @@ trnControllers.controller('transactions.MaterialController', ['$scope', 'trnServ
                             $scope.showErrorMsg(msg);
                         });
                     } else if (checkNotNullEmpty($scope.reasons) &&  $scope.reasons.length > 0) {
-                        if (checkNullEmpty($scope.defaultReason) && $scope.reasons.indexOf("") == -1) {
+                        if ($scope.reasons.indexOf("") == -1) {
                             $scope.reasons.splice(0, 0, "");
                         }
                         $scope.material.reason = $scope.defaultReason;
@@ -2247,6 +2275,8 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope', '$timeout', 'reque
 
         $scope.toggle = function (index) {
             $scope.material.op = undefined;
+            $scope.material.disableButtons = undefined;
+            $scope.openFormCount.returns -= 1;
             $scope.select(index);
         };
 
@@ -2295,7 +2325,7 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope', '$timeout', 'reque
                     }
                 }
                 if ($scope.transaction.type == 'ro') {
-                    if (checkNotNullEmpty(transaction.bid)) {
+                    if (transaction.rq > 0 && checkNotNullEmpty(transaction.bid)) {
                         if (checkNullEmpty($scope.material.bidbatchDetMap[transaction.bid])) {
                             $scope.showWarning($scope.resourceBundle['batch'] + " " + transaction.bid + " " + $scope.resourceBundle['return.not.allowed.non.existing.batch'] + " " + $scope.mnm + ".");
                             return false;
@@ -2317,8 +2347,8 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope', '$timeout', 'reque
                     $scope.showWarning($scope.resourceBundle['status.required'] + " " + $scope.resourceBundle['for'] + " " + $scope.mnm + ".");
                     return false;
                 }
-                if (checkNotNullEmpty($scope.reasons) && $scope.reasons.length > 0 && checkNullEmpty(transaction.rrsn)) {
-                    $scope.showWarning($scope.resourceBundle['reason.required']);
+                if (checkNullEmpty(transaction.rrsn) && $scope.reasonMandatory) {
+                    $scope.showWarning($scope.resourceBundle['reason.required'] + " " + $scope.resourceBundle['for'] + " " + $scope.mnm + ".");
                     return false;
                 }
 
@@ -2358,7 +2388,7 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope', '$timeout', 'reque
                 }
 
                 if (!isInvalid && $scope.transaction.type == 'ro') {
-                    if (checkNotNullEmpty(transaction.bid)) {
+                    if (transaction.rq > 0 && checkNotNullEmpty(transaction.bid)) {
                         if (checkNullEmpty($scope.material.bidbatchDetMap[transaction.bid])) {
                             showPopup($scope, transaction, idPrefix + transaction.id,
                                 $scope.resourceBundle['batch'] + " " + transaction.bid + " " + $scope.resourceBundle['return.not.allowed.non.existing.batch'] + " " + $scope.mnm + ".",
@@ -2393,7 +2423,7 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope', '$timeout', 'reque
             }
 
             if (type == undefined || type == 'r') {
-                if (checkNotNullEmpty($scope.reasons) && $scope.reasons.length > 0 && checkNullEmpty(transaction.rrsn)) {
+                if ($scope.reasonMandatory && checkNullEmpty(transaction.rrsn)) {
                     showPopup($scope, transaction, idPrefix + transaction.id, $scope.resourceBundle['reason.required'],
                         index, $timeout, false, false, true);
                     isInvalid = true;
@@ -2456,6 +2486,6 @@ trnControllers.controller('ReturnTransactionCtrl', ['$scope', '$timeout', 'reque
                     }
                 }
             }
-        }
+        };
     }]);
 

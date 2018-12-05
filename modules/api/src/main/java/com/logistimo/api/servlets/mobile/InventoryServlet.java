@@ -315,7 +315,7 @@ public class InventoryServlet extends JsonRestServlet {
     // Get request parameters
     String strKioskId = req.getParameter(RestConstantsZ.KIOSK_ID);
     String strUserId = req.getParameter(RestConstantsZ.USER_ID);
-    String password = req.getParameter(RestConstantsZ.PASSWORD);
+    String password = req.getParameter(RestConstantsZ.PASSWRD);
     String sizeStr = req.getParameter(RestConstantsZ.SIZE);
     String filter = req.getParameter(RestConstantsZ.FILTER);
     boolean onlyStock = RestConstantsZ.FILTER_ONLYSTOCK.equals(filter);
@@ -473,7 +473,7 @@ public class InventoryServlet extends JsonRestServlet {
     String strKioskId = req.getParameter(RestConstantsZ.KIOSK_ID);
     String strMaterialId = req.getParameter(MATERIAL_ID);
     String strUserId = req.getParameter(RestConstantsZ.USER_ID);
-    String password = req.getParameter(RestConstantsZ.PASSWORD);
+    String password = req.getParameter(RestConstantsZ.PASSWRD);
     String sizeStr = req.getParameter(RestConstantsZ.SIZE);
     String offsetStr = req.getParameter(Constants.OFFSET);
     int offset = 0;
@@ -587,7 +587,7 @@ public class InventoryServlet extends JsonRestServlet {
     // Get request parameters
     String jsonString = req.getParameter(RestConstantsZ.JSON_STRING);
     String transType = req.getParameter(RestConstantsZ.TRANS_TYPE);
-    String password = req.getParameter(RestConstantsZ.PASSWORD); // sent in case of SMS message
+    String password = req.getParameter(RestConstantsZ.PASSWRD); // sent in case of SMS message
     boolean isReverse = (req.getParameter("reverse") != null);
     String
         domainIdStr =

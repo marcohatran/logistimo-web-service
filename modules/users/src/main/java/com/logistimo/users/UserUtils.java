@@ -25,13 +25,13 @@ package com.logistimo.users;
 
 import com.logistimo.auth.SecurityConstants;
 import com.logistimo.context.StaticApplicationContext;
-import com.logistimo.logger.XLog;
 import com.logistimo.services.Resources;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.users.service.impl.UsersServiceImpl;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -45,9 +45,9 @@ import java.util.Set;
  * Created by charan on 09/03/17.
  */
 public class UserUtils {
-
-  private static final XLog xLogger = XLog.getLog(UserUtils.class);
-
+  private UserUtils() {
+    
+  }
   // Static display functions
   public static String getRoleDisplay(String role, Locale locale) {
     ResourceBundle messages = Resources.get().getBundle("Messages", locale);
@@ -84,6 +84,8 @@ public class UserUtils {
       displayStr = messages.getString("gender.male");
     } else if (IUserAccount.GENDER_FEMALE.equals(constant)) {
       displayStr = messages.getString("gender.female");
+    } else if (IUserAccount.GENDER_OTHER.equals(constant)) {
+      displayStr = messages.getString("gender.other");
     }
 
     return displayStr;
@@ -104,16 +106,15 @@ public class UserUtils {
     }
 
     Set<String> eUIds = new HashSet<>();
-    if (uIds != null && uIds.size() > 0) {
+    if (!CollectionUtils.isEmpty(uIds)) {
       eUIds.addAll(uIds);
     }
-    if (uTIds != null && uTIds.size() > 0) {
+    if (!CollectionUtils.isEmpty(uTIds)) {
       eUIds.addAll(uTIds);
     }
-    if (eUIds.size() > 0) {
+    if (!CollectionUtils.isEmpty(eUIds)) {
       userIds = new ArrayList<>(eUIds);
     }
-
     return userIds;
   }
 }

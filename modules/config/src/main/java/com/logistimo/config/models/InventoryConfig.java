@@ -31,6 +31,7 @@ import com.logistimo.constants.Constants;
 import com.logistimo.services.Resources;
 import com.logistimo.utils.StringUtil;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -39,11 +40,13 @@ import java.io.Serializable;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.Set;
 
 /**
  * @author Arun
@@ -116,6 +119,7 @@ public class InventoryConfig implements Serializable {
   private static final String CONFIGURE_RETURNS_INCOMING_BY_MATERIAL_TAGS = "crimt";
   private static final String CONFIGURE_RETURNS_OUTGOING_BY_MATERIAL_TAGS = "cromt";
   private static final String RETURNS = "returns";
+  private static final String TRANSACTION_TYPES_WITH_REASON_MANDATORY = "transaction_types_with_reason_mandatory";
 
 
   private boolean exportEnabled = false;
@@ -179,6 +183,19 @@ public class InventoryConfig implements Serializable {
    */
   private List<ReturnsConfig> returnsConfig = new ArrayList<>(1);
 
+  public Set<String> getTransactionTypesWithReasonMandatory() {
+    return transactionTypesWithReasonMandatory;
+  }
+
+  public void setTransactionTypesWithReasonMandatory(
+      Set<String> transactionTypesWithReasonMandatory) {
+    this.transactionTypesWithReasonMandatory = transactionTypesWithReasonMandatory;
+  }
+
+  /**
+   * Set of transaction types that for which reason is configured as mandatory
+   */
+  Set<String> transactionTypesWithReasonMandatory = new HashSet<>(1);
 
   public InventoryConfig() {
     batchMgmt = new BatchMgmt();
@@ -246,6 +263,13 @@ public class InventoryConfig implements Serializable {
     }
     try {
       mtagRetOutRsns = gson.fromJson(json.getString(RETURN_OUTGOING_MTAG_TRANS_REASONS), type);
+    } catch (JSONException e) {
+      // ignore
+    }
+    Type transactionTypeSet = new TypeToken<Set<String>>(){}.getType();
+    try {
+      transactionTypesWithReasonMandatory = gson.fromJson(
+          json.getString(TRANSACTION_TYPES_WITH_REASON_MANDATORY), transactionTypeSet);
     } catch (JSONException e) {
       // ignore
     }
@@ -357,7 +381,6 @@ public class InventoryConfig implements Serializable {
     } catch (JSONException e) {
       //ignore
     }
-
 
     crimt = gson.fromJson(String.valueOf(
         json.optBoolean(CONFIGURE_RETURNS_INCOMING_BY_MATERIAL_TAGS)), Boolean.class);
@@ -764,6 +787,10 @@ public class InventoryConfig implements Serializable {
         Type type = new TypeToken<Map<String,ReasonConfig>>(){}.getType();
         json.put(RETURN_OUTGOING_MTAG_TRANS_REASONS, gson.toJson(mtagRetOutRsns, type));
       }
+      if (CollectionUtils.isNotEmpty(transactionTypesWithReasonMandatory)) {
+        Type type = new TypeToken<Set<String>>(){}.getType();
+        json.put(TRANSACTION_TYPES_WITH_REASON_MANDATORY, gson.toJson(transactionTypesWithReasonMandatory, type));
+      }
       if (permissions != null) {
         json.put(PERMISSIONS, permissions.toJSONObject());
       }
@@ -822,6 +849,9 @@ public class InventoryConfig implements Serializable {
       return null;
     }
     String matStatus = isTempSensitive ? msConfig.getEtsm() : msConfig.getDf();
+    if(isTempSensitive && StringUtils.isBlank(matStatus)) {
+      matStatus = msConfig.getDf();
+    }
     if (StringUtils.isNotBlank(matStatus)) {
       matStatus = matStatus.split(CharacterConstants.COMMA, 2)[0];
     }

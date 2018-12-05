@@ -35,6 +35,7 @@ import org.springframework.orm.jpa.JpaVendorAdapter;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import java.util.Properties;
 
@@ -45,7 +46,7 @@ import javax.sql.DataSource;
  * Created by pratheeka on 15/03/18.
  */
 @Configuration
-@org.springframework.transaction.annotation.EnableTransactionManagement
+@EnableTransactionManagement
 @EnableJpaRepositories(basePackages = "com.logistimo")
 public class JPAConfig {
 
@@ -102,6 +103,7 @@ public class JPAConfig {
     properties.stringPropertyNames().stream()
         .filter(key -> !key.startsWith("database"))
         .forEach(key -> additionalProperties.setProperty(key, properties.getProperty(key)));
+    additionalProperties.setProperty("hibernate.enable_lazy_load_no_trans","true");
     return additionalProperties;
   }
 }

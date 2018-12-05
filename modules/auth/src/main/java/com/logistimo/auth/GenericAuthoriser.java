@@ -28,7 +28,7 @@ import com.logistimo.auth.service.impl.AuthenticationServiceImpl;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.context.StaticApplicationContext;
-import com.logistimo.exception.UnauthorizedException;
+import com.logistimo.logger.XLog;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ServiceException;
 import com.logistimo.users.service.UsersService;
@@ -42,6 +42,7 @@ import org.springframework.util.StringUtils;
  */
 public class GenericAuthoriser {
 
+  private static final XLog xLogger = XLog.getLog(GenericAuthoriser.class);
   public static final Integer NO_ACCESS = 0;
   public static final Integer MANAGE_MASTER_DATA = 2;
 
@@ -74,7 +75,8 @@ public class GenericAuthoriser {
     String token = as.getUserToken(userId);
     if( StringUtils.isEmpty(token) || StringUtils.isEmpty(tokenSuffix)
         || !token.endsWith(tokenSuffix)) {
-      throw new UnauthorizedException("Invalid token");
+      xLogger.warn("Invalid token for SMS authorization");
+      return Boolean.FALSE;
     }
 
     String tmpUserMobileNumber = userMobileNumber.replaceAll(PatternConstants.PLUS_AND_SPACES,

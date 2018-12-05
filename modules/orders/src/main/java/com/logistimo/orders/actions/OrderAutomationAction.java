@@ -132,22 +132,11 @@ public class OrderAutomationAction {
         .map(this::getTransaction)
         .filter(Optional::isPresent)
         .map(Optional::get)
-        .map(transaction -> {
-          transaction.setReason(getReason(ordersConfig, locale));
-          return transaction;
-        })
         .collect(Collectors.groupingBy(
             iTransaction -> iTransaction.getKioskId() + "_" + iTransaction.getLinkedKioskId()))
         .forEach((key, transactions) -> process(transactions, locale));
 
     LOGGER.info("Completed processing order automation for domain {0}", domainId);
-  }
-
-  private String getReason(OrdersConfig ordersConfig, Locale locale) {
-    ResourceBundle backendMessages = Resources.get().getBundle(BACKEND_MESSAGES, locale);
-    return ordersConfig.isAutoCreateOnMin() ? backendMessages.getString("orders.item.reached.min")
-        : MessageFormat.format(backendMessages.getString("orders.item.likely.stockout"),
-            ordersConfig.getAutoCreatePdos());
   }
 
 
@@ -206,21 +195,21 @@ public class OrderAutomationAction {
   protected List<ITransaction> filter(List<ITransaction> kioskTransactions,
                                     List<IDemandItem> demandItems) {
     return kioskTransactions.stream()
-        .filter(inventory -> !demandItems.stream()
-            .anyMatch(di -> di.getMaterialId().equals(inventory.getMaterialId())))
+        .filter(inventory -> demandItems.stream()
+            .noneMatch(di -> di.getMaterialId().equals(inventory.getMaterialId())))
         .collect(Collectors.toList());
   }
 
   private void addToExistingOrder(List<ITransaction> kioskTransactions,
                                   Long orderId, Locale locale)
       throws LogiException {
-    IOrder order = orderManagementService.getOrder(orderId, true);
     PersistenceManager pm = PMF.get().getPersistenceManager();
     Transaction tx = null;
     try {
       String message = getAddMaterialsMessage(kioskTransactions, locale);
       tx = pm.currentTransaction();
       tx.begin();
+      IOrder order = orderManagementService.getOrder(orderId, true, pm);
       orderManagementService.modifyOrder(order, Constants.SYSTEM_USER_ID,
           kioskTransactions, new Date(), order.getDomainId(),
           ITransaction.TYPE_REORDER, message, null, null,

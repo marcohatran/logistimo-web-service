@@ -333,6 +333,7 @@ approvalControllers.controller('ApprovalsCtrl', ['$scope', 'approvalService', 'o
                     $scope.filtered = data.data.content;
                     $scope.setActiveApprovers();
                     $scope.setPagedResults(data.data);
+                    fixTable();
                 }).catch(function error(msg) {
                     $scope.showErrorMsg(msg);
                 }).finally(function () {

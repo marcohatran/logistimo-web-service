@@ -31,5 +31,6 @@ import java.math.BigDecimal;
 public class CurrentStock {
   public BigDecimal count = BigDecimal.ZERO;
   public String date;
+  public String lastUpdatedTimeStamp;
 
 }

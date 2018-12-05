@@ -31,7 +31,8 @@
 		<li ng-if="iSU || dp.ma || dp.me || dp.mr" ng-class="{active: subview == 'upload' }"><a
 			href="#/setup/materials/all/upload/">{{resourceBundle['bulkupload.uploadinbulk']}}</a></li>
 	</ul>
-	<div ng-switch="subview">
+    <div ng-include="'loader-template.html'"></div>
+    <div ng-switch="subview">
 		<div class="tab-pane" ng-switch-when="list">
 			<div ng-if="iSU || (iAdm && dp.mv)" ng-init="matListType = 'all'"
 				ng-include="'views/materials/materials-list.html'"></div>

@@ -157,10 +157,6 @@ public interface IDemandItem extends IOverlappedDomain {
 
   void setFulfilledQuantity(BigDecimal quantity);
 
-  BigDecimal getReturnedQuantity();
-
-  void setReturnedQuantity(BigDecimal rq);
-
   /**
    * @return time to order, timediff from min event generated time to order creation time.
    */
@@ -181,4 +177,14 @@ public interface IDemandItem extends IOverlappedDomain {
    * Transient non-persisted
    */
   void setAllocatedStock(BigDecimal quantity);
+
+  Date getCreatedOn();
+
+  void setCreatedOn(Date createdOn);
+
+  String getCreatedBy();
+
+  void setCreatedBy(String createdBy);
+
+
 }

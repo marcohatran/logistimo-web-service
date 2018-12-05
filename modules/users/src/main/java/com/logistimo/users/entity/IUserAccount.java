@@ -39,9 +39,8 @@ public interface IUserAccount extends ISuperDomain, ILocation {
   // Gender
   String GENDER_MALE = "m";
   String GENDER_FEMALE = "f";
-  // Age
-  String AGETYPE_BIRTHDATE = "b";
-  String AGETYPE_YEARS = "y";
+  String GENDER_OTHER = "o";
+
   // User attribute names (esp. used for searching)
   String REGISTERED_BY = "registeredBy";
 
@@ -112,14 +111,6 @@ public interface IUserAccount extends ISuperDomain, ILocation {
   Date getBirthdate();
 
   void setBirthdate(Date birthdate);
-
-  int getAge();
-
-  void setAge(int age);
-
-  String getAgeType();
-
-  void setAgeType(String ageType);
 
   String getStreet();
 
@@ -271,4 +262,8 @@ public interface IUserAccount extends ISuperDomain, ILocation {
   Integer getStoreAppTheme();
 
   void setStoreAppTheme(Integer theme);
+
+  void setSalt(String salt);
+
+  void setPassword(String password);
 }

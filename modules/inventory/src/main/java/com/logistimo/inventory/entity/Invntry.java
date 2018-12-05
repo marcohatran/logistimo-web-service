@@ -65,7 +65,7 @@ import javax.jdo.annotations.PrimaryKey;
 /**
  * @author arun
  */
-@PersistenceCapable(identityType = IdentityType.APPLICATION, detachable = "true")
+@PersistenceCapable(identityType = IdentityType.APPLICATION, detachable = "true", cacheable = "false")
 public class Invntry implements IInvntry {
 
   private static final XLog xLogger = XLog.getLog(Invntry.class);
@@ -117,8 +117,6 @@ public class Invntry implements IInvntry {
   @NotPersistent
   private String mnm;
   // material name - redundantly stored here to enable sorting Inventory by material
-  @Persistent
-  private String b; //material binary valued
   @Persistent
   @Extension(vendorName = "datanucleus", key = "gae.unindexed", value = "true")
   private BigDecimal reord = BigDecimal.ZERO; // re-order levels or MIN
@@ -509,20 +507,6 @@ public class Invntry implements IInvntry {
       this.mnm = materialName.toLowerCase();
     } else {
       this.mnm = null;
-    }
-  }
-
-  @Override
-  public String getBinaryValued() {
-    return b;
-  }
-
-  @Override
-  public void setBinaryValued(String binaryValued) {
-    if (binaryValued != null) {
-      this.b = binaryValued.toLowerCase();
-    } else {
-      this.b = "no";
     }
   }
 

@@ -29,7 +29,8 @@
 		<li ng-class="{active: subview == 'add' }" ng-show="iSU || dp.ega"><a
 			href="#/setup/ent-grps/all/add/">{{resourceBundle['poolgroup.create']}}</a></li>
 	</ul>
-	<div ng-switch="subview">
+  <div ng-include="'loader-template.html'"></div>
+  <div ng-switch="subview">
 		<div class="tab-pane" ng-switch-when="list">
 			<div ng-include="'views/ent-grps/ent-grps-list.html'"></div>
 		</div>

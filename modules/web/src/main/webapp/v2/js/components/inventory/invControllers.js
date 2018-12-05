@@ -1248,37 +1248,36 @@ invControllers.controller('BatchDetailCtrl', ['$scope', 'invService', 'trnServic
 
         fetchTransConfig();
 
-        $scope.openReason = function (transType, index, tgs) {
-            $scope.transType = transType;
-            if (transType == 'p') {
-                $scope.title = "Stock count";
-                $scope.atd = $scope.tranDomainConfig.atdp;
+        $scope.openReason = function (transType, index, item) {
+            item.transType = transType;
+            if (item.transType == 'p') {
+                item.title = "Stock count";
+                item.atdConfig = $scope.tranDomainConfig.atdp;
             } else {
-                $scope.title = "Discard";
-                $scope.atd = $scope.tranDomainConfig.atdw;
+                item.title = "Discard";
+                item.atdConfig = $scope.tranDomainConfig.atdw;
             }
+            $scope.reasonMandatory = $scope.tranDomainConfig.transactionTypesWithReasonMandatory.indexOf('p') != -1 || $scope.tranDomainConfig.transactionTypesWithReasonMandatory.indexOf('w') != -1;
             $scope.reasons = [];
             $scope.defaultReason = '';
             $scope.tagReasons = [];
-            if (checkNotNullEmpty(tgs)) {
-                trnService.getReasons(transType, tgs).then(function (data) {
+            if (checkNotNullEmpty(item.mtgs)) {
+                trnService.getReasons(item.transType, item.mtgs).then(function (data) {
                     $scope.tagReasons = data.data.rsns;
                     $scope.defaultReason = data.data.defRsn;
                     if (checkNotNullEmpty($scope.tagReasons)) {
                         $scope.reasons = $scope.tagReasons;
-                        if (checkNullEmpty($scope.defaultReason)) {
-                            $scope.reasons.splice(0, 0, "");
-                        }
+                        $scope.reasons.splice(0, 0, "");
                         $scope.expBatchDet[index].showReason = !$scope.expBatchDet[index].showReason;
                         $scope.expBatchDet[index].reason = $scope.expBatchDet[index].showReason ? $scope.defaultReason : undefined;
                     } else {
-                        setCommonReasons(transType, index);
+                        setCommonReasons(item.transType, index);
                     }
                 }).catch(function error(msg) {
                     $scope.showErrorMsg(msg);
                 });
             } else {
-                setCommonReasons(transType, index);
+                setCommonReasons(item.transType, index);
             }
         };
 
@@ -1294,7 +1293,7 @@ invControllers.controller('BatchDetailCtrl', ['$scope', 'invService', 'trnServic
                     });
 
                     if (checkNotNullEmpty($scope.reasons) && $scope.reasons.length > 0) {
-                        if (checkNullEmpty($scope.defaultReason) && $scope.reasons.indexOf("") == -1) {
+                        if ($scope.reasons.indexOf("") == -1) {
                             $scope.reasons.splice(0, 0, "");
                         }
                     }
@@ -1319,6 +1318,10 @@ invControllers.controller('BatchDetailCtrl', ['$scope', 'invService', 'trnServic
                     $scope.showWarning("Please select actual date of physical transaction.");
                     return null;
                 }
+                if (checkNullEmpty(reason) && $scope.reasonMandatory) {
+                    $scope.showWarning("Please select a reason.");
+                    return null;
+                }
             }
             ft['bmaterials'] = [];
             if (checkNotNullEmpty(m)) {
@@ -1338,8 +1341,8 @@ invControllers.controller('BatchDetailCtrl', ['$scope', 'invService', 'trnServic
             return ft;
         };
 
-        $scope.updateTransaction = function (index, transType, reason, atd, tgs) {
-            var fTransaction = $scope.constructFinalTransaction(index, transType, reason, atd);
+        $scope.updateTransaction = function (index, item) {
+            var fTransaction = $scope.constructFinalTransaction(index, item.transType, item.reason, item.atd);
             if (checkNullEmpty(fTransaction)) {
                 return;
             }
@@ -1349,7 +1352,7 @@ invControllers.controller('BatchDetailCtrl', ['$scope', 'invService', 'trnServic
                     $scope.showWarning(data.data);
                 } else {
                     $scope.showSuccess(data.data);
-                    $scope.openReason(transType, index, tgs);
+                    $scope.openReason(item.transType, index, item.mtgs);
                     $scope.getBatchDetails();
                 }
             }).catch(function error(msg) {

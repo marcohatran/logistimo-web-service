@@ -29,6 +29,7 @@
         <li ng-class="{active: subview == 'predictive'}" ng-show="iPredEnabled"><a
                 href="#/dashboard/inventory/predictive">Stock out prediction</a></li>
     </ul>
+    <div ng-include="'loader-template.html'"></div>
     <div ng-switch="subview">
         <div class="tab-pane" ng-switch-when="overview">
             <div ng-include="'views/dashboard/inv-table-dashboard.html'"></div>

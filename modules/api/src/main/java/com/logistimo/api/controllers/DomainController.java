@@ -25,6 +25,7 @@ package com.logistimo.api.controllers;
 
 import com.logistimo.AppFactory;
 import com.logistimo.api.builders.DomainBuilder;
+import com.logistimo.api.models.LocationModel;
 import com.logistimo.api.models.superdomains.DomainDBModel;
 import com.logistimo.api.models.superdomains.DomainModel;
 import com.logistimo.auth.GenericAuthoriser;
@@ -38,9 +39,9 @@ import com.logistimo.domains.entity.IDomainPermission;
 import com.logistimo.domains.service.DomainsService;
 import com.logistimo.domains.utils.DomainDeleter;
 import com.logistimo.exception.BadRequestException;
+import com.logistimo.exception.ForbiddenAccessException;
 import com.logistimo.exception.InvalidDataException;
 import com.logistimo.exception.InvalidServiceException;
-import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.logger.XLog;
 import com.logistimo.pagination.Navigator;
 import com.logistimo.pagination.PageParams;
@@ -238,9 +239,14 @@ public class DomainController {
   @RequestMapping(value = "/create", method = RequestMethod.POST)
   public
   @ResponseBody
-  String createDomain(@RequestParam String domainName, @RequestParam(required = false) String desc) {
+  String createDomain(@RequestParam String domainName, @RequestParam(required = false) String desc,
+                      @RequestBody LocationModel location, @RequestParam String timezone) throws ServiceException{
     if (StringUtils.isEmpty(domainName)) {
       throw new InvalidDataException("Domain name can't be empty.");
+    } else if(StringUtils.isEmpty(location.cntry)) {
+      throw new InvalidDataException("Country can't be empty.");
+    } else if(StringUtils.isEmpty(timezone)) {
+      throw new InvalidDataException("Timezone can't be empty.");
     }
     try {
       SecureUserDetails sUser = SecurityUtils.getUserDetails();
@@ -252,8 +258,7 @@ public class DomainController {
       if (desc != null && !desc.isEmpty()) {
         domain.setDescription(desc);
       }
-      Long domainId = domainsService.addDomain(domain);
-      domainsService.createDefaultDomainPermissions(domainId);
+      domainsService.addDomain(domain, location.cntry, location.state, location.district, timezone, userId);
       return "Domain " + MsgUtil.bold(domainName) + " created successfully.";
     } catch (ServiceException e) {
       xLogger.severe("Unable to create domain", e);
@@ -311,7 +316,7 @@ public class DomainController {
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     if (!GenericAuthoriser.authoriseAdmin()) {
-      throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+      throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
     }
     if (StringUtils.isBlank(domainIdStr)) {
       xLogger.severe("Error in switching domain");
@@ -330,8 +335,6 @@ public class DomainController {
             break;
           }
         }
-      } else {
-        authorisedUser = false;
       }
     } catch (Exception e) {
       xLogger
@@ -339,7 +342,7 @@ public class DomainController {
               sUser.getUsername(), e);
     }
     if (!authorisedUser) {
-      throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+      throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
     }
   }
 }

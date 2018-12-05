@@ -78,7 +78,8 @@ public class DataXExportStatusProcessor {
             backendMessages, model.meshId);
       }
     } else if (ExportConstants.STATUS_FAILED.equals(model.status)) {
-      JobUtil.setJobFailed(jobId, model.reason);
+      xLogger.warn("Error occurred during export with detail {0} ",model.reason);
+      JobUtil.setJobFailed(jobId, "Error occurred during export");
       emailHelper.sendMail(jobStatus, model.meshId, "Error during export.");
     }
   }

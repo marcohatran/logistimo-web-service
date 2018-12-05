@@ -33,7 +33,6 @@ import com.logistimo.locations.model.LocationResponseModel;
 import com.logistimo.logger.XLog;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -46,15 +45,14 @@ public class LocationServiceImpl implements LocationClient {
   private static final XLog log = XLog.getLog(LocationServiceImpl.class);
 
   @Autowired
-  @Qualifier("locationsRestTemplate")
-  private RestTemplate restTemplate;
+  private RestTemplate locationsRestTemplate;
 
   @Override
   public LocationResponseModel getLocationIds(ILocation location) {
     MultiValueMap<String, String> headers = new LinkedMultiValueMap<>(1);
     headers.add("x-app-name", "logistimo");
     LocationRequestModel model = convert(location);
-    GetLocationCommand locationCommand = new GetLocationCommand(restTemplate, model, headers);
+    GetLocationCommand locationCommand = new GetLocationCommand(locationsRestTemplate, model, headers);
     return locationCommand.execute();
   }
 
@@ -64,7 +62,7 @@ public class LocationServiceImpl implements LocationClient {
     headers.add("x-app-name", "logistimo");
     UpdateLocationMasterDataCommand
         updateLocationMasterDataCommand =
-        new UpdateLocationMasterDataCommand(restTemplate, locationsJson, headers);
+        new UpdateLocationMasterDataCommand(locationsRestTemplate, locationsJson, headers);
     updateLocationMasterDataCommand.execute();
     log.info("Add locations completed successfully");
   }

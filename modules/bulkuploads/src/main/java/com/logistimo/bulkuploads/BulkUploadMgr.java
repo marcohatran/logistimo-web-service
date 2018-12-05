@@ -35,6 +35,8 @@ import com.logistimo.assets.service.impl.AssetManagementServiceImpl;
 import com.logistimo.auth.SecurityConstants;
 import com.logistimo.auth.SecurityMgr;
 import com.logistimo.auth.SecurityUtil;
+import com.logistimo.auth.service.AuthenticationService;
+import com.logistimo.auth.service.impl.AuthenticationServiceImpl;
 import com.logistimo.bulkuploads.headers.AssetsHeader;
 import com.logistimo.bulkuploads.headers.IHeader;
 import com.logistimo.bulkuploads.headers.InventoryHeader;
@@ -64,7 +66,9 @@ import com.logistimo.entities.entity.IKioskLink;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
 import com.logistimo.entity.IUploaded;
+import com.logistimo.exception.BadRequestException;
 import com.logistimo.exception.TaskSchedulingException;
+import com.logistimo.exception.ValidationException;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.service.InventoryManagementService;
 import com.logistimo.inventory.service.impl.InventoryManagementServiceImpl;
@@ -88,12 +92,19 @@ import com.logistimo.utils.FieldLimits;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.PatternConstants;
 import com.logistimo.utils.StringUtil;
+import com.logistimo.validations.PasswordValidator;
 
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -147,7 +158,6 @@ public class BulkUploadMgr {
   public static final int LOWER_BOUND_FOR_YOM = 1980;
   public static final String TEMP_MIN = "Temperature Min.";
   public static final String TEMP_MAX = "Temperature Max.";
-  private static ITaskService taskService = AppFactory.get().getTaskService();
 
   private static final String MAX_LENGTH_MSG = " cannot be greater than ";
   private static final String CHARACTERS = " characters";
@@ -161,29 +171,79 @@ public class BulkUploadMgr {
   private static final String STREET_ADDRESS_MAX_LENGTH_MSG = MAX_LENGTH_MSG + FieldLimits.STREET_ADDRESS_MAX_LENGTH + CHARACTERS + CharacterConstants.DOT;
   private static final String ERROR_COUNT_MSG = "Remaining number of errors: ";
   private static final String ERRORS_TRUNCATED_MSG = "... Message truncated due to too many errors. ";
+  private static final String SALT_HASH_SEPARATOR = "####";
 
+  private static DomainsService domainsService;
+  private static EntitiesService entitiesService;
+  private static UsersService usersService;
+  private static AssetManagementService assetManagementService;
+  private static MaterialCatalogService materialCatalogService;
+  private static ITaskService taskService;
+
+  private static ITaskService getTaskService() {
+    if(taskService == null) {
+      taskService = AppFactory.get().getTaskService();
+    }
+    return taskService;
+  }
+
+  protected static DomainsService getDomainService() {
+    if(domainsService == null) {
+      domainsService = StaticApplicationContext.getBean(DomainsServiceImpl.class);
+    }
+    return domainsService;
+  }
+
+  protected static EntitiesService getEntitiesService() {
+    if(entitiesService == null) {
+      entitiesService = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
+    }
+    return entitiesService;
+  }
+
+  protected static UsersService getUsersService() {
+    if(usersService == null) {
+      usersService = StaticApplicationContext.getBean(UsersServiceImpl.class);
+    }
+    return usersService;
+  }
+
+  protected static AssetManagementService getAssetManagementService() {
+    if(assetManagementService ==  null) {
+      assetManagementService = StaticApplicationContext.getBean(AssetManagementServiceImpl.class);
+    }
+    return assetManagementService;
+  }
+
+  protected static MaterialCatalogService getMaterialCatalogService() {
+    if(materialCatalogService == null) {
+      materialCatalogService = StaticApplicationContext.getBean(MaterialCatalogServiceImpl.class);
+    }
+    return materialCatalogService;
+  }
+
+  private BulkUploadMgr() {
+
+  }
   // Get the display name of a given type
   public static String getDisplayName(String type, Locale locale) {
     ResourceBundle bundle = Resources.get().getBundle("Messages", locale);
-    ResourceBundle backendBundle = Resources.get().getBundle("BackendMessages", locale);
-    if (TYPE_USERS.equals(type)) {
-      return bundle.getString("users");
-    } else if (TYPE_MATERIALS.equals(type)) {
-      return bundle.getString("materials");
-    } else if (TYPE_KIOSKS.equals(type)) {
-      return backendBundle.getString("kiosks");
-    } else if (TYPE_TRANSACTIONS.equals(type) || TYPE_TRANSACTIONS_CUM_INVENTORY_METADATA
-        .equals(type)) {
-      return bundle.getString("transactions");
-    } else if (TYPE_INVENTORY.equals(type)) {
-      return bundle.getString("inventory");
-    } else if (TYPE_ASSETS.equals(type)) {
-      return backendBundle.getString("asset");
-    }
-                /*else if ( TYPE_TRANSACTIONS_CUM_INVENTORY_METADATA.equals( type ) )
-                        return bundle.getString( "transactionscuminventorymetadata" );*/
-    else {
-      return null;
+    switch(type) {
+      case TYPE_USERS:
+        return bundle.getString("users");
+      case TYPE_MATERIALS:
+        return bundle.getString("materials");
+      case TYPE_KIOSKS:
+        return bundle.getString("kiosks");
+      case TYPE_TRANSACTIONS:
+      case TYPE_TRANSACTIONS_CUM_INVENTORY_METADATA:
+        return bundle.getString("transactions");
+      case TYPE_INVENTORY:
+        return bundle.getString("inventory");
+      case TYPE_ASSETS:
+        return bundle.getString("assets");
+      default:
+        return null;
     }
   }
 
@@ -205,8 +265,7 @@ public class BulkUploadMgr {
     // Get the user's role
     String role = null;
     try {
-      UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
-      role = as.getUserAccount(userId).getRole();
+      role = getUsersService().getUserAccount(userId).getRole();
     } catch (Exception e) {
       xLogger.warn(
           "{0} when getting user's role for uploaded type {1} from user {2} in domain {3}: {4}",
@@ -219,7 +278,6 @@ public class BulkUploadMgr {
     {
       key += "." + userId;
     }
-    ///return JDOUtils.createUploadedKey(domainId + "." + userId + "." + type, "0", Constants.LANG_DEFAULT);
     return JDOUtils.createUploadedKey(key, "0", Constants.LANG_DEFAULT);
   }
 
@@ -256,17 +314,17 @@ public class BulkUploadMgr {
   public static List<ErrMessage> getErrorMessageObjects(String uploadedKey) {
     xLogger.fine("Entered getErrorMessageObjects: uploadedKey = {0}", uploadedKey);
     if (uploadedKey == null) {
-      return null;
+      return Collections.emptyList();
     }
     List<String> allMsgs = getUploadedMessages(uploadedKey);
     if (allMsgs == null || allMsgs.isEmpty()) {
-      return null;
+      return Collections.emptyList();
     }
     List<ErrMessage> errors = new ArrayList<>();
     for (String allMsg : allMsgs) {
       String[] array = allMsg.split(INTRALINE_DELIMITER);
       if (array.length < 4) {
-        return null;
+        return Collections.emptyList();
       }
       ErrMessage err = new ErrMessage();
       try {
@@ -313,7 +371,7 @@ public class BulkUploadMgr {
     } else if (TYPE_ASSETS.equals(type)) {
       header = new AssetsHeader();
     }
-    return header.getUploadableCSVHeader(locale, type);
+    return header != null ? header.getUploadableCSVHeader(locale, type) : null;
   }
 
   public static EntityContainer processEntity(String type, String csvLine, Long domainId,
@@ -324,8 +382,7 @@ public class BulkUploadMgr {
     }
     EntityContainer entityContainer = null;
     String[] tokens = StringUtil.getCSVTokens(csvLine);
-    UsersService usersService = StaticApplicationContext.getBean(UsersService.class);
-    SecurityMgr.setSessionDetails(usersService.getUserAccount(sourceUserId));
+    SecurityMgr.setSessionDetails(getUsersService().getUserAccount(sourceUserId));
     if (TYPE_USERS.equals(type)) {
       entityContainer = processUserEntity(tokens, domainId, sourceUserId);
     } else if (TYPE_MATERIALS.equals(type)) {
@@ -356,16 +413,16 @@ public class BulkUploadMgr {
     xLogger.fine("Entered processAssetEntity");
     ResourceBundle backendMessages;
     EntityContainer ec = new EntityContainer();
+    Long kioskId = null;
+    IAsset monitoredAsset = null;
+    IAsset sensorAsset = null;
 
     try {
       if (tokens == null || tokens.length == 0) {
         throw new ServiceException("No fields specified");
       }
 
-      UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
-      AssetManagementService ams = StaticApplicationContext.getBean(
-          AssetManagementServiceImpl.class);
-      IUserAccount su = as.getUserAccount(sourceUserId);
+      IUserAccount su = getUsersService().getUserAccount(sourceUserId);
       backendMessages = Resources.get().getBundle("BackendMessages", su.getLocale());
       //Entity Name
       int i = 0;
@@ -376,8 +433,6 @@ public class BulkUploadMgr {
             + " name: Name is greater than 50 characters. Please specify a valid " + backendMessages
             .getString("kiosks.lowercase") + " name.");
       }
-
-      Long kioskId = null;
       PersistenceManager pm = PMF.get().getPersistenceManager();
       List<String> tags = new ArrayList<>(1);
       Query q = pm.newQuery("select kioskId from " + JDOUtils.getImplClass(IKiosk.class).getName()
@@ -387,9 +442,7 @@ public class BulkUploadMgr {
         List<Long> list = (List<Long>) q.execute(domainId, eName.toLowerCase());
         if (list != null && !list.isEmpty()) {
           kioskId = list.get(0);
-            EntitiesService entitiesService = StaticApplicationContext.getBean(
-                EntitiesServiceImpl.class);
-            tags = entitiesService.getAssetTagsToRegister(kioskId);
+            tags = getEntitiesService().getAssetTagsToRegister(kioskId);
         }
         xLogger.fine(
             "BulkUploadMgr.processAssetEntity: resolved kiosk {0} to {1}; list returned {2} items",
@@ -405,8 +458,7 @@ public class BulkUploadMgr {
 
       //Skipping entity details, moving to Fridge details
       i += 5;
-      IAsset monitoredAsset = null;
-      Map<String, Object> variableMap = new HashMap<>(5), metaDataMap = new HashMap<>(1);
+      Map<String, Object> variableMap = new HashMap<>(7), metaDataMap = new HashMap<>(1);
       if (i < size) {
         variableMap.put(AssetUtil.ASSET_NAME, tokens[i].trim());
         if (++i < size) {
@@ -418,13 +470,18 @@ public class BulkUploadMgr {
               metaDataMap.put(AssetUtil.DEV_MODEL, tokens[i].trim());
               variableMap.put(AssetUtil.TAGS, tags);
               if(++i < size) {
-                String yom = tokens[i].trim();
-                if(StringUtils.isNotEmpty(yom)){
-                  validateYearOfManufacture(yom, backendMessages);
-                  variableMap.put(ASSET_YOM, yom);
-                  metaDataMap.put(DEV_YOM, yom);
-                }
+                addYearOfManufacture(variableMap,metaDataMap,tokens[i].trim(),backendMessages);
               }
+              if (++i < size) {
+                addUsersToVariableMap(variableMap,tokens[i].trim(),domainId,AssetUtil.OWNERS);
+              }
+              if (++i < size) {
+                addUsersToVariableMap(variableMap,tokens[i].trim(),domainId,AssetUtil.MAINTAINERS);
+              }
+              monitoredAsset =
+                  getAssetManagementService()
+                      .getAsset((String) variableMap.get(AssetUtil.MANUFACTURER_NAME),
+                          (String) variableMap.get(AssetUtil.SERIAL_NUMBER));
               monitoredAsset = AssetUtil.verifyAndRegisterAsset(domainId, sourceUserId, kioskId,
                   variableMap, metaDataMap);
             } else {
@@ -439,9 +496,8 @@ public class BulkUploadMgr {
       }
 
       //Processing sensor devices
-      IAsset sensorAsset = null;
       if (++i < size) {
-        variableMap = new HashMap<>(5);
+        variableMap = new HashMap<>(7);
         metaDataMap = new HashMap<>(5);
         String serialNumber = tokens[i].trim();
         if (!serialNumber.isEmpty()) {
@@ -490,20 +546,18 @@ public class BulkUploadMgr {
           if (++i < size) {
             manufacturer = tokens[i].trim();
           }
-
           if (++i < size) {
             model = tokens[i].trim();
           }
-
           if (++i < size) {
-            String yom = tokens[i].trim();
-            if(StringUtils.isNotEmpty(yom)){
-              validateYearOfManufacture(yom, backendMessages);
-              variableMap.put(ASSET_YOM, yom);
-              metaDataMap.put(DEV_YOM, yom);
-            }
+            addYearOfManufacture(variableMap,metaDataMap,tokens[i].trim(),backendMessages);
           }
-
+          if (++i < size) {
+            addUsersToVariableMap(variableMap,tokens[i].trim(),domainId,AssetUtil.OWNERS);
+          }
+          if (++i < size) {
+            addUsersToVariableMap(variableMap,tokens[i].trim(),domainId,AssetUtil.MAINTAINERS);
+          }
           if ((StringUtils.isEmpty(manufacturer) && StringUtils.isEmpty(model)) || (
               StringUtils.isNotEmpty(manufacturer) && StringUtils.isNotEmpty(model))) {
             AssetConfig ac = DomainConfig.getInstance(domainId).getAssetConfig();
@@ -565,20 +619,24 @@ public class BulkUploadMgr {
           }
           variableMap.put(AssetUtil.TAGS, tags);
           sensorAsset =
+              getAssetManagementService()
+                  .getAsset((String) variableMap.get(AssetUtil.MANUFACTURER_NAME),
+                      (String) variableMap.get(AssetUtil.SERIAL_NUMBER));
+          sensorAsset =
               AssetUtil.verifyAndRegisterAsset(domainId, sourceUserId, kioskId, variableMap,
                   metaDataMap);
         }
       }
 
       if (monitoredAsset != null && sensorAsset != null) {
-        IAssetRelation assetRelation = ams.getAssetRelationByRelatedAsset(sensorAsset.getId());
+        IAssetRelation assetRelation = getAssetManagementService().getAssetRelationByRelatedAsset(sensorAsset.getId());
         if (assetRelation != null && !Objects
             .equals(assetRelation.getAssetId(), monitoredAsset.getId())) {
           throw new ServiceException("Given monitoring asset " + sensorAsset.getSerialId()
               + " is related to another asset, before adding new relationship, remove existing relationship.");
         }
 
-        assetRelation = ams.getAssetRelationByAsset(monitoredAsset.getId());
+        assetRelation = getAssetManagementService().getAssetRelationByAsset(monitoredAsset.getId());
         if (assetRelation != null && !Objects
             .equals(assetRelation.getRelatedAssetId(), sensorAsset.getId())) {
           throw new ServiceException("Given monitored asset " + monitoredAsset.getSerialId()
@@ -589,8 +647,10 @@ public class BulkUploadMgr {
         AssetUtil.createAssetRelationship(domainId, monitoredAsset, sensorAsset,
             (List<String>) variableMap.get(AssetUtil.TAGS));
       }
-    } catch (ServiceException e) {
-      ec.messages.add(e.getMessage());
+    } catch (ServiceException | BadRequestException e) {
+      IAsset asset = sensorAsset!= null ? sensorAsset : monitoredAsset;
+      String message = getErrorMessage(e.getCode(), e.getMessage(), asset);
+      ec.messages.add(message);
     } catch (Exception e) {
       ec.messages.add("Error: " + e.getMessage());
       xLogger.warn("Exception: {0}, Message: {1}", e.getClass().getName(), e.getMessage(), e);
@@ -599,6 +659,48 @@ public class BulkUploadMgr {
     }
 
     return ec;
+  }
+
+  private static void addYearOfManufacture(Map<String,Object> variableMap,
+                                           Map<String,Object> metaDataMap, String yom, ResourceBundle backendMessages) throws ServiceException {
+    if(StringUtils.isNotEmpty(yom)){
+      validateYearOfManufacture(yom, backendMessages);
+      variableMap.put(ASSET_YOM, yom);
+      metaDataMap.put(DEV_YOM, yom);
+    }
+  }
+
+  private static void addUsersToVariableMap(Map<String,Object> variableMap, String users,Long domainId,String type) throws ServiceException {
+    if (StringUtils.isNotEmpty(users)) {
+      try {
+        checkUsersExistInDomain(users, domainId);
+        variableMap.put(type,
+            new ArrayList<>(getUniqueUserIds(users, CharacterConstants.COMMA)));
+      } catch (Exception e) {
+        throw new ServiceException("Issue with asset users of type : " + (type.equals(AssetUtil.MAINTAINERS) ? "maintainers": "owners"));
+      }
+    }
+  }
+
+  private static void checkUsersExistInDomain(String users, Long domainId) {
+
+    Set<String> errors = new HashSet<>();
+    Set<String> userIdsSet = getUniqueUserIds(users,CharacterConstants.COMMA);
+    for (String userId : userIdsSet) {
+      try {
+        if (!getUsersService().getUserAccount(userId).getDomainId().equals(domainId)) {
+          errors.add("User with ID " + userId + " does not belong to this domain");
+          continue;
+        }
+      } catch (ObjectNotFoundException e) {
+        errors.add("User with ID '" + userId + "' not found.");
+      }
+    }
+    if (errors.size() > 0) {
+      StringBuilder builder = new StringBuilder();
+      errors.stream().forEach(error ->builder.append(error).append(CharacterConstants.NEWLINE));
+      throw new RuntimeException(builder.toString());
+    }
   }
 
   private static Boolean validateYearOfManufacture(String yearOfManufactureString, ResourceBundle backendMessages)
@@ -625,7 +727,7 @@ public class BulkUploadMgr {
 
   private static List<String> fetchVendorsForType(List<String> vendorIds, Integer type) {
     List<String> vendors = null;
-    if (vendorIds != null && vendorIds.size() > 0) {
+    if (!CollectionUtils.isEmpty(vendorIds)) {
       vendors = new ArrayList<>(1);
       for (String vendor : vendorIds) {
         if (type == 1 && !vendor.contains(Constants.KEY_SEPARATOR)) {
@@ -641,7 +743,7 @@ public class BulkUploadMgr {
   private static List<String> fetchAssetModelsForType(List<String> modelIds, Integer type,
                                                       String manufacturer) {
     List<String> assetModels = null;
-    if (modelIds != null && modelIds.size() > 0 && type != null && StringUtils
+    if (!CollectionUtils.isEmpty(modelIds) && type != null && StringUtils
         .isNotEmpty(manufacturer)) {
       assetModels = new ArrayList<>(1);
       for (String model : modelIds) {
@@ -664,13 +766,11 @@ public class BulkUploadMgr {
       return ec;
     }
     try {
-      UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
-      DomainsService ds = StaticApplicationContext.getBean(DomainsServiceImpl.class);
-      IUserAccount su = as.getUserAccount(sourceUserId);
+      IUserAccount su = getUsersService().getUserAccount(sourceUserId);
       backendMessages = Resources.get().getBundle("BackendMessages", su.getLocale());
       IDomainPermission
           permission =
-          ds.getLinkedDomainPermission(
+          getDomainService().getLinkedDomainPermission(
               su.getRole().equalsIgnoreCase(SecurityConstants.ROLE_DOMAINOWNER) ? su.getDomainId()
                   : domainId);
       int i = 0;
@@ -1037,6 +1137,7 @@ public class BulkUploadMgr {
     }
     try {
       UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
+      AuthenticationService aus = StaticApplicationContext.getBean(AuthenticationServiceImpl.class);
       IUserAccount u = null;
       IUserAccount su = as.getUserAccount(sourceUserId);
       DomainsService ds = StaticApplicationContext.getBean(DomainsServiceImpl.class);
@@ -1064,8 +1165,7 @@ public class BulkUploadMgr {
         ec.messages.add("No fields specified");
         return ec;
       }
-      if (!OP_ADD.equals(ec.operation) && !OP_EDIT.equals(ec.operation) && !OP_DELETE
-          .equals(ec.operation)) {
+      if (!isOperationValid(ec.operation)) {
         ec.messages.add("Invalid Operation. Please enter a = add / e = edit / d = delete.");
         return ec;
       }
@@ -1169,245 +1269,248 @@ public class BulkUploadMgr {
       }
       // Password - get the password fields now, and process them later depending on add/edit
       String password = tokens[i].trim();
-      if ((isAdd || isEdit && !password.isEmpty())) {
-        if (password.length() < FieldLimits.PASSWORD_MIN_LENGTH || password.length() > FieldLimits.PASSWORD_MAX_LENGTH) {
-          ec.messages.add("Password: '" + password
-              + "'  is empty, or not between " + FieldLimits.PASSWORD_MIN_LENGTH + "-" + FieldLimits.PASSWORD_MAX_LENGTH + " characters. None of these are allowed.");
-        }
-      }
+
       if (++i == size) {
         ec.messages.add("No fields specified after password");
         return ec;
       }
-      boolean done = false;
+
       // Confirm password
       String confirmPassword = tokens[i].trim();
       if (++i == size) {
         ec.messages.add("No fields specified after Confirm Password");
-        done = true;
+        return ec;
       }
       // Role
-      String role = null;
-      if (!done) {
-        // Role
-        role = tokens[i].trim();
-        if (!SecurityConstants.ROLE_DOMAINOWNER.equals(role) && !SecurityConstants.ROLE_SERVICEMANAGER
-            .equals(role) && !SecurityConstants.ROLE_KIOSKOWNER.equals(role)) {
-          ec.messages.add("Role: Invalid role '" + role + "'. Role should be one of "
-              + SecurityConstants.ROLE_DOMAINOWNER + " (Administrator) or "
-              + SecurityConstants.ROLE_KIOSKOWNER + " (" + backendMessages.getString("kiosk")
-              + " Operator) or " + SecurityConstants.ROLE_SERVICEMANAGER + " (" + backendMessages
-              .getString("kiosk") + " Manager)");
-          return ec;
-        } else if ((su.getRole().equals(SecurityConstants.ROLE_SERVICEMANAGER) &&
-            ((!userId.equals(sourceUserId) && !role.equals(SecurityConstants.ROLE_KIOSKOWNER) || (
-                userId.equals(sourceUserId) && !role.equals(SecurityConstants.ROLE_SERVICEMANAGER)))))
-            || (su.getRole().equals(SecurityConstants.ROLE_DOMAINOWNER) && role
-            .equals(SecurityConstants.ROLE_SUPERUSER))) {
-          ec.messages.add("Cannot edit user '" + userId + "'. Permission denied.");
-          return ec;
+      String role = tokens[i].trim();
+      if (!SecurityConstants.ROLE_DOMAINOWNER.equals(role) && !SecurityConstants.ROLE_SERVICEMANAGER
+          .equals(role) && !SecurityConstants.ROLE_KIOSKOWNER.equals(role)) {
+        ec.messages.add("Role: Invalid role '" + role + "'. Role should be one of "
+            + SecurityConstants.ROLE_DOMAINOWNER + " (Administrator) or "
+            + SecurityConstants.ROLE_KIOSKOWNER + " (" + backendMessages.getString("kiosk")
+            + " Operator) or " + SecurityConstants.ROLE_SERVICEMANAGER + " (" + backendMessages
+            .getString("kiosk") + " Manager)");
+        return ec;
+      } else if ((su.getRole().equals(SecurityConstants.ROLE_SERVICEMANAGER) &&
+          ((!userId.equals(sourceUserId) && !role.equals(SecurityConstants.ROLE_KIOSKOWNER) || (
+              userId.equals(sourceUserId) && !role.equals(SecurityConstants.ROLE_SERVICEMANAGER)))))
+          || (su.getRole().equals(SecurityConstants.ROLE_DOMAINOWNER) && role
+          .equals(SecurityConstants.ROLE_SUPERUSER))) {
+        ec.messages.add("Cannot edit user '" + userId + "'. Permission denied.");
+        return ec;
+      } else {
+        u.setRole(role);
+      }
+      if (++i == size) {
+        ec.messages.add("No fields specified after Role");
+        return ec;
+      }
+
+      String permission = tokens[i].trim();
+      if (!isPermissionValid(permission)) {
+        ec.messages.add("Permission: Invalid value '" + permission + "'. Value should be either "
+            + IUserAccount.PERMISSION_DEFAULT + " (Default) or " + IUserAccount.PERMISSION_VIEW
+            + " (View only) or " + IUserAccount.PERMISSION_ASSET + " (Asset view only)");
+      } else {
+        u.setPermission(permission.isEmpty() ? IUserAccount.PERMISSION_DEFAULT : permission);
+      }
+      if (++i == size) {
+        ec.messages.add("No fields specified after Permission");
+        return ec;
+      }
+
+      String tokenExpiry = tokens[i].trim();
+      if (!isTokenExpiryValid(tokenExpiry)) {
+        ec.messages.add("Token expiry: Invalid value '" + tokenExpiry + "'. Value should be between "
+            + FieldLimits.TOKEN_EXPIRY_MIN + " and " + FieldLimits.TOKEN_EXPIRY_MAX + " days");
+      } else {
+        u.setAuthenticationTokenExpiry(tokenExpiry.isEmpty() ? 0 : Integer.parseInt(tokenExpiry));
+      }
+      if (++i == size) {
+        ec.messages.add("No fields specified after Token expiry");
+        return ec;
+      }
+
+      // First name
+      String firstName = tokens[i].trim();
+      if (firstName.length() < FieldLimits.FIRSTNAME_MIN_LENGTH || firstName.length() > FieldLimits.TEXT_FIELD_MAX_LENGTH) {
+        ec.messages.add("First name: '" + firstName + "' should be between " + FieldLimits.FIRSTNAME_MIN_LENGTH + "-" + FieldLimits.TEXT_FIELD_MAX_LENGTH + " characters");
+      } else {
+        boolean isAlpha = firstName.matches(PatternConstants.FIRSTNAME);
+        if (isAlpha) {
+          u.setFirstName(firstName);
         } else {
-          u.setRole(role);
+          ec.messages.add("First name can have only alphabets and space : " + firstName);
         }
-        if (++i == size) {
-          ec.messages.add("No fields specified after Role");
-          done = true;
-        }
+        //for auditlog
+        uname = firstName;
       }
-      if (!done) {
-        // First name
-        String firstName = tokens[i].trim();
-        if (firstName.length() < FieldLimits.FIRSTNAME_MIN_LENGTH || firstName.length() > FieldLimits.TEXT_FIELD_MAX_LENGTH) {
-          ec.messages.add("First name: '" + firstName + "' should be between " + FieldLimits.FIRSTNAME_MIN_LENGTH + "-" + FieldLimits.TEXT_FIELD_MAX_LENGTH + " characters");
+      if (++i == size) {
+        ec.messages.add("No fields specified after First Name");
+        return ec;
+      }
+      // Last name (optional)
+      String lastName = tokens[i].trim();
+      if (lastName.length() > FieldLimits.TEXT_FIELD_MAX_LENGTH) {
+        ec.messages.add("Last name: '" + lastName + CharacterConstants.S_QUOTE + TEXT_FIELD_MAX_LENGTH_MSG);
+      } else {
+        boolean isAlpha = lastName.matches(PatternConstants.LASTNAME);
+        uname += CharacterConstants.SPACE + lastName;
+        if (isAlpha) {
+          u.setLastName(lastName);
         } else {
-          boolean isAlpha = firstName.matches(PatternConstants.FIRSTNAME);
-          if (isAlpha) {
-            u.setFirstName(firstName);
-          } else {
-            ec.messages.add("First name can have only alphabets and space : " + firstName);
-          }
-          //for auditlog
-          uname = firstName;
-        }
-        if (++i == size) {
-          ec.messages.add("No fields specified after First Name");
-          done = true;
+          ec.messages.add("Last name can have only alphabets and space : " + lastName);
         }
       }
-      if (!done) {
-        // Last name (optional)
-        String lastName = tokens[i].trim();
-        if (lastName.length() > FieldLimits.TEXT_FIELD_MAX_LENGTH) {
-          ec.messages.add("Last name: '" + lastName + CharacterConstants.S_QUOTE + TEXT_FIELD_MAX_LENGTH_MSG);
+      if (++i == size) {
+        ec.messages.add("No fields specified after Last Name");
+        return ec;
+      }
+
+      // Mobile phone
+      String mobilePhone = tokens[i].trim();
+      if (StringUtils.isNotEmpty(mobilePhone) && mobilePhone.length() > FieldLimits.MOBILE_PHONE_MAX_LENGTH) {
+        ec.messages.add("Mobile phone: '" + mobilePhone + CharacterConstants.S_QUOTE + MOBILE_PHONE_MAX_LENGTH_MSG);
+      }
+      String validatedMobilePhone = validPhone(mobilePhone);
+      if (validatedMobilePhone != null) {
+        u.setMobilePhoneNumber(validatedMobilePhone);
+      } else {
+        ec.messages.add("Mobile phone: Number (" + mobilePhone
+            + ") format is invalid. It should be +[country-code][space][phone-number-without-spacesORdashes]; ensure space between country code and number.");
+      }
+      if (++i == size) {
+        ec.messages.add("No fields specified after Mobile Phone");
+        return ec;
+      }
+      // Email
+      String email = tokens[i].trim();
+      if (!SecurityConstants.ROLE_KIOSKOWNER.equals(role) && email.isEmpty()) {
+        ec.messages.add(
+            "Email: Email is mandatory for all roles other than Operator");
+      }
+      if (!email.isEmpty()) {
+        if (email.length() > FieldLimits.EMAIL_MAX_LENGTH) {
+          ec.messages.add("Email: '" + email + CharacterConstants.S_QUOTE + EMAIL_MAX_LENGTH_MSG);
+        } else if (!emailValid(email)){
+          ec.messages.add("Email: Email (" + email
+              + ") format is invalid. It should be in the format 'testuser@email.com'");
         } else {
-          boolean isAlpha = lastName.matches(PatternConstants.LASTNAME);
-          uname += CharacterConstants.SPACE + lastName;
-          if (isAlpha) {
-            u.setLastName(lastName);
-          } else {
-            ec.messages.add("Last name can have only alphabets and space : " + lastName);
-          }
-        }
-        if (++i == size) {
-          ec.messages.add("No fields specified after Last Name");
-          done = true;
+          u.setEmail(email);
         }
       }
-      if (!done) {
-        // Mobile phone
-        String mobilePhone = tokens[i].trim();
-        if (StringUtils.isNotEmpty(mobilePhone) && mobilePhone.length() > FieldLimits.MOBILE_PHONE_MAX_LENGTH) {
-          ec.messages.add("Mobile phone: '" + mobilePhone + CharacterConstants.S_QUOTE + MOBILE_PHONE_MAX_LENGTH_MSG);
-        }
-        String validatedMobilePhone = validPhone(mobilePhone);
-        if (validatedMobilePhone != null) {
-          u.setMobilePhoneNumber(validatedMobilePhone);
-        } else {
-          ec.messages.add("Mobile phone: Number (" + mobilePhone
-              + ") format is invalid. It should be +[country-code][space][phone-number-without-spacesORdashes]; ensure space between country code and number.");
-        }
-        if (++i == size) {
-          ec.messages.add("No fields specified after Mobile Phone");
-          done = true;
-        }
+      if (++i == size) {
+        ec.messages.add("No fields specified after Email");
+        return ec;
       }
-      if (!done) {
-        // Email
-        String email = tokens[i].trim();
-        if (!SecurityConstants.ROLE_KIOSKOWNER.equals(role) && email.isEmpty()) {
-          ec.messages.add(
-              "Email: Email is mandatory for all roles other than Operator");
-        }
-        if (!email.isEmpty()) {
-          if (email.length() > FieldLimits.EMAIL_MAX_LENGTH) {
-            ec.messages.add("Email: '" + email + CharacterConstants.S_QUOTE + EMAIL_MAX_LENGTH_MSG);
-          } else if (!emailValid(email)){
-            ec.messages.add("Email: Email (" + email
-                + ") format is invalid. It should be in the format 'testuser@email.com'");
-          } else {
-            u.setEmail(email);
-          }
-        }
-        if (++i == size) {
-          ec.messages.add("No fields specified after Email");
-          done = true;
-        }
-      }
-      String country = "";
-      if (!done) {
-        // Country
-        country = tokens[i].trim();
-        if (!country.isEmpty()) {
-          //validating country with system configuration
-          if (c != null && c.getConfig() != null) {
-            String jsonLocationString = c.getConfig();
-            if (jsonLocationString != null) {
-              jsonLocationObject = new JSONObject(jsonLocationString);
-              if (!jsonLocationObject.isNull("data")) {
-                intermediateJsonObject = jsonLocationObject.getJSONObject("data");
-                countryKey = intermediateJsonObject.keySet();
-              }
+
+      // Country
+      String country = tokens[i].trim();
+      if (!country.isEmpty()) {
+        //validating country with system configuration
+        if (c != null && c.getConfig() != null) {
+          String jsonLocationString = c.getConfig();
+          if (jsonLocationString != null) {
+            jsonLocationObject = new JSONObject(jsonLocationString);
+            if (!jsonLocationObject.isNull("data")) {
+              intermediateJsonObject = jsonLocationObject.getJSONObject("data");
+              countryKey = intermediateJsonObject.keySet();
             }
           }
-          if (countryKey.contains(country) && country.length() == 2) {
-            u.setCountry(country);
-            intermediateJsonObject = intermediateJsonObject.getJSONObject(country);
-          } else {
-            ec.messages.add("Country: Country code '" + country
-                + "' is not available in the configuration. Please enter the proper country code.");
-          }
+        }
+        if (countryKey.contains(country) && country.length() == 2) {
+          u.setCountry(country);
+          intermediateJsonObject = intermediateJsonObject.getJSONObject(country);
         } else {
-          ec.messages.add(
-              "Country code is mandatory. Please specify proper country code. It should be a valid 2-letter ISO-3166 code");
+          ec.messages.add("Country: Country code '" + country
+              + "' is not available in the configuration. Please enter the proper country code.");
         }
-        if (++i == size) {
-          ec.messages.add("No fields specified after Country");
-          done = true;
-        }
+      } else {
+        ec.messages.add(
+            "Country code is mandatory. Please specify proper country code. It should be a valid 2-letter ISO-3166 code");
       }
-      if (!done) {
-        String language = tokens[i].trim();
-        if (!language.isEmpty()) {
-          String jsonLanguageString;
-          //validating language with system configuration
-          if (ln != null && ln.getConfig() != null) {
-            jsonLanguageString = ln.getConfig();
-            if (jsonLanguageString != null) {
-              jsonLanguageObject = new JSONObject(jsonLanguageString);
-              languageKey = jsonLanguageObject.keySet();
-            }
+      if (++i == size) {
+        ec.messages.add("No fields specified after Country");
+        return ec;
+      }
+      String language = tokens[i].trim();
+      if (!language.isEmpty()) {
+        String jsonLanguageString;
+        //validating language with system configuration
+        if (ln != null && ln.getConfig() != null) {
+          jsonLanguageString = ln.getConfig();
+          if (jsonLanguageString != null) {
+            jsonLanguageObject = new JSONObject(jsonLanguageString);
+            languageKey = jsonLanguageObject.keySet();
           }
-          if (languageKey.contains(language) && language.length() == 2) {
-            u.setLanguage(language);
-          } else {
-            ec.messages.add("Language: Language code '" + language + CharacterConstants.S_QUOTE
-                + " is not available in the configuration. Please enter the proper language code.");
-          }
-        } else {
-          ec.messages.add(
-              "Language code is mandatory. Please specify proper language code. It should be a valid 2-letter ISO-630-1 code.");
         }
+        if (languageKey.contains(language) && language.length() == 2) {
+          u.setLanguage(language);
+        } else {
+          ec.messages.add("Language: Language code '" + language + CharacterConstants.S_QUOTE
+              + " is not available in the configuration. Please enter the proper language code.");
+        }
+      } else {
+        ec.messages.add(
+            "Language code is mandatory. Please specify proper language code. It should be a valid 2-letter ISO-630-1 code.");
+      }
 
-        if (++i == size) {
-          ec.messages.add("No fields specified after language");
-          done = true;
+      if (++i == size) {
+        ec.messages.add("No fields specified after language");
+        return ec;
+      }
+      // Timezone
+      String[] timezones = TimeZone.getAvailableIDs();
+      String
+          TIMEZONE_ID_PREFIXES =
+          "^(Africa|America|Asia|Atlantic|Australia|Europe|Indian|Pacific)/.*";
+      List<String> timezoneCode = new ArrayList<>();
+      for (String timezone1 : timezones) {
+        if (timezone1.matches(TIMEZONE_ID_PREFIXES)) {
+          timezoneCode.add(timezone1);
         }
       }
-      if (!done) {
-        // Timezone
-        String[] timezones = TimeZone.getAvailableIDs();
-        String
-            TIMEZONE_ID_PREFIXES =
-            "^(Africa|America|Asia|Atlantic|Australia|Europe|Indian|Pacific)/.*";
-        List<String> timezoneCode = new ArrayList<>();
-        for (String timezone1 : timezones) {
-          if (timezone1.matches(TIMEZONE_ID_PREFIXES)) {
-            timezoneCode.add(timezone1);
-          }
-        }
-        String timezone = tokens[i].trim();
-        if (timezone.isEmpty() || !timezone.contains("/")) {
-          ec.messages.add(
-              "Timezone: Timezone is not specified or is of incorrect format (i.e. missing a /). It should be an entry from the URL given in the header.");
+      String timezone = tokens[i].trim();
+      if (timezone.isEmpty() || !timezone.contains("/")) {
+        ec.messages.add(
+            "Timezone: Timezone is not specified or is of incorrect format (i.e. missing a /). It should be an entry from the URL given in the header.");
+      } else {
+        //Validating the timezone with the system configuration
+        if (timezoneCode.contains(timezone)) {
+          u.setTimezone(timezone);
         } else {
-          //Validating the timezone with the system configuration
-          if (timezoneCode.contains(timezone)) {
-            u.setTimezone(timezone);
-          } else {
-            ec.messages.add("Timezone:Timezone " + timezone
-                + " is not available in the given configuration. Please enter the proper timezone code."
-                +
-                " It should be an entry from the URL given in the header");
-          }
+          ec.messages.add("Timezone:Timezone " + timezone
+              + " is not available in the given configuration. Please enter the proper timezone code."
+              +
+              " It should be an entry from the URL given in the header");
         }
-
       }
-      // Gender
-      String gender;
-      if (++i < size && (!(gender = tokens[i]).isEmpty())) {
-        gender = gender.trim();
-        if (!gender.isEmpty() && !IUserAccount.GENDER_MALE.equals(gender)
-            && !IUserAccount.GENDER_FEMALE.equals(gender)) {
+
+      if (++i < size && !tokens[i].isEmpty()) {
+        String gender = tokens[i].trim();
+        if (!isGenderValid(gender)) {
           ec.messages.add("Gender: Invalid value '" + gender + "'. Value should be either "
               + IUserAccount.GENDER_MALE + " = Male or " + IUserAccount.GENDER_FEMALE
-              + " = Female");
+              + " = Female or " + IUserAccount.GENDER_OTHER + " = Other");
         } else {
-          u.setGender(gender);
+          u.setGender(gender.toLowerCase());
         }
       }
-      // Age
-      String age;
-      if (++i < size && !(age = tokens[i].trim()).isEmpty()) {
+
+      String dateOfBirth;
+      if (++i < size && !(dateOfBirth = tokens[i].trim()).isEmpty()) {
         try {
-          int iAge = Integer.parseInt(age);
-          if (iAge >= FieldLimits.AGE_MIN && iAge <= FieldLimits.AGE_MAX) {
-            u.setAge(iAge);
+          DateTimeFormatter formatter = DateTimeFormatter.ofPattern(Constants.DATE_FORMAT_EXCEL);
+          LocalDate birthDate = LocalDate.parse(dateOfBirth, formatter);
+          if (!isDateOfBirthValid(birthDate, LocalDate.now())) {
+            ec.messages
+                .add("Date of birth: " + dateOfBirth + " is not valid. A valid date of birth in the format " + Constants.DATE_FORMAT_EXCEL + " between today and 100 years before today should be specified.");
           } else {
-            ec.messages.add("Age: " + age + " is not a valid number. Age should be between " + FieldLimits.AGE_MIN + " and " + FieldLimits.AGE_MAX + " without decimals.");
+            u.setBirthdate(Date.from(birthDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant()));
           }
-        } catch (NumberFormatException e) {
+        } catch (DateTimeParseException e) {
           ec.messages
-              .add("Age: " + age + " is not a valid number. A valid whole number should be specified");
+              .add("Date of birth: " + dateOfBirth + " is not valid. A valid date of birth in the format " + Constants.DATE_FORMAT_EXCEL + " between today and 100 years before today should be specified.");
         }
       }
       // Land phone
@@ -1429,28 +1532,26 @@ public class BulkUploadMgr {
           u.setLandPhoneNumber(landPhone);
         }
       }
-      // State (made mandatory since gae 1.2.9 - April 29, 2013)
+
       String state = "";
-      if (!done) {
-        if (u.getCountry() != null) {
-          state = tokens[++i].trim();
-          if (state.isEmpty()) {
-            ec.messages.add("State is not specified. State is mandatory for the user");
+      if (u.getCountry() != null) {
+        state = tokens[++i].trim();
+        if (state.isEmpty()) {
+          ec.messages.add("State is not specified. State is mandatory for the user");
+        } else {
+          //validating state with system configuration
+          if (intermediateJsonObject.isNull("states")) {
+            ec.messages.add(
+                "States for the country" + country + " are not available in the configuration");
           } else {
-            //validating state with system configuration
-            if (intermediateJsonObject.isNull("states")) {
-              ec.messages.add(
-                  "States for the country" + country + " are not available in the configuration");
+            Set<String> stateCode = intermediateJsonObject.getJSONObject("states").keySet();
+            if (stateCode != null && stateCode.contains(state)) {
+              u.setState(state);
+              intermediateJsonObject =
+                  intermediateJsonObject.getJSONObject("states").getJSONObject(state);
             } else {
-              Set<String> stateCode = intermediateJsonObject.getJSONObject("states").keySet();
-              if (stateCode != null && stateCode.contains(state)) {
-                u.setState(state);
-                intermediateJsonObject =
-                    intermediateJsonObject.getJSONObject("states").getJSONObject(state);
-              } else {
-                ec.messages.add("State: " + state
-                    + " is not available in the configuration.Please enter the proper state name");
-              }
+              ec.messages.add("State: " + state
+                  + " is not available in the configuration.Please enter the proper state name");
             }
           }
         }
@@ -1540,7 +1641,7 @@ public class BulkUploadMgr {
             u.setPinCode(pinCode);
           } else {
             ec.messages.add("Invalid format: Zip/PIN code '" + pinCode
-                + CharacterConstants.S_QUOTE + TEXT_FIELD_MAX_LENGTH_MSG + " and can contain only uppercase, lowercase, digits, hypen and spaces.");
+                + CharacterConstants.S_QUOTE + TEXT_FIELD_MAX_LENGTH_MSG + " and can contain only uppercase, lowercase, digits, hyphen and spaces.");
           }
         } else {
           u.setPinCode(pinCode);
@@ -1553,18 +1654,27 @@ public class BulkUploadMgr {
       }
       // Process password
       boolean processPassword = (isAdd || (isEdit && !oldPassword.isEmpty()));
-      boolean isPasswordValid = true;
+
       if (processPassword) {
-        if (password.length() < FieldLimits.PASSWORD_MIN_LENGTH || password.length() > FieldLimits.PASSWORD_MAX_LENGTH) {
-          isPasswordValid = false;
-        }
+
         if (password.equals(confirmPassword)) {
           // Set password after encoding
+
+          boolean isPasswordValid = true;
+          if (isClearTextPassword(password) && (isAdd || isEdit && !password.isEmpty())) {
+            try{
+              PasswordValidator.validate(userId,u.getRole(),password); }
+            catch (ValidationException e){
+              isPasswordValid=false;
+              ec.messages.add(e.getMessage());
+            }
+          }
           try {
             if (isPasswordValid && isAdd) {
               u.setEncodedPassword(password);
             } else if (isPasswordValid && isEdit && !oldPassword.isEmpty()) {
-              as.changePassword(userId, oldPassword, password);
+              //Bulkupload edit password will always be clear text
+              aus.changePassword(userId, null, oldPassword, password, false);
             }
           } catch (Exception e) {
             ec.messages.add(
@@ -1576,59 +1686,52 @@ public class BulkUploadMgr {
         }
       }
 
-      // Custom ID
-      String customId;
       if (++i < size) {
-        customId = tokens[i].trim();
+        String customId = tokens[i].trim();
         if (customId.length() > FieldLimits.TEXT_FIELD_MAX_LENGTH) {
           ec.messages.add("Custom ID '" + customId + CharacterConstants.S_QUOTE + TEXT_FIELD_MAX_LENGTH_MSG);
         } else {
           u.setCustomId(customId);
         }
       }
-      //Phone Brand
-      String phoneBrand;
+
       if (++i < size) {
-        phoneBrand = tokens[i].trim();
+        String phoneBrand = tokens[i].trim();
         if (phoneBrand.length() > FieldLimits.TEXT_FIELD_MAX_LENGTH) {
           ec.messages.add("Mobile Phone Brand '" + phoneBrand + CharacterConstants.S_QUOTE + TEXT_FIELD_MAX_LENGTH_MSG);
         } else {
           u.setPhoneBrand(phoneBrand);
         }
       }
-      //Phone Model
-      String phoneModel;
+
       if (++i < size) {
-        phoneModel = tokens[i].trim();
+        String phoneModel = tokens[i].trim();
         if (phoneModel.length() > FieldLimits.TEXT_FIELD_MAX_LENGTH) {
           ec.messages.add("Mobile Phone Model '" + phoneModel + CharacterConstants.S_QUOTE + TEXT_FIELD_MAX_LENGTH_MSG);
         } else {
           u.setPhoneModelNumber(phoneModel);
         }
       }
-      //IMEI
-      String imei;
+
       if (++i < size) {
-        imei = tokens[i].trim();
+        String imei = tokens[i].trim();
         if (imei.length() > FieldLimits.TEXT_FIELD_MAX_LENGTH) {
           ec.messages.add("IMEI number '" + imei + CharacterConstants.S_QUOTE + TEXT_FIELD_MAX_LENGTH_MSG);
         }
         u.setImei(imei);
       }
-      //Service Provider
-      String serviceProvider;
+
       if (++i < size) {
-        serviceProvider = tokens[i].trim();
+        String serviceProvider = tokens[i].trim();
         if (serviceProvider.length() > FieldLimits.TEXT_FIELD_MAX_LENGTH) {
           ec.messages.add("SIM Provider '" + serviceProvider + CharacterConstants.S_QUOTE + TEXT_FIELD_MAX_LENGTH_MSG);
         } else {
           u.setPhoneServiceProvider(serviceProvider);
         }
       }
-      //Sim Id
-      String simId;
+
       if (++i < size) {
-        simId = tokens[i].trim();
+        String simId = tokens[i].trim();
         if (simId.length() > FieldLimits.TEXT_FIELD_MAX_LENGTH) {
           ec.messages.add("SIM ID '" + simId + CharacterConstants.S_QUOTE + TEXT_FIELD_MAX_LENGTH_MSG);
         } else {
@@ -1641,6 +1744,24 @@ public class BulkUploadMgr {
       } else if (u.getTags()
           != null) { // The user being updated had tags earlier but now being edited to remove tags
         u.setTags(new ArrayList<>());
+      }
+
+      if (++i < size) {
+        String guiTheme = tokens[i].trim();
+        if (!isGuiThemeValid(guiTheme)) {
+          ec.messages
+              .add("Store app GUI theme: Invalid value '" + guiTheme + "'. Value should be either "
+                  + FieldLimits.GUI_THEME_SAME_AS_IN_DOMAIN_CONFIGURATION
+                  + " (Same as in domain configuration) or " + FieldLimits.GUI_THEME_DEFAULT
+                  + " (Default) or " + FieldLimits.GUI_THEME_SIDEBAR_AND_LANDING_SCREEN
+                  + " (Sidebar & Landing screen)");
+        } else {
+          int actualGuiTheme = Constants.GUI_THEME_SAME_AS_IN_DOMAIN_CONFIGURATION;
+          if (!guiTheme.isEmpty()) {
+            actualGuiTheme = Integer.parseInt(guiTheme) - 1;
+          }
+          u.setStoreAppTheme(actualGuiTheme);
+        }
       }
       // If there are errors, return; do not add/update
       if (ec.hasErrors()) {
@@ -1809,15 +1930,6 @@ public class BulkUploadMgr {
       // Tags
       if (++i < size) {
         processTags(tokens[i], domainId, ec, TagUtil.TYPE_MATERIAL, m);
-      }
-      // Data type - e.g. Is binary
-      if (++i < size) {
-        if ("yes".equals(tokens[i].trim())) {
-          xLogger.info("Setting type for material to {0}", IMaterial.TYPE_BINARY);
-          m.setType(IMaterial.TYPE_BINARY);
-        } else {
-          m.setType(null);
-        }
       }
       // Is seasonal?
       boolean seasonal = false;
@@ -2027,13 +2139,11 @@ public class BulkUploadMgr {
     // Process material fields
     try {
       UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
-      EntitiesService es = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
-      DomainsService ds = StaticApplicationContext.getBean(DomainsServiceImpl.class);
       IUserAccount su = as.getUserAccount(sourceUserId);
       backendMessages = Resources.get().getBundle("BackendMessages", su.getLocale());
       IDomainPermission
           permission =
-          ds.getLinkedDomainPermission(
+          getDomainService().getLinkedDomainPermission(
               su.getRole().equalsIgnoreCase(SecurityConstants.ROLE_DOMAINOWNER) ? su.getDomainId()
                   : domainId);
       ConfigurationMgmtService cms =
@@ -2127,7 +2237,7 @@ public class BulkUploadMgr {
         }
         List<Long> kioskIds = new ArrayList<>();
         kioskIds.add(kioskId);
-        es.deleteKiosks(domainId, kioskIds, sourceUserId);
+        getEntitiesService().deleteKiosks(domainId, kioskIds, sourceUserId);
         xLogger.info("AUDITLOG\t{0}\t{1}\tENTITY\t " +
             "DELETE\t{3}\t{4}", domainId, sourceUserId, ec.operation, kioskId, name);
         return ec;
@@ -2152,7 +2262,7 @@ public class BulkUploadMgr {
           return ec;
         }
         // Get existing entity
-        k = es.getKiosk(kioskId);
+        k = getEntitiesService().getKiosk(kioskId);
       }
       k.setUpdatedBy(sourceUserId);
       // Set other entity parameters, if any
@@ -2558,7 +2668,7 @@ public class BulkUploadMgr {
         }
       }
       // Add tags, if any
-      xLogger.info("Adding tags: error messages so far: {0}", ec.messages);
+      xLogger.info("Adding tags: issues so far: {0}", ec.messages);
       xLogger.info("i = {0}, size = {1}, isEdit = {2}, isAdd = {3}", i, size, isEdit, isAdd);
 
       if ((isAdd && ++i < size) || (isEdit && (i = i + 6) < size)) {
@@ -2611,9 +2721,9 @@ public class BulkUploadMgr {
       }
       // Add/edit
       if (isAdd) {
-        kioskId = es.addKiosk(domainId, k);
+        kioskId = getEntitiesService().addKiosk(domainId, k);
       } else {
-        es.updateKiosk(k, domainId);
+        getEntitiesService().updateKiosk(k, domainId);
       }
       // Set object id
       ec.entityId = kioskId;
@@ -2627,12 +2737,12 @@ public class BulkUploadMgr {
         }
       }
       if (addVendorLinks) {
-        addKioskLinks(domainId, kioskId, vendorNamesStr, IKioskLink.TYPE_VENDOR, sourceUserId, es,
+        addKioskLinks(domainId, kioskId, vendorNamesStr, IKioskLink.TYPE_VENDOR, sourceUserId, getEntitiesService(),
             ec, backendMessages);
       }
       if (addCustomerLinks) {
         addKioskLinks(domainId, kioskId, customerNamesStr, IKioskLink.TYPE_CUSTOMER, sourceUserId,
-            es, ec, backendMessages);
+            getEntitiesService(), ec, backendMessages);
       }
 
       xLogger.info("AUDITLOG\t{0}\t{1}\tENTITY\t " +
@@ -2800,7 +2910,7 @@ public class BulkUploadMgr {
     List<String> multiValueParams = new ArrayList<>();
     multiValueParams.add("materialid");
     // Schedule task immediately to add materials to kiosk
-    taskService.schedule(ITaskService.QUEUE_DEFAULT, url, params, multiValueParams, null,
+    getTaskService().schedule(ITaskService.QUEUE_DEFAULT, url, params, multiValueParams, null,
         ITaskService.METHOD_POST, -1, domainId, sourceUserId, "MATERIALS_TO_KIOSK");
     xLogger.fine("Exiting addMaterialsToKiosk");
   }
@@ -2881,7 +2991,7 @@ public class BulkUploadMgr {
       try {
         q.closeAll();
       } catch (Exception ignored) {
-
+        // ignore
       }
       if (pm == null) {
         pmLocal.close();
@@ -2972,7 +3082,6 @@ public class BulkUploadMgr {
         // Else error message
         if (confTags.containsAll(tagsFromUser)) {
           // Get config tags equivalent
-          // List<String> tags = TagUtil.getConfTagsEquivalent(tagsFromUser, confTags, DomainConfig.getInstance(domainId));
           setUploadableObjTags(tagType, uploadable, tagsFromUser);
           update = true;
         } else {
@@ -3048,6 +3157,84 @@ public class BulkUploadMgr {
     return trimmedErrMsgSb.toString();
   }
 
+  /**
+   * This method ignores case and returns true if gender is IUserAccount.GENDER_MALE, IUserAccount.GENDER_FEMALE, IUserAccount.GENDER_OTHER or empty.
+   * It returns false otherwise.
+   */
+  protected static boolean isGenderValid(String gender) {
+    return (gender.isEmpty() || IUserAccount.GENDER_MALE.equalsIgnoreCase(gender)
+        || IUserAccount.GENDER_FEMALE.equalsIgnoreCase(gender) || IUserAccount.GENDER_OTHER.equalsIgnoreCase(gender));
+  }
+
+  /**
+   * This method returns true if the difference between dateOfBirth and currentDate is 100 years or less. Otherwise, returns false.
+   * If dateOfBirth is after currentDate then it returns false.
+   * @param dateOfBirth
+   * @param currentDate
+   * @return
+   */
+  protected static boolean isDateOfBirthValid(LocalDate dateOfBirth, LocalDate currentDate) {
+    if (dateOfBirth.isAfter(currentDate)) {
+      return false;
+    }
+    Period age = dateOfBirth.until(currentDate);
+    return (age.getYears() < FieldLimits.MAX_USER_AGE || age.equals(
+        Period.of(FieldLimits.MAX_USER_AGE, 0, 0)));
+  }
+
+  /**
+   * This method returns true if the operation is add or edit or delete. Otherwise it returns false
+   * @param operation
+   * @return
+   */
+  protected static boolean isOperationValid(String operation) {
+    return OP_ADD.equals(operation) || OP_EDIT.equals(operation) || OP_DELETE.equals(operation);
+  }
+
+  /**
+   * This method returns true if the permission is valid (empty or d - Default, v - View only, a - Asset user). Otherwise, it returns false.
+   * @param permission
+   * @return
+   */
+  protected static boolean isPermissionValid(String permission) {
+    return permission.isEmpty() || IUserAccount.PERMISSION_DEFAULT.equals(permission) || IUserAccount.PERMISSION_VIEW.equals(
+        permission) || IUserAccount.PERMISSION_ASSET.equals(permission);
+  }
+
+  /**
+   * This method returns true if the token expiry is valid (empty or a number between 0 and 999). Otherwise, it returns false.
+   * @param tokenExpiryStr
+   * @return
+   */
+  protected static boolean isTokenExpiryValid(String tokenExpiryStr) {
+    if (tokenExpiryStr.isEmpty()) {
+      return true;
+    }
+    try {
+      int tokenExpiry = Integer.parseInt(tokenExpiryStr);
+      return (tokenExpiry >= FieldLimits.TOKEN_EXPIRY_MIN && tokenExpiry <= FieldLimits.TOKEN_EXPIRY_MAX);
+    } catch (NumberFormatException e) {
+      return false;
+    }
+  }
+
+  /**
+   * This method returns true if the GUI theme is valid (empty or 0, 1 or 2). Otherwise, it returns false.
+   * @param guiThemeStr
+   * @return
+   */
+  protected static boolean isGuiThemeValid(String guiThemeStr) {
+    if (guiThemeStr.isEmpty()) {
+      return true;
+    }
+    try {
+      int guiTheme = Integer.parseInt(guiThemeStr);
+      return (guiTheme == FieldLimits.GUI_THEME_SAME_AS_IN_DOMAIN_CONFIGURATION || guiTheme == FieldLimits.GUI_THEME_DEFAULT || guiTheme == FieldLimits.GUI_THEME_SIDEBAR_AND_LANDING_SCREEN);
+    } catch (NumberFormatException e) {
+      return false;
+    }
+  }
+
   public static class EntityContainer {
     public String operation = OP_ADD; // operation
     public List<String> messages = new ArrayList<>(); // error messages, if any
@@ -3082,4 +3269,42 @@ public class BulkUploadMgr {
     public String operation;
     public List<String> messages;
   }
+
+  /**
+   * This method determine call from old or new app
+   *
+   * @param password
+   * @return true or false
+   */
+  private static boolean isClearTextPassword(String password) {
+    return !password.contains(SALT_HASH_SEPARATOR);
+  }
+
+  protected static String getErrorMessage(String errorCode, String errorMessage, IAsset asset) {
+
+    String name;
+    try {
+      switch (errorCode) {
+        case "AST005":
+          name = asset != null ? getDomainService().getDomain(asset.getDomainId()).getName() : "another";
+          break;
+        case "AST006":
+          name = asset != null ? getEntitiesService().getKiosk(asset.getKioskId()).getName() : "another";
+          break;
+        default:
+          return errorMessage;
+      }
+    } catch (ServiceException e) {
+      name = "another";
+    }
+    return constructErrorMessage(errorMessage, name);
+  }
+
+  /**
+   * Replaces ID(domain/kiosk) with their name.
+   */
+  private static String constructErrorMessage(String errorMessage, String name) {
+    return errorMessage.replaceAll("(to )([\\d,]+)( )", "$1" + name + "$3");
+  }
+
 }

@@ -24,22 +24,21 @@
 
 package com.logistimo.api.models;
 
-/**
- * Created by yuvaraj on 23/05/17.
- */
+import lombok.Data;
+
+@Data
 public class UserDeviceModel {
-  public String userid;
-  public String token;
-  public String appname;
-  public String createdOn;
-  public String updatedOn;
-  public Integer deleted;
+  private String userId;
+  private String fcmToken;
+  private String appName;
+  private String createdOn;
+  private String updatedOn;
 
   @Override
   public String toString() {
     return "UserDeviceModel{" +
-        "userid='" + userid + '\'' +
-        ", appname='" + appname + '\'' +
+        "userId='" + userId + '\'' +
+        ", appName='" + appName + '\'' +
         '}';
   }
 }

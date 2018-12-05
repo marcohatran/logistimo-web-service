@@ -32,6 +32,7 @@ import com.logistimo.auth.service.AuthorizationService;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.QueryConstants;
+import com.logistimo.constants.SourceConstants;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.domains.entity.IDomainLink;
 import com.logistimo.domains.service.DomainsService;
@@ -41,6 +42,7 @@ import com.logistimo.entity.comparator.LocationComparator;
 import com.logistimo.events.entity.IEvent;
 import com.logistimo.events.exceptions.EventGenerationException;
 import com.logistimo.events.processor.EventPublisher;
+import com.logistimo.exception.ForbiddenAccessException;
 import com.logistimo.exception.HttpBadRequestException;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exception.SystemException;
@@ -48,7 +50,6 @@ import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.locations.client.LocationClient;
 import com.logistimo.locations.model.LocationResponseModel;
 import com.logistimo.logger.XLog;
-import com.logistimo.models.users.UserLoginHistoryModel;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.QueryParams;
 import com.logistimo.pagination.Results;
@@ -57,7 +58,6 @@ import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.cache.MemcacheService;
 import com.logistimo.services.impl.PMF;
-import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.tags.dao.ITagDao;
 import com.logistimo.tags.entity.ITag;
 import com.logistimo.users.builders.UserDeviceBuilder;
@@ -65,9 +65,9 @@ import com.logistimo.users.dao.IUserDao;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.entity.IUserDevice;
 import com.logistimo.users.entity.UserAccount;
+import com.logistimo.users.models.ExtUserAccount;
 import com.logistimo.users.service.UsersService;
 import com.logistimo.utils.Counter;
-import com.logistimo.utils.GsonUtils;
 import com.logistimo.utils.MessageUtil;
 import com.logistimo.utils.PasswordEncoder;
 import com.logistimo.utils.QueryUtil;
@@ -75,12 +75,12 @@ import com.logistimo.utils.StringUtil;
 import com.logistimo.utils.ThreadLocalUtil;
 import com.netflix.hystrix.exception.HystrixBadRequestException;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.UnsupportedEncodingException;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -104,7 +104,9 @@ import javax.jdo.Transaction;
 public class UsersServiceImpl implements UsersService {
 
   private static final XLog xLogger = XLog.getLog(UsersServiceImpl.class);
-  private static final String LOGUSER_TASK_URL = "/s2/api/users/update/loginhistory";
+  private static final String SALT_HASH_SEPARATOR = "####";
+  private static final String MMA = "MMA";
+  private static final String SUCCESS = "SUCCESS";
 
   private ITagDao tagDao;
   private IUserDao userDao;
@@ -216,12 +218,12 @@ public class UsersServiceImpl implements UsersService {
       try {
         if (!authorizationService.authoriseUpdateKiosk(
             account.getRegisteredBy(), domainId)) {
-          throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+          throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
         }
         tx.begin();
         IUserAccount registeringUser = getUserAccount(account.getRegisteredBy());
         if(SecurityUtil.compareRoles(registeringUser.getRole(),account.getRole()) < 0){
-          throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+          throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
         }
         @SuppressWarnings("unused")
         IUserAccount user = JDOUtils.getObjectById(IUserAccount.class, accountId, pm);
@@ -242,9 +244,7 @@ public class UsersServiceImpl implements UsersService {
                   + messages.getString("customid") + " " + account.getCustomId() + " "
                   + backendMessages.getString("error.alreadyexists") + ".");
         }
-
-        String password = account.getEncodedPassword();
-        account.setEncodedPassword(PasswordEncoder.MD5(password));
+        setNewUserPassword(account);
         if (account.getTags() != null) {
           account.setTgs(tagDao.getTagsByNames(account.getTags(), ITag.USER_TAG));
         }
@@ -286,6 +286,22 @@ public class UsersServiceImpl implements UsersService {
     }
 
     return account;
+  }
+
+  /**
+   * TODO This method should be in authentication service
+   * @param account
+   */
+  private void setNewUserPassword(IUserAccount account) {
+    String password = account.getEncodedPassword();
+    if(password.contains(SALT_HASH_SEPARATOR)) {
+      String[] saltHash = password.split(SALT_HASH_SEPARATOR);
+      account.setEncodedPassword(PasswordEncoder.MD5(saltHash[1]));
+      account.setSalt(saltHash[0]);
+      account.setPassword(PasswordEncoder.bcrypt(password));
+    }else {
+      account.setEncodedPassword(PasswordEncoder.MD5(password));
+    }
   }
 
   @SuppressWarnings("unchecked")
@@ -540,14 +556,14 @@ public class UsersServiceImpl implements UsersService {
     ResourceBundle backendMessages = Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
     try {
       if (!authorizationService.authoriseUpdateKiosk(updatedBy, account.getDomainId())) {
-        throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+        throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
       }
       tx.begin();
       //First check if the user already exists in the database
       IUserAccount user = JDOUtils.getObjectById(IUserAccount.class, account.getUserId(), pm);
       IUserAccount registeringUser = getUserAccount(updatedBy);
       if(SecurityUtil.compareRoles(registeringUser.getRole(),user.getRole()) < 0){
-        throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+        throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
       }
       //location check
       int locindex = new LocationComparator().compare(user, account);
@@ -565,13 +581,8 @@ public class UsersServiceImpl implements UsersService {
       user.setCountry(account.getCountry());
       user.setPinCode(account.getPinCode());
       user.setGender(account.getGender());
-      user.setAgeType(account.getAgeType());
       user.setAuthenticationTokenExpiry(account.getAuthenticationTokenExpiry());
-      if (IUserAccount.AGETYPE_BIRTHDATE.equals(account.getAgeType())) {
-        user.setBirthdate(account.getBirthdate());
-      } else {
-        user.setAge(account.getAge());
-      }
+      user.setBirthdate(account.getBirthdate());
       user.setLastLogin(account.getLastLogin());
       user.setEmail(account.getEmail());
       user.setLanguage(account.getLanguage());
@@ -628,7 +639,7 @@ public class UsersServiceImpl implements UsersService {
       xLogger.warn("updateAccount: FAILED!! User {0} does not exist in the database",
           account.getUserId());
       exception = e;
-    } catch(UnauthorizedException e){
+    } catch(UnauthorizedException | ForbiddenAccessException e){
       throw e;
     }catch (Exception e) {
       exception = e;
@@ -729,7 +740,7 @@ public class UsersServiceImpl implements UsersService {
         ResourceBundle
             backendMessages =
             Resources.get().getBundle(Constants.BACKEND_MESSAGES, locale);
-        throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+        throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
       }
       for (String accountId : accountIds) {
         try {
@@ -739,7 +750,6 @@ public class UsersServiceImpl implements UsersService {
           Query query = pm.newQuery(JDOUtils.getImplClass(IUserToKiosk.class));
           query.setFilter("userId == userIdParam");
           query.declareParameters("String userIdParam");
-          AuthenticationService aus = AppFactory.get().getAuthenticationService();
           try {
             List<IUserToKiosk> results = (List<IUserToKiosk>) query.execute(accountId);
             if (!results.isEmpty()) {
@@ -760,7 +770,7 @@ public class UsersServiceImpl implements UsersService {
               xLogger.fine("deleteAccounts: deleting user {0} from the database", accountId);
               pm.deletePersistent(account);
               removeUserFromCache(accountId);
-              aus.clearUserTokens(accountId, true);
+              authenticationService.clearUserTokens(accountId, true);
               xLogger.info("AUDITLOG\t{0}\t{1}\tUSER\t " +
                   "DELETE\t{2}\t{3}", domainId, sUser, accountId, userName);
             }
@@ -777,176 +787,6 @@ public class UsersServiceImpl implements UsersService {
       xLogger.warn(e.getMessage(), e);
     } finally {
       xLogger.fine("Exiting deleteAccounts");
-      pm.close();
-    }
-    if (exception != null) {
-      throw new ServiceException(exception);
-    }
-  }
-
-  /**
-   * Authenticate a user in the context of a given domain; Returns user object if authenticated, otherwise null
-   */
-  public IUserAccount authenticateUser(String userId, String password, Integer lgSrc)
-      throws ServiceException, ObjectNotFoundException {
-    xLogger.fine("Entering authenticateUser");
-    PersistenceManager pm = PMF.get().getPersistenceManager();
-    Exception exception = null;
-    boolean isAuthenticated = false;
-    boolean userNotFound = false;
-    IUserAccount user = null;
-    try {
-      user = JDOUtils.getObjectById(IUserAccount.class, userId, pm);
-      if (user.isEnabled()) {
-        String encodedPassword = PasswordEncoder.MD5(password);
-        if (encodedPassword.equals(user.getEncodedPassword())) {
-          user.setLastLogin(new Date());
-          if (lgSrc != null) {
-            user.setLoginSource(lgSrc);
-          }
-          xLogger.info("User " + userId + " authenticated successfully");
-          isAuthenticated = true;
-        }
-      } else {
-        xLogger.warn("Authentication failed! User {0} is disabled", userId);
-      }
-      user = pm.detachCopy(user);
-    } catch (JDOObjectNotFoundException e) {
-      xLogger.warn("Authentication failed! User {0} does not exist", userId);
-      exception = e;
-      userNotFound = true;
-    } catch (Exception e) {
-      xLogger.warn("Exception while authentication user", e);
-      exception = e;
-    } finally {
-      pm.close();
-    }
-    if (userNotFound) {
-      throw new ObjectNotFoundException("USR001", userId);
-    } else if (exception != null) {
-      throw new ServiceException(exception);
-    }
-    xLogger.fine("Exiting authenticateUser: {0}", isAuthenticated);
-
-    if (isAuthenticated) {
-      return user;
-    } else {
-      return null;
-    }
-  }
-
-  /**
-   * Change the password of a given user.
-   *
-   * @param userId      The user whose password is to be changed.
-   * @param oldPassword The old password of this user
-   * @param newPassword The new password to which the change is tareted
-   * @throws ServiceException If there is an error in this process
-   */
-  public void changePassword(String userId, String oldPassword, String newPassword)
-      throws ServiceException {
-    xLogger.fine("Entering changePassword");
-    if (newPassword == null || newPassword.isEmpty()) {
-      throw new ServiceException("New password not specified");
-    }
-    PersistenceManager pm = PMF.get().getPersistenceManager();
-    Exception exception = null;
-    try {
-      IUserAccount user = JDOUtils.getObjectById(IUserAccount.class, userId, pm);
-      if (oldPassword != null) {
-        String encodedPassword = PasswordEncoder.MD5(oldPassword);
-        if (encodedPassword.equals(user.getEncodedPassword())) {
-          user.setEncodedPassword(PasswordEncoder.MD5(newPassword));
-        } else {
-          xLogger
-              .warn("changePassword: WARNING!! Failed to authenticate user {0} with old password",
-                  userId);
-        }
-      } else {
-        user.setEncodedPassword(PasswordEncoder.MD5(newPassword));
-      }
-    } catch (JDOObjectNotFoundException e) {
-      xLogger.warn("changePassword: FAILED!! User {0} does not exist", userId);
-      exception = e;
-    } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
-      xLogger.warn("Exception in changePassword", e);
-      exception = e;
-    } finally {
-      pm.close();
-    }
-    if (exception != null) {
-      throw new ServiceException(exception);
-    }
-
-    xLogger.fine("Exiting changePassword");
-  }
-
-  /**
-   * Disable the account of a given user - pass in a fully qualified user Id (i.e. domainId.userId)
-   */
-  public void disableAccount(String userId) throws ServiceException {
-    xLogger.fine("Entering disableAccount");
-    Exception exception = null;
-    PersistenceManager pm = PMF.get().getPersistenceManager();
-    //We use an atomic transaction here to check if the user exists and then update it
-    Transaction tx = pm.currentTransaction();
-    try {
-      tx.begin();
-      try {
-        //First check if the user already exists in the database
-        IUserAccount user = JDOUtils.getObjectById(IUserAccount.class, userId, pm);
-        xLogger.info("disableAccount: Disabling user account {0}", userId);
-        user.setEnabled(false);
-        authenticationService.clearUserTokens(userId, true);
-      } catch (JDOObjectNotFoundException e) {
-        xLogger.warn("disableAccount: FAILED!! user {0} does not exist", userId);
-        exception = e;
-      } catch (Exception e) {
-        xLogger.warn("Exception in disableAccount()", e);
-        exception = e;
-      }
-      tx.commit();
-      removeUserFromCache(userId);
-    } finally {
-      if (tx.isActive()) {
-        tx.rollback();
-      }
-      xLogger.fine("Exiting disableAccount");
-      pm.close();
-    }
-    if (exception != null) {
-      throw new ServiceException(exception);
-    }
-  }
-
-  /**
-   * Enable a user account (pass in fully qualified user Id - i.e. domainId.userId)
-   */
-  public void enableAccount(String userId) throws ServiceException {
-    xLogger.fine("Entering enableAccount");
-    Exception exception = null;
-    PersistenceManager pm = PMF.get().getPersistenceManager();
-    Transaction tx = pm.currentTransaction();
-    try {
-      tx.begin();
-      try {
-        IUserAccount user = JDOUtils.getObjectById(IUserAccount.class, userId, pm);
-        xLogger.info("enableAccount: Enabling user account {0}", userId);
-        user.setEnabled(true);
-      } catch (JDOObjectNotFoundException e) {
-        xLogger.warn("enableAccount: FAILED!! user {0} does not exist", userId);
-        exception = e;
-      } catch (Exception e) {
-        xLogger.warn("Exception in enableAccount()", e);
-        exception = e;
-      }
-      tx.commit();
-      removeUserFromCache(userId);
-    } finally {
-      if (tx.isActive()) {
-        tx.rollback();
-      }
-      xLogger.fine("Exiting enableAccount");
       pm.close();
     }
     if (exception != null) {
@@ -1108,33 +948,6 @@ public class UsersServiceImpl implements UsersService {
     return results;
   }
 
-  public void updateMobileLoginFields(IUserAccount account) {
-    PersistenceManager pm = null;
-    try {
-      pm = PMF.get().getPersistenceManager();
-      IUserAccount u = JDOUtils.getObjectById(IUserAccount.class, account.getUserId(), pm);
-      u.setLastMobileAccessed(account.getLastMobileAccessed());
-      u.setIPAddress(account.getIPAddress());
-      u.setUserAgent(account.getUserAgent());
-      u.setPreviousUserAgent(account.getPreviousUserAgent());
-      u.setAppVersion(account.getAppVersion());
-      //remove from cache
-      removeUserFromCache(account.getUserId());
-      Map<String, Object> params = new HashMap<>(1);
-      params.put("ipaddress", account.getIPAddress());
-      EventPublisher.generate(u.getDomainId(), IEvent.IP_ADDRESS_MATCHED, params,
-          UserAccount.class.getName(), u.getKeyString(),
-          null);
-    } catch (Exception e) {
-      xLogger.warn("Exception while updating mobile login related fields for user {0}",
-          account.getUserId(), e);
-    } finally {
-      if (pm != null) {
-        pm.close();
-      }
-    }
-  }
-
   @Override
   public boolean hasAccessToDomain(String username, Long domainId)
       throws ServiceException, ObjectNotFoundException {
@@ -1150,23 +963,6 @@ public class UsersServiceImpl implements UsersService {
   }
 
 
-  public void updateUserLoginHistory(String userId, Integer lgSrc, String usrAgnt, String ipAddr,
-                                     Date loginTime, String version) {
-    try {
-      xLogger.fine("Updating user login history");
-      if (StringUtils.isNotBlank(userId)) {
-        UserLoginHistoryModel
-            ulh =
-            new UserLoginHistoryModel(userId, lgSrc, usrAgnt, ipAddr, loginTime, version);
-        AppFactory.get().getTaskService()
-            .schedule(ITaskService.QUEUE_DEFAULT, LOGUSER_TASK_URL,
-                GsonUtils.toJson(ulh));
-      }
-    } catch (Exception e) {
-      xLogger.warn(" {0} while updating the user login history, {1}", e.getMessage(), userId, e);
-    }
-  }
-
   public Set<String> getElementSetByUserFilter(Long domainId, IUserAccount user, String paramName,
                                                String paramValue, PageParams pageParams)
       throws ServiceException {
@@ -1176,13 +972,9 @@ public class UsersServiceImpl implements UsersService {
     }
 
     boolean isSuperUsers = user.getRole().equals("ROLE_su");
-
     paramName = paramName.trim();
     PersistenceManager pm = PMF.get().getPersistenceManager();
-    Query
-        q =
-        pm.newQuery(" SELECT " + paramName + " FROM " + JDOUtils.getImplClass(IUserAccount.class)
-            .getName());
+    Query q = pm.newQuery(" SELECT " + paramName + " FROM " + JDOUtils.getImplClass(IUserAccount.class).getName());
     Set<String> elementSet = new HashSet<>();
     StringBuilder filter = new StringBuilder();
     StringBuilder declaration = new StringBuilder();
@@ -1219,7 +1011,6 @@ public class UsersServiceImpl implements UsersService {
     try {
       List elements = (List) q.executeWithMap(params);
       if (elements != null) {
-        //elements = (List)pm.detachCopyAll(elements);
         for (Object o : elements) {
           elementSet.add((String) o);
         }
@@ -1268,7 +1059,7 @@ public class UsersServiceImpl implements UsersService {
    * Get the list of enabled userIds from the given userIds
    */
   public List<String> getEnabledUserIds(List<String> uIds) {
-    if (uIds != null && uIds.size() > 0) {
+    if (!CollectionUtils.isEmpty(uIds)) {
       PersistenceManager pm = PMF.get().getPersistenceManager();
       try {
         List<String> eUids = new ArrayList<>(1);
@@ -1295,21 +1086,27 @@ public class UsersServiceImpl implements UsersService {
    */
   public List<String> getEnabledUserIdsWithTags(List<String> tagNames, Long domainId) {
     List<String> uIds = null;
-    if (tagNames != null && tagNames.size() > 0) {
+    if (!CollectionUtils.isEmpty(tagNames)) {
       PersistenceManager pm = PMF.get().getPersistenceManager();
-      String tagName = MessageUtil.getCSVWithEnclose(tagNames);
-      String query = "SELECT UA.USERID FROM USERACCOUNT UA,USER_TAGS UT WHERE "
-          + "UT.ID IN (SELECT ID FROM TAG WHERE NAME IN (" + tagName + ") AND TYPE=4)"
-          + " AND UT.USERID = UA.USERID AND UA.ISENABLED = 1 AND UA.SDID = ?";
-      Query q = pm.newQuery(Constants.JAVAX_JDO_QUERY_SQL, query);
+      List<Object> parameters=new ArrayList<>();
+      StringBuilder query = new StringBuilder("SELECT UA.USERID FROM USERACCOUNT UA,USER_TAGS UT WHERE "
+          + "UT.ID IN (SELECT ID FROM TAG WHERE NAME IN (");
+      for (String name : tagNames) {
+        query.append(CharacterConstants.QUESTION).append(CharacterConstants.COMMA);
+        parameters.add(name);
+      }
+      query.setLength(query.length() - 1);
+      query.append(") AND TYPE=4) AND UT.USERID = UA.USERID AND UA.ISENABLED = 1 AND UA.SDID = ?");
+      parameters.add(domainId);
+      Query q = pm.newQuery(Constants.JAVAX_JDO_QUERY_SQL, query.toString());
       try {
-        List l = (List) q.executeWithArray(domainId);
+        List l = (List) q.executeWithArray(parameters.toArray());
         uIds = new ArrayList<>(l.size());
         for (Object o : l) {
           uIds.add((String) o);
         }
       } catch (Exception e) {
-        xLogger.warn("Error while getting enabled user by tags {0}", tagName, e);
+        xLogger.warn("Error while getting enabled user by tags {0}", tagNames.toString(), e);
       } finally {
         try {
           q.closeAll();
@@ -1346,7 +1143,11 @@ public class UsersServiceImpl implements UsersService {
     }
     try {
       List<IUserAccount> users;
-      users = (List<IUserAccount>) q.executeWithMap(qp.params);
+      if(MapUtils.isNotEmpty(qp.params)) {
+        users = (List<IUserAccount>) q.executeWithMap(qp.params);
+      } else {
+        users = (List<IUserAccount>) q.executeWithArray(qp.listParams);
+      }
       String cursor = null;
       if (users != null) {
         users.size();
@@ -1463,15 +1264,14 @@ public class UsersServiceImpl implements UsersService {
   @Override
   public void addEditUserDevice(UserDeviceModel ud) throws ServiceException {
     UserDeviceBuilder builder = new UserDeviceBuilder();
-    IUserDevice userDevice = getUserDevice(ud.userid, ud.appname);
+    IUserDevice userDevice = getUserDevice(ud.getUserId(), ud.getAppName());
     userDevice = builder.buildUserDevice(userDevice, ud);
-    xLogger.fine("Entering createUserDevice");
     PersistenceManager pm = PMF.get().getPersistenceManager();
     try {
       pm.makePersistent(userDevice);
     } catch (Exception e) {
-      xLogger.warn("Issue with add edit user device {}", e.getMessage());
-      throw new ServiceException(e.getMessage(), e);
+      xLogger.warn("Issue with adding user firebase token {0}", e.getMessage(),e);
+      throw new ServiceException("UD002", ud.getUserId());
     } finally {
       pm.close();
     }
@@ -1486,13 +1286,12 @@ public class UsersServiceImpl implements UsersService {
       Query query = pm.newQuery(JDOUtils.getImplClass(IUserDevice.class));
       query.setFilter("userId == userIdParam && appname == appnameParam");
       query.declareParameters("String userIdParam, String appnameParam");
-      //Query query = pm.newQuery(Constants.QUERY_LANGUAGE",q);
       query.setUnique(true);
       IUserDevice userDevice = (IUserDevice) query.execute(userid, appname);
       return pm.detachCopy(userDevice);
     } catch (Exception e) {
-      xLogger.severe("{0} while getting user device {1}", e.getMessage(), userid, e);
-      throw new ServiceException("Issue with getting user device for user :" + userid);
+      xLogger.severe("Issue while getting firebase token for user {0}", userid, e);
+      throw new ServiceException("UD001",userid);
     } finally {
       if (pm != null) {
         pm.close();
@@ -1594,7 +1393,6 @@ public class UsersServiceImpl implements UsersService {
    * @return List<IUserAccount>
    */
   public List<IUserAccount> getUsersByIds(List<String> userIds) {
-
     if (userIds == null || userIds.isEmpty()) {
       return null;
     }
@@ -1602,17 +1400,19 @@ public class UsersServiceImpl implements UsersService {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     Query query = null;
     try {
-
+      List<String> parameters = new ArrayList<>();
       StringBuilder queryBuilder = new StringBuilder("SELECT * FROM `USERACCOUNT` ");
       queryBuilder.append("WHERE USERID IN (");
       for (String userId : userIds) {
-        queryBuilder.append("'").append(userId).append("'").append(CharacterConstants.COMMA);
+        queryBuilder.append(CharacterConstants.QUESTION).append(CharacterConstants.COMMA);
+        parameters.add(userId);
+
       }
       queryBuilder.setLength(queryBuilder.length() - 1);
       queryBuilder.append(" )");
       query = pm.newQuery(Constants.JAVAX_JDO_QUERY_SQL, queryBuilder.toString());
       query.setClass(JDOUtils.getImplClass(IUserAccount.class));
-      results = (List<IUserAccount>) query.execute();
+      results = (List<IUserAccount>) query.executeWithArray(parameters.toArray());
       results = (List<IUserAccount>) pm.detachCopyAll(results);
     } catch (Exception e) {
       xLogger.warn("Exception while fetching approval status", e);
@@ -1667,6 +1467,41 @@ public class UsersServiceImpl implements UsersService {
       xLogger
           .warn("Error while fetching users for kiosk: {0} for user tag: {1}", objectId, userTags,
               e);
+      throw e;
+    } finally {
+      query.closeAll();
+      pm.close();
+    }
+  }
+
+  public List<ExtUserAccount> eligibleUsersForEventNotification(Long domainId) {
+
+    List<String> parameters = new ArrayList<>();
+    List<ExtUserAccount> users = new ArrayList<>();
+    String querystr = "SELECT U.USERID, U.SDID, U.MOBILEPHONENUMBER, U.EMAIL, UD.TOKEN FROM USERACCOUNT U,"
+        + " USERDEVICE UD WHERE U.USERID = UD.USERID AND U.SDID = ? AND UD.APPNAME = ? AND U.USERID IN "
+        + " (SELECT USERID FROM USERLOGINHISTORY WHERE LGSRC = ? AND STATUS = ?)";
+    parameters.add(String.valueOf(domainId));
+    parameters.add(MMA);
+    parameters.add(String.valueOf(SourceConstants.MMA));
+    parameters.add(SUCCESS);
+    PersistenceManager pm = getPM();
+    Query query = pm.newQuery(Constants.JAVAX_JDO_QUERY_SQL, querystr);
+    try {
+      List list = (List) query.executeWithArray(parameters.toArray());
+      for (Object st : list) {
+        ExtUserAccount model = new ExtUserAccount();
+        model.setUserId((String) ((Object[]) st)[0]);
+        model.setSdId((Long)((Object[]) st)[1]);
+        model.setMobilePhoneNumber((String)((Object[]) st)[2]);
+        model.setEmail((String) ((Object[]) st)[3]);
+        model.setToken((String) ((Object[]) st)[4]);
+        users.add(model);
+      }
+      return users;
+    } catch (Exception e) {
+      xLogger
+          .warn("Error while fetching eligible users for event notification for domain: {0}", domainId, e);
       throw e;
     } finally {
       query.closeAll();

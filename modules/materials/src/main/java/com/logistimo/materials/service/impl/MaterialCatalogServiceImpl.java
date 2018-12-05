@@ -53,6 +53,7 @@ import com.logistimo.utils.Counter;
 import com.logistimo.utils.StringUtil;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -69,7 +70,7 @@ import javax.jdo.Transaction;
 /**
  * @author juhee
  */
-@org.springframework.stereotype.Service
+@Service
 public class MaterialCatalogServiceImpl implements MaterialCatalogService {
 
   private static final XLog xLogger = XLog.getLog(MaterialCatalogServiceImpl.class);
@@ -235,7 +236,6 @@ public class MaterialCatalogServiceImpl implements MaterialCatalogService {
         mat.setShortName(material.getShortName());
         mat.setInfo(material.getInfo());
         mat.setInfoDisplay(material.displayInfo());
-        mat.setType(material.getType());
         mat.setBatchEnabled(material.isBatchEnabled());
         mat.setBatchEnabledOnMobile(material.isBatchEnabled());
         mat.setTemperatureSensitive(material.isTemperatureSensitive());

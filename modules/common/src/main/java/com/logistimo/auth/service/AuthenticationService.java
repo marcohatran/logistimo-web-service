@@ -24,15 +24,13 @@
 package com.logistimo.auth.service;
 
 import com.logistimo.communications.MessageHandlingException;
-import com.logistimo.exception.InvalidDataException;
 import com.logistimo.exception.UnauthorizedException;
-import com.logistimo.exception.ValidationException;
-import com.logistimo.services.ObjectNotFoundException;
+import com.logistimo.models.AuthRequest;
+import com.logistimo.models.users.UserDetails;
 import com.logistimo.services.ServiceException;
 import com.logistimo.users.entity.IUserToken;
 
 import java.io.IOException;
-import java.util.InputMismatchException;
 import java.util.Optional;
 
 
@@ -41,17 +39,12 @@ import java.util.Optional;
  */
 public interface AuthenticationService {
 
-  String JWTKEY = "jwt.key";
-
-
   IUserToken generateUserToken(String userId, Integer accessInitiator)
-      throws ServiceException, ObjectNotFoundException;
+      throws ServiceException;
 
-  IUserToken authenticateToken(String token, Integer accessInitiator)
-      throws UnauthorizedException, ServiceException, ObjectNotFoundException;
+  IUserToken authenticateToken(String token, Integer accessInitiator) throws UnauthorizedException;
 
-  String getUserIdByToken(String token)
-      throws UnauthorizedException, ServiceException, ObjectNotFoundException;
+  String getUserIdByToken(String token);
 
   Boolean clearUserTokens(String userId, boolean removeAccessKeys);
 
@@ -65,27 +58,72 @@ public interface AuthenticationService {
 
   String resetPassword(String userId, int mode, String otp, String src,
                               String au)
-      throws ServiceException, ObjectNotFoundException, MessageHandlingException, IOException,
-      InputMismatchException, ValidationException;
+      throws ServiceException, MessageHandlingException, IOException;
 
+  /**
+   * Generate OTP for Email
+   */
   String generateOTP(String userId, int mode, String src, String hostUri)
-      throws MessageHandlingException, IOException, ServiceException, ObjectNotFoundException,
-      InvalidDataException;
+      throws MessageHandlingException, IOException, ServiceException;
 
   Optional<IUserToken> checkAccessKeyStatus(String accessKey) throws ServiceException;
 
-  void authoriseAccessKey(String accessKey) throws ValidationException, ServiceException;
+  void authoriseAccessKey(String accessKey) throws ServiceException;
 
   String createJWT(String userid, long ttlMillis);
 
-  String decryptJWT(String token);
+  String[] decryptJWT(String token);
 
-  String setNewPassword(String token, String newPassword, String confirmPassword)
-      throws Exception;
+  String setNewPassword(String token, String newPassword, String confirmPassword, boolean isEnhanced)
+      throws ServiceException;
 
   String generatePassword(String id);
 
-  void validateOtpMMode(String userId, String otp) throws ValidationException;
+  void validateOtpMMode(String userId, String otp);
+
+  void validateOtpMMode(String userId, String otp, boolean isTwoFactorAuthenticationOTP);
 
   String generateAccessKey();
+
+  UserDetails authenticate(AuthRequest authRequest) throws ServiceException;
+
+  /**
+   *
+   * @param userId
+   * @param otp
+   * @param oldPassword
+   * @param newPassword
+   * @param isEnhanced -this flag indicates that client is sending sha512(salt+password) and compatibale with security chnages
+   * @throws ServiceException
+   */
+  void changePassword(String userId, String otp, String oldPassword, String newPassword, boolean isEnhanced) throws ServiceException;
+
+  void enableAccount(String userId) throws ServiceException;
+
+  void disableAccount(String userId) throws ServiceException;
+
+  void removeUserFromCache(String userId);
+
+  String getUserSalt(String userId);
+
+  String generateRandomSalt();
+
+  void logForbiddenAccess(AuthRequest authRequest);
+
+
+  boolean verifyCaptcha(String captchaResponse);
+
+  /**
+   * Generate 2FA OTP for mobile
+   *
+   * @return success message
+   */
+  String generate2FAOTP(String userId) throws MessageHandlingException, IOException;
+
+  boolean isUserDeviceAuthenticated(String deviceKey, String userId, Long domainId)
+      throws IOException;
+
+  boolean authenticateUserByCredentials(String userId, String deviceKey, Integer loginSource,
+                                        String otp, boolean isTwoFactorAuthenticationOTP)
+      throws IOException, MessageHandlingException;
 }

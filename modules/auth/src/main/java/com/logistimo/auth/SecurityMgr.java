@@ -27,12 +27,16 @@
 package com.logistimo.auth;
 
 import com.logistimo.AppFactory;
+import com.logistimo.auth.service.AuthenticationService;
+import com.logistimo.auth.service.impl.AuthenticationServiceImpl;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.SourceConstants;
 import com.logistimo.context.StaticApplicationContext;
 import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.logger.XLog;
+import com.logistimo.models.AuthRequest;
+import com.logistimo.models.users.UserDetails;
 import com.logistimo.security.BadCredentialsException;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.security.UserDisabledException;
@@ -111,17 +115,22 @@ public class SecurityMgr {
   }
 
   // Authenticate user
-  public static SecureUserDetails authenticate(String userId, String password)
-      throws Exception {
-    UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
+  public static SecureUserDetails authenticate(String userId, String password) throws Exception {
+    AuthenticationService as = StaticApplicationContext.getBean(AuthenticationServiceImpl.class);
+    UsersService us = StaticApplicationContext.getBean(UsersServiceImpl.class);
     // Authenticate user
-    IUserAccount user = as.authenticateUser(userId, password, SourceConstants.WEB);
-    if (user == null) {
-      throw new BadCredentialsException("Invalid user name or password");
+    AuthRequest authRequest = AuthRequest.builder()
+        .userId(userId)
+        .password(password)
+        .loginSource(SourceConstants.WEB).build();
+    UserDetails userDetails = as.authenticate(authRequest);
+    if (userDetails == null) {
+      throw new BadCredentialsException("G008");
     }
-    if (!user.isEnabled()) {
+    if (!userDetails.isEnabled()) {
       throw new UserDisabledException("You account is disabled");
     }
+    IUserAccount user = us.getUserAccount(userId);
     return getSecureUserDetails(user);
   }
 

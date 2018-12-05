@@ -48,8 +48,8 @@ import com.logistimo.entities.auth.EntityAuthoriser;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.models.LocationSuggestionModel;
 import com.logistimo.entities.service.EntitiesService;
+import com.logistimo.exception.ForbiddenAccessException;
 import com.logistimo.exception.InvalidServiceException;
-import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.inventory.entity.IInventoryMinMaxLog;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.IInvntryBatch;
@@ -127,6 +127,9 @@ public class InventoryController {
   private OrderManagementService orderManagementService;
 
   @Autowired
+  private ReportsService reportsService;
+
+  @Autowired
   public void setInventoryBuilder(InventoryBuilder inventoryBuilder) {
     this.inventoryBuilder = inventoryBuilder;
   }
@@ -178,11 +181,13 @@ public class InventoryController {
                        @RequestParam(defaultValue = PageParams.DEFAULT_OFFSET_STR) int offset,
                        @RequestParam(defaultValue = PageParams.DEFAULT_SIZE_STR) int size,
                        @RequestParam(required = false) Integer abType,
-                       @RequestParam(required = false) String startsWith,
+                       @RequestParam(required = false) String materialQueryText,
                        @RequestParam(required = false) String fetchTemp,
                        @RequestParam(defaultValue = ALL) int matType,
                        @RequestParam(required = false) boolean onlyNZStk,
                        @RequestParam(required = false) String pdos,
+                       @RequestParam(required = false) String materialQueryType,
+                       @RequestParam(required = false) boolean includeMaterialDescriptionQuery,
                        HttpServletRequest request) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Locale locale = sUser.getLocale();
@@ -193,11 +198,11 @@ public class InventoryController {
     String timezone = dc.getTimezone();
     try {
       if (!EntityAuthoriser.authoriseInventoryAccess(sUser, entityId)) {
-        throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+        throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
       }
       int numTotalInv = Counter.getMaterialCounter(domainId, entityId, tag).getCount();
       Navigator navigator;
-      if (startsWith == null) {
+      if (materialQueryText == null) {
         navigator =
             new Navigator(request.getSession(), "InventoryController.getInventory", offset, size,
                 "base/test", numTotalInv);
@@ -208,7 +213,7 @@ public class InventoryController {
       }
       PageParams pageParams = new PageParams(navigator.getCursor(offset), offset, size);
       Results results;
-      if (startsWith == null) {
+      if (materialQueryText == null) {
         if (abType != null) {
 
           Map<String, Object> filters = new HashMap<>();
@@ -221,7 +226,6 @@ public class InventoryController {
           filters.put(ReportsConstants.FILTER_LATEST, true);
           filters.put(ReportsConstants.FILTER_ABNORMALSTOCKVIEW, true);
 
-          ReportsService reportsService = StaticApplicationContext.getBean(ConfigUtil.get("reports"), ReportsService.class);
           ReportData reportData = reportsService.getReportData(
               ReportsConstants.TYPE_STOCKEVENT, null, null,
               ReportsConstants.FREQ_DAILY, filters, locale, timezone, pageParams, dc, userId);
@@ -232,8 +236,11 @@ public class InventoryController {
               null, tag, matType, onlyNZStk, pdos, null, pageParams);
         }
       } else {
-        results = inventoryManagementService.searchKioskInventory(entityId, tag, startsWith, pageParams);
-        results.setNumFound(-1);
+        results =
+            inventoryManagementService
+                .searchKioskInventory(entityId, tag, materialQueryText, pageParams,
+                    materialQueryType, includeMaterialDescriptionQuery);
+        results.setNumFound(results.getNumFound());
       }
       navigator.setResultParams(results);
       results.setOffset(offset);
@@ -329,7 +336,6 @@ public class InventoryController {
         filters.put(ReportsConstants.FILTER_LATEST, true);
         filters.put(ReportsConstants.FILTER_ABNORMALSTOCKVIEW, true);
 
-        ReportsService reportsService = StaticApplicationContext.getBean(ConfigUtil.get("reports"), ReportsService.class);
         ReportData reportData = reportsService.getReportData(
             ReportsConstants.TYPE_STOCKEVENT, null, null, ReportsConstants.FREQ_DAILY, filters,
             locale, timezone, pageParams, dc, userId);
@@ -477,7 +483,6 @@ public class InventoryController {
 
       xLogger.fine("filters: {0}", filters);
       PageParams pageParams = new PageParams(null, size);
-      ReportsService reportsService = StaticApplicationContext.getBean(ConfigUtil.get("reports"), ReportsService.class);
       ReportData r = reportsService.getReportData(reportType, null, null, frequency,
           filters, locale, timezone, pageParams, dc, userId);
       if (r != null) {
@@ -596,7 +601,7 @@ public class InventoryController {
           filters.put(ReportsConstants.FILTER_ABNORMALSTOCKVIEW, true);
         }
 
-      ReportsService reportsService = StaticApplicationContext.getBean(ConfigUtil.get("reports"), ReportsService.class);
+      ReportsService reportsService = StaticApplicationContext.getBean(ReportsService.class);
       ReportData reportData = reportsService.getReportData(
             ReportsConstants.TYPE_STOCKEVENT, null, null, ReportsConstants.FREQ_DAILY, filters,
             locale, timezone, pageParams, dc, userId);
@@ -661,7 +666,7 @@ public class InventoryController {
   List<FChartModel> getInventoryPredictiveStk(@RequestParam Long kioskId,
                                               @RequestParam Long materialId) {
     try {
-      ReportsService reportsService = StaticApplicationContext.getBean(ConfigUtil.get("reports"), ReportsService.class);
+      ReportsService reportsService = StaticApplicationContext.getBean(ReportsService.class);
       Results ds = reportsService.getSlices(new Date(), ISlice.DAILY, ISlice.OTYPE_MATERIAL,
           String.valueOf(materialId), ISlice.KIOSK, String.valueOf(kioskId), true,
           new PageParams(PREDICTIVE_HISTORY_DAYS));
@@ -711,11 +716,10 @@ public class InventoryController {
                         @RequestParam(required = false) String invId) {
     try {
       if (orderId != null) {
-        PredictionService oms = StaticApplicationContext.getBean(ConfigUtil.get("predictions"), PredictionService.class);
+        PredictionService oms = StaticApplicationContext.getBean(PredictionService.class);
         oms.updateOrderPredictions(orderId);
       } else if (invId != null) {
-        PredictionService ps = StaticApplicationContext.getBean(ConfigUtil.get("predictions"),
-            PredictionService.class);
+        PredictionService ps = StaticApplicationContext.getBean(PredictionService.class);
         ps.updateInventoryPredictions(invId);
       }
     } catch (Exception e) {
@@ -739,7 +743,8 @@ public class InventoryController {
   @ResponseBody
   InventoryDetailModel getInvDetail(
       @PathVariable Long entityId,
-      @PathVariable Long materialId) throws ServiceException, ObjectNotFoundException {
+      @PathVariable Long materialId, @RequestParam(required = false) boolean embed)
+      throws ServiceException, ObjectNotFoundException {
 
     Long domainId = SecurityUtils.getCurrentDomainId();
     Results results = inventoryManagementService.getInventory(domainId, entityId, null, null, null,
@@ -748,6 +753,6 @@ public class InventoryController {
       throw new ObjectNotFoundException("Inventory not found");
     }
     return inventoryBuilder
-        .buildMInventoryDetail((IInvntry) results.getResults().get(0), domainId, entityId);
+        .buildMInventoryDetail((IInvntry) results.getResults().get(0), domainId, entityId, embed);
   }
 }

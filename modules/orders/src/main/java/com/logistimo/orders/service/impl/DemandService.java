@@ -46,7 +46,6 @@ import com.logistimo.pagination.Results;
 import com.logistimo.proto.JsonTagsZ;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.impl.PMF;
-import com.logistimo.shipments.entity.IShipmentItemBatch;
 import com.logistimo.shipments.service.impl.ShipmentService;
 import com.logistimo.tags.dao.ITagDao;
 import com.logistimo.tags.entity.ITag;
@@ -58,6 +57,7 @@ import com.sun.rowset.CachedRowSetImpl;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
@@ -82,7 +82,7 @@ import javax.sql.rowset.CachedRowSet;
 /**
  * Created by smriti on 9/30/16.
  */
-@org.springframework.stereotype.Service
+@Service
 public class DemandService implements IDemandService {
   private static final XLog xLogger = XLog.getLog(DemandService.class);
   private ITagDao tagDao;
@@ -184,7 +184,9 @@ public class DemandService implements IDemandService {
       parameters.add(String.valueOf(mTag));
     }
 
-    query.append(" GROUP BY LKID, MID LIMIT ").append(offset).append(CharacterConstants.COMMA)
+    query.append(" GROUP BY LKID, MID LIMIT ")
+        .append(offset)
+        .append(CharacterConstants.COMMA)
         .append(size)
         .append(")D").append(CharacterConstants.SPACE)
         .append("LEFT JOIN INVNTRY I ON D.LKID = I.KID AND D.MID = I.MID");
@@ -203,10 +205,11 @@ public class DemandService implements IDemandService {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     JDOConnection conn = null;
     PreparedStatement statement = null;
+    CachedRowSet rowSet = null;
     try {
       conn = pm.getDataStoreConnection();
       java.sql.Connection sqlConn = (java.sql.Connection) conn;
-      CachedRowSet rowSet = new CachedRowSetImpl();
+      rowSet = new CachedRowSetImpl();
       statement = sqlConn.prepareStatement(query.toString());
       int i = 1;
       for (String p : parameters) {
@@ -223,6 +226,15 @@ public class DemandService implements IDemandService {
       }
       return res;
     } finally {
+
+      try {
+        if (rowSet != null) {
+          rowSet.close();
+        }
+      } catch (Exception ignored) {
+        xLogger.warn("Exception while closing rowSet", ignored);
+      }
+
       try {
         if (statement != null) {
           statement.close();
@@ -278,84 +290,6 @@ public class DemandService implements IDemandService {
       if (useLocalPM) {
         localPM.close();
       }
-    }
-    return null;
-  }
-
-  /**
-   * Batches are grouped across all shipments by batch id, ignoring all meta. Only quantities and
-   * batch id can be read.
-   */
-  public List<IDemandItem> getDemandItemsWithBatches(Long orderId) {
-    try {
-      List<IDemandItem> demandItems = getDemandItems(orderId);
-      Map<Long, IDemandItem> demandItemMap = new HashMap<>(demandItems.size());
-      demandItems.stream()
-          .forEach(demandItem -> demandItemMap.put(demandItem.getMaterialId(), demandItem));
-      List<IShipmentItemBatch>
-          shipmentItemBatches =
-          shipmentService.getShipmentsBatchByOrderId(orderId);
-      if (shipmentItemBatches != null) {
-        Map<String, IShipmentItemBatch> shipmentItemBatchMap = new HashMap<>();
-        shipmentItemBatches.stream().forEach(shipmentItemBatch -> {
-              String key = shipmentItemBatch.getMaterialId() + "_" + shipmentItemBatch.getBatchId();
-              if (!shipmentItemBatchMap.containsKey(key)) {
-                shipmentItemBatchMap.put(key, shipmentItemBatch);
-              } else {
-                IShipmentItemBatch iShipmentItemBatch = shipmentItemBatchMap.get(key);
-                iShipmentItemBatch.setQuantity(
-                    iShipmentItemBatch.getQuantity().add(shipmentItemBatch.getQuantity()));
-                iShipmentItemBatch.setDiscrepancyQuantity(
-                    iShipmentItemBatch.getDiscrepancyQuantity()
-                        .add(shipmentItemBatch.getDiscrepancyQuantity()));
-                iShipmentItemBatch.setFulfilledQuantity(
-                    iShipmentItemBatch.getFulfilledQuantity()
-                        .add(shipmentItemBatch.getFulfilledQuantity()));
-              }
-            }
-        );
-        for (Map.Entry<String, IShipmentItemBatch> shipmentItemBatchEntry : shipmentItemBatchMap
-            .entrySet()) {
-          Long materialId = Long.valueOf(shipmentItemBatchEntry.getKey().split("_")[0]);
-          demandItemMap.get(materialId).addBatch(shipmentItemBatchEntry.getValue());
-        }
-      }
-      return demandItems;
-    } catch (Exception e) {
-      xLogger.severe("Error while fetching demand items with batches for order {0}", orderId, e);
-    }
-    return null;
-  }
-
-  /**
-   * @param quantityByMaterial - Key: Material Id, value - Return quantity
-   */
-  public List<IDemandItem> updateDemandReturns(Long orderId,
-                                               Map<Long, BigDecimal> quantityByMaterial,
-                                               boolean decrement) {
-    PersistenceManager pm = PMF.get().getPersistenceManager();
-    try {
-      List<IDemandItem> demandItems = getDemandItems(orderId, pm);
-      demandItems.stream()
-          .filter(demandItem -> quantityByMaterial.containsKey(demandItem.getMaterialId()))
-          .forEach(demandItem -> {
-                if (decrement) {
-                  demandItem.setReturnedQuantity(demandItem.getReturnedQuantity()
-                      .subtract(quantityByMaterial.get(demandItem.getMaterialId())));
-                } else {
-                  demandItem.setReturnedQuantity(demandItem.getReturnedQuantity()
-                      .add(quantityByMaterial.get(demandItem.getMaterialId())));
-                }
-              }
-          );
-      pm.makePersistentAll(demandItems);
-      return (List<IDemandItem>) pm.detachCopyAll(demandItems);
-    } catch (Exception e) {
-      xLogger
-          .severe("Error while updating demand items with return quantity for order {0}", orderId,
-              e);
-    } finally {
-      pm.close();
     }
     return null;
   }
@@ -552,7 +486,7 @@ public class DemandService implements IDemandService {
                 "(SELECT OX.STON from `ORDER` OX where OX.ID = OID) OSCT FROM DEMANDITEM D ");
     List<String> parameters = new ArrayList<>();
     if (orderId != null) {
-      sqlQuery.append("WHERE OID = ").append(CharacterConstants.QUESTION);
+      sqlQuery.append("WHERE OID = ?");
       parameters.add(String.valueOf(orderId));
     } else {
       StringBuilder orderQuery =
@@ -561,22 +495,20 @@ public class DemandService implements IDemandService {
         sqlQuery.append("WHERE OID IN (").append(orderQuery).append(")");
     }
     if (materialId != null) {
-      sqlQuery.append(" AND MID = ").append(CharacterConstants.QUESTION);
+      sqlQuery.append(" AND MID = ?");
       parameters.add(String.valueOf(materialId));
     } else if (materialTag != null && !materialTag.isEmpty()) {
-      sqlQuery.append(" AND MID IN (SELECT MATERIALID from MATERIAL_TAGS where ID = ")
-          .append(CharacterConstants.QUESTION)
-          .append(")");
+      sqlQuery.append(" AND MID IN (SELECT MATERIALID from MATERIAL_TAGS where ID = ?)");
       parameters.add(String.valueOf(tagDao.getTagFilter(materialTag, ITag.MATERIAL_TAG)));
     }
     SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATETIME_CSV_FORMAT);
     if (from != null) {
-      sqlQuery.append(" AND T >= TIMESTAMP(").append(CharacterConstants.QUESTION).append(")");
+      sqlQuery.append(" AND T >= TIMESTAMP(?)");
       parameters.add(sdf.format(from));
     }
     if (to != null) {
       to = LocalDateUtil.getOffsetDate(to, 1, java.util.Calendar.DAY_OF_MONTH);
-      sqlQuery.append(" AND T < TIMESTAMP(").append(CharacterConstants.QUESTION).append(")");
+      sqlQuery.append(" AND T < TIMESTAMP(?)");
       parameters.add(sdf.format(to));
     }
     if(StringUtils.isBlank(discType)) {
@@ -609,7 +541,7 @@ public class DemandService implements IDemandService {
                                           List<String> parameters) {
     StringBuilder orderQuery = new StringBuilder("SELECT ID FROM `ORDER` WHERE ");
     if (excludeTransfer) {
-      orderQuery.append("OTY != ").append(CharacterConstants.QUESTION);
+      orderQuery.append("OTY != ?");
       parameters.add(String.valueOf(IOrder.TRANSFER));
       orderQuery.append(" AND ");
     }
@@ -634,29 +566,25 @@ public class DemandService implements IDemandService {
 
       orderQuery.append("))");
     } else {
-      orderQuery.append("(KID IN (SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID = ")
-          .append(CharacterConstants.QUESTION).append(")");
+      orderQuery.append("(KID IN (SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID = ?)");
       parameters.add(String.valueOf(domainId));
       orderQuery.append(" OR ");
-      orderQuery.append("SKID IN (SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID = ")
-          .append(CharacterConstants.QUESTION).append("))");
+      orderQuery.append("SKID IN (SELECT KIOSKID_OID FROM KIOSK_DOMAINS WHERE DOMAIN_ID = ?))");
       parameters.add(String.valueOf(domainId));
 
     }
 
     if (kioskId != null) {
       String kidParam = IOrder.TYPE_PURCHASE.equals(oType) ? "KID" : "SKID";
-      orderQuery.append(" AND ").append(kidParam).append(" = ").append(CharacterConstants.QUESTION);
+      orderQuery.append(" AND ").append(kidParam).append(" = ?");
       parameters.add(String.valueOf(kioskId));
     } else if (StringUtils.isNotBlank(kioskTag)) {
       orderQuery.append(
-          " AND (KID IN (SELECT KIOSKID FROM KIOSK_TAGS WHERE ID IN(SELECT ID FROM TAG WHERE NAME=")
-          .append(CharacterConstants.QUESTION).append("))");
+          " AND (KID IN (SELECT KIOSKID FROM KIOSK_TAGS WHERE ID IN(SELECT ID FROM TAG WHERE NAME=?))");
       parameters.add(kioskTag);
       orderQuery.append(" OR ");
       orderQuery.append(
-          "SKID IN (SELECT KIOSKID FROM KIOSK_TAGS WHERE ID IN(SELECT ID FROM TAG WHERE NAME=")
-          .append(CharacterConstants.QUESTION).append(")))");
+          "SKID IN (SELECT KIOSKID FROM KIOSK_TAGS WHERE ID IN(SELECT ID FROM TAG WHERE NAME=?)))");
       parameters.add(kioskTag);
     }
 

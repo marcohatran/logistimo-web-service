@@ -35,7 +35,6 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 import javax.jdo.PersistenceManager;
-import javax.jdo.Query;
 
 /**
  * Created by naveensnair on 13/11/17.
@@ -95,27 +94,7 @@ public class BulletinBoardDashBoardService implements IBulletinBoardDashBoardSer
 
   @SuppressWarnings("unchecked")
   private <T> List<T> getAll(Long domainId, Class<T> clz) {
-    List<T> o = null;
-    PersistenceManager pm = PMF.get().getPersistenceManager();
-    Query q = pm.newQuery(JDOUtils.getImplClass(clz));
-    String declaration = " Long dIdParam";
-    q.setFilter("dId == dIdParam");
-    q.declareParameters(declaration);
-    try {
-      o = (List<T>) q.execute(domainId);
-      if (o != null) {
-        o.size();
-        o = (List<T>) pm.detachCopyAll(o);
-      }
-    } finally {
-      try {
-        q.closeAll();
-      } catch (Exception ignored) {
-        xLogger.warn("Exception while closing query", ignored);
-      }
-      pm.close();
-    }
-    return o;
+    return JDOUtils.getAll(domainId, clz);
   }
 
   @Override
@@ -137,7 +116,7 @@ public class BulletinBoardDashBoardService implements IBulletinBoardDashBoardSer
   @Override
   public IDashboard getDashBoard(Long dbId) throws ServiceException {
     try {
-      return get(dbId, IDashboard.class);
+      return JDOUtils.get(dbId, IDashboard.class);
     } catch (Exception e) {
       xLogger.severe("Error in fetching Widget:", dbId, e);
       throw new ServiceException("Error in fetching Widget" + dbId, e);
@@ -145,12 +124,4 @@ public class BulletinBoardDashBoardService implements IBulletinBoardDashBoardSer
   }
 
 
-  private <T> T get(Long id, Class<T> clz) {
-    PersistenceManager pm = PMF.get().getPersistenceManager();
-    try {
-      return JDOUtils.getObjectById(clz, id, pm);
-    } finally {
-      pm.close();
-    }
-  }
 }

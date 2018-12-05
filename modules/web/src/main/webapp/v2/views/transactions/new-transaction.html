@@ -98,6 +98,10 @@
                                 <span ng-show="loadingDent" class="form-control-feedback typehead-loading" aria-hidden="true">
                                     <span class="glyphicons glyphicons-cogwheel spin"></span>
                                 </span>
+                                <div ng-show="showCustomerInventory(transaction)"
+                                     class="temp">
+                                    <span class="litetext"> <input type="checkbox" ng-model="showDestInv" ng-disabled="showDestInv"> {{resourceBundle['show.currentstock.at']}} {{transaction.dent.enm}}</span>
+                                </div>
                                 <span ng-show="isUndef(transaction.dent) && transaction.type == 'ri'" class="litetext"> {{resourceBundle['customer.not.selected.note']}}</span>
                             </div>
                         </div>
@@ -144,7 +148,7 @@
                             <div ng-show="transaction.ent.nm === transaction.dent.enm" class="has-error">
                                 <span class="help-block">{{resourceBundle['materials.transfer']}}</span>
                             </div>
-                            <div ng-show="tranDomainConfig.showCInv && (transaction.type == 't' || transaction.type == 'i' || transaction.type == 'ri') && transaction.dent.enm.length > 0 && transaction.ent.nm !== transaction.dent.enm && showDestInvPermission > 0"
+                            <div ng-show="showCustomerInventory(transaction)"
                                  class="temp">
                                 <span class="litetext"> <input type="checkbox" ng-model="showDestInv" ng-disabled="showDestInv"> {{resourceBundle['show.currentstock.at']}} {{transaction.dent.enm}}</span>
                             </div>
@@ -256,7 +260,7 @@
                         <th class="col-sm-1 text-center" ng-show="transaction.type == 'ri' || transaction.type == 'ro'">
                             {{resourceBundle['return.quantity']}}
                         </th>
-                        <th class="col-sm-1 text-center" ng-hide="transaction.type == 'ri' || transaction.type == 'ro'">
+                        <th class="col-sm-1 text-center" ng-class="{'required' : reasonMandatory}" ng-hide="transaction.type == 'ri' || transaction.type == 'ro'">
                             {{resourceBundle['reason']}}
                         </th>
                         <th class="col-sm-0-5 text-center"></th>
@@ -332,14 +336,14 @@
                                     </tr>
                                     </tbody>
                                 </table>
-                                <button type="button" ng-disabled="material.op=='add'"
+                                <button type="button" ng-disabled="material.disableButtons == true"
                                         ng-hide="exRow[$index] === 'add' || exRow[$index] === 'show' ||  isUndef(material.returnitems) || material.returnitems.length == 0"
                                         class="btn btn-sm btn-primary"
-                                        ng-click="material.op='edit'; selectOnType($index)">{{resourceBundle['edit']}}
+                                        ng-click="material.op='edit'; disableButtonsAndIncrementCount(material); selectOnType($index)">{{resourceBundle['edit']}}
                                 </button>
-                                <button type="button" class="btn btn-sm btn-primary" ng-disabled="material.op=='edit'"
+                                <button type="button" class="btn btn-sm btn-primary" ng-disabled="material.disableButtons == true"
                                         ng-hide="exRow[$index] === 'add' || exRow[$index] === 'show'"
-                                        ng-click="material.op='add'; selectOnType($index)">
+                                        ng-click="material.op='add'; disableButtonsAndIncrementCount(material); selectOnType($index)">
                                     {{resourceBundle['enter.returns']}}
                                 </button>
                             </div>
@@ -386,11 +390,11 @@
                                 <button type="button" ng-hide="exRow[$index] === 'add' || exRow[$index] === 'show'" class="btn btn-sm btn-primary">{{resourceBundle['batch.enter']}}</button>
                                 <p ng-show="exRow[$index] === 'add' || exRow[$index] === 'show'" class="btn btn-sm btn-default">{{resourceBundle['hideuppercase']}} {{resourceBundle['batch.lower']}}</p>
                             </div>
-                            <p class="text-center temp" ng-show="material.isBinary && showMaterials">1</p>
                         </td>
                         <td ng-hide="transaction.type == 'ri' || transaction.type == 'ro'">
                             <div ng-show="showMaterials && material.rsns && material.rsns.length > 0 && showReason && transaction.materials.length - 1 !== $index" >
-                                <select class="form-control" ng-model="material.reason" tabindex="{{$index+100}}">
+                                <select class="form-control" ng-model="material.reason" tabindex="{{$index+100}}" id="r{{material.name.mId}}{{$index}}"  ng-class="{'red-border':material.rinvalidPopup}" ng-blur="material.isVisitedReason = true; validate(material,$index)" uib-popover="{{material.rPopupMsg}}" popover-trigger="showpopup"
+                                        ng-focus="hidePopup(material,$index,'r')">
                                     <option ng-repeat="reason in material.rsns track by $index" value="{{reason}}" ng-selected="material.reason == reason">{{reason || resourceBundle['select'] + ' ' + resourceBundle['reason.lowercase']}}</option>
                                 </select>
                             </div>
@@ -434,7 +438,7 @@
                     </tr>
                     <tr data-ng-switch-when="return">
                         <td colspan=100% class="partialview">
-                            <div ng-init="view='views/transactions/return-transaction.html'; reasons = material.rsns; defReason = material.reason; showReason = material.showReason; op = material.op; huName = material.name.huName; huQty = material.name.huQty; mnm = material.name.mnm ; mid = material.name.mId ; kid = material.name.kId ; bdata = material.oquantity; bndata = material.bnquantity; type = transaction.type; index = $index"
+                            <div ng-init="view='views/transactions/return-transaction.html'; reasons = material.rsns; defReason = material.reason; showReason = material.showReason; op = material.op; huName = material.name.huName; huQty = material.name.huQty; mnm = material.name.mnm ; mid = material.name.mId ; kid = material.name.kId ; bdata = material.oquantity; bndata = material.bnquantity; type = transaction.type; index = $index;"
                                  ng-include="'views/transactions/return-transaction.html'"></div>
                         </td>
                     </tr>
@@ -444,7 +448,7 @@
                     <div class="col-sm-12">
                         <div class="pull-right">
                             <button type="button"
-                                    ng-disabled="invalidPopup != 0 || transaction.materials.length<=1 || !addTransaction.$valid"
+                                    ng-disabled="invalidPopup != 0 || transaction.materials.length<=1 || !addTransaction.$valid || openFormCount.returns > 0"
                                     ng-click="submitted=true; addTransaction.$valid && update()"
                                     class="btn btn-sm btn-primary">{{resourceBundle['submit']}}
                             </button>

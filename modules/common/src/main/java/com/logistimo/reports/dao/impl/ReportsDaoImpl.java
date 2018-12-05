@@ -33,7 +33,7 @@ import java.util.List;
 public class ReportsDaoImpl implements IReportsDao {
 
   @Override
-  public List getResults(String query) {
+  public List getResults(String query, Object... objects) {
     return null;
   }
 }

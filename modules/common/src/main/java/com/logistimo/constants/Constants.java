@@ -40,13 +40,14 @@ public final class Constants {
   public static final String X_ACCESS_USER = "x-access-user";
   public static final String GROUP_BY_NAME = "GROUP_BY_NAME";
   public static final String DOMAIN = "x-access-domain";
+  public static final String BACKEND_MESSAGES = "BackendMessages";
+  public static final String MESSAGES = "Messages";
 
   private Constants() {
   }
 
   // Country codes - ISO 3166 standard codes
   public static final String COUNTRY_INDIA = "IN";
-  public static final String COUNTRY_VIETNAM = "VN";
   public static final String COUNTRY_DEFAULT = COUNTRY_INDIA;
 
   // Language codes - ISO 639.2
@@ -55,7 +56,6 @@ public final class Constants {
 
   // Currency codes - ISO 4217
   public static final String CURRENCY_INDIANRUPEES = "INR";
-  public static final String CURRENCY_USDOLLARS = "USD";
   public static final String CURRENCY_DEFAULT = CURRENCY_INDIANRUPEES;
 
   // Timezones - Java timezone IDs
@@ -75,10 +75,6 @@ public final class Constants {
   // Domain defaults
   public static final Long DOMAINID_DEFAULT = -1l;
 
-  // Admin. account defaults
-  public static final String ADMINID_DEFAULT = "__admin__";
-  public static final String ADMINNAME_DEFAULT = "admin";
-
   // System name default
   public static final String SYSTEM_ID = "__sys__";
 
@@ -89,12 +85,11 @@ public final class Constants {
   public static final String VIEW_KIOSKMATERIALS = "kioskmaterials";
   public static final String VIEW_USERS = "users";
   public static final String VIEW_ORDERS = "orders";
-  public static final String VIEW_REPORTS = "reports";
   public static final String VIEW_DATA = "data";
   public static final String VIEW_DOMAINS = "domains";
   public static final String VIEW_HOME = "home";
   public static final String VIEW_SYSTEMCONFIGURATION = "system_configuration";
-  public static final String VIEW_CONFIGURATION = "configuration";
+
   public static final String VIEW_POOLGROUPS = "poolgroups";
 
   // Unicode replace-any character
@@ -103,10 +98,6 @@ public final class Constants {
   // Modes
   public static final String MODE_MANAGE = "manage";
 
-  // Verical or industry
-  public static final String VERTICAL_DEFAULT = "dfl";
-  public static final String VERTICAL_PHARMACEUTICALS = "phr";
-
   // Date format
   public static final String DATE_FORMAT = "dd/MM/yyyy";
   public static final String DATE_FORMAT_CSV = "yyyy-MM-dd";
@@ -114,55 +105,35 @@ public final class Constants {
   public static final String DATETIME_FORMAT = "dd/MM/yyyy HH:mm:ss";
   public static final String DATETIME_CSV_FORMAT = "yyyy-MM-dd HH:mm:ss";
   public static final String DATETIME_IN_MILLIS_FORMAT = "dd/MM/yyyy HH:mm:ss.SSS";
-  public static final String DATETIME_CSV_MILLIS_FORMAT = "yyyy-MM-dd HH:mm:ss.SSS";
-  public static final int MAX_REPORT_DURATION = 365; // days
   public static final String DATE_FORMAT_CUSTOMREPORT = "dd-MMM-yyyy";
   public static final String ANALYTICS_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
   public static final String IF_MODIFIED_SINCE_DATE_FORMAT = "EEE, dd MMM yyyy HH:mm:ss";
   public static final String ISO_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+  public static final String DATE_FORMAT_EXCEL = "yyyy.MM.dd";
 
   public static final String IF_MODIFIED_SINCE_HEADER = "If-Modified-Since";
   public static final String LAST_MODIFIED_HEADER = "Last-Modified";
-  // Reporting types
-  public static final String REPORT_TRANSACTION = "trnsrpt";
-  public static final String REPORT_DEMAND = "dmndrpt";
 
   // Pagination cursor session attributes
   public static final String CURSOR_TRANSACTIONS = "cursortrans";
-  public static final String CURSOR_DEMANDBOARD = "cursordb";
   public static final String CURSOR_ORDERS = "cursororders";
   public static final String CURSOR_USERS = "cursorusers";
   public static final String CURSOR_KIOSKS = "cursorkiosks";
   public static final String CURSOR_INVENTORY = "cursorinventory";
   public static final String CURSOR_MATERIALS = "cursormaterials";
   public static final String CURSOR_KIOSKLINKS = "cursorkiosklinks";
-  public static final String CURSOR_DOMAINS = "cursordomains";
-  public static final String CURSOR_ALOGS = "cursoralogs";
-  public static final String CURSOR_MESSAGES = "cursormsgs";
-  public static final String CURSOR_STOCKEVENTS = "cursorstockevents";
-  public static final String CURSOR_MANUALTRANSACTIONS = "cursormanualtrans";
-  public static final String CURSOR_INVENTORYITEM = "cursorinventoryitem";
-
 
   // Login expiry time default
   public static final int LOGIN_DURATION = 15; // days
-  // Days filter default
-  public static final String FILTER_DAYS_DEFAULT = "180";
-  // Tags
-  public static final int MAX_TAGS = 30; // max. number of tags displayed
+
   // URLS
   public static final String URL_OPTIMIZE = "/task/optimize";
 
   // Max. limit to contains query in GAE
   public static final int MAX_LIST_SIZE_FOR_CONTAINS_QUERY = 30;
 
-  public static final int MAX_ORDERS_TO_CLIENT = 20;
-
   // Backend hosts
   public static final String BACKEND1 = "backend1";
-
-  // New UI index page
-  public static final String NEWUI_HOME_URL = "/v2/index.html";
 
   public static final String GAE_DEPLOYMENT = "gae.deployment";
   public static final String GCS_BUCKET_DEFAULT = "default";
@@ -216,10 +187,7 @@ public final class Constants {
   public static final String TYPE_ORDER = "o";
   public static final String TYPE_REORDER = "oo";
   public static final String TYPE_WASTAGE = "w";
-  public static final String TYPE_RETURN = "rt";
-  public static final String TYPE_SHIPMENT = "s";
   public static final String MATERIAL_TAG = "mTag";
-  public static final int LOCATION_FAILED_JOB_LIMIT = 15;
 
   public static final String REQ_ID = "x-request-id";
   public static final String APP_NAME = "x-app-name";
@@ -230,28 +198,21 @@ public final class Constants {
   public static final int FREQ_TYPE_WEEKLY = 1;
   public static final int FREQ_TYPE_MONTHLY = 2;
 
-  // Attributes for store app theme
-  public static final int GUI_THEME_BLACK = 0;
-  public static final int GUI_THEME_RED = 1;
-  public static final int GUI_THEME_DEFAULT = -1;
+  public static final int GUI_THEME_SAME_AS_IN_DOMAIN_CONFIGURATION = -1;
+  public static final int GUI_THEME_DEFAULT = 0;
+  public static final int GUI_THEME_SIDEBAR_AND_LANDING_SCREEN = 1;
 
   public static final String JAVAX_JDO_QUERY_SQL = "javax.jdo.query.SQL";
 
   public static final String SYSTEM_USER_ID = "system";
 
-  public static String getVerticalDisplay(String vertical) {
-    String verticalDisplay = "Default";
-    if (VERTICAL_PHARMACEUTICALS.equals(vertical)) {
-      verticalDisplay = "Pharmaceuticals";
-    }
-
-    return verticalDisplay;
-  }
+  public static final String WEB = "w";
 
   public static final String USER_KEY = "user";
   public static final String KIOSK_KEY = "kiosk";
 
-  public static final String MESSAGES = "Messages";
+  public static final String SKIP_INVENTORY = "skip_inventory";
 
-  public static final String BACKEND_MESSAGES = "BackendMessages";
+  public static final int FILE_SIZE_IN_MB = 20;
+  public static final int MEDIA_SIZE_IN_MB = 10;
 }

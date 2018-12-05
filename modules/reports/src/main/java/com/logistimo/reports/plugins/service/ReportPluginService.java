@@ -34,10 +34,13 @@ import com.logistimo.constants.Constants;
 import com.logistimo.domains.entity.IDomain;
 import com.logistimo.domains.service.DomainsService;
 import com.logistimo.exception.BadRequestException;
+import com.logistimo.inventory.entity.IInventoryMinMaxLog;
+import com.logistimo.inventory.service.InventoryManagementService;
 import com.logistimo.logger.XLog;
 import com.logistimo.reports.ReportsConstants;
 import com.logistimo.reports.constants.ReportCompareField;
 import com.logistimo.reports.constants.ReportViewType;
+import com.logistimo.reports.models.ReportMinMaxHistoryFilters;
 import com.logistimo.reports.plugins.IExternalServiceClient;
 import com.logistimo.reports.plugins.internal.ExportModel;
 import com.logistimo.reports.plugins.internal.ExternalServiceClient;
@@ -57,12 +60,14 @@ import org.joda.time.format.DateTimeFormatter;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Type;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -74,7 +79,7 @@ import javax.ws.rs.core.Response;
 /**
  * @author Mohan Raja
  */
-@org.springframework.stereotype.Service
+@Service
 public class ReportPluginService {
 
   private static final XLog xLogger = XLog.getLog(ReportPluginService.class);
@@ -88,6 +93,7 @@ public class ReportPluginService {
 
   private DomainsService domainsService;
   private AssetManagementService assetManagementService;
+  private InventoryManagementService inventoryManagementService;
 
   @Autowired
   public void setDomainsService(DomainsService domainsService) {
@@ -97,6 +103,11 @@ public class ReportPluginService {
   @Autowired
   public void setAssetManagementService(AssetManagementService assetManagementService) {
     this.assetManagementService = assetManagementService;
+  }
+
+  @Autowired
+  public void setInventoryManagementService(InventoryManagementService inventoryManagementService) {
+    this.inventoryManagementService = inventoryManagementService;
   }
 
   public List<ReportChartModel> getReportData(Long domainId, String json) {
@@ -125,7 +136,7 @@ public class ReportPluginService {
           model.filters);
     } catch (Exception e) {
       xLogger.severe("Error while getting the report data", e);
-      return null;
+      return Collections.emptyList();
     }
   }
 
@@ -318,10 +329,7 @@ public class ReportPluginService {
         model.filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_ENTITY_TAG);
         break;
       case BY_REGION:
-        model.filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_COUNTRY);
-        model.filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_STATE);
-        model.filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_DISTRICT);
-        model.filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_TALUK);
+        finaliseFilterByRegion(model);
         break;
       case BY_MODEL:
         model.filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_DMODEL);
@@ -329,6 +337,26 @@ public class ReportPluginService {
       case BY_CUSTOMER:
         finaliseFilterByCustomer(model);
         break;
+      default:
+        break;
+    }
+  }
+
+  private void finaliseFilterByRegion(QueryRequestModel model) {
+    if(model.filters.get(QueryHelper.TOKEN + QueryHelper.QUERY_COUNTRY) == null ) {
+      model.filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_COUNTRY);
+    }
+    if(model.filters.get(QueryHelper.TOKEN + QueryHelper.QUERY_STATE) == null ) {
+      model.filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_STATE);
+    }
+    if(model.filters.get(QueryHelper.TOKEN + QueryHelper.QUERY_DISTRICT) == null ) {
+      model.filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_DISTRICT);
+    }
+    if(model.filters.get(QueryHelper.TOKEN + QueryHelper.QUERY_TALUK) == null ) {
+      model.filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_TALUK);
+    }
+    if(model.filters.get(QueryHelper.TOKEN + QueryHelper.QUERY_CITY) == null ) {
+      model.filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_CITY);
     }
   }
 
@@ -384,7 +412,7 @@ public class ReportPluginService {
 
   private QueryRequestModel constructQueryRequestModel(Long domainId, JSONObject jsonObject,
                                                        ReportViewType viewType)
-      throws ParseException, ServiceException {
+      throws ParseException {
     QueryRequestModel model = new QueryRequestModel();
     model.filters = QueryHelper.parseFilters(domainId, jsonObject);
     if (model.filters.containsKey(QueryHelper.TOKEN + QueryHelper.QUERY_CITY)) {
@@ -423,6 +451,13 @@ public class ReportPluginService {
       model.rowHeadings = Arrays.asList(arr);
     }
     finaliseFilters(viewType, model, retainFilters);
+    if(model.filters.containsKey(QueryHelper.LOCATION_BY)) {
+      if(model.filters.containsKey(QueryHelper.TOKEN + QueryHelper.QUERY_DISTRICT)) {
+        model.queryId = model.queryId.replace("RT", "RT_D");
+      } else {
+        model.queryId = model.queryId.replace("RT", "RT_D_ALL");
+      }
+    }
     return model;
   }
 
@@ -447,12 +482,13 @@ public class ReportPluginService {
 
   private void finaliseFilterByCustomer(QueryRequestModel model) {
     model.filters.remove(QueryHelper.TOKEN + QueryHelper.QUERY_LKID);
-    model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_LKID + CharacterConstants.UNDERSCORE + QueryHelper.QUERY, QueryHelper.QUERY_LKID + CharacterConstants.UNDERSCORE + QueryHelper.QUERY);
+    model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_LKID + CharacterConstants.UNDERSCORE
+            + QueryHelper.QUERY,
+        QueryHelper.QUERY_LKID + CharacterConstants.UNDERSCORE + QueryHelper.QUERY);
   }
 
   private void prepareFilters(Long domainId, ReportViewType viewType,
-                              QueryRequestModel model, Map<String, String> retainFilters)
-      throws ServiceException {
+                              QueryRequestModel model, Map<String, String> retainFilters) {
     switch (viewType) {
       case BY_MATERIAL:
         prepareFiltersByMaterial(model, retainFilters);
@@ -495,38 +531,72 @@ public class ReportPluginService {
       case BY_CUSTOMER:
         prepareFiltersByCustomer(model);
         break;
+      default:
+        break;
+    }
+  }
+
+  private String getLocationReportBy(String locationBy) {
+    switch (locationBy) {
+      case QueryHelper.DISTRICT:
+        return QueryHelper.LOCATION_DISTRICT;
+      case QueryHelper.TALUK:
+        return QueryHelper.LOCATION_TALUK;
+      case QueryHelper.CITY:
+      default:
+        return QueryHelper.LOCATION_CITY;
     }
   }
 
   private void prepareFiltersByRegion(Long domainId, QueryRequestModel model) {
     try {
-      DomainConfig dc = DomainConfig.getInstance(domainId);
-      if (StringUtils.isNotEmpty(dc.getCountry())) {
-        if (StringUtils.isNotEmpty(dc.getState())) {
-          if (StringUtils.isNotEmpty(dc.getDistrict())) {
-            model.filters.put(QueryHelper.TOKEN_LOCATION, QueryHelper.LOCATION_TALUK);
-            model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_TALUK, null);
-            model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_DISTRICT, null);
-            model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_STATE, null);
-            model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_COUNTRY, null);
+      if(model.filters.containsKey(QueryHelper.TOKEN + QueryHelper.QUERY_COUNTRY)) {
+        if (model.filters.containsKey(QueryHelper.TOKEN + QueryHelper.QUERY_DISTRICT)) {
+          model.filters.put(QueryHelper.TOKEN_LOCATION, QueryHelper.LOCATION_TALUK);
+          model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_TALUK, null);
+        } else { // with state filter
+          String locationBy = getLocationReportBy(model.filters.get(QueryHelper.LOCATION_BY));
+          model.filters.put(QueryHelper.TOKEN_LOCATION, locationBy);
+          switch (locationBy) {
+            case QueryHelper.LOCATION_CITY:
+              model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_CITY, null);
+              break;
+            case QueryHelper.LOCATION_TALUK:
+              model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_TALUK, null);
+            default:
+              model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_DISTRICT, null);
+          }
+        }
+      } else {
+        DomainConfig dc = DomainConfig.getInstance(domainId);
+        if (StringUtils.isNotEmpty(dc.getCountry())) {
+          if (StringUtils.isNotEmpty(dc.getState())) {
+            if (StringUtils.isNotEmpty(dc.getDistrict())) {
+              model.filters.put(QueryHelper.TOKEN_LOCATION, QueryHelper.LOCATION_TALUK);
+              model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_TALUK, null);
+              model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_DISTRICT, null);
+              model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_STATE, null);
+              model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_COUNTRY, null);
+            } else {
+              model.filters.put(QueryHelper.TOKEN_LOCATION, QueryHelper.LOCATION_DISTRICT);
+              model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_DISTRICT, null);
+              model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_STATE, null);
+              model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_COUNTRY, null);
+            }
           } else {
-            model.filters.put(QueryHelper.TOKEN_LOCATION, QueryHelper.LOCATION_DISTRICT);
-            model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_DISTRICT, null);
+            model.filters.put(QueryHelper.TOKEN_LOCATION, QueryHelper.LOCATION_STATE);
             model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_STATE, null);
             model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_COUNTRY, null);
           }
         } else {
-          model.filters.put(QueryHelper.TOKEN_LOCATION, QueryHelper.LOCATION_STATE);
-          model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_STATE, null);
+          model.filters.put(QueryHelper.TOKEN_LOCATION, QueryHelper.LOCATION_COUNTRY);
           model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_COUNTRY, null);
         }
-      } else {
-        model.filters.put(QueryHelper.TOKEN_LOCATION, QueryHelper.LOCATION_COUNTRY);
-        model.filters.put(QueryHelper.TOKEN + QueryHelper.QUERY_COUNTRY, null);
       }
     } catch (Exception e) {
       xLogger.warn("Exception in replacing location token", e);
     }
+
   }
 
   private void perpareFiltersByEntity(QueryRequestModel model, Map<String, String> retainFilters) {
@@ -596,6 +666,26 @@ public class ReportPluginService {
         mDateTimeFormatter = DateTimeFormat.forPattern(QueryHelper.DATE_FORMAT_DAILY);
         toTime = mDateTimeFormatter.parseDateTime(endTime);
         return mDateTimeFormatter.print(toTime.minusDays(QueryHelper.DAYS_LIMIT - 1));
+    }
+  }
+
+  /**
+   * Gets a list of IInventoryMinMaxLog objects for the entity ID and material ID, from and to dates specified in the filters
+   * @param minMaxHistoryFilters -
+   * @return List of IInventoryMinMaxLog objects or empty list (in case an exception occurs)
+   */
+  public List<IInventoryMinMaxLog> getMinMaxHistoryReportData(ReportMinMaxHistoryFilters minMaxHistoryFilters) {
+    if (minMaxHistoryFilters == null) {
+      throw new IllegalArgumentException("Invalid filters while getting min max history report data");
+    }
+    String domainTimezone = DomainConfig.getInstance(SecurityUtils.getCurrentDomainId()).getTimezone();
+    try {
+      Date fromDate = LocalDateUtil.parseCustom(minMaxHistoryFilters.getFrom(),QueryHelper.DATE_FORMAT_DAILY, domainTimezone);
+      Date toDate = LocalDateUtil.parseCustom(minMaxHistoryFilters.getTo(),QueryHelper.DATE_FORMAT_DAILY, domainTimezone);
+      return inventoryManagementService.fetchMinMaxLogByInterval(minMaxHistoryFilters.getEntityId(), minMaxHistoryFilters.getMaterialId(), fromDate , toDate);
+    } catch (Exception e) {
+      xLogger.severe("Error while getting min max history report data", e);
+      return Collections.emptyList();
     }
   }
 }

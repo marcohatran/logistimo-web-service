@@ -85,6 +85,14 @@ domainCfgControllers.controller('GeneralConfigurationController', ['$scope', 'do
                 $scope.showWarning($scope.resourceBundle['same.admincontacts.warning']);
                 return;
             }
+            if(checkNullEmpty($scope.cnf.cnt)) {
+                $scope.showWarning($scope.resourceBundle['domain.country.mandatory']);
+                return;
+            }
+            if(checkNullEmpty($scope.cnf.tz)) {
+                $scope.showWarning($scope.resourceBundle['domain.timezone.mandatory']);
+                return;
+            }
             if ($scope.pUser)
                 $scope.continue = true;
             if ($scope.cnf.snh && checkNullEmpty($scope.cnf.nhn)) {
@@ -307,12 +315,12 @@ domainCfgControllers.controller('GeneralConfigurationController', ['$scope', 'do
             }
             var fileType = $scope.imageData.filetype.split("/");
             $scope.fileExt = fileType[fileType.length - 1];
-            if ($scope.fileExt != "png" && $scope.fileExt != "jpg" && $scope.fileExt != "jpeg") {
+            if ($scope.fileExt != "png" && $scope.fileExt != "jpg" && $scope.fileExt != "jpeg" && $scope.fileExt != 'gif') {
                 $scope.showWarning($scope.resourceBundle['image.upload.warning']);
                 return false;
             }
             var fileSize = $scope.imageData.filesize;
-            if (fileSize > 5 * 1024 * 1024) {
+            if (fileSize > 10 * 1024 * 1024) {
                 $scope.showWarning($scope.resourceBundle['uploadsizemessage']);
                 return false;
             }
@@ -322,7 +330,7 @@ domainCfgControllers.controller('GeneralConfigurationController', ['$scope', 'do
         $scope.uploadDomainImage = function () {
             $scope.showLoading();
             $scope.loadingImage = true;
-            mediaService.uploadImage($scope.fileExt, $scope.domainId, $scope.imageData.base64).then(function (data) {
+            mediaService.uploadImage($scope.fileExt, $scope.domainId, $scope.imageData).then(function (data) {
                 $scope.showSuccess($scope.resourceBundle['image.upload.success']);
                 getDomainImage();
                 $scope.addImage = false;
@@ -668,6 +676,7 @@ domainCfgControllers.controller('CapabilitiesConfigurationController', ['$scope'
                 $scope.uiCnf.stwd = $scope.cnf.stwd;
                 $scope.uiCnf.llr = $scope.cnf.llr;
                 $scope.uiCnf.theme = $scope.cnf.theme;
+                $scope.uiCnf.twoFactorAuthenticationEnabled = $scope.cnf.twoFactorAuthenticationEnabled;
             }
         };
         $scope.setCapabilitiesByRole = function (role, lu) {
@@ -694,6 +703,7 @@ domainCfgControllers.controller('CapabilitiesConfigurationController', ['$scope'
                 $scope.cnf.stwd = $scope.uiCnf.stwd;
                 $scope.cnf.llr = $scope.uiCnf.llr;
                 $scope.cnf.theme = $scope.uiCnf.theme;
+                $scope.cnf.twoFactorAuthenticationEnabled = $scope.uiCnf.twoFactorAuthenticationEnabled;
             }
         }
     }
@@ -1017,8 +1027,8 @@ domainCfgControllers.controller('ApprovalConfigurationController', ['$scope', 'd
 
     }]);
 
-domainCfgControllers.controller('InventoryConfigurationController', ['$scope', 'domainCfgService', 'OPTIMIZER', 'configService', '$timeout',
-    function ($scope, domainCfgService, OPTIMIZER, configService, $timeout) {
+domainCfgControllers.controller('InventoryConfigurationController', ['$scope', 'domainCfgService', 'OPTIMIZER', 'configService', '$timeout', 'TRANSACTION_TYPES',
+    function ($scope, domainCfgService, OPTIMIZER, configService, $timeout, TRANSACTION_TYPES) {
         $scope.inv = {};
         $scope.fr = ["daily", "weekly", "monthly"];
         $scope.forecast = [{
@@ -1330,6 +1340,11 @@ domainCfgControllers.controller('InventoryConfigurationController', ['$scope', '
                     };
                 });
             });
+            angular.forEach(TRANSACTION_TYPES, function(transactionType) {
+                if (checkNotNullEmpty($scope.inv.transactionTypesWithReasonMandatory) && $scope.inv.transactionTypesWithReasonMandatory.indexOf(transactionType) != -1) {
+                    $scope.inv[transactionType + 'rm'] = true;
+                }
+            });
 
             if (checkNotNullEmpty($scope.inv.ersns)) {
                 $scope.inv.ersnsObj = [];
@@ -1601,6 +1616,19 @@ domainCfgControllers.controller('InventoryConfigurationController', ['$scope', '
                     }
                 });
             });
+            $scope.inv.transactionTypesWithReasonMandatory = [];
+            angular.forEach(TRANSACTION_TYPES, function(transactionType){
+                var type = transactionType;
+                if (transactionType == 'p') {
+                    type = 's';
+                } else if (transactionType == 'w') {
+                    type = 'd';
+                }
+                if ($scope.inv[transactionType+'rm'] && ($scope.inv['r' + type] && checkNotNullEmpty($scope.inv['r' + type].rsns) || $scope.inv['c' + type + 'mt'])) {
+                    $scope.inv.transactionTypesWithReasonMandatory.push(transactionType);
+                }
+            });
+
             $scope.inv.ersns = [];
             if ($scope.inv.irc && checkNotNullEmpty($scope.inv.ersnsObj)) {
                 for (var i = 0; i < $scope.inv.ersnsObj.length; i++) {
@@ -4378,8 +4406,9 @@ domainCfgControllers.controller('CustomReportConfigurationController', ['$scope'
                 $scope.hideLoading();
             });
         };
-        $scope.getGeneralConfiguration();
-
+        $scope.finished = function() {
+            $scope.getGeneralConfiguration();
+        };
         $scope.openReport = function () {
             $scope.open = true;
         };
@@ -4501,6 +4530,11 @@ domainCfgControllers.controller('CustomReportConfigurationController', ['$scope'
         $scope.validateCustomReport = function () {
             $scope.cont = false;
             if ($scope.fileData != undefined) {
+                //validate fle size
+                if($scope.fileData.size > 20 * 1024 * 1024 ) { // Max file size to upload 10 MB
+                    $scope.showWarning("Maximum file size is 20MB.");
+                    return;
+                }
                 if (checkNullEmpty($scope.cr.tn)) {
                     $scope.showWarning($scope.resourceBundle['custom.templatenamedetail']);
                     return;
@@ -5049,5 +5083,44 @@ domainCfgControllers.controller('DashboardConfigurationController', ['$scope', '
             }
             query.callback(rData);
         };
+    }
+]);
+
+domainCfgControllers.controller('FormsConfigurationController', ['$scope', 'domainCfgService',
+    function($scope, domainCfgService) {
+        $scope.formsCfg = {formsList: ''};
+        $scope.loading = false;
+
+        $scope.setFormsConfiguration = function () {
+            $scope.loading = true;
+            $scope.showLoading();
+            domainCfgService.setFormsConfig($scope.formsCfg).then(function (data) {
+                if(checkNotNullEmpty(data.data)){
+                    $scope.showSuccess(data.data);
+                }
+            }).catch(function err(msg) {
+                $scope.showErrorMsg(msg, true);
+            }).finally(function () {
+                $scope.hideLoading();
+                $scope.loading = false;
+            })
+        };
+
+        $scope.getFormsConfiguration = function () {
+            $scope.loading = true;
+            $scope.showLoading();
+            domainCfgService.getFormsConfig().then(function (data) {
+                if(checkNotNullEmpty(data.data)) {
+                    $scope.formsCfg = data.data;
+                }
+            }).catch(function err(msg) {
+                $scope.showErrorMsg(msg, true);
+            }).finally(function () {
+                $scope.hideLoading();
+                $scope.loading = false;
+            })
+        };
+
+        $scope.getFormsConfiguration();
     }
 ]);

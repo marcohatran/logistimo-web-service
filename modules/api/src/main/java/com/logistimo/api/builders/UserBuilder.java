@@ -58,11 +58,14 @@ import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.StringUtil;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
@@ -119,10 +122,12 @@ public class UserBuilder {
     model.tgs = user.getTags();
     if (!isPartial) {
       model.ro = UserUtils.getRoleDisplay(user.getRole(), locale);
+      model.role =  user.getRole();
       model.phl = user.getLandPhoneNumber();
       model.ct = user.getCity();
       model.cnt = user.getCountry();
       model.st = user.getState();
+      model.ds = user.getDistrict();
       model.ll = user.getLastLogin();
       model.lr = user.getLastMobileAccessed();
       if (model.ll != null) {
@@ -221,13 +226,18 @@ public class UserBuilder {
               AssetConfigModel.Model aModel = new AssetConfigModel.Model();
               aModel.name = assetModel.name;
               aModel.type = assetModel.type;
-              for (AssetSystemConfig.Sensor sensor : assetModel.sns) {
-                AssetConfigModel.Sensor assetSns = new AssetConfigModel.Sensor();
-                assetSns.name = sensor.name;
-                assetSns.mpId = sensor.mpId;
-                assetSns.cd = sensor.cd;
-                aModel.sns.put(assetSns.name, assetSns);
+              aModel.capacity = assetModel.capacityInLitres;
+
+              if(CollectionUtils.isNotEmpty(assetModel.sns)) {
+                for (AssetSystemConfig.Sensor sensor : assetModel.sns) {
+                  AssetConfigModel.Sensor assetSns = new AssetConfigModel.Sensor();
+                  assetSns.name = sensor.name;
+                  assetSns.mpId = sensor.mpId;
+                  assetSns.cd = sensor.cd;
+                  aModel.sns.put(assetSns.name, assetSns);
+                }
               }
+
               manc.model.put(aModel.name, aModel);
             }
           }
@@ -322,9 +332,13 @@ public class UserBuilder {
 
       model.fnm = account.getFirstName();
       model.lnm = account.getLastName();
-      model.gen = account.getGender();
-      model.age = account.getAge();
-
+      model.setGen(account.getGender());
+      if (account.getBirthdate() != null) {
+        model.setDob(
+            LocalDateUtil.formatCustom(account.getBirthdate(), Constants.DATE_FORMAT, null));
+        model.setDobLabel(LocalDateUtil
+            .format(account.getBirthdate(), locale, timeZone, true));
+      }
       model.phl = account.getLandPhoneNumber();
 
       model.cnt = account.getCountry();
@@ -403,10 +417,17 @@ public class UserBuilder {
     user.setPermission(model.per);
     user.setFirstName(model.fnm);
     user.setLastName(model.lnm);
-    user.setGender(model.gen);
-    user.setAge(model.age);
-    user.setAgeType(IUserAccount.AGETYPE_YEARS);
-
+    user.setGender(model.getGen());
+    if (!StringUtils.isEmpty(model.getDob())) {
+      try {
+        user.setBirthdate(LocalDateUtil.parseCustom(model.getDob(), Constants.DATE_FORMAT, null));
+      } catch (ParseException e) {
+        xLogger.severe("Exception while trying to set date of birth of user. UserID: {0}", model.id,
+            e);
+      }
+    } else {
+      user.setBirthdate(null);
+    }
     user.setMobilePhoneNumber(model.phm);
     user.setLandPhoneNumber(model.phl);
     user.setEmail(model.em);
@@ -451,8 +472,8 @@ public class UserBuilder {
   }
 
   public List<DomainSuggestionModel> buildAccDmnSuggestionModelList(List<Long> accDids) {
-    if (accDids == null || accDids.isEmpty()) {
-      return null;
+    if (CollectionUtils.isEmpty(accDids)) {
+      return Collections.emptyList();
     } else {
       try {
         List<DomainSuggestionModel> accDmnSuggestionModelList = new ArrayList<>();

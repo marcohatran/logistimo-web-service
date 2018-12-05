@@ -339,7 +339,6 @@ public class BulkExportMgr {
               .setKioskId(kioskId)
               .setStatus(orderStatus)
               .setOtype(oType)
-              .setUserId(sourceUserId)
               .setSince(from)
               .setUntil(to)
               .setTagType(tagType)

@@ -29,11 +29,14 @@ import com.logistimo.dao.JDOUtils;
 import com.logistimo.exception.LogiException;
 import com.logistimo.exception.ValidationException;
 import com.logistimo.inventory.dao.impl.TransDao;
+import com.logistimo.inventory.entity.IInventoryMinMaxLog;
 import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.IInvntryBatch;
 import com.logistimo.inventory.entity.ITransaction;
+import com.logistimo.inventory.entity.InventoryMinMaxLog;
 import com.logistimo.inventory.entity.Invntry;
 import com.logistimo.inventory.entity.Transaction;
+import com.logistimo.services.ServiceException;
 import com.logistimo.tags.dao.TagDao;
 
 import org.junit.Before;
@@ -48,18 +51,27 @@ import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
 import javax.jdo.PersistenceManager;
+import javax.jdo.Query;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
@@ -384,4 +396,48 @@ public class InventoryManagementServiceImplTest {
 
   }
 
+  @Test
+  public void testFetchMinMaxLogByIntervalNormalCase() throws ParseException {
+    InventoryManagementServiceImpl inventoryManagementService = spy(InventoryManagementServiceImpl.class);
+    List<IInventoryMinMaxLog> minMaxLogs = new ArrayList<>(4);
+    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    minMaxLogs.add(getInventoryMinMaxLog(sdf.parse("2018-03-10 00:00:00")));
+    minMaxLogs.add(getInventoryMinMaxLog(sdf.parse("2018-04-01 00:00:00")));
+    minMaxLogs.add(getInventoryMinMaxLog(sdf.parse("2018-04-15 00:00:00")));
+    minMaxLogs.add(getInventoryMinMaxLog(sdf.parse("2018-04-30 00:00:00")));
+
+    PersistenceManager pm = mock(PersistenceManager.class);
+    Query q = mock(Query.class);
+    doReturn(pm).when(inventoryManagementService).getPM();
+    when(pm.newQuery(anyString(), any())).thenReturn(q);
+    List<String> parameters = new ArrayList<>(4);
+    parameters.add("1");
+    parameters.add("1");
+    parameters.add("2018-04-01 00:00:00");
+    parameters.add("2018-04-30 00:00:00");
+    when(q.executeWithMap(anyMap())).thenReturn(minMaxLogs);
+    when(pm.detachCopyAll(minMaxLogs)).thenReturn(minMaxLogs);
+
+    try {
+      List<IInventoryMinMaxLog> actualResults = inventoryManagementService.fetchMinMaxLogByInterval(1l, 1l, sdf.parse("2018-04-01 00:00:00"),
+          sdf.parse("2018-04-30 00:00:00"));
+      assertSame(minMaxLogs, actualResults);
+    } catch (ServiceException e) {
+      // Ignore
+    }
+  }
+
+  @Test (expected = IllegalArgumentException.class)
+  public void testFetchMinMaxLogByIntervalWithNullParameters() throws ServiceException{
+    InventoryManagementServiceImpl inventoryManagementService = new InventoryManagementServiceImpl();
+    inventoryManagementService.fetchMinMaxLogByInterval(null,null,null,null);
+  }
+
+  private IInventoryMinMaxLog getInventoryMinMaxLog(Date date) throws ParseException{
+    InventoryMinMaxLog inventoryMinMaxLog = new InventoryMinMaxLog();
+    inventoryMinMaxLog.setKioskId(1l);
+    inventoryMinMaxLog.setMaterialId(1l);
+    inventoryMinMaxLog.setCreatedTime(date);
+    return inventoryMinMaxLog;
+  }
 }

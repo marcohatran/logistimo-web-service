@@ -25,42 +25,54 @@ package com.logistimo.api.controllers;
 
 import com.logistimo.api.auth.AuthenticationUtil;
 import com.logistimo.api.builders.UserBuilder;
+import com.logistimo.api.builders.UserDevicesBuilder;
 import com.logistimo.api.models.AuthLoginModel;
+import com.logistimo.api.models.AuthModel;
 import com.logistimo.api.models.ChangePasswordModel;
+import com.logistimo.api.models.PasswordModel;
 import com.logistimo.api.models.UserDetailModel;
+import com.logistimo.api.models.auth.SaltModel;
 import com.logistimo.api.models.mobile.ValidateOtpModel;
 import com.logistimo.auth.SecurityConstants;
 import com.logistimo.auth.service.AuthenticationService;
+import com.logistimo.communications.MessageHandlingException;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.SourceConstants;
 import com.logistimo.exception.BadRequestException;
-import com.logistimo.exception.UnauthorizedException;
+import com.logistimo.exception.ForbiddenAccessException;
 import com.logistimo.exception.ValidationException;
+import com.logistimo.logger.XLog;
+import com.logistimo.models.AuthRequest;
+import com.logistimo.models.users.UserDetails;
 import com.logistimo.security.BadCredentialsException;
-import com.logistimo.security.UserDisabledException;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
+import com.logistimo.twofactorauthentication.service.TwoFactorAuthenticationService;
+import com.logistimo.twofactorauthentication.vo.UserDevicesVO;
 import com.logistimo.users.entity.IUserAccount;
-import com.logistimo.users.entity.IUserToken;
 import com.logistimo.users.service.UsersService;
+import com.logistimo.utils.CommonUtils;
+import com.logistimo.utils.TwoFactorAuthenticationUtil;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
+import java.util.Objects;
 import java.util.ResourceBundle;
-import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -70,13 +82,17 @@ import javax.servlet.http.HttpServletResponse;
 @RequestMapping("/mauth")
 public class AuthControllerMV1 {
 
+  private static final XLog xLogger = XLog.getLog(AuthControllerMV1.class);
   private static final String USER_AGENT = "User-Agent";
   private static final String DEVICE_DETAILS = "Device-Details";
   private static final String DEVICE_PROFILE = "Device-Profile";
+  private static final String REFERER = "referer";
 
   private UserBuilder userBuilder;
   private AuthenticationService authenticationService;
   private UsersService usersService;
+  private TwoFactorAuthenticationService twoFactorAuthenticationService;
+  private UserDevicesBuilder userDevicesBuilder;
 
   @Autowired
   public void setUserBuilder(UserBuilder userBuilder) {
@@ -93,26 +109,136 @@ public class AuthControllerMV1 {
     this.usersService = usersService;
   }
 
+  @Autowired
+  public void setTwoFactorAuthenticationService(TwoFactorAuthenticationService twoFactorAuthenticationService) {
+   this.twoFactorAuthenticationService = twoFactorAuthenticationService;
+  }
+
+  @Autowired
+  public void setUserDevicesBuilder(UserDevicesBuilder userDevicesBuilder) { this.userDevicesBuilder = userDevicesBuilder; }
+
   /**
    * This method is used for user's login
    *
    * @param loginModel userid and password
    * @param req        http request
+   * @deprecated
    * @return UserDetail object on successful login
    */
+  @Deprecated
   @RequestMapping(value = "/login", method = RequestMethod.POST)
   public
   @ResponseBody
   UserDetailModel login(@RequestBody AuthLoginModel loginModel,
                         HttpServletRequest req, HttpServletResponse res)
-      throws ServiceException, BadCredentialsException,
-      UserDisabledException {
+      throws Exception {
+    loginModel.setSkipTwoFactorAuthentication(true);
+    return processLoginRequest(loginModel, req, res);
+  }
+
+  /**
+   * This method is used for user's login along with two factor authentication
+   *
+   * @param loginModel userid and password
+   * @param req        http request
+   * @return UserDetail object on successful login
+   */
+  @RequestMapping(value = "/login/v1", method = RequestMethod.POST)
+  public
+  @ResponseBody
+  UserDetailModel login2FA(@RequestBody AuthLoginModel loginModel,
+                        HttpServletRequest req, HttpServletResponse res)
+      throws Exception {
+    loginModel.setSkipTwoFactorAuthentication(false);
+    return processLoginRequest(loginModel, req, res);
+  }
+
+
+  @RequestMapping(value = "generate-authentication-otp", method = RequestMethod.POST)
+  public
+  @ResponseBody
+  AuthModel generate2FAOTP(@RequestBody PasswordModel model)
+      throws BadCredentialsException, MessageHandlingException, IOException {
+    if(StringUtils.isBlank(model.getUid())) {
+      throw new BadCredentialsException("User ID is empty.");
+    }
+    if(StringUtils.isBlank(model.getUdty())) {
+      model.setUdty(Constants.WEB);
+    }
+    String successMsg = authenticationService.generate2FAOTP(model.getUid());
+    return new AuthModel(false, successMsg);
+  }
+
+
+  private UserDetailModel processLoginRequest(AuthLoginModel loginModel,
+                                              HttpServletRequest req, HttpServletResponse res)
+      throws Exception {
     IUserAccount user;
-    Map<String, String> headers = new HashMap<>();
     String authToken = req.getHeader(Constants.TOKEN);
     String initiator = req.getHeader(Constants.ACCESS_INITIATOR);
     Integer actionInitiator = StringUtils.isEmpty(initiator) ? -1 : Integer.parseInt(initiator);
-    headers.put(Constants.REQ_ID, req.getHeader(Constants.REQ_ID));
+    Integer loginSource = getAppName(actionInitiator, req);
+    if (authToken != null) {
+      user = AuthenticationUtil.authenticateToken(authToken, actionInitiator);
+    } else {
+      if (StringUtils.isEmpty(loginModel.getUserId()) && StringUtils.isEmpty(loginModel.getPassword())) {
+        throw new BadRequestException("G011", null);
+      }
+
+      AuthRequest authRequest = buildAuthRequest(loginModel,req);
+      if(StringUtils.isEmpty(loginModel.getOtp()) && Objects.equals(SourceConstants.WEB, authRequest.getLoginSource())) {
+        boolean isCaptchaVerified = authenticationService.verifyCaptcha(loginModel.getCaptcha());
+        if(!isCaptchaVerified) {
+          xLogger.warn("Captcha verification failed for user {0}", authRequest.getUserId());
+          throw new BadRequestException("G010", null);
+        }
+      }
+
+      UserDetails userDetails = authenticationService.authenticate(authRequest);
+      user = usersService.getUserAccount(authRequest.getUserId());
+
+      //authorize login req from source like Bulletin Board
+      authorizeLoginBySource(user, actionInitiator, authRequest);
+
+      String mobileNumber = authoriseDevice(loginModel, user, loginSource, req);
+      if(StringUtils.isNotBlank(mobileNumber)) {
+        UserDetailModel model = new UserDetailModel();
+        model.mobileNo = mobileNumber;
+        return model;
+      }
+
+      if(!loginModel.isSkipTwoFactorAuthentication()) {
+        if (StringUtils.isNotEmpty(loginModel.getOtp())) {
+          createUserDeviceInformation(res, loginSource, user.getUserId());
+        } else {
+          String key = TwoFactorAuthenticationUtil.generateAuthKey(loginModel.getUserId());
+          updateHeaderForUserDevice(res, CommonUtils.getCookieByName(req, key), user.getUserId());
+        }
+      }
+      //setting response headers
+      userDetails.setRequestId(req.getHeader(Constants.REQ_ID));
+      setResponseHeaders(res, userDetails);//
+    }
+    return userBuilder.buildMobileAuthResponseModel(user);
+  }
+
+  private int getAppName(Integer actionInitiator, HttpServletRequest req) {
+    String appName = req.getHeader(Constants.APP_NAME);
+
+    int src = SourceConstants.MOBILE;
+    if (!StringUtils.isEmpty(appName) && appName.equals(Constants.MMA_NAME)) {
+      src = SourceConstants.MMA;
+    } else if (actionInitiator == 1) {
+      src = actionInitiator;
+    }
+    return src;
+  }
+
+
+  private AuthRequest buildAuthRequest (AuthLoginModel loginModel, HttpServletRequest req) {
+
+    String initiator = req.getHeader(Constants.ACCESS_INITIATOR);
+    Integer actionInitiator = StringUtils.isEmpty(initiator) ? -1 : Integer.parseInt(initiator);
     String appName = req.getHeader(Constants.APP_NAME);
     String appVer = req.getHeader(Constants.APP_VER);
     int src = SourceConstants.MOBILE;
@@ -121,79 +247,53 @@ public class AuthControllerMV1 {
     } else if (actionInitiator == 1) {
       src = actionInitiator;
     }
-    if (authToken != null) {
-      user = AuthenticationUtil.authenticateToken(authToken, actionInitiator);
-    } else {
-      if (loginModel.userId == null && loginModel.password == null) {
-        throw new BadRequestException("Login credentials are empty");
-      }
-      String userAgentStr = req.getHeader(USER_AGENT);
-      String deviceDetails = req.getHeader(DEVICE_DETAILS);
-      String deviceProfile = req.getHeader(DEVICE_PROFILE);
-      String ipaddr = req.getHeader("X-REAL-IP");
-      if (userAgentStr == null) {
-        userAgentStr = "";
-      }
-      if (deviceDetails != null && !deviceDetails.isEmpty()) {
-        userAgentStr += " [Device-details: " + deviceDetails + "]";
-      }
-      if (deviceProfile != null && !deviceProfile.isEmpty()) {
-        userAgentStr += " [Device-Profile: " + deviceProfile + "]";
-      }
-      String userid = loginModel.userId;
-      String password = loginModel.password;
-
-      try {
-        user = usersService.authenticateUser(userid, password, src);
-      } catch (ObjectNotFoundException oe) {
-        throw new BadCredentialsException("Invalid user name or password");
-      }
-      if (user == null) {
-        throw new BadCredentialsException("Invalid user name or password");
-      }
-      if (!user.isEnabled()) {
-        throw new UserDisabledException("You account is disabled");
-      }
-      if ((SourceConstants.WEB.equals(actionInitiator) || SourceConstants.BULLETIN_BOARD
-          .equals(actionInitiator)) && SecurityConstants.ROLE_KIOSKOWNER.equals(user.getRole())) {
-        ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages",
-            Locale.getDefault());
-        throw new UnauthorizedException(backendMessages.getString("user.access.denied"),HttpStatus.FORBIDDEN);
-      }
-      generateUserToken(headers, userid, actionInitiator);
-      user.setIPAddress(ipaddr);
-      user.setLoginSource(src);
-      user.setPreviousUserAgent(user.getUserAgent());
-      user.setUserAgent(userAgentStr);
-      user.setAppVersion(appVer);
-      //to store the history of user login's
-      usersService.updateUserLoginHistory(userid, src, userAgentStr,
-          ipaddr, new Date(), appVer);
-      //update user account
-      usersService.updateMobileLoginFields(user);
+    String userAgentStr = req.getHeader(USER_AGENT);
+    String deviceDetails = req.getHeader(DEVICE_DETAILS);
+    String deviceProfile = req.getHeader(DEVICE_PROFILE);
+    String ipaddr = req.getHeader("X-REAL-IP");
+    String referrer = req.getHeader(REFERER);
+    if (userAgentStr == null) {
+      userAgentStr = "";
     }
-    //setting response headers
-    setResponseHeaders(res, headers);
-    return userBuilder.buildMobileAuthResponseModel(user);
+    if (deviceDetails != null && !deviceDetails.isEmpty()) {
+      userAgentStr += " [Device-details: " + deviceDetails + "]";
+    }
+    if (deviceProfile != null && !deviceProfile.isEmpty()) {
+      userAgentStr += " [Device-Profile: " + deviceProfile + "]";
+    }
+
+    return AuthRequest.builder()
+        .userId(loginModel.getUserId())
+        .password(loginModel.getPassword())
+        .ipAddress(ipaddr)
+        .loginSource(src)
+        .referer(referrer)
+        .sourceVersion(appVer)
+        .userAgent(userAgentStr).build();
+
   }
 
-  private void setResponseHeaders(HttpServletResponse response, Map<String, String> headers) {
-    Set<Map.Entry<String, String>> entrySet = headers.entrySet();
-    for (Map.Entry<String, String> entry : entrySet) {
-      response.addHeader(entry.getKey(), entry.getValue());
+  private void authorizeLoginBySource(IUserAccount user, Integer actionInitiator,
+                                      AuthRequest authRequest) {
+    if ((SourceConstants.WEB.equals(actionInitiator) || SourceConstants.BULLETIN_BOARD
+        .equals(actionInitiator)) && SecurityConstants.ROLE_KIOSKOWNER.equals(user.getRole())) {
+      ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages",
+          Locale.getDefault());
+      authenticationService.logForbiddenAccess(authRequest);
+      throw new ForbiddenAccessException(backendMessages.getString("user.access.denied"));
     }
   }
 
-  private void generateUserToken(Map<String, String> headers,
-                                 String userid, int src)
-      throws ObjectNotFoundException, ServiceException {
-    IUserToken token;
-    token = authenticationService.generateUserToken(userid, src);
-    if (token != null) {
-      headers.put(Constants.TOKEN, token.getRawToken());
-      if (token.getExpires() != null) {
-        headers.put(Constants.EXPIRES, String.valueOf(token.getExpires().getTime()));
+  private void setResponseHeaders(HttpServletResponse response, UserDetails userDetails) {
+    if (userDetails.getToken() != null) {
+      response.addHeader(Constants.TOKEN, userDetails.getToken());
+      response.addHeader("Set-Cookie",Constants.TOKEN+"="+userDetails.getToken() + ";Path=/; HttpOnly");
+      if (userDetails.getTokenExpiry() != null) {
+        response.addHeader(Constants.EXPIRES, String.valueOf(userDetails.getTokenExpiry()));
       }
+    }
+    if (userDetails.getToken() != null) {
+      response.addHeader(Constants.REQ_ID, userDetails.getRequestId());
     }
   }
 
@@ -225,6 +325,30 @@ public class AuthControllerMV1 {
     return authenticationService.authenticateToken(token, accessInitiator).getUserId();
   }
 
+  private String authoriseDevice(AuthLoginModel loginModel, IUserAccount user,
+                                  Integer loginSource,
+                                  HttpServletRequest request)
+      throws MessageHandlingException, IOException,
+      NoSuchAlgorithmException {
+
+    if (!loginModel.isSkipTwoFactorAuthentication()) {
+      String otp = loginModel.getOtp();
+      String
+          deviceKey =
+          CommonUtils.getCookieByName(request, TwoFactorAuthenticationUtil
+              .generateAuthKey(user.getUserId()));
+
+      boolean
+          isUserAuthenticated =
+          authenticationService
+              .authenticateUserByCredentials(user.getUserId(), deviceKey, loginSource, otp, true);
+      if (!isUserAuthenticated) {
+        return user.getMobilePhoneNumber();
+      }
+    }
+    return null;
+  }
+
   /**
    * This will reset user's password
    *
@@ -232,9 +356,50 @@ public class AuthControllerMV1 {
    */
   @RequestMapping(value = "/change-password", method = RequestMethod.POST)
   @ResponseStatus(HttpStatus.NO_CONTENT)
-  public void resetPassword(@RequestBody ChangePasswordModel pwdModel)
-      throws ServiceException, ValidationException {
-    authenticationService.validateOtpMMode(pwdModel.uid, pwdModel.otp);
-    usersService.changePassword(pwdModel.uid, null, pwdModel.npd);
+  public void resetPassword(@RequestBody ChangePasswordModel pwdModel) throws ServiceException {
+    if(StringUtils.isEmpty(pwdModel.getOtp())){
+      throw new ValidationException("UA002");
+    }
+    authenticationService.changePassword(pwdModel.getUid(), pwdModel.getOtp(), null, pwdModel.getNpd(),pwdModel.isEnhanced());
   }
+
+  /**
+   * This gives user's salt
+   *
+   * @param userId
+   * @return salt stored against queried user
+   */
+  @RequestMapping(value = "/get-salt/{userId}" ,method = RequestMethod.GET)
+  public @ResponseBody SaltModel getSalt (@PathVariable String userId) {
+    return new SaltModel(authenticationService.getUserSalt(userId));
+  }
+
+  /**
+   * This gives user's salt
+   *
+   * @return salt stored against queried user
+   */
+  @RequestMapping(value = "/random-salt/" ,method = RequestMethod.GET)
+  public @ResponseBody
+  SaltModel randomSalt () {
+    return new SaltModel(authenticationService.generateRandomSalt());
+  }
+
+  protected void createUserDeviceInformation(HttpServletResponse response, Integer src, String userId)
+      throws Exception {
+    Date twoFactorTokenGenerationTime = new Date();
+    String cookieValue = TwoFactorAuthenticationUtil.generateUserDeviceCacheKey(userId, twoFactorTokenGenerationTime.getTime());
+    UserDevicesVO
+        userDevicesVO =
+        userDevicesBuilder.buildUserDevicesVO(cookieValue, userId, src, twoFactorTokenGenerationTime);
+    twoFactorAuthenticationService.createUserDevices(userDevicesVO);
+    updateHeaderForUserDevice(response, cookieValue, userDevicesVO.getUserId());
+  }
+
+  protected void updateHeaderForUserDevice(HttpServletResponse response, String cookieValue, String userId)
+      throws UnsupportedEncodingException, NoSuchAlgorithmException {
+    response.addHeader("Set-Cookie",
+        TwoFactorAuthenticationUtil.generateAuthKey(userId) + "=" + cookieValue + ";Path=/; HttpOnly");
+  }
+
 }

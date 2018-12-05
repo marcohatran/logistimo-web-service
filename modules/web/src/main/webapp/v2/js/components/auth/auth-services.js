@@ -27,19 +27,42 @@
 var authServices = angular.module('authServices', []);
 authServices.factory('iAuthService', ['APIService', '$rootScope', '$q', '$cookies', function (apiService, $rootScope, $q, $cookies) {
     return {
-        login: function (userId,password,lang) {
-            var urlStr = '/s2/api/mauth/login';
+        login: function (userId,password,lang, captchaResponse, otp) {
+            var urlStr = '/s2/api/mauth/login/v1/';
             var credentials = {};
             if (checkNotNullEmpty(userId)) {
                 credentials.userId = userId;
             }
-            if (checkNotNullEmpty(password)) {
-                credentials.password = password;
-            }
             if (checkNotNullEmpty(lang)) {
                 credentials.language = lang;
             }
-            return apiService.post(credentials, urlStr);
+            if( checkNotNullEmpty(otp)) {
+                credentials.otp = otp;
+            }
+            if(checkNotNullEmpty(captchaResponse)) {
+                credentials.captcha = captchaResponse;
+            }
+            var saltFn = this.getSalt;
+            return $q(function(resolve, reject) {
+                saltFn(userId).then(function(data){
+                    if (checkNullEmpty(password)) {
+                        reject("Password cannot be empty")
+                    }
+                    if(checkNotNullEmpty(data.data.salt)) {
+                        credentials.password = hex_sha512(data.data.salt + password);
+                    }else {
+                        credentials.password = password;
+                    }
+                    apiService.post(credentials, urlStr).then(function (data) {
+                        resolve(data);
+                    }).catch(function (err) {
+                        reject(err);
+                    })
+                }).catch(function(err){
+                    reject(err);
+                })
+            });
+
         },
         logout: function () {
             var service = this;
@@ -72,7 +95,6 @@ authServices.factory('iAuthService', ['APIService', '$rootScope', '$q', '$cookie
         },
         setAccessToken: function (accessToken, expires) {
             localStorage.setItem("x-access-token", accessToken);
-            $cookies.put("x-access-token", accessToken, {path: "/"});
             if (checkNotNullEmpty(expires)) {
                 localStorage.setItem("expires", expires);
             }
@@ -92,6 +114,23 @@ authServices.factory('iAuthService', ['APIService', '$rootScope', '$q', '$cookie
         },
         checkAccessKey: function (authKey) {
             return apiService.post(authKey, "/s2/api/auth/check-access-key");
+        },
+        getSalt: function (userId) {
+            return apiService.get("/s2/api/mauth/get-salt/"+userId);
+        },
+        randomSalt: function () {
+            return apiService.get("/s2/api/mauth/random-salt/");
+        },
+        setAuthenticationHeader: function (authKey, authValue, expires) {
+            localStorage.setItem(authKey, authValue);
+            $cookies.put(authKey, authValue, {path: "/"});
+            if (checkNotNullEmpty(expires)) {
+                localStorage.setItem("expires", expires);
+            }
+        },
+        generateAuthenticationOTP: function(userId, mode) {
+            var request = {uid: userId, mode: mode};
+            return apiService.post(request, '/s2/api/mauth/generate-authentication-otp');
         }
 
     }

@@ -99,8 +99,9 @@ public class APISecurityFilter implements Filter {
         }
       } else if (!servletPath.startsWith(M_AUTH_URL) && AuthenticationUtil.hasAccessToken(req)) {
         try {
-          AuthenticationUtil.authenticateTokenAndSetSession(req);
-        } catch (UnauthorizedException | ObjectNotFoundException e) {
+          AuthenticationUtil.authenticateTokenAndSetSession(req,resp);
+        } catch (UnauthorizedException e) {
+          xLogger.warn("Issue with api client authentication", e);
           resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
           return;
         } catch (Exception e) {

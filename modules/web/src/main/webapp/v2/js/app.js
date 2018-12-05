@@ -1,4 +1,3 @@
-
 /*
  * Copyright © 2017 Logistimo.
  *
@@ -246,6 +245,8 @@ logistimoApp.config(function ($routeProvider) {
         action: "configuration.approvals"
     }).when("/configuration/rebalancing/", {
        action: "configuration.rebalancing"
+    }).when("/configuration/forms/", {
+       action: "configuration.forms"
     }).when("/configuration/accounting/", {
         action: "configuration.accounting"
     }).when("/configuration/custom", {

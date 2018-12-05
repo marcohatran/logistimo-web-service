@@ -29,6 +29,7 @@
         <li ng-if="iSU || dp.ma" ng-class="{active: subview == 'create' }"><a
                 href="#/setup/handlingunits/all/create/">{{resourceBundle['create']}} handling units</a></li>
     </ul>
+    <div ng-include="'loader-template.html'"></div>
     <div ng-switch="subview">
         <div class="tab-pane" ng-switch-when="list">
             <div ng-if="iSU || (iAdm && dp.mv)" ng-include="'views/handlingunits/list.html'"></div>

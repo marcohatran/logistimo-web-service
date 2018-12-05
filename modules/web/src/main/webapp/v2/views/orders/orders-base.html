@@ -30,6 +30,7 @@
 			<a href="#/orders/add/">{{resourceBundle['order.create']}}</a>
 		</li>
 	</ul>
+	<div ng-include="'loader-template.html'"></div>
 	<div ng-switch="subview">
 		<div class="tab-pane" ng-switch-when="list">
 			<div ng-if="!vo" ng-init="matListType = 'all'"

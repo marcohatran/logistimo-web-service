@@ -84,7 +84,8 @@ ENV MYSQL_HOST_URL="jdbc:mariadb://localhost/logistimo?useUnicode=true&amp;chara
         JMX_AGENT_PORT=8088 \
         ORIGINS=*.logistimo.com,localhost \
         MAPI_URL=http://localhost:8080 \
-        GOOGLE_ANALYTICS_CLIENT_ID=
+        GOOGLE_ANALYTICS_CLIENT_ID= \
+        EVENTSUMMARYSERVICE_URL=http://logi-es:9010/v1/event-summaries
 
 ENV JAVA_OPTS $JAVA_OPTS
 

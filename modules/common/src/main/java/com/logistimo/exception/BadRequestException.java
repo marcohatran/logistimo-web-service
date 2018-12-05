@@ -29,9 +29,13 @@ import com.logistimo.services.ServiceException;
  * Created by Mohan Raja on 16/03/15.
  */
 @SuppressWarnings("serial")
-public class BadRequestException extends RuntimeException {
+public class BadRequestException extends SystemException {
   public BadRequestException(String message) {
     super(message);
+  }
+
+  public BadRequestException(String code, Object... arguments) {
+    super(code, arguments);
   }
 
   public BadRequestException(ServiceException e) {

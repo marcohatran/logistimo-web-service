@@ -95,8 +95,7 @@ public class DashboardServlet extends JsonRestServlet {
           // ignore; return default months data
         }
       }
-      ReportsService svc = StaticApplicationContext.getBean(ConfigUtil.get("reports"),
-          ReportsService.class);
+      ReportsService svc = StaticApplicationContext.getBean(ReportsService.class);
       String json = svc.getMonthlyStatsJSON(domainId, months);
       writeText(response, json);
     } catch (Exception e) {
@@ -139,8 +138,7 @@ public class DashboardServlet extends JsonRestServlet {
       }
 
       // Proceed only if the mandatory attributes are present.
-      ReportsService rs = StaticApplicationContext.getBean(ConfigUtil.get("reports"),
-          ReportsService.class);
+      ReportsService rs = StaticApplicationContext.getBean(ReportsService.class);
       PageParams pageParams = new PageParams(null, offset, size);
       Results results = rs.getMonthlyUsageStatsForDomain(domainId, startDate, pageParams);
       List<IMonthSlice> resultsList = results.getResults();
@@ -205,8 +203,7 @@ public class DashboardServlet extends JsonRestServlet {
       startDate = cal.getTime();
       xLogger.info("startDate: {0}, endDate: {1}", startDate.toString(), endDate.toString());
       // Call ReportsService API to get domain counts
-      ReportsService rs = StaticApplicationContext.getBean(ConfigUtil.get("reports"),
-          ReportsService.class);
+      ReportsService rs = StaticApplicationContext.getBean(ReportsService.class);
       DomainCounts
           domainCounts =
           rs.getDomainCounts(domainId, endDate, period, periodTypeStr, null, null);
@@ -268,7 +265,7 @@ public class DashboardServlet extends JsonRestServlet {
     xLogger.fine("Entered getKiosks");
     // Get the parameters
     String userId = request.getParameter(RestConstantsZ.USER_ID);
-    String password = request.getParameter(RestConstantsZ.PASSWORD);
+    String password = request.getParameter(RestConstantsZ.PASSWRD);
     String sizeStr = request.getParameter(RestConstantsZ.SIZE);
     String cursor = request.getParameter(RestConstantsZ.CURSOR);
     // Get pagination params
@@ -340,8 +337,7 @@ public class DashboardServlet extends JsonRestServlet {
       Date startDate;
       startDate = df.parse(startDateStr);
       // Proceed only if the mandatory attributes are present.
-      ReportsService rs = StaticApplicationContext.getBean(ConfigUtil.get("reports"),
-          ReportsService.class);
+      ReportsService rs = StaticApplicationContext.getBean(ReportsService.class);
       PageParams pageParams = new PageParams(null, offset, size);
       Results results = rs.getUsageStatsAcrossDomains(startDate, pageParams);
       List<IMonthSlice> resultsList = results.getResults();

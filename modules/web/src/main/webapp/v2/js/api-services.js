@@ -83,13 +83,13 @@ logistimoApp.factory('APIService', function ($http, $q, $rootScope) {
             });
         },
         get: get,
-        post: function (data, urlStr) {
+        post: function (data, urlStr, headers) {
             if (checkDomainAndReject()) {
                 return $q(function (resolve, reject) {
                     reject();
                 });
             }
-            return $http({method: 'POST', data: data, url: urlStr});
+            return $http({method: 'POST', data: data, url: urlStr, headers : headers});
         },
         put: function (data, urlStr) {
             if (checkDomainAndReject()) {

@@ -52,10 +52,10 @@ import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.events.generators.EventGeneratorFactory;
 import com.logistimo.events.generators.OrdersEventGenerator;
 import com.logistimo.exception.BadRequestException;
+import com.logistimo.exception.ForbiddenAccessException;
 import com.logistimo.exception.InvalidDataException;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exception.LogiException;
-import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.exception.ValidationException;
 import com.logistimo.inventory.entity.IInvAllocation;
 import com.logistimo.inventory.entity.ITransaction;
@@ -97,7 +97,6 @@ import com.logistimo.utils.StringUtil;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -224,7 +223,7 @@ public class OrdersController {
     }
     List<Long> domainIds = order.getDomainIds();
     if (domainIds != null && !domainIds.contains(domainId)) {
-      throw new UnauthorizedException(CharacterConstants.EMPTY, HttpStatus.FORBIDDEN);
+      throw new ForbiddenAccessException("Forbidden");
     }
     model = orderAPIBuilder.buildFullOrderModel(order, domainId, embed);
     return model;
@@ -258,7 +257,7 @@ public class OrdersController {
                           @RequestParam(required = false) String transferRefId,
                           HttpServletRequest request) {
     return getOrders(null, offset, size, status, from, until, otype, tgType, tag, oty, salesRefId,
-        approval_status, purchaseRefId, transferRefId, request);
+        approval_status, purchaseRefId, transferRefId, null, request);
   }
 
   @RequestMapping("/entity/{entityId}")
@@ -278,10 +277,11 @@ public class OrdersController {
                           @RequestParam(required = false) String approval_status,
                           @RequestParam(required = false) String purchaseRefId,
                           @RequestParam(required = false) String transferRefId,
+                          @RequestParam(required = false) Long linkedKioskId,
                           HttpServletRequest request) {
     return getOrders(entityId, offset, size, status, from, until, otype, tgType, tag, oty,
         salesRefId,
-        approval_status, purchaseRefId, transferRefId, request);
+        approval_status, purchaseRefId, transferRefId, linkedKioskId, request);
   }
 
 
@@ -486,7 +486,10 @@ public class OrdersController {
     PersistenceManager pm = null;
     Transaction tx = null;
     try {
-      IOrder order = orderManagementService.getOrder(orderId);
+      pm = PMF.get().getPersistenceManager();
+      tx = pm.currentTransaction();
+      tx.begin();
+      IOrder order = orderManagementService.getOrder(orderId, false, pm);
       if (order == null) {
         throw new BadRequestException(backendMessages.getString("order.none") + " " + orderId);
       }
@@ -503,20 +506,18 @@ public class OrdersController {
       }
       DomainConfig dc = DomainConfig.getInstance(domainId);
       order.setItems(demandService.getDemandItems(orderId));
-      List<ITransaction> transactions = orderAPIBuilder.buildTransactionsForNewItems(order, model.items);
+      Date now = new Date();
+      List<ITransaction> transactions = orderAPIBuilder.buildTransactionsForNewItems(order, model.items, now, user.getUsername());
       if (transactions != null && !transactions.isEmpty()) {
         orderManagementService.
             modifyOrder(order, user.getUsername(), transactions, new Date(), domainId,
                 ITransaction.TYPE_REORDER, model.msg, null, null, BigDecimal.ZERO, null,
                 dc.allowEmptyOrders(), order.getTags(TagUtil.TYPE_ORDER),
-                order.getSalesReferenceID(), null, order.getPurchaseReferenceId(), order.getTransferReferenceId());
+                order.getSalesReferenceID(), pm, order.getPurchaseReferenceId(), order.getTransferReferenceId());
       }
-      order = orderAPIBuilder.buildOrderMaterials(order, model.items);
+      order = orderAPIBuilder.buildOrderMaterials(order, model.items, now, user.getUsername());
       //TODO use OrderManagementServiceImpl updateOrderWithAllocations
       String oIdStr = String.valueOf(order.getOrderId());
-      pm = PMF.get().getPersistenceManager();
-      tx = pm.currentTransaction();
-      tx.begin();
       if (dc.autoGI() && order.getServicingKiosk() != null) {
         String tag = IInvAllocation.Type.ORDER.toString() + CharacterConstants.COLON + oIdStr;
         for (DemandModel item : model.items) {
@@ -559,7 +560,7 @@ public class OrdersController {
         }
       }
       UpdatedOrder updorder = orderManagementService
-          .updateOrder(order, SourceConstants.WEB, true, true, user.getUsername());
+          .updateOrder(order, SourceConstants.WEB, true, true, user.getUsername(), pm);
       tx.commit();
       return orderAPIBuilder.buildOrderResponseModel(updorder, true, domainId, true,
           OrdersAPIBuilder.DEFAULT_EMBED);
@@ -676,7 +677,7 @@ public class OrdersController {
   public Results getOrders(Long entityId, int offset, int size,
                            String status, String from, String until, String otype, String tgType,
                            String tag, Integer oty, String salesRefId, String approvalStatus,
-                           String purchaseRefId, String transferRefId,
+                           String purchaseRefId, String transferRefId, Long linkedKioskId,
                            HttpServletRequest request) {
     SecureUserDetails user = SecurityUtils.getUserDetails();
     Locale locale = user.getLocale();
@@ -709,7 +710,7 @@ public class OrdersController {
       }
       Results or = orderManagementService.getOrders(domainId, entityId, status, startDate, endDate,
           otype, tgType, tag, kioskIds, pageParams, oty, salesRefId, approvalStatus, purchaseRefId,
-          transferRefId);
+          transferRefId, linkedKioskId);
       return orderAPIBuilder.buildOrders(or, SecurityUtils.getDomainId());
     } catch (Exception e) {
       xLogger.severe("Error in fetching orders for entity {0} of type {1}", entityId, otype, e);

@@ -24,8 +24,11 @@
 package com.logistimo.api.models;
 
 
+import com.google.gson.annotations.SerializedName;
+
 public class LocationModel {
 
+  @SerializedName("country")
   public String cntry;
 
   public String district;

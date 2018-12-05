@@ -23,6 +23,7 @@
 
 package com.logistimo.entities.utils;
 
+import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.QueryConstants;
 import com.logistimo.context.StaticApplicationContext;
@@ -30,16 +31,19 @@ import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.pagination.processor.MoveProcessor;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entities.service.EntitiesServiceImpl;
+import com.logistimo.exception.TaskSchedulingException;
 import com.logistimo.logger.XLog;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.PagedExec;
 import com.logistimo.pagination.QueryParams;
+import com.logistimo.pagination.processor.ProcessingException;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.utils.ConfigUtil;
 import com.logistimo.utils.MsgUtil;
 import com.logistimo.utils.PropertyUtil;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
@@ -47,7 +51,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
@@ -64,6 +67,9 @@ import java.util.Set;
  */
 public class EntityMover {
 
+  private EntityMover() {
+  }
+
   private static final XLog xLogger = XLog.getLog(EntityMover.class);
   private static final int MAX_CONTAINS_VALUE = 30;
   private static final String MOVE_ENTITY_PROP = "entity.move.relations";
@@ -78,8 +84,9 @@ public class EntityMover {
     List<IKiosk> kioskList = as.getKiosksByIds(kiosks);
     Set<String> users = EntityMoveHelper.extractUserIds(kioskList);
     List<String> errors = EntityMoveHelper.validateUsers(users, kiosks);
-    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", Locale.ENGLISH);
-    if (errors.size() > 0) {
+    ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", SecurityUtils
+        .getLocale());
+    if (!errors.isEmpty()) {
       String errSt = errors.toString().substring(1);
       errSt = errSt.substring(0, errSt.length() - 1);
       xLogger.warn("User is associated to other entities: {0}", errSt);
@@ -89,8 +96,8 @@ public class EntityMover {
     }
     String relatedObjectsStr = ConfigUtil.get(MOVE_ENTITY_PROP);
     Map<String, String[]> relatedClassesMap = PropertyUtil.parseProperty(relatedObjectsStr);
-    for (String relatedClassName : relatedClassesMap.keySet()) {
-      String[] fieldName = relatedClassesMap.get(relatedClassName);
+    for (Map.Entry<String, String[]> relatedClassName : relatedClassesMap.entrySet()) {
+      String[] fieldName = relatedClassName.getValue();
       if (fieldName.length != 2) {
         return
             "Invalid no field names. Required only two field names. 1. key id field name 2. Source domain field name"
@@ -98,6 +105,14 @@ public class EntityMover {
                 MsgUtil.newLine() + "Field names:" + Arrays.toString(fieldName);
       }
     }
+    List<String> assetMoveErrors = EntityMoveHelper.isAssetsMovePossible(kioskList);
+    if(CollectionUtils.isNotEmpty(assetMoveErrors)) {
+      String errorString = String.join(",", assetMoveErrors);
+      String errorMessage = backendMessages.getString("assets.move.error") + errorString;
+      xLogger.warn(errorMessage);
+      return errorMessage;
+    }
+
     return "success";
   }
 
@@ -121,19 +136,19 @@ public class EntityMover {
     }
     String relatedObjectsStr = ConfigUtil.get(MOVE_ENTITY_PROP);
     Map<String, String[]> relatedClassesMap = PropertyUtil.parseProperty(relatedObjectsStr);
-    for (String relatedClassName : relatedClassesMap.keySet()) {
-      String[] fieldName = relatedClassesMap.get(relatedClassName);
+    for (Map.Entry<String, String[]> relatedClassName : relatedClassesMap.entrySet()) {
+      String[] fieldName = relatedClassName.getValue();
       try {
         List ids;
-        if (relatedClassName.endsWith("UserAccount")) {
+        if (relatedClassName.getKey().endsWith("UserAccount")) {
           ids = new ArrayList<>(users);
         } else {
           ids = kiosks;
         }
         xLogger
             .info("Scheduling task for moving Object: {0}[{1}] from domainID {2} to domainId {3}",
-                relatedClassName, ids, sourceDomainId, destDomainId);
-        execute(relatedClassName, fieldName, ids, sourceDomainId, destDomainId);
+                relatedClassName.getKey(), ids, sourceDomainId, destDomainId);
+        execute(relatedClassName.getKey(), fieldName, ids, sourceDomainId, destDomainId);
         xLogger.info("AUDITLOG\tENTITY\t " +
             "MOVE\t{0}\tfrom domainId:{1}\tto domainId:{2}", ids, sourceDomainId, destDomainId);
       } catch (Exception e) {
@@ -160,7 +175,8 @@ public class EntityMover {
    */
   @SuppressWarnings("unchecked")
   private static void execute(String className, String[] idField, List ids, Long sourceDomainId,
-                              Long destDomainId) throws Exception {
+                              Long destDomainId)
+      throws TaskSchedulingException, ProcessingException {
     final int idsSize = ids.size();
     int idsIndex = 0;
     boolean last = false;

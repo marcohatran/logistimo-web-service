@@ -28,12 +28,14 @@ import com.logistimo.api.models.configuration.ReasonConfigModel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by mohan raja on 23/11/14
  */
 public class TransactionDomainConfigModel {
   public List<ReasonWrapper> reasons;
+  public Set<String> transactionTypesWithReasonMandatory;
   public int noc; // No of customers
   public int nov; // No of vendors
   public boolean isMan; // Is Manager

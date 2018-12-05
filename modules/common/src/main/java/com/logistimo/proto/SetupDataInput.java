@@ -147,7 +147,7 @@ public class SetupDataInput extends InputMessageBean implements JsonBean {
   private void loadUserData(JSONObject json) throws JSONException {
     // Read the json object and populate the user hashtable with the values.
     user.put(JsonTagsZ.USER_ID, json.get(JsonTagsZ.USER_ID));
-    user.put(JsonTagsZ.PASSWORD, json.get(JsonTagsZ.PASSWORD));
+    user.put(JsonTagsZ.PASSWRD, json.get(JsonTagsZ.PASSWRD));
     user.put(JsonTagsZ.ROLE, json.get(JsonTagsZ.ROLE));
     user.put(JsonTagsZ.FIRST_NAME, json.get(JsonTagsZ.FIRST_NAME));
     try {
@@ -385,7 +385,7 @@ public class SetupDataInput extends InputMessageBean implements JsonBean {
     // Form a user json
     JSONObject u = new JSONObject();
     u.put(JsonTagsZ.USER_ID, user.get(JsonTagsZ.USER_ID));
-    u.put(JsonTagsZ.PASSWORD, user.get(JsonTagsZ.PASSWORD));
+    u.put(JsonTagsZ.PASSWRD, user.get(JsonTagsZ.PASSWRD));
     String role = (String) user.get(JsonTagsZ.ROLE);
     u.put(JsonTagsZ.ROLE, role);
     u.put(JsonTagsZ.FIRST_NAME, user.get(JsonTagsZ.FIRST_NAME));

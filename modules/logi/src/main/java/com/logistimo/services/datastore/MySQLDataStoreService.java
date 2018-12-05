@@ -27,6 +27,7 @@ import com.logistimo.AppFactory;
 import com.logistimo.accounting.entity.Account;
 import com.logistimo.config.entity.Config;
 import com.logistimo.constants.CharacterConstants;
+import com.logistimo.constants.QueryConstants;
 import com.logistimo.domains.entity.Domain;
 import com.logistimo.domains.entity.DomainLink;
 import com.logistimo.domains.entity.DomainPermission;
@@ -187,13 +188,15 @@ public class MySQLDataStoreService extends DataStoreService {
     EntityCursor entityCursor = null;
     if (entityType != null) {
       List<String> columns = getColumns(entityType);
+      // This connection will be closed by calling close in EntityCursor
       Statement statement = getConnection(entityType).createStatement();
-      statement.setFetchSize(20);
-      ResultSet
-          resultSet =
-          statement.executeQuery("SELECT * FROM `" + entityType + CharacterConstants.ACUTE);
-      entityCursor =
-          new EntityCursor(statement, resultSet, columns, getPrimaryKey(entityType), entityType);
+        statement.setFetchSize(20);
+      // This connection will be closed by calling close in EntityCursor
+      ResultSet resultSet = statement.executeQuery(
+                QueryConstants.SELECT_STAR_FROM + CharacterConstants.ACUTE + entityType
+                    + CharacterConstants.ACUTE);
+        entityCursor =
+            new EntityCursor(statement, resultSet, columns, getPrimaryKey(entityType), entityType);
     }
     return entityCursor;
   }

@@ -24,20 +24,17 @@
 var userControllers = angular.module('userControllers', []);
 userControllers.controller('UsersListController', ['$scope', 'userService', 'requestContext', '$location', '$window', 'exportService',
     function ($scope, userService, requestContext, $location, $window, exportService) {
-        $scope.wparams = [["search", "search.nm"],["role","urole"],["phn","mphn"],["vsn","uvsn"],["act","uactive"],
+        $scope.wparams = [["fname", "fname"],["role","urole"],["phn","uphn"],["vsn","uversion"],["act","uactive"],
             ["fm","from","", formatDate2Url],["to","to","", formatDate2Url],["nvrlogged","nvrlogged"],["utag","utag"]];
         $scope.filtered = {};
+        $scope.localFilters = ['fname','uphn','urole','userId','uactive','uversion','from','to','nvrlogged','utag'];
         $scope.userId = '';
         $scope.today = formatDate2Url(new Date());
         $scope.init = function () {
-            $scope.search = {};
-            $scope.search.nm = requestContext.getParam("search") || "";
-            $scope.search.key = $scope.search.nm;
+            $scope.fname = requestContext.getParam("fname") || "";
             $scope.urole = requestContext.getParam("role") || "";
-            $scope.mphn = requestContext.getParam("phn") || "";
-            $scope.uphn = $scope.mphn;
-            $scope.uvsn = requestContext.getParam("vsn") || "";
-            $scope.uversion=$scope.uvsn;
+            $scope.uphn = requestContext.getParam("phn") || "";
+            $scope.uversion = requestContext.getParam("vsn") || "";
             $scope.active= requestContext.getParam("act") || "";
             $scope.from = parseUrlDate(requestContext.getParam("fm")) || "";
             $scope.to = parseUrlDate(requestContext.getParam("to")) || "";
@@ -53,8 +50,8 @@ userControllers.controller('UsersListController', ['$scope', 'userService', 'req
             var filters = {};
 
             $scope.showLoading();
-            if(checkNotNullEmpty($scope.search.key)){
-                filters.nName = $scope.search.key;
+            if(checkNotNullEmpty($scope.fname)){
+                filters.nName = $scope.fname;
             }
             if(checkNotNullEmpty($scope.uphn)){
                 filters.mobilePhoneNumber = $scope.uphn;
@@ -197,16 +194,6 @@ userControllers.controller('UsersListController', ['$scope', 'userService', 'req
             }
             $window.location.href = '#/setup/users/all/sendmessage?userIds=' + $scope.selectedUsers;
         };
-        $scope.searchUser = function () {
-            if($scope.search.nm != $scope.search.key){
-                $scope.search.nm = $scope.search.key;
-            }
-        };
-        $scope.searchPhone = function () {
-            if($scope.mphn != $scope.uphn){
-                $scope.mphn = $scope.uphn;
-            }
-        };
         $scope.searchVersion=function(){
             if($scope.uvsn != $scope.uversion){
                 $scope.uvsn = $scope.uversion;
@@ -218,12 +205,10 @@ userControllers.controller('UsersListController', ['$scope', 'userService', 'req
             }
         }
         $scope.reset = function() {
-            $scope.search = {};
-            $scope.search.nm = "";
-            $scope.search.key = $scope.search.nm;
+            $scope.fname = "";
             $scope.urole="";
             $scope.uvsn="";
-            $scope.uversion=$scope.uvsn;
+            $scope.uversion="";
             $scope.uactive="";
             $scope.from="";
             $scope.to="";
@@ -248,7 +233,7 @@ userControllers.controller('UsersListController', ['$scope', 'userService', 'req
                 mobile = "+" + mobile
             }
             exportService.exportData({
-                first_name: $scope.search.key || undefined,
+                first_name: $scope.fname || undefined,
                 mobile_no: mobile || undefined,
                 role: $scope.urole || undefined,
                 user_active: $scope.uactive || undefined,
@@ -272,7 +257,7 @@ userControllers.controller('UsersListController', ['$scope', 'userService', 'req
         };
 
         function getCaption() {
-            var caption = getFilterTitle($scope.search.key, $scope.resourceBundle['user.firstname']);
+            var caption = getFilterTitle($scope.fname, $scope.resourceBundle['user.firstname']);
             caption += getFilterTitle($scope.uphn, $scope.resourceBundle['user.mobile.phone.number']);
             caption += getFilterTitle(getDisplayText('r', $scope.urole), $scope.resourceBundle['role']);
             caption += getFilterTitle(getDisplayText('a', $scope.uactive), $scope.resourceBundle['user.active']);
@@ -310,8 +295,8 @@ userControllers.controller('UsersListController', ['$scope', 'userService', 'req
     }
 ]);
 
-userControllers.controller('AddUserController', ['$scope', 'userService', 'configService', 'entityService','domainCfgService', 'requestContext', '$window',
-    function ($scope, userService, configService, entityService, domainCfgService, requestContext, $window) {
+userControllers.controller('AddUserController', ['$scope', 'userService', 'configService', 'entityService','domainCfgService', 'requestContext', '$timeout','$sce',
+    function ($scope, userService, configService, entityService, domainCfgService, requestContext, $timeout,$sce) {
         $scope.user = {lgr:-1, theme: -1};
         $scope.user.st = undefined;
         $scope.user.cnt = undefined;
@@ -323,6 +308,10 @@ userControllers.controller('AddUserController', ['$scope', 'userService', 'confi
         $scope.editUserId = requestContext.getParam("userId");
         $scope.uidLengthVerified = false;
         $scope.theme = 1;
+        var today = new Date();
+        $scope.dobMaxDate = angular.copy(today);
+        today.setYear(today.getYear() - 100);
+        $scope.dobMinDate = today;
         if (checkNotNullEmpty($scope.editUserId)) {
             $scope.edit = true;
         }
@@ -351,7 +340,7 @@ userControllers.controller('AddUserController', ['$scope', 'userService', 'confi
                 if (checkNotNullEmpty($scope.dc.timezone)) {
                     $scope.user.tz = $scope.dc.timezone;
                 }
-                $scope.user.gen = "m";
+                $scope.user.gen = "";
                 $scope.user.per = "d";
                 if (checkNotNullEmpty($scope.dc.state)) {
                     $scope.setState($scope.dc.state);
@@ -399,7 +388,7 @@ userControllers.controller('AddUserController', ['$scope', 'userService', 'confi
             $scope.showLoading();
             userService.getUser($scope.editUserId).then(function (data) {
                 $scope.user = data.data;
-                $scope.user.age = checkNullEmpty($scope.user.age)?'':$scope.user.age;
+                $scope.user.dobmodel = string2Date($scope.user.dob, 'dd/mm/yyyy', '/',false,true);
                 $scope.updateTags("fetch");
                 $scope.user.pw = " ";
                 $scope.user.cpw = $scope.user.pw;
@@ -459,20 +448,22 @@ userControllers.controller('AddUserController', ['$scope', 'userService', 'confi
             }
         };
         $scope.validatePassword = function () {
-            if(checkNotNullEmpty($scope.user.pw)) {
-                var lengthError = false;
-                $scope.uPasswordInvalidType = "";
-                if($scope.user.pw.length < 6 || $scope.user.pw.length > 18){
-                    lengthError = true;
-                    $scope.uPasswordInvalidType = "l";
-                }
-                var passwordMismatch = false;
-                if(!lengthError && $scope.user.pw !== $scope.user.cpw) {
-                    passwordMismatch = true;
-                    $scope.uPasswordInvalidType = "m";
-                }
-                $scope.uPasswordInvalid = lengthError || passwordMismatch;
+            var state = validatePassword($scope.user.pw, $scope.user.ro, $scope.user.id);
+            $scope.password_state = $sce.trustAsHtml(state);
+            if(state) {
+                $scope.uPasswordInvalid = true;
+                triggerShowPopup($timeout, 'usrPw')
+            } else {
+                triggerHidePopup($timeout, 'usrPw');
+                $scope.uPasswordInvalid = $scope.user.pw != $scope.user.cpw;
+                $scope.uPasswordInvalidPwd = $scope.user.pw != $scope.user.cpw;
             }
+        };
+
+        $scope.resetPassword = function() {
+            triggerHidePopup($timeout, 'usrPw');
+            $scope.uPasswordInvalid = $scope.password_state = $scope.user.pw = $scope.user.cpw =
+                $scope.uVisited.pw = $scope.uVisited.cpw = undefined;
         };
 
         $scope.validateMobilePhone = function () {
@@ -481,9 +472,10 @@ userControllers.controller('AddUserController', ['$scope', 'userService', 'confi
         };
 
         $scope.validate = function () {
+            $scope.validatePassword();
             var valid = !($scope.uPasswordInvalid || checkNotNullEmpty($scope.invalidPhm)
             || checkNotNullEmpty($scope.invalidPhl) || $scope.uidStatus
-            || $scope.ucidStatus || !$scope.uidLengthVerified || ($scope.user.age == 0 && $scope.user.age != '') || checkNullEmpty($scope.user.ro)
+            || $scope.ucidStatus || !$scope.uidLengthVerified || checkNullEmpty($scope.user.ro)
             || checkNullEmpty($scope.user.fnm) || checkNullEmpty($scope.user.cnt) || checkNullEmpty($scope.user.st)
             || checkNullEmpty($scope.user.lng) || checkNullEmpty($scope.user.tz) || addUserForm.em.className.indexOf('ng-invalid-email') > -1);
             if (!valid) {
@@ -492,7 +484,7 @@ userControllers.controller('AddUserController', ['$scope', 'userService', 'confi
             return valid;
         };
         $scope.validateUpdate = function(){
-            var valid = !(checkNotNullEmpty($scope.invalidPhm) || checkNotNullEmpty($scope.invalidPhl) || $scope.ucidStatus || ($scope.user.age == 0 && $scope.user.age != ''));
+            var valid = !(checkNotNullEmpty($scope.invalidPhm) || checkNotNullEmpty($scope.invalidPhl) || $scope.ucidStatus);
             if(!valid) {
                 $scope.showErrorMsg($scope.resourceBundle['form.error']);
             }
@@ -501,17 +493,15 @@ userControllers.controller('AddUserController', ['$scope', 'userService', 'confi
         $scope.createUser = function () {
             if ($scope.user != null) {
                 $scope.updateTags("add");
-                $scope.showLoading();
-                if(checkNullEmpty($scope.user.age)){
-                    $scope.user.age = 0;
-                }
+                $scope.showFullLoading();
+                $scope.user.dob = formatDate($scope.user.dobmodel);
                 userService.createUser($scope.user).then(function (data) {
                     $scope.resetForm();
                     $scope.showSuccess(data.data);
                 }).catch(function error(msg) {
                     $scope.showErrorMsg(msg);
                 }).finally(function(){
-                    $scope.hideLoading();
+                    $scope.hideFullLoading();
                 });
             }
         };
@@ -544,12 +534,10 @@ userControllers.controller('AddUserController', ['$scope', 'userService', 'confi
         };
         $scope.updateUser = function () {
             if ($scope.user != null) {
-                if(checkNullEmpty($scope.user.age)){
-                    $scope.user.age = 0;
-                }
+                $scope.user.dob = formatDate($scope.user.dobmodel);
                 $scope.updateTags("update");
                 $scope.loading = true;
-                $scope.showLoading();
+                $scope.showFullLoading();
                 $scope.updatePrimaryEntityId();
                 userService.updateUser($scope.user, $scope.user.id).then(function (data) {
                     $scope.$back();
@@ -558,7 +546,7 @@ userControllers.controller('AddUserController', ['$scope', 'userService', 'confi
                     $scope.showErrorMsg(msg);
                 }).finally(function (){
                     $scope.loading = false;
-                    $scope.hideLoading();
+                    $scope.hideFullLoading();
                 });
             }
         };
@@ -609,7 +597,7 @@ userControllers.controller('UserDetailsController', ['$scope', 'userService', 'c
         $scope.eRoute = 'false';
         $scope.imageData='';
         $scope.loadimage=true;
-        $scope.theme = [{key: 0, value: $scope.resourceBundle['theme.black']}, {key: 1, value:$scope.resourceBundle['theme.red']}];
+        $scope.theme = [{key: 0, value: $scope.resourceBundle['default.caps']}, {key: 1, value:$scope.resourceBundle['sidebar.landing.screen']}];
 
         var isSupport = false;
         $scope.editRoute = function (value) {
@@ -727,7 +715,7 @@ userControllers.controller('UserDetailsController', ['$scope', 'userService', 'c
             }
 
             var size = $scope.imageData.filesize;
-            if(size > 5 * 1024 * 1024) {
+            if(size > 10 * 1024 * 1024) {
                 $scope.showWarning ($scope.resourceBundle['uploadsizemessage']);
                 return false;
             }
@@ -735,7 +723,7 @@ userControllers.controller('UserDetailsController', ['$scope', 'userService', 'c
         };
         $scope.uploadImage = function(){
             $scope.showLoading();
-            mediaService.uploadImage($scope.ext,$scope.userId,$scope.imageData.base64).then(function(){
+            mediaService.uploadImage($scope.ext,$scope.userId,$scope.imageData).then(function(){
                 $scope.showSuccess($scope.resourceBundle['image.upload.success']);
                 mediaService.getDomainkeyImages($scope.userId).then(function(data){
                     $scope.userImages = data.data;
@@ -812,35 +800,29 @@ userControllers.controller('UserDetailsController', ['$scope', 'userService', 'c
         }
     }
 ]);
-userControllers.controller('UserPasswordController', ['$scope', 'userService', 'requestContext', '$window',
-    function ($scope, userService, requestContext, $window) {
+userControllers.controller('UserPasswordController', ['$scope', 'userService', 'requestContext', '$window','$sce','$timeout',
+    function ($scope, userService, requestContext, $window, $sce, $timeout) {
         $scope.userId = requestContext.getParam("userId");
         $scope.pType = requestContext.getParam("type");
         $scope.reset = $scope.pType == "reset";
         $scope.upw = {};
         $scope.sendType = "sms";
         $scope.dpwd = false;
+
         $scope.validatePassword = function () {
-            if(checkNotNullEmpty($scope.upw.pw)) {
-                var lengthError = false;
-                $scope.uPasswordInvalidType = "";
-                if($scope.upw.pw.length < 6 || $scope.upw.pw.length > 18) {
-                    lengthError = true;
-                    $scope.uPasswordInvalidType = "l";
-                }
-                var samePassError = false;
-                if($scope.upw.opw == $scope.upw.pw) {
-                    samePassError = true;
-                    $scope.uPasswordInvalidType = "s";
-                }
-                var passMismatch = false;
-                if(!lengthError && !samePassError && checkNotNullEmpty($scope.upw.cpw) && $scope.upw.pw !== $scope.upw.cpw) {
-                    passMismatch = true;
-                    $scope.uPasswordInvalidType = "m";
-                }
-                $scope.uPasswordInvalid = lengthError || samePassError || passMismatch;
+            var state = validatePassword($scope.upw.pw, $scope.user.ro, $scope.userId);
+            $scope.password_state = $sce.trustAsHtml(state);
+            if(state) {
+                triggerShowPopup($timeout, 'usrPw');
+                $scope.uPasswordInvalid = true;
+            } else {
+                triggerHidePopup($timeout, 'usrPw');
+                $scope.uPasswordInvalid = $scope.upw.pw != $scope.upw.cpw;
+                $scope.uPasswordInvalidPwd = $scope.upw.pw != $scope.upw.cpw;
             }
+
         };
+
         $scope.user = {};
         $scope.getUserDetails = function(){
             $scope.showLoading();

@@ -229,26 +229,12 @@ public class OrderManagementServiceImpl implements OrderManagementService {
     return AppFactory.get().getTaskService();
   }
 
-  // Get a demand item with same material ID
-  private static IDemandItem getDemandItemByMaterial(List<IDemandItem> demandList,
-      Long materialId) {
-    if (demandList == null || demandList.isEmpty()) {
-      return null;
-    }
-    for (IDemandItem di : demandList) {
-      if (di.getMaterialId().equals(materialId)) {
-        return di;
-      }
-    }
-    return null;
-  }
-
-  public IOrder getOrder(Long orderId) throws ObjectNotFoundException, ServiceException {
+  public IOrder getOrder(Long orderId) throws ServiceException {
     return getOrder(orderId, false, null);
   }
 
   public IOrder getOrder(Long orderId, boolean includeItems)
-      throws ObjectNotFoundException, ServiceException {
+      throws ServiceException {
     return getOrder(orderId, includeItems, null);
   }
 
@@ -257,7 +243,7 @@ public class OrderManagementServiceImpl implements OrderManagementService {
    */
   @Override
   public IOrder getOrder(Long orderId, boolean includeItems, PersistenceManager pm)
-      throws ObjectNotFoundException, ServiceException {
+      throws ServiceException {
     xLogger.fine("Entered getOrder");
     if (orderId == null) {
       throw new ServiceException("No order ID specified");
@@ -345,11 +331,12 @@ public class OrderManagementServiceImpl implements OrderManagementService {
           order.setStatus(newOrderStatus);
         }
       }
-      OrderUpdateStatus orderUpdateStatus = orderDao.update(order, pm);
+      OrderUpdateStatus orderUpdateStatus = orderDao.update(order);
       if (order.getItems() != null) {
         pm.makePersistentAll(order.getItems());
       }
       order = uo.order = orderUpdateStatus.order;
+      pm.makePersistent(order);
       // Generate event
       if (orderUpdateStatus.paymentChanged || orderUpdateStatus.statusChanged) {
         if (orderUpdateStatus.paymentChanged) {
@@ -539,7 +526,7 @@ public class OrderManagementServiceImpl implements OrderManagementService {
   }
 
   public IMessage addMessageToOrder(Long orderId, String message, String userId)
-      throws ServiceException, ObjectNotFoundException {
+      throws ServiceException {
     IOrder order = getOrder(orderId);
     return addMessageToOrder(orderId, order.getDomainId(), message, userId, null);
   }
@@ -548,7 +535,7 @@ public class OrderManagementServiceImpl implements OrderManagementService {
   public String shipNow(IOrder order, String transporter, String trackingId, String reason,
                         Date expectedFulfilmentDate, String userId, String ps, int source,
                         String salesRefId, Boolean updateOrderFields)
-      throws ServiceException, ObjectNotFoundException, ValidationException {
+      throws ServiceException {
     ShipmentModel model = new ShipmentModel();
     if (expectedFulfilmentDate != null) {
       model.ead = new SimpleDateFormat(Constants.DATE_FORMAT).format(expectedFulfilmentDate);
@@ -643,14 +630,25 @@ public class OrderManagementServiceImpl implements OrderManagementService {
       throws ServiceException {
     return getOrders(domainId, kioskId, status, since, until, otype, tagType, tag, kioskIds,
         pageParams, orderType, salesReferenceId, approvalStatus, false, purchaseReferenceId,
-        transferReferenceId);
+        transferReferenceId, null);
   }
 
   public Results getOrders(Long domainId, Long kioskId, String status, Date since, Date until,
-      String otype, String tagType, String tag, List<Long> kioskIds,
+                           String otype, String tagType, String tag, List<Long> kioskIds,
+                           PageParams pageParams, Integer orderType, String salesReferenceId,
+                           String approvalStatus,
+                           String purchaseReferenceId, String transferReferenceId, Long linkedKioskId)
+      throws ServiceException {
+    return getOrders(domainId, kioskId, status, since, until, otype, tagType, tag, kioskIds,
+        pageParams, orderType, salesReferenceId, approvalStatus, false, purchaseReferenceId,
+        transferReferenceId, linkedKioskId);
+  }
+
+  public Results getOrders(Long domainId, Long kioskId, String status, Date since, Date until,
+                           String otype, String tagType, String tag, List<Long> kioskIds,
                            PageParams pageParams, Integer orderType, String salesReferenceId,
                            String approvalStatus, boolean withDemand, String purchaseReferenceId,
-                           String transferReferenceId) {
+                           String transferReferenceId, Long linkedKioskId) {
     OrderFilters filters = new OrderFilters().setDomainId(domainId)
         .setKioskId(kioskId)
         .setStatus(status)
@@ -665,7 +663,8 @@ public class OrderManagementServiceImpl implements OrderManagementService {
         .setApprovalStatus(approvalStatus)
         .setWithDemand(withDemand)
         .setPurchaseReferenceId(purchaseReferenceId)
-        .setTransferReferenceId(transferReferenceId);
+        .setTransferReferenceId(transferReferenceId)
+        .setLinkedKioskId(linkedKioskId);
     return getOrders(filters, pageParams);
   }
 
@@ -695,27 +694,28 @@ public class OrderManagementServiceImpl implements OrderManagementService {
     try {
 
       //Set the oty based on transfer or not
-      queryBuilder.append(" WHERE OTY").append(isTransfer ? "=" : "!=")
-          .append(CharacterConstants.QUESTION);
+      queryBuilder.append(" WHERE OTY").append(isTransfer ? "=?" : "!=?");
       parameters.add(String.valueOf(IOrder.TRANSFER));
 
       //If the order type is purchase append kid, if it is sales append the lkid
       if (OrderUtils.isValidOrderType(orderType)) {
         if (orderType.equalsIgnoreCase(IOrder.TYPE_PURCHASE)) {
-          queryBuilder.append(" AND KID =").append(CharacterConstants.QUESTION);
+          queryBuilder.append(" AND KID =?");
         } else {
-          queryBuilder.append(" AND SKID =").append(CharacterConstants.QUESTION);
+          queryBuilder.append(" AND SKID =?");
         }
         parameters.add(String.valueOf(kioskId));
       }
       //Append status information
       if (StringUtils.isNotBlank(status) && OrderUtils.isValidOrderStatus(status)) {
-        queryBuilder.append("AND ST=").append(CharacterConstants.QUESTION);
+        queryBuilder.append("AND ST=?");
         parameters.add(status);
       }
 
       queryBuilder.append(" ORDER BY UON DESC");
-      queryBuilder.append(" LIMIT ").append(pageParams.getOffset()).append(CharacterConstants.COMMA)
+      queryBuilder.append(" LIMIT ")
+          .append(pageParams.getOffset())
+          .append(CharacterConstants.COMMA)
           .append(pageParams.getSize());
       query = pm.newQuery(Constants.JAVAX_JDO_QUERY_SQL, queryBuilder.toString());
       query.setClass(Order.class);
@@ -1711,8 +1711,10 @@ public class OrderManagementServiceImpl implements OrderManagementService {
     di.setReason(trans.getReason());
 
     di.setStatus(IOrder.PENDING);
+    di.setCreatedOn(trans.getTimestamp());
     di.setTimestamp(trans.getTimestamp());
     di.setMessage(trans.getMessage());
+    di.setCreatedBy(trans.getSourceUserId());
     di.setUserId(trans.getSourceUserId());
     // Set tags
     di.setTgs(tagDao.getTagsByNames(inv.getTags(TagUtil.TYPE_ENTITY), ITag.KIOSK_TAG),
@@ -1786,28 +1788,35 @@ public class OrderManagementServiceImpl implements OrderManagementService {
     return Collections.emptyList();
   }
 
+  private String buildReferenceIdFilterQuery(List<Object> parameters, Long domainId, String referenceId, String referenceIdSearchText) {
+
+    String query = "(SELECT ID_OID FROM ORDER_DOMAINS WHERE DOMAIN_ID = ?) AND " + referenceId + " LIKE ?";
+    parameters.add(domainId);
+    parameters.add(referenceIdSearchText.concat("%"));
+    return query;
+  }
+
 
   public List<String> getIdSuggestions(Long domainId, String id, String type, Integer oty,
       List<Long> kioskIds) throws ServiceException {
     List<String> filterIds = new ArrayList<>();
-    String filterQuery = "SELECT ID_OID FROM ORDER_DOMAINS WHERE DOMAIN_ID = " + domainId;
+    List<Object> parameters = new ArrayList<>();
+
     StringBuilder sqlQuery = new StringBuilder();
     if (StringUtils.isNotEmpty(type)) {
       if ("salesRefId".equals(type)) {
-        sqlQuery.append("SELECT DISTINCT SALES_REF_ID FROM `ORDER` WHERE ID IN (")
-            .append(filterQuery)
-            .append(") AND SALES_REF_ID LIKE '").append(id).append("%' ");
+        sqlQuery.append("SELECT DISTINCT SALES_REF_ID FROM `ORDER` WHERE ID IN ")
+            .append(buildReferenceIdFilterQuery(parameters, domainId, "SALES_REF_ID", id));
       } else if ("purchaseRefId".equals(type)) {
-        sqlQuery.append("SELECT DISTINCT PURCHASE_REF_ID FROM `ORDER` WHERE ID IN (")
-            .append(filterQuery)
-            .append(") AND PURCHASE_REF_ID LIKE '").append(id).append("%' ");
+        sqlQuery.append("SELECT DISTINCT PURCHASE_REF_ID FROM `ORDER` WHERE ID IN ")
+            .append(buildReferenceIdFilterQuery(parameters, domainId,"PURCHASE_REF_ID", id));
       } else if ("transferRefId".equals(type)) {
-        sqlQuery.append("SELECT DISTINCT TRANSFER_REF_ID FROM `ORDER` WHERE ID IN (")
-            .append(filterQuery)
-            .append(") AND TRANSFER_REF_ID LIKE '").append(id).append("%' ");
+        sqlQuery.append("SELECT DISTINCT TRANSFER_REF_ID FROM `ORDER` WHERE ID IN ")
+            .append(buildReferenceIdFilterQuery(parameters, domainId,"TRANSFER_REF_ID", id));
       } else if ("oid".equals(type)) {
-        sqlQuery.append("SELECT ID FROM `ORDER` WHERE ID IN (");
-        sqlQuery.append(filterQuery).append(" AND ID_OID LIKE '").append(id).append("%')");
+        sqlQuery.append("SELECT ID FROM `ORDER` WHERE ID IN (SELECT ID_OID FROM ORDER_DOMAINS WHERE DOMAIN_ID = ? AND ID_OID LIKE ?)");
+        parameters.add(domainId);
+        parameters.add(id.concat("%"));
       }
     }
     if (oty != null) {
@@ -1815,29 +1824,31 @@ public class OrderManagementServiceImpl implements OrderManagementService {
         sqlQuery.append(" AND OTY IN (").append(IOrder.PURCHASE_ORDER)
             .append(CharacterConstants.COMMA).append(IOrder.SALES_ORDER).append(")");
       } else {
-        sqlQuery.append(" AND OTY = ").append(oty);
+        sqlQuery.append(" AND OTY = ?");
+        parameters.add(String.valueOf(oty));
       }
     }
     if (kioskIds != null && !kioskIds.isEmpty()) {
-      sqlQuery.append(" AND ((KID IN(");
+      List<Object> kidParams = new ArrayList<>(kioskIds.size());
+      StringBuilder kids = new StringBuilder();
       for (Long kid : kioskIds) {
-        sqlQuery.append(kid).append(CharacterConstants.COMMA);
+        kids.append(CharacterConstants.QUESTION).append(CharacterConstants.COMMA);
+        kidParams.add(kid);
       }
-      sqlQuery.setLength(sqlQuery.length() - 1);
-      sqlQuery.append(") AND VTC = 1) OR (SKID IN(");
-      for (Long kid : kioskIds) {
-        sqlQuery.append(kid).append(CharacterConstants.COMMA);
-      }
-      sqlQuery.setLength(sqlQuery.length() - 1);
-      sqlQuery.append(") AND VTV = 1))");
+      kids.setLength(kids.length() - 1);
+      sqlQuery.append(" AND ((KID IN(")
+          .append(kids.toString())
+          .append(") AND VTC = 1) OR (SKID IN(")
+          .append(kids.toString())
+          .append(") AND VTV = 1))");
+      parameters.addAll(kidParams); // for KID
+      parameters.addAll(kidParams); // for SKID
     }
-    sqlQuery.append(CharacterConstants.SPACE);
-
-    sqlQuery.append("LIMIT 0,8");
+    sqlQuery.append(" LIMIT 0,8");
     PersistenceManager pm = PMF.get().getPersistenceManager();
     Query query = pm.newQuery(Constants.JAVAX_JDO_QUERY_SQL, sqlQuery.toString());
     try {
-      List rs = (List) query.execute();
+      List rs = (List) query.executeWithArray(parameters.toArray());
       for (Object r : rs) {
         String a = String.valueOf(r);
         if (a != null) {
@@ -1897,20 +1908,21 @@ public class OrderManagementServiceImpl implements OrderManagementService {
     }
     sqlQuery.append(" FROM `ORDER` WHERE ");
     if (kskHasMoreThanOneVnd) {
-      sqlQuery.append("ID IN (SELECT DISTINCT OID FROM DEMANDITEM WHERE KID = ")
-          .append(CharacterConstants.QUESTION);
+      sqlQuery.append("ID IN (SELECT DISTINCT OID FROM DEMANDITEM WHERE KID = ?");
       parameters.add(String.valueOf(kid));
-      sqlQuery.append(" AND MID = ").append(CharacterConstants.QUESTION)
-          .append(CharacterConstants.C_BRACKET);
+      sqlQuery.append(" AND MID = ?)");
       parameters.add(String.valueOf(mid));
     } else {
-      sqlQuery.append("KID = ").append(CharacterConstants.QUESTION);
+      sqlQuery.append("KID = ?");
       parameters.add(String.valueOf(kid));
     }
-    sqlQuery.append(" AND ST = '").append(IOrder.FULFILLED).append("'");
+    sqlQuery.append(" AND ST = ?");
+    parameters.add(IOrder.FULFILLED);
 
-    sqlQuery.append(" AND UON >= (DATE_SUB(NOW(),INTERVAL ").append(maxHistoricalPeriod)
-        .append(" DAY))").append(" ORDER BY UON DESC LIMIT 0,").append(maxNumberOfOrders);
+    sqlQuery.append(" AND UON >= (DATE_SUB(NOW(),INTERVAL ?")
+        .append(" DAY))").append(" ORDER BY UON DESC LIMIT 0,?");
+    parameters.add(String.valueOf(maxHistoricalPeriod));
+    parameters.add(String.valueOf(maxNumberOfOrders));
     sqlQuery.append(") ALIAS");
     PersistenceManager pm = PMF.get().getPersistenceManager();
     Query query = pm.newQuery(Constants.JAVAX_JDO_QUERY_SQL, sqlQuery.toString());
@@ -2002,7 +2014,7 @@ public class OrderManagementServiceImpl implements OrderManagementService {
 
   @Override
   public PDFResponseModel generateInvoiceForOrder(Long orderId)
-      throws ServiceException, IOException, ValidationException, ObjectNotFoundException {
+      throws ServiceException, IOException {
     IOrder order = getOrder(orderId, true);
     SecureUserDetails user = SecurityUtils.getUserDetails();
     return generateOrderInvoiceAction.invoke(order, user);

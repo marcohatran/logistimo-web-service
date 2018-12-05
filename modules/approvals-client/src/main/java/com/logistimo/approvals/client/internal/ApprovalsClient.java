@@ -51,12 +51,11 @@ public class ApprovalsClient implements IApprovalsClient {
   private ApprovalsClientConfiguration configuration;
 
   @Autowired
-  @Qualifier("approvalsRestTemplate")
-  private RestTemplate restTemplate;
+  private RestTemplate approvalsRestTemplate;
 
   @Override
   public CreateApprovalResponse createApproval(CreateApprovalRequest request) {
-    CreateApprovalCommand command = new CreateApprovalCommand(restTemplate, configuration.getPath(),
+    CreateApprovalCommand command = new CreateApprovalCommand(approvalsRestTemplate, configuration.getPath(),
         request);
     return command.execute();
   }
@@ -65,7 +64,7 @@ public class ApprovalsClient implements IApprovalsClient {
   public RestResponsePage<Approval> fetchApprovals(ApprovalFilters approvalFilters) {
     GetFilteredApprovalsCommand
         command =
-        new GetFilteredApprovalsCommand(restTemplate,
+        new GetFilteredApprovalsCommand(approvalsRestTemplate,
             configuration.getUrl() + "/v1/approvals-search", approvalFilters);
     return command.execute();
   }
@@ -74,12 +73,12 @@ public class ApprovalsClient implements IApprovalsClient {
   public CreateApprovalResponse getApproval(String approvalId) {
     GetApprovalCommand
         command =
-        new GetApprovalCommand(restTemplate, configuration.getPath(), approvalId);
+        new GetApprovalCommand(approvalsRestTemplate, configuration.getPath(), approvalId);
     return command.execute();
   }
 
   public void updateApprovalRequest(UpdateApprovalRequest request, String approvalId) {
-    new UpdateApprovalStatusCommand(restTemplate, configuration.getPath(), approvalId, request)
+    new UpdateApprovalStatusCommand(approvalsRestTemplate, configuration.getPath(), approvalId, request)
         .execute();
   }
 }

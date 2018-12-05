@@ -40,7 +40,7 @@ public class Report {
   public String atype;
   public String mtype;
   public String dmodel;
-  public String myear;
+  public Long myear;
   public String country;
   public String state;
   public String district;

@@ -92,6 +92,16 @@
                                                         </div>
                                                     </div>
                                                 </div>
+                                                <div class="row">
+                                                    <div class="col-sm-11">
+                                                        <div class="form-group">
+                                                            <div class="col-sm-3"></div>
+                                                            <div class="col-sm-8">
+                                                                <input type="checkbox" ng-disabled="(isUndef(inv.ri) || isUndef(inv.ri.rsns)) && inv.cimt == false" ng-model="inv.irm"> {{resourceBundle['markmandatory']}}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                                 <div class="row " ng-show="MatTags.length>0">
                                                     <div class="col-sm-11">
                                                         <div class="form-group">
@@ -164,6 +174,16 @@
                                                             <label  class="col-sm-3 control-label">{{resourceBundle['config.inventory.default.reason']}} {{resourceBundle['for.lowercase']}} {{resourceBundle['transactions.receipt']}}</label>
                                                             <div class="col-sm-8">
                                                                 <lg-uib-select allow-clear="true" append-to-body="true" query="queryReasons(q,'rr')" refresh-list="refreshReceiptList[0]" ui-model="inv.rr.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.receipt.reason']}}"> </lg-uib-select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-sm-11">
+                                                        <div class="form-group">
+                                                            <div class="col-sm-3"></div>
+                                                            <div class="col-sm-8">
+                                                                <input type="checkbox" ng-disabled="(isUndef(inv.rr) || isUndef(inv.rr.rsns)) && inv.crmt == false" ng-model="inv.rrm"> {{resourceBundle['markmandatory']}}
                                                             </div>
                                                         </div>
                                                     </div>
@@ -244,6 +264,16 @@
                                                         </div>
                                                     </div>
                                                 </div>
+                                                <div class="row">
+                                                    <div class="col-sm-11">
+                                                        <div class="form-group">
+                                                            <div class="col-sm-3"></div>
+                                                            <div class="col-sm-8">
+                                                                <input type="checkbox" ng-disabled="(isUndef(inv.rs) || isUndef(inv.rs.rsns)) && inv.csmt == false" ng-model="inv.prm"> {{resourceBundle['markmandatory']}}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                                 <div class="row " ng-show="MatTags.length>0">
                                                     <div class="col-sm-11">
                                                         <div class="form-group">
@@ -316,6 +346,16 @@
                                                             <label  class="col-sm-3 control-label">{{resourceBundle['config.inventory.default.reason']}} {{resourceBundle['for.lowercase']}} {{resourceBundle['transactions.wastage']}}</label>
                                                             <div class="col-sm-8">
                                                                 <lg-uib-select allow-clear="true" append-to-body="true" query="queryReasons(q,'rd')" refresh-list="refreshDiscardList[0]" ui-model="inv.rd.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.discards.reason']}}"> </lg-uib-select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-sm-11">
+                                                        <div class="form-group">
+                                                            <div class="col-sm-3"></div>
+                                                            <div class="col-sm-8">
+                                                                <input type="checkbox" ng-disabled="(isUndef(inv.rd) || isUndef(inv.rd.rsns)) && inv.cdmt == false" ng-model="inv.wrm"> {{resourceBundle['markmandatory']}}
                                                             </div>
                                                         </div>
                                                     </div>
@@ -396,6 +436,16 @@
                                                         </div>
                                                     </div>
                                                 </div>
+                                                <div class="row">
+                                                    <div class="col-sm-11">
+                                                        <div class="form-group">
+                                                            <div class="col-sm-3"></div>
+                                                            <div class="col-sm-8">
+                                                                <input type="checkbox" ng-disabled="(isUndef(inv.rt) || isUndef(inv.rt.rsns)) && inv.ctmt == false" ng-model="inv.trm"> {{resourceBundle['markmandatory']}}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                                 <div class="row " ng-show="MatTags.length>0">
                                                     <div class="col-sm-11">
                                                         <div class="form-group">
@@ -472,6 +522,16 @@
                                                         </div>
                                                     </div>
                                                 </div>
+                                                <div class="row">
+                                                    <div class="col-sm-11">
+                                                        <div class="form-group">
+                                                            <div class="col-sm-3"></div>
+                                                            <div class="col-sm-8">
+                                                                <input type="checkbox" ng-disabled="(isUndef(inv.rri) || isUndef(inv.rri.rsns)) && inv.crimt == false" ng-model="inv.rirm"> {{resourceBundle['markmandatory']}}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                                 <div class="row " ng-show="MatTags.length>0">
                                                     <div class="col-sm-11">
                                                         <div class="form-group">
@@ -544,6 +604,16 @@
                                                             <label  class="col-sm-3 control-label">{{resourceBundle['config.inventory.default.reason']}} {{resourceBundle['for.lowercase']}} {{resourceBundle['transactions.returns.outgoing']}}</label>
                                                             <div class="col-sm-8">
                                                                 <lg-uib-select allow-clear="true" append-to-body="true" query="queryReasons(q,'rro')" refresh-list="refreshReturnsOutgoingList[0]" ui-model="inv.rro.defRsnUI" place-holder="{{resourceBundle['config.inventory.select.default.returnsoutgoing.reason']}}"> </lg-uib-select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-sm-11">
+                                                        <div class="form-group">
+                                                            <div class="col-sm-3"></div>
+                                                            <div class="col-sm-8">
+                                                                <input type="checkbox" ng-disabled="(isUndef(inv.rro) || isUndef(inv.rro.rsns)) && inv.cromt == false" ng-model="inv.rorm"> {{resourceBundle['markmandatory']}}
                                                             </div>
                                                         </div>
                                                     </div>

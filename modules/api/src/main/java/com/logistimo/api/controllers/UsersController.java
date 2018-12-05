@@ -27,6 +27,7 @@ import com.logistimo.api.builders.EntityBuilder;
 import com.logistimo.api.builders.UserBuilder;
 import com.logistimo.api.builders.UserMessageBuilder;
 import com.logistimo.api.models.AddRemoveAccDomainsResponseObj;
+import com.logistimo.api.models.ChangePasswordModel;
 import com.logistimo.api.models.UserMessageModel;
 import com.logistimo.api.models.UserModel;
 import com.logistimo.api.models.configuration.AdminContactConfigModel;
@@ -50,11 +51,12 @@ import com.logistimo.entities.models.UserEntitiesModel;
 import com.logistimo.entities.service.EntitiesService;
 import com.logistimo.entity.IMessageLog;
 import com.logistimo.exception.BadRequestException;
+import com.logistimo.exception.ForbiddenAccessException;
 import com.logistimo.exception.InvalidDataException;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exception.SystemException;
-import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.logger.XLog;
+import com.logistimo.models.AuthRequest;
 import com.logistimo.models.ICounter;
 import com.logistimo.models.superdomains.DomainSuggestionModel;
 import com.logistimo.models.users.UserLoginHistoryModel;
@@ -74,6 +76,7 @@ import com.logistimo.utils.Counter;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.MessageUtil;
 import com.logistimo.utils.MsgUtil;
+import com.logistimo.utils.RandomPasswordGenerator;
 import com.logistimo.utils.StringUtil;
 
 import org.apache.commons.lang.StringUtils;
@@ -205,11 +208,8 @@ public class UsersController {
       PageParams pageParams = new PageParams(navigator.getCursor(offset), offset, size);
       if (SecurityConstants.ROLE_SUPERUSER.equals(role) && !sUser.getRole()
           .equals(SecurityConstants.ROLE_SUPERUSER)) {
-        throw new UnauthorizedException(backendMessages.getString("user.unauthorized"));
+        throw new ForbiddenAccessException(backendMessages.getString("user.unauthorized"));
       }
-/*            if (SecurityManager.compareRoles(rRole, role) <= 0) {
-                role = rRole;
-            }*/
       if (SecurityConstants.ROLE_SUPERUSER.equals(role)) {
         results = new Results<>(usersService.getSuperusers(), null);
       } else {
@@ -452,7 +452,8 @@ public class UsersController {
     Long domainId = sUser.getCurrentDomainId();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
-    int usrCnt, errCnt = 0;
+    int usrCnt;
+    int errCnt = 0;
     StringBuilder errMsg = new StringBuilder();
     List<String> errUsr = new ArrayList<>();
     try {
@@ -522,7 +523,7 @@ public class UsersController {
     UserModel model;
     try {
       if (!GenericAuthoriser.authoriseUser(userId)) {
-        throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+        throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
       }
       UserEntitiesModel userEntitiesModel = entitiesService.getUserWithKiosks(userId);
       IUserAccount ua = userEntitiesModel.getUserAccount();
@@ -613,8 +614,8 @@ public class UsersController {
 
   private void setDisplayNames(Locale locale, String timezone, UserModel model) {
     model.lngn = new Locale(model.lng).getDisplayLanguage();
-    if (null != model.gen) {
-      model.genn = UserUtils.getGenderDisplay(model.gen, locale);
+    if (null != model.getGen()) {
+      model.setGenderLabel(UserUtils.getGenderDisplay(model.getGen(), locale));
     }
     if (null != model.ro) {
       model.ron = UserUtils.getRoleDisplay(model.ro, locale);
@@ -646,7 +647,7 @@ public class UsersController {
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
     try {
       if (!GenericAuthoriser.authoriseUser(userModel.id)) {
-        throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+        throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
       }
       IUserAccount user = usersService.getUserAccount(userModel.id);
       user.setUpdatedBy(sUser.getUsername());
@@ -673,24 +674,30 @@ public class UsersController {
         .getString("update.success"));
   }
 
-  @RequestMapping(value = "/updatepassword/", method = RequestMethod.GET)
+  @RequestMapping(value = "/updatepassword", method = RequestMethod.POST)
   public
   @ResponseBody
-  String updateUserPassword(@RequestParam String userId, @RequestParam String opw,
-                            @RequestParam String pw) {
+  String updateUserPassword(@RequestBody ChangePasswordModel model) {
     SecureUserDetails sUser = SecurityUtils.getUserDetails();
     Long domainId = sUser.getCurrentDomainId();
     Locale locale = sUser.getLocale();
     ResourceBundle backendMessages = Resources.get().getBundle("BackendMessages", locale);
+    String userId = model.getUid();
     try {
       IUserAccount user = usersService.getUserAccount(userId);
       if (!GenericAuthoriser.authoriseUser(userId)) {
-        throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+        throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
       }
-      if (usersService.authenticateUser(userId, opw, null) == null) {
+      // Authenticate user
+      AuthRequest authRequest = AuthRequest.builder()
+          .userId(userId)
+          .password(model.getOldPassword()).build();
+      if (authenticationService.authenticate(authRequest) == null) {
         return backendMessages.getString("invalid.lowercase");
       }
-      usersService.changePassword(userId, opw, pw);
+      authenticationService
+          .changePassword(userId, null, model.getOldPassword(), model.getNpd(),
+              model.isEnhanced());
       authenticationService.clearUserTokens(userId, false);
       xLogger.info("AUDITLOG \t {0} \t {1} \t USER \t " +
               "UPDATE PASSWORD \t {2} \t {3}", domainId, sUser.getUsername(), userId,
@@ -700,7 +707,7 @@ public class UsersController {
       throw new InvalidServiceException(
           backendMessages.getString("user.password.update.error") + " " + userId);
     } catch (ObjectNotFoundException e) {
-      xLogger.severe("Object Not found exception in authenticateUser: {0}", e.getMessage());
+      xLogger.severe("Object Not found exception in authenticate: {0}", e.getMessage());
       throw new InvalidServiceException(
           backendMessages.getString("user.password.update.error") + " " + userId);
     }
@@ -717,11 +724,11 @@ public class UsersController {
     String loggedInUserId = sUser.getUsername();
     Long domainId = sUser.getCurrentDomainId();
     try {
-      String newPassword = authenticationService.generatePassword(userId);
+      IUserAccount ua = usersService.getUserAccount(userId);
+      String newPassword = RandomPasswordGenerator.generate(SecurityUtil.isUserAdmin(ua.getRole()));
       String msg = backendMessages.getString("password.reset.success") + ": " + newPassword;
       String logMsg = backendMessages.getString("password.reset.success.log");
-      IUserAccount ua = usersService.getUserAccount(userId);
-      usersService.changePassword(userId, null, newPassword);
+      authenticationService.changePassword(userId, null, null, newPassword,false);
       authenticationService.updateUserSession(userId, null);
       MessageService
           ms =
@@ -753,19 +760,19 @@ public class UsersController {
       IUserAccount ua = usersService.getUserAccount(userId);
       if (GenericAuthoriser.authoriseUser(userId)) {
         if ("e".equals(action)) {
-          usersService.enableAccount(userId);
+          authenticationService.enableAccount(userId);
           xLogger.info("AUDITLOG \t {0} \t {1} \t USER \t " +
               "ENABLE \t {2} \t {3}", domainId, sUser.getUsername(), userId, ua.getFullName());
           return backendMessages.getString("user.account.enabled") + " " + MsgUtil.bold(userId);
         } else {
-          usersService.disableAccount(userId);
+          authenticationService.disableAccount(userId);
           authenticationService.updateUserSession(userId, null);
           xLogger.info("AUDITLOG \t {0} \t {1} \t USER \t " +
               "DISABLE \t {2} \t {3}", domainId, sUser.getUsername(), userId, ua.getFullName());
           return backendMessages.getString("user.account.disabled") + " " + MsgUtil.bold(userId);
         }
       } else {
-        throw new UnauthorizedException(backendMessages.getString("permission.denied"));
+        throw new ForbiddenAccessException(backendMessages.getString("permission.denied"));
       }
     } catch (ServiceException | ObjectNotFoundException se) {
       xLogger.warn("Error Updating User password for " + userId, se);
@@ -890,7 +897,6 @@ public class UsersController {
     } catch (ObjectNotFoundException e) {
       xLogger.severe("Error in getting General Config details");
       throw new InvalidServiceException("Error in getting General Config details");
-      // throw new InvalidServiceException(backendMessages.getString("account.error"));
     }
   }
 
@@ -1054,16 +1060,18 @@ public class UsersController {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     try {
       IUserLoginHistory user = JDOUtils.createInstance(IUserLoginHistory.class);
-      user.setUserId(userLoginHistory.userId);
-      user.setLoginTime(userLoginHistory.loginTime);
-      user.setLgSrc(userLoginHistory.lgSrc);
-      user.setIpAddr(userLoginHistory.ipAddr);
-      user.setUsrAgnt(userLoginHistory.usrAgnt);
-      user.setVersion(userLoginHistory.version);
+      user.setUserId(userLoginHistory.getUserId());
+      user.setLoginTime(userLoginHistory.getLoginTime());
+      user.setLgSrc(userLoginHistory.getLgSrc());
+      user.setIpAddr(userLoginHistory.getIpAddr());
+      user.setUsrAgnt(userLoginHistory.getUsrAgnt());
+      user.setVersion(userLoginHistory.getVersion());
+      user.setReferer(userLoginHistory.getReferer());
+      user.setStatus(userLoginHistory.getStatus());
       pm.makePersistent(user);
     } catch (Exception e) {
       xLogger.warn(" {0} while updating the user login history, {1}", e.getMessage(),
-          userLoginHistory.userId, e);
+          userLoginHistory.getUserId(), e);
     } finally {
       if (pm != null) {
         pm.close();

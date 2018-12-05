@@ -29,17 +29,31 @@ import com.logistimo.models.superdomains.DomainSuggestionModel;
 import java.util.Date;
 import java.util.List;
 
+import lombok.Data;
+
+@Data
 public class UserModel {
   public String id; //User ID
   public String pw; //Password
-  public String ro; //Role
+  public String ro; //Localized Role text
+  public String role; //Role text in english
   public String cid; //Custom ID
   public List<String> tgs; // Tags
 
   public String fnm; //First Name
   public String lnm; //Last Name
-  public String gen; //Gender
-  public int age; //Age
+  /**
+   * Gender
+   */
+  private String gen;
+  /**
+   * Date of birth
+   */
+  private String dob;
+  /**
+   * Date of birth label in the format specific to the locale of the user
+   */
+  private String dobLabel;
 
   public String phm; //Mobile Phone
   public String phl; //Land Phone
@@ -71,7 +85,10 @@ public class UserModel {
   public String sp; //Phone Service Provider
 
   public String msn; //Registered On
-  public String genn; //Gender Name
+  /**
+   * Gender label
+   */
+  private String genderLabel;
   public String ron; //Role Display name
   public String lln; //Last Login Name
   public String lrn; //Last Reconnected Name
@@ -108,13 +125,9 @@ public class UserModel {
   public Integer lgSrc; // login src
   public Long sdid; //source domain
   public String sdname; //source domain name
-  private int theme; // store app theme
+  /**
+   * Store app theme
+   */
+  private int theme;
 
-  public int getTheme() {
-    return theme;
-  }
-
-  public void setTheme(int theme) {
-    this.theme = theme;
-  }
 }

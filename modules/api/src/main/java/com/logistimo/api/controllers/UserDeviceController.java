@@ -25,7 +25,7 @@ package com.logistimo.api.controllers;
 
 import com.logistimo.api.models.UserDeviceModel;
 import com.logistimo.auth.utils.SecurityUtils;
-import com.logistimo.exception.InvalidDataException;
+import com.logistimo.exception.ValidationException;
 import com.logistimo.logger.XLog;
 import com.logistimo.services.ServiceException;
 import com.logistimo.users.service.UsersService;
@@ -52,19 +52,16 @@ public class UserDeviceController {
   @RequestMapping(value = "/", method = RequestMethod.POST)
   public
   @ResponseBody
-  void addEditUserDevice(@RequestBody UserDeviceModel udModel)
-      throws ServiceException {
-
+  void addEditUserDevice(@RequestBody UserDeviceModel udModel) throws ServiceException {
     validate(udModel, SecurityUtils.getUserDetails().getUsername());
     usersService.addEditUserDevice(udModel);
     xLogger.info("USER DEVICE for user: {0} STORED SUCCESSFULLY", udModel);
   }
 
   private void validate(UserDeviceModel udModel, String userId) {
-    if (udModel == null ||
-        (udModel.userid == null || udModel.appname == null || udModel.token == null) ||
-        !userId.equals(udModel.userid)) {
-      throw new InvalidDataException("validation error");
+    if ((udModel.getUserId() == null || udModel.getAppName() == null || udModel.getFcmToken() == null)
+        || !userId.equals(udModel.getUserId())) {
+      throw new ValidationException("UD003",new Object[]{null});
     }
   }
 

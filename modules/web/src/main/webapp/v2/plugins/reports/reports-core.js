@@ -35,13 +35,21 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
     }
     if (checkNullEmpty(reportWidgets[report])) {
         reportWidgets[report] = [];
-        //reportMenus.push({id: id, report: report});
-        //reportMenus = sortByKey(reportMenus, 'report');
     }
     reportWidgets[report].push({id: id, subReport: subReport, widget: widget, helpFile: helpFilePath});
     reportWidgets = sortObject(reportWidgets);
     for (var w in reportWidgets) {
         reportWidgets[w] = sortByKey(reportWidgets[w], 'subReport');
+    }
+}
+
+function getReportWidgetById(id) {
+    for (let widget in reportWidgets) {
+        for (let report of reportWidgets[widget]) {
+            if (report.id == id) {
+                return report;
+            }
+        }
     }
 }
 
@@ -324,7 +332,7 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
     ModelFilterController.$inject = ['$scope', '$q', 'assetService'];
     AggregationLastRunTimeController.$inject = ['$scope', 'reportsServiceCore'];
     OrderTypeFilterController.$inject = ['$scope'];
-    ExportController.$inject = ['$scope','$uibModal'];
+    ExportController.$inject = ['$scope','$uibModal','AnalyticsService'];
 
     function ageFilter() {
         function getYears(offset) {
@@ -387,10 +395,11 @@ function registerWidget(id, widget, report, subReport, helpFilePath) {
         };
     }
 
-    function ExportController($scope,$uibModal) {
+    function ExportController($scope,$uibModal,AnalyticsService) {
         $scope.mailId = $scope.$parent.$parent.$parent.$parent.mailId;
         $scope.doExport = function() {
             $scope.close();
+            AnalyticsService.logEventAnalytics('Export',getReportWidgetById($scope.reportType).subReport + " Report");
             $scope.callback({reportType: $scope.reportType});
         };
         $scope.close = function () {
@@ -1162,7 +1171,10 @@ function reportCoreService() {
             },
             exportData: function (json) {
                 return apiService.post(json, '/s2/api/plugins/report/export');
-            }
+            },
+            getMinMaxHistoryData: function (json) {
+                return apiService.get('/s2/api/plugins/report/min-max-history?json=' + encodeURIComponent(json));
+            },
         }
     }]);
 }
@@ -1251,7 +1263,7 @@ function reportCoreFunction() {
                             t.displayValue = reportCoreFunction().roundNumber(t.value);
                         }
                         if (!isLinkDisabled && !(t.value == "0" || t.value == "0.0")) {
-                            t.link = "JavaScript: angular.element(document.getElementById('cid')).scope().getDFChartData('" + lData.label + "');";
+                            t.link = "JavaScript: callFunctionByName('getDFChartData','" + lData.label + "')";
                         }
                         if (color) {
                             t.color = color;

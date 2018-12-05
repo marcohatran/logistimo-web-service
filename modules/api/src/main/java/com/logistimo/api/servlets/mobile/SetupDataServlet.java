@@ -25,16 +25,20 @@ package com.logistimo.api.servlets.mobile;
 
 import com.logistimo.AppFactory;
 import com.logistimo.api.auth.AuthenticationUtil;
+import com.logistimo.api.constants.Status;
 import com.logistimo.api.servlets.JsonRestServlet;
 import com.logistimo.api.util.GsonUtil;
 import com.logistimo.api.util.RESTUtil;
 import com.logistimo.auth.SecurityConstants;
 import com.logistimo.auth.SecurityUtil;
+import com.logistimo.auth.service.AuthenticationService;
+import com.logistimo.auth.service.impl.AuthenticationServiceImpl;
 import com.logistimo.bulkuploads.BulkUploadMgr;
 import com.logistimo.communications.MessageHandlingException;
 import com.logistimo.communications.service.MessageService;
 import com.logistimo.config.models.CapabilityConfig;
 import com.logistimo.config.models.DomainConfig;
+import com.logistimo.config.models.FormsConfig;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.context.StaticApplicationContext;
@@ -288,9 +292,9 @@ public class SetupDataServlet extends JsonRestServlet {
     if (RestConstantsZ.ACTION_CREATEUSERKIOSK.equalsIgnoreCase(action)
         || RestConstantsZ.ACTION_UPDATEUSERKIOSK.equalsIgnoreCase(action)) {
       setupData(req, resp, backendMessages, action);
-    } else if (RestConstantsZ.ACTION_UPDATEPASSWORD.equalsIgnoreCase(action)) {
+    } else if (RestConstantsZ.ACTION_UPDATEPASSWRD.equalsIgnoreCase(action)) {
       updatePassword(req, resp, backendMessages);
-    } else if (RestConstantsZ.ACTION_RESETPASSWORD.equalsIgnoreCase(action)) {
+    } else if (RestConstantsZ.ACTION_RESETPASSWRD.equalsIgnoreCase(action)) {
       resetPassword(req, resp, backendMessages);
     } else if (RestConstantsZ.ACTION_REMOVE.equalsIgnoreCase(action)) {
       remove(req, resp, backendMessages);
@@ -300,10 +304,46 @@ public class SetupDataServlet extends JsonRestServlet {
       manageRelationship(req, resp, backendMessages, action);
     } else if (RestConstantsZ.ACTION_GETRELATEDENTITIES.equalsIgnoreCase(action)) {
       getRelatedEntities(req, resp);
+    } else if (RestConstantsZ.ACTION_GET_FORMSCONFIG.equalsIgnoreCase(action)) {
+      getFormsConfig(req, resp);
     } else {
       throw new ServiceException("Invalid action: " + action);
     }
     xLogger.fine("Out of processPost");
+  }
+
+  private void getFormsConfig(HttpServletRequest req, HttpServletResponse resp) {
+    xLogger.fine("Entered getFormsConfig");
+    // Get the request parameters
+    String userId = req.getParameter(RestConstantsZ.USER_ID);
+    String password = req.getParameter(RestConstantsZ.PASSWRD);
+    String kioskIdStr = req.getParameter(RestConstantsZ.KIOSK_ID);
+    String errMsg = null;
+    Status status = Status.SUCCESS;
+    int statusCode = HttpServletResponse.SC_OK;
+    FormsConfig formsConfig = null;
+    Long domainId = null;
+    if(StringUtils.isNotEmpty(kioskIdStr)) {
+      Long kioskId = Long.valueOf(kioskIdStr);
+      try {
+        IUserAccount u = RESTUtil.authenticate(userId, password, kioskId, req, resp);
+        domainId = u.getDomainId();
+        DomainConfig dc = DomainConfig.getInstance(domainId);
+        formsConfig = dc.getFormsConfig();
+      } catch (ServiceException e) {
+        errMsg = e.getMessage();
+        status = Status.FAILURE;
+      }
+      try {
+        sendJsonResponse(resp, statusCode, GsonUtil.getFormsAsJson(status, formsConfig.getForms(),
+            errMsg,
+            RESTUtil.VERSION_01));
+      } catch (IOException e) {
+        xLogger.severe("{0} when sending JSON response for getFormsConfiguration for domain {1}",
+            e.getClass().getName(), domainId);
+        resp.setStatus(500);
+      }
+    }
   }
 
   @SuppressWarnings("unchecked")
@@ -348,7 +388,7 @@ public class SetupDataServlet extends JsonRestServlet {
     // user id and password of the caller
     // Authenticate the user
     String userId = req.getParameter(RestConstantsZ.USER_ID);
-    String password = req.getParameter(RestConstantsZ.PASSWORD);
+    String password = req.getParameter(RestConstantsZ.PASSWRD);
     boolean
         notifyPassword =
         (req.getParameter("np")
@@ -580,7 +620,7 @@ public class SetupDataServlet extends JsonRestServlet {
       // If user Id is not null, and password notification is required, then do so
       if (uId != null && notifyPassword && user != null) {
         notifyPasswordToUser(user.get(JsonTagsZ.USER_ID),
-            user.get(JsonTagsZ.PASSWORD), domainId, userId);
+            user.get(JsonTagsZ.PASSWRD), domainId, userId);
       }
     } catch (Exception e) {
       xLogger
@@ -614,14 +654,13 @@ public class SetupDataServlet extends JsonRestServlet {
       sendBasicError(resp, locale.toString(), errMsg, null, HttpServletResponse.SC_OK);
       return;
     }
-
     // If the caller is authorized, proceed
-
     // Create AccountsService object
     UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
+    AuthenticationService aus = StaticApplicationContext.getBean(AuthenticationServiceImpl.class);
     String userId = req.getParameter(RestConstantsZ.ENDUSER_ID);
-    String password = req.getParameter(RestConstantsZ.OLD_PASSWORD);
-    String upPassword = req.getParameter(RestConstantsZ.UPDATED_PASSWORD);
+    String password = req.getParameter(RestConstantsZ.OLD_PASSWRD);
+    String upPassword = req.getParameter(RestConstantsZ.UPDATED_PASSWRD);
     // If end user id is null or empty, set error message and return
     if (userId == null || userId.isEmpty()) {
       errMsg = "Invalid user name of the end user whose password is to be updated";
@@ -651,7 +690,7 @@ public class SetupDataServlet extends JsonRestServlet {
     }
 
     try {
-      as.changePassword(userId, password, upPassword);
+      aus.changePassword(userId,null, password, upPassword,false);
     } catch (ServiceException e) {
       xLogger.severe("ServiceException while changing password for user {0}, Msg: {1}", userId,
           e.getMessage(), e);
@@ -692,7 +731,7 @@ public class SetupDataServlet extends JsonRestServlet {
 
     // Read the request parameters. If uid, p are both given, then it's the admin trying to reset a user's password
     userId = req.getParameter(RestConstantsZ.USER_ID);
-    String password = req.getParameter(RestConstantsZ.PASSWORD);
+    String password = req.getParameter(RestConstantsZ.PASSWRD);
 
     if ((userId != null && !userId.isEmpty()) || (password != null && !password.isEmpty())) {
       IUserAccount u = validateCaller(req, resp, backendMessages, null);
@@ -718,6 +757,7 @@ public class SetupDataServlet extends JsonRestServlet {
 
     // Create AccountsService object
     UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
+    AuthenticationService aus = StaticApplicationContext.getBean(AuthenticationServiceImpl.class);
     if (as == null) {
       // Failed to create AccountsService. Set the status to false and set the errMsg appropriately. And return.
       errMsg = "Failed to create AccountsService";
@@ -726,7 +766,7 @@ public class SetupDataServlet extends JsonRestServlet {
     }
 
     String endUserId = req.getParameter(RestConstantsZ.ENDUSER_ID);
-    String newPassword = req.getParameter(RestConstantsZ.UPDATED_PASSWORD);
+    String newPassword = req.getParameter(RestConstantsZ.UPDATED_PASSWRD);
     String notification = req.getParameter(RestConstantsZ.NOTIFICATION);
 
     // Check if endUserId is null or empty
@@ -761,7 +801,7 @@ public class SetupDataServlet extends JsonRestServlet {
     // Proceed to reset the password
     if (domainId == null || (domainId.equals(eu.getDomainId()))) {
       try {
-        as.changePassword(endUserId, null, newPassword);
+        aus.changePassword(endUserId,null, null, newPassword,false);
       } catch (ServiceException e) {
         xLogger
             .severe("ServiceException while resetting password for user {0}, Msg: {1}", endUserId,
@@ -999,12 +1039,12 @@ public class SetupDataServlet extends JsonRestServlet {
     }
     String value;
     csv = operType + "," + ht.get(JsonTagsZ.USER_ID);
-    String password = ht.get(JsonTagsZ.PASSWORD);
-    if (password == null) {
-      password = "";
+    String passwrd = ht.get(JsonTagsZ.PASSWRD);
+    if (passwrd == null) {
+      passwrd = "";
     }
     csv +=
-        "," + password + "," + password + "," + ht.get(JsonTagsZ.ROLE) + ",\"" + ht
+        "," + passwrd + "," + passwrd + "," + ht.get(JsonTagsZ.ROLE) + "," + CharacterConstants.COMMA + CharacterConstants.COMMA + "\""  + ht
             .get(JsonTagsZ.FIRST_NAME) + "\",";
     // Last name is optional
     if ((value = ht.get(JsonTagsZ.LAST_NAME)) != null && (!value.isEmpty())) {
@@ -1503,7 +1543,7 @@ public class SetupDataServlet extends JsonRestServlet {
     // user id and password of the caller
     // Authenticate the user
     String userId = req.getParameter(RestConstantsZ.USER_ID);
-    String password = req.getParameter(RestConstantsZ.PASSWORD);
+    String password = req.getParameter(RestConstantsZ.PASSWRD);
     String token = req.getHeader(Constants.TOKEN);
     String sourceInitiatorStr = req.getHeader(Constants.ACCESS_INITIATOR);
     int actionInitiator = -1;
@@ -1560,7 +1600,7 @@ public class SetupDataServlet extends JsonRestServlet {
     xLogger.fine("Entered getRelatedEntities");
     // Get the request parameters
     String userId = req.getParameter(RestConstantsZ.USER_ID);
-    String password = req.getParameter(RestConstantsZ.PASSWORD);
+    String password = req.getParameter(RestConstantsZ.PASSWRD);
     String kioskIdStr = req.getParameter(RestConstantsZ.KIOSK_ID);
     String relationshipType = req.getParameter(RestConstantsZ.RELATIONSHIP);
     String sizeStr = req.getParameter(RestConstantsZ.SIZE);
@@ -1590,7 +1630,7 @@ public class SetupDataServlet extends JsonRestServlet {
           try {
             // Authenticate user
             IUserAccount u = RESTUtil.authenticate(userId, password, kioskId, req, resp);
-            if (userId == null) {
+             if (userId == null) {
               userId = u.getUserId();
             }
             DomainConfig dc = DomainConfig.getInstance(u.getDomainId());

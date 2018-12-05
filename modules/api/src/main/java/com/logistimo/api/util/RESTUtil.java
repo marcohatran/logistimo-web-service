@@ -39,6 +39,8 @@ import com.logistimo.api.servlets.mobile.models.ParsedRequest;
 import com.logistimo.auth.SecurityConstants;
 import com.logistimo.auth.SecurityMgr;
 import com.logistimo.auth.SecurityUtil;
+import com.logistimo.auth.service.AuthenticationService;
+import com.logistimo.auth.service.impl.AuthenticationServiceImpl;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.communications.service.SMSService;
 import com.logistimo.config.entity.IConfig;
@@ -95,6 +97,8 @@ import com.logistimo.materials.service.IHandlingUnitService;
 import com.logistimo.materials.service.MaterialCatalogService;
 import com.logistimo.materials.service.impl.HandlingUnitServiceImpl;
 import com.logistimo.materials.service.impl.MaterialCatalogServiceImpl;
+import com.logistimo.models.AuthRequest;
+import com.logistimo.models.users.UserDetails;
 import com.logistimo.orders.entity.IOrder;
 import com.logistimo.pagination.PageParams;
 import com.logistimo.pagination.Results;
@@ -170,8 +174,6 @@ public class RESTUtil {
 
 
   private static final String MINIMUM_RESPONSE_CODE_TWO = "2";
-  private static final short GUI_THEME_FROM_DOMAIN_CONFIGURATION = -1;
-
 
   @SuppressWarnings("unchecked")
   public static Results getInventoryData(Long kioskId, Locale locale,
@@ -291,11 +293,6 @@ public class RESTUtil {
         List<String> tags = m.getTags();
         if (tags != null && !tags.isEmpty()) {
           material.put(JsonTagsZ.TAGS, StringUtil.getCSV(tags)); // earlier using TagUtil.getCSVTags
-        }
-        // Material type, if present
-        String type = m.getType();
-        if (type != null && !type.isEmpty()) {
-          material.put(JsonTagsZ.DATA_TYPE, type);
         }
         /// Min/Max, if any
         BigDecimal min = inv.getReorderLevel();
@@ -769,8 +766,10 @@ public class RESTUtil {
     // Get service
     UsersService as = StaticApplicationContext.getBean(UsersServiceImpl.class);
     EntitiesService entitiesService = StaticApplicationContext.getBean(EntitiesServiceImpl.class);
+    AuthenticationService aus = StaticApplicationContext.getBean(AuthenticationServiceImpl.class);
     String errMsg = null;
     IUserAccount u = null;
+    UserDetails ud = null;
     ResourceBundle backendMessages;
     String uId = userId;
     String pwd = password;
@@ -785,8 +784,7 @@ public class RESTUtil {
       }
     }
     // Get default backendMessages
-    backendMessages =
-        Resources.get().getBundle("BackendMessages", new Locale(Constants.LANG_DEFAULT));
+    backendMessages = Resources.get().getBundle("BackendMessages", new Locale(Constants.LANG_DEFAULT));
     try {
       boolean authenticated = false;
       // Check if Basic auth. header exists
@@ -801,25 +799,29 @@ public class RESTUtil {
         }
         // Authenticate using password (either from auth. header or parameters (for backward compatibility)
         if (uId != null && pwd != null) {
-          // Authenticate user
-          u = as.authenticateUser(uId, pwd, SourceConstants.MOBILE);
-          authenticated = (u != null);
+          AuthRequest authRequest = AuthRequest.builder()
+              .userId(uId)
+              .password(pwd)
+              .loginSource(SourceConstants.MOBILE).build();
+          ud = aus.authenticate(authRequest);
+          authenticated = (ud != null);
           if (!authenticated) {
-            backendMessages =
-                Resources.get().getBundle("BackendMessages", new Locale(Constants.LANG_DEFAULT));
+            backendMessages = Resources.get().getBundle("BackendMessages", new Locale(Constants.LANG_DEFAULT));
             errMsg = backendMessages.getString("error.invalidusername");
+          } else {
+            u = as.getUserAccount(uId);
           }
-        } else if (uId == null) { // no proper credentials
-          backendMessages =
-              Resources.get().getBundle("BackendMessages", new Locale(Constants.LANG_DEFAULT));
+        } else if (uId == null) {
+          // no proper credentials
+          backendMessages = Resources.get().getBundle("BackendMessages", new Locale(Constants.LANG_DEFAULT));
           errMsg = backendMessages.getString("error.invalidusername");
         } else {
           // Brought this back, without this few pages in old UI break. ( Stock view dashboard)
           // DEPRECATED
           // No password - check whether an authenticated session exists
           SecureUserDetails sUser = SecurityMgr.getUserDetailsIfPresent();
-          if (sUser != null && sUser.getUsername()
-              .equals(uId)) { // authenticated via web login session
+          if (sUser != null && sUser.getUsername().equals(uId)) {
+            // authenticated via web login session
             u = as.getUserAccount(uId);
             authenticated = true;
           } else { // no authenticated session either
@@ -902,7 +904,7 @@ public class RESTUtil {
                                                  boolean onlyAuthenticate,
                                                  boolean forceIntegerForStock, Date start,
                                                  Optional<Date> modifiedSinceDate,
-                                                 PageParams kioskPageParams)
+                                                 PageParams kioskPageParams, boolean skipInventory)
       throws ProtocolException, ServiceException {
     Hashtable<String, Object> config = null;
     String expiryTime = null;
@@ -921,10 +923,10 @@ public class RESTUtil {
         boolean getUsersForKiosk = (MINIMUM_RESPONSE_CODE_TWO.equals(minResponseCode));
         boolean
             getMaterials =
-            (isSingleKiosk || StringUtils.isEmpty(minResponseCode));
+            (isSingleKiosk || StringUtils.isEmpty(minResponseCode)) && !skipInventory;
         boolean
             getLinkedKiosks =
-            (isSingleKiosk || !getUsersForKiosk);
+            (!getUsersForKiosk);
         for (IKiosk k : kiosks) {
           // set users if minResponseCode is 2 (local editing of kiosks/users is now possible)
           if (getUsersForKiosk) {
@@ -1206,11 +1208,11 @@ public class RESTUtil {
     Long domainId;
     Map<String, String> reqParamsMap = new HashMap<>(1);
     String userId = req.getParameter(RestConstantsZ.USER_ID);
-    String password = req.getParameter(RestConstantsZ.PASSWORD);
+    String password = req.getParameter(RestConstantsZ.PASSWRD);
     reqParamsMap.put(RestConstantsZ.TYPE, req.getParameter(RestConstantsZ.TYPE));
     reqParamsMap.put(RestConstantsZ.KIOSK_ID, req.getParameter(RestConstantsZ.KIOSK_ID));
     reqParamsMap.put(RestConstantsZ.USER_ID, userId);
-    reqParamsMap.put(RestConstantsZ.PASSWORD, password);
+    reqParamsMap.put(RestConstantsZ.PASSWRD, password);
     reqParamsMap.put(RestConstantsZ.EMAIL, req.getParameter(RestConstantsZ.EMAIL));
     reqParamsMap.put(RestConstantsZ.ORDER_TYPE, req.getParameter(RestConstantsZ.ORDER_TYPE));
     ParsedRequest parsedRequest = parseGeneralExportFilters(reqParamsMap, backendMessages);
@@ -1246,12 +1248,22 @@ public class RESTUtil {
       return getKioskDataExportJsonOutput(locale, false, message);
     }
     parsedRequest.parsedReqMap.putAll(parsedOrderExportFilters.parsedReqMap);
+
+    // Date filters
+    reqParamsMap.put(RestConstantsZ.STARTDATE, req.getParameter(RestConstantsZ.STARTDATE));
+    reqParamsMap.put(RestConstantsZ.ENDDATE, req.getParameter(RestConstantsZ.ENDDATE));
+    ParsedRequest parsedDateFilters = parseDateFilters(reqParamsMap, backendMessages);
+    if (StringUtils.isNotEmpty(parsedDateFilters.errMessage)) {
+      message = parsedDateFilters.errMessage;
+      return getKioskDataExportJsonOutput(locale, false, message);
+    }
+    parsedRequest.parsedReqMap.putAll(parsedDateFilters.parsedReqMap);
+
     // Transaction filters
     reqParamsMap
         .put(RestConstantsZ.TRANSACTION_TYPE, req.getParameter(RestConstantsZ.TRANSACTION_TYPE));
     reqParamsMap.put(RestConstantsZ.MATERIAL_ID, req.getParameter(RestConstantsZ.MATERIAL_ID));
-    reqParamsMap.put(RestConstantsZ.STARTDATE, req.getParameter(RestConstantsZ.STARTDATE));
-    reqParamsMap.put(RestConstantsZ.ENDDATE, req.getParameter(RestConstantsZ.ENDDATE));
+
     ParsedRequest parsedTransExportFilters =
         parseTransactionsExportFilters(reqParamsMap, backendMessages);
     if (StringUtils.isNotEmpty(parsedTransExportFilters.errMessage)) {
@@ -1259,15 +1271,15 @@ public class RESTUtil {
       return getKioskDataExportJsonOutput(locale, false, message);
     }
     parsedRequest.parsedReqMap.putAll(parsedTransExportFilters.parsedReqMap);
-    // Export, if still valid
+
     Map<String, String> params = new HashMap<>();
     params.put(MobileExportConstants.EXPORT_TYPE_KEY,
         (String) parsedRequest.parsedReqMap.get(RestConstantsZ.TYPE));
     params.put(MobileExportConstants.DOMAIN_ID_KEY, domainId.toString());
     params.put(MobileExportConstants.KIOSK_ID_KEY,
         parsedRequest.parsedReqMap.get(RestConstantsZ.KIOSK_ID).toString());
-    if (BulkExportMgr.TYPE_TRANSACTIONS
-        .equals(parsedRequest.parsedReqMap.get(RestConstantsZ.TYPE))) {
+    String exportType = (String) parsedRequest.parsedReqMap.get(RestConstantsZ.TYPE);
+    if (isExportTypeTransactions(exportType) || isExportTypeOrders(exportType) || isExportTypeTransfers(exportType)) {
       if (parsedRequest.parsedReqMap.get(RestConstantsZ.ENDDATE) != null) {
         params.put(MobileExportConstants.END_DATE_KEY, LocalDateUtil
             .formatCustom((Date) parsedRequest.parsedReqMap.get(RestConstantsZ.ENDDATE),
@@ -1284,6 +1296,8 @@ public class RESTUtil {
         params.put(MobileExportConstants.FROM_DATE_KEY,
             LocalDateUtil.formatCustom(cal.getTime(), Constants.DATE_FORMAT_CSV, null));
       }
+    }
+    if (isExportTypeTransactions(exportType)) {
       if (parsedRequest.parsedReqMap.get(RestConstantsZ.MATERIAL_ID) != null) {
         params.put(MobileExportConstants.MATERIAL_ID_KEY,
             parsedRequest.parsedReqMap.get(RestConstantsZ.MATERIAL_ID).toString());
@@ -1293,14 +1307,8 @@ public class RESTUtil {
             parsedRequest.parsedReqMap.get(RestConstantsZ.TRANSACTION_TYPE).toString());
       }
     }
-    if (BulkExportMgr.TYPE_ORDERS.equals(parsedRequest.parsedReqMap.get(RestConstantsZ.TYPE))
-        || TRANSFERS.equals(parsedRequest.parsedReqMap.get(RestConstantsZ.TYPE))) {
-      // Export a year's worth of transactions/orders
-      Calendar cal = GregorianCalendar.getInstance();
-      cal.add(Calendar.YEAR, -1);
-      params.put(MobileExportConstants.FROM_DATE_KEY,
-          LocalDateUtil.formatCustom(cal.getTime(), Constants.DATE_FORMAT_CSV, null));
-
+    if (isExportTypeOrders(exportType)
+        || isExportTypeTransfers(exportType)) {
       params.put(MobileExportConstants.ORDER_TYPE_KEY,
           (String) parsedRequest.parsedReqMap.get(MobileExportConstants.ORDERS_SUB_TYPE_KEY));
       params.put(MobileExportConstants.ORDERS_SUB_TYPE_KEY,
@@ -1313,18 +1321,15 @@ public class RESTUtil {
           exportAdapter =
           StaticApplicationContext.getBean(MobileExportAdapter.class);
       exportAdapter.buildExportRequest(params);
-      message =
-          "Successfully scheduled export, data will be sent to email address \""
-              + parsedRequest.parsedReqMap.get(RestConstantsZ.EMAIL)
-              + "\".";
+      message = backendMessages.getString("exports.successfully.scheduled.message") + CharacterConstants.DOUBLE_QUOTES + parsedRequest.parsedReqMap.get(RestConstantsZ.EMAIL)
+          + CharacterConstants.DOUBLE_QUOTES + CharacterConstants.DOT;
     } catch (Exception e) {
       xLogger.severe(
           "{0} when scheduling task for kiosk data export of type {1} for kiosk {2} in domain {3} by user {4}: ",
           e.getClass().getName(), parsedRequest.parsedReqMap.get(RestConstantsZ.TYPE),
           parsedRequest.parsedReqMap.get(RestConstantsZ.KIOSK_ID), domainId, userId, e
       );
-      message =
-          "A system error occurred. Please retry your export once again, or contact your Administrator.";
+      message = backendMessages.getString("exports.failure.message");
       return getKioskDataExportJsonOutput(locale, false, message);
     }
     return getKioskDataExportJsonOutput(locale, true, message);
@@ -1520,6 +1525,10 @@ public class RESTUtil {
         ic);
     if (MapUtils.isNotEmpty(defRsnsCfgByTransTypeMap)) {
       config.put(JsonTagsZ.DEFAULT_REASONS, defRsnsCfgByTransTypeMap);
+    }
+    if (CollectionUtils.isNotEmpty(ic.getTransactionTypesWithReasonMandatory())) {
+      config.put(JsonTagsZ.TRANSACTION_TYPES_WITH_REASON_MANDATORY,
+          ic.getTransactionTypesWithReasonMandatory());
     }
     // Material Status, if any
     Map<String,Map<String,String>> matStatusByType = getMaterialStatusByType(ic);
@@ -1720,7 +1729,7 @@ public class RESTUtil {
       }
       // Get user specific gui theme configuration and add it to config
       int storeAppTheme = user.getStoreAppTheme();
-      if (storeAppTheme != GUI_THEME_FROM_DOMAIN_CONFIGURATION) {
+      if (storeAppTheme != Constants.GUI_THEME_SAME_AS_IN_DOMAIN_CONFIGURATION) {
         config.put(JsonTagsZ.GUI_THEME, storeAppTheme);
       }
       // Add kiosk tags, if configured in the domain
@@ -1750,6 +1759,7 @@ public class RESTUtil {
     } catch (Exception e) {
       xLogger.warn("Error in getting system configuration: {0}", e);
     }
+    config.put(JsonTagsZ.ENABLE_TWO_FACTOR_AUTHENTICATION, dc.isTwoFactorAuthenticationEnabled());
     // Return config
     if (config.isEmpty()) {
       return null;
@@ -1821,10 +1831,8 @@ public class RESTUtil {
 
   // Method to switch to new host if configured in the Domain configuration for a user's domain
   public static boolean checkIfLoginShouldNotBeAllowed(IUserAccount u, HttpServletResponse resp,
-                                                       HttpServletRequest req)
-      throws ServiceException {
+                                                       HttpServletRequest req) throws ServiceException {
     // Get the configuration. Check if switch to new host is enabled. If yes, get the new host name and return 409 response.
-
     return checkAppVersion(u,resp,req) || checkDomainSwith(u,resp);
   }
 
@@ -2147,7 +2155,7 @@ public class RESTUtil {
     Map<String, ActualTransConfig> actualTransConfigByType = ic.getActualTransConfigMapByType();
     if (MapUtils.isNotEmpty(actualTransConfigByType)) {
       actualTransConfigByType.entrySet().forEach(entry -> {
-            Map<String,String> actualTransConfig = getActualTransConfigByType(entry.getValue());
+            Map<String, String> actualTransConfig = getActualTransConfigByType(entry.getValue());
             if (MapUtils.isNotEmpty(actualTransConfig)) {
               actualTransDateConfigByType
                   .put(entry.getKey(), actualTransConfig);
@@ -2328,7 +2336,7 @@ public class RESTUtil {
 
   private static ParsedRequest parseOrdersExportFilters(Map<String, String> reqParamsMap) {
     ParsedRequest parsedRequest = new ParsedRequest();
-    if (reqParamsMap == null || reqParamsMap.isEmpty()) {
+    if (MapUtils.isEmpty(reqParamsMap)) {
       return parsedRequest;
     }
     // Get the order type, if sent
@@ -2356,7 +2364,42 @@ public class RESTUtil {
       Map<String, String> reqParamsMap,
       ResourceBundle backendMessages) {
     ParsedRequest parsedRequest = new ParsedRequest();
-    if (reqParamsMap == null || reqParamsMap.isEmpty()) {
+    if (MapUtils.isEmpty(reqParamsMap)) {
+      return parsedRequest;
+    }
+
+    String transTypeStr = reqParamsMap.get(RestConstantsZ.TRANSACTION_TYPE);
+    if (StringUtils.isNotEmpty(transTypeStr)) {
+      if (ITransaction.TYPE_PHYSICALCOUNT.equals(transTypeStr) || ITransaction.TYPE_ISSUE
+          .equals(transTypeStr) || ITransaction.TYPE_RECEIPT.equals(transTypeStr)
+          || ITransaction.TYPE_TRANSFER.equals(transTypeStr) || ITransaction.TYPE_WASTAGE
+          .equals(transTypeStr)) {
+        parsedRequest.parsedReqMap.put(RestConstantsZ.TRANSACTION_TYPE, transTypeStr);
+      } else {
+        parsedRequest.errMessage = backendMessages.getString("error.invalidtransactiontype");
+        return parsedRequest;
+      }
+    }
+    String materialIdStr = reqParamsMap.get(RestConstantsZ.MATERIAL_ID);
+    if (StringUtils.isNotEmpty(materialIdStr)) {
+      try {
+        Long materialId = Long.parseLong(materialIdStr);
+        parsedRequest.parsedReqMap.put(RestConstantsZ.MATERIAL_ID, materialId);
+      } catch (NumberFormatException e) {
+        parsedRequest.errMessage = backendMessages.getString("error.invalidmaterialid");
+        xLogger.severe("Exception while parsing material id. {0}",
+            materialIdStr, e);
+        return parsedRequest;
+      }
+    }
+    return parsedRequest;
+  }
+
+  private static ParsedRequest parseDateFilters(
+      Map<String, String> reqParamsMap,
+      ResourceBundle backendMessages) {
+    ParsedRequest parsedRequest = new ParsedRequest();
+    if (MapUtils.isEmpty(reqParamsMap)) {
       return parsedRequest;
     }
     String endDateStr = reqParamsMap.get(RestConstantsZ.ENDDATE);
@@ -2391,34 +2434,6 @@ public class RESTUtil {
       parsedRequest.errMessage = backendMessages.getString("error.startdateisgreaterthanenddate");
       return parsedRequest;
     }
-
-    String transTypeStr = reqParamsMap.get(RestConstantsZ.TRANSACTION_TYPE);
-    if (StringUtils.isNotEmpty(transTypeStr)) {
-      if (ITransaction.TYPE_PHYSICALCOUNT.equals(transTypeStr) || ITransaction.TYPE_ISSUE
-          .equals(transTypeStr) || ITransaction.TYPE_RECEIPT.equals(transTypeStr)
-          || ITransaction.TYPE_TRANSFER.equals(transTypeStr) || ITransaction.TYPE_WASTAGE
-          .equals(transTypeStr)) {
-        parsedRequest.parsedReqMap.put(RestConstantsZ.TRANSACTION_TYPE, transTypeStr);
-      } else {
-        parsedRequest.errMessage = backendMessages.getString("error.invalidtransactiontype");
-        return parsedRequest;
-      }
-    }
-    String materialIdStr = null;
-    if (reqParamsMap.containsKey(RestConstantsZ.MATERIAL_ID)) {
-      materialIdStr = reqParamsMap.get(RestConstantsZ.MATERIAL_ID);
-    }
-    if (StringUtils.isNotEmpty(materialIdStr)) {
-      try {
-        Long materialId = Long.parseLong(materialIdStr);
-        parsedRequest.parsedReqMap.put(RestConstantsZ.MATERIAL_ID, materialId);
-      } catch (NumberFormatException e) {
-        parsedRequest.errMessage = backendMessages.getString("error.invalidmaterialid");
-        xLogger.severe("Exception while parsing material id. {0}",
-            materialIdStr, e);
-        return parsedRequest;
-      }
-    }
     return parsedRequest;
   }
 
@@ -2429,5 +2444,20 @@ public class RESTUtil {
     IConfig config = cms.getConfiguration(IConfig.CONFIG_PREFIX + domainId);
     return !modifiedSinceDate.isPresent() || !modifiedSinceDate.get()
         .after(config.getLastUpdated());
+  }
+
+  private static boolean isExportTypeTransactions(String exportType) {
+    return BulkExportMgr.TYPE_TRANSACTIONS
+        .equals(exportType);
+  }
+
+  private static boolean isExportTypeOrders(String exportType) {
+    return BulkExportMgr.TYPE_ORDERS
+        .equals(exportType);
+  }
+
+  private static boolean isExportTypeTransfers(String exportType) {
+    return BulkExportMgr.TYPE_TRANSFERS
+        .equals(exportType);
   }
 }

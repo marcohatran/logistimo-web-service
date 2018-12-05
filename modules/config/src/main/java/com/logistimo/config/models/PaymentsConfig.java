@@ -44,7 +44,7 @@ public class PaymentsConfig implements Serializable {
   public static final String ACCOUNT_NAME = "accountname";
   public static final String ACCOUNT_USER = "accountuser";
   public static final String ACCESS_NAME = "accessusername";
-  public static final String ACCESS_PASSWORD = "accesspassword";
+  public static final String ACCESS_PASS = "accesspassword";
   private static final long serialVersionUID = -6231148078583991869L;
   private static final XLog xLogger = XLog.getLog(PaymentsConfig.class);
   private static final String CREATION_TIME = "creationtime";
@@ -205,7 +205,7 @@ public class PaymentsConfig implements Serializable {
       }
       // Get the access password
       try {
-        this.accessPassword = json.getString(ACCESS_PASSWORD);
+        this.accessPassword = json.getString(ACCESS_PASS);
       } catch (JSONException e) {
         // ignore
       }
@@ -249,7 +249,7 @@ public class PaymentsConfig implements Serializable {
           json.put(ACCESS_NAME, this.accessName);
         }
         if (this.accessPassword != null && !this.accessPassword.isEmpty()) {
-          json.put(ACCESS_PASSWORD, this.accessPassword);
+          json.put(ACCESS_PASS, this.accessPassword);
         }
         if (this.creationTime != null) {
           json.put(CREATION_TIME, creationTime.getTime());

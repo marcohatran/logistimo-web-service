@@ -26,35 +26,45 @@
  */
 
 logistimoApp.service('returnsService', ['APIService', function (apiService) {
-    var _items = [];
-    var _order = {};
+    let _items = [];
+    let _order = {};
 
     const SOURCE_WEB = 1;
 
-    this.setItems = function (items) {
-        _items = items;
-    };
+    this.setItems =  items => _items = items;
 
-    this.getItems = function () {
-        var tItems = _items;
+    this.getItems = () => {
+        let tItems = _items;
         _items = [];
         return tItems;
     };
 
-    this.setOrder = function (order) {
-        _order = order;
-    };
+    this.setOrder =  order => _order = order;
 
-    this.getOrder = function () {
-        var tOrder = _order;
+    this.getOrder = () => {
+        let tOrder = _order;
         _order = {};
         return tOrder;
     };
 
-    function getCreateRequest(returns) {
-        var items = [];
-        angular.forEach(returns.returnItems, function (returnItem) {
-            var item = {
+    let getTrackingDetails = returns => {
+        if(returns.tracking_details) {
+            let tracking_details = {};
+            tracking_details.transporter = returns.tracking_details.transporter || undefined;
+            tracking_details.tracking_id = returns.tracking_details.trackingId || undefined;
+            tracking_details.estimated_arrival_date = formatDate(returns.tracking_details.estimatedArrivalDate) || undefined;
+            tracking_details.required_on = formatDate(returns.tracking_details.requiredOn) || undefined;
+            let isValid = Object.values(tracking_details).some(d => {
+                return checkNotNullEmpty(d);
+            });
+            return isValid ? tracking_details : undefined;
+        }
+    };
+
+    let getCreateRequest = returns => {
+        let items = [];
+        angular.forEach(returns.returnItems, returnItem => {
+            let item = {
                 material_id: returnItem.id,
                 return_quantity: returnItem.returnQuantity,
                 material_status: returnItem.returnMaterialStatus,
@@ -62,8 +72,8 @@ logistimoApp.service('returnsService', ['APIService', function (apiService) {
             };
             if (checkNotNullEmpty(returnItem.returnBatches)) {
                 item.batches = [];
-                var totalReturnQuantity = 0;
-                angular.forEach(returnItem.returnBatches, function (returnBatch) {
+                let totalReturnQuantity = 0;
+                angular.forEach(returnItem.returnBatches, returnBatch => {
                     if (checkNotNullEmpty(returnBatch.returnQuantity)) {
                         item.batches.push({
                             batch_id: returnBatch.id,
@@ -82,42 +92,87 @@ logistimoApp.service('returnsService', ['APIService', function (apiService) {
         return {
             order_id: returns.order_id,
             comment: returns.comment,
-            items: items,
-            source: SOURCE_WEB
+            items,
+            source: SOURCE_WEB,
+            tracking_details: getTrackingDetails(returns)
         }
-    }
+    };
 
-    this.create = function (data) {
+    this.create = data => {
         return apiService.post(getCreateRequest(data), '/s2/api/returns');
     };
 
-    this.get = function (id) {
-        return apiService.get('/s2/api/returns/' + id);
+    this.get = id => {
+        return apiService.get(`/s2/api/returns/${id}`);
     };
 
-    this.getAll = function (filters) {
-        var filterArray = [];
-        for (var filter in filters) {
+    this.getAll = filters => {
+        let filterArray = [];
+        for (let filter in filters) {
             if (filters.hasOwnProperty(filter) && checkNotNullEmpty(filters[filter])) {
-                filterArray.push(filter + "=" + filters[filter]);
+                filterArray.push(`${filter}=${filters[filter]}`);
             }
         }
-        return apiService.get('/s2/api/returns' + (filterArray.length > 0 ? '?' + filterArray.join("&") : ''));
+        return apiService.get(`/s2/api/returns${filterArray.length > 0 ? '?' + filterArray.join("&") : ''}`);
     };
 
-    this.ship = function (id, data) {
-        data.source = SOURCE_WEB;
-        return apiService.post(data, '/s2/api/returns/' + id + '/ship');
+    let getShipRequest = returns => {
+        return {
+            comment: returns.comment,
+            tracking_details: getTrackingDetails(returns)
+        }
     };
 
-    this.receive = function (id, data) {
+    this.ship = (id, data) => {
         data.source = SOURCE_WEB;
-        return apiService.post(data, '/s2/api/returns/' + id + '/receive');
+        return apiService.post(getShipRequest(data), `/s2/api/returns/${id}/ship`);
     };
 
-    this.cancel = function (id, data) {
+    this.receive = (id, data) => {
         data.source = SOURCE_WEB;
-        return apiService.post(data, '/s2/api/returns/' + id + '/cancel');
+        return apiService.post(data, `/s2/api/returns/${id}/receive`);
+    };
+
+    this.cancel = (id, data) => {
+        data.source = SOURCE_WEB;
+        return apiService.post(data, `/s2/api/returns/${id}/cancel`);
+    };
+
+    let getUpdateTrackingDetailsRequest = trackingDetails => {
+        return {
+            transporter: trackingDetails.transporter,
+            tracking_id: trackingDetails.tracking_id,
+            estimated_arrival_date: formatDate(trackingDetails.ead) || undefined,
+            required_on: formatDate(trackingDetails.ron) || undefined
+        }
+    };
+
+    this.updateTrackingDetails = (id, data) => {
+        return apiService.post(getUpdateTrackingDetailsRequest(data), `/s2/api/returns/${id}/tracking-details`);
+    };
+
+    let getUpdateItemRequest = returnItems => {
+        angular.forEach(returnItems, returnItem => {
+            if(checkNotNullEmpty(returnItem.new_return_quantity)) {
+                returnItem.return_quantity = returnItem.new_return_quantity || returnItem.return_quantity;
+            }
+            if(checkNotNullEmpty(returnItem.batches)) {
+                angular.forEach(returnItem.batches, returnBatch => {
+                    if (checkNotNullEmpty(returnBatch.new_return_quantity)) {
+                        returnBatch.return_quantity = returnBatch.new_return_quantity || returnBatch.return_quantity;
+                    }
+                });
+            }
+        });
+        return {items: returnItems};
+    };
+
+    this.updateItems = (id, data) => {
+        return apiService.post(getUpdateItemRequest(data), `/s2/api/returns/${id}/update-items`);
+    };
+
+    this.getQuantityByOrder = (orderId) => {
+        return apiService.get(`/s2/api/returns/order/${orderId}`);
     };
 
 }]);

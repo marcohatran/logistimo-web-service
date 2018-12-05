@@ -28,9 +28,12 @@ import com.logistimo.reports.models.ReportDataModel;
 import java.util.List;
 import java.util.Map;
 
+import lombok.Data;
+
 /**
  * Created by mohan on 30/03/17.
  */
+@Data
 public class ReportChartModel {
   public String label;
   public List<ReportDataModel> value;

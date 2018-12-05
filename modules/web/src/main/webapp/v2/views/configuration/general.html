@@ -52,7 +52,7 @@
                                     <div class="row">
                                         <div class="col-sm-7">
                                             <div class="form-group">
-                                                <label for="cnfCnt" class="col-sm-4 control-label">{{resourceBundle['country']}}</label>
+                                                <label for="cnfCnt" class="col-sm-4 control-label required">{{resourceBundle['country']}}</label>
 
                                                 <div class="col-sm-7">
                                                     <select ng-model="cnf.cnt" class="form-control" id="cnfCnt"
@@ -127,7 +127,7 @@
                                     <div class="row"> <!--Timezone-->
                                         <div class="col-sm-7">
                                             <div class="form-group">
-                                                <label for="cnfTz" class="col-sm-4 control-label">{{resourceBundle['timezone']}}</label>
+                                                <label for="cnfTz" class="col-sm-4 control-label required">{{resourceBundle['timezone']}}</label>
 
                                                 <div class="col-sm-7">
                                                     <select ng-model="cnf.tz" class="form-control" id="cnfTz"
@@ -230,7 +230,7 @@
                                         <div class="form-group mgh0">
                                             <input type="file" id="domainFileupload" ng-model="imageData"
                                                    class="form-control"
-                                                   accept=".png,.jpg,.jpeg" maxsize="5000" base-sixty-four-input/>
+                                                   accept=".png,.jpg,.jpeg,.gif" maxsize="10000" base-sixty-four-input/>
                                             <span ng-show="uploadForm.imageData.$error.maxsize">{{resourceBundle['uploadsizemessage']}}</span>
                                         </div>
                                         <span class="litetext">{{resourceBundle['uploadmessage']}}</span>

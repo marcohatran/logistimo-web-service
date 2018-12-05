@@ -95,38 +95,21 @@
                         </div>
                     </div>
                 </div>
+                <div class="row" ng-show="currentAsset.at == 2 && isDef(assetDetails.meta.cc.qty) && isDef(assetDetails.meta.cc.met) && increaseCounter()">
+                    <div class="col-sm-12">
+                        <div class="row">
+                            <div class="col-sm-2 cbx">
+                                <label class="control-label"> {{resourceBundle['asset']}} {{resourceBundle['capacity'] | lowercase}}</label>
+                            </div>
+                            <div class="col-sm-10 cbx">
+                                {{assetDetails.meta.cc.qty}} {{assetDetails.meta.cc.met}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="row">
-            <div class="bgr" ng-show="currentAsset.at == 2 && assetInfoCounter > 0 && isDef(assetDetails.meta.cc.qty)">
-                <div class="title-heading">
-                    {{resourceBundle['asset']}} {{resourceBundle['capacity'] | lowercase}}
-                </div>
-                <div class="row"  ng-show="isDef(assetDetails.meta.cc.qty) && increaseCounter()">
-                    <div class="col-sm-12">
-                        <div class="row">
-                            <div class="col-sm-2 cbx">
-                                <label class="control-label">{{resourceBundle['capacity']}}:</label>
-                            </div>
-                            <div class="col-sm-10 cbx">
-                                {{assetDetails.meta.cc.qty}}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="row" ng-show="isDef(assetDetails.meta.cc.met) && assetDetails.meta.cc.met != 0 && increaseCounter()">
-                    <div class="col-sm-12">
-                        <div class="row">
-                            <div class="col-sm-2 cbx">
-                                <label class="control-label">{{resourceBundle['capacity']}} {{resourceBundle['metric'] | lowercase}}:</label>
-                            </div>
-                            <div class="col-sm-10 cbx">
-                                {{assetDetails.meta.cc.met}}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
             <div class="bgr" ng-show="isDef(assetDetails.gsmInfo) && assetInfoCounter > 0">
                 <div class="title-heading">
                     {{resourceBundle['asset.meta.gsm.info']}}

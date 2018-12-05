@@ -24,9 +24,13 @@
 var domainServices = angular.module('domainServices', []);
 domainServices.factory('domainService', ['APIService', '$q', '$cookies', function (apiService, $q, $cookies) {
     return {
-        createDomain: function (domainName, desc) {
-            var param = '?domainName=' + domainName + '&desc=' + desc;
-            return apiService.post(null, '/s2/api/domain/create' + param);
+        createDomain: function (domainName, desc, location, timezone) {
+            var param = '?domainName=' + domainName;
+            if(checkNotNullEmpty(desc)) {
+                param += '&desc=' + desc;
+            }
+            param += '&timezone=' + timezone;
+            return apiService.post(location, '/s2/api/domain/create' + param);
         },
         deleteDomain: function(dId) {
             var param = '?dId=' + dId;

@@ -22,7 +22,7 @@
  */
 
 var userServices = angular.module('userServices', []);
-userServices.factory('userService', ['APIService', function (apiService) {
+userServices.factory('userService', ['APIService','iAuthService','$q', function (apiService, iAuthService, $q) {
     return {
         getUsers: function (entityId, srcEntityId) {
             var urlStr = '/s2/api/entities/entity/' + entityId + "/users";
@@ -79,7 +79,24 @@ userServices.factory('userService', ['APIService', function (apiService) {
             return apiService.get('/s2/api/users/check/custom?customId=' + params);
         },
         createUser: function (user) {
-            return apiService.post(user, "/s2/api/users/");
+            return $q(function(resolve, reject) {
+
+                var userRef = angular.copy(user);
+                iAuthService.randomSalt().then(function(salt){
+                    if (checkNullEmpty(userRef.pw) || checkNullEmpty(userRef.cpw)) {
+                        reject("Password cannot be empty")
+                    }
+                    userRef.cpw = hex_sha512(salt.data.salt + userRef.cpw);
+                    userRef.pw = salt.data.salt+"####"+hex_sha512(salt.data.salt + userRef.pw);
+                    apiService.post(userRef, "/s2/api/users/").then(function (data) {
+                        resolve(data);
+                    }).catch(function (err) {
+                        reject(err);
+                    })
+                }).catch(function(err){
+                    reject(err);
+                })
+            });
         },
         deleteUsers: function (user) {
             return apiService.post("'" + user + "'", "/s2/api/users/delete/");
@@ -106,7 +123,23 @@ userServices.factory('userService', ['APIService', function (apiService) {
             return apiService.post(user, '/s2/api/users/user/' + userId);
         },
         updateUserPassword: function (user, userId) {
-            return apiService.get('/s2/api/users/updatepassword/?userId=' + userId + '&opw=' + user.opw + '&pw=' + user.pw);
+            var data = {uid: userId, is_enhanced: true};
+            return $q(function(resolve, reject) {
+                iAuthService.getSalt(userId).then(function(salt){
+                    if (checkNullEmpty(user.opw) || checkNotNullEmpty(user.npw)) {
+                        reject("Password cannot be empty")
+                    }
+                    data.old_password = hex_sha512(salt.data.salt + user.opw);
+                    data.npd = hex_sha512(salt.data.salt + user.pw);
+                    apiService.post(data, '/s2/api/users/updatepassword').then(function (response) {
+                        resolve(response);
+                    }).catch(function (err) {
+                        reject(err);
+                    })
+                }).catch(function(err){
+                    reject(err);
+                })
+            });
         },
         resetUserPassword: function (userId, sendType) {
             return apiService.get('/s2/api/users/resetpassword/?userId=' + userId + '&sendType=' + sendType);

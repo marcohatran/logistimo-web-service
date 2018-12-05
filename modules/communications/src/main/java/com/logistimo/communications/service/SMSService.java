@@ -71,7 +71,7 @@ public class SMSService extends MessageService {
 
   // Parameters sent by a Gateway
   public static final String PARAM_USERID = "%uid%";
-  public static final String PARAM_PASSWORD = "%pwd%";
+  public static final String PARAM_PASS = "%pwd%";
   public static final String PARAM_SENDERID = "%sid%";
   public static final String PARAM_MOBILENO = "%mno%";
   public static final String PARAM_MESSAGE = "%msg%";
@@ -148,7 +148,7 @@ public class SMSService extends MessageService {
     xLogger.fine("Entered sendMessage");
     // Get credentials
     String userId = provider.getString(ProviderConfig.USER_ID);
-    String password = provider.getString(ProviderConfig.PASSWORD);
+    String password = provider.getString(ProviderConfig.PASSCODE);
     String senderId = provider.getString(ProviderConfig.SENDER_ID);
     // Get the relevant URL for sending
     String url;
@@ -380,7 +380,7 @@ public class SMSService extends MessageService {
                                   String port) {
     Map<String, String> rmap = new HashMap<>();
     rmap.put(PARAM_USERID, userId);
-    rmap.put(PARAM_PASSWORD, password);
+    rmap.put(PARAM_PASS, password);
     rmap.put(PARAM_SENDERID, senderId);
     rmap.put(PARAM_MOBILENO, addresses);
     rmap.put(PARAM_MESSAGE, encode(message, messageType));

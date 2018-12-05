@@ -29,6 +29,7 @@ package com.logistimo.api.servlets;
 import com.logistimo.api.communications.MessageHandler;
 import com.logistimo.auth.SecurityMgr;
 import com.logistimo.communications.MessageHandlingException;
+import com.logistimo.constants.Constants;
 import com.logistimo.logger.XLog;
 
 import java.io.IOException;
@@ -55,35 +56,28 @@ public class MsgHandlerServlet extends HttpServlet {
   // Date format
   private static final String DATE_FORMAT = "MM/dd/yyyy hh:mm:ss a";
 
+  @Override
   public void doPost(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     xLogger.fine("Entered doPost");
     try {
       // Get the request parameters
-      String wireType = request.getParameter(MessageHandler.WIRETYPE);
-      String address = request.getParameter(MessageHandler.ADDRESS);
-      String message = request.getParameter(MessageHandler.MESSAGE);
-      String recdOn = request.getParameter(MessageHandler.RECEIVEDON);
+      String wireType = request.getParameter(MessageHandler.WIRE_TYPE);
+      String address = request.getParameter(MessageHandler.ADDRESS_PARAM);
+      String message = request.getParameter(MessageHandler.MESSAGE_PARAM);
+      String recdOn = request.getParameter(MessageHandler.RECEIVED_ON);
       // Decode parameters
       if (address != null) {
-        address = URLDecoder.decode(address, "UTF-8");
+        address = URLDecoder.decode(address, Constants.UTF8);
       }
       if (message != null) {
-        message = URLDecoder.decode(message, "UTF-8");
+        message = URLDecoder.decode(message, Constants.UTF8);
       }
       if (recdOn != null) {
-        recdOn = URLDecoder.decode(recdOn, "UTF-8");
+        recdOn = URLDecoder.decode(recdOn, Constants.UTF8);
       }
       // Convert date
-      Date recd = null;
-      if (recdOn != null && !recdOn.isEmpty()) {
-        SimpleDateFormat df = new SimpleDateFormat(DATE_FORMAT);
-        try {
-          recd = df.parse(recdOn);
-        } catch (ParseException e) {
-          xLogger.warn("Unable to parse date: {0}", e.getMessage());
-        }
-      }
+      Date recd = parseDate(recdOn);
       // Invoke the message handler to handle the message
       MessageHandler mh = MessageHandler.getInstance(wireType, message, address, recd);
       // Set the URL base
@@ -100,6 +94,20 @@ public class MsgHandlerServlet extends HttpServlet {
     xLogger.fine("Exiting doPost");
   }
 
+  private Date parseDate(String recdOn) {
+    Date recd = null;
+    if (recdOn != null && !recdOn.isEmpty()) {
+      SimpleDateFormat df = new SimpleDateFormat(DATE_FORMAT);
+      try {
+        recd = df.parse(recdOn);
+      } catch (ParseException e) {
+        xLogger.warn("Unable to parse date: {0}", e.getMessage());
+      }
+    }
+    return recd;
+  }
+
+  @Override
   public void doGet(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     doPost(request, response);

@@ -82,26 +82,6 @@
 -->
 <!-- endcomments -->
 <!-- @endif -->
-    <div ng-show="showLoadIcon" class="loader">
-    </div>
-    <div ng-show="showLoadIcon" class="loader-content">
-        <spinner></spinner>
-        <!-- span ng-bind="loadMessage"></span -->
-    </div>
-    <!-- @if (NODE_ENV == 'PRODUCTION' || NODE_ENV == 'DEVELOPMENT') && BULLETIN_BOARD == 'NA' -->
-    <div class="splash" ng-cloak="">
-        <div  class="loader-content">
-            <spinner></spinner>
-        </div>
-    </div>
-    <!-- @endif -->
-    <!-- @if (NODE_ENV == 'PRODUCTION' || NODE_ENV == 'DEVELOPMENT') && BULLETIN_BOARD == 'BULLETIN_BOARD' -->
-    <div class="splash" ng-cloak="" style="background-color: black">
-        <div class="loader-content">
-            <spinner></spinner>
-        </div>
-    </div>
-    <!-- @endif -->
 
     <!-- General 3rdparty inclusion(common for dev n prod) -->
     <script src="js/3rdparty/jquery.min.js"></script>
@@ -151,12 +131,13 @@
     <script src="js/3rdparty/d3/d3.min.js"></script>
     <script src="js/3rdparty/d3/nv.d3.js"></script>
     <script src="js/3rdparty/angular-downloadsvg-directive.min.js"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?client=&v=3.exp&libraries=weather,visualization"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?client=&key=&v=3.exp&libraries=weather,visualization"></script>
     <script src="js/3rdparty/oms.min.js"></script>
     <script src="js/3rdparty/angular-base64-upload.min.js"></script>
     <script src="js/3rdparty/respond.min.js"></script>
     <script src="js/3rdparty/moment/moment.min.js"></script>
     <script src="js/3rdparty/moment/moment-timezone.min.js"></script>
+    <script src="js/3rdparty/sha512.js"></script>
 
 
     <!-- @if (NODE_ENV == 'PRODUCTION'|| NODE_ENV == 'DEVELOPMENT') && BULLETIN_BOARD == 'NA' -->
@@ -179,8 +160,10 @@
     <script src="js/request-context.js"></script>
     <script src="js/render-context.js"></script>
     <script src="js/utils/common-utils.js"></script>
+    <script src="js/password-validator.js"></script>
     <script src="js/utils/d3-tree.js"></script>
     <script src="js/utils/fusion-chart-util.js"></script>
+    <script src="js/utils/crc32.js"></script>
     <script src="js/utils/google-map-api.js"></script>
     <script src="js/utils/common-controllers.js"></script>
     <script src="js/utils/lodash-addons.js"></script>
@@ -278,6 +261,8 @@
 
 <!-- @endif -->
 
+<div ng-include="'full-loader-template.html'"></div>
+
     <script type="text/ng-template" id="entityTemplate">
         <a>
             <span ng-bind-html="match.label | uibTypeaheadHighlight:query"></span>
@@ -297,7 +282,8 @@
         <div class="container-fluid">
 		<div ng-include=" 'views/menu.html' "></div>
 			<div ng-switch="subview">
-				<div ng-switch-when="setup">
+                <div ng-inclde="'loader-template.html'"></div>
+                <div ng-switch-when="setup">
 					<div ng-include=" 'views/setup.html' "></div>
 				</div>
 				<div ng-switch-when="orders">

@@ -1,0 +1,82 @@
+<!--
+  ~ Copyright © 2017 Logistimo.
+  ~
+  ~ This file is part of Logistimo.
+  ~
+  ~ Logistimo software is a mobile & web platform for supply chain management and remote temperature monitoring in
+  ~ low-resource settings, made available under the terms of the GNU Affero General Public License (AGPL).
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General
+  ~ Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any
+  ~ later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+  ~ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License
+  ~ for more details.
+  ~
+  ~ You should have received a copy of the GNU Affero General Public License along with this program.  If not, see
+  ~ <http://www.gnu.org/licenses/>.
+  ~
+  ~ You can be released from the requirements of the license by purchasing a commercial license. To know more about
+  ~ the commercial license, please contact us at opensource@logistimo.com
+  -->
+
+<div ng-controller="LoginController">
+    <form class="form-horizontal" novalidate>
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="text-center">
+                    <img class="imagewrapper" src="images/acquia_marina_logo.png">
+                </div>
+            </div>
+        </div>
+        <div class="bgr bgr-login otp-model">
+            <div class="row marginlr0" ng-show="invalid && showMsg">
+                <div class="col-sm-12">
+                    <p class="fc-color-red form-group">
+                        <span class="glyphicons glyphicons-remove-circle pt2"></span>
+                        &nbsp;{{errorMsg}}
+                    </p>
+                </div>
+            </div>
+            <div class="row marginlr0 pt20">
+                <div class="col-sm-12">
+                    <div class="form-group mb0">
+                        <input type="text" class="form-control" placeholder="{{resourceBundle['enter']}} {{resourceBundle['one.time.password']}}" ng-model="otp"
+                               autofocus="autofocus" maxlength="6" autocomplete="off" required only-digits/>
+                    </div>
+                </div>
+            </div>
+            <div class="row marginlr0 mt10">
+                <div class="col-sm-12">
+                    <div class="form-group">
+                        <button ng-disabled="lLoading || isUndef(userId) || isUndef(otp)" ng-click="login(userId,password,otp)"
+                                name="login" class="btn btn-primary w100">
+                            <span ng-show="lLoading" class="glyphicons glyphicons-cogwheel spin"></span>&nbsp;{{resourceBundle['submit']}}
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="row marginlr0">
+                <div class="col-sm-12 plr0">
+                    <div class="pt3 text-right">
+                        <div class="pa">
+                            <span class="glyphicons glyphicons-chevron-left pt2"></span>
+                            <a href="" ng-click="cancel()">{{resourceBundle['back']}}</a>
+                        </div>
+                        <a href="" ng-click="generateNewOTP()">{{resourceBundle['pwd.generate.otp.new']}}</a>
+                        <span ng-show="nLoading" class="glyphicons glyphicons-cogwheel spin ng-hide"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="row marginlr0 mt10 mb10">
+                <div class="col-sm-12">
+                    <div class="form-group">
+                    <span class="litetext text-justify">{{resourceBundle['otp.sent.message']}}{{mobileNo}},
+                        {{resourceBundle['two.step.authentication.otp.enter']}} {{resourceBundle['two.step.authentication.otp.info']}}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
