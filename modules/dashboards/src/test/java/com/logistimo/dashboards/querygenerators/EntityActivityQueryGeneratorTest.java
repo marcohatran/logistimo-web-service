@@ -106,7 +106,6 @@ public class EntityActivityQueryGeneratorTest {
         .withPeriod(7)
         .generate();
     assertNotNull(query);
-
   }
 
   @Test
@@ -114,7 +113,7 @@ public class EntityActivityQueryGeneratorTest {
     EntityActivityQueryGenerator
         entityActivityQueryGenerator =
         EntityActivityQueryGenerator.getEntityActivityQueryGenerator();
-    PreparedStatementModel query = entityActivityQueryGenerator.withDomainId(13l)
+      PreparedStatementModel query = entityActivityQueryGenerator.withDomainId(13l)
         .withCountry("INDIA")
         .withState("KARNATAKA")
         .withDistrict("BENGALURU")
@@ -123,27 +122,7 @@ public class EntityActivityQueryGeneratorTest {
         .withPeriod(7)
         .generate();
     assertNotNull(query);
-
   }
 
-  @Test
-  public void testQueryGeneratorWithDateFilter() {
-    EntityActivityQueryGenerator
-        entityActivityQueryGenerator =
-        EntityActivityQueryGenerator.getEntityActivityQueryGenerator();
-    String query = entityActivityQueryGenerator.withDomainId(13l)
-        .withCountry("INDIA")
-        .withState("KARNATAKA")
-        .withDistrict("BENGALURU")
-        .withIsCount(false)
-        .withAsOf(new Date())
-        .withPeriod(7)
-        .generate();
-    assertNotNull(query);
-    assertTrue("Query should contain country INDIA", query.contains("INDIA"));
-    assertTrue("Query should contain state KARNATAKA", query.contains("KARNATAKA"));
-    assertTrue("Query should contain district BENGALURU", query.contains("BENGALURU"));
-    assertTrue("Query should fetch data from TRANSACTION table", query.contains("TRANSACTION"));
-  }
 
 }
