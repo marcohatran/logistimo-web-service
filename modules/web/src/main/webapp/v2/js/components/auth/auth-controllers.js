@@ -30,6 +30,7 @@ authControllers.controller('LoginController', ['$scope', 'iAuthService', 'authSe
         $scope.lLoading = false;
         $scope.fp = false;
         $scope.showCaptcha = true;
+        $scope.captchaEnabled = true;
 
         $scope.init = function(){
             $scope.denied = false;
@@ -40,6 +41,9 @@ authControllers.controller('LoginController', ['$scope', 'iAuthService', 'authSe
             $scope.errorMsg = undefined;
             $scope.invalid = false;
             $scope.fp = false;
+            iAuthService.getCaptchaConfig().then(function (config) {
+                $scope.captchaEnabled = config.data['enabled'];
+            })
         };
         $scope.init();
 
@@ -48,15 +52,21 @@ authControllers.controller('LoginController', ['$scope', 'iAuthService', 'authSe
         };
 
         $scope.resetCaptcha = function() {
-            $scope.showCaptcha = false;
-            $timeout(function(){
-                $scope.showCaptcha = true;
-            },10);
-            $scope.captchaResponse = undefined;
+            if($scope.captchaEnabled) {
+                $scope.showCaptcha = false;
+                $timeout(function(){
+                    $scope.showCaptcha = true;
+                },10);
+                $scope.captchaResponse = undefined;
+            }
         };
 
+        $scope.captchaDisabledOrNonEmpty = function() {
+            return !$scope.captchaEnabled || isCaptchaValid($scope.captchaResponse)
+        }
+
         $scope.login = function (userId, password, otp) {
-            if (checkNotNullEmpty(otp) || isCaptchaValid($scope.captchaResponse)) {
+            if (checkNotNullEmpty(otp) || $scope.captchaDisabledOrNonEmpty()) {
             if (checkNullEmpty(userId) || checkNullEmpty(password)) {
                 $scope.invalid = true;
                 $scope.errorMsg = (checkNullEmpty(userId) ? $scope.resourceBundle['user.id'] : $scope.resourceBundle['login.password']) + " " + $scope.resourceBundle['isrequired'];
@@ -291,7 +301,7 @@ authControllers.controller('ForgotPasswordController', ['$scope', 'iAuthService'
 
         $scope.generateOtp = function(){
             if(checkNotNullEmpty($scope.fpw)) {
-                if (!$scope.isCaptchaValidated || isCaptchaValid($scope.$parent.captchaResponse)) {
+                if (!$scope.isCaptchaValidated || $scope.captchaDisabledOrNonEmpty()) {
                     $scope.fpw.captcha = $scope.$parent.captchaResponse;
                     if (checkNullEmpty($scope.fpw.uid)) {
                         $scope.showWarning($scope.resourceBundle['pwd.user.id.required']);
