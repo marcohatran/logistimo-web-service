@@ -41,11 +41,14 @@ import javax.jdo.annotations.NotPersistent;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
+import javax.jdo.annotations.Version;
+import javax.jdo.annotations.VersionStrategy;
 
 /**
  * Created by Mohan Raja on 28/09/16
  */
 @PersistenceCapable(identityType = IdentityType.APPLICATION, detachable = "true")
+@Version(strategy= VersionStrategy.VERSION_NUMBER, column="VERSION")
 public class Shipment implements IShipment {
 
   static XLog xLogger = XLog.getLog(Shipment.class);

@@ -750,7 +750,8 @@ public class InventoryController {
     Results results = inventoryManagementService.getInventory(domainId, entityId, null, null, null,
         materialId, null, IInvntry.ALL, false, null, null, new PageParams(0, 1));
     if (results.getResults().isEmpty()) {
-      throw new ObjectNotFoundException("Inventory not found");
+      xLogger.warn("No such material {0} in the Entity {i}", materialId, entityId);
+      throw new ObjectNotFoundException("M005",materialId);
     }
     return inventoryBuilder
         .buildMInventoryDetail((IInvntry) results.getResults().get(0), domainId, entityId, embed);
