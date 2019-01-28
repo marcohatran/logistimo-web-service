@@ -498,7 +498,7 @@ public class OrdersController {
         throw new LogiException("O004", user.getUsername(),
             LocalDateUtil.format(order.getUpdatedOn(), user.getLocale(), user.getTimezone()));
       }
-      if (order.isStatus(IOrder.CANCELLED) || order.isStatus(IOrder.FULFILLED)) {
+      if (order.isStatus(IOrder.CANCELLED) || order.isStatus(IOrder.FULFILLED) || order.isStatus(IOrder.COMPLETED)) {
         xLogger.warn("User {0} tried to edit materials of {1} order {2}", user, order.getStatus(),
             orderId);
         throw new BadRequestException(new ServiceException("O003", orderId,

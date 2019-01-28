@@ -64,6 +64,7 @@ import com.logistimo.orders.OrderUtils;
 import com.logistimo.orders.actions.GenerateOrderEventsAction;
 import com.logistimo.orders.actions.GenerateOrderInvoiceAction;
 import com.logistimo.orders.actions.GetFilteredOrdersAction;
+import com.logistimo.orders.actions.GetOrderOverallStatusAction;
 import com.logistimo.orders.approvals.actions.OrderVisibilityAction;
 import com.logistimo.orders.dao.IOrderDao;
 import com.logistimo.orders.dao.OrderUpdateStatus;
@@ -149,6 +150,7 @@ public class OrderManagementServiceImpl implements OrderManagementService {
   private GetFilteredOrdersAction getFilteredOrdersAction;
   private UpdateOrderStatusValidator updateOrderStatusValidator;
   private OrderVisibilityAction orderVisibilityAction;
+  private GetOrderOverallStatusAction orderOverallStatusAction;
 
   @Autowired
   public void setTagDao(ITagDao tagDao) {
@@ -223,6 +225,12 @@ public class OrderManagementServiceImpl implements OrderManagementService {
   @Autowired
   public void setOrderVisibilityAction(OrderVisibilityAction orderVisibilityAction) {
     this.orderVisibilityAction = orderVisibilityAction;
+  }
+
+  @Autowired
+  public void setOrderOverallStatusAction(
+      GetOrderOverallStatusAction orderOverallStatusAction) {
+    this.orderOverallStatusAction = orderOverallStatusAction;
   }
 
   private static ITaskService getTaskService(){
@@ -324,7 +332,7 @@ public class OrderManagementServiceImpl implements OrderManagementService {
         }
         if (isOrderCompleted) {
           List<IShipment> shipments = shipmentService.getShipmentsByOrderId(order.getOrderId());
-          String newOrderStatus = shipmentService.getOverallStatus(shipments, true, order.getOrderId());
+          String newOrderStatus = orderOverallStatusAction.invoke(shipments, true, order.getOrderId());
           pm.makePersistentAll(order.getItems());
           updateOrderStatus(order.getOrderId(), newOrderStatus, userId, null, null, source, pm,
               null);

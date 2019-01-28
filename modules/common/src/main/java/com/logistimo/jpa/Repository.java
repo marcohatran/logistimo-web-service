@@ -97,6 +97,13 @@ public class Repository {
     return query1.getResultList();
   }
 
+  public <T> List<T> findAllByNativeQuery(String query, Map<String, Object> filters) {
+    Query query1 = entityManager.createNativeQuery(query);
+    if(filters != null && filters.size() > 0)
+      filters.forEach(query1::setParameter);
+    return query1.getResultList();
+  }
+
   public <T> T findByNativeQuery(String query, Map<String, Object> filters) {
     Query query1 = entityManager.createNativeQuery(query);
     filters.forEach(query1::setParameter);

@@ -857,4 +857,15 @@ public class DemandService implements IDemandService {
 
     return materialsList;
   }
+
+  @Override
+  public Map<Long, IDemandItem> getDemandMetadata(Long orderId, PersistenceManager pm) {
+    Map<Long, IDemandItem> demand = new HashMap<>();
+    List<IDemandItem> demandItems = getDemandItems(orderId, pm);
+    for (IDemandItem di : demandItems) {
+      demand.put(di.getMaterialId(), di);
+    }
+    return demand;
+  }
+
 }

@@ -36,13 +36,11 @@ import com.logistimo.services.ServiceException;
 import com.logistimo.shipments.FulfilledQuantityModel;
 import com.logistimo.shipments.ShipmentStatus;
 import com.logistimo.shipments.entity.IShipment;
-import com.logistimo.shipments.entity.IShipmentItem;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import javax.jdo.PersistenceManager;
@@ -123,19 +121,9 @@ public interface IShipmentService {
 
   IMessage addMessage(String shipmentId, String message, String userId) throws ServiceException;
 
-  String createShipmentForMigratoryOrder(ShipmentModel model) throws ServiceException;
-
   void includeShipmentItems(IShipment shipment);
 
   BigDecimal getAllocatedQuantityForShipmentItem(String sId, Long kId, Long mId);
-
-  String getOverallStatus(List<IShipment> shipments, boolean allItemsInShipments, Long orderId)
-      throws ServiceException;
-
-  Map<String, Object> getShipmentItemAsMap(IShipmentItem shipment, String currency,
-                                           Locale locale, String timezone);
-
-  public void checkShipmentRequest(Long customerKioskId,Long vendorKioskId,List itemList) throws ServiceException;
 
   /**
    * Generate shipment voucher

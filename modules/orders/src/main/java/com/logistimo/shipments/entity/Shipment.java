@@ -35,6 +35,7 @@ import java.util.List;
 
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Element;
+import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.IdentityType;
 import javax.jdo.annotations.Join;
 import javax.jdo.annotations.NotPersistent;
@@ -48,7 +49,8 @@ import javax.jdo.annotations.VersionStrategy;
  * Created by Mohan Raja on 28/09/16
  */
 @PersistenceCapable(identityType = IdentityType.APPLICATION, detachable = "true")
-@Version(strategy= VersionStrategy.VERSION_NUMBER, column="VERSION")
+@Version(strategy= VersionStrategy.VERSION_NUMBER, column="VERSION"
+    ,extensions={@Extension(vendorName="datanucleus", key="field-name", value="version")})
 public class Shipment implements IShipment {
 
   static XLog xLogger = XLog.getLog(Shipment.class);
@@ -154,8 +156,10 @@ public class Shipment implements IShipment {
   private List<ShipmentItem> items;
 
   @Persistent
-  @Column(name = "sales_ref_id")
+  @Column(name = "SALES_REF_ID")
   private String salesRefId;
+
+  protected Long version;
 
   @Override
   public String getShipmentId() {
@@ -460,5 +464,15 @@ public class Shipment implements IShipment {
   @Override
   public void setSalesReferenceId(String salesRefId) {
     this.salesRefId = salesRefId;
+  }
+
+  @Override
+  public Long getVersion() {
+    return version;
+  }
+
+  @Override
+  public void setVersion(Long version) {
+    this.version = version;
   }
 }
