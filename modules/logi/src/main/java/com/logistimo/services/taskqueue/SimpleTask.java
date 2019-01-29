@@ -54,7 +54,7 @@ public class SimpleTask implements Task, Runnable {
 
   @Override
   public void run() {
-    logger.info("Starting task {0}", taskOptions);
+    logger.fine("Starting task {0}", taskOptions);
     long startTime = System.currentTimeMillis();
     try {
       TaskUtil.getTaskLogger().moveToInProgress(taskOptions.getTaskId());
@@ -65,7 +65,7 @@ public class SimpleTask implements Task, Runnable {
         HttpUtil.postMulti(taskOptions.getUrl(), taskOptions.getParams(), taskOptions.getHeaders(),
             taskOptions.getPayload(), taskOptions.getContentType());
       }
-      logger.info("Completed task {0}", taskOptions);
+      logger.fine("Completed task {0}", taskOptions);
       TaskUtil.getTaskLogger()
           .complete(taskOptions.getTaskId(), System.currentTimeMillis() - startTime);
     } catch (Exception e) {

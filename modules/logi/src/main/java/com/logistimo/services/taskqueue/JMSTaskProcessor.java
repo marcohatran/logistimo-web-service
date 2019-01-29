@@ -43,8 +43,7 @@ public class JMSTaskProcessor {
   @Handler
   public void execute(TaskOptions taskOptions) {
     jmsMeter.mark();
-    log.info("Submitting task with parameter{0}", taskOptions);
-    //localQueue.add(taskOptions);
+    log.fine("Submitting task with parameter{0}", taskOptions);
     Task simpleTask = new SimpleTask(taskOptions);
     try {
       ((Runnable) simpleTask).run();
