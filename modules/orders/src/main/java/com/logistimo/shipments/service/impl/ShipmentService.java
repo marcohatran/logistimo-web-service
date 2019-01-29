@@ -129,6 +129,7 @@ public class ShipmentService implements IShipmentService {
   private GenerateShipmentVoucherAction generateShipmentVoucherAction;
   private UpdateShipmentStatusAction updateShipmentStatusAction;
 
+  @Autowired
   public ShipmentService setShipmentActivty(ShipmentActivty shipmentActivty) {
     this.shipmentActivty = shipmentActivty;
     return this;
