@@ -131,7 +131,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
   @ExceptionHandler({BadRequestException.class})
   protected ResponseEntity<Object> handleBadRequest(Exception e, WebRequest request) {
     logWarning(request, e);
-    ErrorResource error = new ErrorResource("[Bad Request]", e.getMessage());
+    ErrorResource error = new ErrorResource(get400Code(e), get400Message(e));
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
     return handleExceptionInternal(e, error, headers, HttpStatus.BAD_REQUEST, request);
