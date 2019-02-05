@@ -36,17 +36,12 @@ import com.logistimo.logger.XLog;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.utils.MessageUtil;
 import com.logistimo.utils.MetricsUtil;
-
 import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 /**
  * Represents a messaging service - SMS or Email

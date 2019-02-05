@@ -23,10 +23,12 @@
 
 package com.logistimo.api.controllers;
 
+import com.logistimo.api.auth.AuthenticationUtil;
 import com.logistimo.api.models.AuthLoginModel;
 import com.logistimo.api.models.AuthModel;
 import com.logistimo.api.models.ChangePasswordModel;
 import com.logistimo.api.models.PasswordModel;
+import com.logistimo.api.models.auth.CaptchaConfig;
 import com.logistimo.auth.SecurityConstants;
 import com.logistimo.auth.SecurityMgr;
 import com.logistimo.auth.SecurityUtil;
@@ -290,7 +292,7 @@ public class AuthController {
         if (StringUtils.isEmpty(model.getUdty())) {
           model.setUdty(WEB);
         }
-      if (WEB.equals(model.getUdty())) {
+      if (AuthenticationUtil.isCaptchaEnabled() && WEB.equals(model.getUdty())) {
         boolean
             captchaVerified = authenticationService
             .verifyCaptcha(model.getCaptcha());
@@ -362,6 +364,14 @@ public class AuthController {
     }
     return tokenDetails;
 
+  }
+
+  @RequestMapping(value = "/captcha-config", method = RequestMethod.GET)
+  public
+  @ResponseBody
+  CaptchaConfig getCaptchaConfig() {
+    boolean captchaEnabled = AuthenticationUtil.isCaptchaEnabled();
+    return new CaptchaConfig(captchaEnabled);
   }
 
   public String resetAndRedirect(String inputToken, String src,

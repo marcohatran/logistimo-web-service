@@ -121,6 +121,11 @@ public class SMSConfig {
     public static final String WAPPUSH_URL = "wappush-url";
     public static final String BINARYTOPORT_URL = "binarytoport-url";
 
+    public static final String ACCOUNT_SID = "account_sid";
+    public static final String AUTH_TOKEN = "auth_token";
+    public static final String MESSAGING_SERVICE_SID = "messaging_service_sid";
+    public static final String CALLBACK_HOST = "callback_host";
+
     public static final String
         FORMAT_DATETIME =
         "format-datetime";
@@ -196,7 +201,7 @@ public class SMSConfig {
           }
         }
       } catch (JSONException e) {
-        xLogger.warn("Invalid regex for key {0}; expected a JSONArray", key);
+          // do nothing
       }
       return strings;
     }

@@ -1544,7 +1544,7 @@ domainControllers.controller('WorkingAssetDashboardController', ['$scope', '$tim
                         o.toolText = o.label + ": " + value + " of " + den + " " + " assets";
                         o.showLabel = "1";
                         if (checkNotNullEmpty(value)) {
-                            o.link = "JavaScript: callFunctionByName('addFilter','" + filter + "','" + level + "')";
+                            o.link = "JavaScript:callFunctionByName('addFilter','" + filter + "','" + level + "')";
                         }
                         mData.push(o);
                     }
@@ -1847,7 +1847,7 @@ domainControllers.controller('MainDashboardController', ['$scope', '$timeout', '
                 stackSeries.data[0].value = data;
                 stackSeries.data[0].color = barColor;
                 stackSeries.data[0].toolText = seriesName + ": " + ((data / denominator) * 100).toFixed(2) + "% (" + data + " of " + denominator + " " + $scope.resourceBundle['kiosks.lower'] + ")";
-                stackSeries.data[0].link = "JavaScript: callFunctionByName('constructMapData','" + code + "')";
+                stackSeries.data[0].link = "JavaScript:callFunctionByName('constructMapData','" + code + "')";
             }
             return stackSeries;
         }

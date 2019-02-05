@@ -26,6 +26,7 @@
  */
 package com.logistimo.api.controllers;
 
+import com.logistimo.api.action.ClearAllocationAction;
 import com.logistimo.api.builders.DemandBuilder;
 import com.logistimo.api.builders.DemandItemBuilder;
 import com.logistimo.api.builders.DiscrepancyBuilder;
@@ -89,6 +90,7 @@ public class DemandController {
   private OrderManagementService orderManagementService;
   private EntitiesService entitiesService;
   private InventoryManagementService inventoryManagementService;
+  private ClearAllocationAction clearAllocationAction;
 
   @Autowired
   public void setDemandItemBuilder(DemandItemBuilder demandItemBuilder) {
@@ -123,6 +125,12 @@ public class DemandController {
   @Autowired
   public void setInventoryManagementService(InventoryManagementService inventoryManagementService) {
     this.inventoryManagementService = inventoryManagementService;
+  }
+
+  @Autowired
+  public void setClearAllocationAction(
+      ClearAllocationAction clearAllocationAction) {
+    this.clearAllocationAction = clearAllocationAction;
   }
 
   @RequestMapping("/")
@@ -418,5 +426,12 @@ public class DemandController {
       xLogger.severe("Failed to get Demand discrepancy data", e);
       throw new InvalidServiceException("System error occurred while fetching discrepancies");
     }
+  }
+
+  @RequestMapping(value = "/clear-allocations", method = RequestMethod.GET)
+  public
+  @ResponseBody
+  void clearAllocations() {
+    clearAllocationAction.invoke();
   }
 }

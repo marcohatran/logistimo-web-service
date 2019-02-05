@@ -216,6 +216,7 @@ services:
       - STOCKREBALANCING_URL=http://localhost:8700
       - ORIGINS=*
       - MAPI_URL=http://localhost:3000
+      - CAPTCHA_ENABLE=true
       - GOOGLE_ANALYTICS_CLIENT_ID=
     volumes:
       - /data/logi-app/logs:/usr/local/tomcat/logs

@@ -274,7 +274,7 @@ function constructMapData(event, init, scope, INVENTORY, $sce, mapRange, mapColo
         "legendBorderAlpha": "0",
         "legendShadow": "0",
         "legendItemFontSize": "14",
-        "legendItemFontColor": "#666666",
+        "legendItemFontColor": "#FFFFFF",
         "drawCustomLegendIcon": "0",
         "legendIconAlpha": "100",
         "legendIconBorderColor": "#e1e1e1",

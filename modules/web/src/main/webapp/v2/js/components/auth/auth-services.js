@@ -131,8 +131,10 @@ authServices.factory('iAuthService', ['APIService', '$rootScope', '$q', '$cookie
         generateAuthenticationOTP: function(userId, mode) {
             var request = {uid: userId, mode: mode};
             return apiService.post(request, '/s2/api/mauth/generate-authentication-otp');
+        },
+        getCaptchaConfig: function() {
+            return apiService.get("/s2/api/auth/captcha-config")
         }
-
     }
 }
 ]);

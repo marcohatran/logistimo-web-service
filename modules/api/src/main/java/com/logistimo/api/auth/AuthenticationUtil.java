@@ -33,6 +33,7 @@ import com.logistimo.exception.UnauthorizedException;
 import com.logistimo.security.SecureUserDetails;
 import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.ServiceException;
+import com.logistimo.services.utils.ConfigUtil;
 import com.logistimo.users.entity.IUserAccount;
 import com.logistimo.users.entity.IUserToken;
 import com.logistimo.users.service.UsersService;
@@ -47,6 +48,8 @@ import javax.servlet.http.HttpServletResponse;
  * Created by charan on 09/03/17.
  */
 public class AuthenticationUtil {
+
+  private AuthenticationUtil() {}
 
   public static IUserAccount authenticateToken(String authtoken, Integer actionInitiator)
       throws ServiceException, ObjectNotFoundException {
@@ -127,5 +130,9 @@ public class AuthenticationUtil {
       }
     }
     return null;
+  }
+
+  public static boolean isCaptchaEnabled() {
+    return ConfigUtil.getBoolean("captcha.enable", true);
   }
 }

@@ -295,7 +295,7 @@ invControllers.controller('StockViewsController', ['$scope', '$timeout', 'matSer
                 titles: {
                     filters: getCaption()
                 },
-                end_date: $scope.ebf,
+                end_date: formatDate2Url($scope.ebf) || undefined,
                 entity_id: kid,
                 type: $scope.abntype,
                 stock_out_days: $scope.pdos,

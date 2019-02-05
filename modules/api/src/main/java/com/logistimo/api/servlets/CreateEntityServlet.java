@@ -2422,7 +2422,7 @@ public class CreateEntityServlet extends SgServlet {
         try {
           as.deleteKiosks(domainId, kiosks, sUserName);
         } catch (Exception e) {
-          xLogger.severe("{0} when deleting kiosks {1} in domain {2}: {3}", e.getClass().getName(),
+          xLogger.warn("{0} when deleting kiosks {1} in domain {2}: {3}", e.getClass().getName(),
               kiosks, domainId, e.getMessage(), e);
         }
       }

@@ -69,8 +69,6 @@ ENV MYSQL_HOST_URL="jdbc:mariadb://localhost/logistimo?useUnicode=true&amp;chara
         TASK_PORT=8080 \
         CALLISTO_HOST_URL=http://localhost:8090 \
         LOCAL_ENV=true \
-        JAVA_XMS=1024m \
-        JAVA_XMX=1024m \
         LOC_URL=http://localhost:9090 \
         APPROVAL_URL=http://localhost:6400 \
         STOCKREBALANCING_URL=http://localhost:8700 \
@@ -84,10 +82,10 @@ ENV MYSQL_HOST_URL="jdbc:mariadb://localhost/logistimo?useUnicode=true&amp;chara
         JMX_AGENT_PORT=8088 \
         ORIGINS=*.logistimo.com,localhost \
         MAPI_URL=http://localhost:8080 \
+        CAPTCHA_ENABLE=true \
         GOOGLE_ANALYTICS_CLIENT_ID= \
+        JAVA_OPTS="-Xms1024m -Xmx1024m -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap" \
         EVENTSUMMARYSERVICE_URL=http://logi-es:9010/v1/event-summaries
-
-ENV JAVA_OPTS $JAVA_OPTS
 
 ENV WEB_APP_VER $WEB_APP_VER
 

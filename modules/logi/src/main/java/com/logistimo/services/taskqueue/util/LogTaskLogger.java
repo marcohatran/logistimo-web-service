@@ -44,18 +44,18 @@ public class LogTaskLogger implements ITaskLogger {
     taskEntity.setTaskId(MurmurHash
         .hash64A((queue + url + scheduledTime + domainId + userName + taskName).getBytes(), -1));
     taskEntity.setName(taskName);
-    _logger.info("Task queued: " + taskEntity.getTaskId());
+    _logger.fine("Task queued: " + taskEntity.getTaskId());
     return taskEntity;
   }
 
   @Override
   public void moveToInProgress(Long taskId) {
-    _logger.info("Starting task: " + taskId);
+    _logger.fine("Starting task: " + taskId);
   }
 
   @Override
   public void complete(Long taskId, long duration) {
-    _logger.info("Completed task: " + taskId);
+    _logger.fine("Completed task: " + taskId);
   }
 
   @Override

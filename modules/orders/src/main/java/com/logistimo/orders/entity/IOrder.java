@@ -327,4 +327,8 @@ public interface IOrder extends ICrossDomain {
 
   void setTransferReferenceId(String transferReferenceId);
 
+  Long getVersion();
+
+  void setVersion(Long version);
+
 }

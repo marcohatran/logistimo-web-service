@@ -23,43 +23,29 @@
 
 package com.logistimo.shipments.service.impl;
 
-import com.logistimo.AppFactory;
-import com.logistimo.activity.entity.IActivity;
-import com.logistimo.activity.models.ActivityModel;
-import com.logistimo.activity.service.ActivityService;
 import com.logistimo.auth.SecurityConstants;
 import com.logistimo.auth.SecurityUtil;
 import com.logistimo.auth.utils.SecurityUtils;
 import com.logistimo.config.models.DomainConfig;
-import com.logistimo.config.models.EventSpec;
 import com.logistimo.constants.CharacterConstants;
 import com.logistimo.constants.Constants;
 import com.logistimo.constants.QueryConstants;
-import com.logistimo.constants.SourceConstants;
 import com.logistimo.conversations.entity.IMessage;
 import com.logistimo.conversations.service.ConversationService;
-import com.logistimo.conversations.service.impl.ConversationServiceImpl;
 import com.logistimo.dao.JDOUtils;
 import com.logistimo.domains.utils.DomainsUtil;
 import com.logistimo.entities.entity.IKiosk;
 import com.logistimo.entities.service.EntitiesService;
-import com.logistimo.events.EventConstants;
 import com.logistimo.events.entity.IEvent;
-import com.logistimo.events.models.CustomOptions;
-import com.logistimo.events.processor.EventPublisher;
-import com.logistimo.exception.InvalidDataException;
 import com.logistimo.exception.InvalidServiceException;
 import com.logistimo.exception.LogiException;
 import com.logistimo.exception.ValidationException;
 import com.logistimo.inventory.entity.IInvAllocation;
-import com.logistimo.inventory.entity.IInvntry;
 import com.logistimo.inventory.entity.IInvntryBatch;
-import com.logistimo.inventory.entity.ITransaction;
 import com.logistimo.inventory.service.InventoryManagementService;
 import com.logistimo.logger.XLog;
 import com.logistimo.materials.entity.IMaterial;
 import com.logistimo.materials.service.MaterialCatalogService;
-import com.logistimo.materials.service.MaterialUtils;
 import com.logistimo.models.ResponseModel;
 import com.logistimo.models.shipments.ShipmentItemBatchModel;
 import com.logistimo.models.shipments.ShipmentItemModel;
@@ -78,13 +64,15 @@ import com.logistimo.services.ObjectNotFoundException;
 import com.logistimo.services.Resources;
 import com.logistimo.services.ServiceException;
 import com.logistimo.services.impl.PMF;
-import com.logistimo.services.taskqueue.ITaskService;
 import com.logistimo.shipments.FulfilledQuantityModel;
+import com.logistimo.shipments.ShipmentRepository;
 import com.logistimo.shipments.ShipmentStatus;
+import com.logistimo.shipments.ShipmentUtils;
+import com.logistimo.shipments.action.ShipmentActivty;
+import com.logistimo.shipments.action.UpdateShipmentStatusAction;
 import com.logistimo.shipments.entity.IShipment;
 import com.logistimo.shipments.entity.IShipmentItem;
 import com.logistimo.shipments.entity.IShipmentItemBatch;
-import com.logistimo.shipments.entity.ShipmentItem;
 import com.logistimo.shipments.service.IShipmentService;
 import com.logistimo.shipments.validators.CreateShipmentValidator;
 import com.logistimo.users.entity.IUserAccount;
@@ -92,8 +80,6 @@ import com.logistimo.users.service.UsersService;
 import com.logistimo.utils.BigUtil;
 import com.logistimo.utils.LocalDateUtil;
 import com.logistimo.utils.LockUtil;
-import com.logistimo.utils.MsgUtil;
-import com.logistimo.utils.StringUtil;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -105,13 +91,11 @@ import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 
@@ -119,6 +103,9 @@ import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import javax.jdo.Transaction;
+
+import static com.logistimo.shipments.ShipmentUtils.extractOrderId;
+import static com.logistimo.shipments.ShipmentUtils.generateEvent;
 
 /**
  * Created by Mohan Raja on 29/09/16
@@ -136,11 +123,32 @@ public class ShipmentService implements IShipmentService {
   private IDemandService demandService;
   private OrderManagementService orderManagementService;
   private ConversationService conversationService;
-  private ActivityService activityService;
   private UsersService usersService;
 
   private CreateShipmentValidator createShipmentValidator;
   private GenerateShipmentVoucherAction generateShipmentVoucherAction;
+  private UpdateShipmentStatusAction updateShipmentStatusAction;
+
+  @Autowired
+  public ShipmentService setShipmentActivty(ShipmentActivty shipmentActivty) {
+    this.shipmentActivty = shipmentActivty;
+    return this;
+  }
+
+  private ShipmentActivty shipmentActivty;
+
+  @Autowired
+  public ShipmentService setShipmentRepository(ShipmentRepository shipmentRepository) {
+    this.shipmentRepository = shipmentRepository;
+    return this;
+  }
+
+  private ShipmentRepository shipmentRepository;
+
+  @Autowired
+  public void setUpdateShipmentStatusAction(UpdateShipmentStatusAction updateShipmentStatusAction){
+    this.updateShipmentStatusAction = updateShipmentStatusAction;
+  }
 
   @Autowired
   public void setMaterialCatalogService(MaterialCatalogService materialCatalogService) {
@@ -173,11 +181,6 @@ public class ShipmentService implements IShipmentService {
   }
 
   @Autowired
-  public void setActivityService(ActivityService activityService) {
-    this.activityService = activityService;
-  }
-
-  @Autowired
   public void setUsersService(UsersService usersService) {
     this.usersService = usersService;
   }
@@ -192,20 +195,6 @@ public class ShipmentService implements IShipmentService {
   public void setGenerateShipmentVoucherAction(
       GenerateShipmentVoucherAction generateShipmentVoucherAction) {
     this.generateShipmentVoucherAction = generateShipmentVoucherAction;
-  }
-
-  private Map<Long, IDemandItem> getDemandMetadata(Long orderId, PersistenceManager pm)
-      throws ServiceException {
-    Map<Long, IDemandItem> demand = new HashMap<>();
-    List<IDemandItem> demandItems = demandService.getDemandItems(orderId, pm);
-    for (IDemandItem di : demandItems) {
-      demand.put(di.getMaterialId(), di);
-    }
-    return demand;
-  }
-
-  private ITaskService getTask() {
-    return AppFactory.get().getTaskService();
   }
 
   /**
@@ -371,7 +360,7 @@ public class ShipmentService implements IShipmentService {
       if (!bItems.isEmpty()) {
         pm.makePersistentAll(bItems);
       }
-      Map<Long, IDemandItem> dItems = getDemandMetadata(model.orderId, pm);
+      Map<Long, IDemandItem> dItems = demandService.getDemandMetadata(model.orderId, pm);
       for (ShipmentItemModel shipmentItemModel : model.items) {
         IDemandItem demandItem = dItems.get(shipmentItemModel.mId);
         demandItem
@@ -379,8 +368,8 @@ public class ShipmentService implements IShipmentService {
       }
       pm.makePersistentAll(dItems.values());
       // ShipmentStatus is sent as OPEN , since status changes are managed subsequently below.
-      updateMessageAndHistory(shipment.getShipmentId(), model.comment, model.userID, model.orderId,
-          model.sdid, null, ShipmentStatus.OPEN, pm);
+      shipmentActivty.updateMessageAndActivity(shipment.getShipmentId(), model.comment, model.userID, model.orderId,
+          model.sdid, null, ShipmentStatus.OPEN, null, pm);
       // if both conversation and activity returns success, proceed to commit changes
       if (isDirectShipOrFulfil) {
         updateShipmentStatus(shipment.getShipmentId(), model.status, null, model.userID, pm, null,
@@ -428,41 +417,6 @@ public class ShipmentService implements IShipmentService {
         item.fmst = item.smst;
       }
     }
-  }
-
-  private void updateMessageAndHistory(String shipmentId, String message, String userId,
-                                       Long orderId, Long domainId
-      , ShipmentStatus prevStatus, ShipmentStatus newStatus, PersistenceManager pm)
-      throws ServiceException {
-    updateMessageAndHistory(shipmentId, message, userId, orderId, domainId, prevStatus, newStatus,
-        null, pm);
-  }
-
-  private void updateMessageAndHistory(String shipmentId, String message, String userId,
-                                       Long orderId, Long domainId
-      , ShipmentStatus prevStatus, ShipmentStatus newStatus, Date createDate, PersistenceManager pm)
-      throws ServiceException {
-    IMessage iMessage = null;
-    if (message != null) {
-      iMessage = conversationService
-          .addMsgToConversation(ConversationServiceImpl.ObjectTypeShipment, shipmentId, message,
-              userId,
-              Collections.singleton("ORDER:" + orderId), domainId, createDate, pm);
-      orderManagementService.generateOrderCommentEvent(domainId, IEvent.COMMENTED,
-          JDOUtils.getImplClassName(IShipment.class), shipmentId, null,
-          null);
-    }
-    updateHistory(shipmentId, userId, orderId, domainId, prevStatus, newStatus, createDate, pm,
-        iMessage);
-  }
-
-  private void updateHistory(String shipmentId, String userId, Long orderId, Long domainId,
-                             ShipmentStatus prevStatus, ShipmentStatus newStatus, Date createDate,
-                             PersistenceManager pm, IMessage iMessage) throws ServiceException {
-    activityService.createActivity(IActivity.TYPE.SHIPMENT.name(), shipmentId, "STATUS",
-        prevStatus != null ? prevStatus.toString() : null,
-        newStatus.toString(), userId, domainId, iMessage != null ? iMessage.getMessageId() : null,
-        "ORDER:" + orderId, createDate, pm);
   }
 
   private IShipmentItemBatch createShipmentItemBatch(ShipmentItemBatchModel batches)
@@ -533,34 +487,6 @@ public class ShipmentService implements IShipmentService {
     }
   }
 
-  // Generate shipment events, if configured
-  private void generateEvent(Long domainId, int eventId, IShipment s, String message,
-                             List<String> userIds) {
-    try {
-      Map<String, Object> params = null;
-
-      if (eventId == IEvent.STATUS_CHANGE) {
-        params = new HashMap<>(1);
-        params.put(EventConstants.PARAM_STATUS, s.getStatus().toString());
-      }
-      // Custom options
-      CustomOptions customOptions = new CustomOptions();
-      if (StringUtils.isNotEmpty(message) || (userIds != null && !userIds.isEmpty())) {
-        customOptions.message = message;
-        if (userIds != null && !userIds.isEmpty()) {
-          Map<Integer, List<String>> userIdsMap = new HashMap<>();
-          userIdsMap.put(EventSpec.NotifyOptions.IMMEDIATE, userIds);
-          customOptions.userIds = userIdsMap;
-        }
-      }
-      // Generate event, if needed
-      EventPublisher.generate(domainId, eventId, params,
-          JDOUtils.getImplClass(IShipment.class).getName(), s.getShipmentId(), customOptions);
-    } catch (Exception e) {
-      xLogger.severe("{0} when generating Shipment event {1} for shipment {2} in domain {3}: {4}",
-          e.getClass().getName(), eventId, s.getShipmentId(), domainId, e);
-    }
-  }
 
   @Override
   public ResponseModel updateShipmentStatus(String shipmentId, ShipmentStatus status,
@@ -629,498 +555,11 @@ public class ShipmentService implements IShipmentService {
                                              int source, String salesRefId,
                                              Date estimatedDateOfArrival, Boolean updateOrderFields)
       throws LogiException {
-    Long orderId = extractOrderId(shipmentId);
-    LockUtil.LockStatus lockStatus = LockUtil.lock(Constants.TX_O + orderId);
-    if (!LockUtil.isLocked(lockStatus)) {
-      throw new InvalidServiceException(new ServiceException("O002", orderId));
-    }
-    boolean closePM = false;
-    boolean localShipObject = shipment == null;
-    ResponseModel responseModel = new ResponseModel();
-    Transaction tx = null;
-    if (pm == null) {
-      pm = PMF.get().getPersistenceManager();
-      tx = pm.currentTransaction();
-      closePM = true;
-    }
-    try {
-      if (closePM) {
-        tx.begin();
-      }
-      if (shipment == null) {
-        shipment = JDOUtils.getObjectById(IShipment.class, shipmentId, pm);
-        if (shipment == null) {
-          ResourceBundle
-              backendMessages =
-              Resources.get().getBundle("BackendMessages", SecurityUtils.getLocale());
-          throw new IllegalArgumentException(
-              backendMessages.getString("shipment.unavailable.db") + " " + backendMessages
-                  .getString("shipment.id") + " : "
-                  + shipmentId);
-        }
-        includeShipmentItems(shipment, pm);
-      }
-      ShipmentStatus prevStatus = shipment.getStatus();
-      validateStatusTransition(prevStatus, status);
-      responseModel = validateStatusChange(shipment, status.toString(), pm);
-      if (ShipmentStatus.CANCELLED == status) {
-        cancelShipment(shipmentId, message, userId, pm, reason);
-        if (ShipmentStatus.SHIPPED.equals(prevStatus) ||
-            ShipmentStatus.FULFILLED.equals(prevStatus)) {
-          postInventoryTransaction(shipment, userId, pm, prevStatus, source);
-        } else if (ShipmentStatus.OPEN.equals(prevStatus)) {
-          DomainConfig dc = DomainConfig.getInstance(shipment.getDomainId());
-          if (dc.autoGI()) {
-            inventoryManagementService
-                .clearAllocation(null, null, IInvAllocation.Type.SHIPMENT, shipmentId, pm);
-          }
-        }
-        if (updateOrderStatus) {
-          updateOrderStatus(shipment.getOrderId(), status, userId, pm);
-        }
-        if (closePM) {
-          tx.commit();
-        }
-        generateEvent(shipment.getDomainId(), IEvent.STATUS_CHANGE, shipment, null, null);
-        responseModel.status = true;
-        return responseModel;
-      }
-
-      shipment.setStatus(status);
-      shipment.setUpdatedBy(userId);
-      shipment.setUpdatedOn(new Date());
-      if (status == ShipmentStatus.SHIPPED || (prevStatus != ShipmentStatus.SHIPPED &&
-          status == ShipmentStatus.FULFILLED)) {
-
-        //To check for batch enabled materials and vendor
-
-        if (status == ShipmentStatus.SHIPPED) {
-
-          checkShipmentRequest(shipment.getKioskId(), shipment.getServicingKiosk(),
-              shipment.getShipmentItems());
-        }
-
-        DomainConfig dc = DomainConfig.getInstance(shipment.getDomainId());
-        if (dc.autoGI()) {
-          inventoryManagementService.clearAllocation(null, null, IInvAllocation.Type.SHIPMENT,
-              shipmentId, pm);
-        }
-        Map<Long, IDemandItem> demandItems = getDemandMetadata(orderId, pm);
-        for (IShipmentItem shipmentItem : shipment.getShipmentItems()) {
-          IDemandItem demandItem = demandItems.get(shipmentItem.getMaterialId());
-          List<IShipmentItemBatch> batch =
-              (List<IShipmentItemBatch>) shipmentItem.getShipmentItemBatch();
-          if (CollectionUtils.isNotEmpty(batch)) {
-            Results<IInvntryBatch>
-                rs =
-                inventoryManagementService.getBatches(shipmentItem.getMaterialId(),
-                    shipment.getServicingKiosk(), null);
-            List<IInvntryBatch> results = rs.getResults();
-            for (IShipmentItemBatch ib : batch) {
-              for (IInvntryBatch invntryBatch : results) {
-                if (ib.getBatchId().equals(invntryBatch.getBatchId())) {
-                  ib.setBatchExpiry(invntryBatch.getBatchExpiry());
-                  ib.setBatchManufacturedDate(invntryBatch.getBatchManufacturedDate());
-                  ib.setBatchManufacturer(invntryBatch.getBatchManufacturer());
-                  if (localShipObject) {
-                    pm.makePersistent(ib);
-                  }
-                  break;
-                }
-              }
-            }
-          }
-          demandItem
-              .setShippedQuantity(demandItem.getShippedQuantity().add(shipmentItem.getQuantity()));
-        }
-        pm.makePersistentAll(demandItems.values());
-        postInventoryTransaction(shipment, userId, pm, prevStatus, source);
-      }
-
-      if (status == ShipmentStatus.FULFILLED && prevStatus != ShipmentStatus.FULFILLED) {
-        //Only post fulfilled transaction here.
-        postInventoryTransaction(shipment, userId, pm, ShipmentStatus.SHIPPED, source);
-      }
-
-      generateEvent(shipment.getDomainId(), IEvent.STATUS_CHANGE, shipment, null, null);
-      if (isOrderFulfil) {
-        IMessage msg = null;
-        if (message != null) {
-          msg = orderManagementService.addMessageToOrder(shipment.getOrderId(), message, userId);
-        }
-        updateHistory(shipmentId, userId, shipment.getOrderId(),
-            shipment.getDomainId(), prevStatus, shipment.getStatus(), null, pm, msg);
-      } else {
-        updateMessageAndHistory(shipmentId, message, userId, shipment.getOrderId(),
-            shipment.getDomainId(), prevStatus, shipment.getStatus(), pm);
-      }
-
-      if (updateOrderStatus) {
-        updateOrderStatus(shipment.getOrderId(), shipment.getStatus(), userId, pm);
-      }
-      orderManagementService
-          .updateOrderMetadata(orderId, userId, pm, salesRefId, estimatedDateOfArrival,
-              updateOrderFields);
-      if (closePM) {
-        tx.commit();
-      }
-
-    } catch (LogiException e) {
-      throw e;
-    } catch (Exception e) {
-      xLogger.severe("Error while getting shipment details.", e);
-      throw new ServiceException(e);
-    } finally {
-      if (closePM && tx.isActive()) {
-        tx.rollback();
-      }
-      if (closePM) {
-        PMF.close(pm);
-      }
-      if (LockUtil.shouldReleaseLock(lockStatus) && !LockUtil.release(Constants.TX_O + orderId)) {
-        xLogger.warn("Unable to release lock for key {0}", Constants.TX_O + orderId);
-      }
-    }
-    responseModel.status = true;
-    return responseModel;
+    return updateShipmentStatusAction
+        .invoke(shipmentId, status, message, userId, pm, reason, shipment, updateOrderStatus, isOrderFulfil, source, salesRefId, estimatedDateOfArrival,
+            updateOrderFields);
   }
 
-  private Boolean validateStatusTransition(ShipmentStatus prevStatus, ShipmentStatus status) {
-    if (ShipmentStatus.OPEN.equals(prevStatus) && (ShipmentStatus.SHIPPED.equals(status)
-        || ShipmentStatus.CANCELLED.equals(status))) {
-      return Boolean.TRUE;
-    }
-
-    if (ShipmentStatus.SHIPPED.equals(prevStatus) && (ShipmentStatus.FULFILLED.equals(status)
-        || ShipmentStatus.CANCELLED.equals(status))) {
-      return Boolean.TRUE;
-    }
-
-    if (ShipmentStatus.FULFILLED.equals(prevStatus) && ShipmentStatus.CANCELLED.equals(status)) {
-      return Boolean.TRUE;
-    }
-
-    return Boolean.FALSE;
-  }
-
-  private void postInventoryTransaction(IShipment shipment, String userId, PersistenceManager pm,
-                                        ShipmentStatus prevStatus, int src)
-      throws ServiceException {
-    DomainConfig dc = DomainConfig.getInstance(shipment.getDomainId());
-    if (!dc.autoGI()) {
-      return;
-    }
-    List<ITransaction> transactionList = new ArrayList<>();
-    List<IInvntry> inTransitList = new ArrayList<>(1);
-    List<IInvntry> unFulfilledTransitList = null;
-    List<ITransaction> errors;
-    boolean checkBatch = true;
-    for (IShipmentItem shipmentItem : shipment.getShipmentItems()) {
-      IInvntry
-          inv =
-          inventoryManagementService
-              .getInventory(shipment.getKioskId(), shipmentItem.getMaterialId(), pm);
-      IInvntry vndInv =
-          inventoryManagementService
-              .getInventory(shipment.getServicingKiosk(), shipmentItem.getMaterialId(), pm);
-      // If inventory is removed in the customer, do not try to post receipts for that material.
-      if (inv == null && ShipmentStatus.FULFILLED.equals(shipment.getStatus())) {
-        xLogger.warn(
-            "Material with ID {0} does not exist in customer with ID {1} while posting transactions for shipment ID {2}",
-            shipmentItem.getMaterialId(), shipment.getKioskId(), shipment.getShipmentId());
-        continue;
-      }
-      if (vndInv == null && (ShipmentStatus.CANCELLED.equals(shipment.getStatus())
-          || ShipmentStatus.SHIPPED.equals(shipment.getStatus()))) {
-        xLogger.warn(
-            "Material with ID {0} does not exist in vendor with ID {1} while posting transactions for shipment ID {2}",
-            shipmentItem.getMaterialId(), shipment.getKioskId(), shipment.getShipmentId());
-        continue;
-      }
-      ITransaction t = JDOUtils.createInstance(ITransaction.class);
-      if (ShipmentStatus.SHIPPED.equals(shipment.getStatus()) || (
-          prevStatus != ShipmentStatus.SHIPPED &&
-              ShipmentStatus.FULFILLED.equals(shipment.getStatus()))) {
-        t.setType(ITransaction.TYPE_ISSUE);
-        t.setQuantity(shipmentItem.getQuantity());
-        t.setReason(shipment.getReason());
-        t.setKioskId(shipment.getServicingKiosk());
-        t.setLinkedKioskId(shipment.getKioskId());
-        t.setDomainId(shipment.getLinkedDomainId());
-        if (inv != null) {
-          inv.setInTransitStock(inv.getInTransitStock().add(shipmentItem.getQuantity()));
-          inv.setUpdatedOn(new Date());
-          inv.setUpdatedBy(userId);
-          inTransitList.add(inv);
-        }
-      } else if (ShipmentStatus.CANCELLED.equals(shipment.getStatus())) {
-        t.setType(ITransaction.TYPE_RECEIPT);
-        t.setQuantity(shipmentItem.getQuantity());
-        t.setReason(shipment.getCancelledDiscrepancyReasons());
-        t.setKioskId(shipment.getServicingKiosk());
-        t.setDomainId(shipment.getLinkedDomainId());
-        if (ShipmentStatus.SHIPPED.equals(prevStatus) && inv != null) {
-          BigDecimal inTransStock = inv.getInTransitStock().subtract(shipmentItem.getQuantity());
-          inv.setInTransitStock(
-              BigUtil.greaterThanEqualsZero(inTransStock) ? inTransStock : BigDecimal.ZERO);
-          inTransitList.add(inv);
-        }
-      } else if (ShipmentStatus.FULFILLED.equals(shipment.getStatus())) {
-        t.setType(ITransaction.TYPE_RECEIPT);
-        t.setQuantity(shipmentItem.getFulfilledQuantity());
-        t.setKioskId(shipmentItem.getKioskId());
-        t.setLinkedKioskId(shipment.getServicingKiosk());
-        t.setReason(shipmentItem.getFulfilledDiscrepancyReason());
-        t.setDomainId(shipment.getKioskDomainId());
-        t.setAtd(shipment.getActualFulfilmentDate());
-        //Reduce quantity (instead of fulfilled quantity) , since in-transit is updated based on issue.
-        BigDecimal inTransStock = inv.getInTransitStock().subtract(shipmentItem.getQuantity());
-        inv.setInTransitStock(
-            BigUtil.greaterThanEqualsZero(inTransStock) ? inTransStock : BigDecimal.ZERO);
-        if (BigUtil.equalsZero(shipmentItem.getFulfilledQuantity())) {
-          if (unFulfilledTransitList == null) {
-            unFulfilledTransitList = new ArrayList<>(1);
-          }
-          unFulfilledTransitList.add(inv);
-        } else {
-          inTransitList.add(inv);
-        }
-        checkBatch = entitiesService.getKiosk(shipment.getKioskId(), false).isBatchMgmtEnabled();
-      } else {
-        ResourceBundle
-            backendMessages =
-            Resources.get().getBundle("BackendMessages", SecurityUtils.getLocale());
-        throw new ServiceException(backendMessages.getString("inventory.post"));
-      }
-      t.setMaterialId(shipmentItem.getMaterialId());
-      t.setSrc(src);
-      t.setTrackingId(shipment.getShipmentId());
-      t.setTrackingObjectType(getTrackingObjectType(shipment, pm));
-      t.setSourceUserId(userId);
-      List<IShipmentItemBatch>
-          batch =
-          checkBatch ? (List<IShipmentItemBatch>) shipmentItem.getShipmentItemBatch() : null;
-      if (batch != null && !batch.isEmpty()) {
-        for (IShipmentItemBatch ib : batch) {
-          if ((ShipmentStatus.FULFILLED.equals(shipment.getStatus()) && BigUtil
-              .equalsZero(ib.getFulfilledQuantity())) || (
-              !(ShipmentStatus.FULFILLED.equals(shipment.getStatus())) && BigUtil
-                  .equalsZero(ib.getQuantity()))) {
-            continue;
-          }
-          ITransaction batchTrans = t.clone();
-          batchTrans.setBatchId(ib.getBatchId());
-          batchTrans.setBatchExpiry(ib.getBatchExpiry());
-          if (ib.getBatchManufacturedDate() != null) {
-            batchTrans.setBatchManufacturedDate(ib.getBatchManufacturedDate());
-          }
-          batchTrans.setBatchManufacturer(ib.getBatchManufacturer());
-          if (ShipmentStatus.FULFILLED.equals(shipment.getStatus())) {
-            batchTrans.setQuantity(ib.getFulfilledQuantity());
-            batchTrans.setReason(ib.getFulfilledDiscrepancyReason());
-            batchTrans.setMaterialStatus(ib.getFulfilledMaterialStatus());
-          } else {
-            batchTrans.setQuantity(ib.getQuantity());
-            batchTrans.setMaterialStatus(ib.getShippedMaterialStatus());
-          }
-          if (BigUtil.greaterThanZero(batchTrans.getQuantity())) {
-            transactionList.add(batchTrans);
-          }
-        }
-      } else {
-        t.setMaterialStatus(ShipmentStatus.FULFILLED.equals(shipment.getStatus()) ?
-            shipmentItem.getFulfilledMaterialStatus() : shipmentItem.getShippedMaterialStatus());
-        if (BigUtil.greaterThanZero(t.getQuantity())) {
-          transactionList.add(t);
-        }
-      }
-    }
-    if (unFulfilledTransitList != null && !unFulfilledTransitList.isEmpty()) {
-      pm.makePersistentAll(unFulfilledTransitList);
-    }
-    if (!transactionList.isEmpty()) {
-      try {
-        if (!ShipmentStatus.FULFILLED.equals(shipment.getStatus())) {
-          pm.makePersistentAll(inTransitList);
-          //Need to send inTransitlist only if order is fulfilled.
-          inTransitList = null;
-        }
-        errors = inventoryManagementService.updateInventoryTransactions(shipment.getDomainId(),
-            transactionList, inTransitList, true, false, pm).getErrorTransactions();
-
-        if (dc.getInventoryConfig().isCREnabled() &&
-            !(ShipmentStatus.FULFILLED.equals(shipment.getStatus()))) {
-          Map<String, String> params = new HashMap<>(1);
-          params.put("orderId", String.valueOf(shipment.getOrderId()));
-          //Added 40 sec delay to let update inventory during post transaction
-          getTask().schedule(ITaskService.QUEUE_OPTIMZER,
-              Constants.UPDATE_PREDICTION_TASK, params,
-              null, ITaskService.METHOD_POST, System.currentTimeMillis() + 40000);
-        }
-      } catch (ServiceException e) {
-        xLogger.warn("ServiceException when doing auto {0} for order {1}: {2}",
-            shipment.getShipmentId(),
-            shipment.getOrderId(), e);
-        throw e;
-      } catch (Exception e) {
-        xLogger.warn("Error in posting transactions", e);
-        ResourceBundle
-            backendMessages =
-            Resources.get().getBundle("BackendMessages", SecurityUtils.getLocale());
-        throw new ServiceException(backendMessages.getString("order.post.exception"), e);
-      }
-      if (CollectionUtils.isNotEmpty(errors)) {
-        StringBuilder errorMsg = new StringBuilder();
-        for (ITransaction error : errors) {
-          errorMsg.append("-").append(error.getMessage());
-        }
-        xLogger.warn("Inventory posting failed {0}", errorMsg.toString());
-        throw new ServiceException("T002", errorMsg.toString());
-      }
-    }
-  }
-
-  protected String getTrackingObjectType(IShipment shipment, PersistenceManager pm)
-      throws ServiceException {
-    return
-        orderManagementService.getOrder(shipment.getOrderId(), false, pm).getOrderType()
-            == IOrder.TRANSFER_ORDER
-            ? ITransaction.TRACKING_OBJECT_TYPE_TRANSFER_SHIPMENT
-            : ITransaction.TRACKING_OBJECT_TYPE_ORDER_SHIPMENT;
-  }
-
-  /**
-   * Determines the new Order status based on the current status of Shipments, It invoked Order
-   * management service to update the same - If all Shipments are SHIPPED and the Demand Items have
-   * no remaining quantity to be SHIPPED, then mark order as SHIPPED - If all Shipments are either
-   * SHIPPED or FULFILLED and there is at least one SHIPPED item and Demand Items have no remaining
-   * quantity to be SHIPPED, then marke Order as SHIPPED. - If all Shipments are FULFILLED and
-   * Demand Items have no remaining quantity, then mark Order as FULFILLED. - If there is remaining
-   * quantity on Demand Items and at least on Shipment is SHIPPED , then mark Order as BACKORDERED.
-   * - If there is remaining quantity on Demand Items and all Shipments or OPEN or CANCELLED, then
-   * Order status should have be in CONFIRMED/PENDING. If the Order status is not CONFIMED/PENDING
-   * then change it to one of the previous available status between CONFIRMED and PENDING from
-   * activity history of this order.
-   *
-   * @param orderId - Order Id of the order for which Status should be updated
-   * @param status  - Shipment status
-   * @param userId  - User Id who triggered this status change.
-   * @param pm      - Persistence Manager.
-   */
-  private void updateOrderStatus(Long orderId, ShipmentStatus status, String userId,
-                                 PersistenceManager pm)
-      throws Exception {
-    boolean fulfilled = status == ShipmentStatus.FULFILLED;
-    boolean shipped = status == ShipmentStatus.SHIPPED;
-    boolean cancelled = status == ShipmentStatus.CANCELLED;
-
-    if (fulfilled || shipped || cancelled) {
-      List<IShipment> shipments = getShipmentsByOrderId(orderId, pm);
-      Map<Long, IDemandItem> demandMap = getDemandMetadata(orderId, pm);
-      boolean allItemsInShipments = true;
-      for (IDemandItem demand : demandMap.values()) {
-        if (BigUtil.notEquals(demand.getQuantity(), demand.getInShipmentQuantity())) {
-          allItemsInShipments = false;
-          break;
-        }
-      }
-      String newOrderStatus = getOverallStatus(shipments, allItemsInShipments, orderId);
-      if (newOrderStatus != null) {
-        try {
-          orderManagementService
-              .updateOrderStatus(orderId, newOrderStatus, userId, null, null, SourceConstants.WEB,
-                  pm,
-                  null);
-        } catch (Exception e) {
-          xLogger
-              .warn("Error while updating order status from shipments for order {0}", orderId, e);
-          throw e;
-        }
-      }
-    }
-  }
-
-  public String getOverallStatus(List<IShipment> shipments, boolean allItemsInShipments,
-                                 Long orderId) throws ServiceException {
-    boolean hasShipped = false;
-    boolean hasFulfilled = false;
-    boolean allShipped = !shipments.isEmpty();
-    boolean allFulfilled = !shipments.isEmpty();
-    for (IShipment shipment : shipments) {
-      switch (shipment.getStatus()) {
-        case SHIPPED:
-          hasShipped = true;
-          allFulfilled = false;
-          break;
-        case FULFILLED:
-          hasFulfilled = true;
-          break;
-        case CANCELLED:
-          break;
-        default:
-          allShipped = false;
-          allFulfilled = false;
-      }
-    }
-    return getNewOrderStatus(allItemsInShipments, allFulfilled, allShipped, hasShipped,
-        hasFulfilled, orderId);
-  }
-
-  /**
-   * Calculates new status refer #updateOrderStatus
-   *
-   * @param allItemsInShipments - Indicates that demand items quantity is fully processed and there
-   *                            is no Yet to create shipment quantity
-   * @param fulfilled           - All shipments in the order are marked as fulfilled.
-   * @param shipped             - All Shipments in the Order are shipped.
-   * @param hasShipped          - There is at least one shipment in Order which is Shipped.
-   * @param hasFulfilled        - There is at least one shipment in Order which is fulfilled.
-   * @param orderId             - Order Id.
-   * @return new order status for the order.
-   */
-  public String getNewOrderStatus(boolean allItemsInShipments, boolean fulfilled,
-                                  boolean shipped,
-                                  boolean hasShipped, boolean hasFulfilled, Long orderId)
-      throws ServiceException {
-    String newOrderStatus;
-    if (allItemsInShipments) {
-      if (fulfilled) {
-        newOrderStatus = IOrder.FULFILLED;
-      } else if (shipped) {
-        newOrderStatus = IOrder.COMPLETED;
-      } else if (hasShipped || hasFulfilled) {
-        newOrderStatus = IOrder.BACKORDERED;
-      } else {
-        // If current status not pending or confirmed then
-        // check Activity and get previous status, else mark as PENDING.
-        newOrderStatus = getPreviousStatus(orderId);
-      }
-    } else {
-      if (hasShipped || hasFulfilled) {
-        newOrderStatus = IOrder.BACKORDERED;
-      } else {
-        // If current status not pending or confirmed then
-        // check Activity and get previous status, else mark as PENDING.
-        newOrderStatus = getPreviousStatus(orderId);
-      }
-    }
-    return newOrderStatus;
-  }
-
-  private String getPreviousStatus(Long orderId) throws ServiceException {
-    Results res = activityService.getActivity(String.valueOf(orderId), IActivity.TYPE.ORDER.name(),
-        null, null, null, null, null);
-    List<ActivityModel> activityList = res.getResults();
-    if (CollectionUtils.isNotEmpty(activityList)) {
-      for (ActivityModel activity : activityList) {
-        if (IOrder.CONFIRMED.equals(activity.newValue) || IOrder.PENDING
-            .equals(activity.newValue)) {
-          return activity.newValue;
-        }
-      }
-    }
-    return IOrder.PENDING;
-  }
 
   /**
    * Update the shipment quantity and allocations with message
@@ -1135,7 +574,7 @@ public class ShipmentService implements IShipmentService {
     if (!LockUtil.isLocked(lockStatus)) {
       throw new InvalidServiceException(new ServiceException("O002", orderId));
     }
-    IShipment shipment = getShipmentById(model.sId);
+    IShipment shipment = shipmentRepository.getById(model.sId);
     includeShipmentItems(shipment);
     if (shipment != null) {
       PersistenceManager pm = PMF.get().getPersistenceManager();
@@ -1274,7 +713,7 @@ public class ShipmentService implements IShipmentService {
     if (!LockUtil.isLocked(lockStatus)) {
       throw new InvalidServiceException(new ServiceException("O002", orderId));
     }
-    IShipment shipment = getShipmentById(sId);
+    IShipment shipment = shipmentRepository.getById(sId);
     if (shipment != null) {
       PersistenceManager pm = PMF.get().getPersistenceManager();
       Transaction tx = pm.currentTransaction();
@@ -1322,7 +761,7 @@ public class ShipmentService implements IShipmentService {
         pm.makePersistent(shipment);
         orderManagementService.updateOrderMetadata(orderId, userId, pm);
         tx.commit();
-        return getShipmentById(sId);
+        return shipmentRepository.getById(sId);
       } catch (InvalidServiceException | IllegalArgumentException e) {
         xLogger.warn("Error while updating shipment", e);
         throw e;
@@ -1348,7 +787,7 @@ public class ShipmentService implements IShipmentService {
   @Override
   public ResponseModel fulfillShipment(String shipmentId, String userId, int source)
       throws ServiceException {
-    IShipment shipment = getShipmentById(shipmentId);
+    IShipment shipment = shipmentRepository.getById(shipmentId);
     includeShipmentItems(shipment);
     ShipmentMaterialsModel sModel = new ShipmentMaterialsModel();
     sModel.sId = shipmentId;
@@ -1419,7 +858,7 @@ public class ShipmentService implements IShipmentService {
       pm = PMF.get().getPersistenceManager();
       tx = pm.currentTransaction();
       tx.begin();
-      IShipment shipment = getShipmentById(model.sId, true, pm);
+      IShipment shipment = shipmentRepository.getById(model.sId, true, pm);
       Map<Long, List<IShipmentItemBatch>> newShipmentItemBatchesMap = new HashMap<>();
       if (shipment != null) {
         for (ShipmentItemModel item : model.items) {
@@ -1516,7 +955,7 @@ public class ShipmentService implements IShipmentService {
           }
         }
         pm.makePersistentAll(shipment.getShipmentItems());
-        Map<Long, IDemandItem> items = getDemandMetadata(extractOrderId(model.sId), pm);
+        Map<Long, IDemandItem> items = demandService.getDemandMetadata(extractOrderId(model.sId), pm);
         for (IShipmentItem sItem : shipment.getShipmentItems()) {
           IDemandItem item = items.get(sItem.getMaterialId());
           item.setFulfilledQuantity(item.getFulfilledQuantity().add(sItem.getFulfilledQuantity()));
@@ -1695,7 +1134,7 @@ public class ShipmentService implements IShipmentService {
   public IShipment getShipment(String shipId) {
     PersistenceManager pm = PMF.get().getPersistenceManager();
     try {
-      return getShipmentById(shipId, true, pm);
+      return shipmentRepository.getById(shipId, true, pm);
     } catch (JDOObjectNotFoundException e) {
       throw new ObjectNotFoundException("Shipment not found : " + shipId);
     } finally {
@@ -1703,111 +1142,6 @@ public class ShipmentService implements IShipmentService {
     }
   }
 
-  private boolean cancelShipment(String shipmentId, String message, String userId,
-                                 PersistenceManager pm, String reason) throws ServiceException {
-    Long orderId = extractOrderId(shipmentId);
-    LockUtil.LockStatus lockStatus = LockUtil.lock(Constants.TX_O + orderId);
-    if (!LockUtil.isLocked(lockStatus)) {
-      throw new InvalidServiceException(new ServiceException("O002", orderId));
-    }
-    boolean closePM = false;
-    Transaction tx = null;
-    if (pm == null) {
-      pm = PMF.get().getPersistenceManager();
-      tx = pm.currentTransaction();
-      closePM = true;
-    }
-    try {
-      IShipment shipment = getShipmentById(shipmentId);
-      ShipmentStatus prevStatus = shipment.getStatus();
-      shipment.setStatus(ShipmentStatus.CANCELLED);
-      shipment.setCancelledDiscrepancyReasons(reason);
-      shipment.setUpdatedBy(userId);
-      shipment.setUpdatedOn(new Date());
-      includeShipmentItems(shipment, pm);
-      boolean
-          decrementShipped =
-          prevStatus == ShipmentStatus.SHIPPED || prevStatus == ShipmentStatus.FULFILLED;
-      Map<Long, IDemandItem> demandItems = getDemandMetadata(orderId, pm);
-      for (IShipmentItem shipmentItem : shipment.getShipmentItems()) {
-        if (prevStatus == ShipmentStatus.OPEN) {
-          List<IInvAllocation>
-              allocations =
-              inventoryManagementService.getAllocationsByTypeId(shipment.getServicingKiosk(),
-                  shipmentItem.getMaterialId(),
-                  IInvAllocation.Type.SHIPMENT, shipmentId);
-          List<ShipmentItemBatchModel> bq = new ArrayList<>(1);
-          BigDecimal q = BigDecimal.ZERO;
-          for (IInvAllocation allocation : allocations) {
-            if (allocation.getBatchId() != null) {
-              ShipmentItemBatchModel m = new ShipmentItemBatchModel();
-              m.id = allocation.getBatchId();
-              m.q = allocation.getQuantity();
-              bq.add(m);
-            } else {
-              q = allocation.getQuantity();
-            }
-          }
-          if (BigUtil.greaterThanZero(q)) {
-            inventoryManagementService
-                .transferAllocation(shipment.getServicingKiosk(), shipmentItem.getMaterialId(),
-                    IInvAllocation.Type.SHIPMENT, shipmentId,
-                    IInvAllocation.Type.ORDER, String.valueOf(orderId), q, null, userId, null, pm,
-                    null, false);
-          }
-          if (CollectionUtils.isNotEmpty(bq)) {
-            inventoryManagementService
-                .transferAllocation(shipment.getServicingKiosk(), shipmentItem.getMaterialId(),
-                    IInvAllocation.Type.SHIPMENT, shipmentId,
-                    IInvAllocation.Type.ORDER, String.valueOf(orderId), null, bq, userId, null, pm,
-                    null, false);
-          }
-        }
-        IDemandItem demandItem = demandItems.get(shipmentItem.getMaterialId());
-        if (decrementShipped) {
-          demandItem.setShippedQuantity(
-              demandItem.getShippedQuantity().subtract(shipmentItem.getQuantity()));
-        }
-        demandItem.setInShipmentQuantity(
-            demandItem.getInShipmentQuantity().subtract(shipmentItem.getQuantity()));
-        //TODO reset fulfilled quantities.
-      }
-      if (closePM) {
-        tx.begin();
-      }
-      pm.makePersistentAll(demandItems.values());
-      updateMessageAndHistory(shipmentId, message, userId, orderId, shipment.getDomainId(),
-          prevStatus,
-          shipment.getStatus(), pm);
-      pm.makePersistent(shipment);
-      orderManagementService.updateOrderMetadata(orderId, userId, pm);
-      if (closePM) {
-        tx.commit();
-      }
-    } catch (Exception e) {
-      xLogger.severe("Error while cancelling the shipment {0}", shipmentId, e);
-      ResourceBundle
-          backendMessages =
-          Resources.get().getBundle("BackendMessages", SecurityUtils.getLocale());
-      throw new ServiceException(
-          backendMessages.getString("shipment.cancel.error") + " " + shipmentId, e);
-    } finally {
-      if (closePM && tx.isActive()) {
-        tx.rollback();
-      }
-      if (closePM) {
-        pm.close();
-      }
-      if (LockUtil.shouldReleaseLock(lockStatus) && !LockUtil.release(Constants.TX_O + orderId)) {
-        xLogger.warn("Unable to release lock for key {0}", Constants.TX_O + orderId);
-      }
-    }
-    return true;
-  }
-
-  private long extractOrderId(String shipmentId) {
-    return Long.parseLong(shipmentId.substring(0, shipmentId.indexOf(CharacterConstants.HYPHEN)));
-  }
 
   @Override
   public List<IShipment> getShipmentsByOrderId(Long orderId) {
@@ -1831,51 +1165,17 @@ public class ShipmentService implements IShipmentService {
   @Override
   @SuppressWarnings("unchecked")
   public List<IShipment> getShipmentsByOrderId(Long orderId, PersistenceManager pm) {
-    Query query = null;
-    try {
-      query = pm.newQuery("javax.jdo.query.SQL", "SELECT * FROM SHIPMENT WHERE ORDERID = ?");
-      query.setClass(JDOUtils.getImplClass(IShipment.class));
-      List list = (List) query.executeWithArray(orderId);
-      List<IShipment> shipments = new ArrayList<>(list.size());
-      for (Object shipment : list) {
-        shipments.add((IShipment) shipment);
-      }
-      return shipments;
-    } catch (Exception e) {
-      xLogger.severe("Error while fetching shipments by order id: {0}", orderId, e);
-    } finally {
-      if (query != null) {
-        query.closeAll();
-      }
-    }
-    return Collections.emptyList();
+    return shipmentRepository.getByOrderId(orderId, pm);
   }
 
-  private IShipment getShipmentById(String shipmentId) {
-    PersistenceManager pm = PMF.get().getPersistenceManager();
-    try {
-      IShipment shipment = getShipmentById(shipmentId, false, pm);
-      return pm.detachCopy(shipment);
-    } finally {
-      pm.close();
-    }
-  }
 
-  private IShipment getShipmentById(String shipmentId, boolean includeShipmentItems,
-                                    PersistenceManager pm) {
-    IShipment shipment = JDOUtils.getObjectById(IShipment.class, shipmentId, pm);
-    if (includeShipmentItems) {
-      includeShipmentItems(shipment, pm);
-    }
-    return shipment;
-  }
 
   @Override
   public void includeShipmentItems(IShipment shipment) {
     PersistenceManager pm = null;
     try {
       pm = PMF.get().getPersistenceManager();
-      includeShipmentItems(shipment, pm);
+      ShipmentUtils.includeShipmentItems(shipment, pm);
     } finally {
       if (pm != null) {
         pm.close();
@@ -1884,36 +1184,6 @@ public class ShipmentService implements IShipmentService {
   }
 
   @SuppressWarnings("unchecked")
-  private void includeShipmentItems(IShipment shipment, PersistenceManager pm) {
-    if (shipment == null) {
-      return;
-    }
-    Query src = null;
-    try {
-      src = pm.newQuery("javax.jdo.query.SQL", "SELECT * FROM SHIPMENTITEM WHERE sid = ?");
-      src.setClass(JDOUtils.getImplClass(IShipmentItem.class));
-      shipment
-          .setShipmentItems((List<IShipmentItem>) src.executeWithArray(shipment.getShipmentId()));
-      shipment
-          .setShipmentItems((List<IShipmentItem>) pm.detachCopyAll(shipment.getShipmentItems()));
-      src = pm.newQuery("javax.jdo.query.SQL", "SELECT * FROM SHIPMENTITEMBATCH WHERE siId = ?");
-      src.setClass(JDOUtils.getImplClass(IShipmentItemBatch.class));
-      for (IShipmentItem iShipmentItem : shipment.getShipmentItems()) {
-        List<IShipmentItemBatch>
-            sb =
-            (List<IShipmentItemBatch>) src.executeWithArray(iShipmentItem.getShipmentItemId());
-        iShipmentItem.setShipmentItemBatch((List<IShipmentItemBatch>) pm.detachCopyAll(sb));
-      }
-    } catch (Exception e) {
-      xLogger
-          .severe("Error while fetching shipment items for shipment: {0}", shipment.getShipmentId(),
-              e);
-    } finally {
-      if (src != null) {
-        src.closeAll();
-      }
-    }
-  }
 
   @Override
   public List<String> getTransporterSuggestions(Long domainId, String text) {
@@ -1946,7 +1216,7 @@ public class ShipmentService implements IShipmentService {
   @Override
   public IMessage addMessage(String shipmentId, String message, String userId)
       throws ServiceException {
-    IShipment shipment = getShipmentById(shipmentId);
+    IShipment shipment = shipmentRepository.getById(shipmentId);
     IMessage
         iMessage =
         conversationService.addMsgToConversation("SHIPMENT", shipmentId, message, userId,
@@ -1957,120 +1227,6 @@ public class ShipmentService implements IShipmentService {
     return iMessage;
   }
 
-  /**
-   * This method is used to create shipment for migratory orders.
-   * This should only be called from migration context.
-   *
-   * @return shipmentId
-   */
-  @Override
-  public String createShipmentForMigratoryOrder(ShipmentModel model) throws ServiceException {
-
-    PersistenceManager pm = PMF.get().getPersistenceManager();
-    Transaction tx = pm.currentTransaction();
-    try {
-      if (!validate(model)) {
-        throw new InvalidDataException("Invalid data. Shipment cannot be created.");
-      }
-      tx.begin();
-      Date now = new Date();
-      IShipment shipment = JDOUtils.createInstance(IShipment.class);
-      shipment.setShipmentId(constructShipmentId(model.orderId));
-      shipment.setOrderId(model.orderId);
-      shipment.setDomainId(model.sdid);
-      shipment.setStatus(ShipmentStatus.OPEN);
-      if (StringUtils.isNotEmpty(model.ead)) {
-        shipment.setExpectedArrivalDate(sdf.parse(model.ead));
-      }
-      shipment.setNumberOfItems(model.items != null ? model.items.size() : 0);
-      shipment.setKioskId(model.customerId);
-      shipment.setServicingKiosk(model.vendorId);
-      shipment.setTransporter(model.transporter);
-      shipment.setTrackingId(model.trackingId);
-      shipment.setReason(model.reason);
-      shipment.setCancelledDiscrepancyReasons(model.cdrsn);
-      shipment.setCreatedBy(model.userID);
-      SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-      shipment.setCreatedOn(model.cOn != null ? sdf.parse(model.cOn) : now);
-      shipment.setLatitude(model.latitude);
-      shipment.setLongitude(model.longitude);
-      shipment.setGeoAccuracy(model.geoAccuracy);
-      shipment.setGeoErrorCode(model.geoError);
-      DomainsUtil.addToDomain(shipment, model.sdid, null);
-      pm.makePersistent(shipment);
-      List<IShipmentItem> items = new ArrayList<>(model.items.size());
-      for (ShipmentItemModel item : model.items) {
-        if (BigUtil.greaterThanZero(item.q)) {
-          item.kid = model.customerId;
-          item.uid = model.userID;
-          item.sid = shipment.getShipmentId();
-          item.sdid = model.sdid;
-          IShipmentItem sItem = createShipmentItem(item);
-          sItem.setFulfilledQuantity(item.fq);
-          items.add(sItem);
-        }
-      }
-      pm.makePersistentAll(items);
-      items = (List<IShipmentItem>) pm.detachCopyAll(items);
-      List<IShipmentItemBatch> bItems = new ArrayList<>(1);
-      for (int i = 0; i < model.items.size(); i++) {
-        ShipmentItemModel item = model.items.get(i);
-        if (item.bq != null) {
-          for (ShipmentItemBatchModel quantityByBatch : item.bq) {
-            quantityByBatch.uid = model.userID;
-            quantityByBatch.mid = item.mId;
-            quantityByBatch.kid = model.customerId;
-            quantityByBatch.siId = items.get(i).getShipmentItemId();
-            quantityByBatch.sdid = model.sdid;
-            IShipmentItemBatch sbItem = createShipmentItemBatch(quantityByBatch);
-            sbItem.setFulfilledQuantity(quantityByBatch.fq);
-            bItems.add(sbItem);
-          }
-        }
-      }
-      if (!bItems.isEmpty()) {
-        pm.makePersistentAll(bItems);
-      }
-      List<IDemandItem> dItems = demandService.getDemandItems(model.orderId, pm);
-      for (IDemandItem item : dItems) {
-        for (ShipmentItemModel shipmentItemModel : model.items) {
-          if (item.getMaterialId().equals(shipmentItemModel.mId)) {
-            item.setInShipmentQuantity(item.getInShipmentQuantity().add(shipmentItemModel.q));
-            break;
-          }
-        }
-      }
-      pm.makePersistentAll(dItems);
-      updateMessageAndHistory(shipment.getShipmentId(), null, model.userID, model.orderId,
-          model.sdid, null, shipment.getStatus(), model.cOn != null ? sdf.parse(model.cOn) : null,
-          pm);
-      // if both conversation and activity returns success, proceed to commit changes
-      if (model.status != null && !model.status.equals(ShipmentStatus.OPEN)) {
-        Date date;
-        if (model.cOn != null) {
-          date = sdf.parse(model.cOn);
-          Calendar cal = Calendar.getInstance();
-          cal.setTime(date);
-          cal.add(Calendar.SECOND, 1);
-          date = cal.getTime();
-        } else {
-          date = null;
-        }
-        updateShipmentStatusForMigratoryOrder(shipment.getShipmentId(), model.status, null,
-            model.userID, pm, date);
-      }
-      tx.commit();
-      return shipment.getShipmentId();
-    } catch (Exception e) {
-      xLogger.severe("Error while creating shipment", e);
-      throw new ServiceException("Error occurred while creating shipment", e);
-    } finally {
-      if (tx.isActive()) {
-        tx.rollback();
-      }
-      pm.close();
-    }
-  }
 
   public BigDecimal getAllocatedQuantityForShipmentItem(String sId, Long kId, Long mId) {
     try {
@@ -2089,147 +1245,6 @@ public class ShipmentService implements IShipmentService {
       xLogger.warn("Exception while getting inventory allocation for the shipment {0}", sId, e);
     }
     return null;
-  }
-
-  private boolean updateShipmentStatusForMigratoryOrder(String shipmentId, ShipmentStatus status,
-                                                        String message, String userId,
-                                                        PersistenceManager pm,
-                                                        Date shpDate) {
-    boolean closePM = false;
-    Transaction tx = null;
-    if (pm == null) {
-      pm = PMF.get().getPersistenceManager();
-      tx = pm.currentTransaction();
-      closePM = true;
-    }
-    try {
-      if (closePM) {
-        tx.begin();
-      }
-      IShipment shipment = JDOUtils.getObjectById(IShipment.class, shipmentId, pm);
-      if (shipment == null) {
-        throw new Exception(
-            "Shipment is not available in db to update status. Shipment ID:" + shipmentId);
-      }
-      includeShipmentItems(shipment, pm);
-      ShipmentStatus prevStatus = shipment.getStatus();
-      shipment.setStatus(status);
-      shipment.setUpdatedBy(userId);
-      shipment.setUpdatedOn(shpDate);
-      if (status == ShipmentStatus.SHIPPED || (prevStatus != ShipmentStatus.SHIPPED
-          && status == ShipmentStatus.FULFILLED)) {
-        Long orderId = extractOrderId(shipmentId);
-        List<IDemandItem> demandItems = demandService.getDemandItems(orderId, pm);
-        for (IShipmentItem shipmentItem : shipment.getShipmentItems()) {
-          for (IDemandItem demandItem : demandItems) {
-            if (demandItem.getMaterialId().equals(shipmentItem.getMaterialId())) {
-              demandItem.setShippedQuantity(
-                  demandItem.getShippedQuantity().add(shipmentItem.getQuantity()));
-              if (status == ShipmentStatus.FULFILLED) {
-                demandItem.setFulfilledQuantity(
-                    demandItem.getFulfilledQuantity().add(shipmentItem.getQuantity()));
-              } else {
-                IInvntry custInvntry =
-                    inventoryManagementService
-                        .getInventory(shipment.getKioskId(), demandItem.getMaterialId(), pm);
-                custInvntry.setInTransitStock(
-                    custInvntry.getInTransitStock().add(shipmentItem.getQuantity()));
-                pm.makePersistent(custInvntry);
-              }
-            }
-          }
-        }
-        pm.makePersistentAll(demandItems);
-      }
-      updateMessageAndHistory(shipmentId, message, userId, shipment.getOrderId(),
-          shipment.getDomainId(), prevStatus, shipment.getStatus(), shpDate, pm);
-      if (closePM) {
-        tx.commit();
-      }
-    } catch (Exception e) {
-      xLogger.severe("Error while getting shipment details.", e);
-      return false;
-    } finally {
-      if (closePM && tx.isActive()) {
-        tx.rollback();
-      }
-      if (closePM) {
-        pm.close();
-      }
-    }
-    return true;
-  }
-
-  @Override
-  public Map<String, Object> getShipmentItemAsMap(IShipmentItem shipment, String currency,
-                                                  Locale locale, String timezone) {
-    Map<String, Object> siMap = new HashMap<>();
-    if (shipment.getMaterialId() != null) {
-      siMap.put(JsonTagsZ.MATERIAL_ID, String.valueOf(shipment.getMaterialId()));
-    }
-    List<Map<String, String>> batches = new ArrayList<>(1);
-    try {
-      IMaterial m = materialCatalogService.getMaterial(shipment.getMaterialId());
-      if (m.isBatchEnabled()) {
-        List<IShipmentItemBatch> sibList = (List<IShipmentItemBatch>) shipment
-            .getShipmentItemBatch();
-        if (sibList != null && !sibList.isEmpty()) {
-          for (IShipmentItemBatch sib : sibList) {
-            Map<String, String> sibMap = getShipmentItemBatchAsMap(sib, timezone);
-            if (sibMap != null && !sibMap.isEmpty()) {
-              batches.add(sibMap);
-            }
-          }
-        }
-      }
-      BigDecimal alq = getAllocatedQuantityForShipmentItem(inventoryManagementService, shipment);
-      if (alq != null) {
-        siMap.put(JsonTagsZ.ALLOCATED_QUANTITY, BigUtil.getFormattedValue(alq));
-      }
-    } catch (Exception e) {
-      xLogger.warn("Exception while getting inventory allocation for the shipment item {0}",
-          shipment.getShipmentItemId(), e);
-    }
-
-    if (shipment.getQuantity() != null) {
-      siMap.put(JsonTagsZ.QUANTITY, BigUtil.getFormattedValue(shipment.getQuantity()));
-    }
-    if (shipment.getFulfilledQuantity() != null) {
-      siMap.put(JsonTagsZ.FULFILLED_QUANTITY,
-          BigUtil.getFormattedValue(shipment.getFulfilledQuantity()));
-    }
-    if (shipment.getFulfilledDiscrepancyReason() != null && !shipment
-        .getFulfilledDiscrepancyReason().isEmpty()) {
-      siMap.put(JsonTagsZ.REASON_FOR_PARTIAL_FULFILLMENT, shipment.getFulfilledDiscrepancyReason());
-    }
-    if (shipment.getUpdatedOn() != null) {
-      siMap.put(JsonTagsZ.TIMESTAMP,
-          LocalDateUtil.format(shipment.getUpdatedOn(), locale, timezone));
-    } else if (shipment.getCreatedOn() != null) {
-      siMap.put(JsonTagsZ.TIMESTAMP,
-          LocalDateUtil.format(shipment.getCreatedOn(), locale, timezone));
-    }
-    // Message - ?
-    if (shipment.getFulfilledMaterialStatus() != null && !shipment.getFulfilledMaterialStatus()
-        .isEmpty()) {
-      siMap.put(JsonTagsZ.MATERIAL_STATUS, shipment.getFulfilledMaterialStatus());
-    }
-    // Add custom material ID
-    try {
-      IMaterial m = materialCatalogService.getMaterial(shipment.getMaterialId());
-      String customMaterialId = m.getCustomId();
-      if (customMaterialId != null && !customMaterialId.isEmpty()) {
-        siMap.put(JsonTagsZ.CUSTOM_MATERIALID, customMaterialId);
-      }
-    } catch (Exception e) {
-      xLogger.warn("Exception when getting custom material ID for material {1}",
-          shipment.getMaterialId(), e);
-    }
-    // Add batches if has inventory allocation by batches is present
-    if (!batches.isEmpty()) {
-      siMap.put(JsonTagsZ.BATCHES, batches);
-    }
-    return siMap;
   }
 
   private BigDecimal getAllocatedQuantityForShipmentItem(InventoryManagementService ims,
@@ -2304,127 +1319,6 @@ public class ShipmentService implements IShipmentService {
     return map;
   }
 
-  private List<IMaterial> getMaterialsNotExistingInKiosk(Long kioskId, IShipment shipment,
-                                                         PersistenceManager pm) {
-    List<IMaterial> materialsNotExisting = new ArrayList<>(1);
-    try {
-      for (IShipmentItem shipmentItem : shipment.getShipmentItems()) {
-        IInvntry
-            inv =
-            inventoryManagementService.getInventory(kioskId, shipmentItem.getMaterialId(), pm);
-        if (inv == null && BigUtil.greaterThanZero(shipmentItem.getQuantity())) {
-          IMaterial material = materialCatalogService.getMaterial(shipmentItem.getMaterialId());
-          materialsNotExisting.add(material);
-        }
-      }
-    } catch (ServiceException e) {
-      xLogger.warn("Exception while getting materials not existing in kioskId {0}", kioskId, e);
-    }
-    return materialsNotExisting;
-  }
-
-  private ResponseModel validateStatusChange(IShipment shipment, String newStatus,
-                                             PersistenceManager pm)
-      throws ServiceException {
-    // Validate vendor inventory if newStatus is shipped (throw exception) or cancelled (show warning if previous status is not pending)
-    // Validate customer inventory if newstatus is fulfilled. (show warning)
-    ResponseModel responseModel = new ResponseModel();
-    List<IMaterial> materialsNotExistingInCustomer = getMaterialsNotExistingInKiosk(
-        shipment.getKioskId(), shipment, pm);
-    List<IMaterial>
-        materialsNotExistingInVendor =
-        getMaterialsNotExistingInKiosk(shipment.getServicingKiosk(), shipment, pm);
-    // If auto posting of transactions is configured
-    DomainConfig dc = DomainConfig.getInstance(shipment.getDomainId());
-    if (ShipmentStatus.FULFILLED.toString().equals(newStatus)
-        && materialsNotExistingInCustomer != null
-        && !materialsNotExistingInCustomer.isEmpty()) {
-      IKiosk cst = entitiesService.getKiosk(shipment.getKioskId(), false);
-      responseModel.status = true;
-      if (dc.autoGI()) {
-        ResourceBundle
-            backendMessages =
-            Resources.get().getBundle("BackendMessages", SecurityUtils.getLocale());
-        responseModel.message =
-            backendMessages.getString("the.following.items")
-                + CharacterConstants.SPACE + MsgUtil.bold(cst.getName())
-                + CharacterConstants.DOT + CharacterConstants.SPACE + backendMessages
-                .getString("receipts.not.posted") + CharacterConstants.DOT
-                + MaterialUtils.getMaterialNamesString(
-                materialsNotExistingInCustomer);
-      }
-      return responseModel;
-    }
-    if ((ShipmentStatus.SHIPPED.toString().equals(newStatus) || ShipmentStatus.CANCELLED.toString()
-        .equals(newStatus)) && materialsNotExistingInVendor != null && !materialsNotExistingInVendor
-        .isEmpty()) {
-      IKiosk vnd = entitiesService.getKiosk(shipment.getServicingKiosk(), false);
-      if (ShipmentStatus.SHIPPED.toString().equals(newStatus)) {
-        throw new ServiceException("I006", MsgUtil.bold(vnd.getName()),
-            MaterialUtils.getMaterialNamesString(
-                materialsNotExistingInVendor));
-
-      }
-      if (ShipmentStatus.CANCELLED.toString().equals(newStatus) && !ShipmentStatus.PENDING
-          .toString().equals(shipment.getStatus().toString()) && !ShipmentStatus.OPEN
-          .toString().equals(shipment.getStatus().toString())) {
-        responseModel.status = true;
-        if (dc.autoGI()) {
-          ResourceBundle
-              backendMessages =
-              Resources.get().getBundle("BackendMessages", SecurityUtils.getLocale());
-          responseModel.message = backendMessages.getString("the.following.items")
-              + CharacterConstants.SPACE + MsgUtil.bold(vnd.getName())
-              + CharacterConstants.DOT + CharacterConstants.SPACE + backendMessages
-              .getString("receipts.not.posted") + CharacterConstants.DOT + MaterialUtils
-              .getMaterialNamesString(
-                  materialsNotExistingInVendor);
-        }
-        return responseModel;
-      }
-    }
-    responseModel.status = true;
-    return responseModel;
-  }
-
-  public void checkShipmentRequest(Long customerKioskId, Long vendorKioskId, List itemList)
-      throws ServiceException {
-
-    IKiosk customerKiosk = entitiesService.getKiosk(customerKioskId);
-    IKiosk vendorKiosk = entitiesService.getKiosk(vendorKioskId);
-
-    boolean
-        checkBEMaterials =
-        customerKiosk.isBatchMgmtEnabled() && !vendorKiosk.isBatchMgmtEnabled();
-    if (checkBEMaterials) {
-      List<String> berrorMaterials = new ArrayList<>(1);
-
-      Long materialId = null;
-      BigDecimal quantity = null;
-      for (Object item : itemList) {
-
-        if (item instanceof ShipmentItem) {
-          materialId = ((ShipmentItem) item).getMaterialId();
-          quantity = ((ShipmentItem) item).getQuantity();
-        } else if (item instanceof IDemandItem) {
-          materialId = ((IDemandItem) item).getMaterialId();
-          quantity = ((IDemandItem) item).getQuantity();
-        }
-        if (materialId != null && quantity != null) {
-          IMaterial material = materialCatalogService.getMaterial(materialId);
-          if (material.isBatchEnabled() && BigUtil.greaterThanZero(quantity)) {
-            berrorMaterials.add(material.getName());
-          }
-        }
-      }
-
-      if (!berrorMaterials.isEmpty()) {
-        throw new ServiceException("O005", berrorMaterials.size(), customerKiosk.getName(),
-            StringUtil.getCSV(berrorMaterials));
-      }
-
-    }
-  }
 
   @Override
   public PDFResponseModel generateShipmentVoucher(String shipmentId)

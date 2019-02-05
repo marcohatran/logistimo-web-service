@@ -73,12 +73,16 @@ import javax.jdo.annotations.NotPersistent;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
+import javax.jdo.annotations.Version;
+import javax.jdo.annotations.VersionStrategy;
 
 /**
  * @author Arun
  */
 
 @PersistenceCapable(identityType = IdentityType.APPLICATION, detachable = "true")
+@Version(strategy= VersionStrategy.VERSION_NUMBER, column="VERSION"
+    ,extensions={@Extension(vendorName="datanucleus", key="field-name", value="version")})
 public class Order implements IOrder {
 
   // Logger
@@ -196,7 +200,7 @@ public class Order implements IOrder {
   @Persistent
   private Integer oty = 1; //Order type
   @Persistent
-  @Column(name = "sales_ref_id")
+  @Column(name = "SALES_REF_ID")
   private String salesRefId; // Sales Reference ID
   /**
      * Estimated date of arrival
@@ -260,14 +264,16 @@ public class Order implements IOrder {
    * Purchase reference id
    */
   @Persistent
-  @Column(name = "purchase_ref_id")
+  @Column(name = "PURCHASE_REF_ID")
   private String purchaseRefId;
   /**
    * Transfer reference id
    */
   @Persistent
-  @Column(name = "transfer_ref_id")
+  @Column(name = "TRANSFER_REF_ID")
   private String transferRefId;
+
+  protected Long version;
 
   public Order() {
 
@@ -1386,4 +1392,13 @@ public class Order implements IOrder {
   }
 
 
+  @Override
+  public Long getVersion() {
+    return version;
+  }
+
+  @Override
+  public void setVersion(Long version) {
+    this.version = version;
+  }
 }

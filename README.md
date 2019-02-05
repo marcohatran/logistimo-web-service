@@ -26,6 +26,7 @@ Pre-requisites
 * Zookeeper
 * Hadoop CDH5
 * Tomcat 7
+* Docker
 * [Fusion charts](http://www.fusioncharts.com/) - This application utilises Fusion charts heavily for all charting needs. 
 Fusion charts, however is not open source. You need to purchase the appropriate license from fusion charts, and copy the
 files to "modules/api/src/main/webapp/v2/js/fusioncharts-3.11.2.6/" folder and uncomment the script include tags in
@@ -76,6 +77,41 @@ Modules
 18. Orders
 19. Reports
 20. User Accounts
+
+Build Instructions
+------------------
+
+To build the artifact and create a docker image of the logistimo-web-service, run the following commands.
+
+1. Set environment
+
+```
+export MAVEN_OPTS="-Xmx2048m -Xms1024m -Djava.awt.headless=true"
+export MAVEN_HOME=/opt/apache-maven-3.5.3/
+export JAVA_HOME=/opt/java-home
+export PATH=$JAVA_HOME/bin:$PATH:$MAVEN_HOME/bin
+```
+
+2. Build the artifact
+
+```
+mvn clean
+```
+```
+npm install
+```
+```
+grunt development
+```
+```
+mvn install -Dfindbugs.skip=true -Dpmd.skip=true -Dmaven.javadoc.skip=true -Dcheckstyle.skip
+```
+
+3. Build docker image
+
+```
+docker build --rm=true --build-arg warname=<war file> -t logistimo-web-service:latest .
+```
 
 Mailing Lists
 -------------

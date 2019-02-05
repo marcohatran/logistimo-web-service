@@ -132,4 +132,8 @@ public interface IShipment extends ICrossDomain {
   String getSalesReferenceId();
 
   void setSalesReferenceId(String salesReferenceId);
+
+  Long getVersion();
+
+  void setVersion(Long version);
 }

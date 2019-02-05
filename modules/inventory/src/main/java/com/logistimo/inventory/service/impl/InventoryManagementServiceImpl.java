@@ -3370,8 +3370,11 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
                 "Inventory does not exist for kiosk ID {0}, material ID: {1}. Cannot incrementInventoryAvailableQuantity",
                 alc.getKioskId(), alc.getMaterialId());
           }
+          xLogger.info("Inventory allocation queued for deletion for kiosk {0} and material {1} with type {2} and typeid {3}"
+              , alc.getKioskId(), alc.getMaterialId(), type, StringUtil.getCSV(typeIds));
         }
         pm.deletePersistentAll(allAllocations);
+        xLogger.info("No of Inventory allocations {0} deleted successfully ", allAllocations.size());
       }
     } catch (InventoryAllocationException ie) {
       throw ie;
@@ -3436,6 +3439,8 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
       }
 
       pm.makePersistentAll(allocations);
+      xLogger.info("Inventory allocations transferred for kiosk {0}, material {1}, source type {3}"
+          + " ,source type id {4}, dest type {5} , dest type id {6}", kid, mid, srcType, srcTypeId, destType, destTypeId);
     } catch (ServiceException ie) {
       throw ie;
     } catch (Exception e) {

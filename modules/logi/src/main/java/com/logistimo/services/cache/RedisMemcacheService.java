@@ -139,7 +139,7 @@ public class RedisMemcacheService implements MemcacheService {
     Jedis jedis = null;
     try {
       jedis = pool.getResource();
-      String status = jedis.set(cacheKey.getBytes(), getBytes(obj), NX, EX, 30);
+      String status = jedis.set(cacheKey.getBytes(), getBytes(obj), NX, EX, 60);
       pool.returnResource(jedis);
       return Constants.OK.equals(status);
     } catch (Exception e) {

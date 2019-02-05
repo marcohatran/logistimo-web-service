@@ -74,4 +74,11 @@
         <!-- 07:30 AM IST -->
     </cron>
 
+    <cron>
+        <url>/s2/api/demand/clear-allocations</url>
+        <description>Clear allocations ftom order cancelled or fulfilled automation</description>
+        <schedule>every day 00:01</schedule>
+        <!-- 05:31 AM IST -->
+    </cron>
+
 </cronentries>

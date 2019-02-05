@@ -23,7 +23,6 @@
 
 package com.logistimo.api.controllers;
 
-
 import com.logistimo.api.builders.SMSBuilder;
 import com.logistimo.api.constants.SMSConstants;
 import com.logistimo.api.models.InventoryTransactions;
@@ -33,6 +32,8 @@ import com.logistimo.api.servlets.mobile.builders.MobileTransactionsBuilder;
 import com.logistimo.api.util.SMSUtil;
 import com.logistimo.auth.GenericAuthoriser;
 import com.logistimo.auth.SecurityMgr;
+import com.logistimo.communications.MessageHandlingException;
+import com.logistimo.communications.service.MessageLogService;
 import com.logistimo.communications.service.MessageService;
 import com.logistimo.exception.InvalidDataException;
 import com.logistimo.exception.LogiException;
@@ -52,10 +53,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -74,6 +77,7 @@ public class SMSController {
   private UsersService usersService;
   private InventoryManagementService inventoryManagementService;
   private MobileTransactionsBuilder mobileTransactionsBuilder;
+  private MessageLogService messageLogService;
 
   @Autowired
   public void setSmsBuilder(SMSBuilder smsBuilder) {
@@ -93,6 +97,11 @@ public class SMSController {
   @Autowired
   public void setMobileTransactionsBuilder(MobileTransactionsBuilder mobileTransactionsBuilder) {
     this.mobileTransactionsBuilder = mobileTransactionsBuilder;
+  }
+
+  @Autowired
+  public void setMessageLogService(MessageLogService messageLogService) {
+    this.messageLogService = messageLogService;
   }
 
   /**
@@ -247,4 +256,17 @@ public class SMSController {
     return mobileMaterialTransModelList;
   }
 
+  @RequestMapping(value = "/twilio/update-status", method = RequestMethod.POST)
+  public @ResponseBody void updateTwilioSMSStatus(
+      @RequestParam("MessageSid") String messageSid,
+      @RequestParam("MessageStatus") String messageStatus,
+      @RequestParam(name = "ErrorCode", required = false) String errorCode) {
+    try {
+      String status = StringUtils.isNotEmpty(errorCode) ? errorCode : messageStatus;
+      messageLogService.updateStatus(messageSid, null, status, new Date());
+    } catch (MessageHandlingException e) {
+      xLogger.warn("Error while updating the message status from Twilio with "
+              + "message id {0} and with status {1}", messageSid, messageStatus);
+    }
+  }
 }

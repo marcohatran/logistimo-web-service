@@ -93,6 +93,7 @@ public interface IDemandService {
   BigDecimal getAllocatedQuantityForDemandItem(String id, Long oId, Long mId);
 
   String getMaterialStatusForDemandItem(String id, Long oId, Long mId);
-  //IDemandItem getDemandItemByMaterial(Long orderId, Long materialId, PersistenceManager pm);
+
+  Map<Long, IDemandItem> getDemandMetadata(Long orderId, PersistenceManager pm);
 
 }
