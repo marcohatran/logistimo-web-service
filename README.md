@@ -9,7 +9,7 @@ It is designed to help manage every stage in a supply-chain from procurement to 
 Latest Release
 ------------------
 
-The most recent release is Logistimo [2.7.2](https://github.com/logistimo/logistimo-web-service/releases/tag/v2.7.2), released on 2018 May 16th.
+The most recent release is Logistimo [2.8.7](https://github.com/logistimo/logistimo-web-service/releases/tag/v2.8.7), released on 2019 Feb 2nd.
 
 How to use Logistimo SCM
 -------------------------
