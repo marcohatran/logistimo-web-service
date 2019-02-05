@@ -56,7 +56,7 @@ envsubst < $TOMCAT_HOME/webapps/ROOT/WEB-INF/classes/readonlyDB.properties.templ
 
 envsubst < $TOMCAT_HOME/webapps/ROOT/WEB-INF/classes/jpa.properties.template  > $TOMCAT_HOME/webapps/ROOT/WEB-INF/classes/jpa.properties
 
-JAVA_OPTS="$JAVA_OPTS" \
+JAVA_OPTS="$JAVA_OPTS \
         -\"javaagent://$TOMCAT_HOME/jmx_prometheus_javaagent-0.7.jar=$JMX_AGENT_PORT:$TOMCAT_HOME/jmx_exporter.json\""
 
 exec $TOMCAT_HOME/bin/catalina.sh run
