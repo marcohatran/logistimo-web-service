@@ -147,16 +147,6 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
     return handleExceptionInternal(e, error, headers, HttpStatus.BAD_REQUEST, request);
   }
 
-
-  @ExceptionHandler({BadCredentialsException.class})
-  protected ResponseEntity<Object> handleBadCredentials(Exception e, WebRequest request) {
-    logWarning(request, e);
-    ErrorResource error = new ErrorResource(get400Code(e), get400Message(e));
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    return handleExceptionInternal(e, error, headers, HttpStatus.BAD_REQUEST, request);
-  }
-
   @ExceptionHandler({InvalidTaskException.class})
   protected ResponseEntity<Object> handleInvalidTaskRequest(RuntimeException e,
                                                             WebRequest request) {
