@@ -9,7 +9,7 @@ It is designed to help manage every stage in a supply-chain from procurement to 
 Latest Release
 ------------------
 
-The most recent release is Logistimo [2.7.2](https://github.com/logistimo/logistimo-web-service/releases/tag/v2.7.2), released on 2018 May 16th.
+The most recent release is Logistimo [2.8.7](https://github.com/logistimo/logistimo-web-service/releases/tag/v2.8.7), released on 2019 Feb 5th.
 
 How to use Logistimo SCM
 -------------------------
@@ -27,7 +27,9 @@ Pre-requisites
 * Hadoop CDH5
 * Tomcat 7
 * Docker
-* [Fusion charts](http://www.fusioncharts.com/) - This application utilises Fusion charts heavily for all charting needs. 
+* [Communications service](https://github.com/logistimo/communications-service)
+* [Collaboration service](https://github.com/logistimo/collaboration-service)
+* [Fusion charts](http://www.fusioncharts.com/) - This application utilises Fusion charts heavily for all charting needs.
 Fusion charts, however is not open source. You need to purchase the appropriate license from fusion charts, and copy the
 files to "modules/api/src/main/webapp/v2/js/fusioncharts-3.11.2.6/" folder and uncomment the script include tags in
 "modules/api/src/main/webapp/v2/index.html". Also note that we have begun the work to migrate to nvd3 which is apache 2.0
@@ -77,6 +79,10 @@ Modules
 18. Orders
 19. Reports
 20. User Accounts
+21. Returns
+22. Two factor authentication
+23. Stock rebalancing
+24. Collaborations
 
 Build Instructions
 ------------------
@@ -93,6 +99,12 @@ export PATH=$JAVA_HOME/bin:$PATH:$MAVEN_HOME/bin
 ```
 
 2. Build the artifact
+
+* Build communication service artifacts, please refer build instruction [here](https://github.com/logistimo/communications-service#build-instructions)
+
+* Build collaboration service artifacts, please refer build instruction [here](https://github.com/logistimo/collaboration-service#build-instructions)
+
+* Now execute following commands in given order
 
 ```
 mvn clean
