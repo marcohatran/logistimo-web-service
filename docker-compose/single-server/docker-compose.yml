@@ -20,6 +20,7 @@ services:
    - LOC_URL=http://locations:9090
    - APPROVAL_URL=http://approvals:6400
    - COLLABORATION_URL=http://social:9070/v1/collaboration/likes
+   - CAPTCHA_ENABLE=true
    - ORIGINS=*
    - MAPI_URL=http://mapi:3000
   volumes:
@@ -244,3 +245,23 @@ services:
       condition: service_healthy
   links:
    - mongo
+ communication:
+   image: logistimo/communication-service:latest
+   container_name: communication-service
+   ports:
+    - "9020:9020"
+   environment:
+    - MYSQL_COMM_HOST=jdbc:mariadb://mariadb:3306/communications?useUnicode=true&amp;characterEncoding=UTF-8
+    - ACTIVEMQ_URL=failover:(tcp://activemq:61616)?randomize=false
+    - SERVER_PORT=9020
+    - MYSQL_COMM_USER=logistimo
+    - MYSQL_COMM_PASS=logistimo
+    - REDIS_HOST=redis
+    - ISSENTINEL=false
+    - GOOGLE_APPLICATION_CREDENTIALS=logistimo
+    - FIREBASE_CONFIG=local
+   depends_on:
+    mariadb:
+       condition: service_healthy
+   links:
+    - mariadb
